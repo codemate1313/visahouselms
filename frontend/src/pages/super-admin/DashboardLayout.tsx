@@ -34,6 +34,13 @@ export function DashboardLayout() {
           <NavLink to="/super-admin/profile">My Profile</NavLink>
           <NavLink to="/super-admin/sessions">Active Sessions</NavLink>
           <NavLink to="/super-admin/change-password">Change Password</NavLink>
+          <p className="nav-section">SaaS</p>
+          <NavLink to="/super-admin/plans">Plans</NavLink>
+          <NavLink to="/super-admin/subscriptions">Subscriptions</NavLink>
+          <p className="nav-section">System</p>
+          <NavLink to="/super-admin/dev-settings">Developer Settings</NavLink>
+          <NavLink to="/super-admin/logs">Logs</NavLink>
+          <NavLink to="/super-admin/terminal">CMD Terminal</NavLink>
         </nav>
         <div className="dashboard-user">
           {user?.avatar_url ? (

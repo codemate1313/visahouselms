@@ -493,6 +493,308 @@ td > .badge-green {
   margin-left: 0;
 }
 
+/* ---------- Tabs / filters / console / terminal ---------- */
+.nav-section {
+  margin: 16px 0 4px;
+  padding: 0 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7186;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-bar .tab {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 10px 16px;
+  font-weight: 600;
+}
+
+.tab-bar .tab:hover:not(:disabled) {
+  background: transparent;
+  color: var(--text);
+}
+
+.tab-bar .tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.form-card.wide {
+  max-width: 720px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 20px;
+}
+
+select,
+textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+}
+
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.test-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--border);
+}
+
+.test-row input {
+  flex: 1;
+}
+
+.test-row button {
+  white-space: nowrap;
+}
+
+.maintenance-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.console-output {
+  background: #171a26;
+  color: #cdd2e0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin-top: 16px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.console-output.error {
+  color: #fca5a5;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-bar input,
+.filter-bar select {
+  width: auto;
+}
+
+.filter-bar input[type="date"] {
+  width: 150px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+.pagination button {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: var(--bg);
+}
+
+.data-table tbody tr.clickable {
+  cursor: pointer;
+}
+
+.empty-cell {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 28px !important;
+}
+
+.terminal-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.preset-palette {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 190px;
+  flex-shrink: 0;
+}
+
+.preset-palette button {
+  text-align: left;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+
+.preset-palette button:hover:not(:disabled) {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.terminal-frame {
+  flex: 1;
+  min-width: 0;
+  background: #171a26;
+  border-radius: 10px;
+  padding: 12px;
+  min-height: 440px;
+}
+
+/* ---------- Subscriptions ---------- */
+.badge-red {
+  background: #fee2e2;
+  color: #b91c1c;
+  margin-left: 0;
+}
+
+.institute-select {
+  width: 260px;
+}
+
+.subscription-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  margin-bottom: 28px;
+  max-width: 720px;
+}
+
+.subscription-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+.subscription-head h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.subscription-dates {
+  font-size: 13.5px;
+  color: var(--text);
+  text-align: right;
+}
+
+.subscription-dates p {
+  margin: 2px 0;
+}
+
+.subscription-dates span {
+  color: var(--text-muted);
+}
+
+.usage-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.usage-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.usage-label {
+  width: 70px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.usage-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.usage-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--primary);
+  transition: width 0.3s;
+}
+
+.usage-fill.full {
+  background: var(--danger);
+}
+
+.usage-count {
+  width: 80px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.subscription-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
+}
+
+.subscription-actions select {
+  width: 280px;
+}
+
+.section-title {
+  font-size: 17px;
+  margin: 0 0 14px;
+}
+
 /* ---------- Profile ---------- */
 .profile-avatar-row {
   display: flex;

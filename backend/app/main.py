@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.middleware.request_logging import RequestLoggingMiddleware, _extract_user_id
-from app.routers import auth, backups, dev_settings, logs, super_admin, terminal
+from app.routers import auth, backups, dev_settings, logs, plans, subscriptions, super_admin, terminal
 
 app = FastAPI(title="IELTS LMS API")
 
@@ -29,6 +29,8 @@ app.include_router(dev_settings.router)
 app.include_router(backups.router)
 app.include_router(logs.router)
 app.include_router(terminal.router)
+app.include_router(plans.router)
+app.include_router(subscriptions.router)
 
 
 @app.exception_handler(Exception)

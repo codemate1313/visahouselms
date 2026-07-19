@@ -182,10 +182,28 @@ def _scheduler_loop() -> None:
 
 # ---------- lifecycle ----------
 
+def _recover_stale_running_jobs() -> None:
+    """Jobs stuck in 'running' at startup were interrupted - either the process
+    died mid-job (kill -9/crash) or a DB restore resurrected the job row that
+    was running while its own dump was taken. Nothing will ever finish them."""
+    db = SessionLocal()
+    try:
+        stale = db.query(Job).filter(Job.status == JOB_RUNNING).all()
+        for job in stale:
+            job.status = JOB_FAILED
+            job.result = "Interrupted (server restart or database restore)."
+            job.finished_at = datetime.now(timezone.utc)
+        if stale:
+            db.commit()
+    finally:
+        db.close()
+
+
 def start_background_threads() -> None:
     global _worker_thread, _scheduler_thread
     if _worker_thread is not None and _worker_thread.is_alive():
         return
+    _recover_stale_running_jobs()
     _stop_event.clear()
     _worker_thread = threading.Thread(target=_worker_loop, name="job-worker", daemon=True)
     _scheduler_thread = threading.Thread(target=_scheduler_loop, name="job-scheduler", daemon=True)

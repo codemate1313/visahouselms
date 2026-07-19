@@ -161,6 +161,9 @@ def restore_backup(db: Session, backup_id: int) -> str:
     Destructive - the router requires a typed confirmation before calling this."""
     backup = get_backup_or_404(db, backup_id)
     archive = backup_file_path(backup)
+    # capture before the restore: the dump predates this backup's own row, so
+    # applying it deletes the row and the ORM instance becomes unusable
+    filename = backup.filename
     params = _db_params()
     env = {**os.environ, "MYSQL_PWD": params["password"]}
 
@@ -168,6 +171,7 @@ def restore_backup(db: Session, backup_id: int) -> str:
     # DROP TABLE statements otherwise wait forever on the metadata lock held by
     # our own SELECT above (self-deadlock).
     db.commit()
+    db.expunge_all()
 
     with tempfile.TemporaryDirectory() as tmp:
         with tarfile.open(archive, "r:gz") as tar:
@@ -212,4 +216,23 @@ def restore_backup(db: Session, backup_id: int) -> str:
                     shutil.copy2(entry, dest)
                 restored_files += 1
 
-    return f"Database restored from {backup.filename}; {restored_files} storage entries restored."
+    _reregister_disk_archives(db)
+    return f"Database restored from {filename}; {restored_files} storage entries restored."
+
+
+def _reregister_disk_archives(db: Session) -> None:
+    """The restored database predates newer backups (including the one just
+    applied), so their rows are missing while the archives still exist on disk.
+    Re-insert rows for any orphaned archive so the list stays truthful."""
+    known = {b.filename for b in db.query(Backup).all()}
+    for archive in sorted(backups_dir().glob("backup_*.tar.gz")):
+        if archive.name not in known:
+            db.add(
+                Backup(
+                    filename=archive.name,
+                    size_bytes=archive.stat().st_size,
+                    kind="manual",
+                    status="done",
+                )
+            )
+    db.commit()
