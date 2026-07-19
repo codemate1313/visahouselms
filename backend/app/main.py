@@ -1,0 +1,77 @@
+import traceback
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+
+from app.config import settings
+from app.middleware.request_logging import RequestLoggingMiddleware, _extract_user_id
+from app.routers import auth, backups, dev_settings, logs, super_admin, terminal
+
+app = FastAPI(title="IELTS LMS API")
+
+settings.storage_path.mkdir(parents=True, exist_ok=True)
+app.mount("/storage", StaticFiles(directory=str(settings.storage_path)), name="storage")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origin_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.add_middleware(RequestLoggingMiddleware)
+
+app.include_router(auth.router)
+app.include_router(super_admin.router)
+app.include_router(dev_settings.router)
+app.include_router(backups.router)
+app.include_router(logs.router)
+app.include_router(terminal.router)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    from app.database import SessionLocal
+    from app.services.log_service import record_error
+
+    db = SessionLocal()
+    try:
+        record_error(
+            db,
+            message=f"{type(exc).__name__}: {exc}",
+            stack_trace=traceback.format_exc(),
+            path=request.url.path,
+            method=request.method,
+            user_id=_extract_user_id(request),
+            ip_address=request.client.host if request.client else None,
+        )
+    except Exception:
+        pass  # error logging must never mask the original failure
+    finally:
+        db.close()
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    from app.core.crash_detection import check_and_mark_startup
+    from app.services.job_service import start_background_threads
+
+    check_and_mark_startup()
+    start_background_threads()
+
+
+@app.on_event("shutdown")
+def on_shutdown() -> None:
+    from app.core.crash_detection import mark_clean_shutdown
+    from app.services.job_service import stop_background_threads
+
+    stop_background_threads()
+    mark_clean_shutdown()
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
