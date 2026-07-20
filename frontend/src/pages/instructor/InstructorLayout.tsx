@@ -44,10 +44,7 @@ export function InstructorLayout() {
           <span className={`nav-bookmark${bookmark.visible ? " is-visible" : ""}`} style={{ height: bookmark.height, transform: `translateY(${bookmark.top}px)` }} aria-hidden="true" />
           <NavLink to="/instructor" end>Dashboard</NavLink>
           <p className="nav-section">Authoring</p>
-          <NavLink to="/instructor/workspace">Content Workspace</NavLink>
-          <NavLink to="/instructor/courses">Courses</NavLink>
-          <NavLink to="/instructor/question-banks">Question Banks</NavLink>
-          <NavLink to="/instructor/tests">Test Builder</NavLink>
+          <NavLink to="/instructor/modules">Assessment Modules</NavLink>
           <NavLink to="/instructor/grading">Grading Queue</NavLink>
           <p className="nav-section">Account</p>
           <NavLink to="/instructor/profile">My Profile</NavLink>

@@ -6,6 +6,7 @@ export interface AuthUser {
   email: string;
   role: string;
   institute_id: number | null;
+  institute_slug: string | null;
   first_name: string;
   last_name: string;
   force_password_reset: boolean;

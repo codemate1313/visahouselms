@@ -21,10 +21,6 @@ export function Login() {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       });
       setSession(tokens.access_token, tokens.refresh_token, user);
-<<<<<<< Updated upstream
-      navigate(user.force_password_reset ? "/super-admin/change-password" : "/super-admin");
-=======
-
       if (user.role === "SUPER_ADMIN") {
         navigate(user.force_password_reset ? "/super-admin/change-password" : "/super-admin");
       } else if (user.role === "SA_INSTRUCTOR") {
@@ -36,7 +32,6 @@ export function Login() {
       } else {
         setError("This role does not have a portal yet.");
       }
->>>>>>> Stashed changes
     } catch {
       setError("Invalid email or password.");
     } finally {

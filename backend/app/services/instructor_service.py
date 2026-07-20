@@ -243,11 +243,15 @@ def delete_instructor(db: Session, actor: User, instructor_id: int, ip: Optional
     # Authored content is durable business history and Phase 3.2+ records use
     # the instructor as their owner. Preserve that attribution permanently.
     from app.models.course import Course
+    from app.models.exam_module import ExamModule
 
-    if db.query(Course).filter(Course.created_by_id == user.id).count() > 0:
+    if (
+        db.query(Course).filter(Course.created_by_id == user.id).count() > 0
+        or db.query(ExamModule).filter(ExamModule.created_by_id == user.id).count() > 0
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This instructor owns course content and cannot be deleted; deactivate the account instead",
+            detail="This instructor owns assessment content and cannot be deleted; deactivate the account instead",
         )
     _audit(db, actor, "sa_instructor.delete", user.id, ip, {"email": user.email})
 
@@ -262,8 +266,7 @@ def delete_instructor(db: Session, actor: User, instructor_id: int, ip: Optional
 
 
 def dashboard_summary(db: Session, actor: User) -> dict:
-    from app.models.assessment import Assessment, QuestionBank
-    from app.models.course import COURSE_DRAFT, Course, CourseAsset
+    from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModuleQuestion
 
     profile = actor.instructor_profile
     completion_parts = [
@@ -285,19 +288,36 @@ def dashboard_summary(db: Session, actor: User) -> dict:
     return {
         "profile_completion": completion,
         "content": {
-            "courses": db.query(Course).filter(Course.created_by_id == actor.id).count(),
-            "question_banks": db.query(QuestionBank).filter(
-                QuestionBank.created_by_id == actor.id
+            "modules": db.query(ExamModule).filter(ExamModule.created_by_id == actor.id).count(),
+            "drafts": db.query(ExamModule).filter(
+                ExamModule.created_by_id == actor.id, ExamModule.status == "draft"
             ).count(),
-            "tests": db.query(Assessment).filter(
-                Assessment.created_by_id == actor.id
+            "published": db.query(ExamModule).filter(
+                ExamModule.created_by_id == actor.id, ExamModule.status == "published"
             ).count(),
-            "drafts": db.query(Course).filter(
-                Course.created_by_id == actor.id, Course.status == COURSE_DRAFT
-            ).count(),
-            "assets": db.query(CourseAsset).join(Course).filter(
-                Course.created_by_id == actor.id
-            ).count(),
+            "questions": db.query(ExamModuleQuestion)
+            .join(ExamModuleQuestion.part)
+            .join(ExamModule)
+            .filter(ExamModule.created_by_id == actor.id)
+            .count(),
+            "audio": db.query(ExamModuleAsset)
+            .join(ExamModule)
+            .filter(ExamModule.created_by_id == actor.id)
+            .count(),
+            **{
+                module_type: db.query(ExamModule).filter(
+                    ExamModule.created_by_id == actor.id,
+                    ExamModule.module_type == module_type,
+                ).count()
+                for module_type in (
+                    "reading",
+                    "speaking",
+                    "writing",
+                    "listening",
+                    "full_mock",
+                    "final_test",
+                )
+            },
         },
         "grading": {"pending": 0, "in_progress": 0, "completed_today": 0},
         "recent_activity": [

@@ -7,15 +7,10 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.middleware.request_logging import RequestLoggingMiddleware, _extract_user_id
-<<<<<<< Updated upstream
-from app.routers import auth, backups, dev_settings, logs, plans, subscriptions, super_admin, terminal
-=======
 from app.routers import (
-    assessment_authoring,
     auth,
     backups,
     coupons,
-    course_authoring,
     course_catalog,
     dashboard,
     demo_accounts,
@@ -24,6 +19,7 @@ from app.routers import (
     instructor_portal,
     instructors,
     logs,
+    module_authoring,
     payment_methods,
     payments,
     plans,
@@ -33,7 +29,6 @@ from app.routers import (
     terminal,
     trial_config,
 )
->>>>>>> Stashed changes
 
 app = FastAPI(title="IELTS LMS API")
 
@@ -57,8 +52,6 @@ app.include_router(logs.router)
 app.include_router(terminal.router)
 app.include_router(plans.router)
 app.include_router(subscriptions.router)
-<<<<<<< Updated upstream
-=======
 app.include_router(institutes.router)
 app.include_router(institutes.public_router)
 app.include_router(instructors.router)
@@ -66,13 +59,11 @@ app.include_router(instructor_portal.router)
 app.include_router(trial_config.router)
 app.include_router(demo_accounts.router)
 app.include_router(coupons.router)
-app.include_router(assessment_authoring.router)
-app.include_router(course_authoring.router)
+app.include_router(module_authoring.router)
 app.include_router(course_catalog.router)
 app.include_router(payments.router)
 app.include_router(payment_methods.router)
 app.include_router(revenue.router)
->>>>>>> Stashed changes
 
 
 @app.exception_handler(Exception)

@@ -27,6 +27,7 @@ class CurrentUser(BaseModel):
     email: str
     role: str
     institute_id: Optional[int]
+    institute_slug: Optional[str] = None
     first_name: str
     last_name: str
     force_password_reset: bool = False

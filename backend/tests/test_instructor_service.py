@@ -113,7 +113,19 @@ class InstructorServiceTests(unittest.TestCase):
 
         self.assertEqual(
             summary["content"],
-            {"courses": 0, "question_banks": 0, "tests": 0, "drafts": 0, "assets": 0},
+            {
+                "modules": 0,
+                "drafts": 0,
+                "published": 0,
+                "questions": 0,
+                "audio": 0,
+                "reading": 0,
+                "speaking": 0,
+                "writing": 0,
+                "listening": 0,
+                "full_mock": 0,
+                "final_test": 0,
+            },
         )
         self.assertEqual(summary["grading"], {"pending": 0, "in_progress": 0, "completed_today": 0})
         self.assertGreaterEqual(summary["profile_completion"], 80)

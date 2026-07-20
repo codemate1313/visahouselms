@@ -14,6 +14,7 @@ from app.core.security import (
     hash_refresh_token,
     verify_password,
 )
+from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.models.user_session import UserSession
 
@@ -57,9 +58,6 @@ def login(
     if user is None or not user.is_active or not verify_password(password, user.password_hash):
         raise INVALID_CREDENTIALS
 
-<<<<<<< Updated upstream
-    return _issue_token_pair(db, user, user_agent, ip_address)
-=======
     if user.institute_id is not None and not user.institute.is_active:
         # don't reveal the suspension to the blocked user - same generic message
         db.add(
@@ -75,7 +73,6 @@ def login(
         raise INVALID_CREDENTIALS
 
     return issue_token_pair(db, user, user_agent, ip_address)
->>>>>>> Stashed changes
 
 
 def refresh(

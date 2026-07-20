@@ -65,3 +65,22 @@ async def read_validated_course_asset(upload: UploadFile) -> tuple[str, str, byt
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is not a valid MP3")
 
     return asset_type, extension, content
+
+
+async def read_validated_mp3(upload: UploadFile) -> bytes:
+    """Read a real MP3 upload for a Listening assessment part."""
+    if upload.content_type not in {"audio/mpeg", "audio/mp3", "audio/x-mpeg"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Listening audio must be an MP3 file",
+        )
+    content = await upload.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Uploaded MP3 is empty")
+    if len(content) > 50 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="MP3 files must be 50 MB or smaller")
+    has_id3 = content.startswith(b"ID3")
+    has_frame_sync = len(content) >= 2 and content[0] == 0xFF and (content[1] & 0xE0) == 0xE0
+    if not (has_id3 or has_frame_sync):
+        raise HTTPException(status_code=400, detail="File is not a valid MP3")
+    return content
