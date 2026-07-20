@@ -45,6 +45,7 @@ app.add_middleware(
 app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(auth.router)
+app.include_router(dashboard.router)
 app.include_router(super_admin.router)
 app.include_router(dev_settings.router)
 app.include_router(backups.router)

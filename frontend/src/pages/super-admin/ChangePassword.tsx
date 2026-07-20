@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { PasswordInput } from "../../components/PasswordInput";
 import { PasswordStrengthMeter } from "../../components/PasswordStrengthMeter";
 import { useAuthStore } from "../../store/authStore";
 import { evaluatePassword } from "../../utils/passwordStrength";
@@ -63,18 +64,16 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
 
       <form className="form-card" onSubmit={handleSubmit}>
         <label htmlFor="current_password">Current password</label>
-        <input
+        <PasswordInput
           id="current_password"
-          type="password"
           value={currentPassword}
           onChange={(event) => setCurrentPassword(event.target.value)}
           required
         />
 
         <label htmlFor="new_password">New password</label>
-        <input
+        <PasswordInput
           id="new_password"
-          type="password"
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
           required
@@ -82,9 +81,8 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
         <PasswordStrengthMeter password={newPassword} />
 
         <label htmlFor="confirm_password">Confirm new password</label>
-        <input
+        <PasswordInput
           id="confirm_password"
-          type="password"
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           required

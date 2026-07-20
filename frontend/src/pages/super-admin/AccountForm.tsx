@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { PasswordInput } from "../../components/PasswordInput";
 import { PasswordStrengthMeter } from "../../components/PasswordStrengthMeter";
 import { evaluatePassword } from "../../utils/passwordStrength";
 
@@ -76,9 +77,8 @@ export function AccountForm() {
         {isNew && (
           <>
             <label htmlFor="password">Password</label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
@@ -120,4 +120,3 @@ export function AccountForm() {
     </div>
   );
 }
-
