@@ -82,6 +82,9 @@ h1 {
   background: var(--nav-bg);
   color: white;
   padding: 24px 16px;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -106,6 +109,37 @@ h1 {
   flex-direction: column;
   gap: 4px;
   flex: 1;
+  position: relative;
+}
+
+.nav-bookmark {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: transparent;
+  filter: drop-shadow(5px 3px 8px rgba(52, 38, 173, 0.18));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 240ms ease,
+    opacity 150ms ease;
+  will-change: transform;
+}
+
+.nav-bookmark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--primary) 0%, #5b50ee 100%);
+  z-index: 1;
+}
+
+.nav-bookmark.is-visible {
+  opacity: 1;
 }
 
 .dashboard-nav nav a {
@@ -114,6 +148,8 @@ h1 {
   padding: 9px 12px;
   border-radius: 8px;
   font-size: 14px;
+  position: relative;
+  z-index: 1;
   transition: background 0.15s, color 0.15s;
 }
 
@@ -123,9 +159,15 @@ h1 {
 }
 
 .dashboard-nav nav a.active {
-  background: var(--primary);
+  background: transparent;
   color: white;
   font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-bookmark {
+    transition: none;
+  }
 }
 
 .dashboard-user {

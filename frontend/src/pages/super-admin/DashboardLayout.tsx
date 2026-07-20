@@ -1,9 +1,13 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useLayoutEffect, useRef, useState } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "../../api/client";
 import { useAuthStore } from "../../store/authStore";
 
 export function DashboardLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const navRef = useRef<HTMLElement>(null);
+  const [bookmark, setBookmark] = useState({ top: 0, height: 0, visible: false });
   const user = useAuthStore((state) => state.user);
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const clear = useAuthStore((state) => state.clear);
@@ -22,6 +26,28 @@ export function DashboardLayout() {
 
   const initials = `${user?.first_name?.[0] ?? ""}${user?.last_name?.[0] ?? ""}`.toUpperCase();
 
+  useLayoutEffect(() => {
+    const positionBookmark = () => {
+      const nav = navRef.current;
+      const activeLink = nav?.querySelector<HTMLAnchorElement>("a.active");
+
+      if (!nav || !activeLink) {
+        setBookmark((current) => ({ ...current, visible: false }));
+        return;
+      }
+
+      setBookmark({
+        top: activeLink.offsetTop,
+        height: activeLink.offsetHeight,
+        visible: true,
+      });
+    };
+
+    positionBookmark();
+    window.addEventListener("resize", positionBookmark);
+    return () => window.removeEventListener("resize", positionBookmark);
+  }, [location.pathname]);
+
   return (
     <div className="dashboard">
       <aside className="dashboard-nav">
@@ -29,7 +55,12 @@ export function DashboardLayout() {
           <h2>IELTS LMS</h2>
           <p className="dashboard-role">Super Admin</p>
         </div>
-        <nav>
+        <nav ref={navRef}>
+          <span
+            className={`nav-bookmark${bookmark.visible ? " is-visible" : ""}`}
+            style={{ height: bookmark.height, transform: `translateY(${bookmark.top}px)` }}
+            aria-hidden="true"
+          />
           <NavLink to="/super-admin/accounts">Admin Accounts</NavLink>
           <NavLink to="/super-admin/profile">My Profile</NavLink>
           <NavLink to="/super-admin/sessions">Active Sessions</NavLink>
