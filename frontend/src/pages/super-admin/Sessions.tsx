@@ -22,7 +22,11 @@ function describeAgent(userAgent: string | null): string {
   return userAgent.slice(0, 40);
 }
 
-export function Sessions() {
+interface SessionsProps {
+  apiBase?: string;
+}
+
+export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +36,7 @@ export function Sessions() {
   async function loadSessions() {
     setLoading(true);
     try {
-      const { data } = await apiClient.get<SessionInfo[]>("/super-admin/me/sessions", {
+      const { data } = await apiClient.get<SessionInfo[]>(`${apiBase}/me/sessions`, {
         headers: refreshToken ? { "X-Refresh-Token": refreshToken } : undefined,
       });
       setSessions(data);
@@ -53,7 +57,7 @@ export function Sessions() {
     setError(null);
     setNotice(null);
     try {
-      await apiClient.delete(`/super-admin/me/sessions/${session.id}`);
+      await apiClient.delete(`${apiBase}/me/sessions/${session.id}`);
       await loadSessions();
     } catch (err: unknown) {
       setError(extractErrorMessage(err, "Failed to revoke session."));
@@ -65,7 +69,7 @@ export function Sessions() {
     setError(null);
     setNotice(null);
     try {
-      const { data } = await apiClient.post("/super-admin/me/sessions/revoke-others", {
+      const { data } = await apiClient.post(`${apiBase}/me/sessions/revoke-others`, {
         refresh_token: refreshToken,
       });
       setNotice(`Revoked ${data.revoked} other session${data.revoked === 1 ? "" : "s"}.`);

@@ -37,7 +37,6 @@ def get_current_user(
 
     return user
 
-
 def require_role(*allowed_roles: str):
     def _check(user: User = Depends(get_current_user)) -> User:
         if user.role.name not in allowed_roles:
@@ -48,3 +47,12 @@ def require_role(*allowed_roles: str):
         return user
 
     return _check
+
+
+def require_password_change_complete(user: User = Depends(get_current_user)) -> User:
+    if user.force_password_reset:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Password change required before accessing this resource",
+        )
+    return user

@@ -21,7 +21,7 @@ apiClient.interceptors.request.use((config) => {
 let refreshPromise: Promise<string> | null = null;
 
 async function refreshAccessToken(): Promise<string> {
-  const { refreshToken, setAccessToken, clear } = useAuthStore.getState();
+  const { refreshToken, setTokens, clear } = useAuthStore.getState();
   if (!refreshToken) {
     clear();
     throw new Error("No refresh token available");
@@ -29,7 +29,9 @@ async function refreshAccessToken(): Promise<string> {
 
   try {
     const { data } = await refreshClient.post("/auth/refresh", { refresh_token: refreshToken });
-    setAccessToken(data.access_token);
+    // The backend rotates both tokens. Persisting only the access token would
+    // make the following refresh reuse a revoked refresh token.
+    setTokens(data.access_token, data.refresh_token);
     return data.access_token;
   } catch (err) {
     clear();

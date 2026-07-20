@@ -21,7 +21,22 @@ export function Login() {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       });
       setSession(tokens.access_token, tokens.refresh_token, user);
+<<<<<<< Updated upstream
       navigate(user.force_password_reset ? "/super-admin/change-password" : "/super-admin");
+=======
+
+      if (user.role === "SUPER_ADMIN") {
+        navigate(user.force_password_reset ? "/super-admin/change-password" : "/super-admin");
+      } else if (user.role === "SA_INSTRUCTOR") {
+        navigate(user.force_password_reset ? "/instructor/change-password" : "/instructor");
+      } else if (user.role === "INSTITUTE_ADMIN") {
+        // Institute Admin's own portal (incl. its change-password flow) lands in Phase 4;
+        // this placeholder proves login + branding delivery work end-to-end today.
+        navigate("/institute-portal");
+      } else {
+        setError("This role does not have a portal yet.");
+      }
+>>>>>>> Stashed changes
     } catch {
       setError("Invalid email or password.");
     } finally {

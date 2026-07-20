@@ -26,6 +26,7 @@ def _create_token(
     institute_id: Optional[int],
     token_type: str,
     expires_delta: timedelta,
+    auth_method: str = "password",
 ) -> str:
     now = datetime.now(timezone.utc)
     payload = {
@@ -36,27 +37,34 @@ def _create_token(
         "iat": now,
         "exp": now + expires_delta,
         "jti": uuid4().hex,
+        "auth_method": auth_method,
     }
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
-def create_access_token(user_id: int, role: str, institute_id: Optional[int]) -> str:
+def create_access_token(
+    user_id: int, role: str, institute_id: Optional[int], auth_method: str = "password"
+) -> str:
     return _create_token(
         user_id,
         role,
         institute_id,
         TOKEN_TYPE_ACCESS,
         timedelta(minutes=settings.access_token_expire_minutes),
+        auth_method,
     )
 
 
-def create_refresh_token(user_id: int, role: str, institute_id: Optional[int]) -> str:
+def create_refresh_token(
+    user_id: int, role: str, institute_id: Optional[int], auth_method: str = "password"
+) -> str:
     return _create_token(
         user_id,
         role,
         institute_id,
         TOKEN_TYPE_REFRESH,
         timedelta(days=settings.refresh_token_expire_days),
+        auth_method,
     )
 
 

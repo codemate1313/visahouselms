@@ -5,7 +5,11 @@ import { PasswordStrengthMeter } from "../../components/PasswordStrengthMeter";
 import { useAuthStore } from "../../store/authStore";
 import { evaluatePassword } from "../../utils/passwordStrength";
 
-export function ChangePassword() {
+interface ChangePasswordProps {
+  apiBase?: string;
+}
+
+export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps) {
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -30,7 +34,7 @@ export function ChangePassword() {
 
     setSaving(true);
     try {
-      await apiClient.post("/super-admin/me/change-password", {
+      await apiClient.post(`${apiBase}/me/change-password`, {
         current_password: currentPassword,
         new_password: newPassword,
       });

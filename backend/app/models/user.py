@@ -24,3 +24,10 @@ class User(Base):
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
 
     role: Mapped["Role"] = relationship(back_populates="users")  # noqa: F821
+<<<<<<< Updated upstream
+=======
+    institute: Mapped[Optional["Institute"]] = relationship()  # noqa: F821
+    instructor_profile: Mapped[Optional["InstructorProfile"]] = relationship(  # noqa: F821
+        back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
+>>>>>>> Stashed changes

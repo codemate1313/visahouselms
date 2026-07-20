@@ -25,11 +25,15 @@ INVALID_REFRESH_TOKEN = HTTPException(
 )
 
 
-def _issue_token_pair(
-    db: Session, user: User, user_agent: Optional[str], ip_address: Optional[str]
+def issue_token_pair(
+    db: Session,
+    user: User,
+    user_agent: Optional[str],
+    ip_address: Optional[str],
+    auth_method: str = "password",
 ) -> Tuple[str, str]:
-    access_token = create_access_token(user.id, user.role.name, user.institute_id)
-    refresh_token = create_refresh_token(user.id, user.role.name, user.institute_id)
+    access_token = create_access_token(user.id, user.role.name, user.institute_id, auth_method)
+    refresh_token = create_refresh_token(user.id, user.role.name, user.institute_id, auth_method)
 
     now = datetime.now(timezone.utc)
     session = UserSession(
@@ -53,7 +57,25 @@ def login(
     if user is None or not user.is_active or not verify_password(password, user.password_hash):
         raise INVALID_CREDENTIALS
 
+<<<<<<< Updated upstream
     return _issue_token_pair(db, user, user_agent, ip_address)
+=======
+    if user.institute_id is not None and not user.institute.is_active:
+        # don't reveal the suspension to the blocked user - same generic message
+        db.add(
+            AuditLog(
+                user_id=user.id,
+                action="institute.login_blocked_suspended",
+                entity_type="institute",
+                entity_id=user.institute_id,
+                ip_address=ip_address,
+            )
+        )
+        db.commit()
+        raise INVALID_CREDENTIALS
+
+    return issue_token_pair(db, user, user_agent, ip_address)
+>>>>>>> Stashed changes
 
 
 def refresh(
@@ -89,7 +111,9 @@ def refresh(
     db.add(session)
     db.commit()
 
-    return _issue_token_pair(db, user, user_agent, ip_address)
+    return issue_token_pair(
+        db, user, user_agent, ip_address, payload.get("auth_method", "password")
+    )
 
 
 def logout(db: Session, refresh_token: str) -> None:
