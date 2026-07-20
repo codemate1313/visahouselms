@@ -229,6 +229,7 @@ export interface ExamModule {
   status: ExamModuleStatus;
   duration_minutes: number;
   blueprint_version: string;
+  source_module_ids: number[];
   created_by_id: number;
   created_by_name: string;
   part_count: number;

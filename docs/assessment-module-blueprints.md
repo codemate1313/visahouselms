@@ -78,9 +78,15 @@ The examiner scores 0–8 for each of five criteria:
 
 ## Full Mock Test and Final Test
 
-Both generate all 15 parts above in Listening → Reading → Writing → Speaking
-order. Their controlled total duration is 154 minutes (40 + 50 + 50 + 14).
-The same section-specific question, mark, rubric, and audio rules apply.
+Both require the instructor to choose one completed Listening, Reading,
+Writing, and Speaking module that they created. The system then generates all
+15 parts in Listening → Reading → Writing → Speaking order, copies each source
+question and Listening MP3, and randomizes question order independently inside
+every part. The copied test is independent: later editing or deleting a source
+does not change an already-created Full Mock or Final Test.
+
+Their controlled total duration is 154 minutes (40 + 50 + 50 + 14). The same
+section-specific question, mark, rubric, and audio rules apply.
 
 ## Import and lifecycle rules
 
@@ -92,3 +98,5 @@ The same section-specific question, mark, rubric, and audio rules apply.
 - Text-to-speech accepts curated English voices and retains the transcript.
 - Only drafts can change. Publishing validates exact counts, marks, types, and
   required audio. A published module must return to draft before editing.
+- The module's instructor-owner may permanently delete it in any lifecycle
+  status. Its copied use in an existing Full Mock or Final Test is unaffected.

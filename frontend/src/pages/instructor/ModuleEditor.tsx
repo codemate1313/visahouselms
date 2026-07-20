@@ -7,6 +7,7 @@ import type {
   ExamModulePart,
   ExamModuleQuestion,
   ExamModuleType,
+  IeltsSection,
   QuestionDraft,
   QuestionImportPreview,
   QuestionOption,
@@ -28,6 +29,8 @@ const QUESTION_LABELS: Record<QuestionType, string> = {
 };
 const CHOICE_TYPES = new Set<QuestionType>(["mcq_single", "mcq_multiple", "true_false_not_given", "yes_no_not_given"]);
 const ANSWER_FREE_TYPES = new Set<QuestionType>(["essay", "speaking_prompt"]);
+const COMPOSITE_TYPES = new Set<ExamModuleType>(["full_mock", "final_test"]);
+const SOURCE_SECTIONS: IeltsSection[] = ["listening", "reading", "writing", "speaking"];
 
 function optionsFor(type: QuestionType): QuestionOption[] {
   if (type === "true_false_not_given") return ["True", "False", "Not Given"].map((text, index) => ({ key: String.fromCharCode(65 + index), text }));
@@ -74,6 +77,9 @@ export function ModuleEditor() {
   const [module, setModule] = useState<ExamModule | null>(null);
   const [selectedPartId, setSelectedPartId] = useState<number | null>(null);
   const [details, setDetails] = useState({ title: "", description: "", instructions: "" });
+  const [sourceModules, setSourceModules] = useState<ExamModule[]>([]);
+  const [selectedSources, setSelectedSources] = useState<Record<IeltsSection, string>>({ listening: "", reading: "", writing: "", speaking: "" });
+  const [loadingSources, setLoadingSources] = useState(false);
   const [manual, setManual] = useState<QuestionDraft | null>(null);
   const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -108,6 +114,14 @@ export function ModuleEditor() {
   useEffect(() => {
     apiClient.get<TTSVoice[]>("/instructor/modules/tts-voices").then(({ data }) => setVoices(data)).catch(() => undefined);
   }, []);
+  useEffect(() => {
+    if (!isNew || !requestedType || !COMPOSITE_TYPES.has(requestedType)) return;
+    setLoadingSources(true);
+    apiClient.get<ExamModule[]>("/instructor/modules")
+      .then(({ data }) => setSourceModules(data.filter((item) => SOURCE_SECTIONS.includes(item.module_type as IeltsSection) && item.status !== "archived" && item.ready_to_publish)))
+      .catch((err: unknown) => setError(extractErrorMessage(err, "Failed to load completed source modules.")))
+      .finally(() => setLoadingSources(false));
+  }, [isNew, requestedType]);
 
   const selectedPart = useMemo(() => module?.parts?.find((part) => part.id === selectedPartId) ?? null, [module, selectedPartId]);
   const isEditable = module?.status === "draft";
@@ -125,9 +139,15 @@ export function ModuleEditor() {
   async function createModule(event: FormEvent) {
     event.preventDefault();
     if (!requestedType) return;
+    const isComposite = COMPOSITE_TYPES.has(requestedType);
+    const sourceModuleIds = SOURCE_SECTIONS.map((section) => Number(selectedSources[section])).filter(Boolean);
+    if (isComposite && sourceModuleIds.length !== SOURCE_SECTIONS.length) {
+      setError("Choose one completed Listening, Reading, Writing, and Speaking module.");
+      return;
+    }
     setBusy(true); setError(null);
     try {
-      const { data } = await apiClient.post<ExamModule>("/instructor/modules", { module_type: requestedType, title: details.title, description: details.description || null, instructions: details.instructions || null });
+      const { data } = await apiClient.post<ExamModule>("/instructor/modules", { module_type: requestedType, title: details.title, description: details.description || null, instructions: details.instructions || null, source_module_ids: isComposite ? sourceModuleIds : [] });
       navigate(`/instructor/modules/${data.id}`, { replace: true });
     } catch (err: unknown) { setError(extractErrorMessage(err, "Failed to create the module.")); }
     finally { setBusy(false); }
@@ -260,16 +280,47 @@ export function ModuleEditor() {
   }
 
   async function deleteModule() {
-    if (!module || !window.confirm(`Delete “${module.title}” and all of its questions and audio?`)) return;
+    if (!module || !window.confirm(`Permanently delete “${module.title}” and all of its questions and audio? Existing Full/Final Mock copies will not be affected.`)) return;
+    setBusy(true); setError(null);
     try { await apiClient.delete(`/instructor/modules/${module.id}`); navigate("/instructor/modules"); }
     catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the module.")); }
+    finally { setBusy(false); }
   }
 
   if (isNew) {
     if (!requestedType) return <div className="empty-state"><h1>Unknown module type</h1><Link to="/instructor/modules">Choose a valid module</Link></div>;
+    const isComposite = COMPOSITE_TYPES.has(requestedType);
+    const allSourcesSelected = SOURCE_SECTIONS.every((section) => selectedSources[section]);
     return <div><div className="page-header"><div><h1>New {TYPE_LABELS[requestedType]}</h1><p className="page-subtitle">The correct parts, timing, marks and assessment rubric will be created automatically.</p></div><Link to="/instructor/modules">← All modules</Link></div>
       {error && <p className="error-text notice-line">{error}</p>}
-      <form className="form-card module-create-form" onSubmit={createModule}><span className={`section-chip section-${requestedType}`}>{TYPE_LABELS[requestedType]}</span><label htmlFor="new-module-title">Module title</label><input id="new-module-title" value={details.title} onChange={(event) => setDetails({ ...details, title: event.target.value })} placeholder={`${TYPE_LABELS[requestedType]} — Academic Set 1`} maxLength={200} required autoFocus /><label htmlFor="new-module-description">Description</label><textarea id="new-module-description" rows={4} value={details.description} onChange={(event) => setDetails({ ...details, description: event.target.value })} placeholder="What this module covers" /><label htmlFor="new-module-instructions">Candidate instructions</label><textarea id="new-module-instructions" rows={4} value={details.instructions} onChange={(event) => setDetails({ ...details, instructions: event.target.value })} placeholder="Optional instructions shown before the assessment starts" /><button type="submit" disabled={busy}>{busy ? "Creating..." : `Create ${TYPE_LABELS[requestedType]}`}</button></form>
+      <form className="form-card module-create-form" onSubmit={createModule}>
+        <span className={`section-chip section-${requestedType}`}>{TYPE_LABELS[requestedType]}</span>
+        <label htmlFor="new-module-title">Module title</label>
+        <input id="new-module-title" value={details.title} onChange={(event) => setDetails({ ...details, title: event.target.value })} placeholder={`${TYPE_LABELS[requestedType]} — Academic Set 1`} maxLength={200} required autoFocus />
+        <label htmlFor="new-module-description">Description</label>
+        <textarea id="new-module-description" rows={4} value={details.description} onChange={(event) => setDetails({ ...details, description: event.target.value })} placeholder="What this module covers" />
+        <label htmlFor="new-module-instructions">Candidate instructions</label>
+        <textarea id="new-module-instructions" rows={4} value={details.instructions} onChange={(event) => setDetails({ ...details, instructions: event.target.value })} placeholder="Optional instructions shown before the assessment starts" />
+        {isComposite && <section className="composite-source-panel">
+          <h2>Choose completed source tests</h2>
+          <p>The system makes an independent copy of all four tests and randomizes the questions within every assessment part. Deleting or editing a source later will not change this {TYPE_LABELS[requestedType]}.</p>
+          {loadingSources && <p className="source-loading">Loading your completed tests...</p>}
+          <div className="source-module-grid">
+            {SOURCE_SECTIONS.map((section) => {
+              const choices = sourceModules.filter((item) => item.module_type === section);
+              return <div className="source-module-choice" key={section}>
+                <label htmlFor={`source-${section}`}>{TYPE_LABELS[section]}</label>
+                <select id={`source-${section}`} value={selectedSources[section]} onChange={(event) => setSelectedSources((current) => ({ ...current, [section]: event.target.value }))} required>
+                  <option value="">Select completed {TYPE_LABELS[section]}</option>
+                  {choices.map((item) => <option value={item.id} key={item.id}>{item.title} · {item.question_count} questions · {item.status}</option>)}
+                </select>
+                {!loadingSources && !choices.length && <small>No completed {TYPE_LABELS[section]} test is available. <Link to={`/instructor/modules/new/${section}`}>Create one first</Link>.</small>}
+              </div>;
+            })}
+          </div>
+        </section>}
+        <button type="submit" disabled={busy || (isComposite && !allSourcesSelected)}>{busy ? "Creating & randomizing..." : `Create ${TYPE_LABELS[requestedType]}`}</button>
+      </form>
     </div>;
   }
 
@@ -282,10 +333,10 @@ export function ModuleEditor() {
 
     <section className={`module-readiness ${module.ready_to_publish ? "is-ready" : "needs-work"}`}><div><h2>{module.ready_to_publish ? "Ready to publish" : "Publishing checklist"}</h2><p>{module.ready_to_publish ? "Every required part, mark and audio rule is satisfied." : "You can work in any order. These checks are enforced only when publishing."}</p></div>{!module.ready_to_publish && <ul>{module.validation_errors.map((message) => <li key={message}>{message}</li>)}</ul>}<div className="module-status-actions">{module.status === "draft" && <button onClick={() => changeStatus("published")} disabled={busy || !module.ready_to_publish}>Publish module</button>}{module.status === "published" && <><button className="secondary-button" onClick={() => changeStatus("draft")} disabled={busy}>Return to draft</button><button onClick={() => changeStatus("archived")} disabled={busy}>Archive</button></>}{module.status === "archived" && <button onClick={() => changeStatus("draft")} disabled={busy}>Restore as draft</button>}</div></section>
 
-    <form className="form-card wide module-details" onSubmit={saveDetails}><div className="panel-title"><div><h2>Module details</h2><p>The assessment type and official timing cannot drift from its blueprint.</p></div><strong>{module.duration_minutes} min</strong></div><label htmlFor="module-title">Title</label><input id="module-title" value={details.title} onChange={(event) => setDetails({ ...details, title: event.target.value })} required readOnly={!isEditable} /><label htmlFor="module-description">Description</label><textarea id="module-description" rows={3} value={details.description} onChange={(event) => setDetails({ ...details, description: event.target.value })} readOnly={!isEditable} /><label htmlFor="module-instructions">Candidate instructions</label><textarea id="module-instructions" rows={3} value={details.instructions} onChange={(event) => setDetails({ ...details, instructions: event.target.value })} readOnly={!isEditable} />{isEditable && <div className="form-actions"><button type="submit" disabled={busy}>Save details</button><button type="button" className="danger-text" onClick={deleteModule}>Delete module</button></div>}</form>
+    <form className="form-card wide module-details" onSubmit={saveDetails}><div className="panel-title"><div><h2>Module details</h2><p>The assessment type and official timing cannot drift from its blueprint.</p></div><strong>{module.duration_minutes} min</strong></div><label htmlFor="module-title">Title</label><input id="module-title" value={details.title} onChange={(event) => setDetails({ ...details, title: event.target.value })} required readOnly={!isEditable} /><label htmlFor="module-description">Description</label><textarea id="module-description" rows={3} value={details.description} onChange={(event) => setDetails({ ...details, description: event.target.value })} readOnly={!isEditable} /><label htmlFor="module-instructions">Candidate instructions</label><textarea id="module-instructions" rows={3} value={details.instructions} onChange={(event) => setDetails({ ...details, instructions: event.target.value })} readOnly={!isEditable} /><div className="form-actions">{isEditable && <button type="submit" disabled={busy}>Save details</button>}<button type="button" className="danger-text" onClick={deleteModule} disabled={busy}>{busy ? "Working..." : "Delete module"}</button></div></form>
 
     <div className="module-authoring-layout">
-      <aside className="module-part-nav" aria-label="Assessment parts"><h2>Assessment parts</h2><p>Select a part before adding or uploading anything.</p>{module.parts?.map((part) => <button className={part.id === selectedPartId ? "active" : ""} onClick={() => choosePart(part)} key={part.id}><span><strong>{part.title}</strong><small>{part.section_type} · {part.auto_marked ? "auto-marked" : "examiner-marked"}</small></span><span>{part.questions.length}{part.question_limit ? `/${part.question_limit}` : "+"}</span></button>)}</aside>
+      <aside className="module-part-nav" aria-label="Assessment parts"><h2>Assessment parts</h2><p>Select a part before adding or uploading anything.</p><div className="module-part-list">{module.parts?.map((part) => <button className={part.id === selectedPartId ? "active" : ""} onClick={() => choosePart(part)} key={part.id}><span><strong>{part.title}</strong><small>{part.section_type} · {part.auto_marked ? "auto-marked" : "examiner-marked"}</small></span><span>{part.questions.length}{part.question_limit ? `/${part.question_limit}` : "+"}</span></button>)}</div></aside>
       {selectedPart && <main className="module-part-editor" id="module-part-editor">
         <section className="part-spec-card"><div className="part-spec-head"><div><span className={`section-chip section-${selectedPart.section_type}`}>{selectedPart.section_type}</span><h2>{selectedPart.title}</h2></div><div className="part-target"><strong>{selectedPart.questions.length}{selectedPart.question_limit ? ` / ${selectedPart.question_limit}` : ""}</strong><span>questions</span></div></div><p>{selectedPart.skill_focus}</p>{selectedPart.instructions && <p className="part-instructions"><strong>Format:</strong> {selectedPart.instructions}</p>}<div className="part-facts"><span>{selectedPart.auto_marked ? "Auto-marked" : "Examiner-marked"}</span>{selectedPart.max_marks && <span>{selectedPart.max_marks} raw marks</span>}{selectedPart.answer_constraints.audio_plays && <span>Audio plays {selectedPart.answer_constraints.audio_plays}×</span>}{selectedPart.answer_constraints.minimum_words && <span>Minimum {selectedPart.answer_constraints.minimum_words} words</span>}{selectedPart.answer_constraints.maximum_words && <span>Maximum {selectedPart.answer_constraints.maximum_words} words</span>}</div>
           {!!selectedPart.rubric.length && <details className="rubric-details" open><summary>Assessment criteria — {selectedPart.rubric.length} × 8 marks</summary><div className="rubric-grid">{selectedPart.rubric.map((criterion) => <article key={criterion.criterion}><div><strong>{criterion.criterion}</strong><span>0–{criterion.max_marks}</span></div><p>{criterion.description}</p></article>)}</div></details>}

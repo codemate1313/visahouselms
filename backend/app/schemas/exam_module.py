@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.models.exam_module import MODULE_STATUSES, MODULE_TYPES
 from app.schemas.assessment import QuestionCreate
@@ -15,6 +15,7 @@ class ModuleCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=2000)
     instructions: Optional[str] = Field(default=None, max_length=20000)
+    source_module_ids: list[int] = Field(default_factory=list, max_length=4)
 
     @field_validator("module_type")
     @classmethod
@@ -33,6 +34,26 @@ class ModuleCreate(BaseModel):
     @classmethod
     def clean_optional(cls, value: Optional[str]) -> Optional[str]:
         return _optional_text(value)
+
+    @field_validator("source_module_ids")
+    @classmethod
+    def unique_positive_sources(cls, values: list[int]) -> list[int]:
+        if any(value <= 0 for value in values):
+            raise ValueError("source_module_ids must be positive")
+        if len(values) != len(set(values)):
+            raise ValueError("Each source module can be selected only once")
+        return values
+
+    @model_validator(mode="after")
+    def validate_composite_sources(self):
+        composite = self.module_type in {"full_mock", "final_test"}
+        if composite and len(self.source_module_ids) != 4:
+            raise ValueError(
+                "Full Mock and Final Test require one completed Listening, Reading, Writing, and Speaking module"
+            )
+        if not composite and self.source_module_ids:
+            raise ValueError("Source modules are only used by Full Mock and Final Test")
+        return self
 
 
 class ModuleUpdate(BaseModel):
