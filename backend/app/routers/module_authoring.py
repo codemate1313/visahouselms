@@ -241,7 +241,11 @@ async def generate_audio(
         from fastapi import HTTPException
 
         raise HTTPException(status_code=400, detail="Text-to-speech is available only for Listening parts")
-    content = await tts_service.synthesize_mp3(payload.conversation, payload.voice, payload.rate)
+    content, assignments = await tts_service.synthesize_conversation_mp3(
+        payload.conversation,
+        rate=payload.rate,
+        preferred_voice=payload.voice,
+    )
     return module_authoring_service.add_audio_asset(
         db,
         actor,
@@ -252,7 +256,7 @@ async def generate_audio(
         original_filename="generated-conversation.mp3",
         asset_type="tts_mp3",
         transcript=payload.conversation,
-        voice=payload.voice,
+        voice=tts_service.voice_assignment_summary(assignments),
         ip=_ip(request),
     )
 

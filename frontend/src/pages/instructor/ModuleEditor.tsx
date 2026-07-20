@@ -4,6 +4,7 @@ import { API_BASE_URL, apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import type {
   ExamModule,
+  ExamModuleAsset,
   ExamModulePart,
   ExamModuleQuestion,
   ExamModuleType,
@@ -12,7 +13,6 @@ import type {
   QuestionImportPreview,
   QuestionOption,
   QuestionType,
-  TTSVoice,
 } from "../../api/types";
 
 const MODULE_TYPES = new Set<ExamModuleType>(["reading", "speaking", "writing", "listening", "full_mock", "final_test"]);
@@ -69,6 +69,26 @@ function questionPayload(question: QuestionDraft) {
   };
 }
 
+function detectConversationSpeakers(conversation: string): string[] {
+  const speakerLine = /^\s*\[?([A-Za-z][A-Za-z0-9 ._'-]{0,39})\]?\s*:\s*.+$/;
+  const speakers = new Map<string, string>();
+  let foundSpeakerLine = false;
+  let hasNarratorPreamble = false;
+  conversation.split(/\r?\n/).forEach((line) => {
+    const match = line.match(speakerLine);
+    if (!match) {
+      if (line.trim() && !foundSpeakerLine) hasNarratorPreamble = true;
+      return;
+    }
+    foundSpeakerLine = true;
+    const name = match[1].trim().replace(/\s+/g, " ");
+    if (!speakers.has(name.toLowerCase())) speakers.set(name.toLowerCase(), name);
+  });
+  if (speakers.size && hasNarratorPreamble) return ["Narrator", ...speakers.values()];
+  if (!speakers.size && conversation.trim()) return ["Narrator"];
+  return [...speakers.values()];
+}
+
 export function ModuleEditor() {
   const { id, type: rawType } = useParams();
   const isNew = !id;
@@ -85,10 +105,9 @@ export function ModuleEditor() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<QuestionImportPreview | null>(null);
   const [selectedImports, setSelectedImports] = useState<Set<number>>(new Set());
-  const [voices, setVoices] = useState<TTSVoice[]>([]);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioTitle, setAudioTitle] = useState("Listening audio");
-  const [tts, setTts] = useState({ title: "Generated conversation", conversation: "", voice: "en-GB-SoniaNeural", rate: "+0%" });
+  const [tts, setTts] = useState({ title: "Generated conversation", conversation: "", rate: "+0%" });
   const [loading, setLoading] = useState(!isNew);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,9 +131,6 @@ export function ModuleEditor() {
 
   useEffect(() => { loadModule(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
   useEffect(() => {
-    apiClient.get<TTSVoice[]>("/instructor/modules/tts-voices").then(({ data }) => setVoices(data)).catch(() => undefined);
-  }, []);
-  useEffect(() => {
     if (!isNew || !requestedType || !COMPOSITE_TYPES.has(requestedType)) return;
     setLoadingSources(true);
     apiClient.get<ExamModule[]>("/instructor/modules")
@@ -124,6 +140,7 @@ export function ModuleEditor() {
   }, [isNew, requestedType]);
 
   const selectedPart = useMemo(() => module?.parts?.find((part) => part.id === selectedPartId) ?? null, [module, selectedPartId]);
+  const detectedTtsSpeakers = useMemo(() => detectConversationSpeakers(tts.conversation), [tts.conversation]);
   const isEditable = module?.status === "draft";
 
   function choosePart(part: ExamModulePart) {
@@ -257,8 +274,8 @@ export function ModuleEditor() {
     event.preventDefault(); if (!module || !selectedPart) return;
     setBusy(true); setError(null);
     try {
-      await apiClient.post(`/instructor/modules/${module.id}/parts/${selectedPart.id}/tts`, tts);
-      setTts((current) => ({ ...current, conversation: "" })); await loadModule(selectedPart.id); setNotice(`Conversation audio generated for ${selectedPart.title}.`);
+      const { data } = await apiClient.post<ExamModuleAsset>(`/instructor/modules/${module.id}/parts/${selectedPart.id}/tts`, tts);
+      setTts((current) => ({ ...current, conversation: "" })); await loadModule(selectedPart.id); setNotice(`${data.tts_voice || "Automatic voices"} generated for ${selectedPart.title}.`);
     } catch (err: unknown) { setError(extractErrorMessage(err, "Text-to-speech could not generate the MP3.")); }
     finally { setBusy(false); }
   }
@@ -342,7 +359,7 @@ export function ModuleEditor() {
           {!!selectedPart.rubric.length && <details className="rubric-details" open><summary>Assessment criteria — {selectedPart.rubric.length} × 8 marks</summary><div className="rubric-grid">{selectedPart.rubric.map((criterion) => <article key={criterion.criterion}><div><strong>{criterion.criterion}</strong><span>0–{criterion.max_marks}</span></div><p>{criterion.description}</p></article>)}</div></details>}
         </section>
 
-        {selectedPart.section_type === "listening" && <section className="listening-audio-panel"><div className="panel-title"><div><span className="phase-chip">Required listening media</span><h2>Audio for {selectedPart.title}</h2><p>Upload an existing MP3 or turn a written conversation into an MP3.</p></div></div>{isEditable && <div className="audio-method-grid"><form onSubmit={uploadAudio}><h3>Upload MP3</h3><label htmlFor="audio-title">Audio title</label><input id="audio-title" value={audioTitle} onChange={(event) => setAudioTitle(event.target.value)} required /><label htmlFor="audio-file">MP3 file</label><input id="audio-file" type="file" accept=".mp3,audio/mpeg" onChange={(event) => setAudioFile(event.target.files?.[0] ?? null)} required /><button type="submit" disabled={busy || !audioFile}>{busy ? "Working..." : "Attach MP3 to this part"}</button></form><form onSubmit={generateAudio}><h3>Generate MP3 from text</h3><label htmlFor="tts-title">Audio title</label><input id="tts-title" value={tts.title} onChange={(event) => setTts({ ...tts, title: event.target.value })} required /><div className="form-grid"><div><label htmlFor="tts-voice">English voice</label><select id="tts-voice" value={tts.voice} onChange={(event) => setTts({ ...tts, voice: event.target.value })}>{voices.map((voice) => <option value={voice.id} key={voice.id}>{voice.label}</option>)}</select></div><div><label htmlFor="tts-rate">Speaking rate</label><select id="tts-rate" value={tts.rate} onChange={(event) => setTts({ ...tts, rate: event.target.value })}><option value="-20%">Slower</option><option value="+0%">Normal</option><option value="+15%">Faster</option></select></div></div><label htmlFor="tts-conversation">Conversation or transcript</label><textarea id="tts-conversation" rows={8} value={tts.conversation} onChange={(event) => setTts({ ...tts, conversation: event.target.value })} placeholder={"Speaker A: Welcome to today's lecture...\nSpeaker B: Thank you. Let's begin..."} required /><button type="submit" disabled={busy || !tts.conversation.trim()}>{busy ? "Generating..." : "Generate & attach MP3"}</button></form></div>}
+        {selectedPart.section_type === "listening" && <section className="listening-audio-panel"><div className="panel-title"><div><span className="phase-chip">Required listening media</span><h2>Audio for {selectedPart.title}</h2><p>Upload an existing MP3 or turn a written conversation into an automatically voiced MP3.</p></div></div>{isEditable && <div className="audio-method-grid"><form onSubmit={uploadAudio}><h3>Upload MP3</h3><label htmlFor="audio-title">Audio title</label><input id="audio-title" value={audioTitle} onChange={(event) => setAudioTitle(event.target.value)} required /><label htmlFor="audio-file">MP3 file</label><input id="audio-file" type="file" accept=".mp3,audio/mpeg" onChange={(event) => setAudioFile(event.target.files?.[0] ?? null)} required /><button type="submit" disabled={busy || !audioFile}>{busy ? "Working..." : "Attach MP3 to this part"}</button></form><form onSubmit={generateAudio}><h3>Generate multi-speaker MP3</h3><label htmlFor="tts-title">Audio title</label><input id="tts-title" value={tts.title} onChange={(event) => setTts({ ...tts, title: event.target.value })} required /><label htmlFor="tts-conversation">Conversation or transcript</label><textarea id="tts-conversation" rows={8} value={tts.conversation} onChange={(event) => setTts({ ...tts, conversation: event.target.value })} placeholder={"Interviewer: Welcome to today's discussion.\nStudent: Thank you. I am glad to be here.\nInterviewer: Let us begin."} required /><p className="hint">Put every person's name before their lines, for example <strong>Speaker A:</strong> or <strong>Sarah:</strong>. Reuse the same name to keep the same voice.</p><div className={`auto-voice-summary${detectedTtsSpeakers.length > 6 ? " has-error" : ""}`}><strong>{detectedTtsSpeakers.length ? `${detectedTtsSpeakers.length} speaker${detectedTtsSpeakers.length === 1 ? "" : "s"} detected` : "Waiting for conversation"}</strong><span>{detectedTtsSpeakers.length ? detectedTtsSpeakers.join(" · ") : "Voices will be assigned automatically."}</span>{detectedTtsSpeakers.length > 6 && <small>Use no more than six distinct speakers.</small>}</div><label htmlFor="tts-rate">Speaking rate</label><select id="tts-rate" value={tts.rate} onChange={(event) => setTts({ ...tts, rate: event.target.value })}><option value="-20%">Slower</option><option value="+0%">Normal</option><option value="+15%">Faster</option></select><button type="submit" disabled={busy || !tts.conversation.trim() || detectedTtsSpeakers.length > 6}>{busy ? "Generating voices..." : `Generate with ${detectedTtsSpeakers.length || 1} automatic voice${detectedTtsSpeakers.length <= 1 ? "" : "s"}`}</button></form></div>}
           <div className="part-audio-list">{!selectedPart.assets.length ? <p className="empty-message">No audio attached to this part yet.</p> : selectedPart.assets.map((asset) => <article key={asset.id}><div><strong>{asset.title}</strong><small>{asset.asset_type === "tts_mp3" ? `Generated voice · ${asset.tts_voice}` : asset.original_filename}</small></div><audio controls preload="metadata" src={`${API_BASE_URL}${asset.url}`}>Your browser does not support audio.</audio>{asset.transcript && <details><summary>Transcript</summary><p>{asset.transcript}</p></details>}{isEditable && <button className="danger-text" onClick={() => deleteAudio(asset.id)}>Delete</button>}</article>)}</div>
         </section>}
 

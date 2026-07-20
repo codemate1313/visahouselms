@@ -95,7 +95,9 @@ section-specific question, mark, rubric, and audio rules apply.
   permitted by the blueprint.
 - Source type and filename remain attached to every imported question.
 - Listening accepts only real MP3 signatures, with a 50 MB maximum.
-- Text-to-speech accepts curated English voices and retains the transcript.
+- Text-to-speech detects unique `Speaker: dialogue` labels, assigns up to six
+  distinct curated English voices automatically, retains each speaker's voice
+  across turns, and stores the original transcript.
 - Only drafts can change. Publishing validates exact counts, marks, types, and
   required audio. A published module must return to draft before editing.
 - The module's instructor-owner may permanently delete it in any lifecycle
