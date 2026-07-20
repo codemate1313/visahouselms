@@ -181,6 +181,13 @@ def assign(
     _audit(db, actor, "subscription.assign", subscription.id, ip, {"institute_id": institute_id, "plan": plan.name})
     db.commit()
     db.refresh(subscription)
+
+    # local import breaks a subscription_service <-> institute_service cycle
+    # (demo_service imports institute_service, which imports this module)
+    from app.services.demo_service import mark_converted_if_demo
+
+    mark_converted_if_demo(db, actor, institute_id, ip)
+
     _, state = current_subscription(db, institute_id)
     return _serialize(subscription, state)
 

@@ -7,15 +7,11 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.security import hash_refresh_token
+from app.core.uploads import read_validated_image
 from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.models.user_session import UserSession
 
-ALLOWED_AVATAR_TYPES = {
-    "image/png": ".png",
-    "image/jpeg": ".jpg",
-    "image/webp": ".webp",
-}
 MAX_AVATAR_BYTES = 2 * 1024 * 1024
 
 
@@ -61,19 +57,7 @@ def update_profile(
 
 
 async def save_avatar(db: Session, actor: User, upload: UploadFile, ip: Optional[str]) -> User:
-    ext = ALLOWED_AVATAR_TYPES.get(upload.content_type or "")
-    if ext is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Avatar must be a PNG, JPEG, or WebP image",
-        )
-
-    content = await upload.read()
-    if len(content) > MAX_AVATAR_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Avatar must be 2 MB or smaller",
-        )
+    ext, content = await read_validated_image(upload, MAX_AVATAR_BYTES, "Avatar")
 
     avatars_dir = settings.storage_path / "avatars"
     avatars_dir.mkdir(parents=True, exist_ok=True)

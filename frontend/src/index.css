@@ -18,6 +18,20 @@
   --radius: 10px;
   --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
   --shadow-md: 0 4px 16px rgba(16, 24, 40, 0.1);
+
+  /* Chart categorical palette - dataviz skill default, validated PASS against
+     this app's white surface (CVD adjacent ΔE 9.1, normal-vision floor 19.6) */
+  --series-1: #2a78d6; /* blue */
+  --series-2: #008300; /* green */
+  --series-3: #e87ba4; /* magenta */
+  --series-4: #eda100; /* yellow */
+  --series-5: #1baf7a; /* aqua */
+  --series-6: #eb6834; /* orange */
+  --series-7: #4a3aa7; /* violet */
+  --series-8: #e34948; /* red */
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+  --chart-muted: #898781;
 }
 
 * {
@@ -726,6 +740,379 @@ textarea:focus {
   min-height: 440px;
 }
 
+/* ---------- Revenue / stat tiles ---------- */
+.stat-tile-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stat-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-label {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-value {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.due-text {
+  color: var(--danger);
+}
+
+.stat-value.due-text {
+  color: #d97706;
+}
+
+/* ---------- Dashboard charts ---------- */
+.dashboard-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 18px 20px 20px;
+}
+
+.chart-card-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+  min-height: 24px;
+}
+
+.chart-table-toggle {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.chart-table-toggle:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  font-size: 12.5px;
+  color: var(--text-secondary, var(--text-muted));
+}
+
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.chart-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* horizontal bar rows */
+.chart-bar-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chart-bar-row {
+  display: grid;
+  grid-template-columns: 130px 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.chart-bar-label {
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-bar-track {
+  height: 20px;
+  background: var(--bg);
+  border-radius: 4px;
+  position: relative;
+}
+
+.chart-bar-fill {
+  position: relative;
+  transition: width 0.4s ease, height 0.4s ease;
+}
+
+.chart-bar-fill-h {
+  height: 100%;
+  min-width: 3px;
+  border-radius: 0 4px 4px 0;
+}
+
+.chart-bar-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 60px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* vertical columns */
+.chart-columns {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  height: 200px;
+  padding-top: 8px;
+  border-bottom: 1px solid var(--chart-axis);
+}
+
+.chart-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 6px;
+  min-width: 0;
+}
+
+.chart-column-track {
+  width: 100%;
+  max-width: 24px;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.chart-bar-fill-v {
+  width: 100%;
+  min-height: 3px;
+  border-radius: 4px 4px 0 0;
+}
+
+.chart-column-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-column-label {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* shared hover tooltip */
+.chart-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #171a26;
+  color: white;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 5px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.chart-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #171a26;
+}
+
+.chart-tooltip-v {
+  bottom: auto;
+  top: -8px;
+  transform: translate(-50%, -100%);
+}
+
+.chart-bar-fill-h .chart-tooltip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.chart-bar-fill-h .chart-tooltip::after {
+  left: auto;
+  right: 10px;
+  transform: none;
+}
+
+.chart-bar-fill:hover .chart-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* donut */
+.donut-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+}
+
+.donut-center-value {
+  font-size: 22px;
+  font-weight: 700;
+  fill: var(--text);
+}
+
+.donut-center-label {
+  font-size: 11px;
+  fill: var(--text-muted);
+}
+
+.revenue-tables {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+@media (max-width: 900px) {
+  .stat-tile-row,
+  .revenue-tables {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Invoice ---------- */
+.invoice-card {
+  max-width: 620px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 32px;
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+
+.invoice-header h2 {
+  margin: 0 0 4px;
+}
+
+.invoice-meta {
+  text-align: right;
+}
+
+.invoice-parties {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.invoice-table {
+  box-shadow: none;
+  border: 1px solid var(--border);
+}
+
+.invoice-table tfoot td {
+  border-top: 2px solid var(--border);
+  border-bottom: none;
+  font-size: 16px;
+}
+
+.invoice-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
+}
+
+@media print {
+  .no-print,
+  .dashboard-nav {
+    display: none !important;
+  }
+  .dashboard-content {
+    padding: 0;
+  }
+}
+
+/* ---------- Trial config ---------- */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.toggle-row input {
+  width: auto;
+  margin: 0;
+}
+
+.toggle-row span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
 /* ---------- Subscriptions ---------- */
 .badge-red {
   background: #fee2e2;
@@ -835,6 +1222,195 @@ textarea:focus {
 .section-title {
   font-size: 17px;
   margin: 0 0 14px;
+}
+
+/* ---------- Password input with show/hide toggle ---------- */
+.password-input-wrap {
+  position: relative;
+  display: flex;
+}
+
+.password-input-wrap input {
+  padding-right: 40px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 6px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:hover {
+  background: transparent;
+  color: var(--text);
+}
+
+/* ---------- Modal ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 17, 26, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 28px;
+  width: 420px;
+  box-shadow: var(--shadow-md);
+}
+
+.modal-card h2 {
+  margin: 0 0 8px;
+}
+
+.credential-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+}
+
+.credential-row span {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.credential-row code {
+  background: var(--bg);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+/* ---------- Institute branding editor ---------- */
+.color-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.color-input-row input[type="color"] {
+  width: 40px;
+  height: 36px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.branding-preview {
+  max-width: 480px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.branding-preview-nav {
+  background: var(--preview-secondary, #1e2130);
+  color: white;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.branding-preview-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.branding-preview-logo-placeholder {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.branding-preview-body {
+  background: var(--surface);
+  padding: 24px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.branding-preview-button {
+  background: var(--preview-primary, #4f46e5);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.branding-preview-badge {
+  font-size: 12.5px;
+  color: var(--preview-primary, #4f46e5);
+  border: 1px solid var(--preview-primary, #4f46e5);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* ---------- Institute Portal (coming soon) ---------- */
+.institute-coming-soon {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--institute-secondary, #171a26);
+}
+
+.institute-coming-soon-card {
+  background: white;
+  border-radius: 14px;
+  padding: 40px;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+
+.institute-coming-soon-card h1 {
+  margin: 16px 0 8px;
+}
+
+.institute-coming-soon-card p {
+  color: var(--text-muted);
+  font-size: 14.5px;
+  margin: 0;
+}
+
+.institute-coming-soon-logo,
+.institute-coming-soon-logo-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  margin: 0 auto;
+  object-fit: cover;
+}
+
+.institute-coming-soon-logo-placeholder {
+  background: var(--institute-primary, #4f46e5);
 }
 
 /* ---------- Profile ---------- */

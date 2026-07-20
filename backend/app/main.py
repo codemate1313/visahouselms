@@ -7,7 +7,24 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.middleware.request_logging import RequestLoggingMiddleware, _extract_user_id
-from app.routers import auth, backups, dev_settings, logs, plans, subscriptions, super_admin, terminal
+from app.routers import (
+    auth,
+    backups,
+    coupons,
+    dashboard,
+    demo_accounts,
+    dev_settings,
+    institutes,
+    logs,
+    payment_methods,
+    payments,
+    plans,
+    revenue,
+    subscriptions,
+    super_admin,
+    terminal,
+    trial_config,
+)
 
 app = FastAPI(title="IELTS LMS API")
 
@@ -24,6 +41,7 @@ app.add_middleware(
 app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(auth.router)
+app.include_router(dashboard.router)
 app.include_router(super_admin.router)
 app.include_router(dev_settings.router)
 app.include_router(backups.router)
@@ -31,6 +49,14 @@ app.include_router(logs.router)
 app.include_router(terminal.router)
 app.include_router(plans.router)
 app.include_router(subscriptions.router)
+app.include_router(institutes.router)
+app.include_router(institutes.public_router)
+app.include_router(trial_config.router)
+app.include_router(demo_accounts.router)
+app.include_router(coupons.router)
+app.include_router(payments.router)
+app.include_router(payment_methods.router)
+app.include_router(revenue.router)
 
 
 @app.exception_handler(Exception)

@@ -167,6 +167,11 @@ def _scheduler_tick() -> None:
         if last_purge is None or now - last_purge >= timedelta(days=1):
             enqueue(db, "purge_logs", None)
             set_setting(db, "internal.last_log_purge", now.isoformat())
+
+        # expired, unconverted demo accounts get their institute suspended
+        from app.services.demo_service import suspend_expired_demos
+
+        suspend_expired_demos(db)
     finally:
         db.close()
 

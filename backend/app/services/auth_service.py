@@ -14,6 +14,7 @@ from app.core.security import (
     hash_refresh_token,
     verify_password,
 )
+from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.models.user_session import UserSession
 
@@ -51,6 +52,20 @@ def login(
 ) -> Tuple[str, str]:
     user = db.query(User).filter(User.email == email).first()
     if user is None or not user.is_active or not verify_password(password, user.password_hash):
+        raise INVALID_CREDENTIALS
+
+    if user.institute_id is not None and not user.institute.is_active:
+        # don't reveal the suspension to the blocked user - same generic message
+        db.add(
+            AuditLog(
+                user_id=user.id,
+                action="institute.login_blocked_suspended",
+                entity_type="institute",
+                entity_id=user.institute_id,
+                ip_address=ip_address,
+            )
+        )
+        db.commit()
         raise INVALID_CREDENTIALS
 
     return _issue_token_pair(db, user, user_agent, ip_address)

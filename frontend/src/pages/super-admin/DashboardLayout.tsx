@@ -61,13 +61,21 @@ export function DashboardLayout() {
             style={{ height: bookmark.height, transform: `translateY(${bookmark.top}px)` }}
             aria-hidden="true"
           />
+          <NavLink to="/super-admin" end>Dashboard</NavLink>
           <NavLink to="/super-admin/accounts">Admin Accounts</NavLink>
           <NavLink to="/super-admin/profile">My Profile</NavLink>
           <NavLink to="/super-admin/sessions">Active Sessions</NavLink>
           <NavLink to="/super-admin/change-password">Change Password</NavLink>
           <p className="nav-section">SaaS</p>
+          <NavLink to="/super-admin/institutes">Institutes</NavLink>
           <NavLink to="/super-admin/plans">Plans</NavLink>
           <NavLink to="/super-admin/subscriptions">Subscriptions</NavLink>
+          <NavLink to="/super-admin/trial-config">Trial Settings</NavLink>
+          <NavLink to="/super-admin/demo-accounts">Demo Accounts</NavLink>
+          <NavLink to="/super-admin/coupons">Coupons</NavLink>
+          <NavLink to="/super-admin/payments">Payments</NavLink>
+          <NavLink to="/super-admin/payment-methods">Payment Methods</NavLink>
+          <NavLink to="/super-admin/revenue">Revenue</NavLink>
           <p className="nav-section">System</p>
           <NavLink to="/super-admin/dev-settings">Developer Settings</NavLink>
           <NavLink to="/super-admin/logs">Logs</NavLink>
