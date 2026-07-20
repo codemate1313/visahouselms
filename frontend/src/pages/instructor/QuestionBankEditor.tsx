@@ -215,7 +215,7 @@ export function QuestionBankEditor() {
 
   async function deleteBank() {
     if (!bank || !window.confirm(`Delete “${bank.title}” and all its questions?`)) return;
-    try { await apiClient.delete(`/instructor/authoring/question-banks/${bank.id}`); navigate("/instructor/question-banks"); }
+    try { await apiClient.delete(`/instructor/authoring/question-banks/${bank.id}`); navigate("/super-admin/instructor/question-banks"); }
     catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the question bank.")); }
   }
 
@@ -223,7 +223,7 @@ export function QuestionBankEditor() {
   if (loading) return <p>Loading...</p>;
 
   return <div>
-    <div className="page-header"><div><h1>{isNew ? "New Question Bank" : bank?.title}</h1>{bank && <p className="page-subtitle">{bank.course_title} · {questionCountLabel}</p>}</div><Link to="/instructor/question-banks" className="text-link">← All question banks</Link></div>
+    <div className="page-header"><div><h1>{isNew ? "New Question Bank" : bank?.title}</h1>{bank && <p className="page-subtitle">{bank.course_title} · {questionCountLabel}</p>}</div><Link to="/super-admin/instructor/question-banks" className="text-link">← All question banks</Link></div>
     {error && <p className="error-text notice-line">{error}</p>}{notice && <p className="success-text notice-line">{notice}</p>}
     {!canEdit && <div className="banner warning">This bank is owned by {bank?.created_by_name}. You can view it, but only its creator can make changes.</div>}
     <form className="form-card wide bank-details-form" onSubmit={saveBank}>

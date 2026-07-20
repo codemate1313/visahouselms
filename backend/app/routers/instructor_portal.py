@@ -74,9 +74,7 @@ def update_my_profile(
     values = payload.model_dump()
     fields_set = set(payload.model_fields_set)
     values["title"] = None
-    values["specializations"] = None
     fields_set.discard("title")
-    fields_set.discard("specializations")
     return instructor_service.update_instructor(
         db,
         actor,

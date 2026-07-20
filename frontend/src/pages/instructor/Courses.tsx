@@ -25,7 +25,7 @@ export function Courses() {
   function searchCourses(event: FormEvent) { event.preventDefault(); load(); }
 
   return <div>
-    <div className="page-header"><div><h1>Courses</h1><p className="page-subtitle">Create and maintain the central IELTS course catalog.</p></div><Link className="button-link" to="/instructor/courses/new">+ New Course</Link></div>
+    <div className="page-header"><div><h1>Courses</h1><p className="page-subtitle">Create and maintain the central IELTS course catalog.</p></div><Link className="button-link" to="/super-admin/instructor/courses/new">+ New Course</Link></div>
     <form className="filter-bar" onSubmit={searchCourses}>
       <input placeholder="Search courses..." aria-label="Search courses" value={search} onChange={(e) => setSearch(e.target.value)} />
       <select aria-label="Course status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}><option value="">All statuses</option><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select>
@@ -33,7 +33,7 @@ export function Courses() {
       <button type="submit">Search</button>
     </form>
     {error && <p className="error-text">{error}</p>}
-    {loading ? <p>Loading...</p> : courses.length === 0 ? <div className="empty-state"><h2>No courses found</h2><p>Create the first course or change your filters.</p></div> : <div className="course-grid">{courses.map((course) => <Link className="course-card" to={`/instructor/courses/${course.id}`} key={course.id}>
+    {loading ? <p>Loading...</p> : courses.length === 0 ? <div className="empty-state"><h2>No courses found</h2><p>Create the first course or change your filters.</p></div> : <div className="course-grid">{courses.map((course) => <Link className="course-card" to={`/super-admin/instructor/courses/${course.id}`} key={course.id}>
       <div className="course-card-top"><span className={`badge ${STATUS_CLASS[course.status]}`}>{course.status}</span>{course.is_featured && <span className="badge featured-badge">Featured</span>}</div>
       <h2>{course.title}</h2><p>{course.summary || "No summary added yet."}</p>
       <div className="course-meta"><span>{course.asset_count} resources</span><span>{course.assignment_count} institutes</span><span>{course.currency} {Number(course.price).toLocaleString("en-IN")}</span></div>

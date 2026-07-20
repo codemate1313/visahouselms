@@ -106,7 +106,7 @@ export function Instructors() {
       <div className="page-header">
         <div>
           <h1>SA Instructors</h1>
-          <p className="page-subtitle">Manage the central team that creates IELTS courses and assessments.</p>
+          <p className="page-subtitle">Manage the central team that creates assessment modules and mock tests.</p>
         </div>
         <Link to="/super-admin/instructors/new" className="button-link">+ New Instructor</Link>
       </div>
@@ -138,14 +138,13 @@ export function Instructors() {
       {loading ? <p>Loading...</p> : (
         <div className="table-wrap">
           <table className="data-table">
-            <thead><tr><th>Instructor</th><th>Expertise</th><th>Status</th><th>Created</th><th /></tr></thead>
+            <thead><tr><th>Instructor</th><th>Status</th><th>Created</th><th /></tr></thead>
             <tbody>
               {instructors.length === 0 ? (
-                <tr><td colSpan={5} className="empty-cell">No instructors match these filters.</td></tr>
+                <tr><td colSpan={4} className="empty-cell">No instructors match these filters.</td></tr>
               ) : instructors.map((instructor) => (
                 <tr key={instructor.id}>
                   <td><strong>{instructor.first_name} {instructor.last_name}</strong><br /><span className="muted-text">{instructor.title} · {instructor.email}</span></td>
-                  <td>{instructor.specializations.length ? instructor.specializations.join(", ") : "—"}</td>
                   <td>
                     <span className={`badge ${instructor.is_active ? "badge-green" : "badge-gray"}`}>{instructor.is_active ? "Active" : "Inactive"}</span>
                     {instructor.force_password_reset && <span className="badge badge-amber">reset required</span>}

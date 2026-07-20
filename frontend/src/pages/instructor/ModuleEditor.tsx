@@ -115,7 +115,8 @@ export function ModuleEditor() {
 
   async function loadModule(preferredPartId?: number) {
     if (!id) return;
-    setLoading(true);
+    const showFullPageLoader = !module;
+    if (showFullPageLoader) setLoading(true);
     try {
       const { data } = await apiClient.get<ExamModule>(`/instructor/modules/${id}`);
       setModule(data);
@@ -126,7 +127,9 @@ export function ModuleEditor() {
       setError(null);
     } catch (err: unknown) {
       setError(extractErrorMessage(err, "Failed to load this module."));
-    } finally { setLoading(false); }
+    } finally {
+      if (showFullPageLoader) setLoading(false);
+    }
   }
 
   useEffect(() => { loadModule(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
@@ -299,16 +302,16 @@ export function ModuleEditor() {
   async function deleteModule() {
     if (!module || !window.confirm(`Permanently delete “${module.title}” and all of its questions and audio? Existing Full/Final Mock copies will not be affected.`)) return;
     setBusy(true); setError(null);
-    try { await apiClient.delete(`/instructor/modules/${module.id}`); navigate("/instructor/modules"); }
+    try { await apiClient.delete(`/instructor/modules/${module.id}`); navigate("/super-admin/instructor/modules"); }
     catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the module.")); }
     finally { setBusy(false); }
   }
 
   if (isNew) {
-    if (!requestedType) return <div className="empty-state"><h1>Unknown module type</h1><Link to="/instructor/modules">Choose a valid module</Link></div>;
+    if (!requestedType) return <div className="empty-state"><h1>Unknown module type</h1><Link to="/super-admin/instructor/modules">Choose a valid module</Link></div>;
     const isComposite = COMPOSITE_TYPES.has(requestedType);
     const allSourcesSelected = SOURCE_SECTIONS.every((section) => selectedSources[section]);
-    return <div><div className="page-header"><div><h1>New {TYPE_LABELS[requestedType]}</h1><p className="page-subtitle">The correct parts, timing, marks and assessment rubric will be created automatically.</p></div><Link to="/instructor/modules">← All modules</Link></div>
+    return <div><div className="page-header"><div><h1>New {TYPE_LABELS[requestedType]}</h1><p className="page-subtitle">The correct parts, timing, marks and assessment rubric will be created automatically.</p></div><Link to="/super-admin/instructor/modules">← All modules</Link></div>
       {error && <p className="error-text notice-line">{error}</p>}
       <form className="form-card module-create-form" onSubmit={createModule}>
         <span className={`section-chip section-${requestedType}`}>{TYPE_LABELS[requestedType]}</span>
@@ -331,7 +334,7 @@ export function ModuleEditor() {
                   <option value="">Select completed {TYPE_LABELS[section]}</option>
                   {choices.map((item) => <option value={item.id} key={item.id}>{item.title} · {item.question_count} questions · {item.status}</option>)}
                 </select>
-                {!loadingSources && !choices.length && <small>No completed {TYPE_LABELS[section]} test is available. <Link to={`/instructor/modules/new/${section}`}>Create one first</Link>.</small>}
+                {!loadingSources && !choices.length && <small>No completed {TYPE_LABELS[section]} test is available. <Link to={`/super-admin/instructor/modules/new/${section}`}>Create one first</Link>.</small>}
               </div>;
             })}
           </div>
@@ -342,10 +345,10 @@ export function ModuleEditor() {
   }
 
   if (loading) return <p>Loading...</p>;
-  if (!module) return <div><p className="error-text">{error || "Module not found."}</p><Link to="/instructor/modules">Back to modules</Link></div>;
+  if (!module) return <div><p className="error-text">{error || "Module not found."}</p><Link to="/super-admin/instructor/modules">Back to modules</Link></div>;
 
   return <div className="module-editor-page">
-    <div className="page-header module-editor-header"><div><div className="module-title-line"><span className={`section-chip section-${module.module_type}`}>{module.module_label}</span><span className={`badge ${module.status === "published" ? "badge-green" : module.status === "archived" ? "badge-gray" : "badge-amber"}`}>{module.status}</span></div><h1>{module.title}</h1><p className="page-subtitle">{module.duration_minutes} minutes · {module.part_count} parts · {module.question_count} questions · {module.blueprint_version}</p></div><Link to="/instructor/modules">← All modules</Link></div>
+    <div className="page-header module-editor-header"><div><div className="module-title-line"><span className={`section-chip section-${module.module_type}`}>{module.module_label}</span><span className={`badge ${module.status === "published" ? "badge-green" : module.status === "archived" ? "badge-gray" : "badge-amber"}`}>{module.status}</span></div><h1>{module.title}</h1><p className="page-subtitle">{module.duration_minutes} minutes · {module.part_count} parts · {module.question_count} questions · {module.blueprint_version}</p></div><Link to="/super-admin/instructor/modules">← All modules</Link></div>
     {error && <p className="error-text notice-line">{error}</p>}{notice && <p className="success-text notice-line">{notice}</p>}
 
     <section className={`module-readiness ${module.ready_to_publish ? "is-ready" : "needs-work"}`}><div><h2>{module.ready_to_publish ? "Ready to publish" : "Publishing checklist"}</h2><p>{module.ready_to_publish ? "Every required part, mark and audio rule is satisfied." : "You can work in any order. These checks are enforced only when publishing."}</p></div>{!module.ready_to_publish && <ul>{module.validation_errors.map((message) => <li key={message}>{message}</li>)}</ul>}<div className="module-status-actions">{module.status === "draft" && <button onClick={() => changeStatus("published")} disabled={busy || !module.ready_to_publish}>Publish module</button>}{module.status === "published" && <><button className="secondary-button" onClick={() => changeStatus("draft")} disabled={busy}>Return to draft</button><button onClick={() => changeStatus("archived")} disabled={busy}>Archive</button></>}{module.status === "archived" && <button onClick={() => changeStatus("draft")} disabled={busy}>Restore as draft</button>}</div></section>

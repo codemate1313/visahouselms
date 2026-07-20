@@ -24,7 +24,7 @@ export function InstructorDashboard() {
   if (!summary) return <p>Loading...</p>;
   return (
     <div>
-      <div className="page-header"><div><span className="page-eyebrow">Instructor workspace</span><h1>Welcome, {user?.first_name}</h1><p className="page-subtitle">Create complete LanguageCert Academic assessment modules.</p></div><Link className="button-link" to="/instructor/modules">+ Create Module</Link></div>
+      <div className="page-header"><div><span className="page-eyebrow">Instructor workspace</span><h1>Welcome, {user?.first_name}</h1><p className="page-subtitle">Create complete LanguageCert Academic assessment modules.</p></div><Link className="button-link" to="/super-admin/instructor/modules">+ Create Module</Link></div>
       <div className="stat-tile-row instructor-stats">
         <div className="stat-tile"><p className="stat-label">Modules</p><p className="stat-value">{summary.content.modules}</p></div>
         <div className="stat-tile"><p className="stat-label">Drafts</p><p className="stat-value">{summary.content.drafts}</p></div>
@@ -39,12 +39,12 @@ export function InstructorDashboard() {
             <div><strong>Complete tests</strong><p>{summary.content.full_mock} full mocks and {summary.content.final_test} final tests.</p></div>
             <div><strong>Listening media</strong><p>{summary.content.audio} uploaded or text-to-speech MP3 files.</p></div>
           </div>
-          <Link to="/instructor/modules">Open module workspace →</Link>
+          <Link to="/super-admin/instructor/modules">Open module workspace →</Link>
         </section>
         <section className="workspace-panel">
           <div className="panel-heading"><div><h2>Profile readiness</h2><p>A complete profile helps content reviews and ownership.</p></div><strong>{summary.profile_completion}%</strong></div>
           <div className="progress-track"><span style={{ width: `${summary.profile_completion}%` }} /></div>
-          {summary.profile_completion < 100 && <Link to="/instructor/profile">Complete your profile →</Link>}
+          {summary.profile_completion < 100 && <Link to="/super-admin/instructor/profile">Complete your profile →</Link>}
         </section>
         <section className="workspace-panel">
           <div className="panel-heading"><div><h2>Recent activity</h2><p>Your latest audited account and content actions.</p></div></div>

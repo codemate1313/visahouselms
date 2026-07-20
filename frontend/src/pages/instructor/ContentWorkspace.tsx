@@ -10,5 +10,5 @@ const AREAS = [
 ];
 
 export function ContentWorkspace() {
-  return <div><div className="page-header"><div><h1>Module Workspace</h1><p className="page-subtitle">Create one self-contained assessment module at a time.</p></div></div><div className="content-area-grid">{AREAS.map((area) => <section className="content-area-card" key={area.name}><span className="phase-chip">Module</span><h2>{area.name}</h2><p>{area.detail}</p><Link className="button-link" to={`/instructor/modules/new/${area.type}`}>Create {area.name}</Link></section>)}</div></div>;
+  return <div><div className="page-header"><div><h1>Module Workspace</h1><p className="page-subtitle">Create one self-contained assessment module at a time.</p></div></div><div className="content-area-grid">{AREAS.map((area) => <section className="content-area-card" key={area.name}><span className="phase-chip">Module</span><h2>{area.name}</h2><p>{area.detail}</p><Link className="button-link" to={`/super-admin/instructor/modules/new/${area.type}`}>Create {area.name}</Link></section>)}</div></div>;
 }

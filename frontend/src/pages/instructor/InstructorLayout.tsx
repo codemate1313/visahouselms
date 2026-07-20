@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "../../api/client";
 import { useAuthStore } from "../../store/authStore";
@@ -9,9 +9,17 @@ export function InstructorLayout() {
   const navRef = useRef<HTMLElement>(null);
   const [bookmark, setBookmark] = useState({ top: 0, height: 0, visible: false });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState({ authoring: location.pathname.includes("/super-admin/instructor/modules") || location.pathname.includes("/super-admin/instructor/grading"), account: location.pathname.includes("/super-admin/instructor/profile") || location.pathname.includes("/super-admin/instructor/sessions") || location.pathname.includes("/super-admin/instructor/change-password") });
   const user = useAuthStore((state) => state.user);
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const clear = useAuthStore((state) => state.clear);
+
+  useEffect(() => {
+    setOpenGroups((current) => ({
+      authoring: current.authoring || location.pathname.includes("/super-admin/instructor/modules") || location.pathname.includes("/super-admin/instructor/grading"),
+      account: current.account || location.pathname.includes("/super-admin/instructor/profile") || location.pathname.includes("/super-admin/instructor/sessions") || location.pathname.includes("/super-admin/instructor/change-password"),
+    }));
+  }, [location.pathname]);
 
   useLayoutEffect(() => {
     setMobileNavOpen(false);
@@ -23,13 +31,13 @@ export function InstructorLayout() {
     };
     position(); window.addEventListener("resize", position);
     return () => window.removeEventListener("resize", position);
-  }, [location.pathname]);
+  }, [location.pathname, openGroups]);
 
   async function logout() {
     if (refreshToken) {
       try { await apiClient.post("/auth/logout", { refresh_token: refreshToken }); } catch { /* best effort */ }
     }
-    clear(); navigate("/login");
+    clear(); navigate("/sa-instructor/login");
   }
 
   const initials = `${user?.first_name?.[0] ?? ""}${user?.last_name?.[0] ?? ""}`.toUpperCase();
@@ -42,14 +50,18 @@ export function InstructorLayout() {
         <div className="dashboard-brand"><h2>IELTS LMS</h2><p className="dashboard-role">SA Instructor</p></div>
         <nav ref={navRef}>
           <span className={`nav-bookmark${bookmark.visible ? " is-visible" : ""}`} style={{ height: bookmark.height, transform: `translateY(${bookmark.top}px)` }} aria-hidden="true" />
-          <NavLink to="/instructor" end>Dashboard</NavLink>
-          <p className="nav-section">Authoring</p>
-          <NavLink to="/instructor/modules">Assessment Modules</NavLink>
-          <NavLink to="/instructor/grading">Grading Queue</NavLink>
-          <p className="nav-section">Account</p>
-          <NavLink to="/instructor/profile">My Profile</NavLink>
-          <NavLink to="/instructor/sessions">Active Sessions</NavLink>
-          <NavLink to="/instructor/change-password">Change Password</NavLink>
+          <NavLink className="nav-icon-dashboard" to="/super-admin/instructor/dashboard">Dashboard</NavLink>
+          <button className="nav-group-toggle" type="button" aria-expanded={openGroups.authoring} onClick={() => setOpenGroups((current) => ({ ...current, authoring: !current.authoring }))}><span>Authoring</span></button>
+          {openGroups.authoring && <div className="nav-group-panel">
+            <NavLink className="nav-icon-module" to="/super-admin/instructor/modules">Assessment Modules</NavLink>
+            <NavLink className="nav-icon-grading" to="/super-admin/instructor/grading">Grading Queue</NavLink>
+          </div>}
+          <button className="nav-group-toggle" type="button" aria-expanded={openGroups.account} onClick={() => setOpenGroups((current) => ({ ...current, account: !current.account }))}><span>Account</span></button>
+          {openGroups.account && <div className="nav-group-panel">
+            <NavLink className="nav-icon-user" to="/super-admin/instructor/profile">My Profile</NavLink>
+            <NavLink className="nav-icon-session" to="/super-admin/instructor/sessions">Active Sessions</NavLink>
+            <NavLink className="nav-icon-lock" to="/super-admin/instructor/change-password">Change Password</NavLink>
+          </div>}
         </nav>
         <div className="dashboard-user">
           {user?.avatar_url ? <img src={`${API_BASE_URL}${user.avatar_url}`} alt="" className="nav-avatar" /> : <div className="nav-avatar nav-avatar-initials">{initials || "?"}</div>}

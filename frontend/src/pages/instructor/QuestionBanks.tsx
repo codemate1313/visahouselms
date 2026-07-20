@@ -48,7 +48,7 @@ export function QuestionBanks() {
   return <div>
     <div className="page-header">
       <div><h1>Question Banks</h1><p className="page-subtitle">Create questions one at a time or extract them from PDF and CSV files.</p></div>
-      <Link className="button-link" to="/instructor/question-banks/new">+ New Question Bank</Link>
+      <Link className="button-link" to="/super-admin/instructor/question-banks/new">+ New Question Bank</Link>
     </div>
     <form className="filter-bar responsive-filters" onSubmit={submitSearch}>
       <input placeholder="Search question banks..." aria-label="Search question banks" value={search} onChange={(event) => setSearch(event.target.value)} />
@@ -64,8 +64,8 @@ export function QuestionBanks() {
       <button type="submit">Search</button>
     </form>
     {error && <p className="error-text">{error}</p>}
-    {loading ? <p>Loading...</p> : banks.length === 0 ? <div className="empty-state"><h2>No question banks found</h2><p>Create a bank for a course, then add individual questions or import a file.</p><Link className="button-link" to="/instructor/question-banks/new">Create Question Bank</Link></div> : <div className="bank-grid">
-      {banks.map((bank) => <Link className="bank-card" to={`/instructor/question-banks/${bank.id}`} key={bank.id}>
+    {loading ? <p>Loading...</p> : banks.length === 0 ? <div className="empty-state"><h2>No question banks found</h2><p>Create a bank for a course, then add individual questions or import a file.</p><Link className="button-link" to="/super-admin/instructor/question-banks/new">Create Question Bank</Link></div> : <div className="bank-grid">
+      {banks.map((bank) => <Link className="bank-card" to={`/super-admin/instructor/question-banks/${bank.id}`} key={bank.id}>
         <div className="bank-card-top"><span className={`section-chip section-${bank.section}`}>{SECTION_LABELS[bank.section]}</span><strong>{bank.question_count}</strong></div>
         <h2>{bank.title}</h2>
         <p>{bank.description || "No description added."}</p>

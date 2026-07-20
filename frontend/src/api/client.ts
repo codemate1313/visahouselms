@@ -4,6 +4,12 @@ import { useAuthStore } from "../store/authStore";
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 const baseURL = API_BASE_URL;
 
+function loginPathForRole(role?: string) {
+  if (role === "SUPER_ADMIN") return "/super-admin/login";
+  if (role === "SA_INSTRUCTOR") return "/sa-instructor/login";
+  return "/login";
+}
+
 export const apiClient = axios.create({ baseURL });
 
 // Separate instance with no interceptors, used only for the refresh call
@@ -12,7 +18,9 @@ const refreshClient = axios.create({ baseURL });
 
 apiClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
-  if (token) {
+  // Explicit Authorization headers (for example the freshly issued token used
+  // by /auth/me during login) must win over any stale persisted session.
+  if (token && !config.headers.has("Authorization")) {
     config.headers.set("Authorization", `Bearer ${token}`);
   }
   return config;
@@ -46,6 +54,7 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
+      const roleBeforeRefresh = useAuthStore.getState().user?.role;
       try {
         refreshPromise ??= refreshAccessToken().finally(() => {
           refreshPromise = null;
@@ -54,7 +63,7 @@ apiClient.interceptors.response.use(
         originalRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
         return apiClient(originalRequest);
       } catch {
-        window.location.href = "/login";
+        window.location.href = loginPathForRole(roleBeforeRefresh);
         return Promise.reject(error);
       }
     }

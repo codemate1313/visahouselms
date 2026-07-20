@@ -17,7 +17,6 @@ export interface InstructorAccount {
   force_password_reset: boolean;
   title: string;
   bio: string | null;
-  specializations: string[];
   created_at: string;
 }
 

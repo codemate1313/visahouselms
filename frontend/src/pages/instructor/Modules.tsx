@@ -56,7 +56,7 @@ export function Modules() {
     </div>
 
     <section className="module-type-grid" aria-label="Create an assessment module">
-      {blueprints.map((blueprint) => <Link className={`module-type-card module-type-${blueprint.module_type}`} to={`/instructor/modules/new/${blueprint.module_type}`} key={blueprint.module_type}>
+      {blueprints.map((blueprint) => <Link className={`module-type-card module-type-${blueprint.module_type}`} to={`/super-admin/instructor/modules/new/${blueprint.module_type}`} key={blueprint.module_type}>
         <span className="module-type-icon" aria-hidden="true">{TYPE_ICONS[blueprint.module_type]}</span>
         <div><h2>{blueprint.label}</h2><p>{TYPE_DETAIL[blueprint.module_type]}</p></div>
         <span className="module-create-label">Create →</span>
@@ -72,7 +72,7 @@ export function Modules() {
     </form>
     {error && <p className="error-text">{error}</p>}
     {loading ? <p>Loading...</p> : !modules.length ? <div className="empty-state"><h2>No modules found</h2><p>Choose one of the six module types above to begin.</p></div> : <div className="module-list-grid">
-      {modules.map((module) => <Link className="module-record-card" to={`/instructor/modules/${module.id}`} key={module.id}>
+      {modules.map((module) => <Link className="module-record-card" to={`/super-admin/instructor/modules/${module.id}`} key={module.id}>
         <div className="module-record-top"><span className={`section-chip section-${module.module_type}`}>{module.module_label}</span><span className={`badge ${module.status === "published" ? "badge-green" : module.status === "archived" ? "badge-gray" : "badge-amber"}`}>{module.status}</span></div>
         <h2>{module.title}</h2><p>{module.description || TYPE_DETAIL[module.module_type]}</p>
         <div className="module-record-metrics"><span><strong>{module.part_count}</strong> parts</span><span><strong>{module.question_count}</strong> questions</span><span><strong>{module.duration_minutes}</strong> min</span></div>

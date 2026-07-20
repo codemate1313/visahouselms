@@ -17,7 +17,6 @@ class InstructorAccountCreate(BaseModel):
     last_name: str = Field(max_length=100)
     title: str = Field(default="IELTS Instructor", max_length=120)
     bio: Optional[str] = Field(default=None, max_length=3000)
-    specializations: list[str] = Field(default_factory=list, max_length=12)
 
     @field_validator("first_name", "last_name", "title")
     @classmethod
@@ -29,16 +28,6 @@ class InstructorAccountCreate(BaseModel):
     def clean_bio(cls, value: Optional[str]) -> Optional[str]:
         return value.strip() or None if value is not None else None
 
-    @field_validator("specializations")
-    @classmethod
-    def clean_specializations(cls, values: list[str]) -> list[str]:
-        cleaned: list[str] = []
-        for value in values:
-            item = value.strip()
-            if item and item.lower() not in {existing.lower() for existing in cleaned}:
-                cleaned.append(item[:80])
-        return cleaned
-
 
 class InstructorAccountUpdate(BaseModel):
     email: Optional[EmailStr] = None
@@ -46,7 +35,6 @@ class InstructorAccountUpdate(BaseModel):
     last_name: Optional[str] = Field(default=None, max_length=100)
     title: Optional[str] = Field(default=None, max_length=120)
     bio: Optional[str] = Field(default=None, max_length=3000)
-    specializations: Optional[list[str]] = Field(default=None, max_length=12)
 
     @field_validator("first_name", "last_name", "title")
     @classmethod
@@ -58,18 +46,6 @@ class InstructorAccountUpdate(BaseModel):
     def clean_bio(cls, value: Optional[str]) -> Optional[str]:
         return value.strip() or None if value is not None else None
 
-    @field_validator("specializations")
-    @classmethod
-    def clean_specializations(cls, values: Optional[list[str]]) -> Optional[list[str]]:
-        if values is None:
-            return None
-        cleaned: list[str] = []
-        for value in values:
-            item = value.strip()
-            if item and item.lower() not in {existing.lower() for existing in cleaned}:
-                cleaned.append(item[:80])
-        return cleaned
-
 
 class InstructorAccountOut(BaseModel):
     id: int
@@ -80,7 +56,6 @@ class InstructorAccountOut(BaseModel):
     force_password_reset: bool
     title: str
     bio: Optional[str]
-    specializations: list[str]
     created_at: datetime
 
 

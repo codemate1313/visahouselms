@@ -73,7 +73,6 @@ def _serialize(user: User) -> dict:
         "force_password_reset": user.force_password_reset,
         "title": profile.title if profile else "IELTS Instructor",
         "bio": profile.bio if profile else None,
-        "specializations": list(profile.specializations or []) if profile else [],
         "created_at": user.created_at,
     }
 
@@ -122,7 +121,6 @@ def create_instructor(
     last_name: str,
     title: str,
     bio: Optional[str],
-    specializations: list[str],
     ip: Optional[str],
 ) -> dict:
     if db.query(User).filter(User.email == email).first() is not None:
@@ -147,7 +145,6 @@ def create_instructor(
             user_id=user.id,
             title=title,
             bio=bio,
-            specializations=specializations,
         )
     )
     _audit(db, actor, "sa_instructor.create", user.id, ip, {"email": email})
@@ -168,7 +165,6 @@ def update_instructor(
     last_name: Optional[str],
     title: Optional[str],
     bio: Optional[str],
-    specializations: Optional[list[str]],
     fields_set: set[str],
     ip: Optional[str],
 ) -> dict:
@@ -189,8 +185,6 @@ def update_instructor(
         profile.title = title
     if "bio" in fields_set:
         profile.bio = bio
-    if specializations is not None:
-        profile.specializations = specializations
 
     db.add_all([user, profile])
     _audit(db, actor, "sa_instructor.update", user.id, ip, {"fields": sorted(fields_set)})
@@ -275,7 +269,6 @@ def dashboard_summary(db: Session, actor: User) -> dict:
         bool(actor.avatar_path),
         bool(profile and profile.title),
         bool(profile and profile.bio),
-        bool(profile and profile.specializations),
     ]
     completion = round(sum(completion_parts) / len(completion_parts) * 100)
     logs = (

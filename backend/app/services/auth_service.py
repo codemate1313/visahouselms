@@ -3,6 +3,7 @@ from typing import Optional, Tuple
 
 import jwt
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -54,7 +55,8 @@ def issue_token_pair(
 def login(
     db: Session, email: str, password: str, user_agent: Optional[str], ip_address: Optional[str]
 ) -> Tuple[str, str]:
-    user = db.query(User).filter(User.email == email).first()
+    normalized_email = email.strip().lower()
+    user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
     if user is None or not user.is_active or not verify_password(password, user.password_hash):
         raise INVALID_CREDENTIALS
 

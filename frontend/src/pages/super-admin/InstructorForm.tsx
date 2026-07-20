@@ -4,8 +4,6 @@ import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import type { InstructorAccount, InstructorAccountCreated } from "../../api/types";
 
-const SPECIALIZATIONS = ["Listening", "Reading", "Writing", "Speaking", "Test design"];
-
 function extractTemporaryPassword(data: InstructorAccountCreated): string {
   const response = data as InstructorAccountCreated & {
     temp_password?: string;
@@ -23,7 +21,6 @@ export function InstructorForm() {
   const [lastName, setLastName] = useState("");
   const [title, setTitle] = useState("IELTS Instructor");
   const [bio, setBio] = useState("");
-  const [specializations, setSpecializations] = useState<string[]>([]);
   const [created, setCreated] = useState<InstructorAccountCreated | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -35,19 +32,15 @@ export function InstructorForm() {
     apiClient.get<InstructorAccount>(`/super-admin/instructors/${id}`)
       .then(({ data }) => {
         setEmail(data.email); setFirstName(data.first_name); setLastName(data.last_name);
-        setTitle(data.title); setBio(data.bio ?? ""); setSpecializations(data.specializations);
+        setTitle(data.title); setBio(data.bio ?? "");
       })
       .catch(() => setError("Failed to load instructor."))
       .finally(() => setLoading(false));
   }, [id, isNew]);
 
-  function toggleSpecialization(value: string) {
-    setSpecializations((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
-  }
-
   async function handleSubmit(event: FormEvent) {
     event.preventDefault(); setSaving(true); setError(null);
-    const payload = { email, first_name: firstName, last_name: lastName, title, bio: bio || null, specializations };
+    const payload = { email, first_name: firstName, last_name: lastName, title, bio: bio || null };
     try {
       if (isNew) {
         const { data } = await apiClient.post<InstructorAccountCreated>("/super-admin/instructors", payload);
@@ -104,10 +97,6 @@ export function InstructorForm() {
         </div>
         <label htmlFor="email">Email</label><input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <label htmlFor="title">Professional title</label><input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={120} />
-        <label>Specializations</label>
-        <div className="checkbox-grid">
-          {SPECIALIZATIONS.map((item) => <label className="check-option" key={item}><input type="checkbox" checked={specializations.includes(item)} onChange={() => toggleSpecialization(item)} /> {item}</label>)}
-        </div>
         <label htmlFor="bio">Bio</label><textarea id="bio" rows={5} maxLength={3000} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Teaching experience, credentials, and focus areas" />
         {isNew && <p className="hint">A temporary password will be generated for testing. The instructor must change it after login.</p>}
         {error && <p className="error-text">{error}</p>}

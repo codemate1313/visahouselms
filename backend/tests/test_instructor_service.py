@@ -47,7 +47,6 @@ class InstructorServiceTests(unittest.TestCase):
             last_name="Teacher",
             title="Senior Instructor",
             bio="IELTS writing specialist",
-            specializations=["Writing", "Speaking"],
             ip="127.0.0.1",
         )
 
@@ -61,7 +60,6 @@ class InstructorServiceTests(unittest.TestCase):
         self.assertTrue(verify_password(created["temporary_password"], user.password_hash))
         self.assertEqual(user.role.name, SA_INSTRUCTOR)
         self.assertEqual(user.instructor_profile.title, "Senior Instructor")
-        self.assertEqual(user.instructor_profile.specializations, ["Writing", "Speaking"])
 
     def test_update_reset_deactivate_reactivate_and_delete_lifecycle(self) -> None:
         created = self._create()
@@ -76,13 +74,11 @@ class InstructorServiceTests(unittest.TestCase):
             last_name=None,
             title="Lead Instructor",
             bio=None,
-            specializations=["Reading"],
-            fields_set={"title", "bio", "specializations"},
+            fields_set={"title", "bio"},
             ip="127.0.0.1",
         )
         self.assertEqual(updated["title"], "Lead Instructor")
         self.assertIsNone(updated["bio"])
-        self.assertEqual(updated["specializations"], ["Reading"])
 
         new_password = instructor_service.reset_password(
             self.db, self.actor, instructor_id, "127.0.0.1"
