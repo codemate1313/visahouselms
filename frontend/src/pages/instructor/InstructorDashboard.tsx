@@ -24,7 +24,7 @@ export function InstructorDashboard() {
   if (!summary) return <p>Loading...</p>;
   return (
     <div>
-      <div className="page-header"><div><h1>Welcome, {user?.first_name}</h1><p className="page-subtitle">Create complete LanguageCert Academic assessment modules.</p></div><Link className="button-link" to="/instructor/modules">+ Create Module</Link></div>
+      <div className="page-header"><div><span className="page-eyebrow">Instructor workspace</span><h1>Welcome, {user?.first_name}</h1><p className="page-subtitle">Create complete LanguageCert Academic assessment modules.</p></div><Link className="button-link" to="/instructor/modules">+ Create Module</Link></div>
       <div className="stat-tile-row instructor-stats">
         <div className="stat-tile"><p className="stat-label">Modules</p><p className="stat-value">{summary.content.modules}</p></div>
         <div className="stat-tile"><p className="stat-label">Drafts</p><p className="stat-value">{summary.content.drafts}</p></div>
@@ -33,7 +33,7 @@ export function InstructorDashboard() {
       </div>
       <div className="workspace-grid">
         <section className="workspace-panel">
-          <div className="panel-heading"><div><h2>Module authoring</h2><p>Each module owns its questions, marking rules and media.</p></div><span className="badge badge-green">Corrected Phase 3.3</span></div>
+          <div className="panel-heading"><div><h2>Module authoring</h2><p>Each module owns its questions, marking rules and media.</p></div><span className="badge badge-green">Structured authoring</span></div>
           <div className="authoring-actions">
             <div><strong>Skill modules</strong><p>{summary.content.reading + summary.content.listening + summary.content.writing + summary.content.speaking} Reading, Listening, Writing and Speaking modules.</p></div>
             <div><strong>Complete tests</strong><p>{summary.content.full_mock} full mocks and {summary.content.final_test} final tests.</p></div>

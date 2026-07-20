@@ -94,8 +94,14 @@ export function Dashboard() {
   const instituteStateLegend = instituteStateData.map((d) => ({ label: d.label, color: d.color }));
 
   return (
-    <div>
-      <h1>Dashboard</h1>
+    <div className="dashboard-overview">
+      <div className="page-header">
+        <div>
+          <span className="page-eyebrow">Platform overview</span>
+          <h1>Dashboard</h1>
+          <p className="page-subtitle">A concise view of institutes, subscriptions, and platform revenue.</p>
+        </div>
+      </div>
 
       <div className="stat-tile-row">
         <div className="stat-tile">
