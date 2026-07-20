@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user, require_role
+from app.models.institute import Institute
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
 from app.schemas.plan import AssignSubscriptionRequest, RenewSubscriptionRequest
@@ -19,6 +20,16 @@ router = APIRouter(
 
 def _client_ip(request: Request) -> Optional[str]:
     return request.client.host if request.client else None
+
+
+@router.get("/institutes")
+def list_institutes(db: Session = Depends(get_db)):
+    """List-only endpoint for the subscription UI dropdown.
+    Full institute CRUD/branding arrives in Phase 2.2."""
+    return [
+        {"id": i.id, "name": i.name, "slug": i.slug, "is_active": i.is_active}
+        for i in db.query(Institute).order_by(Institute.name).all()
+    ]
 
 
 @router.get("/institutes/{institute_id}/subscription")

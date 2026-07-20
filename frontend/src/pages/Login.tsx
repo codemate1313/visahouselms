@@ -1,7 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../api/client";
-import { PasswordInput } from "../components/PasswordInput";
 import { useAuthStore } from "../store/authStore";
 
 export function Login() {
@@ -22,9 +21,10 @@ export function Login() {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       });
       setSession(tokens.access_token, tokens.refresh_token, user);
-
       if (user.role === "SUPER_ADMIN") {
         navigate(user.force_password_reset ? "/super-admin/change-password" : "/super-admin");
+      } else if (user.role === "SA_INSTRUCTOR") {
+        navigate(user.force_password_reset ? "/instructor/change-password" : "/instructor");
       } else if (user.role === "INSTITUTE_ADMIN") {
         // Institute Admin's own portal (incl. its change-password flow) lands in Phase 4;
         // this placeholder proves login + branding delivery work end-to-end today.
@@ -55,8 +55,9 @@ export function Login() {
         />
 
         <label htmlFor="password">Password</label>
-        <PasswordInput
+        <input
           id="password"
+          type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required

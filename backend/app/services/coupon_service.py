@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models.audit_log import AuditLog
 from app.models.coupon import Coupon
+from app.models.course import Course
 from app.models.payment import Payment
 from app.models.user import User
 
@@ -80,14 +81,21 @@ def create_coupon(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="discount_type must be 'percent' or 'flat'")
     if data.get("scope", "all") not in ("all", "plan", "course"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="scope must be 'all', 'plan', or 'course'")
+    if data.get("scope") == "course":
+        course_id = data.get("scope_course_id")
+        if course_id is None or db.get(Course, course_id) is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Select a valid course for this coupon")
+    if data.get("scope") == "plan" and data.get("scope_plan_id") is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Select a plan for this coupon")
 
+    coupon_scope = data.get("scope", "all")
     coupon = Coupon(
         code=data["code"].upper(),
         discount_type=data["discount_type"],
         value=Decimal(str(data["value"])),
-        scope=data.get("scope", "all"),
-        scope_plan_id=data.get("scope_plan_id"),
-        scope_course_id=data.get("scope_course_id"),
+        scope=coupon_scope,
+        scope_plan_id=data.get("scope_plan_id") if coupon_scope == "plan" else None,
+        scope_course_id=data.get("scope_course_id") if coupon_scope == "course" else None,
         usage_limit=data.get("usage_limit"),
         valid_from=data.get("valid_from"),
         valid_until=data.get("valid_until"),
@@ -103,13 +111,23 @@ def create_coupon(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
 
 def update_coupon(db: Session, actor: User, coupon_id: int, data: dict, ip: Optional[str]) -> dict:
     coupon = get_coupon_or_404(db, coupon_id)
+    resulting_scope = data.get("scope") or coupon.scope
+    resulting_course_id = data.get("scope_course_id", coupon.scope_course_id)
+    if resulting_scope == "course" and (
+        resulting_course_id is None or db.get(Course, resulting_course_id) is None
+    ):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Select a valid course for this coupon")
     for field in ("usage_limit", "valid_from", "valid_until", "scope_plan_id", "scope_course_id"):
-        if field in data and data[field] is not None:
+        if field in data:
             setattr(coupon, field, data[field])
     if data.get("value") is not None:
         coupon.value = Decimal(str(data["value"]))
     if data.get("scope") is not None:
         coupon.scope = data["scope"]
+    if coupon.scope != "plan":
+        coupon.scope_plan_id = None
+    if coupon.scope != "course":
+        coupon.scope_course_id = None
 
     db.add(coupon)
     _audit(db, actor, "coupon.update", coupon.id, ip)

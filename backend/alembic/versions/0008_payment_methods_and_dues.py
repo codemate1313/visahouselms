@@ -29,16 +29,41 @@ def upgrade() -> None:
     methods_table = sa.table("payment_methods", sa.column("id", sa.Integer), sa.column("name", sa.String))
     op.bulk_insert(methods_table, [{"name": name} for name in DEFAULT_METHODS])
 
-    op.add_column("payments", sa.Column("payment_method_id", sa.Integer, sa.ForeignKey("payment_methods.id"), nullable=True))
-    op.add_column("payments", sa.Column("amount_paid", sa.Numeric(10, 2), nullable=False, server_default="0"))
-    op.alter_column("payments", "gateway_reference", existing_type=sa.String(255), type_=sa.Text, nullable=True)
+    # Batch mode recreates the table on SQLite (which cannot ALTER in a new
+    # foreign-key constraint) and emits normal ALTER statements on MySQL.
+    with op.batch_alter_table("payments") as batch_op:
+        batch_op.add_column(
+            sa.Column(
+                "payment_method_id",
+                sa.Integer,
+                sa.ForeignKey(
+                    "payment_methods.id", name="fk_payments_payment_method_id"
+                ),
+                nullable=True,
+            )
+        )
+        batch_op.add_column(
+            sa.Column("amount_paid", sa.Numeric(10, 2), nullable=False, server_default="0")
+        )
+        batch_op.alter_column(
+            "gateway_reference",
+            existing_type=sa.String(255),
+            type_=sa.Text,
+            nullable=True,
+        )
 
     # backfill: existing rows are all fully-paid one-shot payments
     op.execute("UPDATE payments SET amount_paid = final_amount WHERE status = 'paid'")
 
 
 def downgrade() -> None:
-    op.alter_column("payments", "gateway_reference", existing_type=sa.Text, type_=sa.String(255), nullable=True)
-    op.drop_column("payments", "amount_paid")
-    op.drop_column("payments", "payment_method_id")
+    with op.batch_alter_table("payments") as batch_op:
+        batch_op.alter_column(
+            "gateway_reference",
+            existing_type=sa.Text,
+            type_=sa.String(255),
+            nullable=True,
+        )
+        batch_op.drop_column("amount_paid")
+        batch_op.drop_column("payment_method_id")
     op.drop_table("payment_methods")

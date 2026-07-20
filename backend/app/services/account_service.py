@@ -6,7 +6,7 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.core.security import hash_refresh_token
+from app.core.security import hash_password, hash_refresh_token, verify_password
 from app.core.uploads import read_validated_image
 from app.models.audit_log import AuditLog
 from app.models.user import User
@@ -136,3 +136,53 @@ def revoke_other_sessions(db: Session, actor: User, current_refresh_token: str, 
         _audit(db, actor, "account.revoke_other_sessions", actor.id, ip, {"count": len(sessions)})
         db.commit()
     return len(sessions)
+
+
+def revoke_all_sessions(db: Session, user_id: int) -> int:
+    """Immediately invalidate every refresh token for an account.
+
+    Access tokens remain short-lived, while the next refresh is guaranteed to
+    fail. This is used for password resets and account deactivation.
+    """
+    now = datetime.now(timezone.utc)
+    sessions = _active_sessions_query(db, user_id).all()
+    for session in sessions:
+        session.revoked_at = now
+        db.add(session)
+    return len(sessions)
+
+
+def change_password(
+    db: Session,
+    actor: User,
+    current_password: str,
+    new_password: str,
+    ip: Optional[str],
+) -> None:
+    if not verify_password(current_password, actor.password_hash):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
+
+    if verify_password(new_password, actor.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from the current password",
+        )
+
+    actor.password_hash = hash_password(new_password)
+    actor.force_password_reset = False
+    db.add(actor)
+    _audit(db, actor, "account.change_password", actor.id, ip)
+    db.commit()
+
+
+def set_initial_password(db: Session, actor: User, new_password: str, ip: Optional[str]) -> None:
+    if not actor.force_password_reset:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Initial password has already been set",
+        )
+    actor.password_hash = hash_password(new_password)
+    actor.force_password_reset = False
+    db.add(actor)
+    _audit(db, actor, "account.set_initial_password", actor.id, ip)
+    db.commit()

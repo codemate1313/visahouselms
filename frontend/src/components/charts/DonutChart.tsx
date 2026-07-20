@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 
-export interface DonutDatum {
+interface DonutDatum {
   label: string;
   value: number;
   color: string;
@@ -9,95 +9,30 @@ export interface DonutDatum {
 interface DonutChartProps {
   data: DonutDatum[];
   centerLabel?: string;
-  formatValue?: (value: number) => string;
-  emptyMessage?: string;
   ariaLabel: string;
+  emptyMessage?: string;
 }
 
-const defaultFormat = (v: number) => v.toLocaleString();
-const SIZE = 160;
-const STROKE = 28;
-const RADIUS = (SIZE - STROKE) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-const GAP = 3; // surface-color gap between adjacent slices
-
-export function DonutChart({ data, centerLabel, formatValue = defaultFormat, emptyMessage = "No data yet.", ariaLabel }: DonutChartProps) {
+export function DonutChart({ data, centerLabel = "total", ariaLabel, emptyMessage = "No data available." }: DonutChartProps) {
   const [showTable, setShowTable] = useState(false);
-  const total = data.reduce((sum, d) => sum + d.value, 0);
+  const titleId = useId();
+  const rows = data.map((item) => ({ ...item, value: Number.isFinite(item.value) ? Math.max(0, item.value) : 0 })).filter((item) => item.value > 0);
+  const total = rows.reduce((sum, item) => sum + item.value, 0);
+  const radius = 74;
+  const circumference = 2 * Math.PI * radius;
+  let consumed = 0;
 
-  let cumulative = 0;
-  const slices = data.map((d) => {
-    const fraction = total > 0 ? d.value / total : 0;
-    const length = Math.max(fraction * CIRCUMFERENCE - GAP, 0);
-    const offset = -cumulative * CIRCUMFERENCE;
-    cumulative += fraction;
-    return { ...d, fraction, length, offset };
-  });
+  if (!rows.length || total === 0) {
+    return <div className="chart-card chart-empty" role="status">{emptyMessage}</div>;
+  }
 
-  return (
-    <div className="chart-card">
-      <div className="chart-card-toolbar">
-        <div className="chart-legend">
-          {data.map((d) => (
-            <span key={d.label} className="chart-legend-item">
-              <span className="chart-legend-swatch" style={{ background: d.color }} />
-              {d.label} ({total > 0 ? Math.round((d.value / total) * 100) : 0}%)
-            </span>
-          ))}
-        </div>
-        <button type="button" className="chart-table-toggle" onClick={() => setShowTable((v) => !v)}>
-          {showTable ? "View as chart" : "View as table"}
-        </button>
-      </div>
-
-      {data.length === 0 || total === 0 ? (
-        <p className="empty-cell">{emptyMessage}</p>
-      ) : showTable ? (
-        <table className="data-table" aria-label={ariaLabel}>
-          <thead><tr><th>Status</th><th>Count</th><th>Share</th></tr></thead>
-          <tbody>
-            {data.map((d) => (
-              <tr key={d.label}>
-                <td>{d.label}</td>
-                <td>{formatValue(d.value)}</td>
-                <td>{Math.round((d.value / total) * 100)}%</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <div className="donut-wrap" role="img" aria-label={ariaLabel}>
-          <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
-            <g transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}>
-              <circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} fill="none" stroke="var(--chart-grid)" strokeWidth={STROKE} />
-              {slices.map((s) => (
-                <circle
-                  key={s.label}
-                  cx={SIZE / 2}
-                  cy={SIZE / 2}
-                  r={RADIUS}
-                  fill="none"
-                  stroke={s.color}
-                  strokeWidth={STROKE}
-                  strokeDasharray={`${s.length} ${CIRCUMFERENCE}`}
-                  strokeDashoffset={s.offset}
-                  strokeLinecap="butt"
-                >
-                  <title>{s.label}: {formatValue(s.value)} ({Math.round(s.fraction * 100)}%)</title>
-                </circle>
-              ))}
-            </g>
-            <text x={SIZE / 2} y={SIZE / 2 - 4} textAnchor="middle" className="donut-center-value">
-              {formatValue(total)}
-            </text>
-            {centerLabel && (
-              <text x={SIZE / 2} y={SIZE / 2 + 16} textAnchor="middle" className="donut-center-label">
-                {centerLabel}
-              </text>
-            )}
-          </svg>
-        </div>
-      )}
-    </div>
-  );
+  return <section className="chart-card">
+    <div className="chart-card-toolbar"><div className="chart-legend" aria-label="Chart legend">{rows.map((item) => <span className="chart-legend-item" key={item.label}><i className="chart-legend-swatch" style={{ background: item.color }} />{item.label}</span>)}</div><button type="button" className="chart-table-toggle" aria-expanded={showTable} onClick={() => setShowTable((current) => !current)}>{showTable ? "Show chart" : "Show data"}</button></div>
+    {showTable ? <div className="chart-data-table-wrap"><table className="chart-data-table"><thead><tr><th>Status</th><th>Count</th><th>Share</th></tr></thead><tbody>{rows.map((item) => <tr key={item.label}><td>{item.label}</td><td>{item.value.toLocaleString("en-IN")}</td><td>{Math.round(item.value / total * 100)}%</td></tr>)}</tbody></table></div> : <div className="donut-layout"><svg className="donut-svg" viewBox="0 0 220 220" role="img" aria-labelledby={titleId}><title id={titleId}>{ariaLabel}</title><circle className="donut-track" cx="110" cy="110" r={radius} />{rows.map((item) => {
+      const length = circumference * item.value / total;
+      const offset = -consumed;
+      consumed += length;
+      return <circle className="donut-segment" cx="110" cy="110" r={radius} fill="none" stroke={item.color} strokeDasharray={`${length} ${circumference - length}`} strokeDashoffset={offset} key={item.label}><title>{`${item.label}: ${item.value} (${Math.round(item.value / total * 100)}%)`}</title></circle>;
+    })}<text className="donut-total" x="110" y="105" textAnchor="middle">{total.toLocaleString("en-IN")}</text><text className="donut-label" x="110" y="127" textAnchor="middle">{centerLabel}</text></svg></div>}
+  </section>;
 }

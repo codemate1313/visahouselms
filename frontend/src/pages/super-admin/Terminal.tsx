@@ -3,7 +3,6 @@ import { Terminal as XTerm } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 import { API_BASE_URL, apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
-import { PasswordInput } from "../../components/PasswordInput";
 
 interface Preset {
   name: string;
@@ -107,8 +106,9 @@ export function Terminal() {
             whitelisted preset commands can run; every command is audit-logged.
           </p>
           <label htmlFor="terminal_password">Password</label>
-          <PasswordInput
+          <input
             id="terminal_password"
+            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

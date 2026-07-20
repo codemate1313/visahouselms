@@ -11,6 +11,9 @@ interface Summary {
     demo_accounts_active: number;
     coupons_active: number;
     super_admin_accounts: number;
+    sa_instructor_accounts: number;
+    courses_total: number;
+    courses_published: number;
   };
   revenue: {
     total_revenue: string;
@@ -118,6 +121,14 @@ export function Dashboard() {
         <div className="stat-tile">
           <p className="stat-label">Active demos</p>
           <p className="stat-value">{counts.demo_accounts_active}</p>
+        </div>
+        <div className="stat-tile">
+          <p className="stat-label">SA instructors</p>
+          <p className="stat-value">{counts.sa_instructor_accounts}</p>
+        </div>
+        <div className="stat-tile">
+          <p className="stat-label">Published courses</p>
+          <p className="stat-value">{counts.courses_published}</p>
         </div>
       </div>
 

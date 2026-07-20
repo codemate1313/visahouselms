@@ -1,0 +1,307 @@
+import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { API_BASE_URL, apiClient } from "../../api/client";
+import { extractErrorMessage } from "../../api/errors";
+import type {
+  ExamModule,
+  ExamModulePart,
+  ExamModuleQuestion,
+  ExamModuleType,
+  QuestionDraft,
+  QuestionImportPreview,
+  QuestionOption,
+  QuestionType,
+  TTSVoice,
+} from "../../api/types";
+
+const MODULE_TYPES = new Set<ExamModuleType>(["reading", "speaking", "writing", "listening", "full_mock", "final_test"]);
+const TYPE_LABELS: Record<ExamModuleType, string> = { reading: "Reading", speaking: "Speaking", writing: "Writing", listening: "Listening", full_mock: "Full Mock Test", final_test: "Final Test" };
+const QUESTION_LABELS: Record<QuestionType, string> = {
+  mcq_single: "MCQ — one answer",
+  mcq_multiple: "MCQ — multiple answers",
+  true_false_not_given: "True / False / Not Given",
+  yes_no_not_given: "Yes / No / Not Given",
+  short_answer: "Short answer",
+  fill_blank: "Fill in the blank",
+  essay: "Writing task",
+  speaking_prompt: "Speaking prompt",
+};
+const CHOICE_TYPES = new Set<QuestionType>(["mcq_single", "mcq_multiple", "true_false_not_given", "yes_no_not_given"]);
+const ANSWER_FREE_TYPES = new Set<QuestionType>(["essay", "speaking_prompt"]);
+
+function optionsFor(type: QuestionType): QuestionOption[] {
+  if (type === "true_false_not_given") return ["True", "False", "Not Given"].map((text, index) => ({ key: String.fromCharCode(65 + index), text }));
+  if (type === "yes_no_not_given") return ["Yes", "No", "Not Given"].map((text, index) => ({ key: String.fromCharCode(65 + index), text }));
+  if (type.startsWith("mcq_")) return ["A", "B", "C"].map((key) => ({ key, text: "" }));
+  return [];
+}
+
+function emptyQuestion(part: ExamModulePart): QuestionDraft {
+  const type = part.answer_constraints.allowed_question_types?.[0] ?? "short_answer";
+  const points = part.max_marks && part.question_limit ? Number(part.max_marks) / part.question_limit : 1;
+  return {
+    question_type: type,
+    prompt: "",
+    instructions: null,
+    passage: null,
+    options: optionsFor(type),
+    correct_answers: ANSWER_FREE_TYPES.has(type) ? [] : ["A"],
+    explanation: null,
+    points,
+    difficulty: "medium",
+  };
+}
+
+function questionPayload(question: QuestionDraft) {
+  return {
+    question_type: question.question_type,
+    prompt: question.prompt.trim(),
+    instructions: question.instructions?.trim() || null,
+    passage: question.passage?.trim() || null,
+    options: CHOICE_TYPES.has(question.question_type) ? question.options.filter((option) => option.text.trim()) : [],
+    correct_answers: ANSWER_FREE_TYPES.has(question.question_type) ? [] : question.correct_answers.map((answer) => answer.trim().toUpperCase()).filter(Boolean),
+    explanation: question.explanation?.trim() || null,
+    points: Number(question.points),
+    difficulty: question.difficulty,
+  };
+}
+
+export function ModuleEditor() {
+  const { id, type: rawType } = useParams();
+  const isNew = !id;
+  const navigate = useNavigate();
+  const requestedType = rawType && MODULE_TYPES.has(rawType as ExamModuleType) ? rawType as ExamModuleType : null;
+  const [module, setModule] = useState<ExamModule | null>(null);
+  const [selectedPartId, setSelectedPartId] = useState<number | null>(null);
+  const [details, setDetails] = useState({ title: "", description: "", instructions: "" });
+  const [manual, setManual] = useState<QuestionDraft | null>(null);
+  const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<QuestionImportPreview | null>(null);
+  const [selectedImports, setSelectedImports] = useState<Set<number>>(new Set());
+  const [voices, setVoices] = useState<TTSVoice[]>([]);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioTitle, setAudioTitle] = useState("Listening audio");
+  const [tts, setTts] = useState({ title: "Generated conversation", conversation: "", voice: "en-GB-SoniaNeural", rate: "+0%" });
+  const [loading, setLoading] = useState(!isNew);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  async function loadModule(preferredPartId?: number) {
+    if (!id) return;
+    setLoading(true);
+    try {
+      const { data } = await apiClient.get<ExamModule>(`/instructor/modules/${id}`);
+      setModule(data);
+      setDetails({ title: data.title, description: data.description ?? "", instructions: data.instructions ?? "" });
+      const selected = data.parts?.find((part) => part.id === (preferredPartId ?? selectedPartId)) ?? data.parts?.[0] ?? null;
+      setSelectedPartId(selected?.id ?? null);
+      if (selected) setManual(emptyQuestion(selected));
+      setError(null);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to load this module."));
+    } finally { setLoading(false); }
+  }
+
+  useEffect(() => { loadModule(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  useEffect(() => {
+    apiClient.get<TTSVoice[]>("/instructor/modules/tts-voices").then(({ data }) => setVoices(data)).catch(() => undefined);
+  }, []);
+
+  const selectedPart = useMemo(() => module?.parts?.find((part) => part.id === selectedPartId) ?? null, [module, selectedPartId]);
+  const isEditable = module?.status === "draft";
+
+  function choosePart(part: ExamModulePart) {
+    setSelectedPartId(part.id);
+    setManual(emptyQuestion(part));
+    setEditingQuestionId(null);
+    setPreview(null);
+    setImportFile(null);
+    setError(null);
+    document.getElementById("module-part-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function createModule(event: FormEvent) {
+    event.preventDefault();
+    if (!requestedType) return;
+    setBusy(true); setError(null);
+    try {
+      const { data } = await apiClient.post<ExamModule>("/instructor/modules", { module_type: requestedType, title: details.title, description: details.description || null, instructions: details.instructions || null });
+      navigate(`/instructor/modules/${data.id}`, { replace: true });
+    } catch (err: unknown) { setError(extractErrorMessage(err, "Failed to create the module.")); }
+    finally { setBusy(false); }
+  }
+
+  async function saveDetails(event: FormEvent) {
+    event.preventDefault(); if (!module) return;
+    setBusy(true); setError(null); setNotice(null);
+    try {
+      const { data } = await apiClient.patch<ExamModule>(`/instructor/modules/${module.id}`, { title: details.title, description: details.description || null, instructions: details.instructions || null });
+      setModule(data); setNotice("Module details saved.");
+    } catch (err: unknown) { setError(extractErrorMessage(err, "Failed to save module details.")); }
+    finally { setBusy(false); }
+  }
+
+  function changeQuestionType(type: QuestionType) {
+    if (!manual) return;
+    setManual({ ...manual, question_type: type, options: optionsFor(type), correct_answers: ANSWER_FREE_TYPES.has(type) ? [] : ["A"] });
+  }
+
+  function updateOption(index: number, text: string) {
+    if (!manual) return;
+    setManual({ ...manual, options: manual.options.map((option, current) => current === index ? { ...option, text } : option) });
+  }
+
+  function toggleCorrect(key: string) {
+    if (!manual) return;
+    const answers = manual.question_type === "mcq_multiple"
+      ? manual.correct_answers.includes(key) ? manual.correct_answers.filter((item) => item !== key) : [...manual.correct_answers, key]
+      : [key];
+    setManual({ ...manual, correct_answers: answers });
+  }
+
+  async function saveQuestion(event: FormEvent) {
+    event.preventDefault(); if (!module || !selectedPart || !manual) return;
+    setBusy(true); setError(null); setNotice(null);
+    try {
+      const base = `/instructor/modules/${module.id}/parts/${selectedPart.id}/questions`;
+      if (editingQuestionId) await apiClient.put(`${base}/${editingQuestionId}`, questionPayload(manual));
+      else await apiClient.post(base, questionPayload(manual));
+      const message = editingQuestionId ? "Question updated." : `Question added to ${selectedPart.title}.`;
+      setEditingQuestionId(null); setManual(emptyQuestion(selectedPart));
+      await loadModule(selectedPart.id); setNotice(message);
+    } catch (err: unknown) { setError(extractErrorMessage(err, "Failed to save the question.")); }
+    finally { setBusy(false); }
+  }
+
+  function editQuestion(question: ExamModuleQuestion) {
+    setEditingQuestionId(question.id);
+    setManual({ question_type: question.question_type, prompt: question.prompt, instructions: question.instructions, passage: question.passage, options: question.options, correct_answers: question.correct_answers, explanation: question.explanation, points: question.points, difficulty: question.difficulty });
+    document.getElementById("manual-module-question")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  async function deleteQuestion(question: ExamModuleQuestion) {
+    if (!module || !selectedPart || !window.confirm("Delete this question?")) return;
+    try { await apiClient.delete(`/instructor/modules/${module.id}/parts/${selectedPart.id}/questions/${question.id}`); await loadModule(selectedPart.id); }
+    catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the question.")); }
+  }
+
+  async function previewImport(event: FormEvent) {
+    event.preventDefault(); if (!module || !selectedPart || !importFile) return;
+    setBusy(true); setError(null); setPreview(null);
+    try {
+      const form = new FormData(); form.append("file", importFile);
+      const { data } = await apiClient.post<QuestionImportPreview>(`/instructor/modules/${module.id}/parts/${selectedPart.id}/import-preview`, form);
+      const allowed = selectedPart.answer_constraints.allowed_question_types ?? [];
+      const normalized = data.questions.map((question) => {
+        if (!allowed.length || allowed.includes(question.question_type)) return question;
+        const nextType = allowed[0];
+        return { ...question, question_type: nextType, options: CHOICE_TYPES.has(nextType) ? question.options : [], correct_answers: ANSWER_FREE_TYPES.has(nextType) ? [] : question.correct_answers };
+      });
+      const requiredPoints = selectedPart.max_marks && selectedPart.question_limit ? Number(selectedPart.max_marks) / selectedPart.question_limit : null;
+      setPreview({ ...data, questions: normalized.map((question) => requiredPoints === null ? question : { ...question, points: requiredPoints }) });
+      setSelectedImports(new Set(normalized.map((_, index) => index)));
+    } catch (err: unknown) { setError(extractErrorMessage(err, "Could not extract questions from this file.")); }
+    finally { setBusy(false); }
+  }
+
+  function updatePreview(index: number, changes: Partial<QuestionDraft>) {
+    setPreview((current) => current ? { ...current, questions: current.questions.map((question, currentIndex) => currentIndex === index ? { ...question, ...changes } : question) } : current);
+  }
+
+  async function commitImport() {
+    if (!module || !selectedPart || !preview) return;
+    const questions = preview.questions.filter((_, index) => selectedImports.has(index)).map(questionPayload);
+    if (!questions.length) { setError("Select at least one extracted question."); return; }
+    setBusy(true); setError(null);
+    try {
+      await apiClient.post(`/instructor/modules/${module.id}/parts/${selectedPart.id}/import`, { source_type: preview.source_type, source_filename: preview.source_filename, questions });
+      setPreview(null); setImportFile(null); await loadModule(selectedPart.id); setNotice(`${questions.length} questions imported into ${selectedPart.title}.`);
+    } catch (err: unknown) { setError(extractErrorMessage(err, "Review the extracted questions and try again.")); }
+    finally { setBusy(false); }
+  }
+
+  async function uploadAudio(event: FormEvent) {
+    event.preventDefault(); if (!module || !selectedPart || !audioFile) return;
+    setBusy(true); setError(null);
+    try {
+      const form = new FormData(); form.append("title", audioTitle); form.append("file", audioFile);
+      await apiClient.post(`/instructor/modules/${module.id}/parts/${selectedPart.id}/audio`, form);
+      setAudioFile(null); await loadModule(selectedPart.id); setNotice(`MP3 attached to ${selectedPart.title}.`);
+    } catch (err: unknown) { setError(extractErrorMessage(err, "Failed to upload the MP3.")); }
+    finally { setBusy(false); }
+  }
+
+  async function generateAudio(event: FormEvent) {
+    event.preventDefault(); if (!module || !selectedPart) return;
+    setBusy(true); setError(null);
+    try {
+      await apiClient.post(`/instructor/modules/${module.id}/parts/${selectedPart.id}/tts`, tts);
+      setTts((current) => ({ ...current, conversation: "" })); await loadModule(selectedPart.id); setNotice(`Conversation audio generated for ${selectedPart.title}.`);
+    } catch (err: unknown) { setError(extractErrorMessage(err, "Text-to-speech could not generate the MP3.")); }
+    finally { setBusy(false); }
+  }
+
+  async function deleteAudio(assetId: number) {
+    if (!module || !selectedPart || !window.confirm("Delete this audio file?")) return;
+    try { await apiClient.delete(`/instructor/modules/${module.id}/assets/${assetId}`); await loadModule(selectedPart.id); }
+    catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the audio.")); }
+  }
+
+  async function changeStatus(status: "draft" | "published" | "archived") {
+    if (!module) return;
+    setBusy(true); setError(null); setNotice(null);
+    try {
+      const { data } = await apiClient.post<ExamModule>(`/instructor/modules/${module.id}/status`, { status });
+      setModule(data); setNotice(status === "published" ? "Module published." : `Module moved to ${status}.`);
+    } catch (err: unknown) { setError(extractErrorMessage(err, "The module status could not be changed.")); }
+    finally { setBusy(false); }
+  }
+
+  async function deleteModule() {
+    if (!module || !window.confirm(`Delete “${module.title}” and all of its questions and audio?`)) return;
+    try { await apiClient.delete(`/instructor/modules/${module.id}`); navigate("/instructor/modules"); }
+    catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the module.")); }
+  }
+
+  if (isNew) {
+    if (!requestedType) return <div className="empty-state"><h1>Unknown module type</h1><Link to="/instructor/modules">Choose a valid module</Link></div>;
+    return <div><div className="page-header"><div><h1>New {TYPE_LABELS[requestedType]}</h1><p className="page-subtitle">The correct parts, timing, marks and assessment rubric will be created automatically.</p></div><Link to="/instructor/modules">← All modules</Link></div>
+      {error && <p className="error-text notice-line">{error}</p>}
+      <form className="form-card module-create-form" onSubmit={createModule}><span className={`section-chip section-${requestedType}`}>{TYPE_LABELS[requestedType]}</span><label htmlFor="new-module-title">Module title</label><input id="new-module-title" value={details.title} onChange={(event) => setDetails({ ...details, title: event.target.value })} placeholder={`${TYPE_LABELS[requestedType]} — Academic Set 1`} maxLength={200} required autoFocus /><label htmlFor="new-module-description">Description</label><textarea id="new-module-description" rows={4} value={details.description} onChange={(event) => setDetails({ ...details, description: event.target.value })} placeholder="What this module covers" /><label htmlFor="new-module-instructions">Candidate instructions</label><textarea id="new-module-instructions" rows={4} value={details.instructions} onChange={(event) => setDetails({ ...details, instructions: event.target.value })} placeholder="Optional instructions shown before the assessment starts" /><button type="submit" disabled={busy}>{busy ? "Creating..." : `Create ${TYPE_LABELS[requestedType]}`}</button></form>
+    </div>;
+  }
+
+  if (loading) return <p>Loading...</p>;
+  if (!module) return <div><p className="error-text">{error || "Module not found."}</p><Link to="/instructor/modules">Back to modules</Link></div>;
+
+  return <div className="module-editor-page">
+    <div className="page-header module-editor-header"><div><div className="module-title-line"><span className={`section-chip section-${module.module_type}`}>{module.module_label}</span><span className={`badge ${module.status === "published" ? "badge-green" : module.status === "archived" ? "badge-gray" : "badge-amber"}`}>{module.status}</span></div><h1>{module.title}</h1><p className="page-subtitle">{module.duration_minutes} minutes · {module.part_count} parts · {module.question_count} questions · {module.blueprint_version}</p></div><Link to="/instructor/modules">← All modules</Link></div>
+    {error && <p className="error-text notice-line">{error}</p>}{notice && <p className="success-text notice-line">{notice}</p>}
+
+    <section className={`module-readiness ${module.ready_to_publish ? "is-ready" : "needs-work"}`}><div><h2>{module.ready_to_publish ? "Ready to publish" : "Publishing checklist"}</h2><p>{module.ready_to_publish ? "Every required part, mark and audio rule is satisfied." : "You can work in any order. These checks are enforced only when publishing."}</p></div>{!module.ready_to_publish && <ul>{module.validation_errors.map((message) => <li key={message}>{message}</li>)}</ul>}<div className="module-status-actions">{module.status === "draft" && <button onClick={() => changeStatus("published")} disabled={busy || !module.ready_to_publish}>Publish module</button>}{module.status === "published" && <><button className="secondary-button" onClick={() => changeStatus("draft")} disabled={busy}>Return to draft</button><button onClick={() => changeStatus("archived")} disabled={busy}>Archive</button></>}{module.status === "archived" && <button onClick={() => changeStatus("draft")} disabled={busy}>Restore as draft</button>}</div></section>
+
+    <form className="form-card wide module-details" onSubmit={saveDetails}><div className="panel-title"><div><h2>Module details</h2><p>The assessment type and official timing cannot drift from its blueprint.</p></div><strong>{module.duration_minutes} min</strong></div><label htmlFor="module-title">Title</label><input id="module-title" value={details.title} onChange={(event) => setDetails({ ...details, title: event.target.value })} required readOnly={!isEditable} /><label htmlFor="module-description">Description</label><textarea id="module-description" rows={3} value={details.description} onChange={(event) => setDetails({ ...details, description: event.target.value })} readOnly={!isEditable} /><label htmlFor="module-instructions">Candidate instructions</label><textarea id="module-instructions" rows={3} value={details.instructions} onChange={(event) => setDetails({ ...details, instructions: event.target.value })} readOnly={!isEditable} />{isEditable && <div className="form-actions"><button type="submit" disabled={busy}>Save details</button><button type="button" className="danger-text" onClick={deleteModule}>Delete module</button></div>}</form>
+
+    <div className="module-authoring-layout">
+      <aside className="module-part-nav" aria-label="Assessment parts"><h2>Assessment parts</h2><p>Select a part before adding or uploading anything.</p>{module.parts?.map((part) => <button className={part.id === selectedPartId ? "active" : ""} onClick={() => choosePart(part)} key={part.id}><span><strong>{part.title}</strong><small>{part.section_type} · {part.auto_marked ? "auto-marked" : "examiner-marked"}</small></span><span>{part.questions.length}{part.question_limit ? `/${part.question_limit}` : "+"}</span></button>)}</aside>
+      {selectedPart && <main className="module-part-editor" id="module-part-editor">
+        <section className="part-spec-card"><div className="part-spec-head"><div><span className={`section-chip section-${selectedPart.section_type}`}>{selectedPart.section_type}</span><h2>{selectedPart.title}</h2></div><div className="part-target"><strong>{selectedPart.questions.length}{selectedPart.question_limit ? ` / ${selectedPart.question_limit}` : ""}</strong><span>questions</span></div></div><p>{selectedPart.skill_focus}</p>{selectedPart.instructions && <p className="part-instructions"><strong>Format:</strong> {selectedPart.instructions}</p>}<div className="part-facts"><span>{selectedPart.auto_marked ? "Auto-marked" : "Examiner-marked"}</span>{selectedPart.max_marks && <span>{selectedPart.max_marks} raw marks</span>}{selectedPart.answer_constraints.audio_plays && <span>Audio plays {selectedPart.answer_constraints.audio_plays}×</span>}{selectedPart.answer_constraints.minimum_words && <span>Minimum {selectedPart.answer_constraints.minimum_words} words</span>}{selectedPart.answer_constraints.maximum_words && <span>Maximum {selectedPart.answer_constraints.maximum_words} words</span>}</div>
+          {!!selectedPart.rubric.length && <details className="rubric-details" open><summary>Assessment criteria — {selectedPart.rubric.length} × 8 marks</summary><div className="rubric-grid">{selectedPart.rubric.map((criterion) => <article key={criterion.criterion}><div><strong>{criterion.criterion}</strong><span>0–{criterion.max_marks}</span></div><p>{criterion.description}</p></article>)}</div></details>}
+        </section>
+
+        {selectedPart.section_type === "listening" && <section className="listening-audio-panel"><div className="panel-title"><div><span className="phase-chip">Required listening media</span><h2>Audio for {selectedPart.title}</h2><p>Upload an existing MP3 or turn a written conversation into an MP3.</p></div></div>{isEditable && <div className="audio-method-grid"><form onSubmit={uploadAudio}><h3>Upload MP3</h3><label htmlFor="audio-title">Audio title</label><input id="audio-title" value={audioTitle} onChange={(event) => setAudioTitle(event.target.value)} required /><label htmlFor="audio-file">MP3 file</label><input id="audio-file" type="file" accept=".mp3,audio/mpeg" onChange={(event) => setAudioFile(event.target.files?.[0] ?? null)} required /><button type="submit" disabled={busy || !audioFile}>{busy ? "Working..." : "Attach MP3 to this part"}</button></form><form onSubmit={generateAudio}><h3>Generate MP3 from text</h3><label htmlFor="tts-title">Audio title</label><input id="tts-title" value={tts.title} onChange={(event) => setTts({ ...tts, title: event.target.value })} required /><div className="form-grid"><div><label htmlFor="tts-voice">English voice</label><select id="tts-voice" value={tts.voice} onChange={(event) => setTts({ ...tts, voice: event.target.value })}>{voices.map((voice) => <option value={voice.id} key={voice.id}>{voice.label}</option>)}</select></div><div><label htmlFor="tts-rate">Speaking rate</label><select id="tts-rate" value={tts.rate} onChange={(event) => setTts({ ...tts, rate: event.target.value })}><option value="-20%">Slower</option><option value="+0%">Normal</option><option value="+15%">Faster</option></select></div></div><label htmlFor="tts-conversation">Conversation or transcript</label><textarea id="tts-conversation" rows={8} value={tts.conversation} onChange={(event) => setTts({ ...tts, conversation: event.target.value })} placeholder={"Speaker A: Welcome to today's lecture...\nSpeaker B: Thank you. Let's begin..."} required /><button type="submit" disabled={busy || !tts.conversation.trim()}>{busy ? "Generating..." : "Generate & attach MP3"}</button></form></div>}
+          <div className="part-audio-list">{!selectedPart.assets.length ? <p className="empty-message">No audio attached to this part yet.</p> : selectedPart.assets.map((asset) => <article key={asset.id}><div><strong>{asset.title}</strong><small>{asset.asset_type === "tts_mp3" ? `Generated voice · ${asset.tts_voice}` : asset.original_filename}</small></div><audio controls preload="metadata" src={`${API_BASE_URL}${asset.url}`}>Your browser does not support audio.</audio>{asset.transcript && <details><summary>Transcript</summary><p>{asset.transcript}</p></details>}{isEditable && <button className="danger-text" onClick={() => deleteAudio(asset.id)}>Delete</button>}</article>)}</div>
+        </section>}
+
+        {isEditable && manual && <div className="module-entry-grid"><section className="authoring-panel" id="manual-module-question"><div className="panel-title"><div><span className="phase-chip">Single entry</span><h2>{editingQuestionId ? "Edit question" : `Add to ${selectedPart.title}`}</h2></div></div><form className="question-form" onSubmit={saveQuestion}><label htmlFor="module-question-type">Question type</label><select id="module-question-type" value={manual.question_type} onChange={(event) => changeQuestionType(event.target.value as QuestionType)}>{(selectedPart.answer_constraints.allowed_question_types ?? []).map((type) => <option value={type} key={type}>{QUESTION_LABELS[type]}</option>)}</select><label htmlFor="module-question-passage">Passage or context</label><textarea id="module-question-passage" rows={4} value={manual.passage ?? ""} onChange={(event) => setManual({ ...manual, passage: event.target.value })} placeholder="Optional passage, transcript context, visual description, or role-play setup" /><label htmlFor="module-question-prompt">Question or task prompt</label><textarea id="module-question-prompt" rows={4} value={manual.prompt} onChange={(event) => setManual({ ...manual, prompt: event.target.value })} required />{CHOICE_TYPES.has(manual.question_type) && <fieldset className="option-editor"><legend>Options and correct answer</legend>{manual.options.map((option, index) => <div className="option-edit-row" key={option.key}><label className="answer-picker"><input type={manual.question_type === "mcq_multiple" ? "checkbox" : "radio"} checked={manual.correct_answers.includes(option.key)} onChange={() => toggleCorrect(option.key)} /><span>{option.key}</span></label><input value={option.text} onChange={(event) => updateOption(index, event.target.value)} required /></div>)}</fieldset>}{!CHOICE_TYPES.has(manual.question_type) && !ANSWER_FREE_TYPES.has(manual.question_type) && <><label htmlFor="module-answers">Accepted answer(s)</label><input id="module-answers" value={manual.correct_answers.join(", ")} onChange={(event) => setManual({ ...manual, correct_answers: event.target.value.split(",").map((answer) => answer.trim()).filter(Boolean) })} placeholder="Separate alternatives with commas" required /></>}<div className="form-grid"><div><label htmlFor="module-points">Raw marks</label><input id="module-points" type="number" min="0.01" step="0.01" value={manual.points} onChange={(event) => setManual({ ...manual, points: event.target.value })} required /></div><div><label htmlFor="module-difficulty">Difficulty</label><select id="module-difficulty" value={manual.difficulty} onChange={(event) => setManual({ ...manual, difficulty: event.target.value as QuestionDraft["difficulty"] })}><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div></div><label htmlFor="module-explanation">Marking note or answer explanation</label><textarea id="module-explanation" rows={3} value={manual.explanation ?? ""} onChange={(event) => setManual({ ...manual, explanation: event.target.value })} /><div className="form-actions"><button type="submit" disabled={busy}>{editingQuestionId ? "Update question" : "Add question"}</button>{editingQuestionId && <button type="button" className="secondary-button" onClick={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}>Cancel</button>}</div></form></section>
+          <section className="authoring-panel"><div className="panel-title"><div><span className="phase-chip">Bulk import</span><h2>PDF or CSV → {selectedPart.title}</h2></div></div><p className="hint">This upload is permanently scoped to <strong>{module.title} / {selectedPart.title}</strong>. Extracted content is listed for review before saving.</p><form className="import-upload" onSubmit={previewImport}><input type="file" accept=".pdf,.csv,application/pdf,text/csv" onChange={(event) => setImportFile(event.target.files?.[0] ?? null)} required /><button type="submit" disabled={busy || !importFile}>{busy ? "Extracting..." : "Extract & review"}</button></form></section></div>}
+
+        {preview && <section className="import-review"><div className="import-review-header"><div><h2>Review extracted content</h2><p>{preview.question_count} detected from {preview.source_filename} → {module.title} / {selectedPart.title}</p></div><div className="review-actions"><button className="secondary-button" onClick={() => setPreview(null)}>Discard</button><button onClick={commitImport} disabled={busy || !selectedImports.size}>Import {selectedImports.size} selected</button></div></div>{preview.warnings.length > 0 && <div className="import-warning"><strong>Extraction warnings</strong><ul>{preview.warnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul></div>}<details className="source-content"><summary>List extracted file text</summary><pre>{preview.source_text}</pre></details><div className="preview-list">{preview.questions.map((question, index) => <article className={`preview-question${selectedImports.has(index) ? " selected" : ""}`} key={index}><label className="preview-selector"><input type="checkbox" checked={selectedImports.has(index)} onChange={() => setSelectedImports((current) => { const next = new Set(current); if (next.has(index)) next.delete(index); else next.add(index); return next; })} /> Include item {index + 1}</label><label>Question type</label><select value={question.question_type} onChange={(event) => updatePreview(index, { question_type: event.target.value as QuestionType })}>{(selectedPart.answer_constraints.allowed_question_types ?? []).map((type) => <option value={type} key={type}>{QUESTION_LABELS[type]}</option>)}</select><label>Extracted question or prompt</label><textarea rows={3} value={question.prompt} onChange={(event) => updatePreview(index, { prompt: event.target.value })} />{!ANSWER_FREE_TYPES.has(question.question_type) && <><label>Correct answer key(s)</label><input value={question.correct_answers.join(", ")} onChange={(event) => updatePreview(index, { correct_answers: event.target.value.split(",").map((answer) => answer.trim()).filter(Boolean) })} /></>}{question.options.length > 0 && <ol className="saved-options" type="A">{question.options.map((option) => <li key={option.key}>{option.text}</li>)}</ol>}</article>)}</div></section>}
+
+        <section className="question-list-section"><div className="section-heading"><div><h2>Saved content — {selectedPart.title}</h2><p>{selectedPart.questions.length}{selectedPart.question_limit ? ` of ${selectedPart.question_limit}` : ""} required questions</p></div></div>{!selectedPart.questions.length ? <div className="empty-state compact-empty"><h2>No content yet</h2><p>Add one item manually or upload a PDF/CSV specifically to this part.</p></div> : <div className="saved-question-list">{selectedPart.questions.map((question, index) => <article className="saved-question" key={question.id}><div className="question-number">{index + 1}</div><div className="question-body"><div className="question-meta"><span>{QUESTION_LABELS[question.question_type]}</span><span>{question.points} mark{Number(question.points) === 1 ? "" : "s"}</span><span>{question.source_type}{question.source_filename ? ` · ${question.source_filename}` : ""}</span></div><h3>{question.prompt}</h3>{question.passage && <p>{question.passage}</p>}{question.options.length > 0 && <ol className="saved-options" type="A">{question.options.map((option) => <li className={question.correct_answers.includes(option.key) ? "correct" : ""} key={option.key}>{option.text}</li>)}</ol>}</div>{isEditable && <div className="question-actions"><button className="secondary-button" onClick={() => editQuestion(question)}>Edit</button><button className="danger-text" onClick={() => deleteQuestion(question)}>Delete</button></div>}</article>)}</div>}</section>
+      </main>}
+    </div>
+  </div>;
+}

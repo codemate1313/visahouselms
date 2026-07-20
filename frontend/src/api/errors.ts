@@ -4,7 +4,7 @@ interface PydanticValidationError {
   msg: string;
 }
 
-type ErrorDetail = string | PydanticValidationError[] | undefined;
+type ErrorDetail = string | PydanticValidationError[] | { message?: string; errors?: string[] } | undefined;
 
 export function extractErrorMessage(err: unknown, fallback: string): string {
   if (typeof err === "object" && err !== null && "response" in err) {
@@ -22,6 +22,11 @@ export function extractErrorMessage(err: unknown, fallback: string): string {
       return detail
         .map((item) => item.msg.replace(/^Value error, /, ""))
         .join(" ");
+    }
+
+    if (typeof detail === "object" && detail !== null && !Array.isArray(detail)) {
+      const messages = Array.isArray(detail.errors) ? detail.errors.join(" ") : "";
+      return [detail.message, messages].filter(Boolean).join(": ") || fallback;
     }
   }
   return fallback;

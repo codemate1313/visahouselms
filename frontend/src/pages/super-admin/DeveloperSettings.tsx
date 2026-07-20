@@ -1,7 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
-import { PasswordInput } from "../../components/PasswordInput";
 
 type Tab = "smtp" | "fcm" | "maintenance" | "backups";
 
@@ -113,7 +112,7 @@ function SmtpTab() {
         </div>
         <div>
           <label>Password</label>
-          <PasswordInput value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="stored encrypted" />
+          <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="stored encrypted" />
         </div>
         <div>
           <label>Encryption</label>

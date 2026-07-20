@@ -8,6 +8,7 @@ export function DashboardLayout() {
   const location = useLocation();
   const navRef = useRef<HTMLElement>(null);
   const [bookmark, setBookmark] = useState({ top: 0, height: 0, visible: false });
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const user = useAuthStore((state) => state.user);
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const clear = useAuthStore((state) => state.clear);
@@ -27,6 +28,7 @@ export function DashboardLayout() {
   const initials = `${user?.first_name?.[0] ?? ""}${user?.last_name?.[0] ?? ""}`.toUpperCase();
 
   useLayoutEffect(() => {
+    setMobileNavOpen(false);
     const positionBookmark = () => {
       const nav = navRef.current;
       const activeLink = nav?.querySelector<HTMLAnchorElement>("a.active");
@@ -50,7 +52,10 @@ export function DashboardLayout() {
 
   return (
     <div className="dashboard">
-      <aside className="dashboard-nav">
+      <button className="mobile-nav-toggle" aria-label="Open navigation" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen(true)}><span /><span /><span /></button>
+      {mobileNavOpen && <button className="nav-overlay" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)} />}
+      <aside className={`dashboard-nav${mobileNavOpen ? " mobile-open" : ""}`}>
+        <button className="mobile-nav-close" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)}>×</button>
         <div className="dashboard-brand">
           <h2>IELTS LMS</h2>
           <p className="dashboard-role">Super Admin</p>
@@ -61,21 +66,15 @@ export function DashboardLayout() {
             style={{ height: bookmark.height, transform: `translateY(${bookmark.top}px)` }}
             aria-hidden="true"
           />
-          <NavLink to="/super-admin" end>Dashboard</NavLink>
           <NavLink to="/super-admin/accounts">Admin Accounts</NavLink>
+          <NavLink to="/super-admin/instructors">SA Instructors</NavLink>
+          <NavLink to="/super-admin/courses">Course Catalog</NavLink>
           <NavLink to="/super-admin/profile">My Profile</NavLink>
           <NavLink to="/super-admin/sessions">Active Sessions</NavLink>
           <NavLink to="/super-admin/change-password">Change Password</NavLink>
           <p className="nav-section">SaaS</p>
-          <NavLink to="/super-admin/institutes">Institutes</NavLink>
           <NavLink to="/super-admin/plans">Plans</NavLink>
           <NavLink to="/super-admin/subscriptions">Subscriptions</NavLink>
-          <NavLink to="/super-admin/trial-config">Trial Settings</NavLink>
-          <NavLink to="/super-admin/demo-accounts">Demo Accounts</NavLink>
-          <NavLink to="/super-admin/coupons">Coupons</NavLink>
-          <NavLink to="/super-admin/payments">Payments</NavLink>
-          <NavLink to="/super-admin/payment-methods">Payment Methods</NavLink>
-          <NavLink to="/super-admin/revenue">Revenue</NavLink>
           <p className="nav-section">System</p>
           <NavLink to="/super-admin/dev-settings">Developer Settings</NavLink>
           <NavLink to="/super-admin/logs">Logs</NavLink>

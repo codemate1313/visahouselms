@@ -1,12 +1,15 @@
 import { type FormEvent, useState } from "react";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
-import { PasswordInput } from "../../components/PasswordInput";
 import { PasswordStrengthMeter } from "../../components/PasswordStrengthMeter";
 import { useAuthStore } from "../../store/authStore";
 import { evaluatePassword } from "../../utils/passwordStrength";
 
-export function ChangePassword() {
+interface ChangePasswordProps {
+  apiBase?: string;
+}
+
+export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps) {
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -31,7 +34,7 @@ export function ChangePassword() {
 
     setSaving(true);
     try {
-      await apiClient.post("/super-admin/me/change-password", {
+      await apiClient.post(`${apiBase}/me/change-password`, {
         current_password: currentPassword,
         new_password: newPassword,
       });
@@ -60,16 +63,18 @@ export function ChangePassword() {
 
       <form className="form-card" onSubmit={handleSubmit}>
         <label htmlFor="current_password">Current password</label>
-        <PasswordInput
+        <input
           id="current_password"
+          type="password"
           value={currentPassword}
           onChange={(event) => setCurrentPassword(event.target.value)}
           required
         />
 
         <label htmlFor="new_password">New password</label>
-        <PasswordInput
+        <input
           id="new_password"
+          type="password"
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
           required
@@ -77,8 +82,9 @@ export function ChangePassword() {
         <PasswordStrengthMeter password={newPassword} />
 
         <label htmlFor="confirm_password">Confirm new password</label>
-        <PasswordInput
+        <input
           id="confirm_password"
+          type="password"
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           required

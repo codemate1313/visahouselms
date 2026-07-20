@@ -20,10 +20,11 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     force_password_reset: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     avatar_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    # set by Phase 5 direct-student signup; drives trial_service.get_trial_state
-    trial_started_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
 
     role: Mapped["Role"] = relationship(back_populates="users")  # noqa: F821
     institute: Mapped[Optional["Institute"]] = relationship()  # noqa: F821
+    instructor_profile: Mapped[Optional["InstructorProfile"]] = relationship(  # noqa: F821
+        back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )

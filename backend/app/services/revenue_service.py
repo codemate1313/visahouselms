@@ -47,15 +47,23 @@ def summary(
         for iid, name, total_amt, count in by_institute_query.group_by(Institute.id, Institute.name).all()
     ]
 
+    # MySQL and SQLite expose different month-formatting functions. Keep the
+    # production query native while making the documented SQLite dev setup
+    # behave identically.
+    month_expression = (
+        func.strftime("%Y-%m", Payment.created_at)
+        if db.bind is not None and db.bind.dialect.name == "sqlite"
+        else func.date_format(Payment.created_at, "%Y-%m")
+    )
     by_month_query = _apply_common(
-        db.query(func.date_format(Payment.created_at, "%Y-%m"), func.sum(Payment.amount_paid), func.count(Payment.id))
+        db.query(month_expression, func.sum(Payment.amount_paid), func.count(Payment.id))
         .filter(Payment.status.in_(REVENUE_STATUSES))
     )
     by_month = [
         {"month": month, "total": str(total_amt), "count": count}
-        for month, total_amt, count in by_month_query.group_by(
-            func.date_format(Payment.created_at, "%Y-%m")
-        ).order_by(func.date_format(Payment.created_at, "%Y-%m")).all()
+        for month, total_amt, count in by_month_query.group_by(month_expression)
+        .order_by(month_expression)
+        .all()
     ]
 
     dues_query = _apply_common(

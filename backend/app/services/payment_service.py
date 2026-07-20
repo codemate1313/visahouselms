@@ -221,10 +221,17 @@ def create_course_payment(
     gateway_reference: Optional[str],
     ip: Optional[str] = None,
 ) -> dict:
-    """B2C direct-student course purchase. Phase 3 (courses) and Phase 5 (the
-    direct-student portal) don't exist yet, so this has no router - it's
-    proven with a direct call. Kept generic/real now so Phase 5's checkout
-    only has to call this, not design it."""
+    """B2C direct-student course purchase foundation for Phase 5 checkout."""
+    from app.models.course import COURSE_PUBLISHED, Course
+
+    course = db.get(Course, course_id)
+    if course is None or course.status != COURSE_PUBLISHED:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Course is not available for purchase")
+    if amount != course.price or currency.upper() != course.currency.upper():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Course price changed; refresh checkout and try again",
+        )
     discount, coupon = coupon_service.validate_and_price(db, coupon_code, amount, "course", course_id)
     final_amount = amount - discount
 

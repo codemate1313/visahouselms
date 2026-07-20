@@ -2,8 +2,11 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.coupon import Coupon
+from app.models.course import COURSE_PUBLISHED, Course
 from app.models.institute import Institute
 from app.models.payment import Payment
+from app.models.role import SA_INSTRUCTOR, Role
+from app.models.user import User
 from app.services import demo_service, revenue_service, subscription_service, super_admin_service
 
 SUBSCRIPTION_STATES = (
@@ -29,6 +32,12 @@ def get_summary(db: Session) -> dict:
 
     coupons_active = db.query(Coupon).filter(Coupon.is_active.is_(True)).count()
     super_admin_accounts = len(super_admin_service.list_super_admins(db))
+    instructor_role = db.query(Role).filter(Role.name == SA_INSTRUCTOR).first()
+    sa_instructor_accounts = (
+        db.query(User).filter(User.role_id == instructor_role.id).count()
+        if instructor_role
+        else 0
+    )
 
     revenue = revenue_service.summary(db)
 
@@ -45,6 +54,9 @@ def get_summary(db: Session) -> dict:
             "demo_accounts_active": demo_active_count,
             "coupons_active": coupons_active,
             "super_admin_accounts": super_admin_accounts,
+            "sa_instructor_accounts": sa_instructor_accounts,
+            "courses_total": db.query(Course).count(),
+            "courses_published": db.query(Course).filter(Course.status == COURSE_PUBLISHED).count(),
         },
         "revenue": {
             "total_revenue": revenue["total_revenue"],

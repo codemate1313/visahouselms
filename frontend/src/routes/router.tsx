@@ -1,10 +1,18 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { InstitutePortalComingSoon } from "../pages/InstitutePortalComingSoon";
 import { Login } from "../pages/Login";
+import { GradingQueue } from "../pages/instructor/GradingQueue";
+import { InstructorDashboard } from "../pages/instructor/InstructorDashboard";
+import { InstructorLayout } from "../pages/instructor/InstructorLayout";
+import { InstructorProfile } from "../pages/instructor/InstructorProfile";
+import { ModuleEditor } from "../pages/instructor/ModuleEditor";
+import { Modules } from "../pages/instructor/Modules";
 import { AccountForm } from "../pages/super-admin/AccountForm";
 import { AccountsList } from "../pages/super-admin/AccountsList";
 import { ChangePassword } from "../pages/super-admin/ChangePassword";
 import { CouponForm } from "../pages/super-admin/CouponForm";
+import { CourseAssignments } from "../pages/super-admin/CourseAssignments";
+import { CourseCatalog } from "../pages/super-admin/CourseCatalog";
 import { Coupons } from "../pages/super-admin/Coupons";
 import { Dashboard } from "../pages/super-admin/Dashboard";
 import { DashboardLayout } from "../pages/super-admin/DashboardLayout";
@@ -12,6 +20,8 @@ import { DemoAccounts } from "../pages/super-admin/DemoAccounts";
 import { DeveloperSettings } from "../pages/super-admin/DeveloperSettings";
 import { InstituteBranding } from "../pages/super-admin/InstituteBranding";
 import { InstituteForm } from "../pages/super-admin/InstituteForm";
+import { InstructorForm } from "../pages/super-admin/InstructorForm";
+import { Instructors } from "../pages/super-admin/Instructors";
 import { Institutes } from "../pages/super-admin/Institutes";
 import { Invoice } from "../pages/super-admin/Invoice";
 import { Logs } from "../pages/super-admin/Logs";
@@ -41,6 +51,11 @@ export const router = createBrowserRouter([
           { path: "accounts", element: <AccountsList /> },
           { path: "accounts/new", element: <AccountForm /> },
           { path: "accounts/:id", element: <AccountForm /> },
+          { path: "instructors", element: <Instructors /> },
+          { path: "instructors/new", element: <InstructorForm /> },
+          { path: "instructors/:id", element: <InstructorForm /> },
+          { path: "courses", element: <CourseCatalog /> },
+          { path: "courses/:id", element: <CourseAssignments /> },
           { path: "profile", element: <Profile /> },
           { path: "sessions", element: <Sessions /> },
           { path: "change-password", element: <ChangePassword /> },
@@ -64,6 +79,29 @@ export const router = createBrowserRouter([
           { path: "payments/:id/invoice", element: <Invoice /> },
           { path: "payment-methods", element: <PaymentMethods /> },
           { path: "revenue", element: <RevenueDashboard /> },
+        ],
+      },
+    ],
+  },
+  {
+    element: <ProtectedRoute allowedRoles={["SA_INSTRUCTOR"]} />,
+    children: [
+      {
+        path: "/instructor",
+        element: <InstructorLayout />,
+        children: [
+          { index: true, element: <InstructorDashboard /> },
+          { path: "workspace", element: <Navigate to="/instructor/modules" replace /> },
+          { path: "modules", element: <Modules /> },
+          { path: "modules/new/:type", element: <ModuleEditor /> },
+          { path: "modules/:id", element: <ModuleEditor /> },
+          { path: "courses/*", element: <Navigate to="/instructor/modules" replace /> },
+          { path: "question-banks/*", element: <Navigate to="/instructor/modules" replace /> },
+          { path: "tests/*", element: <Navigate to="/instructor/modules" replace /> },
+          { path: "grading", element: <GradingQueue /> },
+          { path: "profile", element: <InstructorProfile /> },
+          { path: "sessions", element: <Sessions apiBase="/instructor" /> },
+          { path: "change-password", element: <ChangePassword apiBase="/instructor" /> },
         ],
       },
     ],
