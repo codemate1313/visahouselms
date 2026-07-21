@@ -13,6 +13,10 @@ class SuperAdminAccountOut(BaseModel):
     last_name: str
     is_active: bool
     force_password_reset: bool
+    dob: Optional[datetime] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    avatar_path: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -23,6 +27,10 @@ class SuperAdminAccountCreate(BaseModel):
     password: str
     first_name: str
     last_name: str
+    dob: Optional[datetime] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    avatar_path: Optional[str] = None
 
     @field_validator("password")
     @classmethod
@@ -35,12 +43,20 @@ class SuperAdminAccountUpdate(BaseModel):
     email: Optional[EmailStr] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    dob: Optional[datetime] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    avatar_path: Optional[str] = None
 
 
 class ProfileUpdateRequest(BaseModel):
     email: Optional[EmailStr] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    dob: Optional[datetime] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    avatar_path: Optional[str] = None
 
 
 class SessionOut(BaseModel):

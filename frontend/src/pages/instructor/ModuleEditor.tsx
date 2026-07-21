@@ -108,6 +108,7 @@ export function ModuleEditor() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioTitle, setAudioTitle] = useState("Listening audio");
   const [tts, setTts] = useState({ title: "Generated conversation", conversation: "", rate: "+0%" });
+  const [avatarGenerating, setAvatarGenerating] = useState(false);
   const [loading, setLoading] = useState(!isNew);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -289,6 +290,32 @@ export function ModuleEditor() {
     catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the audio.")); }
   }
 
+  async function generateAvatar() {
+    if (!module || !selectedPart) return;
+    setAvatarGenerating(true); setError(null);
+    try {
+      const { data } = await apiClient.post<{ job_id: number }>(`/instructor/modules/${module.id}/parts/${selectedPart.id}/avatar`);
+      const partId = selectedPart.id;
+      const poll = async () => {
+        const { data: job } = await apiClient.get(`/instructor/modules/jobs/${data.job_id}`, { headers: { "X-Skip-Loader": "1" } });
+        if (job.status === "done") {
+          setAvatarGenerating(false);
+          await loadModule(partId);
+          setNotice("Avatar video generated.");
+        } else if (job.status === "failed") {
+          setAvatarGenerating(false);
+          setError(job.result || "Avatar generation failed.");
+        } else {
+          setTimeout(poll, 3000);
+        }
+      };
+      setTimeout(poll, 3000);
+    } catch (err: unknown) {
+      setAvatarGenerating(false);
+      setError(extractErrorMessage(err, "Failed to start avatar generation."));
+    }
+  }
+
   async function changeStatus(status: "draft" | "published" | "archived") {
     if (!module) return;
     setBusy(true); setError(null); setNotice(null);
@@ -364,6 +391,10 @@ export function ModuleEditor() {
 
         {selectedPart.section_type === "listening" && <section className="listening-audio-panel"><div className="panel-title"><div><span className="phase-chip">Required listening media</span><h2>Audio for {selectedPart.title}</h2><p>Upload an existing MP3 or turn a written conversation into an automatically voiced MP3.</p></div></div>{isEditable && <div className="audio-method-grid"><form onSubmit={uploadAudio}><h3>Upload MP3</h3><label htmlFor="audio-title">Audio title</label><input id="audio-title" value={audioTitle} onChange={(event) => setAudioTitle(event.target.value)} required /><label htmlFor="audio-file">MP3 file</label><input id="audio-file" type="file" accept=".mp3,audio/mpeg" onChange={(event) => setAudioFile(event.target.files?.[0] ?? null)} required /><button type="submit" disabled={busy || !audioFile}>{busy ? "Working..." : "Attach MP3 to this part"}</button></form><form onSubmit={generateAudio}><h3>Generate multi-speaker MP3</h3><label htmlFor="tts-title">Audio title</label><input id="tts-title" value={tts.title} onChange={(event) => setTts({ ...tts, title: event.target.value })} required /><label htmlFor="tts-conversation">Conversation or transcript</label><textarea id="tts-conversation" rows={8} value={tts.conversation} onChange={(event) => setTts({ ...tts, conversation: event.target.value })} placeholder={"Interviewer: Welcome to today's discussion.\nStudent: Thank you. I am glad to be here.\nInterviewer: Let us begin."} required /><p className="hint">Put every person's name before their lines, for example <strong>Speaker A:</strong> or <strong>Sarah:</strong>. Reuse the same name to keep the same voice.</p><div className={`auto-voice-summary${detectedTtsSpeakers.length > 6 ? " has-error" : ""}`}><strong>{detectedTtsSpeakers.length ? `${detectedTtsSpeakers.length} speaker${detectedTtsSpeakers.length === 1 ? "" : "s"} detected` : "Waiting for conversation"}</strong><span>{detectedTtsSpeakers.length ? detectedTtsSpeakers.join(" · ") : "Voices will be assigned automatically."}</span>{detectedTtsSpeakers.length > 6 && <small>Use no more than six distinct speakers.</small>}</div><label htmlFor="tts-rate">Speaking rate</label><select id="tts-rate" value={tts.rate} onChange={(event) => setTts({ ...tts, rate: event.target.value })}><option value="-20%">Slower</option><option value="+0%">Normal</option><option value="+15%">Faster</option></select><button type="submit" disabled={busy || !tts.conversation.trim() || detectedTtsSpeakers.length > 6}>{busy ? "Generating voices..." : `Generate with ${detectedTtsSpeakers.length || 1} automatic voice${detectedTtsSpeakers.length <= 1 ? "" : "s"}`}</button></form></div>}
           <div className="part-audio-list">{!selectedPart.assets.length ? <p className="empty-message">No audio attached to this part yet.</p> : selectedPart.assets.map((asset) => <article key={asset.id}><div><strong>{asset.title}</strong><small>{asset.asset_type === "tts_mp3" ? `Generated voice · ${asset.tts_voice}` : asset.original_filename}</small></div><audio controls preload="metadata" src={`${API_BASE_URL}${asset.url}`}>Your browser does not support audio.</audio>{asset.transcript && <details><summary>Transcript</summary><p>{asset.transcript}</p></details>}{isEditable && <button className="danger-text" onClick={() => deleteAudio(asset.id)}>Delete</button>}</article>)}</div>
+        </section>}
+
+        {selectedPart.section_type === "speaking" && <section className="listening-audio-panel"><div className="panel-title"><div><span className="phase-chip">Optional presenter video</span><h2>Avatar for {selectedPart.title}</h2><p>Generate a talking-presenter video reading this part's prompts, so students see and hear an examiner rather than just text. Requires a D-ID key configured in Developer Settings — Speaking parts publish without one too.</p></div></div>{isEditable && <div className="form-actions"><button type="button" onClick={generateAvatar} disabled={avatarGenerating || !selectedPart.questions.length}>{avatarGenerating ? "Generating video... (about a minute)" : "Generate avatar video"}</button></div>}
+          <div className="part-audio-list">{!selectedPart.assets.filter((a) => a.asset_type === "avatar_mp4").length ? <p className="empty-message">No avatar video generated yet.</p> : selectedPart.assets.filter((a) => a.asset_type === "avatar_mp4").map((asset) => <article key={asset.id}><div><strong>{asset.title}</strong></div><video controls preload="metadata" src={`${API_BASE_URL}${asset.url}`} style={{ maxWidth: 320 }}>Your browser does not support video.</video>{isEditable && <button className="danger-text" onClick={() => deleteAudio(asset.id)}>Delete</button>}</article>)}</div>
         </section>}
 
         {isEditable && manual && <div className="module-entry-grid"><section className="authoring-panel" id="manual-module-question"><div className="panel-title"><div><span className="phase-chip">Single entry</span><h2>{editingQuestionId ? "Edit question" : `Add to ${selectedPart.title}`}</h2></div></div><form className="question-form" onSubmit={saveQuestion}><label htmlFor="module-question-type">Question type</label><select id="module-question-type" value={manual.question_type} onChange={(event) => changeQuestionType(event.target.value as QuestionType)}>{(selectedPart.answer_constraints.allowed_question_types ?? []).map((type) => <option value={type} key={type}>{QUESTION_LABELS[type]}</option>)}</select><label htmlFor="module-question-passage">Passage or context</label><textarea id="module-question-passage" rows={4} value={manual.passage ?? ""} onChange={(event) => setManual({ ...manual, passage: event.target.value })} placeholder="Optional passage, transcript context, visual description, or role-play setup" /><label htmlFor="module-question-prompt">Question or task prompt</label><textarea id="module-question-prompt" rows={4} value={manual.prompt} onChange={(event) => setManual({ ...manual, prompt: event.target.value })} required />{CHOICE_TYPES.has(manual.question_type) && <fieldset className="option-editor"><legend>Options and correct answer</legend>{manual.options.map((option, index) => <div className="option-edit-row" key={option.key}><label className="answer-picker"><input type={manual.question_type === "mcq_multiple" ? "checkbox" : "radio"} checked={manual.correct_answers.includes(option.key)} onChange={() => toggleCorrect(option.key)} /><span>{option.key}</span></label><input value={option.text} onChange={(event) => updateOption(index, event.target.value)} required /></div>)}</fieldset>}{!CHOICE_TYPES.has(manual.question_type) && !ANSWER_FREE_TYPES.has(manual.question_type) && <><label htmlFor="module-answers">Accepted answer(s)</label><input id="module-answers" value={manual.correct_answers.join(", ")} onChange={(event) => setManual({ ...manual, correct_answers: event.target.value.split(",").map((answer) => answer.trim()).filter(Boolean) })} placeholder="Separate alternatives with commas" required /></>}<div className="form-grid"><div><label htmlFor="module-points">Raw marks</label><input id="module-points" type="number" min="0.01" step="0.01" value={manual.points} onChange={(event) => setManual({ ...manual, points: event.target.value })} required /></div><div><label htmlFor="module-difficulty">Difficulty</label><select id="module-difficulty" value={manual.difficulty} onChange={(event) => setManual({ ...manual, difficulty: event.target.value as QuestionDraft["difficulty"] })}><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div></div><label htmlFor="module-explanation">Marking note or answer explanation</label><textarea id="module-explanation" rows={3} value={manual.explanation ?? ""} onChange={(event) => setManual({ ...manual, explanation: event.target.value })} /><div className="form-actions"><button type="submit" disabled={busy}>{editingQuestionId ? "Update question" : "Add question"}</button>{editingQuestionId && <button type="button" className="secondary-button" onClick={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}>Cancel</button>}</div></form></section>

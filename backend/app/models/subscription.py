@@ -11,7 +11,11 @@ class Subscription(Base):
     __tablename__ = "subscriptions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    institute_id: Mapped[int] = mapped_column(ForeignKey("institutes.id"), nullable=False, index=True)
+    # exactly one of institute_id/user_id is set (B2B institute subscription
+    # vs a direct/B2C student's personal subscription) - enforced at the
+    # application layer in subscription_service, not a DB constraint.
+    institute_id: Mapped[Optional[int]] = mapped_column(ForeignKey("institutes.id"), nullable=True, index=True)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     plan_id: Mapped[int] = mapped_column(ForeignKey("plans.id"), nullable=False)
     starts_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -22,3 +26,4 @@ class Subscription(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     plan: Mapped["Plan"] = relationship()  # noqa: F821
+    user: Mapped[Optional["User"]] = relationship()  # noqa: F821

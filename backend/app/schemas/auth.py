@@ -1,11 +1,37 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
+
+from app.core.password_policy import validate_password_strength
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+
+class RegisterRequest(BaseModel):
+    """Public self-registration for direct (B2C) students only - every other
+    role in this app is admin-created."""
+
+    email: EmailStr
+    password: str
+    first_name: str
+    last_name: str
+
+    @field_validator("password")
+    @classmethod
+    def check_password_strength(cls, value: str) -> str:
+        validate_password_strength(value)
+        return value
+
+    @field_validator("first_name", "last_name")
+    @classmethod
+    def required_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Value cannot be blank")
+        return value[:100]
 
 
 class RefreshRequest(BaseModel):

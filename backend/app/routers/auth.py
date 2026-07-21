@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user
-from app.schemas.auth import CurrentUser, LoginRequest, LogoutRequest, RefreshRequest, TokenResponse
+from app.schemas.auth import CurrentUser, LoginRequest, LogoutRequest, RefreshRequest, RegisterRequest, TokenResponse
 from app.services import account_service, auth_service
 from app.models.user import User
 
@@ -16,6 +16,20 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
         db,
         payload.email,
         payload.password,
+        request.headers.get("user-agent"),
+        request.client.host if request.client else None,
+    )
+    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+
+
+@router.post("/register", response_model=TokenResponse, status_code=201)
+def register(payload: RegisterRequest, request: Request, db: Session = Depends(get_db)):
+    access_token, refresh_token = auth_service.register(
+        db,
+        payload.email,
+        payload.password,
+        payload.first_name,
+        payload.last_name,
         request.headers.get("user-agent"),
         request.client.host if request.client else None,
     )

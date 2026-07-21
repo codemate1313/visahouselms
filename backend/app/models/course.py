@@ -50,6 +50,12 @@ class Course(Base):
     assessments: Mapped[List["Assessment"]] = relationship(  # noqa: F821
         back_populates="course", cascade="all, delete-orphan"
     )
+    course_modules: Mapped[List["CourseModule"]] = relationship(  # noqa: F821
+        back_populates="course", cascade="all, delete-orphan", order_by="CourseModule.sort_order"
+    )
+    enrollments: Mapped[List["Enrollment"]] = relationship(  # noqa: F821
+        back_populates="course", cascade="all, delete-orphan"
+    )
 
 
 class CourseAsset(Base):

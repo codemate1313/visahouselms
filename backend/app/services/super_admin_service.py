@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from fastapi import HTTPException, status
@@ -53,7 +54,17 @@ def get_super_admin_or_404(db: Session, account_id: int) -> User:
 
 
 def create_super_admin(
-    db: Session, actor: User, email: str, password: str, first_name: str, last_name: str, ip_address: Optional[str]
+    db: Session,
+    actor: User,
+    email: str,
+    password: str,
+    first_name: str,
+    last_name: str,
+    ip_address: Optional[str],
+    dob: Optional[datetime] = None,
+    phone_number: Optional[str] = None,
+    address: Optional[str] = None,
+    avatar_path: Optional[str] = None,
 ) -> User:
     role = _super_admin_role(db)
     if db.query(User).filter(User.email == email).first() is not None:
@@ -67,6 +78,10 @@ def create_super_admin(
         first_name=first_name,
         last_name=last_name,
         is_active=True,
+        dob=dob,
+        phone_number=phone_number,
+        address=address,
+        avatar_path=avatar_path,
     )
     db.add(user)
     db.flush()
@@ -84,6 +99,10 @@ def update_super_admin(
     first_name: Optional[str],
     last_name: Optional[str],
     ip_address: Optional[str],
+    dob: Optional[datetime] = None,
+    phone_number: Optional[str] = None,
+    address: Optional[str] = None,
+    avatar_path: Optional[str] = None,
 ) -> User:
     user = get_super_admin_or_404(db, account_id)
 
@@ -95,6 +114,14 @@ def update_super_admin(
         user.first_name = first_name
     if last_name is not None:
         user.last_name = last_name
+    if dob is not None:
+        user.dob = dob
+    if phone_number is not None:
+        user.phone_number = phone_number
+    if address is not None:
+        user.address = address
+    if avatar_path is not None:
+        user.avatar_path = avatar_path
 
     db.add(user)
     _write_audit_log(db, actor, "super_admin.update", user.id, ip_address)

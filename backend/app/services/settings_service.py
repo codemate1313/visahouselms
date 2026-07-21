@@ -6,7 +6,7 @@ from app.core.crypto import decrypt_value, encrypt_value
 from app.models.setting import Setting
 
 # Keys whose values are Fernet-encrypted at rest and never returned by the API.
-SECRET_KEYS = {"smtp.password", "fcm.service_account_json"}
+SECRET_KEYS = {"smtp.password", "fcm.service_account_json", "avatar.api_key"}
 
 SECRET_PLACEHOLDER = "********"
 

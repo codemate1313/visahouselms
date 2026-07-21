@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.uploads import read_validated_mp3
@@ -17,7 +17,14 @@ from app.schemas.exam_module import (
     ModuleUpdate,
     TTSCreate,
 )
-from app.services import module_authoring_service, module_blueprint_service, question_import_service, tts_service
+from app.services import (
+    avatar_service,
+    job_service,
+    module_authoring_service,
+    module_blueprint_service,
+    question_import_service,
+    tts_service,
+)
 
 
 router = APIRouter(
@@ -259,6 +266,41 @@ async def generate_audio(
         voice=tts_service.voice_assignment_summary(assignments),
         ip=_ip(request),
     )
+
+
+@router.post("/{module_id}/parts/{part_id}/avatar", status_code=202)
+def generate_avatar(
+    module_id: int,
+    part_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    # Fail fast on obvious problems (wrong section, no prompts, not the
+    # owner, module not draft) before enqueuing the slow vendor call.
+    avatar_service.validate_part_for_generation(db, actor, module_id, part_id)
+    job = job_service.enqueue(
+        db,
+        "generate_avatar",
+        {"module_id": module_id, "part_id": part_id, "actor_id": actor.id, "ip": _ip(request)},
+    )
+    return {"job_id": job.id, "status": job.status}
+
+
+@router.get("/jobs/{job_id}")
+def avatar_job_status(job_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    job = job_service.get_job(db, job_id)
+    if job is None or (job.payload or {}).get("actor_id") != actor.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+    return {
+        "id": job.id,
+        "type": job.type,
+        "status": job.status,
+        "result": job.result,
+        "created_at": job.created_at,
+        "started_at": job.started_at,
+        "finished_at": job.finished_at,
+    }
 
 
 @router.delete("/{module_id}/assets/{asset_id}", status_code=204)

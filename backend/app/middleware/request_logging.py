@@ -40,7 +40,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         latency_ms = int((time.perf_counter() - start) * 1000)
 
-        if request.url.path.startswith(SKIP_PREFIXES):
+        if request.method == "OPTIONS" or request.url.path.startswith(SKIP_PREFIXES):
             return response
 
         user_id = _extract_user_id(request)

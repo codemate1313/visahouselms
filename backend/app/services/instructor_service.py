@@ -1,3 +1,4 @@
+from datetime import datetime
 import secrets
 import string
 from typing import Optional
@@ -73,6 +74,10 @@ def _serialize(user: User) -> dict:
         "force_password_reset": user.force_password_reset,
         "title": profile.title if profile else "IELTS Instructor",
         "bio": profile.bio if profile else None,
+        "dob": user.dob,
+        "phone_number": user.phone_number,
+        "address": user.address,
+        "avatar_path": user.avatar_path,
         "created_at": user.created_at,
     }
 
@@ -121,6 +126,10 @@ def create_instructor(
     last_name: str,
     title: str,
     bio: Optional[str],
+    dob: Optional[datetime] = None,
+    phone_number: Optional[str] = None,
+    address: Optional[str] = None,
+    avatar_path: Optional[str] = None,
     ip: Optional[str],
 ) -> dict:
     if db.query(User).filter(User.email == email).first() is not None:
@@ -137,6 +146,10 @@ def create_instructor(
         last_name=last_name,
         is_active=True,
         force_password_reset=True,
+        dob=dob,
+        phone_number=phone_number,
+        address=address,
+        avatar_path=avatar_path,
     )
     db.add(user)
     db.flush()
@@ -165,6 +178,10 @@ def update_instructor(
     last_name: Optional[str],
     title: Optional[str],
     bio: Optional[str],
+    dob: Optional[datetime] = None,
+    phone_number: Optional[str] = None,
+    address: Optional[str] = None,
+    avatar_path: Optional[str] = None,
     fields_set: set[str],
     ip: Optional[str],
 ) -> dict:
@@ -177,6 +194,14 @@ def update_instructor(
         user.first_name = first_name
     if last_name is not None:
         user.last_name = last_name
+    if dob is not None:
+        user.dob = dob
+    if phone_number is not None:
+        user.phone_number = phone_number
+    if address is not None:
+        user.address = address
+    if avatar_path is not None:
+        user.avatar_path = avatar_path
 
     profile = user.instructor_profile
     if profile is None:

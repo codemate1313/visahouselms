@@ -2,10 +2,11 @@ from decimal import Decimal
 from typing import List, Optional
 
 from fastapi import HTTPException, status
-from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy import func, or_
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.audit_log import AuditLog
+from app.models.exam_module import ExamModule
 from app.models.plan import Plan
 from app.models.subscription import Subscription
 from app.models.user import User
@@ -51,10 +52,41 @@ def _serialize(plan: Plan, subscription_count: Optional[int] = None) -> dict:
         "grace_days": plan.grace_days,
         "is_active": plan.is_active,
         "created_at": plan.created_at,
+        "module_count": len(plan.modules),
+        "modules": [
+            {
+                "id": module.id,
+                "title": module.title,
+                "module_type": module.module_type,
+                "duration_minutes": module.duration_minutes,
+                "status": module.status,
+            }
+            for module in plan.modules
+        ],
     }
     if subscription_count is not None:
         data["subscription_count"] = subscription_count
     return data
+
+
+def _resolve_modules(db: Session, module_ids: List[int]) -> List[ExamModule]:
+    if not module_ids:
+        return []
+    modules = db.query(ExamModule).filter(ExamModule.id.in_(module_ids)).all()
+    found_ids = {module.id for module in modules}
+    missing = [mid for mid in module_ids if mid not in found_ids]
+    if missing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Module id(s) not found: {', '.join(str(m) for m in missing)}",
+        )
+    not_published = [module.id for module in modules if module.status != "published"]
+    if not_published:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Only published modules can be added to a plan (not published: {', '.join(str(m) for m in not_published)})",
+        )
+    return modules
 
 
 def get_plan_or_404(db: Session, plan_id: int) -> Plan:
@@ -85,6 +117,7 @@ def create_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> dict
         staff_limit=data["staff_limit"],
         grace_days=data.get("grace_days", 7),
         is_active=True,
+        modules=_resolve_modules(db, data.get("module_ids") or []),
     )
     db.add(plan)
     db.flush()
@@ -107,6 +140,8 @@ def update_plan(db: Session, actor: User, plan_id: int, data: dict, ip: Optional
             setattr(plan, field, data[field])
     if "price" in data and data["price"] is not None:
         plan.price = Decimal(str(data["price"]))
+    if "module_ids" in data and data["module_ids"] is not None:
+        plan.modules = _resolve_modules(db, data["module_ids"])
 
     db.add(plan)
     _audit(db, actor, "plan.update", plan.id, ip)
@@ -140,3 +175,61 @@ def delete_plan(db: Session, actor: User, plan_id: int, ip: Optional[str]) -> No
     _audit(db, actor, "plan.delete", plan.id, ip, {"name": plan.name})
     db.delete(plan)
     db.commit()
+
+
+def list_available_modules_for_plans(
+    db: Session, search: Optional[str] = None, module_type: Optional[str] = None
+) -> List[dict]:
+    """Cross-instructor listing of published modules for the Super Admin's
+    plan-module picker. Deliberately unscoped by created_by_id - unlike
+    module_authoring_service.list_modules (author-private), Super Admin needs
+    visibility into every instructor's published content to bundle it into a
+    plan."""
+    query = db.query(ExamModule).filter(ExamModule.status == "published")
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        query = query.filter(or_(ExamModule.title.ilike(term), ExamModule.description.ilike(term)))
+    if module_type:
+        query = query.filter(ExamModule.module_type == module_type)
+    modules = query.order_by(ExamModule.module_type, ExamModule.title).all()
+    return [
+        {
+            "id": module.id,
+            "title": module.title,
+            "module_type": module.module_type,
+            "duration_minutes": module.duration_minutes,
+            "status": module.status,
+        }
+        for module in modules
+    ]
+
+
+def list_public_plans(db: Session, user: User) -> List[dict]:
+    """Active plans with each plan's module bundle plus whether this student
+    (institute-linked or direct/B2C) is currently entitled to it."""
+    from app.services.subscription_service import (  # local import: avoids a
+        STATE_ACTIVE,  # circular import, since subscription_service already
+        STATE_GRACE,  # imports plan_service.get_plan_or_404
+        current_subscription,
+        current_user_subscription,
+    )
+
+    if user.institute_id is not None:
+        subscription, state = current_subscription(db, user.institute_id)
+    else:
+        subscription, state = current_user_subscription(db, user.id)
+    entitled_plan_id = subscription.plan_id if subscription and state in (STATE_ACTIVE, STATE_GRACE) else None
+
+    plans = (
+        db.query(Plan)
+        .options(joinedload(Plan.modules))
+        .filter(Plan.is_active.is_(True))
+        .order_by(Plan.price)
+        .all()
+    )
+    result = []
+    for plan in plans:
+        data = _serialize(plan)
+        data["entitled"] = plan.id == entitled_plan_id
+        result.append(data)
+    return result

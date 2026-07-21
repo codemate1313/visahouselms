@@ -1,12 +1,22 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { InstitutePortalComingSoon } from "../pages/InstitutePortalComingSoon";
 import { Login } from "../pages/Login";
+import { Register } from "../pages/Register";
+import { GradingDetail } from "../pages/instructor/GradingDetail";
 import { GradingQueue } from "../pages/instructor/GradingQueue";
 import { InstructorDashboard } from "../pages/instructor/InstructorDashboard";
 import { InstructorLayout } from "../pages/instructor/InstructorLayout";
 import { InstructorProfile } from "../pages/instructor/InstructorProfile";
 import { ModuleEditor } from "../pages/instructor/ModuleEditor";
 import { Modules } from "../pages/instructor/Modules";
+import { AttemptResult } from "../pages/student/AttemptResult";
+import { CourseCatalog as StudentCourseCatalog } from "../pages/student/CourseCatalog";
+import { MyCourses } from "../pages/student/MyCourses";
+import { StudentAttempts } from "../pages/student/StudentAttempts";
+import { StudentDashboard } from "../pages/student/StudentDashboard";
+import { StudentLayout } from "../pages/student/StudentLayout";
+import { StudentProfile } from "../pages/student/StudentProfile";
+import { TestRunner } from "../pages/student/TestRunner";
 import { AccountForm } from "../pages/super-admin/AccountForm";
 import { AccountsList } from "../pages/super-admin/AccountsList";
 import { ChangePassword } from "../pages/super-admin/ChangePassword";
@@ -48,6 +58,7 @@ export const router = createBrowserRouter([
   { path: "/instructor", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
   { path: "/instructor/*", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
   { path: "/login", element: <Login allowedRoles={["INSTITUTE_ADMIN", "INST_INSTRUCTOR", "STUDENT"]} title="Portal Login" subtitle="Sign in as institute admin, instructor, or student" wrongRoleMessage="Super Admin and SA Instructor accounts have separate login pages." /> },
+  { path: "/register", element: <Register /> },
   {
     element: <ProtectedRoute allowedRoles={["SUPER_ADMIN"]} />,
     children: [
@@ -107,6 +118,7 @@ export const router = createBrowserRouter([
           { path: "question-banks/*", element: <Navigate to="/super-admin/instructor/modules" replace /> },
           { path: "tests/*", element: <Navigate to="/super-admin/instructor/modules" replace /> },
           { path: "grading", element: <GradingQueue /> },
+          { path: "grading/:id", element: <GradingDetail /> },
           { path: "profile", element: <InstructorProfile /> },
           { path: "sessions", element: <Sessions apiBase="/instructor" /> },
           { path: "change-password", element: <ChangePassword apiBase="/instructor" /> },
@@ -118,6 +130,26 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute allowedRoles={["INSTITUTE_ADMIN"]} />,
     children: [
       { path: "/institute-portal", element: <InstitutePortalComingSoon /> },
+    ],
+  },
+  {
+    element: <ProtectedRoute allowedRoles={["STUDENT"]} />,
+    children: [
+      {
+        path: "/student",
+        element: <StudentLayout />,
+        children: [
+          { path: "dashboard", element: <StudentDashboard /> },
+          { path: "courses", element: <StudentCourseCatalog /> },
+          { path: "my-courses", element: <MyCourses /> },
+          { path: "attempts", element: <StudentAttempts /> },
+          { path: "attempts/:id/result", element: <AttemptResult /> },
+          { path: "profile", element: <StudentProfile /> },
+          { path: "sessions", element: <Sessions apiBase="/student" /> },
+          { path: "change-password", element: <ChangePassword apiBase="/student" /> },
+        ],
+      },
+      { path: "/student/attempts/:id/take", element: <TestRunner /> },
     ],
   },
 ]);

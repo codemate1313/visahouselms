@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.config import settings
 from app.core.uploads import read_validated_course_asset
+from app.models.attempt import CourseModule, Enrollment
 from app.models.audit_log import AuditLog
 from app.models.coupon import Coupon
 from app.models.course import (
@@ -21,6 +22,7 @@ from app.models.course import (
     CourseAsset,
     InstituteCourse,
 )
+from app.models.exam_module import ExamModule
 from app.models.institute import Institute
 from app.models.payment import Payment
 from app.models.user import User
@@ -73,6 +75,7 @@ def _course_query(db: Session):
         joinedload(Course.created_by),
         joinedload(Course.assets),
         joinedload(Course.institute_assignments).joinedload(InstituteCourse.institute),
+        joinedload(Course.course_modules).joinedload(CourseModule.module),
     )
 
 
@@ -88,6 +91,19 @@ def _asset_out(asset: CourseAsset) -> dict:
         "file_size": asset.file_size,
         "sort_order": asset.sort_order,
         "created_at": asset.created_at,
+    }
+
+
+def _module_link_out(link: CourseModule) -> dict:
+    module = link.module
+    return {
+        "id": link.id,
+        "module_id": module.id,
+        "module_type": module.module_type,
+        "title": module.title,
+        "status": module.status,
+        "duration_minutes": module.duration_minutes,
+        "sort_order": link.sort_order,
     }
 
 
@@ -125,6 +141,10 @@ def serialize(course: Course, include_assignments: bool = False) -> dict:
         "asset_count": len(course.assets),
         "assignment_count": len(active_assignments),
         "assets": [_asset_out(asset) for asset in sorted(course.assets, key=lambda item: item.sort_order)],
+        "modules": [
+            _module_link_out(link)
+            for link in sorted(course.course_modules, key=lambda item: item.sort_order)
+        ],
     }
     if include_assignments:
         result["assignments"] = [
@@ -225,10 +245,15 @@ def set_status(
         return serialize(course, include_assignments=True)
 
     if new_status == COURSE_PUBLISHED:
-        if not course.assets:
+        if not course.course_modules:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Add at least one PDF or MP3 resource before publishing",
+                detail="Attach at least one assessment module before publishing",
+            )
+        if any(link.module.status != "published" for link in course.course_modules):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Every attached module must be published first",
             )
         if not course.summary and not course.description:
             raise HTTPException(
@@ -378,12 +403,74 @@ def delete_asset(
         file_path.unlink()
 
 
+def attach_module(
+    db: Session, actor: User, course_id: int, module_id: int, ip: Optional[str]
+) -> dict:
+    course = get_course_or_404(db, course_id)
+    if course.status == COURSE_ARCHIVED:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Archived courses cannot be edited")
+    module = db.get(ExamModule, module_id)
+    if module is None or module.created_by_id != actor.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module not found")
+    if module.status != "published":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Only published modules can be attached to a course"
+        )
+    exists = db.query(CourseModule).filter(
+        CourseModule.course_id == course.id, CourseModule.module_id == module.id
+    ).first()
+    if exists is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This module is already attached")
+
+    link = CourseModule(course_id=course.id, module_id=module.id, sort_order=len(course.course_modules))
+    db.add(link)
+    db.flush()
+    _audit(db, actor, "course.module_attach", course.id, ip, {"module_id": module.id})
+    db.commit()
+    return serialize(get_course_or_404(db, course.id), include_assignments=True)
+
+
+def detach_module(
+    db: Session, actor: User, course_id: int, module_id: int, ip: Optional[str]
+) -> dict:
+    course = get_course_or_404(db, course_id)
+    link = db.query(CourseModule).filter(
+        CourseModule.course_id == course.id, CourseModule.module_id == module_id
+    ).first()
+    if link is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module is not attached to this course")
+    db.delete(link)
+    _audit(db, actor, "course.module_detach", course.id, ip, {"module_id": module_id})
+    db.commit()
+    return serialize(get_course_or_404(db, course.id), include_assignments=True)
+
+
+def reorder_modules(
+    db: Session, actor: User, course_id: int, module_ids: list[int], ip: Optional[str]
+) -> dict:
+    course = get_course_or_404(db, course_id)
+    current_ids = {link.module_id for link in course.course_modules}
+    if len(module_ids) != len(set(module_ids)) or set(module_ids) != current_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="module_ids must contain every attached module exactly once",
+        )
+    by_module_id = {link.module_id: link for link in course.course_modules}
+    for index, module_id in enumerate(module_ids):
+        by_module_id[module_id].sort_order = index
+        db.add(by_module_id[module_id])
+    _audit(db, actor, "course.module_reorder", course_id, ip)
+    db.commit()
+    return serialize(get_course_or_404(db, course.id), include_assignments=True)
+
+
 def delete_course(db: Session, actor: User, course_id: int, ip: Optional[str]) -> None:
     course = get_course_or_404(db, course_id)
     has_assignments = db.query(InstituteCourse).filter(InstituteCourse.course_id == course.id).count() > 0
     has_payments = db.query(Payment).filter(Payment.course_id == course.id).count() > 0
     has_coupons = db.query(Coupon).filter(Coupon.scope_course_id == course.id).count() > 0
-    if has_assignments or has_payments or has_coupons:
+    has_enrollments = db.query(Enrollment).filter(Enrollment.course_id == course.id).count() > 0
+    if has_assignments or has_payments or has_coupons or has_enrollments:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This course has assignment, coupon, or payment history and cannot be deleted; archive it instead",

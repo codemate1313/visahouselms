@@ -87,3 +87,11 @@ class AssetReorder(BaseModel):
 
 class CourseAssignmentRequest(BaseModel):
     institute_id: int = Field(gt=0)
+
+
+class ModuleAttach(BaseModel):
+    module_id: int = Field(gt=0)
+
+
+class ModuleReorder(BaseModel):
+    module_ids: list[int] = Field(min_length=1)

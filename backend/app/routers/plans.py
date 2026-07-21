@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -24,6 +24,15 @@ def _client_ip(request: Request) -> Optional[str]:
 @router.get("")
 def list_plans(db: Session = Depends(get_db)):
     return plan_service.list_plans(db)
+
+
+@router.get("/available-modules")
+def list_available_modules(
+    search: Optional[str] = Query(default=None, max_length=200),
+    module_type: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    return plan_service.list_available_modules_for_plans(db, search, module_type)
 
 
 @router.post("", status_code=201)

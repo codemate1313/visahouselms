@@ -1,5 +1,13 @@
 from app.models.api_log import ApiLog
 from app.models.assessment import Assessment, AssessmentQuestion, Question, QuestionBank
+from app.models.attempt import (
+    AttemptAnswer,
+    AttemptFlag,
+    AttemptPartGrade,
+    CourseModule,
+    Enrollment,
+    TestAttempt,
+)
 from app.models.audit_log import AuditLog
 from app.models.backup import Backup
 from app.models.base import Base
@@ -58,4 +66,10 @@ __all__ = [
     "InstituteCourse",
     "Payment",
     "PaymentMethod",
+    "CourseModule",
+    "Enrollment",
+    "TestAttempt",
+    "AttemptAnswer",
+    "AttemptPartGrade",
+    "AttemptFlag",
 ]

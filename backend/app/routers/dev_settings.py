@@ -8,6 +8,7 @@ from app.models.audit_log import AuditLog
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
 from app.schemas.dev import (
+    AvatarSettingsIn,
     BackupSettingsIn,
     FcmSettingsIn,
     LogSettingsIn,
@@ -15,7 +16,7 @@ from app.schemas.dev import (
     TestEmailIn,
     TestFcmIn,
 )
-from app.services import fcm_service, job_service, smtp_service
+from app.services import avatar_service, fcm_service, job_service, smtp_service
 from app.services.settings_service import get_settings_group, set_settings_group
 from app.config import settings as app_config
 
@@ -93,6 +94,33 @@ def test_fcm(payload: TestFcmIn, db: Session = Depends(get_db)):
             db, payload.device_token, "IELTS LMS", "FCM test notification"
         )
     return fcm_service.test_credentials(db)
+
+
+# ---------- Avatar (Speaking video presenter) ----------
+
+@router.get("/avatar")
+def get_avatar(db: Session = Depends(get_db)):
+    return avatar_service.get_config(db)
+
+
+@router.put("/avatar")
+def put_avatar(
+    payload: AvatarSettingsIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    values = payload.model_dump()
+    if not values.get("provider"):
+        values["provider"] = "d_id"
+    result = avatar_service.update_config(db, values)
+    _audit(db, actor, "dev_settings.update_avatar", request)
+    return result
+
+
+@router.post("/avatar/test")
+def test_avatar(db: Session = Depends(get_db)):
+    return avatar_service.test_connection(db)
 
 
 # ---------- Backup / log settings ----------
@@ -185,6 +213,37 @@ def storage_link(
         "mounted_at": "/storage",
         "writable": writable,
         "created": created,
+    }
+
+
+@router.post("/seed")
+def seed_sample_data(
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Seed sample institutes, demo accounts, and assessment modules for local testing."""
+    import sys
+    from pathlib import Path
+    root_dir = Path(__file__).resolve().parent.parent.parent
+    if str(root_dir) not in sys.path:
+        sys.path.insert(0, str(root_dir))
+
+    from scripts.seed_dummy_modules import _get_or_create_instructor, _create_module
+
+    instructor = _get_or_create_instructor(db)
+    created_modules = 0
+    for module_type in ("listening", "reading", "writing", "speaking"):
+        if _create_module(db, instructor, module_type):
+            created_modules += 1
+
+    db.commit()
+    _audit(db, actor, "dev_settings.seed_data", request, {"created_modules": created_modules})
+    return {
+        "success": True,
+        "message": "Sample seed data successfully populated!",
+        "instructor_email": instructor.email,
+        "created_modules": created_modules,
     }
 
 

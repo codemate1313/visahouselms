@@ -2,7 +2,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.coupon import Coupon
-from app.models.course import COURSE_PUBLISHED, Course
+from app.models.exam_module import ExamModule
 from app.models.institute import Institute
 from app.models.payment import Payment
 from app.models.role import SA_INSTRUCTOR, Role
@@ -55,8 +55,8 @@ def get_summary(db: Session) -> dict:
             "coupons_active": coupons_active,
             "super_admin_accounts": super_admin_accounts,
             "sa_instructor_accounts": sa_instructor_accounts,
-            "courses_total": db.query(Course).count(),
-            "courses_published": db.query(Course).filter(Course.status == COURSE_PUBLISHED).count(),
+            "modules_total": db.query(ExamModule).count(),
+            "modules_published": db.query(ExamModule).filter(ExamModule.status == "published").count(),
         },
         "revenue": {
             "total_revenue": revenue["total_revenue"],

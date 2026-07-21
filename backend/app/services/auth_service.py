@@ -12,10 +12,12 @@ from app.core.security import (
     create_access_token,
     create_refresh_token,
     decode_token,
+    hash_password,
     hash_refresh_token,
     verify_password,
 )
 from app.models.audit_log import AuditLog
+from app.models.role import STUDENT, Role
 from app.models.user import User
 from app.models.user_session import UserSession
 
@@ -73,6 +75,53 @@ def login(
         )
         db.commit()
         raise INVALID_CREDENTIALS
+
+    return issue_token_pair(db, user, user_agent, ip_address)
+
+
+def register(
+    db: Session,
+    email: str,
+    password: str,
+    first_name: str,
+    last_name: str,
+    user_agent: Optional[str],
+    ip_address: Optional[str],
+) -> Tuple[str, str]:
+    """Public self-registration for a direct (B2C) student - institute_id is
+    always NULL here; institute students are created by their institute."""
+    normalized_email = email.strip().lower()
+    existing = db.query(User).filter(func.lower(User.email) == normalized_email).first()
+    if existing is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="An account with this email already exists")
+
+    role = db.query(Role).filter(Role.name == STUDENT).first()
+    if role is None:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="STUDENT role is not seeded")
+
+    user = User(
+        email=normalized_email,
+        password_hash=hash_password(password),
+        role_id=role.id,
+        institute_id=None,
+        first_name=first_name,
+        last_name=last_name,
+        is_active=True,
+        force_password_reset=False,
+    )
+    db.add(user)
+    db.flush()
+    db.add(
+        AuditLog(
+            user_id=user.id,
+            action="student.self_register",
+            entity_type="user",
+            entity_id=user.id,
+            ip_address=ip_address,
+        )
+    )
+    db.commit()
+    db.refresh(user)
 
     return issue_token_pair(db, user, user_agent, ip_address)
 

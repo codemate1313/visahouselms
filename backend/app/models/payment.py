@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -16,7 +16,7 @@ class Payment(Base):
     institute_id: Mapped[Optional[int]] = mapped_column(ForeignKey("institutes.id"), nullable=True)
     user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
     plan_id: Mapped[Optional[int]] = mapped_column(ForeignKey("plans.id"), nullable=True)
-    course_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # no FK yet - Phase 3
+    course_id: Mapped[Optional[int]] = mapped_column(ForeignKey("courses.id"), nullable=True)
 
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     discount_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False, default=0)
@@ -38,5 +38,6 @@ class Payment(Base):
 
     institute: Mapped[Optional["Institute"]] = relationship()  # noqa: F821
     plan: Mapped[Optional["Plan"]] = relationship()  # noqa: F821
+    course: Mapped[Optional["Course"]] = relationship()  # noqa: F821
     coupon: Mapped[Optional["Coupon"]] = relationship()  # noqa: F821
     payment_method: Mapped[Optional["PaymentMethod"]] = relationship()  # noqa: F821

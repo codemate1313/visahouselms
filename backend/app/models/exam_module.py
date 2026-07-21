@@ -17,7 +17,7 @@ MODULE_TYPES = (
     "final_test",
 )
 MODULE_STATUSES = ("draft", "published", "archived")
-MODULE_ASSET_TYPES = ("mp3", "tts_mp3")
+MODULE_ASSET_TYPES = ("mp3", "tts_mp3", "avatar_mp4")
 
 
 class ExamModule(Base):

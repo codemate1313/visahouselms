@@ -14,6 +14,7 @@ class PlanCreate(BaseModel):
     test_limit: int = Field(ge=0)
     staff_limit: int = Field(ge=0)
     grace_days: int = Field(default=7, ge=0)
+    module_ids: list[int] = Field(default_factory=list)
 
 
 class PlanUpdate(BaseModel):
@@ -26,6 +27,7 @@ class PlanUpdate(BaseModel):
     test_limit: Optional[int] = Field(default=None, ge=0)
     staff_limit: Optional[int] = Field(default=None, ge=0)
     grace_days: Optional[int] = Field(default=None, ge=0)
+    module_ids: Optional[list[int]] = None
 
 
 class AssignSubscriptionRequest(BaseModel):

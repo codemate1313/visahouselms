@@ -56,6 +56,23 @@ def update_profile(
     return actor
 
 
+async def save_temp_avatar(upload: UploadFile) -> dict:
+    import uuid
+    ext, content = await read_validated_image(upload, MAX_AVATAR_BYTES, "Avatar")
+
+    avatars_dir = settings.storage_path / "avatars"
+    avatars_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = f"avatar_{uuid.uuid4().hex}{ext}"
+    relative_path = f"avatars/{filename}"
+    (settings.storage_path / relative_path).write_bytes(content)
+
+    return {
+        "avatar_path": relative_path,
+        "url": f"/storage/{relative_path}",
+    }
+
+
 async def save_avatar(db: Session, actor: User, upload: UploadFile, ip: Optional[str]) -> User:
     ext, content = await read_validated_image(upload, MAX_AVATAR_BYTES, "Avatar")
 

@@ -49,7 +49,17 @@ def create_account(
     actor: User = Depends(get_current_user),
 ):
     return super_admin_service.create_super_admin(
-        db, actor, payload.email, payload.password, payload.first_name, payload.last_name, _client_ip(request)
+        db,
+        actor,
+        payload.email,
+        payload.password,
+        payload.first_name,
+        payload.last_name,
+        _client_ip(request),
+        dob=payload.dob,
+        phone_number=payload.phone_number,
+        address=payload.address,
+        avatar_path=payload.avatar_path,
     )
 
 
@@ -62,7 +72,17 @@ def update_account(
     actor: User = Depends(get_current_user),
 ):
     return super_admin_service.update_super_admin(
-        db, actor, account_id, payload.email, payload.first_name, payload.last_name, _client_ip(request)
+        db,
+        actor,
+        account_id,
+        payload.email,
+        payload.first_name,
+        payload.last_name,
+        _client_ip(request),
+        dob=payload.dob,
+        phone_number=payload.phone_number,
+        address=payload.address,
+        avatar_path=payload.avatar_path,
     )
 
 
@@ -156,6 +176,13 @@ async def upload_my_avatar(
 ):
     user = await account_service.save_avatar(db, actor, file, _client_ip(request))
     return _current_user_response(user)
+
+
+@router.post("/upload-avatar")
+async def upload_account_avatar(
+    file: UploadFile = File(...),
+):
+    return await account_service.save_temp_avatar(file)
 
 
 @router.get("/me/sessions", response_model=List[SessionOut])

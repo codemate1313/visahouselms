@@ -84,3 +84,42 @@ async def read_validated_mp3(upload: UploadFile) -> bytes:
     if not (has_id3 or has_frame_sync):
         raise HTTPException(status_code=400, detail="File is not a valid MP3")
     return content
+
+
+SPEAKING_ANSWER_AUDIO_TYPES = {
+    "audio/webm",
+    "audio/ogg",
+    "audio/mp4",
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/x-wav",
+}
+
+
+async def read_validated_speaking_answer(upload: UploadFile) -> tuple[bytes, str]:
+    """Read a browser-recorded (MediaRecorder) Speaking response.
+
+    Unlike instructor-authored Listening audio, a recorded answer can arrive
+    in whichever container the student's browser's MediaRecorder defaults to
+    (commonly audio/webm), so this only checks the declared type is a real
+    audio format and caps the size - no magic-byte signature check, since
+    there isn't one universal signature across those containers."""
+    content_type = upload.content_type or ""
+    if content_type not in SPEAKING_ANSWER_AUDIO_TYPES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Speaking answers must be an audio recording")
+    content = await upload.read()
+    if not content:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Uploaded recording is empty")
+    if len(content) > 25 * 1024 * 1024:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Recordings must be 25 MB or smaller")
+    extension = {
+        "audio/webm": ".webm",
+        "audio/ogg": ".ogg",
+        "audio/mp4": ".m4a",
+        "audio/mpeg": ".mp3",
+        "audio/mp3": ".mp3",
+        "audio/wav": ".wav",
+        "audio/x-wav": ".wav",
+    }[content_type]
+    return content, extension

@@ -11,12 +11,12 @@ from starlette.datastructures import Headers
 
 from app.config import settings
 from app.core.security import hash_password
-from app.models import Base
+from app.models import Base, ExamModuleQuestion
 from app.models.course import COURSE_ARCHIVED, COURSE_DRAFT, COURSE_PUBLISHED
 from app.models.institute import Institute
 from app.models.role import SA_INSTRUCTOR, SUPER_ADMIN, Role
 from app.models.user import User
-from app.services import course_service
+from app.services import course_service, module_authoring_service
 
 
 class CourseServiceTests(unittest.TestCase):
@@ -85,6 +85,37 @@ class CourseServiceTests(unittest.TestCase):
             headers=Headers({"content-type": "application/pdf"}),
         )
 
+    def _published_module_id(self) -> int:
+        created = module_authoring_service.create_module(
+            self.db,
+            self.instructor,
+            {"module_type": "writing", "title": "Writing sample", "description": None, "instructions": None},
+            "127.0.0.1",
+        )
+        module = module_authoring_service.get_module_or_404(self.db, created["id"])
+        for part in module.parts:
+            self.db.add(
+                ExamModuleQuestion(
+                    part_id=part.id,
+                    question_type="essay",
+                    prompt=f"{part.part_code} prompt",
+                    instructions=None,
+                    passage=None,
+                    options=[],
+                    correct_answers=[],
+                    explanation=None,
+                    points=part.max_marks,
+                    difficulty="medium",
+                    source_type="manual",
+                    source_filename=None,
+                    sort_order=0,
+                    created_by_id=self.instructor.id,
+                )
+            )
+        self.db.commit()
+        module_authoring_service.set_status(self.db, self.instructor, module.id, "published", "127.0.0.1")
+        return module.id
+
     def test_full_publish_assignment_archive_lifecycle(self) -> None:
         created = self._create_course()
         course_id = created["id"]
@@ -94,7 +125,7 @@ class CourseServiceTests(unittest.TestCase):
             course_service.set_status(
                 self.db, self.instructor, course_id, COURSE_PUBLISHED, "127.0.0.1"
             )
-        self.assertIn("resource", blocked.exception.detail)
+        self.assertIn("module", blocked.exception.detail)
 
         asset = asyncio.run(
             course_service.add_asset(
@@ -107,10 +138,12 @@ class CourseServiceTests(unittest.TestCase):
             )
         )
         self.assertEqual(asset["asset_type"], "pdf")
+        course_service.attach_module(self.db, self.instructor, course_id, self._published_module_id(), "127.0.0.1")
         published = course_service.set_status(
             self.db, self.instructor, course_id, COURSE_PUBLISHED, "127.0.0.1"
         )
         self.assertEqual(published["status"], COURSE_PUBLISHED)
+        self.assertEqual(len(published["modules"]), 1)
 
         assignment = course_service.assign_to_institute(
             self.db,

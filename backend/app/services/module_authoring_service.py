@@ -589,6 +589,70 @@ def add_audio_asset(
     return _asset_out(asset)
 
 
+def speaking_script(part: ExamModulePart) -> str:
+    """Concatenates a Speaking part's prompt questions into one script for
+    TTS/avatar narration, in question order."""
+    prompts = [
+        question.prompt
+        for question in sorted(part.questions, key=lambda q: q.sort_order)
+        if question.question_type == "speaking_prompt" and question.prompt.strip()
+    ]
+    return "  ...  ".join(prompts)
+
+
+def add_avatar_asset(
+    db: Session,
+    actor: User,
+    module_id: int,
+    part_id: int,
+    *,
+    content: bytes,
+    title: str,
+    script_text: str,
+    ip: Optional[str],
+) -> dict:
+    module = get_module_or_404(db, module_id)
+    _require_owner(module, actor)
+    part = _part_or_404(module, part_id)
+    if part.section_type != "speaking":
+        raise HTTPException(status_code=400, detail="Avatar video can only be attached to a Speaking part")
+
+    relative = Path("exam-modules") / str(module.id) / f"{uuid4().hex}.mp4"
+    destination = settings.storage_path / relative
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(content)
+    # Replace any previous avatar clip for this part - only one is meaningful at a time.
+    for existing in list(part.assets):
+        if existing.asset_type == "avatar_mp4":
+            old_path = settings.storage_path / existing.file_path
+            db.delete(existing)
+            old_path.unlink(missing_ok=True)
+    asset = ExamModuleAsset(
+        module_id=module.id,
+        part_id=part.id,
+        asset_type="avatar_mp4",
+        title=title.strip()[:200],
+        original_filename="avatar-presenter.mp4",
+        file_path=relative.as_posix(),
+        mime_type="video/mp4",
+        file_size=len(content),
+        transcript=script_text,
+        tts_voice=None,
+        uploaded_by_id=actor.id,
+    )
+    try:
+        db.add(asset)
+        db.flush()
+        _audit(db, actor, "exam_module.avatar.create", module.id, ip, {"part_id": part.id})
+        db.commit()
+    except Exception:
+        db.rollback()
+        destination.unlink(missing_ok=True)
+        raise
+    db.refresh(asset)
+    return _asset_out(asset)
+
+
 def delete_asset(db: Session, actor: User, module_id: int, asset_id: int, ip: Optional[str]) -> None:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)

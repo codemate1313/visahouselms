@@ -17,6 +17,13 @@ class FcmSettingsIn(BaseModel):
     service_account_json: Optional[str] = None  # write-only
 
 
+class AvatarSettingsIn(BaseModel):
+    provider: Optional[str] = None  # currently only "d_id"
+    api_key: Optional[str] = None  # write-only; masked value leaves stored secret untouched
+    presenter_image_url: Optional[str] = None
+    voice_id: Optional[str] = None
+
+
 class BackupSettingsIn(BaseModel):
     schedule: Optional[str] = None  # none | daily | weekly
     retention: Optional[str] = None

@@ -34,7 +34,15 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        origins = [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        if "*" in origins:
+            return ["*"]
+        defaults = [
+            f"http://{host}:{port}"
+            for host in ("localhost", "127.0.0.1")
+            for port in range(5170, 5190)
+        ]
+        return list(set(origins + defaults))
 
 
 settings = Settings()

@@ -17,6 +17,10 @@ class InstructorAccountCreate(BaseModel):
     last_name: str = Field(max_length=100)
     title: str = Field(default="IELTS Instructor", max_length=120)
     bio: Optional[str] = Field(default=None, max_length=3000)
+    dob: Optional[datetime] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    avatar_path: Optional[str] = None
 
     @field_validator("first_name", "last_name", "title")
     @classmethod
@@ -35,6 +39,10 @@ class InstructorAccountUpdate(BaseModel):
     last_name: Optional[str] = Field(default=None, max_length=100)
     title: Optional[str] = Field(default=None, max_length=120)
     bio: Optional[str] = Field(default=None, max_length=3000)
+    dob: Optional[datetime] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    avatar_path: Optional[str] = None
 
     @field_validator("first_name", "last_name", "title")
     @classmethod
@@ -56,6 +64,10 @@ class InstructorAccountOut(BaseModel):
     force_password_reset: bool
     title: str
     bio: Optional[str]
+    dob: Optional[datetime] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    avatar_path: Optional[str] = None
     created_at: datetime
 
 

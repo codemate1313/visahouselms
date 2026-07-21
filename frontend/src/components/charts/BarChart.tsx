@@ -1,9 +1,10 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 export interface BarChartDatum {
   label: string;
   value: number;
   color?: string;
+  subtext?: string;
 }
 
 interface BarChartProps {
@@ -16,8 +17,6 @@ interface BarChartProps {
   emptyMessage?: string;
 }
 
-const DEFAULT_COLOR = "var(--series-1)";
-
 function safeValue(value: number): number {
   return Number.isFinite(value) ? Math.max(0, value) : 0;
 }
@@ -29,97 +28,291 @@ function shortLabel(label: string, maximum: number): string {
 export function BarChart({
   data,
   orientation = "vertical",
-  color = DEFAULT_COLOR,
+  color,
   legend,
   formatValue = (value) => value.toLocaleString("en-IN"),
   ariaLabel,
   emptyMessage = "No data available.",
 }: BarChartProps) {
   const [showTable, setShowTable] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const titleId = useId();
-  const rows = data.map((item) => ({ ...item, value: safeValue(item.value) }));
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoaded(true), 60);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const rows = data.map((item) => ({
+    ...item,
+    value: safeValue(item.value),
+  }));
+
   const maximum = Math.max(0, ...rows.map((item) => item.value));
+  // Round up max for nice grid axis ticks
+  const gridMax = Math.max(100, Math.ceil((maximum * 1.15) / 100) * 100);
 
   if (!rows.length || maximum === 0) {
     return <div className="chart-card chart-empty" role="status">{emptyMessage}</div>;
   }
 
-  return <section className="chart-card">
-    <div className="chart-card-toolbar">
-      {legend?.length ? <div className="chart-legend" aria-label="Chart legend">{legend.map((item) => <span className="chart-legend-item" key={item.label}><i className="chart-legend-swatch" style={{ background: item.color }} />{item.label}</span>)}</div> : <span />}
-      <button type="button" className="chart-table-toggle" aria-expanded={showTable} onClick={() => setShowTable((current) => !current)}>{showTable ? "Show chart" : "Show data"}</button>
-    </div>
-    {showTable ? <ChartTable rows={rows} formatValue={formatValue} /> : orientation === "horizontal"
-      ? <HorizontalBars rows={rows} maximum={maximum} color={color} formatValue={formatValue} ariaLabel={ariaLabel} titleId={titleId} />
-      : <VerticalBars rows={rows} maximum={maximum} color={color} formatValue={formatValue} ariaLabel={ariaLabel} titleId={titleId} />}
-  </section>;
-}
+  // Active bar defaults to top value row if none hovered
+  const activeIdx = hoveredIndex !== null ? hoveredIndex : 0;
 
-interface InternalChartProps {
-  rows: BarChartDatum[];
-  maximum: number;
-  color: string;
-  formatValue: (value: number) => string;
-  ariaLabel: string;
-  titleId: string;
-}
+  // Grid tick values (e.g. 0, 2000, 4000, 6000)
+  const tickCount = 5;
+  const ticks = Array.from({ length: tickCount }, (_, i) => Math.round((gridMax / (tickCount - 1)) * i));
 
-function HorizontalBars({ rows, maximum, color, formatValue, ariaLabel, titleId }: InternalChartProps) {
-  const width = 720;
-  const left = 158;
-  const right = 92;
-  const top = 24;
-  const rowHeight = 46;
-  const plotWidth = width - left - right;
-  const height = Math.max(190, top * 2 + rows.length * rowHeight);
+  return (
+    <section className="chart-card reference-styled-chart">
+      {/* Top Header Bar */}
+      <div className="chart-card-toolbar">
+        {legend?.length ? (
+          <div className="chart-legend" aria-label="Chart legend">
+            {legend.map((item, idx) => (
+              <span
+                className={`chart-legend-item ${activeIdx === idx ? "legend-active" : ""}`}
+                key={item.label}
+                onMouseEnter={() => setHoveredIndex(idx)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
+                <i className="chart-legend-swatch" style={{ background: item.color }} />
+                <span className="legend-label-text">{item.label}</span>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="chart-title-area">
+            <span className="info-icon-badge">📊</span>
+            <span className="chart-tag-text">Analytics Overview</span>
+          </div>
+        )}
 
-  return <div className="chart-svg-wrap"><svg className="chart-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby={titleId}>
-    <title id={titleId}>{ariaLabel}</title>
-    {[0, 0.25, 0.5, 0.75, 1].map((tick) => <line className="chart-grid-line" x1={left + plotWidth * tick} x2={left + plotWidth * tick} y1={12} y2={height - 12} key={tick} />)}
-    {rows.map((item, index) => {
-      const y = top + index * rowHeight;
-      const barWidth = Math.max(2, plotWidth * item.value / maximum);
-      return <g key={`${item.label}-${index}`}>
-        <title>{`${item.label}: ${formatValue(item.value)}`}</title>
-        <text className="chart-label chart-label-left" x={left - 12} y={y + 17}>{shortLabel(item.label, 23)}</text>
-        <rect className="chart-bar" x={left} y={y} width={barWidth} height={24} rx={5} fill={item.color ?? color} />
-        <text className="chart-value" x={Math.min(left + barWidth + 8, width - right + 8)} y={y + 17}>{formatValue(item.value)}</text>
-      </g>;
-    })}
-  </svg></div>;
-}
+        {/* Reference Toggle Pill Control (≡ / 田) */}
+        <div className="chart-view-toggle-pill">
+          <button
+            type="button"
+            className={`pill-btn ${!showTable ? "active" : ""}`}
+            onClick={() => setShowTable(false)}
+            title="Chart View"
+          >
+            ≡
+          </button>
+          <button
+            type="button"
+            className={`pill-btn ${showTable ? "active" : ""}`}
+            onClick={() => setShowTable(true)}
+            title="Data Table View"
+          >
+            田
+          </button>
+        </div>
+      </div>
 
-function VerticalBars({ rows, maximum, color, formatValue, ariaLabel, titleId }: InternalChartProps) {
-  const width = 720;
-  const height = 310;
-  const left = 54;
-  const right = 18;
-  const top = 28;
-  const bottom = 66;
-  const plotWidth = width - left - right;
-  const plotHeight = height - top - bottom;
-  const slot = plotWidth / rows.length;
-  const barWidth = Math.min(58, Math.max(12, slot * 0.58));
+      {showTable ? (
+        <div className="chart-data-table-wrap">
+          <table className="chart-data-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Value</th>
+                <th>Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((item) => (
+                <tr key={item.label}>
+                  <td>{item.label}</td>
+                  <td>{formatValue(item.value)}</td>
+                  <td>{Math.round((item.value / maximum) * 100)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : orientation === "horizontal" ? (
+        /* REFERENCE HORIZONTAL BAR CHART DESIGN */
+        <div className="ref-horizontal-chart-wrap">
+          {/* Dashed Vertical Background Gridlines */}
+          <div className="vertical-gridlines-container">
+            {ticks.map((tick) => (
+              <div key={tick} className="gridline-col">
+                <div className="dashed-line" />
+              </div>
+            ))}
+          </div>
 
-  return <div className="chart-svg-wrap"><svg className="chart-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby={titleId}>
-    <title id={titleId}>{ariaLabel}</title>
-    {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
-      const y = top + plotHeight * (1 - tick);
-      return <g key={tick}><line className="chart-grid-line" x1={left} x2={width - right} y1={y} y2={y} /><text className="chart-axis-label" x={left - 9} y={y + 4}>{formatValue(maximum * tick)}</text></g>;
-    })}
-    {rows.map((item, index) => {
-      const barHeight = Math.max(2, plotHeight * item.value / maximum);
-      const x = left + index * slot + (slot - barWidth) / 2;
-      const y = top + plotHeight - barHeight;
-      return <g key={`${item.label}-${index}`}>
-        <title>{`${item.label}: ${formatValue(item.value)}`}</title>
-        <rect className="chart-bar" x={x} y={y} width={barWidth} height={barHeight} rx={5} fill={item.color ?? color} />
-        <text className="chart-label" textAnchor="middle" x={x + barWidth / 2} y={height - 40}>{shortLabel(item.label, 12)}</text>
-      </g>;
-    })}
-  </svg></div>;
-}
+          {/* Bar Rows */}
+          <div className="horizontal-bar-list">
+            {rows.map((row, idx) => {
+              const percent = gridMax > 0 ? (row.value / gridMax) * 100 : 0;
+              const isActive = activeIdx === idx;
+              // Highlight top item in vibrant red (#e53935), others in soft sage green (#76a77d)
+              const barColor = row.color
+                ? row.color
+                : color
+                ? color
+                : idx === 0
+                ? "#e53935"
+                : "#76a77d";
 
-function ChartTable({ rows, formatValue }: { rows: BarChartDatum[]; formatValue: (value: number) => string }) {
-  return <div className="chart-data-table-wrap"><table className="chart-data-table"><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody>{rows.map((item, index) => <tr key={`${item.label}-${index}`}><td>{item.label}</td><td>{formatValue(item.value)}</td></tr>)}</tbody></table></div>;
+              return (
+                <div
+                  key={row.label}
+                  className={`ref-bar-row ${isActive ? "is-active" : ""}`}
+                  onMouseEnter={() => setHoveredIndex(idx)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                >
+                  {/* Category Name */}
+                  <div className="ref-bar-label" title={row.label}>
+                    {shortLabel(row.label, 20)}
+                  </div>
+
+                  {/* Bar Track & End Callout */}
+                  <div className="ref-bar-track">
+                    <div
+                      className="ref-bar-fill"
+                      style={{
+                        width: loaded ? `${Math.max(percent, 4)}%` : "0%",
+                        background: barColor,
+                      }}
+                    >
+                      {/* Left Circular Ring Start Dot */}
+                      <span className="bar-start-ring" style={{ borderColor: barColor }} />
+
+                      {/* Right Pointer Dot for Active Row */}
+                      {isActive && <span className="bar-end-dot" style={{ background: "#ffffff", borderColor: barColor }} />}
+                    </div>
+
+                    {/* Dark Reference Tooltip Callout Card */}
+                    {isActive && (
+                      <div className="ref-dark-tooltip-callout">
+                        <span className="tooltip-subtext">{row.subtext ?? "Recent Activity"}</span>
+                        <strong className="tooltip-main-val">{formatValue(row.value)}</strong>
+                        <div className="tooltip-arrow-down" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Bottom X-Axis Ticks (Aligned directly with vertical gridlines) */}
+          <div className="ref-x-axis-row">
+            <div className="x-axis-indent" />
+            <div className="x-axis-ticks">
+              {ticks.map((tick) => (
+                <span key={tick} className="x-tick-label">
+                  {formatValue(tick)}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* REFERENCE VERTICAL BAR CHART DESIGN */
+        <div className="ref-vertical-chart-wrap">
+          <svg className="ref-vertical-svg" viewBox="0 0 500 230" role="img" aria-labelledby={titleId}>
+            <title id={titleId}>{ariaLabel}</title>
+
+            {/* Dashed Horizontal Background Gridlines & Y-Axis Ticks */}
+            {[0, 0.25, 0.5, 0.75, 1].map((step) => {
+              const y = 190 - step * 160;
+              const val = Math.round(gridMax * step);
+              return (
+                <g key={step}>
+                  <line
+                    x1="65"
+                    y1={y}
+                    x2="480"
+                    y2={y}
+                    stroke="#e2e8f0"
+                    strokeDasharray="4 4"
+                    strokeWidth="1"
+                  />
+                  <text x="55" y={y + 4} textAnchor="end" fontSize="11" fill="#94a3b8" fontWeight="500">
+                    {formatValue(val)}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Vertical Bars */}
+            {rows.map((row, idx) => {
+              const count = rows.length;
+              const availableWidth = 400;
+              const barWidth = Math.min(36, Math.max(18, Math.floor(availableWidth / count - 16)));
+              const gap = (availableWidth - barWidth * count) / (count + 1);
+              const x = 70 + gap + idx * (barWidth + gap);
+              const barHeight = gridMax > 0 ? (row.value / gridMax) * 160 : 0;
+              const y = 190 - (loaded ? barHeight : 0);
+              const isActive = activeIdx === idx;
+              const barColor = row.color
+                ? row.color
+                : color
+                ? color
+                : idx === 0
+                ? "#e53935"
+                : "#76a77d";
+
+              return (
+                <g
+                  key={row.label}
+                  className={`ref-vbar-group ${isActive ? "is-active" : ""}`}
+                  onMouseEnter={() => setHoveredIndex(idx)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  style={{ cursor: "pointer" }}
+                >
+                  {/* Vertical Bar Rect */}
+                  <rect
+                    x={x}
+                    y={y}
+                    width={barWidth}
+                    height={loaded ? barHeight : 0}
+                    rx="8"
+                    ry="8"
+                    fill={barColor}
+                    style={{
+                      transition: "all 500ms cubic-bezier(0.16, 1, 0.3, 1)",
+                      opacity: hoveredIndex !== null && !isActive ? 0.45 : 1,
+                    }}
+                  />
+
+                  {/* Start Ring Dot at Base */}
+                  <circle cx={x + barWidth / 2} cy="188" r="3" fill="#ffffff" stroke={barColor} strokeWidth="1.5" />
+
+                  {/* End Dot at Top of Active Bar */}
+                  {isActive && (
+                    <circle cx={x + barWidth / 2} cy={y + 4} r="4" fill="#ffffff" stroke="#e53935" strokeWidth="2" />
+                  )}
+
+                  {/* X Axis Label */}
+                  <text
+                    x={x + barWidth / 2}
+                    y="212"
+                    textAnchor="middle"
+                    fill={isActive ? "#0f172a" : "#64748b"}
+                    fontSize="11"
+                    fontWeight={isActive ? "700" : "500"}
+                  >
+                    {shortLabel(row.label, 10)}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+
+          {/* Dark Floating Tooltip Callout for Vertical Bar */}
+          {activeIdx !== null && rows[activeIdx] && (
+            <div className="ref-dark-tooltip-callout v-centered">
+              <span className="tooltip-subtext">{rows[activeIdx].label}</span>
+              <strong className="tooltip-main-val">{formatValue(rows[activeIdx].value)}</strong>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
 }

@@ -211,39 +211,34 @@ def add_installment(
     return _serialize(payment)
 
 
-def create_course_payment(
+def create_user_plan_payment(
     db: Session,
-    user_id: Optional[int],
-    course_id: int,
-    amount: Decimal,
-    currency: str,
+    user_id: int,
+    plan_id: int,
     coupon_code: Optional[str],
     gateway_reference: Optional[str],
     ip: Optional[str] = None,
 ) -> dict:
-    """B2C direct-student course purchase foundation for Phase 5 checkout."""
-    from app.models.course import COURSE_PUBLISHED, Course
+    """B2C direct-student self-service plan purchase - same shape as
+    create_b2b_plan_payment but for an individual user's personal
+    subscription instead of an institute's, and full-payment-only (no
+    partial/installment support, matching this flow's B2C-only precedent)."""
+    plan = plan_service.get_plan_or_404(db, plan_id)
+    if not plan.is_active:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This plan is deactivated")
 
-    course = db.get(Course, course_id)
-    if course is None or course.status != COURSE_PUBLISHED:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Course is not available for purchase")
-    if amount != course.price or currency.upper() != course.currency.upper():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Course price changed; refresh checkout and try again",
-        )
-    discount, coupon = coupon_service.validate_and_price(db, coupon_code, amount, "course", course_id)
-    final_amount = amount - discount
+    discount, coupon = coupon_service.validate_and_price(db, coupon_code, plan.price, "plan", plan_id)
+    final_amount = plan.price - discount
 
     payment = Payment(
         source="b2c",
         user_id=user_id,
-        course_id=course_id,
-        amount=amount,
+        plan_id=plan_id,
+        amount=plan.price,
         discount_amount=discount,
         final_amount=final_amount,
         amount_paid=final_amount,
-        currency=currency,
+        currency=plan.currency,
         coupon_id=coupon.id if coupon else None,
         gateway="manual",
         gateway_reference=gateway_reference,
@@ -251,7 +246,7 @@ def create_course_payment(
     )
     db.add(payment)
     db.flush()
-    _audit(db, None, "payment.create", payment.id, ip, {"course_id": course_id, "source": "b2c"})
+    _audit(db, None, "payment.create", payment.id, ip, {"plan": plan.name, "source": "b2c"})
     db.commit()
 
     gateway = get_gateway("manual")
@@ -268,7 +263,13 @@ def create_course_payment(
     if coupon is not None:
         coupon_service.redeem(db, coupon)
     db.commit()
-    db.refresh(payment)
+
+    subscription = subscription_service.subscribe_user(db, user_id, plan_id, ip)
+    payment.subscription_id = subscription.id
+    db.add(payment)
+    db.commit()
+
+    payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
     return _serialize(payment)
 
 

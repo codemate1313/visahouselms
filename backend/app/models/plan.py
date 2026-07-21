@@ -1,11 +1,20 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import List, Optional
 
-from sqlalchemy import Boolean, DateTime, Integer, Numeric, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Table, Text, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+# Plain join table (no extra columns on the link itself) - a Plan's module
+# bundle has no per-item ordering need, unlike a Course's linear sequence.
+plan_modules = Table(
+    "plan_modules",
+    Base.metadata,
+    Column("plan_id", ForeignKey("plans.id", ondelete="CASCADE"), primary_key=True),
+    Column("module_id", ForeignKey("exam_modules.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class Plan(Base):
@@ -24,3 +33,7 @@ class Plan(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
+
+    modules: Mapped[List["ExamModule"]] = relationship(  # noqa: F821
+        secondary=plan_modules, order_by="ExamModule.title"
+    )

@@ -11,11 +11,11 @@ from app.routers import (
     auth,
     backups,
     coupons,
-    course_catalog,
     dashboard,
     demo_accounts,
     dev_settings,
     institutes,
+    instructor_grading,
     instructor_portal,
     instructors,
     logs,
@@ -24,6 +24,7 @@ from app.routers import (
     payments,
     plans,
     revenue,
+    student_portal,
     subscriptions,
     super_admin,
     terminal,
@@ -35,14 +36,15 @@ app = FastAPI(title="IELTS LMS API")
 settings.storage_path.mkdir(parents=True, exist_ok=True)
 app.mount("/storage", StaticFiles(directory=str(settings.storage_path)), name="storage")
 
+app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(auth.router)
 app.include_router(dashboard.router)
@@ -57,14 +59,15 @@ app.include_router(institutes.router)
 app.include_router(institutes.public_router)
 app.include_router(instructors.router)
 app.include_router(instructor_portal.router)
+app.include_router(instructor_grading.router)
 app.include_router(trial_config.router)
 app.include_router(demo_accounts.router)
 app.include_router(coupons.router)
 app.include_router(module_authoring.router)
-app.include_router(course_catalog.router)
 app.include_router(payments.router)
 app.include_router(payment_methods.router)
 app.include_router(revenue.router)
+app.include_router(student_portal.router)
 
 
 @app.exception_handler(Exception)

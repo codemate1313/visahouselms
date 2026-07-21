@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.audit_log import AuditLog
 from app.models.institute import Institute
+from app.models.plan import Plan
 from app.models.role import INST_INSTRUCTOR, INSTITUTE_ADMIN, STUDENT, Role
 from app.models.subscription import Subscription
 from app.models.user import User
@@ -62,6 +63,28 @@ def current_subscription(db: Session, institute_id: int) -> Tuple[Optional[Subsc
     return subscription, STATE_EXPIRED
 
 
+def current_user_subscription(db: Session, user_id: int) -> Tuple[Optional[Subscription], str]:
+    """Personal (B2C direct-student) mirror of current_subscription - latest
+    non-cancelled subscription owned by this user (not an institute) and its
+    derived state."""
+    subscription = (
+        db.query(Subscription)
+        .options(joinedload(Subscription.plan).joinedload(Plan.modules))
+        .filter(Subscription.user_id == user_id, Subscription.cancelled_at.is_(None))
+        .order_by(Subscription.expires_at.desc())
+        .first()
+    )
+    if subscription is None:
+        return None, STATE_NONE
+
+    now = _now()
+    if now < subscription.expires_at:
+        return subscription, STATE_ACTIVE
+    if now < subscription.expires_at + timedelta(days=subscription.grace_days):
+        return subscription, STATE_GRACE
+    return subscription, STATE_EXPIRED
+
+
 def usage(db: Session, institute_id: int) -> dict:
     role_ids = {
         role.name: role.id
@@ -97,6 +120,7 @@ def _serialize(subscription: Subscription, state: str) -> dict:
     return {
         "id": subscription.id,
         "institute_id": subscription.institute_id,
+        "user_id": subscription.user_id,
         "plan_id": subscription.plan_id,
         "plan_name": subscription.plan.name if subscription.plan else None,
         "starts_at": subscription.starts_at,
@@ -243,3 +267,101 @@ def cancel(db: Session, actor: User, subscription_id: int, ip: Optional[str]) ->
     db.commit()
     db.refresh(subscription)
     return _serialize(subscription, "cancelled")
+
+
+def subscribe_user(
+    db: Session,
+    user_id: int,
+    plan_id: int,
+    ip: Optional[str],
+) -> Subscription:
+    """Personal (B2C) mirror of assign() - grants a direct student a
+    subscription to a plan. Not exposed as a standalone endpoint; only
+    reachable through payment_service.create_user_plan_payment, exactly how
+    assign() itself is only reachable through create_b2b_plan_payment."""
+    plan = get_plan_or_404(db, plan_id)
+    if not plan.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This plan is deactivated and cannot be subscribed to",
+        )
+
+    start = _now()
+    subscription = Subscription(
+        user_id=user_id,
+        plan_id=plan.id,
+        starts_at=start,
+        expires_at=start + timedelta(days=plan.duration_days),
+        grace_days=plan.grace_days,
+    )
+    db.add(subscription)
+    db.flush()
+    db.add(
+        AuditLog(
+            user_id=user_id,
+            action="subscription.subscribe",
+            entity_type="subscription",
+            entity_id=subscription.id,
+            details={"plan": plan.name},
+            ip_address=ip,
+        )
+    )
+    db.commit()
+    db.refresh(subscription)
+    return subscription
+
+
+def user_subscription_history(db: Session, user_id: int) -> List[dict]:
+    rows = (
+        db.query(Subscription)
+        .options(joinedload(Subscription.plan))
+        .filter(Subscription.user_id == user_id)
+        .order_by(Subscription.created_at.desc(), Subscription.id.desc())
+        .all()
+    )
+    now = _now()
+    result = []
+    for row in rows:
+        if row.cancelled_at is not None:
+            state = "cancelled"
+        elif now < row.expires_at:
+            state = STATE_ACTIVE
+        elif now < row.expires_at + timedelta(days=row.grace_days):
+            state = STATE_GRACE
+        else:
+            state = STATE_EXPIRED
+        result.append(_serialize(row, state))
+    return result
+
+
+def my_current_plan_view(db: Session, user: User) -> dict:
+    """What a student's 'My Plan' page renders: their current (institute or
+    personal) subscription's plan and its modules, ready for a 'Start test'
+    button, or plan=None if they have no active/grace subscription."""
+    if user.institute_id is not None:
+        subscription, state = current_subscription(db, user.institute_id)
+    else:
+        subscription, state = current_user_subscription(db, user.id)
+
+    if subscription is None or state not in (STATE_ACTIVE, STATE_GRACE):
+        return {"plan": None, "state": state, "expires_at": None}
+
+    plan = subscription.plan
+    return {
+        "plan": {
+            "id": plan.id,
+            "name": plan.name,
+            "description": plan.description,
+            "modules": [
+                {
+                    "module_id": module.id,
+                    "title": module.title,
+                    "module_type": module.module_type,
+                    "duration_minutes": module.duration_minutes,
+                }
+                for module in plan.modules
+            ],
+        },
+        "state": state,
+        "expires_at": subscription.expires_at,
+    }
