@@ -7152,9 +7152,15 @@ button.danger-text {
 /* ---------- Test-taking engine (student attempts) ---------- */
 
 .test-runner-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: var(--bg);
 }
 
@@ -7179,6 +7185,30 @@ button.danger-text {
   margin: 0;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+.test-runner-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.test-runner-dev-exit {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-muted);
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.test-runner-dev-exit:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft, rgba(225, 29, 46, 0.08));
+  color: var(--primary);
+  transform: none;
 }
 
 .test-runner-timer {
@@ -7246,10 +7276,13 @@ button.danger-text {
 
 .test-runner-body {
   flex: 1;
+  min-height: 0;
   max-width: 860px;
   width: 100%;
   margin: 0 auto;
   padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .test-runner-instructions {
@@ -7373,6 +7406,86 @@ button.danger-text {
   min-height: 100vh;
   font-size: 15px;
   color: var(--text-muted);
+}
+
+.test-runner-fullscreen-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.56);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.test-runner-fullscreen-gate section {
+  width: min(440px, 100%);
+  padding: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.3);
+  text-align: center;
+}
+
+.test-runner-fullscreen-gate h2 {
+  margin: 8px 0;
+  font-size: 24px;
+}
+
+.test-runner-fullscreen-gate p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.test-runner-gate-timer {
+  margin: 22px 0;
+  color: var(--text);
+  font-size: 34px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.test-runner-gate-timer.is-urgent {
+  color: #b91c1c;
+}
+
+@media (max-width: 640px) {
+  .test-runner-header {
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .test-runner-header-actions {
+    align-items: flex-end;
+    flex-direction: column-reverse;
+  }
+
+  .test-runner-parts,
+  .test-runner-body,
+  .test-runner-footer {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .test-runner-footer {
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+
+  .test-runner-footer>div {
+    width: 100%;
+  }
+
+  .test-runner-footer button {
+    flex: 1;
+  }
 }
 
 /* ---------- CEFR result profile ---------- */

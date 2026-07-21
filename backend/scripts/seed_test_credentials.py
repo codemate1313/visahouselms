@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.core.security import hash_password  # noqa: E402
 from app.database import SessionLocal  # noqa: E402
 from app.models.institute import Institute  # noqa: E402
+from app.models.exam_module import InstituteModule  # noqa: E402
 from app.models.instructor_profile import InstructorProfile  # noqa: E402
 from app.models.plan import Plan  # noqa: E402
 from app.models.role import (  # noqa: E402
@@ -159,6 +160,29 @@ def main() -> None:
                     last_name,
                 )
             )
+
+        super_admin = next(user for user in users if user.email == "qa.superadmin@example.com")
+        existing_assignments = {
+            assignment.module_id: assignment
+            for assignment in db.query(InstituteModule)
+            .filter(InstituteModule.institute_id == institute.id)
+            .all()
+        }
+        for module in modules:
+            assignment = existing_assignments.get(module.id)
+            if assignment is None:
+                db.add(
+                    InstituteModule(
+                        institute_id=institute.id,
+                        module_id=module.id,
+                        assigned_by_id=super_admin.id,
+                        is_active=True,
+                    )
+                )
+            else:
+                assignment.assigned_by_id = super_admin.id
+                assignment.is_active = True
+                db.add(assignment)
 
         now = _utcnow()
         active_subscription = (

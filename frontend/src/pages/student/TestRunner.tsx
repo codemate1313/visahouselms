@@ -6,6 +6,7 @@ import type { Attempt, AttemptQuestion, AttemptResponse, ProctorFlagType } from 
 import { useToastStore } from "../../store/toastStore";
 
 const DEBOUNCE_MS = 800;
+const IMMERSIVE_MODULE_TYPES = new Set(["full_mock", "final_test"]);
 
 function formatTime(seconds: number): string {
   const clamped = Math.max(0, Math.floor(seconds));
@@ -30,7 +31,9 @@ export function TestRunner() {
   const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const recorderRef = useRef<MediaRecorder | null>(null);
   const [recordingQuestionId, setRecordingQuestionId] = useState<number | null>(null);
+  const [fullscreenActive, setFullscreenActive] = useState(() => Boolean(document.fullscreenElement));
   const submittedRef = useRef(false);
+  const developerFullscreenBypass = useRef(false);
 
   useEffect(() => {
     apiClient
@@ -83,26 +86,33 @@ export function TestRunner() {
     [id],
   );
 
-  // Final Test strict mode: fullscreen lock + blur/visibility flagging.
+  const isImmersiveAttempt = attempt ? IMMERSIVE_MODULE_TYPES.has(attempt.module_type) : false;
+  const immersiveAttemptId = isImmersiveAttempt ? attempt?.id : null;
+  const isFinalAttempt = attempt?.is_final ?? false;
+
+  // Composite tests occupy the full viewport. Final Tests additionally retain
+  // strict proctor flagging; Full Mocks use the same delivery surface without
+  // treating practice interruptions as violations.
   useEffect(() => {
-    if (!attempt?.is_final) return;
-    const el = document.documentElement;
-    el.requestFullscreen?.().catch(() => {});
+    if (!immersiveAttemptId) return;
+    developerFullscreenBypass.current = false;
+    setFullscreenActive(Boolean(document.fullscreenElement));
 
     function onFullscreenChange() {
-      if (!document.fullscreenElement && !submittedRef.current) {
+      const isActive = Boolean(document.fullscreenElement);
+      setFullscreenActive(isActive);
+      if (!isActive && isFinalAttempt && !submittedRef.current && !developerFullscreenBypass.current) {
         recordFlag("fullscreen_exit");
-        el.requestFullscreen?.().catch(() => {});
       }
     }
     function onVisibilityChange() {
-      if (document.hidden && !submittedRef.current) recordFlag("visibility_change");
+      if (isFinalAttempt && document.hidden && !submittedRef.current) recordFlag("visibility_change");
     }
     function onBlur() {
-      if (!submittedRef.current) recordFlag("blur");
+      if (isFinalAttempt && !submittedRef.current) recordFlag("blur");
     }
     function onBeforeUnload(event: BeforeUnloadEvent) {
-      if (submittedRef.current) return;
+      if (!isFinalAttempt || submittedRef.current) return;
       event.preventDefault();
       event.returnValue = "";
     }
@@ -118,7 +128,26 @@ export function TestRunner() {
       window.removeEventListener("beforeunload", onBeforeUnload);
       if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     };
-  }, [attempt?.is_final, recordFlag]);
+  }, [immersiveAttemptId, isFinalAttempt, recordFlag]);
+
+  async function enterFullscreen() {
+    developerFullscreenBypass.current = false;
+    try {
+      if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+      setFullscreenActive(Boolean(document.fullscreenElement));
+    } catch {
+      showError("Allow full-screen access to continue this timed test.", "Full Screen Required");
+    }
+  }
+
+  async function exitDeveloperFullscreen() {
+    developerFullscreenBypass.current = true;
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+    } finally {
+      setFullscreenActive(false);
+    }
+  }
 
   async function persist(questionId: number, response: AttemptResponse) {
     setSavingIds((prev) => new Set(prev).add(questionId));
@@ -220,7 +249,14 @@ export function TestRunner() {
           <h1>{attempt.module_title}</h1>
           <p>{currentPart.title}{currentPart.skill_focus ? ` · ${currentPart.skill_focus}` : ""}</p>
         </div>
-        <div className={`test-runner-timer${secondsLeft < 300 ? " is-urgent" : ""}`}>{formatTime(secondsLeft)}</div>
+        <div className="test-runner-header-actions">
+          {import.meta.env.DEV && isImmersiveAttempt && fullscreenActive && (
+            <button type="button" className="test-runner-dev-exit" onClick={exitDeveloperFullscreen}>
+              Exit full screen (dev)
+            </button>
+          )}
+          <div className={`test-runner-timer${secondsLeft < 300 ? " is-urgent" : ""}`}>{formatTime(secondsLeft)}</div>
+        </div>
       </header>
 
       <nav className="test-runner-parts">
@@ -285,6 +321,18 @@ export function TestRunner() {
               <button onClick={submit} disabled={submitting}>{submitting ? "Submitting..." : "Submit now"}</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {isImmersiveAttempt && !fullscreenActive && !developerFullscreenBypass.current && (
+        <div className="test-runner-fullscreen-gate" role="dialog" aria-modal="true" aria-labelledby="fullscreen-gate-title">
+          <section>
+            <span className="page-eyebrow">{attempt.is_final ? "Final Test" : "Full Mock Test"}</span>
+            <h2 id="fullscreen-gate-title">Continue in full screen</h2>
+            <p>Your timed session is active. Enter full screen to view and complete the assessment.</p>
+            <div className={`test-runner-gate-timer${secondsLeft < 300 ? " is-urgent" : ""}`}>{formatTime(secondsLeft)}</div>
+            <button type="button" onClick={enterFullscreen}>Enter full screen</button>
+          </section>
         </div>
       )}
     </div>

@@ -251,11 +251,16 @@ def seed_sample_data(
     if str(root_dir) not in sys.path:
         sys.path.insert(0, str(root_dir))
 
-    from scripts.seed_dummy_modules import _get_or_create_instructor, _create_module
+    from scripts.seed_dummy_modules import (
+        COMPOSITE_MODULE_TYPES,
+        SKILL_MODULE_TYPES,
+        _create_module,
+        _get_or_create_instructor,
+    )
 
     instructor = _get_or_create_instructor(db)
     created_modules = 0
-    for module_type in ("listening", "reading", "writing", "speaking"):
+    for module_type in (*SKILL_MODULE_TYPES, *COMPOSITE_MODULE_TYPES):
         if _create_module(db, instructor, module_type):
             created_modules += 1
 
@@ -266,6 +271,7 @@ def seed_sample_data(
         "message": "Sample seed data successfully populated!",
         "instructor_email": instructor.email,
         "created_modules": created_modules,
+        "module_types": [*SKILL_MODULE_TYPES, *COMPOSITE_MODULE_TYPES],
     }
 
 

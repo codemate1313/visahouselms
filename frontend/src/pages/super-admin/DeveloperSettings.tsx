@@ -206,7 +206,7 @@ function SeedTab() {
     try {
       const { data } = await apiClient.post("/super-admin/dev-settings/seed");
       setOutput(
-        `✓ ${data.message}\nInstructor: ${data.instructor_email}\nNew Modules Created: ${data.created_modules}`
+        `✓ ${data.message}\nInstructor: ${data.instructor_email}\nNew Modules Created: ${data.created_modules}\nAvailable Types: ${(data.module_types ?? []).join(", ")}`
       );
     } catch (err: unknown) {
       setError(extractErrorMessage(err, "Failed to seed sample data."));
@@ -232,7 +232,7 @@ function SeedTab() {
     <div className="form-card wide">
       <h3>Populate Sample & Demo Seed Data</h3>
       <p className="hint" style={{ marginBottom: 16 }}>
-        Generate sample assessment modules (Listening, Reading, Writing, Speaking), instructor profiles, demo accounts, and test packages into the database for local testing and demonstration.
+        Generate sample Listening, Reading, Writing, Speaking, Full Mock, and Final Test courses for local testing and demonstration.
       </p>
 
       <div className="form-actions" style={{ display: "flex", gap: "12px" }}>

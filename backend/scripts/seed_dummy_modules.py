@@ -21,6 +21,7 @@ from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, 
 from app.models.instructor_profile import InstructorProfile  # noqa: E402
 from app.models.role import SA_INSTRUCTOR, Role  # noqa: E402
 from app.models.user import User  # noqa: E402
+from app.services import module_authoring_service  # noqa: E402
 from app.services.module_blueprint_service import get_blueprint  # noqa: E402
 
 
@@ -32,7 +33,11 @@ SAMPLE_TITLES = {
     "reading": "Sample Reading Course - Academic Set 1",
     "writing": "Sample Writing Course - Academic Set 1",
     "speaking": "Sample Speaking Course - Academic Set 1",
+    "full_mock": "Sample Full Mock Test - Academic Set 1",
+    "final_test": "Sample Final Test - Academic Set 1",
 }
+SKILL_MODULE_TYPES = ("listening", "reading", "writing", "speaking")
+COMPOSITE_MODULE_TYPES = ("full_mock", "final_test")
 
 
 def _sample_mp3_bytes() -> bytes:
@@ -143,6 +148,38 @@ def _create_module(db, actor: User, module_type: str) -> bool:
         print(f"Skipping existing module: {title}")
         return False
 
+    if module_type in COMPOSITE_MODULE_TYPES:
+        sources = (
+            db.query(ExamModule)
+            .filter(
+                ExamModule.created_by_id == actor.id,
+                ExamModule.title.in_([SAMPLE_TITLES[item] for item in SKILL_MODULE_TYPES]),
+                ExamModule.deleted_at.is_(None),
+            )
+            .all()
+        )
+        by_type = {source.module_type: source for source in sources}
+        missing = [item for item in SKILL_MODULE_TYPES if item not in by_type]
+        if missing:
+            raise RuntimeError(
+                f"Cannot create {title}; missing sample sources: {', '.join(missing)}"
+            )
+        created = module_authoring_service.create_module(
+            db,
+            actor,
+            {
+                "module_type": module_type,
+                "title": title,
+                "description": "Complete seeded four-skill assessment for local student test-taking QA.",
+                "instructions": "Complete every section before submitting. The countdown continues throughout the sitting.",
+                "source_module_ids": [by_type[item].id for item in SKILL_MODULE_TYPES],
+            },
+            None,
+        )
+        module_authoring_service.set_status(db, actor, created["id"], "published", None)
+        print(f"Created module: {title}")
+        return True
+
     blueprint = get_blueprint(module_type)
     module = ExamModule(
         module_type=module_type,
@@ -216,7 +253,7 @@ def main() -> None:
     try:
         instructor = _get_or_create_instructor(db)
         created = 0
-        for module_type in ("listening", "reading", "writing", "speaking"):
+        for module_type in (*SKILL_MODULE_TYPES, *COMPOSITE_MODULE_TYPES):
             if _create_module(db, instructor, module_type):
                 created += 1
         db.commit()

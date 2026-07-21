@@ -15,6 +15,8 @@ const MODULE_TYPE_LABEL: Record<string, string> = {
   final_test: "Final Test",
 };
 
+const IMMERSIVE_MODULE_TYPES = new Set(["full_mock", "final_test"]);
+
 export function MyCourses() {
   const navigate = useNavigate();
   const showError = useToastStore((state) => state.showError);
@@ -32,12 +34,28 @@ export function MyCourses() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function startModule(moduleId: number) {
+  async function startModule(moduleId: number, moduleType: string) {
     setStarting(moduleId);
+    let enteredFullscreen = false;
     try {
+      if (
+        IMMERSIVE_MODULE_TYPES.has(moduleType) &&
+        !document.fullscreenElement &&
+        document.documentElement.requestFullscreen
+      ) {
+        try {
+          await document.documentElement.requestFullscreen();
+          enteredFullscreen = Boolean(document.fullscreenElement);
+        } catch {
+          // The runner presents a user-gesture retry screen when the browser blocks this request.
+        }
+      }
       const { data } = await apiClient.post<{ id: number }>(`/student/modules/${moduleId}/attempts`);
       navigate(`/student/attempts/${data.id}/take`);
     } catch (err: unknown) {
+      if (enteredFullscreen && document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      }
       showError(extractErrorMessage(err, "Failed to start the test."), "Could Not Start");
     } finally {
       setStarting(null);
@@ -71,7 +89,7 @@ export function MyCourses() {
                     <div className="section-chip">{MODULE_TYPE_LABEL[module.module_type] ?? module.module_type}</div>
                     <h2>{module.title}</h2>
                     <p>{module.duration_minutes} minutes</p>
-                    <button disabled={starting === moduleId} onClick={() => startModule(moduleId)}>
+                    <button disabled={starting === moduleId} onClick={() => startModule(moduleId, module.module_type)}>
                       {starting === moduleId ? "Starting..." : "Start test"}
                     </button>
                   </div>
