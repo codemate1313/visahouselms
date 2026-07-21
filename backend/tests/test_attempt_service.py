@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -157,6 +158,8 @@ class AttemptServiceTestCase(unittest.TestCase):
         self._course_with_module(module.id)
 
         attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        self.assertEqual(attempt_out["started_at"].utcoffset(), timedelta(0))
+        self.assertEqual(attempt_out["expires_at"].utcoffset(), timedelta(0))
         attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
 
         # answer every question correctly ("A") except the very last one

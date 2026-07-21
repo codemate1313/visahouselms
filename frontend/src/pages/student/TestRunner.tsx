@@ -17,6 +17,11 @@ function formatTime(seconds: number): string {
   return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
 }
 
+function parseServerTimestamp(value: string): number {
+  const hasTimezone = /(?:z|[+-]\d{2}:\d{2})$/i.test(value);
+  return new Date(hasTimezone ? value : `${value}Z`).getTime();
+}
+
 export function TestRunner() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -70,7 +75,7 @@ export function TestRunner() {
     if (!attempt) return;
     function tick() {
       if (!attempt) return;
-      const remaining = (new Date(attempt.expires_at).getTime() - Date.now()) / 1000;
+      const remaining = (parseServerTimestamp(attempt.expires_at) - Date.now()) / 1000;
       setSecondsLeft(remaining);
       if (remaining <= 0) submit();
     }

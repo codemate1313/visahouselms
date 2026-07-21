@@ -31,6 +31,15 @@ def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
+def _utc_out(value: Optional[datetime]) -> Optional[datetime]:
+    """Attach the UTC offset omitted by the database's naive UTC columns."""
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
 def _attempt_query(db: Session):
     return db.query(TestAttempt).options(
         joinedload(TestAttempt.module).selectinload(ExamModule.parts).selectinload(ExamModulePart.questions),
@@ -207,16 +216,16 @@ def get_student_view(db: Session, attempt: TestAttempt) -> dict:
         "course_id": attempt.course_id,
         "status": attempt.status,
         "is_final": attempt.is_final,
-        "started_at": attempt.started_at,
-        "expires_at": attempt.expires_at,
-        "submitted_at": attempt.submitted_at,
+        "started_at": _utc_out(attempt.started_at),
+        "expires_at": _utc_out(attempt.expires_at),
+        "submitted_at": _utc_out(attempt.submitted_at),
         "raw_score": str(attempt.raw_score) if attempt.raw_score is not None else None,
         "max_score": str(attempt.max_score) if attempt.max_score is not None else None,
         "band_label": attempt.band_label,
         "cefr_level": attempt.cefr_level,
         "cefr_profile": attempt.cefr_profile,
         "cefr_policy_version": attempt.cefr_policy_version,
-        "graded_at": attempt.graded_at,
+        "graded_at": _utc_out(attempt.graded_at),
         "flag_count": len(attempt.flags),
         "reevaluation": grading_service.reevaluation_for_student(db, attempt),
         "parts": _serialize_parts(attempt, reveal=reveal),
@@ -527,8 +536,8 @@ def list_my_attempts(db: Session, user: User) -> list[dict]:
             "module_type": attempt.module.module_type,
             "module_title": attempt.module.title,
             "status": attempt.status,
-            "started_at": attempt.started_at,
-            "submitted_at": attempt.submitted_at,
+            "started_at": _utc_out(attempt.started_at),
+            "submitted_at": _utc_out(attempt.submitted_at),
             "raw_score": str(attempt.raw_score) if attempt.raw_score is not None else None,
             "max_score": str(attempt.max_score) if attempt.max_score is not None else None,
             "band_label": attempt.band_label,
