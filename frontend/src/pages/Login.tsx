@@ -2,6 +2,7 @@ import { type FormEvent, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../api/client";
+import { getDeviceIdentity } from "../auth/device";
 import { PasswordInput } from "../components/PasswordInput";
 import { useAuthStore } from "../store/authStore";
 import { useToastStore } from "../store/toastStore";
@@ -45,6 +46,7 @@ export function Login({
       const { data: tokens } = await apiClient.post("/auth/login", {
         email: email.trim().toLowerCase(),
         password,
+        ...getDeviceIdentity(),
       });
       const { data: user } = await apiClient.get("/auth/me", {
         headers: { Authorization: `Bearer ${tokens.access_token}` },

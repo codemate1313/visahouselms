@@ -30,12 +30,14 @@ from app.models.subscription import Subscription
 from app.models.setting import Setting
 from app.models.trial_config import TrialConfig
 from app.models.user import User
+from app.models.user_device import UserDevice
 from app.models.user_session import UserSession
 
 __all__ = [
     "Base",
     "Role",
     "User",
+    "UserDevice",
     "UserSession",
     "Institute",
     "Setting",

@@ -20,6 +20,23 @@ from app.models.user_session import UserSession
 from app.services.subscription_service import current_subscription
 
 MAX_LOGO_BYTES = 2 * 1024 * 1024
+DEFAULT_ADMIN_PERMISSIONS = {
+    "view_students": False,
+    "manage_students": False,
+    "view_student_activity": False,
+    "manage_student_sessions": False,
+    "manage_staff": False,
+    "view_billing": False,
+}
+
+
+def normalized_admin_permissions(value: Optional[dict]) -> dict:
+    permissions = DEFAULT_ADMIN_PERMISSIONS.copy()
+    if value:
+        permissions.update(
+            {key: bool(value.get(key)) for key in DEFAULT_ADMIN_PERMISSIONS if key in value}
+        )
+    return permissions
 
 
 def _audit(db: Session, actor: User, action: str, entity_id: Optional[int], ip: Optional[str], details=None) -> None:
@@ -68,6 +85,7 @@ def _serialize(db: Session, institute: Institute) -> dict:
         "name": institute.name,
         "slug": institute.slug,
         "contact_email": institute.contact_email,
+        "admin_permissions": normalized_admin_permissions(institute.admin_permissions),
         "is_active": institute.is_active,
         "subscription_state": sub_state,
         "created_at": institute.created_at,
@@ -91,6 +109,7 @@ def create_institute(
     admin_email: str,
     admin_first_name: str,
     admin_last_name: str,
+    admin_permissions: dict,
     ip: Optional[str],
 ) -> dict:
     if db.query(User).filter(User.email == admin_email).first() is not None:
@@ -100,7 +119,13 @@ def create_institute(
     if role is None:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="INSTITUTE_ADMIN role not seeded")
 
-    institute = Institute(name=name, slug=_unique_slug(db, name), contact_email=contact_email, is_active=True)
+    institute = Institute(
+        name=name,
+        slug=_unique_slug(db, name),
+        contact_email=contact_email,
+        admin_permissions=normalized_admin_permissions(admin_permissions),
+        is_active=True,
+    )
     db.add(institute)
     db.flush()
 
@@ -131,7 +156,13 @@ def create_institute(
 
 
 def update_institute(
-    db: Session, actor: User, institute_id: int, name: Optional[str], contact_email: Optional[str], ip: Optional[str]
+    db: Session,
+    actor: User,
+    institute_id: int,
+    name: Optional[str],
+    contact_email: Optional[str],
+    admin_permissions: Optional[dict],
+    ip: Optional[str],
 ) -> dict:
     institute = get_institute_or_404(db, institute_id)
     if name is not None and name != institute.name:
@@ -139,6 +170,8 @@ def update_institute(
         institute.slug = _unique_slug(db, name, exclude_id=institute.id)
     if contact_email is not None:
         institute.contact_email = contact_email
+    if admin_permissions is not None:
+        institute.admin_permissions = normalized_admin_permissions(admin_permissions)
 
     db.add(institute)
     _audit(db, actor, "institute.update", institute.id, ip)

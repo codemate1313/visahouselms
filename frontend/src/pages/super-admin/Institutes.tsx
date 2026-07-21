@@ -108,6 +108,7 @@ export function Institutes() {
                 </td>
                 <td className="table-actions">
                   <Link to={`/super-admin/institutes/${row.id}`}>Edit</Link>
+                  <Link to={`/super-admin/institutes/${row.id}/students`}>Students</Link>
                   <Link to={`/super-admin/institutes/${row.id}/branding`}>Branding</Link>
                   <button onClick={() => toggleActive(row)}>
                     {row.is_active ? "Suspend" : "Reactivate"}

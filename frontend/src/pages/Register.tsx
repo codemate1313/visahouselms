@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../api/client";
+import { getDeviceIdentity } from "../auth/device";
 import { extractErrorMessage } from "../api/errors";
 import { PasswordInput } from "../components/PasswordInput";
 import { PasswordStrengthMeter } from "../components/PasswordStrengthMeter";
@@ -29,6 +30,7 @@ export function Register() {
         password,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
+        ...getDeviceIdentity(),
       });
       const { data: user } = await apiClient.get("/auth/me", {
         headers: { Authorization: `Bearer ${tokens.access_token}` },

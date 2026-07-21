@@ -1,9 +1,13 @@
+from datetime import datetime, timezone
+
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.exam_module import ExamModule
+from app.models.attempt import Enrollment
+from app.models.course import InstituteCourse
 from app.models.role import STUDENT
 from app.models.user import User
 from app.services.subscription_service import (
@@ -34,6 +38,44 @@ def has_module_access(db: Session, user: User, module_id: int) -> bool:
     if subscription is None or state not in (STATE_ACTIVE, STATE_GRACE):
         return False
     return any(module.id == module_id for module in subscription.plan.modules)
+
+
+def has_course_access(db: Session, user: User, course_id: int) -> bool:
+    """Legacy course entitlement used by the course bundle service/tests.
+
+    Direct students need an active, unexpired Enrollment. Institute students
+    inherit active course assignments while their institute subscription is
+    active or in grace. Module-plan entitlement remains authoritative for
+    starting the newer module-first attempts.
+    """
+    if user.institute_id is None:
+        enrollment = (
+            db.query(Enrollment)
+            .filter(
+                Enrollment.user_id == user.id,
+                Enrollment.course_id == course_id,
+                Enrollment.is_active.is_(True),
+            )
+            .first()
+        )
+        if enrollment is None:
+            return False
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        return enrollment.expires_at is None or enrollment.expires_at > now
+
+    _subscription, state = current_subscription(db, user.institute_id)
+    if state not in (STATE_ACTIVE, STATE_GRACE):
+        return False
+    return (
+        db.query(InstituteCourse)
+        .filter(
+            InstituteCourse.institute_id == user.institute_id,
+            InstituteCourse.course_id == course_id,
+            InstituteCourse.is_active.is_(True),
+        )
+        .first()
+        is not None
+    )
 
 
 def require_module_access(

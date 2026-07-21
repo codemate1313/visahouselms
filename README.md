@@ -13,7 +13,8 @@ React/Vite frontend.
 - Phase 3.1: SA Instructor role and portal foundation — complete
 - Phase 3.2: SA Instructor account and profile controls — complete
 - Phase 3.3: module-first assessment authoring — complete
-- Phase 3.4: student attempts and grading workflow — next
+- Phase 3.4: student attempts and grading workflow — complete
+- Phase 4: Institute Admin portal, member management, and billing — complete
 
 ## Phase 3.1 capabilities
 
@@ -60,7 +61,45 @@ mounted.
 The dashboard shell and authoring views include mobile navigation, responsive
 cards and forms, scroll-safe tables, and layouts for tablet and phone widths.
 
-The schema is at Alembic revision `0014`.
+## Phase 3.4 capabilities
+
+Students can take entitled assessment modules in a timed, autosaving runner,
+upload Speaking recordings, resume active attempts, and review submitted or
+graded results. Objective sections are marked automatically; Writing and
+Speaking submissions enter the owning SA Instructor's rubric grading queue.
+Final Tests are single-sitting and record focus/fullscreen flags for review.
+
+## Phase 4 capabilities
+
+Super Admins provision institute students manually or by CSV/XLSX import,
+subject to the institute's assigned plan limit. They can edit, activate,
+deactivate, archive, reset passwords, review attempts and grading history,
+inspect known device counts, and revoke student sessions. Institute Admins
+cannot create or import student accounts.
+
+Institute Admin access is permission-based per institute. During institute
+creation, and at any later time, the Super Admin can grant or revoke student
+directory access, student management, activity visibility, session revocation,
+instructor management, and subscription visibility. The portal navigation and
+dashboard follow those permissions, and the API enforces the same checks.
+Subscription and offline payment information is read-only for permitted
+Institute Admins. Every member operation remains tenant-scoped; cross-institute
+IDs return not found.
+
+## Institute onboarding flow
+
+1. The institute contacts Visa House offline and agrees on access, capacity,
+   duration, and payment terms.
+2. The Super Admin records the payment/subscription and creates the institute.
+3. The Super Admin applies the institute logo, colors, and other branding.
+4. The Super Admin grants the Institute Admin only the agreed operational
+   permissions and shares the generated temporary login.
+5. The Super Admin creates student accounts individually or imports a CSV/XLSX
+   file, up to the subscribed student limit.
+6. The Super Admin can later change permissions, suspend the institute, or
+   manage and revoke individual student access.
+
+The schema is at Alembic revision `0020`.
 
 The full assessment mapping is documented in
 [`docs/assessment-module-blueprints.md`](docs/assessment-module-blueprints.md).

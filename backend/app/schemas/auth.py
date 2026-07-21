@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.core.password_policy import validate_password_strength
 
@@ -8,6 +8,8 @@ from app.core.password_policy import validate_password_strength
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    device_id: Optional[str] = Field(default=None, min_length=16, max_length=200)
+    device_name: Optional[str] = Field(default=None, max_length=120)
 
 
 class RegisterRequest(BaseModel):
@@ -18,6 +20,8 @@ class RegisterRequest(BaseModel):
     password: str
     first_name: str
     last_name: str
+    device_id: Optional[str] = Field(default=None, min_length=16, max_length=200)
+    device_name: Optional[str] = Field(default=None, max_length=120)
 
     @field_validator("password")
     @classmethod
@@ -58,3 +62,4 @@ class CurrentUser(BaseModel):
     last_name: str
     force_password_reset: bool = False
     avatar_url: Optional[str] = None
+    institute_permissions: Optional[dict] = None

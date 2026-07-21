@@ -92,7 +92,11 @@ def usage(db: Session, institute_id: int) -> dict:
     }
     students = (
         db.query(User)
-        .filter(User.institute_id == institute_id, User.role_id == role_ids.get(STUDENT, -1))
+        .filter(
+            User.institute_id == institute_id,
+            User.role_id == role_ids.get(STUDENT, -1),
+            User.deleted_at.is_(None),
+        )
         .count()
     )
     staff = (
@@ -100,12 +104,18 @@ def usage(db: Session, institute_id: int) -> dict:
         .filter(
             User.institute_id == institute_id,
             User.role_id.in_([role_ids.get(INSTITUTE_ADMIN, -1), role_ids.get(INST_INSTRUCTOR, -1)]),
+            User.deleted_at.is_(None),
         )
         .count()
     )
-    # tests don't exist until Phase 3 - the counter registry in
-    # app/dependencies/limits.py is the single place to update when they do
-    tests = 0
+    from app.models.attempt import TestAttempt
+
+    tests = (
+        db.query(TestAttempt)
+        .join(User, TestAttempt.user_id == User.id)
+        .filter(User.institute_id == institute_id)
+        .count()
+    )
     return {"students": students, "staff": staff, "tests": tests}
 
 

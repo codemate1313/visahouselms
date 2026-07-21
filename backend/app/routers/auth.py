@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import CurrentUser, LoginRequest, LogoutRequest, RefreshRequest, RegisterRequest, TokenResponse
-from app.services import account_service, auth_service
+from app.services import account_service, auth_service, institute_service
 from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -18,6 +18,8 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
         payload.password,
         request.headers.get("user-agent"),
         request.client.host if request.client else None,
+        payload.device_id,
+        payload.device_name,
     )
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
@@ -32,6 +34,8 @@ def register(payload: RegisterRequest, request: Request, db: Session = Depends(g
         payload.last_name,
         request.headers.get("user-agent"),
         request.client.host if request.client else None,
+        payload.device_id,
+        payload.device_name,
     )
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
@@ -64,4 +68,9 @@ def me(user: User = Depends(get_current_user)):
         last_name=user.last_name,
         force_password_reset=user.force_password_reset,
         avatar_url=account_service.avatar_url_for(user),
+        institute_permissions=(
+            institute_service.normalized_admin_permissions(user.institute.admin_permissions)
+            if user.institute and user.role.name == "INSTITUTE_ADMIN"
+            else None
+        ),
     )

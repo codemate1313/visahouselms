@@ -15,6 +15,7 @@ from app.routers import (
     demo_accounts,
     dev_settings,
     institutes,
+    institute_admin,
     instructor_grading,
     instructor_portal,
     instructors,
@@ -57,6 +58,7 @@ app.include_router(plans.router)
 app.include_router(subscriptions.router)
 app.include_router(institutes.router)
 app.include_router(institutes.public_router)
+app.include_router(institute_admin.router)
 app.include_router(instructors.router)
 app.include_router(instructor_portal.router)
 app.include_router(instructor_grading.router)

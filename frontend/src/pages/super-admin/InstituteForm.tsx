@@ -1,12 +1,41 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 
 interface CreatedInstitute {
+  id: number;
   admin_email: string;
   admin_temp_password: string;
 }
+
+type PermissionKey =
+  | "view_students"
+  | "manage_students"
+  | "view_student_activity"
+  | "manage_student_sessions"
+  | "manage_staff"
+  | "view_billing";
+
+type InstitutePermissions = Record<PermissionKey, boolean>;
+
+const DEFAULT_PERMISSIONS: InstitutePermissions = {
+  view_students: false,
+  manage_students: false,
+  view_student_activity: false,
+  manage_student_sessions: false,
+  manage_staff: false,
+  view_billing: false,
+};
+
+const PERMISSION_OPTIONS: Array<{ key: PermissionKey; label: string; description: string }> = [
+  { key: "view_students", label: "View students", description: "See the institute student directory." },
+  { key: "manage_students", label: "Manage students", description: "Edit, activate, deactivate, and delete student accounts." },
+  { key: "view_student_activity", label: "View student activity", description: "Review test attempts, grading history, and known devices." },
+  { key: "manage_student_sessions", label: "Manage student sessions", description: "Revoke a student's active login session." },
+  { key: "manage_staff", label: "Manage instructors", description: "Create, edit, activate, and deactivate institute instructors." },
+  { key: "view_billing", label: "View subscription", description: "See the assigned plan, limits, and offline payment history." },
+];
 
 export function InstituteForm() {
   const { id } = useParams();
@@ -18,6 +47,7 @@ export function InstituteForm() {
   const [adminEmail, setAdminEmail] = useState("");
   const [adminFirstName, setAdminFirstName] = useState("");
   const [adminLastName, setAdminLastName] = useState("");
+  const [permissions, setPermissions] = useState<InstitutePermissions>(DEFAULT_PERMISSIONS);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -31,6 +61,7 @@ export function InstituteForm() {
       .then(({ data }) => {
         setName(data.name);
         setContactEmail(data.contact_email ?? "");
+        setPermissions({ ...DEFAULT_PERMISSIONS, ...data.admin_permissions });
       })
       .catch(() => setError("Failed to load institute."))
       .finally(() => setLoading(false));
@@ -48,12 +79,14 @@ export function InstituteForm() {
           admin_email: adminEmail,
           admin_first_name: adminFirstName,
           admin_last_name: adminLastName,
+          admin_permissions: permissions,
         });
-        setCreated({ admin_email: data.admin_email, admin_temp_password: data.admin_temp_password });
+        setCreated({ id: data.id, admin_email: data.admin_email, admin_temp_password: data.admin_temp_password });
       } else {
         await apiClient.patch(`/super-admin/institutes/${id}`, {
           name,
           contact_email: contactEmail || null,
+          admin_permissions: permissions,
         });
         navigate("/super-admin/institutes");
       }
@@ -93,6 +126,9 @@ export function InstituteForm() {
             <button type="button" onClick={copyPassword}>
               {copied ? "Copied!" : "Copy password"}
             </button>
+            <button type="button" onClick={() => navigate(`/super-admin/institutes/${created.id}/students`)}>
+              Add students
+            </button>
             <button type="button" onClick={() => navigate("/super-admin/institutes")}>
               Done
             </button>
@@ -104,7 +140,15 @@ export function InstituteForm() {
 
   return (
     <div>
-      <h1>{isNew ? "New Institute" : "Edit Institute"}</h1>
+      <div className="page-header">
+        <h1>{isNew ? "New Institute" : "Edit Institute"}</h1>
+        {!isNew && (
+          <div className="form-actions">
+            <Link className="button-link" to={`/super-admin/institutes/${id}/students`}>Students</Link>
+            <Link className="button-link secondary-button" to={`/super-admin/institutes/${id}/branding`}>Branding</Link>
+          </div>
+        )}
+      </div>
       <form className="form-card wide" onSubmit={handleSubmit}>
         <label htmlFor="name">Institute name</label>
         <input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -144,6 +188,26 @@ export function InstituteForm() {
             </p>
           </>
         )}
+
+        <fieldset className="permission-fieldset">
+          <legend>Institute Admin permissions</legend>
+          <p className="hint">Student account creation remains exclusive to the Super Admin.</p>
+          <div className="permission-grid">
+            {PERMISSION_OPTIONS.map((option) => (
+              <label className="permission-option" key={option.key}>
+                <input
+                  type="checkbox"
+                  checked={permissions[option.key]}
+                  onChange={(event) => setPermissions((current) => ({
+                    ...current,
+                    [option.key]: event.target.checked,
+                  }))}
+                />
+                <span><strong>{option.label}</strong><small>{option.description}</small></span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         {error && <p className="error-text">{error}</p>}
 

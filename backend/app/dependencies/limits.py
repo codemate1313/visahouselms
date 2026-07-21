@@ -29,7 +29,11 @@ def _count_users_with_roles(db: Session, institute_id: int, role_names) -> int:
         return 0
     return (
         db.query(User)
-        .filter(User.institute_id == institute_id, User.role_id.in_(role_ids))
+        .filter(
+            User.institute_id == institute_id,
+            User.role_id.in_(role_ids),
+            User.deleted_at.is_(None),
+        )
         .count()
     )
 
@@ -43,8 +47,14 @@ def _count_staff(db: Session, institute_id: int) -> int:
 
 
 def _count_tests(db: Session, institute_id: int) -> int:
-    # Phase 3 replaces this with a real count once the tests table exists.
-    return 0
+    from app.models.attempt import TestAttempt
+
+    return (
+        db.query(TestAttempt)
+        .join(User, TestAttempt.user_id == User.id)
+        .filter(User.institute_id == institute_id)
+        .count()
+    )
 
 
 # resource name -> (counter, plan limit attribute)

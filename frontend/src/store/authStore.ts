@@ -11,6 +11,7 @@ export interface AuthUser {
   last_name: string;
   force_password_reset: boolean;
   avatar_url: string | null;
+  institute_permissions: Record<string, boolean> | null;
 }
 
 interface AuthState {

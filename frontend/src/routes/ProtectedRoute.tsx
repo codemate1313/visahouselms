@@ -27,6 +27,8 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const passwordRoutes: Record<string, string> = {
     SUPER_ADMIN: "/super-admin/change-password",
     SA_INSTRUCTOR: "/super-admin/instructor/change-password",
+    INSTITUTE_ADMIN: "/institute-portal/change-password",
+    STUDENT: "/student/change-password",
   };
   const requiredRoute = passwordRoutes[user.role];
   if (user.force_password_reset && requiredRoute && location.pathname !== requiredRoute) {

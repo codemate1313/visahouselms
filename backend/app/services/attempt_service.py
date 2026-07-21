@@ -74,6 +74,11 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
                 return get_student_view(db, get_attempt_or_404(db, user, existing.id))
             _auto_expire(db, existing)
 
+    if user.institute_id is not None:
+        from app.dependencies.limits import enforce_limit
+
+        enforce_limit(db, user.institute_id, "tests")
+
     expires_at = _now() + timedelta(minutes=module.duration_minutes + EXPIRY_BUFFER_MINUTES)
     attempt = TestAttempt(
         user_id=user.id,

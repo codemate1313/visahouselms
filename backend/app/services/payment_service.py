@@ -100,6 +100,7 @@ def create_b2b_plan_payment(
     payment_method_id: Optional[int] = None,
     amount_received: Optional[Decimal] = None,
     ip: Optional[str] = None,
+    renew_if_current: bool = False,
 ) -> dict:
     institute_service.get_institute_or_404(db, institute_id)
     plan = plan_service.get_plan_or_404(db, plan_id)
@@ -160,9 +161,19 @@ def create_b2b_plan_payment(
     )
     db.commit()
 
-    # subscription activates immediately on any recorded payment (partial or
-    # full) - the due balance is tracked for collection, access isn't gated
-    subscription = subscription_service.assign(db, actor, institute_id, plan_id, None, ip)
+    # Subscription activates immediately on any recorded payment (partial or
+    # full). Institute self-service renews the current plan from its existing
+    # expiry; Super Admin plan changes retain the established assign behavior.
+    current, current_state = subscription_service.current_subscription(db, institute_id)
+    if (
+        renew_if_current
+        and current is not None
+        and current.plan_id == plan_id
+        and current_state in (subscription_service.STATE_ACTIVE, subscription_service.STATE_GRACE)
+    ):
+        subscription = subscription_service.renew(db, actor, institute_id, plan_id, ip)
+    else:
+        subscription = subscription_service.assign(db, actor, institute_id, plan_id, None, ip)
     payment.subscription_id = subscription["id"]
     db.add(payment)
     db.commit()

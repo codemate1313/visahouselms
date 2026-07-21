@@ -1,7 +1,14 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { InstitutePortalComingSoon } from "../pages/InstitutePortalComingSoon";
 import { Login } from "../pages/Login";
 import { Register } from "../pages/Register";
+import { TestingLoginSelector } from "../pages/TestingLoginSelector";
+import { InstituteBilling } from "../pages/institute/InstituteBilling";
+import { InstituteDashboard } from "../pages/institute/InstituteDashboard";
+import { InstituteLayout } from "../pages/institute/InstituteLayout";
+import { InstituteMemberForm, SuperAdminStudentForm } from "../pages/institute/InstituteMemberForm";
+import { InstituteMembers, SuperAdminInstituteStudents } from "../pages/institute/InstituteMembers";
+import { InstituteProfile } from "../pages/institute/InstituteProfile";
+import { StudentOverview, SuperAdminStudentOverview } from "../pages/institute/StudentOverview";
 import { GradingDetail } from "../pages/instructor/GradingDetail";
 import { GradingQueue } from "../pages/instructor/GradingQueue";
 import { InstructorDashboard } from "../pages/instructor/InstructorDashboard";
@@ -48,7 +55,8 @@ import { TrialConfig } from "../pages/super-admin/TrialConfig";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 export const router = createBrowserRouter([
-  { path: "/", element: <Navigate to="/super-admin/login" replace /> },
+  { path: "/", element: <TestingLoginSelector /> },
+  { path: "/testing-login", element: <TestingLoginSelector /> },
   { path: "/super-admin/login", element: <Login allowedRoles={["SUPER_ADMIN"]} title="Super Admin Login" subtitle="Sign in to the platform administration portal" wrongRoleMessage="This login is only for Super Admin accounts." /> },
   { path: "/sa-instructor/login", element: <Login allowedRoles={["SA_INSTRUCTOR"]} title="Super Admin Instructor Login" subtitle="Sign in to the assessment authoring portal" wrongRoleMessage="This login is only for Super Admin Instructor accounts." /> },
   { path: "/super-admin", element: <Navigate to="/super-admin/login" replace /> },
@@ -89,6 +97,10 @@ export const router = createBrowserRouter([
           { path: "institutes/new", element: <InstituteForm /> },
           { path: "institutes/:id", element: <InstituteForm /> },
           { path: "institutes/:id/branding", element: <InstituteBranding /> },
+          { path: "institutes/:id/students", element: <SuperAdminInstituteStudents /> },
+          { path: "institutes/:id/students/new", element: <SuperAdminStudentForm /> },
+          { path: "institutes/:id/students/:studentId", element: <SuperAdminStudentOverview /> },
+          { path: "institutes/:id/students/:studentId/edit", element: <SuperAdminStudentForm /> },
           { path: "trial-config", element: <TrialConfig /> },
           { path: "demo-accounts", element: <DemoAccounts /> },
           { path: "coupons", element: <Coupons /> },
@@ -129,7 +141,24 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute allowedRoles={["INSTITUTE_ADMIN"]} />,
     children: [
-      { path: "/institute-portal", element: <InstitutePortalComingSoon /> },
+      {
+        path: "/institute-portal",
+        element: <InstituteLayout />,
+        children: [
+          { index: true, element: <Navigate to="dashboard" replace /> },
+          { path: "dashboard", element: <InstituteDashboard /> },
+          { path: "students", element: <InstituteMembers role="STUDENT" /> },
+          { path: "students/:id", element: <StudentOverview /> },
+          { path: "students/:id/edit", element: <InstituteMemberForm role="STUDENT" /> },
+          { path: "staff", element: <InstituteMembers role="INST_INSTRUCTOR" /> },
+          { path: "staff/new", element: <InstituteMemberForm role="INST_INSTRUCTOR" /> },
+          { path: "staff/:id", element: <InstituteMemberForm role="INST_INSTRUCTOR" /> },
+          { path: "billing", element: <InstituteBilling /> },
+          { path: "profile", element: <InstituteProfile /> },
+          { path: "sessions", element: <Sessions apiBase="/institute" /> },
+          { path: "change-password", element: <ChangePassword apiBase="/institute" /> },
+        ],
+      },
     ],
   },
   {

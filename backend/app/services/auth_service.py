@@ -1,5 +1,7 @@
+import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
+from uuid import uuid4
 
 import jwt
 from fastapi import HTTPException, status
@@ -19,6 +21,7 @@ from app.core.security import (
 from app.models.audit_log import AuditLog
 from app.models.role import STUDENT, Role
 from app.models.user import User
+from app.models.user_device import UserDevice
 from app.models.user_session import UserSession
 
 INVALID_CREDENTIALS = HTTPException(
@@ -29,19 +32,112 @@ INVALID_REFRESH_TOKEN = HTTPException(
 )
 
 
+def _active_sessions(db: Session, user_id: int) -> list[UserSession]:
+    return (
+        db.query(UserSession)
+        .filter(
+            UserSession.user_id == user_id,
+            UserSession.revoked_at.is_(None),
+            UserSession.expires_at > datetime.now(timezone.utc),
+        )
+        .all()
+    )
+
+
+def _resolve_device(
+    db: Session,
+    user: User,
+    device_identifier: Optional[str],
+    device_name: Optional[str],
+    user_agent: Optional[str],
+    ip_address: Optional[str],
+    *,
+    enforce_single_device: bool,
+) -> Optional[UserDevice]:
+    if not device_identifier:
+        if enforce_single_device:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Device identification is required for student login",
+            )
+        return None
+
+    identifier_hash = hashlib.sha256(device_identifier.strip().encode("utf-8")).hexdigest()
+    device = (
+        db.query(UserDevice)
+        .filter(UserDevice.user_id == user.id, UserDevice.identifier_hash == identifier_hash)
+        .first()
+    )
+    now = datetime.now(timezone.utc)
+    if device is None:
+        device = UserDevice(
+            user_id=user.id,
+            identifier_hash=identifier_hash,
+            name=(device_name or "Unknown device").strip()[:120],
+            user_agent=(user_agent or "")[:255] or None,
+            last_ip_address=ip_address,
+            login_count=0,
+            first_seen_at=now,
+            last_seen_at=now,
+        )
+        db.add(device)
+        db.flush()
+
+    active_sessions = _active_sessions(db, user.id)
+    if enforce_single_device:
+        other_device_session = next(
+            (
+                session
+                for session in active_sessions
+                if session.device_id is not None and session.device_id != device.id
+            ),
+            None,
+        )
+        if other_device_session is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    "This student account is already signed in on another device. "
+                    "Sign out there or ask the institute administrator to revoke that session."
+                ),
+            )
+
+        # Replace an older token from this browser. Legacy sessions without a
+        # device identifier are also retired during the first identified login.
+        for session in active_sessions:
+            session.revoked_at = now
+            db.add(session)
+
+    device.name = (device_name or device.name or "Unknown device").strip()[:120]
+    device.user_agent = (user_agent or device.user_agent or "")[:255] or None
+    device.last_ip_address = ip_address
+    device.last_seen_at = now
+    device.login_count += 1
+    db.add(device)
+    return device
+
+
 def issue_token_pair(
     db: Session,
     user: User,
     user_agent: Optional[str],
     ip_address: Optional[str],
     auth_method: str = "password",
+    device: Optional[UserDevice] = None,
 ) -> Tuple[str, str]:
-    access_token = create_access_token(user.id, user.role.name, user.institute_id, auth_method)
-    refresh_token = create_refresh_token(user.id, user.role.name, user.institute_id, auth_method)
+    session_key = uuid4().hex
+    access_token = create_access_token(
+        user.id, user.role.name, user.institute_id, auth_method, session_key
+    )
+    refresh_token = create_refresh_token(
+        user.id, user.role.name, user.institute_id, auth_method, session_key
+    )
 
     now = datetime.now(timezone.utc)
     session = UserSession(
         user_id=user.id,
+        device_id=device.id if device else None,
+        session_key=session_key,
         refresh_token_hash=hash_refresh_token(refresh_token),
         user_agent=user_agent,
         ip_address=ip_address,
@@ -55,7 +151,13 @@ def issue_token_pair(
 
 
 def login(
-    db: Session, email: str, password: str, user_agent: Optional[str], ip_address: Optional[str]
+    db: Session,
+    email: str,
+    password: str,
+    user_agent: Optional[str],
+    ip_address: Optional[str],
+    device_identifier: Optional[str] = None,
+    device_name: Optional[str] = None,
 ) -> Tuple[str, str]:
     normalized_email = email.strip().lower()
     user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
@@ -76,7 +178,16 @@ def login(
         db.commit()
         raise INVALID_CREDENTIALS
 
-    return issue_token_pair(db, user, user_agent, ip_address)
+    device = _resolve_device(
+        db,
+        user,
+        device_identifier,
+        device_name,
+        user_agent,
+        ip_address,
+        enforce_single_device=user.role.name == STUDENT,
+    )
+    return issue_token_pair(db, user, user_agent, ip_address, device=device)
 
 
 def register(
@@ -87,6 +198,8 @@ def register(
     last_name: str,
     user_agent: Optional[str],
     ip_address: Optional[str],
+    device_identifier: Optional[str] = None,
+    device_name: Optional[str] = None,
 ) -> Tuple[str, str]:
     """Public self-registration for a direct (B2C) student - institute_id is
     always NULL here; institute students are created by their institute."""
@@ -120,10 +233,19 @@ def register(
             ip_address=ip_address,
         )
     )
+    device = _resolve_device(
+        db,
+        user,
+        device_identifier,
+        device_name,
+        user_agent,
+        ip_address,
+        enforce_single_device=True,
+    )
     db.commit()
     db.refresh(user)
 
-    return issue_token_pair(db, user, user_agent, ip_address)
+    return issue_token_pair(db, user, user_agent, ip_address, device=device)
 
 
 def refresh(
@@ -147,11 +269,16 @@ def refresh(
         or session.revoked_at is not None
         or session_expires_at is None
         or session_expires_at < now
+        or payload.get("sid") != session.session_key
     ):
         raise INVALID_REFRESH_TOKEN
 
     user = db.get(User, session.user_id)
     if user is None or not user.is_active:
+        raise INVALID_REFRESH_TOKEN
+    if user.role.name == STUDENT and session.device_id is None:
+        # Pre-device-tracking student sessions must perform a fresh identified
+        # login before they can receive another token pair.
         raise INVALID_REFRESH_TOKEN
 
     # rotate: revoke the presented refresh token, issue a fresh pair
@@ -159,8 +286,21 @@ def refresh(
     db.add(session)
     db.commit()
 
+    device = session.device
+    if device is not None:
+        device.last_seen_at = now
+        device.last_ip_address = ip_address
+        device.user_agent = (user_agent or device.user_agent or "")[:255] or None
+        db.add(device)
+        db.commit()
+
     return issue_token_pair(
-        db, user, user_agent, ip_address, payload.get("auth_method", "password")
+        db,
+        user,
+        user_agent,
+        ip_address,
+        payload.get("auth_method", "password"),
+        device=device,
     )
 
 

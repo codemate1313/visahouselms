@@ -1,4 +1,5 @@
 import jwt
+from datetime import datetime, timezone
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.security import TOKEN_TYPE_ACCESS, decode_token
 from app.database import get_db
 from app.models.user import User
+from app.models.user_session import UserSession
 
 bearer_scheme = HTTPBearer()
 
@@ -33,6 +35,22 @@ def get_current_user(
 
     user = db.get(User, int(user_id))
     if user is None or not user.is_active:
+        raise unauthorized
+
+    session_key = payload.get("sid")
+    if session_key is None:
+        raise unauthorized
+    session = (
+        db.query(UserSession)
+        .filter(
+            UserSession.session_key == session_key,
+            UserSession.user_id == user.id,
+            UserSession.revoked_at.is_(None),
+            UserSession.expires_at > datetime.now(timezone.utc),
+        )
+        .first()
+    )
+    if session is None:
         raise unauthorized
 
     return user
