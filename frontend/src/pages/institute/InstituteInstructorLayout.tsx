@@ -22,7 +22,7 @@ export function InstituteInstructorLayout() {
       try { await apiClient.post("/auth/logout", { refresh_token: refreshToken }); } catch { /* best effort */ }
     }
     clear();
-    navigate("/login");
+    navigate("/");
   }
 
   const sections: MenuSection[] = [

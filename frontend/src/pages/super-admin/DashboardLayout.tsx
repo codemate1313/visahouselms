@@ -27,7 +27,7 @@ export function DashboardLayout() {
       }
     }
     clear();
-    navigate("/super-admin/login");
+    navigate("/");
   }
 
   // Original IELTS LMS Super Admin Menu Configuration

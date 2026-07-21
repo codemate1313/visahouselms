@@ -27,7 +27,7 @@ export function InstructorLayout() {
       }
     }
     clear();
-    navigate("/sa-instructor/login");
+    navigate("/");
   }
 
   const sections: MenuSection[] = [

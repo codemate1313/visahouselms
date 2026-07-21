@@ -31,7 +31,7 @@ export function StudentLayout() {
       }
     }
     clear();
-    navigate("/login");
+    navigate("/");
   }
 
   const mainItems: MenuItem[] = [

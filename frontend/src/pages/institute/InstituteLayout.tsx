@@ -37,7 +37,7 @@ export function InstituteLayout() {
       }
     }
     clear();
-    navigate("/login");
+    navigate("/");
   }
 
   const instituteItems: MenuItem[] = [

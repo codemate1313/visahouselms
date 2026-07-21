@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useState } from "react";
 import axios from "axios";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiClient } from "../api/client";
 import { getDeviceIdentity } from "../auth/device";
 import { PasswordInput } from "../components/PasswordInput";
@@ -117,16 +117,31 @@ export function Login({
     allowedRoles.includes(item.role)
   );
 
-  const requestedRole = searchParams.get("role");
-  const selectedRole = requestedRole && allowedRoles.includes(requestedRole)
-    ? requestedRole
-    : availableRoleOptions[0]?.role ?? allowedRoles[0] ?? "INSTITUTE_ADMIN";
+  const initialRole = (() => {
+    const requested = searchParams.get("role");
+    if (requested && allowedRoles.includes(requested)) return requested;
+    return availableRoleOptions[0]?.role ?? allowedRoles[0] ?? "INSTITUTE_ADMIN";
+  })();
+
+  const [selectedRole, setSelectedRole] = useState<string>(initialRole);
+
+  useEffect(() => {
+    const requested = searchParams.get("role");
+    if (requested && allowedRoles.includes(requested)) {
+      setSelectedRole(requested);
+    }
+  }, [searchParams, allowedRoles]);
 
   function changePortal(role: string) {
     const option = ALL_ROLE_OPTIONS.find((item) => item.role === role);
     if (!option) return;
     setError(null);
-    navigate(`${option.basePath}?role=${role}`);
+    setSelectedRole(role);
+  }
+
+  function handleSwitchPortalMode(targetRole: string) {
+    setError(null);
+    setSelectedRole(targetRole);
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -173,10 +188,15 @@ export function Login({
     }
   }
 
-  const isSuperAdminPortal = allowedRoles.includes("SUPER_ADMIN") || allowedRoles.includes("SA_INSTRUCTOR");
+  // Check active portal mode based on selectedRole
+  const isSuperAdminPortal = selectedRole === "SUPER_ADMIN" || selectedRole === "SA_INSTRUCTOR";
 
-  const activeIndex = availableRoleOptions.findIndex((opt) => opt.role === selectedRole);
-  const totalTabs = availableRoleOptions.length || 1;
+  const activeRoleOptions = isSuperAdminPortal
+    ? ALL_ROLE_OPTIONS.filter((item) => item.role === "SUPER_ADMIN" || item.role === "SA_INSTRUCTOR")
+    : ALL_ROLE_OPTIONS.filter((item) => item.role === "INSTITUTE_ADMIN" || item.role === "INST_INSTRUCTOR" || item.role === "STUDENT");
+
+  const activeIndex = activeRoleOptions.findIndex((opt) => opt.role === selectedRole);
+  const totalTabs = activeRoleOptions.length || 1;
   const safeActiveIndex = activeIndex >= 0 ? activeIndex : 0;
 
   return (
@@ -217,7 +237,7 @@ export function Login({
                 transform: `translateX(calc(${safeActiveIndex} * (100% + 4px)))`,
               }}
             />
-            {availableRoleOptions.map((option) => {
+            {activeRoleOptions.map((option) => {
               const isActive = option.role === selectedRole;
               return (
                 <button
@@ -291,11 +311,43 @@ export function Login({
 
             {isSuperAdminPortal ? (
               <p className="form-legal-note">
-                Institute Admin or Student? <Link to="/login">Go to Portal Login</Link>
+                Institute Admin or Student?{" "}
+                <button
+                  type="button"
+                  onClick={() => handleSwitchPortalMode("INSTITUTE_ADMIN")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#e11d48",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    padding: 0,
+                    fontSize: "inherit",
+                    textDecoration: "underline"
+                  }}
+                >
+                  Go to Portal Login
+                </button>
               </p>
             ) : (
               <p className="form-legal-note">
-                Platform Admin? <Link to="/super-admin/login">Super Admin Login</Link>
+                Platform Admin?{" "}
+                <button
+                  type="button"
+                  onClick={() => handleSwitchPortalMode("SUPER_ADMIN")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#e11d48",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    padding: 0,
+                    fontSize: "inherit",
+                    textDecoration: "underline"
+                  }}
+                >
+                  Super Admin Login
+                </button>
               </p>
             )}
           </div>

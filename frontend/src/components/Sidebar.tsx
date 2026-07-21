@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { NavLink, useLocation } from "react-router-dom";
 import { Icon, type IconName } from "./icons";
 
@@ -127,6 +128,7 @@ export function Sidebar({
   };
 
   return (
+    <>
     <aside className={`huge-sidebar ${collapsed ? "is-collapsed" : ""}`}>
       {/* Brand Header */}
       <div className="sidebar-brand-container">
@@ -316,12 +318,15 @@ export function Sidebar({
         </div>
       )}
 
-      {/* Logout Confirmation Modal */}
-      {showLogoutModal && onLogout && (
+    </aside>
+
+      {/* Logout Confirmation Modal - rendered via portal so it covers the full screen */}
+      {showLogoutModal && onLogout && createPortal(
         <div
           className="logout-modal-backdrop"
           onClick={() => setShowLogoutModal(false)}
           role="presentation"
+          style={{ position: "fixed", inset: 0, zIndex: 9999 }}
         >
           <div
             className="logout-modal-card"
@@ -357,8 +362,9 @@ export function Sidebar({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </aside>
+    </>
   );
 }
