@@ -182,3 +182,26 @@ From `frontend/`:
 npm run lint
 npm run build
 ```
+
+## Local seed data
+
+The local database file is intentionally ignored by Git. To recreate the shared
+QA dataset on any machine, configure `backend/.env`, install backend
+dependencies, then run:
+
+```bash
+cd backend
+.venv/bin/python scripts/seed_local_data.py
+```
+
+The command is safe to run repeatedly. It applies migrations, creates the
+configured `.env` Super Admin if missing, creates sample assessment modules, and
+assigns all published modules to the QA institute.
+
+Seeded QA logins use password `Test@12345`:
+
+- Super Admin: `qa.superadmin@example.com`
+- SA Instructor: `sample.instructor@example.com`
+- Institute Admin: `qa.institute.admin@example.com`
+- Institute Instructor: `qa.institute.instructor@example.com`
+- Institute Student: `qa.student@example.com`
