@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { ConfirmModal } from "../../components/ConfirmModal";
 
 interface InstituteRow {
   id: number;
@@ -24,6 +25,7 @@ const STATE_BADGES: Record<string, string> = {
 export function Institutes() {
   const [rows, setRows] = useState<InstituteRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -43,6 +45,13 @@ export function Institutes() {
     load();
   }, [load]);
 
+  const filteredRows = rows.filter(
+    (row) =>
+      row.name.toLowerCase().includes(search.toLowerCase()) ||
+      row.slug.toLowerCase().includes(search.toLowerCase()) ||
+      (row.contact_email && row.contact_email.toLowerCase().includes(search.toLowerCase()))
+  );
+
   async function toggleActive(row: InstituteRow) {
     setError(null);
     const action = row.is_active ? "suspend" : "reactivate";
@@ -54,14 +63,21 @@ export function Institutes() {
     }
   }
 
-  async function remove(row: InstituteRow) {
-    if (!window.confirm(`Delete institute "${row.name}"? This cannot be undone.`)) return;
+  const [deletingRow, setDeletingRow] = useState<InstituteRow | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  async function handleConfirmDelete() {
+    if (!deletingRow) return;
     setError(null);
+    setDeleteLoading(true);
     try {
-      await apiClient.delete(`/super-admin/institutes/${row.id}`);
+      await apiClient.delete(`/super-admin/institutes/${deletingRow.id}`);
+      setDeletingRow(null);
       await load();
     } catch (err: unknown) {
       setError(extractErrorMessage(err, "Failed to delete institute."));
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -74,27 +90,56 @@ export function Institutes() {
 
       {error && <p className="error-text">{error}</p>}
 
+      <div className="filter-bar">
+        <div className="search-input-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search institutes..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div style={{ fontSize: "13px", color: "#64748b" }}>
+          Showing <strong>{filteredRows.length}</strong> entries
+        </div>
+      </div>
+
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Slug</th>
-              <th>Contact</th>
-              <th>Subscription</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 && (
-              <tr><td colSpan={6} className="empty-cell">No institutes yet.</td></tr>
-            )}
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <td><strong>{row.name}</strong></td>
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th className="sortable">Institute Name</th>
+                <th className="sortable">Slug</th>
+                <th>Contact</th>
+                <th>Subscription</th>
+                <th>Status</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRows.length === 0 && (
+                <tr><td colSpan={6} className="empty-cell">No institutes found matching your query.</td></tr>
+              )}
+              {filteredRows.map((row) => (
+                <tr key={row.id}>
+                  <td>
+                    <div className="table-item-cell">
+                      <div className="table-avatar-tile">
+                        {row.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="table-item-details">
+                        <span className="table-item-title">{row.name}</span>
+                        <span className="table-item-subtitle">ID: #{row.id}</span>
+                      </div>
+                    </div>
+                  </td>
                 <td className="hint">{row.slug}</td>
                 <td>{row.contact_email ?? "—"}</td>
                 <td>
@@ -114,13 +159,24 @@ export function Institutes() {
                   <button onClick={() => toggleActive(row)}>
                     {row.is_active ? "Suspend" : "Reactivate"}
                   </button>
-                  <button className="danger" onClick={() => remove(row)}>Delete</button>
+                  <button className="danger" onClick={() => setDeletingRow(row)}>Delete</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
       )}
+
+      <ConfirmModal
+        isOpen={Boolean(deletingRow)}
+        title="Delete Institute"
+        message={deletingRow ? `Are you sure you want to delete institute "${deletingRow.name}"? This action cannot be undone.` : ""}
+        confirmText="Delete Institute"
+        loading={deleteLoading}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeletingRow(null)}
+      />
     </div>
   );
 }

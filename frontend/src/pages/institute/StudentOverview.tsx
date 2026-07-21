@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
+import { confirmDelete } from "../../components/ConfirmModal";
 import { extractErrorMessage } from "../../api/errors";
 import { useAuthStore } from "../../store/authStore";
 import type { InstituteMember } from "./InstituteMembers";
@@ -86,7 +87,7 @@ export function StudentOverview({ instituteId }: { instituteId?: number }) {
   }
 
   async function archive() {
-    if (!window.confirm("Delete this student account? Test and device history will be retained.")) return;
+    if (!await confirmDelete("Are you sure you want to delete this student account? Test and device history will be retained.", "Delete Student Account")) return;
     await apiClient.delete(`${apiBase}/members/${id}`);
     await load();
   }

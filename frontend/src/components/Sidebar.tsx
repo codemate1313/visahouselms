@@ -94,6 +94,7 @@ export function Sidebar({
 
   // Keep track of expanded accordions
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Automatically expand parent accordions when current active key belongs to a child
   useEffect(() => {
@@ -284,7 +285,7 @@ export function Sidebar({
         ))}
       </nav>
 
-      {/* 4. Footer Section (Logout Account) */}
+      {/* 4. Footer Section (Logout) */}
       {onLogout && (
         <div className="sidebar-footer">
           <ul className="sidebar-menu-list">
@@ -292,19 +293,63 @@ export function Sidebar({
               <button
                 type="button"
                 className="sidebar-item-link sidebar-footer-btn is-red"
-                onClick={onLogout}
-                title={collapsed ? "Logout Account" : undefined}
+                onClick={() => setShowLogoutModal(true)}
+                title={collapsed ? "Logout" : undefined}
               >
                 <div className="sidebar-item-icon-wrap">
                   <Icon name="logout" className="sidebar-icon" />
                 </div>
-                <span className="sidebar-item-label">Logout Account</span>
+                <span className="sidebar-item-label">Logout</span>
                 {collapsed && (
-                  <div className="sidebar-tooltip">Logout Account</div>
+                  <div className="sidebar-tooltip">Logout</div>
                 )}
               </button>
             </li>
           </ul>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && onLogout && (
+        <div
+          className="logout-modal-backdrop"
+          onClick={() => setShowLogoutModal(false)}
+          role="presentation"
+        >
+          <div
+            className="logout-modal-card"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="logout-dialog-title"
+          >
+            <div className="logout-modal-icon-badge">
+              <Icon name="logout" className="logout-modal-icon" />
+            </div>
+            <h2 id="logout-dialog-title" className="logout-modal-title">Confirm Logout</h2>
+            <p className="logout-modal-description">
+              Are you sure you want to log out of your account? You will need to sign back in to access your portal.
+            </p>
+            <div className="logout-modal-actions">
+              <button
+                type="button"
+                className="logout-modal-btn cancel-btn"
+                onClick={() => setShowLogoutModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="logout-modal-btn confirm-btn"
+                onClick={() => {
+                  setShowLogoutModal(false);
+                  onLogout();
+                }}
+              >
+                Yes, Logout
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </aside>

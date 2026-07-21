@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmDelete } from "../../components/ConfirmModal";
 import type { Course, Question, QuestionBank, QuestionDraft, QuestionImportPreview, QuestionOption, QuestionType } from "../../api/types";
 import { useAuthStore } from "../../store/authStore";
 
@@ -168,7 +169,7 @@ export function QuestionBankEditor() {
   }
 
   async function removeQuestion(question: Question) {
-    if (!bank || !window.confirm("Delete this question?")) return;
+    if (!bank || !await confirmDelete("Are you sure you want to delete this question?", "Delete Question")) return;
     try { await apiClient.delete(`/instructor/authoring/question-banks/${bank.id}/questions/${question.id}`); await loadBank(); }
     catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the question.")); }
   }
@@ -214,7 +215,7 @@ export function QuestionBankEditor() {
   }
 
   async function deleteBank() {
-    if (!bank || !window.confirm(`Delete “${bank.title}” and all its questions?`)) return;
+    if (!bank || !await confirmDelete(`Are you sure you want to delete “${bank.title}” and all of its questions?`, "Delete Question Bank")) return;
     try { await apiClient.delete(`/instructor/authoring/question-banks/${bank.id}`); navigate("/super-admin/instructor/question-banks"); }
     catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the question bank.")); }
   }

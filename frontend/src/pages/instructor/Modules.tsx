@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
+import { confirmDelete } from "../../components/ConfirmModal";
 import type { ExamModule, ExamModuleType, ModuleBlueprint } from "../../api/types";
 
 const TYPE_ICONS: Record<ExamModuleType, string> = {
@@ -50,7 +51,7 @@ export function Modules() {
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [type, status]);
   function submit(event: FormEvent) { event.preventDefault(); load(); }
   async function deleteDraft(moduleId: number, title: string) {
-    if (!window.confirm(`Delete draft "${title}"?`)) return;
+    if (!await confirmDelete(`Are you sure you want to delete draft "${title}"?`, "Delete Draft Course")) return;
     try { await apiClient.delete(`/instructor/modules/${moduleId}`); await load(); }
     catch { setError("Failed to delete draft course."); }
   }

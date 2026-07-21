@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmDelete } from "../../components/ConfirmModal";
 
 export interface CouponRow {
   id: number;
@@ -60,7 +61,7 @@ export function Coupons() {
   }
 
   async function remove(coupon: CouponRow) {
-    if (!window.confirm(`Delete coupon "${coupon.code}"? This cannot be undone.`)) return;
+    if (!await confirmDelete(`Are you sure you want to delete coupon "${coupon.code}"? This action cannot be undone.`, "Delete Coupon")) return;
     setError(null);
     try {
       await apiClient.delete(`/super-admin/coupons/${coupon.id}`);

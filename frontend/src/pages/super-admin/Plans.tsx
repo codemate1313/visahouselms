@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmDelete } from "../../components/ConfirmModal";
 
 export interface PlanRow {
   id: number;
@@ -55,7 +56,7 @@ export function Plans() {
   }
 
   async function remove(plan: PlanRow) {
-    if (!window.confirm(`Delete plan "${plan.name}"? This cannot be undone.`)) return;
+    if (!await confirmDelete(`Are you sure you want to delete plan "${plan.name}"? This action cannot be undone.`, "Delete Plan")) return;
     setError(null);
     try {
       await apiClient.delete(`/super-admin/plans/${plan.id}`);

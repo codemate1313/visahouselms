@@ -1,6 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmDelete } from "../../components/ConfirmModal";
 import { PasswordInput } from "../../components/PasswordInput";
 import { FONT_FAMILY_OPTIONS, useFontStore } from "../../store/fontStore";
 import { useLoaderStore } from "../../store/loaderStore";
@@ -727,7 +728,7 @@ function BackupsTab() {
   }
 
   async function remove(row: BackupRow) {
-    if (!window.confirm(`Delete ${row.filename}?`)) return;
+    if (!await confirmDelete(`Are you sure you want to delete backup file "${row.filename}"?`, "Delete Backup")) return;
     setError(null); setNotice(null);
     try {
       await apiClient.delete(`/super-admin/backups/${row.id}`);

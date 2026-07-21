@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmDelete } from "../../components/ConfirmModal";
 import type { InstructorAccount, InstructorPasswordReset } from "../../api/types";
 
 interface PasswordNotice {
@@ -91,7 +92,7 @@ export function Instructors() {
   }
 
   async function deleteInstructor(instructor: InstructorAccount) {
-    if (!window.confirm(`Permanently delete ${instructor.email}? This cannot be undone.`)) return;
+    if (!await confirmDelete(`Are you sure you want to permanently delete instructor "${instructor.email}"? This action cannot be undone.`, "Delete Instructor")) return;
     setError(null);
     try {
       await apiClient.delete(`/super-admin/instructors/${instructor.id}`);

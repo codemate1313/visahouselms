@@ -1,7 +1,8 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmDelete } from "../../components/ConfirmModal";
 import type {
   ExamModule,
   ExamModuleAsset,
@@ -223,7 +224,7 @@ export function ModuleEditor() {
   }
 
   async function deleteQuestion(question: ExamModuleQuestion) {
-    if (!module || !selectedPart || !window.confirm("Delete this question?")) return;
+    if (!module || !selectedPart || !await confirmDelete("Are you sure you want to delete this question?", "Delete Question")) return;
     try { await apiClient.delete(`/instructor/modules/${module.id}/parts/${selectedPart.id}/questions/${question.id}`); await loadModule(selectedPart.id); }
     catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the question.")); }
   }
@@ -285,7 +286,7 @@ export function ModuleEditor() {
   }
 
   async function deleteAudio(assetId: number) {
-    if (!module || !selectedPart || !window.confirm("Delete this audio file?")) return;
+    if (!module || !selectedPart || !await confirmDelete("Are you sure you want to delete this audio file?", "Delete Audio File")) return;
     try { await apiClient.delete(`/instructor/modules/${module.id}/assets/${assetId}`); await loadModule(selectedPart.id); }
     catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the audio.")); }
   }
@@ -327,7 +328,7 @@ export function ModuleEditor() {
   }
 
   async function deleteModule() {
-    if (!module || !window.confirm(`Permanently delete “${module.title}” and all of its questions and audio? Existing Full/Final Mock copies will not be affected.`)) return;
+    if (!module || !await confirmDelete(`Are you sure you want to permanently delete “${module.title}” and all of its questions and audio? Existing Full/Final Mock copies will not be affected.`, "Delete Module")) return;
     setBusy(true); setError(null);
     try { await apiClient.delete(`/instructor/modules/${module.id}`); navigate("/super-admin/instructor/modules"); }
     catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the module.")); }

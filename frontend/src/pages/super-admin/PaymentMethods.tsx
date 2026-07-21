@@ -1,6 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmDelete } from "../../components/ConfirmModal";
 
 interface MethodRow {
   id: number;
@@ -58,7 +59,7 @@ export function PaymentMethods() {
   }
 
   async function remove(method: MethodRow) {
-    if (!window.confirm(`Delete payment method "${method.name}"?`)) return;
+    if (!await confirmDelete(`Are you sure you want to delete payment method "${method.name}"?`, "Delete Payment Method")) return;
     setError(null);
     try {
       await apiClient.delete(`/super-admin/payment-methods/${method.id}`);

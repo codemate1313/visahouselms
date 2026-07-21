@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmDelete } from "../../components/ConfirmModal";
 import type { Assessment, Course, Question } from "../../api/types";
 import { useAuthStore } from "../../store/authStore";
 
@@ -57,7 +58,7 @@ export function TestEditor() {
   function toggleQuestion(questionId: number) { setQuestionIds((current) => current.includes(questionId) ? current.filter((value) => value !== questionId) : [...current, questionId]); }
   function moveQuestion(index: number, direction: -1 | 1) { setQuestionIds((current) => { const next = [...current]; const target = index + direction; if (target < 0 || target >= next.length) return current; [next[index], next[target]] = [next[target], next[index]]; return next; }); }
   async function changeStatus(status: Assessment["status"]) { if (!test) return; setError(null); try { const { data } = await apiClient.post<Assessment>(`/instructor/authoring/tests/${test.id}/status`, { status }); setTest(data); setNotice(`Test moved to ${status}.`); } catch (err: unknown) { setError(extractErrorMessage(err, "Failed to change test status.")); } }
-  async function deleteTest() { if (!test || !window.confirm(`Delete “${test.title}”?`)) return; try { await apiClient.delete(`/instructor/authoring/tests/${test.id}`); navigate("/super-admin/instructor/tests"); } catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the test.")); } }
+  async function deleteTest() { if (!test || !await confirmDelete(`Are you sure you want to delete test “${test.title}”?`, "Delete Test")) return; try { await apiClient.delete(`/instructor/authoring/tests/${test.id}`); navigate("/super-admin/instructor/tests"); } catch (err: unknown) { setError(extractErrorMessage(err, "Failed to delete the test.")); } }
 
   const byId = useMemo(() => new Map(available.map((question) => [question.id, question])), [available]);
   const filtered = useMemo(() => available.filter((question) => (!section || question.section === section) && (!search || question.prompt.toLowerCase().includes(search.toLowerCase()) || question.bank_title?.toLowerCase().includes(search.toLowerCase()))), [available, search, section]);

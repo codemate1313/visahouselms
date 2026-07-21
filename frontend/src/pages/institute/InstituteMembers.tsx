@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmDelete } from "../../components/ConfirmModal";
 import { useAuthStore } from "../../store/authStore";
 
 export interface InstituteMember {
@@ -102,7 +103,7 @@ export function InstituteMembers({ role, instituteId }: Props) {
   }
 
   async function remove(member: InstituteMember) {
-    if (!window.confirm(`Delete ${member.email}? The account will be signed out while its test history is retained.`)) return;
+    if (!await confirmDelete(`Are you sure you want to delete member "${member.email}"? The account will be signed out while test history is retained.`, "Delete Member")) return;
     try {
       await apiClient.delete(`${apiBase}/members/${member.id}`);
       await load();

@@ -3,6 +3,7 @@ import { apiClient } from "../../api/client";
 import { AnimatedCounter } from "../../components/AnimatedCounter";
 import { BarChart } from "../../components/charts/BarChart";
 import { DonutChart } from "../../components/charts/DonutChart";
+import { Icon, type IconName } from "../../components/icons";
 
 type MetricKey =
   | "institutes"
@@ -143,6 +144,7 @@ function MetricItem({
   isCurrency = false,
   valueClassName = "",
   metricKey,
+  iconName,
   onOpen,
 }: {
   label: string;
@@ -152,30 +154,55 @@ function MetricItem({
   isCurrency?: boolean;
   valueClassName?: string;
   metricKey: MetricKey;
+  iconName: IconName;
   onOpen: (metric: MetricKey) => void;
 }) {
   return (
-    <button
-      type="button"
-      className="metric-strip-item"
-      onClick={() => onOpen(metricKey)}
-      aria-label={`View ${label} details`}
-    >
-      <div className="metric-strip-label">
-        <span className={`metric-indicator-dot dot-${badgeTheme}`} />
-        <span>{label}</span>
+    <div className={`metric-card theme-${badgeTheme}`}>
+      <div className="metric-card-top">
+        <div className="metric-card-header">
+          <div className={`metric-card-icon-wrapper icon-${badgeTheme}`}>
+            <Icon name={iconName} className="metric-card-icon" />
+          </div>
+          <span className="metric-card-title">{label}</span>
+        </div>
+        {badgeText && <span className={`metric-trend-pill pill-${badgeTheme}`}>{badgeText}</span>}
       </div>
-      <div className="metric-strip-value-row">
-        <span className={`metric-strip-number${valueClassName ? ` ${valueClassName}` : ""}`}>
+
+      <div className="metric-card-middle">
+        <span className={`metric-card-number${valueClassName ? ` ${valueClassName}` : ""}`}>
           <AnimatedCounter
             value={numericValue}
             duration={1200}
             format={isCurrency ? formatMoney : undefined}
           />
         </span>
-        {badgeText && <span className={`metric-trend-pill pill-${badgeTheme}`}>{badgeText}</span>}
       </div>
-    </button>
+
+      <div className="metric-card-bottom">
+        <button
+          type="button"
+          className="metric-view-action"
+          onClick={() => onOpen(metricKey)}
+          aria-label={`View ${label} details`}
+        >
+          <span>View details</span>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="metric-view-arrow"
+          >
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -275,16 +302,16 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Completely Iconless & Cardless Executive Metric Strip */}
-      <div className="executive-metric-strip">
-        <MetricItem metricKey="institutes" onOpen={openMetric} label="Total Institutes" numericValue={counts.institutes_total} badgeText="Active" badgeTheme="green" />
-        <MetricItem metricKey="subscriptions" onOpen={openMetric} label="Active Subscriptions" numericValue={counts.subscriptions_active} badgeText="Live" badgeTheme="blue" />
-        <MetricItem metricKey="revenue" onOpen={openMetric} label="Total Revenue" numericValue={Number(revenue.total_revenue)} isCurrency badgeText="+18% growth" badgeTheme="green" />
-        <MetricItem metricKey="dues" onOpen={openMetric} label="Total Due" numericValue={Number(revenue.total_due)} isCurrency valueClassName="due-text" badgeText="Pending" badgeTheme="amber" />
-        <MetricItem metricKey="transactions" onOpen={openMetric} label="Transactions" numericValue={revenue.transaction_count} badgeText="Settled" badgeTheme="slate" />
-        <MetricItem metricKey="demos" onOpen={openMetric} label="Active Demos" numericValue={counts.demo_accounts_active} badgeText="Demo" badgeTheme="blue" />
-        <MetricItem metricKey="instructors" onOpen={openMetric} label="SA Instructors" numericValue={counts.sa_instructor_accounts} badgeText="Verified" badgeTheme="green" />
-        <MetricItem metricKey="modules" onOpen={openMetric} label="Published Modules" numericValue={counts.modules_published} badgeText="Published" badgeTheme="purple" />
+      {/* Sleek & Interactive Executive Metric Grid */}
+      <div className="executive-metric-grid">
+        <MetricItem metricKey="institutes" iconName="building" onOpen={openMetric} label="Total Institutes" numericValue={counts.institutes_total} badgeText="Active" badgeTheme="green" />
+        <MetricItem metricKey="subscriptions" iconName="subscription" onOpen={openMetric} label="Active Subscriptions" numericValue={counts.subscriptions_active} badgeText="Live" badgeTheme="blue" />
+        <MetricItem metricKey="revenue" iconName="revenue" onOpen={openMetric} label="Total Revenue" numericValue={Number(revenue.total_revenue)} isCurrency badgeText="+18% growth" badgeTheme="green" />
+        <MetricItem metricKey="dues" iconName="due" onOpen={openMetric} label="Total Due" numericValue={Number(revenue.total_due)} isCurrency valueClassName="due-text" badgeText="Pending" badgeTheme="amber" />
+        <MetricItem metricKey="transactions" iconName="transactions" onOpen={openMetric} label="Transactions" numericValue={revenue.transaction_count} badgeText="Settled" badgeTheme="slate" />
+        <MetricItem metricKey="demos" iconName="demo" onOpen={openMetric} label="Active Demos" numericValue={counts.demo_accounts_active} badgeText="Demo" badgeTheme="blue" />
+        <MetricItem metricKey="instructors" iconName="instructors" onOpen={openMetric} label="SA Instructors" numericValue={counts.sa_instructor_accounts} badgeText="Verified" badgeTheme="green" />
+        <MetricItem metricKey="modules" iconName="module" onOpen={openMetric} label="Published Modules" numericValue={counts.modules_published} badgeText="Published" badgeTheme="purple" />
       </div>
 
       <div className="dashboard-charts-grid">

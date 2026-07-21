@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import type { SuperAdminAccount } from "../../api/types";
+import { ConfirmModal } from "../../components/ConfirmModal";
 import { useAuthStore } from "../../store/authStore";
 
 export function AccountsList() {
@@ -10,6 +11,8 @@ export function AccountsList() {
   const [accounts, setAccounts] = useState<SuperAdminAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingAccount, setDeletingAccount] = useState<SuperAdminAccount | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   async function loadAccounts() {
     setLoading(true);
@@ -51,16 +54,18 @@ export function AccountsList() {
     }
   }
 
-  async function handleDelete(account: SuperAdminAccount) {
-    if (!window.confirm(`Delete ${account.email}? This cannot be undone.`)) {
-      return;
-    }
+  async function handleConfirmDelete() {
+    if (!deletingAccount) return;
     setError(null);
+    setDeleteLoading(true);
     try {
-      await apiClient.delete(`/super-admin/accounts/${account.id}`);
+      await apiClient.delete(`/super-admin/accounts/${deletingAccount.id}`);
+      setDeletingAccount(null);
       await loadAccounts();
     } catch (err: unknown) {
       setError(extractErrorMessage(err, "Failed to delete account."));
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -113,7 +118,7 @@ export function AccountsList() {
                   <button onClick={() => handleToggleActive(account)}>
                     {account.is_active ? "Deactivate" : "Reactivate"}
                   </button>
-                  <button onClick={() => handleDelete(account)} className="danger">
+                  <button onClick={() => setDeletingAccount(account)} className="danger">
                     Delete
                   </button>
                 </td>
@@ -122,6 +127,16 @@ export function AccountsList() {
           </tbody>
         </table>
       )}
+
+      <ConfirmModal
+        isOpen={Boolean(deletingAccount)}
+        title="Delete Admin Account"
+        message={deletingAccount ? `Are you sure you want to delete account "${deletingAccount.email}"? This action cannot be undone.` : ""}
+        confirmText="Delete Account"
+        loading={deleteLoading}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeletingAccount(null)}
+      />
     </div>
   );
 }

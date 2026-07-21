@@ -1,4 +1,5 @@
 import { RouterProvider } from "react-router-dom";
+import { GlobalConfirmModal } from "./components/ConfirmModal";
 import { GlobalDialog } from "./components/GlobalDialog";
 import { GlobalLoader } from "./components/GlobalLoader";
 import { GlobalSnackbar } from "./components/GlobalSnackbar";
@@ -10,6 +11,7 @@ function App() {
       <GlobalLoader />
       <GlobalDialog />
       <GlobalSnackbar />
+      <GlobalConfirmModal />
       <RouterProvider router={router} />
     </>
   );
