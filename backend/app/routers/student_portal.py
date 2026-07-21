@@ -5,12 +5,21 @@ from sqlalchemy.orm import Session
 
 from app.core.uploads import read_validated_speaking_answer
 from app.database import get_db
+from app.dependencies.auth import get_current_session
 from app.dependencies.student_access import require_module_access, require_student
 from app.models.attempt import ATTEMPT_FLAG_TYPES
 from app.models.exam_module import ExamModule
 from app.models.user import User
+from app.models.user_session import UserSession
 from app.schemas.auth import CurrentUser
-from app.schemas.student import AnswerSaveRequest, PlanSubscribeRequest, ProctorFlagRequest, ReevaluationCreateRequest
+from app.schemas.student import (
+    AnswerSaveRequest,
+    FinalTestHeartbeatRequest,
+    FinalTestPreflightRequest,
+    PlanSubscribeRequest,
+    ProctorFlagRequest,
+    ReevaluationCreateRequest,
+)
 from app.schemas.user import ChangePasswordRequest, ProfileUpdateRequest, RevokeOthersRequest, SessionOut
 from app.services import (
     account_service,
@@ -147,9 +156,31 @@ def list_attempts(db: Session = Depends(get_db), user: User = Depends(require_st
 
 
 @router.get("/attempts/{attempt_id}")
-def get_attempt(attempt_id: int, db: Session = Depends(get_db), user: User = Depends(require_student)):
+def get_attempt(
+    attempt_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+    x_attempt_token: Optional[str] = Header(default=None),
+):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
-    return attempt_service.get_student_view(db, attempt)
+    authorized = attempt_service.security_access_valid(attempt, session, x_attempt_token)
+    return attempt_service.get_student_view(db, attempt, security_authorized=authorized)
+
+
+@router.get("/attempts/{attempt_id}/parts/{part_id}")
+def get_attempt_part(
+    attempt_id: int,
+    part_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+    x_attempt_token: Optional[str] = Header(default=None),
+):
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    attempt_service.require_security_access(attempt, session, x_attempt_token)
+    attempt_service.require_live_security(attempt)
+    return attempt_service.get_attempt_part_view(attempt, part_id)
 
 
 @router.get("/attempts/{attempt_id}/analysis")
@@ -179,6 +210,52 @@ def start_attempt(
     return attempt_service.start_attempt(db, user, module)
 
 
+@router.post("/attempts/{attempt_id}/security/preflight")
+def final_test_preflight(
+    attempt_id: int,
+    payload: FinalTestPreflightRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+):
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    return attempt_service.secure_preflight(db, attempt, session, payload.model_dump(), _ip(request))
+
+
+@router.post("/attempts/{attempt_id}/security/begin")
+def begin_final_test(
+    attempt_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+    x_attempt_token: Optional[str] = Header(default=None),
+):
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    return attempt_service.begin_secure_attempt(db, attempt, session, x_attempt_token)
+
+
+@router.post("/attempts/{attempt_id}/security/heartbeat")
+def final_test_heartbeat(
+    attempt_id: int,
+    payload: FinalTestHeartbeatRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+    x_attempt_token: Optional[str] = Header(default=None),
+):
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    return attempt_service.record_heartbeat(
+        db,
+        attempt,
+        session,
+        x_attempt_token,
+        payload.model_dump(),
+        _ip(request),
+    )
+
+
 @router.put("/attempts/{attempt_id}/answers/{question_id}")
 def save_answer(
     attempt_id: int,
@@ -186,9 +263,13 @@ def save_answer(
     payload: AnswerSaveRequest,
     db: Session = Depends(get_db),
     user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+    x_attempt_token: Optional[str] = Header(default=None),
 ):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
-    return attempt_service.save_answer(db, attempt, question_id, payload.response)
+    attempt_service.require_security_access(attempt, session, x_attempt_token)
+    attempt_service.require_live_security(attempt)
+    return attempt_service.save_answer(db, attempt, question_id, payload.response, payload.revision)
 
 
 @router.post("/attempts/{attempt_id}/answers/{question_id}/audio", status_code=201)
@@ -198,8 +279,12 @@ async def save_audio_answer(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+    x_attempt_token: Optional[str] = Header(default=None),
 ):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    attempt_service.require_security_access(attempt, session, x_attempt_token)
+    attempt_service.require_live_security(attempt)
     content, extension = await read_validated_speaking_answer(file)
     return attempt_service.save_audio_answer(db, attempt, question_id, content, extension)
 
@@ -210,16 +295,33 @@ def record_flag(
     payload: ProctorFlagRequest,
     db: Session = Depends(get_db),
     user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+    x_attempt_token: Optional[str] = Header(default=None),
 ):
     if payload.flag_type not in ATTEMPT_FLAG_TYPES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown flag type")
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
-    return attempt_service.record_flag(db, attempt, payload.flag_type, payload.meta)
+    attempt_service.require_security_access(attempt, session, x_attempt_token)
+    return attempt_service.record_flag(
+        db,
+        attempt,
+        payload.flag_type,
+        payload.meta,
+        payload.client_sequence,
+        payload.client_occurred_at,
+    )
 
 
 @router.post("/attempts/{attempt_id}/submit")
-def submit_attempt(attempt_id: int, db: Session = Depends(get_db), user: User = Depends(require_student)):
+def submit_attempt(
+    attempt_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+    x_attempt_token: Optional[str] = Header(default=None),
+):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    attempt_service.require_security_access(attempt, session, x_attempt_token)
     return attempt_service.submit_attempt(db, attempt)
 
 

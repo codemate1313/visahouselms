@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { Sidebar, type MenuItem, type MenuSection } from "../../components/Sidebar";
+import { useInstituteBranding } from "../../hooks/useInstituteBranding";
 import { useAuthStore } from "../../store/authStore";
 
 const COLLAPSE_STORAGE_KEY = "institute-lms-sidebar-collapsed";
@@ -13,6 +14,7 @@ export function InstituteLayout() {
   );
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const user = useAuthStore((state) => state.user);
+  const { branding, logoUrl } = useInstituteBranding(user?.institute_slug);
   const clear = useAuthStore((state) => state.clear);
   const permissions = user?.institute_permissions ?? {};
   const canSeeStudents = Boolean(
@@ -25,18 +27,6 @@ export function InstituteLayout() {
   useEffect(() => {
     localStorage.setItem(COLLAPSE_STORAGE_KEY, collapsed ? "1" : "0");
   }, [collapsed]);
-
-  useEffect(() => {
-    if (!user?.institute_slug) return;
-    apiClient.get(`/institutes/${user.institute_slug}/branding`).then(({ data }) => {
-      document.documentElement.style.setProperty("--institute-primary", data.primary_color);
-      document.documentElement.style.setProperty("--institute-secondary", data.secondary_color);
-    }).catch(() => undefined);
-    return () => {
-      document.documentElement.style.removeProperty("--institute-primary");
-      document.documentElement.style.removeProperty("--institute-secondary");
-    };
-  }, [user?.institute_slug]);
 
   async function logout() {
     if (refreshToken) {
@@ -79,10 +69,11 @@ export function InstituteLayout() {
   ];
 
   return (
-    <div className="dashboard institute-portal">
+    <div className="dashboard institute-portal institute-branded-portal">
       <Sidebar
-        brandTitle="IELTS LMS"
+        brandTitle={branding?.institute_name ?? "IELTS LMS"}
         brandSubtitle="Institute Admin"
+        brandLogoUrl={logoUrl}
         sections={sections}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((value) => !value)}

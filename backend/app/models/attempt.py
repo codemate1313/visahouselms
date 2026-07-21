@@ -22,11 +22,13 @@ from app.models.base import Base
 ENROLLMENT_SOURCES = ("b2c_purchase", "institute_assigned")
 
 ATTEMPT_IN_PROGRESS = "in_progress"
+ATTEMPT_READY = "ready"
 ATTEMPT_SUBMITTED = "submitted"
 ATTEMPT_GRADING = "grading"
 ATTEMPT_GRADED = "graded"
 ATTEMPT_EXPIRED = "expired"
 ATTEMPT_STATUSES = (
+    ATTEMPT_READY,
     ATTEMPT_IN_PROGRESS,
     ATTEMPT_SUBMITTED,
     ATTEMPT_GRADING,
@@ -41,7 +43,29 @@ PART_GRADE_STATUSES = (PART_GRADE_PENDING, PART_GRADE_GRADED)
 FLAG_BLUR = "blur"
 FLAG_VISIBILITY_CHANGE = "visibility_change"
 FLAG_FULLSCREEN_EXIT = "fullscreen_exit"
-ATTEMPT_FLAG_TYPES = (FLAG_BLUR, FLAG_VISIBILITY_CHANGE, FLAG_FULLSCREEN_EXIT)
+FLAG_CAMERA_STOPPED = "camera_stopped"
+FLAG_MICROPHONE_STOPPED = "microphone_stopped"
+FLAG_SCREEN_SHARE_STOPPED = "screen_share_stopped"
+FLAG_SCREEN_SURFACE_INVALID = "screen_surface_invalid"
+FLAG_CONCURRENT_TAB = "concurrent_tab"
+FLAG_CLIPBOARD = "clipboard"
+FLAG_PRINT_ATTEMPT = "print_attempt"
+FLAG_CONTEXT_MENU = "context_menu"
+FLAG_IP_CHANGE = "ip_change"
+ATTEMPT_FLAG_TYPES = (
+    FLAG_BLUR,
+    FLAG_VISIBILITY_CHANGE,
+    FLAG_FULLSCREEN_EXIT,
+    FLAG_CAMERA_STOPPED,
+    FLAG_MICROPHONE_STOPPED,
+    FLAG_SCREEN_SHARE_STOPPED,
+    FLAG_SCREEN_SURFACE_INVALID,
+    FLAG_CONCURRENT_TAB,
+    FLAG_CLIPBOARD,
+    FLAG_PRINT_ATTEMPT,
+    FLAG_CONTEXT_MENU,
+    FLAG_IP_CHANGE,
+)
 
 QUEUE_PENDING = "pending"
 QUEUE_CLAIMED = "claimed"
@@ -111,6 +135,20 @@ class TestAttempt(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=ATTEMPT_IN_PROGRESS, index=True)
     is_final: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
+    security_required: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    security_started_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    security_device_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("user_devices.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    security_client_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    security_token_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    security_ip_address: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    security_last_heartbeat_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    security_heartbeat_sequence: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    security_risk_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    security_media_state: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    content_snapshot: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
     started_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -135,6 +173,7 @@ class TestAttempt(Base):
     flags: Mapped[List["AttemptFlag"]] = relationship(
         back_populates="attempt", cascade="all, delete-orphan"
     )
+    security_device: Mapped[Optional["UserDevice"]] = relationship()  # noqa: F821
 
 
 class AttemptAnswer(Base):
@@ -151,6 +190,7 @@ class AttemptAnswer(Base):
     is_correct: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
     points_awarded: Mapped[Optional[Decimal]] = mapped_column(Numeric(7, 2), nullable=True)
     audio_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
     attempt: Mapped[TestAttempt] = relationship(back_populates="answers")
@@ -192,6 +232,9 @@ class AttemptFlag(Base):
         ForeignKey("test_attempts.id", ondelete="CASCADE"), nullable=False, index=True
     )
     flag_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), nullable=False, default="low")
+    client_sequence: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    client_occurred_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     occurred_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     meta: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 

@@ -5,16 +5,26 @@ import { extractErrorMessage } from "../../api/errors";
 
 interface Branding {
   institute_id: number;
+  institute_name: string;
   logo_url: string | null;
   primary_color: string;
   secondary_color: string;
+  font_family: string;
+  heading_font_weight: number;
+  body_font_weight: number;
 }
+
+const FONT_OPTIONS = ["Plus Jakarta Sans", "Inter", "Sora", "Outfit", "system-ui"];
+const FONT_WEIGHTS = [400, 500, 600, 700, 800];
 
 export function InstituteBranding() {
   const { id } = useParams();
   const [branding, setBranding] = useState<Branding | null>(null);
   const [primary, setPrimary] = useState("#4f46e5");
   const [secondary, setSecondary] = useState("#1e2130");
+  const [fontFamily, setFontFamily] = useState("Plus Jakarta Sans");
+  const [headingWeight, setHeadingWeight] = useState(700);
+  const [bodyWeight, setBodyWeight] = useState(400);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -25,6 +35,9 @@ export function InstituteBranding() {
       setBranding(data);
       setPrimary(data.primary_color);
       setSecondary(data.secondary_color);
+      setFontFamily(data.font_family);
+      setHeadingWeight(data.heading_font_weight);
+      setBodyWeight(data.body_font_weight);
     });
   }, [id]);
 
@@ -36,6 +49,9 @@ export function InstituteBranding() {
       const { data } = await apiClient.put(`/super-admin/institutes/${id}/branding`, {
         primary_color: primary,
         secondary_color: secondary,
+        font_family: fontFamily,
+        heading_font_weight: headingWeight,
+        body_font_weight: bodyWeight,
       });
       setBranding(data);
       setNotice("Branding saved.");
@@ -87,6 +103,29 @@ export function InstituteBranding() {
           </div>
         </div>
 
+        <h2 className="section-title" style={{ marginTop: 24 }}>Typography</h2>
+        <p className="hint">Applied to the institute admin, instructor, and student portals.</p>
+        <div className="form-grid">
+          <div>
+            <label htmlFor="font-family">Font family</label>
+            <select id="font-family" value={fontFamily} onChange={(event) => setFontFamily(event.target.value)}>
+              {FONT_OPTIONS.map((font) => <option key={font} value={font}>{font === "system-ui" ? "System UI" : font}</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="heading-weight">Heading weight</label>
+            <select id="heading-weight" value={headingWeight} onChange={(event) => setHeadingWeight(Number(event.target.value))}>
+              {FONT_WEIGHTS.map((weight) => <option key={weight} value={weight}>{weight}</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="body-weight">Body weight</label>
+            <select id="body-weight" value={bodyWeight} onChange={(event) => setBodyWeight(Number(event.target.value))}>
+              {FONT_WEIGHTS.map((weight) => <option key={weight} value={weight}>{weight}</option>)}
+            </select>
+          </div>
+        </div>
+
         <label>Logo</label>
         <div className="profile-avatar-row" style={{ marginTop: 4 }}>
           {logoSrc ? (
@@ -114,7 +153,7 @@ export function InstituteBranding() {
         {notice && <p className="success-text">{notice}</p>}
 
         <div className="form-actions">
-          <button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save Colors"}</button>
+          <button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save branding"}</button>
         </div>
       </div>
 
@@ -124,11 +163,16 @@ export function InstituteBranding() {
       </p>
       <div
         className="branding-preview"
-        style={{ "--preview-primary": primary, "--preview-secondary": secondary } as CSSProperties}
+        style={{
+          "--preview-primary": primary,
+          "--preview-secondary": secondary,
+          fontFamily: fontFamily === "system-ui" ? "system-ui" : `'${fontFamily}', sans-serif`,
+          fontWeight: bodyWeight,
+        } as CSSProperties}
       >
         <div className="branding-preview-nav">
           {logoSrc ? <img src={logoSrc} alt="" className="branding-preview-logo" /> : <div className="branding-preview-logo-placeholder" />}
-          <span>Institute Portal</span>
+          <span style={{ fontWeight: headingWeight }}>{branding?.institute_name ?? "Institute Portal"}</span>
         </div>
         <div className="branding-preview-body">
           <button className="branding-preview-button">Primary action</button>

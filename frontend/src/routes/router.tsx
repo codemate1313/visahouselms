@@ -71,7 +71,7 @@ export const router = createBrowserRouter([
   { path: "/sa-instructor-login", element: <Navigate to="/sa-instructor/login" replace /> },
   { path: "/instructor", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
   { path: "/instructor/*", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
-  { path: "/login", element: <Login allowedRoles={["INSTITUTE_ADMIN", "INST_INSTRUCTOR", "STUDENT"]} title="Portal Login" subtitle="Sign in as institute admin, instructor, or student" wrongRoleMessage="Super Admin and SA Instructor accounts have separate login pages." /> },
+  { path: "/login", element: <Login allowedRoles={["STUDENT", "INSTITUTE_ADMIN", "INST_INSTRUCTOR"]} title="Portal Login" subtitle="Choose your role and sign in to the correct portal" wrongRoleMessage="Super Admin and SA Instructor accounts have separate login pages." /> },
   { path: "/register", element: <Register /> },
   {
     element: <ProtectedRoute allowedRoles={["SUPER_ADMIN"]} />,

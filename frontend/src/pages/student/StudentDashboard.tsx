@@ -5,6 +5,7 @@ import type { AttemptSummary, StudentCurrentPlan } from "../../api/types";
 import { useAuthStore } from "../../store/authStore";
 
 const STATUS_LABEL: Record<string, string> = {
+  ready: "Security check required",
   in_progress: "In progress",
   submitted: "Submitted",
   grading: "Awaiting grading",
@@ -33,7 +34,7 @@ export function StudentDashboard() {
   if (error) return <p className="error-text">{error}</p>;
   if (!attempts || !myPlan) return <p>Loading...</p>;
 
-  const inProgress = attempts.filter((a) => a.status === "in_progress").length;
+  const inProgress = attempts.filter((a) => a.status === "ready" || a.status === "in_progress").length;
   const graded = attempts.filter((a) => a.status === "graded").length;
   const pendingGrading = attempts.filter((a) => a.status === "grading").length;
   const isInstituteStudent = user?.institute_id != null;

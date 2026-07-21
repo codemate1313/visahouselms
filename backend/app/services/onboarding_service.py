@@ -84,7 +84,7 @@ def create_draft(db: Session, actor: User, data: dict, ip: Optional[str]) -> dic
 
     created = institute_service.create_institute(
         db, actor, data["name"], data.get("contact_email"), data["admin_email"],
-        data["admin_first_name"], data["admin_last_name"], data["admin_permissions"], ip,
+        data["admin_first_name"], data["admin_last_name"], data["admin_permissions"], 24, ip,
         active=False, onboarding_status="draft",
     )
     institute = institute_service.get_institute_or_404(db, created["id"])

@@ -72,7 +72,7 @@ def create_demo(
     ip: Optional[str],
 ) -> dict:
     institute_result = institute_service.create_institute(
-        db, actor, name, None, admin_email, admin_first_name, admin_last_name, {}, ip
+        db, actor, name, None, admin_email, admin_first_name, admin_last_name, {}, 24, ip
     )
 
     demo = DemoAccount(

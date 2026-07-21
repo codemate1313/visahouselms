@@ -4,6 +4,7 @@ import { apiClient } from "../../api/client";
 import type { AttemptSummary } from "../../api/types";
 
 const STATUS_CLASS: Record<string, string> = {
+  ready: "badge-blue",
   in_progress: "badge-amber",
   submitted: "badge-gray",
   grading: "badge-amber",
@@ -11,6 +12,7 @@ const STATUS_CLASS: Record<string, string> = {
   expired: "badge-red",
 };
 const STATUS_LABEL: Record<string, string> = {
+  ready: "Security check",
   in_progress: "In progress",
   submitted: "Submitted",
   grading: "Awaiting grading",
@@ -54,7 +56,7 @@ export function StudentAttempts() {
                   <td>{attempt.raw_score && attempt.max_score ? `${attempt.raw_score} / ${attempt.max_score}` : "—"}</td>
                   <td>{attempt.band_label ?? "—"}</td>
                   <td className="table-actions">
-                    {attempt.status === "in_progress" ? (
+                    {attempt.status === "ready" || attempt.status === "in_progress" ? (
                       <Link to={`/student/attempts/${attempt.id}/take`}>Resume</Link>
                     ) : (
                       <Link to={`/student/attempts/${attempt.id}/result`}>View</Link>

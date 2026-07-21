@@ -55,6 +55,37 @@ def get_current_user(
 
     return user
 
+
+def get_current_session(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> UserSession:
+    unauthorized = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = decode_token(credentials.credentials)
+    except jwt.PyJWTError:
+        raise unauthorized
+    if payload.get("type") != TOKEN_TYPE_ACCESS or payload.get("sid") is None:
+        raise unauthorized
+
+    session = (
+        db.query(UserSession)
+        .filter(
+            UserSession.session_key == payload["sid"],
+            UserSession.user_id == int(payload.get("sub", 0)),
+            UserSession.revoked_at.is_(None),
+            UserSession.expires_at > datetime.now(timezone.utc),
+        )
+        .first()
+    )
+    if session is None:
+        raise unauthorized
+    return session
+
 def require_role(*allowed_roles: str):
     def _check(user: User = Depends(get_current_user)) -> User:
         if user.role.name not in allowed_roles:

@@ -15,7 +15,7 @@ const MODULE_TYPE_LABEL: Record<string, string> = {
   final_test: "Final Test",
 };
 
-const IMMERSIVE_MODULE_TYPES = new Set(["full_mock", "final_test"]);
+const IMMERSIVE_MODULE_TYPES = new Set(["full_mock"]);
 
 export function MyCourses() {
   const navigate = useNavigate();

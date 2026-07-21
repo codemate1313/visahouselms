@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiClient } from "../api/client";
 import { getDeviceIdentity } from "../auth/device";
 import { PasswordInput } from "../components/PasswordInput";
@@ -12,6 +12,18 @@ interface LoginProps {
   title?: string;
   subtitle?: string;
   wrongRoleMessage?: string;
+}
+
+const ROLE_OPTIONS = [
+  { role: "STUDENT", label: "Student", path: "/login?role=STUDENT" },
+  { role: "INSTITUTE_ADMIN", label: "Institute Admin", path: "/login?role=INSTITUTE_ADMIN" },
+  { role: "INST_INSTRUCTOR", label: "Institute Instructor", path: "/login?role=INST_INSTRUCTOR" },
+  { role: "SA_INSTRUCTOR", label: "SA Instructor", path: "/sa-instructor/login" },
+  { role: "SUPER_ADMIN", label: "Super Admin", path: "/super-admin/login" },
+] as const;
+
+function roleLabel(role: string) {
+  return ROLE_OPTIONS.find((option) => option.role === role)?.label ?? role;
 }
 
 function destinationFor(user: { role: string; force_password_reset: boolean }) {
@@ -30,6 +42,7 @@ export function Login({
   wrongRoleMessage = "Use the correct login page for this account.",
 }: LoginProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const setSession = useAuthStore((state) => state.setSession);
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
@@ -38,6 +51,17 @@ export function Login({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const requestedRole = searchParams.get("role");
+  const selectedRole = requestedRole && allowedRoles?.includes(requestedRole)
+    ? requestedRole
+    : allowedRoles?.[0] ?? "STUDENT";
+
+  function changePortal(role: string) {
+    const option = ROLE_OPTIONS.find((item) => item.role === role);
+    if (!option) return;
+    setError(null);
+    navigate(option.path);
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -52,9 +76,13 @@ export function Login({
       const { data: user } = await apiClient.get("/auth/me", {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       });
-      if (allowedRoles && !allowedRoles.includes(user.role)) {
-        setError(wrongRoleMessage);
-        showError(wrongRoleMessage, "Access Denied");
+      if ((allowedRoles && !allowedRoles.includes(user.role)) || user.role !== selectedRole) {
+        await apiClient.post("/auth/logout", { refresh_token: tokens.refresh_token }).catch(() => undefined);
+        const roleMessage = allowedRoles?.includes(user.role)
+          ? `This account belongs to ${roleLabel(user.role)}. Select that portal and sign in again.`
+          : wrongRoleMessage;
+        setError(roleMessage);
+        showError(roleMessage, "Access Denied");
         return;
       }
       const destination = destinationFor(user);
@@ -107,6 +135,23 @@ export function Login({
           </div>
 
           <form onSubmit={handleSubmit} className="concise-form">
+            <div className="form-group login-role-group">
+              <label htmlFor="portal-role">Sign in as</label>
+              <div className="login-role-select-wrap">
+                <select
+                  id="portal-role"
+                  value={selectedRole}
+                  onChange={(event) => changePortal(event.target.value)}
+                >
+                  {ROLE_OPTIONS.map((option) => (
+                    <option key={option.role} value={option.role}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             <div className="form-group">
               <label htmlFor="email">Email address</label>
               <input
@@ -155,7 +200,7 @@ export function Login({
             </button>
           </form>
 
-          {allowedRoles?.includes("STUDENT") && (
+          {selectedRole === "STUDENT" && (
             <p className="form-legal-note text-center">
               New here? <a href="/register">Create a student account</a>
             </p>

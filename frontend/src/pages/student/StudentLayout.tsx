@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { Sidebar, type MenuItem, type MenuSection } from "../../components/Sidebar";
+import { useInstituteBranding } from "../../hooks/useInstituteBranding";
 import { useAuthStore } from "../../store/authStore";
 
 const COLLAPSE_STORAGE_KEY = "student-lms-sidebar-collapsed";
@@ -15,6 +16,7 @@ export function StudentLayout() {
   const clear = useAuthStore((state) => state.clear);
   const user = useAuthStore((state) => state.user);
   const isInstituteStudent = user?.institute_id != null;
+  const { branding, logoUrl } = useInstituteBranding(isInstituteStudent ? user?.institute_slug : null);
 
   useEffect(() => {
     localStorage.setItem(COLLAPSE_STORAGE_KEY, collapsed ? "1" : "0");
@@ -60,10 +62,11 @@ export function StudentLayout() {
   ];
 
   return (
-    <div className="dashboard student-portal">
+    <div className={`dashboard student-portal${isInstituteStudent ? " institute-branded-portal" : ""}`}>
       <Sidebar
-        brandTitle="IELTS LMS"
+        brandTitle={branding?.institute_name ?? "IELTS LMS"}
         brandSubtitle={isInstituteStudent ? "Institute Student" : "Direct Student"}
+        brandLogoUrl={logoUrl}
         sections={sections}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((prev) => !prev)}

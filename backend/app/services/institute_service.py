@@ -20,6 +20,8 @@ from app.models.user_session import UserSession
 from app.services.subscription_service import current_subscription
 
 MAX_LOGO_BYTES = 2 * 1024 * 1024
+ALLOWED_FONT_FAMILIES = {"Plus Jakarta Sans", "Inter", "Sora", "Outfit", "system-ui"}
+ALLOWED_FONT_WEIGHTS = {400, 500, 600, 700, 800}
 DEFAULT_ADMIN_PERMISSIONS = {
     "view_students": False,
     "manage_students": False,
@@ -86,6 +88,7 @@ def _serialize(db: Session, institute: Institute) -> dict:
         "slug": institute.slug,
         "contact_email": institute.contact_email,
         "admin_permissions": normalized_admin_permissions(institute.admin_permissions),
+        "session_duration_hours": institute.session_duration_hours,
         "is_active": institute.is_active,
         "onboarding_status": institute.onboarding_status,
         "subscription_state": sub_state,
@@ -111,6 +114,7 @@ def create_institute(
     admin_first_name: str,
     admin_last_name: str,
     admin_permissions: dict,
+    session_duration_hours: int,
     ip: Optional[str],
     active: bool = True,
     onboarding_status: str = "published",
@@ -127,6 +131,7 @@ def create_institute(
         slug=_unique_slug(db, name),
         contact_email=contact_email,
         admin_permissions=normalized_admin_permissions(admin_permissions),
+        session_duration_hours=session_duration_hours,
         is_active=active,
         onboarding_status=onboarding_status,
     )
@@ -166,6 +171,7 @@ def update_institute(
     name: Optional[str],
     contact_email: Optional[str],
     admin_permissions: Optional[dict],
+    session_duration_hours: Optional[int],
     ip: Optional[str],
 ) -> dict:
     institute = get_institute_or_404(db, institute_id)
@@ -176,6 +182,8 @@ def update_institute(
         institute.contact_email = contact_email
     if admin_permissions is not None:
         institute.admin_permissions = normalized_admin_permissions(admin_permissions)
+    if session_duration_hours is not None:
+        institute.session_duration_hours = session_duration_hours
 
     db.add(institute)
     _audit(db, actor, "institute.update", institute.id, ip)
@@ -240,27 +248,39 @@ def _get_or_create_branding(db: Session, institute_id: int) -> InstituteBranding
     return branding
 
 
-def _serialize_branding(branding: InstituteBranding) -> dict:
+def _serialize_branding(branding: InstituteBranding, institute_name: str) -> dict:
     return {
         "institute_id": branding.institute_id,
+        "institute_name": institute_name,
         "logo_url": f"/storage/{branding.logo_path}" if branding.logo_path else None,
         "primary_color": branding.primary_color,
         "secondary_color": branding.secondary_color,
+        "font_family": branding.font_family,
+        "heading_font_weight": branding.heading_font_weight,
+        "body_font_weight": branding.body_font_weight,
     }
 
 
 def get_branding(db: Session, institute_id: int) -> dict:
-    get_institute_or_404(db, institute_id)
-    return _serialize_branding(_get_or_create_branding(db, institute_id))
+    institute = get_institute_or_404(db, institute_id)
+    return _serialize_branding(_get_or_create_branding(db, institute_id), institute.name)
 
 
 _HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 
 def update_branding(
-    db: Session, actor: User, institute_id: int, primary_color: Optional[str], secondary_color: Optional[str], ip: Optional[str]
+    db: Session,
+    actor: User,
+    institute_id: int,
+    primary_color: Optional[str],
+    secondary_color: Optional[str],
+    ip: Optional[str],
+    font_family: Optional[str] = None,
+    heading_font_weight: Optional[int] = None,
+    body_font_weight: Optional[int] = None,
 ) -> dict:
-    get_institute_or_404(db, institute_id)
+    institute = get_institute_or_404(db, institute_id)
     branding = _get_or_create_branding(db, institute_id)
 
     for label, value in (("primary_color", primary_color), ("secondary_color", secondary_color)):
@@ -269,15 +289,28 @@ def update_branding(
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"{label} must be a hex color like #4f46e5")
             setattr(branding, label, value)
 
+    if font_family is not None:
+        if font_family not in ALLOWED_FONT_FAMILIES:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported font family")
+        branding.font_family = font_family
+    for label, value in (
+        ("heading_font_weight", heading_font_weight),
+        ("body_font_weight", body_font_weight),
+    ):
+        if value is not None:
+            if value not in ALLOWED_FONT_WEIGHTS:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported {label}")
+            setattr(branding, label, value)
+
     db.add(branding)
     _audit(db, actor, "institute.update_branding", institute_id, ip)
     db.commit()
     db.refresh(branding)
-    return _serialize_branding(branding)
+    return _serialize_branding(branding, institute.name)
 
 
 async def save_logo(db: Session, actor: User, institute_id: int, upload: UploadFile, ip: Optional[str]) -> dict:
-    get_institute_or_404(db, institute_id)
+    institute = get_institute_or_404(db, institute_id)
     ext, content = await read_validated_image(upload, MAX_LOGO_BYTES, "Logo")
 
     logos_dir = settings.storage_path / "institute_logos"
@@ -297,7 +330,7 @@ async def save_logo(db: Session, actor: User, institute_id: int, upload: UploadF
     _audit(db, actor, "institute.update_logo", institute_id, ip)
     db.commit()
     db.refresh(branding)
-    return _serialize_branding(branding)
+    return _serialize_branding(branding, institute.name)
 
 
 def get_public_branding(db: Session, slug: str) -> dict:
@@ -305,6 +338,4 @@ def get_public_branding(db: Session, slug: str) -> dict:
     if institute is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Institute not found")
     branding = _get_or_create_branding(db, institute.id)
-    data = _serialize_branding(branding)
-    data["institute_name"] = institute.name
-    return data
+    return _serialize_branding(branding, institute.name)

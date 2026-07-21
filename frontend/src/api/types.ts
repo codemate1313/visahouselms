@@ -329,7 +329,7 @@ export interface StudentCurrentPlan {
   access_type: "institute" | "direct";
 }
 
-export type AttemptStatus = "in_progress" | "submitted" | "grading" | "graded" | "expired";
+export type AttemptStatus = "ready" | "in_progress" | "submitted" | "grading" | "graded" | "expired";
 
 export interface AttemptResponse {
   selected?: string | string[];
@@ -348,6 +348,7 @@ export interface AttemptQuestion {
   sort_order: number;
   response: AttemptResponse | null;
   audio_path: string | null;
+  revision: number;
   correct_answers?: string[];
   explanation?: string | null;
   is_correct?: boolean | null;
@@ -488,6 +489,8 @@ export interface AttemptPart {
   cefr_scale: CefrScaleAnchor[];
   sort_order: number;
   assets: AttemptAsset[];
+  question_count: number;
+  answered_count: number;
   questions: AttemptQuestion[];
   grade: AttemptPartGradeView | null;
 }
@@ -500,6 +503,11 @@ export interface Attempt {
   course_id: number | null;
   status: AttemptStatus;
   is_final: boolean;
+  security_required: boolean;
+  security_authorized: boolean;
+  security_started_at: string | null;
+  security_last_heartbeat_at: string | null;
+  security_risk_score: number;
   started_at: string;
   expires_at: string;
   submitted_at: string | null;
@@ -550,6 +558,8 @@ export interface AttemptSummary {
   module_type: ExamModuleType;
   module_title: string;
   status: AttemptStatus;
+  security_required: boolean;
+  security_risk_score: number;
   started_at: string;
   submitted_at: string | null;
   raw_score: string | null;
@@ -559,7 +569,19 @@ export interface AttemptSummary {
   cefr_profile: CefrProfile | null;
 }
 
-export type ProctorFlagType = "blur" | "visibility_change" | "fullscreen_exit";
+export type ProctorFlagType =
+  | "blur"
+  | "visibility_change"
+  | "fullscreen_exit"
+  | "camera_stopped"
+  | "microphone_stopped"
+  | "screen_share_stopped"
+  | "screen_surface_invalid"
+  | "concurrent_tab"
+  | "clipboard"
+  | "print_attempt"
+  | "context_menu"
+  | "ip_change";
 
 export interface GradingQueueItem {
   id: number;
@@ -579,7 +601,13 @@ export interface GradingQueueItem {
 export interface GradingDetail extends Attempt {
   student_name: string;
   student_email: string;
-  flags: { flag_type: ProctorFlagType; occurred_at: string; meta: Record<string, unknown> | null }[];
+  flags: {
+    flag_type: ProctorFlagType;
+    severity: "low" | "medium" | "high" | "critical";
+    occurred_at: string;
+    client_occurred_at: string | null;
+    meta: Record<string, unknown> | null;
+  }[];
   queue: GradingQueueMetadata;
   ai_assistance: {
     enabled: boolean;

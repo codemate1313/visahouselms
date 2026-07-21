@@ -47,6 +47,7 @@ export function InstituteForm() {
   const [adminEmail, setAdminEmail] = useState("");
   const [adminFirstName, setAdminFirstName] = useState("");
   const [adminLastName, setAdminLastName] = useState("");
+  const [sessionDurationHours, setSessionDurationHours] = useState(24);
   const [permissions, setPermissions] = useState<InstitutePermissions>(DEFAULT_PERMISSIONS);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew);
@@ -61,6 +62,7 @@ export function InstituteForm() {
       .then(({ data }) => {
         setName(data.name);
         setContactEmail(data.contact_email ?? "");
+        setSessionDurationHours(data.session_duration_hours ?? 24);
         setPermissions({ ...DEFAULT_PERMISSIONS, ...data.admin_permissions });
       })
       .catch(() => setError("Failed to load institute."))
@@ -80,6 +82,7 @@ export function InstituteForm() {
           admin_first_name: adminFirstName,
           admin_last_name: adminLastName,
           admin_permissions: permissions,
+          session_duration_hours: sessionDurationHours,
         });
         setCreated({ id: data.id, admin_email: data.admin_email, admin_temp_password: data.admin_temp_password });
       } else {
@@ -87,6 +90,7 @@ export function InstituteForm() {
           name,
           contact_email: contactEmail || null,
           admin_permissions: permissions,
+          session_duration_hours: sessionDurationHours,
         });
         navigate("/super-admin/institutes");
       }
@@ -188,6 +192,21 @@ export function InstituteForm() {
             </p>
           </>
         )}
+
+        <fieldset className="permission-fieldset">
+          <legend>Session policy</legend>
+          <p className="hint">Controls how long institute account sessions remain valid after login. Refreshing the page does not extend this limit.</p>
+          <label htmlFor="session-duration-hours">Session lifetime (hours)</label>
+          <input
+            id="session-duration-hours"
+            type="number"
+            min="1"
+            max="720"
+            value={sessionDurationHours}
+            onChange={(event) => setSessionDurationHours(Number(event.target.value))}
+            required
+          />
+        </fieldset>
 
         <fieldset className="permission-fieldset">
           <legend>Institute Admin permissions</legend>

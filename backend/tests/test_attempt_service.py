@@ -1,8 +1,9 @@
 import tempfile
 import unittest
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -13,12 +14,15 @@ from app.models import Base, ExamModuleAsset, ExamModuleQuestion
 from app.models.attempt import (
     ATTEMPT_GRADED,
     ATTEMPT_GRADING,
+    ATTEMPT_IN_PROGRESS,
+    ATTEMPT_READY,
     AiEvaluation,
     AiEvaluationLimit,
     CourseModule,
     Enrollment,
     GradingQueueEntry,
     ReevaluationRequest,
+    AttemptFlag,
 )
 from app.models.course import COURSE_PUBLISHED, Course
 from app.models.institute import Institute
@@ -404,6 +408,99 @@ class AttemptServiceTestCase(unittest.TestCase):
 
         with self.assertRaises(Exception):
             attempt_service.start_attempt(self.db, self.student, module)
+
+    def test_final_test_requires_bound_media_preflight_before_timer_and_content(self):
+        module = self._build_reading_module()
+        module.module_type = "final_test"
+        self.db.add(module)
+        self.db.commit()
+
+        created = attempt_service.start_attempt(self.db, self.student, module)
+        self.assertEqual(created["status"], ATTEMPT_READY)
+        self.assertFalse(created["security_authorized"])
+        self.assertTrue(all(not part["questions"] for part in created["parts"]))
+
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, created["id"])
+        provisional_expiry = attempt.expires_at
+        session = SimpleNamespace(device_id=41)
+        payload = {
+            "client_id": "test-client-identifier-0001",
+            "camera_active": True,
+            "microphone_active": True,
+            "screen_share_active": True,
+            "fullscreen_active": True,
+            "display_surface": "monitor",
+        }
+        preflight = attempt_service.secure_preflight(
+            self.db, attempt, session, payload, "127.0.0.1"
+        )
+        self.assertTrue(attempt_service.security_access_valid(attempt, session, preflight["attempt_token"]))
+        self.assertFalse(attempt_service.security_access_valid(attempt, session, "wrong-token"))
+
+        view = attempt_service.begin_secure_attempt(
+            self.db, attempt, session, preflight["attempt_token"]
+        )
+        self.assertEqual(view["status"], ATTEMPT_IN_PROGRESS)
+        self.assertIsNotNone(view["security_started_at"])
+        self.assertGreater(view["expires_at"].replace(tzinfo=None), provisional_expiry)
+        self.assertTrue(view["parts"][0]["questions"])
+        self.assertTrue(all(not part["questions"] for part in view["parts"][1:]))
+
+    def test_final_test_heartbeat_records_media_loss_and_answer_revisions_block_stale_writes(self):
+        module = self._build_reading_module()
+        module.module_type = "final_test"
+        self.db.add(module)
+        self.db.commit()
+        created = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, created["id"])
+        session = SimpleNamespace(device_id=42)
+        client_id = "test-client-identifier-0002"
+        preflight = attempt_service.secure_preflight(
+            self.db,
+            attempt,
+            session,
+            {
+                "client_id": client_id,
+                "camera_active": True,
+                "microphone_active": True,
+                "screen_share_active": True,
+                "fullscreen_active": True,
+                "display_surface": "monitor",
+            },
+            "127.0.0.1",
+        )
+        attempt_service.begin_secure_attempt(self.db, attempt, session, preflight["attempt_token"])
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt.id)
+        question = attempt.module.parts[0].questions[0]
+
+        saved = attempt_service.save_answer(self.db, attempt, question.id, {"selected": "A"}, revision=1)
+        self.assertEqual(saved["revision"], 1)
+        with self.assertRaises(Exception):
+            attempt_service.save_answer(self.db, attempt, question.id, {"selected": "B"}, revision=1)
+
+        heartbeat = {
+            "sequence": 1,
+            "client_id": client_id,
+            "camera_active": False,
+            "microphone_active": True,
+            "screen_share_active": True,
+            "fullscreen_active": True,
+            "visible": True,
+            "focused": True,
+            "display_surface": "monitor",
+            "current_part_id": attempt.module.parts[0].id,
+            "client_at": datetime.now(timezone.utc),
+        }
+        result = attempt_service.record_heartbeat(
+            self.db, attempt, session, preflight["attempt_token"], heartbeat, "127.0.0.1"
+        )
+        self.assertGreaterEqual(result["risk_score"], 3)
+        self.assertEqual(
+            self.db.query(AttemptFlag).filter_by(attempt_id=attempt.id, flag_type="camera_stopped").count(),
+            1,
+        )
+        with self.assertRaises(Exception):
+            attempt_service.require_live_security(attempt)
 
 
 if __name__ == "__main__":

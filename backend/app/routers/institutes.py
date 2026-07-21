@@ -47,6 +47,7 @@ def create_institute(
         payload.admin_first_name,
         payload.admin_last_name,
         payload.admin_permissions.model_dump(),
+        payload.session_duration_hours,
         _client_ip(request),
     )
 
@@ -71,6 +72,7 @@ def update_institute(
         payload.name,
         payload.contact_email,
         payload.admin_permissions.model_dump() if payload.admin_permissions else None,
+        payload.session_duration_hours,
         _client_ip(request),
     )
 
@@ -309,7 +311,15 @@ def update_branding(
     actor: User = Depends(get_current_user),
 ):
     return institute_service.update_branding(
-        db, actor, institute_id, payload.primary_color, payload.secondary_color, _client_ip(request)
+        db,
+        actor,
+        institute_id,
+        payload.primary_color,
+        payload.secondary_color,
+        _client_ip(request),
+        payload.font_family,
+        payload.heading_font_weight,
+        payload.body_font_weight,
     )
 
 

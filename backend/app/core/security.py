@@ -69,13 +69,14 @@ def create_refresh_token(
     institute_id: Optional[int],
     auth_method: str = "password",
     session_key: Optional[str] = None,
+    expires_delta: Optional[timedelta] = None,
 ) -> str:
     return _create_token(
         user_id,
         role,
         institute_id,
         TOKEN_TYPE_REFRESH,
-        timedelta(days=settings.refresh_token_expire_days),
+        expires_delta or timedelta(days=settings.refresh_token_expire_days),
         auth_method,
         session_key,
     )

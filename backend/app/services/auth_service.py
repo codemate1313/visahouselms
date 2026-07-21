@@ -44,6 +44,13 @@ def _active_sessions(db: Session, user_id: int) -> list[UserSession]:
     )
 
 
+def _session_expiry(user: User, now: datetime) -> datetime:
+    if user.institute is not None:
+        hours = max(1, min(720, user.institute.session_duration_hours or 24))
+        return now + timedelta(hours=hours)
+    return now + timedelta(days=settings.refresh_token_expire_days)
+
+
 def _resolve_device(
     db: Session,
     user: User,
@@ -58,7 +65,7 @@ def _resolve_device(
         if enforce_single_device:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Device identification is required for student login",
+                detail="Device identification is required for login",
             )
         return None
 
@@ -89,16 +96,21 @@ def _resolve_device(
             (
                 session
                 for session in active_sessions
-                if session.device_id is not None and session.device_id != device.id
+                if session.device_id != device.id
             ),
             None,
         )
         if other_device_session is not None:
+            active_device_name = (
+                other_device_session.device.name
+                if other_device_session.device is not None
+                else "another device"
+            )
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=(
-                    "This student account is already signed in on another device. "
-                    "Sign out there or ask the institute administrator to revoke that session."
+                    f"This account already has an active session on {active_device_name}. "
+                    "Sign out on that device or ask an administrator to revoke the active session before trying again."
                 ),
             )
 
@@ -124,16 +136,24 @@ def issue_token_pair(
     ip_address: Optional[str],
     auth_method: str = "password",
     device: Optional[UserDevice] = None,
+    expires_at: Optional[datetime] = None,
 ) -> Tuple[str, str]:
     session_key = uuid4().hex
+    now = datetime.now(timezone.utc)
+    session_expires_at = expires_at or _session_expiry(user, now)
+    refresh_lifetime = max(session_expires_at - now, timedelta(seconds=1))
     access_token = create_access_token(
         user.id, user.role.name, user.institute_id, auth_method, session_key
     )
     refresh_token = create_refresh_token(
-        user.id, user.role.name, user.institute_id, auth_method, session_key
+        user.id,
+        user.role.name,
+        user.institute_id,
+        auth_method,
+        session_key,
+        refresh_lifetime,
     )
 
-    now = datetime.now(timezone.utc)
     session = UserSession(
         user_id=user.id,
         device_id=device.id if device else None,
@@ -142,7 +162,7 @@ def issue_token_pair(
         user_agent=user_agent,
         ip_address=ip_address,
         created_at=now,
-        expires_at=now + timedelta(days=settings.refresh_token_expire_days),
+        expires_at=session_expires_at,
     )
     db.add(session)
     db.commit()
@@ -301,6 +321,7 @@ def refresh(
         ip_address,
         payload.get("auth_method", "password"),
         device=device,
+        expires_at=session_expires_at,
     )
 
 

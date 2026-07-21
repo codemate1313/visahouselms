@@ -28,6 +28,7 @@ export interface MenuSection {
 interface SidebarProps {
   brandTitle?: string;
   brandSubtitle?: string;
+  brandLogoUrl?: string | null;
   sections: MenuSection[];
   onLogout?: () => void;
   collapsed?: boolean;
@@ -82,6 +83,7 @@ function getActiveItemKey(sections: MenuSection[], pathname: string): string | n
 export function Sidebar({
   brandTitle = "IELTS LMS",
   brandSubtitle,
+  brandLogoUrl,
   sections,
   onLogout,
   collapsed = false,
@@ -128,6 +130,11 @@ export function Sidebar({
     <aside className={`huge-sidebar ${collapsed ? "is-collapsed" : ""}`}>
       {/* Brand Header */}
       <div className="sidebar-brand-container">
+        {brandLogoUrl && (
+          <div className="sidebar-brand-logo-box">
+            <img src={brandLogoUrl} alt={`${brandTitle} logo`} className="sidebar-brand-logo-image" />
+          </div>
+        )}
         {!collapsed && (
           <div className="sidebar-brand-text">
             <h1 className="sidebar-brand-title">{brandTitle}</h1>
