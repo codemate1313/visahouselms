@@ -15,6 +15,8 @@ interface InstituteRow {
   onboarding_status: "draft" | "published";
 }
 
+type SortKey = "name" | "slug";
+
 const STATE_BADGES: Record<string, string> = {
   active: "badge-green",
   grace: "badge-amber",
@@ -26,6 +28,8 @@ export function Institutes() {
   const [rows, setRows] = useState<InstituteRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDirection, setSortDirection] = useState<"ascending" | "descending">("ascending");
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -45,12 +49,27 @@ export function Institutes() {
     load();
   }, [load]);
 
-  const filteredRows = rows.filter(
-    (row) =>
-      row.name.toLowerCase().includes(search.toLowerCase()) ||
-      row.slug.toLowerCase().includes(search.toLowerCase()) ||
-      (row.contact_email && row.contact_email.toLowerCase().includes(search.toLowerCase()))
-  );
+  const query = search.trim().toLowerCase();
+  const filteredRows = rows
+    .filter(
+      (row) =>
+        row.name.toLowerCase().includes(query) ||
+        row.slug.toLowerCase().includes(query) ||
+        Boolean(row.contact_email?.toLowerCase().includes(query))
+    )
+    .sort((left, right) => {
+      const comparison = left[sortKey].localeCompare(right[sortKey]);
+      return sortDirection === "ascending" ? comparison : -comparison;
+    });
+
+  function changeSort(nextKey: SortKey) {
+    if (nextKey === sortKey) {
+      setSortDirection((current) => current === "ascending" ? "descending" : "ascending");
+      return;
+    }
+    setSortKey(nextKey);
+    setSortDirection("ascending");
+  }
 
   async function toggleActive(row: InstituteRow) {
     setError(null);
@@ -103,7 +122,7 @@ export function Institutes() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div style={{ fontSize: "13px", color: "#64748b" }}>
+        <div className="filter-result-count">
           Showing <strong>{filteredRows.length}</strong> entries
         </div>
       </div>
@@ -115,12 +134,16 @@ export function Institutes() {
           <table className="data-table">
             <thead>
               <tr>
-                <th className="sortable">Institute Name</th>
-                <th className="sortable">Slug</th>
+                <th aria-sort={sortKey === "name" ? sortDirection : "none"}>
+                  <button type="button" className="table-sort-button" onClick={() => changeSort("name")}>Institute Name</button>
+                </th>
+                <th aria-sort={sortKey === "slug" ? sortDirection : "none"}>
+                  <button type="button" className="table-sort-button" onClick={() => changeSort("slug")}>Slug</button>
+                </th>
                 <th>Contact</th>
                 <th>Subscription</th>
                 <th>Status</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
+                <th className="table-actions-heading">Actions</th>
               </tr>
             </thead>
             <tbody>

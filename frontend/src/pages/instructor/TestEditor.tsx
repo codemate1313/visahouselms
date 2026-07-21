@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
-import { confirmDelete } from "../../components/ConfirmModal";
+import { confirmDelete } from "../../components/confirmDialog";
 import type { Assessment, Course, Question } from "../../api/types";
 import { useAuthStore } from "../../store/authStore";
 

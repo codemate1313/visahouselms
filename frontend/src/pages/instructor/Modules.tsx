@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
-import { confirmDelete } from "../../components/ConfirmModal";
+import { confirmDelete } from "../../components/confirmDialog";
 import type { ExamModule, ExamModuleType, ModuleBlueprint } from "../../api/types";
 
 const TYPE_ICONS: Record<ExamModuleType, string> = {

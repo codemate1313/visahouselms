@@ -1,7 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
-import { confirmDelete } from "../../components/ConfirmModal";
+import { confirmDelete } from "../../components/confirmDialog";
 import { PasswordInput } from "../../components/PasswordInput";
 import { FONT_FAMILY_OPTIONS, useFontStore } from "../../store/fontStore";
 import { useLoaderStore } from "../../store/loaderStore";

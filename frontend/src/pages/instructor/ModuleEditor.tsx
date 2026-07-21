@@ -1,8 +1,8 @@
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
-import { confirmDelete } from "../../components/ConfirmModal";
+import { confirmDelete } from "../../components/confirmDialog";
 import type {
   ExamModule,
   ExamModuleAsset,

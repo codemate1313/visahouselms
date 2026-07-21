@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { CONFIRM_DIALOG_EVENT, type ConfirmRequest, type ConfirmVariant } from "./confirmDialog";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -6,7 +7,7 @@ interface ConfirmModalProps {
   message: ReactNode;
   confirmText?: string;
   cancelText?: string;
-  variant?: "danger" | "warning" | "primary";
+  variant?: ConfirmVariant;
   loading?: boolean;
   onConfirm: () => void;
   onClose: () => void;
@@ -23,12 +24,35 @@ export function ConfirmModal({
   onConfirm,
   onClose,
 }: ConfirmModalProps) {
+  const titleId = useId();
+  const descriptionId = useId();
+  const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    cancelButtonRef.current?.focus();
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !loading) onCloseRef.current();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocus?.focus();
+    };
+  }, [isOpen, loading]);
+
   if (!isOpen) return null;
 
   return (
     <div
       className="logout-modal-backdrop"
-      onClick={onClose}
+      onClick={() => { if (!loading) onClose(); }}
       role="presentation"
     >
       <div
@@ -36,8 +60,10 @@ export function ConfirmModal({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
       >
-        <div className={`custom-dialog-icon-badge badge-${variant}`}>
+        <div className={`confirm-modal-icon is-${variant}`}>
           {variant === "danger" ? (
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" />
@@ -50,14 +76,15 @@ export function ConfirmModal({
             </svg>
           )}
         </div>
-        <h2 className="logout-modal-title">{title}</h2>
-        <p className="logout-modal-description">{message}</p>
+        <h2 id={titleId} className="logout-modal-title">{title}</h2>
+        <div id={descriptionId} className="logout-modal-description">{message}</div>
         <div className="logout-modal-actions">
           <button
             type="button"
             className="logout-modal-btn cancel-btn"
             onClick={onClose}
             disabled={loading}
+            ref={cancelButtonRef}
           >
             {cancelText}
           </button>
@@ -75,52 +102,6 @@ export function ConfirmModal({
   );
 }
 
-interface ConfirmRequest {
-  title: string;
-  message: string;
-  confirmText: string;
-  cancelText: string;
-  variant: "danger" | "warning" | "primary";
-  resolve: (value: boolean) => void;
-}
-
-export function confirmDelete(message: string, title: string = "Confirm Delete"): Promise<boolean> {
-  return new Promise((resolve) => {
-    window.dispatchEvent(
-      new CustomEvent<ConfirmRequest>("app-confirm-dialog", {
-        detail: {
-          title,
-          message,
-          confirmText: "Delete",
-          cancelText: "Cancel",
-          variant: "danger",
-          resolve,
-        },
-      })
-    );
-  });
-}
-
-export function confirmAction(
-  message: string,
-  options?: { title?: string; confirmText?: string; cancelText?: string; variant?: "danger" | "warning" | "primary" }
-): Promise<boolean> {
-  return new Promise((resolve) => {
-    window.dispatchEvent(
-      new CustomEvent<ConfirmRequest>("app-confirm-dialog", {
-        detail: {
-          title: options?.title ?? "Confirm Action",
-          message,
-          confirmText: options?.confirmText ?? "Confirm",
-          cancelText: options?.cancelText ?? "Cancel",
-          variant: options?.variant ?? "danger",
-          resolve,
-        },
-      })
-    );
-  });
-}
-
 export function GlobalConfirmModal() {
   const [request, setRequest] = useState<ConfirmRequest | null>(null);
 
@@ -132,8 +113,8 @@ export function GlobalConfirmModal() {
       }
     };
 
-    window.addEventListener("app-confirm-dialog", handleEvent);
-    return () => window.removeEventListener("app-confirm-dialog", handleEvent);
+    window.addEventListener(CONFIRM_DIALOG_EVENT, handleEvent);
+    return () => window.removeEventListener(CONFIRM_DIALOG_EVENT, handleEvent);
   }, []);
 
   if (!request) return null;

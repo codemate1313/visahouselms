@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
-import { confirmDelete } from "../../components/ConfirmModal";
+import { confirmAction, confirmDelete } from "../../components/confirmDialog";
 import type { Course } from "../../api/types";
 
 interface Institute { id: number; name: string; is_active: boolean; subscription_state: string }
@@ -18,7 +18,7 @@ export function CourseAssignments() {
   async function load() { try { const [{ data: courseData }, { data: instituteData }] = await Promise.all([apiClient.get<Course>(`/super-admin/courses/${id}`), apiClient.get<Institute[]>("/super-admin/institutes")]); setCourse(courseData); setInstitutes(instituteData); } catch { setError("Failed to load course assignments."); } }
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
   async function assign(event: FormEvent) { event.preventDefault(); if (!selected) return; setSaving(true); setError(null); try { await apiClient.post(`/super-admin/courses/${id}/assignments`, { institute_id: Number(selected) }); setSelected(""); await load(); } catch (err) { setError(extractErrorMessage(err, "Failed to assign course.")); } finally { setSaving(false); } }
-  async function unassign(instituteId: number) { if (!await confirmDelete("Revoke this course from the institute?", "Revoke Access")) return; try { await apiClient.delete(`/super-admin/courses/${id}/assignments/${instituteId}`); await load(); } catch (err) { setError(extractErrorMessage(err, "Failed to revoke course.")); } }
+  async function unassign(instituteId: number) { if (!await confirmAction("Revoke this course from the institute?", { title: "Revoke Access", confirmText: "Revoke access", variant: "warning" })) return; try { await apiClient.delete(`/super-admin/courses/${id}/assignments/${instituteId}`); await load(); } catch (err) { setError(extractErrorMessage(err, "Failed to revoke course.")); } }
   async function toggleVisibility() { try { await apiClient.patch(`/super-admin/courses/${id}/visibility`, { is_visible: !course?.is_visible }); await load(); } catch (err) { setError(extractErrorMessage(err, "Failed to update visibility.")); } }
   async function changeStatus(status: string) { try { await apiClient.post(`/super-admin/courses/${id}/status`, { status }); await load(); } catch (err) { setError(extractErrorMessage(err, "Failed to update status.")); } }
   async function removeCourse() { if (!await confirmDelete(`Are you sure you want to delete "${course?.title}" and revoke all active access? Historical records will be retained.`, "Delete Course")) return; try { await apiClient.delete(`/super-admin/courses/${id}`); navigate("/super-admin/courses"); } catch (err) { setError(extractErrorMessage(err, "Failed to delete course.")); } }

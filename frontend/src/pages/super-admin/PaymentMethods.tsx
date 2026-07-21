@@ -1,7 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
-import { confirmDelete } from "../../components/ConfirmModal";
+import { confirmDelete } from "../../components/confirmDialog";
 
 interface MethodRow {
   id: number;

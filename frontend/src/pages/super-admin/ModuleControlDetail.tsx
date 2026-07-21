@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
-import { confirmDelete } from "../../components/ConfirmModal";
+import { confirmAction, confirmDelete } from "../../components/confirmDialog";
 import type { ExamModule } from "../../api/types";
 
 interface Assignment { id: number; institute_id: number; institute_name: string; is_active: boolean; assigned_at: string }
@@ -15,7 +15,7 @@ export function ModuleControlDetail() {
   async function load() { const [{ data: moduleData }, { data: instituteData }] = await Promise.all([apiClient.get<ManagedModule>(`/super-admin/modules/${id}`), apiClient.get<Institute[]>("/super-admin/institutes")]); setModule(moduleData); setInstitutes(instituteData); }
   useEffect(() => { load().catch(() => setError("Failed to load course.")); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
   async function assign(event: FormEvent) { event.preventDefault(); setBusy(true); try { await apiClient.post(`/super-admin/modules/${id}/assignments`, { institute_id: Number(selected) }); setSelected(""); await load(); } catch (err) { setError(extractErrorMessage(err, "Failed to assign course.")); } finally { setBusy(false); } }
-  async function revoke(instituteId: number) { if (!await confirmDelete("Revoke this course from the institute?", "Revoke Access")) return; await apiClient.delete(`/super-admin/modules/${id}/assignments/${instituteId}`); await load(); }
+  async function revoke(instituteId: number) { if (!await confirmAction("Revoke this course from the institute?", { title: "Revoke Access", confirmText: "Revoke access", variant: "warning" })) return; await apiClient.delete(`/super-admin/modules/${id}/assignments/${instituteId}`); await load(); }
   async function visibility() { if (!module) return; await apiClient.patch(`/super-admin/modules/${id}/visibility`, { is_visible: !module.is_visible }); await load(); }
   async function status(next: string) { try { await apiClient.post(`/super-admin/modules/${id}/status`, { status: next }); await load(); } catch (err) { setError(extractErrorMessage(err, "Failed to change course status.")); } }
   async function remove() { if (!await confirmDelete(`Are you sure you want to delete "${module?.title}" from the platform? Existing attempt history will be retained.`, "Delete Course")) return; await apiClient.delete(`/super-admin/modules/${id}`); navigate("/super-admin/modules"); }

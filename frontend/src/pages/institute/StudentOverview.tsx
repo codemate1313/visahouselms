@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
-import { confirmDelete } from "../../components/ConfirmModal";
+import { confirmDelete } from "../../components/confirmDialog";
 import { extractErrorMessage } from "../../api/errors";
 import { useAuthStore } from "../../store/authStore";
 import type { InstituteMember } from "./InstituteMembers";
