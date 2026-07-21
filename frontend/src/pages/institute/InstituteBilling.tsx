@@ -15,7 +15,7 @@ interface Payment {
 interface SubscriptionStatus {
   state: string;
   usage: { students: number; staff: number; tests: number };
-  limits: { students: number; staff: number; tests: number } | null;
+  limits: { students: number; staff: number; tests: number | null } | null;
   subscription: { plan_name: string; expires_at: string; days_remaining: number | null } | null;
 }
 
@@ -58,8 +58,8 @@ export function InstituteBilling() {
       {subscription?.limits && (
         <div className="stat-tile-row">
           <div className="stat-tile"><p className="stat-label">Students</p><p className="stat-value">{subscription.usage.students} / {subscription.limits.students}</p></div>
-          <div className="stat-tile"><p className="stat-label">Staff</p><p className="stat-value">{subscription.usage.staff} / {subscription.limits.staff}</p></div>
-          <div className="stat-tile"><p className="stat-label">Tests</p><p className="stat-value">{subscription.usage.tests} / {subscription.limits.tests}</p></div>
+          <div className="stat-tile"><p className="stat-label">Instructors</p><p className="stat-value">{subscription.usage.staff} / {subscription.limits.staff}</p></div>
+          <div className="stat-tile"><p className="stat-label">Tests</p><p className="stat-value">{subscription.limits.tests === null ? "Unlimited" : `${subscription.usage.tests} / ${subscription.limits.tests}`}</p></div>
         </div>
       )}
 

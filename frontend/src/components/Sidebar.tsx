@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Icon, type IconName } from "./icons";
 
@@ -98,24 +98,22 @@ export function Sidebar({
   // Automatically expand parent accordions when current active key belongs to a child
   useEffect(() => {
     if (!activeKey) return;
-    const newExpanded: Record<string, boolean> = { ...expandedKeys };
-    let changed = false;
-
-    sections.forEach((section) => {
-      section.items.forEach((item) => {
-        if (item.children && item.children.length > 0) {
-          const isChildActive = item.children.some((child) => child.key === activeKey);
-          if (isChildActive && !newExpanded[item.key]) {
-            newExpanded[item.key] = true;
-            changed = true;
+    setExpandedKeys((current) => {
+      const next = { ...current };
+      let changed = false;
+      sections.forEach((section) => {
+        section.items.forEach((item) => {
+          if (item.children?.length) {
+            const isChildActive = item.children.some((child) => child.key === activeKey);
+            if (isChildActive && !next[item.key]) {
+              next[item.key] = true;
+              changed = true;
+            }
           }
-        }
+        });
       });
+      return changed ? next : current;
     });
-
-    if (changed) {
-      setExpandedKeys(newExpanded);
-    }
   }, [activeKey, sections]);
 
   const toggleAccordion = (key: string) => {

@@ -15,6 +15,8 @@ class PlanCreate(BaseModel):
     staff_limit: int = Field(ge=0)
     grace_days: int = Field(default=7, ge=0)
     module_ids: list[int] = Field(default_factory=list)
+    audience: str = Field(default="both", pattern="^(both|direct_students|institutes)$")
+    is_published: bool = False
 
 
 class PlanUpdate(BaseModel):
@@ -28,6 +30,8 @@ class PlanUpdate(BaseModel):
     staff_limit: Optional[int] = Field(default=None, ge=0)
     grace_days: Optional[int] = Field(default=None, ge=0)
     module_ids: Optional[list[int]] = None
+    audience: Optional[str] = Field(default=None, pattern="^(both|direct_students|institutes)$")
+    is_published: Optional[bool] = None
 
 
 class AssignSubscriptionRequest(BaseModel):

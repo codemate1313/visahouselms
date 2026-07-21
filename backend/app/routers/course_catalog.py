@@ -8,7 +8,7 @@ from app.dependencies.auth import get_current_user, require_role
 from app.models.course import COURSE_STATUSES
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
-from app.schemas.course import CourseAssignmentRequest
+from app.schemas.course import CourseAssignmentRequest, CourseStatusUpdate, CourseVisibilityUpdate
 from app.services import course_service
 
 router = APIRouter(
@@ -38,6 +38,21 @@ def get_course(course_id: int, db: Session = Depends(get_db)):
     return course_service.serialize(
         course_service.get_course_or_404(db, course_id), include_assignments=True
     )
+
+
+@router.post("/{course_id}/status")
+def set_course_status(course_id: int, payload: CourseStatusUpdate, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    return course_service.set_status(db, actor, course_id, payload.status, _ip(request))
+
+
+@router.patch("/{course_id}/visibility")
+def set_course_visibility(course_id: int, payload: CourseVisibilityUpdate, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    return course_service.set_visibility(db, actor, course_id, payload.is_visible, _ip(request))
+
+
+@router.delete("/{course_id}", status_code=204)
+def remove_course(course_id: int, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    course_service.remove_course_by_super_admin(db, actor, course_id, _ip(request))
 
 
 @router.get("/{course_id}/assignments")

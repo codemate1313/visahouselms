@@ -15,6 +15,9 @@ export interface PlanRow {
   staff_limit: number;
   grace_days: number;
   is_active: boolean;
+  is_published: boolean;
+  audience: "both" | "direct_students" | "institutes";
+  module_count: number;
   subscription_count: number;
 }
 
@@ -82,6 +85,7 @@ export function Plans() {
               <th>Duration</th>
               <th>Limits (students / staff / tests)</th>
               <th>Grace</th>
+              <th>Courses</th>
               <th>Subs</th>
               <th>Status</th>
               <th></th>
@@ -89,7 +93,7 @@ export function Plans() {
           </thead>
           <tbody>
             {plans.length === 0 && (
-              <tr><td colSpan={8} className="empty-cell">No plans yet - create your first plan.</td></tr>
+              <tr><td colSpan={9} className="empty-cell">No plans yet - create your first plan.</td></tr>
             )}
             {plans.map((plan) => (
               <tr key={plan.id}>
@@ -101,10 +105,11 @@ export function Plans() {
                 <td>{plan.duration_days} days</td>
                 <td>{plan.student_limit} / {plan.staff_limit} / {plan.test_limit}</td>
                 <td>{plan.grace_days} days</td>
+                <td>{plan.module_count}<div className="hint">direct students</div></td>
                 <td>{plan.subscription_count}</td>
                 <td>
                   <span className={`badge ${plan.is_active ? "badge-green" : "badge-gray"}`}>
-                    {plan.is_active ? "Active" : "Inactive"}
+                    {!plan.is_active ? "Inactive" : plan.is_published ? "Published" : "Draft"}
                   </span>
                 </td>
                 <td className="table-actions">

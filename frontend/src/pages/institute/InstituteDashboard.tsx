@@ -19,7 +19,7 @@ interface DashboardSummary {
   subscription: null | {
     state: string;
     usage: { students: number; staff: number; tests: number };
-    limits: { students: number; staff: number; tests: number } | null;
+    limits: { students: number; staff: number; tests: number | null } | null;
     subscription: { plan_name: string; expires_at: string; days_remaining: number | null } | null;
   };
   permissions: Record<string, boolean>;
@@ -87,13 +87,13 @@ export function InstituteDashboard() {
           </div>
           {limits ? (
             <div className="usage-list">
-              {(["students", "staff", "tests"] as const).map((resource) => {
+              {(["students", "staff"] as const).map((resource) => {
                 const used = subscriptionSummary.usage[resource];
                 const limit = limits[resource];
                 const percent = limit > 0 ? Math.min(100, (used / limit) * 100) : 100;
                 return (
                   <div className="usage-row" key={resource}>
-                    <div><span>{resource}</span><strong>{used} / {limit}</strong></div>
+                    <div><span>{resource === "staff" ? "instructors" : resource}</span><strong>{used} / {limit}</strong></div>
                     <div className="usage-track"><span style={{ width: `${percent}%` }} /></div>
                   </div>
                 );

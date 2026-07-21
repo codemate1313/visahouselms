@@ -28,25 +28,29 @@ interface ImportResult {
 }
 
 interface Props {
-  role: InstituteMember["role"];
+  role?: InstituteMember["role"];
   instituteId?: number;
 }
 
 export function InstituteMembers({ role, instituteId }: Props) {
   const isStudent = role === "STUDENT";
+  const isAllAccounts = role === undefined;
   const permissions = useAuthStore((state) => state.user?.institute_permissions);
   const isSuperAdmin = instituteId !== undefined;
-  const label = isStudent ? "Students" : "Staff";
+  const label = isAllAccounts ? "Accounts" : isStudent ? "Students" : "Instructors";
   const apiBase = isSuperAdmin ? `/super-admin/institutes/${instituteId}` : "/institute";
   const basePath = isSuperAdmin
-    ? `/super-admin/institutes/${instituteId}/students`
+    ? `/super-admin/institutes/${instituteId}/accounts`
     : isStudent ? "/institute-portal/students" : "/institute-portal/staff";
-  const canProvision = isSuperAdmin && isStudent;
+  const canProvision = (isSuperAdmin && (isStudent || isAllAccounts)) || (!isSuperAdmin && isStudent && Boolean(permissions?.manage_students));
   const canManage = isSuperAdmin || (isStudent ? permissions?.manage_students : permissions?.manage_staff);
   const canViewActivity = isSuperAdmin || permissions?.view_student_activity;
   const [members, setMembers] = useState<InstituteMember[]>([]);
   const [search, setSearch] = useState("");
-  const [active, setActive] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [activityFilter, setActivityFilter] = useState("");
+  const [sessionFilter, setSessionFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [credential, setCredential] = useState<{ name: string; password: string } | null>(null);
@@ -57,7 +61,14 @@ export function InstituteMembers({ role, instituteId }: Props) {
     setLoading(true);
     try {
       const { data } = await apiClient.get<InstituteMember[]>(`${apiBase}/members`, {
-        params: { role, search: search || undefined, active: active || undefined },
+        params: {
+          role: (role ?? roleFilter) || undefined,
+          search: search || undefined,
+          status: statusFilter || undefined,
+          has_attempts: activityFilter === "attempts" ? true : activityFilter === "no_attempts" ? false : undefined,
+          has_devices: sessionFilter === "known_devices" ? true : sessionFilter === "no_devices" ? false : undefined,
+          has_active_sessions: sessionFilter === "active_session" ? true : undefined,
+        },
       });
       setMembers(data);
       setError(null);
@@ -66,7 +77,7 @@ export function InstituteMembers({ role, instituteId }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [active, apiBase, label, role, search]);
+  }, [activityFilter, apiBase, label, role, roleFilter, search, sessionFilter, statusFilter]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -141,21 +152,44 @@ export function InstituteMembers({ role, instituteId }: Props) {
   return (
     <div>
       <div className="page-header">
-        <div><span className="page-eyebrow">People</span><h1>{label}</h1><p className="page-subtitle">Manage {label.toLowerCase()} within your institute.</p></div>
+        <div><span className="page-eyebrow">People</span><h1>{label}</h1><p className="page-subtitle">Manage and inspect institute accounts from one place.</p></div>
         <div className="page-header-actions">
           {canProvision && <button className="secondary-action" type="button" onClick={downloadTemplate}>Download template</button>}
           {canProvision && <button className="secondary-action" type="button" onClick={() => fileInput.current?.click()}>Import CSV / Excel</button>}
-          {(canProvision || (!isStudent && canManage)) && <Link className="button-link" to={`${basePath}/new`}>Add {isStudent ? "student" : "instructor"}</Link>}
+          {isSuperAdmin && <Link className="button-link" to={`${basePath}/students/new`}>Add student</Link>}
+          {isSuperAdmin && <Link className="button-link secondary-button" to={`${basePath}/staff/new`}>Add instructor</Link>}
+          {!isSuperAdmin && isStudent && canManage && <Link className="button-link" to={`${basePath}/new`}>Add student</Link>}
+          {!isSuperAdmin && !isStudent && canManage && <Link className="button-link" to={`${basePath}/new`}>Add instructor</Link>}
           {canProvision && <input ref={fileInput} className="visually-hidden" type="file" accept=".csv,.xlsx" onChange={(event) => event.target.files?.[0] && importFile(event.target.files[0])} />}
         </div>
       </div>
 
-      <div className="filter-row">
+      <div className={`filter-row ${isAllAccounts ? "accounts-filter-row" : ""}`}>
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${label.toLowerCase()}...`} />
-        <select value={active} onChange={(event) => setActive(event.target.value)}>
-          <option value="">All statuses</option>
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
+        {isAllAccounts && (
+          <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
+            <option value="">All account types</option>
+            <option value="STUDENT">Students</option>
+            <option value="INST_INSTRUCTOR">Institute instructors</option>
+          </select>
+        )}
+        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+          <option value="">Any status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="deleted">Deleted</option>
+          <option value="password_reset">Password reset pending</option>
+        </select>
+        <select value={activityFilter} onChange={(event) => setActivityFilter(event.target.value)}>
+          <option value="">Any test activity</option>
+          <option value="attempts">Has test attempts</option>
+          <option value="no_attempts">No test attempts</option>
+        </select>
+        <select value={sessionFilter} onChange={(event) => setSessionFilter(event.target.value)}>
+          <option value="">Any device/session</option>
+          <option value="active_session">Currently signed in</option>
+          <option value="known_devices">Known devices</option>
+          <option value="no_devices">No known devices</option>
         </select>
       </div>
       {error && <p className="error-text">{error}</p>}
@@ -163,20 +197,22 @@ export function InstituteMembers({ role, instituteId }: Props) {
       {loading ? <p>Loading...</p> : (
         <div className="table-wrap">
           <table className="data-table">
-            <thead><tr><th>Name</th><th>Email</th>{isStudent && <th>Tests</th>}{isStudent && <th>Devices</th>}<th>Contact</th><th>Status</th><th>Created</th><th /></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th>{isAllAccounts && <th>Type</th>}<th>Tests</th><th>Devices</th><th>Contact</th><th>Status</th><th>Created</th><th /></tr></thead>
             <tbody>
-              {members.length === 0 && <tr><td colSpan={isStudent ? 8 : 6} className="empty-cell">No {label.toLowerCase()} found.</td></tr>}
+              {members.length === 0 && <tr><td colSpan={9} className="empty-cell">No {label.toLowerCase()} found.</td></tr>}
               {members.map((member) => (
                 <tr key={member.id}>
                   <td><strong>{member.first_name} {member.last_name}</strong>{member.force_password_reset && <span className="badge badge-amber">password reset</span>}</td>
                   <td>{member.email}</td>
-                  {isStudent && <td>{member.attempt_count}</td>}
-                  {isStudent && <td>{member.device_count}<span className="muted-text device-active-label">{member.active_session_count ? `${member.active_session_count} active` : ""}</span></td>}
+                  {isAllAccounts && <td>{member.role === "STUDENT" ? "Student" : "Instructor"}</td>}
+                  <td>{member.attempt_count}</td>
+                  <td>{member.device_count}<span className="muted-text device-active-label">{member.active_session_count ? `${member.active_session_count} active` : ""}</span></td>
                   <td>{member.phone_number ?? "-"}</td>
                   <td><span className={`badge ${member.deleted_at ? "badge-gray" : member.is_active ? "badge-green" : "badge-amber"}`}>{member.deleted_at ? "Deleted" : member.is_active ? "Active" : "Inactive"}</span></td>
                   <td>{new Date(member.created_at).toLocaleDateString()}</td>
                   <td className="table-actions">
-                    {(isStudent ? canViewActivity : canManage) && <Link to={`${basePath}/${member.id}`}>{isStudent ? "View" : "Edit"}</Link>}
+                    {member.role === "STUDENT" && canViewActivity && <Link to={`${basePath}/students/${member.id}`}>View</Link>}
+                    {canManage && <Link to={`${basePath}/${member.role === "STUDENT" ? "students" : "staff"}/${member.id}/edit`}>Edit</Link>}
                     {!member.deleted_at && canManage && <button onClick={() => resetPassword(member)}>Reset password</button>}
                     {!member.deleted_at && canManage && <button onClick={() => toggle(member)}>{member.is_active ? "Deactivate" : "Reactivate"}</button>}
                     {!member.deleted_at && canManage && <button className="danger" onClick={() => remove(member)}>Delete</button>}
@@ -215,4 +251,9 @@ export function InstituteMembers({ role, instituteId }: Props) {
 export function SuperAdminInstituteStudents() {
   const { id } = useParams();
   return <InstituteMembers role="STUDENT" instituteId={Number(id)} />;
+}
+
+export function SuperAdminInstituteAccounts() {
+  const { id } = useParams();
+  return <InstituteMembers instituteId={Number(id)} />;
 }

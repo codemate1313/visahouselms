@@ -9,11 +9,22 @@ from sqlalchemy.orm import sessionmaker
 from app.config import settings
 from app.core.security import hash_password
 from app.models import Base, ExamModuleAsset, ExamModuleQuestion
-from app.models.attempt import ATTEMPT_GRADED, ATTEMPT_GRADING, CourseModule, Enrollment
+from app.models.attempt import (
+    ATTEMPT_GRADED,
+    ATTEMPT_GRADING,
+    AiEvaluation,
+    AiEvaluationLimit,
+    CourseModule,
+    Enrollment,
+    GradingQueueEntry,
+    ReevaluationRequest,
+)
 from app.models.course import COURSE_PUBLISHED, Course
-from app.models.role import SA_INSTRUCTOR, STUDENT, Role
+from app.models.institute import Institute
+from app.models.role import INST_INSTRUCTOR, SA_INSTRUCTOR, STUDENT, Role
 from app.models.user import User
-from app.services import attempt_service, module_authoring_service
+from app.services import ai_evaluation_service, attempt_service, grading_service, module_authoring_service
+from app.services import cefr_service
 
 
 def _question(question_type: str, prompt: str, points: Decimal, correct: list[str]) -> dict:
@@ -159,7 +170,11 @@ class AttemptServiceTestCase(unittest.TestCase):
         expected_raw = sum(Decimal(q.points) for q in all_questions[:-1])
         self.assertEqual(Decimal(result["raw_score"]), expected_raw)
         self.assertEqual(Decimal(result["max_score"]), Decimal("30"))
-        self.assertIsNotNone(result["band_label"])
+        self.assertEqual(result["band_label"], "C2")
+        self.assertEqual(result["cefr_level"], "C2")
+        self.assertEqual(result["cefr_policy_version"], cefr_service.POLICY_VERSION)
+        self.assertEqual(result["cefr_profile"]["status"], "complete")
+        self.assertEqual(result["cefr_profile"]["skills"][0]["mapping_method"], "configured_raw_score")
 
     def test_mcq_multiple_requires_exact_set_match(self):
         module = self._build_reading_module()
@@ -202,6 +217,12 @@ class AttemptServiceTestCase(unittest.TestCase):
 
         result = attempt_service.submit_attempt(self.db, attempt)
         self.assertEqual(result["status"], ATTEMPT_GRADING)
+        queue = self.db.query(GradingQueueEntry).filter_by(attempt_id=attempt.id).one()
+        self.assertEqual(queue.status, "pending")
+
+        claimed = grading_service.claim(self.db, self.instructor, attempt)
+        self.assertEqual(claimed["status"], "claimed")
+        self.assertEqual(claimed["assigned_to_id"], self.instructor.id)
 
         parts = sorted(attempt.module.parts, key=lambda p: p.sort_order)
         criteria = [{"criterion": item["criterion"], "marks_awarded": 6} for item in parts[0].rubric]
@@ -213,6 +234,136 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(final["status"], ATTEMPT_GRADED)
         self.assertEqual(Decimal(final["raw_score"]), Decimal("48"))
         self.assertEqual(Decimal(final["max_score"]), Decimal("64"))
+        self.assertEqual(final["cefr_level"], "C1")
+        self.assertEqual(final["cefr_profile"]["skills"][0]["level"], "C1")
+        self.db.refresh(queue)
+        self.assertEqual(queue.status, "completed")
+        self.assertTrue(
+            all(
+                criterion["cefr_level"] == "C1"
+                for part in final["parts"]
+                for criterion in part["grade"]["criteria"]
+            )
+        )
+
+    def test_ai_draft_is_normalized_limited_and_never_publishes_a_grade(self):
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "A developed academic response."})
+        attempt_service.submit_attempt(self.db, attempt)
+        part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+
+        def evaluator(_config, payload):
+            return {
+                "criteria": [
+                    {"criterion": item["criterion"], "marks_awarded": 6, "rationale": "Evidence in the response."}
+                    for item in payload["rubric"]
+                ],
+                "comment": "Advisory draft only.",
+                "confidence": 0.8,
+            }
+
+        suggestion = ai_evaluation_service.request_suggestion(
+            self.db, self.instructor, attempt, part, evaluator=evaluator
+        )
+        self.assertTrue(suggestion["human_review_required"])
+        self.assertEqual(suggestion["criteria"][0]["cefr_level"], "C1")
+        self.assertEqual(self.db.query(AiEvaluation).count(), 1)
+        self.assertEqual(self.db.query(AiEvaluationLimit).one().used_count, 1)
+        grade = next(item for item in attempt.part_grades if item.part_id == part.id)
+        self.assertEqual(grade.status, "pending")
+        self.assertIsNone(grade.total_marks)
+
+    def test_student_reevaluation_reopens_completed_queue_and_records_resolution(self):
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "Reviewable response."})
+        attempt_service.submit_attempt(self.db, attempt)
+        for part in sorted(attempt.module.parts, key=lambda item: item.sort_order):
+            criteria = [{"criterion": item["criterion"], "marks_awarded": 5} for item in part.rubric]
+            attempt_service.grade_part(self.db, self.instructor, attempt.id, part.id, criteria, "Initial grade")
+
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt.id)
+        request = grading_service.request_reevaluation(
+            self.db,
+            self.student,
+            attempt,
+            "Please review the task achievement criterion and examiner feedback.",
+        )
+        self.assertEqual(request["status"], "pending")
+        queue = self.db.query(GradingQueueEntry).filter_by(attempt_id=attempt.id).one()
+        self.assertEqual(queue.status, "pending")
+        self.assertEqual(queue.priority, 10)
+
+        grading_service.claim(self.db, self.instructor, attempt)
+        resolved = grading_service.resolve_reevaluation(
+            self.db,
+            self.instructor,
+            attempt,
+            "resolved",
+            "The complete rubric and response were reviewed; the original marks remain appropriate.",
+        )
+        self.assertEqual(resolved["status"], "resolved")
+        self.assertEqual(self.db.query(ReevaluationRequest).count(), 1)
+        self.db.refresh(queue)
+        self.assertEqual(queue.status, "completed")
+
+    def test_institute_submission_uses_institute_instructor_with_sa_fallback(self):
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "Institute response."})
+        attempt_service.submit_attempt(self.db, attempt)
+
+        institute_role = Role(name=INST_INSTRUCTOR)
+        institute = Institute(name="Routing Academy", slug="routing-academy", is_active=True)
+        self.db.add_all([institute_role, institute])
+        self.db.flush()
+        institute_instructor = User(
+            email="marker@routing.test",
+            password_hash=hash_password("MarkerPassword!1"),
+            role_id=institute_role.id,
+            institute_id=institute.id,
+            first_name="Institute",
+            last_name="Marker",
+            is_active=True,
+        )
+        self.student.institute_id = institute.id
+        self.db.add_all([institute_instructor, self.student])
+        self.db.commit()
+
+        self.assertEqual(attempt_service.list_grading_queue(self.db, self.instructor), [])
+        self.assertEqual(
+            [item["id"] for item in attempt_service.list_grading_queue(self.db, institute_instructor)],
+            [attempt.id],
+        )
+
+        institute_instructor.is_active = False
+        self.db.add(institute_instructor)
+        self.db.commit()
+        self.assertEqual(
+            [item["id"] for item in attempt_service.list_grading_queue(self.db, self.instructor)],
+            [attempt.id],
+        )
+
+    def test_cefr_percentage_policy_boundaries_are_versioned(self):
+        self.assertEqual(cefr_service.level_for_percentage(Decimal("39.9")), "Below B1")
+        self.assertEqual(cefr_service.level_for_percentage(Decimal("40")), "B1")
+        self.assertEqual(cefr_service.level_for_percentage(Decimal("60")), "B2")
+        self.assertEqual(cefr_service.level_for_percentage(Decimal("75")), "C1")
+        self.assertEqual(cefr_service.level_for_percentage(Decimal("90")), "C2")
+        self.assertIn("2020", cefr_service.POLICY_VERSION)
 
     def test_final_test_cannot_be_retaken(self):
         created = module_authoring_service.create_module(

@@ -57,7 +57,7 @@ export function InstituteLayout() {
     instituteItems.push({ key: "students", label: "Students", icon: "user", to: "/institute-portal/students" });
   }
   if (permissions.manage_staff) {
-    instituteItems.push({ key: "staff", label: "Staff", icon: "instructors", to: "/institute-portal/staff" });
+    instituteItems.push({ key: "staff", label: "Instructors", icon: "instructors", to: "/institute-portal/staff" });
   }
   if (permissions.view_billing) {
     instituteItems.push({ key: "billing", label: "Subscription", icon: "subscription", to: "/institute-portal/billing" });

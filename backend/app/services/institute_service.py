@@ -87,6 +87,7 @@ def _serialize(db: Session, institute: Institute) -> dict:
         "contact_email": institute.contact_email,
         "admin_permissions": normalized_admin_permissions(institute.admin_permissions),
         "is_active": institute.is_active,
+        "onboarding_status": institute.onboarding_status,
         "subscription_state": sub_state,
         "created_at": institute.created_at,
     }
@@ -111,6 +112,8 @@ def create_institute(
     admin_last_name: str,
     admin_permissions: dict,
     ip: Optional[str],
+    active: bool = True,
+    onboarding_status: str = "published",
 ) -> dict:
     if db.query(User).filter(User.email == admin_email).first() is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Admin email already in use")
@@ -124,7 +127,8 @@ def create_institute(
         slug=_unique_slug(db, name),
         contact_email=contact_email,
         admin_permissions=normalized_admin_permissions(admin_permissions),
-        is_active=True,
+        is_active=active,
+        onboarding_status=onboarding_status,
     )
     db.add(institute)
     db.flush()
@@ -137,7 +141,7 @@ def create_institute(
         institute_id=institute.id,
         first_name=admin_first_name,
         last_name=admin_last_name,
-        is_active=True,
+        is_active=active,
         force_password_reset=True,
     )
     db.add(admin)

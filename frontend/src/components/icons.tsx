@@ -272,6 +272,8 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
 export function Icon({ name, className }: { name: IconName; className?: string }) {
   return (
     <svg
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

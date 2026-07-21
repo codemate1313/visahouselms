@@ -28,6 +28,7 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     SUPER_ADMIN: "/super-admin/change-password",
     SA_INSTRUCTOR: "/super-admin/instructor/change-password",
     INSTITUTE_ADMIN: "/institute-portal/change-password",
+    INST_INSTRUCTOR: "/institute-instructor/change-password",
     STUDENT: "/student/change-password",
   };
   const requiredRoute = passwordRoutes[user.role];

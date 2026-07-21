@@ -1,11 +1,16 @@
 from app.models.api_log import ApiLog
+from app.models.achievement import Badge, LeaderboardSnapshot, StudentBadge
 from app.models.assessment import Assessment, AssessmentQuestion, Question, QuestionBank
 from app.models.attempt import (
     AttemptAnswer,
     AttemptFlag,
     AttemptPartGrade,
+    AiEvaluation,
+    AiEvaluationLimit,
     CourseModule,
     Enrollment,
+    GradingQueueEntry,
+    ReevaluationRequest,
     TestAttempt,
 )
 from app.models.audit_log import AuditLog
@@ -16,7 +21,7 @@ from app.models.course import Course, CourseAsset, InstituteCourse
 from app.models.crash_log import CrashLog
 from app.models.demo_account import DemoAccount
 from app.models.error_log import ErrorLog
-from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion
+from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion, InstituteModule
 from app.models.institute import Institute
 from app.models.institute_branding import InstituteBranding
 from app.models.instructor_profile import InstructorProfile
@@ -43,6 +48,9 @@ __all__ = [
     "Setting",
     "AuditLog",
     "ApiLog",
+    "Badge",
+    "StudentBadge",
+    "LeaderboardSnapshot",
     "QuestionBank",
     "Question",
     "Assessment",
@@ -52,6 +60,7 @@ __all__ = [
     "ExamModulePart",
     "ExamModuleQuestion",
     "ExamModuleAsset",
+    "InstituteModule",
     "RequestLog",
     "CrashLog",
     "Job",
@@ -74,4 +83,8 @@ __all__ = [
     "AttemptAnswer",
     "AttemptPartGrade",
     "AttemptFlag",
+    "GradingQueueEntry",
+    "AiEvaluation",
+    "AiEvaluationLimit",
+    "ReevaluationRequest",
 ]

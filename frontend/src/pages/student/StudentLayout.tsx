@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { apiClient } from "../../api/client";
-import { Sidebar, type MenuSection } from "../../components/Sidebar";
+import { Sidebar, type MenuItem, type MenuSection } from "../../components/Sidebar";
 import { useAuthStore } from "../../store/authStore";
 
 const COLLAPSE_STORAGE_KEY = "student-lms-sidebar-collapsed";
@@ -13,6 +13,8 @@ export function StudentLayout() {
   );
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const clear = useAuthStore((state) => state.clear);
+  const user = useAuthStore((state) => state.user);
+  const isInstituteStudent = user?.institute_id != null;
 
   useEffect(() => {
     localStorage.setItem(COLLAPSE_STORAGE_KEY, collapsed ? "1" : "0");
@@ -30,15 +32,22 @@ export function StudentLayout() {
     navigate("/login");
   }
 
+  const mainItems: MenuItem[] = [
+    { key: "dashboard", label: "Dashboard", icon: "dashboard", to: "/student/dashboard" },
+  ];
+  if (!isInstituteStudent) {
+    mainItems.push({ key: "catalog", label: "Plans & Upgrades", icon: "courses", to: "/student/courses" });
+  }
+  mainItems.push(
+    { key: "my-courses", label: "My Tests", icon: "module", to: "/student/my-courses" },
+    { key: "attempts", label: "My Test History", icon: "grading", to: "/student/attempts" },
+    { key: "progress", label: "Progress", icon: "analytics", to: "/student/progress" },
+  );
+
   const sections: MenuSection[] = [
     {
       title: "MAIN MENU",
-      items: [
-        { key: "dashboard", label: "Dashboard", icon: "dashboard", to: "/student/dashboard" },
-        { key: "catalog", label: "Course Catalog", icon: "courses", to: "/student/courses" },
-        { key: "my-courses", label: "My Courses", icon: "module", to: "/student/my-courses" },
-        { key: "attempts", label: "My Test History", icon: "grading", to: "/student/attempts" },
-      ],
+      items: mainItems,
     },
     {
       title: "SETTINGS",
@@ -54,7 +63,7 @@ export function StudentLayout() {
     <div className="dashboard student-portal">
       <Sidebar
         brandTitle="IELTS LMS"
-        brandSubtitle="Student"
+        brandSubtitle={isInstituteStudent ? "Institute Student" : "Direct Student"}
         sections={sections}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((prev) => !prev)}

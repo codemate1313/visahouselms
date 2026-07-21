@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -16,3 +18,20 @@ router = APIRouter(
 @router.get("/summary")
 def get_summary(db: Session = Depends(get_db)):
     return dashboard_service.get_summary(db)
+
+
+@router.get("/metrics/{metric}")
+def get_metric_detail(
+    metric: Literal[
+        "institutes",
+        "subscriptions",
+        "revenue",
+        "dues",
+        "transactions",
+        "demos",
+        "instructors",
+        "modules",
+    ],
+    db: Session = Depends(get_db),
+):
+    return dashboard_service.get_metric_detail(db, metric)

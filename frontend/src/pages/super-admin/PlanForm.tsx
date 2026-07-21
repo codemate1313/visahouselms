@@ -3,133 +3,23 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 
-const EMPTY_FORM = {
-  name: "",
-  description: "",
-  price: "",
-  currency: "INR",
-  duration_days: "30",
-  student_limit: "50",
-  staff_limit: "5",
-  test_limit: "20",
-  grace_days: "7",
-};
+interface PlanModule { id: number; title: string; module_type: string; duration_minutes: number; is_visible: boolean; created_by_name?: string }
+const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", test_limit: "20", grace_days: "0", is_published: false };
 
 export function PlanForm() {
   const { id } = useParams();
-  const isNew = id === "new" || id === undefined;
+  const isNew = id === "new" || !id;
   const navigate = useNavigate();
-
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(!isNew);
+  const [form, setForm] = useState(EMPTY);
+  const [modules, setModules] = useState<PlanModule[]>([]);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (isNew) return;
-    apiClient
-      .get(`/super-admin/plans/${id}`)
-      .then(({ data }) => {
-        setForm({
-          name: data.name ?? "",
-          description: data.description ?? "",
-          price: data.price ?? "",
-          currency: data.currency ?? "INR",
-          duration_days: String(data.duration_days ?? ""),
-          student_limit: String(data.student_limit ?? ""),
-          staff_limit: String(data.staff_limit ?? ""),
-          test_limit: String(data.test_limit ?? ""),
-          grace_days: String(data.grace_days ?? ""),
-        });
-      })
-      .catch(() => setError("Failed to load plan."))
-      .finally(() => setLoading(false));
-  }, [id, isNew]);
-
-  function set(field: keyof typeof EMPTY_FORM) {
-    return (event: { target: { value: string } }) =>
-      setForm((prev) => ({ ...prev, [field]: event.target.value }));
-  }
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    setError(null);
-    setSaving(true);
-    const payload = {
-      name: form.name,
-      description: form.description || null,
-      price: Number(form.price),
-      currency: form.currency,
-      duration_days: Number(form.duration_days),
-      student_limit: Number(form.student_limit),
-      staff_limit: Number(form.staff_limit),
-      test_limit: Number(form.test_limit),
-      grace_days: Number(form.grace_days),
-    };
-    try {
-      if (isNew) {
-        await apiClient.post("/super-admin/plans", payload);
-      } else {
-        await apiClient.patch(`/super-admin/plans/${id}`, payload);
-      }
-      navigate("/super-admin/plans");
-    } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Failed to save plan."));
-    } finally {
-      setSaving(false);
-    }
-  }
-
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => { Promise.all([apiClient.get<PlanModule[]>("/super-admin/plans/available-modules"), ...(isNew ? [] : [apiClient.get(`/super-admin/plans/${id}`)])]).then((responses) => { setModules(responses[0].data); if (!isNew) { const data = responses[1].data; setForm({ name: data.name || "", description: data.description || "", price: data.price || "", currency: data.currency || "INR", duration_days: String(data.duration_days), student_limit: String(data.student_limit), staff_limit: String(data.staff_limit), test_limit: String(data.test_limit), grace_days: String(data.grace_days), is_published: Boolean(data.is_published) }); setSelected(new Set((data.modules || []).map((module: PlanModule) => module.id))); } }).catch(() => setError("Failed to load plan.")) .finally(() => setLoading(false)); }, [id, isNew]);
+  function set(field: keyof typeof EMPTY) { return (event: { target: { value: string } }) => setForm((current) => ({ ...current, [field]: event.target.value })); }
+  function toggle(moduleId: number) { setSelected((current) => { const next = new Set(current); if (next.has(moduleId)) next.delete(moduleId); else next.add(moduleId); return next; }); }
+  async function submit(event: FormEvent) { event.preventDefault(); setSaving(true); setError(null); const payload = { name: form.name, description: form.description || null, price: Number(form.price), currency: form.currency, duration_days: Number(form.duration_days), student_limit: Number(form.student_limit), staff_limit: Number(form.staff_limit), test_limit: Number(form.test_limit), grace_days: Number(form.grace_days), audience: "direct_students", is_published: form.is_published, module_ids: [...selected] }; try { if (isNew) await apiClient.post("/super-admin/plans", payload); else await apiClient.patch(`/super-admin/plans/${id}`, payload); navigate("/super-admin/plans"); } catch (err) { setError(extractErrorMessage(err, "Failed to save direct-student plan.")); } finally { setSaving(false); } }
   if (loading) return <p>Loading...</p>;
-
-  return (
-    <div>
-      <h1>{isNew ? "New Plan" : "Edit Plan"}</h1>
-      <form className="form-card wide" onSubmit={handleSubmit}>
-        <label htmlFor="name">Name</label>
-        <input id="name" value={form.name} onChange={set("name")} required />
-
-        <label htmlFor="description">Description</label>
-        <input id="description" value={form.description} onChange={set("description")} placeholder="Optional" />
-
-        <div className="form-grid">
-          <div>
-            <label htmlFor="price">Price</label>
-            <input id="price" type="number" min="0" step="0.01" value={form.price} onChange={set("price")} required />
-          </div>
-          <div>
-            <label htmlFor="currency">Currency</label>
-            <input id="currency" value={form.currency} onChange={set("currency")} required />
-          </div>
-          <div>
-            <label htmlFor="duration_days">Duration (days)</label>
-            <input id="duration_days" type="number" min="1" value={form.duration_days} onChange={set("duration_days")} required />
-          </div>
-          <div>
-            <label htmlFor="grace_days">Grace period (days)</label>
-            <input id="grace_days" type="number" min="0" value={form.grace_days} onChange={set("grace_days")} required />
-          </div>
-          <div>
-            <label htmlFor="student_limit">Student limit</label>
-            <input id="student_limit" type="number" min="0" value={form.student_limit} onChange={set("student_limit")} required />
-          </div>
-          <div>
-            <label htmlFor="staff_limit">Staff limit</label>
-            <input id="staff_limit" type="number" min="0" value={form.staff_limit} onChange={set("staff_limit")} required />
-          </div>
-          <div>
-            <label htmlFor="test_limit">Test limit</label>
-            <input id="test_limit" type="number" min="0" value={form.test_limit} onChange={set("test_limit")} required />
-          </div>
-        </div>
-
-        {error && <p className="error-text">{error}</p>}
-
-        <div className="form-actions">
-          <button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Plan"}</button>
-          <button type="button" onClick={() => navigate("/super-admin/plans")}>Cancel</button>
-        </div>
-      </form>
-    </div>
-  );
+  return <div><div className="page-header"><div><h1>{isNew ? "Create Direct Student Plan" : "Edit Direct Student Plan"}</h1><p className="page-subtitle">Bundle published courses for students purchasing access directly from the website.</p></div></div><form className="form-card wide" onSubmit={submit}><label>Plan name</label><input value={form.name} onChange={set("name")} required /><label>Description</label><textarea rows={3} value={form.description} onChange={set("description")} /><div className="form-grid"><div><label>Price</label><input type="number" min="0" step="0.01" value={form.price} onChange={set("price")} required /></div><div><label>Currency</label><input value={form.currency} onChange={set("currency")} required /></div><div><label>Access duration (days)</label><input type="number" min="1" value={form.duration_days} onChange={set("duration_days")} required /></div><div><label>Test attempt limit</label><input type="number" min="0" value={form.test_limit} onChange={set("test_limit")} required /></div></div><fieldset className="plan-course-picker"><legend>Included courses</legend><p className="hint">Add or remove courses at any time. Hidden courses remain configured but are unavailable to students.</p>{!modules.length ? <p className="empty-message">No published courses are available.</p> : modules.map((module) => <label className="plan-course-option" key={module.id}><input type="checkbox" checked={selected.has(module.id)} onChange={() => toggle(module.id)} /><span><strong>{module.title}</strong><small>{module.module_type.replaceAll("_", " ")} · {module.duration_minutes} minutes · {module.created_by_name || "SA Instructor"}{module.is_visible ? "" : " · hidden"}</small></span></label>)}</fieldset><label className="toggle-row"><input type="checkbox" checked={form.is_published} onChange={(event) => setForm((current) => ({ ...current, is_published: event.target.checked }))} /><span><strong>Publish on website</strong><small>Only published plans are visible to direct students.</small></span></label>{error && <p className="error-text">{error}</p>}<div className="form-actions"><button disabled={saving || (form.is_published && !selected.size)}>{saving ? "Saving..." : "Save plan"}</button><button type="button" onClick={() => navigate("/super-admin/plans")}>Cancel</button></div></form></div>;
 }

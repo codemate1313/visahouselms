@@ -16,6 +16,13 @@ plan_modules = Table(
     Column("module_id", ForeignKey("exam_modules.id", ondelete="CASCADE"), primary_key=True),
 )
 
+plan_courses = Table(
+    "plan_courses",
+    Base.metadata,
+    Column("plan_id", ForeignKey("plans.id", ondelete="CASCADE"), primary_key=True),
+    Column("course_id", ForeignKey("courses.id", ondelete="CASCADE"), primary_key=True),
+)
+
 
 class Plan(Base):
     __tablename__ = "plans"
@@ -31,9 +38,15 @@ class Plan(Base):
     staff_limit: Mapped[int] = mapped_column(Integer, nullable=False)
     grace_days: Mapped[int] = mapped_column(Integer, nullable=False, default=7)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    audience: Mapped[str] = mapped_column(String(30), nullable=False, default="both")
+    is_published: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_internal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
 
     modules: Mapped[List["ExamModule"]] = relationship(  # noqa: F821
         secondary=plan_modules, order_by="ExamModule.title"
+    )
+    courses: Mapped[List["Course"]] = relationship(  # noqa: F821
+        secondary=plan_courses, order_by="Course.title"
     )

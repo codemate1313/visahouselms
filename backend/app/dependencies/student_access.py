@@ -8,6 +8,7 @@ from app.dependencies.auth import get_current_user
 from app.models.exam_module import ExamModule
 from app.models.attempt import Enrollment
 from app.models.course import InstituteCourse
+from app.models.exam_module import InstituteModule
 from app.models.role import STUDENT
 from app.models.user import User
 from app.services.subscription_service import (
@@ -32,12 +33,30 @@ def has_module_access(db: Session, user: User, module_id: int) -> bool:
     attempt-start check so the two can never drift apart."""
     if user.institute_id is not None:
         subscription, state = current_subscription(db, user.institute_id)
-    else:
-        subscription, state = current_user_subscription(db, user.id)
+        if subscription is None or state not in (STATE_ACTIVE, STATE_GRACE):
+            return False
+        return (
+            db.query(InstituteModule)
+            .filter(
+                InstituteModule.institute_id == user.institute_id,
+                InstituteModule.is_active.is_(True),
+                InstituteModule.module_id == module_id,
+            )
+            .first()
+            is not None
+        )
+
+    subscription, state = current_user_subscription(db, user.id)
 
     if subscription is None or state not in (STATE_ACTIVE, STATE_GRACE):
         return False
-    return any(module.id == module_id for module in subscription.plan.modules)
+    if any(module.id == module_id for module in subscription.plan.modules):
+        return True
+    return any(
+        link.module_id == module_id
+        for course in subscription.plan.courses
+        for link in course.course_modules
+    )
 
 
 def has_course_access(db: Session, user: User, course_id: int) -> bool:
@@ -84,7 +103,7 @@ def require_module_access(
     user: User = Depends(require_student),
 ) -> ExamModule:
     module = db.get(ExamModule, module_id)
-    if module is None or module.status != "published":
+    if module is None or module.status != "published" or not module.is_visible or module.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module not found")
     if not has_module_access(db, user, module_id):
         raise HTTPException(

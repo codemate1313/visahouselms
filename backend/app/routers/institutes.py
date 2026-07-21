@@ -81,12 +81,25 @@ def list_institute_members(
     role: Optional[str] = None,
     search: Optional[str] = Query(default=None, max_length=200),
     active: Optional[bool] = None,
+    status: Optional[str] = Query(default=None, pattern="^(active|inactive|deleted|password_reset)$"),
+    has_attempts: Optional[bool] = None,
+    has_devices: Optional[bool] = None,
+    has_active_sessions: Optional[bool] = None,
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
     institute_service.get_institute_or_404(db, institute_id)
     return institute_admin_service.list_members(
-        db, actor, role, search, active, scoped_institute_id=institute_id
+        db,
+        actor,
+        role,
+        search,
+        active,
+        status,
+        has_attempts,
+        has_devices,
+        has_active_sessions,
+        scoped_institute_id=institute_id,
     )
 
 
@@ -98,8 +111,8 @@ def create_institute_student(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    if payload.role != STUDENT:
-        raise HTTPException(status_code=400, detail="This endpoint provisions student accounts only")
+    if payload.role not in (STUDENT, "INST_INSTRUCTOR"):
+        raise HTTPException(status_code=400, detail="Role must be STUDENT or INST_INSTRUCTOR")
     institute_service.get_institute_or_404(db, institute_id)
     return institute_admin_service.create_member(
         db,
@@ -107,7 +120,7 @@ def create_institute_student(
         email=str(payload.email),
         first_name=payload.first_name,
         last_name=payload.last_name,
-        role_name=STUDENT,
+        role_name=payload.role,
         phone_number=payload.phone_number,
         address=payload.address,
         ip=_client_ip(request),

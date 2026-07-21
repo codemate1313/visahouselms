@@ -84,6 +84,14 @@ class ModuleStatusUpdate(BaseModel):
         return value
 
 
+class ModuleVisibilityUpdate(BaseModel):
+    is_visible: bool
+
+
+class ModuleInstituteAssignment(BaseModel):
+    institute_id: int = Field(gt=0)
+
+
 class ModuleQuestionBatchCreate(BaseModel):
     source_type: str
     source_filename: Optional[str] = Field(default=None, max_length=255)

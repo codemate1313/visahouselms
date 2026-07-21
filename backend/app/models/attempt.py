@@ -43,6 +43,15 @@ FLAG_VISIBILITY_CHANGE = "visibility_change"
 FLAG_FULLSCREEN_EXIT = "fullscreen_exit"
 ATTEMPT_FLAG_TYPES = (FLAG_BLUR, FLAG_VISIBILITY_CHANGE, FLAG_FULLSCREEN_EXIT)
 
+QUEUE_PENDING = "pending"
+QUEUE_CLAIMED = "claimed"
+QUEUE_COMPLETED = "completed"
+
+REEVALUATION_PENDING = "pending"
+REEVALUATION_IN_REVIEW = "in_review"
+REEVALUATION_RESOLVED = "resolved"
+REEVALUATION_REJECTED = "rejected"
+
 
 class CourseModule(Base):
     """Links a sellable Course to one or more published ExamModules."""
@@ -109,6 +118,9 @@ class TestAttempt(Base):
     raw_score: Mapped[Optional[Decimal]] = mapped_column(Numeric(7, 2), nullable=True)
     max_score: Mapped[Optional[Decimal]] = mapped_column(Numeric(7, 2), nullable=True)
     band_label: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
+    cefr_level: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, index=True)
+    cefr_profile: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    cefr_policy_version: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
     graded_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     user: Mapped["User"] = relationship()  # noqa: F821
@@ -184,3 +196,81 @@ class AttemptFlag(Base):
     meta: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
     attempt: Mapped[TestAttempt] = relationship(back_populates="flags")
+
+
+class GradingQueueEntry(Base):
+    __tablename__ = "grading_queue"
+    __table_args__ = (UniqueConstraint("attempt_id", name="uq_grading_queue_attempt"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    attempt_id: Mapped[int] = mapped_column(
+        ForeignKey("test_attempts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default=QUEUE_PENDING, index=True)
+    assigned_to_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    routing_reason: Mapped[str] = mapped_column(String(50), nullable=False, default="standard")
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    due_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    claimed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
+
+    attempt: Mapped[TestAttempt] = relationship()
+    assigned_to: Mapped[Optional["User"]] = relationship()  # noqa: F821
+
+
+class AiEvaluation(Base):
+    __tablename__ = "ai_evaluations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    attempt_id: Mapped[int] = mapped_column(
+        ForeignKey("test_attempts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    part_id: Mapped[int] = mapped_column(ForeignKey("exam_module_parts.id", ondelete="CASCADE"), nullable=False)
+    requested_by_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    provider: Mapped[str] = mapped_column(String(60), nullable=False)
+    model: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="completed")
+    suggestions: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    attempt: Mapped[TestAttempt] = relationship()
+    part: Mapped["ExamModulePart"] = relationship()  # noqa: F821
+    requested_by: Mapped["User"] = relationship()  # noqa: F821
+
+
+class AiEvaluationLimit(Base):
+    __tablename__ = "ai_eval_limits"
+    __table_args__ = (UniqueConstraint("scope_key", name="uq_ai_eval_limits_scope"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    scope_key: Mapped[str] = mapped_column(String(80), nullable=False)
+    institute_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    period_key: Mapped[str] = mapped_column(String(7), nullable=False, index=True)
+    monthly_limit: Mapped[int] = mapped_column(Integer, nullable=False)
+    used_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
+
+
+class ReevaluationRequest(Base):
+    __tablename__ = "reevaluation_requests"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    attempt_id: Mapped[int] = mapped_column(
+        ForeignKey("test_attempts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    student_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    assigned_to_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default=REEVALUATION_PENDING, index=True)
+    resolution_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    attempt: Mapped[TestAttempt] = relationship()
+    student: Mapped["User"] = relationship(foreign_keys=[student_id])  # noqa: F821
+    assigned_to: Mapped[Optional["User"]] = relationship(foreign_keys=[assigned_to_id])  # noqa: F821

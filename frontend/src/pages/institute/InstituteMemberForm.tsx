@@ -7,18 +7,19 @@ import type { InstituteMember } from "./InstituteMembers";
 interface Props {
   role: InstituteMember["role"];
   instituteId?: number;
+  returnPath?: string;
 }
 
-export function InstituteMemberForm({ role, instituteId }: Props) {
+export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
   const params = useParams();
-  const id = instituteId === undefined ? params.id : params.studentId;
+  const id = instituteId === undefined ? params.id : params.memberId ?? params.studentId;
   const isNew = id === undefined;
   const isStudent = role === "STUDENT";
   const label = isStudent ? "student" : "instructor";
   const apiBase = instituteId === undefined ? "/institute" : `/super-admin/institutes/${instituteId}`;
-  const basePath = instituteId === undefined
+  const basePath = returnPath ?? (instituteId === undefined
     ? isStudent ? "/institute-portal/students" : "/institute-portal/staff"
-    : `/super-admin/institutes/${instituteId}/students`;
+    : `/super-admin/institutes/${instituteId}/accounts`);
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", first_name: "", last_name: "", phone_number: "", address: "" });
   const [loading, setLoading] = useState(!isNew);
@@ -106,5 +107,10 @@ export function InstituteMemberForm({ role, instituteId }: Props) {
 
 export function SuperAdminStudentForm() {
   const { id } = useParams();
-  return <InstituteMemberForm role="STUDENT" instituteId={Number(id)} />;
+  return <InstituteMemberForm role="STUDENT" instituteId={Number(id)} returnPath={`/super-admin/institutes/${id}/accounts`} />;
+}
+
+export function SuperAdminInstructorForm() {
+  const { id } = useParams();
+  return <InstituteMemberForm role="INST_INSTRUCTOR" instituteId={Number(id)} returnPath={`/super-admin/institutes/${id}/accounts`} />;
 }

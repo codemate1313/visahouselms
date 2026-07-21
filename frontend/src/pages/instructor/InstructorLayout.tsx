@@ -47,7 +47,7 @@ export function InstructorLayout() {
           children: [
             {
               key: "modules",
-              label: "Assessment Modules",
+              label: "Courses",
               to: "/super-admin/instructor/modules",
             },
             {

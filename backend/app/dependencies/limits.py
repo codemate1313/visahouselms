@@ -10,7 +10,7 @@ from typing import Callable, Dict
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.models.role import INST_INSTRUCTOR, INSTITUTE_ADMIN, STUDENT, Role
+from app.models.role import INST_INSTRUCTOR, STUDENT, Role
 from app.models.user import User
 from app.services.subscription_service import (
     STATE_ACTIVE,
@@ -43,7 +43,7 @@ def _count_students(db: Session, institute_id: int) -> int:
 
 
 def _count_staff(db: Session, institute_id: int) -> int:
-    return _count_users_with_roles(db, institute_id, [INSTITUTE_ADMIN, INST_INSTRUCTOR])
+    return _count_users_with_roles(db, institute_id, [INST_INSTRUCTOR])
 
 
 def _count_tests(db: Session, institute_id: int) -> int:
@@ -72,6 +72,19 @@ def enforce_limit(db: Session, institute_id: int, resource: str) -> None:
     if resource not in RESOURCE_REGISTRY:
         raise ValueError(f"Unknown limited resource '{resource}'")
 
+    from app.models.institute import Institute
+
+    institute = db.get(Institute, institute_id)
+    if institute is not None and institute.onboarding_status == "draft":
+        counter, limit_attr = RESOURCE_REGISTRY[resource]
+        limit = getattr(institute, limit_attr)
+        if limit is None:
+            raise HTTPException(status_code=HTTP_402_PAYMENT_REQUIRED, detail="Agreement limits have not been configured")
+        count = counter(db, institute_id)
+        if count >= limit:
+            raise HTTPException(status_code=HTTP_402_PAYMENT_REQUIRED, detail=f"Agreement limit reached: {count}/{limit} {resource}.")
+        return
+
     subscription, state = current_subscription(db, institute_id)
 
     if state not in (STATE_ACTIVE, STATE_GRACE):
@@ -82,6 +95,9 @@ def enforce_limit(db: Session, institute_id: int, resource: str) -> None:
                 "Purchase or renew a plan to continue."
             ),
         )
+
+    if resource == "tests" and subscription.plan.is_internal:
+        return
 
     counter, limit_attr = RESOURCE_REGISTRY[resource]
     limit = getattr(subscription.plan, limit_attr)

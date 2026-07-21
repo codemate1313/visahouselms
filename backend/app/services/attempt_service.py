@@ -20,7 +20,7 @@ from app.models.attempt import (
 )
 from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion
 from app.models.user import User
-from app.services.module_blueprint_service import SECTION_BLUEPRINTS
+from app.services import cefr_service
 
 # Small buffer so a slow network round-trip near the deadline doesn't cost
 # the student their last answer - the server clock is still authoritative.
@@ -155,6 +155,7 @@ def _serialize_parts(attempt: TestAttempt, reveal: bool) -> list[dict]:
                 "auto_marked": part.auto_marked,
                 "max_marks": str(part.max_marks) if part.max_marks is not None else None,
                 "rubric": part.rubric,
+                "cefr_scale": cefr_service.assessment_scale(part.section_type) if not part.auto_marked else [],
                 "sort_order": part.sort_order,
                 "assets": [_asset_out(asset, reveal_transcript=reveal) for asset in part.assets],
                 "questions": [
@@ -163,7 +164,16 @@ def _serialize_parts(attempt: TestAttempt, reveal: bool) -> list[dict]:
                 ],
                 "grade": (
                     {
-                        "criteria": grade.criteria,
+                        "criteria": [
+                            {
+                                **criterion,
+                                "cefr_level": criterion.get("cefr_level")
+                                or cefr_service.criterion_level(
+                                    criterion.get("marks_awarded"), criterion.get("max_marks")
+                                ),
+                            }
+                            for criterion in (grade.criteria or [])
+                        ],
                         "total_marks": str(grade.total_marks) if grade.total_marks is not None else None,
                         "comment": grade.comment,
                         "status": grade.status,
@@ -177,9 +187,17 @@ def _serialize_parts(attempt: TestAttempt, reveal: bool) -> list[dict]:
 
 
 def get_student_view(db: Session, attempt: TestAttempt) -> dict:
+    from app.services import grading_service
+
     if attempt.status == ATTEMPT_IN_PROGRESS and attempt.expires_at <= _now():
         _auto_expire(db, attempt)
         attempt = get_attempt_or_404(db, db.get(User, attempt.user_id), attempt.id)
+    if attempt.status in (ATTEMPT_GRADING, ATTEMPT_GRADED) and (
+        attempt.cefr_profile is None or attempt.cefr_policy_version != cefr_service.POLICY_VERSION
+    ):
+        cefr_service.apply_evaluation(attempt)
+        db.add(attempt)
+        db.commit()
     reveal = attempt.status in (ATTEMPT_GRADING, ATTEMPT_GRADED)
     return {
         "id": attempt.id,
@@ -195,8 +213,12 @@ def get_student_view(db: Session, attempt: TestAttempt) -> dict:
         "raw_score": str(attempt.raw_score) if attempt.raw_score is not None else None,
         "max_score": str(attempt.max_score) if attempt.max_score is not None else None,
         "band_label": attempt.band_label,
+        "cefr_level": attempt.cefr_level,
+        "cefr_profile": attempt.cefr_profile,
+        "cefr_policy_version": attempt.cefr_policy_version,
         "graded_at": attempt.graded_at,
         "flag_count": len(attempt.flags),
+        "reevaluation": grading_service.reevaluation_for_student(db, attempt),
         "parts": _serialize_parts(attempt, reveal=reveal),
     }
 
@@ -295,13 +317,6 @@ def _grade_answer(question: ExamModuleQuestion, response: Optional[dict]) -> tup
     return is_correct, (Decimal(question.points) if is_correct else Decimal("0"))
 
 
-def _band_for_reading(raw_marks: Decimal) -> Optional[str]:
-    for band in SECTION_BLUEPRINTS["reading"]["assessment"]["score_bands"]:
-        if band["minimum"] <= raw_marks <= band["maximum"]:
-            return band["level"]
-    return None
-
-
 def submit_attempt(db: Session, attempt: TestAttempt) -> dict:
     if attempt.status != ATTEMPT_IN_PROGRESS:
         # idempotent: a retried submit just returns the current state
@@ -313,9 +328,6 @@ def submit_attempt(db: Session, attempt: TestAttempt) -> dict:
     answers_by_question = {answer.question_id: answer for answer in attempt.answers}
     raw_score = Decimal("0")
     max_score = Decimal("0")
-    reading_raw = Decimal("0")
-    reading_max = Decimal("0")
-    has_reading = False
     needs_grading = False
 
     for part in attempt.module.parts:
@@ -333,11 +345,6 @@ def submit_attempt(db: Session, attempt: TestAttempt) -> dict:
                 answer.points_awarded = points
                 part_points += points
             raw_score += part_points
-            if part.section_type == "reading":
-                has_reading = True
-                reading_raw += part_points
-                if part.max_marks is not None:
-                    reading_max += Decimal(part.max_marks)
         else:
             needs_grading = True
             existing_grade = next((g for g in attempt.part_grades if g.part_id == part.id), None)
@@ -346,8 +353,6 @@ def submit_attempt(db: Session, attempt: TestAttempt) -> dict:
 
     attempt.raw_score = raw_score
     attempt.max_score = max_score if max_score > 0 else None
-    if has_reading:
-        attempt.band_label = _band_for_reading(reading_raw)
 
     if needs_grading:
         attempt.status = ATTEMPT_GRADING
@@ -355,47 +360,42 @@ def submit_attempt(db: Session, attempt: TestAttempt) -> dict:
         attempt.status = ATTEMPT_GRADED
         attempt.graded_at = _now()
 
+    cefr_service.apply_evaluation(attempt)
     db.add(attempt)
+    db.flush()
+    if needs_grading:
+        from app.services import grading_service
+
+        grading_service.ensure_queue_entry(db, attempt)
+    completed_now = attempt.status == ATTEMPT_GRADED
+    attempt_id = attempt.id
+    user_id = attempt.user_id
     db.commit()
-    return get_student_view(db, get_attempt_or_404(db, db.get(User, attempt.user_id), attempt.id))
+    if completed_now:
+        from app.services import achievement_service
+
+        achievement_service.refresh_student_achievements(db, user_id, attempt_id)
+    return get_student_view(db, get_attempt_or_404(db, db.get(User, user_id), attempt_id))
 
 
 def get_attempt_for_grading_or_404(db: Session, actor: User, attempt_id: int) -> TestAttempt:
+    from app.services import grading_service
+
     attempt = _attempt_query(db).filter(TestAttempt.id == attempt_id).first()
-    if attempt is None or attempt.module.created_by_id != actor.id:
+    if attempt is None or not grading_service.can_grade_attempt(db, actor, attempt):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
     return attempt
 
 
 def list_grading_queue(db: Session, actor: User, status_filter: Optional[str] = None) -> list[dict]:
-    query = (
-        _attempt_query(db)
-        .join(ExamModule, TestAttempt.module_id == ExamModule.id)
-        .filter(ExamModule.created_by_id == actor.id)
-    )
-    if status_filter:
-        query = query.filter(TestAttempt.status == status_filter)
-    else:
-        query = query.filter(TestAttempt.status.in_((ATTEMPT_GRADING, ATTEMPT_GRADED)))
-    attempts = query.order_by(TestAttempt.submitted_at.asc()).all()
-    return [
-        {
-            "id": attempt.id,
-            "user_id": attempt.user_id,
-            "student_name": f"{attempt.user.first_name} {attempt.user.last_name}",
-            "module_id": attempt.module_id,
-            "module_title": attempt.module.title,
-            "module_type": attempt.module.module_type,
-            "status": attempt.status,
-            "submitted_at": attempt.submitted_at,
-            "flag_count": len(attempt.flags),
-            "parts_to_grade": sum(1 for g in attempt.part_grades if g.status == "pending"),
-        }
-        for attempt in attempts
-    ]
+    from app.services import grading_service
+
+    return grading_service.list_queue(db, actor, status_filter)
 
 
 def get_grading_detail(db: Session, actor: User, attempt_id: int) -> dict:
+    from app.services import ai_evaluation_service, grading_service
+
     attempt = get_attempt_for_grading_or_404(db, actor, attempt_id)
     view = get_student_view(db, attempt)
     view["student_name"] = f"{attempt.user.first_name} {attempt.user.last_name}"
@@ -404,6 +404,9 @@ def get_grading_detail(db: Session, actor: User, attempt_id: int) -> dict:
         {"flag_type": flag.flag_type, "occurred_at": flag.occurred_at, "meta": flag.meta}
         for flag in sorted(attempt.flags, key=lambda f: f.occurred_at)
     ]
+    view["queue"] = grading_service.queue_metadata(db, attempt)
+    view["reevaluation"] = grading_service.reevaluation_for_student(db, attempt)
+    view["ai_assistance"] = ai_evaluation_service.config_status(db)
     return view
 
 
@@ -434,12 +437,15 @@ def grade_part(
     criteria: list[dict],
     comment: Optional[str],
 ) -> dict:
+    from app.services import grading_service
+
     attempt = get_attempt_for_grading_or_404(db, actor, attempt_id)
     if attempt.status not in (ATTEMPT_GRADING, ATTEMPT_GRADED):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This attempt has not been submitted yet")
     part = next((p for p in attempt.module.parts if p.id == part_id), None)
     if part is None or part.auto_marked:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This part is not human-graded")
+    grading_service.require_or_claim(db, actor, attempt)
 
     rubric_by_criterion = {item["criterion"]: Decimal(str(item["max_marks"])) for item in (part.rubric or [])}
     if not rubric_by_criterion:
@@ -461,7 +467,14 @@ def grade_part(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail=f"{name} must be between 0 and {max_marks}"
             )
-        normalized.append({"criterion": name, "max_marks": str(max_marks), "marks_awarded": str(awarded)})
+        normalized.append(
+            {
+                "criterion": name,
+                "max_marks": str(max_marks),
+                "marks_awarded": str(awarded),
+                "cefr_level": cefr_service.criterion_level(awarded, max_marks),
+            }
+        )
     if seen != set(rubric_by_criterion):
         missing = set(rubric_by_criterion) - seen
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Missing scores for: {', '.join(missing)}")
@@ -486,13 +499,16 @@ def grade_part(
             just_completed = True
         attempt.status = ATTEMPT_GRADED
         attempt.graded_at = _now()
-        db.add(attempt)
+        grading_service.complete_if_ready(db, attempt)
+    cefr_service.apply_evaluation(attempt)
+    db.add(attempt)
 
     db.commit()
     attempt = get_attempt_for_grading_or_404(db, actor, attempt_id)
     if just_completed:
-        from app.services import notification_service
+        from app.services import achievement_service, notification_service
 
+        achievement_service.refresh_student_achievements(db, attempt.user_id, attempt.id)
         notification_service.send_grade_released_email(db, attempt)
     return get_grading_detail(db, actor, attempt_id)
 
@@ -516,6 +532,8 @@ def list_my_attempts(db: Session, user: User) -> list[dict]:
             "raw_score": str(attempt.raw_score) if attempt.raw_score is not None else None,
             "max_score": str(attempt.max_score) if attempt.max_score is not None else None,
             "band_label": attempt.band_label,
+            "cefr_level": attempt.cefr_level,
+            "cefr_profile": attempt.cefr_profile,
         }
         for attempt in attempts
     ]

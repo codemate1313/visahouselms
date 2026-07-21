@@ -158,6 +158,26 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             self.db, self.instructor, created["id"], "published", None
         )
         self.assertEqual(published["status"], "published")
+        updated = module_authoring_service.update_module(
+            self.db,
+            self.instructor,
+            created["id"],
+            {"title": "Updated published writing course"},
+            {"title"},
+            None,
+        )
+        self.assertEqual(updated["title"], "Updated published writing course")
+        first_question = updated["parts"][0]["questions"][0]
+        edited_question = module_authoring_service.update_question(
+            self.db,
+            self.instructor,
+            created["id"],
+            first["id"],
+            first_question["id"],
+            _question("essay", "Updated task after publication", Decimal("32")),
+            None,
+        )
+        self.assertEqual(edited_question["prompt"], "Updated task after publication")
         with self.assertRaises(HTTPException):
             module_authoring_service.add_question(
                 self.db, self.instructor, created["id"], first["id"], _question("essay", "Another task"), None
@@ -248,9 +268,15 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertEqual(denied.exception.status_code, 403)
         self.assertIsNotNone(self.db.get(ExamModule, final_test["id"]))
 
-        module_authoring_service.delete_module(
-            self.db, self.instructor, final_test["id"], None
+        with self.assertRaises(HTTPException) as published_denied:
+            module_authoring_service.delete_module(
+                self.db, self.instructor, final_test["id"], None
+            )
+        self.assertEqual(published_denied.exception.status_code, 400)
+        module_authoring_service.set_status(
+            self.db, self.instructor, final_test["id"], "draft", None
         )
+        module_authoring_service.delete_module(self.db, self.instructor, final_test["id"], None)
         self.assertIsNone(self.db.get(ExamModule, final_test["id"]))
         self.assertFalse(copied_audio_path.exists())
         self.assertTrue(source_audio_path.exists())

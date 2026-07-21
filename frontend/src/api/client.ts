@@ -69,10 +69,10 @@ function getEventMessage(config: InternalAxiosRequestConfig): string {
   return "Processing request...";
 }
 
-export const apiClient = axios.create({ baseURL });
+export const apiClient = axios.create({ baseURL, withCredentials: true });
 
 // Separate instance with no interceptors, used only for the refresh call
-const refreshClient = axios.create({ baseURL });
+const refreshClient = axios.create({ baseURL, withCredentials: true });
 
 apiClient.interceptors.request.use(
   (config) => {

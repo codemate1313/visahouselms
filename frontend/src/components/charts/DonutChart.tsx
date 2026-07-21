@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from "react";
 import { AnimatedCounter } from "../AnimatedCounter";
+import { Icon } from "../icons";
 
 interface DonutDatum {
   label: string;
@@ -46,14 +47,14 @@ export function DonutChart({
     return <div className={`chart-card ${cardVariant === "tinted" ? "tinted-bg" : ""} chart-empty`} role="status">{emptyMessage}</div>;
   }
 
-  const activeItem = hoveredIndex !== null ? rows[hoveredIndex] : rows[0];
-  const activePercent = Math.round((activeItem.value / total) * 100);
+  const activeItem = hoveredIndex !== null ? rows[hoveredIndex] : null;
+  const activePercent = activeItem ? Math.round((activeItem.value / total) * 100) : 0;
 
   return (
     <section className={`chart-card reference-styled-chart ${cardVariant === "tinted" ? "tinted-bg" : ""}`}>
       <div className="chart-card-toolbar">
         <span className="chart-info-tag">
-          <span className="info-dot">🎯</span>
+          <span className="info-dot"><Icon name="analytics" /></span>
           <span>Breakdown</span>
         </span>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -132,6 +133,9 @@ export function DonutChart({
                     strokeDashoffset={offset}
                     onMouseEnter={() => setHoveredIndex(index)}
                     onMouseLeave={() => setHoveredIndex(null)}
+                    onFocus={() => setHoveredIndex(index)}
+                    onBlur={() => setHoveredIndex(null)}
+                    tabIndex={0}
                     style={{
                       cursor: "pointer",
                       transition: "stroke-dasharray 1.2s cubic-bezier(0.16, 1, 0.3, 1), stroke-width 200ms ease, opacity 200ms ease, transform 200ms ease",
@@ -148,13 +152,13 @@ export function DonutChart({
               {/* Center Display */}
               <text className="donut-total" x="110" y="102" textAnchor="middle" style={{ fontSize: "30px", fontWeight: 800, fill: "#0f172a" }}>
                 {hoveredIndex !== null ? (
-                  activeItem.value.toLocaleString("en-IN")
+                  activeItem?.value.toLocaleString("en-IN")
                 ) : (
                   <AnimatedCounter value={total} duration={1200} />
                 )}
               </text>
               <text className="donut-label" x="110" y="124" textAnchor="middle" style={{ fontSize: "11.5px", fontWeight: 600, fill: "#64748b" }}>
-                {hoveredIndex !== null ? activeItem.label : centerLabel}
+                {hoveredIndex !== null ? activeItem?.label : centerLabel}
               </text>
             </svg>
           </div>
@@ -168,6 +172,9 @@ export function DonutChart({
                   key={item.label}
                   onMouseEnter={() => setHoveredIndex(idx)}
                   onMouseLeave={() => setHoveredIndex(null)}
+                  onFocus={() => setHoveredIndex(idx)}
+                  onBlur={() => setHoveredIndex(null)}
+                  tabIndex={0}
                 >
                   <div className="legend-row-left">
                     <span className="legend-dot-swatch" style={{ background: item.color }} />
@@ -185,12 +192,10 @@ export function DonutChart({
                   className="donut-progress-bar-fill"
                   style={{
                     width: loaded ? `${activePercent}%` : "0%",
-                    background: activeItem.color,
+                    background: activeItem?.color ?? "transparent",
                   }}
                 >
-                  <div className="donut-floating-badge">
-                    {activePercent}%
-                  </div>
+                  {activeItem && <div className="donut-floating-badge">{activePercent}%</div>}
                 </div>
               </div>
             </div>

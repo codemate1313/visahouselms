@@ -88,6 +88,21 @@ does not change an already-created Full Mock or Final Test.
 Their controlled total duration is 154 minutes (40 + 50 + 50 + 14). The same
 section-specific question, mark, rubric, and audio rules apply.
 
+## CEFR result policy
+
+Submitted attempts receive a skill profile for every section in the module.
+Configured raw-score bands take priority; sections without validated cut scores
+use the versioned local diagnostic bands: B1 from 40%, B2 from 60%, C1 from 75%,
+and C2 from 90%. A score below 40% is reported as `Below B1` because these
+modules target B1-C2 and do not contain enough A1/A2 evidence to distinguish
+those levels reliably.
+
+Writing and Speaking criteria use the same declared conversion on their 0-8
+examiner scale: 0-3.5 Below B1, 4-4.5 B1, 5-5.5 B2, 6-7.5 C1, and 8 C2. The
+result remains provisional until all human-marked parts are complete. The
+overall result is the lowest completed skill level and is explicitly labelled
+as a diagnostic CEFR-aligned estimate, not an official certificate.
+
 ## Import and lifecycle rules
 
 - PDF/CSV preview and commit endpoints include both module ID and part ID.

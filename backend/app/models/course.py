@@ -32,10 +32,12 @@ class Course(Base):
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="INR")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=COURSE_DRAFT, index=True)
     is_featured: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
     created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     published_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
 
     created_by: Mapped["User"] = relationship()  # noqa: F821
     assets: Mapped[List["CourseAsset"]] = relationship(

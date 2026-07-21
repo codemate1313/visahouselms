@@ -10,9 +10,17 @@ from app.models.attempt import ATTEMPT_FLAG_TYPES
 from app.models.exam_module import ExamModule
 from app.models.user import User
 from app.schemas.auth import CurrentUser
-from app.schemas.student import AnswerSaveRequest, PlanSubscribeRequest, ProctorFlagRequest
+from app.schemas.student import AnswerSaveRequest, PlanSubscribeRequest, ProctorFlagRequest, ReevaluationCreateRequest
 from app.schemas.user import ChangePasswordRequest, ProfileUpdateRequest, RevokeOthersRequest, SessionOut
-from app.services import account_service, attempt_service, payment_service, plan_service, subscription_service
+from app.services import (
+    account_service,
+    achievement_service,
+    attempt_service,
+    grading_service,
+    payment_service,
+    plan_service,
+    subscription_service,
+)
 
 router = APIRouter(
     prefix="/student",
@@ -103,6 +111,11 @@ def revoke_my_other_sessions(
 
 @router.get("/plans")
 def list_plan_catalog(db: Session = Depends(get_db), user: User = Depends(require_student)):
+    if user.institute_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Institute students receive assigned tests and cannot view or purchase plans",
+        )
     return plan_service.list_public_plans(db, user)
 
 
@@ -136,6 +149,17 @@ def list_attempts(db: Session = Depends(get_db), user: User = Depends(require_st
 def get_attempt(attempt_id: int, db: Session = Depends(get_db), user: User = Depends(require_student)):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
     return attempt_service.get_student_view(db, attempt)
+
+
+@router.post("/attempts/{attempt_id}/reevaluation", status_code=201)
+def request_reevaluation(
+    attempt_id: int,
+    payload: ReevaluationCreateRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    return grading_service.request_reevaluation(db, user, attempt, payload.reason)
 
 
 @router.post("/modules/{module_id}/attempts", status_code=201)
@@ -190,3 +214,13 @@ def record_flag(
 def submit_attempt(attempt_id: int, db: Session = Depends(get_db), user: User = Depends(require_student)):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
     return attempt_service.submit_attempt(db, attempt)
+
+
+@router.get("/achievements")
+def achievements(db: Session = Depends(get_db), user: User = Depends(require_student)):
+    return achievement_service.list_student_badges(db, user)
+
+
+@router.get("/leaderboard")
+def leaderboard(db: Session = Depends(get_db), user: User = Depends(require_student)):
+    return achievement_service.student_leaderboard(db, user)

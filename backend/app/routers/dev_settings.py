@@ -8,6 +8,7 @@ from app.models.audit_log import AuditLog
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
 from app.schemas.dev import (
+    AiEvaluationSettingsIn,
     AvatarSettingsIn,
     BackupSettingsIn,
     FcmSettingsIn,
@@ -16,7 +17,7 @@ from app.schemas.dev import (
     TestEmailIn,
     TestFcmIn,
 )
-from app.services import avatar_service, fcm_service, job_service, smtp_service
+from app.services import ai_evaluation_service, avatar_service, fcm_service, job_service, smtp_service
 from app.services.settings_service import get_settings_group, set_settings_group
 from app.config import settings as app_config
 
@@ -121,6 +122,27 @@ def put_avatar(
 @router.post("/avatar/test")
 def test_avatar(db: Session = Depends(get_db)):
     return avatar_service.test_connection(db)
+
+
+# ---------- AI-assisted evaluation ----------
+
+@router.get("/ai-evaluation")
+def get_ai_evaluation(db: Session = Depends(get_db)):
+    return ai_evaluation_service.config_status(db)
+
+
+@router.put("/ai-evaluation")
+def put_ai_evaluation(
+    payload: AiEvaluationSettingsIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    if payload.monthly_limit < 0:
+        raise HTTPException(status_code=400, detail="Monthly AI evaluation limit cannot be negative")
+    set_settings_group(db, "ai", {key: str(value) if isinstance(value, bool) else value for key, value in payload.model_dump().items()})
+    _audit(db, actor, "dev_settings.update_ai_evaluation", request)
+    return ai_evaluation_service.config_status(db)
 
 
 # ---------- Backup / log settings ----------

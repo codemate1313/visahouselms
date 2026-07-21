@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from "react";
+import { Icon } from "../icons";
 
 export interface BarChartDatum {
   label: string;
@@ -50,19 +51,32 @@ export function BarChart({
   }));
 
   const maximum = Math.max(0, ...rows.map((item) => item.value));
-  // Round up max for nice grid axis ticks
-  const gridMax = Math.max(100, Math.ceil((maximum * 1.15) / 100) * 100);
+  const gridMax = maximum < 10 ? Math.max(1, maximum) : Math.ceil(maximum * 1.15);
 
   if (!rows.length || maximum === 0) {
     return <div className="chart-card chart-empty" role="status">{emptyMessage}</div>;
   }
 
-  // Active bar defaults to top value row if none hovered
-  const activeIdx = hoveredIndex !== null ? hoveredIndex : 0;
+  const activeIdx = hoveredIndex;
 
   // Grid tick values (e.g. 0, 2000, 4000, 6000)
   const tickCount = 5;
-  const ticks = Array.from({ length: tickCount }, (_, i) => Math.round((gridMax / (tickCount - 1)) * i));
+  const ticks = Array.from(
+    { length: tickCount },
+    (_, i) => (gridMax / (tickCount - 1)) * i,
+  );
+  const activeVerticalPosition = activeIdx === null ? null : (() => {
+    const count = rows.length;
+    const availableWidth = 400;
+    const barWidth = Math.min(36, Math.max(18, Math.floor(availableWidth / count - 16)));
+    const gap = (availableWidth - barWidth * count) / (count + 1);
+    const x = 70 + gap + activeIdx * (barWidth + gap) + barWidth / 2;
+    const barHeight = gridMax > 0 ? (rows[activeIdx].value / gridMax) * 160 : 0;
+    return {
+      left: `${(x / 500) * 100}%`,
+      top: `${((190 - barHeight) / 230) * 100}%`,
+    };
+  })();
 
   return (
     <section className="chart-card reference-styled-chart">
@@ -74,8 +88,11 @@ export function BarChart({
               <span
                 className={`chart-legend-item ${activeIdx === idx ? "legend-active" : ""}`}
                 key={item.label}
+                tabIndex={0}
                 onMouseEnter={() => setHoveredIndex(idx)}
                 onMouseLeave={() => setHoveredIndex(null)}
+                onFocus={() => setHoveredIndex(idx)}
+                onBlur={() => setHoveredIndex(null)}
               >
                 <i className="chart-legend-swatch" style={{ background: item.color }} />
                 <span className="legend-label-text">{item.label}</span>
@@ -84,7 +101,7 @@ export function BarChart({
           </div>
         ) : (
           <div className="chart-title-area">
-            <span className="info-icon-badge">📊</span>
+            <span className="info-icon-badge"><Icon name="analytics" /></span>
             <span className="chart-tag-text">Analytics Overview</span>
           </div>
         )}
@@ -161,8 +178,11 @@ export function BarChart({
                 <div
                   key={row.label}
                   className={`ref-bar-row ${isActive ? "is-active" : ""}`}
+                  tabIndex={0}
                   onMouseEnter={() => setHoveredIndex(idx)}
                   onMouseLeave={() => setHoveredIndex(null)}
+                  onFocus={() => setHoveredIndex(idx)}
+                  onBlur={() => setHoveredIndex(null)}
                 >
                   {/* Category Name */}
                   <div className="ref-bar-label" title={row.label}>
@@ -183,16 +203,15 @@ export function BarChart({
 
                       {/* Right Pointer Dot for Active Row */}
                       {isActive && <span className="bar-end-dot" style={{ background: "#ffffff", borderColor: barColor }} />}
-                    </div>
 
-                    {/* Dark Reference Tooltip Callout Card */}
-                    {isActive && (
-                      <div className="ref-dark-tooltip-callout">
-                        <span className="tooltip-subtext">{row.subtext ?? "Recent Activity"}</span>
-                        <strong className="tooltip-main-val">{formatValue(row.value)}</strong>
-                        <div className="tooltip-arrow-down" />
-                      </div>
-                    )}
+                      {isActive && (
+                        <div className="ref-dark-tooltip-callout horizontal-point">
+                          <span className="tooltip-subtext">{row.subtext ?? row.label}</span>
+                          <strong className="tooltip-main-val">{formatValue(row.value)}</strong>
+                          <div className="tooltip-arrow-down" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -220,7 +239,7 @@ export function BarChart({
             {/* Dashed Horizontal Background Gridlines & Y-Axis Ticks */}
             {[0, 0.25, 0.5, 0.75, 1].map((step) => {
               const y = 190 - step * 160;
-              const val = Math.round(gridMax * step);
+              const val = gridMax * step;
               return (
                 <g key={step}>
                   <line
@@ -261,8 +280,11 @@ export function BarChart({
                 <g
                   key={row.label}
                   className={`ref-vbar-group ${isActive ? "is-active" : ""}`}
+                  tabIndex={0}
                   onMouseEnter={() => setHoveredIndex(idx)}
                   onMouseLeave={() => setHoveredIndex(null)}
+                  onFocus={() => setHoveredIndex(idx)}
+                  onBlur={() => setHoveredIndex(null)}
                   style={{ cursor: "pointer" }}
                 >
                   {/* Vertical Bar Rect */}
@@ -285,7 +307,7 @@ export function BarChart({
 
                   {/* End Dot at Top of Active Bar */}
                   {isActive && (
-                    <circle cx={x + barWidth / 2} cy={y + 4} r="4" fill="#ffffff" stroke="#e53935" strokeWidth="2" />
+                    <circle cx={x + barWidth / 2} cy={y + 4} r="4" fill="#ffffff" stroke={barColor} strokeWidth="2" />
                   )}
 
                   {/* X Axis Label */}
@@ -305,10 +327,11 @@ export function BarChart({
           </svg>
 
           {/* Dark Floating Tooltip Callout for Vertical Bar */}
-          {activeIdx !== null && rows[activeIdx] && (
-            <div className="ref-dark-tooltip-callout v-centered">
+          {activeIdx !== null && rows[activeIdx] && activeVerticalPosition && (
+            <div className="ref-dark-tooltip-callout vertical-point" style={activeVerticalPosition}>
               <span className="tooltip-subtext">{rows[activeIdx].label}</span>
               <strong className="tooltip-main-val">{formatValue(rows[activeIdx].value)}</strong>
+              <div className="tooltip-arrow-down" />
             </div>
           )}
         </div>

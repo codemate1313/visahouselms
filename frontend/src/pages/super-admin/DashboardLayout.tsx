@@ -54,13 +54,26 @@ export function DashboardLayout() {
           to: "/super-admin/instructors",
         },
         {
+          key: "courses",
+          label: "Course Control",
+          icon: "module",
+          to: "/super-admin/modules",
+        },
+        {
+          key: "grading-oversight",
+          label: "Grading Oversight",
+          icon: "grading",
+          to: "/super-admin/grading",
+        },
+        {
           key: "saas",
           label: "SaaS",
           icon: "building",
           children: [
             { key: "saas_institutes", label: "Institutes", to: "/super-admin/institutes" },
-            { key: "saas_plans", label: "Plans", to: "/super-admin/plans" },
-            { key: "saas_subscriptions", label: "Subscriptions", to: "/super-admin/subscriptions" },
+            { key: "saas_onboarding", label: "Institute Onboarding", to: "/super-admin/onboarding" },
+            { key: "saas_plans", label: "Direct Student Plans", to: "/super-admin/plans" },
+            { key: "saas_subscriptions", label: "Access Agreements", to: "/super-admin/subscriptions" },
             { key: "saas_trial", label: "Trial Settings", to: "/super-admin/trial-config" },
             { key: "saas_demo", label: "Demo Accounts", to: "/super-admin/demo-accounts" },
             { key: "saas_coupons", label: "Coupons", to: "/super-admin/coupons" },

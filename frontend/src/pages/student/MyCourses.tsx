@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
-import type { CatalogCourse } from "../../api/types";
+import type { StudentCurrentPlan } from "../../api/types";
 import { useToastStore } from "../../store/toastStore";
+import { useAuthStore } from "../../store/authStore";
 
 const MODULE_TYPE_LABEL: Record<string, string> = {
   reading: "Reading",
@@ -17,16 +18,17 @@ const MODULE_TYPE_LABEL: Record<string, string> = {
 export function MyCourses() {
   const navigate = useNavigate();
   const showError = useToastStore((state) => state.showError);
-  const [courses, setCourses] = useState<CatalogCourse[]>([]);
+  const isInstituteStudent = useAuthStore((state) => state.user?.institute_id != null);
+  const [access, setAccess] = useState<StudentCurrentPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState<number | null>(null);
 
   useEffect(() => {
     apiClient
-      .get<CatalogCourse[]>("/student/my-courses")
-      .then(({ data }) => setCourses(data))
-      .catch(() => setError("Failed to load your courses."))
+      .get<StudentCurrentPlan>("/student/my-plan")
+      .then(({ data }) => setAccess(data))
+      .catch(() => setError("Failed to load your learning plan."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -47,34 +49,39 @@ export function MyCourses() {
   return (
     <div>
       <div className="page-header">
-        <div><span className="page-eyebrow">Learning</span><h1>My Courses</h1><p className="page-subtitle">Start or resume a test from any course you have access to.</p></div>
+        <div><span className="page-eyebrow">Learning</span><h1>{isInstituteStudent ? "Assigned Tests" : "My Tests"}</h1><p className="page-subtitle">{isInstituteStudent ? "Start a test allotted to your institute." : "Start a test included in your active plan."}</p></div>
       </div>
       {loading ? (
         <p>Loading...</p>
-      ) : courses.length === 0 ? (
-        <div className="empty-state"><h2>No courses yet</h2><p>Browse the catalog and purchase a course to get started.</p></div>
+      ) : !access?.plan ? (
+        <div className="empty-state"><h2>{isInstituteStudent ? "No tests assigned" : "No active learning plan"}</h2><p>{isInstituteStudent ? "Contact your institute administrator to confirm course access." : "Choose or upgrade a plan to unlock tests."}</p></div>
       ) : (
-        courses.map((course) => (
-          <section className="workspace-panel" key={course.id} style={{ marginBottom: 16 }}>
-            <div className="panel-heading"><div><h2>{course.title}</h2><p>{course.summary || "No summary added yet."}</p></div></div>
-            {course.modules?.length ? (
-              <div className="module-list-grid">
-                {course.modules.map((module) => (
-                  <div className="module-record-card" key={module.module_id}>
+        <section className="workspace-panel" style={{ marginBottom: 16 }}>
+          <div className="panel-heading">
+            <div><h2>{access.plan.name}</h2><p>{access.plan.description || "Your assigned assessment access."}</p></div>
+            {!isInstituteStudent && access.expires_at && <span className="badge badge-gray">Access until {new Date(access.expires_at).toLocaleDateString()}</span>}
+          </div>
+          {access.plan.modules.length ? (
+            <div className="module-list-grid">
+              {access.plan.modules.map((module) => {
+                const moduleId = module.module_id ?? module.id;
+                if (!moduleId) return null;
+                return (
+                  <div className="module-record-card" key={moduleId}>
                     <div className="section-chip">{MODULE_TYPE_LABEL[module.module_type] ?? module.module_type}</div>
                     <h2>{module.title}</h2>
                     <p>{module.duration_minutes} minutes</p>
-                    <button disabled={starting === module.module_id} onClick={() => startModule(module.module_id)}>
-                      {starting === module.module_id ? "Starting..." : "Start test"}
+                    <button disabled={starting === moduleId} onClick={() => startModule(moduleId)}>
+                      {starting === moduleId ? "Starting..." : "Start test"}
                     </button>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="empty-message">No modules attached to this course yet.</p>
-            )}
-          </section>
-        ))
+                );
+              })}
+            </div>
+          ) : (
+            <p className="empty-message">{isInstituteStudent ? "No published tests are assigned to your institute yet." : "No published tests are attached to this plan yet."}</p>
+          )}
+        </section>
       )}
     </div>
   );

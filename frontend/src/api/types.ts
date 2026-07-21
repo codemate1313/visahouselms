@@ -80,12 +80,14 @@ export interface Course {
   currency: string;
   status: "draft" | "published" | "archived";
   is_featured: boolean;
+  is_visible: boolean;
   created_by_id: number;
   created_by_name: string;
   created_by_email: string;
   published_at: string | null;
   created_at: string;
   updated_at: string | null;
+  deleted_at: string | null;
   asset_count: number;
   assignment_count: number;
   assets: CourseAsset[];
@@ -245,6 +247,9 @@ export interface ExamModule {
   description: string | null;
   instructions: string | null;
   status: ExamModuleStatus;
+  is_visible: boolean;
+  deleted_at: string | null;
+  assignment_count: number;
   duration_minutes: number;
   blueprint_version: string;
   source_module_ids: number[];
@@ -291,25 +296,37 @@ export interface TTSVoice {
 
 /* ---------- Student portal / attempts / grading (Phase 3.4) ---------- */
 
-export interface CatalogCourseModule {
-  module_id: number;
+export interface StudentPlanModule {
+  id?: number;
+  module_id?: number;
   title: string;
   module_type: ExamModuleType;
   duration_minutes: number;
+  status?: ExamModuleStatus;
 }
 
-export interface CatalogCourse {
+export interface StudentPlanCatalogItem {
   id: number;
-  title: string;
-  slug: string;
-  summary: string | null;
-  level: string;
-  estimated_duration_minutes: number | null;
+  name: string;
+  description: string | null;
   price: string;
   currency: string;
+  duration_days: number;
   module_count: number;
+  modules: StudentPlanModule[];
   entitled: boolean;
-  modules?: CatalogCourseModule[];
+}
+
+export interface StudentCurrentPlan {
+  plan: {
+    id: number;
+    name: string;
+    description: string | null;
+    modules: StudentPlanModule[];
+  } | null;
+  state: "none" | "active" | "grace" | "expired";
+  expires_at: string | null;
+  access_type: "institute" | "direct";
 }
 
 export type AttemptStatus = "in_progress" | "submitted" | "grading" | "graded" | "expired";
@@ -348,10 +365,113 @@ export interface AttemptAsset {
 }
 
 export interface AttemptPartGradeView {
-  criteria: { criterion: string; max_marks: string; marks_awarded: string }[];
+  criteria: { criterion: string; max_marks: string; marks_awarded: string; cefr_level: CefrLevel }[];
   total_marks: string | null;
   comment: string | null;
   status: "pending" | "graded";
+}
+
+export interface ReevaluationRequestView {
+  id: number;
+  attempt_id: number;
+  student_name: string;
+  module_title: string;
+  reason: string;
+  status: "pending" | "in_review" | "resolved" | "rejected";
+  assigned_to_id: number | null;
+  assigned_to_name: string | null;
+  resolution_note: string | null;
+  created_at: string;
+  resolved_at: string | null;
+}
+
+export interface GradingQueueMetadata {
+  id: number;
+  status: "pending" | "claimed" | "completed";
+  assigned_to_id: number | null;
+  assigned_to_name: string | null;
+  routing_reason: string;
+  priority: number;
+  due_at: string | null;
+  claimed_at: string | null;
+  completed_at: string | null;
+}
+
+export interface AiEvaluationSuggestion {
+  id: number;
+  criteria: Array<{ criterion: string; max_marks: string; marks_awarded: string; cefr_level: CefrLevel; rationale: string }>;
+  comment: string;
+  confidence: string;
+  human_review_required: true;
+  framework_version: string;
+  policy_version: string;
+}
+
+export type CefrLevel = "Below B1" | "B1" | "B2" | "C1" | "C2";
+
+export interface CefrScaleAnchor {
+  level: CefrLevel;
+  marks: string;
+  descriptor: string;
+}
+
+export interface CefrSkillResult {
+  skill: IeltsSection;
+  label: string;
+  status: "pending" | "complete";
+  part_count: number;
+  raw_score: string;
+  max_score: string;
+  percentage: string;
+  level: CefrLevel | null;
+  level_label: string;
+  descriptor: string;
+  mapping_method: "configured_raw_score" | "local_percentage" | null;
+}
+
+export interface CefrProfile {
+  framework: "CEFR";
+  framework_version: string;
+  policy_version: string;
+  status: "provisional" | "complete";
+  overall: {
+    level: CefrLevel;
+    label: string;
+    descriptor: string;
+    aggregation: "lowest_completed_skill";
+  } | null;
+  skills: CefrSkillResult[];
+  source_url: string;
+  calibration_note: string;
+}
+
+export interface StudentBadge {
+  code: string;
+  name: string;
+  description: string;
+  icon: string;
+  criteria: Record<string, string | number>;
+  earned: boolean;
+  awarded_at: string | null;
+  attempt_id: number | null;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  user_id: number;
+  display_name: string;
+  attempts_count: number;
+  average_percentage: string;
+  best_cefr_level: CefrLevel | null;
+  is_current_student: boolean;
+}
+
+export interface StudentLeaderboard {
+  scope: "institute" | "direct_student";
+  period?: "all_time";
+  entries: LeaderboardEntry[];
+  current_student: LeaderboardEntry | null;
+  message: string | null;
 }
 
 export interface AttemptPart {
@@ -365,6 +485,7 @@ export interface AttemptPart {
   auto_marked: boolean;
   max_marks: string | null;
   rubric: ModuleRubricCriterion[];
+  cefr_scale: CefrScaleAnchor[];
   sort_order: number;
   assets: AttemptAsset[];
   questions: AttemptQuestion[];
@@ -385,8 +506,12 @@ export interface Attempt {
   raw_score: string | null;
   max_score: string | null;
   band_label: string | null;
+  cefr_level: CefrLevel | null;
+  cefr_profile: CefrProfile | null;
+  cefr_policy_version: string | null;
   graded_at: string | null;
   flag_count: number;
+  reevaluation: ReevaluationRequestView | null;
   parts: AttemptPart[];
 }
 
@@ -401,6 +526,8 @@ export interface AttemptSummary {
   raw_score: string | null;
   max_score: string | null;
   band_label: string | null;
+  cefr_level: CefrLevel | null;
+  cefr_profile: CefrProfile | null;
 }
 
 export type ProctorFlagType = "blur" | "visibility_change" | "fullscreen_exit";
@@ -416,12 +543,28 @@ export interface GradingQueueItem {
   submitted_at: string | null;
   flag_count: number;
   parts_to_grade: number;
+  queue: GradingQueueMetadata;
+  is_reevaluation: boolean;
 }
 
 export interface GradingDetail extends Attempt {
   student_name: string;
   student_email: string;
   flags: { flag_type: ProctorFlagType; occurred_at: string; meta: Record<string, unknown> | null }[];
+  queue: GradingQueueMetadata;
+  ai_assistance: {
+    enabled: boolean;
+    configured: boolean;
+    provider: string;
+    model: string | null;
+    monthly_limit: number;
+  };
+}
+
+export interface GradingAdminOverview {
+  queue: { pending: number; claimed: number; completed: number };
+  ai_usage: { period: string; used: number; limit: number; scopes: number };
+  reevaluations: ReevaluationRequestView[];
 }
 
 export interface AvatarSettings {

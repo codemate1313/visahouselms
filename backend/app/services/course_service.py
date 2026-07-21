@@ -132,12 +132,14 @@ def serialize(course: Course, include_assignments: bool = False) -> dict:
         "currency": course.currency,
         "status": course.status,
         "is_featured": course.is_featured,
+        "is_visible": course.is_visible,
         "created_by_id": course.created_by_id,
         "created_by_name": f"{course.created_by.first_name} {course.created_by.last_name}",
         "created_by_email": course.created_by.email,
         "published_at": course.published_at,
         "created_at": course.created_at,
         "updated_at": course.updated_at,
+        "deleted_at": course.deleted_at,
         "asset_count": len(course.assets),
         "assignment_count": len(active_assignments),
         "assets": [_asset_out(asset) for asset in sorted(course.assets, key=lambda item: item.sort_order)],
@@ -159,8 +161,11 @@ def list_courses(
     search: Optional[str] = None,
     status_filter: Optional[str] = None,
     creator_id: Optional[int] = None,
+    include_deleted: bool = False,
 ) -> list[dict]:
     query = _course_query(db)
+    if not include_deleted:
+        query = query.filter(Course.deleted_at.is_(None))
     if search and search.strip():
         term = f"%{search.strip()}%"
         query = query.filter(
@@ -174,7 +179,7 @@ def list_courses(
 
 
 def get_course_or_404(db: Session, course_id: int) -> Course:
-    course = _course_query(db).filter(Course.id == course_id).first()
+    course = _course_query(db).filter(Course.id == course_id, Course.deleted_at.is_(None)).first()
     if course is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
     return course
@@ -482,6 +487,47 @@ def delete_course(db: Session, actor: User, course_id: int, ip: Optional[str]) -
     for path in paths:
         if path.is_file():
             path.unlink()
+
+
+def set_visibility(
+    db: Session, actor: User, course_id: int, is_visible: bool, ip: Optional[str]
+) -> dict:
+    course = get_course_or_404(db, course_id)
+    course.is_visible = is_visible
+    db.add(course)
+    _audit(db, actor, "course.show" if is_visible else "course.hide", course.id, ip)
+    db.commit()
+    return serialize(get_course_or_404(db, course.id), include_assignments=True)
+
+
+def remove_course_by_super_admin(
+    db: Session, actor: User, course_id: int, ip: Optional[str]
+) -> None:
+    """Remove a course from every live surface while retaining its history."""
+    course = get_course_or_404(db, course_id)
+    course.status = COURSE_ARCHIVED
+    course.is_visible = False
+    course.deleted_at = _now()
+    assignments_disabled = (
+        db.query(InstituteCourse)
+        .filter(InstituteCourse.course_id == course.id, InstituteCourse.is_active.is_(True))
+        .update({"is_active": False}, synchronize_session=False)
+    )
+    enrollments_disabled = (
+        db.query(Enrollment)
+        .filter(Enrollment.course_id == course.id, Enrollment.is_active.is_(True))
+        .update({"is_active": False}, synchronize_session=False)
+    )
+    _audit(
+        db,
+        actor,
+        "course.remove",
+        course.id,
+        ip,
+        {"assignments_revoked": assignments_disabled, "enrollments_revoked": enrollments_disabled},
+    )
+    db.add(course)
+    db.commit()
 
 
 def list_assignments(db: Session, course_id: int) -> list[dict]:

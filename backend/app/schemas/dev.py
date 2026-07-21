@@ -24,6 +24,15 @@ class AvatarSettingsIn(BaseModel):
     voice_id: Optional[str] = None
 
 
+class AiEvaluationSettingsIn(BaseModel):
+    enabled: bool = False
+    provider: str = "custom_json"
+    endpoint_url: Optional[str] = None
+    api_key: Optional[str] = None
+    model: Optional[str] = None
+    monthly_limit: int = 100
+
+
 class BackupSettingsIn(BaseModel):
     schedule: Optional[str] = None  # none | daily | weekly
     retention: Optional[str] = None

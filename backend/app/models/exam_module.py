@@ -29,6 +29,7 @@ class ExamModule(Base):
     description: Mapped[Optional[str]] = mapped_column(String(2000), nullable=True)
     instructions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft", index=True)
+    is_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
     blueprint_version: Mapped[str] = mapped_column(
         String(80), nullable=False, default="LanguageCert Academic 2025"
@@ -38,6 +39,7 @@ class ExamModule(Base):
     published_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
 
     created_by: Mapped["User"] = relationship()  # noqa: F821
     parts: Mapped[List["ExamModulePart"]] = relationship(
@@ -48,6 +50,26 @@ class ExamModule(Base):
     assets: Mapped[List["ExamModuleAsset"]] = relationship(
         back_populates="module", cascade="all, delete-orphan"
     )
+    institute_assignments: Mapped[List["InstituteModule"]] = relationship(
+        back_populates="module", cascade="all, delete-orphan"
+    )
+
+
+class InstituteModule(Base):
+    __tablename__ = "institute_modules"
+    __table_args__ = (UniqueConstraint("institute_id", "module_id", name="uq_institute_module"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    institute_id: Mapped[int] = mapped_column(ForeignKey("institutes.id", ondelete="CASCADE"), nullable=False, index=True)
+    module_id: Mapped[int] = mapped_column(ForeignKey("exam_modules.id", ondelete="CASCADE"), nullable=False, index=True)
+    assigned_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    assigned_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
+
+    institute: Mapped["Institute"] = relationship()  # noqa: F821
+    module: Mapped[ExamModule] = relationship(back_populates="institute_assignments")
+    assigned_by: Mapped["User"] = relationship()  # noqa: F821
 
 
 class ExamModulePart(Base):

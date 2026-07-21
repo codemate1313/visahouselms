@@ -22,6 +22,7 @@ router = APIRouter(
     tags=["institute-portal"],
     dependencies=[Depends(require_role(INSTITUTE_ADMIN))],
 )
+MAX_STUDENT_IMPORT_BYTES = 3 * 1024 * 1024
 
 
 def _ip(request: Request) -> Optional[str]:
@@ -121,6 +122,10 @@ def list_members(
     role: Optional[str] = None,
     search: Optional[str] = Query(default=None, max_length=200),
     active: Optional[bool] = None,
+    status: Optional[str] = Query(default=None, pattern="^(active|inactive|deleted|password_reset)$"),
+    has_attempts: Optional[bool] = None,
+    has_devices: Optional[bool] = None,
+    has_active_sessions: Optional[bool] = None,
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
@@ -134,7 +139,17 @@ def list_members(
         )
     else:
         institute_admin_service.require_admin_permission(actor, "manage_staff")
-    return institute_admin_service.list_members(db, actor, role, search, active)
+    return institute_admin_service.list_members(
+        db,
+        actor,
+        role,
+        search,
+        active,
+        status,
+        has_attempts,
+        has_devices,
+        has_active_sessions,
+    )
 
 
 @router.post("/members", status_code=201, dependencies=[Depends(require_password_change_complete)])
@@ -144,9 +159,9 @@ def create_member(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    if payload.role == "STUDENT":
-        raise HTTPException(status_code=403, detail="Only the Super Admin can create student accounts")
-    institute_admin_service.require_admin_permission(actor, "manage_staff")
+    institute_admin_service.require_admin_permission(
+        actor, "manage_students" if payload.role == "STUDENT" else "manage_staff"
+    )
     return institute_admin_service.create_member(
         db,
         actor,
@@ -156,6 +171,26 @@ def create_member(
         role_name=payload.role,
         phone_number=payload.phone_number,
         address=payload.address,
+        ip=_ip(request),
+    )
+
+
+@router.post("/students/import", status_code=201, dependencies=[Depends(require_password_change_complete)])
+async def import_students(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    institute_admin_service.require_admin_permission(actor, "manage_students")
+    content = await file.read(MAX_STUDENT_IMPORT_BYTES + 1)
+    if len(content) > MAX_STUDENT_IMPORT_BYTES:
+        raise HTTPException(status_code=413, detail="Student import files cannot exceed 3 MB")
+    return institute_admin_service.import_students(
+        db,
+        actor,
+        content=content,
+        filename=file.filename or "students.csv",
         ip=_ip(request),
     )
 

@@ -1,7 +1,11 @@
-from fastapi import APIRouter, Depends, Request
+from typing import Optional
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.config import settings
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import CurrentUser, LoginRequest, LogoutRequest, RefreshRequest, RegisterRequest, TokenResponse
 from app.services import account_service, auth_service, institute_service
@@ -9,23 +13,41 @@ from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+DEVICE_COOKIE = "ielts_lms_device"
+
+
+def _device_identifier(request: Request, response: Response, supplied: Optional[str]) -> str:
+    identifier = supplied or request.cookies.get(DEVICE_COOKIE) or uuid4().hex
+    response.set_cookie(
+        DEVICE_COOKIE,
+        identifier,
+        max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
+        httponly=True,
+        secure=request.url.scheme == "https",
+        samesite="lax",
+        path="/",
+    )
+    return identifier
+
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
+def login(payload: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    device_identifier = _device_identifier(request, response, payload.device_id)
     access_token, refresh_token = auth_service.login(
         db,
         payload.email,
         payload.password,
         request.headers.get("user-agent"),
         request.client.host if request.client else None,
-        payload.device_id,
+        device_identifier,
         payload.device_name,
     )
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
 @router.post("/register", response_model=TokenResponse, status_code=201)
-def register(payload: RegisterRequest, request: Request, db: Session = Depends(get_db)):
+def register(payload: RegisterRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    device_identifier = _device_identifier(request, response, payload.device_id)
     access_token, refresh_token = auth_service.register(
         db,
         payload.email,
@@ -34,7 +56,7 @@ def register(payload: RegisterRequest, request: Request, db: Session = Depends(g
         payload.last_name,
         request.headers.get("user-agent"),
         request.client.host if request.client else None,
-        payload.device_id,
+        device_identifier,
         payload.device_name,
     )
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)

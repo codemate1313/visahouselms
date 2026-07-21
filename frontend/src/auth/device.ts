@@ -1,5 +1,16 @@
 const DEVICE_ID_KEY = "ielts-lms-device-id";
 
+function createDeviceId(): string {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+  } catch {
+    // Some privacy modes expose crypto but block calls to it.
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
+
 function browserName(userAgent: string): string {
   if (userAgent.includes("Edg/")) return "Edge";
   if (userAgent.includes("Chrome/")) return "Chrome";
@@ -18,10 +29,19 @@ function operatingSystem(userAgent: string): string {
 }
 
 export function getDeviceIdentity() {
-  let deviceId = localStorage.getItem(DEVICE_ID_KEY);
-  if (!deviceId) {
-    deviceId = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
-    localStorage.setItem(DEVICE_ID_KEY, deviceId);
+  let deviceId: string | null = null;
+  try {
+    deviceId = localStorage.getItem(DEVICE_ID_KEY);
+  } catch {
+    // The server's HTTP-only cookie keeps identity stable when storage is blocked.
+  }
+  if (!deviceId || deviceId.length < 16 || deviceId.length > 200) {
+    deviceId = createDeviceId();
+    try {
+      localStorage.setItem(DEVICE_ID_KEY, deviceId);
+    } catch {
+      // Login can continue with the generated ID and server cookie fallback.
+    }
   }
   const userAgent = navigator.userAgent;
   return {

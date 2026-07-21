@@ -18,6 +18,7 @@ function destinationFor(user: { role: string; force_password_reset: boolean }) {
   if (user.role === "SUPER_ADMIN") return user.force_password_reset ? "/super-admin/change-password" : "/super-admin/dashboard";
   if (user.role === "SA_INSTRUCTOR") return user.force_password_reset ? "/super-admin/instructor/change-password" : "/super-admin/instructor/dashboard";
   if (user.role === "INSTITUTE_ADMIN") return "/institute-portal";
+  if (user.role === "INST_INSTRUCTOR") return user.force_password_reset ? "/institute-instructor/change-password" : "/institute-instructor/grading";
   if (user.role === "STUDENT") return "/student/dashboard";
   return null;
 }

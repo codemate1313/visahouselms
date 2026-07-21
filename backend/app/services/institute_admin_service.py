@@ -170,6 +170,10 @@ def list_members(
     role_name: Optional[str] = None,
     search: Optional[str] = None,
     active: Optional[bool] = None,
+    status_filter: Optional[str] = None,
+    has_attempts: Optional[bool] = None,
+    has_devices: Optional[bool] = None,
+    has_active_sessions: Optional[bool] = None,
     scoped_institute_id: Optional[int] = None,
 ) -> list[dict]:
     institute_id = _require_institute(actor, scoped_institute_id)
@@ -185,9 +189,27 @@ def list_members(
         )
     if active is not None:
         query = query.filter(User.is_active.is_(active))
+    if status_filter:
+        if status_filter == "active":
+            query = query.filter(User.is_active.is_(True), User.deleted_at.is_(None))
+        elif status_filter == "inactive":
+            query = query.filter(User.is_active.is_(False), User.deleted_at.is_(None))
+        elif status_filter == "deleted":
+            query = query.filter(User.deleted_at.is_not(None))
+        elif status_filter == "password_reset":
+            query = query.filter(User.force_password_reset.is_(True), User.deleted_at.is_(None))
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid member status filter")
     users = query.order_by(User.created_at.desc()).all()
     metrics = _metrics_for_members(db, [user.id for user in users])
-    return [serialize_member(user, metrics[user.id]) for user in users]
+    rows = [serialize_member(user, metrics[user.id]) for user in users]
+    if has_attempts is not None:
+        rows = [row for row in rows if (row["attempt_count"] > 0) is has_attempts]
+    if has_devices is not None:
+        rows = [row for row in rows if (row["device_count"] > 0) is has_devices]
+    if has_active_sessions is not None:
+        rows = [row for row in rows if (row["active_session_count"] > 0) is has_active_sessions]
+    return rows
 
 
 def get_member_or_404(
@@ -232,6 +254,8 @@ def create_member(
         )
 
     temporary_password = _temporary_password()
+    from app.models.institute import Institute
+    institute = db.get(Institute, institute_id)
     user = User(
         email=normalized_email,
         password_hash=hash_password(temporary_password),
@@ -241,7 +265,7 @@ def create_member(
         last_name=last_name,
         phone_number=phone_number,
         address=address,
-        is_active=True,
+        is_active=institute is None or institute.onboarding_status != "draft",
         force_password_reset=True,
     )
     db.add(user)
@@ -426,6 +450,21 @@ def _import_identity(row: dict) -> tuple[str, str, str, Optional[str], Optional[
 
 
 def _available_student_slots(db: Session, institute_id: int) -> int:
+    from app.models.institute import Institute
+
+    institute = db.get(Institute, institute_id)
+    if institute is not None and institute.onboarding_status == "draft":
+        current = (
+            db.query(User)
+            .join(Role, User.role_id == Role.id)
+            .filter(
+                User.institute_id == institute_id,
+                User.deleted_at.is_(None),
+                Role.name == STUDENT,
+            )
+            .count()
+        )
+        return max(0, (institute.student_limit or 0) - current)
     subscription = subscription_service.subscription_status(db, institute_id)
     if subscription["state"] not in ("active", "grace") or not subscription["limits"]:
         raise HTTPException(
@@ -445,6 +484,8 @@ def import_students(
     scoped_institute_id: Optional[int] = None,
 ) -> dict:
     institute_id = _require_institute(actor, scoped_institute_id)
+    from app.models.institute import Institute
+    institute = db.get(Institute, institute_id)
     rows = _rows_from_upload(content, filename)
     if not rows:
         raise HTTPException(status_code=400, detail="The import file contains no student rows")
@@ -491,7 +532,7 @@ def import_students(
             last_name=last_name[:100],
             phone_number=phone[:50] if phone else None,
             address=address[:255] if address else None,
-            is_active=True,
+            is_active=institute is None or institute.onboarding_status != "draft",
             force_password_reset=True,
         )
         db.add(user)

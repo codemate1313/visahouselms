@@ -194,6 +194,85 @@ class InstituteAdminServiceTests(unittest.TestCase):
             institute_admin_service.get_member_or_404(self.db, self.actor, self.other_student.id)
         self.assertEqual(raised.exception.status_code, 404)
 
+    def test_super_admin_account_directory_filters_members(self):
+        student_data = self._create_student()
+        student = institute_admin_service.get_member_or_404(self.db, self.actor, student_data["id"])
+        instructor_data = institute_admin_service.create_member(
+            self.db,
+            self.actor,
+            email="teacher.filters@north.test",
+            first_name="Filter",
+            last_name="Teacher",
+            role_name=INST_INSTRUCTOR,
+            phone_number=None,
+            address=None,
+            ip=None,
+        )
+        instructor = institute_admin_service.get_member_or_404(self.db, self.actor, instructor_data["id"])
+        module = ExamModule(
+            module_type="reading",
+            title="Filter Practice",
+            status="published",
+            duration_minutes=30,
+            created_by_id=self.super_actor.id,
+        )
+        self.db.add(module)
+        self.db.flush()
+        device = UserDevice(
+            user_id=student.id,
+            identifier_hash="c" * 64,
+            name="Chrome",
+            login_count=1,
+            first_seen_at=_now(),
+            last_seen_at=_now(),
+        )
+        self.db.add(device)
+        self.db.flush()
+        self.db.add_all(
+            [
+                TestAttempt(
+                    user_id=student.id,
+                    module_id=module.id,
+                    status="submitted",
+                    is_final=False,
+                    expires_at=_now() + timedelta(hours=1),
+                ),
+                UserSession(
+                    user_id=student.id,
+                    device_id=device.id,
+                    session_key="directory-filter-session",
+                    refresh_token_hash="d" * 64,
+                    created_at=_now(),
+                    expires_at=_now() + timedelta(days=1),
+                ),
+            ]
+        )
+        self.db.commit()
+
+        students = institute_admin_service.list_members(
+            self.db, self.super_actor, role_name=STUDENT, scoped_institute_id=self.institute.id
+        )
+        self.assertEqual([row["email"] for row in students], ["student@north.test"])
+
+        attempted = institute_admin_service.list_members(
+            self.db, self.super_actor, has_attempts=True, scoped_institute_id=self.institute.id
+        )
+        self.assertEqual([row["id"] for row in attempted], [student.id])
+        signed_in = institute_admin_service.list_members(
+            self.db, self.super_actor, has_active_sessions=True, scoped_institute_id=self.institute.id
+        )
+        self.assertEqual([row["id"] for row in signed_in], [student.id])
+        with_devices = institute_admin_service.list_members(
+            self.db, self.super_actor, has_devices=True, scoped_institute_id=self.institute.id
+        )
+        self.assertEqual([row["id"] for row in with_devices], [student.id])
+
+        institute_admin_service.delete_member(self.db, self.actor, instructor.id, None)
+        deleted = institute_admin_service.list_members(
+            self.db, self.super_actor, status_filter="deleted", scoped_institute_id=self.institute.id
+        )
+        self.assertEqual([row["id"] for row in deleted], [instructor.id])
+
     def test_member_update_reset_status_and_delete_lifecycle(self):
         created = institute_admin_service.create_member(
             self.db,

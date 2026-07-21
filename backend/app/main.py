@@ -14,13 +14,17 @@ from app.routers import (
     dashboard,
     demo_accounts,
     dev_settings,
+    grading_admin,
     institutes,
     institute_admin,
+    institute_instructor,
     instructor_grading,
     instructor_portal,
     instructors,
     logs,
     module_authoring,
+    module_catalog,
+    onboarding,
     payment_methods,
     payments,
     plans,
@@ -51,6 +55,7 @@ app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(super_admin.router)
 app.include_router(dev_settings.router)
+app.include_router(grading_admin.router)
 app.include_router(backups.router)
 app.include_router(logs.router)
 app.include_router(terminal.router)
@@ -59,6 +64,7 @@ app.include_router(subscriptions.router)
 app.include_router(institutes.router)
 app.include_router(institutes.public_router)
 app.include_router(institute_admin.router)
+app.include_router(institute_instructor.router)
 app.include_router(instructors.router)
 app.include_router(instructor_portal.router)
 app.include_router(instructor_grading.router)
@@ -66,6 +72,8 @@ app.include_router(trial_config.router)
 app.include_router(demo_accounts.router)
 app.include_router(coupons.router)
 app.include_router(module_authoring.router)
+app.include_router(module_catalog.router)
+app.include_router(onboarding.router)
 app.include_router(payments.router)
 app.include_router(payment_methods.router)
 app.include_router(revenue.router)

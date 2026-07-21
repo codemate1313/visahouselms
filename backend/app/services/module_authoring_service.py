@@ -11,7 +11,9 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.config import settings
 from app.models.audit_log import AuditLog
-from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion
+from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion, InstituteModule
+from app.models.institute import Institute
+from app.models.plan import Plan
 from app.models.user import User
 from app.services.module_blueprint_service import get_blueprint
 
@@ -46,11 +48,12 @@ def _module_query(db: Session):
         selectinload(ExamModule.parts).selectinload(ExamModulePart.questions),
         selectinload(ExamModule.parts).selectinload(ExamModulePart.assets),
         selectinload(ExamModule.assets),
+        selectinload(ExamModule.institute_assignments).joinedload(InstituteModule.institute),
     )
 
 
 def get_module_or_404(db: Session, module_id: int) -> ExamModule:
-    module = _module_query(db).filter(ExamModule.id == module_id).first()
+    module = _module_query(db).filter(ExamModule.id == module_id, ExamModule.deleted_at.is_(None)).first()
     if module is None:
         raise HTTPException(status_code=404, detail="Assessment module not found")
     return module
@@ -62,10 +65,10 @@ def _require_owner(module: ExamModule, actor: User) -> None:
 
 
 def _require_draft(module: ExamModule) -> None:
-    if module.status != "draft":
+    if module.status == "archived":
         raise HTTPException(
             status_code=400,
-            detail="Only draft modules can be edited. Move this module back to draft first.",
+            detail="Archived courses cannot be edited. Restore the course first.",
         )
 
 
@@ -160,6 +163,7 @@ def serialize_module(module: ExamModule, detailed: bool = False) -> dict:
         "description": module.description,
         "instructions": module.instructions,
         "status": module.status,
+        "is_visible": module.is_visible,
         "duration_minutes": module.duration_minutes,
         "blueprint_version": module.blueprint_version,
         "source_module_ids": list(module.source_module_ids or []),
@@ -173,6 +177,8 @@ def serialize_module(module: ExamModule, detailed: bool = False) -> dict:
         "published_at": module.published_at,
         "created_at": module.created_at,
         "updated_at": module.updated_at,
+        "deleted_at": module.deleted_at,
+        "assignment_count": sum(1 for item in module.institute_assignments if item.is_active),
     }
     if detailed:
         result["assessment"] = blueprint["assessment"]
@@ -208,7 +214,7 @@ def list_modules(
     module_type: Optional[str] = None,
     status_filter: Optional[str] = None,
 ) -> list[dict]:
-    query = _module_query(db).filter(ExamModule.created_by_id == actor.id)
+    query = _module_query(db).filter(ExamModule.created_by_id == actor.id, ExamModule.deleted_at.is_(None))
     if search and search.strip():
         term = f"%{search.strip()}%"
         query = query.filter(or_(ExamModule.title.ilike(term), ExamModule.description.ilike(term)))
@@ -688,6 +694,8 @@ def set_status(
 def delete_module(db: Session, actor: User, module_id: int, ip: Optional[str]) -> None:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
+    if module.status != "draft":
+        raise HTTPException(status_code=400, detail="Only draft modules can be deleted")
     paths = [settings.storage_path / asset.file_path for asset in module.assets]
     _audit(
         db,
@@ -701,3 +709,109 @@ def delete_module(db: Session, actor: User, module_id: int, ip: Optional[str]) -
     db.commit()
     for path in paths:
         path.unlink(missing_ok=True)
+
+
+def _assignment_out(assignment: InstituteModule) -> dict:
+    return {
+        "id": assignment.id,
+        "institute_id": assignment.institute_id,
+        "institute_name": assignment.institute.name,
+        "is_active": assignment.is_active,
+        "assigned_at": assignment.assigned_at,
+    }
+
+
+def serialize_for_super_admin(module: ExamModule) -> dict:
+    result = serialize_module(module, detailed=True)
+    result["assignments"] = [
+        _assignment_out(item)
+        for item in sorted(module.institute_assignments, key=lambda row: row.institute.name.lower())
+    ]
+    return result
+
+
+def list_all_modules(
+    db: Session,
+    search: Optional[str] = None,
+    module_type: Optional[str] = None,
+    status_filter: Optional[str] = None,
+) -> list[dict]:
+    query = _module_query(db).filter(ExamModule.deleted_at.is_(None))
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        query = query.filter(or_(ExamModule.title.ilike(term), ExamModule.description.ilike(term)))
+    if module_type:
+        query = query.filter(ExamModule.module_type == module_type)
+    if status_filter:
+        query = query.filter(ExamModule.status == status_filter)
+    return [serialize_module(module) for module in query.order_by(ExamModule.created_by_id, ExamModule.created_at.desc()).all()]
+
+
+def set_visibility(db: Session, actor: User, module_id: int, visible: bool, ip: Optional[str]) -> dict:
+    module = get_module_or_404(db, module_id)
+    module.is_visible = visible
+    _audit(db, actor, "exam_module.show" if visible else "exam_module.hide", module.id, ip)
+    db.add(module)
+    db.commit()
+    return serialize_for_super_admin(get_module_or_404(db, module.id))
+
+
+def remove_by_super_admin(db: Session, actor: User, module_id: int, ip: Optional[str]) -> None:
+    module = get_module_or_404(db, module_id)
+    module.status = "archived"
+    module.is_visible = False
+    module.deleted_at = _now()
+    db.query(InstituteModule).filter(
+        InstituteModule.module_id == module.id, InstituteModule.is_active.is_(True)
+    ).update({"is_active": False}, synchronize_session=False)
+    for plan in db.query(Plan).filter(Plan.modules.any(ExamModule.id == module.id)).all():
+        plan.modules.remove(module)
+        db.add(plan)
+    _audit(db, actor, "exam_module.remove", module.id, ip, {"title": module.title})
+    db.add(module)
+    db.commit()
+
+
+def assign_to_institute(
+    db: Session, actor: User, module_id: int, institute_id: int, ip: Optional[str], allow_inactive: bool = False
+) -> dict:
+    module = get_module_or_404(db, module_id)
+    if module.status != "published":
+        raise HTTPException(status_code=400, detail="Only published courses can be assigned")
+    institute = db.get(Institute, institute_id)
+    if institute is None:
+        raise HTTPException(status_code=404, detail="Institute not found")
+    if not institute.is_active and not allow_inactive:
+        raise HTTPException(status_code=400, detail="Draft or suspended institutes cannot receive live access")
+    assignment = db.query(InstituteModule).filter(
+        InstituteModule.institute_id == institute_id, InstituteModule.module_id == module_id
+    ).first()
+    if assignment is None:
+        assignment = InstituteModule(institute_id=institute_id, module_id=module_id, assigned_by_id=actor.id, is_active=True)
+        db.add(assignment)
+    elif assignment.is_active:
+        raise HTTPException(status_code=409, detail="Course is already assigned to this institute")
+    else:
+        assignment.is_active = True
+        assignment.assigned_by_id = actor.id
+        assignment.assigned_at = _now()
+        db.add(assignment)
+    db.flush()
+    _audit(db, actor, "exam_module.assign", module.id, ip, {"institute_id": institute_id})
+    db.commit()
+    assignment = db.query(InstituteModule).options(joinedload(InstituteModule.institute)).filter(InstituteModule.id == assignment.id).one()
+    return _assignment_out(assignment)
+
+
+def unassign_from_institute(db: Session, actor: User, module_id: int, institute_id: int, ip: Optional[str]) -> None:
+    assignment = db.query(InstituteModule).filter(
+        InstituteModule.institute_id == institute_id,
+        InstituteModule.module_id == module_id,
+        InstituteModule.is_active.is_(True),
+    ).first()
+    if assignment is None:
+        raise HTTPException(status_code=404, detail="Active course assignment not found")
+    assignment.is_active = False
+    db.add(assignment)
+    _audit(db, actor, "exam_module.unassign", module_id, ip, {"institute_id": institute_id})
+    db.commit()

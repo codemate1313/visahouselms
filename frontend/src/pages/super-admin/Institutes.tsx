@@ -11,6 +11,7 @@ interface InstituteRow {
   is_active: boolean;
   subscription_state: string;
   created_at: string;
+  onboarding_status: "draft" | "published";
 }
 
 const STATE_BADGES: Record<string, string> = {
@@ -68,7 +69,7 @@ export function Institutes() {
     <div>
       <div className="page-header">
         <h1>Institutes</h1>
-        <Link to="/super-admin/institutes/new" className="button-link">+ New Institute</Link>
+        <Link to="/super-admin/onboarding/new" className="button-link">Onboard Institute</Link>
       </div>
 
       {error && <p className="error-text">{error}</p>}
@@ -103,7 +104,7 @@ export function Institutes() {
                 </td>
                 <td>
                   <span className={`badge ${row.is_active ? "badge-green" : "badge-gray"}`}>
-                    {row.is_active ? "Active" : "Suspended"}
+                    {row.onboarding_status === "draft" ? "Draft" : row.is_active ? "Active" : "Suspended"}
                   </span>
                 </td>
                 <td className="table-actions">

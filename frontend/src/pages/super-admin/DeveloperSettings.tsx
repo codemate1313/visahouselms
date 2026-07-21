@@ -6,7 +6,7 @@ import { FONT_FAMILY_OPTIONS, useFontStore } from "../../store/fontStore";
 import { useLoaderStore } from "../../store/loaderStore";
 import { useToastStore } from "../../store/toastStore";
 
-type Tab = "typography" | "smtp" | "fcm" | "avatar" | "maintenance" | "backups" | "seed";
+type Tab = "typography" | "smtp" | "fcm" | "avatar" | "ai" | "maintenance" | "backups" | "seed";
 
 interface BackupRow {
   id: number;
@@ -31,7 +31,7 @@ export function DeveloperSettings() {
     <div>
       <h1>Developer Settings</h1>
       <div className="tab-bar">
-        {(["typography", "smtp", "fcm", "avatar", "maintenance", "backups", "seed"] as Tab[]).map((t) => (
+        {(["typography", "smtp", "fcm", "avatar", "ai", "maintenance", "backups", "seed"] as Tab[]).map((t) => (
           <button
             key={t}
             className={`tab ${tab === t ? "active" : ""}`}
@@ -43,6 +43,7 @@ export function DeveloperSettings() {
                 smtp: "SMTP",
                 fcm: "Firebase FCM",
                 avatar: "Avatar (Speaking)",
+                ai: "AI Evaluation",
                 maintenance: "Maintenance",
                 backups: "Backups",
                 seed: "Seed Data",
@@ -55,6 +56,7 @@ export function DeveloperSettings() {
       {tab === "smtp" && <SmtpTab />}
       {tab === "fcm" && <FcmTab />}
       {tab === "avatar" && <AvatarTab />}
+      {tab === "ai" && <AiEvaluationTab />}
       {tab === "maintenance" && <MaintenanceTab />}
       {tab === "backups" && <BackupsTab />}
       {tab === "seed" && <SeedTab />}
@@ -556,6 +558,32 @@ function AvatarTab() {
       </div>
     </form>
   );
+}
+
+/* ---------------- AI-assisted evaluation ---------------- */
+
+function AiEvaluationTab() {
+  const [form, setForm] = useState({ enabled: false, provider: "custom_json", endpoint_url: "", api_key: "", model: "", monthly_limit: 100 });
+  const [configured, setConfigured] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => { apiClient.get("/super-admin/dev-settings/ai-evaluation").then(({ data }) => { setConfigured(data.configured); setForm({ enabled: data.enabled, provider: data.provider ?? "custom_json", endpoint_url: data.endpoint_url ?? "", api_key: data.api_key ?? "", model: data.model ?? "", monthly_limit: data.monthly_limit ?? 100 }); }); }, []);
+
+  async function save(event: FormEvent) {
+    event.preventDefault(); setBusy(true); setError(null); setNotice(null);
+    try { const { data } = await apiClient.put("/super-admin/dev-settings/ai-evaluation", form); setConfigured(data.configured); setNotice("AI evaluation settings saved."); } catch (err: unknown) { setError(extractErrorMessage(err, "Failed to save AI evaluation settings.")); } finally { setBusy(false); }
+  }
+
+  return <form className="form-card wide" onSubmit={save}>
+    <div className="panel-heading"><div><h3>Human-reviewed AI evaluation</h3><p>Configure a JSON rubric evaluator for advisory Writing drafts.</p></div><span className={`badge ${configured ? "badge-green" : "badge-gray"}`}>{configured ? "Ready" : "Not configured"}</span></div>
+    <label className="toggle-row"><input type="checkbox" checked={form.enabled} onChange={(event) => setForm({ ...form, enabled: event.target.checked })} /><span>Enable AI rubric suggestions</span></label>
+    <div className="form-grid"><div><label>Provider label</label><input value={form.provider} onChange={(event) => setForm({ ...form, provider: event.target.value })} /></div><div><label>Model</label><input value={form.model} onChange={(event) => setForm({ ...form, model: event.target.value })} /></div><div><label>Evaluator endpoint</label><input type="url" value={form.endpoint_url} onChange={(event) => setForm({ ...form, endpoint_url: event.target.value })} placeholder="https://evaluator.example.com/grade" /></div><div><label>Monthly draft limit</label><input type="number" min="0" value={form.monthly_limit} onChange={(event) => setForm({ ...form, monthly_limit: Number(event.target.value) })} /></div></div>
+    <label>API key</label><PasswordInput value={form.api_key} onChange={(event) => setForm({ ...form, api_key: event.target.value })} placeholder="stored encrypted" />
+    {error && <p className="error-text">{error}</p>}{notice && <p className="success-text">{notice}</p>}
+    <div className="form-actions"><button disabled={busy}>{busy ? "Saving..." : "Save AI settings"}</button></div>
+  </form>;
 }
 
 /* ---------------- Maintenance ---------------- */

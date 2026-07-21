@@ -5,9 +5,10 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.audit_log import AuditLog
+from app.models.exam_module import ExamModule, InstituteModule
 from app.models.institute import Institute
 from app.models.plan import Plan
-from app.models.role import INST_INSTRUCTOR, INSTITUTE_ADMIN, STUDENT, Role
+from app.models.role import INST_INSTRUCTOR, STUDENT, Role
 from app.models.subscription import Subscription
 from app.models.user import User
 from app.services.plan_service import get_plan_or_404
@@ -88,7 +89,7 @@ def current_user_subscription(db: Session, user_id: int) -> Tuple[Optional[Subsc
 def usage(db: Session, institute_id: int) -> dict:
     role_ids = {
         role.name: role.id
-        for role in db.query(Role).filter(Role.name.in_([STUDENT, INSTITUTE_ADMIN, INST_INSTRUCTOR])).all()
+        for role in db.query(Role).filter(Role.name.in_([STUDENT, INST_INSTRUCTOR])).all()
     }
     students = (
         db.query(User)
@@ -103,7 +104,7 @@ def usage(db: Session, institute_id: int) -> dict:
         db.query(User)
         .filter(
             User.institute_id == institute_id,
-            User.role_id.in_([role_ids.get(INSTITUTE_ADMIN, -1), role_ids.get(INST_INSTRUCTOR, -1)]),
+            User.role_id == role_ids.get(INST_INSTRUCTOR, -1),
             User.deleted_at.is_(None),
         )
         .count()
@@ -152,7 +153,7 @@ def subscription_status(db: Session, institute_id: int) -> dict:
         limits = {
             "students": subscription.plan.student_limit,
             "staff": subscription.plan.staff_limit,
-            "tests": subscription.plan.test_limit,
+            "tests": None if subscription.plan.is_internal else subscription.plan.test_limit,
         }
     return {
         "subscription": _serialize(subscription, state) if subscription else None,
@@ -354,14 +355,44 @@ def my_current_plan_view(db: Session, user: User) -> dict:
         subscription, state = current_user_subscription(db, user.id)
 
     if subscription is None or state not in (STATE_ACTIVE, STATE_GRACE):
-        return {"plan": None, "state": state, "expires_at": None}
+        return {
+            "plan": None,
+            "state": state,
+            "expires_at": None,
+            "access_type": "institute" if user.institute_id is not None else "direct",
+        }
 
     plan = subscription.plan
+    if user.institute_id is not None:
+        modules = (
+            db.query(ExamModule)
+            .join(InstituteModule, InstituteModule.module_id == ExamModule.id)
+            .filter(
+                InstituteModule.institute_id == user.institute_id,
+                InstituteModule.is_active.is_(True),
+                ExamModule.status == "published",
+                ExamModule.is_visible.is_(True),
+                ExamModule.deleted_at.is_(None),
+            )
+            .order_by(ExamModule.created_at.desc(), ExamModule.id.desc())
+            .all()
+        )
+    else:
+        modules = [
+            module
+            for module in plan.modules
+            if module.status == "published" and module.is_visible and module.deleted_at is None
+        ]
     return {
         "plan": {
-            "id": plan.id,
-            "name": plan.name,
-            "description": plan.description,
+            "id": 0 if user.institute_id is not None else plan.id,
+            "name": "Institute assigned tests" if user.institute_id is not None else plan.name,
+            "description": (
+                "Tests assigned to your institute by the Super Admin."
+                if user.institute_id is not None
+                else plan.description
+            ),
+            "courses": [],
             "modules": [
                 {
                     "module_id": module.id,
@@ -369,9 +400,10 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                     "module_type": module.module_type,
                     "duration_minutes": module.duration_minutes,
                 }
-                for module in plan.modules
+                for module in modules
             ],
         },
         "state": state,
         "expires_at": subscription.expires_at,
+        "access_type": "institute" if user.institute_id is not None else "direct",
     }

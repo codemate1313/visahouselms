@@ -89,6 +89,10 @@ class CourseAssignmentRequest(BaseModel):
     institute_id: int = Field(gt=0)
 
 
+class CourseVisibilityUpdate(BaseModel):
+    is_visible: bool
+
+
 class ModuleAttach(BaseModel):
     module_id: int = Field(gt=0)
 

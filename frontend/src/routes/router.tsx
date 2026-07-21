@@ -5,8 +5,9 @@ import { TestingLoginSelector } from "../pages/TestingLoginSelector";
 import { InstituteBilling } from "../pages/institute/InstituteBilling";
 import { InstituteDashboard } from "../pages/institute/InstituteDashboard";
 import { InstituteLayout } from "../pages/institute/InstituteLayout";
-import { InstituteMemberForm, SuperAdminStudentForm } from "../pages/institute/InstituteMemberForm";
-import { InstituteMembers, SuperAdminInstituteStudents } from "../pages/institute/InstituteMembers";
+import { InstituteInstructorLayout } from "../pages/institute/InstituteInstructorLayout";
+import { InstituteMemberForm, SuperAdminInstructorForm, SuperAdminStudentForm } from "../pages/institute/InstituteMemberForm";
+import { InstituteMembers, SuperAdminInstituteAccounts, SuperAdminInstituteStudents } from "../pages/institute/InstituteMembers";
 import { InstituteProfile } from "../pages/institute/InstituteProfile";
 import { StudentOverview, SuperAdminStudentOverview } from "../pages/institute/StudentOverview";
 import { GradingDetail } from "../pages/instructor/GradingDetail";
@@ -23,16 +24,16 @@ import { StudentAttempts } from "../pages/student/StudentAttempts";
 import { StudentDashboard } from "../pages/student/StudentDashboard";
 import { StudentLayout } from "../pages/student/StudentLayout";
 import { StudentProfile } from "../pages/student/StudentProfile";
+import { StudentProgress } from "../pages/student/StudentProgress";
 import { TestRunner } from "../pages/student/TestRunner";
 import { AccountForm } from "../pages/super-admin/AccountForm";
 import { AccountsList } from "../pages/super-admin/AccountsList";
 import { ChangePassword } from "../pages/super-admin/ChangePassword";
 import { CouponForm } from "../pages/super-admin/CouponForm";
-import { CourseAssignments } from "../pages/super-admin/CourseAssignments";
-import { CourseCatalog } from "../pages/super-admin/CourseCatalog";
 import { Coupons } from "../pages/super-admin/Coupons";
 import { Dashboard } from "../pages/super-admin/Dashboard";
 import { DashboardLayout } from "../pages/super-admin/DashboardLayout";
+import { GradingOversight } from "../pages/super-admin/GradingOversight";
 import { DemoAccounts } from "../pages/super-admin/DemoAccounts";
 import { DeveloperSettings } from "../pages/super-admin/DeveloperSettings";
 import { InstituteBranding } from "../pages/super-admin/InstituteBranding";
@@ -43,6 +44,10 @@ import { Institutes } from "../pages/super-admin/Institutes";
 import { Invoice } from "../pages/super-admin/Invoice";
 import { Logs } from "../pages/super-admin/Logs";
 import { PaymentMethods } from "../pages/super-admin/PaymentMethods";
+import { InstituteOnboarding } from "../pages/super-admin/InstituteOnboarding";
+import { InstituteOnboardings } from "../pages/super-admin/InstituteOnboardings";
+import { ModuleControl } from "../pages/super-admin/ModuleControl";
+import { ModuleControlDetail } from "../pages/super-admin/ModuleControlDetail";
 import { PlanForm } from "../pages/super-admin/PlanForm";
 import { Plans } from "../pages/super-admin/Plans";
 import { Payments } from "../pages/super-admin/Payments";
@@ -81,14 +86,20 @@ export const router = createBrowserRouter([
           { path: "instructors", element: <Instructors /> },
           { path: "instructors/new", element: <InstructorForm /> },
           { path: "instructors/:id", element: <InstructorForm /> },
-          { path: "courses", element: <CourseCatalog /> },
-          { path: "courses/:id", element: <CourseAssignments /> },
+          { path: "modules", element: <ModuleControl /> },
+          { path: "modules/:id", element: <ModuleControlDetail /> },
+          { path: "grading", element: <GradingOversight /> },
+          { path: "courses", element: <Navigate to="/super-admin/modules" replace /> },
+          { path: "courses/:id", element: <Navigate to="/super-admin/modules" replace /> },
           { path: "profile", element: <Profile /> },
           { path: "sessions", element: <Sessions /> },
           { path: "change-password", element: <ChangePassword /> },
           { path: "dev-settings", element: <DeveloperSettings /> },
           { path: "logs", element: <Logs /> },
           { path: "terminal", element: <Terminal /> },
+          { path: "onboarding", element: <InstituteOnboardings /> },
+          { path: "onboarding/new", element: <InstituteOnboarding /> },
+          { path: "onboarding/:id", element: <InstituteOnboarding /> },
           { path: "plans", element: <Plans /> },
           { path: "plans/new", element: <PlanForm /> },
           { path: "plans/:id", element: <PlanForm /> },
@@ -97,6 +108,12 @@ export const router = createBrowserRouter([
           { path: "institutes/new", element: <InstituteForm /> },
           { path: "institutes/:id", element: <InstituteForm /> },
           { path: "institutes/:id/branding", element: <InstituteBranding /> },
+          { path: "institutes/:id/accounts", element: <SuperAdminInstituteAccounts /> },
+          { path: "institutes/:id/accounts/students/new", element: <SuperAdminStudentForm /> },
+          { path: "institutes/:id/accounts/staff/new", element: <SuperAdminInstructorForm /> },
+          { path: "institutes/:id/accounts/students/:memberId", element: <SuperAdminStudentOverview /> },
+          { path: "institutes/:id/accounts/students/:memberId/edit", element: <SuperAdminStudentForm /> },
+          { path: "institutes/:id/accounts/staff/:memberId/edit", element: <SuperAdminInstructorForm /> },
           { path: "institutes/:id/students", element: <SuperAdminInstituteStudents /> },
           { path: "institutes/:id/students/new", element: <SuperAdminStudentForm /> },
           { path: "institutes/:id/students/:studentId", element: <SuperAdminStudentOverview /> },
@@ -148,6 +165,7 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to="dashboard" replace /> },
           { path: "dashboard", element: <InstituteDashboard /> },
           { path: "students", element: <InstituteMembers role="STUDENT" /> },
+          { path: "students/new", element: <InstituteMemberForm role="STUDENT" /> },
           { path: "students/:id", element: <StudentOverview /> },
           { path: "students/:id/edit", element: <InstituteMemberForm role="STUDENT" /> },
           { path: "staff", element: <InstituteMembers role="INST_INSTRUCTOR" /> },
@@ -157,6 +175,22 @@ export const router = createBrowserRouter([
           { path: "profile", element: <InstituteProfile /> },
           { path: "sessions", element: <Sessions apiBase="/institute" /> },
           { path: "change-password", element: <ChangePassword apiBase="/institute" /> },
+        ],
+      },
+    ],
+  },
+  {
+    element: <ProtectedRoute allowedRoles={["INST_INSTRUCTOR"]} />,
+    children: [
+      {
+        path: "/institute-instructor",
+        element: <InstituteInstructorLayout />,
+        children: [
+          { index: true, element: <Navigate to="grading" replace /> },
+          { path: "grading", element: <GradingQueue /> },
+          { path: "grading/:id", element: <GradingDetail /> },
+          { path: "sessions", element: <Sessions apiBase="/institute-instructor" /> },
+          { path: "change-password", element: <ChangePassword apiBase="/institute-instructor" /> },
         ],
       },
     ],
@@ -173,6 +207,7 @@ export const router = createBrowserRouter([
           { path: "my-courses", element: <MyCourses /> },
           { path: "attempts", element: <StudentAttempts /> },
           { path: "attempts/:id/result", element: <AttemptResult /> },
+          { path: "progress", element: <StudentProgress /> },
           { path: "profile", element: <StudentProfile /> },
           { path: "sessions", element: <Sessions apiBase="/student" /> },
           { path: "change-password", element: <ChangePassword apiBase="/student" /> },

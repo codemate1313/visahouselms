@@ -144,7 +144,7 @@ export function InstituteForm() {
         <h1>{isNew ? "New Institute" : "Edit Institute"}</h1>
         {!isNew && (
           <div className="form-actions">
-            <Link className="button-link" to={`/super-admin/institutes/${id}/students`}>Students</Link>
+            <Link className="button-link" to={`/super-admin/institutes/${id}/accounts`}>Accounts</Link>
             <Link className="button-link secondary-button" to={`/super-admin/institutes/${id}/branding`}>Branding</Link>
           </div>
         )}
