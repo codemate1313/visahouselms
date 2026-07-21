@@ -6,8 +6,9 @@ import { PasswordInput } from "../../components/PasswordInput";
 import { FONT_FAMILY_OPTIONS, useFontStore } from "../../store/fontStore";
 import { useLoaderStore } from "../../store/loaderStore";
 import { useToastStore } from "../../store/toastStore";
+import { useLoginSliderStore } from "../../store/loginSliderStore";
 
-type Tab = "typography" | "smtp" | "fcm" | "avatar" | "ai" | "maintenance" | "backups" | "seed";
+type Tab = "typography" | "smtp" | "fcm" | "avatar" | "ai" | "maintenance" | "backups" | "seed" | "slider";
 
 interface BackupRow {
   id: number;
@@ -32,7 +33,7 @@ export function DeveloperSettings() {
     <div>
       <h1>Developer Settings</h1>
       <div className="tab-bar">
-        {(["typography", "smtp", "fcm", "avatar", "ai", "maintenance", "backups", "seed"] as Tab[]).map((t) => (
+        {(["typography", "slider", "smtp", "fcm", "avatar", "ai", "maintenance", "backups", "seed"] as Tab[]).map((t) => (
           <button
             key={t}
             className={`tab ${tab === t ? "active" : ""}`}
@@ -41,6 +42,7 @@ export function DeveloperSettings() {
             {
               {
                 typography: "Typography & Weights",
+                slider: "Login Hero Slider",
                 smtp: "SMTP",
                 fcm: "Firebase FCM",
                 avatar: "Avatar (Speaking)",
@@ -54,6 +56,7 @@ export function DeveloperSettings() {
         ))}
       </div>
       {tab === "typography" && <TypographyTab />}
+      {tab === "slider" && <LoginSliderTab />}
       {tab === "smtp" && <SmtpTab />}
       {tab === "fcm" && <FcmTab />}
       {tab === "avatar" && <AvatarTab />}
@@ -793,6 +796,137 @@ function BackupsTab() {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/* ---------------- Login Hero Slider Settings ---------------- */
+
+function LoginSliderTab() {
+  const { slides, updateSlide, addSlide, removeSlide, resetSlides } = useLoginSliderStore();
+  const showSuccess = useToastStore((state) => state.showSuccess);
+  const [newUrl, setNewUrl] = useState("");
+  const [newTitle, setNewTitle] = useState("");
+  const [newSubtitle, setNewSubtitle] = useState("");
+  const [newBadge, setNewBadge] = useState("IELTS LMS PLATFORM");
+
+  function handleAdd(e: FormEvent) {
+    e.preventDefault();
+    if (!newUrl || !newTitle) return;
+    addSlide({
+      imageUrl: newUrl.trim(),
+      title: newTitle.trim(),
+      subtitle: newSubtitle.trim() || "Educational IELTS LMS platform slide.",
+      badge: newBadge.trim() || "IELTS LMS",
+    });
+    setNewUrl("");
+    setNewTitle("");
+    setNewSubtitle("");
+    showSuccess("New login hero slide added successfully!", "Slide Added");
+  }
+
+  return (
+    <div className="form-card wide">
+      <h3>Login Page Educational Hero Slider Settings</h3>
+      <p className="hint" style={{ marginBottom: 20 }}>
+        Manage the educational showcase images, titles, and subtitles displayed on the login page hero carousel.
+      </p>
+
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+        <button className="secondary-button" type="button" onClick={() => { resetSlides(); showSuccess("Hero slides reset to defaults.", "Reset Done"); }}>
+          Reset to Default Educational Slides
+        </button>
+      </div>
+
+      <div style={{ display: "grid", gap: 20, marginBottom: 32 }}>
+        {slides.map((slide) => (
+          <div key={slide.id} style={{ display: "flex", gap: 20, background: "#f8fafc", padding: 16, borderRadius: 14, border: "1px solid #e2e8f0", alignItems: "center" }}>
+            <img src={slide.imageUrl} alt={slide.title} style={{ width: 140, height: 90, objectFit: "cover", borderRadius: 10, flexShrink: 0 }} />
+            <div style={{ flex: 1, display: "grid", gap: 8 }}>
+              <div style={{ display: "flex", gap: 12 }}>
+                <input
+                  type="text"
+                  placeholder="Badge text"
+                  value={slide.badge}
+                  onChange={(e) => updateSlide(slide.id, { badge: e.target.value })}
+                  style={{ width: "200px", padding: "6px 10px", fontSize: "12px", fontWeight: 600 }}
+                />
+                <input
+                  type="text"
+                  placeholder="Slide Title"
+                  value={slide.title}
+                  onChange={(e) => updateSlide(slide.id, { title: e.target.value })}
+                  style={{ flex: 1, padding: "6px 10px", fontSize: "13px", fontWeight: 600 }}
+                />
+              </div>
+              <input
+                type="text"
+                placeholder="Subtitle"
+                value={slide.subtitle}
+                onChange={(e) => updateSlide(slide.id, { subtitle: e.target.value })}
+                style={{ padding: "6px 10px", fontSize: "12px" }}
+              />
+              <input
+                type="text"
+                placeholder="Image URL"
+                value={slide.imageUrl}
+                onChange={(e) => updateSlide(slide.id, { imageUrl: e.target.value })}
+                style={{ padding: "6px 10px", fontSize: "12px" }}
+              />
+            </div>
+            {slides.length > 1 && (
+              <button className="danger" type="button" onClick={() => removeSlide(slide.id)}>
+                Remove
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <h4>Add Custom Educational Slide</h4>
+      <form onSubmit={handleAdd} style={{ display: "grid", gap: 12, maxWidth: 600 }}>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Image URL</label>
+          <input
+            type="url"
+            placeholder="https://images.unsplash.com/..."
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Title</label>
+          <input
+            type="text"
+            placeholder="Slide Heading"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Subtitle</label>
+          <input
+            type="text"
+            placeholder="Slide Subtitle"
+            value={newSubtitle}
+            onChange={(e) => setNewSubtitle(e.target.value)}
+          />
+        </div>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Badge Text</label>
+          <input
+            type="text"
+            placeholder="e.g. ACADEMIC EXCELLENCE"
+            value={newBadge}
+            onChange={(e) => setNewBadge(e.target.value)}
+          />
+        </div>
+        <button type="submit" style={{ justifySelf: "start", padding: "10px 20px" }}>
+          Add Educational Slide
+        </button>
+      </form>
     </div>
   );
 }

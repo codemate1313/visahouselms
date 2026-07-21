@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { apiClient } from "../api/client";
 import { getDeviceIdentity } from "../auth/device";
 import { extractErrorMessage } from "../api/errors";
@@ -7,6 +7,7 @@ import { PasswordInput } from "../components/PasswordInput";
 import { PasswordStrengthMeter } from "../components/PasswordStrengthMeter";
 import { useAuthStore } from "../store/authStore";
 import { useToastStore } from "../store/toastStore";
+import { HeroSlider } from "./Login";
 
 export function Register() {
   const navigate = useNavigate();
@@ -49,33 +50,35 @@ export function Register() {
 
   return (
     <div className="login-concise-page">
-      <div className="login-concise-card">
-        <div className="login-graphic-side">
-          <div className="graphic-overlay">
-            <span className="graphic-badge">IELTS LMS PLATFORM</span>
-            <h2 className="graphic-heading">Start Your IELTS Journey Today</h2>
-          </div>
-          <img src="/assets/login-showcase.png" alt="IELTS LMS Platform" className="graphic-img" />
+      {/* Dynamic Glowing Orbs Background Layer */}
+      <div className="login-glowing-orbs" aria-hidden="true">
+        <div className="glowing-orb orb-primary" />
+        <div className="glowing-orb orb-secondary" />
+        <div className="glowing-orb orb-tertiary" />
+      </div>
+
+      <div className="login-ref-card">
+        {/* Left Side: Animated Hero Image Slider */}
+        <div className="login-slider-container">
+          <HeroSlider />
         </div>
 
+        {/* Right Side: Clean Form */}
         <div className="login-form-side">
           <div className="login-form-header text-center">
-            <div className="brand-logo-badge justify-center">
-              <span className="logo-dot" />
-              <span>IELTS LMS</span>
-            </div>
-            <h1 className="form-main-title">Create your account</h1>
-            <p className="form-sub-title">Sign up as a direct student to browse and purchase courses.</p>
+            <h1 className="form-main-title">CREATE ACCOUNT</h1>
+            <p className="form-sub-title">Sign up as a student to browse and access IELTS courses.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="concise-form">
-            <div className="form-grid">
+            <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <div className="form-group">
                 <label htmlFor="first_name">First name</label>
                 <input
                   id="first_name"
                   value={firstName}
                   onChange={(event) => setFirstName(event.target.value)}
+                  placeholder="First name"
                   required
                   maxLength={100}
                   autoComplete="given-name"
@@ -87,6 +90,7 @@ export function Register() {
                   id="last_name"
                   value={lastName}
                   onChange={(event) => setLastName(event.target.value)}
+                  placeholder="Last name"
                   required
                   maxLength={100}
                   autoComplete="family-name"
@@ -125,9 +129,11 @@ export function Register() {
             </button>
           </form>
 
-          <p className="form-legal-note text-center">
-            Already have an account? <a href="/login">Sign in</a>
-          </p>
+          <div className="login-footer-links text-center">
+            <p className="form-legal-note">
+              Already have an account? <Link to="/login">Sign in</Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

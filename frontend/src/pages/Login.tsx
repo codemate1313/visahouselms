@@ -1,11 +1,12 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { apiClient } from "../api/client";
 import { getDeviceIdentity } from "../auth/device";
 import { PasswordInput } from "../components/PasswordInput";
 import { useAuthStore } from "../store/authStore";
 import { useToastStore } from "../store/toastStore";
+import { useLoginSliderStore } from "../store/loginSliderStore";
 
 interface LoginProps {
   allowedRoles?: string[];
@@ -14,16 +15,16 @@ interface LoginProps {
   wrongRoleMessage?: string;
 }
 
-const ROLE_OPTIONS = [
-  { role: "STUDENT", label: "Student", path: "/login?role=STUDENT" },
-  { role: "INSTITUTE_ADMIN", label: "Institute Admin", path: "/login?role=INSTITUTE_ADMIN" },
-  { role: "INST_INSTRUCTOR", label: "Institute Instructor", path: "/login?role=INST_INSTRUCTOR" },
-  { role: "SA_INSTRUCTOR", label: "SA Instructor", path: "/sa-instructor/login" },
-  { role: "SUPER_ADMIN", label: "Super Admin", path: "/super-admin/login" },
+const ALL_ROLE_OPTIONS = [
+  { role: "INSTITUTE_ADMIN", label: "Institute", basePath: "/login" },
+  { role: "INST_INSTRUCTOR", label: "Instructor", basePath: "/login" },
+  { role: "STUDENT", label: "Student", basePath: "/login" },
+  { role: "SUPER_ADMIN", label: "Super Admin", basePath: "/super-admin/login" },
+  { role: "SA_INSTRUCTOR", label: "SA Instructor", basePath: "/super-admin/login" },
 ] as const;
 
 function roleLabel(role: string) {
-  return ROLE_OPTIONS.find((option) => option.role === role)?.label ?? role;
+  return ALL_ROLE_OPTIONS.find((option) => option.role === role)?.label ?? role;
 }
 
 function destinationFor(user: { role: string; force_password_reset: boolean }) {
@@ -35,8 +36,67 @@ function destinationFor(user: { role: string; force_password_reset: boolean }) {
   return null;
 }
 
+export function HeroSlider() {
+  const slides = useLoginSliderStore((state) => state.slides);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (slides.length <= 1 || isPaused) return;
+    const timer = setInterval(() => {
+      setCurrentSlideIndex((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [slides.length, isPaused]);
+
+  const activeSlide = slides[currentSlideIndex] ?? slides[0];
+
+  return (
+    <div
+      className="login-hero-slider"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Sliding Window Track */}
+      <div
+        className="hero-slider-track"
+        style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
+      >
+        {slides.map((slide) => (
+          <div key={slide.id} className="hero-slide-item">
+            <img src={slide.imageUrl} alt={slide.title} className="hero-slide-img" />
+            <div className="hero-slide-overlay" />
+          </div>
+        ))}
+      </div>
+
+      {/* Slide Content Overlay */}
+      <div className="hero-slide-content" key={activeSlide.id}>
+        <span className="hero-kicker-badge">{activeSlide.badge}</span>
+        <h2 className="hero-slide-title">{activeSlide.title}</h2>
+        <p className="hero-slide-subtitle">{activeSlide.subtitle}</p>
+
+        {/* Interactive Dots Pagination */}
+        {slides.length > 1 && (
+          <div className="hero-slider-dots">
+            {slides.map((slide, idx) => (
+              <button
+                key={slide.id}
+                type="button"
+                className={`slider-dot ${idx === currentSlideIndex ? "active" : ""}`}
+                onClick={() => setCurrentSlideIndex(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function Login({
-  allowedRoles,
+  allowedRoles = ["INSTITUTE_ADMIN", "INST_INSTRUCTOR", "STUDENT"],
   title = "IELTS LMS",
   subtitle = "Enter your credentials to access your dashboard",
   wrongRoleMessage = "Use the correct login page for this account.",
@@ -51,16 +111,22 @@ export function Login({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+
+  // Filter available role tab options based on allowedRoles
+  const availableRoleOptions = ALL_ROLE_OPTIONS.filter((item) =>
+    allowedRoles.includes(item.role)
+  );
+
   const requestedRole = searchParams.get("role");
-  const selectedRole = requestedRole && allowedRoles?.includes(requestedRole)
+  const selectedRole = requestedRole && allowedRoles.includes(requestedRole)
     ? requestedRole
-    : allowedRoles?.[0] ?? "STUDENT";
+    : availableRoleOptions[0]?.role ?? allowedRoles[0] ?? "INSTITUTE_ADMIN";
 
   function changePortal(role: string) {
-    const option = ROLE_OPTIONS.find((item) => item.role === role);
+    const option = ALL_ROLE_OPTIONS.find((item) => item.role === role);
     if (!option) return;
     setError(null);
-    navigate(option.path);
+    navigate(`${option.basePath}?role=${role}`);
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -79,7 +145,7 @@ export function Login({
       if ((allowedRoles && !allowedRoles.includes(user.role)) || user.role !== selectedRole) {
         await apiClient.post("/auth/logout", { refresh_token: tokens.refresh_token }).catch(() => undefined);
         const roleMessage = allowedRoles?.includes(user.role)
-          ? `This account belongs to ${roleLabel(user.role)}. Select that portal and sign in again.`
+          ? `This account belongs to ${roleLabel(user.role)}. Switch to that tab and sign in again.`
           : wrongRoleMessage;
         setError(roleMessage);
         showError(roleMessage, "Access Denied");
@@ -107,51 +173,68 @@ export function Login({
     }
   }
 
+  const isSuperAdminPortal = allowedRoles.includes("SUPER_ADMIN") || allowedRoles.includes("SA_INSTRUCTOR");
+
+  const activeIndex = availableRoleOptions.findIndex((opt) => opt.role === selectedRole);
+  const totalTabs = availableRoleOptions.length || 1;
+  const safeActiveIndex = activeIndex >= 0 ? activeIndex : 0;
+
   return (
     <div className="login-concise-page">
-      <div className="login-concise-card">
-        {/* Left Side: Crisp 3D Image Panel */}
-        <div className="login-graphic-side">
-          <div className="graphic-overlay">
-            <span className="graphic-badge">IELTS LMS PLATFORM</span>
-            <h2 className="graphic-heading">Smart Evaluation & Institute Analytics</h2>
-          </div>
-          <img
-            src="/assets/login-showcase.png"
-            alt="IELTS LMS Platform"
-            className="graphic-img"
-          />
+      {/* Dynamic Glowing Orbs Background Layer */}
+      <div className="login-glowing-orbs" aria-hidden="true">
+        <div className="glowing-orb orb-primary" />
+        <div className="glowing-orb orb-secondary" />
+        <div className="glowing-orb orb-tertiary" />
+      </div>
+
+      <div className="login-ref-card">
+        {/* Left Side: Animated Hero Image Slider */}
+        <div className="login-slider-container">
+          <HeroSlider />
         </div>
 
-        {/* Right Side: Concise Professional Form with Centered Header */}
+        {/* Right Side: Clean Form */}
         <div className="login-form-side">
           <div className="login-form-header text-center">
-            <div className="brand-logo-badge justify-center">
-              <span className="logo-dot" />
-              <span>{title}</span>
-            </div>
-            <h1 className="form-main-title">Sign in</h1>
+            <h1 className="form-main-title">{title}</h1>
             <p className="form-sub-title">{subtitle}</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="concise-form">
-            <div className="form-group login-role-group">
-              <label htmlFor="portal-role">Sign in as</label>
-              <div className="login-role-select-wrap">
-                <select
-                  id="portal-role"
-                  value={selectedRole}
-                  onChange={(event) => changePortal(event.target.value)}
+          {/* Switchable Role Tabs with Smooth Sliding Indicator */}
+          <div
+            className="login-role-tabs-bar"
+            role="tablist"
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${totalTabs}, 1fr)`,
+            }}
+          >
+            <div
+              className="role-tab-indicator"
+              style={{
+                width: `calc((100% - 8px - ${(totalTabs - 1) * 4}px) / ${totalTabs})`,
+                transform: `translateX(calc(${safeActiveIndex} * (100% + 4px)))`,
+              }}
+            />
+            {availableRoleOptions.map((option) => {
+              const isActive = option.role === selectedRole;
+              return (
+                <button
+                  key={option.role}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`role-tab-btn ${isActive ? "active" : ""}`}
+                  onClick={() => changePortal(option.role)}
                 >
-                  {ROLE_OPTIONS.map((option) => (
-                    <option key={option.role} value={option.role}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
 
+          <form onSubmit={handleSubmit} className="concise-form">
             <div className="form-group">
               <label htmlFor="email">Email address</label>
               <input
@@ -179,7 +262,6 @@ export function Login({
               </div>
             </div>
 
-            {/* Sleek Custom Toggle Switch for Remember Me */}
             <div className="remember-row">
               <label className="toggle-switch-container">
                 <input
@@ -200,15 +282,23 @@ export function Login({
             </button>
           </form>
 
-          {selectedRole === "STUDENT" && (
-            <p className="form-legal-note text-center">
-              New here? <a href="/register">Create a student account</a>
-            </p>
-          )}
+          <div className="login-footer-links text-center">
+            {selectedRole === "STUDENT" && (
+              <p className="form-legal-note">
+                New student? <a href="/register">Create a student account</a>
+              </p>
+            )}
 
-          <p className="form-legal-note text-center">
-            Protected by enterprise encryption. <a href="#privacy">Privacy Policy</a>
-          </p>
+            {isSuperAdminPortal ? (
+              <p className="form-legal-note">
+                Institute Admin or Student? <Link to="/login">Go to Portal Login</Link>
+              </p>
+            ) : (
+              <p className="form-legal-note">
+                Platform Admin? <Link to="/super-admin/login">Super Admin Login</Link>
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

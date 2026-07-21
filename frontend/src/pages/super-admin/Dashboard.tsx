@@ -136,6 +136,40 @@ function getGreeting(): string {
   return "Good Evening";
 }
 
+function Sparkline({ theme }: { theme: "green" | "blue" | "amber" | "purple" | "slate" }) {
+  const colorMap = {
+    green: { stroke: "#10b981", id: "spark-grad-green" },
+    blue: { stroke: "#3b82f6", id: "spark-grad-blue" },
+    amber: { stroke: "#f59e0b", id: "spark-grad-amber" },
+    purple: { stroke: "#8b5cf6", id: "spark-grad-purple" },
+    slate: { stroke: "#64748b", id: "spark-grad-slate" },
+  };
+
+  const { stroke, id } = colorMap[theme] || colorMap.green;
+
+  return (
+    <svg width="72" height="30" viewBox="0 0 72 30" fill="none" className="metric-sparkline">
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={stroke} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={stroke} stopOpacity="0.0" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M 2 22 Q 14 16, 26 20 T 50 12 T 70 4 L 70 30 L 2 30 Z"
+        fill={`url(#${id})`}
+      />
+      <path
+        d="M 2 22 Q 14 16, 26 20 T 50 12 T 70 4"
+        stroke={stroke}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function MetricItem({
   label,
   numericValue,
@@ -158,18 +192,26 @@ function MetricItem({
   onOpen: (metric: MetricKey) => void;
 }) {
   return (
-    <div className={`metric-card theme-${badgeTheme}`}>
-      <div className="metric-card-top">
-        <div className="metric-card-header">
-          <div className={`metric-card-icon-wrapper icon-${badgeTheme}`}>
-            <Icon name={iconName} className="metric-card-icon" />
-          </div>
-          <span className="metric-card-title">{label}</span>
+    <div 
+      className={`metric-card theme-${badgeTheme}`}
+      onClick={() => onOpen(metricKey)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpen(metricKey);
+        }
+      }}
+    >
+      <div className="metric-card-header-row">
+        <span className="metric-card-label">{label}</span>
+        <div className={`metric-card-icon-bubble icon-bg-${badgeTheme}`}>
+          <Icon name={iconName} className="metric-card-icon" />
         </div>
-        {badgeText && <span className={`metric-trend-pill pill-${badgeTheme}`}>{badgeText}</span>}
       </div>
 
-      <div className="metric-card-middle">
+      <div className="metric-card-value-row">
         <span className={`metric-card-number${valueClassName ? ` ${valueClassName}` : ""}`}>
           <AnimatedCounter
             value={numericValue}
@@ -179,28 +221,27 @@ function MetricItem({
         </span>
       </div>
 
-      <div className="metric-card-bottom">
-        <button
-          type="button"
-          className="metric-view-action"
-          onClick={() => onOpen(metricKey)}
-          aria-label={`View ${label} details`}
-        >
-          <span>View details</span>
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="metric-view-arrow"
-          >
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
-        </button>
+      <div className="metric-card-footer-row">
+        {badgeText && (
+          <span className={`metric-badge-pill pill-${badgeTheme}`}>
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="metric-pill-arrow"
+            >
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+              <polyline points="17 6 23 6 23 12" />
+            </svg>
+            {badgeText}
+          </span>
+        )}
+        <Sparkline theme={badgeTheme} />
       </div>
     </div>
   );
@@ -375,13 +416,22 @@ export function Dashboard() {
                 {metricDetail && <p>{metricDetail.description}</p>}
               </div>
               <button type="button" className="dashboard-detail-close" onClick={closeMetric} aria-label="Close details" title="Close" autoFocus>
-                <span aria-hidden="true">×</span>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="dashboard-close-icon"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
               </button>
             </header>
-
-            <div className="dashboard-detail-count" aria-live="polite">
-              {metricDetail ? `${metricDetail.items.length} ${metricDetail.items.length === 1 ? "record" : "records"}` : ""}
-            </div>
 
             <div className="dashboard-detail-body">
               {metricLoading && <div className="dashboard-detail-state">Loading details...</div>}
@@ -389,37 +439,55 @@ export function Dashboard() {
               {metricDetail && metricDetail.items.length === 0 && (
                 <div className="dashboard-detail-state">{metricDetail.empty_message}</div>
               )}
-              {metricDetail?.items.map((item) => (
-                <article className="dashboard-detail-row" key={`${metricDetail.metric}-${item.id}`}>
-                  <div className="dashboard-detail-row-main">
-                    <div className="dashboard-detail-identity">
-                      <div className="dashboard-detail-title-row">
-                        <h3>{item.title}</h3>
-                        {item.status_label && (
-                          <span className="dashboard-detail-status" data-tone={item.status_tone}>{item.status_label}</span>
+              {metricDetail && metricDetail.items.length > 0 && (
+                <div className="dashboard-records-list">
+                  <div className="records-count-bar">
+                    <span className="records-count-label">Total Records</span>
+                    <span className="records-count-badge">{metricDetail.items.length}</span>
+                  </div>
+
+                  {metricDetail.items.map((item) => (
+                    <article className="dashboard-record-card" key={`${metricDetail.metric}-${item.id}`}>
+                      <div className="record-card-top">
+                        <div className="record-identity">
+                          <div className="record-title-group">
+                            <h3 className="record-title">{item.title}</h3>
+                            {item.status_label && (
+                              <span className="record-status-pill" data-tone={item.status_tone}>
+                                <span className="status-dot" />
+                                {item.status_label}
+                              </span>
+                            )}
+                          </div>
+                          {item.subtitle && <p className="record-subtitle">{item.subtitle}</p>}
+                        </div>
+
+                        {item.value !== null && (
+                          <div className="record-value-box">
+                            <strong className="record-value-num">
+                              {formatDetailValue(item.value, item.value_type, item.currency)}
+                            </strong>
+                            {item.value_label && <span className="record-value-lbl">{item.value_label}</span>}
+                          </div>
                         )}
                       </div>
-                      {item.subtitle && <p>{item.subtitle}</p>}
-                    </div>
-                    {item.value !== null && (
-                      <div className="dashboard-detail-value">
-                        <strong>{formatDetailValue(item.value, item.value_type, item.currency)}</strong>
-                        {item.value_label && <span>{item.value_label}</span>}
-                      </div>
-                    )}
-                  </div>
-                  {item.metadata.length > 0 && (
-                    <dl className="dashboard-detail-meta">
-                      {item.metadata.map((entry) => (
-                        <div key={`${item.id}-${entry.label}`}>
-                          <dt>{entry.label}</dt>
-                          <dd>{formatDetailValue(entry.value, entry.value_type, entry.currency)}</dd>
+
+                      {item.metadata.length > 0 && (
+                        <div className="record-metadata-grid">
+                          {item.metadata.map((entry) => (
+                            <div className="metadata-chip" key={`${item.id}-${entry.label}`}>
+                              <span className="meta-chip-label">{entry.label}</span>
+                              <span className="meta-chip-value">
+                                {formatDetailValue(entry.value, entry.value_type, entry.currency)}
+                              </span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </dl>
-                  )}
-                </article>
-              ))}
+                      )}
+                    </article>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         </div>
