@@ -24,7 +24,7 @@ from app.models.course import COURSE_PUBLISHED, Course
 from app.models.institute import Institute
 from app.models.role import INST_INSTRUCTOR, SA_INSTRUCTOR, STUDENT, Role
 from app.models.user import User
-from app.services import ai_evaluation_service, attempt_service, grading_service, module_authoring_service
+from app.services import ai_evaluation_service, attempt_service, grading_service, module_authoring_service, student_analysis_service
 from app.services import cefr_service
 
 
@@ -178,6 +178,26 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(result["cefr_policy_version"], cefr_service.POLICY_VERSION)
         self.assertEqual(result["cefr_profile"]["status"], "complete")
         self.assertEqual(result["cefr_profile"]["skills"][0]["mapping_method"], "configured_raw_score")
+
+        analysis = student_analysis_service.result_analysis(
+            self.db,
+            attempt,
+            evaluator=lambda _config, _payload: {
+                "summary": "A focused analysis based on the aggregate result.",
+                "strengths": ["Strong completion."],
+                "improvements": ["Review the missed item."],
+                "next_steps": ["Practise one timed reading set."],
+            },
+        )
+        self.assertEqual(analysis["generated_by"], "configured_ai")
+        self.assertEqual(analysis["metrics"]["attempted"], len(all_questions))
+        self.assertEqual(analysis["metrics"]["correct"], len(all_questions) - 1)
+        self.assertEqual(analysis["metrics"]["incorrect"], 1)
+
+        fallback_analysis = student_analysis_service.result_analysis(self.db, attempt)
+        self.assertEqual(fallback_analysis["generated_by"], "cefr_analysis_engine")
+        self.assertFalse(fallback_analysis["ai_enabled"])
+        self.assertTrue(fallback_analysis["next_steps"])
 
     def test_mcq_multiple_requires_exact_set_match(self):
         module = self._build_reading_module()

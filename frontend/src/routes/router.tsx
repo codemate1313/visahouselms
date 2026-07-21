@@ -18,6 +18,7 @@ import { InstructorProfile } from "../pages/instructor/InstructorProfile";
 import { ModuleEditor } from "../pages/instructor/ModuleEditor";
 import { Modules } from "../pages/instructor/Modules";
 import { AttemptResult } from "../pages/student/AttemptResult";
+import { AttemptResultDetails } from "../pages/student/AttemptResultDetails";
 import { CourseCatalog as StudentCourseCatalog } from "../pages/student/CourseCatalog";
 import { MyCourses } from "../pages/student/MyCourses";
 import { StudentAttempts } from "../pages/student/StudentAttempts";
@@ -207,6 +208,7 @@ export const router = createBrowserRouter([
           { path: "my-courses", element: <MyCourses /> },
           { path: "attempts", element: <StudentAttempts /> },
           { path: "attempts/:id/result", element: <AttemptResult /> },
+          { path: "attempts/:id/result/details", element: <AttemptResultDetails /> },
           { path: "progress", element: <StudentProgress /> },
           { path: "profile", element: <StudentProfile /> },
           { path: "sessions", element: <Sessions apiBase="/student" /> },

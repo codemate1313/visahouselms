@@ -19,6 +19,7 @@ from app.services import (
     grading_service,
     payment_service,
     plan_service,
+    student_analysis_service,
     subscription_service,
 )
 
@@ -149,6 +150,12 @@ def list_attempts(db: Session = Depends(get_db), user: User = Depends(require_st
 def get_attempt(attempt_id: int, db: Session = Depends(get_db), user: User = Depends(require_student)):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
     return attempt_service.get_student_view(db, attempt)
+
+
+@router.get("/attempts/{attempt_id}/analysis")
+def get_attempt_analysis(attempt_id: int, db: Session = Depends(get_db), user: User = Depends(require_student)):
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    return student_analysis_service.result_analysis(db, attempt)
 
 
 @router.post("/attempts/{attempt_id}/reevaluation", status_code=201)

@@ -4,9 +4,16 @@ import { API_BASE_URL, apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import type { Attempt, AttemptQuestion, AttemptResponse, ProctorFlagType } from "../../api/types";
 import { useToastStore } from "../../store/toastStore";
+import { hasAttemptResponse } from "./attemptMetrics";
 
 const DEBOUNCE_MS = 800;
 const IMMERSIVE_MODULE_TYPES = new Set(["full_mock", "final_test"]);
+const SECTION_LABELS: Record<string, string> = {
+  listening: "Listening",
+  reading: "Reading",
+  writing: "Writing",
+  speaking: "Speaking",
+};
 
 function formatTime(seconds: number): string {
   const clamped = Math.max(0, Math.floor(seconds));
@@ -39,6 +46,8 @@ export function TestRunner() {
   const [fullscreenActive, setFullscreenActive] = useState(() => Boolean(document.fullscreenElement));
   const submittedRef = useRef(false);
   const developerFullscreenBypass = useRef(false);
+  const sourcePaneRef = useRef<HTMLElement | null>(null);
+  const questionPaneRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     apiClient
@@ -239,10 +248,46 @@ export function TestRunner() {
 
   const currentPart = attempt?.parts[partIndex];
   const answeredCount = useMemo(
-    () => attempt?.parts.reduce((sum, part) => sum + part.questions.filter((q) => q.response).length, 0) ?? 0,
+    () => attempt?.parts.reduce((sum, part) => sum + part.questions.filter(hasAttemptResponse).length, 0) ?? 0,
     [attempt],
   );
   const totalQuestions = useMemo(() => attempt?.parts.reduce((sum, part) => sum + part.questions.length, 0) ?? 0, [attempt]);
+  const sectionGroups = useMemo(() => {
+    const groups: Array<{
+      section: string;
+      label: string;
+      parts: Array<{ part: Attempt["parts"][number]; index: number }>;
+    }> = [];
+    attempt?.parts.forEach((part, index) => {
+      let group = groups.find((item) => item.section === part.section_type);
+      if (!group) {
+        group = {
+          section: part.section_type,
+          label: SECTION_LABELS[part.section_type] ?? part.section_type,
+          parts: [],
+        };
+        groups.push(group);
+      }
+      group.parts.push({ part, index });
+    });
+    return groups;
+  }, [attempt]);
+  const passages = useMemo(
+    () => Array.from(new Set((currentPart?.questions ?? []).map((question) => question.passage?.trim()).filter(Boolean))) as string[],
+    [currentPart],
+  );
+  const questionNumberOffset = useMemo(
+    () => attempt?.parts.slice(0, partIndex).reduce((sum, part) => sum + part.questions.length, 0) ?? 0,
+    [attempt, partIndex],
+  );
+
+  function selectPart(index: number) {
+    setPartIndex(index);
+    requestAnimationFrame(() => {
+      sourcePaneRef.current?.scrollTo({ top: 0 });
+      questionPaneRef.current?.scrollTo({ top: 0 });
+    });
+  }
 
   if (error) return <p className="error-text">{error}</p>;
   if (!attempt || !currentPart) return <div className="test-runner-loading">Loading your test...</div>;
@@ -250,66 +295,122 @@ export function TestRunner() {
   return (
     <div className="test-runner-shell">
       <header className="test-runner-header">
-        <div>
-          <h1>{attempt.module_title}</h1>
-          <p>{currentPart.title}{currentPart.skill_focus ? ` · ${currentPart.skill_focus}` : ""}</p>
+        <div className="test-runner-brand">
+          <span className="test-runner-brand-mark">VH</span>
+          <div>
+            <h1>{attempt.module_title}</h1>
+            <p>{SECTION_LABELS[currentPart.section_type]} · {currentPart.title}</p>
+          </div>
         </div>
         <div className="test-runner-header-actions">
+          <div className="test-runner-header-navigation" aria-label="Part navigation">
+            <button type="button" className="secondary-button" disabled={partIndex === 0} onClick={() => selectPart(partIndex - 1)}>
+              Previous
+            </button>
+            <button type="button" disabled={partIndex === attempt.parts.length - 1} onClick={() => selectPart(partIndex + 1)}>
+              Next
+            </button>
+          </div>
           {import.meta.env.DEV && isImmersiveAttempt && fullscreenActive && (
             <button type="button" className="test-runner-dev-exit" onClick={exitDeveloperFullscreen}>
               Exit full screen (dev)
             </button>
           )}
-          <div className={`test-runner-timer${secondsLeft < 300 ? " is-urgent" : ""}`}>{formatTime(secondsLeft)}</div>
+          <div className={`test-runner-timer${secondsLeft < 300 ? " is-urgent" : ""}`} aria-label="Time remaining">
+            <span>Time left</span>
+            <strong>{formatTime(secondsLeft)}</strong>
+          </div>
         </div>
       </header>
 
-      <nav className="test-runner-parts">
-        {attempt.parts.map((part, index) => (
-          <button
-            key={part.id}
-            className={`test-runner-part-tab${index === partIndex ? " is-active" : ""}`}
-            onClick={() => setPartIndex(index)}
-          >
-            {part.title}
-            <span className="test-runner-part-progress">
-              {part.questions.filter((q) => q.response).length}/{part.questions.length}
-            </span>
-          </button>
-        ))}
-      </nav>
-
-      <main className="test-runner-body">
-        {currentPart.instructions && <p className="test-runner-instructions">{currentPart.instructions}</p>}
-        {currentPart.assets.map((asset) => (
-          <div className="test-runner-asset" key={asset.id}>
-            <p>{asset.title}</p>
-            {asset.asset_type === "avatar_mp4" ? (
-              <video controls src={`${API_BASE_URL}${asset.url}`} style={{ maxWidth: 480 }} />
-            ) : (
-              <audio controls src={`${API_BASE_URL}${asset.url}`} />
-            )}
+      <div className="test-runner-layout">
+        <nav className="test-runner-parts" aria-label="Test sections">
+          <div className="test-runner-progress-summary">
+            <span>Progress</span>
+            <strong>{answeredCount}/{totalQuestions}</strong>
           </div>
-        ))}
-        {currentPart.questions.map((question, qIndex) => (
-          <QuestionInput
-            key={question.id}
-            index={qIndex + 1}
-            question={question}
-            saving={savingIds.has(question.id)}
-            recording={recordingQuestionId === question.id}
-            onChange={(response, debounce) => updateResponse(question.id, response, debounce)}
-            onRecord={() => recordSpeakingAnswer(question.id)}
-          />
-        ))}
-      </main>
+          {sectionGroups.map((group) => (
+            <section className="test-runner-section-group" key={group.section}>
+              <h2>{group.label}</h2>
+              {group.parts.map(({ part, index }) => {
+                const complete = part.questions.length > 0 && part.questions.every(hasAttemptResponse);
+                return (
+                  <button
+                    type="button"
+                    key={part.id}
+                    className={`test-runner-part-tab${index === partIndex ? " is-active" : ""}${complete ? " is-complete" : ""}`}
+                    onClick={() => selectPart(index)}
+                    aria-current={index === partIndex ? "step" : undefined}
+                  >
+                    <span>{part.title}</span>
+                    <span className="test-runner-part-progress">
+                      {part.questions.filter(hasAttemptResponse).length}/{part.questions.length}
+                    </span>
+                  </button>
+                );
+              })}
+            </section>
+          ))}
+        </nav>
+
+        <main className="test-runner-body">
+          <section className="test-runner-source-pane" ref={sourcePaneRef}>
+            <div className="test-runner-pane-heading">
+              <span>{currentPart.part_code.replaceAll("_", " ")}</span>
+              <h2>{passages.length > 0 ? "Source material" : "Part instructions"}</h2>
+              {currentPart.skill_focus && <p>{currentPart.skill_focus}</p>}
+            </div>
+            {currentPart.instructions && <p className="test-runner-instructions">{currentPart.instructions}</p>}
+            {currentPart.assets.map((asset) => (
+              <div className="test-runner-asset" key={asset.id}>
+                <p>{asset.title}</p>
+                {asset.asset_type === "avatar_mp4" ? (
+                  <video controls src={`${API_BASE_URL}${asset.url}`} />
+                ) : (
+                  <audio controls src={`${API_BASE_URL}${asset.url}`} />
+                )}
+              </div>
+            ))}
+            {passages.length > 0 ? passages.map((passage, index) => (
+              <article className="test-runner-passage" key={`${currentPart.id}-${index}`}>
+                {passages.length > 1 && <strong>Passage {index + 1}</strong>}
+                <p>{passage}</p>
+              </article>
+            )) : (
+              <div className="test-runner-source-placeholder">
+                <strong>{SECTION_LABELS[currentPart.section_type]} task</strong>
+                <p>Read each prompt carefully and complete every item in this part. Your answers save automatically.</p>
+              </div>
+            )}
+          </section>
+
+          <section className="test-runner-question-pane" ref={questionPaneRef} aria-label={`${currentPart.title} questions`}>
+            <div className="test-runner-pane-heading test-runner-question-pane-heading">
+              <span>{currentPart.questions.length} questions</span>
+              <h2>{currentPart.title}</h2>
+              <p>Choose or enter the best answer for each question.</p>
+            </div>
+            {currentPart.questions.map((question, qIndex) => (
+              <QuestionInput
+                key={question.id}
+                index={questionNumberOffset + qIndex + 1}
+                question={question}
+                saving={savingIds.has(question.id)}
+                recording={recordingQuestionId === question.id}
+                onChange={(response, debounce) => updateResponse(question.id, response, debounce)}
+                onRecord={() => recordSpeakingAnswer(question.id)}
+              />
+            ))}
+          </section>
+        </main>
+      </div>
 
       <footer className="test-runner-footer">
         <span>{answeredCount} of {totalQuestions} answered</span>
         <div>
-          <button className="secondary-button" disabled={partIndex === 0} onClick={() => setPartIndex((i) => i - 1)}>← Previous part</button>
+          <button className="secondary-button" disabled={partIndex === 0} onClick={() => selectPart(partIndex - 1)}>Previous part</button>
           {partIndex < attempt.parts.length - 1 ? (
-            <button onClick={() => setPartIndex((i) => i + 1)}>Next part →</button>
+            <button onClick={() => selectPart(partIndex + 1)}>Next part</button>
           ) : (
             <button onClick={() => setConfirmSubmit(true)} disabled={submitting}>{submitting ? "Submitting..." : "Submit test"}</button>
           )}
@@ -367,7 +468,6 @@ function QuestionInput({
         <span>Question {index}</span>
         {saving && <span className="hint">Saving...</span>}
       </div>
-      {question.passage && <p className="test-runner-passage">{question.passage}</p>}
       <p className="test-runner-prompt">{question.prompt}</p>
       {question.instructions && <p className="hint">{question.instructions}</p>}
 

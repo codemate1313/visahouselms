@@ -515,6 +515,35 @@ export interface Attempt {
   parts: AttemptPart[];
 }
 
+export interface StudentResultAnalysis {
+  generated_by: "configured_ai" | "cefr_analysis_engine";
+  ai_enabled: boolean;
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  next_steps: string[];
+  metrics: {
+    total: number;
+    attempted: number;
+    correct: number;
+    incorrect: number;
+    pending: number;
+    unanswered: number;
+  };
+  section_metrics: Array<{
+    skill: IeltsSection;
+    label: string;
+    total: number;
+    attempted: number;
+    correct: number;
+    incorrect: number;
+    pending: number;
+    percentage: string;
+    cefr_level: string | null;
+  }>;
+  framework_version: string;
+}
+
 export interface AttemptSummary {
   id: number;
   module_id: number;
