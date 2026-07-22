@@ -4,6 +4,7 @@ import { Register } from "../pages/Register";
 import { ResetPassword } from "../pages/ResetPassword";
 import { TestingLoginSelector } from "../pages/TestingLoginSelector";
 import { InstituteBilling } from "../pages/institute/InstituteBilling";
+import { InstituteAnnouncements } from "../pages/institute/InstituteAnnouncements";
 import { InstituteDashboard } from "../pages/institute/InstituteDashboard";
 import { InstituteLayout } from "../pages/institute/InstituteLayout";
 import { InstituteInstructorLayout } from "../pages/institute/InstituteInstructorLayout";
@@ -25,6 +26,7 @@ import { MyCourses } from "../pages/student/MyCourses";
 import { StudentAttempts } from "../pages/student/StudentAttempts";
 import { StudentDashboard } from "../pages/student/StudentDashboard";
 import { StudentLayout } from "../pages/student/StudentLayout";
+import { StudentAnnouncements } from "../pages/student/StudentAnnouncements";
 import { StudentProfile } from "../pages/student/StudentProfile";
 import { StudentProgress } from "../pages/student/StudentProgress";
 import { TestRunner } from "../pages/student/TestRunner";
@@ -46,6 +48,7 @@ import { Institutes } from "../pages/super-admin/Institutes";
 import { Invoice } from "../pages/super-admin/Invoice";
 import { Logs } from "../pages/super-admin/Logs";
 import { PaymentMethods } from "../pages/super-admin/PaymentMethods";
+import { PlatformNotifications } from "../pages/super-admin/PlatformNotifications";
 import { InstituteOnboarding } from "../pages/super-admin/InstituteOnboarding";
 import { InstituteOnboardings } from "../pages/super-admin/InstituteOnboardings";
 import { ModuleControl } from "../pages/super-admin/ModuleControl";
@@ -105,6 +108,7 @@ export const router = createBrowserRouter([
           { path: "modules", element: <ModuleControl /> },
           { path: "modules/:id", element: <ModuleControlDetail /> },
           { path: "grading", element: <GradingOversight /> },
+          { path: "notifications", element: <PlatformNotifications /> },
           { path: "courses", element: <Navigate to="/super-admin/modules" replace /> },
           { path: "courses/:id", element: <Navigate to="/super-admin/modules" replace /> },
           { path: "profile", element: <Profile /> },
@@ -188,6 +192,7 @@ export const router = createBrowserRouter([
           { path: "staff/new", element: <InstituteMemberForm role="INST_INSTRUCTOR" /> },
           { path: "staff/:id", element: <InstituteMemberForm role="INST_INSTRUCTOR" /> },
           { path: "billing", element: <InstituteBilling /> },
+          { path: "announcements", element: <InstituteAnnouncements /> },
           { path: "profile", element: <InstituteProfile /> },
           { path: "sessions", element: <Sessions apiBase="/institute" /> },
           { path: "change-password", element: <ChangePassword apiBase="/institute" /> },
@@ -225,6 +230,7 @@ export const router = createBrowserRouter([
           { path: "attempts/:id/result", element: <AttemptResult /> },
           { path: "attempts/:id/result/details", element: <AttemptResultDetails /> },
           { path: "progress", element: <StudentProgress /> },
+          { path: "announcements", element: <StudentAnnouncements /> },
           { path: "profile", element: <StudentProfile /> },
           { path: "sessions", element: <Sessions apiBase="/student" /> },
           { path: "change-password", element: <ChangePassword apiBase="/student" /> },

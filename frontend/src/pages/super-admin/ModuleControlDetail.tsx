@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { confirmAction, confirmDelete } from "../../components/confirmDialog";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import type { ExamModule } from "../../api/types";
@@ -320,8 +321,11 @@ export function ModuleControlDetail() {
       </div>
 
       {/* Assign to Institute Section */}
-      <section className="detail-card workspace-panel">
-        <h2 className="panel-title">Assign to institute</h2>
+      <CollapsiblePanel
+        className="detail-card workspace-panel"
+        title="Assign to institute"
+        description="Grant this published module to an institute."
+      >
         {module.status !== "published" ? (
           <div className="banner-warning-box">
             Publish the course before assigning it to an institute.
@@ -345,11 +349,15 @@ export function ModuleControlDetail() {
             </button>
           </form>
         )}
-      </section>
+      </CollapsiblePanel>
 
       {/* Institute Access Table Section */}
-      <section className="detail-card access-table-panel">
-        <h2 className="panel-title">Institute access</h2>
+      <CollapsiblePanel
+        className="detail-card access-table-panel"
+        title="Institute access"
+        description="Review active and revoked institute assignments."
+        badge={<span className="count-chip">{module.assignments.length}</span>}
+      >
         <div className="table-responsive-wrapper">
           <table className="data-table sleek-access-table">
             <thead>
@@ -396,7 +404,7 @@ export function ModuleControlDetail() {
             </tbody>
           </table>
         </div>
-      </section>
+      </CollapsiblePanel>
     </div>
   );
 }

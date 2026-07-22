@@ -1,4 +1,5 @@
 import type { ChangeEvent, ReactNode } from "react";
+import { CollapsiblePanel } from "./CollapsiblePanel";
 
 type ProfileTone = "super-admin" | "instructor" | "institute" | "student";
 
@@ -77,14 +78,14 @@ export function ProfileEditorShell({
           </div>
         </aside>
 
-        <section className="role-profile-form-panel" aria-label="Profile details">
-          <div className="role-profile-form-heading">
-            <span className="page-eyebrow">Account details</span>
-            <h2>Personal information</h2>
-            <p>Keep your contact and identity details accurate.</p>
-          </div>
+        <CollapsiblePanel
+          className="role-profile-form-panel"
+          eyebrow="Account details"
+          title="Personal information"
+          description="Keep your contact and identity details accurate."
+        >
           {children}
-        </section>
+        </CollapsiblePanel>
       </div>
 
     </div>

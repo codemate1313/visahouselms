@@ -1,0 +1,419 @@
+import { type FormEvent, useEffect, useState } from "react";
+
+import { apiClient } from "../../api/client";
+import type { Announcement, TargetInstituteOption, TargetStudentOption } from "../../api/types";
+import { CollapsiblePanel } from "../../components/CollapsiblePanel";
+
+interface TargetOptions {
+  institutes: TargetInstituteOption[];
+  students: TargetStudentOption[];
+}
+
+function formatDate(value: string | null) {
+  return value ? new Date(value).toLocaleString() : "Draft";
+}
+
+function normalizeSearch(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function PlatformNotifications() {
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [targetOptions, setTargetOptions] = useState<TargetOptions>({ institutes: [], students: [] });
+
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [selectedAudiences, setSelectedAudiences] = useState<string[]>(["students"]);
+  const [selectedInstituteIds, setSelectedInstituteIds] = useState<number[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+  const [status, setStatus] = useState<"published" | "scheduled" | "draft">("published");
+  const [scheduledAt, setScheduledAt] = useState("");
+
+  const [instituteSearch, setInstituteSearch] = useState("");
+  const [studentSearch, setStudentSearch] = useState("");
+
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadData() {
+    try {
+      const [announcementsRes, optionsRes] = await Promise.all([
+        apiClient.get<Announcement[]>("/super-admin/announcements"),
+        apiClient.get<TargetOptions>("/super-admin/announcements/target-options"),
+      ]);
+      setAnnouncements(announcementsRes.data);
+      setTargetOptions(optionsRes.data);
+      setError(null);
+    } catch {
+      setError("Notifications or targeting options could not be loaded.");
+    }
+  }
+
+  useEffect(() => {
+    void loadData();
+  }, []);
+
+  function toggleAudienceCard(key: string) {
+    if (key === "all") {
+      if (selectedAudiences.includes("all")) {
+        setSelectedAudiences(["students"]);
+      } else {
+        setSelectedAudiences(["all"]);
+      }
+      return;
+    }
+
+    let next = selectedAudiences.filter((a) => a !== "all");
+    if (key === "institutes" || key === "specific_students") {
+      next = next.filter((a) => a !== "students");
+    }
+    if (key === "students") {
+      next = next.filter((a) => a !== "institutes" && a !== "specific_students");
+      setSelectedInstituteIds([]);
+      setSelectedUserIds([]);
+    }
+    if (next.includes(key)) {
+      next = next.filter((a) => a !== key);
+    } else {
+      next.push(key);
+    }
+
+    if (next.length === 0) {
+      next = ["students"];
+    }
+    setSelectedAudiences(next);
+  }
+
+  function toggleInstitute(id: number) {
+    if (selectedInstituteIds.includes(id)) {
+      setSelectedInstituteIds(selectedInstituteIds.filter((i) => i !== id));
+    } else {
+      setSelectedInstituteIds([...selectedInstituteIds, id]);
+    }
+  }
+
+  function toggleStudent(id: number) {
+    if (selectedUserIds.includes(id)) {
+      setSelectedUserIds(selectedUserIds.filter((i) => i !== id));
+    } else {
+      setSelectedUserIds([...selectedUserIds, id]);
+    }
+  }
+
+  async function publish(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+
+    if (status === "scheduled" && !scheduledAt) {
+      setError("Please select a date and time for scheduled notification.");
+      setBusy(false);
+      return;
+    }
+    if (selectedAudiences.includes("institutes") && selectedInstituteIds.length === 0) {
+      setError("Please select at least one target institute.");
+      setBusy(false);
+      return;
+    }
+    if (selectedAudiences.includes("specific_students") && selectedUserIds.length === 0) {
+      setError("Please select at least one target student.");
+      setBusy(false);
+      return;
+    }
+
+    const payload = {
+      title,
+      message,
+      audience: selectedAudiences.join(","),
+      status,
+      scheduled_at: status === "scheduled" && scheduledAt ? new Date(scheduledAt).toISOString() : null,
+      target_institute_ids: selectedAudiences.includes("institutes") ? selectedInstituteIds : [],
+      target_user_ids: selectedAudiences.includes("specific_students") ? selectedUserIds : [],
+    };
+
+    try {
+      await apiClient.post("/super-admin/announcements", payload);
+      setTitle("");
+      setMessage("");
+      setSelectedAudiences(["students"]);
+      setSelectedInstituteIds([]);
+      setSelectedUserIds([]);
+      setStatus("published");
+      setScheduledAt("");
+      await loadData();
+    } catch {
+      setError("Notification could not be saved or published.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const instituteQuery = normalizeSearch(instituteSearch);
+  const filteredInstitutes = targetOptions.institutes
+    .filter((inst) => {
+      const haystack = [inst.name, inst.slug, String(inst.id), inst.onboarding_status, inst.is_active ? "active" : "inactive"]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return !instituteQuery || haystack.includes(instituteQuery);
+    })
+    .sort((a, b) => Number(selectedInstituteIds.includes(b.id)) - Number(selectedInstituteIds.includes(a.id)) || a.name.localeCompare(b.name));
+
+  const studentQuery = normalizeSearch(studentSearch);
+  const filteredStudents = targetOptions.students
+    .filter((st) => {
+      const haystack = [st.name, st.email, String(st.id), st.institute_id ? String(st.institute_id) : ""]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return !studentQuery || haystack.includes(studentQuery);
+    })
+    .sort((a, b) => Number(selectedUserIds.includes(b.id)) - Number(selectedUserIds.includes(a.id)) || a.name.localeCompare(b.name));
+
+  const audienceCards = [
+    { key: "students", title: "Students", icon: "🎓", desc: "All platform students" },
+    { key: "staff", title: "Staff", icon: "👨‍💼", desc: "Instructors and administrators" },
+    { key: "institutes", title: "Specific Institutes", icon: "🏛️", desc: "Select custom institutes" },
+    { key: "specific_students", title: "Specific Students", icon: "👤", desc: "Select individual students" },
+    { key: "all", title: "Everyone", icon: "🌐", desc: "All users on the platform" },
+  ];
+
+  return (
+    <div className="announcement-admin-page">
+      <div className="page-header">
+        <div>
+          <span className="page-eyebrow">Platform notifications</span>
+          <h1>Publish notifications</h1>
+        </div>
+      </div>
+      {error && <p className="error-text">{error}</p>}
+      <div className="announcement-admin-grid">
+        <CollapsiblePanel
+          className="workspace-panel announcement-publisher-panel"
+          title="New platform notification"
+          description="Publish a targeted or scheduled announcement with custom audience selection."
+        >
+          <form onSubmit={(event) => void publish(event)}>
+            <label htmlFor="platform-notification-title">Title</label>
+            <input
+              id="platform-notification-title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="e.g. System Maintenance Notice"
+              required
+            />
+
+            <label htmlFor="platform-notification-message">Message</label>
+            <textarea
+              id="platform-notification-message"
+              rows={5}
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              placeholder="Write notification content..."
+              required
+            />
+
+            <label>Target Audience (Select cards)</label>
+            <div className="audience-cards-grid">
+              {audienceCards.map((card) => {
+                const isSelected = selectedAudiences.includes(card.key);
+                return (
+                  <div
+                    key={card.key}
+                    className={`audience-checkbox-card ${isSelected ? "selected" : ""}`}
+                    role="checkbox"
+                    aria-checked={isSelected}
+                    tabIndex={0}
+                    onClick={() => toggleAudienceCard(card.key)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        toggleAudienceCard(card.key);
+                      }
+                    }}
+                  >
+                    <div className="audience-card-checkbox-custom">
+                      {isSelected && <span>✓</span>}
+                    </div>
+                    <div className="audience-card-body">
+                      <span className="audience-card-title">{card.icon} {card.title}</span>
+                      <span className="audience-card-desc">{card.desc}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {selectedAudiences.includes("institutes") && (
+              <div className="custom-target-select-container">
+                <div className="custom-target-header">
+                  <span>🏛️ Select Target Institutes ({selectedInstituteIds.length} selected)</span>
+                  {selectedInstituteIds.length > 0 && (
+                    <button type="button" className="text-button" onClick={() => setSelectedInstituteIds([])}>
+                      Clear all
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  className="target-search-input"
+                  placeholder="Type institute name, slug, ID, active, inactive, or published..."
+                  value={instituteSearch}
+                  onChange={(e) => setInstituteSearch(e.target.value)}
+                />
+                <div className="chip-select-list">
+                  {filteredInstitutes.map((inst) => {
+                    const active = selectedInstituteIds.includes(inst.id);
+                    return (
+                      <button
+                        type="button"
+                        key={inst.id}
+                        className={`chip-option ${active ? "active" : ""}`}
+                        onClick={() => toggleInstitute(inst.id)}
+                      >
+                        <span>{active ? "✓" : "+"}</span>
+                        <strong>{inst.name}</strong>
+                        <small>
+                          slug: {inst.slug} · {inst.onboarding_status ?? "published"} · {inst.is_active === false ? "Inactive" : "Active"}
+                        </small>
+                      </button>
+                    );
+                  })}
+                  {filteredInstitutes.length === 0 && (
+                    <small className="help-text">
+                      No matching institutes found. Try the institute name, slug, ID, active, inactive, draft, or published.
+                    </small>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {selectedAudiences.includes("specific_students") && (
+              <div className="custom-target-select-container">
+                <div className="custom-target-header">
+                  <span>👤 Select Target Students ({selectedUserIds.length} selected)</span>
+                  {selectedUserIds.length > 0 && (
+                    <button type="button" className="text-button" onClick={() => setSelectedUserIds([])}>
+                      Clear all
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  className="target-search-input"
+                  placeholder="Search students by name or email..."
+                  value={studentSearch}
+                  onChange={(e) => setStudentSearch(e.target.value)}
+                />
+                <div className="chip-select-list">
+                  {filteredStudents.map((st) => {
+                    const active = selectedUserIds.includes(st.id);
+                    return (
+                      <button
+                        type="button"
+                        key={st.id}
+                        className={`chip-option ${active ? "active" : ""}`}
+                        onClick={() => toggleStudent(st.id)}
+                      >
+                        <span>{active ? "✓" : "+"}</span>
+                        <strong>{st.name}</strong>
+                        <small>{st.email}{st.institute_id ? ` · Institute #${st.institute_id}` : ""}</small>
+                      </button>
+                    );
+                  })}
+                  {filteredStudents.length === 0 && (
+                    <small className="help-text">No matching students found.</small>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="schedule-timing-group">
+              <label>Publish Timing & Scheduling</label>
+              <div className="schedule-timing-options">
+                <div
+                  className={`schedule-timing-pill ${status === "published" ? "selected" : ""}`}
+                  onClick={() => setStatus("published")}
+                >
+                  ⚡ Send Immediately
+                </div>
+                <div
+                  className={`schedule-timing-pill ${status === "scheduled" ? "selected" : ""}`}
+                  onClick={() => setStatus("scheduled")}
+                >
+                  ⏰ Schedule for Later
+                </div>
+                <div
+                  className={`schedule-timing-pill ${status === "draft" ? "selected" : ""}`}
+                  onClick={() => setStatus("draft")}
+                >
+                  📝 Save as Draft
+                </div>
+              </div>
+
+              {status === "scheduled" && (
+                <div>
+                  <label htmlFor="scheduled-datetime-input">Schedule Date & Time</label>
+                  <input
+                    id="scheduled-datetime-input"
+                    type="datetime-local"
+                    className="datetime-picker-input"
+                    value={scheduledAt}
+                    onChange={(e) => setScheduledAt(e.target.value)}
+                    min={new Date().toISOString().slice(0, 16)}
+                    required
+                  />
+                  <small className="help-text">Notification will automatically publish at this date and time.</small>
+                </div>
+              )}
+            </div>
+
+            <button disabled={busy} style={{ marginTop: 12 }}>
+              {busy
+                ? "Processing..."
+                : status === "scheduled"
+                  ? "Schedule notification"
+                  : status === "draft"
+                    ? "Save draft"
+                    : "Publish notification"}
+            </button>
+          </form>
+        </CollapsiblePanel>
+
+        <CollapsiblePanel
+          className="workspace-panel announcement-history-panel"
+          title="Notification history"
+          description="Review published, scheduled, and draft platform announcements."
+          badge={<span className="count-chip">{announcements.length}</span>}
+        >
+          <div className="announcement-history-list">
+            {announcements.map((item) => (
+              <article key={item.id}>
+                <div>
+                  <span
+                    className={`badge ${item.status === "published"
+                        ? "badge-green"
+                        : item.status === "scheduled"
+                          ? "badge-purple"
+                          : "badge-gray"
+                      }`}
+                  >
+                    {item.status}
+                  </span>
+                  <h3>{item.title}</h3>
+                  <p>{item.message}</p>
+                  <small>
+                    Audience: {item.audience}
+                    {item.status === "scheduled" && item.scheduled_at
+                      ? ` · Scheduled for: ${formatDate(item.scheduled_at)}`
+                      : ` · Published: ${formatDate(item.published_at)}`}
+                  </small>
+                </div>
+              </article>
+            ))}
+          </div>
+        </CollapsiblePanel>
+      </div>
+    </div>
+  );
+}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "../../auth/logout";
 import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
+import { NotificationBell } from "../../components/StudentNotificationBell";
 import { Sidebar, type MenuSection } from "../../components/Sidebar";
 
 const COLLAPSE_STORAGE_KEY = "instructor-lms-sidebar-collapsed";
@@ -87,6 +88,7 @@ export function InstructorLayout() {
         onToggleCollapse={() => setCollapsed((prev) => !prev)}
         onLogout={logout}
       />
+      <NotificationBell eyebrow="Author updates" fallbackRoute="/super-admin/instructor/dashboard" />
       <main className="dashboard-content" style={{ flex: 1, padding: "20px" }}>
         <GsapRouteAnimator>
           <Outlet />

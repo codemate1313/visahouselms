@@ -7,11 +7,19 @@ import { Icon } from "./icons";
 
 type NotificationSegment = "unread" | "read";
 
-function destinationFor(notification: StudentNotification) {
+interface NotificationBellProps {
+  eyebrow?: string;
+  fallbackRoute?: string;
+  notificationsPath?: string;
+  title?: string;
+}
+
+function destinationFor(notification: StudentNotification, fallbackRoute: string) {
+  if (notification.link_url) return notification.link_url;
   if (notification.kind === "grade_released" && notification.attempt_id) {
     return `/student/attempts/${notification.attempt_id}/result/details`;
   }
-  return "/student/dashboard";
+  return fallbackRoute;
 }
 
 function notificationTime(value: string) {
@@ -28,7 +36,12 @@ function scoreLabel(notification: StudentNotification) {
   return `${notification.raw_score} / ${notification.max_score}`;
 }
 
-export function StudentNotificationBell() {
+export function NotificationBell({
+  eyebrow = "Updates",
+  fallbackRoute = "/",
+  notificationsPath = "/notifications",
+  title = "Notifications",
+}: NotificationBellProps) {
   const navigate = useNavigate();
   const shellRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -40,7 +53,7 @@ export function StudentNotificationBell() {
 
   const loadNotifications = useCallback(async () => {
     try {
-      const { data } = await apiClient.get<StudentNotification[]>("/student/notifications", {
+      const { data } = await apiClient.get<StudentNotification[]>(notificationsPath, {
         headers: { "X-Skip-Loader": "1" },
       });
       setNotifications(data);
@@ -50,7 +63,7 @@ export function StudentNotificationBell() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [notificationsPath]);
 
   useEffect(() => {
     void loadNotifications();
@@ -119,7 +132,7 @@ export function StudentNotificationBell() {
     )));
     try {
       const { data } = await apiClient.patch<StudentNotification>(
-        `/student/notifications/${notification.id}/read`,
+        `${notificationsPath}/${notification.id}/read`,
         undefined,
         { headers: { "X-Skip-Loader": "1" } },
       );
@@ -137,7 +150,7 @@ export function StudentNotificationBell() {
     setNotifications((items) => items.map((item) => ({ ...item, read_at: item.read_at ?? readAt })));
     try {
       await apiClient.patch(
-        "/student/notifications/read-all",
+        `${notificationsPath}/read-all`,
         undefined,
         { headers: { "X-Skip-Loader": "1" } },
       );
@@ -149,7 +162,7 @@ export function StudentNotificationBell() {
   function openNotification(notification: StudentNotification) {
     void markRead(notification);
     closePanel();
-    navigate(destinationFor(notification));
+    navigate(destinationFor(notification, fallbackRoute));
   }
 
   return (
@@ -183,12 +196,12 @@ export function StudentNotificationBell() {
           className="student-notification-popover"
           role="dialog"
           aria-modal="false"
-          aria-labelledby="student-notification-title"
+          aria-labelledby="portal-notification-title"
         >
           <div className="student-notification-header">
             <div>
-              <span className="page-eyebrow">Student updates</span>
-              <h2 id="student-notification-title">Notifications</h2>
+              <span className="page-eyebrow">{eyebrow}</span>
+              <h2 id="portal-notification-title">{title}</h2>
             </div>
             <button type="button" className="student-notification-close" onClick={closePanel} aria-label="Close notifications">
               &times;
@@ -248,9 +261,17 @@ export function StudentNotificationBell() {
                     <strong>{notification.title}</strong>
                     <span className="student-notification-message">{notification.message}</span>
                     <span className="student-notification-meta">
-                      {notification.module_type && <span>{notification.module_type.replaceAll("_", " ")}</span>}
-                      {scoreLabel(notification) && <span>Score {scoreLabel(notification)}</span>}
-                      <time dateTime={notification.created_at}>{notificationTime(notification.created_at)}</time>
+                      {notification.module_type && (
+                        <span className="student-notification-pill is-module">
+                          {notification.module_type.replaceAll("_", " ")}
+                        </span>
+                      )}
+                      {scoreLabel(notification) && (
+                        <span className="student-notification-pill is-score">Score {scoreLabel(notification)}</span>
+                      )}
+                      <time className="student-notification-pill is-time" dateTime={notification.created_at}>
+                        {notificationTime(notification.created_at)}
+                      </time>
                     </span>
                   </span>
                   <span className="student-notification-item-arrow" aria-hidden="true">&#8250;</span>
@@ -262,4 +283,8 @@ export function StudentNotificationBell() {
       )}
     </div>
   );
+}
+
+export function StudentNotificationBell() {
+  return <NotificationBell eyebrow="Student updates" fallbackRoute="/student/dashboard" />;
 }

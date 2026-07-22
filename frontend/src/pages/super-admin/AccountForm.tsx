@@ -2,6 +2,7 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { PasswordInput } from "../../components/PasswordInput";
 import { PasswordStrengthMeter } from "../../components/PasswordStrengthMeter";
 import { evaluatePassword } from "../../utils/passwordStrength";
@@ -145,13 +146,11 @@ export function AccountForm() {
         </aside>
 
         <section className="account-form-panel">
-          <div className="account-form-section">
-            <div className="section-heading compact">
-              <div>
-                <h2>Personal Details</h2>
-                <p>Keep the account profile easy to identify across admin tools.</p>
-              </div>
-            </div>
+          <CollapsiblePanel
+            className="account-form-section"
+            title="Personal Details"
+            description="Keep the account profile easy to identify across admin tools."
+          >
             <div className="account-field-grid">
               <div>
                 <label htmlFor="first_name">First name</label>
@@ -184,16 +183,14 @@ export function AccountForm() {
                 />
               </div>
             </div>
-          </div>
+          </CollapsiblePanel>
 
           {isNew && (
-            <div className="account-form-section">
-              <div className="section-heading compact">
-                <div>
-                  <h2>Security</h2>
-                  <p>Create a strong temporary password for the first sign-in.</p>
-                </div>
-              </div>
+            <CollapsiblePanel
+              className="account-form-section"
+              title="Security"
+              description="Create a strong temporary password for the first sign-in."
+            >
               <label htmlFor="password">Password</label>
               <PasswordInput
                 id="password"
@@ -202,16 +199,14 @@ export function AccountForm() {
                 required
               />
               <PasswordStrengthMeter password={password} />
-            </div>
+            </CollapsiblePanel>
           )}
 
-          <div className="account-form-section">
-            <div className="section-heading compact">
-              <div>
-                <h2>Contact Info</h2>
-                <p>Optional details for internal records and support handoffs.</p>
-              </div>
-            </div>
+          <CollapsiblePanel
+            className="account-form-section"
+            title="Contact Info"
+            description="Optional details for internal records and support handoffs."
+          >
             <div className="account-field-grid">
               <div>
                 <label htmlFor="dob">Date of Birth (DOB)</label>
@@ -245,7 +240,7 @@ export function AccountForm() {
                 />
               </div>
             </div>
-          </div>
+          </CollapsiblePanel>
 
           {error && <p className="error-text">{error}</p>}
 

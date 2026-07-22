@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "../../auth/logout";
 import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
+import { NotificationBell } from "../../components/StudentNotificationBell";
 import { Sidebar, type MenuItem, type MenuSection } from "../../components/Sidebar";
 import { useInstituteBranding } from "../../hooks/useInstituteBranding";
 import { useAuthStore } from "../../store/authStore";
@@ -35,6 +36,7 @@ export function InstituteLayout() {
   ];
   if (canSeeStudents) {
     instituteItems.push({ key: "students", label: "Students", icon: "user", to: "/institute-portal/students" });
+    instituteItems.push({ key: "announcements", label: "Announcements", icon: "notifications", to: "/institute-portal/announcements" });
   }
   if (permissions.manage_staff) {
     instituteItems.push({ key: "staff", label: "Instructors", icon: "instructors", to: "/institute-portal/staff" });
@@ -69,6 +71,7 @@ export function InstituteLayout() {
         onToggleCollapse={() => setCollapsed((value) => !value)}
         onLogout={logout}
       />
+      <NotificationBell eyebrow="Institute updates" fallbackRoute="/institute-portal/dashboard" />
       <main className="dashboard-content" style={{ flex: 1, padding: "20px" }}>
         <GsapRouteAnimator>
           <Outlet />

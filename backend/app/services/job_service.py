@@ -182,6 +182,10 @@ def _scheduler_tick() -> None:
         if last_purge is None or now - last_purge >= timedelta(days=1):
             enqueue(db, "purge_logs", None)
             set_setting(db, "internal.last_log_purge", now.isoformat())
+
+        # scheduled announcements
+        from app.services import announcement_service
+        announcement_service.process_scheduled_announcements(db)
     finally:
         db.close()
 

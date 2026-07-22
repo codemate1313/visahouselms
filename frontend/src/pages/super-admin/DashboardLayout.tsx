@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "../../auth/logout";
 import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
+import { NotificationBell } from "../../components/StudentNotificationBell";
 import { Sidebar, type MenuSection } from "../../components/Sidebar";
 
 const COLLAPSE_STORAGE_KEY = "ielts-lms-sidebar-collapsed";
@@ -53,6 +54,12 @@ export function DashboardLayout() {
           label: "Grading Oversight",
           icon: "grading",
           to: "/super-admin/grading",
+        },
+        {
+          key: "notifications",
+          label: "Notifications",
+          icon: "notifications",
+          to: "/super-admin/notifications",
         },
         {
           key: "saas",
@@ -118,6 +125,7 @@ export function DashboardLayout() {
         onToggleCollapse={() => setCollapsed((prev) => !prev)}
         onLogout={handleLogout}
       />
+      <NotificationBell eyebrow="Platform updates" fallbackRoute="/super-admin/dashboard" />
       <main className="dashboard-content">
         <GsapRouteAnimator>
           <Outlet />

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.attempt import ATTEMPT_GRADED, AttemptPartGrade, TestAttempt
 from app.models.notification import GRADE_RELEASED, StudentNotification
+from app.models.role import STUDENT
 from app.models.user import User
 from app.services import smtp_service
 
@@ -35,6 +36,7 @@ def _grade_notification(attempt: TestAttempt) -> StudentNotification:
             "Your instructor has completed this assessment. Review your score, "
             "rubric feedback, and detailed analysis."
         ),
+        link_url=f"/student/attempts/{attempt.id}/result/details",
         created_at=attempt.graded_at or _now(),
     )
 
@@ -96,6 +98,8 @@ def _notification_out(notification: StudentNotification) -> dict:
         "id": notification.id,
         "kind": notification.kind,
         "attempt_id": notification.attempt_id,
+        "announcement_id": notification.announcement_id,
+        "link_url": notification.link_url,
         "title": notification.title,
         "message": notification.message,
         "read_at": _utc_out(notification.read_at),
@@ -109,8 +113,9 @@ def _notification_out(notification: StudentNotification) -> dict:
     }
 
 
-def list_student_notifications(db: Session, user: User) -> list[dict]:
-    _backfill_grade_notifications(db, user)
+def list_user_notifications(db: Session, user: User) -> list[dict]:
+    if user.role.name == STUDENT:
+        _backfill_grade_notifications(db, user)
     notifications = (
         db.query(StudentNotification)
         .options(joinedload(StudentNotification.attempt).joinedload(TestAttempt.module))
@@ -120,6 +125,10 @@ def list_student_notifications(db: Session, user: User) -> list[dict]:
         .all()
     )
     return [_notification_out(notification) for notification in notifications]
+
+
+def list_student_notifications(db: Session, user: User) -> list[dict]:
+    return list_user_notifications(db, user)
 
 
 def mark_notification_read(db: Session, user: User, notification_id: int) -> dict:

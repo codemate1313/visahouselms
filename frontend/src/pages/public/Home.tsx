@@ -101,7 +101,7 @@ export function Home() {
   const [activeShowcaseDetail, setActiveShowcaseDetail] = useState<string | null>(null);
   const typewriterRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const parallaxContainerRef = useRef<HTMLSelectElement>(null);
+  const parallaxContainerRef = useRef<HTMLElement | null>(null);
   const parallaxImgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
@@ -291,12 +291,12 @@ export function Home() {
       </section>
 
       {/* Premium Parallax Educational Image Section */}
-      <section className="landing-parallax-section" ref={parallaxContainerRef as any}>
+      <section className="landing-parallax-section" ref={parallaxContainerRef}>
         <div className="parallax-overlay" />
-        <img 
+        <img
           ref={parallaxImgRef}
-          src="/educational-hero.png" 
-          alt="Students studying collaboratively" 
+          src="/educational-hero.png"
+          alt="Students studying collaboratively"
           className="parallax-img"
         />
         <div className="parallax-content">

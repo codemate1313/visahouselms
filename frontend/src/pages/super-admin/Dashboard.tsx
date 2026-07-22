@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { apiClient } from "../../api/client";
 import { AnimatedCounter } from "../../components/AnimatedCounter";
 import { BarChart } from "../../components/charts/BarChart";
 import { DonutChart } from "../../components/charts/DonutChart";
+import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { Icon, type IconName } from "../../components/icons";
 
 type MetricKey =
@@ -356,8 +358,11 @@ export function Dashboard() {
       </div>
 
       <div className="dashboard-charts-grid">
-        <div>
-          <h2 className="section-title">Revenue by institute</h2>
+        <CollapsiblePanel
+          className="dashboard-chart-collapsible"
+          title="Revenue by institute"
+          description="Compare institute contribution across recorded payments."
+        >
           <BarChart
             data={institutesByRevenue}
             orientation="horizontal"
@@ -365,10 +370,13 @@ export function Dashboard() {
             ariaLabel="Revenue by institute"
             emptyMessage="No revenue recorded yet."
           />
-        </div>
+        </CollapsiblePanel>
 
-        <div>
-          <h2 className="section-title">Revenue by month</h2>
+        <CollapsiblePanel
+          className="dashboard-chart-collapsible"
+          title="Revenue by month"
+          description="Track month-wise platform revenue movement."
+        >
           <BarChart
             data={revenueByMonth}
             orientation="vertical"
@@ -376,20 +384,26 @@ export function Dashboard() {
             ariaLabel="Revenue by month"
             emptyMessage="No revenue recorded yet."
           />
-        </div>
+        </CollapsiblePanel>
 
-        <div>
-          <h2 className="section-title">Payment status</h2>
+        <CollapsiblePanel
+          className="dashboard-chart-collapsible"
+          title="Payment status"
+          description="Review paid and partial payment split."
+        >
           <DonutChart
             data={paymentStatusData}
             centerLabel="payments"
             ariaLabel="Payment status breakdown"
             emptyMessage="No payments recorded yet."
           />
-        </div>
+        </CollapsiblePanel>
 
-        <div>
-          <h2 className="section-title">Institutes by subscription state</h2>
+        <CollapsiblePanel
+          className="dashboard-chart-collapsible"
+          title="Institutes by subscription state"
+          description="See active, grace-period, and inactive institutes."
+        >
           <BarChart
             data={instituteStateData}
             orientation="vertical"
@@ -397,10 +411,10 @@ export function Dashboard() {
             ariaLabel="Institutes by subscription state"
             emptyMessage="No institutes yet."
           />
-        </div>
+        </CollapsiblePanel>
       </div>
 
-      {selectedMetric && (
+      {selectedMetric && createPortal(
         <div className="dashboard-detail-backdrop" onMouseDown={closeMetric}>
           <section
             className="dashboard-detail-dialog"
@@ -490,7 +504,8 @@ export function Dashboard() {
               )}
             </div>
           </section>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

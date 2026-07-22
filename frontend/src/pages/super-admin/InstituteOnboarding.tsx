@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { SearchableSelect } from "../../components/SearchableSelect";
 
 interface ModuleOption { id: number; title: string; module_type: string; duration_minutes: number; created_by_name: string }
@@ -188,10 +189,11 @@ export function InstituteOnboarding() {
           <div className="onboarding-grid-two-col">
             {/* LEFT COLUMN */}
             <div className="onboarding-col">
-              <div className="form-card onboarding-section-card">
-                <h2>Institute & Admin Details</h2>
-                <p className="hint" style={{ marginBottom: 16 }}>Basic institute credentials and initial admin profile.</p>
-
+              <CollapsiblePanel
+                className="form-card onboarding-section-card"
+                title="Institute & Admin Details"
+                description="Basic institute credentials and initial admin profile."
+              >
                 <div className="form-grid">
                   <div>
                     <label htmlFor="ob-name">Institute name</label>
@@ -218,11 +220,14 @@ export function InstituteOnboarding() {
                     <input value={form.admin_last_name} onChange={set("admin_last_name")} required placeholder="Doe" />
                   </div>
                 </div>
-              </div>
+              </CollapsiblePanel>
 
-              <div className="form-card onboarding-section-card">
-                <h2>Administrator Permissions</h2>
-                <p className="hint" style={{ marginBottom: 16 }}>Select features enabled for this institute's admin role.</p>
+              <CollapsiblePanel
+                className="form-card onboarding-section-card"
+                title="Administrator Permissions"
+                description="Select features enabled for this institute's admin role."
+                badge={<span className="count-chip">{Object.values(adminPermissions).filter(Boolean).length}</span>}
+              >
                 <div className="permission-grid">
                   {PERMISSIONS.map((permission) => (
                     <label className="permission-option" key={permission.key}>
@@ -240,15 +245,16 @@ export function InstituteOnboarding() {
                     </label>
                   ))}
                 </div>
-              </div>
+              </CollapsiblePanel>
             </div>
 
             {/* RIGHT COLUMN */}
             <div className="onboarding-col">
-              <div className="form-card onboarding-section-card">
-                <h2>Agreement & Payment Terms</h2>
-                <p className="hint" style={{ marginBottom: 16 }}>Commercial terms, payment record, and access allocation.</p>
-
+              <CollapsiblePanel
+                className="form-card onboarding-section-card"
+                title="Agreement & Payment Terms"
+                description="Commercial terms, payment record, and access allocation."
+              >
                 <div className="form-grid">
                   <div>
                     <label>Agreed amount</label>
@@ -302,11 +308,14 @@ export function InstituteOnboarding() {
                     <input type="number" min="1" value={form.access_duration_days} onChange={set("access_duration_days")} required />
                   </div>
                 </div>
-              </div>
+              </CollapsiblePanel>
 
-              <div className="form-card onboarding-section-card">
-                <h2>Included Courses</h2>
-                <p className="hint" style={{ marginBottom: 16 }}>Select courses included in this onboarding agreement.</p>
+              <CollapsiblePanel
+                className="form-card onboarding-section-card"
+                title="Included Courses"
+                description="Select courses included in this onboarding agreement."
+                badge={<span className="count-chip">{selectedModules.size}</span>}
+              >
                 <div className="plan-course-picker">
                   {modules.map((module) => (
                     <label className="plan-course-option" key={module.id}>
@@ -324,7 +333,7 @@ export function InstituteOnboarding() {
                     </label>
                   ))}
                 </div>
-              </div>
+              </CollapsiblePanel>
             </div>
           </div>
 
@@ -337,18 +346,26 @@ export function InstituteOnboarding() {
       )}
 
       {step === 2 && (
-        <section className="form-card wide">
-          <h2>Institute branding</h2><p className="hint">The portal stays offline while you prepare its identity.</p>
+        <CollapsiblePanel
+          className="form-card wide"
+          title="Institute branding"
+          description="The portal stays offline while you prepare its identity."
+        >
           {adminCredential && <section className="credential-sheet"><h3>Institute admin credentials</h3><p>Share these securely. The temporary password is shown only in this session.</p><div className="credential-row"><code>{adminCredential.email}</code><code>{adminCredential.password}</code></div></section>}
           <div className="form-grid"><div><label>Primary color</label><div className="color-input-row"><input type="color" value={form.primary_color} onChange={set("primary_color")} /><input value={form.primary_color} onChange={set("primary_color")} /></div></div><div><label>Secondary color</label><div className="color-input-row"><input type="color" value={form.secondary_color} onChange={set("secondary_color")} /><input value={form.secondary_color} onChange={set("secondary_color")} /></div></div></div>
           <label>Institute logo</label><input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setLogo(event.target.files?.[0] || null)} />
           <div className="branding-preview onboarding-brand-preview" style={{ background: form.secondary_color, borderColor: form.primary_color }}><strong style={{ color: form.primary_color }}>{onboarding?.name}</strong><span>Institute Portal</span></div>
           <div className="form-actions"><button onClick={saveBranding} disabled={busy}>{busy ? "Saving..." : "Save branding and review"}</button></div>
-        </section>
+        </CollapsiblePanel>
       )}
 
       {step === 3 && onboarding && (
-        <section className="form-card wide publish-summary-card">
+        <CollapsiblePanel
+          className="form-card wide publish-summary-card"
+          title={onboarding.onboarding_status === "published" ? "Institute is live" : "Ready to publish"}
+          description={`${onboarding.agreement_currency || "INR"} ${Number(onboarding.agreed_amount || 0).toLocaleString("en-IN")} agreement · ${onboarding.payment?.status || "pending"} payment · ${onboarding.access_duration_days} days validity`}
+          badge={<span className={`badge ${onboarding.onboarding_status === "published" ? "badge-green" : "badge-amber"}`}>{onboarding.onboarding_status === "published" ? "Published & Live" : "Draft Ready"}</span>}
+        >
           <div className="publish-hero-header">
             <span className={`badge ${onboarding.onboarding_status === "published" ? "badge-green" : "badge-amber"}`}>
               {onboarding.onboarding_status === "published" ? "Published & Live" : "Draft Ready"}
@@ -410,7 +427,7 @@ export function InstituteOnboarding() {
               </button>
             </div>
           )}
-        </section>
+        </CollapsiblePanel>
       )}
     </div>
   );

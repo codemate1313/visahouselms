@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "../../auth/logout";
 import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
+import { NotificationBell } from "../../components/StudentNotificationBell";
 import { Sidebar, type MenuSection } from "../../components/Sidebar";
 import { useInstituteBranding } from "../../hooks/useInstituteBranding";
 import { useAuthStore } from "../../store/authStore";
@@ -27,5 +28,5 @@ export function InstituteInstructorLayout() {
     ] },
   ];
 
-  return <div className="dashboard instructor-portal institute-branded-portal"><Sidebar brandTitle={branding?.institute_name ?? "IELTS LMS"} brandSubtitle="Institute Instructor" brandLogoUrl={logoUrl} sections={sections} collapsed={collapsed} onToggleCollapse={() => setCollapsed((value) => !value)} onLogout={logout} /><main className="dashboard-content" style={{ flex: 1, padding: "20px" }}><GsapRouteAnimator><Outlet /></GsapRouteAnimator></main></div>;
+  return <div className="dashboard instructor-portal institute-branded-portal"><Sidebar brandTitle={branding?.institute_name ?? "IELTS LMS"} brandSubtitle="Institute Instructor" brandLogoUrl={logoUrl} sections={sections} collapsed={collapsed} onToggleCollapse={() => setCollapsed((value) => !value)} onLogout={logout} /><NotificationBell eyebrow="Instructor updates" fallbackRoute="/institute-instructor/grading" /><main className="dashboard-content" style={{ flex: 1, padding: "20px" }}><GsapRouteAnimator><Outlet /></GsapRouteAnimator></main></div>;
 }

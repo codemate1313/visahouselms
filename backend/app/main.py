@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.middleware.request_logging import RequestLoggingMiddleware, _extract_user_id
 from app.routers import (
+    announcements,
     auth,
     backups,
     coupons,
@@ -24,6 +25,7 @@ from app.routers import (
     logs,
     module_authoring,
     module_catalog,
+    notifications,
     onboarding,
     payment_methods,
     payments,
@@ -95,6 +97,10 @@ app.include_router(payments.router)
 app.include_router(payment_methods.router)
 app.include_router(revenue.router)
 app.include_router(student_portal.router)
+app.include_router(notifications.router)
+app.include_router(announcements.institute_router)
+app.include_router(announcements.platform_router)
+app.include_router(announcements.student_router)
 
 
 @app.exception_handler(Exception)

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
 import type { StudentBadge, StudentLeaderboard } from "../../api/types";
+import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { Icon, type IconName } from "../../components/icons";
 
 const BADGE_ICONS: Record<string, IconName> = {
@@ -56,8 +57,12 @@ export function StudentProgress() {
         <div className="stat-tile"><p className="stat-label">Best CEFR</p><p className="stat-value">{leaderboard.current_student?.best_cefr_level ?? "-"}</p></div>
       </div>
 
-      <section className="progress-section">
-        <div className="panel-heading"><div><h2>Badges</h2><p>Badges unlock automatically when a graded result meets the stated requirement.</p></div></div>
+      <CollapsiblePanel
+        className="progress-section"
+        title="Badges"
+        description="Badges unlock automatically when a graded result meets the stated requirement."
+        badge={<span className="count-chip">{earned.length} / {badges.length}</span>}
+      >
         <div className="achievement-grid">
           {badges.map((badge) => (
             <article key={badge.code} className={badge.earned ? "is-earned" : "is-locked"}>
@@ -71,10 +76,14 @@ export function StudentProgress() {
             </article>
           ))}
         </div>
-      </section>
+      </CollapsiblePanel>
 
-      <section className="progress-section">
-        <div className="panel-heading"><div><h2>Institute leaderboard</h2><p>Ranked by average percentage across graded tests. Equal averages share a rank.</p></div></div>
+      <CollapsiblePanel
+        className="progress-section"
+        title="Institute leaderboard"
+        description="Ranked by average percentage across graded tests. Equal averages share a rank."
+        badge={<span className="count-chip">{leaderboard.entries.length}</span>}
+      >
         {leaderboard.message ? (
           <p className="empty-message">{leaderboard.message}</p>
         ) : leaderboard.entries.length ? (
@@ -97,7 +106,7 @@ export function StudentProgress() {
         ) : (
           <p className="empty-message">Complete a graded test to join your institute leaderboard.</p>
         )}
-      </section>
+      </CollapsiblePanel>
     </div>
   );
 }

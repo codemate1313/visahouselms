@@ -1,6 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { confirmDelete } from "../../components/confirmDialog";
 import { PasswordInput } from "../../components/PasswordInput";
 import { SearchableSelect } from "../../components/SearchableSelect";
@@ -140,12 +141,11 @@ function TypographyTab() {
   };
 
   return (
-    <div className="form-card wide">
-      <h3>App Typography & Tag Font Weights</h3>
-      <p className="hint" style={{ marginBottom: 20 }}>
-        Customize the global font family and tag-specific font weights across the platform to make text sleek, lightweight, or bold in real time.
-      </p>
-
+    <CollapsiblePanel
+      className="form-card wide"
+      title="App Typography & Tag Font Weights"
+      description="Customize the global font family and tag-specific font weights across the platform in real time."
+    >
       {/* Font Family Selection */}
       <div style={{ marginBottom: 24 }}>
         <label style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Global Font Family</label>
@@ -213,7 +213,7 @@ function TypographyTab() {
           Reset to Sleek Defaults
         </button>
       </div>
-    </div>
+    </CollapsiblePanel>
   );
 }
 
@@ -254,12 +254,11 @@ function SeedTab() {
   }
 
   return (
-    <div className="form-card wide">
-      <h3>Populate Sample & Demo Seed Data</h3>
-      <p className="hint" style={{ marginBottom: 16 }}>
-        Generate sample Listening, Reading, Writing, Speaking, Full Mock, and Final Test courses for local testing and demonstration.
-      </p>
-
+    <CollapsiblePanel
+      className="form-card wide"
+      title="Populate Sample & Demo Seed Data"
+      description="Generate sample Listening, Reading, Writing, Speaking, Full Mock, and Final Test courses for local testing and demos."
+    >
       <div className="form-actions" style={{ display: "flex", gap: "12px" }}>
         <button type="button" disabled={busy} onClick={runSeed}>
           {busy ? "Seeding Data..." : "Populate Seed Data"}
@@ -308,7 +307,7 @@ function SeedTab() {
 
       {error && <pre className="console-output error">{error}</pre>}
       {output && <pre className="console-output">{output}</pre>}
-    </div>
+    </CollapsiblePanel>
   );
 }
 
@@ -363,55 +362,61 @@ function SmtpTab() {
   }
 
   return (
-    <form className="form-card wide" onSubmit={save}>
-      <div className="form-grid">
-        <div>
-          <label>Host</label>
-          <input value={form.host} onChange={(e) => setForm({ ...form, host: e.target.value })} placeholder="smtp.example.com" />
+    <form className="form-card wide collapsible-form-card" onSubmit={save}>
+      <CollapsiblePanel
+        className="form-card-collapsible"
+        title="SMTP Delivery"
+        description="Configure outbound mail delivery and send a test email."
+      >
+        <div className="form-grid">
+          <div>
+            <label>Host</label>
+            <input value={form.host} onChange={(e) => setForm({ ...form, host: e.target.value })} placeholder="smtp.example.com" />
+          </div>
+          <div>
+            <label>Port</label>
+            <input value={form.port} onChange={(e) => setForm({ ...form, port: e.target.value })} placeholder="587" />
+          </div>
+          <div>
+            <label>Username</label>
+            <input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+          </div>
+          <div>
+            <label>Password</label>
+            <PasswordInput value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="stored encrypted" />
+          </div>
+          <div>
+            <label>Encryption</label>
+            <SearchableSelect
+              options={[
+                { value: "tls", label: "TLS (STARTTLS)" },
+                { value: "ssl", label: "SSL" },
+                { value: "none", label: "None" },
+              ]}
+              value={form.encryption}
+              onChange={(value) => setForm({ ...form, encryption: String(value) })}
+              searchable={false}
+              className="form-dropdown-select"
+            />
+          </div>
+          <div>
+            <label>From address</label>
+            <input value={form.from_address} onChange={(e) => setForm({ ...form, from_address: e.target.value })} placeholder="noreply@example.com" />
+          </div>
         </div>
-        <div>
-          <label>Port</label>
-          <input value={form.port} onChange={(e) => setForm({ ...form, port: e.target.value })} placeholder="587" />
-        </div>
-        <div>
-          <label>Username</label>
-          <input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
-        </div>
-        <div>
-          <label>Password</label>
-          <PasswordInput value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="stored encrypted" />
-        </div>
-        <div>
-          <label>Encryption</label>
-          <SearchableSelect
-            options={[
-              { value: "tls", label: "TLS (STARTTLS)" },
-              { value: "ssl", label: "SSL" },
-              { value: "none", label: "None" },
-            ]}
-            value={form.encryption}
-            onChange={(value) => setForm({ ...form, encryption: String(value) })}
-            searchable={false}
-            className="form-dropdown-select"
-          />
-        </div>
-        <div>
-          <label>From address</label>
-          <input value={form.from_address} onChange={(e) => setForm({ ...form, from_address: e.target.value })} placeholder="noreply@example.com" />
-        </div>
-      </div>
 
-      {error && <p className="error-text">{error}</p>}
-      {notice && <p className="success-text">{notice}</p>}
+        {error && <p className="error-text">{error}</p>}
+        {notice && <p className="success-text">{notice}</p>}
 
-      <div className="form-actions">
-        <button type="submit" disabled={busy}>Save SMTP Settings</button>
-      </div>
+        <div className="form-actions">
+          <button type="submit" disabled={busy}>Save SMTP Settings</button>
+        </div>
 
-      <div className="test-row">
-        <input placeholder="you@example.com" value={testTo} onChange={(e) => setTestTo(e.target.value)} />
-        <button type="button" disabled={busy || !testTo} onClick={sendTest}>Send test email</button>
-      </div>
+        <div className="test-row">
+          <input placeholder="you@example.com" value={testTo} onChange={(e) => setTestTo(e.target.value)} />
+          <button type="button" disabled={busy || !testTo} onClick={sendTest}>Send test email</button>
+        </div>
+      </CollapsiblePanel>
     </form>
   );
 }
@@ -473,39 +478,46 @@ function FcmTab() {
   }
 
   return (
-    <form className="form-card wide" onSubmit={save}>
-      <p className={configured ? "success-text" : "hint"}>
-        {configured ? "✓ Service account configured" : "No service account uploaded yet."}
-      </p>
+    <form className="form-card wide collapsible-form-card" onSubmit={save}>
+      <CollapsiblePanel
+        className="form-card-collapsible"
+        title="Firebase FCM"
+        description="Manage push notification credentials and device-token testing."
+        badge={<span className={`badge ${configured ? "badge-green" : "badge-gray"}`}>{configured ? "Ready" : "Missing"}</span>}
+      >
+        <p className={configured ? "success-text" : "hint"}>
+          {configured ? "✓ Service account configured" : "No service account uploaded yet."}
+        </p>
 
-      <label>Project ID (optional - detected from JSON if empty)</label>
-      <input value={projectId} onChange={(e) => setProjectId(e.target.value)} placeholder="my-firebase-project" />
+        <label>Project ID (optional - detected from JSON if empty)</label>
+        <input value={projectId} onChange={(e) => setProjectId(e.target.value)} placeholder="my-firebase-project" />
 
-      <label>Service account JSON {configured && "(paste to replace)"}</label>
-      <textarea
-        rows={7}
-        value={saJson}
-        onChange={(e) => setSaJson(e.target.value)}
-        placeholder='{"type": "service_account", "project_id": "...", ...}'
-      />
-
-      {error && <p className="error-text">{error}</p>}
-      {notice && <p className="success-text">{notice}</p>}
-
-      <div className="form-actions">
-        <button type="submit" disabled={busy}>Save FCM Settings</button>
-      </div>
-
-      <div className="test-row">
-        <input
-          placeholder="Device token (optional - validates credentials if empty)"
-          value={deviceToken}
-          onChange={(e) => setDeviceToken(e.target.value)}
+        <label>Service account JSON {configured && "(paste to replace)"}</label>
+        <textarea
+          rows={7}
+          value={saJson}
+          onChange={(e) => setSaJson(e.target.value)}
+          placeholder='{"type": "service_account", "project_id": "...", ...}'
         />
-        <button type="button" disabled={busy || !configured} onClick={test}>
-          {deviceToken ? "Send test notification" : "Validate credentials"}
-        </button>
-      </div>
+
+        {error && <p className="error-text">{error}</p>}
+        {notice && <p className="success-text">{notice}</p>}
+
+        <div className="form-actions">
+          <button type="submit" disabled={busy}>Save FCM Settings</button>
+        </div>
+
+        <div className="test-row">
+          <input
+            placeholder="Device token (optional - validates credentials if empty)"
+            value={deviceToken}
+            onChange={(e) => setDeviceToken(e.target.value)}
+          />
+          <button type="button" disabled={busy || !configured} onClick={test}>
+            {deviceToken ? "Send test notification" : "Validate credentials"}
+          </button>
+        </div>
+      </CollapsiblePanel>
     </form>
   );
 }
@@ -556,41 +568,47 @@ function AvatarTab() {
   }
 
   return (
-    <form className="form-card wide" onSubmit={save}>
-      <p className="hint">
-        Speaking modules can show a talking-presenter video reading the prompts (via D-ID). Until an API key and
-        presenter image are set here, Speaking parts fall back to no video — instructors can still author them.
-      </p>
-      <div className="form-grid">
-        <div>
-          <label>Provider</label>
-          <SearchableSelect
-            options={[{ value: "d_id", label: "D-ID" }]}
-            value={form.provider}
-            onChange={(value) => setForm({ ...form, provider: String(value) })}
-            searchable={false}
-            className="form-dropdown-select"
-          />
+    <form className="form-card wide collapsible-form-card" onSubmit={save}>
+      <CollapsiblePanel
+        className="form-card-collapsible"
+        title="Avatar Presenter"
+        description="Configure D-ID presenter video support for Speaking modules."
+      >
+        <p className="hint">
+          Speaking modules can show a talking-presenter video reading the prompts (via D-ID). Until an API key and
+          presenter image are set here, Speaking parts fall back to no video — instructors can still author them.
+        </p>
+        <div className="form-grid">
+          <div>
+            <label>Provider</label>
+            <SearchableSelect
+              options={[{ value: "d_id", label: "D-ID" }]}
+              value={form.provider}
+              onChange={(value) => setForm({ ...form, provider: String(value) })}
+              searchable={false}
+              className="form-dropdown-select"
+            />
+          </div>
+          <div>
+            <label>Voice</label>
+            <input value={form.voice_id} onChange={(e) => setForm({ ...form, voice_id: e.target.value })} placeholder="en-GB-SoniaNeural" />
+          </div>
         </div>
-        <div>
-          <label>Voice</label>
-          <input value={form.voice_id} onChange={(e) => setForm({ ...form, voice_id: e.target.value })} placeholder="en-GB-SoniaNeural" />
+        <label>API key</label>
+        <PasswordInput value={form.api_key} onChange={(e) => setForm({ ...form, api_key: e.target.value })} placeholder="stored encrypted" />
+        <label>Presenter image URL</label>
+        <input value={form.presenter_image_url} onChange={(e) => setForm({ ...form, presenter_image_url: e.target.value })} placeholder="https://.../presenter.jpg" />
+
+        {error && <p className="error-text">{error}</p>}
+        {notice && <p className="success-text">{notice}</p>}
+
+        <div className="form-actions">
+          <button type="submit" disabled={busy}>Save Avatar Settings</button>
         </div>
-      </div>
-      <label>API key</label>
-      <PasswordInput value={form.api_key} onChange={(e) => setForm({ ...form, api_key: e.target.value })} placeholder="stored encrypted" />
-      <label>Presenter image URL</label>
-      <input value={form.presenter_image_url} onChange={(e) => setForm({ ...form, presenter_image_url: e.target.value })} placeholder="https://.../presenter.jpg" />
-
-      {error && <p className="error-text">{error}</p>}
-      {notice && <p className="success-text">{notice}</p>}
-
-      <div className="form-actions">
-        <button type="submit" disabled={busy}>Save Avatar Settings</button>
-      </div>
-      <div className="test-row">
-        <button type="button" disabled={busy || !form.api_key} onClick={test}>Test connection</button>
-      </div>
+        <div className="test-row">
+          <button type="button" disabled={busy || !form.api_key} onClick={test}>Test connection</button>
+        </div>
+      </CollapsiblePanel>
     </form>
   );
 }
@@ -611,13 +629,19 @@ function AiEvaluationTab() {
     try { const { data } = await apiClient.put("/super-admin/dev-settings/ai-evaluation", form); setConfigured(data.configured); setNotice("AI evaluation settings saved."); } catch (err: unknown) { setError(extractErrorMessage(err, "Failed to save AI evaluation settings.")); } finally { setBusy(false); }
   }
 
-  return <form className="form-card wide" onSubmit={save}>
-    <div className="panel-heading"><div><h3>Human-reviewed AI evaluation</h3><p>Configure a JSON rubric evaluator for advisory Writing drafts.</p></div><span className={`badge ${configured ? "badge-green" : "badge-gray"}`}>{configured ? "Ready" : "Not configured"}</span></div>
-    <label className="toggle-row"><input type="checkbox" checked={form.enabled} onChange={(event) => setForm({ ...form, enabled: event.target.checked })} /><span>Enable AI rubric suggestions</span></label>
-    <div className="form-grid"><div><label>Provider label</label><input value={form.provider} onChange={(event) => setForm({ ...form, provider: event.target.value })} /></div><div><label>Model</label><input value={form.model} onChange={(event) => setForm({ ...form, model: event.target.value })} /></div><div><label>Evaluator endpoint</label><input type="url" value={form.endpoint_url} onChange={(event) => setForm({ ...form, endpoint_url: event.target.value })} placeholder="https://evaluator.example.com/grade" /></div><div><label>Monthly draft limit</label><input type="number" min="0" value={form.monthly_limit} onChange={(event) => setForm({ ...form, monthly_limit: Number(event.target.value) })} /></div></div>
-    <label>API key</label><PasswordInput value={form.api_key} onChange={(event) => setForm({ ...form, api_key: event.target.value })} placeholder="stored encrypted" />
-    {error && <p className="error-text">{error}</p>}{notice && <p className="success-text">{notice}</p>}
-    <div className="form-actions"><button disabled={busy}>{busy ? "Saving..." : "Save AI settings"}</button></div>
+  return <form className="form-card wide collapsible-form-card" onSubmit={save}>
+    <CollapsiblePanel
+      className="form-card-collapsible"
+      title="Human-reviewed AI evaluation"
+      description="Configure a JSON rubric evaluator for advisory Writing drafts."
+      badge={<span className={`badge ${configured ? "badge-green" : "badge-gray"}`}>{configured ? "Ready" : "Not configured"}</span>}
+    >
+      <label className="toggle-row"><input type="checkbox" checked={form.enabled} onChange={(event) => setForm({ ...form, enabled: event.target.checked })} /><span>Enable AI rubric suggestions</span></label>
+      <div className="form-grid"><div><label>Provider label</label><input value={form.provider} onChange={(event) => setForm({ ...form, provider: event.target.value })} /></div><div><label>Model</label><input value={form.model} onChange={(event) => setForm({ ...form, model: event.target.value })} /></div><div><label>Evaluator endpoint</label><input type="url" value={form.endpoint_url} onChange={(event) => setForm({ ...form, endpoint_url: event.target.value })} placeholder="https://evaluator.example.com/grade" /></div><div><label>Monthly draft limit</label><input type="number" min="0" value={form.monthly_limit} onChange={(event) => setForm({ ...form, monthly_limit: Number(event.target.value) })} /></div></div>
+      <label>API key</label><PasswordInput value={form.api_key} onChange={(event) => setForm({ ...form, api_key: event.target.value })} placeholder="stored encrypted" />
+      {error && <p className="error-text">{error}</p>}{notice && <p className="success-text">{notice}</p>}
+      <div className="form-actions"><button disabled={busy}>{busy ? "Saving..." : "Save AI settings"}</button></div>
+    </CollapsiblePanel>
   </form>;
 }
 
@@ -663,7 +687,11 @@ function MaintenanceTab() {
   }
 
   return (
-    <div className="form-card wide">
+    <CollapsiblePanel
+      className="form-card wide"
+      title="Maintenance Actions"
+      description="Run migrations, clear cache, and check storage links."
+    >
       <div className="maintenance-actions">
         <button disabled={busy !== null} onClick={() => run("migrate", "Data migration")}>
           {busy === "migrate" ? "Running..." : "Run data migration"}
@@ -677,7 +705,7 @@ function MaintenanceTab() {
       </div>
       {error && <pre className="console-output error">{error}</pre>}
       {output && <pre className="console-output">{output}</pre>}
-    </div>
+    </CollapsiblePanel>
   );
 }
 
@@ -774,7 +802,11 @@ function BackupsTab() {
 
   return (
     <div>
-      <div className="form-card wide" style={{ marginBottom: 20 }}>
+      <CollapsiblePanel
+        className="form-card wide"
+        title="Backup Schedule"
+        description="Set backup cadence, retention, and trigger an immediate backup."
+      >
         <div className="form-grid">
           <div>
             <label>Schedule</label>
@@ -801,38 +833,47 @@ function BackupsTab() {
           <button disabled={busy} onClick={saveSettings}>Save settings</button>
           <button disabled={busy} onClick={backupNow}>Backup now</button>
         </div>
-      </div>
+      </CollapsiblePanel>
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>File</th><th>Size</th><th>Kind</th><th>Status</th><th>Created</th><th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 && (
-            <tr><td colSpan={6} className="empty-cell">No backups yet.</td></tr>
-          )}
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <td>{row.filename}</td>
-              <td>{formatBytes(row.size_bytes)}</td>
-              <td>{row.kind}</td>
-              <td>
-                <span className={`badge ${row.status === "done" ? "badge-green" : "badge-amber"}`}>
-                  {row.status}
-                </span>
-              </td>
-              <td>{new Date(row.created_at).toLocaleString()}</td>
-              <td className="table-actions">
-                <button onClick={() => download(row)}>Download</button>
-                <button onClick={() => restore(row)}>Restore</button>
-                <button className="danger" onClick={() => remove(row)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <CollapsiblePanel
+        className="form-card wide table-card-collapsible"
+        title="Backup Files"
+        description="Download, restore, or delete generated backup artifacts."
+        badge={<span className="count-chip">{rows.length}</span>}
+      >
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>File</th><th>Size</th><th>Kind</th><th>Status</th><th>Created</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 && (
+                <tr><td colSpan={6} className="empty-cell">No backups yet.</td></tr>
+              )}
+              {rows.map((row) => (
+                <tr key={row.id}>
+                  <td>{row.filename}</td>
+                  <td>{formatBytes(row.size_bytes)}</td>
+                  <td>{row.kind}</td>
+                  <td>
+                    <span className={`badge ${row.status === "done" ? "badge-green" : "badge-amber"}`}>
+                      {row.status}
+                    </span>
+                  </td>
+                  <td>{new Date(row.created_at).toLocaleString()}</td>
+                  <td className="table-actions">
+                    <button onClick={() => download(row)}>Download</button>
+                    <button onClick={() => restore(row)}>Restore</button>
+                    <button className="danger" onClick={() => remove(row)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CollapsiblePanel>
     </div>
   );
 }
@@ -863,107 +904,118 @@ function LoginSliderTab() {
   }
 
   return (
-    <div className="form-card wide">
-      <h3>Login Page Educational Hero Slider Settings</h3>
-      <p className="hint" style={{ marginBottom: 20 }}>
-        Manage the educational showcase images, titles, and subtitles displayed on the login page hero carousel.
-      </p>
-
+    <CollapsiblePanel
+      className="form-card wide"
+      title="Login Page Educational Hero Slider Settings"
+      description="Manage the educational showcase images, titles, and subtitles displayed on the login page hero carousel."
+    >
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
         <button className="secondary-button" type="button" onClick={() => { resetSlides(); showSuccess("Hero slides reset to defaults.", "Reset Done"); }}>
           Reset to Default Educational Slides
         </button>
       </div>
 
-      <div style={{ display: "grid", gap: 20, marginBottom: 32 }}>
-        {slides.map((slide) => (
-          <div key={slide.id} style={{ display: "flex", gap: 20, background: "#f8fafc", padding: 16, borderRadius: 14, border: "1px solid #e2e8f0", alignItems: "center" }}>
-            <img src={slide.imageUrl} alt={slide.title} style={{ width: 140, height: 90, objectFit: "cover", borderRadius: 10, flexShrink: 0 }} />
-            <div style={{ flex: 1, display: "grid", gap: 8 }}>
-              <div style={{ display: "flex", gap: 12 }}>
+      <CollapsiblePanel
+        className="nested-collapsible-panel"
+        title="Current slides"
+        description="Edit existing hero images and copy."
+        badge={<span className="count-chip">{slides.length}</span>}
+      >
+        <div style={{ display: "grid", gap: 20, marginBottom: 20 }}>
+          {slides.map((slide) => (
+            <div key={slide.id} style={{ display: "flex", gap: 20, background: "#f8fafc", padding: 16, borderRadius: 14, border: "1px solid #e2e8f0", alignItems: "center" }}>
+              <img src={slide.imageUrl} alt={slide.title} style={{ width: 140, height: 90, objectFit: "cover", borderRadius: 10, flexShrink: 0 }} />
+              <div style={{ flex: 1, display: "grid", gap: 8 }}>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <input
+                    type="text"
+                    placeholder="Badge text"
+                    value={slide.badge}
+                    onChange={(e) => updateSlide(slide.id, { badge: e.target.value })}
+                    style={{ width: "200px", padding: "6px 10px", fontSize: "12px", fontWeight: 600 }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Slide Title"
+                    value={slide.title}
+                    onChange={(e) => updateSlide(slide.id, { title: e.target.value })}
+                    style={{ flex: 1, padding: "6px 10px", fontSize: "13px", fontWeight: 600 }}
+                  />
+                </div>
                 <input
                   type="text"
-                  placeholder="Badge text"
-                  value={slide.badge}
-                  onChange={(e) => updateSlide(slide.id, { badge: e.target.value })}
-                  style={{ width: "200px", padding: "6px 10px", fontSize: "12px", fontWeight: 600 }}
+                  placeholder="Subtitle"
+                  value={slide.subtitle}
+                  onChange={(e) => updateSlide(slide.id, { subtitle: e.target.value })}
+                  style={{ padding: "6px 10px", fontSize: "12px" }}
                 />
                 <input
                   type="text"
-                  placeholder="Slide Title"
-                  value={slide.title}
-                  onChange={(e) => updateSlide(slide.id, { title: e.target.value })}
-                  style={{ flex: 1, padding: "6px 10px", fontSize: "13px", fontWeight: 600 }}
+                  placeholder="Image URL"
+                  value={slide.imageUrl}
+                  onChange={(e) => updateSlide(slide.id, { imageUrl: e.target.value })}
+                  style={{ padding: "6px 10px", fontSize: "12px" }}
                 />
               </div>
-              <input
-                type="text"
-                placeholder="Subtitle"
-                value={slide.subtitle}
-                onChange={(e) => updateSlide(slide.id, { subtitle: e.target.value })}
-                style={{ padding: "6px 10px", fontSize: "12px" }}
-              />
-              <input
-                type="text"
-                placeholder="Image URL"
-                value={slide.imageUrl}
-                onChange={(e) => updateSlide(slide.id, { imageUrl: e.target.value })}
-                style={{ padding: "6px 10px", fontSize: "12px" }}
-              />
+              {slides.length > 1 && (
+                <button className="danger" type="button" onClick={() => removeSlide(slide.id)}>
+                  Remove
+                </button>
+              )}
             </div>
-            {slides.length > 1 && (
-              <button className="danger" type="button" onClick={() => removeSlide(slide.id)}>
-                Remove
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </CollapsiblePanel>
 
-      <h4>Add Custom Educational Slide</h4>
-      <form onSubmit={handleAdd} style={{ display: "grid", gap: 12, maxWidth: 600 }}>
-        <div>
-          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Image URL</label>
-          <input
-            type="url"
-            placeholder="https://images.unsplash.com/..."
-            value={newUrl}
-            onChange={(e) => setNewUrl(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Title</label>
-          <input
-            type="text"
-            placeholder="Slide Heading"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Subtitle</label>
-          <input
-            type="text"
-            placeholder="Slide Subtitle"
-            value={newSubtitle}
-            onChange={(e) => setNewSubtitle(e.target.value)}
-          />
-        </div>
-        <div>
-          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Badge Text</label>
-          <input
-            type="text"
-            placeholder="e.g. ACADEMIC EXCELLENCE"
-            value={newBadge}
-            onChange={(e) => setNewBadge(e.target.value)}
-          />
-        </div>
-        <button type="submit" style={{ justifySelf: "start", padding: "10px 20px" }}>
-          Add Educational Slide
-        </button>
-      </form>
-    </div>
+      <CollapsiblePanel
+        className="nested-collapsible-panel compact"
+        title="Add Custom Educational Slide"
+        description="Create another slide for the public login hero."
+      >
+        <form onSubmit={handleAdd} style={{ display: "grid", gap: 12, maxWidth: 600 }}>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Image URL</label>
+            <input
+              type="url"
+              placeholder="https://images.unsplash.com/..."
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Title</label>
+            <input
+              type="text"
+              placeholder="Slide Heading"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Subtitle</label>
+            <input
+              type="text"
+              placeholder="Slide Subtitle"
+              value={newSubtitle}
+              onChange={(e) => setNewSubtitle(e.target.value)}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Badge Text</label>
+            <input
+              type="text"
+              placeholder="e.g. ACADEMIC EXCELLENCE"
+              value={newBadge}
+              onChange={(e) => setNewBadge(e.target.value)}
+            />
+          </div>
+          <button type="submit" style={{ justifySelf: "start", padding: "10px 20px" }}>
+            Add Educational Slide
+          </button>
+        </form>
+      </CollapsiblePanel>
+    </CollapsiblePanel>
   );
 }

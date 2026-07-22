@@ -571,8 +571,10 @@ export interface AttemptSummary {
 
 export interface StudentNotification {
   id: number;
-  kind: "grade_released";
+  kind: "grade_released" | "announcement_published";
   attempt_id: number | null;
+  announcement_id: number | null;
+  link_url: string | null;
   title: string;
   message: string;
   read_at: string | null;
@@ -584,6 +586,37 @@ export interface StudentNotification {
   band_label: string | null;
   cefr_level: CefrLevel | null;
 }
+
+export interface Announcement {
+  id: number;
+  institute_id: number | null;
+  title: string;
+  message: string;
+  audience: string;
+  status: "draft" | "published" | "scheduled";
+  published_at: string | null;
+  scheduled_at: string | null;
+  expires_at: string | null;
+  target_institute_ids?: number[];
+  target_user_ids?: number[];
+  created_at: string;
+}
+
+export interface TargetInstituteOption {
+  id: number;
+  name: string;
+  slug: string;
+  is_active?: boolean;
+  onboarding_status?: string;
+}
+
+export interface TargetStudentOption {
+  id: number;
+  name: string;
+  email: string;
+  institute_id?: number | null;
+}
+
 
 export type ProctorFlagType =
   | "blur"

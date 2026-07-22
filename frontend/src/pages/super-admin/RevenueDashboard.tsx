@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { apiClient } from "../../api/client";
+import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
 
@@ -270,8 +271,12 @@ export function RevenueDashboard() {
       </div>
 
       <div className="revenue-tables-grid">
-        <div className="table-card-block">
-          <h2 className="section-title">Revenue by Institute</h2>
+        <CollapsiblePanel
+          className="table-card-block"
+          title="Revenue by Institute"
+          description="Institute-level revenue and transaction counts."
+          badge={<span className="count-chip">{summary.by_institute.length}</span>}
+        >
           <div className="table-wrap">
             <table className="data-table sleek-institutes-table">
               <thead>
@@ -308,10 +313,14 @@ export function RevenueDashboard() {
               </tbody>
             </table>
           </div>
-        </div>
+        </CollapsiblePanel>
 
-        <div className="table-card-block">
-          <h2 className="section-title">Revenue by Month</h2>
+        <CollapsiblePanel
+          className="table-card-block"
+          title="Revenue by Month"
+          description="Month-wise revenue and transaction counts."
+          badge={<span className="count-chip">{summary.by_month.length}</span>}
+        >
           <div className="table-wrap">
             <table className="data-table sleek-institutes-table">
               <thead>
@@ -343,11 +352,15 @@ export function RevenueDashboard() {
               </tbody>
             </table>
           </div>
-        </div>
+        </CollapsiblePanel>
       </div>
 
-      <div className="table-card-block" style={{ marginTop: 28 }}>
-        <h2 className="section-title">Outstanding Dues</h2>
+      <CollapsiblePanel
+        className="table-card-block"
+        title="Outstanding Dues"
+        description="Invoices with remaining due amounts."
+        badge={<span className="count-chip">{summary.dues.length}</span>}
+      >
         <div className="table-wrap">
           <table className="data-table sleek-institutes-table">
             <thead>
@@ -395,7 +408,7 @@ export function RevenueDashboard() {
             </tbody>
           </table>
         </div>
-      </div>
+      </CollapsiblePanel>
     </div>
   );
 }
