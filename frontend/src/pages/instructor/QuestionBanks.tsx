@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
+import { SearchableSelect } from "../../components/SearchableSelect";
 import type { Course, QuestionBank } from "../../api/types";
 
 const SECTION_LABELS: Record<string, string> = {
@@ -52,14 +53,22 @@ export function QuestionBanks() {
     </div>
     <form className="filter-bar responsive-filters" onSubmit={submitSearch}>
       <input placeholder="Search question banks..." aria-label="Search question banks" value={search} onChange={(event) => setSearch(event.target.value)} />
-      <select aria-label="IELTS section" value={section} onChange={(event) => setSection(event.target.value)}>
-        <option value="">All sections</option>
-        {Object.entries(SECTION_LABELS).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-      </select>
-      <select aria-label="Course" value={courseId} onChange={(event) => setCourseId(event.target.value)}>
-        <option value="">All courses</option>
-        {courses.map((course) => <option value={course.id} key={course.id}>{course.title}</option>)}
-      </select>
+      <SearchableSelect
+        ariaLabel="IELTS section"
+        options={[{ value: "", label: "All sections" }, ...Object.entries(SECTION_LABELS).map(([value, label]) => ({ value, label }))]}
+        value={section}
+        onChange={(value) => setSection(String(value))}
+        searchable={false}
+        className="status-filter-select"
+      />
+      <SearchableSelect
+        ariaLabel="Course"
+        options={[{ value: "", label: "All courses" }, ...courses.map((course) => ({ value: course.id, label: course.title }))]}
+        value={courseId}
+        onChange={(value) => setCourseId(String(value))}
+        searchPlaceholder="Search courses..."
+        className="status-filter-select"
+      />
       <label className="inline-check"><input type="checkbox" checked={mine} onChange={(event) => setMine(event.target.checked)} /> My banks</label>
       <button type="submit">Search</button>
     </form>

@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
 from app.core.security import hash_password
-from app.models import Base, ExamModuleAsset, ExamModuleQuestion
+from app.models import Base, ExamModuleAsset, ExamModuleQuestion, StudentNotification
 from app.models.attempt import (
     ATTEMPT_GRADED,
     ATTEMPT_GRADING,
@@ -28,7 +28,7 @@ from app.models.course import COURSE_PUBLISHED, Course
 from app.models.institute import Institute
 from app.models.role import INST_INSTRUCTOR, SA_INSTRUCTOR, STUDENT, Role
 from app.models.user import User
-from app.services import ai_evaluation_service, attempt_service, grading_service, module_authoring_service, student_analysis_service
+from app.services import ai_evaluation_service, attempt_service, grading_service, module_authoring_service, notification_service, student_analysis_service
 from app.services import cefr_service
 
 
@@ -263,6 +263,14 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(Decimal(final["max_score"]), Decimal("64"))
         self.assertEqual(final["cefr_level"], "C1")
         self.assertEqual(final["cefr_profile"]["skills"][0]["level"], "C1")
+        notification = self.db.query(StudentNotification).filter_by(attempt_id=attempt.id).one()
+        self.assertEqual(notification.user_id, self.student.id)
+        self.assertEqual(notification.kind, "grade_released")
+        updates = notification_service.list_student_notifications(self.db, self.student)
+        self.assertEqual(updates[0]["attempt_id"], attempt.id)
+        self.assertIsNone(updates[0]["read_at"])
+        notification_service.mark_notification_read(self.db, self.student, notification.id)
+        self.assertIsNotNone(notification.read_at)
         self.db.refresh(queue)
         self.assertEqual(queue.status, "completed")
         self.assertTrue(

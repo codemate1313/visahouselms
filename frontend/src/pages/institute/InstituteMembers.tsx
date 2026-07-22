@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import { confirmDelete } from "../../components/confirmDialog";
+import { SearchableSelect } from "../../components/SearchableSelect";
 import { useAuthStore } from "../../store/authStore";
 
 export interface InstituteMember {
@@ -168,30 +169,54 @@ export function InstituteMembers({ role, instituteId }: Props) {
       <div className={`filter-row ${isAllAccounts ? "accounts-filter-row" : ""}`}>
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${label.toLowerCase()}...`} />
         {isAllAccounts && (
-          <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
-            <option value="">All account types</option>
-            <option value="STUDENT">Students</option>
-            <option value="INST_INSTRUCTOR">Institute instructors</option>
-          </select>
+          <SearchableSelect
+            options={[
+              { value: "", label: "All account types" },
+              { value: "STUDENT", label: "Students" },
+              { value: "INST_INSTRUCTOR", label: "Institute instructors" },
+            ]}
+            value={roleFilter}
+            onChange={(value) => setRoleFilter(String(value))}
+            searchable={false}
+            className="member-filter-select"
+          />
         )}
-        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-          <option value="">Any status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="deleted">Deleted</option>
-          <option value="password_reset">Password reset pending</option>
-        </select>
-        <select value={activityFilter} onChange={(event) => setActivityFilter(event.target.value)}>
-          <option value="">Any test activity</option>
-          <option value="attempts">Has test attempts</option>
-          <option value="no_attempts">No test attempts</option>
-        </select>
-        <select value={sessionFilter} onChange={(event) => setSessionFilter(event.target.value)}>
-          <option value="">Any device/session</option>
-          <option value="active_session">Currently signed in</option>
-          <option value="known_devices">Known devices</option>
-          <option value="no_devices">No known devices</option>
-        </select>
+        <SearchableSelect
+          options={[
+            { value: "", label: "Any status" },
+            { value: "active", label: "Active" },
+            { value: "inactive", label: "Inactive" },
+            { value: "deleted", label: "Deleted" },
+            { value: "password_reset", label: "Password reset pending" },
+          ]}
+          value={statusFilter}
+          onChange={(value) => setStatusFilter(String(value))}
+          searchable={false}
+          className="member-filter-select"
+        />
+        <SearchableSelect
+          options={[
+            { value: "", label: "Any test activity" },
+            { value: "attempts", label: "Has test attempts" },
+            { value: "no_attempts", label: "No test attempts" },
+          ]}
+          value={activityFilter}
+          onChange={(value) => setActivityFilter(String(value))}
+          searchable={false}
+          className="member-filter-select"
+        />
+        <SearchableSelect
+          options={[
+            { value: "", label: "Any device/session" },
+            { value: "active_session", label: "Currently signed in" },
+            { value: "known_devices", label: "Known devices" },
+            { value: "no_devices", label: "No known devices" },
+          ]}
+          value={sessionFilter}
+          onChange={(value) => setSessionFilter(String(value))}
+          searchable={false}
+          className="member-filter-select"
+        />
       </div>
       {error && <p className="error-text">{error}</p>}
 

@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "../../auth/logout";
 import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
 import { Sidebar, type MenuItem, type MenuSection } from "../../components/Sidebar";
+import { StudentNotificationBell } from "../../components/StudentNotificationBell";
 import { useInstituteBranding } from "../../hooks/useInstituteBranding";
 import { useAuthStore } from "../../store/authStore";
 
@@ -62,7 +63,8 @@ export function StudentLayout() {
         onToggleCollapse={() => setCollapsed((prev) => !prev)}
         onLogout={logout}
       />
-      <main className="dashboard-content" style={{ flex: 1, padding: "20px" }}>
+      <StudentNotificationBell />
+      <main className="dashboard-content student-dashboard-content">
         <GsapRouteAnimator>
           <Outlet />
         </GsapRouteAnimator>

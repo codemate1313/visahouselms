@@ -7,13 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.security import hash_password, hash_refresh_token, verify_password
-from app.core.uploads import read_validated_image
+from app.core.uploads import read_compressed_profile_image
 from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.models.user_session import UserSession
-
-MAX_AVATAR_BYTES = 2 * 1024 * 1024
-
 
 def _audit(db: Session, actor: User, action: str, entity_id: int, ip: Optional[str], details: Optional[dict] = None) -> None:
     db.add(
@@ -58,7 +55,7 @@ def update_profile(
 
 async def save_temp_avatar(upload: UploadFile) -> dict:
     import uuid
-    ext, content = await read_validated_image(upload, MAX_AVATAR_BYTES, "Avatar")
+    ext, content = await read_compressed_profile_image(upload)
 
     avatars_dir = settings.storage_path / "avatars"
     avatars_dir.mkdir(parents=True, exist_ok=True)
@@ -74,7 +71,7 @@ async def save_temp_avatar(upload: UploadFile) -> dict:
 
 
 async def save_avatar(db: Session, actor: User, upload: UploadFile, ip: Optional[str]) -> User:
-    ext, content = await read_validated_image(upload, MAX_AVATAR_BYTES, "Avatar")
+    ext, content = await read_compressed_profile_image(upload)
 
     avatars_dir = settings.storage_path / "avatars"
     avatars_dir.mkdir(parents=True, exist_ok=True)

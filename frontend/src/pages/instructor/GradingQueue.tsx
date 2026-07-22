@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import type { GradingQueueItem } from "../../api/types";
+import { SearchableSelect } from "../../components/SearchableSelect";
 import { useAuthStore } from "../../store/authStore";
 
 const STATUS_CLASS: Record<string, string> = { pending: "badge-amber", claimed: "badge-blue", completed: "badge-green" };
@@ -38,12 +39,19 @@ export function GradingQueue() {
         <div className="stat-tile"><p className="stat-label">Reevaluations</p><p className="stat-value">{reevaluations}</p></div>
       </div>
       <form className="filter-bar" onSubmit={(e) => e.preventDefault()}>
-        <select aria-label="Status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="">All</option>
-          <option value="pending">Unclaimed</option>
-          <option value="claimed">Claimed</option>
-          <option value="completed">Completed</option>
-        </select>
+        <SearchableSelect
+          ariaLabel="Status"
+          options={[
+            { value: "", label: "All" },
+            { value: "pending", label: "Unclaimed" },
+            { value: "claimed", label: "Claimed" },
+            { value: "completed", label: "Completed" },
+          ]}
+          value={statusFilter}
+          onChange={(value) => setStatusFilter(String(value))}
+          searchable={false}
+          className="status-filter-select"
+        />
       </form>
       {error && <p className="error-text">{error}</p>}
       {loading ? (

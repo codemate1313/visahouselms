@@ -50,22 +50,36 @@ export function AccountsList() {
   async function handleToggleActive(account: SuperAdminAccount) {
     setError(null);
     const action = account.is_active ? "deactivate" : "reactivate";
+    setAccounts((current) =>
+      current.map((item) => item.id === account.id ? { ...item, is_active: !account.is_active } : item)
+    );
     try {
       await apiClient.post(`/super-admin/accounts/${account.id}/${action}`);
-      await loadAccounts();
     } catch (err: unknown) {
+      setAccounts((current) =>
+        current.map((item) => item.id === account.id ? { ...item, is_active: account.is_active } : item)
+      );
       setError(extractErrorMessage(err, `Failed to ${action} account.`));
     }
   }
 
   async function handleForceReset(account: SuperAdminAccount) {
     setError(null);
+    setAccounts((current) =>
+      current.map((item) =>
+        item.id === account.id ? { ...item, force_password_reset: !account.force_password_reset } : item
+      )
+    );
     try {
       await apiClient.post(`/super-admin/accounts/${account.id}/force-password-reset`, {
         enabled: !account.force_password_reset,
       });
-      await loadAccounts();
     } catch (err: unknown) {
+      setAccounts((current) =>
+        current.map((item) =>
+          item.id === account.id ? { ...item, force_password_reset: account.force_password_reset } : item
+        )
+      );
       setError(extractErrorMessage(err, "Failed to update password-reset requirement."));
     }
   }
@@ -208,14 +222,14 @@ export function AccountsList() {
         <p>Loading...</p>
       ) : (
         <div className="table-wrap">
-          <table className="data-table sleek-institutes-table">
+          <table className="data-table sleek-accounts-table">
             <thead>
               <tr>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Status</th>
                 <th>Created</th>
-                <th className="table-actions-heading" style={{ textAlign: "center", width: 140, minWidth: 140 }}>Actions</th>
+                <th className="table-actions-heading">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -249,7 +263,7 @@ export function AccountsList() {
                     </span>
                   </td>
                   <td>{new Date(account.created_at).toLocaleDateString("en-GB")}</td>
-                  <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>
+                  <td className="table-actions institute-row-actions">
                     <ToggleSwitch
                       checked={account.is_active}
                       onChange={() => handleToggleActive(account)}

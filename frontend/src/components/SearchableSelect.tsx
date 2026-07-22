@@ -8,6 +8,7 @@ export interface SelectOption {
 }
 
 interface SearchableSelectProps {
+  id?: string;
   options: SelectOption[];
   value: string | number;
   onChange: (value: string | number) => void;
@@ -17,9 +18,11 @@ interface SearchableSelectProps {
   disabled?: boolean;
   className?: string;
   emptyMessage?: string;
+  ariaLabel?: string;
 }
 
 export function SearchableSelect({
+  id,
   options,
   value,
   onChange,
@@ -29,6 +32,7 @@ export function SearchableSelect({
   disabled = false,
   className = "",
   emptyMessage = "No matching options found.",
+  ariaLabel,
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -92,10 +96,12 @@ export function SearchableSelect({
       <button
         type="button"
         className="searchable-select-trigger"
+        id={id}
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
+        aria-label={ariaLabel ?? placeholder}
       >
         <span className={`selected-value-label ${!selectedOption ? "is-placeholder" : ""}`}>
           {selectedOption ? selectedOption.label : placeholder}

@@ -26,6 +26,7 @@ from app.services import (
     achievement_service,
     attempt_service,
     grading_service,
+    notification_service,
     payment_service,
     plan_service,
     student_analysis_service,
@@ -80,6 +81,25 @@ async def upload_my_avatar(
     user: User = Depends(require_student),
 ):
     return _current_user_out(await account_service.save_avatar(db, user, file, _ip(request)))
+
+
+@router.get("/notifications")
+def list_notifications(db: Session = Depends(get_db), user: User = Depends(require_student)):
+    return notification_service.list_student_notifications(db, user)
+
+
+@router.patch("/notifications/read-all")
+def read_all_notifications(db: Session = Depends(get_db), user: User = Depends(require_student)):
+    return {"updated": notification_service.mark_all_notifications_read(db, user)}
+
+
+@router.patch("/notifications/{notification_id}/read")
+def read_notification(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    return notification_service.mark_notification_read(db, user, notification_id)
 
 
 @router.post("/me/change-password", status_code=204)

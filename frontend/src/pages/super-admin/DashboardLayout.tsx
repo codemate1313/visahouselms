@@ -118,7 +118,7 @@ export function DashboardLayout() {
         onToggleCollapse={() => setCollapsed((prev) => !prev)}
         onLogout={handleLogout}
       />
-      <main className="dashboard-content" style={{ flex: 1, padding: "20px" }}>
+      <main className="dashboard-content">
         <GsapRouteAnimator>
           <Outlet />
         </GsapRouteAnimator>

@@ -3,6 +3,7 @@ import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import { confirmDelete } from "../../components/confirmDialog";
 import { PasswordInput } from "../../components/PasswordInput";
+import { SearchableSelect } from "../../components/SearchableSelect";
 import { FONT_FAMILY_OPTIONS, useFontStore } from "../../store/fontStore";
 import { useLoaderStore } from "../../store/loaderStore";
 import { useToastStore } from "../../store/toastStore";
@@ -148,17 +149,13 @@ function TypographyTab() {
       {/* Font Family Selection */}
       <div style={{ marginBottom: 24 }}>
         <label style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Global Font Family</label>
-        <select
+        <SearchableSelect
+          options={FONT_FAMILY_OPTIONS}
           value={config.fontFamily}
-          onChange={(e) => updateConfig({ fontFamily: e.target.value })}
-          style={{ width: "100%", maxWidth: "420px", padding: "10px 14px", borderRadius: "10px" }}
-        >
-          {FONT_FAMILY_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => updateConfig({ fontFamily: String(value) })}
+          searchPlaceholder="Search font family..."
+          className="form-dropdown-select typography-font-select"
+        />
       </div>
 
       <div className="typography-slider-panel">
@@ -386,11 +383,17 @@ function SmtpTab() {
         </div>
         <div>
           <label>Encryption</label>
-          <select value={form.encryption} onChange={(e) => setForm({ ...form, encryption: e.target.value })}>
-            <option value="tls">TLS (STARTTLS)</option>
-            <option value="ssl">SSL</option>
-            <option value="none">None</option>
-          </select>
+          <SearchableSelect
+            options={[
+              { value: "tls", label: "TLS (STARTTLS)" },
+              { value: "ssl", label: "SSL" },
+              { value: "none", label: "None" },
+            ]}
+            value={form.encryption}
+            onChange={(value) => setForm({ ...form, encryption: String(value) })}
+            searchable={false}
+            className="form-dropdown-select"
+          />
         </div>
         <div>
           <label>From address</label>
@@ -561,9 +564,13 @@ function AvatarTab() {
       <div className="form-grid">
         <div>
           <label>Provider</label>
-          <select value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })}>
-            <option value="d_id">D-ID</option>
-          </select>
+          <SearchableSelect
+            options={[{ value: "d_id", label: "D-ID" }]}
+            value={form.provider}
+            onChange={(value) => setForm({ ...form, provider: String(value) })}
+            searchable={false}
+            className="form-dropdown-select"
+          />
         </div>
         <div>
           <label>Voice</label>
@@ -771,11 +778,17 @@ function BackupsTab() {
         <div className="form-grid">
           <div>
             <label>Schedule</label>
-            <select value={schedule} onChange={(e) => setSchedule(e.target.value)}>
-              <option value="none">Disabled</option>
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-            </select>
+            <SearchableSelect
+              options={[
+                { value: "none", label: "Disabled" },
+                { value: "daily", label: "Daily" },
+                { value: "weekly", label: "Weekly" },
+              ]}
+              value={schedule}
+              onChange={(value) => setSchedule(String(value))}
+              searchable={false}
+              className="form-dropdown-select"
+            />
           </div>
           <div>
             <label>Retention (backups kept)</label>

@@ -14,7 +14,9 @@ export function ToggleSwitch({ checked, onChange, disabled = false, tooltip }: T
       disabled={disabled}
       data-tooltip={tooltip}
       aria-label={tooltip ?? "Toggle status"}
+      aria-pressed={checked}
     >
+      <span className="toggle-track-fill" />
       <span className="toggle-thumb" />
     </button>
   );

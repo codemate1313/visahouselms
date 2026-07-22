@@ -2,6 +2,7 @@ import { type ChangeEvent, type CSSProperties, useCallback, useEffect, useState 
 import { useParams } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { SearchableSelect } from "../../components/SearchableSelect";
 
 interface Branding {
   institute_id: number;
@@ -108,21 +109,36 @@ export function InstituteBranding() {
         <div className="form-grid">
           <div>
             <label htmlFor="font-family">Font family</label>
-            <select id="font-family" value={fontFamily} onChange={(event) => setFontFamily(event.target.value)}>
-              {FONT_OPTIONS.map((font) => <option key={font} value={font}>{font === "system-ui" ? "System UI" : font}</option>)}
-            </select>
+            <SearchableSelect
+              id="font-family"
+              options={FONT_OPTIONS.map((font) => ({ value: font, label: font === "system-ui" ? "System UI" : font }))}
+              value={fontFamily}
+              onChange={(value) => setFontFamily(String(value))}
+              searchable={false}
+              className="form-dropdown-select"
+            />
           </div>
           <div>
             <label htmlFor="heading-weight">Heading weight</label>
-            <select id="heading-weight" value={headingWeight} onChange={(event) => setHeadingWeight(Number(event.target.value))}>
-              {FONT_WEIGHTS.map((weight) => <option key={weight} value={weight}>{weight}</option>)}
-            </select>
+            <SearchableSelect
+              id="heading-weight"
+              options={FONT_WEIGHTS.map((weight) => ({ value: weight, label: String(weight) }))}
+              value={headingWeight}
+              onChange={(value) => setHeadingWeight(Number(value))}
+              searchable={false}
+              className="form-dropdown-select"
+            />
           </div>
           <div>
             <label htmlFor="body-weight">Body weight</label>
-            <select id="body-weight" value={bodyWeight} onChange={(event) => setBodyWeight(Number(event.target.value))}>
-              {FONT_WEIGHTS.map((weight) => <option key={weight} value={weight}>{weight}</option>)}
-            </select>
+            <SearchableSelect
+              id="body-weight"
+              options={FONT_WEIGHTS.map((weight) => ({ value: weight, label: String(weight) }))}
+              value={bodyWeight}
+              onChange={(value) => setBodyWeight(Number(value))}
+              searchable={false}
+              className="form-dropdown-select"
+            />
           </div>
         </div>
 

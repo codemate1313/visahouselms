@@ -1,4 +1,7 @@
+from io import BytesIO
+
 from fastapi import HTTPException, UploadFile, status
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 ALLOWED_IMAGE_TYPES = {
     "image/png": ".png",
@@ -29,6 +32,48 @@ async def read_validated_image(upload: UploadFile, max_bytes: int, label: str = 
             detail=f"{label} must be {max_bytes // (1024 * 1024)} MB or smaller",
         )
     return ext, content
+
+
+async def read_compressed_profile_image(
+    upload: UploadFile,
+    label: str = "Avatar",
+    max_dimension: int = 1600,
+    quality: int = 82,
+) -> tuple[str, bytes]:
+    """Validate and normalize a profile image into a compact, metadata-free WebP."""
+    if (upload.content_type or "") not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{label} must be a PNG, JPEG, or WebP image",
+        )
+
+    await upload.seek(0)
+    try:
+        with Image.open(upload.file) as source:
+            source.seek(0)
+            image = ImageOps.exif_transpose(source)
+            image.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
+
+            has_alpha = image.mode in {"RGBA", "LA"} or (
+                image.mode == "P" and "transparency" in image.info
+            )
+            image = image.convert("RGBA" if has_alpha else "RGB")
+
+            output = BytesIO()
+            image.save(output, format="WEBP", quality=quality, method=6)
+    except (Image.DecompressionBombError, UnidentifiedImageError, OSError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{label} is not a valid or supported image",
+        ) from None
+
+    content = output.getvalue()
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{label} could not be processed",
+        )
+    return ".webp", content
 
 
 async def read_validated_course_asset(upload: UploadFile) -> tuple[str, str, bytes]:

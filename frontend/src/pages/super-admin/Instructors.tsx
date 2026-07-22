@@ -65,10 +65,15 @@ export function Instructors() {
     const action = instructor.is_active ? "deactivate" : "reactivate";
     if (instructor.is_active && !window.confirm(`Deactivate ${instructor.email}? Their active sessions will be revoked.`)) return;
     setError(null);
+    setInstructors((current) =>
+      current.map((item) => item.id === instructor.id ? { ...item, is_active: !instructor.is_active } : item)
+    );
     try {
       await apiClient.post(`/super-admin/instructors/${instructor.id}/${action}`);
-      await loadInstructors();
     } catch (err: unknown) {
+      setInstructors((current) =>
+        current.map((item) => item.id === instructor.id ? { ...item, is_active: instructor.is_active } : item)
+      );
       setError(extractErrorMessage(err, `Failed to ${action} instructor.`));
     }
   }

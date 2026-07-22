@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { confirmDelete } from "../../components/confirmDialog";
+import { SearchableSelect } from "../../components/SearchableSelect";
 import type { ExamModule, ExamModuleType, ModuleBlueprint } from "../../api/types";
 
 const TYPE_ICONS: Record<ExamModuleType, string> = {
@@ -72,8 +73,27 @@ export function Modules() {
     <div className="section-heading module-list-heading"><div><h2>Your courses</h2><p>Draft, validate, publish, and update each assessment course.</p></div></div>
     <form className="filter-bar responsive-filters" onSubmit={submit}>
       <input aria-label="Search courses" placeholder="Search courses..." value={search} onChange={(event) => setSearch(event.target.value)} />
-      <select aria-label="Module type" value={type} onChange={(event) => setType(event.target.value)}><option value="">All types</option>{blueprints.map((item) => <option value={item.module_type} key={item.module_type}>{item.label}</option>)}</select>
-      <select aria-label="Module status" value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All statuses</option><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select>
+      <SearchableSelect
+        ariaLabel="Module type"
+        options={[{ value: "", label: "All types" }, ...blueprints.map((item) => ({ value: item.module_type, label: item.label }))]}
+        value={type}
+        onChange={(value) => setType(String(value))}
+        searchable={false}
+        className="status-filter-select"
+      />
+      <SearchableSelect
+        ariaLabel="Module status"
+        options={[
+          { value: "", label: "All statuses" },
+          { value: "draft", label: "Draft" },
+          { value: "published", label: "Published" },
+          { value: "archived", label: "Archived" },
+        ]}
+        value={status}
+        onChange={(value) => setStatus(String(value))}
+        searchable={false}
+        className="status-filter-select"
+      />
       <button type="submit">Search</button>
     </form>
     {error && <p className="error-text">{error}</p>}

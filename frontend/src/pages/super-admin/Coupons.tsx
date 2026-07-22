@@ -61,10 +61,15 @@ export function Coupons() {
   async function toggleActive(coupon: CouponRow) {
     setError(null);
     const action = coupon.is_active ? "deactivate" : "reactivate";
+    setCoupons((current) =>
+      current.map((item) => item.id === coupon.id ? { ...item, is_active: !coupon.is_active } : item)
+    );
     try {
       await apiClient.post(`/super-admin/coupons/${coupon.id}/${action}`);
-      await load();
     } catch (err: unknown) {
+      setCoupons((current) =>
+        current.map((item) => item.id === coupon.id ? { ...item, is_active: coupon.is_active } : item)
+      );
       setError(extractErrorMessage(err, `Failed to ${action} coupon.`));
     }
   }

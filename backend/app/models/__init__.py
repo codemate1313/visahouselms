@@ -26,6 +26,7 @@ from app.models.institute import Institute
 from app.models.institute_branding import InstituteBranding
 from app.models.instructor_profile import InstructorProfile
 from app.models.job import Job
+from app.models.notification import StudentNotification
 from app.models.payment import Payment
 from app.models.payment_method import PaymentMethod
 from app.models.plan import Plan
@@ -64,6 +65,7 @@ __all__ = [
     "RequestLog",
     "CrashLog",
     "Job",
+    "StudentNotification",
     "Backup",
     "Plan",
     "Subscription",

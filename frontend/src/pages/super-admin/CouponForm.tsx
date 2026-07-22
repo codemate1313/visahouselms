@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { SearchableSelect } from "../../components/SearchableSelect";
 import type { PlanRow } from "./Plans";
 
 const EMPTY_FORM = {
@@ -103,10 +104,18 @@ export function CouponForm() {
         <div className="form-grid">
           <div>
             <label htmlFor="discount_type">Discount type</label>
-            <select id="discount_type" value={form.discount_type} onChange={set("discount_type")} disabled={!isNew}>
-              <option value="percent">Percent</option>
-              <option value="flat">Flat amount</option>
-            </select>
+            <SearchableSelect
+              id="discount_type"
+              options={[
+                { value: "percent", label: "Percent" },
+                { value: "flat", label: "Flat amount" },
+              ]}
+              value={form.discount_type}
+              onChange={(value) => setForm((prev) => ({ ...prev, discount_type: String(value) as typeof prev.discount_type }))}
+              searchable={false}
+              disabled={!isNew}
+              className="form-dropdown-select"
+            />
           </div>
           <div>
             <label htmlFor="value">Value {form.discount_type === "percent" ? "(%)" : "(₹)"}</label>
@@ -114,20 +123,29 @@ export function CouponForm() {
           </div>
           <div>
             <label htmlFor="scope">Scope</label>
-            <select id="scope" value={form.scope} onChange={set("scope")}>
-              <option value="all">All products</option>
-              <option value="plan">Specific plan</option>
-            </select>
+            <SearchableSelect
+              id="scope"
+              options={[
+                { value: "all", label: "All products" },
+                { value: "plan", label: "Specific plan" },
+              ]}
+              value={form.scope}
+              onChange={(value) => setForm((prev) => ({ ...prev, scope: String(value) as typeof prev.scope }))}
+              searchable={false}
+              className="form-dropdown-select"
+            />
           </div>
           {form.scope === "plan" && (
             <div>
               <label htmlFor="scope_plan_id">Plan</label>
-              <select id="scope_plan_id" value={form.scope_plan_id} onChange={set("scope_plan_id")} required>
-                <option value="">Select a plan...</option>
-                {plans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>{plan.name}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                id="scope_plan_id"
+                options={[{ value: "", label: "Select a plan..." }, ...plans.map((plan) => ({ value: plan.id, label: plan.name }))]}
+                value={form.scope_plan_id}
+                onChange={(value) => setForm((prev) => ({ ...prev, scope_plan_id: String(value) }))}
+                searchPlaceholder="Search plans..."
+                className="form-dropdown-select"
+              />
             </div>
           )}
           <div>

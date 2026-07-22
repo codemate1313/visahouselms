@@ -103,29 +103,8 @@ def _resolve_device(
         identified_sessions = [
             session for session in active_sessions if session.device_id is not None
         ]
-        other_device_session = next(
-            (
-                session
-                for session in identified_sessions
-                if session.device_id != device.id
-            ),
-            None,
-        )
-        if other_device_session is not None:
-            active_device_name = (
-                other_device_session.device.name
-                if other_device_session.device is not None
-                else "another device"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=(
-                    f"This account already has an active session on {active_device_name}. "
-                    "Sign out on that device or ask an administrator to revoke the active session before trying again."
-                ),
-            )
-
-        # Replace an older token from this browser.
+        # Student accounts keep one active session at a time. A fresh successful
+        # login takes over the account and signs out any previous student device.
         for session in identified_sessions:
             session.revoked_at = now
             db.add(session)

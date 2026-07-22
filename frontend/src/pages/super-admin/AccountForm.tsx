@@ -20,6 +20,7 @@ export function AccountForm() {
   const [address, setAddress] = useState("");
   const [avatarPath, setAvatarPath] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
+  const [avatarFileName, setAvatarFileName] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew);
@@ -51,6 +52,7 @@ export function AccountForm() {
 
     const localUrl = URL.createObjectURL(file);
     setAvatarPreview(localUrl);
+    setAvatarFileName(file.name);
     setUploadingAvatar(true);
     setError(null);
 
@@ -98,138 +100,167 @@ export function AccountForm() {
 
   if (loading) return <p>Loading...</p>;
 
+  const fullName = `${firstName} ${lastName}`.trim();
+  const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase() || "SA";
+
   return (
-    <div>
-      <h1>{isNew ? "New Super Admin Account" : "Edit Super Admin Account"}</h1>
-      <form className="form-card" onSubmit={handleSubmit}>
-        {/* Profile Picture File Upload Picker */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px" }}>
-          <div style={{
-            width: "64px",
-            height: "64px",
-            borderRadius: "50%",
-            backgroundColor: "#fee2e2",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-            border: "2px solid #fca5a5",
-            flexShrink: 0,
-          }}>
+    <div className="account-editor-page">
+      <div className="page-header account-editor-header">
+        <div>
+          <span className="section-kicker">Super Admin Access</span>
+          <h1>{isNew ? "New Super Admin Account" : "Edit Super Admin Account"}</h1>
+          <p className="page-subtitle">Manage identity, contact details, and account security from one clean workspace.</p>
+        </div>
+      </div>
+
+      <form className="account-editor-shell" onSubmit={handleSubmit}>
+        <aside className="account-profile-panel">
+          <div className="account-avatar-preview">
             {avatarPreview ? (
-              <img src={avatarPreview} alt="Avatar Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <img src={avatarPreview} alt="Avatar preview" />
             ) : (
-              <span style={{ fontSize: "24px" }}>👤</span>
+              <span>{initials}</span>
             )}
           </div>
-          <div>
-            <label htmlFor="avatar-file-upload" style={{ fontWeight: 600, display: "block", marginBottom: "6px" }}>
-              Profile Image (Upload from system)
-            </label>
+          <div className="account-profile-copy">
+            <span className="phase-chip">{isNew ? "New profile" : "Profile image"}</span>
+            <h2>{fullName || "Super Admin"}</h2>
+            <p>{email || "Add an email address to complete this account."}</p>
+          </div>
+          <div className="account-upload-box">
+            <strong>Profile Image</strong>
             <input
               id="avatar-file-upload"
               type="file"
               accept="image/*"
               onChange={handleFileChange}
               disabled={uploadingAvatar}
+              hidden
             />
-            {uploadingAvatar && (
-              <span className="hint" style={{ color: "#dc2626", marginLeft: "8px" }}>
-                Uploading image...
-              </span>
-            )}
+            <label className="avatar-upload-cta" htmlFor="avatar-file-upload">
+              {uploadingAvatar ? "Uploading..." : "Choose Image"}
+            </label>
+            <span>{avatarFileName || "PNG, JPG, or WebP from your system."}</span>
           </div>
-        </div>
+        </aside>
 
-        <div className="form-grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-          <div>
-            <label htmlFor="first_name">First name</label>
-            <input
-              id="first_name"
-              value={firstName}
-              onChange={(event) => setFirstName(event.target.value)}
-              required
-            />
-          </div>
+        <section className="account-form-panel">
+          <div className="account-form-section">
+            <div className="section-heading compact">
+              <div>
+                <h2>Personal Details</h2>
+                <p>Keep the account profile easy to identify across admin tools.</p>
+              </div>
+            </div>
+            <div className="account-field-grid">
+              <div>
+                <label htmlFor="first_name">First name</label>
+                <input
+                  id="first_name"
+                  value={firstName}
+                  onChange={(event) => setFirstName(event.target.value)}
+                  required
+                />
+              </div>
 
-          <div>
-            <label htmlFor="last_name">Last name</label>
-            <input
-              id="last_name"
-              value={lastName}
-              onChange={(event) => setLastName(event.target.value)}
-              required
-            />
-          </div>
-        </div>
+              <div>
+                <label htmlFor="last_name">Last name</label>
+                <input
+                  id="last_name"
+                  value={lastName}
+                  onChange={(event) => setLastName(event.target.value)}
+                  required
+                />
+              </div>
 
-        <label htmlFor="email" style={{ marginTop: "12px" }}>Email address</label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-        />
-
-        {isNew && (
-          <>
-            <label htmlFor="password">Password</label>
-            <PasswordInput
-              id="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
-            <PasswordStrengthMeter password={password} />
-          </>
-        )}
-
-        <div className="form-grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "16px", marginTop: "12px" }}>
-          <div>
-            <label htmlFor="dob">Date of Birth (DOB)</label>
-            <input
-              id="dob"
-              type="date"
-              value={dob}
-              onChange={(event) => setDob(event.target.value)}
-            />
+              <div className="field-wide">
+                <label htmlFor="email">Email address</label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label htmlFor="phone">Phone Number</label>
-            <input
-              id="phone"
-              type="tel"
-              placeholder="+1 (555) 000-0000"
-              value={phoneNumber}
-              onChange={(event) => setPhoneNumber(event.target.value)}
-            />
+          {isNew && (
+            <div className="account-form-section">
+              <div className="section-heading compact">
+                <div>
+                  <h2>Security</h2>
+                  <p>Create a strong temporary password for the first sign-in.</p>
+                </div>
+              </div>
+              <label htmlFor="password">Password</label>
+              <PasswordInput
+                id="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+              <PasswordStrengthMeter password={password} />
+            </div>
+          )}
+
+          <div className="account-form-section">
+            <div className="section-heading compact">
+              <div>
+                <h2>Contact Info</h2>
+                <p>Optional details for internal records and support handoffs.</p>
+              </div>
+            </div>
+            <div className="account-field-grid">
+              <div>
+                <label htmlFor="dob">Date of Birth (DOB)</label>
+                <input
+                  id="dob"
+                  type="date"
+                  value={dob}
+                  onChange={(event) => setDob(event.target.value)}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="phone">Phone Number</label>
+                <input
+                  id="phone"
+                  type="tel"
+                  placeholder="+1 (555) 000-0000"
+                  value={phoneNumber}
+                  onChange={(event) => setPhoneNumber(event.target.value)}
+                />
+              </div>
+
+              <div className="field-wide">
+                <label htmlFor="address">Address</label>
+                <input
+                  id="address"
+                  type="text"
+                  placeholder="123 Main Street, Suite 100"
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                />
+              </div>
+            </div>
           </div>
-        </div>
 
-        <label htmlFor="address" style={{ marginTop: "12px" }}>Address</label>
-        <input
-          id="address"
-          type="text"
-          placeholder="123 Main Street, Suite 100"
-          value={address}
-          onChange={(event) => setAddress(event.target.value)}
-        />
+          {error && <p className="error-text">{error}</p>}
 
-        {error && <p className="error-text">{error}</p>}
-
-        <div className="form-actions" style={{ marginTop: "20px" }}>
-          <button
-            type="submit"
-            disabled={saving || uploadingAvatar || (isNew && !evaluatePassword(password).allMet)}
-          >
-            {saving ? "Saving..." : "Save Account"}
-          </button>
-          <button type="button" onClick={() => navigate("/super-admin/accounts")}>
-            Cancel
-          </button>
-        </div>
+          <div className="form-actions account-editor-actions">
+            <button
+              type="submit"
+              disabled={saving || uploadingAvatar || (isNew && !evaluatePassword(password).allMet)}
+            >
+              {saving ? "Saving..." : "Save Account"}
+            </button>
+            <button type="button" onClick={() => navigate("/super-admin/accounts")}>
+              Cancel
+            </button>
+          </div>
+        </section>
       </form>
     </div>
   );

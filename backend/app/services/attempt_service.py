@@ -964,6 +964,7 @@ def grade_part(
         from app.services import achievement_service, notification_service
 
         achievement_service.refresh_student_achievements(db, attempt.user_id, attempt.id)
+        notification_service.create_grade_released_notification(db, attempt)
         notification_service.send_grade_released_email(db, attempt)
     return get_grading_detail(db, actor, attempt_id)
 

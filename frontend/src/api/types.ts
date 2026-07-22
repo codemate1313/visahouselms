@@ -569,6 +569,22 @@ export interface AttemptSummary {
   cefr_profile: CefrProfile | null;
 }
 
+export interface StudentNotification {
+  id: number;
+  kind: "grade_released";
+  attempt_id: number | null;
+  title: string;
+  message: string;
+  read_at: string | null;
+  created_at: string;
+  module_title: string | null;
+  module_type: ExamModuleType | null;
+  raw_score: string | null;
+  max_score: string | null;
+  band_label: string | null;
+  cefr_level: CefrLevel | null;
+}
+
 export type ProctorFlagType =
   | "blur"
   | "visibility_change"

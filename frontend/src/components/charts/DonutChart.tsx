@@ -150,7 +150,7 @@ export function DonutChart({
               })}
 
               {/* Center Display */}
-              <text className="donut-total" x="110" y="102" textAnchor="middle" style={{ fontSize: "30px", fontWeight: 800, fill: "#0f172a" }}>
+              <text className="donut-total" x="110" y="102" textAnchor="middle" transform="rotate(90 110 102)" style={{ fontSize: "30px", fontWeight: 800, fill: "#0f172a" }}>
                 {hoveredIndex !== null ? (
                   activeItem?.value.toLocaleString("en-IN")
                 ) : (

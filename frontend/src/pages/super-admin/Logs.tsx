@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { API_BASE_URL, apiClient } from "../../api/client";
+import { SearchableSelect } from "../../components/SearchableSelect";
 import { useAuthStore } from "../../store/authStore";
 
 type LogType = "error" | "api" | "crash" | "request";
@@ -152,12 +153,18 @@ export function Logs() {
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
         />
         {tab === "error" && (
-          <select value={level} onChange={(e) => { setLevel(e.target.value); setPage(1); }}>
-            <option value="">All levels</option>
-            <option value="ERROR">ERROR</option>
-            <option value="WARNING">WARNING</option>
-            <option value="CRITICAL">CRITICAL</option>
-          </select>
+          <SearchableSelect
+            options={[
+              { value: "", label: "All levels" },
+              { value: "ERROR", label: "ERROR" },
+              { value: "WARNING", label: "WARNING" },
+              { value: "CRITICAL", label: "CRITICAL" },
+            ]}
+            value={level}
+            onChange={(value) => { setLevel(String(value)); setPage(1); }}
+            searchable={false}
+            className="status-filter-select"
+          />
         )}
         <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} />
         <span className="hint">to</span>

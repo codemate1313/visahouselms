@@ -253,19 +253,25 @@ export function Payments() {
           <div className="form-grid">
             <div>
               <label htmlFor="institute">Institute</label>
-              <select id="institute" value={instituteId} onChange={(e) => setInstituteId(e.target.value)} required>
-                <option value="">Select institute...</option>
-                {institutes.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-              </select>
+              <SearchableSelect
+                id="institute"
+                options={[{ value: "", label: "Select institute..." }, ...institutes.map((i) => ({ value: i.id, label: i.name }))]}
+                value={instituteId}
+                onChange={(value) => setInstituteId(String(value))}
+                searchPlaceholder="Search institutes..."
+                className="form-dropdown-select"
+              />
             </div>
             <div>
               <label htmlFor="plan">Plan</label>
-              <select id="plan" value={planId} onChange={(e) => setPlanId(e.target.value)} required>
-                <option value="">Select plan...</option>
-                {plans.filter((p) => p.is_active).map((p) => (
-                  <option key={p.id} value={p.id}>{p.name} - {p.currency || "INR"} {p.price}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                id="plan"
+                options={[{ value: "", label: "Select plan..." }, ...plans.filter((p) => p.is_active).map((p) => ({ value: p.id, label: `${p.name} - ${p.currency || "INR"} ${p.price}` }))]}
+                value={planId}
+                onChange={(value) => setPlanId(String(value))}
+                searchPlaceholder="Search plans..."
+                className="form-dropdown-select"
+              />
             </div>
             <div>
               <label htmlFor="coupon">Coupon code (optional)</label>
@@ -285,10 +291,14 @@ export function Payments() {
             </div>
             <div>
               <label htmlFor="method">Payment mode</label>
-              <select id="method" value={methodId} onChange={(e) => setMethodId(e.target.value)}>
-                <option value="">Select mode...</option>
-                {methods.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-              </select>
+              <SearchableSelect
+                id="method"
+                options={[{ value: "", label: "Select mode..." }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
+                value={methodId}
+                onChange={(value) => setMethodId(String(value))}
+                searchPlaceholder="Search modes..."
+                className="form-dropdown-select"
+              />
             </div>
             <div>
               <label htmlFor="reference">Reference note</label>
@@ -494,10 +504,14 @@ export function Payments() {
                 required
               />
               <label htmlFor="due_method" style={{ marginTop: 12 }}>Payment mode</label>
-              <select id="due_method" value={dueMethodId} onChange={(e) => setDueMethodId(e.target.value)}>
-                <option value="">Select mode...</option>
-                {methods.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-              </select>
+              <SearchableSelect
+                id="due_method"
+                options={[{ value: "", label: "Select mode..." }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
+                value={dueMethodId}
+                onChange={(value) => setDueMethodId(String(value))}
+                searchPlaceholder="Search modes..."
+                className="form-dropdown-select"
+              />
               <label htmlFor="due_reference" style={{ marginTop: 12 }}>Reference note</label>
               <input id="due_reference" value={dueReference} onChange={(e) => setDueReference(e.target.value)} placeholder="Bank txn ID..." />
 

@@ -91,10 +91,15 @@ export function Institutes() {
   async function toggleActive(row: InstituteRow) {
     setError(null);
     const action = row.is_active ? "suspend" : "reactivate";
+    setRows((current) =>
+      current.map((item) => item.id === row.id ? { ...item, is_active: !row.is_active } : item)
+    );
     try {
       await apiClient.post(`/super-admin/institutes/${row.id}/${action}`);
-      await load();
     } catch (err: unknown) {
+      setRows((current) =>
+        current.map((item) => item.id === row.id ? { ...item, is_active: row.is_active } : item)
+      );
       setError(extractErrorMessage(err, `Failed to ${action} institute.`));
     }
   }

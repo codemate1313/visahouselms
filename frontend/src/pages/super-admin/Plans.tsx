@@ -70,10 +70,15 @@ export function Plans() {
   async function toggleActive(plan: PlanRow) {
     setError(null);
     const action = plan.is_active ? "deactivate" : "reactivate";
+    setPlans((current) =>
+      current.map((item) => item.id === plan.id ? { ...item, is_active: !plan.is_active } : item)
+    );
     try {
       await apiClient.post(`/super-admin/plans/${plan.id}/${action}`);
-      await load();
     } catch (err: unknown) {
+      setPlans((current) =>
+        current.map((item) => item.id === plan.id ? { ...item, is_active: plan.is_active } : item)
+      );
       setError(extractErrorMessage(err, `Failed to ${action} plan.`));
     }
   }

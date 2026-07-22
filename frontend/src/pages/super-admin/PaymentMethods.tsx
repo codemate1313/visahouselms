@@ -69,10 +69,15 @@ export function PaymentMethods() {
   async function toggleActive(method: MethodRow) {
     setError(null);
     const action = method.is_active ? "deactivate" : "reactivate";
+    setMethods((current) =>
+      current.map((item) => item.id === method.id ? { ...item, is_active: !method.is_active } : item)
+    );
     try {
       await apiClient.post(`/super-admin/payment-methods/${method.id}/${action}`);
-      await load();
     } catch (err: unknown) {
+      setMethods((current) =>
+        current.map((item) => item.id === method.id ? { ...item, is_active: method.is_active } : item)
+      );
       setError(extractErrorMessage(err, `Failed to ${action} payment method.`));
     }
   }

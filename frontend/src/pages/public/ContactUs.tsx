@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from "react";
+import { SearchableSelect } from "../../components/SearchableSelect";
 import { useToastStore } from "../../store/toastStore";
 
 export function ContactUs() {
@@ -121,17 +122,19 @@ export function ContactUs() {
 
                 <div className="form-group">
                   <label htmlFor="contact_type">I am inquiring as a:</label>
-                  <select
+                  <SearchableSelect
                     id="contact_type"
+                    options={[
+                      { value: "STUDENT", label: "Direct IELTS Student" },
+                      { value: "INSTITUTE", label: "Institute Owner / Director" },
+                      { value: "INSTRUCTOR", label: "IELTS Trainer / Teacher" },
+                      { value: "OTHER", label: "Other Partner / Business" },
+                    ]}
                     value={inquiryType}
-                    onChange={(e) => setInquiryType(e.target.value)}
-                    className="contact-select"
-                  >
-                    <option value="STUDENT">Direct IELTS Student</option>
-                    <option value="INSTITUTE">Institute Owner / Director</option>
-                    <option value="INSTRUCTOR">IELTS Trainer / Teacher</option>
-                    <option value="OTHER">Other Partner / Business</option>
-                  </select>
+                    onChange={(value) => setInquiryType(String(value))}
+                    searchable={false}
+                    className="form-dropdown-select contact-select"
+                  />
                 </div>
 
                 <div className="form-group">

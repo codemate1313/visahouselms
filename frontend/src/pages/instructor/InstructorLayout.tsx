@@ -78,7 +78,7 @@ export function InstructorLayout() {
   ];
 
   return (
-    <div className="dashboard instructor-portal">
+    <div className="dashboard instructor-portal super-admin-portal">
       <Sidebar
         brandTitle="IELTS LMS"
         brandSubtitle="SA Instructor"

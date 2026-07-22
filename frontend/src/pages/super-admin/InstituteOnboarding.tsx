@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { SearchableSelect } from "../../components/SearchableSelect";
 
 interface ModuleOption { id: number; title: string; module_type: string; duration_minutes: number; created_by_name: string }
 interface Method { id: number; name: string; is_active: boolean }
@@ -263,14 +264,13 @@ export function InstituteOnboarding() {
                   </div>
                   <div>
                     <label>Payment method</label>
-                    <select value={form.payment_method_id} onChange={set("payment_method_id")}>
-                      <option value="">Manual / unspecified</option>
-                      {methods.map((method) => (
-                        <option value={method.id} key={method.id}>
-                          {method.name}
-                        </option>
-                      ))}
-                    </select>
+                    <SearchableSelect
+                      options={[{ value: "", label: "Manual / unspecified" }, ...methods.map((method) => ({ value: method.id, label: method.name }))]}
+                      value={form.payment_method_id}
+                      onChange={(value) => setForm((prev) => ({ ...prev, payment_method_id: String(value) }))}
+                      searchPlaceholder="Search payment methods..."
+                      className="form-dropdown-select"
+                    />
                   </div>
                   <div>
                     <label>Receipt/reference</label>

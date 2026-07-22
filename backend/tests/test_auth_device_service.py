@@ -1,5 +1,5 @@
-import unittest
 from datetime import datetime, timedelta, timezone
+import unittest
 
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
@@ -54,18 +54,16 @@ class StudentDeviceLoginTests(unittest.TestCase):
             name,
         )
 
-    def test_student_is_limited_to_one_device_and_history_is_retained(self):
+    def test_student_login_on_new_device_revokes_previous_session_and_retains_history(self):
         first_access, _ = self._login("device-a-identifier-0001")
         self.assertEqual(self.db.query(UserDevice).count(), 1)
 
-        with self.assertRaises(HTTPException) as raised:
-            self._login("device-b-identifier-0002", "Firefox on Windows")
-        self.assertEqual(raised.exception.status_code, 409)
-        self.db.rollback()
+        replacement_access, _ = self._login("device-b-identifier-0002", "Firefox on Windows")
 
-        replacement_access, _ = self._login("device-a-identifier-0001")
+        self.assertEqual(self.db.query(UserDevice).count(), 2)
         active = self.db.query(UserSession).filter(UserSession.revoked_at.is_(None)).all()
         self.assertEqual(len(active), 1)
+        self.assertEqual(active[0].device.name, "Firefox on Windows")
 
         with self.assertRaises(HTTPException):
             get_current_user(
