@@ -27,7 +27,6 @@ export function ContactUs() {
       {/* Header */}
       <section className="contact-hero-section text-center">
         <div className="contact-hero-container">
-          <span className="section-kicker">CONTACT &amp; SUPPORT</span>
           <h1 className="hero-main-title">
             We&apos;re Here to Help You <span className="text-gradient">Succeed</span>
           </h1>

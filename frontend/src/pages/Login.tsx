@@ -1,4 +1,5 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
+import gsap from "gsap";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiClient } from "../api/client";
@@ -13,6 +14,7 @@ interface LoginProps {
   allowedRoles?: string[];
   title?: string;
   subtitle?: string;
+  disableAnimation?: boolean;
 }
 
 const ALL_ROLE_OPTIONS = [
@@ -99,9 +101,31 @@ export function Login({
   allowedRoles = ["INSTITUTE_ADMIN", "INST_INSTRUCTOR", "STUDENT"],
   title = "IELTS LMS",
   subtitle = "Enter your credentials to access your dashboard",
+  disableAnimation = false,
 }: LoginProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!containerRef.current || disableAnimation) return;
+    const ctx = gsap.context(() => {
+      // Premium popup animation for the main card (sped up)
+      gsap.fromTo(
+        ".login-ref-card",
+        { autoAlpha: 0, scale: 0.9, y: 20 },
+        { autoAlpha: 1, scale: 1, y: 0, duration: 0.35, ease: "back.out(1.2)", delay: 0.05 }
+      );
+      
+      // Staggered fade-in for background orbs
+      gsap.fromTo(
+        ".glowing-orb",
+        { autoAlpha: 0, scale: 0.8 },
+        { autoAlpha: 0.6, scale: 1, duration: 0.6, ease: "power2.out", stagger: 0.1 }
+      );
+    }, containerRef);
+    return () => ctx.revert();
+  }, []);
   const setSession = useAuthStore((state) => state.setSession);
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
@@ -209,7 +233,7 @@ export function Login({
   const safeActiveIndex = activeIndex >= 0 ? activeIndex : 0;
 
   return (
-    <div className="login-concise-page">
+    <div className="login-concise-page" ref={containerRef}>
       {/* Dynamic Glowing Orbs Background Layer */}
       <div className="login-glowing-orbs" aria-hidden="true">
         <div className="glowing-orb orb-primary" />

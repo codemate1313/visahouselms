@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useOutletContext, Link } from "react-router-dom";
+import gsap from "gsap";
+import { TextPlugin } from "gsap/TextPlugin";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(TextPlugin, ScrollTrigger);
 
 interface LandingContext {
   openLoginModal: () => void;
@@ -94,9 +99,53 @@ function AnimatedStat({
 export function Home() {
   const { openLoginModal } = useOutletContext<LandingContext>();
   const [activeShowcaseDetail, setActiveShowcaseDetail] = useState<string | null>(null);
+  const typewriterRef = useRef<HTMLSpanElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const parallaxContainerRef = useRef<HTMLSelectElement>(null);
+  const parallaxImgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (!typewriterRef.current) return;
+    
+    const ctx = gsap.context(() => {
+      const target = typewriterRef.current!;
+      const originalText = `& AI Feedback`;
+      
+      // Clear initially
+      target.textContent = "";
+      
+      // Live typewriter effect (looping: type out, wait, delete)
+      const tl = gsap.timeline({ repeat: -1, yoyo: true, repeatDelay: 1.5, delay: 0.3 });
+      tl.to(target, {
+        text: { value: originalText },
+        duration: 1.5,
+        ease: "none"
+      });
+      
+      // Parallax effect
+      if (parallaxContainerRef.current && parallaxImgRef.current) {
+        gsap.fromTo(
+          parallaxImgRef.current,
+          { yPercent: -20 },
+          {
+            yPercent: 0,
+            ease: "none",
+            scrollTrigger: {
+              trigger: parallaxContainerRef.current,
+              start: "top bottom",
+              end: "top top",
+              scrub: true
+            }
+          }
+        );
+      }
+    }, titleRef);
+    
+    return () => ctx.revert();
+  }, []);
 
   return (
-    <div className="landing-page home-page">
+    <div className="landing-page home-page" ref={titleRef as any}>
       {/* Dynamic Background Mesh */}
       <div className="landing-ambient-orbs" aria-hidden="true">
         <div className="landing-orb orb-1" />
@@ -112,7 +161,11 @@ export function Home() {
             <span>AI-POWERED IELTS PLATFORM 3.0</span>
           </div>
           <h1 className="hero-main-title">
-            Master IELTS with <span className="text-gradient" data-text="Real Exam Simulations">Real Exam Simulations</span> &amp; AI Feedback
+            Master IELTS with <span className="text-gradient" data-text="Real Exam Simulations">Real Exam Simulations</span><br />
+            <span style={{ position: "relative", display: "inline-block" }}>
+              <span style={{ visibility: "hidden" }}>&amp; AI Feedback</span>
+              <span ref={typewriterRef} style={{ position: "absolute", left: 0, top: 0, whiteSpace: "nowrap" }}></span>
+            </span>
           </h1>
           <p className="hero-description">
             Experience authentic computer-delivered IELTS environments. Powered by instant AI Speaking evaluation, automated Writing feedback, and real-time institute tracking.
@@ -234,6 +287,21 @@ export function Home() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Premium Parallax Educational Image Section */}
+      <section className="landing-parallax-section" ref={parallaxContainerRef as any}>
+        <div className="parallax-overlay" />
+        <img 
+          ref={parallaxImgRef}
+          src="/educational-hero.png" 
+          alt="Students studying collaboratively" 
+          className="parallax-img"
+        />
+        <div className="parallax-content">
+          <h2>Empowering the Next Generation</h2>
+          <p>State-of-the-art tools for modern educators and ambitious students.</p>
         </div>
       </section>
 

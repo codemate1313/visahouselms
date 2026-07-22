@@ -18,7 +18,7 @@ export function AboutUs() {
       {/* Hero Header */}
       <section className="about-hero-section text-center">
         <div className="about-hero-container">
-          <span className="section-kicker">OUR MISSION &amp; VISION</span>
+
           <h1 className="hero-main-title">
             Empowering Educators &amp; Students with <span className="text-gradient">IELTS Innovation</span>
           </h1>

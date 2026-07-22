@@ -20,7 +20,6 @@ export function Plans() {
       {/* Header */}
       <section className="plans-hero-section text-center">
         <div className="plans-hero-container">
-          <span className="section-kicker">PLANS &amp; PRICING</span>
           <h1 className="hero-main-title">
             Flexible Subscription Tiers for <span className="text-gradient">Every Goal</span>
           </h1>

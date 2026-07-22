@@ -13501,14 +13501,16 @@ th[aria-sort="descending"] .table-sort-button::after {
 }
 
 .billing-toggle-container {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 14px;
   background: var(--bg-card, #ffffff);
   border: 1px solid rgba(226, 232, 240, 0.9);
   padding: 8px 18px;
   border-radius: 30px;
-  margin-top: 24px;
+  margin: 32px auto 0;
+  width: max-content;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
 }
 
@@ -16600,4 +16602,63 @@ th[aria-sort="descending"] .table-sort-button::after {
   .student-notification-item-arrow {
     transition: none;
   }
+}
+
+/* Educational Parallax Section */
+.landing-parallax-section {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  height: 60vh;
+  min-height: 500px;
+  margin: 80px 0;
+  border-radius: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+  container-type: inline-size;
+}
+
+.parallax-img {
+  position: absolute;
+  top: -20%;
+  left: 0;
+  width: 100%;
+  height: 140%;
+  object-fit: cover;
+  z-index: 0;
+  will-change: transform;
+}
+
+.parallax-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 100%);
+  z-index: 1;
+}
+
+.parallax-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: #fff;
+  padding: 0 24px;
+  max-width: 800px;
+  transform: translateY(20px);
+}
+
+.parallax-content h2 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.parallax-content p {
+  font-size: clamp(1.1rem, 2vw, 1.3rem);
+  opacity: 0.9;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
