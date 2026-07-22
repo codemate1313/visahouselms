@@ -76,7 +76,7 @@ export const router = createBrowserRouter([
     ],
   },
   { path: "/testing-login", element: <TestingLoginSelector /> },
-  { path: "/super-admin/login", element: <Login allowedRoles={["SUPER_ADMIN", "SA_INSTRUCTOR"]} title="Super Admin & Author Portal" subtitle="Sign in to platform management or assessment authoring" wrongRoleMessage="This login is only for Super Admin and SA Instructor accounts." /> },
+  { path: "/super-admin/login", element: <Login allowedRoles={["SUPER_ADMIN", "SA_INSTRUCTOR"]} title="Super Admin & Author Portal" subtitle="Sign in to platform management or assessment authoring" /> },
   { path: "/sa-instructor/login", element: <Navigate to="/super-admin/login?role=SA_INSTRUCTOR" replace /> },
   { path: "/super-admin", element: <Navigate to="/super-admin/login" replace /> },
   { path: "/super-admin/instructor", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
@@ -84,7 +84,7 @@ export const router = createBrowserRouter([
   { path: "/sa-instructor-login", element: <Navigate to="/super-admin/login?role=SA_INSTRUCTOR" replace /> },
   { path: "/instructor", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
   { path: "/instructor/*", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
-  { path: "/login", element: <Login allowedRoles={["INSTITUTE_ADMIN", "INST_INSTRUCTOR", "STUDENT"]} title="Portal Login" subtitle="Select your role and sign in to your portal" wrongRoleMessage="Super Admin and SA Instructor accounts must use /super-admin/login." /> },
+  { path: "/login", element: <Login allowedRoles={["INSTITUTE_ADMIN", "INST_INSTRUCTOR", "STUDENT"]} title="Portal Login" subtitle="Select your role and sign in to your portal" /> },
   { path: "/register", element: <Register /> },
   {
     element: <ProtectedRoute allowedRoles={["SUPER_ADMIN"]} />,

@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiClient } from "../../api/client";
+import { API_BASE_URL, apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import { ConfirmModal } from "../../components/ConfirmModal";
+import { Icon } from "../../components/icons";
 
 interface InstituteRow {
   id: number;
   name: string;
   slug: string;
   contact_email: string | null;
+  logo_url: string | null;
   is_active: boolean;
   subscription_state: string;
   created_at: string;
@@ -155,7 +157,11 @@ export function Institutes() {
                   <td>
                     <div className="table-item-cell">
                       <div className="table-avatar-tile">
-                        {row.name.charAt(0).toUpperCase()}
+                        {row.logo_url ? (
+                          <img src={`${API_BASE_URL}${row.logo_url}`} alt={`${row.name} logo`} />
+                        ) : (
+                          row.name.charAt(0).toUpperCase()
+                        )}
                       </div>
                       <div className="table-item-details">
                         <span className="table-item-title">{row.name}</span>
@@ -175,14 +181,27 @@ export function Institutes() {
                     {row.onboarding_status === "draft" ? "Draft" : row.is_active ? "Active" : "Suspended"}
                   </span>
                 </td>
-                <td className="table-actions">
-                  <Link to={`/super-admin/institutes/${row.id}`}>Edit</Link>
-                  <Link to={`/super-admin/institutes/${row.id}/students`}>Students</Link>
-                  <Link to={`/super-admin/institutes/${row.id}/branding`}>Branding</Link>
-                  <button onClick={() => toggleActive(row)}>
+                <td className="table-actions institute-row-actions">
+                  <Link className="action-edit" to={`/super-admin/institutes/${row.id}`}>
+                    <Icon name="edit" className="table-action-icon" />
+                    <span>Edit</span>
+                  </Link>
+                  <Link className="action-students" to={`/super-admin/institutes/${row.id}/students`}>
+                    <Icon name="user" className="table-action-icon" />
+                    <span>Students</span>
+                  </Link>
+                  <Link className="action-branding" to={`/super-admin/institutes/${row.id}/branding`}>
+                    <Icon name="settings" className="table-action-icon" />
+                    <span>Branding</span>
+                  </Link>
+                  <button className="action-toggle" onClick={() => toggleActive(row)}>
+                    <Icon name={row.is_active ? "lock" : "session"} className="table-action-icon" />
                     {row.is_active ? "Suspend" : "Reactivate"}
                   </button>
-                  <button className="danger" onClick={() => setDeletingRow(row)}>Delete</button>
+                  <button className="danger action-delete" onClick={() => setDeletingRow(row)}>
+                    <Icon name="trash" className="table-action-icon" />
+                    <span>Delete</span>
+                  </button>
                 </td>
               </tr>
             ))}

@@ -92,10 +92,21 @@ def _resolve_device(
 
     active_sessions = _active_sessions(db, user.id)
     if enforce_single_device:
+        # Sessions created before device tracking cannot identify a real device.
+        # Retire them before enforcing the one-device rule so they do not lock a
+        # student out as an "Unknown device" for the rest of their lifetime.
+        legacy_sessions = [session for session in active_sessions if session.device_id is None]
+        for session in legacy_sessions:
+            session.revoked_at = now
+            db.add(session)
+
+        identified_sessions = [
+            session for session in active_sessions if session.device_id is not None
+        ]
         other_device_session = next(
             (
                 session
-                for session in active_sessions
+                for session in identified_sessions
                 if session.device_id != device.id
             ),
             None,
@@ -114,9 +125,8 @@ def _resolve_device(
                 ),
             )
 
-        # Replace an older token from this browser. Legacy sessions without a
-        # device identifier are also retired during the first identified login.
-        for session in active_sessions:
+        # Replace an older token from this browser.
+        for session in identified_sessions:
             session.revoked_at = now
             db.add(session)
 

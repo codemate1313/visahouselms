@@ -162,21 +162,66 @@ export function InstituteBranding() {
         This is what the institute's own portal will look like once themed with these colors.
       </p>
       <div
-        className="branding-preview"
+        className="branding-dashboard-preview"
         style={{
           "--preview-primary": primary,
           "--preview-secondary": secondary,
+          "--preview-on-primary": "#ffffff",
           fontFamily: fontFamily === "system-ui" ? "system-ui" : `'${fontFamily}', sans-serif`,
           fontWeight: bodyWeight,
         } as CSSProperties}
       >
-        <div className="branding-preview-nav">
-          {logoSrc ? <img src={logoSrc} alt="" className="branding-preview-logo" /> : <div className="branding-preview-logo-placeholder" />}
-          <span style={{ fontWeight: headingWeight }}>{branding?.institute_name ?? "Institute Portal"}</span>
+        <div className="branding-preview-sidebar">
+          <div className="branding-preview-brand">
+            {logoSrc ? <img src={logoSrc} alt="" className="branding-preview-logo" /> : <div className="branding-preview-logo-placeholder" />}
+            <div>
+              <strong style={{ fontWeight: headingWeight }}>{branding?.institute_name ?? "Institute Portal"}</strong>
+              <span>Institute Student</span>
+            </div>
+          </div>
+          <div className="branding-preview-menu">
+            <span className="is-active">Dashboard</span>
+            <span>My Tests</span>
+            <span>My Test History</span>
+            <span>Progress</span>
+          </div>
+          <div className="branding-preview-settings">
+            <span>My Profile</span>
+            <span>Active Sessions</span>
+          </div>
         </div>
-        <div className="branding-preview-body">
-          <button className="branding-preview-button">Primary action</button>
-          <span className="branding-preview-badge">Sample badge</span>
+        <div className="branding-preview-main">
+          <div className="branding-preview-header">
+            <div>
+              <small>Institute Student Portal</small>
+              <h3 style={{ fontWeight: headingWeight }}>Welcome, QA</h3>
+              <p>Take assigned tests and track CEFR results.</p>
+            </div>
+            <button className="branding-preview-button">View assigned tests</button>
+          </div>
+          <div className="branding-preview-stats">
+            <article><span>Available tests</span><strong>6</strong></article>
+            <article><span>In progress</span><strong>0</strong></article>
+            <article><span>Awaiting grading</span><strong>12</strong></article>
+            <article><span>Graded</span><strong>1</strong></article>
+          </div>
+          <div className="branding-preview-panels">
+            <section>
+              <h4>Institute assigned tests</h4>
+              <p>Only tests allotted to your institute are available here.</p>
+              <div className="branding-preview-panel-row"><span>Available now</span><strong>6 tests</strong></div>
+              <button className="branding-preview-text-button">Go to My Tests</button>
+            </section>
+            <section>
+              <h4>Recent test activity</h4>
+              {["Sample Full Mock Test", "Sample Final Test", "Sample Reading Course"].map((item) => (
+                <div className="branding-preview-activity" key={item}>
+                  <span>{item}</span>
+                  <small>Awaiting grading</small>
+                </div>
+              ))}
+            </section>
+          </div>
         </div>
       </div>
     </div>

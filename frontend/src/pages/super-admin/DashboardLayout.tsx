@@ -120,7 +120,7 @@ export function DashboardLayout() {
   ];
 
   return (
-    <div className="dashboard">
+    <div className="dashboard super-admin-portal">
       <Sidebar
         brandTitle="IELTS LMS"
         brandSubtitle="Super Admin"

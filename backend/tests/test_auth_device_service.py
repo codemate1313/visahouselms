@@ -88,6 +88,28 @@ class StudentDeviceLoginTests(unittest.TestCase):
         self.assertEqual(len(active), 1)
         self.assertEqual(active[0].device.name, "Firefox on Windows")
 
+    def test_unidentified_legacy_session_does_not_lock_student_out(self):
+        legacy_session = UserSession(
+            user_id=self.student.id,
+            device_id=None,
+            session_key="legacy-unidentified-session",
+            refresh_token_hash="legacy-unidentified-refresh-token",
+            user_agent=None,
+            ip_address=None,
+            created_at=datetime.now(timezone.utc),
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        )
+        self.db.add(legacy_session)
+        self.db.commit()
+
+        self._login("device-a-identifier-0001")
+
+        self.db.refresh(legacy_session)
+        self.assertIsNotNone(legacy_session.revoked_at)
+        active = self.db.query(UserSession).filter(UserSession.revoked_at.is_(None)).all()
+        self.assertEqual(len(active), 1)
+        self.assertIsNotNone(active[0].device_id)
+
 
 class InstituteSessionPolicyTests(unittest.TestCase):
     def setUp(self) -> None:

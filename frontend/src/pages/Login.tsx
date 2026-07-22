@@ -12,7 +12,6 @@ interface LoginProps {
   allowedRoles?: string[];
   title?: string;
   subtitle?: string;
-  wrongRoleMessage?: string;
 }
 
 const ALL_ROLE_OPTIONS = [
@@ -99,7 +98,6 @@ export function Login({
   allowedRoles = ["INSTITUTE_ADMIN", "INST_INSTRUCTOR", "STUDENT"],
   title = "IELTS LMS",
   subtitle = "Enter your credentials to access your dashboard",
-  wrongRoleMessage = "Use the correct login page for this account.",
 }: LoginProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -157,15 +155,6 @@ export function Login({
       const { data: user } = await apiClient.get("/auth/me", {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       });
-      if ((allowedRoles && !allowedRoles.includes(user.role)) || user.role !== selectedRole) {
-        await apiClient.post("/auth/logout", { refresh_token: tokens.refresh_token }).catch(() => undefined);
-        const roleMessage = allowedRoles?.includes(user.role)
-          ? `This account belongs to ${roleLabel(user.role)}. Switch to that tab and sign in again.`
-          : wrongRoleMessage;
-        setError(roleMessage);
-        showError(roleMessage, "Access Denied");
-        return;
-      }
       const destination = destinationFor(user);
       if (!destination) {
         setError("This role does not have a portal yet.");
@@ -173,7 +162,7 @@ export function Login({
         return;
       }
       setSession(tokens.access_token, tokens.refresh_token, user);
-      showSuccess(`Welcome back!`, "Signed In");
+      showSuccess(`Welcome back, ${roleLabel(user.role)}!`, "Signed In");
       navigate(destination);
     } catch (requestError: unknown) {
       let msg = "Unable to sign in. Please try again.";
@@ -233,8 +222,8 @@ export function Login({
             <div
               className="role-tab-indicator"
               style={{
-                width: `calc((100% - 8px - ${(totalTabs - 1) * 4}px) / ${totalTabs})`,
-                transform: `translateX(calc(${safeActiveIndex} * (100% + 4px)))`,
+                width: `calc((100% - 8px) / ${totalTabs})`,
+                transform: `translateX(calc(${safeActiveIndex} * (100% - 2px)))`,
               }}
             />
             {activeRoleOptions.map((option) => {

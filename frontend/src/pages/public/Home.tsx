@@ -1,11 +1,99 @@
+import { useEffect, useRef, useState } from "react";
 import { useOutletContext, Link } from "react-router-dom";
 
 interface LandingContext {
   openLoginModal: () => void;
 }
 
+interface AnimatedStatProps {
+  value: number;
+  label: string;
+  suffix?: string;
+  decimals?: number;
+  trailing?: string;
+  duration?: number;
+}
+
+function AnimatedStat({
+  value,
+  label,
+  suffix = "",
+  decimals = 0,
+  trailing = "",
+  duration = 1500,
+}: AnimatedStatProps) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [hasEntered, setHasEntered] = useState(false);
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return undefined;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) {
+      setDisplayValue(value);
+      setHasEntered(true);
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasEntered(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.35, rootMargin: "0px 0px -8% 0px" }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [value]);
+
+  useEffect(() => {
+    if (!hasEntered) return undefined;
+
+    let frameId = 0;
+    let startTime: number | null = null;
+
+    const tick = (timestamp: number) => {
+      if (startTime === null) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 4);
+      setDisplayValue(value * eased);
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(tick);
+      } else {
+        setDisplayValue(value);
+      }
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [duration, hasEntered, value]);
+
+  const formattedValue = displayValue.toLocaleString("en-IN", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+
+  return (
+    <div ref={ref} className={`stat-card ${hasEntered ? "stat-card-visible" : ""}`}>
+      <h3 className="stat-number" aria-label={`${formattedValue}${suffix}${trailing} ${label}`}>
+        <span className="stat-number-roll">{formattedValue}</span>
+        {suffix && <span className="stat-number-affix">{suffix}</span>}
+        {trailing && <span className="stat-number-trailing">{trailing}</span>}
+      </h3>
+      <p className="stat-label">{label}</p>
+    </div>
+  );
+}
+
 export function Home() {
   const { openLoginModal } = useOutletContext<LandingContext>();
+  const [activeShowcaseDetail, setActiveShowcaseDetail] = useState<string | null>(null);
 
   return (
     <div className="landing-page home-page">
@@ -24,7 +112,7 @@ export function Home() {
             <span>AI-POWERED IELTS PLATFORM 3.0</span>
           </div>
           <h1 className="hero-main-title">
-            Master IELTS with <span className="text-gradient">Real Exam Simulations</span> &amp; AI Feedback
+            Master IELTS with <span className="text-gradient" data-text="Real Exam Simulations">Real Exam Simulations</span> &amp; AI Feedback
           </h1>
           <p className="hero-description">
             Experience authentic computer-delivered IELTS environments. Powered by instant AI Speaking evaluation, automated Writing feedback, and real-time institute tracking.
@@ -45,10 +133,21 @@ export function Home() {
           </div>
 
           {/* 3D Showcase Floating Elements Card */}
-          <div className="hero-3d-showcase">
+          <div
+            className="hero-3d-showcase"
+            onPointerLeave={() => setActiveShowcaseDetail(null)}
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) {
+                setActiveShowcaseDetail(null);
+              }
+            }}
+          >
             <div className="showcase-card-container">
               {/* Central Mock Screen */}
-              <div className="mock-exam-screen">
+              <div
+                className="mock-exam-screen"
+                tabIndex={0}
+              >
                 <div className="mock-screen-header">
                   <div className="screen-dots">
                     <span className="dot red" />
@@ -80,7 +179,12 @@ export function Home() {
               </div>
 
               {/* Floating 3D Badge 1: AI Speaking Evaluator */}
-              <div className="floating-badge badge-top-right">
+              <div
+                className="floating-badge badge-top-right"
+                tabIndex={0}
+                onPointerEnter={() => setActiveShowcaseDetail("speaking")}
+                onFocus={() => setActiveShowcaseDetail("speaking")}
+              >
                 <div className="badge-icon-wrap bg-rose">🎙️</div>
                 <div className="badge-text-box">
                   <span className="badge-title">AI Speaking Evaluator</span>
@@ -89,7 +193,12 @@ export function Home() {
               </div>
 
               {/* Floating 3D Badge 2: Instant Writing Assessment */}
-              <div className="floating-badge badge-bottom-left">
+              <div
+                className="floating-badge badge-bottom-left"
+                tabIndex={0}
+                onPointerEnter={() => setActiveShowcaseDetail("writing")}
+                onFocus={() => setActiveShowcaseDetail("writing")}
+              >
                 <div className="badge-icon-wrap bg-indigo">✍️</div>
                 <div className="badge-text-box">
                   <span className="badge-title">Writing Task 2 Feedback</span>
@@ -98,12 +207,30 @@ export function Home() {
               </div>
 
               {/* Floating 3D Badge 3: Institute Analytics */}
-              <div className="floating-badge badge-bottom-right">
+              <div
+                className="floating-badge badge-bottom-right"
+                tabIndex={0}
+                onPointerEnter={() => setActiveShowcaseDetail("analytics")}
+                onFocus={() => setActiveShowcaseDetail("analytics")}
+              >
                 <div className="badge-icon-wrap bg-emerald">📊</div>
                 <div className="badge-text-box">
                   <span className="badge-title">Institute Analytics</span>
                   <span className="badge-sub">150+ Batch Students Tracked</span>
                 </div>
+              </div>
+
+              <div className={`showcase-detail-card independent-detail-card speaking-detail-card ${activeShowcaseDetail === "speaking" ? "is-active" : ""}`} aria-hidden={activeShowcaseDetail !== "speaking"}>
+                <strong>Speaking insight</strong>
+                <span>Fluency, pronunciation, lexical range, and response timing cues.</span>
+              </div>
+              <div className={`showcase-detail-card independent-detail-card writing-detail-card ${activeShowcaseDetail === "writing" ? "is-active" : ""}`} aria-hidden={activeShowcaseDetail !== "writing"}>
+                <strong>Writing breakdown</strong>
+                <span>Task response, grammar, coherence, cohesion, and vocabulary signals.</span>
+              </div>
+              <div className={`showcase-detail-card independent-detail-card analytics-detail-card ${activeShowcaseDetail === "analytics" ? "is-active" : ""}`} aria-hidden={activeShowcaseDetail !== "analytics"}>
+                <strong>Batch visibility</strong>
+                <span>Attempts, grading status, CEFR movement, and instructor workload.</span>
               </div>
             </div>
           </div>
@@ -113,25 +240,13 @@ export function Home() {
       {/* Stats Counter Section */}
       <section className="landing-stats-section">
         <div className="stats-container">
-          <div className="stat-card">
-            <h3 className="stat-number">15,000+</h3>
-            <p className="stat-label">Students Prepared</p>
-          </div>
+          <AnimatedStat value={15000} suffix="+" label="Students Prepared" />
           <div className="stat-divider" />
-          <div className="stat-card">
-            <h3 className="stat-number">180+</h3>
-            <p className="stat-label">Partner Institutes</p>
-          </div>
+          <AnimatedStat value={180} suffix="+" label="Partner Institutes" />
           <div className="stat-divider" />
-          <div className="stat-card">
-            <h3 className="stat-number">98.4%</h3>
-            <p className="stat-label">Target Band Rate</p>
-          </div>
+          <AnimatedStat value={98.4} suffix="%" decimals={1} label="Target Band Rate" />
           <div className="stat-divider" />
-          <div className="stat-card">
-            <h3 className="stat-number">4.9 / 5.0</h3>
-            <p className="stat-label">Average User Score</p>
-          </div>
+          <AnimatedStat value={4.9} decimals={1} trailing=" / 5.0" label="Average User Score" />
         </div>
       </section>
 

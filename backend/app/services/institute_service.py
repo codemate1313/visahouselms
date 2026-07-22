@@ -82,11 +82,13 @@ def get_institute_or_404(db: Session, institute_id: int) -> Institute:
 
 def _serialize(db: Session, institute: Institute) -> dict:
     _, sub_state = current_subscription(db, institute.id)
+    branding = db.query(InstituteBranding).filter(InstituteBranding.institute_id == institute.id).first()
     return {
         "id": institute.id,
         "name": institute.name,
         "slug": institute.slug,
         "contact_email": institute.contact_email,
+        "logo_url": f"/storage/{branding.logo_path}" if branding and branding.logo_path else None,
         "admin_permissions": normalized_admin_permissions(institute.admin_permissions),
         "session_duration_hours": institute.session_duration_hours,
         "is_active": institute.is_active,

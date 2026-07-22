@@ -31,6 +31,8 @@ export type IconName =
   | "notifications"
   | "help"
   | "logout"
+  | "edit"
+  | "trash"
   | "chevronDown"
   | "overview"
   | "projects";
@@ -133,6 +135,20 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <path d="M16 17l5-5-5-5" />
       <path d="M21 12H9" />
+    </>
+  ),
+  edit: (
+    <>
+      <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z" />
+      <path d="M13.5 7.5l3 3" />
+    </>
+  ),
+  trash: (
+    <>
+      <path d="M4 7h16" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M6 7l1 13h10l1-13" />
+      <path d="M9 7V4h6v3" />
     </>
   ),
   // Chevron Down Icon
