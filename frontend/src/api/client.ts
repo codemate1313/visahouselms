@@ -1,4 +1,5 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { shouldRedirectHomeAfterLogout } from "../auth/logoutRedirect";
 import { useAuthStore } from "../store/authStore";
 import { useLoaderStore } from "../store/loaderStore";
 
@@ -95,6 +96,7 @@ apiClient.interceptors.request.use(
 );
 
 let refreshPromise: Promise<string> | null = null;
+let logoutInProgress = false;
 
 async function refreshAccessToken(): Promise<string> {
   const { refreshToken, setTokens, clear } = useAuthStore.getState();
@@ -123,7 +125,12 @@ apiClient.interceptors.response.use(
 
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if (
+      error.response?.status === 401
+      && originalRequest
+      && !originalRequest._retry
+      && !logoutInProgress
+    ) {
       originalRequest._retry = true;
       const roleBeforeRefresh = useAuthStore.getState().user?.role;
       try {
@@ -134,7 +141,7 @@ apiClient.interceptors.response.use(
         originalRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
         return apiClient(originalRequest);
       } catch {
-        window.location.href = loginPathForRole(roleBeforeRefresh);
+        window.location.href = shouldRedirectHomeAfterLogout() ? "/" : loginPathForRole(roleBeforeRefresh);
         return Promise.reject(error);
       }
     }
@@ -142,3 +149,21 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export async function revokeCurrentSession(): Promise<void> {
+  logoutInProgress = true;
+
+  try {
+    if (refreshPromise) {
+      await refreshPromise.catch(() => undefined);
+    }
+
+    const refreshToken = useAuthStore.getState().refreshToken;
+    if (refreshToken) {
+      await refreshClient.post("/auth/logout", { refresh_token: refreshToken });
+    }
+  } finally {
+    useAuthStore.getState().clear();
+    logoutInProgress = false;
+  }
+}

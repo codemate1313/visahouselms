@@ -4,6 +4,8 @@ Designed specifically for 100% rendering compatibility across Gmail, Outlook,
 Apple Mail, and mobile clients without SVG stripping or dark inversion bugs.
 """
 
+from __future__ import annotations
+
 
 def render_base_email(
     badge_label: str,

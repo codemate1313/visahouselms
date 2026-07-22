@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { consumeLogoutRedirect } from "../../auth/logoutRedirect";
+import { GsapRouteAnimator } from "../GsapRouteAnimator";
 import { LandingHeader } from "./LandingHeader";
 import { LandingFooter } from "./LandingFooter";
 import { LoginModal } from "./LoginModal";
@@ -8,6 +10,10 @@ export function LandingLayout() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const location = useLocation();
   const hasPlayedInitialReveal = useRef(false);
+
+  useEffect(() => {
+    consumeLogoutRedirect();
+  }, [location.pathname]);
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -65,7 +71,9 @@ export function LandingLayout() {
     <div className="landing-layout-root">
       <LandingHeader onOpenLogin={() => setLoginModalOpen(true)} />
       <main className="landing-main-content">
-        <Outlet context={{ openLoginModal: () => setLoginModalOpen(true) }} />
+        <GsapRouteAnimator className="gsap-route-scope landing-gsap-scope">
+          <Outlet context={{ openLoginModal: () => setLoginModalOpen(true) }} />
+        </GsapRouteAnimator>
       </main>
       <LandingFooter />
       <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />

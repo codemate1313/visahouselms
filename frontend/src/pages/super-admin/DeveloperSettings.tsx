@@ -72,6 +72,71 @@ export function DeveloperSettings() {
 
 function TypographyTab() {
   const { config, updateConfig, resetConfig } = useFontStore();
+  const weightTone = (weight: string) => {
+    if (weight === "600") return "Sleek";
+    if (weight === "400") return "Regular";
+    if (Number(weight) >= 700) return "Bold";
+    if (Number(weight) <= 300) return "Light";
+    return "Balanced";
+  };
+  const weightLabel = (weight: string) => `${weight} ${weightTone(weight)}`;
+  const scaleValues = (min: number, max: number) =>
+    Array.from({ length: 11 }, (_, index) => Math.round(min + ((max - min) / 10) * index));
+  const WeightSlider = ({
+    label,
+    helper,
+    value,
+    min,
+    max,
+    onChange,
+  }: {
+    label: string;
+    helper: string;
+    value: string;
+    min: number;
+    max: number;
+    onChange: (value: string) => void;
+  }) => {
+    const percent = ((Number(value) - min) / (max - min)) * 100;
+
+    return (
+      <div className="typography-slider-row">
+        <div className="typography-slider-header">
+          <div>
+            <label>{label}</label>
+            <p>{helper}</p>
+          </div>
+          <output aria-live="polite">{weightLabel(value)}</output>
+        </div>
+        <div className="typography-range-wrap">
+          <input
+            aria-label={label}
+            className="typography-range"
+            type="range"
+            min={min}
+            max={max}
+            step={10}
+            value={value}
+            style={{ "--range-progress": `${percent}%` } as React.CSSProperties}
+            onChange={(event) => onChange(event.target.value)}
+          />
+          <div className="typography-range-ticks" aria-hidden="true">
+            {scaleValues(min, max).map((tick) => (
+              <span key={tick} />
+            ))}
+          </div>
+        </div>
+        <div className="typography-range-scale">
+          {scaleValues(min, max).map((tick) => (
+            <span key={tick}>{tick}</span>
+          ))}
+        </div>
+        <p className="typography-selected-value">
+          Selecting <strong>{value}</strong> for {label.toLowerCase()}.
+        </p>
+      </div>
+    );
+  };
 
   return (
     <div className="form-card wide">
@@ -96,95 +161,54 @@ function TypographyTab() {
         </select>
       </div>
 
-      {/* Headings Font Weight (h1, h2, h3, .section-title) */}
-      <div style={{ marginBottom: 24 }}>
-        <label style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>
-          Headings Weight (h1, h2, section titles)
-        </label>
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          {["400", "500", "600", "700", "800"].map((w) => (
-            <button
-              key={w}
-              type="button"
-              className={config.headingWeight === w ? "" : "secondary-button"}
-              style={{
-                minWidth: "100px",
-                background: config.headingWeight === w ? "#ef4444" : undefined,
-                color: config.headingWeight === w ? "#ffffff" : undefined,
-              }}
-              onClick={() => updateConfig({ headingWeight: w })}
-            >
-              {w === "600" ? `${w} (Sleek)` : w}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Metric Values Weight (.stat-value) */}
-      <div style={{ marginBottom: 24 }}>
-        <label style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>
-          Dashboard Metric Numbers (.stat-value)
-        </label>
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          {["500", "600", "700", "800"].map((w) => (
-            <button
-              key={w}
-              type="button"
-              className={config.statWeight === w ? "" : "secondary-button"}
-              style={{
-                minWidth: "100px",
-                background: config.statWeight === w ? "#ef4444" : undefined,
-                color: config.statWeight === w ? "#ffffff" : undefined,
-              }}
-              onClick={() => updateConfig({ statWeight: w })}
-            >
-              {w === "600" ? `${w} (Sleek)` : w}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Body Text Weight (body, p, span) */}
-      <div style={{ marginBottom: 24 }}>
-        <label style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>
-          Body Text & Labels Weight
-        </label>
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          {["300", "400", "500"].map((w) => (
-            <button
-              key={w}
-              type="button"
-              className={config.bodyWeight === w ? "" : "secondary-button"}
-              style={{
-                minWidth: "100px",
-                background: config.bodyWeight === w ? "#ef4444" : undefined,
-                color: config.bodyWeight === w ? "#ffffff" : undefined,
-              }}
-              onClick={() => updateConfig({ bodyWeight: w })}
-            >
-              {w === "400" ? `${w} (Regular)` : w}
-            </button>
-          ))}
-        </div>
+      <div className="typography-slider-panel">
+        <WeightSlider
+          label="Headings Weight"
+          helper="Applies to h1, h2, h3, and section titles."
+          value={config.headingWeight}
+          min={400}
+          max={800}
+          onChange={(headingWeight) => updateConfig({ headingWeight })}
+        />
+        <WeightSlider
+          label="Dashboard Metric Numbers"
+          helper="Applies to dashboard KPI and stat values."
+          value={config.statWeight}
+          min={500}
+          max={800}
+          onChange={(statWeight) => updateConfig({ statWeight })}
+        />
+        <WeightSlider
+          label="Body Text & Labels"
+          helper="Applies to body copy, labels, and compact supporting text."
+          value={config.bodyWeight}
+          min={300}
+          max={500}
+          onChange={(bodyWeight) => updateConfig({ bodyWeight })}
+        />
       </div>
 
       {/* Live Preview Card */}
-      <div
-        style={{
-          background: "rgba(247, 247, 249, 0.9)",
-          border: "1px solid rgba(225, 29, 46, 0.2)",
-          padding: "22px 26px",
-          borderRadius: "18px",
-          marginTop: "20px",
-          marginBottom: "20px",
-        }}
-      >
-        <span style={{ fontSize: "11px", fontWeight: 700, color: "#dc2626", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-          Live Typography Preview
-        </span>
-        <h2 style={{ margin: "8px 0 6px", fontSize: "22px" }}>Good Evening, Super Admin</h2>
-        <p style={{ margin: "0 0 14px", color: "#6e6e73" }}>Real-time overview of institutes, subscriptions, and revenue.</p>
-        <div style={{ fontSize: "32px", fontWeight: "var(--app-stat-weight)", color: "#111827" }}>₹6,599</div>
+      <div className="typography-preview">
+        <div className="typography-preview-copy">
+          <span>Live Typography Preview</span>
+          <h2>Good Evening, Super Admin</h2>
+          <p>Real-time overview of institutes, subscriptions, and revenue.</p>
+        </div>
+        <div className="typography-preview-metrics">
+          <div className="typography-preview-stat">
+            <p>Revenue</p>
+            <strong>₹6,599</strong>
+          </div>
+          <div className="typography-preview-stat">
+            <p>Institutes</p>
+            <strong>24</strong>
+          </div>
+          <div className="typography-preview-stat">
+            <p>Due</p>
+            <strong>₹840</strong>
+          </div>
+        </div>
       </div>
 
       <div className="form-actions">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
-import { apiClient } from "../../api/client";
+import { Outlet } from "react-router-dom";
+import { logoutAndRedirectHome } from "../../auth/logout";
+import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
 import { Sidebar, type MenuItem, type MenuSection } from "../../components/Sidebar";
 import { useInstituteBranding } from "../../hooks/useInstituteBranding";
 import { useAuthStore } from "../../store/authStore";
@@ -8,12 +9,9 @@ import { useAuthStore } from "../../store/authStore";
 const COLLAPSE_STORAGE_KEY = "student-lms-sidebar-collapsed";
 
 export function StudentLayout() {
-  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1"
   );
-  const refreshToken = useAuthStore((state) => state.refreshToken);
-  const clear = useAuthStore((state) => state.clear);
   const user = useAuthStore((state) => state.user);
   const isInstituteStudent = user?.institute_id != null;
   const { branding, logoUrl } = useInstituteBranding(isInstituteStudent ? user?.institute_slug : null);
@@ -23,15 +21,7 @@ export function StudentLayout() {
   }, [collapsed]);
 
   async function logout() {
-    if (refreshToken) {
-      try {
-        await apiClient.post("/auth/logout", { refresh_token: refreshToken });
-      } catch {
-        /* best effort */
-      }
-    }
-    clear();
-    navigate("/");
+    await logoutAndRedirectHome();
   }
 
   const mainItems: MenuItem[] = [
@@ -73,7 +63,9 @@ export function StudentLayout() {
         onLogout={logout}
       />
       <main className="dashboard-content" style={{ flex: 1, padding: "20px" }}>
-        <Outlet />
+        <GsapRouteAnimator>
+          <Outlet />
+        </GsapRouteAnimator>
       </main>
     </div>
   );

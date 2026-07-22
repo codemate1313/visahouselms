@@ -88,6 +88,16 @@ class StudentDeviceLoginTests(unittest.TestCase):
         self.assertEqual(len(active), 1)
         self.assertEqual(active[0].device.name, "Firefox on Windows")
 
+    def test_logout_revokes_a_rotated_session_on_the_same_device(self):
+        _, original_refresh = self._login("device-a-identifier-0001")
+        auth_service.refresh(self.db, original_refresh, "Test Browser", "127.0.0.1")
+
+        auth_service.logout(self.db, original_refresh)
+
+        active = self.db.query(UserSession).filter(UserSession.revoked_at.is_(None)).all()
+        self.assertEqual(active, [])
+        self._login("device-b-identifier-0002", "Firefox on Windows")
+
     def test_unidentified_legacy_session_does_not_lock_student_out(self):
         legacy_session = UserSession(
             user_id=self.student.id,

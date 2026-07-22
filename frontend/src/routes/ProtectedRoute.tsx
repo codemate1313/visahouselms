@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { consumeLogoutRedirect } from "../auth/logoutRedirect";
 import { useAuthStore } from "../store/authStore";
 
 interface ProtectedRouteProps {
@@ -17,6 +18,9 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const location = useLocation();
 
   if (!accessToken || !user) {
+    if (consumeLogoutRedirect()) {
+      return <Navigate to="/" replace />;
+    }
     return <Navigate to={loginPathForRole(allowedRoles?.[0])} replace />;
   }
 

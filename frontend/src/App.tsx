@@ -3,6 +3,7 @@ import { GlobalConfirmModal } from "./components/ConfirmModal";
 import { GlobalDialog } from "./components/GlobalDialog";
 import { GlobalLoader } from "./components/GlobalLoader";
 import { GlobalSnackbar } from "./components/GlobalSnackbar";
+import { GsapInteractionLayer } from "./components/GsapInteractionLayer";
 import { router } from "./routes/router";
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
       <GlobalDialog />
       <GlobalSnackbar />
       <GlobalConfirmModal />
+      <GsapInteractionLayer />
       <RouterProvider router={router} />
     </>
   );

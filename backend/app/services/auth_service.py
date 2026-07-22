@@ -407,7 +407,20 @@ def refresh(
 def logout(db: Session, refresh_token: str) -> None:
     token_hash = hash_refresh_token(refresh_token)
     session = db.query(UserSession).filter(UserSession.refresh_token_hash == token_hash).first()
-    if session is not None and session.revoked_at is None:
-        session.revoked_at = datetime.now(timezone.utc)
-        db.add(session)
-        db.commit()
+    if session is None:
+        return
+
+    sessions = db.query(UserSession).filter(
+        UserSession.user_id == session.user_id,
+        UserSession.revoked_at.is_(None),
+    )
+    if session.device_id is not None:
+        sessions = sessions.filter(UserSession.device_id == session.device_id)
+    else:
+        sessions = sessions.filter(UserSession.id == session.id)
+
+    now = datetime.now(timezone.utc)
+    for active_session in sessions.all():
+        active_session.revoked_at = now
+        db.add(active_session)
+    db.commit()

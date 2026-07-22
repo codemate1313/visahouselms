@@ -39,6 +39,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body,
 button,
 input,
@@ -55,6 +59,24 @@ textarea {
   color: var(--text);
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
+}
+
+body {
+  overscroll-behavior-y: none;
+}
+
+.dashboard-nav nav,
+.module-part-list,
+.sidebar-nav-scroll,
+.test-source-pane,
+.test-question-pane,
+.attempt-question-list,
+.modal-body,
+.table-scroll,
+.overflow-scroll,
+.overflow-auto {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 body::before {
@@ -13074,6 +13096,224 @@ th[aria-sort="descending"] .table-sort-button::after {
 .footer-legal-links a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Super Admin Typography Settings */
+.typography-slider-panel {
+  display: grid;
+  gap: 20px;
+  margin: 6px 0 24px;
+  max-width: 100%;
+}
+
+.typography-slider-row {
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  border-radius: 8px;
+  padding: 20px 22px 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
+}
+
+.typography-slider-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.typography-slider-header label {
+  color: #111827;
+  display: block;
+  font-size: 18px;
+  font-weight: var(--app-heading-weight, 650);
+}
+
+.typography-slider-header p {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: var(--app-body-weight, 400);
+  line-height: 1.45;
+  margin: 5px 0 0;
+}
+
+.typography-slider-header output {
+  min-width: 120px;
+  border-radius: 8px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 11px 14px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.typography-range-wrap {
+  position: relative;
+  padding: 0 0 12px;
+}
+
+.typography-range {
+  --range-progress: 50%;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background:
+    linear-gradient(to right, #ef4444 0%, #ef4444 var(--range-progress), #d1d5db var(--range-progress), #d1d5db 100%);
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+
+.typography-range::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 26px;
+  height: 26px;
+  border: 4px solid #ffffff;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 6px 14px rgba(239, 68, 68, 0.28);
+}
+
+.typography-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 4px solid #ffffff;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 6px 14px rgba(239, 68, 68, 0.28);
+}
+
+.typography-range-ticks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.typography-range-ticks span {
+  width: 1px;
+  height: 9px;
+  background: #cbd5e1;
+}
+
+.typography-range-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 7px;
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.typography-range-scale span {
+  min-width: 20px;
+  text-align: center;
+}
+
+.typography-range-scale span:first-child {
+  text-align: left;
+}
+
+.typography-range-scale span:last-child {
+  text-align: right;
+}
+
+.typography-selected-value {
+  color: #475569;
+  font-size: 12px;
+  font-weight: var(--app-body-weight, 400);
+  margin: 12px 0 0;
+}
+
+.typography-selected-value strong {
+  color: #ef4444;
+  font-weight: 800;
+}
+
+.typography-preview {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.85fr) 1.15fr;
+  gap: 18px;
+  margin: 22px 0 20px;
+  border: 1px solid rgba(225, 29, 72, 0.2);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 241, 242, 0.88), rgba(255, 255, 255, 0.94) 42%),
+    #ffffff;
+  padding: 20px;
+}
+
+.typography-preview-copy span {
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.typography-preview-copy h2 {
+  margin: 8px 0 7px;
+  color: #0f172a;
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: var(--app-heading-weight, 600);
+}
+
+.typography-preview-copy p,
+.typography-preview-stat p {
+  color: #64748b;
+  font-weight: var(--app-body-weight, 400);
+}
+
+.typography-preview-copy p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.typography-preview-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.typography-preview-stat {
+  min-height: 104px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 15px;
+}
+
+.typography-preview-stat p {
+  margin: 0 0 12px;
+  font-size: 12px;
+}
+
+.typography-preview-stat strong {
+  display: block;
+  color: #111827;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1;
+  font-weight: var(--app-stat-weight, 600);
+}
+
+@media (max-width: 760px) {
+  .typography-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .typography-preview-metrics {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Login Modal Overlay (Heavy Backdrop Blur & Dark Tint) */
