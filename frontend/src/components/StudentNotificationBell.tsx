@@ -68,8 +68,8 @@ export function StudentNotificationBell() {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     gsap.fromTo(
       panelRef.current,
-      { autoAlpha: 0, y: -10, scale: reducedMotion ? 1 : 0.92, transformOrigin: "top right" },
-      { autoAlpha: 1, y: 0, scale: 1, duration: reducedMotion ? 0 : 0.28, ease: "power3.out" },
+      { autoAlpha: 0, y: -8, scale: reducedMotion ? 1 : 0.96, transformOrigin: "top right" },
+      { autoAlpha: 1, y: 0, scale: 1, duration: reducedMotion ? 0 : 0.32, ease: "back.out(1.35)" },
     );
   }, [panelVisible]);
 
@@ -83,9 +83,9 @@ export function StudentNotificationBell() {
     gsap.killTweensOf(panel);
     gsap.to(panel, {
       autoAlpha: 0,
-      y: -8,
-      scale: reducedMotion ? 1 : 0.96,
-      duration: reducedMotion ? 0 : 0.17,
+      y: -6,
+      scale: reducedMotion ? 1 : 0.98,
+      duration: reducedMotion ? 0 : 0.16,
       ease: "power2.in",
       onComplete: () => setPanelVisible(false),
     });
@@ -168,7 +168,6 @@ export function StudentNotificationBell() {
         aria-label={`Notifications${unread.length ? `, ${unread.length} unread` : ""}`}
         aria-haspopup="dialog"
         aria-expanded={panelVisible}
-        title="Notifications"
       >
         <Icon name="notifications" />
         {unread.length > 0 && (
@@ -191,7 +190,7 @@ export function StudentNotificationBell() {
               <span className="page-eyebrow">Student updates</span>
               <h2 id="student-notification-title">Notifications</h2>
             </div>
-            <button type="button" className="student-notification-close" onClick={closePanel} aria-label="Close notifications" title="Close">
+            <button type="button" className="student-notification-close" onClick={closePanel} aria-label="Close notifications">
               &times;
             </button>
           </div>

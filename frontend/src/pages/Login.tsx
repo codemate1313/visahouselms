@@ -125,7 +125,7 @@ export function Login({
       );
     }, containerRef);
     return () => ctx.revert();
-  }, []);
+  }, [disableAnimation]);
   const setSession = useAuthStore((state) => state.setSession);
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
