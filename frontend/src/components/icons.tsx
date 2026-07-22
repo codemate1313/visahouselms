@@ -35,9 +35,23 @@ export type IconName =
   | "trash"
   | "chevronDown"
   | "overview"
-  | "projects";
+  | "projects"
+  | "toggleOn"
+  | "toggleOff";
 
 const ICON_PATHS: Record<IconName, ReactNode> = {
+  toggleOn: (
+    <>
+      <rect x="2" y="6" width="20" height="12" rx="6" fill="#16a34a" stroke="none" />
+      <circle cx="16" cy="12" r="4" fill="#ffffff" stroke="none" />
+    </>
+  ),
+  toggleOff: (
+    <>
+      <rect x="2" y="6" width="20" height="12" rx="6" fill="#cbd5e1" stroke="none" />
+      <circle cx="8" cy="12" r="4" fill="#ffffff" stroke="none" />
+    </>
+  ),
   // Bucket / Logo Icon from Hugeicons reference
   bucket: (
     <>

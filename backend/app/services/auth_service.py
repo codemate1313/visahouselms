@@ -275,7 +275,76 @@ def register(
     db.commit()
     db.refresh(user)
 
+    # Send HTML Welcome Email
+    try:
+        from app.services import email_template_service, smtp_service
+        frontend_url = settings.frontend_url or "http://localhost:5173"
+        login_url = f"{frontend_url}/login"
+        subject, plain, html = email_template_service.render_welcome_email(user.first_name, login_url)
+        smtp_service.send_email(db, user.email, subject, plain, html_body=html)
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("Failed to send welcome email for %s: %s", user.email, exc)
+
     return issue_token_pair(db, user, user_agent, ip_address, device=device)
+
+
+def request_password_reset(db: Session, email: str) -> None:
+    normalized_email = email.strip().lower()
+    user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
+    if user is None or not user.is_active:
+        return
+
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(minutes=30)
+    reset_payload = {
+        "sub": str(user.id),
+        "email": user.email,
+        "type": "password_reset",
+        "exp": expires_at,
+    }
+    reset_token = jwt.encode(reset_payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+    try:
+        from app.services import email_template_service, smtp_service
+        frontend_url = settings.frontend_url or "http://localhost:5173"
+        reset_url = f"{frontend_url}/reset-password?token={reset_token}"
+        subject, plain, html = email_template_service.render_forgot_password_email(
+            user.first_name or "Student", reset_url
+        )
+        smtp_service.send_email(db, user.email, subject, plain, html_body=html)
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).exception("Failed to send forgot password email for %s: %s", user.email, exc)
+
+
+def confirm_password_reset(db: Session, token: str, new_password: str) -> None:
+    try:
+        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset link")
+
+    if payload.get("type") != "password_reset":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid reset link")
+
+    user_id = int(payload.get("sub", 0))
+    user = db.get(User, user_id)
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Account not found or inactive")
+
+    user.password_hash = hash_password(new_password)
+    user.force_password_reset = False
+
+    now = datetime.now(timezone.utc)
+    active_sessions = (
+        db.query(UserSession)
+        .filter(UserSession.user_id == user.id, UserSession.revoked_at.is_(None))
+        .all()
+    )
+    for session in active_sessions:
+        session.revoked_at = now
+
+    db.commit()
 
 
 def refresh(

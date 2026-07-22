@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiClient } from "../api/client";
+import { extractErrorMessage } from "../api/errors";
 import { getDeviceIdentity } from "../auth/device";
 import { PasswordInput } from "../components/PasswordInput";
 import { useAuthStore } from "../store/authStore";
@@ -106,6 +107,25 @@ export function Login({
   const showError = useToastStore((state) => state.showError);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotError, setForgotError] = useState<string | null>(null);
+
+  async function handleForgotSubmit(e: FormEvent) {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError(null);
+    try {
+      await apiClient.post("/auth/forgot-password", { email: forgotEmail });
+      setForgotSent(true);
+    } catch (err: unknown) {
+      setForgotError(extractErrorMessage(err, "Failed to send reset link."));
+    } finally {
+      setForgotLoading(false);
+    }
+  }
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -265,7 +285,15 @@ export function Login({
                 placeholder="Enter password"
               />
               <div className="below-password-row">
-                <a href="#forgot" className="inline-forgot-link" onClick={(e) => e.preventDefault()}>
+                <a
+                  href="#forgot"
+                  className="inline-forgot-link"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowForgotModal(true);
+                    if (email) setForgotEmail(email);
+                  }}
+                >
                   Forgot password?
                 </a>
               </div>
@@ -342,6 +370,67 @@ export function Login({
           </div>
         </div>
       </div>
+
+      {showForgotModal && (
+        <div className="logout-modal-backdrop" onClick={() => setShowForgotModal(false)} role="presentation">
+          <div className="logout-modal-card" onClick={(e) => e.stopPropagation()} role="dialog" style={{ maxWidth: 420 }}>
+            <h2 className="logout-modal-title">Reset Password</h2>
+            <p className="logout-modal-description">
+              Enter your account email address. We'll send you an email with a secure link to reset your password.
+            </p>
+            {forgotSent ? (
+              <div style={{ padding: "16px 0", textAlign: "center" }}>
+                <div style={{ background: "#dcfce7", color: "#15803d", padding: "12px 16px", borderRadius: 8, fontSize: 13.5, marginBottom: 16, border: "1px solid #86efac" }}>
+                  Reset link sent! Check your email inbox for instructions.
+                </div>
+                <button
+                  type="button"
+                  className="concise-submit-btn"
+                  onClick={() => {
+                    setShowForgotModal(false);
+                    setForgotSent(false);
+                  }}
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotSubmit} style={{ marginTop: 16 }}>
+                <div className="form-group" style={{ textAlign: "left", marginBottom: 16 }}>
+                  <label htmlFor="forgot-email">Email Address</label>
+                  <input
+                    id="forgot-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                {forgotError && <div className="concise-error-box" style={{ marginBottom: 16 }}>{forgotError}</div>}
+                <div className="logout-modal-actions" style={{ display: "flex", gap: 10, marginTop: 20 }}>
+                  <button
+                    type="button"
+                    className="logout-modal-btn cancel-btn"
+                    onClick={() => setShowForgotModal(false)}
+                    disabled={forgotLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="logout-modal-btn confirm-btn btn-primary"
+                    disabled={forgotLoading || !forgotEmail}
+                    style={{ background: "#b91c2b", color: "#ffffff" }}
+                  >
+                    {forgotLoading ? "Sending..." : "Send Reset Link"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

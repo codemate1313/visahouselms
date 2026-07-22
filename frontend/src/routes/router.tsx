@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { Login } from "../pages/Login";
 import { Register } from "../pages/Register";
+import { ResetPassword } from "../pages/ResetPassword";
 import { TestingLoginSelector } from "../pages/TestingLoginSelector";
 import { InstituteBilling } from "../pages/institute/InstituteBilling";
 import { InstituteDashboard } from "../pages/institute/InstituteDashboard";
@@ -86,6 +87,7 @@ export const router = createBrowserRouter([
   { path: "/instructor/*", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
   { path: "/login", element: <Login allowedRoles={["INSTITUTE_ADMIN", "INST_INSTRUCTOR", "STUDENT"]} title="Portal Login" subtitle="Select your role and sign in to your portal" /> },
   { path: "/register", element: <Register /> },
+  { path: "/reset-password", element: <ResetPassword /> },
   {
     element: <ProtectedRoute allowedRoles={["SUPER_ADMIN"]} />,
     children: [

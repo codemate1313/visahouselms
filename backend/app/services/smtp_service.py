@@ -20,7 +20,18 @@ def _require(db: Session, key: str) -> str:
     return value
 
 
-def send_email(db: Session, to_address: str, subject: str, body: str) -> None:
+def _get_ssl_context() -> ssl.SSLContext:
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        return ctx
+
+
+def send_email(db: Session, to_address: str, subject: str, body: str, html_body: str | None = None) -> None:
     host = _require(db, "smtp.host")
     port = int(_require(db, "smtp.port"))
     username = get_setting(db, "smtp.username")
@@ -33,17 +44,21 @@ def send_email(db: Session, to_address: str, subject: str, body: str) -> None:
     message["To"] = to_address
     message["Subject"] = subject
     message.set_content(body)
+    if html_body:
+        message.add_alternative(html_body, subtype="html")
+
+    ctx = _get_ssl_context()
 
     try:
         if encryption == "ssl":
-            with smtplib.SMTP_SSL(host, port, timeout=SMTP_TIMEOUT_SECONDS) as server:
+            with smtplib.SMTP_SSL(host, port, context=ctx, timeout=SMTP_TIMEOUT_SECONDS) as server:
                 if username and password:
                     server.login(username, password)
                 server.send_message(message)
         else:
             with smtplib.SMTP(host, port, timeout=SMTP_TIMEOUT_SECONDS) as server:
                 if encryption == "tls":
-                    server.starttls(context=ssl.create_default_context())
+                    server.starttls(context=ctx)
                 if username and password:
                     server.login(username, password)
                 server.send_message(message)

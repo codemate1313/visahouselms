@@ -63,3 +63,18 @@ class CurrentUser(BaseModel):
     force_password_reset: bool = False
     avatar_url: Optional[str] = None
     institute_permissions: Optional[dict] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def check_password_strength(cls, value: str) -> str:
+        validate_password_strength(value)
+        return value

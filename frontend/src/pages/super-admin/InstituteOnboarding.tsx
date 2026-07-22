@@ -159,25 +159,180 @@ export function InstituteOnboarding() {
   const steps = ["Agreement", "Branding", "Publish"];
   return (
     <div className="onboarding-page">
-      <div className="page-header"><div><h1>{onboarding?.name || "Onboard Institute"}</h1><p className="page-subtitle">Record the agreement, configure access and branding, then publish the institute.</p></div><Link to="/super-admin/onboarding">All onboardings</Link></div>
-      <ol className="onboarding-steps">{steps.map((label, index) => <li className={step === index + 1 ? "active" : step > index + 1 ? "complete" : ""} key={label}><span>{index + 1}</span>{label}</li>)}</ol>
+      <div className="page-header">
+        <div>
+          <h1>{onboarding?.name || "Onboard Institute"}</h1>
+          <p className="page-subtitle">Record the agreement, configure access and branding, then publish the institute.</p>
+        </div>
+        <Link to="/super-admin/onboarding" className="button-link secondary-link-btn">
+          ← All onboardings
+        </Link>
+      </div>
+
+      <div className="onboarding-stepper-card">
+        <ol className="onboarding-steps">
+          {steps.map((label, index) => (
+            <li className={step === index + 1 ? "active" : step > index + 1 ? "complete" : ""} key={label}>
+              <span>{step > index + 1 ? "✓" : index + 1}</span>
+              <span className="step-label-text">{label}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+
       {error && <p className="error-text">{error}</p>}
 
       {step === 1 && (
-        <form className="form-card wide" onSubmit={createDraft}>
-          <h2>Institute and agreement</h2>
-          <div className="form-grid"><div><label htmlFor="ob-name">Institute name</label><input id="ob-name" value={form.name} onChange={set("name")} required /></div><div><label htmlFor="ob-contact">Contact email</label><input id="ob-contact" type="email" value={form.contact_email} onChange={set("contact_email")} /></div></div>
-          <h3>First institute admin</h3>
-          <div className="form-grid"><div><label>Email</label><input type="email" value={form.admin_email} onChange={set("admin_email")} required /></div><div><label>First name</label><input value={form.admin_first_name} onChange={set("admin_first_name")} required /></div><div><label>Last name</label><input value={form.admin_last_name} onChange={set("admin_last_name")} required /></div></div>
-          <fieldset className="permission-grid"><legend>Institute admin permissions</legend>{PERMISSIONS.map((permission) => <label className="permission-option" key={permission.key}><input type="checkbox" checked={Boolean(adminPermissions[permission.key])} onChange={(event) => setAdminPermissions((current) => ({ ...current, [permission.key]: event.target.checked }))} /><span><strong>{permission.label}</strong><small>{permission.description}</small></span></label>)}</fieldset>
-          <h3>Physical payment</h3>
-          <div className="form-grid"><div><label>Agreed amount</label><input type="number" min="1" value={form.agreed_amount} onChange={set("agreed_amount")} required /></div><div><label>Amount received</label><input type="number" min="1" value={form.amount_received} onChange={set("amount_received")} required /></div><div><label>Currency</label><input value={form.currency} onChange={set("currency")} required /></div><div><label>Payment method</label><select value={form.payment_method_id} onChange={set("payment_method_id")}><option value="">Manual / unspecified</option>{methods.map((method) => <option value={method.id} key={method.id}>{method.name}</option>)}</select></div><div><label>Receipt/reference</label><input value={form.payment_reference} onChange={set("payment_reference")} /></div><div><label>Agreement reference</label><input value={form.agreement_reference} onChange={set("agreement_reference")} /></div></div>
-          <label>Agreement notes</label><textarea rows={3} value={form.agreement_notes} onChange={set("agreement_notes")} />
-          <h3>Allocation</h3>
-          <div className="form-grid"><div><label>Students</label><input type="number" min="0" value={form.student_limit} onChange={set("student_limit")} required /></div><div><label>Instructors</label><input type="number" min="0" value={form.staff_limit} onChange={set("staff_limit")} required /></div><div><label>Access duration (days)</label><input type="number" min="1" value={form.access_duration_days} onChange={set("access_duration_days")} required /></div></div>
-          <p className="hint">Institute students can take assigned tests without a separate test quota.</p>
-          <fieldset className="plan-course-picker"><legend>Courses included in the agreement</legend>{modules.map((module) => <label className="plan-course-option" key={module.id}><input type="checkbox" checked={selectedModules.has(module.id)} onChange={() => toggleModule(module.id)} /><span><strong>{module.title}</strong><small>{module.module_type.replace("_", " ")} · {module.duration_minutes} minutes · {module.created_by_name}</small></span></label>)}</fieldset>
-          <div className="form-actions"><button disabled={busy || !selectedModules.size}>{busy ? "Creating draft..." : "Create draft and continue"}</button></div>
+        <form className="onboarding-split-form" onSubmit={createDraft}>
+          <div className="onboarding-grid-two-col">
+            {/* LEFT COLUMN */}
+            <div className="onboarding-col">
+              <div className="form-card onboarding-section-card">
+                <h2>Institute & Admin Details</h2>
+                <p className="hint" style={{ marginBottom: 16 }}>Basic institute credentials and initial admin profile.</p>
+
+                <div className="form-grid">
+                  <div>
+                    <label htmlFor="ob-name">Institute name</label>
+                    <input id="ob-name" value={form.name} onChange={set("name")} required placeholder="e.g. Cambridge Academy" />
+                  </div>
+                  <div>
+                    <label htmlFor="ob-contact">Contact email</label>
+                    <input id="ob-contact" type="email" value={form.contact_email} onChange={set("contact_email")} placeholder="contact@institute.com" />
+                  </div>
+                </div>
+
+                <h3 className="section-subheading" style={{ marginTop: 20 }}>First Institute Administrator</h3>
+                <div className="form-grid">
+                  <div>
+                    <label>Admin email</label>
+                    <input type="email" value={form.admin_email} onChange={set("admin_email")} required placeholder="admin@institute.com" />
+                  </div>
+                  <div>
+                    <label>First name</label>
+                    <input value={form.admin_first_name} onChange={set("admin_first_name")} required placeholder="John" />
+                  </div>
+                  <div>
+                    <label>Last name</label>
+                    <input value={form.admin_last_name} onChange={set("admin_last_name")} required placeholder="Doe" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-card onboarding-section-card">
+                <h2>Administrator Permissions</h2>
+                <p className="hint" style={{ marginBottom: 16 }}>Select features enabled for this institute's admin role.</p>
+                <div className="permission-grid">
+                  {PERMISSIONS.map((permission) => (
+                    <label className="permission-option" key={permission.key}>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(adminPermissions[permission.key])}
+                        onChange={(event) =>
+                          setAdminPermissions((current) => ({ ...current, [permission.key]: event.target.checked }))
+                        }
+                      />
+                      <span>
+                        <strong>{permission.label}</strong>
+                        <small>{permission.description}</small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN */}
+            <div className="onboarding-col">
+              <div className="form-card onboarding-section-card">
+                <h2>Agreement & Payment Terms</h2>
+                <p className="hint" style={{ marginBottom: 16 }}>Commercial terms, payment record, and access allocation.</p>
+
+                <div className="form-grid">
+                  <div>
+                    <label>Agreed amount</label>
+                    <input type="number" min="1" value={form.agreed_amount} onChange={set("agreed_amount")} required placeholder="10000" />
+                  </div>
+                  <div>
+                    <label>Amount received</label>
+                    <input type="number" min="1" value={form.amount_received} onChange={set("amount_received")} required placeholder="10000" />
+                  </div>
+                  <div>
+                    <label>Currency</label>
+                    <input value={form.currency} onChange={set("currency")} required />
+                  </div>
+                  <div>
+                    <label>Payment method</label>
+                    <select value={form.payment_method_id} onChange={set("payment_method_id")}>
+                      <option value="">Manual / unspecified</option>
+                      {methods.map((method) => (
+                        <option value={method.id} key={method.id}>
+                          {method.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label>Receipt/reference</label>
+                    <input value={form.payment_reference} onChange={set("payment_reference")} placeholder="REC-1002" />
+                  </div>
+                  <div>
+                    <label>Agreement reference</label>
+                    <input value={form.agreement_reference} onChange={set("agreement_reference")} placeholder="AGR-2026-01" />
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 12 }}>
+                  <label>Agreement notes</label>
+                  <textarea rows={2} value={form.agreement_notes} onChange={set("agreement_notes")} placeholder="Additional notes..." />
+                </div>
+
+                <h3 className="section-subheading" style={{ marginTop: 20 }}>Allocation Limits</h3>
+                <div className="form-grid">
+                  <div>
+                    <label>Student limit</label>
+                    <input type="number" min="0" value={form.student_limit} onChange={set("student_limit")} required />
+                  </div>
+                  <div>
+                    <label>Instructor limit</label>
+                    <input type="number" min="0" value={form.staff_limit} onChange={set("staff_limit")} required />
+                  </div>
+                  <div>
+                    <label>Duration (days)</label>
+                    <input type="number" min="1" value={form.access_duration_days} onChange={set("access_duration_days")} required />
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-card onboarding-section-card">
+                <h2>Included Courses</h2>
+                <p className="hint" style={{ marginBottom: 16 }}>Select courses included in this onboarding agreement.</p>
+                <div className="plan-course-picker">
+                  {modules.map((module) => (
+                    <label className="plan-course-option" key={module.id}>
+                      <input
+                        type="checkbox"
+                        checked={selectedModules.has(module.id)}
+                        onChange={() => toggleModule(module.id)}
+                      />
+                      <span>
+                        <strong>{module.title}</strong>
+                        <small>
+                          {module.module_type.replace("_", " ")} · {module.duration_minutes} mins
+                        </small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="onboarding-form-submit-bar">
+            <button type="submit" disabled={busy || !selectedModules.size} className="primary-submit-btn">
+              {busy ? "Creating draft..." : "Create draft and continue →"}
+            </button>
+          </div>
         </form>
       )}
 
@@ -193,10 +348,68 @@ export function InstituteOnboarding() {
       )}
 
       {step === 3 && onboarding && (
-        <section className="publish-review">
-          <div><span className={`badge ${onboarding.onboarding_status === "published" ? "badge-green" : "badge-amber"}`}>{onboarding.onboarding_status}</span><h2>{onboarding.onboarding_status === "published" ? "Institute is live" : "Ready to publish"}</h2><p>{onboarding.agreement_currency} {Number(onboarding.agreed_amount).toLocaleString("en-IN")} agreement · {onboarding.payment?.status} payment · {onboarding.access_duration_days} days</p></div>
-          <dl className="tree-course-facts"><div><dt>Student allocation</dt><dd>{onboarding.student_limit}</dd></div><div><dt>Instructor allocation</dt><dd>{onboarding.staff_limit}</dd></div><div><dt>Tests</dt><dd>Unlimited assigned tests</dd></div><div><dt>Courses</dt><dd>{onboarding.course_count}</dd></div><div><dt>Admin permissions</dt><dd>{Object.values(onboarding.admin_permissions || {}).filter(Boolean).length} enabled</dd></div><div><dt>Payment received</dt><dd>{onboarding.agreement_currency} {Number(onboarding.payment?.amount_paid || 0).toLocaleString("en-IN")}</dd></div></dl>
-          {onboarding.onboarding_status === "draft" ? <button onClick={publish} disabled={busy}>{busy ? "Publishing..." : "Publish institute"}</button> : <div className="form-actions"><Link className="button-link" to={`/super-admin/institutes/${onboarding.id}`}>Manage institute</Link><button onClick={() => navigate("/super-admin/onboarding")}>Done</button></div>}
+        <section className="form-card wide publish-summary-card">
+          <div className="publish-hero-header">
+            <span className={`badge ${onboarding.onboarding_status === "published" ? "badge-green" : "badge-amber"}`}>
+              {onboarding.onboarding_status === "published" ? "Published & Live" : "Draft Ready"}
+            </span>
+            <h2 className="publish-hero-title">
+              {onboarding.onboarding_status === "published" ? "Institute is live" : "Ready to publish"}
+            </h2>
+            <p className="publish-hero-subtitle">
+              <strong>{onboarding.agreement_currency || "INR"} {Number(onboarding.agreed_amount || 0).toLocaleString("en-IN")}</strong> agreement · 
+              <span className="capitalize-text"> {onboarding.payment?.status || "pending"}</span> payment · 
+              <strong> {onboarding.access_duration_days} days</strong> validity
+            </p>
+          </div>
+
+          <div className="publish-stats-grid">
+            <div className="publish-stat-box">
+              <span className="stat-label">Student Allocation</span>
+              <span className="stat-value">{onboarding.student_limit}</span>
+            </div>
+            <div className="publish-stat-box">
+              <span className="stat-label">Instructor Allocation</span>
+              <span className="stat-value">{onboarding.staff_limit}</span>
+            </div>
+            <div className="publish-stat-box">
+              <span className="stat-label">Assigned Tests</span>
+              <span className="stat-value">Unlimited</span>
+            </div>
+            <div className="publish-stat-box">
+              <span className="stat-label">Included Courses</span>
+              <span className="stat-value">{onboarding.course_count}</span>
+            </div>
+            <div className="publish-stat-box">
+              <span className="stat-label">Admin Permissions</span>
+              <span className="stat-value">
+                {Object.values(onboarding.admin_permissions || {}).filter(Boolean).length} enabled
+              </span>
+            </div>
+            <div className="publish-stat-box">
+              <span className="stat-label">Payment Received</span>
+              <span className="stat-value">
+                {onboarding.agreement_currency || "INR"} {Number(onboarding.payment?.amount_paid || 0).toLocaleString("en-IN")}
+              </span>
+            </div>
+          </div>
+
+          {onboarding.onboarding_status === "draft" ? (
+            <div className="publish-actions-row">
+              <button type="button" className="button-link primary-publish-btn" onClick={publish} disabled={busy}>
+                {busy ? "Publishing..." : "Publish Institute"}
+              </button>
+            </div>
+          ) : (
+            <div className="publish-actions-row">
+              <Link className="button-link" to={`/super-admin/institutes/${onboarding.id}`}>
+                Manage institute
+              </Link>
+              <button type="button" className="secondary-done-btn" onClick={() => navigate("/super-admin/onboarding")}>
+                Done
+              </button>
+            </div>
+          )}
         </section>
       )}
     </div>

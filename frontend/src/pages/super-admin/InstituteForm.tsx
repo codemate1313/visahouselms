@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { Breadcrumbs } from "../../components/Breadcrumbs";
 
 interface CreatedInstitute {
   id: number;
@@ -144,6 +145,12 @@ export function InstituteForm() {
 
   return (
     <div>
+      <Breadcrumbs
+        items={[
+          { label: "Institutes", to: "/super-admin/institutes" },
+          { label: isNew ? "New Institute" : name ? `Edit ${name}` : "Edit Institute" },
+        ]}
+      />
       <div className="page-header">
         <h1>{isNew ? "New Institute" : "Edit Institute"}</h1>
         {!isNew && (

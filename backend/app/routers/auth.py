@@ -7,7 +7,16 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.config import settings
 from app.dependencies.auth import get_current_user
-from app.schemas.auth import CurrentUser, LoginRequest, LogoutRequest, RefreshRequest, RegisterRequest, TokenResponse
+from app.schemas.auth import (
+    CurrentUser,
+    ForgotPasswordRequest,
+    LoginRequest,
+    LogoutRequest,
+    RefreshRequest,
+    RegisterRequest,
+    ResetPasswordRequest,
+    TokenResponse,
+)
 from app.services import account_service, auth_service, institute_service
 from app.models.user import User
 
@@ -96,3 +105,15 @@ def me(user: User = Depends(get_current_user)):
             else None
         ),
     )
+
+
+@router.post("/forgot-password", status_code=202)
+def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    auth_service.request_password_reset(db, payload.email)
+    return {"message": "If an active account exists for this email, a password reset link has been sent."}
+
+
+@router.post("/reset-password", status_code=200)
+def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+    auth_service.confirm_password_reset(db, payload.token, payload.new_password)
+    return {"message": "Password updated successfully. You can now log in with your new password."}

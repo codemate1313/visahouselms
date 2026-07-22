@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 import { apiClient } from "../../api/client";
+import { Icon } from "../../components/icons";
+import { SearchableSelect } from "../../components/SearchableSelect";
 
 interface InstituteRow {
   id: number;
@@ -72,109 +77,325 @@ export function RevenueDashboard() {
     apiClient.get("/super-admin/institutes").then(({ data }) => setInstitutes(data));
   }, []);
 
+  function formatCurrency(amountStr: string | number) {
+    const num = Number(amountStr) || 0;
+    return `INR ${num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function exportPDF() {
+    if (!summary) return;
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+    // Header block
+    doc.setFillColor(185, 28, 43);
+    doc.rect(0, 0, 297, 20, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("IELTS LMS — Financial & Revenue Summary Report", 14, 13);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 215, 13);
+
+    // KPI Summary
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text("KPI Overview:", 14, 28);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(
+      `Total Revenue: ${formatCurrency(summary.total_revenue)}   |   B2B: ${formatCurrency(summary.b2b_revenue)}   |   B2C: ${formatCurrency(summary.b2c_revenue)}   |   Total Due: ${formatCurrency(summary.total_due)}   |   Transactions: ${summary.transaction_count}`,
+      14,
+      34
+    );
+
+    autoTable(doc, {
+      startY: 40,
+      head: [["#", "Institute Name", "Revenue Amount", "Transaction Count"]],
+      body: summary.by_institute.map((row, i) => [
+        i + 1,
+        row.institute_name,
+        formatCurrency(row.total),
+        row.count,
+      ]),
+      styles: { fontSize: 9, cellPadding: 4, textColor: [15, 23, 42] },
+      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+    });
+
+    doc.save(`revenue-report-${new Date().toISOString().slice(0, 10)}.pdf`);
+  }
+
+  function exportExcel() {
+    if (!summary) return;
+    const wsData = [
+      ["Metric Summary"],
+      ["Total Revenue", formatCurrency(summary.total_revenue)],
+      ["B2B (Institutes)", formatCurrency(summary.b2b_revenue)],
+      ["B2C (Direct)", formatCurrency(summary.b2c_revenue)],
+      ["Total Due", formatCurrency(summary.total_due)],
+      ["Total Transactions", summary.transaction_count],
+      [],
+      ["Revenue By Institute"],
+      ["#", "Institute Name", "Revenue Total", "Transactions"],
+      ...summary.by_institute.map((row, i) => [
+        i + 1,
+        row.institute_name,
+        row.total,
+        row.count,
+      ]),
+      [],
+      ["Revenue By Month"],
+      ["#", "Month", "Revenue Total", "Transactions"],
+      ...summary.by_month.map((row, i) => [
+        i + 1,
+        row.month,
+        row.total,
+        row.count,
+      ]),
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws["!cols"] = [{ wch: 5 }, { wch: 30 }, { wch: 20 }, { wch: 15 }];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Revenue Summary");
+    XLSX.writeFile(wb, `revenue-report-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
   if (error) return <p className="error-text">{error}</p>;
   if (!summary) return <p>Loading...</p>;
 
   return (
     <div>
-      <h1>Revenue</h1>
-
-      <div className="filter-bar">
-        <select value={instituteFilter} onChange={(e) => setInstituteFilter(e.target.value)}>
-          <option value="">All institutes</option>
-          {institutes.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-        </select>
-        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-        <span className="hint">to</span>
-        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+      <div className="page-header">
+        <div>
+          <h1>Revenue Analytics</h1>
+          <p className="page-subtitle">Financial performance breakdown across B2B institutes and B2C direct students.</p>
+        </div>
       </div>
 
-      <div className="stat-tile-row">
-        <div className="stat-tile">
-          <p className="stat-label">Total revenue</p>
-          <p className="stat-value">₹{summary.total_revenue}</p>
+      <div className="filter-bar institutes-filter-bar">
+        <SearchableSelect
+          options={[
+            { value: "", label: "All institutes" },
+            ...institutes.map((i) => ({ value: String(i.id), label: i.name })),
+          ]}
+          value={instituteFilter}
+          onChange={(val) => setInstituteFilter(String(val))}
+          placeholder="All institutes"
+          searchPlaceholder="Search institute..."
+          className="status-filter-select"
+        />
+
+        <div className="date-filter-wrap">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="date-input-field"
+            aria-label="From Date"
+          />
+          <span className="date-sep-text">to</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="date-input-field"
+            aria-label="To Date"
+          />
         </div>
-        <div className="stat-tile">
-          <p className="stat-label">B2B (institutes)</p>
-          <p className="stat-value">₹{summary.b2b_revenue}</p>
+
+        {(instituteFilter || dateFrom || dateTo) && (
+          <button
+            type="button"
+            className="clear-search-btn reset-filters-btn"
+            onClick={() => {
+              setInstituteFilter("");
+              setDateFrom("");
+              setDateTo("");
+            }}
+          >
+            Reset filters
+          </button>
+        )}
+
+        <div className="export-btn-group">
+          <button type="button" className="export-btn export-pdf" onClick={exportPDF} data-tooltip="Export PDF">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <path d="M12 18v-6" />
+              <path d="m9 15 3 3 3-3" />
+            </svg>
+          </button>
+          <button type="button" className="export-btn export-excel" onClick={exportExcel} data-tooltip="Export Excel">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="2" />
+              <path d="M3 9h18" />
+              <path d="M3 15h18" />
+              <path d="M9 3v18" />
+              <path d="M15 3v18" />
+            </svg>
+          </button>
         </div>
-        <div className="stat-tile">
-          <p className="stat-label">B2C (direct)</p>
-          <p className="stat-value">₹{summary.b2c_revenue}</p>
+
+        <div className="filter-result-count">
+          Showing <strong>{summary.transaction_count}</strong> {summary.transaction_count === 1 ? "transaction" : "transactions"}
         </div>
-        <div className="stat-tile">
-          <p className="stat-label">Total due</p>
-          <p className="stat-value due-text">₹{summary.total_due}</p>
+      </div>
+
+      <div className="stat-tile-row revenue-kpi-row">
+        <div className="stat-tile revenue-kpi-tile">
+          <p className="stat-label">Total Revenue</p>
+          <p className="stat-value">{formatCurrency(summary.total_revenue)}</p>
         </div>
-        <div className="stat-tile">
+        <div className="stat-tile revenue-kpi-tile">
+          <p className="stat-label">B2B (Institutes)</p>
+          <p className="stat-value">{formatCurrency(summary.b2b_revenue)}</p>
+        </div>
+        <div className="stat-tile revenue-kpi-tile">
+          <p className="stat-label">B2C (Direct)</p>
+          <p className="stat-value">{formatCurrency(summary.b2c_revenue)}</p>
+        </div>
+        <div className="stat-tile revenue-kpi-tile">
+          <p className="stat-label">Total Due</p>
+          <p className="stat-value due-text">{formatCurrency(summary.total_due)}</p>
+        </div>
+        <div className="stat-tile revenue-kpi-tile">
           <p className="stat-label">Transactions</p>
           <p className="stat-value">{summary.transaction_count}</p>
         </div>
       </div>
 
-      <div className="revenue-tables">
-        <div>
-          <h2 className="section-title">By institute</h2>
-          <table className="data-table">
-            <thead><tr><th>Institute</th><th>Revenue</th><th>Transactions</th></tr></thead>
-            <tbody>
-              {summary.by_institute.length === 0 && (
-                <tr><td colSpan={3} className="empty-cell">No revenue yet.</td></tr>
-              )}
-              {summary.by_institute.map((row) => (
-                <tr key={row.institute_id}>
-                  <td>{row.institute_name}</td>
-                  <td>₹{row.total}</td>
-                  <td>{row.count}</td>
+      <div className="revenue-tables-grid">
+        <div className="table-card-block">
+          <h2 className="section-title">Revenue by Institute</h2>
+          <div className="table-wrap">
+            <table className="data-table sleek-institutes-table">
+              <thead>
+                <tr>
+                  <th>Institute</th>
+                  <th>Revenue</th>
+                  <th style={{ textAlign: "right", paddingRight: 24 }}>Transactions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {summary.by_institute.length === 0 && (
+                  <tr><td colSpan={3} className="empty-cell">No revenue recorded yet.</td></tr>
+                )}
+                {summary.by_institute.map((row) => (
+                  <tr key={row.institute_id}>
+                    <td>
+                      <div className="table-item-cell">
+                        <div className="table-avatar-tile">
+                          {row.institute_name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="table-item-title">{row.institute_name}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <strong style={{ fontSize: 13.5 }}>{formatCurrency(row.total)}</strong>
+                    </td>
+                    <td style={{ textAlign: "right", paddingRight: 24 }}>
+                      <span className="badge badge-gray" style={{ fontWeight: 600 }}>
+                        {row.count} txns
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div>
-          <h2 className="section-title">By month</h2>
-          <table className="data-table">
-            <thead><tr><th>Month</th><th>Revenue</th><th>Transactions</th></tr></thead>
+        <div className="table-card-block">
+          <h2 className="section-title">Revenue by Month</h2>
+          <div className="table-wrap">
+            <table className="data-table sleek-institutes-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Revenue</th>
+                  <th style={{ textAlign: "right", paddingRight: 24 }}>Transactions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.by_month.length === 0 && (
+                  <tr><td colSpan={3} className="empty-cell">No monthly data.</td></tr>
+                )}
+                {summary.by_month.map((row) => (
+                  <tr key={row.month}>
+                    <td>
+                      <strong style={{ fontSize: 13.5 }}>{row.month}</strong>
+                    </td>
+                    <td>
+                      <strong style={{ fontSize: 13.5 }}>{formatCurrency(row.total)}</strong>
+                    </td>
+                    <td style={{ textAlign: "right", paddingRight: 24 }}>
+                      <span className="badge badge-gray" style={{ fontWeight: 600 }}>
+                        {row.count} txns
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div className="table-card-block" style={{ marginTop: 28 }}>
+        <h2 className="section-title">Outstanding Dues</h2>
+        <div className="table-wrap">
+          <table className="data-table sleek-institutes-table">
+            <thead>
+              <tr>
+                <th>Institute</th>
+                <th>Invoice</th>
+                <th>Total</th>
+                <th>Paid</th>
+                <th>Due Amount</th>
+                <th className="table-actions-heading" style={{ textAlign: "center", width: 100, minWidth: 100 }}>Action</th>
+              </tr>
+            </thead>
             <tbody>
-              {summary.by_month.length === 0 && (
-                <tr><td colSpan={3} className="empty-cell">No revenue yet.</td></tr>
+              {summary.dues.length === 0 && (
+                <tr><td colSpan={6} className="empty-cell">No outstanding dues. All accounts clear!</td></tr>
               )}
-              {summary.by_month.map((row) => (
-                <tr key={row.month}>
-                  <td>{row.month}</td>
-                  <td>₹{row.total}</td>
-                  <td>{row.count}</td>
+              {summary.dues.map((row) => (
+                <tr key={row.id}>
+                  <td>
+                    <span className="table-item-title">{row.institute_name ?? "Direct Student"}</span>
+                  </td>
+                  <td>
+                    <span className="table-item-subtitle" style={{ fontSize: 12.5, color: "#64748b" }}>
+                      {row.invoice_number ?? "N/A"}
+                    </span>
+                  </td>
+                  <td>{formatCurrency(row.final_amount)}</td>
+                  <td>{formatCurrency(row.amount_paid)}</td>
+                  <td>
+                    <span className="badge badge-red" style={{ fontWeight: 700 }}>
+                      {formatCurrency(row.due_amount)}
+                    </span>
+                  </td>
+                  <td className="table-actions" style={{ justifyContent: "center" }}>
+                    <Link
+                      className="action-btn-icon action-edit"
+                      to={`/super-admin/payments/${row.id}/invoice`}
+                      data-tooltip="View Invoice"
+                    >
+                      <Icon name="billings" />
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
-
-      <h2 className="section-title" style={{ marginTop: 28 }}>Outstanding dues</h2>
-      <table className="data-table">
-        <thead>
-          <tr><th>Institute</th><th>Invoice</th><th>Total</th><th>Paid</th><th>Due</th><th></th></tr>
-        </thead>
-        <tbody>
-          {summary.dues.length === 0 && (
-            <tr><td colSpan={6} className="empty-cell">No outstanding dues.</td></tr>
-          )}
-          {summary.dues.map((row) => (
-            <tr key={row.id}>
-              <td>{row.institute_name ?? "—"}</td>
-              <td>{row.invoice_number ?? "—"}</td>
-              <td>₹{row.final_amount}</td>
-              <td>₹{row.amount_paid}</td>
-              <td className="due-text">₹{row.due_amount}</td>
-              <td className="table-actions">
-                <Link to={`/super-admin/payments/${row.id}/invoice`}>Invoice</Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }
