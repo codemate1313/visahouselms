@@ -26,6 +26,7 @@ from app.services import (
     account_service,
     achievement_service,
     attempt_service,
+    avatar_service,
     grading_service,
     notification_service,
     payment_service,
@@ -357,3 +358,43 @@ def achievements(db: Session = Depends(get_db), user: User = Depends(require_stu
 @router.get("/leaderboard")
 def leaderboard(db: Session = Depends(get_db), user: User = Depends(require_student)):
     return achievement_service.student_leaderboard(db, user)
+
+
+@router.get("/speaking-examiners")
+def list_speaking_examiners():
+    return avatar_service.list_examiners()
+
+
+@router.get("/attempts/{attempt_id}/speaking-avatar/{part_id}")
+async def get_speaking_avatar_for_attempt_part(
+    attempt_id: int,
+    part_id: int,
+    examiner_id: Optional[str] = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+    x_attempt_token: Optional[str] = Header(default=None),
+):
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    attempt_service.require_security_access(attempt, session, x_attempt_token)
+
+    part_view = attempt_service.get_attempt_part_view(attempt, part_id)
+    part_data = part_view.get("part", {})
+    questions = part_view.get("questions", [])
+
+    prompt_text = part_data.get("instructions") or part_data.get("title") or "Listen to the examiner prompt and record your response."
+    if questions and questions[0].get("prompt"):
+        prompt_text = questions[0]["prompt"]
+
+    examiner = avatar_service.get_examiner(examiner_id)
+    audio_url, visemes, duration = await avatar_service.get_or_create_prompt_audio(prompt_text, examiner["voice"])
+
+    return {
+        "examiner": examiner,
+        "prompt_text": prompt_text,
+        "audio_url": audio_url,
+        "video_url": None,
+        "duration": duration,
+        "visemes": visemes,
+    }
+

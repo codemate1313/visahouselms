@@ -7,6 +7,7 @@ import { useInstituteBranding } from "../../hooks/useInstituteBranding";
 import { useAuthStore } from "../../store/authStore";
 import { useToastStore } from "../../store/toastStore";
 import { hasAttemptResponse } from "./attemptMetrics";
+import { SpeakingAvatar } from "../../components/speaking/SpeakingAvatar";
 
 const DEBOUNCE_MS = 800;
 const HEARTBEAT_MS = 5_000;
@@ -879,6 +880,9 @@ export function TestRunner() {
               <h2>{passages.length > 0 ? "Source material" : "Part instructions"}</h2>
               {currentPart.skill_focus && <p>{currentPart.skill_focus}</p>}
             </div>
+            {currentPart.section_type === "speaking" && (
+              <SpeakingAvatar attemptId={attempt.id} partId={currentPart.id} />
+            )}
             {currentPart.instructions && <p className="test-runner-instructions">{currentPart.instructions}</p>}
             {currentPart.assets.map((asset) => (
               <div className="test-runner-asset" key={asset.id}>

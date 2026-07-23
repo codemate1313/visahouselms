@@ -5,7 +5,7 @@ trap 'echo "\nStopping both servers..."; kill $BACKEND_PID $FRONTEND_PID; exit' 
 
 echo "Starting Backend (FastAPI)..."
 cd backend
-source venv/bin/activate
+source .venv/bin/activate
 uvicorn app.main:app --reload &
 BACKEND_PID=$!
 
