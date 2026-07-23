@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.attempt import (
     ATTEMPT_GRADED,
+    ATTEMPT_GRADING,
     AiEvaluationLimit,
     GradingQueueEntry,
     QUEUE_CLAIMED,
@@ -19,7 +20,7 @@ from app.models.attempt import (
     TestAttempt,
 )
 from app.models.exam_module import ExamModule
-from app.models.role import INST_INSTRUCTOR, SA_INSTRUCTOR
+from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, SA_INSTRUCTOR
 from app.models.user import User
 
 OPEN_REEVALUATION_STATUSES = (REEVALUATION_PENDING, REEVALUATION_IN_REVIEW)
@@ -29,14 +30,14 @@ def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-def _institute_has_active_instructor(db: Session, institute_id: int) -> bool:
+def _institute_has_active_staff(db: Session, institute_id: int) -> bool:
     return (
         db.query(User)
         .filter(
             User.institute_id == institute_id,
             User.is_active.is_(True),
             User.deleted_at.is_(None),
-            User.role.has(name=INST_INSTRUCTOR),
+            User.role.has(name.in_((INSTITUTE_ADMIN, INST_INSTRUCTOR))),
         )
         .first()
         is not None
@@ -48,7 +49,7 @@ def can_grade_attempt(db: Session, actor: User, attempt: TestAttempt) -> bool:
         return actor.institute_id is not None and attempt.user.institute_id == actor.institute_id
     if actor.role.name != SA_INSTRUCTOR or attempt.module.created_by_id != actor.id:
         return False
-    return attempt.user.institute_id is None or not _institute_has_active_instructor(
+    return attempt.user.institute_id is None or not _institute_has_active_staff(
         db, attempt.user.institute_id
     )
 
@@ -65,7 +66,7 @@ def ensure_queue_entry(
             "direct_student"
             if attempt.user.institute_id is None
             else "institute_instructor"
-            if _institute_has_active_instructor(db, attempt.user.institute_id)
+            if _institute_has_active_staff(db, attempt.user.institute_id)
             else "sa_fallback"
         )
         entry = GradingQueueEntry(
@@ -257,8 +258,8 @@ def reevaluation_for_student(db: Session, attempt: TestAttempt) -> Optional[dict
 def request_reevaluation(db: Session, student: User, attempt: TestAttempt, reason: str) -> dict:
     if attempt.user_id != student.id:
         raise HTTPException(status_code=404, detail="Attempt not found")
-    if attempt.status != ATTEMPT_GRADED or not attempt.part_grades:
-        raise HTTPException(status_code=409, detail="Only a completed instructor-graded result can be reevaluated")
+    if attempt.status not in (ATTEMPT_GRADING, ATTEMPT_GRADED) or not attempt.part_grades:
+        raise HTTPException(status_code=409, detail="Only submitted instructor-reviewable results can be sent for review")
     if latest_open_reevaluation(db, attempt.id):
         raise HTTPException(status_code=409, detail="A reevaluation request is already open for this result")
     request = ReevaluationRequest(attempt_id=attempt.id, student_id=student.id, reason=reason.strip())

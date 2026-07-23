@@ -41,6 +41,7 @@ export function SpeakingAvatar({ attemptId, partId, isCandidateRecording = false
   const [avatarData, setAvatarData] = useState<AvatarData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [hasPlayedPrompt, setHasPlayedPrompt] = useState<boolean>(false);
   const [currentViseme, setCurrentViseme] = useState<number>(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -137,20 +138,37 @@ export function SpeakingAvatar({ attemptId, partId, isCandidateRecording = false
     };
   }, [isPlaying, avatarData]);
 
+  const promptPlayKey = avatarData
+    ? `speaking-avatar-played:${attemptId}:${partId}:${selectedExaminer}:${avatarData.prompt_text}`
+    : "";
+
+  useEffect(() => {
+    if (!promptPlayKey) {
+      setHasPlayedPrompt(false);
+      return;
+    }
+    setHasPlayedPrompt(sessionStorage.getItem(promptPlayKey) === "true");
+  }, [promptPlayKey]);
+
   const togglePlay = () => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || !audioFullUrl) return;
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
-    } else {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+      return;
     }
+    if (hasPlayedPrompt) return;
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
   };
 
   const handleAudioEnded = () => {
     setIsPlaying(false);
     setCurrentViseme(0);
+    setHasPlayedPrompt(true);
+    if (promptPlayKey) {
+      sessionStorage.setItem(promptPlayKey, "true");
+    }
   };
 
   const examiner = avatarData?.examiner || examiners.find((e) => e.id === selectedExaminer);
@@ -163,8 +181,16 @@ export function SpeakingAvatar({ attemptId, partId, isCandidateRecording = false
           <div
             className={`avatar-portrait-container ${isPlaying ? "speaking" : ""}`}
             onClick={togglePlay}
-            title={audioFullUrl ? (isPlaying ? "Pause examiner audio" : "Click to listen to examiner") : undefined}
-            style={{ cursor: audioFullUrl ? "pointer" : "default" }}
+            title={
+              audioFullUrl
+                ? hasPlayedPrompt
+                  ? "Examiner audio already played for this question"
+                  : isPlaying
+                    ? "Pause examiner audio"
+                    : "Click to listen to examiner"
+                : undefined
+            }
+            style={{ cursor: audioFullUrl && !hasPlayedPrompt ? "pointer" : "default" }}
           >
             <div className="avatar-portrait-frame">
               <ExaminerAvatarSvg
@@ -176,7 +202,11 @@ export function SpeakingAvatar({ attemptId, partId, isCandidateRecording = false
           </div>
 
           {/* Floating Elegant Status Tag */}
-          <div className="avatar-floating-status-pill" onClick={togglePlay} style={{ cursor: audioFullUrl ? "pointer" : "default" }}>
+          <div
+            className="avatar-floating-status-pill"
+            onClick={togglePlay}
+            style={{ cursor: audioFullUrl && !hasPlayedPrompt ? "pointer" : "default" }}
+          >
             {isPlaying ? (
               <span className="examiner-status-badge active">
                 <span className="audio-wave-bar">
@@ -191,7 +221,7 @@ export function SpeakingAvatar({ attemptId, partId, isCandidateRecording = false
             ) : (
               <span className="examiner-status-badge">
                 <span className="status-dot-pulse" />
-                {audioFullUrl ? "Click Avatar to Listen" : "IELTS Examiner Ready"}
+                {hasPlayedPrompt ? "Examiner Audio Played" : audioFullUrl ? "Click Avatar to Listen" : "IELTS Examiner Ready"}
               </span>
             )}
           </div>
@@ -284,7 +314,7 @@ export function SpeakingAvatar({ attemptId, partId, isCandidateRecording = false
                 type="button"
                 className={`avatar-btn ${isPlaying ? "avatar-btn-secondary" : "avatar-btn-primary"}`}
                 onClick={togglePlay}
-                disabled={loading}
+                disabled={loading || hasPlayedPrompt}
               >
                 {isPlaying ? (
                   <>
@@ -299,7 +329,7 @@ export function SpeakingAvatar({ attemptId, partId, isCandidateRecording = false
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                       <polygon points="5 3 19 12 5 21 5 3" />
                     </svg>
-                    {isPlaying ? "Replay Examiner" : "Listen to Examiner"}
+                    {hasPlayedPrompt ? "Audio Played" : "Listen to Examiner"}
                   </>
                 )}
               </button>

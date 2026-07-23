@@ -37,9 +37,10 @@ export function AttemptResultDetails() {
   if (!attempt) return <p>Loading...</p>;
 
   const graded = attempt.status === "graded";
+  const reviewable = ["grading", "graded"].includes(attempt.status);
   const profile = attempt.cefr_profile;
   const metrics = getAttemptMetrics(attempt);
-  const canRequestReevaluation = graded && attempt.parts.some((part) => !part.auto_marked) && !attempt.reevaluation;
+  const canRequestReevaluation = reviewable && attempt.parts.some((part) => !part.auto_marked) && !attempt.reevaluation;
 
   async function requestReevaluation(event: FormEvent) {
     event.preventDefault();
@@ -185,10 +186,10 @@ export function AttemptResultDetails() {
 
       {canRequestReevaluation && (
         <form className="workspace-panel reevaluation-form" onSubmit={requestReevaluation}>
-          <div className="panel-heading"><div><span className="page-eyebrow">Need another review?</span><h2>Request reevaluation</h2><p>Explain the specific rubric mark or feedback you would like an instructor to review.</p></div></div>
+          <div className="panel-heading"><div><span className="page-eyebrow">Need another review?</span><h2>Request instructor review</h2><p>Your request stays with your institute staff. It is routed to the Super Admin instructor queue only when your institute has no active staff.</p></div></div>
           <label htmlFor="reevaluation-reason">Reason for review</label>
           <textarea id="reevaluation-reason" rows={4} minLength={20} maxLength={2000} required value={reason} onChange={(event) => setReason(event.target.value)} />
-          <div className="form-actions"><button disabled={requesting || reason.trim().length < 20}>{requesting ? "Submitting..." : "Submit reevaluation request"}</button></div>
+          <div className="form-actions"><button disabled={requesting || reason.trim().length < 20}>{requesting ? "Submitting..." : "Submit instructor review request"}</button></div>
         </form>
       )}
     </div>

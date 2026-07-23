@@ -26,7 +26,7 @@ from app.models.attempt import (
 )
 from app.models.course import COURSE_PUBLISHED, Course
 from app.models.institute import Institute
-from app.models.role import INST_INSTRUCTOR, SA_INSTRUCTOR, STUDENT, Role
+from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, SA_INSTRUCTOR, STUDENT, Role
 from app.models.user import User
 from app.services import ai_evaluation_service, attempt_service, grading_service, module_authoring_service, notification_service, student_analysis_service
 from app.services import cefr_service
@@ -362,8 +362,9 @@ class AttemptServiceTestCase(unittest.TestCase):
         attempt_service.submit_attempt(self.db, attempt)
 
         institute_role = Role(name=INST_INSTRUCTOR)
+        institute_admin_role = Role(name=INSTITUTE_ADMIN)
         institute = Institute(name="Routing Academy", slug="routing-academy", is_active=True)
-        self.db.add_all([institute_role, institute])
+        self.db.add_all([institute_role, institute_admin_role, institute])
         self.db.flush()
         institute_instructor = User(
             email="marker@routing.test",
@@ -374,8 +375,17 @@ class AttemptServiceTestCase(unittest.TestCase):
             last_name="Marker",
             is_active=True,
         )
+        institute_admin = User(
+            email="admin@routing.test",
+            password_hash=hash_password("AdminPassword!1"),
+            role_id=institute_admin_role.id,
+            institute_id=institute.id,
+            first_name="Institute",
+            last_name="Admin",
+            is_active=True,
+        )
         self.student.institute_id = institute.id
-        self.db.add_all([institute_instructor, self.student])
+        self.db.add_all([institute_instructor, institute_admin, self.student])
         self.db.commit()
 
         self.assertEqual(attempt_service.list_grading_queue(self.db, self.instructor), [])
@@ -386,6 +396,11 @@ class AttemptServiceTestCase(unittest.TestCase):
 
         institute_instructor.is_active = False
         self.db.add(institute_instructor)
+        self.db.commit()
+        self.assertEqual(attempt_service.list_grading_queue(self.db, self.instructor), [])
+
+        institute_admin.is_active = False
+        self.db.add(institute_admin)
         self.db.commit()
         self.assertEqual(
             [item["id"] for item in attempt_service.list_grading_queue(self.db, self.instructor)],
