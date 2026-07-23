@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../../api/client";
 
 export function SuperAdminSEOSettings() {
   const [formData, setFormData] = useState({
@@ -17,7 +18,7 @@ export function SuperAdminSEOSettings() {
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
-    fetch("/api/v1/super-admin/seo-settings")
+    fetch(`${API_BASE_URL}/super-admin/seo-settings`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) setFormData(data);
@@ -31,7 +32,7 @@ export function SuperAdminSEOSettings() {
     setLoading(true);
     setSavedSuccess(false);
 
-    fetch("/api/v1/super-admin/seo-settings", {
+    fetch(`${API_BASE_URL}/super-admin/seo-settings`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),

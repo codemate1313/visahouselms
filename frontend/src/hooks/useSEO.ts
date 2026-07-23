@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../api/client";
 
 export interface SEOSettingsData {
   site_name: string;
@@ -34,7 +35,7 @@ export function useSEO(pageOverride?: PageSEOOverride) {
 
   useEffect(() => {
     // Fetch live SEO settings from API
-    fetch("/api/v1/seo-settings")
+    fetch(`${API_BASE_URL}/seo-settings`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) setSeoData(data);

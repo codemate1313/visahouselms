@@ -1,94 +1,24 @@
-import { useEffect, useState } from "react";
-import { apiClient } from "../../api/client";
-import { ToggleSwitch } from "../../components/ToggleSwitch";
-import "./SuperAdminTestimonials.css";
+import re
 
-interface TestimonialAdminItem {
-  id: number;
-  student_name: string;
-  student_role?: string;
-  target_score?: string;
-  avatar_url?: string;
-  rating: number;
-  quote: string;
-  is_active: boolean;
-  display_order: number;
-  created_at?: string;
-}
+def process_file():
+    with open('/Users/dummy/Desktop/Visahouselms/scratch_SuperAdminTestimonials.tsx', 'r') as f:
+        content = f.read()
+    
+    # We will just write a new file from scratch in the python script.
+    # We can preserve the state/hooks section.
+    
+    # The hooks section ends exactly at `return (`
+    parts = content.split('  return (', 1)
+    if len(parts) != 2:
+        return
+        
+    logic_part = parts[0]
+    
+    # We will inject the CSS import at the top
+    logic_part = logic_part.replace('import { apiClient } from "../../api/client";', 
+                                    'import { apiClient } from "../../api/client";\nimport "./SuperAdminTestimonials.css";')
 
-export function SuperAdminTestimonials() {
-  const [items, setItems] = useState<TestimonialAdminItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [editingItem, setEditingItem] = useState<Partial<TestimonialAdminItem> | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const fetchItems = () => {
-    setLoading(true);
-    apiClient
-      .get("/super-admin/testimonials")
-      .then((res) => {
-        setItems(res.data || []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    fetchItems();
-  }, []);
-
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingItem?.student_name || !editingItem?.quote) return;
-
-    setSaving(true);
-    const isEdit = Boolean(editingItem.id);
-    const url = isEdit ? `/super-admin/testimonials/${editingItem.id}` : "/super-admin/testimonials";
-    const promise = isEdit ? apiClient.put(url, editingItem) : apiClient.post(url, editingItem);
-
-    promise
-      .then(() => {
-        setIsModalOpen(false);
-        setEditingItem(null);
-        fetchItems();
-      })
-      .finally(() => setSaving(false));
-  };
-
-  const handleDelete = (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this testimonial?")) return;
-    apiClient.delete(`/super-admin/testimonials/${id}`).then(() => {
-      fetchItems();
-    });
-  };
-
-  const handleToggleActive = (item: TestimonialAdminItem) => {
-    apiClient.put(`/super-admin/testimonials/${item.id}`, { is_active: !item.is_active }).then(() => {
-      fetchItems();
-    });
-  };
-
-  const filteredItems = items.filter((item) => {
-    const matchesSearch =
-      item.student_name.toLowerCase().includes(search.toLowerCase()) ||
-      (item.student_role && item.student_role.toLowerCase().includes(search.toLowerCase())) ||
-      (item.target_score && item.target_score.toLowerCase().includes(search.toLowerCase())) ||
-      item.quote.toLowerCase().includes(search.toLowerCase());
-
-    if (filterStatus === "ACTIVE") return matchesSearch && item.is_active;
-    if (filterStatus === "INACTIVE") return matchesSearch && !item.is_active;
-    return matchesSearch;
-  });
-
-  const totalCount = items.length;
-  const activeCount = items.filter((i) => i.is_active).length;
-  const inactiveCount = items.filter((i) => !i.is_active).length;
-
-  return (
+    new_jsx = """  return (
     <div className="sat-container">
       {/* Top Banner Header */}
       <div className="sat-header">
@@ -135,6 +65,14 @@ export function SuperAdminTestimonials() {
       {/* Metrics Summary Strip */}
       <div className="sat-metrics-grid">
         <div className="sat-metric-card">
+          <div className="sat-metric-icon sat-icon-blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
           <div className="sat-metric-data">
             <span className="sat-metric-label">Total Items</span>
             <span className="sat-metric-value">{totalCount}</span>
@@ -142,6 +80,11 @@ export function SuperAdminTestimonials() {
         </div>
 
         <div className="sat-metric-card">
+          <div className="sat-metric-icon sat-icon-green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
           <div className="sat-metric-data">
             <span className="sat-metric-label">Active Published</span>
             <span className="sat-metric-value sat-text-green">{activeCount}</span>
@@ -149,6 +92,13 @@ export function SuperAdminTestimonials() {
         </div>
 
         <div className="sat-metric-card">
+          <div className="sat-metric-icon sat-icon-yellow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
           <div className="sat-metric-data">
             <span className="sat-metric-label">Draft / Inactive</span>
             <span className="sat-metric-value sat-text-yellow">{inactiveCount}</span>
@@ -156,6 +106,11 @@ export function SuperAdminTestimonials() {
         </div>
 
         <div className="sat-metric-card">
+          <div className="sat-metric-icon sat-icon-red">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </div>
           <div className="sat-metric-data">
             <span className="sat-metric-label">Avg Student Score</span>
             <span className="sat-metric-value sat-text-red">Band 8.0+</span>
@@ -252,13 +207,13 @@ export function SuperAdminTestimonials() {
                   <div className="sat-card-role">{item.student_role}</div>
                 </div>
                 <div className="sat-card-actions">
-                  <button onClick={() => { setEditingItem(item); setIsModalOpen(true); }} className="sat-action-btn edit" data-tooltip="Edit">
+                  <button onClick={() => { setEditingItem(item); setIsModalOpen(true); }} className="sat-action-btn edit" title="Edit">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
                   </button>
-                  <button onClick={() => handleDelete(item.id)} className="sat-action-btn delete" data-tooltip="Delete">
+                  <button onClick={() => handleDelete(item.id)} className="sat-action-btn delete" title="Delete">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -298,12 +253,12 @@ export function SuperAdminTestimonials() {
           <table className="sat-table">
             <thead>
               <tr>
-                <th>NAME</th>
-                <th>SCORE</th>
-                <th>QUOTE</th>
-                <th>STATUS</th>
-                <th>ORDER</th>
-                <th>ACTIONS</th>
+                <th>Student</th>
+                <th>Score</th>
+                <th>Quote</th>
+                <th>Status</th>
+                <th>Order</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -311,11 +266,7 @@ export function SuperAdminTestimonials() {
                 <tr key={item.id} className={!item.is_active ? "inactive-row" : ""}>
                   <td>
                     <div className="sat-table-student">
-                      {item.avatar_url ? (
-                         <img src={item.avatar_url} alt="" className="sat-avatar-img" />
-                      ) : (
-                         <div className="sat-avatar-placeholder">{item.student_name.charAt(0).toUpperCase()}</div>
-                      )}
+                      <img src={item.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(item.student_name)} alt="" />
                       <div>
                         <div className="sat-table-name">{item.student_name}</div>
                         <div className="sat-table-role">{item.student_role}</div>
@@ -329,34 +280,18 @@ export function SuperAdminTestimonials() {
                     </div>
                   </td>
                   <td>
-                    <span className={`sat-status-badge ${item.is_active ? "active" : "inactive"}`}>
-                      <span className="dot"></span> {item.is_active ? "Active" : "Draft"}
-                    </span>
+                    <button
+                      onClick={() => handleToggleActive(item)}
+                      className={`sat-toggle-btn small ${item.is_active ? "active" : ""}`}
+                    >
+                      {item.is_active ? "Published" : "Draft"}
+                    </button>
                   </td>
                   <td><span className="sat-order-badge">{item.display_order}</span></td>
                   <td>
-                    <div className="table-actions institute-row-actions">
-                      <ToggleSwitch
-                        checked={item.is_active}
-                        onChange={() => handleToggleActive(item)}
-                        tooltip={item.is_active ? "Deactivate" : "Activate"}
-                      />
-
-                      <button onClick={() => { setEditingItem(item); setIsModalOpen(true); }} className="action-btn-icon action-edit" data-tooltip="Edit">
-                        <svg className="table-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                      </button>
-
-                      <button onClick={() => handleDelete(item.id)} className="action-btn-icon danger action-delete" data-tooltip="Delete">
-                        <svg className="table-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                          <line x1="10" y1="11" x2="10" y2="17" />
-                          <line x1="14" y1="11" x2="14" y2="17" />
-                        </svg>
-                      </button>
+                    <div className="sat-table-actions">
+                      <button onClick={() => { setEditingItem(item); setIsModalOpen(true); }} className="sat-action-btn edit">Edit</button>
+                      <button onClick={() => handleDelete(item.id)} className="sat-action-btn delete">Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -481,3 +416,9 @@ export function SuperAdminTestimonials() {
     </div>
   );
 }
+"""
+
+    with open('/Users/dummy/Desktop/Visahouselms/frontend/src/pages/superadmin/SuperAdminTestimonials.tsx', 'w') as f:
+        f.write(logic_part + new_jsx)
+
+process_file()

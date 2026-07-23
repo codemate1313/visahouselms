@@ -9,6 +9,12 @@ export default defineConfig({
     chunkSizeWarningLimit: 750,
   },
   server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
     headers: {
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',

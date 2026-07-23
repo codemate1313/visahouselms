@@ -5,6 +5,8 @@ import { TextPlugin } from "gsap/TextPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useSEO } from "../../hooks/useSEO";
 
+import { API_BASE_URL, apiClient } from "../../api/client";
+
 gsap.registerPlugin(TextPlugin, ScrollTrigger);
 
 interface TestimonialItem {
@@ -15,6 +17,18 @@ interface TestimonialItem {
   avatar_url?: string;
   rating: number;
   quote: string;
+}
+
+interface BlogItem {
+  id: number;
+  title: string;
+  slug: string;
+  summary: string;
+  featured_image_url?: string;
+  category: string;
+  author_name: string;
+  read_time_minutes: number;
+  created_at: string;
 }
 
 interface LandingContext {
@@ -114,21 +128,48 @@ export function Home() {
   const [flippedModules, setFlippedModules] = useState<Record<string, boolean>>({});
   const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
   const [loadingTestimonials, setLoadingTestimonials] = useState(true);
+  const [blogs, setBlogs] = useState<BlogItem[]>([]);
+  const [loadingBlogs, setLoadingBlogs] = useState(true);
+
+  const sliderWrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLoadingTestimonials(true);
-    fetch("/api/v1/testimonials")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setTestimonials(data);
+    apiClient.get("/testimonials")
+      .then((res) => {
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setTestimonials(res.data);
         }
         setLoadingTestimonials(false);
       })
       .catch(() => {
         setLoadingTestimonials(false);
       });
+
+    setLoadingBlogs(true);
+    apiClient.get("/blogs")
+      .then((res) => {
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setBlogs(res.data.slice(0, 3));
+        }
+        setLoadingBlogs(false);
+      })
+      .catch(() => {
+        setLoadingBlogs(false);
+      });
   }, []);
+
+  const handlePrev = () => {
+    if (sliderWrapperRef.current) {
+      sliderWrapperRef.current.scrollBy({ left: -384, behavior: "smooth" });
+    }
+  };
+
+  const handleNext = () => {
+    if (sliderWrapperRef.current) {
+      sliderWrapperRef.current.scrollBy({ left: 384, behavior: "smooth" });
+    }
+  };
 
   const toggleModuleExpand = (moduleKey: string) => {
     const isFlipped = !flippedModules[moduleKey];
@@ -659,47 +700,142 @@ export function Home() {
       {/* Student Testimonials Section */}
       {(!loadingTestimonials && testimonials.length === 0) ? null : (
         <section className="testimonials-section">
-          <div className="section-header text-center">
-            <span className="section-kicker">STUDENT SUCCESS STORIES</span>
-            <h2 className="section-title">Trusted by 10,000+ IELTS Aspirants</h2>
-            <p className="section-subtitle">
-              Read real experiences from candidates who achieved their target band scores using IELTS LMS.
-            </p>
+          <div className="testimonials-header-wrap">
+            <div className="section-header text-left">
+              <span className="section-kicker">STUDENT SUCCESS STORIES</span>
+              <h2 className="section-title">Trusted by 10,000+ IELTS Aspirants</h2>
+              <p className="section-subtitle">
+                Read real experiences from candidates who achieved their target band scores using IELTS LMS.
+              </p>
+            </div>
+            <div className="testimonial-slider-controls">
+              <button
+                type="button"
+                className="slider-nav-btn"
+                onClick={handlePrev}
+                aria-label="Previous Testimonial"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                className="slider-nav-btn"
+                onClick={handleNext}
+                aria-label="Next Testimonial"
+              >
+                ›
+              </button>
+            </div>
           </div>
 
-          <div className="testimonials-grid">
+          <div
+            className="testimonial-slider-wrapper"
+            ref={sliderWrapperRef}
+          >
             {testimonials.length > 0 ? (
-              testimonials.map((t) => (
-                <div key={t.id} className="testimonial-card">
-                  <div>
-                    <div className="testimonial-header">
-                      <img
-                        src={t.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"}
-                        alt={t.student_name}
-                        className="testimonial-avatar"
-                      />
-                      <div className="testimonial-author-info">
-                        <strong>{t.student_name}</strong>
-                        <span>{t.student_role}</span>
-                        {t.target_score && (
-                          <div className="testimonial-score-badge">{t.target_score}</div>
-                        )}
+              <div className="testimonial-slider-track">
+                {[...testimonials, ...testimonials].map((t, idx) => (
+                  <div key={`${t.id}-${idx}`} className="testimonial-card">
+                    <div>
+                      <div className="testimonial-header">
+                        <img
+                          src={t.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"}
+                          alt={t.student_name}
+                          className="testimonial-avatar"
+                        />
+                        <div className="testimonial-author-info">
+                          <strong>{t.student_name}</strong>
+                          <span>{t.student_role}</span>
+                          {t.target_score && (
+                            <div className="testimonial-score-badge">{t.target_score}</div>
+                          )}
+                        </div>
                       </div>
+                      <p className="testimonial-quote">"{t.quote}"</p>
                     </div>
-                    <p className="testimonial-quote">"{t.quote}"</p>
+                    <div className="testimonial-stars">
+                      {Array.from({ length: t.rating || 5 }).map((_, i) => (
+                        <span key={i}>★</span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="testimonial-stars">
-                    {Array.from({ length: t.rating || 5 }).map((_, i) => (
-                      <span key={i}>★</span>
-                    ))}
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
-              <div className="text-center" style={{ gridColumn: "1 / -1", padding: "40px", color: "#64748b" }}>
+              <div className="text-center" style={{ padding: "40px", color: "#64748b" }}>
                 Loading student success stories...
               </div>
             )}
+          </div>
+        </section>
+      )}
+
+      {/* Latest Blogs Section */}
+      {(!loadingBlogs && blogs.length === 0) ? null : (
+        <section className="landing-blogs-section" style={{ padding: "80px 5%", backgroundColor: "var(--surface-muted)", position: "relative" }}>
+          <div className="section-header text-center" style={{ marginBottom: "60px" }}>
+            <span className="section-kicker" style={{ color: "var(--primary)", fontWeight: "bold", letterSpacing: "1px", textTransform: "uppercase", fontSize: "0.85rem" }}>RESOURCES & INSIGHTS</span>
+            <h2 className="section-title" style={{ fontSize: "2.5rem", fontWeight: "800", color: "var(--text)", marginTop: "10px" }}>Latest from Our Blog</h2>
+            <p className="section-subtitle" style={{ color: "var(--text-muted)", marginTop: "15px", maxWidth: "600px", margin: "15px auto 0" }}>
+              Expert advice, IELTS strategies, and platform updates to help you achieve your target band.
+            </p>
+          </div>
+
+          {loadingBlogs ? (
+            <div className="text-center text-gray-500 py-12">Loading latest articles...</div>
+          ) : (
+            <div className="blogs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "30px", maxWidth: "1200px", margin: "0 auto" }}>
+              {blogs.map((blog) => (
+                <div key={blog.id} className="blog-card" style={{ backgroundColor: "var(--glass-bg)", border: "1px solid var(--border)", borderRadius: "20px", overflow: "hidden", transition: "transform 0.3s ease, box-shadow 0.3s ease", display: "flex", flexDirection: "column" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-10px)'; e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.08)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                >
+                  <div style={{ height: "200px", overflow: "hidden", position: "relative" }}>
+                    {blog.featured_image_url ? (
+                      <img src={blog.featured_image_url} alt={blog.title} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease" }} />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", backgroundColor: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ color: "#cbd5e1" }}>No Image</span>
+                      </div>
+                    )}
+                    <div style={{ position: "absolute", top: "15px", left: "15px", backgroundColor: "rgba(255, 255, 255, 0.9)", padding: "4px 12px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "bold", color: "var(--primary)" }}>
+                      {blog.category}
+                    </div>
+                  </div>
+                  <div style={{ padding: "25px", display: "flex", flexDirection: "column", flexGrow: 1 }}>
+                    <h3 style={{ fontSize: "1.25rem", fontWeight: "700", color: "var(--text)", marginBottom: "10px", lineHeight: "1.4" }}>
+                      <Link to={`/blogs/${blog.slug}`} style={{ textDecoration: "none", color: "inherit" }}>
+                        {blog.title}
+                      </Link>
+                    </h3>
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: "1.6", marginBottom: "20px", flexGrow: 1 }}>
+                      {blog.summary.substring(0, 100)}...
+                    </p>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border)", paddingTop: "15px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "var(--primary-soft)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "bold", fontSize: "0.8rem" }}>
+                          {blog.author_name.charAt(0)}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: "0.8rem", fontWeight: "bold", color: "var(--text)" }}>{blog.author_name}</div>
+                          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{new Date(blog.created_at).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: "600", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {blog.read_time_minutes} min
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <div style={{ textAlign: "center", marginTop: "50px" }}>
+             <Link to="/blogs" className="hero-secondary-btn" style={{ padding: "12px 30px", borderRadius: "30px", border: "1px solid var(--border)", backgroundColor: "transparent", color: "var(--text)", fontWeight: "600", textDecoration: "none", transition: "all 0.3s" }}>
+               View All Articles
+             </Link>
           </div>
         </section>
       )}

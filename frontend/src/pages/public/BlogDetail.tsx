@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSEO } from "../../hooks/useSEO";
+import { API_BASE_URL } from "../../api/client";
 
 interface BlogPostDetail {
   id: number;
@@ -33,7 +34,7 @@ export function BlogDetail() {
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
-    fetch(`/api/v1/blogs/${slug}`)
+    fetch(`${API_BASE_URL}/blogs/${slug}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         setPost(data);
@@ -62,29 +63,48 @@ export function BlogDetail() {
 
   // Simple HTML renderer helper for markdown paragraphs and headings
   const renderMarkdownLines = (markdown: string) => {
-    return markdown.split("\n\n").map((chunk, idx) => {
-      const trimmed = chunk.trim();
-      if (trimmed.startsWith("# ")) {
-        return <h1 key={idx}>{trimmed.replace("# ", "")}</h1>;
-      }
-      if (trimmed.startsWith("## ")) {
-        return <h2 key={idx}>{trimmed.replace("## ", "")}</h2>;
-      }
-      if (trimmed.startsWith("### ")) {
-        return <h3 key={idx}>{trimmed.replace("### ", "")}</h3>;
-      }
-      if (trimmed.startsWith("- ")) {
-        const items = trimmed.split("\n- ").map((item) => item.replace("- ", ""));
-        return (
-          <ul key={idx}>
-            {items.map((it, i) => (
+    const lines = markdown.split(/\r?\n/);
+    const elements: React.ReactNode[] = [];
+    let currentList: string[] = [];
+
+    const flushList = () => {
+      if (currentList.length > 0) {
+        elements.push(
+          <ul key={`ul-${elements.length}`}>
+            {currentList.map((it, i) => (
               <li key={i} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(it) }} />
             ))}
           </ul>
         );
+        currentList = [];
       }
-      return <p key={idx} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed) }} />;
+    };
+
+    lines.forEach((line, index) => {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        flushList();
+        return;
+      }
+
+      if (trimmed.startsWith("- ")) {
+        currentList.push(trimmed.substring(2));
+      } else {
+        flushList();
+        if (trimmed.startsWith("# ")) {
+          elements.push(<h1 key={index} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^#\s+/, "")) }} />);
+        } else if (trimmed.startsWith("## ")) {
+          elements.push(<h2 key={index} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^##\s+/, "")) }} />);
+        } else if (trimmed.startsWith("### ")) {
+          elements.push(<h3 key={index} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^###\s+/, "")) }} />);
+        } else {
+          elements.push(<p key={index} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed) }} />);
+        }
+      }
     });
+
+    flushList();
+    return elements;
   };
 
   const formatInlineMarkdown = (text: string) => {
@@ -95,22 +115,34 @@ export function BlogDetail() {
 
   return (
     <div className="blog-detail-container">
-      <Link to="/blogs" className="text-sm font-semibold text-rose-600 hover:underline mb-6 inline-block">
-        ← Back to All Articles
+      <Link to="/blogs" className="blog-back-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to All Articles
       </Link>
 
       <div className="blog-detail-header">
-        <span className="blog-category-badge" style={{ position: "static" }}>
+        <span className="blog-detail-badge">
           {post.category}
         </span>
-        <h1 className="blog-detail-title">{post.title}</h1>
+        <h1 className="blog-detail-title">{post.title.replace('8. 0+', '8.0+')}</h1>
 
         <div className="blog-detail-meta">
-          <span>By {post.author_name}</span>
-          <span>•</span>
-          <span>{post.read_time_minutes} min read</span>
-          <span>•</span>
-          <span>Published {new Date(post.created_at).toLocaleDateString()}</span>
+          <div className="meta-item">
+            <span className="meta-label">By</span>
+            <span className="meta-value">{post.author_name}</span>
+          </div>
+          <span className="meta-dot">•</span>
+          <div className="meta-item">
+            <span className="meta-value">{post.read_time_minutes} min read</span>
+          </div>
+          <span className="meta-dot">•</span>
+          <div className="meta-item">
+            <span className="meta-label">Published</span>
+            <span className="meta-value">{new Date(post.created_at).toLocaleDateString()}</span>
+          </div>
         </div>
       </div>
 
