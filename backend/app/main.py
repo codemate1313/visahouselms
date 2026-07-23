@@ -11,6 +11,7 @@ from app.routers import (
     announcements,
     auth,
     backups,
+    blogs_router,
     coupons,
     dashboard,
     demo_accounts,
@@ -31,10 +32,12 @@ from app.routers import (
     payments,
     plans,
     revenue,
+    seo_router,
     student_portal,
     subscriptions,
     super_admin,
     terminal,
+    testimonials_router,
     trial_config,
 )
 
@@ -101,6 +104,12 @@ app.include_router(notifications.router)
 app.include_router(announcements.institute_router)
 app.include_router(announcements.platform_router)
 app.include_router(announcements.student_router)
+app.include_router(testimonials_router.public_router)
+app.include_router(testimonials_router.admin_router)
+app.include_router(blogs_router.public_router)
+app.include_router(blogs_router.admin_router)
+app.include_router(seo_router.public_router)
+app.include_router(seo_router.admin_router)
 
 
 @app.exception_handler(Exception)

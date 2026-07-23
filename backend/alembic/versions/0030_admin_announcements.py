@@ -17,33 +17,39 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.create_table(
-        "announcements",
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("institute_id", sa.Integer, sa.ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True),
-        sa.Column("title", sa.String(180), nullable=False),
-        sa.Column("message", sa.Text, nullable=False),
-        sa.Column("audience", sa.String(20), nullable=False, server_default="students"),
-        sa.Column("status", sa.String(20), nullable=False, server_default="draft"),
-        sa.Column("published_at", sa.DateTime, nullable=True),
-        sa.Column("expires_at", sa.DateTime, nullable=True),
-        sa.Column("created_by_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("created_at", sa.DateTime, nullable=False, server_default=sa.func.now()),
-    )
-    op.create_index("ix_announcements_institute_id", "announcements", ["institute_id"])
-    op.create_index("ix_announcements_status", "announcements", ["status"])
-
-    with op.batch_alter_table("student_notifications") as batch_op:
-        batch_op.add_column(sa.Column("announcement_id", sa.Integer, nullable=True))
-        batch_op.add_column(sa.Column("link_url", sa.String(500), nullable=True))
-        batch_op.create_foreign_key(
-            "fk_student_notifications_announcement_id",
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if not inspector.has_table("announcements"):
+        op.create_table(
             "announcements",
-            ["announcement_id"],
-            ["id"],
-            ondelete="SET NULL",
+            sa.Column("id", sa.Integer, primary_key=True),
+            sa.Column("institute_id", sa.Integer, sa.ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True),
+            sa.Column("title", sa.String(180), nullable=False),
+            sa.Column("message", sa.Text, nullable=False),
+            sa.Column("audience", sa.String(20), nullable=False, server_default="students"),
+            sa.Column("status", sa.String(20), nullable=False, server_default="draft"),
+            sa.Column("published_at", sa.DateTime, nullable=True),
+            sa.Column("expires_at", sa.DateTime, nullable=True),
+            sa.Column("created_by_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
+            sa.Column("created_at", sa.DateTime, nullable=False, server_default=sa.func.now()),
         )
-        batch_op.create_index("ix_student_notifications_announcement_id", ["announcement_id"])
+        op.create_index("ix_announcements_institute_id", "announcements", ["institute_id"])
+        op.create_index("ix_announcements_status", "announcements", ["status"])
+
+    existing_cols = [c["name"] for c in inspector.get_columns("student_notifications")]
+    with op.batch_alter_table("student_notifications") as batch_op:
+        if "announcement_id" not in existing_cols:
+            batch_op.add_column(sa.Column("announcement_id", sa.Integer, nullable=True))
+            batch_op.create_foreign_key(
+                "fk_student_notifications_announcement_id",
+                "announcements",
+                ["announcement_id"],
+                ["id"],
+                ondelete="SET NULL",
+            )
+            batch_op.create_index("ix_student_notifications_announcement_id", ["announcement_id"])
+        if "link_url" not in existing_cols:
+            batch_op.add_column(sa.Column("link_url", sa.String(500), nullable=True))
 
 
 def downgrade() -> None:

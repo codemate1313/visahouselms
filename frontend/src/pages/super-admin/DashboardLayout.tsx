@@ -81,6 +81,29 @@ export function DashboardLayout() {
       ],
     },
     {
+      title: "CMS & CONTENT",
+      items: [
+        {
+          key: "testimonials",
+          label: "Testimonials",
+          icon: "user",
+          to: "/super-admin/testimonials",
+        },
+        {
+          key: "blogs",
+          label: "Blogs CMS",
+          icon: "module",
+          to: "/super-admin/blogs",
+        },
+        {
+          key: "seo_settings",
+          label: "SEO & Meta Settings",
+          icon: "settings",
+          to: "/super-admin/seo-settings",
+        },
+      ],
+    },
+    {
       title: "SETTINGS",
       items: [
         {

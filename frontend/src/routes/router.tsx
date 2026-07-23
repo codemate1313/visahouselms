@@ -75,6 +75,12 @@ import {
   TrialConfig,
 } from "./lazyPages";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { BlogsList } from "../pages/public/BlogsList";
+import { BlogDetail } from "../pages/public/BlogDetail";
+import { SuperAdminTestimonials } from "../pages/superadmin/SuperAdminTestimonials";
+import { SuperAdminBlogs } from "../pages/superadmin/SuperAdminBlogs";
+import { SuperAdminBlogForm } from "../pages/superadmin/SuperAdminBlogForm";
+import { SuperAdminSEOSettings } from "../pages/superadmin/SuperAdminSEOSettings";
 
 export const router = createBrowserRouter([
   {
@@ -84,6 +90,8 @@ export const router = createBrowserRouter([
       { path: "/about", element: <AboutUs /> },
       { path: "/plans", element: <ShowcasePlans /> },
       { path: "/contact", element: <ContactUs /> },
+      { path: "/blogs", element: <BlogsList /> },
+      { path: "/blogs/:slug", element: <BlogDetail /> },
     ],
   },
   { path: "/testing-login", element: <TestingLoginSelector /> },
@@ -106,6 +114,11 @@ export const router = createBrowserRouter([
         element: <DashboardLayout />,
         children: [
           { path: "dashboard", element: <Dashboard /> },
+          { path: "testimonials", element: <SuperAdminTestimonials /> },
+          { path: "blogs", element: <SuperAdminBlogs /> },
+          { path: "blogs/new", element: <SuperAdminBlogForm /> },
+          { path: "blogs/:id", element: <SuperAdminBlogForm /> },
+          { path: "seo-settings", element: <SuperAdminSEOSettings /> },
           { path: "accounts", element: <AccountsList /> },
           { path: "accounts/new", element: <AccountForm /> },
           { path: "accounts/:id", element: <AccountForm /> },

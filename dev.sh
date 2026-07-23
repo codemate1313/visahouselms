@@ -3,8 +3,11 @@
 # Trap SIGINT (Ctrl+C) and gracefully kill both processes
 trap 'echo "\nStopping both servers..."; kill $BACKEND_PID $FRONTEND_PID; exit' SIGINT
 
-echo "Starting Backend (FastAPI)..."
+echo "Running automatic seed..."
 cd backend
+PYTHONPATH=. .venv/bin/python scripts/seed_local_data.py
+
+echo "Starting Backend (FastAPI)..."
 source .venv/bin/activate
 uvicorn app.main:app --reload &
 BACKEND_PID=$!

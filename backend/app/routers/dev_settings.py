@@ -257,6 +257,7 @@ def seed_sample_data(
         _create_module,
         _get_or_create_instructor,
     )
+    from scripts.seed_cms_and_seo import seed_cms_and_seo
 
     instructor = _get_or_create_instructor(db)
     created_modules = 0
@@ -265,10 +266,14 @@ def seed_sample_data(
             created_modules += 1
 
     db.commit()
+
+    # Seed testing blogs, testimonials, and SEO settings
+    seed_cms_and_seo()
+
     _audit(db, actor, "dev_settings.seed_data", request, {"created_modules": created_modules})
     return {
         "success": True,
-        "message": "Sample seed data successfully populated!",
+        "message": "Sample seed data (modules, testing blogs, testimonials, SEO) successfully populated!",
         "instructor_email": instructor.email,
         "created_modules": created_modules,
         "module_types": [*SKILL_MODULE_TYPES, *COMPOSITE_MODULE_TYPES],

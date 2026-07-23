@@ -3,8 +3,19 @@ import { useOutletContext, Link } from "react-router-dom";
 import gsap from "gsap";
 import { TextPlugin } from "gsap/TextPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useSEO } from "../../hooks/useSEO";
 
 gsap.registerPlugin(TextPlugin, ScrollTrigger);
+
+interface TestimonialItem {
+  id: number;
+  student_name: string;
+  student_role?: string;
+  target_score?: string;
+  avatar_url?: string;
+  rating: number;
+  quote: string;
+}
 
 interface LandingContext {
   openLoginModal: () => void;
@@ -97,9 +108,27 @@ function AnimatedStat({
 }
 
 export function Home() {
+  useSEO();
   const { openLoginModal } = useOutletContext<LandingContext>();
   const [activeShowcaseDetail, setActiveShowcaseDetail] = useState<string | null>(null);
   const [flippedModules, setFlippedModules] = useState<Record<string, boolean>>({});
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
+  const [loadingTestimonials, setLoadingTestimonials] = useState(true);
+
+  useEffect(() => {
+    setLoadingTestimonials(true);
+    fetch("/api/v1/testimonials")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setTestimonials(data);
+        }
+        setLoadingTestimonials(false);
+      })
+      .catch(() => {
+        setLoadingTestimonials(false);
+      });
+  }, []);
 
   const toggleModuleExpand = (moduleKey: string) => {
     const isFlipped = !flippedModules[moduleKey];
@@ -173,10 +202,7 @@ export function Home() {
       {/* Hero Section */}
       <section className="landing-hero-section">
         <div className="hero-container">
-          <div className="hero-badge-pill">
-            <span className="pill-dot" />
-            <span>AI-POWERED IELTS PLATFORM 3.0</span>
-          </div>
+
           <h1 className="hero-main-title">
             Master IELTS with <span className="text-gradient" data-text="Real Exam Simulations">Real Exam Simulations</span><br />
             <span style={{ position: "relative", display: "inline-block" }}>
@@ -629,6 +655,54 @@ export function Home() {
           </div>
         </div>
       </section>
+
+      {/* Student Testimonials Section */}
+      {(!loadingTestimonials && testimonials.length === 0) ? null : (
+        <section className="testimonials-section">
+          <div className="section-header text-center">
+            <span className="section-kicker">STUDENT SUCCESS STORIES</span>
+            <h2 className="section-title">Trusted by 10,000+ IELTS Aspirants</h2>
+            <p className="section-subtitle">
+              Read real experiences from candidates who achieved their target band scores using IELTS LMS.
+            </p>
+          </div>
+
+          <div className="testimonials-grid">
+            {testimonials.length > 0 ? (
+              testimonials.map((t) => (
+                <div key={t.id} className="testimonial-card">
+                  <div>
+                    <div className="testimonial-header">
+                      <img
+                        src={t.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"}
+                        alt={t.student_name}
+                        className="testimonial-avatar"
+                      />
+                      <div className="testimonial-author-info">
+                        <strong>{t.student_name}</strong>
+                        <span>{t.student_role}</span>
+                        {t.target_score && (
+                          <div className="testimonial-score-badge">{t.target_score}</div>
+                        )}
+                      </div>
+                    </div>
+                    <p className="testimonial-quote">"{t.quote}"</p>
+                  </div>
+                  <div className="testimonial-stars">
+                    {Array.from({ length: t.rating || 5 }).map((_, i) => (
+                      <span key={i}>★</span>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center" style={{ gridColumn: "1 / -1", padding: "40px", color: "#64748b" }}>
+                Loading student success stories...
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Call to Action Banner */}
       <section className="landing-cta-banner">

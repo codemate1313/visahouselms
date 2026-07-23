@@ -17,11 +17,17 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    existing_cols = [c["name"] for c in inspector.get_columns("announcements")]
     with op.batch_alter_table("announcements") as batch_op:
-        batch_op.add_column(sa.Column("scheduled_at", sa.DateTime, nullable=True))
-        batch_op.add_column(sa.Column("target_institute_ids", sa.Text, nullable=True))
-        batch_op.add_column(sa.Column("target_user_ids", sa.Text, nullable=True))
-        batch_op.create_index("ix_announcements_scheduled_at", ["scheduled_at"])
+        if "scheduled_at" not in existing_cols:
+            batch_op.add_column(sa.Column("scheduled_at", sa.DateTime, nullable=True))
+            batch_op.create_index("ix_announcements_scheduled_at", ["scheduled_at"])
+        if "target_institute_ids" not in existing_cols:
+            batch_op.add_column(sa.Column("target_institute_ids", sa.Text, nullable=True))
+        if "target_user_ids" not in existing_cols:
+            batch_op.add_column(sa.Column("target_user_ids", sa.Text, nullable=True))
 
 
 def downgrade() -> None:

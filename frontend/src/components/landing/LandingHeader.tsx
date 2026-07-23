@@ -13,6 +13,7 @@ export function LandingHeader({ onOpenLogin }: LandingHeaderProps) {
     { label: "Home", path: "/" },
     { label: "About Us", path: "/about" },
     { label: "Plans & Pricing", path: "/plans" },
+    { label: "Blogs", path: "/blogs" },
     { label: "Contact Us", path: "/contact" },
   ];
 

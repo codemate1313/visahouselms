@@ -34,6 +34,9 @@ from app.models.request_log import RequestLog
 from app.models.role import Role
 from app.models.subscription import Subscription
 from app.models.setting import Setting
+from app.models.testimonials import Testimonial
+from app.models.blogs import BlogPost
+from app.models.seo_settings import SEOSetting
 from app.models.trial_config import TrialConfig
 from app.models.user import User
 from app.models.user_device import UserDevice
