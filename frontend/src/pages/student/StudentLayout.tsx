@@ -67,6 +67,7 @@ export function StudentLayout() {
         <PortalTopBar
           notificationEyebrow="Student updates"
           fallbackRoute="/student/dashboard"
+          notificationsHref="/student/notifications"
           roleLabel={isInstituteStudent ? "Institute Student" : "Direct Student"}
         />
         <GsapRouteAnimator>

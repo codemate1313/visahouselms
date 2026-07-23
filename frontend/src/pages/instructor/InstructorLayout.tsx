@@ -92,6 +92,7 @@ export function InstructorLayout() {
         <PortalTopBar
           notificationEyebrow="Author updates"
           fallbackRoute="/super-admin/instructor/dashboard"
+          notificationsHref="/super-admin/instructor/notifications"
           roleLabel="SA Instructor"
         />
         <GsapRouteAnimator>

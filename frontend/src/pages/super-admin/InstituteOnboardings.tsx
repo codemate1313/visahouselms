@@ -240,7 +240,7 @@ export function InstituteOnboardings() {
                         </div>
                         <div className="table-item-details">
                           <span className="table-item-title">{row.name}</span>
-                          <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "#94a3b8" }}>
+                          <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--slate-400)" }}>
                             {row.contact_email || "No contact email"}
                           </span>
                         </div>
@@ -256,7 +256,7 @@ export function InstituteOnboardings() {
                         <span className="table-item-title" style={{ fontSize: 13, fontWeight: 500 }}>
                           {row.payment ? `${row.agreement_currency || "INR"} ${Number(row.payment.amount_paid || 0).toLocaleString("en-IN")}` : "Not recorded"}
                         </span>
-                        <span className="table-item-subtitle" style={{ fontSize: 11.5, color: row.payment?.status === "paid" ? "#16a34a" : "#94a3b8" }}>
+                        <span className="table-item-subtitle" style={{ fontSize: 11.5, color: row.payment?.status === "paid" ? "var(--green-600)" : "var(--slate-400)" }}>
                           {row.payment?.status || "pending"}
                         </span>
                       </div>
@@ -266,7 +266,7 @@ export function InstituteOnboardings() {
                         <span className="table-item-title" style={{ fontSize: 13, fontWeight: 500 }}>
                           {row.student_limit} students / {row.staff_limit} staff
                         </span>
-                        <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "#94a3b8" }}>
+                        <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--slate-400)" }}>
                           {row.member_count} accounts issued
                         </span>
                       </div>

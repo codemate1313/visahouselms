@@ -43,6 +43,7 @@ export function InstituteInstructorLayout() {
         <PortalTopBar
           notificationEyebrow="Instructor updates"
           fallbackRoute="/institute-instructor/grading"
+          notificationsHref="/institute-instructor/notifications"
           roleLabel="Institute Instructor"
         />
         <GsapRouteAnimator>

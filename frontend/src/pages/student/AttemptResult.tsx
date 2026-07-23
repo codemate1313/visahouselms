@@ -13,10 +13,10 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const RADIAL_COLORS = {
-  correct: "#16865b",
-  incorrect: "#e11d2e",
-  pending: "#d79018",
-  unanswered: "#d7d9df",
+  correct: "var(--shade-16865b)",
+  incorrect: "var(--primary)",
+  pending: "var(--shade-d79018)",
+  unanswered: "var(--shade-d7d9df)",
 };
 
 function ResultRadial({ metrics }: { metrics: ReturnType<typeof getAttemptMetrics> }) {
@@ -88,8 +88,8 @@ export function AttemptResult() {
   if (!attempt || !metrics) return <p>Loading...</p>;
 
   const metricRows = [
-    { label: "Total questions", value: metrics.total, color: "#72737a" },
-    { label: "Attempted", value: metrics.attempted, color: "#303138" },
+    { label: "Total questions", value: metrics.total, color: "var(--shade-72737a)" },
+    { label: "Attempted", value: metrics.attempted, color: "var(--shade-303138)" },
     { label: "Correct", value: metrics.correct, color: RADIAL_COLORS.correct },
     { label: "Incorrect", value: metrics.incorrect, color: RADIAL_COLORS.incorrect },
     ...(metrics.pending ? [{ label: "Awaiting review", value: metrics.pending, color: RADIAL_COLORS.pending }] : []),

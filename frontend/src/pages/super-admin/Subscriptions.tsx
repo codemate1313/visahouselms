@@ -185,7 +185,7 @@ function ValidityGauge({ daysRemaining, state }: { daysRemaining: number | null;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percent / 100) * circumference;
 
-  const strokeColor = state === "active" ? "#16a34a" : state === "grace" ? "#d97706" : "#dc2626";
+  const strokeColor = state === "active" ? "var(--green-600)" : state === "grace" ? "var(--amber-600)" : "var(--danger)";
 
   return (
     <div className="validity-gauge-card">
@@ -324,7 +324,7 @@ export function Subscriptions() {
 
       <div className="filter-bar institutes-filter-bar" style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--slate-500)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             Institute:
           </span>
           <div style={{ width: 260 }}>
@@ -352,7 +352,7 @@ export function Subscriptions() {
             {/* LEFT COLUMN: Plan Info & Actions */}
             <div className="sub-card-col-left">
               <div className="subscription-head-v2">
-                <span className="table-item-subtitle" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b" }}>
+                <span className="table-item-subtitle" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--slate-500)" }}>
                   {selectedInstitute.name}
                 </span>
                 <h2 className="subscription-plan-title">{current?.plan_name ?? "No Active Plan"}</h2>
@@ -476,7 +476,7 @@ export function Subscriptions() {
                           Cancel
                         </button>
                       ) : (
-                        <span style={{ fontSize: 12, color: "#94a3b8" }}>—</span>
+                        <span style={{ fontSize: 12, color: "var(--slate-400)" }}>—</span>
                       )}
                     </td>
                   </tr>

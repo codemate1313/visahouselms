@@ -276,7 +276,7 @@ export function Instructors() {
                           <span className="table-item-title" style={{ fontSize: 13.5 }}>
                             {instructor.first_name} {instructor.last_name}
                           </span>
-                          <span className="table-item-subtitle" style={{ fontSize: 12, color: "#64748b" }}>
+                          <span className="table-item-subtitle" style={{ fontSize: 12, color: "var(--slate-500)" }}>
                             {instructor.title ? `${instructor.title} · ` : ""}{instructor.email}
                           </span>
                         </div>

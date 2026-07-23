@@ -52,6 +52,7 @@ def _current_user_out(user: User) -> CurrentUser:
         email=user.email,
         role=user.role.name,
         institute_id=user.institute_id,
+        institute_slug=user.institute.slug if user.institute else None,
         first_name=user.first_name,
         last_name=user.last_name,
         force_password_reset=user.force_password_reset,

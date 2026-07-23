@@ -3,51 +3,30 @@ import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { apiClient } from "../api/client";
 import type { StudentNotification } from "../api/types";
+import { notificationTime, scoreLabel } from "../utils/notificationHelpers";
 import { Icon } from "./icons";
 
 interface NotificationBellProps {
   eyebrow?: string;
   fallbackRoute?: string;
   notificationsPath?: string;
+  notificationsHref?: string;
   title?: string;
 }
 
-function destinationFor(notification: StudentNotification, fallbackRoute: string) {
-  if (notification.link_url) return notification.link_url;
-  if (notification.kind === "grade_released" && notification.attempt_id) {
-    return `/student/attempts/${notification.attempt_id}/result/details`;
-  }
-  return fallbackRoute;
-}
-
-function notificationTime(value: string) {
-  const date = new Date(value);
-  const diffMs = Date.now() - date.getTime();
-  const minute = 60_000;
-  const hour = 60 * minute;
-  const day = 24 * hour;
-  if (Number.isNaN(date.getTime())) return "";
-  if (diffMs < minute) return "Just now";
-  if (diffMs < hour) return `${Math.floor(diffMs / minute)} min ago`;
-  if (diffMs < day) return `${Math.floor(diffMs / hour)} hr ago`;
-  if (diffMs < 7 * day) return `${Math.floor(diffMs / day)} d ago`;
-  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date);
-}
-
-function scoreLabel(notification: StudentNotification) {
-  if (notification.raw_score == null || notification.max_score == null) return null;
-  return `${notification.raw_score} / ${notification.max_score}`;
-}
+const HOVER_CLOSE_DELAY = 220;
 
 export function NotificationBell({
   eyebrow = "Updates",
   fallbackRoute = "/",
   notificationsPath = "/notifications",
+  notificationsHref,
   title = "Notifications",
 }: NotificationBellProps) {
   const navigate = useNavigate();
   const shellRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeTimer = useRef<number | null>(null);
   const [notifications, setNotifications] = useState<StudentNotification[]>([]);
   const [panelVisible, setPanelVisible] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -83,8 +62,8 @@ export function NotificationBell({
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     gsap.fromTo(
       panelRef.current,
-      { autoAlpha: 0, y: -8, scale: reducedMotion ? 1 : 0.96, transformOrigin: "top right" },
-      { autoAlpha: 1, y: 0, scale: 1, duration: reducedMotion ? 0 : 0.32, ease: "back.out(1.35)" },
+      { autoAlpha: 0, y: reducedMotion ? 0 : -16, scale: reducedMotion ? 1 : 0.86, transformOrigin: "top right" },
+      { autoAlpha: 1, y: 0, scale: 1, duration: reducedMotion ? 0 : 0.6, ease: "elastic.out(1, 0.65)" },
     );
   }, [panelVisible]);
 
@@ -121,6 +100,28 @@ export function NotificationBell({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [closePanel, panelVisible]);
+
+  const cancelScheduledClose = useCallback(() => {
+    if (closeTimer.current !== null) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  }, []);
+
+  const openPanel = useCallback(() => {
+    cancelScheduledClose();
+    setPanelVisible(true);
+  }, [cancelScheduledClose]);
+
+  const scheduleClose = useCallback(() => {
+    cancelScheduledClose();
+    closeTimer.current = window.setTimeout(() => {
+      closeTimer.current = null;
+      closePanel();
+    }, HOVER_CLOSE_DELAY);
+  }, [cancelScheduledClose, closePanel]);
+
+  useEffect(() => () => cancelScheduledClose(), [cancelScheduledClose]);
 
   const unread = notifications.filter((notification) => !notification.read_at);
   const visibleNotifications = notifications.slice(0, 6);
@@ -163,21 +164,20 @@ export function NotificationBell({
   function openNotification(notification: StudentNotification) {
     void markRead(notification);
     closePanel();
-    navigate(destinationFor(notification, fallbackRoute));
+    navigate(notificationsHref ?? fallbackRoute);
   }
 
   return (
-    <div className="student-notification-shell" ref={shellRef}>
+    <div
+      className="student-notification-shell"
+      ref={shellRef}
+      onMouseEnter={openPanel}
+      onMouseLeave={scheduleClose}
+    >
       <button
         type="button"
         className={`student-notification-bell${unread.length ? " has-unread" : ""}`}
-        onClick={() => {
-          if (panelVisible) {
-            closePanel();
-          } else {
-            setPanelVisible(true);
-          }
-        }}
+        onClick={() => (panelVisible ? closePanel() : openPanel())}
         aria-label={`Notifications${unread.length ? `, ${unread.length} unread` : ""}`}
         aria-haspopup="dialog"
         aria-expanded={panelVisible}
@@ -200,9 +200,6 @@ export function NotificationBell({
         >
           <div className="student-notification-header">
             <h2 id="portal-notification-title">{title}</h2>
-            <button type="button" className="student-notification-close" onClick={closePanel} aria-label="Close notifications">
-              &times;
-            </button>
           </div>
 
           <div className="student-notification-list">
@@ -255,7 +252,7 @@ export function NotificationBell({
             className="student-notification-view-all"
             onClick={() => {
               closePanel();
-              navigate(fallbackRoute);
+              navigate(notificationsHref ?? fallbackRoute);
             }}
           >
             View All Notifications
@@ -264,8 +261,4 @@ export function NotificationBell({
       )}
     </div>
   );
-}
-
-export function StudentNotificationBell() {
-  return <NotificationBell eyebrow="Student updates" fallbackRoute="/student/dashboard" />;
 }

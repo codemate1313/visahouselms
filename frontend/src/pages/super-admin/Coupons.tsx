@@ -252,10 +252,10 @@ export function Coupons() {
               {coupons.map((coupon) => (
                 <tr key={coupon.id}>
                   <td>
-                    <strong style={{ fontSize: 14, color: "#0f172a", letterSpacing: "0.02em" }}>{coupon.code}</strong>
+                    <strong style={{ fontSize: 14, color: "var(--slate-900)", letterSpacing: "0.02em" }}>{coupon.code}</strong>
                   </td>
                   <td>
-                    <strong style={{ fontSize: 13.5, color: "#b91c2b" }}>
+                    <strong style={{ fontSize: 13.5, color: "var(--sa-sidebar-red)" }}>
                       {coupon.discount_type === "percent" ? `${coupon.value}%` : `INR ${coupon.value}`}
                     </strong>
                   </td>
@@ -270,7 +270,7 @@ export function Coupons() {
                     </span>
                   </td>
                   <td>
-                    <span className="table-item-subtitle" style={{ fontSize: 12, color: "#64748b" }}>
+                    <span className="table-item-subtitle" style={{ fontSize: 12, color: "var(--slate-500)" }}>
                       {coupon.valid_from ? new Date(coupon.valid_from).toLocaleDateString("en-GB") : "—"}
                       {" – "}
                       {coupon.valid_until ? new Date(coupon.valid_until).toLocaleDateString("en-GB") : "—"}

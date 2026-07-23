@@ -99,11 +99,11 @@
 .sat-btn-primary {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: white;
-  box-shadow: 0 4px 12px rgba(225, 29, 46, 0.25);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.25);
 }
 .sat-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(225, 29, 46, 0.35);
+  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.35);
 }
 .sat-btn-secondary {
   background: var(--surface-muted);
@@ -150,8 +150,8 @@
   justify-content: center;
   flex-shrink: 0;
 }
-.sat-icon-blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-.sat-icon-green { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.sat-icon-blue { background: rgba(var(--blue-500-rgb), 0.1); color: var(--blue-500); }
+.sat-icon-green { background: rgba(var(--emerald-500-rgb), 0.1); color: var(--emerald-500); }
 .sat-icon-yellow { background: var(--warning-soft); color: var(--warning); }
 .sat-icon-red { background: var(--primary-soft); color: var(--primary); }
 
@@ -172,7 +172,7 @@
   color: var(--text);
   line-height: 1.2;
 }
-.sat-text-green { color: #10b981; }
+.sat-text-green { color: var(--emerald-500); }
 .sat-text-yellow { color: var(--warning); }
 .sat-text-red { color: var(--primary); }
 
@@ -253,7 +253,7 @@
   font-family: var(--app-font-family);
 }
 .sat-filter-btn:hover {
-  background: #ff4d4d; /* Light red */
+  background: var(--red-hover); /* Light red */
   color: white;
 }
 .sat-filter-btn.active {
@@ -275,7 +275,7 @@
   justify-content: center;
 }
 .sat-view-btn:hover {
-  background: #ff4d4d; /* Light red */
+  background: var(--red-hover); /* Light red */
   color: white;
 }
 .sat-view-btn.active {
@@ -370,12 +370,12 @@
   justify-content: center;
 }
 .sat-action-btn.edit:hover {
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
+  color: var(--blue-500);
+  background: rgba(var(--blue-500-rgb), 0.1);
 }
 .sat-action-btn.delete:hover {
   color: var(--danger);
-  background: rgba(220, 38, 38, 0.1);
+  background: rgba(var(--danger-rgb), 0.1);
 }
 
 .sat-card-body {
@@ -433,9 +433,9 @@
   transition: all 0.2s;
 }
 .sat-toggle-btn.active {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  border-color: rgba(16, 185, 129, 0.2);
+  background: rgba(var(--emerald-500-rgb), 0.1);
+  color: var(--emerald-500);
+  border-color: rgba(var(--emerald-500-rgb), 0.2);
 }
 .sat-toggle-btn.small {
   padding: 0.25rem 0.5rem;
@@ -445,7 +445,7 @@
   height: 8px;
   border-radius: 50%;
 }
-.sat-toggle-btn .dot.on { background: #10b981; box-shadow: 0 0 6px #10b981; }
+.sat-toggle-btn .dot.on { background: var(--emerald-500); box-shadow: 0 0 6px var(--emerald-500); }
 .sat-toggle-btn .dot.off { background: var(--text-muted); }
 
 .sat-order-badge {
@@ -460,11 +460,11 @@
 
 /* Table View */
 .sat-table-wrapper {
-  background: #ffffff;
-  border: 1px solid #f3f4f6;
+  background: var(--white);
+  border: 1px solid var(--gray-100);
   border-radius: 12px;
   overflow-x: auto;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 6px -1px rgba(var(--black-rgb), 0.05), 0 2px 4px -1px rgba(var(--black-rgb), 0.03);
 }
 .sat-table {
   width: 100%;
@@ -472,27 +472,27 @@
   text-align: left;
 }
 .sat-table th {
-  background: #f9fafb;
+  background: var(--gray-50);
   padding: 1.25rem 1.5rem;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--gray-500);
   letter-spacing: 0.05em;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--gray-200);
 }
 .sat-table td {
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--gray-100);
   vertical-align: middle;
-  background: #ffffff;
+  background: var(--white);
 }
 .sat-table tr:last-child td {
   border-bottom: none;
 }
 .sat-table tr.inactive-row {
   opacity: 0.8;
-  background: #fafafa;
+  background: var(--shade-fafafa);
 }
 
 .sat-table-student {
@@ -510,7 +510,7 @@
   width: 38px;
   height: 38px;
   border-radius: 8px;
-  background: #8b5cf6;
+  background: var(--shade-8b5cf6);
   color: white;
   display: flex;
   align-items: center;
@@ -521,19 +521,19 @@
 .sat-table-name {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--gray-900);
 }
 .sat-table-role {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--gray-500);
 }
 .sat-table-score {
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--gray-700);
 }
 .sat-table-quote {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--gray-500);
   max-width: 300px;
 }
 
@@ -547,12 +547,12 @@
   font-weight: 600;
 }
 .sat-status-badge.active {
-  background: #d1fae5;
-  color: #059669;
+  background: var(--emerald-100);
+  color: var(--emerald-600);
 }
 .sat-status-badge.inactive {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: var(--gray-100);
+  color: var(--gray-500);
 }
 .sat-status-badge .dot {
   width: 6px;
@@ -565,7 +565,7 @@
 .sat-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(var(--black-rgb), 0.4);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;

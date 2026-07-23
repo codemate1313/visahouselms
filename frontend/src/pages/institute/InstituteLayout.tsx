@@ -75,6 +75,7 @@ export function InstituteLayout() {
         <PortalTopBar
           notificationEyebrow="Institute updates"
           fallbackRoute="/institute-portal/dashboard"
+          notificationsHref="/institute-portal/notifications"
           roleLabel="Institute Admin"
         />
         <GsapRouteAnimator>

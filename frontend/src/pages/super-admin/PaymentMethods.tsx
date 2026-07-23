@@ -230,7 +230,7 @@ export function PaymentMethods() {
               {filteredMethods.map((method) => (
                 <tr key={method.id}>
                   <td>
-                    <strong style={{ fontSize: 14, color: "#0f172a" }}>{method.name}</strong>
+                    <strong style={{ fontSize: 14, color: "var(--slate-900)" }}>{method.name}</strong>
                   </td>
                   <td>
                     <span className={`badge ${method.is_active ? "badge-green" : "badge-gray"}`}>

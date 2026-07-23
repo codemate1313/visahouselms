@@ -152,6 +152,7 @@ export function DashboardLayout() {
         <PortalTopBar
           notificationEyebrow="Platform updates"
           fallbackRoute="/super-admin/dashboard"
+          notificationsHref="/super-admin/inbox"
           roleLabel="Super Admin"
         />
         <GsapRouteAnimator>

@@ -112,7 +112,7 @@ export function DonutChart({
                 cx="110"
                 cy="110"
                 r={radius}
-                stroke="#e2e8f0"
+                stroke="var(--slate-200)"
                 strokeWidth="16"
                 fill="none"
               />
@@ -159,14 +159,14 @@ export function DonutChart({
               })}
 
               {/* Center Display */}
-              <text className="donut-total" x="110" y="102" textAnchor="middle" style={{ fontSize: "30px", fontWeight: 800, fill: "#0f172a" }}>
+              <text className="donut-total" x="110" y="102" textAnchor="middle" style={{ fontSize: "30px", fontWeight: 800, fill: "var(--slate-900)" }}>
                 {hoveredIndex !== null ? (
                   activeItem?.value.toLocaleString("en-IN")
                 ) : (
                   <AnimatedCounter value={total} duration={1200} />
                 )}
               </text>
-              <text className="donut-label" x="110" y="124" textAnchor="middle" style={{ fontSize: "11.5px", fontWeight: 600, fill: "#64748b" }}>
+              <text className="donut-label" x="110" y="124" textAnchor="middle" style={{ fontSize: "11.5px", fontWeight: 600, fill: "var(--slate-500)" }}>
                 {hoveredIndex !== null ? activeItem?.label : centerLabel}
               </text>
             </svg>

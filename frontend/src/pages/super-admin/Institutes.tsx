@@ -318,7 +318,7 @@ export function Institutes() {
                   <td>
                     <div className="table-item-details">
                       <span className="table-item-title" style={{ fontSize: 13, fontWeight: 500 }}>{row.contact_email ?? "—"}</span>
-                      <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "#94a3b8" }}>slug: {row.slug}</span>
+                      <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--slate-400)" }}>slug: {row.slug}</span>
                     </div>
                   </td>
                   <td>

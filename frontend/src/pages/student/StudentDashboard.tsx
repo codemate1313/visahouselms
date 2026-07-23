@@ -99,7 +99,6 @@ export function StudentDashboard() {
           <h1>Welcome, {user?.first_name}</h1>
           <p className="page-subtitle">{isInstituteStudent ? "Take the tests assigned to your institute and track your CEFR results." : "Manage your plan, take included tests, and track your CEFR results."}</p>
         </div>
-        <Link className="button-link" to={isInstituteStudent ? "/student/my-courses" : "/student/courses"}>{isInstituteStudent ? "View assigned tests" : "View and upgrade plan"}</Link>
       </div>
 
       <div className="stat-tile-row">

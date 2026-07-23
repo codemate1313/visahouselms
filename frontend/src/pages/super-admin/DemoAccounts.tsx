@@ -337,13 +337,13 @@ export function DemoAccounts() {
                     </div>
                   </td>
                   <td>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: "#334155" }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: "var(--slate-700)" }}>
                       {row.course_limit} courses / {row.test_limit} tests
                     </span>
                   </td>
                   <td>{new Date(row.expires_at).toLocaleDateString("en-GB")}</td>
                   <td>
-                    <strong style={{ fontSize: 13.5, color: (row.days_remaining ?? 0) <= 3 ? "#b91c2b" : "#0f172a" }}>
+                    <strong style={{ fontSize: 13.5, color: (row.days_remaining ?? 0) <= 3 ? "var(--sa-sidebar-red)" : "var(--slate-900)" }}>
                       {row.days_remaining ?? "—"}
                     </strong>
                   </td>

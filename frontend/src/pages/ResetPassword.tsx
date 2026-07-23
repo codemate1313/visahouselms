@@ -41,25 +41,25 @@ export function ResetPassword() {
   }
 
   return (
-    <div className="login-page-container" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "#f8fafc" }}>
-      <div className="login-card-container" style={{ width: "100%", maxWidth: 440, background: "#ffffff", padding: 32, borderRadius: 16, border: "1px solid #e2e8f0", boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)" }}>
+    <div className="login-page-container" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "var(--slate-50)" }}>
+      <div className="login-card-container" style={{ width: "100%", maxWidth: 440, background: "var(--white)", padding: 32, borderRadius: 16, border: "1px solid var(--slate-200)", boxShadow: "0 10px 30px rgba(var(--slate-900-rgb), 0.06)" }}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ display: "inline-block", padding: "6px 14px", background: "rgba(185, 28, 43, 0.1)", borderRadius: 20, color: "#b91c2b", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
+          <div style={{ display: "inline-block", padding: "6px 14px", background: "rgba(var(--sa-sidebar-red-rgb), 0.1)", borderRadius: 20, color: "var(--sa-sidebar-red)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
             Security
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", margin: "4px 0" }}>Set New Password</h1>
-          <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>Create a strong new password for your account</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--slate-900)", margin: "4px 0" }}>Set New Password</h1>
+          <p style={{ fontSize: 13.5, color: "var(--slate-500)", margin: 0 }}>Create a strong new password for your account</p>
         </div>
 
         {success ? (
           <div style={{ textAlign: "center", padding: "16px 0" }}>
-            <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#dcfce7", color: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px auto" }}>
+            <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--shade-dcfce7)", color: "var(--green-600)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px auto" }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>Password Reset Successfully!</h2>
-            <p style={{ fontSize: 14, color: "#64748b", marginBottom: 24 }}>Your password has been updated. You can now sign in with your new credentials.</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--slate-900)", marginBottom: 8 }}>Password Reset Successfully!</h2>
+            <p style={{ fontSize: 14, color: "var(--slate-500)", marginBottom: 24 }}>Your password has been updated. You can now sign in with your new credentials.</p>
             <Link to="/login" className="concise-submit-btn" style={{ textDecoration: "none", display: "block", textAlign: "center" }}>
               Sign in to Account &rarr;
             </Link>
@@ -97,7 +97,7 @@ export function ResetPassword() {
             </button>
 
             <div style={{ textAlign: "center", marginTop: 20 }}>
-              <Link to="/login" style={{ fontSize: 13, color: "#64748b", textDecoration: "none", fontWeight: 600 }}>
+              <Link to="/login" style={{ fontSize: 13, color: "var(--slate-500)", textDecoration: "none", fontWeight: 600 }}>
                 &larr; Return to Sign in
               </Link>
             </div>

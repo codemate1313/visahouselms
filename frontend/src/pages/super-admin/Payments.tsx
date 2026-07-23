@@ -237,7 +237,7 @@ export function Payments() {
       </div>
 
       {result && (
-        <div className="banner" style={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: 12, padding: "12px 18px", marginBottom: 20 }}>
+        <div className="banner" style={{ background: "var(--shade-dcfce7)", color: "var(--green-700)", border: "1px solid var(--green-300)", borderRadius: 12, padding: "12px 18px", marginBottom: 20 }}>
           Payment recorded — invoice <strong>{result.invoice_number}</strong>.{" "}
           <Link to={`/super-admin/payments/${result.id}/invoice`}>View invoice</Link>
         </div>
@@ -429,7 +429,7 @@ export function Payments() {
               {rows.map((row) => (
                 <tr key={row.id}>
                   <td>
-                    <strong style={{ fontSize: 13.5, color: "#0f172a" }}>{row.invoice_number ?? "—"}</strong>
+                    <strong style={{ fontSize: 13.5, color: "var(--slate-900)" }}>{row.invoice_number ?? "—"}</strong>
                   </td>
                   <td>
                     <span className="badge badge-gray" style={{ fontSize: 11 }}>{row.source.toUpperCase()}</span>
@@ -438,7 +438,7 @@ export function Payments() {
                     <div className="table-item-details">
                       <span className="table-item-title">{row.institute_name ?? "Direct Student"}</span>
                       {row.plan_name && (
-                        <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "#64748b" }}>
+                        <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--slate-500)" }}>
                           Plan: {row.plan_name}
                         </span>
                       )}
@@ -449,7 +449,7 @@ export function Payments() {
                       {row.currency || "INR"} {Number(row.amount_paid).toLocaleString("en-IN")}
                     </strong>
                     {Number(row.due_amount) > 0 && (
-                      <div className="table-item-subtitle" style={{ fontSize: 11.5, color: "#b91c2b", fontWeight: 600 }}>
+                      <div className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--sa-sidebar-red)", fontWeight: 600 }}>
                         due {row.currency || "INR"} {Number(row.due_amount).toLocaleString("en-IN")}
                       </div>
                     )}

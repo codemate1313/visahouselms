@@ -360,7 +360,7 @@ export function Login({
                   style={{
                     background: "none",
                     border: "none",
-                    color: "#e11d48",
+                    color: "var(--rose-600)",
                     fontWeight: 700,
                     cursor: "pointer",
                     padding: 0,
@@ -380,7 +380,7 @@ export function Login({
                   style={{
                     background: "none",
                     border: "none",
-                    color: "#e11d48",
+                    color: "var(--rose-600)",
                     fontWeight: 700,
                     cursor: "pointer",
                     padding: 0,
@@ -405,7 +405,7 @@ export function Login({
             </p>
             {forgotSent ? (
               <div style={{ padding: "16px 0", textAlign: "center" }}>
-                <div style={{ background: "#dcfce7", color: "#15803d", padding: "12px 16px", borderRadius: 8, fontSize: 13.5, marginBottom: 16, border: "1px solid #86efac" }}>
+                <div style={{ background: "var(--shade-dcfce7)", color: "var(--green-700)", padding: "12px 16px", borderRadius: 8, fontSize: 13.5, marginBottom: 16, border: "1px solid var(--green-300)" }}>
                   Reset link sent! Check your email inbox for instructions.
                 </div>
                 <button
@@ -446,7 +446,7 @@ export function Login({
                     type="submit"
                     className="logout-modal-btn confirm-btn btn-primary"
                     disabled={forgotLoading || !forgotEmail}
-                    style={{ background: "#b91c2b", color: "#ffffff" }}
+                    style={{ background: "var(--sa-sidebar-red)", color: "var(--white)" }}
                   >
                     {forgotLoading ? "Sending..." : "Send Reset Link"}
                   </button>

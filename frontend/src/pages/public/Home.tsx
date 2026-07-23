@@ -345,7 +345,7 @@ export function Home() {
                 {/* 3 Outward Floating Cloud Feature Pills for Speaking */}
                 <div className={`feature-cloud-card cloud-1 speaking-cloud-1 ${activeShowcaseDetail === "speaking" ? "is-active" : ""}`}>
                   <div className="cloud-icon-box bg-rose-sub">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--rose-600)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                   </div>
                   <div className="cloud-text-box">
                     <strong>Fluency &amp; Cadence</strong>
@@ -355,7 +355,7 @@ export function Home() {
 
                 <div className={`feature-cloud-card cloud-2 speaking-cloud-2 ${activeShowcaseDetail === "speaking" ? "is-active" : ""}`}>
                   <div className="cloud-icon-box bg-rose-sub">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--rose-600)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
                   </div>
                   <div className="cloud-text-box">
                     <strong>Phoneme Accuracy</strong>
@@ -365,7 +365,7 @@ export function Home() {
 
                 <div className={`feature-cloud-card cloud-3 speaking-cloud-3 ${activeShowcaseDetail === "speaking" ? "is-active" : ""}`}>
                   <div className="cloud-icon-box bg-rose-sub">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--rose-600)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   </div>
                   <div className="cloud-text-box">
                     <strong>Pace &amp; Rhythm</strong>
@@ -397,7 +397,7 @@ export function Home() {
                 {/* 3 Outward Floating Cloud Feature Pills for Writing */}
                 <div className={`feature-cloud-card cloud-1 writing-cloud-1 ${activeShowcaseDetail === "writing" ? "is-active" : ""}`}>
                   <div className="cloud-icon-box bg-indigo-sub">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--shade-6366f1)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>
                   </div>
                   <div className="cloud-text-box">
                     <strong>Task Coverage</strong>
@@ -407,7 +407,7 @@ export function Home() {
 
                 <div className={`feature-cloud-card cloud-2 writing-cloud-2 ${activeShowcaseDetail === "writing" ? "is-active" : ""}`}>
                   <div className="cloud-icon-box bg-indigo-sub">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--shade-6366f1)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   </div>
                   <div className="cloud-text-box">
                     <strong>Grammar Engine</strong>
@@ -417,7 +417,7 @@ export function Home() {
 
                 <div className={`feature-cloud-card cloud-3 writing-cloud-3 ${activeShowcaseDetail === "writing" ? "is-active" : ""}`}>
                   <div className="cloud-icon-box bg-indigo-sub">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--shade-6366f1)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                   </div>
                   <div className="cloud-text-box">
                     <strong>Lexical Resource</strong>
@@ -450,7 +450,7 @@ export function Home() {
                 {/* 3 Outward Floating Cloud Feature Pills for Analytics */}
                 <div className={`feature-cloud-card cloud-1 analytics-cloud-1 ${activeShowcaseDetail === "analytics" ? "is-active" : ""}`}>
                   <div className="cloud-icon-box bg-emerald-sub">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--emerald-500)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                   </div>
                   <div className="cloud-text-box">
                     <strong>150+ Students</strong>
@@ -460,7 +460,7 @@ export function Home() {
 
                 <div className={`feature-cloud-card cloud-2 analytics-cloud-2 ${activeShowcaseDetail === "analytics" ? "is-active" : ""}`}>
                   <div className="cloud-icon-box bg-emerald-sub">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--emerald-500)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   </div>
                   <div className="cloud-text-box">
                     <strong>Weak Area Detector</strong>
@@ -470,7 +470,7 @@ export function Home() {
 
                 <div className={`feature-cloud-card cloud-3 analytics-cloud-3 ${activeShowcaseDetail === "analytics" ? "is-active" : ""}`}>
                   <div className="cloud-icon-box bg-emerald-sub">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--emerald-500)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   </div>
                   <div className="cloud-text-box">
                     <strong>One-Click Reports</strong>
@@ -558,7 +558,7 @@ export function Home() {
                     <li><strong>Diagnostics:</strong> Instant script alignment &amp; section band breakdown</li>
                   </ul>
                 </div>
-                <div className="card-expand-action" style={{ color: '#e11d48', marginTop: '12px' }}>
+                <div className="card-expand-action" style={{ color: 'var(--rose-600)', marginTop: '12px' }}>
                   <span>Flip Back ↺</span>
                 </div>
               </div>
@@ -601,7 +601,7 @@ export function Home() {
                     <li><strong>Analytics:</strong> Time-per-question tracker &amp; vocabulary lookup assistant</li>
                   </ul>
                 </div>
-                <div className="card-expand-action" style={{ color: '#e11d48', marginTop: '12px' }}>
+                <div className="card-expand-action" style={{ color: 'var(--rose-600)', marginTop: '12px' }}>
                   <span>Flip Back ↺</span>
                 </div>
               </div>
@@ -644,7 +644,7 @@ export function Home() {
                     <li><strong>Rewrite Engine:</strong> Sentence-level improvement suggestions &amp; grammar highlights</li>
                   </ul>
                 </div>
-                <div className="card-expand-action" style={{ color: '#e11d48', marginTop: '12px' }}>
+                <div className="card-expand-action" style={{ color: 'var(--rose-600)', marginTop: '12px' }}>
                   <span>Flip Back ↺</span>
                 </div>
               </div>
@@ -688,7 +688,7 @@ export function Home() {
                     <li><strong>Audio Review:</strong> Interactive transcript alignment with teacher audio commentary</li>
                   </ul>
                 </div>
-                <div className="card-expand-action" style={{ color: '#e11d48', marginTop: '12px' }}>
+                <div className="card-expand-action" style={{ color: 'var(--rose-600)', marginTop: '12px' }}>
                   <span>Flip Back ↺</span>
                 </div>
               </div>
@@ -715,7 +715,7 @@ export function Home() {
                 onClick={handlePrev}
                 aria-label="Previous Testimonial"
               >
-                ‹
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 22 L6 12 L16 2"/></svg>
               </button>
               <button
                 type="button"
@@ -723,7 +723,7 @@ export function Home() {
                 onClick={handleNext}
                 aria-label="Next Testimonial"
               >
-                ›
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 22 L18 12 L8 2"/></svg>
               </button>
             </div>
           </div>
@@ -762,7 +762,7 @@ export function Home() {
                 ))}
               </div>
             ) : (
-              <div className="text-center" style={{ padding: "40px", color: "#64748b" }}>
+              <div className="text-center" style={{ padding: "40px", color: "var(--slate-500)" }}>
                 Loading student success stories...
               </div>
             )}
@@ -772,7 +772,7 @@ export function Home() {
 
       {/* Latest Blogs Section */}
       {(!loadingBlogs && blogs.length === 0) ? null : (
-        <section className="landing-blogs-section" style={{ padding: "80px 5%", backgroundColor: "var(--surface-muted)", position: "relative" }}>
+        <section className="landing-blogs-section" style={{ padding: "40px 5%", backgroundColor: "var(--surface-muted)", position: "relative" }}>
           <div className="section-header text-center" style={{ marginBottom: "60px" }}>
             <span className="section-kicker" style={{ color: "var(--primary)", fontWeight: "bold", letterSpacing: "1px", textTransform: "uppercase", fontSize: "0.85rem" }}>RESOURCES & INSIGHTS</span>
             <h2 className="section-title" style={{ fontSize: "2.5rem", fontWeight: "800", color: "var(--text)", marginTop: "10px" }}>Latest from Our Blog</h2>
@@ -786,48 +786,36 @@ export function Home() {
           ) : (
             <div className="blogs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "30px", maxWidth: "1200px", margin: "0 auto" }}>
               {blogs.map((blog) => (
-                <div key={blog.id} className="blog-card" style={{ backgroundColor: "var(--glass-bg)", border: "1px solid var(--border)", borderRadius: "20px", overflow: "hidden", transition: "transform 0.3s ease, box-shadow 0.3s ease", display: "flex", flexDirection: "column" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-10px)'; e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.08)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
-                >
-                  <div style={{ height: "200px", overflow: "hidden", position: "relative" }}>
+                <Link key={blog.id} to={`/blogs/${blog.slug}`} className="blog-card">
+                  <div className="blog-card-image-wrap">
                     {blog.featured_image_url ? (
-                      <img src={blog.featured_image_url} alt={blog.title} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease" }} />
+                      <img src={blog.featured_image_url} alt={blog.title} loading="lazy" />
                     ) : (
-                      <div style={{ width: "100%", height: "100%", backgroundColor: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <span style={{ color: "#cbd5e1" }}>No Image</span>
+                      <div className="blog-card-image-empty">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        No Image
                       </div>
                     )}
-                    <div style={{ position: "absolute", top: "15px", left: "15px", backgroundColor: "rgba(255, 255, 255, 0.9)", padding: "4px 12px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "bold", color: "var(--primary)" }}>
-                      {blog.category}
-                    </div>
+                    <div className="blog-card-badge">{blog.category}</div>
                   </div>
-                  <div style={{ padding: "25px", display: "flex", flexDirection: "column", flexGrow: 1 }}>
-                    <h3 style={{ fontSize: "1.25rem", fontWeight: "700", color: "var(--text)", marginBottom: "10px", lineHeight: "1.4" }}>
-                      <Link to={`/blogs/${blog.slug}`} style={{ textDecoration: "none", color: "inherit" }}>
-                        {blog.title}
-                      </Link>
-                    </h3>
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: "1.6", marginBottom: "20px", flexGrow: 1 }}>
-                      {blog.summary.substring(0, 100)}...
-                    </p>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border)", paddingTop: "15px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "var(--primary-soft)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "bold", fontSize: "0.8rem" }}>
-                          {blog.author_name.charAt(0)}
-                        </div>
-                        <div>
-                          <div style={{ fontSize: "0.8rem", fontWeight: "bold", color: "var(--text)" }}>{blog.author_name}</div>
-                          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{new Date(blog.created_at).toLocaleDateString()}</div>
+                  <div className="blog-card-body">
+                    <h3 className="blog-card-title">{blog.title}</h3>
+                    <p className="blog-card-summary">{blog.summary}</p>
+                    <div className="blog-card-footer">
+                      <div className="blog-card-author">
+                        <div className="blog-card-avatar">{blog.author_name.charAt(0)}</div>
+                        <div className="blog-card-author-meta">
+                          <div className="blog-card-author-name">{blog.author_name}</div>
+                          <div className="blog-card-author-date">{new Date(blog.created_at).toLocaleDateString()}</div>
                         </div>
                       </div>
-                      <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: "600", display: "flex", alignItems: "center", gap: "4px" }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <div className="blog-card-readtime">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         {blog.read_time_minutes} min
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

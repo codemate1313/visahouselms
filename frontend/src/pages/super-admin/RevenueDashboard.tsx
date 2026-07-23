@@ -325,7 +325,7 @@ export function RevenueDashboard() {
                     <span className="table-item-title">{row.institute_name ?? "Direct Student"}</span>
                   </td>
                   <td>
-                    <span className="table-item-subtitle" style={{ fontSize: 12.5, color: "#64748b" }}>
+                    <span className="table-item-subtitle" style={{ fontSize: 12.5, color: "var(--slate-500)" }}>
                       {row.invoice_number ?? "N/A"}
                     </span>
                   </td>

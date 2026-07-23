@@ -204,8 +204,8 @@ export function SuperAdminBlogs() {
                 {item.featured_image_url ? (
                   <img src={item.featured_image_url} alt={item.title} className="sab-card-avatar" style={{ borderRadius: '8px', width: '50px', height: '50px', objectFit: 'cover' }} />
                 ) : (
-                  <div className="sab-card-avatar" style={{ backgroundColor: '#f1f5f9', borderRadius: '8px', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <div className="sab-card-avatar" style={{ backgroundColor: 'var(--slate-100)', borderRadius: '8px', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                   </div>
                 )}
                 <div className="sab-card-meta">
@@ -274,8 +274,8 @@ export function SuperAdminBlogs() {
                       {item.featured_image_url ? (
                         <img src={item.featured_image_url} alt={item.title} className="sab-table-avatar" style={{ width: '64px', height: '48px', borderRadius: '6px', objectFit: 'cover' }} />
                       ) : (
-                        <div className="sab-table-avatar" style={{ width: '64px', height: '48px', backgroundColor: '#f1f5f9', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <div className="sab-table-avatar" style={{ width: '64px', height: '48px', backgroundColor: 'var(--slate-100)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                         </div>
                       )}
                       <div className="sab-table-student-info">

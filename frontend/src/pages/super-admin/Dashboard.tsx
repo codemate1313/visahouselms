@@ -83,10 +83,10 @@ interface Summary {
 }
 
 const SUBSCRIPTION_STATE_COLORS: Record<string, string> = {
-  active: "#10b981",  // Emerald Green
-  grace: "#f59e0b",   // Amber Gold
-  expired: "#ef4444", // Coral Red
-  none: "#94a3b8",    // Slate
+  active: "var(--emerald-500)",  // Emerald Green
+  grace: "var(--amber-500)",   // Amber Gold
+  expired: "var(--red-500)", // Coral Red
+  none: "var(--slate-400)",    // Slate
 };
 
 const SUBSCRIPTION_STATE_LABELS: Record<string, string> = {
@@ -97,11 +97,11 @@ const SUBSCRIPTION_STATE_LABELS: Record<string, string> = {
 };
 
 const PAYMENT_STATUS_COLORS: Record<string, string> = {
-  paid: "#10b981",     // Emerald Green
-  partial: "#f59e0b",  // Amber Gold
-  pending: "#3b82f6",  // Electric Blue
-  failed: "#ef4444",   // Coral Red
-  refunded: "#8b5cf6", // Violet Purple
+  paid: "var(--emerald-500)",     // Emerald Green
+  partial: "var(--amber-500)",  // Amber Gold
+  pending: "var(--blue-500)",  // Electric Blue
+  failed: "var(--red-500)",   // Coral Red
+  refunded: "var(--shade-8b5cf6)", // Violet Purple
 };
 
 function formatMoney(value: number): string {
@@ -139,11 +139,11 @@ function getGreeting(): string {
 
 function Sparkline({ theme }: { theme: "green" | "blue" | "amber" | "purple" | "slate" }) {
   const colorMap = {
-    green: { stroke: "#10b981", id: "spark-grad-green" },
-    blue: { stroke: "#3b82f6", id: "spark-grad-blue" },
-    amber: { stroke: "#f59e0b", id: "spark-grad-amber" },
-    purple: { stroke: "#8b5cf6", id: "spark-grad-purple" },
-    slate: { stroke: "#64748b", id: "spark-grad-slate" },
+    green: { stroke: "var(--emerald-500)", id: "spark-grad-green" },
+    blue: { stroke: "var(--blue-500)", id: "spark-grad-blue" },
+    amber: { stroke: "var(--amber-500)", id: "spark-grad-amber" },
+    purple: { stroke: "var(--shade-8b5cf6)", id: "spark-grad-purple" },
+    slate: { stroke: "var(--slate-500)", id: "spark-grad-slate" },
   };
 
   const { stroke, id } = colorMap[theme] || colorMap.green;

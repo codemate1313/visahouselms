@@ -269,7 +269,7 @@ function SeedTab() {
         </button>
       </div>
 
-      <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid #e2e8f0" }}>
+      <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--slate-200)" }}>
         <h4 style={{ margin: "0 0 8px", fontSize: "14px", fontWeight: 600 }}>Floating Global Snackbars (Toast Notifications)</h4>
         <p className="hint" style={{ marginBottom: 14 }}>
           Trigger floating snackbars in the top-right corner for quick non-blocking feedback (Success, Failed, Warning, Info).
@@ -277,28 +277,28 @@ function SeedTab() {
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <button
             type="button"
-            style={{ background: "#10b981", color: "#ffffff", border: "none", borderRadius: "10px", padding: "10px 14px" }}
+            style={{ background: "var(--emerald-500)", color: "var(--white)", border: "none", borderRadius: "10px", padding: "10px 14px" }}
             onClick={() => useToastStore.getState().showSuccess("Password updated successfully!", "Success")}
           >
             🟢 Success Snackbar
           </button>
           <button
             type="button"
-            style={{ background: "#ef4444", color: "#ffffff", border: "none", borderRadius: "10px", padding: "10px 14px" }}
+            style={{ background: "var(--red-500)", color: "var(--white)", border: "none", borderRadius: "10px", padding: "10px 14px" }}
             onClick={() => useToastStore.getState().showError("Failed to update profile. Please try again.", "Action Failed")}
           >
             🔴 Failed Snackbar
           </button>
           <button
             type="button"
-            style={{ background: "#f59e0b", color: "#ffffff", border: "none", borderRadius: "10px", padding: "10px 14px" }}
+            style={{ background: "var(--amber-500)", color: "var(--white)", border: "none", borderRadius: "10px", padding: "10px 14px" }}
             onClick={() => useToastStore.getState().showWarning("Your trial subscription expires in 2 days.", "Warning")}
           >
             🟡 Warning Snackbar
           </button>
           <button
             type="button"
-            style={{ background: "#3b82f6", color: "#ffffff", border: "none", borderRadius: "10px", padding: "10px 14px" }}
+            style={{ background: "var(--blue-500)", color: "var(--white)", border: "none", borderRadius: "10px", padding: "10px 14px" }}
             onClick={() => useToastStore.getState().showInfo("New platform version v2.4 is available.", "Notice")}
           >
             🔵 Info Snackbar
@@ -930,7 +930,7 @@ function LoginSliderTab() {
       >
         <div style={{ display: "grid", gap: 20, marginBottom: 20 }}>
           {slides.map((slide) => (
-            <div key={slide.id} style={{ display: "flex", gap: 20, background: "#f8fafc", padding: 16, borderRadius: 14, border: "1px solid #e2e8f0", alignItems: "center" }}>
+            <div key={slide.id} style={{ display: "flex", gap: 20, background: "var(--slate-50)", padding: 16, borderRadius: 14, border: "1px solid var(--slate-200)", alignItems: "center" }}>
               <img src={slide.imageUrl} alt={slide.title} style={{ width: 140, height: 90, objectFit: "cover", borderRadius: 10, flexShrink: 0 }} />
               <div style={{ flex: 1, display: "grid", gap: 8 }}>
                 <div style={{ display: "flex", gap: 12 }}>

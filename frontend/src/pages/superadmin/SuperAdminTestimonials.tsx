@@ -269,7 +269,7 @@ export function SuperAdminTestimonials() {
               <div className="sat-card-body">
                 <div className="sat-card-rating">
                   {[...Array(5)].map((_, i) => (
-                    <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill={i < item.rating ? "#f59e0b" : "none"} stroke={i < item.rating ? "#f59e0b" : "#cbd5e1"} strokeWidth="2">
+                    <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill={i < item.rating ? "var(--amber-500)" : "none"} stroke={i < item.rating ? "var(--amber-500)" : "var(--slate-300)"} strokeWidth="2">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
                   ))}

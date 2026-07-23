@@ -2,8 +2,7 @@
   "name": "visahouselms-root",
   "version": "1.0.0",
   "scripts": {
-    "prestart": "npm run seed",
-    "start": "npm run seed && concurrently \"cd backend && source .venv/bin/activate && uvicorn app.main:app --reload\" \"cd frontend && npm run dev\"",
+    "start": "concurrently \"cd backend && source .venv/bin/activate && uvicorn app.main:app --reload\" \"cd frontend && npm run dev\"",
     "dev": "npm run start",
     "seed": "cd backend && PYTHONPATH=. .venv/bin/python scripts/seed_local_data.py",
     "seed:testimonials": "cd backend && PYTHONPATH=. .venv/bin/python scripts/seed_testimonials.py"

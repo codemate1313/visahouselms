@@ -258,7 +258,7 @@ export function Plans() {
                 <th>Duration</th>
                 <th>
                   LIMITS
-                  <span style={{ display: "block", fontSize: 9.5, fontWeight: 500, color: "#94a3b8", textTransform: "lowercase", marginTop: 2 }}>
+                  <span style={{ display: "block", fontSize: 9.5, fontWeight: 500, color: "var(--slate-400)", textTransform: "lowercase", marginTop: 2 }}>
                     (std / stf / tst)
                   </span>
                 </th>
@@ -279,7 +279,7 @@ export function Plans() {
                     <div className="table-item-details">
                       <span className="table-item-title" style={{ fontSize: 14, fontWeight: 650 }}>{plan.name}</span>
                       {plan.description && (
-                        <span className="table-item-subtitle" style={{ fontSize: 12, color: "#64748b" }}>
+                        <span className="table-item-subtitle" style={{ fontSize: 12, color: "var(--slate-500)" }}>
                           {plan.description}
                         </span>
                       )}
@@ -292,7 +292,7 @@ export function Plans() {
                   </td>
                   <td style={{ whiteSpace: "nowrap" }}>{plan.duration_days} days</td>
                   <td>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: "#334155", whiteSpace: "nowrap" }} title={`${plan.student_limit} Students / ${plan.staff_limit} Staff / ${plan.test_limit} Tests`}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: "var(--slate-700)", whiteSpace: "nowrap" }} title={`${plan.student_limit} Students / ${plan.staff_limit} Staff / ${plan.test_limit} Tests`}>
                       {plan.student_limit} / {plan.staff_limit} / {plan.test_limit}
                     </span>
                   </td>

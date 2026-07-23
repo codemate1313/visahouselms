@@ -150,12 +150,12 @@ export function InstructorForm() {
             width: "64px",
             height: "64px",
             borderRadius: "50%",
-            backgroundColor: "#fee2e2",
+            backgroundColor: "var(--red-100)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             overflow: "hidden",
-            border: "2px solid #fca5a5",
+            border: "2px solid var(--shade-fca5a5)",
             flexShrink: 0,
           }}>
             {avatarPreview ? (
@@ -176,7 +176,7 @@ export function InstructorForm() {
               disabled={uploadingAvatar}
             />
             {uploadingAvatar && (
-              <span className="hint" style={{ color: "#dc2626", marginLeft: "8px" }}>
+              <span className="hint" style={{ color: "var(--danger)", marginLeft: "8px" }}>
                 Uploading image...
               </span>
             )}

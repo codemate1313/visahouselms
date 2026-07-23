@@ -182,7 +182,7 @@ export function InstituteBranding() {
         style={{
           "--preview-primary": primary,
           "--preview-secondary": secondary,
-          "--preview-on-primary": "#ffffff",
+          "--preview-on-primary": "var(--white)",
           fontFamily: fontFamily === "system-ui" ? "system-ui" : `'${fontFamily}', sans-serif`,
           fontWeight: bodyWeight,
         } as CSSProperties}

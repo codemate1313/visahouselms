@@ -47,14 +47,14 @@ export type IconName =
 const ICON_PATHS: Record<IconName, ReactNode> = {
   toggleOn: (
     <>
-      <rect x="2" y="6" width="20" height="12" rx="6" fill="#16a34a" stroke="none" />
-      <circle cx="16" cy="12" r="4" fill="#ffffff" stroke="none" />
+      <rect x="2" y="6" width="20" height="12" rx="6" fill="var(--green-600)" stroke="none" />
+      <circle cx="16" cy="12" r="4" fill="var(--white)" stroke="none" />
     </>
   ),
   toggleOff: (
     <>
-      <rect x="2" y="6" width="20" height="12" rx="6" fill="#cbd5e1" stroke="none" />
-      <circle cx="8" cy="12" r="4" fill="#ffffff" stroke="none" />
+      <rect x="2" y="6" width="20" height="12" rx="6" fill="var(--slate-300)" stroke="none" />
+      <circle cx="8" cy="12" r="4" fill="var(--white)" stroke="none" />
     </>
   ),
   // Bucket / Logo Icon from Hugeicons reference
@@ -137,7 +137,7 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
       <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-      <circle cx="18" cy="5" r="2" fill="#ef4444" stroke="none" />
+      <circle cx="18" cy="5" r="2" fill="var(--red-500)" stroke="none" />
     </>
   ),
   search: (

@@ -171,8 +171,8 @@ export function BarChart({
                 : color
                 ? color
                 : idx === 0
-                ? "#e53935"
-                : "#76a77d";
+                ? "var(--chart-highlight)"
+                : "var(--chart-muted)";
 
               return (
                 <div
@@ -202,7 +202,7 @@ export function BarChart({
                       <span className="bar-start-ring" style={{ borderColor: barColor }} />
 
                       {/* Right Pointer Dot for Active Row */}
-                      {isActive && <span className="bar-end-dot" style={{ background: "#ffffff", borderColor: barColor }} />}
+                      {isActive && <span className="bar-end-dot" style={{ background: "var(--white)", borderColor: barColor }} />}
 
                       {isActive && (
                         <div className="ref-dark-tooltip-callout horizontal-point">
@@ -247,11 +247,11 @@ export function BarChart({
                     y1={y}
                     x2="480"
                     y2={y}
-                    stroke="#e2e8f0"
+                    stroke="var(--slate-200)"
                     strokeDasharray="4 4"
                     strokeWidth="1"
                   />
-                  <text x="55" y={y + 4} textAnchor="end" fontSize="11" fill="#94a3b8" fontWeight="500">
+                  <text x="55" y={y + 4} textAnchor="end" fontSize="11" fill="var(--slate-400)" fontWeight="500">
                     {formatValue(val)}
                   </text>
                 </g>
@@ -273,8 +273,8 @@ export function BarChart({
                 : color
                 ? color
                 : idx === 0
-                ? "#e53935"
-                : "#76a77d";
+                ? "var(--chart-highlight)"
+                : "var(--chart-muted)";
 
               return (
                 <g
@@ -303,11 +303,11 @@ export function BarChart({
                   />
 
                   {/* Start Ring Dot at Base */}
-                  <circle cx={x + barWidth / 2} cy="188" r="3" fill="#ffffff" stroke={barColor} strokeWidth="1.5" />
+                  <circle cx={x + barWidth / 2} cy="188" r="3" fill="var(--white)" stroke={barColor} strokeWidth="1.5" />
 
                   {/* End Dot at Top of Active Bar */}
                   {isActive && (
-                    <circle cx={x + barWidth / 2} cy={y + 4} r="4" fill="#ffffff" stroke={barColor} strokeWidth="2" />
+                    <circle cx={x + barWidth / 2} cy={y + 4} r="4" fill="var(--white)" stroke={barColor} strokeWidth="2" />
                   )}
 
                   {/* X Axis Label */}
@@ -315,7 +315,7 @@ export function BarChart({
                     x={x + barWidth / 2}
                     y="212"
                     textAnchor="middle"
-                    fill={isActive ? "#0f172a" : "#64748b"}
+                    fill={isActive ? "var(--slate-900)" : "var(--slate-500)"}
                     fontSize="11"
                     fontWeight={isActive ? "700" : "500"}
                   >
