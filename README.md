@@ -190,6 +190,12 @@ QA dataset on any machine, configure `backend/.env`, install backend
 dependencies, then run:
 
 ```bash
+npm run seed
+```
+
+Or run the backend script directly:
+
+```bash
 cd backend
 .venv/bin/python scripts/seed_local_data.py
 ```
