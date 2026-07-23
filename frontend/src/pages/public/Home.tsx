@@ -5,7 +5,7 @@ import { TextPlugin } from "gsap/TextPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useSEO } from "../../hooks/useSEO";
 
-import { API_BASE_URL, apiClient } from "../../api/client";
+import { apiClient } from "../../api/client";
 
 gsap.registerPlugin(TextPlugin, ScrollTrigger);
 

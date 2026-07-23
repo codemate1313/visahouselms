@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "../../auth/logout";
 import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
-import { NotificationBell } from "../../components/StudentNotificationBell";
+import { PortalTopBar } from "../../components/PortalTopBar";
 import { Sidebar, type MenuItem, type MenuSection } from "../../components/Sidebar";
 import { useInstituteBranding } from "../../hooks/useInstituteBranding";
 import { useAuthStore } from "../../store/authStore";
@@ -72,7 +72,11 @@ export function InstituteLayout() {
         onLogout={logout}
       />
       <main className="dashboard-content" style={{ flex: 1, padding: "20px" }}>
-        <NotificationBell eyebrow="Institute updates" fallbackRoute="/institute-portal/dashboard" />
+        <PortalTopBar
+          notificationEyebrow="Institute updates"
+          fallbackRoute="/institute-portal/dashboard"
+          roleLabel="Institute Admin"
+        />
         <GsapRouteAnimator>
           <Outlet />
         </GsapRouteAnimator>

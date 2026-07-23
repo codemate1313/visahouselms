@@ -5,8 +5,6 @@ import { apiClient } from "../api/client";
 import type { StudentNotification } from "../api/types";
 import { Icon } from "./icons";
 
-type NotificationSegment = "unread" | "read";
-
 interface NotificationBellProps {
   eyebrow?: string;
   fallbackRoute?: string;
@@ -23,12 +21,17 @@ function destinationFor(notification: StudentNotification, fallbackRoute: string
 }
 
 function notificationTime(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
+  const date = new Date(value);
+  const diffMs = Date.now() - date.getTime();
+  const minute = 60_000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  if (Number.isNaN(date.getTime())) return "";
+  if (diffMs < minute) return "Just now";
+  if (diffMs < hour) return `${Math.floor(diffMs / minute)} min ago`;
+  if (diffMs < day) return `${Math.floor(diffMs / hour)} hr ago`;
+  if (diffMs < 7 * day) return `${Math.floor(diffMs / day)} d ago`;
+  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date);
 }
 
 function scoreLabel(notification: StudentNotification) {
@@ -46,7 +49,6 @@ export function NotificationBell({
   const shellRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [notifications, setNotifications] = useState<StudentNotification[]>([]);
-  const [segment, setSegment] = useState<NotificationSegment>("unread");
   const [panelVisible, setPanelVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -121,8 +123,7 @@ export function NotificationBell({
   }, [closePanel, panelVisible]);
 
   const unread = notifications.filter((notification) => !notification.read_at);
-  const read = notifications.filter((notification) => notification.read_at);
-  const visibleNotifications = segment === "unread" ? unread : read;
+  const visibleNotifications = notifications.slice(0, 6);
 
   async function markRead(notification: StudentNotification) {
     if (notification.read_at) return;
@@ -174,7 +175,6 @@ export function NotificationBell({
           if (panelVisible) {
             closePanel();
           } else {
-            setSegment("unread");
             setPanelVisible(true);
           }
         }}
@@ -199,38 +199,14 @@ export function NotificationBell({
           aria-labelledby="portal-notification-title"
         >
           <div className="student-notification-header">
-            <div>
-              <span className="page-eyebrow">{eyebrow}</span>
-              <h2 id="portal-notification-title">{title}</h2>
-            </div>
+            <h2 id="portal-notification-title">{title}</h2>
             <button type="button" className="student-notification-close" onClick={closePanel} aria-label="Close notifications">
               &times;
             </button>
           </div>
 
-          <div className="student-notification-segments" role="tablist" aria-label="Notification status">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={segment === "unread"}
-              className={segment === "unread" ? "is-active" : ""}
-              onClick={() => setSegment("unread")}
-            >
-              Unread <span>{unread.length}</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={segment === "read"}
-              className={segment === "read" ? "is-active" : ""}
-              onClick={() => setSegment("read")}
-            >
-              Read <span>{read.length}</span>
-            </button>
-          </div>
-
-          <div className="student-notification-list" role="tabpanel">
-            {segment === "unread" && unread.length > 0 && (
+          <div className="student-notification-list">
+            {unread.length > 0 && (
               <button type="button" className="student-notification-read-all" onClick={() => void markAllRead()}>
                 Mark all as read
               </button>
@@ -245,8 +221,8 @@ export function NotificationBell({
               </div>
             ) : visibleNotifications.length === 0 ? (
               <div className="student-notification-state">
-                <strong>No {segment} notifications</strong>
-                <p>{segment === "unread" ? "You are all caught up." : "Notifications you open will appear here."}</p>
+                <strong>No notifications</strong>
+                <p>{eyebrow}. You are all caught up.</p>
               </div>
             ) : (
               visibleNotifications.map((notification) => (
@@ -256,29 +232,34 @@ export function NotificationBell({
                   key={notification.id}
                   onClick={() => openNotification(notification)}
                 >
-                  <span className="student-notification-item-dot" />
+                  <span className="student-notification-item-icon">
+                    <Icon name="notifications" />
+                  </span>
                   <span className="student-notification-item-content">
                     <strong>{notification.title}</strong>
-                    <span className="student-notification-message">{notification.message}</span>
-                    <span className="student-notification-meta">
-                      {notification.module_type && (
-                        <span className="student-notification-pill is-module">
-                          {notification.module_type.replaceAll("_", " ")}
-                        </span>
-                      )}
-                      {scoreLabel(notification) && (
-                        <span className="student-notification-pill is-score">Score {scoreLabel(notification)}</span>
-                      )}
-                      <time className="student-notification-pill is-time" dateTime={notification.created_at}>
-                        {notificationTime(notification.created_at)}
-                      </time>
+                    <span className="student-notification-message">
+                      {notification.message}
+                      {scoreLabel(notification) ? ` Score ${scoreLabel(notification)}.` : ""}
                     </span>
                   </span>
-                  <span className="student-notification-item-arrow" aria-hidden="true">&#8250;</span>
+                  <time className="student-notification-time" dateTime={notification.created_at}>
+                    {notificationTime(notification.created_at)}
+                  </time>
                 </button>
               ))
             )}
           </div>
+
+          <button
+            type="button"
+            className="student-notification-view-all"
+            onClick={() => {
+              closePanel();
+              navigate(fallbackRoute);
+            }}
+          >
+            View All Notifications
+          </button>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { Icon } from "../../components/icons";
 
 interface SessionInfo {
   id: number;
@@ -92,7 +93,7 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
               <th>IP Address</th>
               <th>Signed in</th>
               <th>Expires</th>
-              <th></th>
+              <th className="table-actions-heading">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -107,8 +108,14 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
                 <td>{new Date(session.expires_at).toLocaleString()}</td>
                 <td className="table-actions">
                   {!session.is_current && (
-                    <button onClick={() => handleRevoke(session)} className="danger">
-                      Revoke
+                    <button
+                      type="button"
+                      onClick={() => handleRevoke(session)}
+                      className="danger"
+                      aria-label="Revoke session"
+                      data-tooltip="Revoke session"
+                    >
+                      <Icon name="revoke" />
                     </button>
                   )}
                 </td>

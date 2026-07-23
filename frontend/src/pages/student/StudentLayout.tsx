@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "../../auth/logout";
 import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
+import { PortalTopBar } from "../../components/PortalTopBar";
 import { Sidebar, type MenuItem, type MenuSection } from "../../components/Sidebar";
-import { StudentNotificationBell } from "../../components/StudentNotificationBell";
 import { useInstituteBranding } from "../../hooks/useInstituteBranding";
 import { useAuthStore } from "../../store/authStore";
 
@@ -53,7 +53,7 @@ export function StudentLayout() {
   ];
 
   return (
-    <div className={`dashboard student-portal${isInstituteStudent ? " institute-branded-portal" : ""}`}>
+    <div className={`dashboard student-portal${isInstituteStudent ? " institute-branded-portal" : " super-admin-portal"}`}>
       <Sidebar
         brandTitle={branding?.institute_name ?? "IELTS LMS"}
         brandSubtitle={isInstituteStudent ? "Institute Student" : "Direct Student"}
@@ -64,7 +64,11 @@ export function StudentLayout() {
         onLogout={logout}
       />
       <main className="dashboard-content student-dashboard-content">
-        <StudentNotificationBell />
+        <PortalTopBar
+          notificationEyebrow="Student updates"
+          fallbackRoute="/student/dashboard"
+          roleLabel={isInstituteStudent ? "Institute Student" : "Direct Student"}
+        />
         <GsapRouteAnimator>
           <Outlet />
         </GsapRouteAnimator>

@@ -19,10 +19,10 @@ interface LoginProps {
 
 const ALL_ROLE_OPTIONS = [
   { role: "INSTITUTE_ADMIN", label: "Institute", basePath: "/login" },
-  { role: "INST_INSTRUCTOR", label: "Instructor", basePath: "/login" },
-  { role: "STUDENT", label: "Student", basePath: "/login" },
+  { role: "INST_INSTRUCTOR", label: "Instructor", basePath: "/login?role=INST_INSTRUCTOR" },
+  { role: "STUDENT", label: "Student", basePath: "/login?role=STUDENT" },
   { role: "SUPER_ADMIN", label: "Super Admin", basePath: "/super-admin/login" },
-  { role: "SA_INSTRUCTOR", label: "SA Instructor", basePath: "/super-admin/login" },
+  { role: "SA_INSTRUCTOR", label: "SA Instructor", basePath: "/super-admin/login?role=SA_INSTRUCTOR" },
 ] as const;
 
 function roleLabel(role: string) {
@@ -179,11 +179,11 @@ export function Login({
     if (!option) return;
     setError(null);
     setSelectedRole(role);
+    window.history.replaceState(window.history.state, "", option.basePath);
   }
 
   function handleSwitchPortalMode(targetRole: string) {
-    setError(null);
-    setSelectedRole(targetRole);
+    changePortal(targetRole);
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -344,11 +344,12 @@ export function Login({
           </form>
 
           <div className="login-footer-links text-center">
-            {selectedRole === "STUDENT" && (
-              <p className="form-legal-note">
-                New student? <a href="/register">Create a student account</a>
-              </p>
-            )}
+            <p
+              className={`form-legal-note${selectedRole === "STUDENT" ? "" : " is-placeholder"}`}
+              aria-hidden={selectedRole !== "STUDENT"}
+            >
+              New student? <a href="/register">Create a student account</a>
+            </p>
 
             {isSuperAdminPortal ? (
               <p className="form-legal-note">

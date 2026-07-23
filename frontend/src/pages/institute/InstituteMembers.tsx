@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import { confirmDelete } from "../../components/confirmDialog";
+import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import { useAuthStore } from "../../store/authStore";
 
@@ -241,7 +242,7 @@ export function InstituteMembers({ role, instituteId }: Props) {
           <div className="feature-lock-preview" aria-hidden="true">
             <div className="table-wrap">
               <table className="data-table">
-                <thead><tr><th>Name</th><th>Email</th><th>Contact</th><th>Status</th><th>Created</th><th /></tr></thead>
+                <thead><tr><th>Name</th><th>Email</th><th>Contact</th><th>Status</th><th>Created</th><th className="table-actions-heading">Actions</th></tr></thead>
                 <tbody>
                   <tr><td><strong>Instructor access</strong></td><td>locked@example.com</td><td>-</td><td><span className="badge badge-gray">Locked</span></td><td>-</td><td /></tr>
                   <tr><td><strong>Feature unavailable</strong></td><td>contact-admin@example.com</td><td>-</td><td><span className="badge badge-gray">Locked</span></td><td>-</td><td /></tr>
@@ -279,7 +280,7 @@ export function InstituteMembers({ role, instituteId }: Props) {
       {loading ? <p>Loading...</p> : (
         <div className="table-wrap">
           <table className="data-table">
-            <thead><tr><th>Name</th><th>Email</th>{isAllAccounts && <th>Type</th>}<th>Tests</th><th>Devices</th><th>Contact</th><th>Status</th><th>Created</th><th /></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th>{isAllAccounts && <th>Type</th>}<th>Tests</th><th>Devices</th><th>Contact</th><th>Status</th><th>Created</th><th className="table-actions-heading">Actions</th></tr></thead>
             <tbody>
               {members.length === 0 && <tr><td colSpan={9} className="empty-cell">No {label.toLowerCase()} found.</td></tr>}
               {members.map((member) => (
@@ -293,11 +294,11 @@ export function InstituteMembers({ role, instituteId }: Props) {
                   <td><span className={`badge ${member.deleted_at ? "badge-gray" : member.is_active ? "badge-green" : "badge-amber"}`}>{member.deleted_at ? "Deleted" : member.is_active ? "Active" : "Inactive"}</span></td>
                   <td>{new Date(member.created_at).toLocaleDateString()}</td>
                   <td className="table-actions">
-                    {member.role === "STUDENT" && canViewActivity && <Link to={`${basePath}/students/${member.id}`}>View</Link>}
-                    {canManage && <Link to={`${basePath}/${member.role === "STUDENT" ? "students" : "staff"}/${member.id}/edit`}>Edit</Link>}
-                    {!member.deleted_at && canManage && <button onClick={() => resetPassword(member)}>Reset password</button>}
-                    {!member.deleted_at && canManage && <button onClick={() => toggle(member)}>{member.is_active ? "Deactivate" : "Reactivate"}</button>}
-                    {!member.deleted_at && canManage && <button className="danger" onClick={() => remove(member)}>Delete</button>}
+                    {member.role === "STUDENT" && canViewActivity && <Link to={`${basePath}/students/${member.id}`} aria-label="View member" data-tooltip="View member"><Icon name="overview" /></Link>}
+                    {canManage && <Link to={`${basePath}/${member.role === "STUDENT" ? "students" : "staff"}/${member.id}/edit`} aria-label="Edit member" data-tooltip="Edit member"><Icon name="edit" /></Link>}
+                    {!member.deleted_at && canManage && <button onClick={() => resetPassword(member)} aria-label="Reset password" data-tooltip="Reset password"><Icon name="lock" /></button>}
+                    {!member.deleted_at && canManage && <button onClick={() => toggle(member)} aria-label={member.is_active ? "Deactivate member" : "Reactivate member"} data-tooltip={member.is_active ? "Deactivate member" : "Reactivate member"}><Icon name={member.is_active ? "toggleOff" : "toggleOn"} /></button>}
+                    {!member.deleted_at && canManage && <button className="danger" onClick={() => remove(member)} aria-label="Delete member" data-tooltip="Delete member"><Icon name="trash" /></button>}
                   </td>
                 </tr>
               ))}

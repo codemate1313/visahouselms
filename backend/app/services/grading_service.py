@@ -20,7 +20,7 @@ from app.models.attempt import (
     TestAttempt,
 )
 from app.models.exam_module import ExamModule
-from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, SA_INSTRUCTOR
+from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, SA_INSTRUCTOR, Role
 from app.models.user import User
 
 OPEN_REEVALUATION_STATUSES = (REEVALUATION_PENDING, REEVALUATION_IN_REVIEW)
@@ -37,7 +37,7 @@ def _institute_has_active_staff(db: Session, institute_id: int) -> bool:
             User.institute_id == institute_id,
             User.is_active.is_(True),
             User.deleted_at.is_(None),
-            User.role.has(name.in_((INSTITUTE_ADMIN, INST_INSTRUCTOR))),
+            User.role.has(Role.name.in_((INSTITUTE_ADMIN, INST_INSTRUCTOR))),
         )
         .first()
         is not None

@@ -281,6 +281,37 @@ class AttemptServiceTestCase(unittest.TestCase):
             )
         )
 
+    def test_institute_student_submit_routes_to_active_institute_staff(self):
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        institute_role = Role(name=INST_INSTRUCTOR)
+        institute = Institute(name="Staffed Academy", slug="staffed-academy", is_active=True)
+        self.db.add_all([institute_role, institute])
+        self.db.flush()
+        self.db.add(
+            User(
+                email="staff@academy.test",
+                password_hash=hash_password("MarkerPassword!1"),
+                role_id=institute_role.id,
+                institute_id=institute.id,
+                first_name="Staff",
+                last_name="Marker",
+                is_active=True,
+            )
+        )
+        self.student.institute_id = institute.id
+        self.db.add(self.student)
+        self.db.commit()
+
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+
+        result = attempt_service.submit_attempt(self.db, attempt)
+
+        self.assertEqual(result["status"], ATTEMPT_GRADING)
+        queue = self.db.query(GradingQueueEntry).filter_by(attempt_id=attempt.id).one()
+        self.assertEqual(queue.routing_reason, "institute_instructor")
+
     def test_ai_draft_is_normalized_limited_and_never_publishes_a_grade(self):
         module = self._build_writing_module()
         self._course_with_module(module.id)

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import type { AttemptSummary } from "../../api/types";
+import { Icon } from "../../components/icons";
 
 const STATUS_CLASS: Record<string, string> = {
   ready: "badge-blue",
@@ -46,7 +47,7 @@ export function StudentAttempts() {
       ) : (
         <div className="table-wrap">
           <table className="data-table">
-            <thead><tr><th>Module</th><th>Status</th><th>Started</th><th>Score</th><th>Band</th><th></th></tr></thead>
+            <thead><tr><th>Module</th><th>Status</th><th>Started</th><th>Score</th><th>Band</th><th className="table-actions-heading">Actions</th></tr></thead>
             <tbody>
               {attempts.map((attempt) => (
                 <tr key={attempt.id} className="clickable">
@@ -57,9 +58,13 @@ export function StudentAttempts() {
                   <td>{attempt.band_label ?? "—"}</td>
                   <td className="table-actions">
                     {attempt.status === "ready" || attempt.status === "in_progress" ? (
-                      <Link to={`/student/attempts/${attempt.id}/take`}>Resume</Link>
+                      <Link to={`/student/attempts/${attempt.id}/take`} aria-label="Resume test" data-tooltip="Resume test">
+                        <Icon name="module" />
+                      </Link>
                     ) : (
-                      <Link to={`/student/attempts/${attempt.id}/result`}>View</Link>
+                      <Link to={`/student/attempts/${attempt.id}/result`} aria-label="View result" data-tooltip="View result">
+                        <Icon name="overview" />
+                      </Link>
                     )}
                   </td>
                 </tr>

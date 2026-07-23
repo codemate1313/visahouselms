@@ -3,6 +3,7 @@ import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { confirmDelete } from "../../components/confirmDialog";
+import { Icon } from "../../components/icons";
 import { PasswordInput } from "../../components/PasswordInput";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import { FONT_FAMILY_OPTIONS, useFontStore } from "../../store/fontStore";
@@ -845,7 +846,7 @@ function BackupsTab() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>File</th><th>Size</th><th>Kind</th><th>Status</th><th>Created</th><th></th>
+                <th>File</th><th>Size</th><th>Kind</th><th>Status</th><th>Created</th><th className="table-actions-heading">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -864,9 +865,15 @@ function BackupsTab() {
                   </td>
                   <td>{new Date(row.created_at).toLocaleString()}</td>
                   <td className="table-actions">
-                    <button onClick={() => download(row)}>Download</button>
-                    <button onClick={() => restore(row)}>Restore</button>
-                    <button className="danger" onClick={() => remove(row)}>Delete</button>
+                    <button onClick={() => download(row)} aria-label="Download backup" data-tooltip="Download backup">
+                      <Icon name="download" />
+                    </button>
+                    <button onClick={() => restore(row)} aria-label="Restore backup" data-tooltip="Restore backup">
+                      <Icon name="restore" />
+                    </button>
+                    <button className="danger" onClick={() => remove(row)} aria-label="Delete backup" data-tooltip="Delete backup">
+                      <Icon name="trash" />
+                    </button>
                   </td>
                 </tr>
               ))}

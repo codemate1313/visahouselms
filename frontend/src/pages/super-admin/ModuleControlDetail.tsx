@@ -4,6 +4,7 @@ import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { confirmAction, confirmDelete } from "../../components/confirmDialog";
+import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import type { ExamModule } from "../../api/types";
 
@@ -387,14 +388,16 @@ export function ModuleControlDetail() {
                         {assignment.is_active ? "Active" : "Revoked"}
                       </span>
                     </td>
-                    <td style={{ textAlign: "right" }}>
+                    <td className="table-actions">
                       {assignment.is_active && (
                         <button
                           type="button"
-                          className="revoke-access-btn"
+                          className="danger"
                           onClick={() => revoke(assignment.institute_id, assignment.institute_name)}
+                          aria-label="Revoke access"
+                          data-tooltip="Revoke access"
                         >
-                          Revoke
+                          <Icon name="revoke" />
                         </button>
                       )}
                     </td>

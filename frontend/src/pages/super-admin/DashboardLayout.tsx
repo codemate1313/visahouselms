@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "../../auth/logout";
 import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
-import { NotificationBell } from "../../components/StudentNotificationBell";
+import { PortalTopBar } from "../../components/PortalTopBar";
 import { Sidebar, type MenuSection } from "../../components/Sidebar";
 
 const COLLAPSE_STORAGE_KEY = "ielts-lms-sidebar-collapsed";
@@ -149,7 +149,11 @@ export function DashboardLayout() {
         onLogout={handleLogout}
       />
       <main className="dashboard-content">
-        <NotificationBell eyebrow="Platform updates" fallbackRoute="/super-admin/dashboard" />
+        <PortalTopBar
+          notificationEyebrow="Platform updates"
+          fallbackRoute="/super-admin/dashboard"
+          roleLabel="Super Admin"
+        />
         <GsapRouteAnimator>
           <Outlet />
         </GsapRouteAnimator>

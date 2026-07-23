@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import type { GradingQueueItem } from "../../api/types";
+import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import { useAuthStore } from "../../store/authStore";
 
@@ -61,7 +62,7 @@ export function GradingQueue() {
       ) : (
         <div className="table-wrap">
           <table className="data-table">
-            <thead><tr><th>Student</th><th>Course</th><th>Queue</th><th>Owner</th><th>Due</th><th>Flags</th><th>Parts left</th><th></th></tr></thead>
+            <thead><tr><th>Student</th><th>Course</th><th>Queue</th><th>Owner</th><th>Due</th><th>Flags</th><th>Parts left</th><th className="table-actions-heading">Actions</th></tr></thead>
             <tbody>
               {items.map((item) => (
                 <tr key={item.id} className="clickable">
@@ -72,7 +73,11 @@ export function GradingQueue() {
                   <td>{item.queue.due_at ? new Date(item.queue.due_at).toLocaleDateString() : "—"}</td>
                   <td>{item.flag_count > 0 ? <span className="badge badge-red">{item.flag_count}</span> : "—"}</td>
                   <td>{item.parts_to_grade}</td>
-                  <td className="table-actions"><Link to={`${gradingBase}/${item.id}`}>Grade →</Link></td>
+                  <td className="table-actions">
+                    <Link to={`${gradingBase}/${item.id}`} aria-label="Grade submission" data-tooltip="Grade submission">
+                      <Icon name="grading" />
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>

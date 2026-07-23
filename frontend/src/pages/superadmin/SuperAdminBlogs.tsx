@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { API_BASE_URL, apiClient } from "../../api/client";
+import { apiClient } from "../../api/client";
 import "./SuperAdminBlogs.css";
 
 interface BlogAdminItem {

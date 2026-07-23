@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { confirmDelete } from "../../components/confirmDialog";
+import { Icon } from "../../components/icons";
 import { extractErrorMessage } from "../../api/errors";
 import { useAuthStore } from "../../store/authStore";
 import type { InstituteMember } from "./InstituteMembers";
@@ -113,7 +114,7 @@ export function StudentOverview({ instituteId }: { instituteId?: number }) {
 
       <section className="student-control-bar">
         <div><span className={`badge ${student.deleted_at ? "badge-gray" : student.is_active ? "badge-green" : "badge-amber"}`}>{student.deleted_at ? "Deleted" : student.is_active ? "Active" : "Inactive"}</span><span>{student.phone_number ?? "No phone number"}</span></div>
-        {!student.deleted_at && <div className="table-actions">{canManage && <button onClick={resetPassword}>Reset password</button>}{canRevokeSessions && <button disabled={!security.active_session_count} onClick={revokeSessions}>Sign out device</button>}{canManage && <button onClick={updateStatus}>{student.is_active ? "Deactivate" : "Reactivate"}</button>}{canManage && <button className="danger" onClick={archive}>Delete</button>}</div>}
+        {!student.deleted_at && <div className="table-actions">{canManage && <button onClick={resetPassword} aria-label="Reset password" data-tooltip="Reset password"><Icon name="lock" /></button>}{canRevokeSessions && <button disabled={!security.active_session_count} onClick={revokeSessions} aria-label="Sign out device" data-tooltip="Sign out device"><Icon name="revoke" /></button>}{canManage && <button onClick={updateStatus} aria-label={student.is_active ? "Deactivate student" : "Reactivate student"} data-tooltip={student.is_active ? "Deactivate student" : "Reactivate student"}><Icon name={student.is_active ? "toggleOff" : "toggleOn"} /></button>}{canManage && <button className="danger" onClick={archive} aria-label="Delete student" data-tooltip="Delete student"><Icon name="trash" /></button>}</div>}
       </section>
 
       <section className="student-record-section">

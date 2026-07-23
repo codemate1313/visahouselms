@@ -29,10 +29,15 @@ export type IconName =
   | "products"
   | "billings"
   | "notifications"
+  | "search"
   | "help"
   | "logout"
   | "edit"
   | "trash"
+  | "revoke"
+  | "download"
+  | "restore"
+  | "x"
   | "chevronDown"
   | "overview"
   | "projects"
@@ -135,6 +140,12 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <circle cx="18" cy="5" r="2" fill="#ef4444" stroke="none" />
     </>
   ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-4.5-4.5" />
+    </>
+  ),
   // Help Center Icon (Question circle)
   help: (
     <>
@@ -163,6 +174,34 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <path d="M10 11v6M14 11v6" />
       <path d="M6 7l1 13h10l1-13" />
       <path d="M9 7V4h6v3" />
+    </>
+  ),
+  revoke: (
+    <>
+      <path d="M4 7v6a7 7 0 0 0 11.95 4.95L20 13.9" />
+      <path d="M20 18v-4.1h-4.1" />
+      <path d="M20 7V4h-3" />
+      <path d="M4 4l16 16" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M12 3v12" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M5 21h14" />
+    </>
+  ),
+  restore: (
+    <>
+      <path d="M4 7v5a8 8 0 1 0 2.34-5.66L4 8.7" />
+      <path d="M4 4v4.7h4.7" />
+      <path d="M12 8v5l3 2" />
+    </>
+  ),
+  x: (
+    <>
+      <path d="M18 6L6 18" />
+      <path d="M6 6l12 12" />
     </>
   ),
   // Chevron Down Icon
