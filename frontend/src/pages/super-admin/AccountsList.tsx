@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
-import { apiClient } from "../../api/client";
+import { API_BASE_URL, apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import type { SuperAdminAccount } from "../../api/types";
 import { ConfirmModal } from "../../components/ConfirmModal";
@@ -193,21 +193,10 @@ export function AccountsList() {
 
         <div className="export-btn-group">
           <button type="button" className="export-btn export-pdf" onClick={exportPDF} data-tooltip="Export PDF">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <path d="M12 18v-6" />
-              <path d="m9 15 3 3 3-3" />
-            </svg>
+            <Icon name="filePdf" />
           </button>
           <button type="button" className="export-btn export-excel" onClick={exportExcel} data-tooltip="Export Excel">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="18" height="18" x="3" y="3" rx="2" />
-              <path d="M3 9h18" />
-              <path d="M3 15h18" />
-              <path d="M9 3v18" />
-              <path d="M15 3v18" />
-            </svg>
+            <Icon name="spreadsheet" />
           </button>
         </div>
 
@@ -241,7 +230,11 @@ export function AccountsList() {
                   <td>
                     <div className="table-item-cell">
                       <div className="table-avatar-tile">
-                        {account.first_name.charAt(0).toUpperCase()}
+                        {account.avatar_path ? (
+                          <img src={`${API_BASE_URL}/storage/${account.avatar_path}`} alt="" />
+                        ) : (
+                          account.first_name.charAt(0).toUpperCase()
+                        )}
                       </div>
                       <div>
                         <strong className="table-item-title" style={{ fontSize: 13.5 }}>
@@ -258,7 +251,7 @@ export function AccountsList() {
                   </td>
                   <td>{account.email}</td>
                   <td>
-                    <span className={`badge ${account.is_active ? "badge-green" : "badge-gray"}`}>
+                    <span className={`badge ${account.is_active ? "badge-green" : "badge-inactive"}`}>
                       {account.is_active ? "Active" : "Inactive"}
                     </span>
                   </td>

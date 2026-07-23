@@ -291,7 +291,7 @@ export function InstituteMembers({ role, instituteId }: Props) {
                   <td>{member.attempt_count}</td>
                   <td>{member.device_count}<span className="muted-text device-active-label">{member.active_session_count ? `${member.active_session_count} active` : ""}</span></td>
                   <td>{member.phone_number ?? "-"}</td>
-                  <td><span className={`badge ${member.deleted_at ? "badge-gray" : member.is_active ? "badge-green" : "badge-amber"}`}>{member.deleted_at ? "Deleted" : member.is_active ? "Active" : "Inactive"}</span></td>
+                  <td><span className={`badge ${member.deleted_at ? "badge-gray" : member.is_active ? "badge-green" : "badge-inactive"}`}>{member.deleted_at ? "Deleted" : member.is_active ? "Active" : "Inactive"}</span></td>
                   <td>{new Date(member.created_at).toLocaleDateString()}</td>
                   <td className="table-actions">
                     {member.role === "STUDENT" && canViewActivity && <Link to={`${basePath}/students/${member.id}`} aria-label="View member" data-tooltip="View member"><Icon name="overview" /></Link>}

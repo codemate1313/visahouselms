@@ -1,53 +1,43 @@
 import { Link } from "react-router-dom";
 
-function FacebookIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="#1877F2"
-        d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.51 1.49-3.9 3.77-3.9 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.87h2.78l-.44 2.91h-2.34v7.03C18.34 21.24 22 17.08 22 12.06Z"
-      />
-    </svg>
-  );
-}
-
-function InstagramIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-      <defs>
-        <linearGradient id="footer-ig-gradient" x1="0" y1="24" x2="24" y2="0">
-          <stop offset="0%" stopColor="#FFDD55" />
-          <stop offset="45%" stopColor="#E1306C" />
-          <stop offset="100%" stopColor="#5851DB" />
-        </linearGradient>
-      </defs>
-      <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#footer-ig-gradient)" />
-      <circle cx="12" cy="12" r="4.6" fill="none" stroke="#fff" strokeWidth="1.6" />
-      <circle cx="17.35" cy="6.65" r="1.15" fill="#fff" />
-    </svg>
-  );
-}
-
-function LinkedInIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-      <rect width="24" height="24" rx="5" fill="#0A66C2" />
-      <path
-        fill="#fff"
-        d="M7.12 9.4H4.4V19h2.72V9.4ZM5.76 8.24a1.58 1.58 0 1 0 0-3.16 1.58 1.58 0 0 0 0 3.16ZM19.6 19h-2.71v-5.1c0-1.22-.02-2.78-1.7-2.78-1.7 0-1.96 1.33-1.96 2.7V19H10.5V9.4h2.6v1.3h.04c.36-.68 1.26-1.4 2.58-1.4 2.76 0 3.27 1.82 3.27 4.18V19Z"
-      />
-    </svg>
-  );
-}
-
-function YouTubeIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-      <rect width="24" height="24" rx="6" fill="#FF0000" />
-      <path fill="#fff" d="M10 8.64v6.72L16 12l-6-3.36Z" />
-    </svg>
-  );
-}
+const socialLinks = [
+  {
+    label: "Facebook",
+    className: "social-facebook",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.52 1.5-3.92 3.78-3.92 1.1 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.78-1.63 1.57v1.9h2.77l-.44 2.91h-2.33V22A10.03 10.03 0 0 0 22 12.06Z" />
+      </svg>
+    ),
+  },
+  {
+    label: "Instagram",
+    className: "social-instagram",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm-.2 2A3.6 3.6 0 0 0 4 7.6v8.8A3.6 3.6 0 0 0 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6A3.6 3.6 0 0 0 16.4 4H7.6Zm9.65 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM12 7.3a4.7 4.7 0 1 1 0 9.4 4.7 4.7 0 0 1 0-9.4Zm0 2a2.7 2.7 0 1 0 0 5.4 2.7 2.7 0 0 0 0-5.4Z" />
+      </svg>
+    ),
+  },
+  {
+    label: "LinkedIn",
+    className: "social-linkedin",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.45 20.45h-3.56v-5.58c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.95v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.32 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13Zm1.78 13.02H3.54V9H7.1v11.45ZM22.22 0H1.77C.8 0 0 .77 0 1.72v20.56C0 23.23.8 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0Z" />
+      </svg>
+    ),
+  },
+  {
+    label: "YouTube",
+    className: "social-youtube",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.2 31.2 0 0 0 0 12a31.2 31.2 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.2 31.2 0 0 0 24 12a31.2 31.2 0 0 0-.5-5.8ZM9.6 15.6V8.4L15.8 12l-6.2 3.6Z" />
+      </svg>
+    ),
+  },
+];
 
 export function LandingFooter() {
   return (
@@ -67,18 +57,12 @@ export function LandingFooter() {
               The premier AI-powered IELTS preparation platform for institutes and direct students. Authentic exam simulation, automated speaking evaluation, and instant writing feedback.
             </p>
             <div className="footer-social-links">
-              <a href="#facebook" onClick={(e) => e.preventDefault()} className="social-badge">
-                <FacebookIcon /> Facebook
-              </a>
-              <a href="#instagram" onClick={(e) => e.preventDefault()} className="social-badge">
-                <InstagramIcon /> Instagram
-              </a>
-              <a href="#linkedin" onClick={(e) => e.preventDefault()} className="social-badge">
-                <LinkedInIcon /> LinkedIn
-              </a>
-              <a href="#youtube" onClick={(e) => e.preventDefault()} className="social-badge">
-                <YouTubeIcon /> YouTube
-              </a>
+              {socialLinks.map((item) => (
+                <span key={item.label} className={`social-badge ${item.className}`}>
+                  <span className="social-icon-wrap">{item.icon}</span>
+                  {item.label}
+                </span>
+              ))}
             </div>
           </div>
 

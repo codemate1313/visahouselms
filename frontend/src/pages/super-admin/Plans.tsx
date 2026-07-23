@@ -223,21 +223,10 @@ export function Plans() {
 
         <div className="export-btn-group">
           <button type="button" className="export-btn export-pdf" onClick={exportPDF} data-tooltip="Export PDF">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <path d="M12 18v-6" />
-              <path d="m9 15 3 3 3-3" />
-            </svg>
+            <Icon name="filePdf" />
           </button>
           <button type="button" className="export-btn export-excel" onClick={exportExcel} data-tooltip="Export Excel">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="18" height="18" x="3" y="3" rx="2" />
-              <path d="M3 9h18" />
-              <path d="M3 15h18" />
-              <path d="M9 3v18" />
-              <path d="M15 3v18" />
-            </svg>
+            <Icon name="spreadsheet" />
           </button>
         </div>
 
@@ -308,7 +297,7 @@ export function Plans() {
                     <strong style={{ fontSize: 13.5 }}>{plan.subscription_count}</strong>
                   </td>
                   <td>
-                    <span className={`badge ${!plan.is_active ? "badge-gray" : plan.is_published ? "badge-green" : "badge-amber"}`}>
+                    <span className={`badge ${!plan.is_active ? "badge-inactive" : plan.is_published ? "badge-green" : "badge-amber"}`}>
                       {!plan.is_active ? "Inactive" : plan.is_published ? "Active" : "Draft"}
                     </span>
                   </td>

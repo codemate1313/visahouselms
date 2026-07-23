@@ -36,6 +36,8 @@ export type IconName =
   | "trash"
   | "revoke"
   | "download"
+  | "filePdf"
+  | "spreadsheet"
   | "restore"
   | "x"
   | "chevronDown"
@@ -189,6 +191,25 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <path d="M12 3v12" />
       <path d="M7 10l5 5 5-5" />
       <path d="M5 21h14" />
+    </>
+  ),
+  filePdf: (
+    <>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+      <path d="M8 17v-4h1.5a1.2 1.2 0 0 1 0 2.4H8" />
+      <path d="M12 17v-4h1a2 2 0 0 1 0 4h-1" />
+      <path d="M16.5 17v-4H19" />
+      <path d="M16.5 15H18" />
+    </>
+  ),
+  spreadsheet: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M3 9h18" />
+      <path d="M3 15h18" />
+      <path d="M9 3v18" />
+      <path d="M15 3v18" />
     </>
   ),
   restore: (
