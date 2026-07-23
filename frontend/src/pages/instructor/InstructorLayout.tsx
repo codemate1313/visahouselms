@@ -88,8 +88,8 @@ export function InstructorLayout() {
         onToggleCollapse={() => setCollapsed((prev) => !prev)}
         onLogout={logout}
       />
-      <NotificationBell eyebrow="Author updates" fallbackRoute="/super-admin/instructor/dashboard" />
       <main className="dashboard-content" style={{ flex: 1, padding: "20px" }}>
+        <NotificationBell eyebrow="Author updates" fallbackRoute="/super-admin/instructor/dashboard" />
         <GsapRouteAnimator>
           <Outlet />
         </GsapRouteAnimator>

@@ -63,8 +63,8 @@ export function StudentLayout() {
         onToggleCollapse={() => setCollapsed((prev) => !prev)}
         onLogout={logout}
       />
-      <StudentNotificationBell />
       <main className="dashboard-content student-dashboard-content">
+        <StudentNotificationBell />
         <GsapRouteAnimator>
           <Outlet />
         </GsapRouteAnimator>

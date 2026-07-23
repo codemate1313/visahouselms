@@ -71,7 +71,7 @@ class SessionOut(BaseModel):
 
 
 class RevokeOthersRequest(BaseModel):
-    refresh_token: str
+    refresh_token: Optional[str] = None
 
 
 class ForceResetRequest(BaseModel):

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, Requ
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.core.auth_cookies import find_refresh_token, get_refresh_token
 from app.dependencies.auth import get_current_user, require_password_change_complete, require_role
 from app.models.role import INSTITUTE_ADMIN
 from app.models.user import User
@@ -85,11 +86,12 @@ async def upload_my_avatar(
 
 @router.get("/me/sessions", response_model=list[SessionOut], dependencies=[Depends(require_password_change_complete)])
 def list_my_sessions(
+    request: Request,
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
     x_refresh_token: Optional[str] = Header(default=None),
 ):
-    return account_service.list_sessions(db, actor, x_refresh_token)
+    return account_service.list_sessions(db, actor, find_refresh_token(request, x_refresh_token))
 
 
 @router.delete("/me/sessions/{session_id}", status_code=204, dependencies=[Depends(require_password_change_complete)])
@@ -109,7 +111,11 @@ def revoke_my_other_sessions(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    return {"revoked": account_service.revoke_other_sessions(db, actor, payload.refresh_token, _ip(request))}
+    return {
+        "revoked": account_service.revoke_other_sessions(
+            db, actor, get_refresh_token(request, payload.refresh_token), _ip(request)
+        )
+    }
 
 
 @router.get("/dashboard", dependencies=[Depends(require_password_change_complete)])
@@ -150,6 +156,19 @@ def list_members(
         has_devices,
         has_active_sessions,
     )
+
+
+@router.get("/member-capacity", dependencies=[Depends(require_password_change_complete)])
+def member_capacity(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    institute_admin_service.require_admin_permission(
+        actor,
+        "view_students",
+        "manage_students",
+        "view_student_activity",
+        "manage_student_sessions",
+        "manage_staff",
+    )
+    return institute_admin_service.member_capacity(db, actor)
 
 
 @router.post("/members", status_code=201, dependencies=[Depends(require_password_change_complete)])

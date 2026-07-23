@@ -57,14 +57,23 @@ export function DonutChart({
           <span className="info-dot"><Icon name="analytics" /></span>
           <span>Breakdown</span>
         </span>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        {/* View Toggle Pill Control (≡ / 田) */}
+        <div className="chart-view-toggle-pill">
           <button
             type="button"
-            className="chart-table-toggle"
-            aria-expanded={showTable}
-            onClick={() => setShowTable((current) => !current)}
+            className={`pill-btn ${!showTable ? "active" : ""}`}
+            onClick={() => setShowTable(false)}
+            title="Chart View"
           >
-            {showTable ? "Show chart" : "Data Table"}
+            ≡
+          </button>
+          <button
+            type="button"
+            className={`pill-btn ${showTable ? "active" : ""}`}
+            onClick={() => setShowTable(true)}
+            title="Data Table View"
+          >
+            田
           </button>
         </div>
       </div>
@@ -150,7 +159,7 @@ export function DonutChart({
               })}
 
               {/* Center Display */}
-              <text className="donut-total" x="110" y="102" textAnchor="middle" transform="rotate(90 110 102)" style={{ fontSize: "30px", fontWeight: 800, fill: "#0f172a" }}>
+              <text className="donut-total" x="110" y="102" textAnchor="middle" style={{ fontSize: "30px", fontWeight: 800, fill: "#0f172a" }}>
                 {hoveredIndex !== null ? (
                   activeItem?.value.toLocaleString("en-IN")
                 ) : (

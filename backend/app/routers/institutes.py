@@ -105,6 +105,16 @@ def list_institute_members(
     )
 
 
+@router.get("/{institute_id}/member-capacity")
+def institute_member_capacity(
+    institute_id: int,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    institute_service.get_institute_or_404(db, institute_id)
+    return institute_admin_service.member_capacity(db, actor, scoped_institute_id=institute_id)
+
+
 @router.post("/{institute_id}/members", status_code=201)
 def create_institute_student(
     institute_id: int,

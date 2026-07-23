@@ -1,72 +1,79 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { Login } from "../pages/Login";
-import { Register } from "../pages/Register";
-import { ResetPassword } from "../pages/ResetPassword";
-import { TestingLoginSelector } from "../pages/TestingLoginSelector";
-import { InstituteBilling } from "../pages/institute/InstituteBilling";
-import { InstituteAnnouncements } from "../pages/institute/InstituteAnnouncements";
-import { InstituteDashboard } from "../pages/institute/InstituteDashboard";
-import { InstituteLayout } from "../pages/institute/InstituteLayout";
-import { InstituteInstructorLayout } from "../pages/institute/InstituteInstructorLayout";
-import { InstituteMemberForm, SuperAdminInstructorForm, SuperAdminStudentForm } from "../pages/institute/InstituteMemberForm";
-import { InstituteMembers, SuperAdminInstituteAccounts, SuperAdminInstituteStudents } from "../pages/institute/InstituteMembers";
-import { InstituteProfile } from "../pages/institute/InstituteProfile";
-import { StudentOverview, SuperAdminStudentOverview } from "../pages/institute/StudentOverview";
-import { GradingDetail } from "../pages/instructor/GradingDetail";
-import { GradingQueue } from "../pages/instructor/GradingQueue";
-import { InstructorDashboard } from "../pages/instructor/InstructorDashboard";
-import { InstructorLayout } from "../pages/instructor/InstructorLayout";
-import { InstructorProfile } from "../pages/instructor/InstructorProfile";
-import { ModuleEditor } from "../pages/instructor/ModuleEditor";
-import { Modules } from "../pages/instructor/Modules";
-import { AttemptResult } from "../pages/student/AttemptResult";
-import { AttemptResultDetails } from "../pages/student/AttemptResultDetails";
-import { CourseCatalog as StudentCourseCatalog } from "../pages/student/CourseCatalog";
-import { MyCourses } from "../pages/student/MyCourses";
-import { StudentAttempts } from "../pages/student/StudentAttempts";
-import { StudentDashboard } from "../pages/student/StudentDashboard";
-import { StudentLayout } from "../pages/student/StudentLayout";
-import { StudentAnnouncements } from "../pages/student/StudentAnnouncements";
-import { StudentProfile } from "../pages/student/StudentProfile";
-import { StudentProgress } from "../pages/student/StudentProgress";
-import { TestRunner } from "../pages/student/TestRunner";
-import { AccountForm } from "../pages/super-admin/AccountForm";
-import { AccountsList } from "../pages/super-admin/AccountsList";
-import { ChangePassword } from "../pages/super-admin/ChangePassword";
-import { CouponForm } from "../pages/super-admin/CouponForm";
-import { Coupons } from "../pages/super-admin/Coupons";
-import { Dashboard } from "../pages/super-admin/Dashboard";
-import { DashboardLayout } from "../pages/super-admin/DashboardLayout";
-import { GradingOversight } from "../pages/super-admin/GradingOversight";
-import { DemoAccounts } from "../pages/super-admin/DemoAccounts";
-import { DeveloperSettings } from "../pages/super-admin/DeveloperSettings";
-import { InstituteBranding } from "../pages/super-admin/InstituteBranding";
-import { InstituteForm } from "../pages/super-admin/InstituteForm";
-import { InstructorForm } from "../pages/super-admin/InstructorForm";
-import { Instructors } from "../pages/super-admin/Instructors";
-import { Institutes } from "../pages/super-admin/Institutes";
-import { Invoice } from "../pages/super-admin/Invoice";
-import { Logs } from "../pages/super-admin/Logs";
-import { PaymentMethods } from "../pages/super-admin/PaymentMethods";
-import { PlatformNotifications } from "../pages/super-admin/PlatformNotifications";
-import { InstituteOnboarding } from "../pages/super-admin/InstituteOnboarding";
-import { InstituteOnboardings } from "../pages/super-admin/InstituteOnboardings";
-import { ModuleControl } from "../pages/super-admin/ModuleControl";
-import { ModuleControlDetail } from "../pages/super-admin/ModuleControlDetail";
-import { PlanForm } from "../pages/super-admin/PlanForm";
-import { Plans } from "../pages/super-admin/Plans";
-import { Payments } from "../pages/super-admin/Payments";
-import { Profile } from "../pages/super-admin/Profile";
-import { RevenueDashboard } from "../pages/super-admin/RevenueDashboard";
-import { Sessions } from "../pages/super-admin/Sessions";
-import { Subscriptions } from "../pages/super-admin/Subscriptions";
-import { Terminal } from "../pages/super-admin/Terminal";
-import { TrialConfig } from "../pages/super-admin/TrialConfig";
 import { LandingLayout } from "../components/landing/LandingLayout";
-import { Home } from "../pages/public/Home";
-import { AboutUs } from "../pages/public/AboutUs";
-import { Plans as ShowcasePlans } from "../pages/public/Plans";
-import { ContactUs } from "../pages/public/ContactUs";
+import { Login } from "../pages/Login";
+import {
+  AboutUs,
+  AccountForm,
+  AccountsList,
+  AttemptResult,
+  AttemptResultDetails,
+  ChangePassword,
+  ContactUs,
+  CouponForm,
+  Coupons,
+  Dashboard,
+  DashboardLayout,
+  DemoAccounts,
+  DeveloperSettings,
+  GradingDetail,
+  GradingOversight,
+  GradingQueue,
+  Home,
+  InstituteAnnouncements,
+  InstituteBilling,
+  InstituteBranding,
+  InstituteDashboard,
+  InstituteForm,
+  InstituteInstructorLayout,
+  InstituteLayout,
+  InstituteMemberForm,
+  InstituteMembers,
+  InstituteOnboarding,
+  InstituteProfile,
+  Instructors,
+  InstructorDashboard,
+  InstructorForm,
+  InstructorLayout,
+  InstructorProfile,
+  Institutes,
+  InstituteOnboardings,
+  Invoice,
+  Logs,
+  ModuleControl,
+  ModuleControlDetail,
+  ModuleEditor,
+  Modules,
+  MyCourses,
+  PaymentMethods,
+  Payments,
+  PlanForm,
+  Plans,
+  PlatformNotifications,
+  Profile,
+  Register,
+  ResetPassword,
+  RevenueDashboard,
+  Sessions,
+  ShowcasePlans,
+  StudentAnnouncements,
+  StudentAttempts,
+  StudentCourseCatalog,
+  StudentDashboard,
+  StudentLayout,
+  StudentOverview,
+  StudentProfile,
+  StudentProgress,
+  Subscriptions,
+  SuperAdminInstituteAccounts,
+  SuperAdminInstituteStudents,
+  SuperAdminInstructorForm,
+  SuperAdminStudentForm,
+  SuperAdminStudentOverview,
+  Terminal,
+  TestRunner,
+  TestingLoginSelector,
+  TrialConfig,
+} from "./lazyPages";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 export const router = createBrowserRouter([

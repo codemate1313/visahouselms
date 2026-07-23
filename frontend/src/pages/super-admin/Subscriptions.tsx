@@ -49,6 +49,7 @@ const STATE_LABELS: Record<string, string> = {
 
 // Pure SVG Donut/Pie Chart Component
 function QuotaPieChart({ usage, limits }: { usage: Record<string, number>; limits: Record<string, number> }) {
+  const [showTable, setShowTable] = useState(false);
   const studentUsed = usage.students ?? 0;
   const studentLimit = limits.students ?? 0;
   const staffUsed = usage.staff ?? 0;
@@ -71,51 +72,106 @@ function QuotaPieChart({ usage, limits }: { usage: Record<string, number>; limit
 
   return (
     <div className="quota-analytics-card">
-      <h3 className="analytics-card-title">Quota Utilization</h3>
-      
-      <div className="donut-pie-row">
-        <div className="donut-chart-wrap">
-          <svg width="110" height="110" viewBox="0 0 100 100" className="donut-svg">
-            <circle cx="50" cy="50" r={radius} className="donut-bg" />
-            <circle
-              cx="50"
-              cy="50"
-              r={radius}
-              className="donut-fill"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-            />
-          </svg>
-          <div className="donut-center-text">
-            <span className="donut-value">{totalUsed}</span>
-            <span className="donut-sublabel">/ {totalLimit}</span>
-          </div>
-        </div>
-
-        <div className="donut-legend">
-          <div className="legend-item">
-            <span className="legend-dot dot-students" />
-            <div className="legend-info">
-              <span className="legend-name">Students</span>
-              <strong className="legend-stat">{studentUsed} / {studentLimit} ({studentPercent}%)</strong>
-            </div>
-          </div>
-          <div className="legend-item">
-            <span className="legend-dot dot-staff" />
-            <div className="legend-info">
-              <span className="legend-name">Instructors</span>
-              <strong className="legend-stat">{staffUsed} / {staffLimit} ({staffPercent}%)</strong>
-            </div>
-          </div>
-          <div className="legend-item">
-            <span className="legend-dot dot-tests" />
-            <div className="legend-info">
-              <span className="legend-name">Assigned Tests</span>
-              <strong className="legend-stat">{testUsed} / {testLimit} ({testPercent}%)</strong>
-            </div>
-          </div>
+      <div className="chart-card-toolbar" style={{ marginBottom: 12 }}>
+        <h3 className="analytics-card-title" style={{ margin: 0 }}>Quota Utilization</h3>
+        <div className="chart-view-toggle-pill">
+          <button
+            type="button"
+            className={`pill-btn ${!showTable ? "active" : ""}`}
+            onClick={() => setShowTable(false)}
+            title="Chart View"
+          >
+            ≡
+          </button>
+          <button
+            type="button"
+            className={`pill-btn ${showTable ? "active" : ""}`}
+            onClick={() => setShowTable(true)}
+            title="Data Table View"
+          >
+            田
+          </button>
         </div>
       </div>
+
+      {showTable ? (
+        <div className="chart-data-table-wrap">
+          <table className="chart-data-table">
+            <thead>
+              <tr>
+                <th>Resource</th>
+                <th>Used</th>
+                <th>Limit</th>
+                <th>Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Students</td>
+                <td>{studentUsed}</td>
+                <td>{studentLimit}</td>
+                <td>{studentPercent}%</td>
+              </tr>
+              <tr>
+                <td>Instructors</td>
+                <td>{staffUsed}</td>
+                <td>{staffLimit}</td>
+                <td>{staffPercent}%</td>
+              </tr>
+              <tr>
+                <td>Assigned Tests</td>
+                <td>{testUsed}</td>
+                <td>{testLimit}</td>
+                <td>{testPercent}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="donut-pie-row">
+          <div className="donut-chart-wrap">
+            <svg width="110" height="110" viewBox="0 0 100 100" className="donut-svg">
+              <circle cx="50" cy="50" r={radius} className="donut-bg" />
+              <circle
+                cx="50"
+                cy="50"
+                r={radius}
+                className="donut-fill"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+              />
+            </svg>
+            <div className="donut-center-text">
+              <span className="donut-value">{totalUsed}</span>
+              <span className="donut-sublabel">/ {totalLimit}</span>
+            </div>
+          </div>
+
+          <div className="donut-legend">
+            <div className="legend-item">
+              <span className="legend-dot dot-students" />
+              <div className="legend-info">
+                <span className="legend-name">Students</span>
+                <strong className="legend-stat">{studentUsed} / {studentLimit} ({studentPercent}%)</strong>
+              </div>
+            </div>
+            <div className="legend-item">
+              <span className="legend-dot dot-staff" />
+              <div className="legend-info">
+                <span className="legend-name">Instructors</span>
+                <strong className="legend-stat">{staffUsed} / {staffLimit} ({staffPercent}%)</strong>
+              </div>
+            </div>
+            <div className="legend-item">
+              <span className="legend-dot dot-tests" />
+              <div className="legend-info">
+                <span className="legend-name">Assigned Tests</span>
+                <strong className="legend-stat">{testUsed} / {testLimit} ({testPercent}%)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

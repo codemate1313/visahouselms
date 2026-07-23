@@ -62,11 +62,26 @@ export function Plans() {
               Start Student Practice
             </button>
             <ul className="plan-features">
-              <li>✓ Authentic Listening &amp; Reading Tests</li>
-              <li>✓ 10 AI Speaking Voice Evaluations</li>
-              <li>✓ 10 AI Writing Essay Scorer Runs</li>
-              <li>✓ Personal Band Score Dashboard</li>
-              <li>✓ 24/7 Web &amp; Mobile Access</li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>Authentic Listening &amp; Reading Tests</span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>10 AI Speaking Voice Evaluations</span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>10 AI Writing Essay Scorer Runs</span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>Personal Band Score Dashboard</span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>24/7 Web &amp; Mobile Access</span>
+              </li>
             </ul>
           </div>
 
@@ -85,12 +100,30 @@ export function Plans() {
               Get Started with Pro →
             </button>
             <ul className="plan-features">
-              <li>✓ Everything in Self-Study Plan</li>
-              <li>✓ <strong>Unlimited AI Speaking Tests</strong></li>
-              <li>✓ <strong>Unlimited AI Writing Assessments</strong></li>
-              <li>✓ Full CD-IELTS Mock Exam Suite</li>
-              <li>✓ Detailed Lexical &amp; Grammar Diagnostics</li>
-              <li>✓ Priority Instant Scoring Queue</li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>Everything in Self-Study Plan</span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span><strong>Unlimited AI Speaking Tests</strong></span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span><strong>Unlimited AI Writing Assessments</strong></span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>Full CD-IELTS Mock Exam Suite</span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>Detailed Lexical &amp; Grammar Diagnostics</span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>Priority Instant Scoring Queue</span>
+              </li>
             </ul>
           </div>
 
@@ -108,12 +141,30 @@ export function Plans() {
               Request Institute Demo
             </Link>
             <ul className="plan-features">
-              <li>✓ Dedicated Institute Portal Domain</li>
-              <li>✓ Up to 100 Active Student Seats</li>
-              <li>✓ Staff Instructor Grading Queue</li>
-              <li>✓ Custom Logo &amp; Institute Branding</li>
-              <li>✓ Student Attempt Analytics &amp; Reports</li>
-              <li>✓ Dedicated Account Manager</li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>Dedicated Institute Portal Domain</span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>Up to 100 Active Student Seats</span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>Staff Instructor Grading Queue</span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>Custom Logo &amp; Institute Branding</span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>Student Attempt Analytics &amp; Reports</span>
+              </li>
+              <li>
+                <span className="pill-check-icon">✓</span>
+                <span>Dedicated Account Manager</span>
+              </li>
             </ul>
           </div>
         </div>

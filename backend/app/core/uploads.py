@@ -145,11 +145,8 @@ SPEAKING_ANSWER_AUDIO_TYPES = {
 async def read_validated_speaking_answer(upload: UploadFile) -> tuple[bytes, str]:
     """Read a browser-recorded (MediaRecorder) Speaking response.
 
-    Unlike instructor-authored Listening audio, a recorded answer can arrive
-    in whichever container the student's browser's MediaRecorder defaults to
-    (commonly audio/webm), so this only checks the declared type is a real
-    audio format and caps the size - no magic-byte signature check, since
-    there isn't one universal signature across those containers."""
+    Browser MediaRecorder uses several possible containers, so validate each
+    supported type against its own container signature."""
     content_type = upload.content_type or ""
     if content_type not in SPEAKING_ANSWER_AUDIO_TYPES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Speaking answers must be an audio recording")
@@ -158,6 +155,22 @@ async def read_validated_speaking_answer(upload: UploadFile) -> tuple[bytes, str
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Uploaded recording is empty")
     if len(content) > 25 * 1024 * 1024:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Recordings must be 25 MB or smaller")
+    signatures = {
+        "audio/webm": content.startswith(b"\x1a\x45\xdf\xa3"),
+        "audio/ogg": content.startswith(b"OggS"),
+        "audio/mp4": len(content) >= 12 and content[4:8] == b"ftyp",
+        "audio/mpeg": content.startswith(b"ID3")
+        or (len(content) >= 2 and content[0] == 0xFF and (content[1] & 0xE0) == 0xE0),
+        "audio/mp3": content.startswith(b"ID3")
+        or (len(content) >= 2 and content[0] == 0xFF and (content[1] & 0xE0) == 0xE0),
+        "audio/wav": len(content) >= 12 and content.startswith(b"RIFF") and content[8:12] == b"WAVE",
+        "audio/x-wav": len(content) >= 12 and content.startswith(b"RIFF") and content[8:12] == b"WAVE",
+    }
+    if not signatures[content_type]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Recording content does not match its declared audio format",
+        )
     extension = {
         "audio/webm": ".webm",
         "audio/ogg": ".ogg",

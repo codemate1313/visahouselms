@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, Header, HTTPException, Request, Up
 from sqlalchemy.orm import Session
 
 from app.core.uploads import read_validated_speaking_answer
+from app.core.auth_cookies import find_refresh_token, get_refresh_token
 from app.database import get_db
 from app.dependencies.auth import get_current_session
 from app.dependencies.student_access import require_module_access, require_student
@@ -114,11 +115,12 @@ def change_my_password(
 
 @router.get("/me/sessions", response_model=list[SessionOut])
 def list_my_sessions(
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_student),
     x_refresh_token: Optional[str] = Header(default=None),
 ):
-    return account_service.list_sessions(db, user, x_refresh_token)
+    return account_service.list_sessions(db, user, find_refresh_token(request, x_refresh_token))
 
 
 @router.delete("/me/sessions/{session_id}", status_code=204)
@@ -135,7 +137,9 @@ def revoke_my_other_sessions(
     db: Session = Depends(get_db),
     user: User = Depends(require_student),
 ):
-    revoked = account_service.revoke_other_sessions(db, user, payload.refresh_token, _ip(request))
+    revoked = account_service.revoke_other_sessions(
+        db, user, get_refresh_token(request, payload.refresh_token), _ip(request)
+    )
     return {"revoked": revoked}
 
 

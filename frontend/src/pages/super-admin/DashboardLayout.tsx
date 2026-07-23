@@ -125,8 +125,8 @@ export function DashboardLayout() {
         onToggleCollapse={() => setCollapsed((prev) => !prev)}
         onLogout={handleLogout}
       />
-      <NotificationBell eyebrow="Platform updates" fallbackRoute="/super-admin/dashboard" />
       <main className="dashboard-content">
+        <NotificationBell eyebrow="Platform updates" fallbackRoute="/super-admin/dashboard" />
         <GsapRouteAnimator>
           <Outlet />
         </GsapRouteAnimator>

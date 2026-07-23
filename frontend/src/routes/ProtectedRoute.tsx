@@ -15,13 +15,14 @@ function loginPathForRole(role?: string) {
 export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const accessToken = useAuthStore((state) => state.accessToken);
   const user = useAuthStore((state) => state.user);
+  const initialized = useAuthStore((state) => state.initialized);
   const location = useLocation();
 
+  if (!initialized) return null;
+
   if (!accessToken || !user) {
-    if (consumeLogoutRedirect()) {
-      return <Navigate to="/" replace />;
-    }
-    return <Navigate to={loginPathForRole(allowedRoles?.[0])} replace />;
+    consumeLogoutRedirect();
+    return <Navigate to="/" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {

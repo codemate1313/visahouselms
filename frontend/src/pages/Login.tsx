@@ -116,7 +116,7 @@ export function Login({
         { autoAlpha: 0, scale: 0.9, y: 20 },
         { autoAlpha: 1, scale: 1, y: 0, duration: 0.35, ease: "back.out(1.2)", delay: 0.05 }
       );
-      
+
       // Staggered fade-in for background orbs
       gsap.fromTo(
         ".glowing-orb",
@@ -205,7 +205,7 @@ export function Login({
         showError("This role does not have an active portal yet.", "Login Failed");
         return;
       }
-      setSession(tokens.access_token, tokens.refresh_token, user);
+      setSession(tokens.access_token, user);
       showSuccess(`Welcome back, ${roleLabel(user.role)}!`, "Signed In");
       navigate(destination);
     } catch (requestError: unknown) {

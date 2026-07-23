@@ -2,7 +2,9 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
-import type { InstituteMember } from "./InstituteMembers";
+import type { InstituteMember, MemberCapacity } from "./InstituteMembers";
+
+const SUPER_ADMIN_CONTACT_EMAIL = "support@ieltslmspro.com";
 
 interface Props {
   role: InstituteMember["role"];
@@ -22,10 +24,19 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
     : `/super-admin/institutes/${instituteId}/accounts`);
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", first_name: "", last_name: "", phone_number: "", address: "" });
-  const [loading, setLoading] = useState(!isNew);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [capacity, setCapacity] = useState<MemberCapacity | null>(null);
   const [createdPassword, setCreatedPassword] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isNew) return;
+    apiClient.get<MemberCapacity>(`${apiBase}/member-capacity`)
+      .then(({ data }) => setCapacity(data))
+      .catch((err: unknown) => setError(extractErrorMessage(err, "Failed to load institute capacity.")))
+      .finally(() => setLoading(false));
+  }, [apiBase, isNew]);
 
   useEffect(() => {
     if (isNew) return;
@@ -72,6 +83,54 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
   }
 
   if (loading) return <p>Loading...</p>;
+
+  if (isNew) {
+    const resource: "students" | "staff" = isStudent ? "students" : "staff";
+    const canAdd = Boolean(capacity?.can_add[resource]);
+    if (!canAdd) {
+      const limit = capacity?.limits[resource];
+      return (
+        <div>
+          <h1>Add {label}</h1>
+          <section className="feature-lock-stage" aria-labelledby="member-form-lock-title">
+            <div className="feature-lock-preview" aria-hidden="true">
+              <form className="form-card wide">
+                <div className="form-grid">
+                  <div><label>First name</label><input disabled /></div>
+                  <div><label>Last name</label><input disabled /></div>
+                </div>
+                <label>Email</label><input disabled />
+                <label>Phone number</label><input disabled />
+              </form>
+            </div>
+            <div className="feature-lock-card">
+              <span className="feature-lock-icon" aria-hidden="true" />
+              <span className="page-eyebrow">Feature locked</span>
+              <h2 id="member-form-lock-title">
+                {limit === 0 ? "You do not have this feature" : `${isStudent ? "Student" : "Instructor"} capacity reached`}
+              </h2>
+              <p>
+                {limit === 0
+                  ? `This institute has 0 ${isStudent ? "student" : "instructor"} slots assigned. Contact the Super Admin to enable this feature.`
+                  : `This institute cannot add more ${isStudent ? "students" : "instructors"} right now.`}
+              </p>
+              {error && <p className="error-text">{error}</p>}
+              <div className="feature-lock-actions">
+                <a
+                  className="button-link"
+                  href={`mailto:${SUPER_ADMIN_CONTACT_EMAIL}?subject=Enable%20${isStudent ? "student" : "instructor"}%20feature`}
+                >
+                  Contact Super Admin
+                </a>
+                <button type="button" className="secondary-action" onClick={() => navigate(basePath)}>Back</button>
+              </div>
+              <p className="hint">Email: {SUPER_ADMIN_CONTACT_EMAIL}</p>
+            </div>
+          </section>
+        </div>
+      );
+    }
+  }
 
   if (createdPassword) {
     return (

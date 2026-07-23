@@ -153,6 +153,17 @@ class InstituteAdminServiceTests(unittest.TestCase):
             )
         self.assertEqual(raised.exception.status_code, 402)
 
+    def test_member_capacity_reports_zero_staff_limit(self):
+        plan = self.db.query(Plan).filter(Plan.name == "Institute Plan").one()
+        plan.staff_limit = 0
+        self.db.commit()
+
+        capacity = institute_admin_service.member_capacity(self.db, self.actor)
+
+        self.assertEqual(capacity["limits"]["staff"], 0)
+        self.assertFalse(capacity["can_add"]["staff"])
+        self.assertTrue(capacity["can_add"]["students"])
+
     def test_permissions_default_to_denied_and_are_enforced(self):
         self.institute.admin_permissions = {"view_students": True}
         self.db.commit()

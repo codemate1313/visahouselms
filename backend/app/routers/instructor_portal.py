@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, Header, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.core.auth_cookies import find_refresh_token, get_refresh_token
 from app.dependencies.auth import (
     get_current_user,
     require_password_change_complete,
@@ -109,11 +110,12 @@ def change_my_password(
 
 @router.get("/me/sessions", response_model=list[SessionOut])
 def list_my_sessions(
+    request: Request,
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
     x_refresh_token: Optional[str] = Header(default=None),
 ):
-    return account_service.list_sessions(db, actor, x_refresh_token)
+    return account_service.list_sessions(db, actor, find_refresh_token(request, x_refresh_token))
 
 
 @router.delete("/me/sessions/{session_id}", status_code=204)
@@ -135,6 +137,6 @@ def revoke_my_other_sessions(
 ):
     return {
         "revoked": account_service.revoke_other_sessions(
-            db, actor, payload.refresh_token, _ip(request)
+            db, actor, get_refresh_token(request, payload.refresh_token), _ip(request)
         )
     }

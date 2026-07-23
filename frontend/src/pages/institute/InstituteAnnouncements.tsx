@@ -138,10 +138,10 @@ export function InstituteAnnouncements() {
     .sort((a, b) => Number(selectedUserIds.includes(b.id)) - Number(selectedUserIds.includes(a.id)) || a.name.localeCompare(b.name));
 
   const audienceCards = [
-    { key: "students", title: "Students", icon: "🎓", desc: "All institute students" },
-    { key: "staff", title: "Staff", icon: "👨‍💼", desc: "Instructors and institute staff" },
-    { key: "specific_students", title: "Specific Students", icon: "👤", desc: "Select individual students" },
-    { key: "all", title: "Everyone", icon: "🌐", desc: "All institute members" },
+    { key: "students", title: "Students", icon: "ST", desc: "All institute students" },
+    { key: "staff", title: "Staff", icon: "SF", desc: "Instructors and institute staff" },
+    { key: "specific_students", title: "Specific Students", icon: "1:1", desc: "Select individual students" },
+    { key: "all", title: "Everyone", icon: "ALL", desc: "All institute members" },
   ];
 
   return (
@@ -179,7 +179,7 @@ export function InstituteAnnouncements() {
               required
             />
 
-            <label>Target Audience (Select cards)</label>
+            <label>Target audience</label>
             <div className="audience-cards-grid">
               {audienceCards.map((card) => {
                 const isSelected = selectedAudiences.includes(card.key);
@@ -202,7 +202,7 @@ export function InstituteAnnouncements() {
                       {isSelected && <span>✓</span>}
                     </div>
                     <div className="audience-card-body">
-                      <span className="audience-card-title">{card.icon} {card.title}</span>
+                      <span className="audience-card-title"><span className="audience-card-icon">{card.icon}</span>{card.title}</span>
                       <span className="audience-card-desc">{card.desc}</span>
                     </div>
                   </div>
@@ -213,7 +213,7 @@ export function InstituteAnnouncements() {
             {selectedAudiences.includes("specific_students") && (
               <div className="custom-target-select-container">
                 <div className="custom-target-header">
-                  <span>👤 Select Target Students ({selectedUserIds.length} selected)</span>
+                  <span>Select target students ({selectedUserIds.length} selected)</span>
                   {selectedUserIds.length > 0 && (
                     <button type="button" className="text-button" onClick={() => setSelectedUserIds([])}>
                       Clear all
@@ -251,25 +251,25 @@ export function InstituteAnnouncements() {
             )}
 
             <div className="schedule-timing-group">
-              <label>Publish Timing & Scheduling</label>
+              <label>Publish timing</label>
               <div className="schedule-timing-options">
                 <div
                   className={`schedule-timing-pill ${status === "published" ? "selected" : ""}`}
                   onClick={() => setStatus("published")}
                 >
-                  ⚡ Send Immediately
+                  Send now
                 </div>
                 <div
                   className={`schedule-timing-pill ${status === "scheduled" ? "selected" : ""}`}
                   onClick={() => setStatus("scheduled")}
                 >
-                  ⏰ Schedule for Later
+                  Schedule
                 </div>
                 <div
                   className={`schedule-timing-pill ${status === "draft" ? "selected" : ""}`}
                   onClick={() => setStatus("draft")}
                 >
-                  📝 Save as Draft
+                  Draft
                 </div>
               </div>
 
@@ -309,6 +309,12 @@ export function InstituteAnnouncements() {
           badge={<span className="count-chip">{announcements.length}</span>}
         >
           <div className="announcement-history-list">
+            {announcements.length === 0 && (
+              <div className="announcement-empty-state">
+                <strong>No announcements yet</strong>
+                <span>Published, scheduled, and draft announcements will appear here.</span>
+              </div>
+            )}
             {announcements.map((item) => (
               <article key={item.id}>
                 <div>

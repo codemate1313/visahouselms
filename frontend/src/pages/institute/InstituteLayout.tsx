@@ -71,8 +71,8 @@ export function InstituteLayout() {
         onToggleCollapse={() => setCollapsed((value) => !value)}
         onLogout={logout}
       />
-      <NotificationBell eyebrow="Institute updates" fallbackRoute="/institute-portal/dashboard" />
       <main className="dashboard-content" style={{ flex: 1, padding: "20px" }}>
+        <NotificationBell eyebrow="Institute updates" fallbackRoute="/institute-portal/dashboard" />
         <GsapRouteAnimator>
           <Outlet />
         </GsapRouteAnimator>

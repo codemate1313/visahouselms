@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.config import settings
+from app.core.auth_cookies import clear_refresh_cookie, get_refresh_token, set_refresh_cookie
+from app.core.rate_limit import enforce_rate_limit
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import (
     CurrentUser,
@@ -32,8 +34,8 @@ def _device_identifier(request: Request, response: Response, supplied: Optional[
         identifier,
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
         httponly=True,
-        secure=request.url.scheme == "https",
-        samesite="lax",
+        secure=settings.refresh_cookie_secure,
+        samesite=settings.refresh_cookie_samesite,
         path="/",
     )
     return identifier
@@ -51,11 +53,18 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
         device_identifier,
         payload.device_name,
     )
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    set_refresh_cookie(response, refresh_token)
+    return TokenResponse(access_token=access_token)
 
 
 @router.post("/register", response_model=TokenResponse, status_code=201)
 def register(payload: RegisterRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    client_ip = request.client.host if request.client else "unknown"
+    enforce_rate_limit(
+        f"register:{client_ip}",
+        settings.registration_rate_limit,
+        settings.registration_rate_window_seconds,
+    )
     device_identifier = _device_identifier(request, response, payload.device_id)
     access_token, refresh_token = auth_service.register(
         db,
@@ -64,27 +73,33 @@ def register(payload: RegisterRequest, request: Request, response: Response, db:
         payload.first_name,
         payload.last_name,
         request.headers.get("user-agent"),
-        request.client.host if request.client else None,
+        client_ip,
         device_identifier,
         payload.device_name,
     )
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    set_refresh_cookie(response, refresh_token)
+    return TokenResponse(access_token=access_token)
 
 
 @router.post("/refresh", response_model=TokenResponse)
-def refresh(payload: RefreshRequest, request: Request, db: Session = Depends(get_db)):
+def refresh(payload: RefreshRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    presented_token = get_refresh_token(request, payload.refresh_token)
     access_token, refresh_token = auth_service.refresh(
         db,
-        payload.refresh_token,
+        presented_token,
         request.headers.get("user-agent"),
         request.client.host if request.client else None,
     )
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    set_refresh_cookie(response, refresh_token)
+    return TokenResponse(access_token=access_token)
 
 
 @router.post("/logout", status_code=204)
-def logout(payload: LogoutRequest, db: Session = Depends(get_db)):
-    auth_service.logout(db, payload.refresh_token)
+def logout(payload: LogoutRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    token = payload.refresh_token or request.cookies.get(settings.refresh_cookie_name)
+    if token:
+        auth_service.logout(db, token)
+    clear_refresh_cookie(response)
 
 
 @router.get("/me", response_model=CurrentUser)

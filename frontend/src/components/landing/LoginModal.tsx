@@ -31,7 +31,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
   useLayoutEffect(() => {
     if (!isOpen || !overlayRef.current || !wrapperRef.current) return;
-    
+
     const ctx = gsap.context(() => {
       // Fade in the dark overlay backdrop (very fast)
       gsap.fromTo(
@@ -39,14 +39,14 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
         { autoAlpha: 0 },
         { autoAlpha: 1, duration: 0.15, ease: "power2.out" }
       );
-      
+
       // Extremely snappy and bouncy popup for the modal wrapper
       gsap.fromTo(
         wrapperRef.current,
         { autoAlpha: 0, scale: 0.5, y: 40 },
         { autoAlpha: 1, scale: 1, y: 0, duration: 0.45, ease: "back.out(2.5)" }
       );
-      
+
       // Staggered fade-in for background orbs
       gsap.fromTo(
         ".glowing-orb",
@@ -54,7 +54,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
         { autoAlpha: 0.6, scale: 1, duration: 0.6, ease: "power2.out", stagger: 0.1 }
       );
     }, overlayRef);
-    
+
     return () => ctx.revert();
   }, [isOpen]);
 

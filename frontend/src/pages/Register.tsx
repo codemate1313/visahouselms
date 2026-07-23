@@ -36,7 +36,7 @@ export function Register() {
       const { data: user } = await apiClient.get("/auth/me", {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       });
-      setSession(tokens.access_token, tokens.refresh_token, user);
+      setSession(tokens.access_token, user);
       showSuccess("Your account is ready.", "Welcome");
       navigate("/student/dashboard");
     } catch (requestError: unknown) {

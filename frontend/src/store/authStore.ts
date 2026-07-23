@@ -1,5 +1,9 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+
+// Remove sessions persisted by versions that stored bearer tokens in localStorage.
+if (typeof window !== "undefined") {
+  window.localStorage.removeItem("ielts-lms-auth");
+}
 
 export interface AuthUser {
   id: number;
@@ -16,25 +20,22 @@ export interface AuthUser {
 
 interface AuthState {
   accessToken: string | null;
-  refreshToken: string | null;
   user: AuthUser | null;
-  setSession: (accessToken: string, refreshToken: string, user: AuthUser) => void;
-  setTokens: (accessToken: string, refreshToken: string) => void;
+  initialized: boolean;
+  setSession: (accessToken: string, user: AuthUser) => void;
+  setAccessToken: (accessToken: string) => void;
   setUser: (user: AuthUser) => void;
+  setInitialized: () => void;
   clear: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      accessToken: null,
-      refreshToken: null,
-      user: null,
-      setSession: (accessToken, refreshToken, user) => set({ accessToken, refreshToken, user }),
-      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
-      setUser: (user) => set({ user }),
-      clear: () => set({ accessToken: null, refreshToken: null, user: null }),
-    }),
-    { name: "ielts-lms-auth" },
-  ),
-);
+export const useAuthStore = create<AuthState>()((set) => ({
+  accessToken: null,
+  user: null,
+  initialized: false,
+  setSession: (accessToken, user) => set({ accessToken, user, initialized: true }),
+  setAccessToken: (accessToken) => set({ accessToken }),
+  setUser: (user) => set({ user }),
+  setInitialized: () => set({ initialized: true }),
+  clear: () => set({ accessToken: null, user: null, initialized: true }),
+}));

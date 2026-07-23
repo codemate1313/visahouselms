@@ -29,6 +29,14 @@ interface ImportResult {
   skipped: Array<{ row: number; email: string | null; reason: string }>;
 }
 
+export interface MemberCapacity {
+  usage: { students: number; staff: number };
+  limits: { students: number | null; staff: number | null };
+  can_add: { students: boolean; staff: boolean };
+}
+
+const SUPER_ADMIN_CONTACT_EMAIL = "support@ieltslmspro.com";
+
 interface Props {
   role?: InstituteMember["role"];
   instituteId?: number;
@@ -44,9 +52,13 @@ export function InstituteMembers({ role, instituteId }: Props) {
   const basePath = isSuperAdmin
     ? `/super-admin/institutes/${instituteId}/accounts`
     : isStudent ? "/institute-portal/students" : "/institute-portal/staff";
-  const canProvision = (isSuperAdmin && (isStudent || isAllAccounts)) || (!isSuperAdmin && isStudent && Boolean(permissions?.manage_students));
+  const [capacity, setCapacity] = useState<MemberCapacity | null>(null);
+  const canAddStudents = Boolean(capacity?.can_add.students);
+  const canAddStaff = Boolean(capacity?.can_add.staff);
+  const canProvision = ((isSuperAdmin && (isStudent || isAllAccounts)) || (!isSuperAdmin && isStudent && Boolean(permissions?.manage_students))) && canAddStudents;
   const canManage = isSuperAdmin || (isStudent ? permissions?.manage_students : permissions?.manage_staff);
   const canViewActivity = isSuperAdmin || permissions?.view_student_activity;
+  const staffFeatureLocked = !isSuperAdmin && !isStudent && capacity?.limits.staff === 0;
   const [members, setMembers] = useState<InstituteMember[]>([]);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
@@ -62,17 +74,21 @@ export function InstituteMembers({ role, instituteId }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await apiClient.get<InstituteMember[]>(`${apiBase}/members`, {
-        params: {
-          role: (role ?? roleFilter) || undefined,
-          search: search || undefined,
-          status: statusFilter || undefined,
-          has_attempts: activityFilter === "attempts" ? true : activityFilter === "no_attempts" ? false : undefined,
-          has_devices: sessionFilter === "known_devices" ? true : sessionFilter === "no_devices" ? false : undefined,
-          has_active_sessions: sessionFilter === "active_session" ? true : undefined,
-        },
-      });
-      setMembers(data);
+      const [membersResponse, capacityResponse] = await Promise.all([
+        apiClient.get<InstituteMember[]>(`${apiBase}/members`, {
+          params: {
+            role: (role ?? roleFilter) || undefined,
+            search: search || undefined,
+            status: statusFilter || undefined,
+            has_attempts: activityFilter === "attempts" ? true : activityFilter === "no_attempts" ? false : undefined,
+            has_devices: sessionFilter === "known_devices" ? true : sessionFilter === "no_devices" ? false : undefined,
+            has_active_sessions: sessionFilter === "active_session" ? true : undefined,
+          },
+        }),
+        apiClient.get<MemberCapacity>(`${apiBase}/member-capacity`),
+      ]);
+      setMembers(membersResponse.data);
+      setCapacity(capacityResponse.data);
       setError(null);
     } catch (err: unknown) {
       setError(extractErrorMessage(err, `Failed to load ${label.toLowerCase()}.`));
@@ -158,15 +174,15 @@ export function InstituteMembers({ role, instituteId }: Props) {
         <div className="page-header-actions">
           {canProvision && <button className="secondary-action" type="button" onClick={downloadTemplate}>Download template</button>}
           {canProvision && <button className="secondary-action" type="button" onClick={() => fileInput.current?.click()}>Import CSV / Excel</button>}
-          {isSuperAdmin && <Link className="button-link" to={`${basePath}/students/new`}>Add student</Link>}
-          {isSuperAdmin && <Link className="button-link secondary-button" to={`${basePath}/staff/new`}>Add instructor</Link>}
-          {!isSuperAdmin && isStudent && canManage && <Link className="button-link" to={`${basePath}/new`}>Add student</Link>}
-          {!isSuperAdmin && !isStudent && canManage && <Link className="button-link" to={`${basePath}/new`}>Add instructor</Link>}
+          {isSuperAdmin && canAddStudents && <Link className="button-link" to={`${basePath}/students/new`}>Add student</Link>}
+          {isSuperAdmin && canAddStaff && <Link className="button-link secondary-button" to={`${basePath}/staff/new`}>Add instructor</Link>}
+          {!isSuperAdmin && isStudent && canManage && canAddStudents && <Link className="button-link" to={`${basePath}/new`}>Add student</Link>}
+          {!isSuperAdmin && !isStudent && canManage && canAddStaff && <Link className="button-link" to={`${basePath}/new`}>Add instructor</Link>}
           {canProvision && <input ref={fileInput} className="visually-hidden" type="file" accept=".csv,.xlsx" onChange={(event) => event.target.files?.[0] && importFile(event.target.files[0])} />}
         </div>
       </div>
 
-      <div className={`filter-row ${isAllAccounts ? "accounts-filter-row" : ""}`}>
+      {!staffFeatureLocked && <div className={`filter-row ${isAllAccounts ? "accounts-filter-row" : ""}`}>
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${label.toLowerCase()}...`} />
         {isAllAccounts && (
           <SearchableSelect
@@ -217,9 +233,49 @@ export function InstituteMembers({ role, instituteId }: Props) {
           searchable={false}
           className="member-filter-select"
         />
-      </div>
+      </div>}
       {error && <p className="error-text">{error}</p>}
 
+      {!loading && staffFeatureLocked && (
+        <section className="feature-lock-stage" aria-labelledby="instructor-feature-lock-title">
+          <div className="feature-lock-preview" aria-hidden="true">
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead><tr><th>Name</th><th>Email</th><th>Contact</th><th>Status</th><th>Created</th><th /></tr></thead>
+                <tbody>
+                  <tr><td><strong>Instructor access</strong></td><td>locked@example.com</td><td>-</td><td><span className="badge badge-gray">Locked</span></td><td>-</td><td /></tr>
+                  <tr><td><strong>Feature unavailable</strong></td><td>contact-admin@example.com</td><td>-</td><td><span className="badge badge-gray">Locked</span></td><td>-</td><td /></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="feature-lock-card">
+            <span className="feature-lock-icon" aria-hidden="true" />
+            <span className="page-eyebrow">Feature locked</span>
+            <h2 id="instructor-feature-lock-title">You do not have this feature</h2>
+            <p>
+              This institute has 0 instructor slots assigned. Contact the Super Admin to enable instructor management for this institute.
+            </p>
+            <div className="feature-lock-actions">
+              <a
+                className="button-link"
+                href={`mailto:${SUPER_ADMIN_CONTACT_EMAIL}?subject=Enable%20instructor%20feature`}
+              >
+                Contact Super Admin
+              </a>
+              {permissions?.view_billing && (
+                <Link className="secondary-action link-action" to="/institute-portal/billing">
+                  View subscription
+                </Link>
+              )}
+            </div>
+            <p className="hint">Email: {SUPER_ADMIN_CONTACT_EMAIL}</p>
+          </div>
+        </section>
+      )}
+
+      {!staffFeatureLocked && (
+        <>
       {loading ? <p>Loading...</p> : (
         <div className="table-wrap">
           <table className="data-table">
@@ -248,6 +304,8 @@ export function InstituteMembers({ role, instituteId }: Props) {
             </tbody>
           </table>
         </div>
+      )}
+        </>
       )}
 
       {credential && (

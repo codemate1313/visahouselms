@@ -4,7 +4,6 @@ import { apiClient } from "../../api/client";
 import { AnimatedCounter } from "../../components/AnimatedCounter";
 import { BarChart } from "../../components/charts/BarChart";
 import { DonutChart } from "../../components/charts/DonutChart";
-import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { Icon, type IconName } from "../../components/icons";
 
 type MetricKey =
@@ -358,60 +357,36 @@ export function Dashboard() {
       </div>
 
       <div className="dashboard-charts-grid">
-        <CollapsiblePanel
-          className="dashboard-chart-collapsible"
-          title="Revenue by institute"
-          description="Compare institute contribution across recorded payments."
-        >
-          <BarChart
-            data={institutesByRevenue}
-            orientation="horizontal"
-            formatValue={formatMoney}
-            ariaLabel="Revenue by institute"
-            emptyMessage="No revenue recorded yet."
-          />
-        </CollapsiblePanel>
+        <BarChart
+          data={institutesByRevenue}
+          orientation="horizontal"
+          formatValue={formatMoney}
+          ariaLabel="Revenue by institute"
+          emptyMessage="No revenue recorded yet."
+        />
 
-        <CollapsiblePanel
-          className="dashboard-chart-collapsible"
-          title="Revenue by month"
-          description="Track month-wise platform revenue movement."
-        >
-          <BarChart
-            data={revenueByMonth}
-            orientation="vertical"
-            formatValue={formatMoney}
-            ariaLabel="Revenue by month"
-            emptyMessage="No revenue recorded yet."
-          />
-        </CollapsiblePanel>
+        <BarChart
+          data={revenueByMonth}
+          orientation="vertical"
+          formatValue={formatMoney}
+          ariaLabel="Revenue by month"
+          emptyMessage="No revenue recorded yet."
+        />
 
-        <CollapsiblePanel
-          className="dashboard-chart-collapsible"
-          title="Payment status"
-          description="Review paid and partial payment split."
-        >
-          <DonutChart
-            data={paymentStatusData}
-            centerLabel="payments"
-            ariaLabel="Payment status breakdown"
-            emptyMessage="No payments recorded yet."
-          />
-        </CollapsiblePanel>
+        <DonutChart
+          data={paymentStatusData}
+          centerLabel="payments"
+          ariaLabel="Payment status breakdown"
+          emptyMessage="No payments recorded yet."
+        />
 
-        <CollapsiblePanel
-          className="dashboard-chart-collapsible"
-          title="Institutes by subscription state"
-          description="See active, grace-period, and inactive institutes."
-        >
-          <BarChart
-            data={instituteStateData}
-            orientation="vertical"
-            legend={instituteStateLegend}
-            ariaLabel="Institutes by subscription state"
-            emptyMessage="No institutes yet."
-          />
-        </CollapsiblePanel>
+        <BarChart
+          data={instituteStateData}
+          orientation="vertical"
+          legend={instituteStateLegend}
+          ariaLabel="Institutes by subscription state"
+          emptyMessage="No institutes yet."
+        />
       </div>
 
       {selectedMetric && createPortal(

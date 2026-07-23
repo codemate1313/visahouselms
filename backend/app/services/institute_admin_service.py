@@ -212,6 +212,44 @@ def list_members(
     return rows
 
 
+def member_capacity(db: Session, actor: User, scoped_institute_id: Optional[int] = None) -> dict:
+    institute_id = _require_institute(actor, scoped_institute_id)
+    institute = db.get(Institute, institute_id)
+    if institute is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Institute not found")
+
+    counts = subscription_service.usage(db, institute_id)
+    limits = {
+        "students": institute.student_limit,
+        "staff": institute.staff_limit,
+    }
+    subscription, state = subscription_service.current_subscription(db, institute_id)
+    if institute.onboarding_status != "draft" and subscription is not None and subscription.plan is not None:
+        limits = {
+            "students": subscription.plan.student_limit,
+            "staff": subscription.plan.staff_limit,
+        }
+
+    can_add = {
+        resource: state in ("active", "grace") and limit is not None and counts[resource] < limit
+        for resource, limit in limits.items()
+    }
+    if institute.onboarding_status == "draft":
+        can_add = {
+            resource: limit is not None and counts[resource] < limit
+            for resource, limit in limits.items()
+        }
+
+    return {
+        "usage": {
+            "students": counts["students"],
+            "staff": counts["staff"],
+        },
+        "limits": limits,
+        "can_add": can_add,
+    }
+
+
 def get_member_or_404(
     db: Session,
     actor: User,

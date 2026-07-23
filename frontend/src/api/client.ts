@@ -1,16 +1,9 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
-import { shouldRedirectHomeAfterLogout } from "../auth/logoutRedirect";
 import { useAuthStore } from "../store/authStore";
 import { useLoaderStore } from "../store/loaderStore";
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 const baseURL = API_BASE_URL;
-
-function loginPathForRole(role?: string) {
-  if (role === "SUPER_ADMIN") return "/super-admin/login";
-  if (role === "SA_INSTRUCTOR") return "/sa-instructor/login";
-  return "/login";
-}
 
 function getEventMessage(config: InternalAxiosRequestConfig): string {
   const url = config.url ?? "";
@@ -99,19 +92,29 @@ let refreshPromise: Promise<string> | null = null;
 let logoutInProgress = false;
 
 async function refreshAccessToken(): Promise<string> {
-  const { refreshToken, setTokens, clear } = useAuthStore.getState();
-  if (!refreshToken) {
-    clear();
-    throw new Error("No refresh token available");
-  }
+  const { setAccessToken, clear } = useAuthStore.getState();
 
   try {
-    const { data } = await refreshClient.post("/auth/refresh", { refresh_token: refreshToken });
-    setTokens(data.access_token, data.refresh_token);
+    const { data } = await refreshClient.post("/auth/refresh", {});
+    setAccessToken(data.access_token);
     return data.access_token;
   } catch (err) {
     clear();
     throw err;
+  }
+}
+
+export async function initializeSession(): Promise<void> {
+  if (useAuthStore.getState().initialized) return;
+
+  try {
+    const accessToken = await refreshAccessToken();
+    const { data: user } = await refreshClient.get("/auth/me", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    useAuthStore.getState().setSession(accessToken, user);
+  } catch {
+    useAuthStore.getState().clear();
   }
 }
 
@@ -132,7 +135,6 @@ apiClient.interceptors.response.use(
       && !logoutInProgress
     ) {
       originalRequest._retry = true;
-      const roleBeforeRefresh = useAuthStore.getState().user?.role;
       try {
         refreshPromise ??= refreshAccessToken().finally(() => {
           refreshPromise = null;
@@ -141,7 +143,7 @@ apiClient.interceptors.response.use(
         originalRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
         return apiClient(originalRequest);
       } catch {
-        window.location.href = shouldRedirectHomeAfterLogout() ? "/" : loginPathForRole(roleBeforeRefresh);
+        window.location.href = "/";
         return Promise.reject(error);
       }
     }
@@ -158,10 +160,7 @@ export async function revokeCurrentSession(): Promise<void> {
       await refreshPromise.catch(() => undefined);
     }
 
-    const refreshToken = useAuthStore.getState().refreshToken;
-    if (refreshToken) {
-      await refreshClient.post("/auth/logout", { refresh_token: refreshToken });
-    }
+    await refreshClient.post("/auth/logout", {});
   } finally {
     useAuthStore.getState().clear();
     logoutInProgress = false;

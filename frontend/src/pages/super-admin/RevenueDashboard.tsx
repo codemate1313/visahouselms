@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { apiClient } from "../../api/client";
 import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { Icon } from "../../components/icons";
+import { BarChart } from "../../components/charts/BarChart";
 import { SearchableSelect } from "../../components/SearchableSelect";
 
 interface InstituteRow {
@@ -271,88 +272,29 @@ export function RevenueDashboard() {
       </div>
 
       <div className="revenue-tables-grid">
-        <CollapsiblePanel
-          className="table-card-block"
-          title="Revenue by Institute"
-          description="Institute-level revenue and transaction counts."
-          badge={<span className="count-chip">{summary.by_institute.length}</span>}
-        >
-          <div className="table-wrap">
-            <table className="data-table sleek-institutes-table">
-              <thead>
-                <tr>
-                  <th>Institute</th>
-                  <th>Revenue</th>
-                  <th style={{ textAlign: "right", paddingRight: 24 }}>Transactions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summary.by_institute.length === 0 && (
-                  <tr><td colSpan={3} className="empty-cell">No revenue recorded yet.</td></tr>
-                )}
-                {summary.by_institute.map((row) => (
-                  <tr key={row.institute_id}>
-                    <td>
-                      <div className="table-item-cell">
-                        <div className="table-avatar-tile">
-                          {row.institute_name.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="table-item-title">{row.institute_name}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <strong style={{ fontSize: 13.5 }}>{formatCurrency(row.total)}</strong>
-                    </td>
-                    <td style={{ textAlign: "right", paddingRight: 24 }}>
-                      <span className="badge badge-gray" style={{ fontWeight: 600 }}>
-                        {row.count} txns
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CollapsiblePanel>
+        <BarChart
+          data={summary.by_institute.map((row) => ({
+            label: row.institute_name,
+            value: Number(row.total) || 0,
+            subtext: `${row.count} txns`,
+          }))}
+          orientation="horizontal"
+          formatValue={(val) => formatCurrency(String(val))}
+          ariaLabel="Revenue by Institute"
+          emptyMessage="No revenue recorded yet."
+        />
 
-        <CollapsiblePanel
-          className="table-card-block"
-          title="Revenue by Month"
-          description="Month-wise revenue and transaction counts."
-          badge={<span className="count-chip">{summary.by_month.length}</span>}
-        >
-          <div className="table-wrap">
-            <table className="data-table sleek-institutes-table">
-              <thead>
-                <tr>
-                  <th>Month</th>
-                  <th>Revenue</th>
-                  <th style={{ textAlign: "right", paddingRight: 24 }}>Transactions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summary.by_month.length === 0 && (
-                  <tr><td colSpan={3} className="empty-cell">No monthly data.</td></tr>
-                )}
-                {summary.by_month.map((row) => (
-                  <tr key={row.month}>
-                    <td>
-                      <strong style={{ fontSize: 13.5 }}>{row.month}</strong>
-                    </td>
-                    <td>
-                      <strong style={{ fontSize: 13.5 }}>{formatCurrency(row.total)}</strong>
-                    </td>
-                    <td style={{ textAlign: "right", paddingRight: 24 }}>
-                      <span className="badge badge-gray" style={{ fontWeight: 600 }}>
-                        {row.count} txns
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CollapsiblePanel>
+        <BarChart
+          data={summary.by_month.map((row) => ({
+            label: row.month,
+            value: Number(row.total) || 0,
+            subtext: `${row.count} txns`,
+          }))}
+          orientation="vertical"
+          formatValue={(val) => formatCurrency(String(val))}
+          ariaLabel="Revenue by Month"
+          emptyMessage="No monthly data."
+        />
       </div>
 
       <CollapsiblePanel
