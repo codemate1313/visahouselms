@@ -99,10 +99,22 @@ function AnimatedStat({
 export function Home() {
   const { openLoginModal } = useOutletContext<LandingContext>();
   const [activeShowcaseDetail, setActiveShowcaseDetail] = useState<string | null>(null);
-  const [expandedFeatureModule, setExpandedFeatureModule] = useState<string | null>(null);
+  const [flippedModules, setFlippedModules] = useState<Record<string, boolean>>({});
 
   const toggleModuleExpand = (moduleKey: string) => {
-    setExpandedFeatureModule((prev) => (prev === moduleKey ? null : moduleKey));
+    const isFlipped = !flippedModules[moduleKey];
+    setFlippedModules((prev) => ({ ...prev, [moduleKey]: isFlipped }));
+
+    const cardInner = document.querySelector(`.card-inner-${moduleKey}`);
+    if (cardInner) {
+      gsap.to(cardInner, {
+        rotateY: isFlipped ? -180 : 0,
+        duration: 0.7,
+        ease: "back.out(1.2)",
+        transformPerspective: 1000,
+        overwrite: "auto",
+      });
+    }
   };
   const typewriterRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -445,146 +457,174 @@ export function Home() {
         <div className="features-grid">
           {/* Card 1 */}
           <div
-            className={`feature-card red-accent-card ${expandedFeatureModule === "listening" ? "is-expanded" : ""}`}
+            className="feature-card red-accent-card"
             onClick={() => toggleModuleExpand("listening")}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleModuleExpand("listening"); }}
           >
-            {/* Front Main Content (Crimson Front Card) */}
-            <div className="card-front-content">
-              <div className="feature-icon bg-rose">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-                  <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
-                </svg>
+            <div className="card-inner card-inner-listening">
+              {/* Front Main Content (Crimson Front Card) */}
+              <div className="card-front-content">
+                <div className="feature-icon bg-rose">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                  </svg>
+                </div>
+                <h3 className="feature-title">Listening Simulations</h3>
+                <p className="feature-desc">
+                  High-fidelity audio playback with native accents, section progress &amp; answer autocommit.
+                </p>
+                <div className="card-expand-action">
+                  <span>{flippedModules["listening"] ? "Flip Back ↺" : "Flip for Specs ↻"}</span>
+                </div>
               </div>
-              <h3 className="feature-title">Listening Simulations</h3>
-              <p className="feature-desc">
-                High-fidelity audio playback with native accents, section progress &amp; answer autocommit.
-              </p>
-              <div className="card-expand-action">
-                <span>{expandedFeatureModule === "listening" ? "Hide Details ▲" : "Click for Specs ↓"}</span>
-              </div>
-            </div>
 
-            {/* Revealable Back Detail Panel */}
-            <div className="card-back-details">
-              <div className="back-details-badge">MODULE SPECS &amp; DEEP DIAGNOSTICS</div>
-              <ul className="back-spec-list">
-                <li><strong>Native Accents:</strong> British, Australian, North American &amp; Indian tracks</li>
-                <li><strong>Audio Engine:</strong> Speed scaling (0.75x–1.5x), waveform seeker &amp; autocommit</li>
-                <li><strong>Diagnostics:</strong> Instant script alignment &amp; section band breakdown</li>
-              </ul>
+              {/* Revealable Back Detail Panel */}
+              <div className="card-back-details">
+                <div>
+                  <div className="back-details-badge">MODULE SPECS &amp; DEEP DIAGNOSTICS</div>
+                  <ul className="back-spec-list">
+                    <li><strong>Native Accents:</strong> British, Australian, North American &amp; Indian tracks</li>
+                    <li><strong>Audio Engine:</strong> Speed scaling (0.75x–1.5x), waveform seeker &amp; autocommit</li>
+                    <li><strong>Diagnostics:</strong> Instant script alignment &amp; section band breakdown</li>
+                  </ul>
+                </div>
+                <div className="card-expand-action" style={{ color: '#e11d48', marginTop: '12px' }}>
+                  <span>Flip Back ↺</span>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Card 2 */}
           <div
-            className={`feature-card red-accent-card ${expandedFeatureModule === "reading" ? "is-expanded" : ""}`}
+            className="feature-card red-accent-card"
             onClick={() => toggleModuleExpand("reading")}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleModuleExpand("reading"); }}
           >
-            {/* Front Main Content (Crimson Front Card) */}
-            <div className="card-front-content">
-              <div className="feature-icon bg-indigo">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-                </svg>
+            <div className="card-inner card-inner-reading">
+              {/* Front Main Content (Crimson Front Card) */}
+              <div className="card-front-content">
+                <div className="feature-icon bg-indigo">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                  </svg>
+                </div>
+                <h3 className="feature-title">Reading Passages</h3>
+                <p className="feature-desc">
+                  Split-screen passage view with text highlighter, T/F/NG, Matching &amp; summary completion.
+                </p>
+                <div className="card-expand-action">
+                  <span>{flippedModules["reading"] ? "Flip Back ↺" : "Flip for Specs ↻"}</span>
+                </div>
               </div>
-              <h3 className="feature-title">Reading Passages</h3>
-              <p className="feature-desc">
-                Split-screen passage view with text highlighter, T/F/NG, Matching &amp; summary completion.
-              </p>
-              <div className="card-expand-action">
-                <span>{expandedFeatureModule === "reading" ? "Hide Details ▲" : "Click for Specs ↓"}</span>
-              </div>
-            </div>
 
-            {/* Revealable Back Detail Panel */}
-            <div className="card-back-details">
-              <div className="back-details-badge">MODULE SPECS &amp; DEEP DIAGNOSTICS</div>
-              <ul className="back-spec-list">
-                <li><strong>Dual-Pane View:</strong> Split-screen passage with sticky questions &amp; live highlighter</li>
-                <li><strong>Question Types:</strong> T/F/NG, Matching Headings, Sentence &amp; Summary completion</li>
-                <li><strong>Analytics:</strong> Time-per-question tracker &amp; vocabulary lookup assistant</li>
-              </ul>
+              {/* Revealable Back Detail Panel */}
+              <div className="card-back-details">
+                <div>
+                  <div className="back-details-badge">MODULE SPECS &amp; DEEP DIAGNOSTICS</div>
+                  <ul className="back-spec-list">
+                    <li><strong>Dual-Pane View:</strong> Split-screen passage with sticky questions &amp; live highlighter</li>
+                    <li><strong>Question Types:</strong> T/F/NG, Matching Headings, Sentence &amp; Summary completion</li>
+                    <li><strong>Analytics:</strong> Time-per-question tracker &amp; vocabulary lookup assistant</li>
+                  </ul>
+                </div>
+                <div className="card-expand-action" style={{ color: '#e11d48', marginTop: '12px' }}>
+                  <span>Flip Back ↺</span>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Card 3 */}
           <div
-            className={`feature-card red-accent-card ${expandedFeatureModule === "writing" ? "is-expanded" : ""}`}
+            className="feature-card red-accent-card"
             onClick={() => toggleModuleExpand("writing")}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleModuleExpand("writing"); }}
           >
-            {/* Front Main Content (Crimson Front Card) */}
-            <div className="card-front-content">
-              <div className="feature-icon bg-emerald">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                </svg>
+            <div className="card-inner card-inner-writing">
+              {/* Front Main Content (Crimson Front Card) */}
+              <div className="card-front-content">
+                <div className="feature-icon bg-emerald">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                </div>
+                <h3 className="feature-title">Writing Assessor</h3>
+                <p className="feature-desc">
+                  Task 1 (Graphs/Diagrams) &amp; Task 2 (Essays) with word counter, AI scoring &amp; grammar fixes.
+                </p>
+                <div className="card-expand-action">
+                  <span>{flippedModules["writing"] ? "Flip Back ↺" : "Flip for Specs ↻"}</span>
+                </div>
               </div>
-              <h3 className="feature-title">Writing Assessor</h3>
-              <p className="feature-desc">
-                Task 1 (Graphs/Diagrams) &amp; Task 2 (Essays) with word counter, AI scoring &amp; grammar fixes.
-              </p>
-              <div className="card-expand-action">
-                <span>{expandedFeatureModule === "writing" ? "Hide Details ▲" : "Click for Specs ↓"}</span>
-              </div>
-            </div>
 
-            {/* Revealable Back Detail Panel */}
-            <div className="card-back-details">
-              <div className="back-details-badge">MODULE SPECS &amp; DEEP DIAGNOSTICS</div>
-              <ul className="back-spec-list">
-                <li><strong>Task 1 &amp; Task 2:</strong> Dual editor with real-time word counter &amp; prompt analyzer</li>
-                <li><strong>AI Scorer:</strong> Instant breakdown across TR, CC, LR, and GRA criteria</li>
-                <li><strong>Rewrite Engine:</strong> Sentence-level improvement suggestions &amp; grammar highlights</li>
-              </ul>
+              {/* Revealable Back Detail Panel */}
+              <div className="card-back-details">
+                <div>
+                  <div className="back-details-badge">MODULE SPECS &amp; DEEP DIAGNOSTICS</div>
+                  <ul className="back-spec-list">
+                    <li><strong>Task 1 &amp; Task 2:</strong> Dual editor with real-time word counter &amp; prompt analyzer</li>
+                    <li><strong>AI Scorer:</strong> Instant breakdown across TR, CC, LR, and GRA criteria</li>
+                    <li><strong>Rewrite Engine:</strong> Sentence-level improvement suggestions &amp; grammar highlights</li>
+                  </ul>
+                </div>
+                <div className="card-expand-action" style={{ color: '#e11d48', marginTop: '12px' }}>
+                  <span>Flip Back ↺</span>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Card 4 */}
           <div
-            className={`feature-card red-accent-card ${expandedFeatureModule === "speaking" ? "is-expanded" : ""}`}
+            className="feature-card red-accent-card"
             onClick={() => toggleModuleExpand("speaking")}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleModuleExpand("speaking"); }}
           >
-            {/* Front Main Content (Crimson Front Card) */}
-            <div className="card-front-content">
-              <div className="feature-icon bg-amber">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                  <line x1="12" y1="19" x2="12" y2="22" />
-                </svg>
+            <div className="card-inner card-inner-speaking">
+              {/* Front Main Content (Crimson Front Card) */}
+              <div className="card-front-content">
+                <div className="feature-icon bg-amber">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="22" />
+                  </svg>
+                </div>
+                <h3 className="feature-title">Speaking Evaluator</h3>
+                <p className="feature-desc">
+                  Part 1-3 voice recording with instant speech-to-text, lexical density &amp; fluency scoring.
+                </p>
+                <div className="card-expand-action">
+                  <span>{flippedModules["speaking"] ? "Flip Back ↺" : "Flip for Specs ↻"}</span>
+                </div>
               </div>
-              <h3 className="feature-title">Speaking Evaluator</h3>
-              <p className="feature-desc">
-                Part 1-3 voice recording with instant speech-to-text, lexical density &amp; fluency scoring.
-              </p>
-              <div className="card-expand-action">
-                <span>{expandedFeatureModule === "speaking" ? "Hide Details ▲" : "Click for Specs ↓"}</span>
-              </div>
-            </div>
 
-            {/* Revealable Back Detail Panel */}
-            <div className="card-back-details">
-              <div className="back-details-badge">MODULE SPECS &amp; DEEP DIAGNOSTICS</div>
-              <ul className="back-spec-list">
-                <li><strong>Part 1, 2 &amp; 3:</strong> Cue card preparation timer &amp; full audio recording engine</li>
-                <li><strong>Phoneme Specs:</strong> Pronunciation accuracy, pause cadence &amp; WPM rhythm score</li>
-                <li><strong>Audio Review:</strong> Interactive transcript alignment with teacher audio commentary</li>
-              </ul>
+              {/* Revealable Back Detail Panel */}
+              <div className="card-back-details">
+                <div>
+                  <div className="back-details-badge">MODULE SPECS &amp; DEEP DIAGNOSTICS</div>
+                  <ul className="back-spec-list">
+                    <li><strong>Part 1, 2 &amp; 3:</strong> Cue card preparation timer &amp; full audio recording engine</li>
+                    <li><strong>Phoneme Specs:</strong> Pronunciation accuracy, pause cadence &amp; WPM rhythm score</li>
+                    <li><strong>Audio Review:</strong> Interactive transcript alignment with teacher audio commentary</li>
+                  </ul>
+                </div>
+                <div className="card-expand-action" style={{ color: '#e11d48', marginTop: '12px' }}>
+                  <span>Flip Back ↺</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
