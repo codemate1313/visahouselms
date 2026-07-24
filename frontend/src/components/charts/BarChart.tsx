@@ -170,9 +170,13 @@ export function BarChart({
                 ? row.color
                 : color
                 ? color
-                : idx === 0
-                ? "var(--chart-highlight)"
-                : "var(--chart-muted)";
+                : idx % 4 === 0
+                ? "#e11d2e"
+                : idx % 4 === 1
+                ? "#3b82f6"
+                : idx % 4 === 2
+                ? "#10b981"
+                : "#f59e0b";
 
               return (
                 <div
@@ -272,9 +276,13 @@ export function BarChart({
                 ? row.color
                 : color
                 ? color
-                : idx === 0
-                ? "var(--chart-highlight)"
-                : "var(--chart-muted)";
+                : idx % 4 === 0
+                ? "#e11d2e"
+                : idx % 4 === 1
+                ? "#3b82f6"
+                : idx % 4 === 2
+                ? "#10b981"
+                : "#f59e0b";
 
               return (
                 <g

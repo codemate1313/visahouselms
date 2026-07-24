@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import type { ExamModule } from "../../api/types";
+import { usePageTitleStore } from "../../store/pageTitleStore";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All statuses" },
@@ -40,6 +41,7 @@ export function ModuleControl() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
+  const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   async function load() {
     setLoading(true);
@@ -57,6 +59,11 @@ export function ModuleControl() {
     load();
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [status]);
+
+  useEffect(() => {
+    setItemCount(modules.length);
+    return () => setItemCount(null);
+  }, [modules.length, setItemCount]);
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -83,13 +90,6 @@ export function ModuleControl() {
 
   return (
     <div className="module-control-page">
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">Course Management</span>
-          <h1>Course Control</h1>
-          <p className="page-subtitle">Every course grouped under the SA Instructor who created it.</p>
-        </div>
-      </div>
 
       <form className="filter-bar course-filter-bar" onSubmit={submit}>
         <div className="search-input-wrapper">

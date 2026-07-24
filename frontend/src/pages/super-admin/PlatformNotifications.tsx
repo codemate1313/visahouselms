@@ -1,21 +1,42 @@
 import { type FormEvent, useEffect, useState } from "react";
-
 import { apiClient } from "../../api/client";
 import type { Announcement, TargetInstituteOption, TargetStudentOption } from "../../api/types";
-import { CollapsiblePanel } from "../../components/CollapsiblePanel";
+import { Icon, type IconName } from "../../components/icons";
+import { usePageTitleStore } from "../../store/pageTitleStore";
 
 interface TargetOptions {
   institutes: TargetInstituteOption[];
   students: TargetStudentOption[];
 }
 
+interface AudienceCardOption {
+  key: string;
+  title: string;
+  iconName: IconName;
+  desc: string;
+}
+
 function formatDate(value: string | null) {
-  return value ? new Date(value).toLocaleString() : "Draft";
+  return value ? new Date(value).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }) : "Draft";
 }
 
 function normalizeSearch(value: string) {
   return value.trim().toLowerCase();
 }
+
+const AUDIENCE_CARDS: AudienceCardOption[] = [
+  { key: "students", title: "Students", iconName: "instructors", desc: "All platform students" },
+  { key: "staff", title: "Staff", iconName: "admin", desc: "Instructors & administrators" },
+  { key: "institutes", title: "Specific Institutes", iconName: "building", desc: "Select custom institutes" },
+  { key: "specific_students", title: "Specific Students", iconName: "user", desc: "Select individual students" },
+  { key: "all", title: "Everyone", iconName: "products", desc: "All users on the platform" },
+];
 
 export function PlatformNotifications() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -32,8 +53,12 @@ export function PlatformNotifications() {
   const [instituteSearch, setInstituteSearch] = useState("");
   const [studentSearch, setStudentSearch] = useState("");
 
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<"ALL" | "PUBLISHED" | "SCHEDULED" | "DRAFT">("ALL");
+
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   async function loadData() {
     try {
@@ -52,6 +77,11 @@ export function PlatformNotifications() {
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    setItemCount(announcements.length);
+    return () => setItemCount(null);
+  }, [announcements.length, setItemCount]);
 
   function toggleAudienceCard(key: string) {
     if (key === "all") {
@@ -97,6 +127,16 @@ export function PlatformNotifications() {
       setSelectedUserIds(selectedUserIds.filter((i) => i !== id));
     } else {
       setSelectedUserIds([...selectedUserIds, id]);
+    }
+  }
+
+  async function deleteAnnouncement(id: number) {
+    if (!window.confirm("Are you sure you want to delete this notification?")) return;
+    try {
+      await apiClient.delete(`/super-admin/announcements/${id}`);
+      await loadData();
+    } catch {
+      setError("Failed to delete notification.");
     }
   }
 
@@ -170,249 +210,321 @@ export function PlatformNotifications() {
     })
     .sort((a, b) => Number(selectedUserIds.includes(b.id)) - Number(selectedUserIds.includes(a.id)) || a.name.localeCompare(b.name));
 
-  const audienceCards = [
-    { key: "students", title: "Students", icon: "🎓", desc: "All platform students" },
-    { key: "staff", title: "Staff", icon: "👨‍💼", desc: "Instructors and administrators" },
-    { key: "institutes", title: "Specific Institutes", icon: "🏛️", desc: "Select custom institutes" },
-    { key: "specific_students", title: "Specific Students", icon: "👤", desc: "Select individual students" },
-    { key: "all", title: "Everyone", icon: "🌐", desc: "All users on the platform" },
-  ];
+  const filteredAnnouncements = announcements.filter((item) => {
+    const q = historySearch.trim().toLowerCase();
+    const matchesSearch = !q || item.title.toLowerCase().includes(q) || item.message.toLowerCase().includes(q);
+    const matchesStatus =
+      historyStatusFilter === "ALL" ||
+      item.status.toUpperCase() === historyStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="announcement-admin-page">
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">Platform notifications</span>
-          <h1>Publish notifications</h1>
-        </div>
-      </div>
-      {error && <p className="error-text">{error}</p>}
+      {error && <p className="error-text" style={{ marginBottom: 16 }}>{error}</p>}
+      
       <div className="announcement-admin-grid">
-        <CollapsiblePanel
-          className="workspace-panel announcement-publisher-panel"
-          title="New platform notification"
-          description="Publish a targeted or scheduled announcement with custom audience selection."
-        >
-          <form onSubmit={(event) => void publish(event)}>
-            <label htmlFor="platform-notification-title">Title</label>
-            <input
-              id="platform-notification-title"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="e.g. System Maintenance Notice"
-              required
-            />
+        {/* Left Section: Create / Publish Form */}
+        <div className="pn-card pn-publisher-card">
+          <div className="pn-card-header">
+            <div>
+              <h2 className="pn-card-title">New Platform Notification</h2>
+              <p className="pn-card-subtitle">Publish a targeted or scheduled announcement with custom audience selection.</p>
+            </div>
+          </div>
 
-            <label htmlFor="platform-notification-message">Message</label>
-            <textarea
-              id="platform-notification-message"
-              rows={5}
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              placeholder="Write notification content..."
-              required
-            />
+          <form onSubmit={(event) => void publish(event)} className="pn-form">
+            <div className="pn-form-group">
+              <label htmlFor="platform-notification-title">Notification Title</label>
+              <input
+                id="platform-notification-title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="e.g. Scheduled System Maintenance"
+                required
+                className="pn-input"
+              />
+            </div>
 
-            <label>Target Audience (Select cards)</label>
-            <div className="audience-cards-grid">
-              {audienceCards.map((card) => {
-                const isSelected = selectedAudiences.includes(card.key);
-                return (
-                  <div
-                    key={card.key}
-                    className={`audience-checkbox-card ${isSelected ? "selected" : ""}`}
-                    role="checkbox"
-                    aria-checked={isSelected}
-                    tabIndex={0}
-                    onClick={() => toggleAudienceCard(card.key)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        toggleAudienceCard(card.key);
-                      }
-                    }}
-                  >
-                    <div className="audience-card-checkbox-custom">
-                      {isSelected && <span>✓</span>}
+            <div className="pn-form-group">
+              <label htmlFor="platform-notification-message">Message Content</label>
+              <textarea
+                id="platform-notification-message"
+                rows={4}
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                placeholder="Write detailed notification content..."
+                required
+                className="pn-textarea"
+              />
+            </div>
+
+            <div className="pn-form-group">
+              <label>Target Audience</label>
+              <div className="pn-audience-grid">
+                {AUDIENCE_CARDS.map((card) => {
+                  const isSelected = selectedAudiences.includes(card.key);
+                  return (
+                    <div
+                      key={card.key}
+                      className={`pn-audience-card ${isSelected ? "is-selected" : ""}`}
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      tabIndex={0}
+                      onClick={() => toggleAudienceCard(card.key)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          toggleAudienceCard(card.key);
+                        }
+                      }}
+                    >
+                      <div className="pn-audience-icon-wrapper">
+                        <Icon name={card.iconName} />
+                      </div>
+                      <div className="pn-audience-info">
+                        <strong>{card.title}</strong>
+                        <span>{card.desc}</span>
+                      </div>
+                      <div className="pn-audience-checkbox">
+                        {isSelected && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </div>
                     </div>
-                    <div className="audience-card-body">
-                      <span className="audience-card-title">{card.icon} {card.title}</span>
-                      <span className="audience-card-desc">{card.desc}</span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
             {selectedAudiences.includes("institutes") && (
-              <div className="custom-target-select-container">
-                <div className="custom-target-header">
-                  <span>🏛️ Select Target Institutes ({selectedInstituteIds.length} selected)</span>
+              <div className="pn-target-container">
+                <div className="pn-target-header">
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Icon name="building" />
+                    <span>Select Target Institutes ({selectedInstituteIds.length} selected)</span>
+                  </div>
                   {selectedInstituteIds.length > 0 && (
-                    <button type="button" className="text-button" onClick={() => setSelectedInstituteIds([])}>
+                    <button type="button" className="pn-text-btn" onClick={() => setSelectedInstituteIds([])}>
                       Clear all
                     </button>
                   )}
                 </div>
                 <input
                   type="text"
-                  className="target-search-input"
-                  placeholder="Type institute name, slug, ID, active, inactive, or published..."
+                  className="pn-input pn-target-search"
+                  placeholder="Filter institutes by name or slug..."
                   value={instituteSearch}
                   onChange={(e) => setInstituteSearch(e.target.value)}
                 />
-                <div className="chip-select-list">
+                <div className="pn-chip-list">
                   {filteredInstitutes.map((inst) => {
                     const active = selectedInstituteIds.includes(inst.id);
                     return (
                       <button
                         type="button"
                         key={inst.id}
-                        className={`chip-option ${active ? "active" : ""}`}
+                        className={`pn-chip ${active ? "is-active" : ""}`}
                         onClick={() => toggleInstitute(inst.id)}
                       >
                         <span>{active ? "✓" : "+"}</span>
                         <strong>{inst.name}</strong>
-                        <small>
-                          slug: {inst.slug} · {inst.onboarding_status ?? "published"} · {inst.is_active === false ? "Inactive" : "Active"}
-                        </small>
                       </button>
                     );
                   })}
-                  {filteredInstitutes.length === 0 && (
-                    <small className="help-text">
-                      No matching institutes found. Try the institute name, slug, ID, active, inactive, draft, or published.
-                    </small>
-                  )}
                 </div>
               </div>
             )}
 
             {selectedAudiences.includes("specific_students") && (
-              <div className="custom-target-select-container">
-                <div className="custom-target-header">
-                  <span>👤 Select Target Students ({selectedUserIds.length} selected)</span>
+              <div className="pn-target-container">
+                <div className="pn-target-header">
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Icon name="user" />
+                    <span>Select Target Students ({selectedUserIds.length} selected)</span>
+                  </div>
                   {selectedUserIds.length > 0 && (
-                    <button type="button" className="text-button" onClick={() => setSelectedUserIds([])}>
+                    <button type="button" className="pn-text-btn" onClick={() => setSelectedUserIds([])}>
                       Clear all
                     </button>
                   )}
                 </div>
                 <input
                   type="text"
-                  className="target-search-input"
-                  placeholder="Search students by name or email..."
+                  className="pn-input pn-target-search"
+                  placeholder="Filter students by name or email..."
                   value={studentSearch}
                   onChange={(e) => setStudentSearch(e.target.value)}
                 />
-                <div className="chip-select-list">
+                <div className="pn-chip-list">
                   {filteredStudents.map((st) => {
                     const active = selectedUserIds.includes(st.id);
                     return (
                       <button
                         type="button"
                         key={st.id}
-                        className={`chip-option ${active ? "active" : ""}`}
+                        className={`pn-chip ${active ? "is-active" : ""}`}
                         onClick={() => toggleStudent(st.id)}
                       >
                         <span>{active ? "✓" : "+"}</span>
                         <strong>{st.name}</strong>
-                        <small>{st.email}{st.institute_id ? ` · Institute #${st.institute_id}` : ""}</small>
                       </button>
                     );
                   })}
-                  {filteredStudents.length === 0 && (
-                    <small className="help-text">No matching students found.</small>
-                  )}
                 </div>
               </div>
             )}
 
-            <div className="schedule-timing-group">
+            <div className="pn-form-group">
               <label>Publish Timing & Scheduling</label>
-              <div className="schedule-timing-options">
-                <div
-                  className={`schedule-timing-pill ${status === "published" ? "selected" : ""}`}
-                  onClick={() => setStatus("published")}
-                >
-                  ⚡ Send Immediately
-                </div>
-                <div
-                  className={`schedule-timing-pill ${status === "scheduled" ? "selected" : ""}`}
-                  onClick={() => setStatus("scheduled")}
-                >
-                  ⏰ Schedule for Later
-                </div>
-                <div
-                  className={`schedule-timing-pill ${status === "draft" ? "selected" : ""}`}
-                  onClick={() => setStatus("draft")}
-                >
-                  📝 Save as Draft
-                </div>
-              </div>
+              {(() => {
+                const TIMING_OPTIONS = [
+                  { key: "published", label: "Send Immediately", icon: "notifications" as const },
+                  { key: "scheduled", label: "Schedule for Later", icon: "session" as const },
+                  { key: "draft", label: "Save as Draft", icon: "edit" as const },
+                ];
+                const activeTimingIdx = TIMING_OPTIONS.findIndex((opt) => opt.key === status);
+                return (
+                  <div className="apple-segmented-control">
+                    <div
+                      className="apple-segmented-thumb"
+                      style={{
+                        width: "calc((100% - 4px) / 3)",
+                        transform: `translateX(calc(${activeTimingIdx} * 100%))`,
+                      }}
+                    />
+                    {TIMING_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setStatus(opt.key as "published" | "scheduled" | "draft")}
+                        className={`apple-segmented-tab ${status === opt.key ? "is-active" : ""}`}
+                      >
+                        <Icon name={opt.icon} />
+                        <span>{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {status === "scheduled" && (
-                <div>
+                <div style={{ marginTop: 12 }}>
                   <label htmlFor="scheduled-datetime-input">Schedule Date & Time</label>
                   <input
                     id="scheduled-datetime-input"
                     type="datetime-local"
-                    className="datetime-picker-input"
+                    className="pn-input"
                     value={scheduledAt}
                     onChange={(e) => setScheduledAt(e.target.value)}
                     min={new Date().toISOString().slice(0, 16)}
                     required
                   />
-                  <small className="help-text">Notification will automatically publish at this date and time.</small>
                 </div>
               )}
             </div>
 
-            <button disabled={busy} style={{ marginTop: 12 }}>
+            <button type="submit" className="pn-submit-btn" disabled={busy}>
               {busy
                 ? "Processing..."
                 : status === "scheduled"
-                  ? "Schedule notification"
+                  ? "Schedule Notification"
                   : status === "draft"
-                    ? "Save draft"
-                    : "Publish notification"}
+                    ? "Save Draft"
+                    : "Publish Notification"}
             </button>
           </form>
-        </CollapsiblePanel>
+        </div>
 
-        <CollapsiblePanel
-          className="workspace-panel announcement-history-panel"
-          title="Notification history"
-          description="Review published, scheduled, and draft platform announcements."
-          badge={<span className="count-chip">{announcements.length}</span>}
-        >
-          <div className="announcement-history-list">
-            {announcements.map((item) => (
-              <article key={item.id}>
-                <div>
-                  <span
-                    className={`badge ${item.status === "published"
-                        ? "badge-green"
-                        : item.status === "scheduled"
-                          ? "badge-purple"
-                          : "badge-gray"
-                      }`}
-                  >
-                    {item.status}
-                  </span>
-                  <h3>{item.title}</h3>
-                  <p>{item.message}</p>
-                  <small>
-                    Audience: {item.audience}
-                    {item.status === "scheduled" && item.scheduled_at
-                      ? ` · Scheduled for: ${formatDate(item.scheduled_at)}`
-                      : ` · Published: ${formatDate(item.published_at)}`}
-                  </small>
-                </div>
-              </article>
-            ))}
+        {/* Right Section: Notification History */}
+        <div className="pn-card pn-history-card">
+          <div className="pn-card-header">
+            <div>
+              <h2 className="pn-card-title">Notification History</h2>
+              <p className="pn-card-subtitle">Review published, scheduled, and draft platform announcements.</p>
+            </div>
+            <span className="pn-history-count">{announcements.length}</span>
           </div>
-        </CollapsiblePanel>
+
+          <div className="pn-history-toolbar">
+            <div className="pn-search-wrap">
+              <Icon name="search" />
+              <input
+                type="text"
+                placeholder="Search title or content..."
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                className="pn-history-search"
+              />
+            </div>
+            {(() => {
+              const STATUS_TABS = ["ALL", "PUBLISHED", "SCHEDULED", "DRAFT"] as const;
+              const activeTabIdx = STATUS_TABS.indexOf(historyStatusFilter);
+              return (
+                <div className="apple-segmented-control">
+                  <div
+                    className="apple-segmented-thumb"
+                    style={{
+                      width: "calc((100% - 4px) / 4)",
+                      transform: `translateX(calc(${activeTabIdx} * 100%))`,
+                    }}
+                  />
+                  {STATUS_TABS.map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setHistoryStatusFilter(tab)}
+                      className={`apple-segmented-tab ${historyStatusFilter === tab ? "is-active" : ""}`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+
+          <div className="pn-history-list">
+            {filteredAnnouncements.length === 0 ? (
+              <div className="pn-empty-state">
+                <Icon name="notifications" />
+                <p>No notifications found matching your search or status filter.</p>
+              </div>
+            ) : (
+              filteredAnnouncements.map((item) => (
+                <article key={item.id} className="pn-history-item">
+                  <div className="pn-history-item-top">
+                    <span className={`pn-badge badge-${item.status}`}>
+                      {item.status}
+                    </span>
+                    <span className="pn-history-date">
+                      {item.status === "scheduled" && item.scheduled_at
+                        ? `Scheduled: ${formatDate(item.scheduled_at)}`
+                        : `Published: ${formatDate(item.published_at)}`}
+                    </span>
+                  </div>
+
+                  <h3 className="pn-history-item-title">{item.title}</h3>
+                  <p className="pn-history-item-body">{item.message}</p>
+
+                  <div className="pn-history-item-bottom">
+                    <span className="pn-audience-tag">Audience: {item.audience}</span>
+                    <button
+                      type="button"
+                      className="pn-delete-btn"
+                      onClick={() => void deleteAnnouncement(item.id)}
+                      title="Delete Notification"
+                    >
+                      <Icon name="trash" />
+                    </button>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

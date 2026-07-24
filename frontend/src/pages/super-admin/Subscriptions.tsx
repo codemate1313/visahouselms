@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import { SearchableSelect } from "../../components/SearchableSelect";
+import { usePageTitleStore } from "../../store/pageTitleStore";
 import type { PlanRow } from "./Plans";
 
 interface InstituteRow {
@@ -236,6 +237,7 @@ export function Subscriptions() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   useEffect(() => {
     apiClient.get("/super-admin/institutes").then(({ data }) => {
@@ -244,6 +246,11 @@ export function Subscriptions() {
     });
     apiClient.get("/super-admin/plans").then(({ data }) => setPlans(data));
   }, []);
+
+  useEffect(() => {
+    setItemCount(institutes.length);
+    return () => setItemCount(null);
+  }, [institutes.length, setItemCount]);
 
   const load = useCallback(async () => {
     if (selected === null) return;

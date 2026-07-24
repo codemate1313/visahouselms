@@ -10,6 +10,7 @@ import { ConfirmModal } from "../../components/ConfirmModal";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
+import { usePageTitleStore } from "../../store/pageTitleStore";
 
 interface PasswordNotice {
   email: string;
@@ -34,6 +35,7 @@ export function Instructors() {
 
   const [deletingInstructor, setDeletingInstructor] = useState<InstructorAccount | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   async function loadInstructors() {
     setLoading(true);
@@ -55,6 +57,11 @@ export function Instructors() {
     loadInstructors();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
+
+  useEffect(() => {
+    setItemCount(instructors.length);
+    return () => setItemCount(null);
+  }, [instructors.length, setItemCount]);
 
   function handleSearch(event: FormEvent) {
     event.preventDefault();
@@ -171,14 +178,6 @@ export function Instructors() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>SA Instructors</h1>
-          <p className="page-subtitle">Manage the central team that creates assessment modules and mock tests.</p>
-        </div>
-        <Link to="/super-admin/instructors/new" className="button-link">+ New Instructor</Link>
-      </div>
-
       {passwordNotice && (
         <div className="delivery-notice success" role="status" style={{ marginBottom: 20 }}>
           <span>Temporary password for <strong>{passwordNotice.email}</strong>: <code>{passwordNotice.temporary_password}</code></span>
@@ -230,6 +229,8 @@ export function Instructors() {
           </button>
         </div>
 
+        <Link to="/super-admin/instructors/new" className="button-link">+ New Instructor</Link>
+
         <div className="filter-result-count">
           Showing <strong>{instructors.length}</strong> {instructors.length === 1 ? "entry" : "entries"}
         </div>
@@ -280,7 +281,7 @@ export function Instructors() {
                       </div>
                     </td>
                     <td>{new Date(instructor.created_at).toLocaleDateString("en-GB")}</td>
-                    <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>
+                    <td className="table-actions institute-row-actions">
                       <ToggleSwitch
                         checked={instructor.is_active}
                         onChange={() => toggleActive(instructor)}

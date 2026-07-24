@@ -8,6 +8,7 @@ import { ConfirmModal } from "../../components/ConfirmModal";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
+import { usePageTitleStore } from "../../store/pageTitleStore";
 
 interface MethodRow {
   id: number;
@@ -27,6 +28,7 @@ export function PaymentMethods() {
 
   const [deletingMethod, setDeletingMethod] = useState<MethodRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -50,6 +52,11 @@ export function PaymentMethods() {
     const matchesStatus = !statusFilter || (statusFilter === "active" ? m.is_active : !m.is_active);
     return matchesSearch && matchesStatus;
   });
+
+  useEffect(() => {
+    setItemCount(filteredMethods.length);
+    return () => setItemCount(null);
+  }, [filteredMethods.length, setItemCount]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();

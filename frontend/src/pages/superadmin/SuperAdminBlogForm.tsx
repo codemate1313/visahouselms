@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
+import "./SuperAdminBlogForm.css";
 
 export function SuperAdminBlogForm() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +23,7 @@ export function SuperAdminBlogForm() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     if (!isEdit || !id) return;
@@ -73,172 +75,219 @@ export function SuperAdminBlogForm() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <Link to="/super-admin/blogs" className="text-xs text-rose-600 font-bold hover:underline mb-1 inline-block">
-            ← Back to Blogs List
+    <div className="sab-form-container">
+      {/* Top Header Bar */}
+      <div className="sab-form-header">
+        <div className="sab-form-header-left">
+          <Link to="/super-admin/blogs" className="sab-back-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            <span>Back to Articles</span>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {isEdit ? "Edit Educational Article" : "Create New Educational Article"}
-          </h1>
+          <div className="sab-form-title-group">
+            <h1>{isEdit ? "Edit Educational Article" : "Create Educational Article"}</h1>
+            <p>Draft, optimize SEO metadata, and publish learning content</p>
+          </div>
+        </div>
+
+        <div className="sab-form-header-actions">
+          <Link to="/super-admin/blogs" className="sat-btn sat-btn-secondary">
+            Cancel
+          </Link>
+          <button
+            type="submit"
+            form="blog-article-form"
+            disabled={loading}
+            className="sat-btn sat-btn-primary"
+          >
+            {loading ? "Saving..." : isEdit ? "Update Article" : "Publish Article"}
+          </button>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 space-y-5 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Article Title *</label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              className="w-full px-3 py-2 text-sm border rounded-xl dark:bg-slate-900 dark:border-slate-700 text-gray-900 dark:text-white"
-              placeholder="e.g. 10 Strategies to Score Band 8.0 in Speaking"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">URL Slug *</label>
-            <input
-              type="text"
-              required
-              value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-              className="w-full px-3 py-2 text-sm border rounded-xl dark:bg-slate-900 dark:border-slate-700 text-gray-900 dark:text-white font-mono"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Category</label>
-            <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 text-sm border rounded-xl dark:bg-slate-900 dark:border-slate-700 text-gray-900 dark:text-white"
-            >
-              <option value="Speaking Tips">Speaking Tips</option>
-              <option value="Reading Passages">Reading Passages</option>
-              <option value="Writing Assessor">Writing Assessor</option>
-              <option value="General Guidance">General Guidance</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Author Name</label>
-            <input
-              type="text"
-              value={formData.author_name}
-              onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
-              className="w-full px-3 py-2 text-sm border rounded-xl dark:bg-slate-900 dark:border-slate-700 text-gray-900 dark:text-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Est. Read Time (Minutes)</label>
-            <input
-              type="number"
-              value={formData.read_time_minutes}
-              onChange={(e) => setFormData({ ...formData, read_time_minutes: parseInt(e.target.value) || 5 })}
-              className="w-full px-3 py-2 text-sm border rounded-xl dark:bg-slate-900 dark:border-slate-700 text-gray-900 dark:text-white"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Featured Image URL (Unsplash or CDN)</label>
-          <input
-            type="text"
-            value={formData.featured_image_url || ""}
-            onChange={(e) => setFormData({ ...formData, featured_image_url: e.target.value })}
-            className="w-full px-3 py-2 text-sm border rounded-xl dark:bg-slate-900 dark:border-slate-700 text-gray-900 dark:text-white"
-            placeholder="https://images.unsplash.com/..."
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Short Summary (Excerpt) *</label>
-          <textarea
-            required
-            rows={2}
-            value={formData.summary}
-            onChange={(e) => setFormData({ ...formData, summary: e.target.value, meta_description: formData.meta_description || e.target.value })}
-            className="w-full px-3 py-2 text-sm border rounded-xl dark:bg-slate-900 dark:border-slate-700 text-gray-900 dark:text-white"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Article Content (Markdown) *</label>
-          <textarea
-            required
-            rows={12}
-            value={formData.content_markdown}
-            onChange={(e) => setFormData({ ...formData, content_markdown: e.target.value })}
-            className="w-full px-3 py-2 text-sm border rounded-xl dark:bg-slate-900 dark:border-slate-700 text-gray-900 dark:text-white font-mono"
-            placeholder="# Title&#10;&#10;## Subheading&#10;&#10;Paragraph content..."
-          />
-        </div>
-
-        {/* SEO Meta Tags Box */}
-        <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
-          <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">SEO &amp; Social Meta Tags</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">SEO Title Tag</label>
+      {/* 2-Column Editor Workspace */}
+      <form id="blog-article-form" onSubmit={handleSubmit}>
+        <div className="sab-form-layout">
+          {/* Main Article Content Panel */}
+          <div className="sab-form-main-card">
+            <div className="sab-field-group">
+              <label>
+                <span>Article Title *</span>
+                {formData.slug && <span className="sab-slug-hint">/{formData.slug}</span>}
+              </label>
               <input
                 type="text"
-                value={formData.meta_title || ""}
-                onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
-                className="w-full px-3 py-2 text-xs border rounded-lg dark:bg-slate-800 dark:border-slate-700 text-gray-900 dark:text-white"
+                required
+                value={formData.title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                className="sab-input-field"
+                placeholder="e.g. 10 Strategies to Score Band 8.0 in IELTS Speaking"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (Comma separated)</label>
+
+            <div className="sab-field-group">
+              <label>URL Slug *</label>
               <input
                 type="text"
-                value={formData.tags || ""}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                className="w-full px-3 py-2 text-xs border rounded-lg dark:bg-slate-800 dark:border-slate-700 text-gray-900 dark:text-white"
+                required
+                value={formData.slug}
+                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                className="sab-input-field sab-mono-editor"
+                placeholder="ielts-speaking-band-8-strategies"
+              />
+            </div>
+
+            <div className="sab-field-group">
+              <label>Short Summary (Excerpt) *</label>
+              <textarea
+                required
+                rows={3}
+                value={formData.summary}
+                onChange={(e) => setFormData({ ...formData, summary: e.target.value, meta_description: formData.meta_description || e.target.value })}
+                className="sab-input-field sab-textarea-field"
+                placeholder="Brief high-level summary displayed on blog cards and search results..."
+              />
+            </div>
+
+            <div className="sab-field-group">
+              <label>Article Content (Markdown) *</label>
+              <textarea
+                required
+                rows={14}
+                value={formData.content_markdown}
+                onChange={(e) => setFormData({ ...formData, content_markdown: e.target.value })}
+                className="sab-input-field sab-textarea-field sab-mono-editor"
+                placeholder="# Title&#10;&#10;## Key Section Heading&#10;&#10;Write comprehensive article content with standard Markdown formatting..."
               />
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">SEO Meta Description</label>
-            <input
-              type="text"
-              value={formData.meta_description || ""}
-              onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
-              className="w-full px-3 py-2 text-xs border rounded-lg dark:bg-slate-800 dark:border-slate-700 text-gray-900 dark:text-white"
-            />
-          </div>
-        </div>
 
-        <div className="flex items-center justify-between pt-2">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="is_published_cb"
-              checked={formData.is_published}
-              onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-            />
-            <label htmlFor="is_published_cb" className="text-xs font-bold text-gray-700 dark:text-gray-300">
-              Publish Live Immediately
-            </label>
-          </div>
+          {/* Right Media & Metadata Panel */}
+          <div className="sab-form-side-card">
+            {/* Live Featured Cover Preview */}
+            <div className="sab-field-group">
+              <label>Cover Photo Preview</label>
+              <div className="sab-image-preview-container">
+                {formData.featured_image_url && !imgError ? (
+                  <img
+                    src={formData.featured_image_url}
+                    alt="Cover preview"
+                    className="sab-image-preview-img"
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <div className="sab-image-preview-empty">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    <span>No Image Preview</span>
+                  </div>
+                )}
+              </div>
+            </div>
 
-          <div className="flex gap-3">
-            <Link to="/super-admin/blogs" className="px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-xl">
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2 text-sm font-semibold bg-rose-600 text-white rounded-xl hover:bg-rose-700"
-            >
-              {loading ? "Saving..." : isEdit ? "Update Article" : "Publish Article"}
-            </button>
+            <div className="sab-field-group">
+              <label>Featured Image URL</label>
+              <input
+                type="url"
+                value={formData.featured_image_url || ""}
+                onChange={(e) => {
+                  setImgError(false);
+                  setFormData({ ...formData, featured_image_url: e.target.value });
+                }}
+                className="sab-input-field"
+                placeholder="https://images.unsplash.com/..."
+              />
+            </div>
+
+            <div className="sab-field-group">
+              <label>Category</label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="sab-input-field"
+              >
+                <option value="Speaking Tips">Speaking Tips</option>
+                <option value="Reading Passages">Reading Passages</option>
+                <option value="Writing Assessor">Writing Assessor</option>
+                <option value="General Guidance">General Guidance</option>
+              </select>
+            </div>
+
+            <div className="sab-field-group">
+              <label>Author Name</label>
+              <input
+                type="text"
+                value={formData.author_name}
+                onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
+                className="sab-input-field"
+              />
+            </div>
+
+            <div className="sab-field-group">
+              <label>Est. Read Time (Minutes)</label>
+              <input
+                type="number"
+                min="1"
+                value={formData.read_time_minutes}
+                onChange={(e) => setFormData({ ...formData, read_time_minutes: parseInt(e.target.value) || 5 })}
+                className="sab-input-field"
+              />
+            </div>
+
+            <div className="sab-publish-switch-group">
+              <div className="sab-publish-label">
+                <strong>Publish Status</strong>
+                <span>{formData.is_published ? "Live on public site" : "Saved as draft"}</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.is_published}
+                onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
+                style={{ width: "20px", height: "20px", accentColor: "#e11d2e", cursor: "pointer" }}
+              />
+            </div>
+
+            {/* SEO Metadata Sub-card */}
+            <div className="sab-seo-card">
+              <h3>SEO &amp; Social Meta Tags</h3>
+              <div className="sab-field-group">
+                <label>SEO Title Tag</label>
+                <input
+                  type="text"
+                  value={formData.meta_title || ""}
+                  onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
+                  className="sab-input-field"
+                  placeholder="Article Title | IELTS LMS"
+                />
+              </div>
+
+              <div className="sab-field-group">
+                <label>Tags (Comma separated)</label>
+                <input
+                  type="text"
+                  value={formData.tags || ""}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  className="sab-input-field"
+                  placeholder="IELTS, Preparation, Speaking"
+                />
+              </div>
+
+              <div className="sab-field-group">
+                <label>SEO Meta Description</label>
+                <textarea
+                  rows={2}
+                  value={formData.meta_description || ""}
+                  onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
+                  className="sab-input-field sab-textarea-field"
+                  placeholder="Search engine meta description..."
+                />
+              </div>
+            </div>
           </div>
         </div>
       </form>

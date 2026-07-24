@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
+import { usePageTitleStore } from "../../store/pageTitleStore";
 import "./SuperAdminTestimonials.css";
 
 interface TestimonialAdminItem {
@@ -25,11 +26,12 @@ export function SuperAdminTestimonials() {
   const [editingItem, setEditingItem] = useState<Partial<TestimonialAdminItem> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   const fetchItems = () => {
     setLoading(true);
     apiClient
-      .get("/super-admin/testimonials")
+      .get<TestimonialAdminItem[]>("/super-admin/testimonials")
       .then((res) => {
         setItems(res.data || []);
         setLoading(false);
@@ -84,85 +86,13 @@ export function SuperAdminTestimonials() {
     return matchesSearch;
   });
 
-  const totalCount = items.length;
-  const activeCount = items.filter((i) => i.is_active).length;
-  const inactiveCount = items.filter((i) => !i.is_active).length;
+  useEffect(() => {
+    setItemCount(filteredItems.length);
+    return () => setItemCount(null);
+  }, [filteredItems.length, setItemCount]);
 
   return (
     <div className="sat-container">
-      {/* Top Banner Header */}
-      <div className="sat-header">
-        <div className="sat-header-info">
-          <div className="sat-header-title-row">
-            <span className="sat-icon-box">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-            </span>
-            <h1>Student Testimonials Management</h1>
-            <span className="sat-badge sat-badge-total">{totalCount} Total</span>
-          </div>
-          <p>Create, order, and toggle verified student reviews shown on the public landing page.</p>
-        </div>
-
-        <div className="sat-header-actions">
-          <button
-            type="button"
-            onClick={() => {
-              setEditingItem({
-                student_name: "",
-                student_role: "Computer-Delivered Academic Candidate",
-                target_score: "Achieved Band 8.0",
-                avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
-                rating: 5,
-                quote: "",
-                is_active: true,
-                display_order: items.length + 1,
-              });
-              setIsModalOpen(true);
-            }}
-            className="sat-btn sat-btn-primary"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            <span>Add New Testimonial</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Metrics Summary Strip */}
-      <div className="sat-metrics-grid">
-        <div className="sat-metric-card">
-          <div className="sat-metric-data">
-            <span className="sat-metric-label">Total Items</span>
-            <span className="sat-metric-value">{totalCount}</span>
-          </div>
-        </div>
-
-        <div className="sat-metric-card">
-          <div className="sat-metric-data">
-            <span className="sat-metric-label">Active Published</span>
-            <span className="sat-metric-value sat-text-green">{activeCount}</span>
-          </div>
-        </div>
-
-        <div className="sat-metric-card">
-          <div className="sat-metric-data">
-            <span className="sat-metric-label">Draft / Inactive</span>
-            <span className="sat-metric-value sat-text-yellow">{inactiveCount}</span>
-          </div>
-        </div>
-
-        <div className="sat-metric-card">
-          <div className="sat-metric-data">
-            <span className="sat-metric-label">Avg Student Score</span>
-            <span className="sat-metric-value sat-text-red">Band 8.0+</span>
-          </div>
-        </div>
-      </div>
-
       {/* Filter and Search Bar */}
       <div className="sat-toolbar">
         <div className="sat-search-box">
@@ -223,6 +153,30 @@ export function SuperAdminTestimonials() {
               </svg>
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setEditingItem({
+                student_name: "",
+                student_role: "Computer-Delivered Academic Candidate",
+                target_score: "Achieved Band 8.0",
+                avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
+                rating: 5,
+                quote: "",
+                is_active: true,
+                display_order: items.length + 1,
+              });
+              setIsModalOpen(true);
+            }}
+            className="sat-btn sat-btn-primary"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>Add Testimonial</span>
+          </button>
         </div>
       </div>
 

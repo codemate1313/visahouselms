@@ -169,20 +169,6 @@ export function DemoAccounts() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>Institute Demo Accounts</h1>
-          <p className="page-subtitle">Manage trial demo environments for prospective institutes.</p>
-        </div>
-        <button
-          type="button"
-          className={showForm ? "secondary-link-btn" : "button-link"}
-          onClick={() => setShowForm((v) => !v)}
-        >
-          {showForm ? "Cancel" : "+ New Demo"}
-        </button>
-      </div>
-
       {created && (
         <div className="modal-backdrop">
           <div className="modal-card">
@@ -293,9 +279,13 @@ export function DemoAccounts() {
           </button>
         </div>
 
-        <div className="filter-result-count">
-          Showing <strong>{filteredRows.length}</strong> {filteredRows.length === 1 ? "entry" : "entries"}
-        </div>
+        <button
+          type="button"
+          className={showForm ? "secondary-link-btn" : "button-link"}
+          onClick={() => setShowForm((v) => !v)}
+        >
+          {showForm ? "Cancel" : "+ New Demo"}
+        </button>
       </div>
 
       {loading ? (

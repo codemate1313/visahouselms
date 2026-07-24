@@ -9,6 +9,7 @@ import { ConfirmModal } from "../../components/ConfirmModal";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
+import { usePageTitleStore } from "../../store/pageTitleStore";
 
 interface InstituteRow {
   id: number;
@@ -40,6 +41,7 @@ export function Institutes() {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDirection, setSortDirection] = useState<"ascending" | "descending">("ascending");
   const [error, setError] = useState<string | null>(null);
+  const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,6 +80,11 @@ export function Institutes() {
       const comparison = left[sortKey].localeCompare(right[sortKey]);
       return sortDirection === "ascending" ? comparison : -comparison;
     });
+
+  useEffect(() => {
+    setItemCount(filteredRows.length);
+    return () => setItemCount(null);
+  }, [filteredRows.length, setItemCount]);
 
   function changeSort(nextKey: SortKey) {
     if (nextKey === sortKey) {
@@ -197,11 +204,6 @@ export function Institutes() {
 
   return (
     <div>
-      <div className="page-header">
-        <h1>Institutes</h1>
-        <Link to="/super-admin/onboarding/new" className="button-link">Onboard Institute</Link>
-      </div>
-
       {error && <p className="error-text">{error}</p>}
 
       <div className="filter-bar institutes-filter-bar">
@@ -259,6 +261,8 @@ export function Institutes() {
             <Icon name="spreadsheet" />
           </button>
         </div>
+
+        <Link to="/super-admin/onboarding/new" className="button-link">Onboard Institute</Link>
 
         <div className="filter-result-count">
           Showing <strong>{filteredRows.length}</strong> {filteredRows.length === 1 ? "entry" : "entries"}

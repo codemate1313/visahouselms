@@ -11,9 +11,11 @@ import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
 import { useAuthStore } from "../../store/authStore";
+import { usePageTitleStore } from "../../store/pageTitleStore";
 
 export function AccountsList() {
   const currentUser = useAuthStore((state) => state.user);
+  const setItemCount = usePageTitleStore((state) => state.setItemCount);
   const [accounts, setAccounts] = useState<SuperAdminAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +48,11 @@ export function AccountsList() {
     const matchesStatus = !statusFilter || (statusFilter === "active" ? account.is_active : !account.is_active);
     return matchesSearch && matchesStatus;
   });
+
+  useEffect(() => {
+    setItemCount(filteredAccounts.length);
+    return () => setItemCount(null);
+  }, [filteredAccounts.length, setItemCount]);
 
   async function handleToggleActive(account: SuperAdminAccount) {
     setError(null);
@@ -149,16 +156,6 @@ export function AccountsList() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>Super Admin Accounts</h1>
-          <p className="page-subtitle">Manage system administrators with global portal access.</p>
-        </div>
-        <Link to="/super-admin/accounts/new" className="button-link">
-          + New Account
-        </Link>
-      </div>
-
       <div className="filter-bar institutes-filter-bar">
         <div className="search-input-wrap">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="search-icon">
@@ -199,6 +196,10 @@ export function AccountsList() {
             <Icon name="spreadsheet" />
           </button>
         </div>
+
+        <Link to="/super-admin/accounts/new" className="button-link">
+          + New Account
+        </Link>
 
         <div className="filter-result-count">
           Showing <strong>{filteredAccounts.length}</strong> {filteredAccounts.length === 1 ? "entry" : "entries"}

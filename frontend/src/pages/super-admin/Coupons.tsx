@@ -9,6 +9,7 @@ import { ConfirmModal } from "../../components/ConfirmModal";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
+import { usePageTitleStore } from "../../store/pageTitleStore";
 
 export interface CouponRow {
   id: number;
@@ -36,6 +37,7 @@ export function Coupons() {
 
   const [deletingCoupon, setDeletingCoupon] = useState<CouponRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,6 +59,11 @@ export function Coupons() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    setItemCount(coupons.length);
+    return () => setItemCount(null);
+  }, [coupons.length, setItemCount]);
 
   async function toggleActive(coupon: CouponRow) {
     setError(null);
@@ -148,14 +155,6 @@ export function Coupons() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>Coupons</h1>
-          <p className="page-subtitle">Manage promotional discount codes for plans and courses.</p>
-        </div>
-        <Link to="/super-admin/coupons/new" className="button-link">+ New Coupon</Link>
-      </div>
-
       <div className="filter-bar institutes-filter-bar">
         <div className="search-input-wrap">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="search-icon">
@@ -210,6 +209,8 @@ export function Coupons() {
             <Icon name="spreadsheet" />
           </button>
         </div>
+
+        <Link to="/super-admin/coupons/new" className="button-link">+ New Coupon</Link>
 
         <div className="filter-result-count">
           Showing <strong>{coupons.length}</strong> {coupons.length === 1 ? "entry" : "entries"}

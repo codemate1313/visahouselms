@@ -9,6 +9,7 @@ import { ConfirmModal } from "../../components/ConfirmModal";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
+import { usePageTitleStore } from "../../store/pageTitleStore";
 
 export interface PlanRow {
   id: number;
@@ -36,6 +37,7 @@ export function Plans() {
   const [error, setError] = useState<string | null>(null);
   const [deletingPlan, setDeletingPlan] = useState<PlanRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -66,6 +68,11 @@ export function Plans() {
 
     return matchesSearch && matchesStatus;
   });
+
+  useEffect(() => {
+    setItemCount(filteredPlans.length);
+    return () => setItemCount(null);
+  }, [filteredPlans.length, setItemCount]);
 
   async function toggleActive(plan: PlanRow) {
     setError(null);
@@ -181,11 +188,6 @@ export function Plans() {
 
   return (
     <div>
-      <div className="page-header">
-        <h1>Subscription Plans</h1>
-        <Link to="/super-admin/plans/new" className="button-link">+ New Plan</Link>
-      </div>
-
       {error && <p className="error-text">{error}</p>}
 
       <div className="filter-bar institutes-filter-bar">
@@ -229,6 +231,8 @@ export function Plans() {
             <Icon name="spreadsheet" />
           </button>
         </div>
+
+        <Link to="/super-admin/plans/new" className="button-link">+ New Plan</Link>
 
         <div className="filter-result-count">
           Showing <strong>{filteredPlans.length}</strong> {filteredPlans.length === 1 ? "entry" : "entries"}

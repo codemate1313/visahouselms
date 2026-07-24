@@ -83,10 +83,10 @@ interface Summary {
 }
 
 const SUBSCRIPTION_STATE_COLORS: Record<string, string> = {
-  active: "var(--emerald-500)",  // Emerald Green
-  grace: "var(--amber-500)",   // Amber Gold
-  expired: "var(--red-500)", // Coral Red
-  none: "var(--slate-400)",    // Slate
+  active: "#10b981",  // Emerald Green
+  grace: "#f59e0b",   // Amber Gold
+  expired: "#e11d2e", // Red Accent
+  none: "#94a3b8",    // Slate Gray
 };
 
 const SUBSCRIPTION_STATE_LABELS: Record<string, string> = {
@@ -97,11 +97,11 @@ const SUBSCRIPTION_STATE_LABELS: Record<string, string> = {
 };
 
 const PAYMENT_STATUS_COLORS: Record<string, string> = {
-  paid: "var(--emerald-500)",     // Emerald Green
-  partial: "var(--amber-500)",  // Amber Gold
-  pending: "var(--blue-500)",  // Electric Blue
-  failed: "var(--red-500)",   // Coral Red
-  refunded: "var(--shade-8b5cf6)", // Violet Purple
+  paid: "#10b981",     // Emerald Green
+  partial: "#f59e0b",  // Amber Gold
+  pending: "#3b82f6",  // Electric Blue
+  failed: "#e11d2e",   // Red Accent
+  refunded: "#8b5cf6", // Violet Purple
 };
 
 function formatMoney(value: number): string {
@@ -128,13 +128,6 @@ function formatDetailValue(
       : date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
   }
   return String(value);
-}
-
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good Morning";
-  if (hour < 17) return "Good Afternoon";
-  return "Good Evening";
 }
 
 function Sparkline({ theme }: { theme: "green" | "blue" | "amber" | "purple" | "slate" }) {
@@ -336,14 +329,6 @@ export function Dashboard() {
 
   return (
     <div className="dashboard-overview">
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">Platform Overview</span>
-          <h1>{getGreeting()}, Super Admin</h1>
-          <p className="page-subtitle">A real-time overview of institutes, subscriptions, and platform revenue.</p>
-        </div>
-      </div>
-
       {/* Sleek & Interactive Executive Metric Grid */}
       <div className="executive-metric-grid">
         <MetricItem metricKey="institutes" iconName="building" onOpen={openMetric} label="Total Institutes" numericValue={counts.institutes_total} badgeText="Active" badgeTheme="green" />

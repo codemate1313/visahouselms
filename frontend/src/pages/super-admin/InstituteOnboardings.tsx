@@ -140,16 +140,6 @@ export function InstituteOnboardings() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>Institute Onboarding</h1>
-          <p className="page-subtitle">Manage physical agreements from first payment through portal publication.</p>
-        </div>
-        <Link className="button-link" to="/super-admin/onboarding/new">
-          Onboard institute
-        </Link>
-      </div>
-
       <div className="filter-bar institutes-filter-bar">
         <div className="search-input-wrap">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="search-icon">
@@ -191,9 +181,9 @@ export function InstituteOnboardings() {
           </button>
         </div>
 
-        <div className="filter-result-count">
-          Showing <strong>{filteredRows.length}</strong> {filteredRows.length === 1 ? "entry" : "entries"}
-        </div>
+        <Link className="button-link" to="/super-admin/onboarding/new">
+          Onboard institute
+        </Link>
       </div>
 
       {loading ? (

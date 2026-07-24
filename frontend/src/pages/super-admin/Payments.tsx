@@ -7,6 +7,7 @@ import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
+import { usePageTitleStore } from "../../store/pageTitleStore";
 import type { PlanRow } from "./Plans";
 
 interface InstituteRow {
@@ -72,6 +73,7 @@ export function Payments() {
   const [dueReference, setDueReference] = useState("");
   const [dueSaving, setDueSaving] = useState(false);
   const [dueError, setDueError] = useState<string | null>(null);
+  const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -94,6 +96,11 @@ export function Payments() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    setItemCount(rows.length);
+    return () => setItemCount(null);
+  }, [rows.length, setItemCount]);
 
   useEffect(() => {
     apiClient.get("/super-admin/institutes").then(({ data }) => setInstitutes(data));
