@@ -91,9 +91,10 @@
 
   <section class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 96px;">
     <div style="display: flex; justify-content: center; margin-bottom: 40px;">
-      <div style="display: inline-flex; padding: 4px; background: var(--chip); border: 1px solid var(--line); border-radius: 100px;">
-        <button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 100px; border: none; background: var(--ink); color: var(--bg); cursor: pointer;">Monthly</button>
-        <button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 100px; border: none; background: transparent; color: var(--ink2); cursor: pointer;">Annual &middot; save 20%</button>
+      <div style="position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 360px); padding: 4px; background: var(--chip); border: 1px solid var(--line); border-radius: 100px; overflow: hidden;">
+        <span aria-hidden="true" style="position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 2); border-radius: 100px; background: var(--ink); transform: translateX({{ billingPillX }}); transition: transform .38s cubic-bezier(.2,.7,.2,1); box-shadow: 0 10px 24px -14px var(--ink);"></span>
+        <button type="button" onClick="{{ setMonthly }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 100px; border: none; background: transparent; color: {{ monthlyColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">Monthly</button>
+        <button type="button" onClick="{{ setAnnual }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 100px; border: none; background: transparent; color: {{ annualColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">Annual &middot; save 20%</button>
       </div>
     </div>
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
@@ -102,8 +103,8 @@
     
     <div style="font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--ink2); margin-bottom: 12px;">Student</div>
     <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px;">
-      <span style="font-size: 52px; font-weight: 700; letter-spacing: -2px;">&#8377;1,499</span>
-      <span style="font-size: 15px; color: var(--ink2);">/ month</span>
+      <span style="font-size: 52px; font-weight: 700; letter-spacing: -2px;">{{ studentPrice }}</span>
+      <span style="font-size: 15px; color: var(--ink2);">{{ studentPeriod }}</span>
     </div>
     <p style="font-size: 14.5px; line-height: 1.55; color: var(--ink2); margin-bottom: 24px;">Direct-student access to all four modules with AI feedback.</p>
     <button type="button" style="font-family: inherit; width: 100%; font-size: 15px; font-weight: 600; padding: 14px; border-radius: 100px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; margin-bottom: 26px;">Choose Student</button>
@@ -131,8 +132,8 @@
     <div style="position: absolute; top: 20px; right: 20px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 10px; border-radius: 100px; background: rgba(255,255,255,0.22);">Most popular</div>
     <div style="font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; opacity: 0.9; margin-bottom: 12px;">Institute</div>
     <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px;">
-      <span style="font-size: 52px; font-weight: 700; letter-spacing: -2px;">&#8377;899</span>
-      <span style="font-size: 15px; opacity: 0.85;">/ student / month</span>
+      <span style="font-size: 52px; font-weight: 700; letter-spacing: -2px;">{{ institutePrice }}</span>
+      <span style="font-size: 15px; opacity: 0.85;">{{ institutePeriod }}</span>
     </div>
     <p style="font-size: 14.5px; line-height: 1.55; opacity: 0.9; margin-bottom: 24px;">Batch management, branding, leaderboards and instructor tools.</p>
     <button type="button" style="font-family: inherit; width: 100%; font-size: 15px; font-weight: 600; padding: 14px; border-radius: 100px; border: none; background: #fff; color: var(--ac); cursor: pointer; margin-bottom: 26px;">Choose Institute</button>
@@ -164,7 +165,7 @@
     <div style="font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--ink2); margin-bottom: 12px;">Enterprise</div>
     <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px;">
       <span style="font-size: 52px; font-weight: 700; letter-spacing: -2px;">Custom</span>
-      <span style="font-size: 15px; color: var(--ink2);">billed annually</span>
+      <span style="font-size: 15px; color: var(--ink2);">{{ enterprisePeriod }}</span>
     </div>
     <p style="font-size: 14.5px; line-height: 1.55; color: var(--ink2); margin-bottom: 24px;">Multi-branch institutes and universities. Dedicated support.</p>
     <button type="button" style="font-family: inherit; width: 100%; font-size: 15px; font-weight: 600; padding: 14px; border-radius: 100px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; margin-bottom: 26px;">Choose Enterprise</button>
@@ -266,7 +267,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
 class Component extends DCLogic {
-  state = { theme: this.getInitialTheme() };
+  state = { theme: this.getInitialTheme(), billing: "monthly" };
 
   getInitialTheme() {
     try {
@@ -346,8 +347,13 @@ class Component extends DCLogic {
     this.setState({ theme: next }, () => this.applyTheme());
   };
 
+  setMonthly = () => this.setState({ billing: "monthly" });
+  setAnnual = () => this.setState({ billing: "annual" });
+
   renderVals() {
     const svg = (paths, size = 22) => React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.9, strokeLinecap: "round", strokeLinejoin: "round" }, paths.map((p, i) => React.createElement(p.tag, { key: i, ...p.attrs })));
+    const annual = this.state.billing === "annual";
+    const format = (n) => "₹" + Math.round(n).toLocaleString("en-IN");
     const themeIcons = {
       light: svg([{ tag: "circle", attrs: { cx: 12, cy: 12, r: 4.2 } }, { tag: "path", attrs: { d: "M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" } }], 17),
       dark: svg([{ tag: "path", attrs: { d: "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" } }], 17),
@@ -355,8 +361,18 @@ class Component extends DCLogic {
     return {
       rootRef: this.rootRef,
       cycleTheme: this.cycleTheme,
+      setMonthly: this.setMonthly,
+      setAnnual: this.setAnnual,
       themeLabel: this.state.theme[0].toUpperCase() + this.state.theme.slice(1),
       themeIcon: themeIcons[this.state.theme],
+      monthlyColor: annual ? "var(--ink2)" : "var(--bg)",
+      annualColor: annual ? "var(--bg)" : "var(--ink2)",
+      billingPillX: annual ? "calc(100% + 4px)" : "0px",
+      studentPrice: annual ? format(1499 * 12 * 0.8) : format(1499),
+      studentPeriod: annual ? "/ year" : "/ month",
+      institutePrice: annual ? format(899 * 12 * 0.8) : format(899),
+      institutePeriod: annual ? "/ student / year" : "/ student / month",
+      enterprisePeriod: annual ? "billed annually" : "custom billing",
       year: new Date().getFullYear(),
       navItems: [
         { label: "Home", href: "/", className: "vh-nav-link" },
