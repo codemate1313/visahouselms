@@ -272,7 +272,7 @@ export function Sidebar({
                       </button>
 
                       {/* Sub-menu Dropdown List with connector line */}
-                      {isExpanded && !collapsed && (
+                      <div className={`sidebar-submenu-transition-wrapper ${isExpanded && !collapsed ? 'is-open' : ''}`}>
                         <div className="sidebar-submenu-wrapper">
                           <div className="sidebar-tree-line" />
                           <ul className="sidebar-submenu-list">
@@ -300,7 +300,7 @@ export function Sidebar({
                             })}
                           </ul>
                         </div>
-                      )}
+                      </div>
                     </li>
                   );
                 }

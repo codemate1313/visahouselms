@@ -306,11 +306,22 @@ export function PlatformNotifications() {
                     <Icon name="building" />
                     <span>Select Target Institutes ({selectedInstituteIds.length} selected)</span>
                   </div>
-                  {selectedInstituteIds.length > 0 && (
-                    <button type="button" className="pn-text-btn" onClick={() => setSelectedInstituteIds([])}>
-                      Clear all
-                    </button>
-                  )}
+                  <div style={{ display: "flex", gap: 12 }}>
+                    {filteredInstitutes.length > 0 && (
+                      <button
+                        type="button"
+                        className="pn-text-btn"
+                        onClick={() => setSelectedInstituteIds(Array.from(new Set([...selectedInstituteIds, ...filteredInstitutes.map((inst) => inst.id)])))}
+                      >
+                        Select all
+                      </button>
+                    )}
+                    {selectedInstituteIds.length > 0 && (
+                      <button type="button" className="pn-text-btn" onClick={() => setSelectedInstituteIds([])}>
+                        Clear all
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <input
                   type="text"
@@ -345,11 +356,22 @@ export function PlatformNotifications() {
                     <Icon name="user" />
                     <span>Select Target Students ({selectedUserIds.length} selected)</span>
                   </div>
-                  {selectedUserIds.length > 0 && (
-                    <button type="button" className="pn-text-btn" onClick={() => setSelectedUserIds([])}>
-                      Clear all
-                    </button>
-                  )}
+                  <div style={{ display: "flex", gap: 12 }}>
+                    {filteredStudents.length > 0 && (
+                      <button
+                        type="button"
+                        className="pn-text-btn"
+                        onClick={() => setSelectedUserIds(Array.from(new Set([...selectedUserIds, ...filteredStudents.map((st) => st.id)])))}
+                      >
+                        Select all
+                      </button>
+                    )}
+                    {selectedUserIds.length > 0 && (
+                      <button type="button" className="pn-text-btn" onClick={() => setSelectedUserIds([])}>
+                        Clear all
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <input
                   type="text"

@@ -6,6 +6,7 @@ import { GlobalDialog } from "./components/GlobalDialog";
 import { GlobalLoader } from "./components/GlobalLoader";
 import { GlobalSnackbar } from "./components/GlobalSnackbar";
 import { GsapInteractionLayer } from "./components/GsapInteractionLayer";
+import { SplashScreen } from "./components/SplashScreen";
 import { router } from "./routes/router";
 import { useAuthStore } from "./store/authStore";
 
@@ -18,6 +19,7 @@ function App() {
 
   return (
     <>
+      <SplashScreen />
       <GlobalLoader />
       <GlobalDialog />
       <GlobalSnackbar />

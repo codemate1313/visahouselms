@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import type { InstructorAccount, InstructorPasswordReset } from "../../api/types";
+import { confirmDelete } from "../../components/confirmDialog";
 import { ConfirmModal } from "../../components/ConfirmModal";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
@@ -35,6 +36,8 @@ export function Instructors() {
 
   const [deletingInstructor, setDeletingInstructor] = useState<InstructorAccount | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   async function loadInstructors() {
@@ -125,6 +128,50 @@ export function Instructors() {
     } finally {
       setDeleteLoading(false);
     }
+  }
+
+  function toggleSelect(id: number) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((current) =>
+      current.size === instructors.length ? new Set() : new Set(instructors.map((instructor) => instructor.id))
+    );
+  }
+
+  async function bulkSetActive(active: boolean) {
+    const targets = instructors.filter((instructor) => selectedIds.has(instructor.id) && instructor.is_active !== active);
+    if (!targets.length) return;
+    if (!active && !window.confirm(`Deactivate ${targets.length} instructor${targets.length === 1 ? "" : "s"}? Their active sessions will be revoked.`)) return;
+    setBulkBusy(true);
+    setError(null);
+    const results = await Promise.allSettled(
+      targets.map((instructor) => apiClient.post(`/super-admin/instructors/${instructor.id}/${active ? "reactivate" : "deactivate"}`))
+    );
+    const failed = results.filter((result) => result.status === "rejected").length;
+    if (failed) setError(`Failed to ${active ? "activate" : "deactivate"} ${failed} of ${targets.length} instructors.`);
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+    await loadInstructors();
+  }
+
+  async function bulkDelete() {
+    const targets = instructors.filter((instructor) => selectedIds.has(instructor.id));
+    if (!targets.length) return;
+    if (!await confirmDelete(`Are you sure you want to delete ${targets.length} instructor${targets.length === 1 ? "" : "s"}? This action cannot be undone.`, "Delete Instructors")) return;
+    setBulkBusy(true);
+    setError(null);
+    const results = await Promise.allSettled(targets.map((instructor) => apiClient.delete(`/super-admin/instructors/${instructor.id}`)));
+    const failed = results.filter((result) => result.status === "rejected").length;
+    if (failed) setError(`Failed to delete ${failed} of ${targets.length} instructors.`);
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+    await loadInstructors();
   }
 
   function exportPDF() {
@@ -237,7 +284,19 @@ export function Instructors() {
       </form>
 
       {error && <p className="error-text">{error}</p>}
-      
+
+      {selectedIds.size > 0 && (
+        <div className="bulk-actions-bar">
+          <span><strong>{selectedIds.size}</strong> selected</span>
+          <div className="bulk-actions-buttons">
+            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>Activate</button>
+            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>Deactivate</button>
+            <button type="button" className="danger" disabled={bulkBusy} onClick={bulkDelete}>Delete</button>
+            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => setSelectedIds(new Set())}>Clear</button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <p>Loading...</p>
       ) : (
@@ -245,6 +304,15 @@ export function Instructors() {
           <table className="data-table sleek-institutes-table">
             <thead>
               <tr>
+                <th className="table-select-heading">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all instructors"
+                    checked={instructors.length > 0 && selectedIds.size === instructors.length}
+                    ref={(el) => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < instructors.length; }}
+                    onChange={toggleSelectAll}
+                  />
+                </th>
                 <th>Instructor</th>
                 <th>Status</th>
                 <th>Created</th>
@@ -253,10 +321,18 @@ export function Instructors() {
             </thead>
             <tbody>
               {instructors.length === 0 ? (
-                <tr><td colSpan={4} className="empty-cell">No instructors match these filters.</td></tr>
+                <tr><td colSpan={5} className="empty-cell">No instructors match these filters.</td></tr>
               ) : (
                 instructors.map((instructor) => (
                   <tr key={instructor.id}>
+                    <td className="table-select-cell">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${instructor.first_name} ${instructor.last_name}`}
+                        checked={selectedIds.has(instructor.id)}
+                        onChange={() => toggleSelect(instructor.id)}
+                      />
+                    </td>
                     <td>
                       <div className="table-item-cell">
                         <div className="table-avatar-tile">

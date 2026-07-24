@@ -94,6 +94,15 @@ export function InstituteOnboarding() {
     });
   }
 
+  function toggleAllModules() {
+    setSelectedModules((current) => current.size === modules.length ? new Set() : new Set(modules.map((module) => module.id)));
+  }
+
+  function toggleAllPermissions() {
+    const allChecked = PERMISSIONS.every((permission) => adminPermissions[permission.key]);
+    setAdminPermissions(Object.fromEntries(PERMISSIONS.map(({ key }) => [key, !allChecked])) as Record<string, boolean>);
+  }
+
   async function createDraft(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
@@ -229,6 +238,15 @@ export function InstituteOnboarding() {
                 badge={<span className="count-chip">{Object.values(adminPermissions).filter(Boolean).length}</span>}
               >
                 <div className="permission-grid">
+                  <label className="permission-option select-all-option">
+                    <input
+                      type="checkbox"
+                      checked={PERMISSIONS.every((permission) => adminPermissions[permission.key])}
+                      ref={(el) => { if (el) el.indeterminate = PERMISSIONS.some((permission) => adminPermissions[permission.key]) && !PERMISSIONS.every((permission) => adminPermissions[permission.key]); }}
+                      onChange={toggleAllPermissions}
+                    />
+                    <span><strong>Select all</strong></span>
+                  </label>
                   {PERMISSIONS.map((permission) => (
                     <label className="permission-option" key={permission.key}>
                       <input
@@ -317,6 +335,17 @@ export function InstituteOnboarding() {
                 badge={<span className="count-chip">{selectedModules.size}</span>}
               >
                 <div className="plan-course-picker">
+                  {modules.length > 0 && (
+                    <label className="plan-course-option select-all-option">
+                      <input
+                        type="checkbox"
+                        checked={selectedModules.size === modules.length}
+                        ref={(el) => { if (el) el.indeterminate = selectedModules.size > 0 && selectedModules.size < modules.length; }}
+                        onChange={toggleAllModules}
+                      />
+                      <span><strong>Select all</strong></span>
+                    </label>
+                  )}
                   {modules.map((module) => (
                     <label className="plan-course-option" key={module.id}>
                       <input

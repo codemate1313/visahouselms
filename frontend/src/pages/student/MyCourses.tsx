@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import gsap from "gsap";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import type { StudentCurrentPlan } from "../../api/types";
@@ -16,6 +17,16 @@ const MODULE_TYPE_LABEL: Record<string, string> = {
 };
 
 const IMMERSIVE_MODULE_TYPES = new Set(["full_mock"]);
+
+function moduleTone(type: string) {
+  switch (type) {
+    case "reading": return "rose";
+    case "speaking": return "emerald";
+    case "writing": return "amber";
+    case "listening": return "indigo";
+    default: return "purple";
+  }
+}
 
 function ModuleTypeIcon({ type }: { type: string }) {
   switch (type) {
@@ -56,6 +67,7 @@ function SpinnerIcon() {
 }
 
 export function MyCourses() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const showError = useToastStore((state) => state.showError);
   const isInstituteStudent = useAuthStore((state) => state.user?.institute_id != null);
@@ -118,10 +130,23 @@ export function MyCourses() {
     }
   }
 
+  useEffect(() => {
+    if (!loading && visibleModules.length > 0) {
+      const ctx = gsap.context(() => {
+        gsap.fromTo(
+          ".assigned-test-card",
+          { y: 30, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.6, stagger: 0.05, ease: "power3.out" }
+        );
+      }, containerRef);
+      return () => ctx.revert();
+    }
+  }, [visibleModules, loading]);
+
   if (error) return <p className="error-text">{error}</p>;
 
   return (
-    <div className="my-courses-page">
+    <div className="my-courses-page" ref={containerRef}>
       <div className="page-header">
         <div><span className="page-eyebrow">Learning</span><h1>{isInstituteStudent ? "Assigned Tests" : "My Tests"}</h1><p className="page-subtitle">{isInstituteStudent ? "Start a test allotted to your institute." : "Start a test included in your active plan."}</p></div>
       </div>
@@ -193,7 +218,7 @@ export function MyCourses() {
                 if (!moduleId) return null;
                 const isStarting = starting === moduleId;
                 return (
-                  <div className="assigned-test-card" key={moduleId}>
+                  <div className="assigned-test-card" data-tone={moduleTone(module.module_type)} key={moduleId}>
                     <div className="assigned-test-top">
                       <div className="assigned-test-icon"><ModuleTypeIcon type={module.module_type} /></div>
                       <span className="assigned-test-chip">{MODULE_TYPE_LABEL[module.module_type] ?? module.module_type}</span>

@@ -219,6 +219,15 @@ export function InstituteForm() {
           <legend>Institute Admin permissions</legend>
           <p className="hint">Student account creation remains exclusive to the Super Admin.</p>
           <div className="permission-grid">
+            <label className="permission-option select-all-option">
+              <input
+                type="checkbox"
+                checked={PERMISSION_OPTIONS.every((option) => permissions[option.key])}
+                ref={(el) => { if (el) el.indeterminate = PERMISSION_OPTIONS.some((option) => permissions[option.key]) && !PERMISSION_OPTIONS.every((option) => permissions[option.key]); }}
+                onChange={(event) => setPermissions(Object.fromEntries(PERMISSION_OPTIONS.map((option) => [option.key, event.target.checked])) as InstitutePermissions)}
+              />
+              <span><strong>Select all</strong></span>
+            </label>
             {PERMISSION_OPTIONS.map((option) => (
               <label className="permission-option" key={option.key}>
                 <input

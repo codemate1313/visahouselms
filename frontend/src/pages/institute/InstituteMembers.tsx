@@ -70,7 +70,10 @@ export function InstituteMembers({ role, instituteId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [credential, setCredential] = useState<{ name: string; password: string } | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const selectableMembers = members.filter((member) => !member.deleted_at);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -128,6 +131,49 @@ export function InstituteMembers({ role, instituteId }: Props) {
     } catch (err: unknown) {
       setError(extractErrorMessage(err, "Failed to delete the member."));
     }
+  }
+
+  function toggleSelect(id: number) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((current) =>
+      current.size === selectableMembers.length ? new Set() : new Set(selectableMembers.map((member) => member.id))
+    );
+  }
+
+  async function bulkSetActive(active: boolean) {
+    const targets = selectableMembers.filter((member) => selectedIds.has(member.id) && member.is_active !== active);
+    if (!targets.length) return;
+    setBulkBusy(true);
+    setError(null);
+    const results = await Promise.allSettled(
+      targets.map((member) => apiClient.post(`${apiBase}/members/${member.id}/${active ? "reactivate" : "deactivate"}`))
+    );
+    const failed = results.filter((result) => result.status === "rejected").length;
+    if (failed) setError(`Failed to ${active ? "activate" : "deactivate"} ${failed} of ${targets.length} ${label.toLowerCase()}.`);
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+    await load();
+  }
+
+  async function bulkRemove() {
+    const targets = selectableMembers.filter((member) => selectedIds.has(member.id));
+    if (!targets.length) return;
+    if (!await confirmDelete(`Are you sure you want to delete ${targets.length} member${targets.length === 1 ? "" : "s"}? Their accounts will be signed out while test history is retained.`, "Delete Members")) return;
+    setBulkBusy(true);
+    setError(null);
+    const results = await Promise.allSettled(targets.map((member) => apiClient.delete(`${apiBase}/members/${member.id}`)));
+    const failed = results.filter((result) => result.status === "rejected").length;
+    if (failed) setError(`Failed to delete ${failed} of ${targets.length} members.`);
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+    await load();
   }
 
   async function importFile(file: File) {
@@ -237,6 +283,18 @@ export function InstituteMembers({ role, instituteId }: Props) {
       </div>}
       {error && <p className="error-text">{error}</p>}
 
+      {canManage && selectedIds.size > 0 && (
+        <div className="bulk-actions-bar">
+          <span><strong>{selectedIds.size}</strong> selected</span>
+          <div className="bulk-actions-buttons">
+            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>Activate</button>
+            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>Deactivate</button>
+            <button type="button" className="danger" disabled={bulkBusy} onClick={bulkRemove}>Delete</button>
+            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => setSelectedIds(new Set())}>Clear</button>
+          </div>
+        </div>
+      )}
+
       {!loading && staffFeatureLocked && (
         <section className="feature-lock-stage" aria-labelledby="instructor-feature-lock-title">
           <div className="feature-lock-preview" aria-hidden="true">
@@ -280,11 +338,12 @@ export function InstituteMembers({ role, instituteId }: Props) {
       {loading ? <p>Loading...</p> : (
         <div className="table-wrap">
           <table className="data-table">
-            <thead><tr><th>Name</th><th>Email</th>{isAllAccounts && <th>Type</th>}<th>Tests</th><th>Devices</th><th>Contact</th><th>Status</th><th>Created</th><th className="table-actions-heading">Actions</th></tr></thead>
+            <thead><tr>{canManage && <th className="table-select-heading"><input type="checkbox" aria-label={`Select all ${label.toLowerCase()}`} checked={selectableMembers.length > 0 && selectedIds.size === selectableMembers.length} ref={(el) => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < selectableMembers.length; }} onChange={toggleSelectAll} /></th>}<th>Name</th><th>Email</th>{isAllAccounts && <th>Type</th>}<th>Tests</th><th>Devices</th><th>Contact</th><th>Status</th><th>Created</th><th className="table-actions-heading">Actions</th></tr></thead>
             <tbody>
-              {members.length === 0 && <tr><td colSpan={9} className="empty-cell">No {label.toLowerCase()} found.</td></tr>}
+              {members.length === 0 && <tr><td colSpan={canManage ? 10 : 9} className="empty-cell">No {label.toLowerCase()} found.</td></tr>}
               {members.map((member) => (
                 <tr key={member.id}>
+                  {canManage && <td className="table-select-cell">{!member.deleted_at && <input type="checkbox" aria-label={`Select ${member.first_name} ${member.last_name}`} checked={selectedIds.has(member.id)} onChange={() => toggleSelect(member.id)} />}</td>}
                   <td><strong>{member.first_name} {member.last_name}</strong>{member.force_password_reset && <span className="badge badge-amber">password reset</span>}</td>
                   <td>{member.email}</td>
                   {isAllAccounts && <td>{member.role === "STUDENT" ? "Student" : "Instructor"}</td>}

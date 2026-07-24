@@ -214,11 +214,22 @@ export function InstituteAnnouncements() {
               <div className="custom-target-select-container">
                 <div className="custom-target-header">
                   <span>Select target students ({selectedUserIds.length} selected)</span>
-                  {selectedUserIds.length > 0 && (
-                    <button type="button" className="text-button" onClick={() => setSelectedUserIds([])}>
-                      Clear all
-                    </button>
-                  )}
+                  <div style={{ display: "flex", gap: 12 }}>
+                    {filteredStudents.length > 0 && (
+                      <button
+                        type="button"
+                        className="text-button"
+                        onClick={() => setSelectedUserIds(Array.from(new Set([...selectedUserIds, ...filteredStudents.map((st) => st.id)])))}
+                      >
+                        Select all
+                      </button>
+                    )}
+                    {selectedUserIds.length > 0 && (
+                      <button type="button" className="text-button" onClick={() => setSelectedUserIds([])}>
+                        Clear all
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <input
                   type="text"

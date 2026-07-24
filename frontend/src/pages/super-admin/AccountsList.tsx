@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { API_BASE_URL, apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import type { SuperAdminAccount } from "../../api/types";
+import { confirmDelete } from "../../components/confirmDialog";
 import { ConfirmModal } from "../../components/ConfirmModal";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
@@ -23,6 +24,8 @@ export function AccountsList() {
   const [statusFilter, setStatusFilter] = useState("");
   const [deletingAccount, setDeletingAccount] = useState<SuperAdminAccount | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   async function loadAccounts() {
     setLoading(true);
@@ -104,6 +107,49 @@ export function AccountsList() {
     } finally {
       setDeleteLoading(false);
     }
+  }
+
+  function toggleSelect(id: number) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((current) =>
+      current.size === filteredAccounts.length ? new Set() : new Set(filteredAccounts.map((account) => account.id))
+    );
+  }
+
+  async function bulkSetActive(active: boolean) {
+    const targets = filteredAccounts.filter((account) => selectedIds.has(account.id) && account.is_active !== active);
+    if (!targets.length) return;
+    setBulkBusy(true);
+    setError(null);
+    const results = await Promise.allSettled(
+      targets.map((account) => apiClient.post(`/super-admin/accounts/${account.id}/${active ? "reactivate" : "deactivate"}`))
+    );
+    const failed = results.filter((result) => result.status === "rejected").length;
+    if (failed) setError(`Failed to ${active ? "activate" : "deactivate"} ${failed} of ${targets.length} accounts.`);
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+    await loadAccounts();
+  }
+
+  async function bulkDelete() {
+    const targets = filteredAccounts.filter((account) => selectedIds.has(account.id));
+    if (!targets.length) return;
+    if (!await confirmDelete(`Are you sure you want to delete ${targets.length} account${targets.length === 1 ? "" : "s"}? This action cannot be undone.`, "Delete Accounts")) return;
+    setBulkBusy(true);
+    setError(null);
+    const results = await Promise.allSettled(targets.map((account) => apiClient.delete(`/super-admin/accounts/${account.id}`)));
+    const failed = results.filter((result) => result.status === "rejected").length;
+    if (failed) setError(`Failed to delete ${failed} of ${targets.length} accounts.`);
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+    await loadAccounts();
   }
 
   function exportPDF() {
@@ -208,6 +254,18 @@ export function AccountsList() {
 
       {error && <p className="error-text">{error}</p>}
 
+      {selectedIds.size > 0 && (
+        <div className="bulk-actions-bar">
+          <span><strong>{selectedIds.size}</strong> selected</span>
+          <div className="bulk-actions-buttons">
+            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>Activate</button>
+            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>Deactivate</button>
+            <button type="button" className="danger" disabled={bulkBusy} onClick={bulkDelete}>Delete</button>
+            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => setSelectedIds(new Set())}>Clear</button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <p>Loading...</p>
       ) : (
@@ -215,6 +273,15 @@ export function AccountsList() {
           <table className="data-table sleek-accounts-table">
             <thead>
               <tr>
+                <th className="table-select-heading">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all accounts"
+                    checked={filteredAccounts.length > 0 && selectedIds.size === filteredAccounts.length}
+                    ref={(el) => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < filteredAccounts.length; }}
+                    onChange={toggleSelectAll}
+                  />
+                </th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Status</th>
@@ -224,10 +291,18 @@ export function AccountsList() {
             </thead>
             <tbody>
               {filteredAccounts.length === 0 && (
-                <tr><td colSpan={5} className="empty-cell">No admin accounts found.</td></tr>
+                <tr><td colSpan={6} className="empty-cell">No admin accounts found.</td></tr>
               )}
               {filteredAccounts.map((account) => (
                 <tr key={account.id}>
+                  <td className="table-select-cell">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${account.first_name} ${account.last_name}`}
+                      checked={selectedIds.has(account.id)}
+                      onChange={() => toggleSelect(account.id)}
+                    />
+                  </td>
                   <td>
                     <div className="table-item-cell">
                       <div className="table-avatar-tile">
