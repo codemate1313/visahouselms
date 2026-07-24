@@ -15887,14 +15887,14 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .static-auth-modal-dark {
   background:
-    radial-gradient(circle at 18% 10%, rgba(255, 77, 61, 0.28), transparent 34%),
+    radial-gradient(circle at 18% 10%, rgba(225, 29, 72, 0.28), transparent 34%),
     radial-gradient(circle at 82% 18%, rgba(124, 92, 255, 0.32), transparent 36%),
     rgba(5, 5, 10, 0.76);
 }
 
 .static-auth-modal-light {
   background:
-    radial-gradient(circle at 18% 10%, rgba(255, 77, 61, 0.18), transparent 36%),
+    radial-gradient(circle at 18% 10%, rgba(225, 29, 72, 0.18), transparent 36%),
     radial-gradient(circle at 82% 18%, rgba(124, 92, 255, 0.18), transparent 38%),
     rgba(247, 245, 242, 0.72);
 }
@@ -15931,7 +15931,7 @@ th[aria-sort="descending"] .table-sort-button::after {
   position: absolute;
   inset: -20px;
   z-index: -1;
-  background: radial-gradient(circle at 30% 20%, #ff4d3d, transparent 60%);
+  background: radial-gradient(circle at 30% 20%, #e11d48, transparent 60%);
   opacity: 0.35;
   filter: blur(50px);
   pointer-events: none;
@@ -15964,13 +15964,13 @@ th[aria-sort="descending"] .table-sort-button::after {
   width: 38px;
   height: 38px;
   border-radius: 11px;
-  background: linear-gradient(135deg, #ff4d3d, #ff7a5c);
+  background: linear-gradient(135deg, #e11d48, #f43f5e);
   color: #fff;
   display: grid;
   place-items: center;
   font-weight: 700;
   font-size: 15px;
-  box-shadow: 0 10px 24px -8px #ff4d3d;
+  box-shadow: 0 10px 24px -8px #e11d48;
 }
 
 .vh-auth-name {
@@ -15988,10 +15988,10 @@ th[aria-sort="descending"] .table-sort-button::after {
 }
 
 .vh-auth-italic {
-  font-family: "Instrument Serif", serif;
-  font-style: italic;
-  font-weight: 400;
-  color: #ff4d3d;
+  font-family: var(--app-font-family);
+  font-style: normal;
+  font-weight: 700;
+  color: #e11d48;
 }
 
 .static-auth-modal-wrapper .login-form-header.text-center {
@@ -16119,9 +16119,9 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .static-auth-modal-wrapper .form-group > input:focus,
 .static-auth-modal-wrapper .password-input-wrap:focus-within {
-  border-color: #ff4d3d;
+  border-color: #e11d48;
   background: rgba(20, 20, 28, 0.95);
-  box-shadow: 0 0 0 4px rgba(255, 77, 61, 0.14);
+  box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.14);
 }
 
 .static-auth-modal-wrapper .login-role-tabs-bar {
@@ -16148,8 +16148,8 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .static-auth-modal-wrapper .role-tab-indicator,
 .static-auth-modal-wrapper .concise-submit-btn {
-  background: linear-gradient(135deg, #ff4d3d, #ff7a5c);
-  box-shadow: 0 12px 30px -8px #ff4d3d;
+  background: linear-gradient(135deg, #e11d48, #f43f5e);
+  box-shadow: 0 12px 30px -8px #e11d48;
 }
 
 .static-auth-modal-wrapper .role-tab-indicator {
@@ -16187,7 +16187,7 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .static-auth-modal-wrapper .form-legal-note a,
 .static-auth-modal-wrapper .inline-forgot-link {
-  color: #ff4d3d;
+  color: #e11d48;
   font-weight: 600;
 }
 
