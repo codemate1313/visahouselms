@@ -15880,6 +15880,85 @@ th[aria-sort="descending"] .table-sort-button::after {
   }
 }
 
+.static-auth-modal {
+  background:
+    radial-gradient(circle at 18% 10%, rgba(255, 77, 61, 0.28), transparent 34%),
+    radial-gradient(circle at 82% 18%, rgba(124, 92, 255, 0.32), transparent 36%),
+    rgba(5, 5, 10, 0.76);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+
+.static-auth-modal-wrapper {
+  max-width: 1040px;
+}
+
+.static-auth-modal-wrapper .login-ref-card {
+  background: rgba(12, 12, 18, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow:
+    0 40px 110px rgba(0, 0, 0, 0.58),
+    0 0 80px rgba(255, 77, 61, 0.12) !important;
+}
+
+.static-auth-modal-wrapper .login-form-side {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035)),
+    rgba(10, 10, 16, 0.78);
+  border-radius: 24px;
+  color: #f8fafc;
+}
+
+.static-auth-modal-wrapper .form-main-title,
+.static-auth-modal-wrapper .form-sub-title,
+.static-auth-modal-wrapper .form-group label,
+.static-auth-modal-wrapper .toggle-switch-text,
+.static-auth-modal-wrapper .form-legal-note {
+  color: #f8fafc;
+}
+
+.static-auth-modal-wrapper .form-sub-title,
+.static-auth-modal-wrapper .form-legal-note {
+  color: rgba(248, 250, 252, 0.72);
+}
+
+.static-auth-modal-wrapper .form-group input,
+.static-auth-modal-wrapper .password-input-wrapper input {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.static-auth-modal-wrapper .form-group input::placeholder,
+.static-auth-modal-wrapper .password-input-wrapper input::placeholder {
+  color: rgba(248, 250, 252, 0.42);
+}
+
+.static-auth-modal-wrapper .login-role-tabs-bar {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.static-auth-modal-wrapper .role-tab-btn {
+  color: rgba(248, 250, 252, 0.68);
+}
+
+.static-auth-modal-wrapper .role-tab-btn.active {
+  color: #ffffff;
+}
+
+.static-auth-modal-wrapper .role-tab-indicator,
+.static-auth-modal-wrapper .concise-submit-btn {
+  background: linear-gradient(135deg, #ff4d3d, #7c5cff);
+  box-shadow: 0 18px 42px -18px #ff4d3d;
+}
+
+.static-auth-modal-wrapper .login-modal-close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
 /* ---------- Sleek Module Control Detail Page ---------- */
 .module-detail-page {
   max-width: 1100px;

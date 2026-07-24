@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Space Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  a:hover { color: var(--ac, #ff4d3d); }
+  @keyframes vh-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  @keyframes vh-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes vh-pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+  @keyframes vh-orbA { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(60px,40px) scale(1.08); } }
+  @keyframes vh-orbB { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-50px,60px) scale(1.05); } }
+  @keyframes vh-orbC { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,-40px) scale(1.1); } }
+  @keyframes vh-wave { 0%,100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+  @keyframes vh-typing { 0% { width: 0; } 100% { width: 100%; } }
+  @keyframes vh-ring { 0% { stroke-dashoffset: 200; } 100% { stroke-dashoffset: 62; } }
+  .vh-reveal { opacity: 0; transform: translateY(30px); transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
+  .vh-reveal.vh-in { opacity: 1; transform: translateY(0); }
+  .vh-flip { perspective: 1400px; }
+  .vh-flip-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.2,.7,.2,1); }
+  .vh-flip:hover .vh-flip-inner { transform: rotateY(180deg); }
+  .vh-face { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 22px; overflow: hidden; }
+  .vh-back { transform: rotateY(180deg); }
+  @keyframes vh-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  ::selection { background: var(--ac, #ff4d3d); color: #fff; }
+</style>
+</helmet>
+<div ref="{{ rootRef }}" style="background: var(--bg); color: var(--ink); min-height: 100vh; overflow-x: hidden; position: relative; transition: background .35s ease, color .35s ease;">
+
+  <div aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; height: 900px; pointer-events: none; z-index: 0; overflow: hidden;">
+    <div style="position: absolute; top: 5%; left: 20%; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, var(--ac) 0%, transparent 65%); opacity: var(--orbA); filter: blur(90px); animation: vh-orbA 18s ease-in-out infinite;"></div>
+    <div style="position: absolute; top: 15%; right: 15%; width: 480px; height: 480px; border-radius: 50%; background: radial-gradient(circle, #7c5cff 0%, transparent 65%); opacity: var(--orbB); filter: blur(100px); animation: vh-orbB 22s ease-in-out infinite;"></div>
+    <div style="position: absolute; top: 55%; left: 40%; width: 380px; height: 380px; border-radius: 50%; background: radial-gradient(circle, #00d4ff 0%, transparent 65%); opacity: var(--orbC); filter: blur(85px); animation: vh-orbC 26s ease-in-out infinite;"></div>
+  </div>
+  <div aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; background: radial-gradient(ellipse at 50% 20%, transparent 0%, var(--bg) 70%); pointer-events: none;"></div>
+
+  <div style="position: relative; z-index: 1;">
+
+  <header style="position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: var(--headerBg); border-bottom: 1px solid var(--line);">
+    <div style="max-width: 1280px; margin: 0 auto; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+      <a href="/" style="display: flex; align-items: center; gap: 11px;">
+        <span style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 15px; box-shadow: 0 8px 24px -8px var(--ac);">VH</span>
+        <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.3px;">Visa House</span>
+        <span style="font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 4px 8px; background: var(--chip); border: 1px solid var(--line); border-radius: 6px; color: var(--ink2);">IELTS LMS</span>
+      </a>
+      <nav style="display: flex; align-items: center; gap: 30px;">
+        <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="5">
+          <a href="{{ item.href }}" style="font-size: 14px; font-weight: 500; color: var(--ink2); transition: color .2s;" style-hover="{color: 'var(--ink)'}">{{ item.label }}</a>
+        </sc-for>
+      </nav>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button type="button" onClick="{{ cycleTheme }}" title="Theme: {{ themeLabel }}" style="font-family: inherit; width: 40px; height: 40px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; display: grid; place-items: center; transition: transform .2s, background .2s;" style-hover="{transform: 'scale(1.08)', background: 'var(--chipHi)'}" style-active="{transform: 'scale(0.94)'}">{{ themeIcon }}</button>
+        <button type="button" style="font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 100px; border: none; background: var(--ink); color: var(--bg); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .2s, box-shadow .2s;" style-hover="{transform: 'translateY(-2px)', boxShadow: '0 12px 28px -12px rgba(0,0,0,0.4)'}" style-active="{transform: 'translateY(0)'}">
+          Sign in
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+
+  <section style="position: relative; max-width: 1120px; margin: 0 auto; padding: 96px 32px 60px; text-align: center;">
+    <div style="animation: vh-rise .7s ease both;">
+      <div style="display: inline-flex; align-items: center; gap: 9px; padding: 8px 14px; border-radius: 100px; background: var(--chip); border: 1px solid var(--line); font-size: 12.5px; font-weight: 500; color: var(--ink2); margin-bottom: 28px;">
+        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--ac); animation: vh-pulse 2s ease-in-out infinite; box-shadow: 0 0 12px var(--ac);"></span>
+        IELTS insights &amp; strategies
+      </div>
+      <h1 style="font-size: 72px; line-height: 0.98; letter-spacing: -3px; font-weight: 600; margin-bottom: 24px;">
+        Fresh from
+        <span style="font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; background: linear-gradient(135deg, var(--ac), var(--ac2)); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -2px;"> our examiners.</span>
+      </h1>
+      <p style="font-size: 19px; line-height: 1.55; color: var(--ink2); max-width: 620px; margin: 0 auto;">Band-boosting strategies, product notes and IELTS news &mdash; written by trainers who mark hundreds of scripts a week.</p>
+    </div>
+  </section>
+
+  <section class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 40px;">
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+      <button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid transparent; background: var(--ink); color: var(--bg); cursor: pointer;">All</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">Strategy</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">Writing</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">Speaking</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">Listening</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">Reading</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">Institute</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">News</button>
+    </div>
+  </section>
+
+  <section class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 60px;">
+    <a href="#" style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 24px; overflow: hidden;">
+      <div style="background-image: repeating-linear-gradient(45deg, var(--acWash) 0 14px, transparent 14px 28px); min-height: 340px; display: grid; place-items: center;">
+        <div style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--ink2);">featured story cover</div>
+      </div>
+      <div style="padding: 40px 40px 40px 0; display: flex; flex-direction: column; justify-content: center;">
+        <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ac); margin-bottom: 12px;">Featured &middot; Strategy</div>
+        <h2 style="font-size: 34px; font-weight: 600; letter-spacing: -1px; line-height: 1.1; margin-bottom: 14px;">The five sentences that broke a plateau at Band 6.5</h2>
+        <p style="font-size: 15px; line-height: 1.6; color: var(--ink2); margin-bottom: 20px;">If you are stuck in the 6.0&ndash;6.5 range, the fix is almost never more vocabulary. Here is what actually moves the needle on Task 2.</p>
+        <div style="font-size: 13px; color: var(--ink2);">Nikhil Verma &middot; 24 Jul 2026 &middot; 8 min read</div>
+      </div>
+    </a>
+  </section>
+
+  <section class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 96px;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;">
+      
+  <a href="#" class="vh-reveal" style="display: block; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
+    <div style="aspect-ratio: 16/9; background-image: repeating-linear-gradient(45deg, var(--acWash) 0 12px, transparent 12px 24px); display: grid; place-items: center; border-bottom: 1px solid var(--line);">
+      <div style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2);">speaking &middot; cover image</div>
+    </div>
+    <div style="padding: 22px;">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ac); margin-bottom: 10px;">Speaking</div>
+      <h3 style="font-size: 18px; font-weight: 600; letter-spacing: -0.3px; line-height: 1.25; margin-bottom: 10px;">How Part 2 cue cards trip up strong speakers</h3>
+      <p style="font-size: 13.5px; line-height: 1.55; color: var(--ink2); margin-bottom: 16px;">Structure beats vocabulary. The 4-line frame our examiners use.</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink2);">
+        <span>Priya Nair &middot; 22 Jul</span>
+        <span>6 min read</span>
+      </div>
+    </div>
+  </a>
+      
+  <a href="#" class="vh-reveal" style="display: block; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
+    <div style="aspect-ratio: 16/9; background-image: repeating-linear-gradient(45deg, var(--acWash) 0 12px, transparent 12px 24px); display: grid; place-items: center; border-bottom: 1px solid var(--line);">
+      <div style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2);">writing &middot; cover image</div>
+    </div>
+    <div style="padding: 22px;">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ac); margin-bottom: 10px;">Writing</div>
+      <h3 style="font-size: 18px; font-weight: 600; letter-spacing: -0.3px; line-height: 1.25; margin-bottom: 10px;">Task 1: the graph description opener that always works</h3>
+      <p style="font-size: 13.5px; line-height: 1.55; color: var(--ink2); margin-bottom: 16px;">One sentence, three moves. Copy this template into every graph task.</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink2);">
+        <span>Arjun Mehta &middot; 18 Jul</span>
+        <span>5 min read</span>
+      </div>
+    </div>
+  </a>
+      
+  <a href="#" class="vh-reveal" style="display: block; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
+    <div style="aspect-ratio: 16/9; background-image: repeating-linear-gradient(45deg, var(--acWash) 0 12px, transparent 12px 24px); display: grid; place-items: center; border-bottom: 1px solid var(--line);">
+      <div style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2);">listening &middot; cover image</div>
+    </div>
+    <div style="padding: 22px;">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ac); margin-bottom: 10px;">Listening</div>
+      <h3 style="font-size: 18px; font-weight: 600; letter-spacing: -0.3px; line-height: 1.25; margin-bottom: 10px;">Section 4 note-taking: the shorthand that saves marks</h3>
+      <p style="font-size: 13.5px; line-height: 1.55; color: var(--ink2); margin-bottom: 16px;">Full sentences lose you marks. Symbols and abbreviations win them back.</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink2);">
+        <span>Sana Iqbal &middot; 14 Jul</span>
+        <span>4 min read</span>
+      </div>
+    </div>
+  </a>
+      
+  <a href="#" class="vh-reveal" style="display: block; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
+    <div style="aspect-ratio: 16/9; background-image: repeating-linear-gradient(45deg, var(--acWash) 0 12px, transparent 12px 24px); display: grid; place-items: center; border-bottom: 1px solid var(--line);">
+      <div style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2);">institute &middot; cover image</div>
+    </div>
+    <div style="padding: 22px;">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ac); margin-bottom: 10px;">Institute</div>
+      <h3 style="font-size: 18px; font-weight: 600; letter-spacing: -0.3px; line-height: 1.25; margin-bottom: 10px;">Running mock weeks: how top institutes schedule them</h3>
+      <p style="font-size: 13.5px; line-height: 1.55; color: var(--ink2); margin-bottom: 16px;">Cadence, cohort size and marker load &mdash; the operational patterns.</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink2);">
+        <span>Dr. Meera Kapoor &middot; 10 Jul</span>
+        <span>7 min read</span>
+      </div>
+    </div>
+  </a>
+      
+  <a href="#" class="vh-reveal" style="display: block; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
+    <div style="aspect-ratio: 16/9; background-image: repeating-linear-gradient(45deg, var(--acWash) 0 12px, transparent 12px 24px); display: grid; place-items: center; border-bottom: 1px solid var(--line);">
+      <div style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2);">reading &middot; cover image</div>
+    </div>
+    <div style="padding: 22px;">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ac); margin-bottom: 10px;">Reading</div>
+      <h3 style="font-size: 18px; font-weight: 600; letter-spacing: -0.3px; line-height: 1.25; margin-bottom: 10px;">Matching headings: eliminate first, match second</h3>
+      <p style="font-size: 13.5px; line-height: 1.55; color: var(--ink2); margin-bottom: 16px;">The counter-intuitive order that gets our high scorers to 9.</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink2);">
+        <span>Nikhil Verma &middot; 6 Jul</span>
+        <span>5 min read</span>
+      </div>
+    </div>
+  </a>
+      
+  <a href="#" class="vh-reveal" style="display: block; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
+    <div style="aspect-ratio: 16/9; background-image: repeating-linear-gradient(45deg, var(--acWash) 0 12px, transparent 12px 24px); display: grid; place-items: center; border-bottom: 1px solid var(--line);">
+      <div style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2);">news &middot; cover image</div>
+    </div>
+    <div style="padding: 22px;">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ac); margin-bottom: 10px;">News</div>
+      <h3 style="font-size: 18px; font-weight: 600; letter-spacing: -0.3px; line-height: 1.25; margin-bottom: 10px;">CEFR updates: what changed in the 2026 companion</h3>
+      <p style="font-size: 13.5px; line-height: 1.55; color: var(--ink2); margin-bottom: 16px;">A quick summary of the diagnostic-v1 policy and how we handle it.</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink2);">
+        <span>Editorial &middot; 2 Jul</span>
+        <span>3 min read</span>
+      </div>
+    </div>
+  </a>
+    </div>
+  </section>
+
+  <section class="vh-reveal" style="max-width: 900px; margin: 0 auto; padding: 40px 32px 96px;">
+    <div style="background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 24px; padding: 44px; text-align: center;">
+      <h2 style="font-size: 32px; font-weight: 600; letter-spacing: -1px; margin-bottom: 10px;">Get one strategy every Friday</h2>
+      <p style="font-size: 15px; color: var(--ink2); margin-bottom: 24px;">Short, examiner-written, no fluff.</p>
+      <div style="display: flex; gap: 10px; max-width: 480px; margin: 0 auto;">
+        <input type="email" placeholder="you@example.com" style="font-family: inherit; flex: 1; font-size: 15px; padding: 14px 20px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+        <button type="button" style="font-family: inherit; font-size: 15px; font-weight: 600; padding: 14px 24px; border-radius: 100px; border: none; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; cursor: pointer;">Subscribe</button>
+      </div>
+    </div>
+  </section>
+
+<footer style="border-top: 1px solid var(--line); padding: 56px 32px 32px;">
+    <div style="max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 40px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 11px; margin-bottom: 16px;">
+          <span style="width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px;">VH</span>
+          <span style="font-size: 17px; font-weight: 700;">Visa House</span>
+        </div>
+        <p style="font-size: 14px; line-height: 1.6; color: var(--ink2); max-width: 340px;">The AI-powered IELTS preparation platform for institutes and direct students. Authentic simulation, automated evaluation, instant feedback.</p>
+      </div>
+      <sc-for list="{{ footerCols }}" as="col" hint-placeholder-count="3">
+        <div>
+          <h4 style="font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--ink2); margin-bottom: 16px;">{{ col.title }}</h4>
+          <div style="display: flex; flex-direction: column; gap: 11px;">
+            <sc-for list="{{ col.links }}" as="l" hint-placeholder-count="4">
+              <a href="#" style="font-size: 14px; color: var(--ink); transition: color .2s;" style-hover="{color: 'var(--ac)'}">{{ l }}</a>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="max-width: 1280px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 13px; color: var(--ink2);">
+      <span>© {{ year }} Visa House IELTS LMS. All rights reserved.</span>
+      <div style="display: flex; gap: 20px;">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Security</a>
+      </div>
+    </div>
+  </footer>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { theme: "system" };
+
+  rootRef = (el) => {
+    if (!el || this._root === el) { if (el) this._root = el; return; }
+    this._root = el;
+    this.applyTheme();
+    this.observeReveal();
+  };
+
+  componentDidMount() {
+    this._mq = window.matchMedia("(prefers-color-scheme: dark)");
+    this._mqListener = () => { if (this.state.theme === "system") this.applyTheme(); };
+    this._mq.addEventListener?.("change", this._mqListener);
+    this.applyTheme();
+  }
+
+  componentWillUnmount() {
+    this._mq?.removeEventListener?.("change", this._mqListener);
+    this._io?.disconnect?.();
+  }
+
+  observeReveal() {
+    if (this._io) this._io.disconnect();
+    if (!this._root) return;
+    this._io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add("vh-in"); this._io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+    requestAnimationFrame(() => { this._root.querySelectorAll(".vh-reveal").forEach((n) => this._io.observe(n)); });
+  }
+
+  isDark() {
+    if (this.state.theme === "dark") return true;
+    if (this.state.theme === "light") return false;
+    return this._mq?.matches ?? true;
+  }
+
+  applyTheme() {
+    if (!this._root) return;
+    const dark = this.isDark();
+    const set = (k, v) => this._root.style.setProperty(k, v);
+    set("--ac", "#ff4d3d");
+    set("--ac2", "#ff7a5c");
+    if (dark) {
+      set("--bg", "#0a0a0f"); set("--ink", "#f5f5f7"); set("--ink2", "#9095a3");
+      set("--line", "rgba(255,255,255,0.1)"); set("--acLine", "rgba(255,122,92,0.35)"); set("--acWash", "rgba(255,77,61,0.14)");
+      set("--card", "rgba(20,20,28,0.55)"); set("--cardSolid", "rgba(20,20,28,0.9)");
+      set("--chip", "rgba(255,255,255,0.06)"); set("--chipHi", "rgba(255,255,255,0.12)"); set("--headerBg", "rgba(10,10,15,0.65)");
+      set("--orbA", "0.28"); set("--orbB", "0.2"); set("--orbC", "0.14");
+    } else {
+      set("--bg", "#f7f5f2"); set("--ink", "#0e0d10"); set("--ink2", "#5f6270");
+      set("--line", "rgba(14,13,16,0.1)"); set("--acLine", "rgba(255,77,61,0.35)"); set("--acWash", "rgba(255,77,61,0.08)");
+      set("--card", "rgba(255,255,255,0.7)"); set("--cardSolid", "rgba(255,255,255,0.95)");
+      set("--chip", "rgba(14,13,16,0.04)"); set("--chipHi", "rgba(14,13,16,0.08)"); set("--headerBg", "rgba(247,245,242,0.7)");
+      set("--orbA", "0.22"); set("--orbB", "0.16"); set("--orbC", "0.12");
+    }
+  }
+
+  cycleTheme = () => {
+    const order = ["system", "light", "dark"];
+    const next = order[(order.indexOf(this.state.theme) + 1) % order.length];
+    this.setState({ theme: next }, () => this.applyTheme());
+  };
+
+  renderVals() {
+    const svg = (paths, size = 22) => React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.9, strokeLinecap: "round", strokeLinejoin: "round" }, paths.map((p, i) => React.createElement(p.tag, { key: i, ...p.attrs })));
+    const themeIcons = {
+      system: svg([{ tag: "rect", attrs: { x: 3, y: 4, width: 18, height: 13, rx: 2 } }, { tag: "path", attrs: { d: "M8 20h8M12 17v3" } }], 17),
+      light: svg([{ tag: "circle", attrs: { cx: 12, cy: 12, r: 4.2 } }, { tag: "path", attrs: { d: "M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" } }], 17),
+      dark: svg([{ tag: "path", attrs: { d: "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" } }], 17),
+    };
+    return {
+      rootRef: this.rootRef,
+      cycleTheme: this.cycleTheme,
+      themeLabel: this.state.theme[0].toUpperCase() + this.state.theme.slice(1),
+      themeIcon: themeIcons[this.state.theme],
+      year: new Date().getFullYear(),
+      navItems: [
+        { label: "Home", href: "/" },
+        { label: "About", href: "/about" },
+        { label: "Plans", href: "/plans" },
+        { label: "Blogs", href: "/blogs" },
+        { label: "Contact", href: "/contact" },
+      ],
+      footerCols: [
+        { title: "Showcase", links: ["Platform Home", "About Us", "Plans & Pricing", "Contact Support"] },
+        { title: "Access Portals", links: ["Student Portal", "Institute Portal", "Instructor Portal", "Platform Admin"] },
+        { title: "Partnerships", links: ["Request Demo", "For Institutes", "Resources", "Blog"] },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
