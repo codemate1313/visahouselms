@@ -28,6 +28,9 @@ export function SuperAdminTestimonials() {
   const [saving, setSaving] = useState(false);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
   const fetchItems = () => {
     setLoading(true);
     apiClient
@@ -42,6 +45,53 @@ export function SuperAdminTestimonials() {
   useEffect(() => {
     fetchItems();
   }, []);
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const updated = [...items];
+    const [movedItem] = updated.splice(draggedIndex, 1);
+    updated.splice(targetIndex, 0, movedItem);
+
+    const reordered = updated.map((item, idx) => ({
+      ...item,
+      display_order: idx + 1,
+    }));
+
+    setItems(reordered);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+
+    apiClient
+      .put(
+        "/super-admin/testimonials/reorder",
+        reordered.map((item) => ({ id: item.id, display_order: item.display_order }))
+      )
+      .catch(() => fetchItems());
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,9 +247,27 @@ export function SuperAdminTestimonials() {
         </div>
       ) : viewMode === "grid" ? (
         <div className="sat-grid-view">
-          {filteredItems.map((item) => (
-            <div key={item.id} className={`sat-card ${!item.is_active ? "inactive" : ""}`}>
+          {filteredItems.map((item, index) => (
+            <div
+              key={item.id}
+              draggable={true}
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+              onDrop={(e) => handleDrop(e, index)}
+              className={`sat-card ${!item.is_active ? "inactive" : ""} ${draggedIndex === index ? "is-dragging" : ""} ${dragOverIndex === index ? "is-drag-over" : ""}`}
+            >
               <div className="sat-card-header">
+                <div className="sat-drag-handle" title="Drag to reorder">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="8" cy="6" r="1.8" />
+                    <circle cx="16" cy="6" r="1.8" />
+                    <circle cx="8" cy="12" r="1.8" />
+                    <circle cx="16" cy="12" r="1.8" />
+                    <circle cx="8" cy="18" r="1.8" />
+                    <circle cx="16" cy="18" r="1.8" />
+                  </svg>
+                </div>
                 <img src={item.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(item.student_name)} alt={item.student_name} className="sat-card-avatar" />
                 <div className="sat-card-meta">
                   <h3 className="sat-card-name">{item.student_name}</h3>
@@ -252,6 +320,7 @@ export function SuperAdminTestimonials() {
           <table className="sat-table">
             <thead>
               <tr>
+                <th style={{ width: 40 }}></th>
                 <th>NAME</th>
                 <th>SCORE</th>
                 <th>QUOTE</th>
@@ -261,8 +330,28 @@ export function SuperAdminTestimonials() {
               </tr>
             </thead>
             <tbody>
-              {filteredItems.map((item) => (
-                <tr key={item.id} className={!item.is_active ? "inactive-row" : ""}>
+              {filteredItems.map((item, index) => (
+                <tr
+                  key={item.id}
+                  draggable={true}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onDrop={(e) => handleDrop(e, index)}
+                  className={`${!item.is_active ? "inactive-row" : ""} ${draggedIndex === index ? "is-dragging" : ""} ${dragOverIndex === index ? "is-drag-over" : ""}`}
+                >
+                  <td>
+                    <div className="sat-drag-handle" title="Drag row to reorder">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="8" cy="6" r="1.8" />
+                        <circle cx="16" cy="6" r="1.8" />
+                        <circle cx="8" cy="12" r="1.8" />
+                        <circle cx="16" cy="12" r="1.8" />
+                        <circle cx="8" cy="18" r="1.8" />
+                        <circle cx="16" cy="18" r="1.8" />
+                      </svg>
+                    </div>
+                  </td>
                   <td>
                     <div className="sat-table-student">
                       {item.avatar_url ? (

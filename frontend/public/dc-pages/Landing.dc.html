@@ -50,7 +50,8 @@
   .testimonial-card { flex: 0 0 360px; width: 360px; background: var(--cardSolid); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: 22px; padding: 26px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.06); transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease; user-select: none; }
   .testimonial-card:hover { transform: translateY(-6px); border-color: var(--acLine); box-shadow: 0 20px 45px rgba(225, 29, 72, 0.12); }
   .testimonial-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
-  .testimonial-avatar { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ac); background: var(--grad); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 800; flex-shrink: 0; }
+  .testimonial-avatar { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ac); background: var(--grad); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 800; flex-shrink: 0; overflow: hidden; position: relative; }
+  .testimonial-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; position: absolute; inset: 0; }
   .testimonial-author-info strong { display: block; font-size: 15px; font-weight: 800; color: var(--ink); }
   .testimonial-author-info span { font-size: 12px; color: var(--ink2); }
   .testimonial-score-badge { display: inline-block; font-size: 11px; font-weight: 800; color: var(--ac); background: var(--acWash); padding: 3px 8px; border-radius: 6px; margin-top: 3px; }
@@ -305,7 +306,10 @@
           <div class="testimonial-card">
             <div>
               <div class="testimonial-header">
-                <div class="testimonial-avatar" style="--grad: {{ t.grad }};">{{ t.init }}</div>
+                <div class="testimonial-avatar" style="--grad: {{ t.grad }};">
+                  <span>{{ t.init }}</span>
+                  <img src="{{ t.avatar }}" alt="{{ t.name }}" class="testimonial-avatar-img" onError="this.style.display='none'" />
+                </div>
                 <div class="testimonial-author-info">
                   <strong>{{ t.name }}</strong>
                   <span>{{ t.role }}</span>
@@ -382,10 +386,10 @@ class Component extends DCLogic {
   }
 
   reviews = [
-    { quote: "The mock environment felt identical to test day. The AI speaking feedback told me exactly where I was losing fluency marks — I went from", highlight: "6.5 to 8.0", tail: ".", name: "Priya Nair", role: "Academic candidate", score: "Band 8.0", meta: "Achieved Band 8.0 · Academic", init: "PN", grad: "linear-gradient(135deg, #e11d48, #7c5cff)" },
-    { quote: "Writing feedback broke my essay down criterion by criterion. Task response and coherence tips got me straight from", highlight: "6.0 to 7.5", tail: " in six weeks.", name: "Arjun Mehta", role: "General Training", score: "Band 7.5", meta: "Achieved Band 7.5 · General", init: "AM", grad: "linear-gradient(135deg, #00d4ff, #22c55e)" },
-    { quote: "Our institute batch dashboard is unreal. We could spot every weak student in one glance — 42 of 50 hit their target band, up from", highlight: "23 last cycle", tail: ".", name: "Dr. Meera Kapoor", role: "Institute director", score: "42/50 targets", meta: "Director · Meridian Institute", init: "MK", grad: "linear-gradient(135deg, #7c5cff, #a48cff)" },
-    { quote: "The listening simulations use actual British and Australian accents. Practicing with the real audio quality made test day feel like a", highlight: "regular practice session", tail: ".", name: "Sana Iqbal", role: "Academic candidate", score: "Band 8.5", meta: "Achieved Band 8.5 · Academic", init: "SI", grad: "linear-gradient(135deg, #fb7185, #e11d48)" },
+    { quote: "The mock environment felt identical to test day. The AI speaking feedback told me exactly where I was losing fluency marks — I went from", highlight: "6.5 to 8.0", tail: ".", name: "Priya Nair", role: "Academic candidate", score: "Band 8.0", meta: "Achieved Band 8.0 · Academic", init: "PN", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80", grad: "linear-gradient(135deg, #e11d48, #7c5cff)" },
+    { quote: "Writing feedback broke my essay down criterion by criterion. Task response and coherence tips got me straight from", highlight: "6.0 to 7.5", tail: " in six weeks.", name: "Arjun Mehta", role: "General Training", score: "Band 7.5", meta: "Achieved Band 7.5 · General", init: "AM", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80", grad: "linear-gradient(135deg, #00d4ff, #22c55e)" },
+    { quote: "Our institute batch dashboard is unreal. We could spot every weak student in one glance — 42 of 50 hit their target band, up from", highlight: "23 last cycle", tail: ".", name: "Dr. Meera Kapoor", role: "Institute director", score: "42/50 targets", meta: "Director · Meridian Institute", init: "MK", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80", grad: "linear-gradient(135deg, #7c5cff, #a48cff)" },
+    { quote: "The listening simulations use actual British and Australian accents. Practicing with the real audio quality made test day feel like a", highlight: "regular practice session", tail: ".", name: "Sana Iqbal", role: "Academic candidate", score: "Band 8.5", meta: "Achieved Band 8.5 · Academic", init: "SI", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80", grad: "linear-gradient(135deg, #fb7185, #e11d48)" },
   ];
 
   rootRef = (el) => {
@@ -615,6 +619,7 @@ class Component extends DCLogic {
       scrollTestimonialsRight: this.scrollTestimonialsRight,
       testimonialCards: [...this.reviews, ...this.reviews].map((r) => ({
         init: r.init,
+        avatar: r.avatar,
         name: r.name,
         role: r.role,
         score: r.score,

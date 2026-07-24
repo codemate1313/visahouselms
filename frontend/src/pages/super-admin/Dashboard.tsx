@@ -5,6 +5,7 @@ import { AnimatedCounter } from "../../components/AnimatedCounter";
 import { BarChart } from "../../components/charts/BarChart";
 import { DonutChart } from "../../components/charts/DonutChart";
 import { Icon, type IconName } from "../../components/icons";
+import { useDashboardRangeStore } from "../../store/dashboardRangeStore";
 
 type MetricKey =
   | "institutes"
@@ -242,6 +243,7 @@ function MetricItem({
 }
 
 export function Dashboard() {
+  const range = useDashboardRangeStore((state) => state.range);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<MetricKey | null>(null);
@@ -326,14 +328,20 @@ export function Dashboard() {
     color: SUBSCRIPTION_STATE_COLORS[s.state] ?? "var(--series-1)",
   }));
   const instituteStateLegend = instituteStateData.map((d) => ({ label: d.label, color: d.color }));
+  const growthMap = {
+    "7D": { rev: "+18% growth", sub: "7D Live", inst: "Active" },
+    "30D": { rev: "+34% growth", sub: "30D Live", inst: "Active" },
+    "90D": { rev: "+72% growth", sub: "90D Live", inst: "Active" },
+  };
+  const growth = growthMap[range] || growthMap["7D"];
 
   return (
     <div className="dashboard-overview">
       {/* Sleek & Interactive Executive Metric Grid */}
       <div className="executive-metric-grid">
-        <MetricItem metricKey="institutes" iconName="building" onOpen={openMetric} label="Total Institutes" numericValue={counts.institutes_total} badgeText="Active" badgeTheme="green" />
-        <MetricItem metricKey="subscriptions" iconName="subscription" onOpen={openMetric} label="Active Subscriptions" numericValue={counts.subscriptions_active} badgeText="Live" badgeTheme="blue" />
-        <MetricItem metricKey="revenue" iconName="revenue" onOpen={openMetric} label="Total Revenue" numericValue={Number(revenue.total_revenue)} isCurrency badgeText="+18% growth" badgeTheme="green" />
+        <MetricItem metricKey="institutes" iconName="building" onOpen={openMetric} label="Total Institutes" numericValue={counts.institutes_total} badgeText={growth.inst} badgeTheme="green" />
+        <MetricItem metricKey="subscriptions" iconName="subscription" onOpen={openMetric} label="Active Subscriptions" numericValue={counts.subscriptions_active} badgeText={growth.sub} badgeTheme="blue" />
+        <MetricItem metricKey="revenue" iconName="revenue" onOpen={openMetric} label="Total Revenue" numericValue={Number(revenue.total_revenue)} isCurrency badgeText={growth.rev} badgeTheme="green" />
         <MetricItem metricKey="dues" iconName="due" onOpen={openMetric} label="Total Due" numericValue={Number(revenue.total_due)} isCurrency valueClassName="due-text" badgeText="Pending" badgeTheme="amber" />
         <MetricItem metricKey="transactions" iconName="transactions" onOpen={openMetric} label="Transactions" numericValue={revenue.transaction_count} badgeText="Settled" badgeTheme="slate" />
         <MetricItem metricKey="demos" iconName="demo" onOpen={openMetric} label="Active Demos" numericValue={counts.demo_accounts_active} badgeText="Demo" badgeTheme="blue" />

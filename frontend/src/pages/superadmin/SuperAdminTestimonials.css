@@ -818,3 +818,49 @@
   margin: 0;
   color: #64748b;
 }
+
+/* Drag and Drop Styling */
+.sat-card {
+  cursor: grab;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease, opacity 0.2s ease;
+}
+
+.sat-card:active {
+  cursor: grabbing;
+}
+
+.sat-card.is-dragging,
+tr.is-dragging {
+  opacity: 0.4;
+  border: 2px dashed #e11d2e !important;
+  background: rgba(225, 29, 46, 0.04) !important;
+}
+
+.sat-card.is-drag-over,
+tr.is-drag-over {
+  border: 2px solid #e11d2e !important;
+  box-shadow: 0 0 0 4px rgba(225, 29, 46, 0.16) !important;
+  transform: scale(1.02);
+}
+
+.sat-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  cursor: grab;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  user-select: none;
+}
+
+.sat-drag-handle:hover {
+  color: #e11d2e;
+  background: rgba(225, 29, 46, 0.08);
+  transform: scale(1.1);
+}
+
+.sat-drag-handle:active {
+  cursor: grabbing;
+}

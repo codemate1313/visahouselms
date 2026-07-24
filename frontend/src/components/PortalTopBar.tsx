@@ -7,6 +7,7 @@ import { useAuthStore } from "../store/authStore";
 import { usePageTitleStore } from "../store/pageTitleStore";
 import { Icon, type IconName } from "./icons";
 import { NotificationBell } from "./StudentNotificationBell";
+import { DashboardRangeAndThemeToggle } from "./DashboardRangeAndThemeToggle";
 
 const HOVER_CLOSE_DELAY = 220;
 
@@ -392,6 +393,9 @@ export function PortalTopBar({
       </div>
 
       <div className="portal-app-actions">
+        {(location.pathname === "/super-admin/dashboard" || location.pathname === "/super-admin/revenue") && (
+          <DashboardRangeAndThemeToggle />
+        )}
         <NotificationBell eyebrow={notificationEyebrow} fallbackRoute={fallbackRoute} notificationsPath={notificationsPath} notificationsHref={notificationsHref} />
         <div
           className="portal-user-menu"

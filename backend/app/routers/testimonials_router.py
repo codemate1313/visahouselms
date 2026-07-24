@@ -37,6 +37,22 @@ def list_all_testimonials_admin(db: Session = Depends(get_db)):
     return db.scalars(stmt).all()
 
 
+from pydantic import BaseModel
+
+class TestimonialReorderItem(BaseModel):
+    id: int
+    display_order: int
+
+@admin_router.put("/reorder")
+def reorder_testimonials_admin(items: List[TestimonialReorderItem], db: Session = Depends(get_db)):
+    for item in items:
+        t = db.get(Testimonial, item.id)
+        if t:
+            t.display_order = item.display_order
+    db.commit()
+    return {"message": "Reordered successfully"}
+
+
 @admin_router.post("", response_model=TestimonialResponse, status_code=status.HTTP_201_CREATED)
 def create_testimonial_admin(payload: TestimonialCreate, db: Session = Depends(get_db)):
     item = Testimonial(**payload.model_dump())

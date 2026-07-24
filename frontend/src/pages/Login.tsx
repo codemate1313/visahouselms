@@ -242,12 +242,7 @@ export function Login({
       </div>
 
       <div className="login-ref-card">
-        {/* Left Side: Animated Hero Image Slider */}
-        <div className="login-slider-container">
-          <HeroSlider />
-        </div>
-
-        {/* Right Side: Clean Form */}
+        {/* Left Side: Clean Form */}
         <div className="login-form-side">
           <div className="vh-auth-brand">
             <span className="vh-auth-logo">VH</span>
@@ -397,7 +392,7 @@ export function Login({
                     background: "none",
                     border: "none",
                     color: "var(--rose-600)",
-                    fontWeight: 700,
+                    fontWeight: 750,
                     cursor: "pointer",
                     padding: 0,
                     fontSize: "inherit",
@@ -409,6 +404,11 @@ export function Login({
               </p>
             )}
           </div>
+        </div>
+
+        {/* Right Side: Animated Hero Image Slider */}
+        <div className="login-slider-container">
+          <HeroSlider />
         </div>
       </div>
 
