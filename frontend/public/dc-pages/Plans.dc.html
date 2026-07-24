@@ -32,6 +32,11 @@
   .vh-flip:hover .vh-flip-inner { transform: rotateY(180deg); }
   .vh-face { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 22px; overflow: hidden; }
   .vh-back { transform: rotateY(180deg); }
+  .vh-nav { display: flex; align-items: center; gap: 30px; }
+  .vh-nav-link { position: relative; font-size: 14px; font-weight: 500; color: var(--ink2, #9095a3); text-decoration: none; padding-bottom: 6px; transition: color 0.25s ease; }
+  .vh-nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--ac, #ff4d3d); transform: scaleX(0); transform-origin: left center; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .vh-nav-link:hover, .vh-nav-link.vh-active { color: var(--ink, #f5f5f7); }
+  .vh-nav-link:hover::after, .vh-nav-link.vh-active::after { transform: scaleX(1); }
   @keyframes vh-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   ::selection { background: var(--ac, #ff4d3d); color: #fff; }
 </style>
@@ -54,9 +59,9 @@
         <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.3px;">Visa House</span>
         <span style="font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 4px 8px; background: var(--chip); border: 1px solid var(--line); border-radius: 6px; color: var(--ink2);">IELTS LMS</span>
       </a>
-      <nav style="display: flex; align-items: center; gap: 30px;">
+      <nav class="vh-nav">
         <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="5">
-          <a href="{{ item.href }}" style="font-size: 14px; font-weight: 500; color: var(--ink2); transition: color .2s;" style-hover="{color: 'var(--ink)'}">{{ item.label }}</a>
+          <a href="{{ item.href }}" class="{{ item.className }}">{{ item.label }}</a>
         </sc-for>
       </nav>
       <div style="display: flex; align-items: center; gap: 10px;">
@@ -261,7 +266,15 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
 class Component extends DCLogic {
-  state = { theme: "system" };
+  state = { theme: this.getInitialTheme() };
+
+  getInitialTheme() {
+    try {
+      const saved = window.localStorage.getItem("vh-theme");
+      if (saved === "light" || saved === "dark") return saved;
+    } catch {}
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
 
   rootRef = (el) => {
     if (!el || this._root === el) { if (el) this._root = el; return; }
@@ -272,7 +285,15 @@ class Component extends DCLogic {
 
   componentDidMount() {
     this._mq = window.matchMedia("(prefers-color-scheme: dark)");
-    this._mqListener = () => { if (this.state.theme === "system") this.applyTheme(); };
+    this._mqListener = () => {
+      try {
+        if (!window.localStorage.getItem("vh-theme")) {
+          this.setState({ theme: this.getInitialTheme() }, () => this.applyTheme());
+        }
+      } catch {
+        this.setState({ theme: this.getInitialTheme() }, () => this.applyTheme());
+      }
+    };
     this._mq.addEventListener?.("change", this._mqListener);
     this.applyTheme();
   }
@@ -294,14 +315,13 @@ class Component extends DCLogic {
   }
 
   isDark() {
-    if (this.state.theme === "dark") return true;
-    if (this.state.theme === "light") return false;
-    return this._mq?.matches ?? true;
+    return this.state.theme === "dark";
   }
 
   applyTheme() {
     if (!this._root) return;
     const dark = this.isDark();
+    try { window.parent.postMessage({ type: "vh-theme", theme: dark ? "dark" : "light" }, window.location.origin); } catch {}
     const set = (k, v) => this._root.style.setProperty(k, v);
     set("--ac", "#ff4d3d");
     set("--ac2", "#ff7a5c");
@@ -321,15 +341,14 @@ class Component extends DCLogic {
   }
 
   cycleTheme = () => {
-    const order = ["system", "light", "dark"];
-    const next = order[(order.indexOf(this.state.theme) + 1) % order.length];
+    const next = this.state.theme === "dark" ? "light" : "dark";
+    try { window.localStorage.setItem("vh-theme", next); } catch {}
     this.setState({ theme: next }, () => this.applyTheme());
   };
 
   renderVals() {
     const svg = (paths, size = 22) => React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.9, strokeLinecap: "round", strokeLinejoin: "round" }, paths.map((p, i) => React.createElement(p.tag, { key: i, ...p.attrs })));
     const themeIcons = {
-      system: svg([{ tag: "rect", attrs: { x: 3, y: 4, width: 18, height: 13, rx: 2 } }, { tag: "path", attrs: { d: "M8 20h8M12 17v3" } }], 17),
       light: svg([{ tag: "circle", attrs: { cx: 12, cy: 12, r: 4.2 } }, { tag: "path", attrs: { d: "M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" } }], 17),
       dark: svg([{ tag: "path", attrs: { d: "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" } }], 17),
     };
@@ -340,11 +359,11 @@ class Component extends DCLogic {
       themeIcon: themeIcons[this.state.theme],
       year: new Date().getFullYear(),
       navItems: [
-        { label: "Home", href: "/" },
-        { label: "About", href: "/about" },
-        { label: "Plans", href: "/plans" },
-        { label: "Blogs", href: "/blogs" },
-        { label: "Contact", href: "/contact" },
+        { label: "Home", href: "/", className: "vh-nav-link" },
+        { label: "About", href: "/about", className: "vh-nav-link" },
+        { label: "Plans", href: "/plans", className: "vh-nav-link vh-active" },
+        { label: "Blogs", href: "/blogs", className: "vh-nav-link" },
+        { label: "Contact", href: "/contact", className: "vh-nav-link" },
       ],
       footerCols: [
         { title: "Showcase", links: ["Platform Home", "About Us", "Plans & Pricing", "Contact Support"] },

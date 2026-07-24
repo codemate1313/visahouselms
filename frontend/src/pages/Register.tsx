@@ -65,8 +65,18 @@ export function Register() {
 
         {/* Right Side: Clean Form */}
         <div className="login-form-side">
+          <div className="vh-auth-brand">
+            <span className="vh-auth-logo">VH</span>
+            <div>
+              <div className="vh-auth-name">Visa House</div>
+              <div className="vh-auth-tag">IELTS LMS</div>
+            </div>
+          </div>
+
           <div className="login-form-header text-center">
-            <h1 className="form-main-title">CREATE ACCOUNT</h1>
+            <h1 className="form-main-title">
+              Create <span className="vh-auth-italic">account.</span>
+            </h1>
             <p className="form-sub-title">Sign up as a student to browse and access IELTS courses.</p>
           </div>
 

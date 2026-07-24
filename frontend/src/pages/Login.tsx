@@ -249,8 +249,24 @@ export function Login({
 
         {/* Right Side: Clean Form */}
         <div className="login-form-side">
+          <div className="vh-auth-brand">
+            <span className="vh-auth-logo">VH</span>
+            <div>
+              <div className="vh-auth-name">Visa House</div>
+              <div className="vh-auth-tag">IELTS LMS</div>
+            </div>
+          </div>
+
           <div className="login-form-header text-center">
-            <h1 className="form-main-title">{title}</h1>
+            <h1 className="form-main-title">
+              {title === "IELTS LMS" ? (
+                <>
+                  Welcome <span className="vh-auth-italic">back.</span>
+                </>
+              ) : (
+                title
+              )}
+            </h1>
             <p className="form-sub-title">{subtitle}</p>
           </div>
 
@@ -339,7 +355,7 @@ export function Login({
             {error && <div className="concise-error-box">{error}</div>}
 
             <button type="submit" className="concise-submit-btn" disabled={loading}>
-              {loading ? "Signing in..." : "Sign in →"}
+              {loading ? "Signing in..." : `Sign in as ${roleLabel(selectedRole)} →`}
             </button>
           </form>
 
