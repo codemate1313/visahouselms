@@ -11394,13 +11394,13 @@ button.danger-text {
   color: #dc2626;
 }
 
-/* Active State Highlighting */
 .huge-sidebar .sidebar-item-link.is-active,
-.huge-sidebar .sidebar-item-btn.is-active {
-  background: var(--sidebar-active-bg) !important;
+.huge-sidebar .sidebar-item-btn.is-active,
+.huge-sidebar .sidebar-subitem-link.is-sub-active {
+  background: transparent !important;
   color: var(--sidebar-active-text) !important;
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.12);
+  box-shadow: none !important;
 }
 
 .huge-sidebar .sidebar-item-link.is-active .sidebar-icon,
@@ -11485,22 +11485,29 @@ button.danger-text {
 }
 
 .institute-branded-portal .huge-sidebar .sidebar-item-link.is-active,
-.institute-branded-portal .huge-sidebar .sidebar-item-btn.is-active {
-  background: color-mix(in srgb, var(--institute-on-primary, #ffffff) 16%, transparent) !important;
-  color: var(--institute-on-primary, #ffffff) !important;
-  box-shadow: none;
+.institute-branded-portal .huge-sidebar .sidebar-item-btn.is-active,
+.institute-branded-portal .huge-sidebar .sidebar-subitem-link.is-sub-active,
+.institute-branded-portal .huge-sidebar .sidebar-item-link.is-active:hover,
+.institute-branded-portal .huge-sidebar .sidebar-item-btn.is-active:hover,
+.institute-branded-portal .huge-sidebar .sidebar-subitem-link.is-sub-active:hover {
+  background: transparent !important;
+  color: var(--institute-primary, #0b2388) !important;
+  box-shadow: none !important;
 }
 
 .institute-branded-portal .huge-sidebar .sidebar-item-link.is-active .sidebar-icon,
 .institute-branded-portal .huge-sidebar .sidebar-item-btn.is-active .sidebar-icon,
 .institute-branded-portal .huge-sidebar .sidebar-item-link.is-active .sidebar-accordion-arrow,
-.institute-branded-portal .huge-sidebar .sidebar-item-btn.is-active .sidebar-accordion-arrow {
-  color: var(--institute-on-primary, #ffffff);
+.institute-branded-portal .huge-sidebar .sidebar-item-btn.is-active .sidebar-accordion-arrow,
+.institute-branded-portal .huge-sidebar .sidebar-item-link.is-active:hover .sidebar-icon,
+.institute-branded-portal .huge-sidebar .sidebar-item-btn.is-active:hover .sidebar-icon,
+.institute-branded-portal .huge-sidebar .sidebar-item-link.is-active:hover .sidebar-accordion-arrow,
+.institute-branded-portal .huge-sidebar .sidebar-item-btn.is-active:hover .sidebar-accordion-arrow {
+  color: var(--institute-primary, #0b2388) !important;
 }
 
-.institute-branded-portal .huge-sidebar .sidebar-subitem-link:hover,
-.institute-branded-portal .huge-sidebar .sidebar-subitem-link.is-sub-active {
-  background: color-mix(in srgb, var(--institute-on-primary, #ffffff) 14%, var(--institute-primary, #0b2388)) !important;
+.institute-branded-portal .huge-sidebar .sidebar-subitem-link:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
   color: var(--institute-on-primary, #ffffff) !important;
   box-shadow: none;
 }
@@ -11696,12 +11703,77 @@ button.danger-text {
   color: #ffffff !important;
 }
 
+/* Apple iOS/macOS Fluid Sliding Sidebar Active Pill Indicator */
+.apple-sidebar-active-indicator {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  background: #ffffff !important;
+  border-radius: 14px !important;
+  box-shadow: 0 10px 26px -4px rgba(87, 11, 18, 0.28), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              width 260ms cubic-bezier(0.16, 1, 0.3, 1),
+              height 250ms cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 180ms ease !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  will-change: transform, width, height, opacity !important;
+}
+
+.huge-sidebar .sidebar-item-link,
+.huge-sidebar .sidebar-item-btn,
+.huge-sidebar .sidebar-subitem-link {
+  position: relative !important;
+  z-index: 2 !important;
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), color 180ms ease !important;
+}
+
+.huge-sidebar .sidebar-item-link:active,
+.huge-sidebar .sidebar-item-btn:active,
+.huge-sidebar .sidebar-subitem-link:active {
+  transform: scale(0.96) !important;
+}
+
+/* Ensure active item text & icons stay crimson red on hover over the white pill */
 .super-admin-portal .huge-sidebar .sidebar-item-link.is-active,
 .super-admin-portal .huge-sidebar .sidebar-item-btn.is-active,
-.super-admin-portal .huge-sidebar .sidebar-subitem-link.is-sub-active {
-  color: var(--sa-sidebar-red) !important;
-  background: #ffffff !important;
-  box-shadow: 0 10px 24px rgba(87, 11, 18, 0.18);
+.super-admin-portal .huge-sidebar .sidebar-subitem-link.is-sub-active,
+.super-admin-portal .huge-sidebar .sidebar-item-link.is-active:hover,
+.super-admin-portal .huge-sidebar .sidebar-item-btn.is-active:hover,
+.super-admin-portal .huge-sidebar .sidebar-subitem-link.is-sub-active:hover {
+  color: var(--sa-sidebar-red, #b91c2b) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-item-link.is-active .sidebar-icon,
+.super-admin-portal .huge-sidebar .sidebar-item-btn.is-active .sidebar-icon,
+.super-admin-portal .huge-sidebar .sidebar-item-link.is-active .sidebar-accordion-arrow,
+.super-admin-portal .huge-sidebar .sidebar-item-btn.is-active .sidebar-accordion-arrow,
+.super-admin-portal .huge-sidebar .sidebar-item-link.is-active:hover .sidebar-icon,
+.super-admin-portal .huge-sidebar .sidebar-item-btn.is-active:hover .sidebar-icon,
+.super-admin-portal .huge-sidebar .sidebar-item-link.is-active:hover .sidebar-accordion-arrow,
+.super-admin-portal .huge-sidebar .sidebar-item-btn.is-active:hover .sidebar-accordion-arrow {
+  color: var(--sa-sidebar-red, #b91c2b) !important;
+}
+
+/* Apple iOS Smooth Route Entrance Animation */
+@keyframes applePageSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dashboard-content,
+.portal-content,
+.super-admin-portal main,
+.institute-branded-portal main {
+  animation: applePageSlideIn 280ms cubic-bezier(0.16, 1, 0.3, 1) ease-out;
 }
 
 .super-admin-portal .huge-sidebar .sidebar-item-link.is-active .sidebar-icon,

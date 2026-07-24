@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useLocation } from "react-router-dom";
 import { Icon, type IconName } from "./icons";
@@ -120,6 +120,42 @@ export function Sidebar({
     });
   }, [activeKey, sections]);
 
+  const navRef = useRef<HTMLElement | null>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState<{ top: number; left: number; width: number; height: number; opacity: number }>({
+    top: 0,
+    left: 0,
+    width: 0,
+    height: 0,
+    opacity: 0,
+  });
+
+  // Calculate sliding indicator position whenever activeKey or route changes
+  useLayoutEffect(() => {
+    const updateIndicator = () => {
+      if (!navRef.current) return;
+      const activeEl = navRef.current.querySelector<HTMLElement>(
+        ".sidebar-item-link.is-active, .sidebar-item-btn.is-active, .sidebar-subitem-link.is-sub-active"
+      );
+      if (activeEl) {
+        const navRect = navRef.current.getBoundingClientRect();
+        const activeRect = activeEl.getBoundingClientRect();
+        setIndicatorStyle({
+          top: activeRect.top - navRect.top + navRef.current.scrollTop,
+          left: activeRect.left - navRect.left,
+          width: activeRect.width,
+          height: activeRect.height,
+          opacity: 1,
+        });
+      } else {
+        setIndicatorStyle((prev) => ({ ...prev, opacity: 0 }));
+      }
+    };
+
+    updateIndicator();
+    const timer = setTimeout(updateIndicator, 60);
+    return () => clearTimeout(timer);
+  }, [activeKey, location.pathname, expandedKeys, collapsed]);
+
   const toggleAccordion = (key: string) => {
     setExpandedKeys((prev) => ({
       ...prev,
@@ -162,7 +198,17 @@ export function Sidebar({
       </div>
 
       {/* 3. Navigation Sections */}
-      <nav className="sidebar-nav-scroll">
+      <nav ref={navRef} className="sidebar-nav-scroll" style={{ position: "relative" }}>
+        {/* Apple iOS Sliding Active Indicator Pill */}
+        <div
+          className="apple-sidebar-active-indicator"
+          style={{
+            transform: `translate(${indicatorStyle.left}px, ${indicatorStyle.top}px)`,
+            width: indicatorStyle.width > 0 ? `${indicatorStyle.width}px` : undefined,
+            height: indicatorStyle.height > 0 ? `${indicatorStyle.height}px` : undefined,
+            opacity: indicatorStyle.opacity,
+          }}
+        />
         {sections.map((section, sIndex) => (
           <div key={sIndex} className="sidebar-section">
             {section.title && (
