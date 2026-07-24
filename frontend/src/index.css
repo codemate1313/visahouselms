@@ -11396,7 +11396,10 @@ button.danger-text {
 
 .huge-sidebar .sidebar-item-link.is-active,
 .huge-sidebar .sidebar-item-btn.is-active,
-.huge-sidebar .sidebar-subitem-link.is-sub-active {
+.huge-sidebar .sidebar-subitem-link.is-sub-active,
+.huge-sidebar .sidebar-item-link.is-active:hover,
+.huge-sidebar .sidebar-item-btn.is-active:hover,
+.huge-sidebar .sidebar-subitem-link.is-sub-active:hover {
   background: transparent !important;
   color: var(--sidebar-active-text) !important;
   font-weight: 600;
@@ -11591,6 +11594,9 @@ button.danger-text {
   margin-bottom: 6px;
   padding-left: 28px;
   animation: slideDown 220ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  /* Ensure submenu items always render ABOVE the sliding pill indicator */
+  isolation: isolate;
+  z-index: 3;
 }
 
 @keyframes slideDown {
@@ -11784,12 +11790,23 @@ button.danger-text {
 }
 
 .super-admin-portal .huge-sidebar .sidebar-subitem-link {
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.82);
+  position: relative !important;
+  z-index: 3 !important;
 }
 
 .super-admin-portal .huge-sidebar .sidebar-subitem-link:hover {
   color: #ffffff !important;
   background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Active sub-item: must be visible (red text) on the white sliding pill */
+.super-admin-portal .huge-sidebar .sidebar-subitem-link.is-sub-active,
+.super-admin-portal .huge-sidebar .sidebar-subitem-link.is-sub-active:hover {
+  color: var(--sa-sidebar-red, #b91c2b) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
 }
 
 .super-admin-portal .huge-sidebar .sidebar-tree-line {
