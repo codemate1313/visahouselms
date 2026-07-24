@@ -10,12 +10,12 @@
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Space Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
   a { color: inherit; text-decoration: none; }
-  a:hover { color: var(--ac, #ff4d3d); }
+  a:hover { color: var(--ac, #e11d48); }
   @keyframes vh-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
   @keyframes vh-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes vh-pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
@@ -32,21 +32,28 @@
   .vh-flip:hover .vh-flip-inner { transform: rotateY(180deg); }
   .vh-face { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 22px; overflow: hidden; }
   .vh-back { transform: rotateY(180deg); }
+  .vh-parallax { will-change: transform; transition: transform .12s linear; }
+  .vh-ielts-band { position: absolute; left: 50%; width: 110vw; height: 170px; border-radius: 999px; transform: translateX(-50%) rotate(-5deg); opacity: var(--bandOpacity); pointer-events: none; }
+  .vh-hero-card { box-shadow: 0 34px 80px -24px rgba(0,0,0,0.38), 0 0 0 1px var(--line); }
+  .vh-exam-tab { background: var(--chip); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; color: var(--ink2); }
+  .vh-exam-tab.is-active { background: var(--acWash); border-color: var(--acLine); color: var(--ink); }
   .vh-nav { display: flex; align-items: center; gap: 30px; }
   .vh-nav-link { position: relative; font-size: 14px; font-weight: 500; color: var(--ink2, #9095a3); text-decoration: none; padding-bottom: 6px; transition: color 0.25s ease; }
-  .vh-nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--ac, #ff4d3d); transform: scaleX(0); transform-origin: left center; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .vh-nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--ac, #e11d48); transform: scaleX(0); transform-origin: left center; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
   .vh-nav-link:hover, .vh-nav-link.vh-active { color: var(--ink, #f5f5f7); }
   .vh-nav-link:hover::after, .vh-nav-link.vh-active::after { transform: scaleX(1); }
   @keyframes vh-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  ::selection { background: var(--ac, #ff4d3d); color: #fff; }
+  ::selection { background: var(--ac, #e11d48); color: #fff; }
 </style>
 </helmet>
 <div ref="{{ rootRef }}" style="background: var(--bg); color: var(--ink); min-height: 100vh; overflow-x: hidden; position: relative; transition: background .35s ease, color .35s ease;">
 
-  <div aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; height: 900px; pointer-events: none; z-index: 0; overflow: hidden;">
-    <div style="position: absolute; top: 5%; left: 20%; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, var(--ac) 0%, transparent 65%); opacity: var(--orbA); filter: blur(90px); animation: vh-orbA 18s ease-in-out infinite;"></div>
-    <div style="position: absolute; top: 15%; right: 15%; width: 480px; height: 480px; border-radius: 50%; background: radial-gradient(circle, #7c5cff 0%, transparent 65%); opacity: var(--orbB); filter: blur(100px); animation: vh-orbB 22s ease-in-out infinite;"></div>
-    <div style="position: absolute; top: 55%; left: 40%; width: 380px; height: 380px; border-radius: 50%; background: radial-gradient(circle, #00d4ff 0%, transparent 65%); opacity: var(--orbC); filter: blur(85px); animation: vh-orbC 26s ease-in-out infinite;"></div>
+  <div aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; height: 980px; pointer-events: none; z-index: 0; overflow: hidden;">
+    <div class="vh-ielts-band vh-parallax" data-depth="-0.05" style="top: 118px; background: linear-gradient(90deg, transparent, var(--acWash), transparent);"></div>
+    <div class="vh-ielts-band vh-parallax" data-depth="0.08" style="top: 320px; background: linear-gradient(90deg, transparent, rgba(0, 119, 182, 0.13), transparent); transform: translateX(-50%) rotate(4deg);"></div>
+    <div class="vh-parallax" data-depth="0.16" style="position: absolute; top: 5%; left: 17%; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, var(--ac) 0%, transparent 65%); opacity: var(--orbA); filter: blur(98px); animation: vh-orbA 18s ease-in-out infinite;"></div>
+    <div class="vh-parallax" data-depth="-0.1" style="position: absolute; top: 12%; right: 12%; width: 470px; height: 470px; border-radius: 50%; background: radial-gradient(circle, #0066b3 0%, transparent 65%); opacity: var(--orbB); filter: blur(108px); animation: vh-orbB 22s ease-in-out infinite;"></div>
+    <div class="vh-parallax" data-depth="0.06" style="position: absolute; top: 58%; left: 38%; width: 360px; height: 360px; border-radius: 50%; background: radial-gradient(circle, #00a3d7 0%, transparent 65%); opacity: var(--orbC); filter: blur(92px); animation: vh-orbC 26s ease-in-out infinite;"></div>
   </div>
   <div aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; background: radial-gradient(ellipse at 50% 20%, transparent 0%, var(--bg) 70%); pointer-events: none;"></div>
 
@@ -82,7 +89,7 @@
       </div>
       <h1 style="font-size: 72px; line-height: 0.98; letter-spacing: -3px; font-weight: 600; margin-bottom: 24px;">
         Master IELTS with real exam simulations
-        <span style="font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; background: linear-gradient(135deg, var(--ac), var(--ac2)); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -2px;"> &amp; AI feedback.</span>
+        <span style="font-family: inherit; font-style: normal; font-weight: 700; background: linear-gradient(135deg, var(--ac), var(--ac2)); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -0.8px;"> &amp; AI feedback.</span>
       </h1>
       <p style="font-size: 18px; line-height: 1.6; color: var(--ink2); max-width: 500px; margin-bottom: 36px;">
         Authentic computer-delivered test environments — with instant AI speaking evaluation, automated writing feedback, and real-time institute tracking.
@@ -96,25 +103,25 @@
       </div>
       <div style="display: flex; gap: 36px;">
         <div>
-          <div style="font-size: 34px; font-weight: 700; letter-spacing: -1px; background: linear-gradient(135deg, var(--ink), var(--ink2)); -webkit-background-clip: text; background-clip: text; color: transparent;">{{ stat0 }}</div>
+          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.4px; background: linear-gradient(135deg, var(--ink), var(--ink2)); -webkit-background-clip: text; background-clip: text; color: transparent;">{{ stat0 }}</div>
           <div style="font-size: 13px; color: var(--ink2); font-weight: 500;">Students prepared</div>
         </div>
         <div style="width: 1px; background: var(--line);"></div>
         <div>
-          <div style="font-size: 34px; font-weight: 700; letter-spacing: -1px; background: linear-gradient(135deg, var(--ink), var(--ink2)); -webkit-background-clip: text; background-clip: text; color: transparent;">{{ stat1 }}</div>
+          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.4px; background: linear-gradient(135deg, var(--ink), var(--ink2)); -webkit-background-clip: text; background-clip: text; color: transparent;">{{ stat1 }}</div>
           <div style="font-size: 13px; color: var(--ink2); font-weight: 500;">Partner institutes</div>
         </div>
         <div style="width: 1px; background: var(--line);"></div>
         <div>
-          <div style="font-size: 34px; font-weight: 700; letter-spacing: -1px; background: linear-gradient(135deg, var(--ink), var(--ink2)); -webkit-background-clip: text; background-clip: text; color: transparent;">{{ stat2 }}</div>
+          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.4px; background: linear-gradient(135deg, var(--ink), var(--ink2)); -webkit-background-clip: text; background-clip: text; color: transparent;">{{ stat2 }}</div>
           <div style="font-size: 13px; color: var(--ink2); font-weight: 500;">Target band rate</div>
         </div>
       </div>
     </div>
 
-    <div style="position: relative; animation: vh-rise .9s ease both;">
-      <div style="position: absolute; inset: -30px; background: radial-gradient(circle at 60% 40%, var(--ac), transparent 60%); opacity: 0.32; filter: blur(50px);"></div>
-      <div style="position: relative; background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 40px 80px -20px rgba(0,0,0,0.35); overflow: hidden;">
+    <div class="vh-parallax" data-depth="-0.05" style="position: relative; animation: vh-rise .9s ease both;">
+      <div class="vh-parallax" data-depth="0.12" style="position: absolute; inset: -30px; background: radial-gradient(circle at 60% 40%, var(--ac), transparent 60%); opacity: 0.26; filter: blur(54px);"></div>
+      <div class="vh-hero-card" style="position: relative; background: var(--cardSolid); backdrop-filter: blur(18px); border: 1px solid var(--line); border-radius: 18px; overflow: hidden;">
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--line);">
           <div style="display: flex; gap: 6px;">
             <span style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f57;"></span>
@@ -125,7 +132,13 @@
             <span style="width: 5px; height: 5px; border-radius: 50%; background: var(--ac); animation: vh-pulse 1.2s infinite;"></span>
             58:40 remaining
           </div>
-          <div style="font-size: 11px; font-weight: 500; color: var(--ink2);">Candidate #489201</div>
+          <div style="font-size: 11px; font-weight: 500; color: var(--ink2);">Computer-delivered IELTS</div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 11.5px; font-weight: 700;">
+          <div class="vh-exam-tab is-active">Listening</div>
+          <div class="vh-exam-tab">Reading</div>
+          <div class="vh-exam-tab">Writing</div>
+          <div class="vh-exam-tab">Speaking</div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr;">
           <div style="padding: 20px; border-right: 1px solid var(--line);">
@@ -182,7 +195,7 @@
   <section id="modules" class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 96px;">
     <div style="max-width: 660px; margin-bottom: 48px;">
       <span style="display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 6px 12px; border-radius: 100px; background: var(--acWash); color: var(--ac); border: 1px solid var(--acLine);">All four modules</span>
-      <h2 style="font-size: 52px; font-weight: 600; letter-spacing: -2px; line-height: 1.02; margin: 16px 0 16px;">Designed for realistic <span style="font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; color: var(--ac);">IELTS success</span></h2>
+      <h2 style="font-size: 52px; font-weight: 600; letter-spacing: -0.8px; line-height: 1.02; margin: 16px 0 16px;">Designed for realistic <span style="font-family: inherit; font-style: normal; font-weight: 700; color: var(--ac);">IELTS success</span></h2>
       <p style="font-size: 17px; line-height: 1.6; color: var(--ink2);">Whether preparing independently or managing an entire institute batch, Visa House delivers complete, exam-accurate coverage.</p>
     </div>
     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
@@ -252,9 +265,9 @@
   </section>
 
   <section class="vh-reveal" style="max-width: 1000px; margin: 0 auto; padding: 40px 32px 96px; text-align: center;">
-    <div style="font-family: 'Instrument Serif', serif; font-size: 110px; line-height: 0.4; color: var(--ac);">&ldquo;</div>
+    <div style="font-family: inherit; font-size: 110px; line-height: 0.4; color: var(--ac);">&ldquo;</div>
     <div key="{{ reviewKey }}" style="animation: vh-fade .55s cubic-bezier(.2,.7,.2,1);">
-      <p style="font-size: 30px; font-weight: 500; line-height: 1.35; letter-spacing: -0.8px; margin-bottom: 28px; min-height: 130px;">{{ review.quote }} <span style="font-family: 'Instrument Serif', serif; font-style: italic; color: var(--ac); letter-spacing: -1px;">{{ review.highlight }}</span>{{ review.tail }}</p>
+      <p style="font-size: 30px; font-weight: 500; line-height: 1.35; letter-spacing: -0.8px; margin-bottom: 28px; min-height: 130px;">{{ review.quote }} <span style="font-family: inherit; font-style: normal; font-weight: 700; color: var(--ac); letter-spacing: -0.4px;">{{ review.highlight }}</span>{{ review.tail }}</p>
       <div style="display: inline-flex; align-items: center; gap: 14px;">
         <div style="width: 48px; height: 48px; border-radius: 50%; background: {{ review.grad }}; display: grid; place-items: center; color: #fff; font-weight: 700;">{{ review.init }}</div>
         <div style="text-align: left;">
@@ -339,10 +352,10 @@ class Component extends DCLogic {
   }
 
   reviews = [
-    { quote: "The mock environment felt identical to test day. The AI speaking feedback told me exactly where I was losing fluency marks — I went from", highlight: "6.5 to 8.0", tail: ".", name: "Priya Nair", meta: "Achieved Band 8.0 · Academic", init: "PN", grad: "linear-gradient(135deg, #ff4d3d, #7c5cff)" },
+    { quote: "The mock environment felt identical to test day. The AI speaking feedback told me exactly where I was losing fluency marks — I went from", highlight: "6.5 to 8.0", tail: ".", name: "Priya Nair", meta: "Achieved Band 8.0 · Academic", init: "PN", grad: "linear-gradient(135deg, #e11d48, #7c5cff)" },
     { quote: "Writing feedback broke my essay down criterion by criterion. Task response and coherence tips got me straight from", highlight: "6.0 to 7.5", tail: " in six weeks.", name: "Arjun Mehta", meta: "Achieved Band 7.5 · General", init: "AM", grad: "linear-gradient(135deg, #00d4ff, #22c55e)" },
     { quote: "Our institute batch dashboard is unreal. We could spot every weak student in one glance — 42 of 50 hit their target band, up from", highlight: "23 last cycle", tail: ".", name: "Dr. Meera Kapoor", meta: "Director · Meridian Institute", init: "MK", grad: "linear-gradient(135deg, #7c5cff, #a48cff)" },
-    { quote: "The listening simulations use actual British and Australian accents. Practicing with the real audio quality made test day feel like a", highlight: "regular practice session", tail: ".", name: "Sana Iqbal", meta: "Achieved Band 8.5 · Academic", init: "SI", grad: "linear-gradient(135deg, #ff9a3d, #ff4d3d)" },
+    { quote: "The listening simulations use actual British and Australian accents. Practicing with the real audio quality made test day feel like a", highlight: "regular practice session", tail: ".", name: "Sana Iqbal", meta: "Achieved Band 8.5 · Academic", init: "SI", grad: "linear-gradient(135deg, #fb7185, #e11d48)" },
   ];
 
   rootRef = (el) => {
@@ -366,6 +379,7 @@ class Component extends DCLogic {
     this._mq.addEventListener?.("change", this._mqListener);
     this.animateStats();
     this.applyTheme();
+    this.bindParallax();
     this._revTimer = setInterval(() => {
       this.setState((s) => ({ rev: (s.rev + 1) % this.reviews.length }));
     }, 5500);
@@ -373,6 +387,7 @@ class Component extends DCLogic {
 
   componentWillUnmount() {
     this._mq?.removeEventListener?.("change", this._mqListener);
+    window.removeEventListener("scroll", this._onParallax);
     this._io?.disconnect?.();
     clearInterval(this._revTimer);
   }
@@ -403,6 +418,26 @@ class Component extends DCLogic {
     });
   }
 
+  bindParallax() {
+    if (!this._root || this._onParallax) return;
+    this._onParallax = () => {
+      if (this._parallaxFrame) return;
+      this._parallaxFrame = requestAnimationFrame(() => {
+        this._parallaxFrame = null;
+        const y = window.scrollY || 0;
+        this._root.querySelectorAll(".vh-parallax").forEach((node) => {
+          const depth = Number(node.dataset.depth || 0);
+          const base = node.classList.contains("vh-ielts-band")
+            ? "translateX(-50%) rotate(" + (node.style.transform.includes("4deg") ? "4deg" : "-5deg") + ")"
+            : "";
+          node.style.transform = `${base} translate3d(0, ${Math.round(y * depth)}px, 0)`;
+        });
+      });
+    };
+    window.addEventListener("scroll", this._onParallax, { passive: true });
+    this._onParallax();
+  }
+
   isDark() {
     return this.state.theme === "dark";
   }
@@ -412,15 +447,15 @@ class Component extends DCLogic {
     const dark = this.isDark();
     try { window.parent.postMessage({ type: "vh-theme", theme: dark ? "dark" : "light" }, window.location.origin); } catch {}
     const set = (k, v) => this._root.style.setProperty(k, v);
-    set("--ac", "#ff4d3d");
-    set("--ac2", "#ff7a5c");
+    set("--ac", "#e11d48");
+    set("--ac2", "#f43f5e");
     if (dark) {
       set("--bg", "#0a0a0f");
       set("--ink", "#f5f5f7");
       set("--ink2", "#9095a3");
       set("--line", "rgba(255,255,255,0.1)");
-      set("--acLine", "rgba(255,122,92,0.35)");
-      set("--acWash", "rgba(255,77,61,0.14)");
+      set("--acLine", "rgba(225, 29, 72,0.35)");
+      set("--acWash", "rgba(225, 29, 72,0.14)");
       set("--card", "rgba(20,20,28,0.55)");
       set("--cardSolid", "rgba(20,20,28,0.9)");
       set("--chip", "rgba(255,255,255,0.06)");
@@ -429,13 +464,14 @@ class Component extends DCLogic {
       set("--orbA", "0.28");
       set("--orbB", "0.2");
       set("--orbC", "0.14");
+      set("--bandOpacity", "0.95");
     } else {
       set("--bg", "#f7f5f2");
       set("--ink", "#0e0d10");
       set("--ink2", "#5f6270");
       set("--line", "rgba(14,13,16,0.1)");
-      set("--acLine", "rgba(255,77,61,0.35)");
-      set("--acWash", "rgba(255,77,61,0.08)");
+      set("--acLine", "rgba(225, 29, 72,0.35)");
+      set("--acWash", "rgba(225, 29, 72,0.08)");
       set("--card", "rgba(255,255,255,0.7)");
       set("--cardSolid", "rgba(255,255,255,0.95)");
       set("--chip", "rgba(14,13,16,0.04)");
@@ -444,6 +480,7 @@ class Component extends DCLogic {
       set("--orbA", "0.22");
       set("--orbB", "0.16");
       set("--orbC", "0.12");
+      set("--bandOpacity", "0.72");
     }
   }
 
@@ -551,7 +588,7 @@ class Component extends DCLogic {
       ],
       logos: ["Meridian", "Cambridge Point", "Aspire", "Lingua", "NorthGate"],
       modules: [
-        { num: "01", title: "Listening Simulations", desc: "High-fidelity native-accent audio with section progress, waveform seeking and answer autocommit.", g1: "#ff4d3d", g2: "#ff7a5c", wash1: "rgba(255,77,61,0.10)", wash2: "rgba(255,77,61,0.02)", status: "Audio playing", preview: wavePreview("#ff4d3d"), icon: svg([
+        { num: "01", title: "Listening Simulations", desc: "High-fidelity native-accent audio with section progress, waveform seeking and answer autocommit.", g1: "#e11d48", g2: "#f43f5e", wash1: "rgba(225, 29, 72,0.10)", wash2: "rgba(225, 29, 72,0.02)", status: "Audio playing", preview: wavePreview("#e11d48"), icon: svg([
           { tag: "path", attrs: { d: "M3 18v-6a9 9 0 0 1 18 0v6" } },
           { tag: "path", attrs: { d: "M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" } },
         ], 32) },

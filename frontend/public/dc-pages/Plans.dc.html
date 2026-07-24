@@ -10,12 +10,12 @@
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Space Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
   a { color: inherit; text-decoration: none; }
-  a:hover { color: var(--ac, #ff4d3d); }
+  a:hover { color: var(--ac, #e11d48); }
   @keyframes vh-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
   @keyframes vh-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes vh-pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
@@ -34,11 +34,11 @@
   .vh-back { transform: rotateY(180deg); }
   .vh-nav { display: flex; align-items: center; gap: 30px; }
   .vh-nav-link { position: relative; font-size: 14px; font-weight: 500; color: var(--ink2, #9095a3); text-decoration: none; padding-bottom: 6px; transition: color 0.25s ease; }
-  .vh-nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--ac, #ff4d3d); transform: scaleX(0); transform-origin: left center; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .vh-nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--ac, #e11d48); transform: scaleX(0); transform-origin: left center; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
   .vh-nav-link:hover, .vh-nav-link.vh-active { color: var(--ink, #f5f5f7); }
   .vh-nav-link:hover::after, .vh-nav-link.vh-active::after { transform: scaleX(1); }
   @keyframes vh-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  ::selection { background: var(--ac, #ff4d3d); color: #fff; }
+  ::selection { background: var(--ac, #e11d48); color: #fff; }
 </style>
 </helmet>
 <div ref="{{ rootRef }}" style="background: var(--bg); color: var(--ink); min-height: 100vh; overflow-x: hidden; position: relative; transition: background .35s ease, color .35s ease;">
@@ -83,7 +83,7 @@
       </div>
       <h1 style="font-size: 72px; line-height: 0.98; letter-spacing: -3px; font-weight: 600; margin-bottom: 24px;">
         One platform.
-        <span style="font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; background: linear-gradient(135deg, var(--ac), var(--ac2)); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -2px;"> Two audiences.</span>
+        <span style="font-family: inherit; font-style: normal; font-weight: 700; background: linear-gradient(135deg, var(--ac), var(--ac2)); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -0.8px;"> Two audiences.</span>
       </h1>
       <p style="font-size: 19px; line-height: 1.55; color: var(--ink2); max-width: 620px; margin: 0 auto;">Direct student subscriptions and institute partnerships &mdash; priced honestly, billed monthly or annual, cancel anytime.</p>
     </div>
@@ -103,7 +103,7 @@
     
     <div style="font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--ink2); margin-bottom: 12px;">Student</div>
     <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px;">
-      <span style="font-size: 52px; font-weight: 700; letter-spacing: -2px;">{{ studentPrice }}</span>
+      <span style="font-size: 52px; font-weight: 700; letter-spacing: -0.8px;">{{ studentPrice }}</span>
       <span style="font-size: 15px; color: var(--ink2);">{{ studentPeriod }}</span>
     </div>
     <p style="font-size: 14.5px; line-height: 1.55; color: var(--ink2); margin-bottom: 24px;">Direct-student access to all four modules with AI feedback.</p>
@@ -132,7 +132,7 @@
     <div style="position: absolute; top: 20px; right: 20px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 10px; border-radius: 100px; background: rgba(255,255,255,0.22);">Most popular</div>
     <div style="font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; opacity: 0.9; margin-bottom: 12px;">Institute</div>
     <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px;">
-      <span style="font-size: 52px; font-weight: 700; letter-spacing: -2px;">{{ institutePrice }}</span>
+      <span style="font-size: 52px; font-weight: 700; letter-spacing: -0.8px;">{{ institutePrice }}</span>
       <span style="font-size: 15px; opacity: 0.85;">{{ institutePeriod }}</span>
     </div>
     <p style="font-size: 14.5px; line-height: 1.55; opacity: 0.9; margin-bottom: 24px;">Batch management, branding, leaderboards and instructor tools.</p>
@@ -164,7 +164,7 @@
     
     <div style="font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--ink2); margin-bottom: 12px;">Enterprise</div>
     <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px;">
-      <span style="font-size: 52px; font-weight: 700; letter-spacing: -2px;">Custom</span>
+      <span style="font-size: 52px; font-weight: 700; letter-spacing: -0.8px;">Custom</span>
       <span style="font-size: 15px; color: var(--ink2);">{{ enterprisePeriod }}</span>
     </div>
     <p style="font-size: 14.5px; line-height: 1.55; color: var(--ink2); margin-bottom: 24px;">Multi-branch institutes and universities. Dedicated support.</p>
@@ -324,17 +324,17 @@ class Component extends DCLogic {
     const dark = this.isDark();
     try { window.parent.postMessage({ type: "vh-theme", theme: dark ? "dark" : "light" }, window.location.origin); } catch {}
     const set = (k, v) => this._root.style.setProperty(k, v);
-    set("--ac", "#ff4d3d");
-    set("--ac2", "#ff7a5c");
+    set("--ac", "#e11d48");
+    set("--ac2", "#f43f5e");
     if (dark) {
       set("--bg", "#0a0a0f"); set("--ink", "#f5f5f7"); set("--ink2", "#9095a3");
-      set("--line", "rgba(255,255,255,0.1)"); set("--acLine", "rgba(255,122,92,0.35)"); set("--acWash", "rgba(255,77,61,0.14)");
+      set("--line", "rgba(255,255,255,0.1)"); set("--acLine", "rgba(225, 29, 72,0.35)"); set("--acWash", "rgba(225, 29, 72,0.14)");
       set("--card", "rgba(20,20,28,0.55)"); set("--cardSolid", "rgba(20,20,28,0.9)");
       set("--chip", "rgba(255,255,255,0.06)"); set("--chipHi", "rgba(255,255,255,0.12)"); set("--headerBg", "rgba(10,10,15,0.65)");
       set("--orbA", "0.28"); set("--orbB", "0.2"); set("--orbC", "0.14");
     } else {
       set("--bg", "#f7f5f2"); set("--ink", "#0e0d10"); set("--ink2", "#5f6270");
-      set("--line", "rgba(14,13,16,0.1)"); set("--acLine", "rgba(255,77,61,0.35)"); set("--acWash", "rgba(255,77,61,0.08)");
+      set("--line", "rgba(14,13,16,0.1)"); set("--acLine", "rgba(225, 29, 72,0.35)"); set("--acWash", "rgba(225, 29, 72,0.08)");
       set("--card", "rgba(255,255,255,0.7)"); set("--cardSolid", "rgba(255,255,255,0.95)");
       set("--chip", "rgba(14,13,16,0.04)"); set("--chipHi", "rgba(14,13,16,0.08)"); set("--headerBg", "rgba(247,245,242,0.7)");
       set("--orbA", "0.22"); set("--orbB", "0.16"); set("--orbC", "0.12");
