@@ -37,6 +37,25 @@
   .vh-hero-card { box-shadow: 0 34px 80px -24px rgba(0,0,0,0.38), 0 0 0 1px var(--line); }
   .vh-exam-tab { background: var(--chip); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; color: var(--ink2); }
   .vh-exam-tab.is-active { background: var(--acWash); border-color: var(--acLine); color: var(--ink); }
+  .testimonials-section { position: relative; z-index: 10; max-width: 1200px; margin: 60px auto; padding: 0 24px; }
+  .testimonials-header-wrap { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+  .testimonial-slider-controls { display: flex; align-items: center; gap: 12px; }
+  .slider-nav-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--cardSolid); border: 1px solid var(--line); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .25s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+  .slider-nav-btn:hover { background: var(--ac); color: #fff; border-color: var(--ac); transform: translateY(-2px); box-shadow: 0 8px 22px var(--acWash); }
+  .testimonial-slider-wrapper { position: relative; width: 100%; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; padding: 12px 0 24px; mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent); scroll-behavior: smooth; }
+  .testimonial-slider-wrapper::-webkit-scrollbar { display: none; }
+  .testimonial-slider-track { display: flex; gap: 24px; width: max-content; will-change: transform; animation: testimonial-marquee 35s linear infinite; }
+  .testimonial-slider-wrapper:hover .testimonial-slider-track { animation-play-state: paused; }
+  @keyframes testimonial-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(calc(-50% - 12px)); } }
+  .testimonial-card { flex: 0 0 360px; width: 360px; background: var(--cardSolid); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: 22px; padding: 26px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.06); transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease; user-select: none; }
+  .testimonial-card:hover { transform: translateY(-6px); border-color: var(--acLine); box-shadow: 0 20px 45px rgba(225, 29, 72, 0.12); }
+  .testimonial-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .testimonial-avatar { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ac); background: var(--grad); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 800; flex-shrink: 0; }
+  .testimonial-author-info strong { display: block; font-size: 15px; font-weight: 800; color: var(--ink); }
+  .testimonial-author-info span { font-size: 12px; color: var(--ink2); }
+  .testimonial-score-badge { display: inline-block; font-size: 11px; font-weight: 800; color: var(--ac); background: var(--acWash); padding: 3px 8px; border-radius: 6px; margin-top: 3px; }
+  .testimonial-quote { font-size: 13.5px; line-height: 1.6; color: var(--ink2); font-style: italic; margin-bottom: 16px; }
+  .testimonial-stars { display: flex; gap: 3px; color: #f59e0b; font-size: 14px; }
   .vh-nav { display: flex; align-items: center; gap: 30px; }
   .vh-nav-link { position: relative; font-size: 14px; font-weight: 500; color: var(--ink2, #9095a3); text-decoration: none; padding-bottom: 6px; transition: color 0.25s ease; }
   .vh-nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--ac, #e11d48); transform: scaleX(0); transform-origin: left center; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
@@ -264,30 +283,41 @@
     </div>
   </section>
 
-  <section class="vh-reveal" style="max-width: 1000px; margin: 0 auto; padding: 40px 32px 96px; text-align: center;">
-    <div style="font-family: inherit; font-size: 110px; line-height: 0.4; color: var(--ac);">&ldquo;</div>
-    <div key="{{ reviewKey }}" style="animation: vh-fade .55s cubic-bezier(.2,.7,.2,1);">
-      <p style="font-size: 30px; font-weight: 500; line-height: 1.35; letter-spacing: -0.8px; margin-bottom: 28px; min-height: 130px;">{{ review.quote }} <span style="font-family: inherit; font-style: normal; font-weight: 700; color: var(--ac); letter-spacing: -0.4px;">{{ review.highlight }}</span>{{ review.tail }}</p>
-      <div style="display: inline-flex; align-items: center; gap: 14px;">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: {{ review.grad }}; display: grid; place-items: center; color: #fff; font-weight: 700;">{{ review.init }}</div>
-        <div style="text-align: left;">
-          <div style="font-weight: 700; font-size: 15px;">{{ review.name }}</div>
-          <div style="font-size: 13px; color: var(--ink2);">{{ review.meta }}</div>
-        </div>
+  <section class="testimonials-section vh-reveal">
+    <div class="testimonials-header-wrap">
+      <div style="max-width: 620px; text-align: left;">
+        <span style="display: inline-block; font-size: 11.5px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--ac); margin-bottom: 8px;">Student success stories</span>
+        <h2 style="font-size: 32px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.12; margin: 0 0 12px;">Trusted by 10,000+ IELTS aspirants</h2>
+        <p style="font-size: 15px; color: var(--ink2); line-height: 1.6; margin: 0;">Read real experiences from candidates who achieved their target band scores using Visa House LMS.</p>
+      </div>
+      <div class="testimonial-slider-controls">
+        <button type="button" class="slider-nav-btn" onClick="{{ scrollTestimonialsLeft }}" aria-label="Previous Testimonial">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 22 6 12 16 2"/></svg>
+        </button>
+        <button type="button" class="slider-nav-btn" onClick="{{ scrollTestimonialsRight }}" aria-label="Next Testimonial">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 22 18 12 8 2"/></svg>
+        </button>
       </div>
     </div>
-    <div style="display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 32px;">
-      <button type="button" onClick="{{ prevReview }}" style="font-family: inherit; width: 40px; height: 40px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; display: grid; place-items: center; transition: transform .2s, background .2s;" style-hover="{transform: 'scale(1.08)', background: 'var(--chipHi)'}">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
-      </button>
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <sc-for list="{{ reviewDots }}" as="d" hint-placeholder-count="4">
-          <button type="button" onClick="{{ d.go }}" style="width: {{ d.w }}; height: 6px; border-radius: 100px; border: none; background: {{ d.bg }}; cursor: pointer; padding: 0; transition: all .3s;"></button>
+    <div ref="{{ testimonialsRef }}" class="testimonial-slider-wrapper">
+      <div class="testimonial-slider-track">
+        <sc-for list="{{ testimonialCards }}" as="t" hint-placeholder-count="8">
+          <div class="testimonial-card">
+            <div>
+              <div class="testimonial-header">
+                <div class="testimonial-avatar" style="--grad: {{ t.grad }};">{{ t.init }}</div>
+                <div class="testimonial-author-info">
+                  <strong>{{ t.name }}</strong>
+                  <span>{{ t.role }}</span>
+                  <div class="testimonial-score-badge">{{ t.score }}</div>
+                </div>
+              </div>
+              <p class="testimonial-quote">&ldquo;{{ t.quote }}&rdquo;</p>
+            </div>
+            <div class="testimonial-stars">★★★★★</div>
+          </div>
         </sc-for>
       </div>
-      <button type="button" onClick="{{ nextReview }}" style="font-family: inherit; width: 40px; height: 40px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; display: grid; place-items: center; transition: transform .2s, background .2s;" style-hover="{transform: 'scale(1.08)', background: 'var(--chipHi)'}">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-      </button>
     </div>
   </section>
 
@@ -352,10 +382,10 @@ class Component extends DCLogic {
   }
 
   reviews = [
-    { quote: "The mock environment felt identical to test day. The AI speaking feedback told me exactly where I was losing fluency marks — I went from", highlight: "6.5 to 8.0", tail: ".", name: "Priya Nair", meta: "Achieved Band 8.0 · Academic", init: "PN", grad: "linear-gradient(135deg, #e11d48, #7c5cff)" },
-    { quote: "Writing feedback broke my essay down criterion by criterion. Task response and coherence tips got me straight from", highlight: "6.0 to 7.5", tail: " in six weeks.", name: "Arjun Mehta", meta: "Achieved Band 7.5 · General", init: "AM", grad: "linear-gradient(135deg, #00d4ff, #22c55e)" },
-    { quote: "Our institute batch dashboard is unreal. We could spot every weak student in one glance — 42 of 50 hit their target band, up from", highlight: "23 last cycle", tail: ".", name: "Dr. Meera Kapoor", meta: "Director · Meridian Institute", init: "MK", grad: "linear-gradient(135deg, #7c5cff, #a48cff)" },
-    { quote: "The listening simulations use actual British and Australian accents. Practicing with the real audio quality made test day feel like a", highlight: "regular practice session", tail: ".", name: "Sana Iqbal", meta: "Achieved Band 8.5 · Academic", init: "SI", grad: "linear-gradient(135deg, #fb7185, #e11d48)" },
+    { quote: "The mock environment felt identical to test day. The AI speaking feedback told me exactly where I was losing fluency marks — I went from", highlight: "6.5 to 8.0", tail: ".", name: "Priya Nair", role: "Academic candidate", score: "Band 8.0", meta: "Achieved Band 8.0 · Academic", init: "PN", grad: "linear-gradient(135deg, #e11d48, #7c5cff)" },
+    { quote: "Writing feedback broke my essay down criterion by criterion. Task response and coherence tips got me straight from", highlight: "6.0 to 7.5", tail: " in six weeks.", name: "Arjun Mehta", role: "General Training", score: "Band 7.5", meta: "Achieved Band 7.5 · General", init: "AM", grad: "linear-gradient(135deg, #00d4ff, #22c55e)" },
+    { quote: "Our institute batch dashboard is unreal. We could spot every weak student in one glance — 42 of 50 hit their target band, up from", highlight: "23 last cycle", tail: ".", name: "Dr. Meera Kapoor", role: "Institute director", score: "42/50 targets", meta: "Director · Meridian Institute", init: "MK", grad: "linear-gradient(135deg, #7c5cff, #a48cff)" },
+    { quote: "The listening simulations use actual British and Australian accents. Practicing with the real audio quality made test day feel like a", highlight: "regular practice session", tail: ".", name: "Sana Iqbal", role: "Academic candidate", score: "Band 8.5", meta: "Achieved Band 8.5 · Academic", init: "SI", grad: "linear-gradient(135deg, #fb7185, #e11d48)" },
   ];
 
   rootRef = (el) => {
@@ -363,6 +393,10 @@ class Component extends DCLogic {
     this._root = el;
     this.applyTheme();
     this.observeReveal();
+  };
+
+  testimonialsRef = (el) => {
+    this._testimonials = el;
   };
 
   componentDidMount() {
@@ -401,6 +435,14 @@ class Component extends DCLogic {
   };
   prevReview = () => this.goReview(this.state.rev - 1);
   nextReview = () => this.goReview(this.state.rev + 1);
+
+  scrollTestimonialsLeft = () => {
+    this._testimonials?.scrollBy({ left: -384, behavior: "smooth" });
+  };
+
+  scrollTestimonialsRight = () => {
+    this._testimonials?.scrollBy({ left: 384, behavior: "smooth" });
+  };
 
   observeReveal() {
     if (this._io) this._io.disconnect();
@@ -568,6 +610,17 @@ class Component extends DCLogic {
       reviewKey: "r" + this.state.rev,
       prevReview: this.prevReview,
       nextReview: this.nextReview,
+      testimonialsRef: this.testimonialsRef,
+      scrollTestimonialsLeft: this.scrollTestimonialsLeft,
+      scrollTestimonialsRight: this.scrollTestimonialsRight,
+      testimonialCards: [...this.reviews, ...this.reviews].map((r) => ({
+        init: r.init,
+        name: r.name,
+        role: r.role,
+        score: r.score,
+        quote: r.quote + " " + r.highlight + r.tail,
+        grad: r.grad,
+      })),
       reviewDots: this.reviews.map((_, i) => ({
         w: i === this.state.rev ? "26px" : "6px",
         bg: i === this.state.rev ? "var(--ac)" : "var(--line)",

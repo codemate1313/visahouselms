@@ -91,11 +91,13 @@
 
   <section class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 40px;">
     <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-      <button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid transparent; background: var(--ink); color: var(--bg); cursor: pointer;">All</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">Strategy</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">Writing</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">Speaking</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">Listening</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">Reading</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">Institute</button><button type="button" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); cursor: pointer;">News</button>
+      <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="8">
+        <button type="button" onClick="{{ cat.select }}" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 100px; border: 1px solid {{ cat.border }}; background: {{ cat.bg }}; color: {{ cat.color }}; cursor: pointer; transition: background .2s, color .2s, border-color .2s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">{{ cat.label }}</button>
+      </sc-for>
     </div>
   </section>
 
-  <section class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 60px;">
+  <section class="vh-reveal" style="display: {{ strategyDisplay }}; max-width: 1280px; margin: 0 auto; padding: 24px 32px 60px;">
     <a href="#" style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 24px; overflow: hidden;">
       <div style="background-image: repeating-linear-gradient(45deg, var(--acWash) 0 14px, transparent 14px 28px); min-height: 340px; display: grid; place-items: center;">
         <div style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--ink2);">featured story cover</div>
@@ -112,7 +114,7 @@
   <section class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 96px;">
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;">
       
-  <a href="#" class="vh-reveal" style="display: block; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
+  <a href="#" class="vh-reveal" style="display: {{ speakingDisplay }}; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
     <div style="aspect-ratio: 16/9; background-image: repeating-linear-gradient(45deg, var(--acWash) 0 12px, transparent 12px 24px); display: grid; place-items: center; border-bottom: 1px solid var(--line);">
       <div style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2);">speaking &middot; cover image</div>
     </div>
@@ -127,7 +129,7 @@
     </div>
   </a>
       
-  <a href="#" class="vh-reveal" style="display: block; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
+  <a href="#" class="vh-reveal" style="display: {{ writingDisplay }}; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
     <div style="aspect-ratio: 16/9; background-image: repeating-linear-gradient(45deg, var(--acWash) 0 12px, transparent 12px 24px); display: grid; place-items: center; border-bottom: 1px solid var(--line);">
       <div style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2);">writing &middot; cover image</div>
     </div>
@@ -142,7 +144,7 @@
     </div>
   </a>
       
-  <a href="#" class="vh-reveal" style="display: block; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
+  <a href="#" class="vh-reveal" style="display: {{ listeningDisplay }}; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
     <div style="aspect-ratio: 16/9; background-image: repeating-linear-gradient(45deg, var(--acWash) 0 12px, transparent 12px 24px); display: grid; place-items: center; border-bottom: 1px solid var(--line);">
       <div style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2);">listening &middot; cover image</div>
     </div>
@@ -157,7 +159,7 @@
     </div>
   </a>
       
-  <a href="#" class="vh-reveal" style="display: block; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
+  <a href="#" class="vh-reveal" style="display: {{ instituteDisplay }}; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
     <div style="aspect-ratio: 16/9; background-image: repeating-linear-gradient(45deg, var(--acWash) 0 12px, transparent 12px 24px); display: grid; place-items: center; border-bottom: 1px solid var(--line);">
       <div style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2);">institute &middot; cover image</div>
     </div>
@@ -172,7 +174,7 @@
     </div>
   </a>
       
-  <a href="#" class="vh-reveal" style="display: block; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
+  <a href="#" class="vh-reveal" style="display: {{ readingDisplay }}; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
     <div style="aspect-ratio: 16/9; background-image: repeating-linear-gradient(45deg, var(--acWash) 0 12px, transparent 12px 24px); display: grid; place-items: center; border-bottom: 1px solid var(--line);">
       <div style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2);">reading &middot; cover image</div>
     </div>
@@ -187,7 +189,7 @@
     </div>
   </a>
       
-  <a href="#" class="vh-reveal" style="display: block; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
+  <a href="#" class="vh-reveal" style="display: {{ newsDisplay }}; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;">
     <div style="aspect-ratio: 16/9; background-image: repeating-linear-gradient(45deg, var(--acWash) 0 12px, transparent 12px 24px); display: grid; place-items: center; border-bottom: 1px solid var(--line);">
       <div style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2);">news &middot; cover image</div>
     </div>
@@ -250,7 +252,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
 class Component extends DCLogic {
-  state = { theme: this.getInitialTheme() };
+  state = { theme: this.getInitialTheme(), activeCategory: "All" };
 
   getInitialTheme() {
     try {
@@ -330,15 +332,42 @@ class Component extends DCLogic {
     this.setState({ theme: next }, () => this.applyTheme());
   };
 
+  setCategory = (category) => {
+    this.setState({ activeCategory: category }, () => this.observeReveal());
+  };
+
+  isVisible(category) {
+    return this.state.activeCategory === "All" || this.state.activeCategory === category;
+  }
+
   renderVals() {
     const svg = (paths, size = 22) => React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.9, strokeLinecap: "round", strokeLinejoin: "round" }, paths.map((p, i) => React.createElement(p.tag, { key: i, ...p.attrs })));
     const themeIcons = {
       light: svg([{ tag: "circle", attrs: { cx: 12, cy: 12, r: 4.2 } }, { tag: "path", attrs: { d: "M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" } }], 17),
       dark: svg([{ tag: "path", attrs: { d: "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" } }], 17),
     };
+    const categoryLabels = ["All", "Strategy", "Writing", "Speaking", "Listening", "Reading", "Institute", "News"];
+    const categories = categoryLabels.map((label) => {
+      const active = this.state.activeCategory === label;
+      return {
+        label,
+        select: () => this.setCategory(label),
+        bg: active ? "var(--ink)" : "var(--chip)",
+        color: active ? "var(--bg)" : "var(--ink2)",
+        border: active ? "transparent" : "var(--line)",
+      };
+    });
     return {
       rootRef: this.rootRef,
       cycleTheme: this.cycleTheme,
+      categories,
+      strategyDisplay: this.isVisible("Strategy") ? "block" : "none",
+      speakingDisplay: this.isVisible("Speaking") ? "block" : "none",
+      writingDisplay: this.isVisible("Writing") ? "block" : "none",
+      listeningDisplay: this.isVisible("Listening") ? "block" : "none",
+      instituteDisplay: this.isVisible("Institute") ? "block" : "none",
+      readingDisplay: this.isVisible("Reading") ? "block" : "none",
+      newsDisplay: this.isVisible("News") ? "block" : "none",
       themeLabel: this.state.theme[0].toUpperCase() + this.state.theme.slice(1),
       themeIcon: themeIcons[this.state.theme],
       year: new Date().getFullYear(),
