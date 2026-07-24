@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -36,6 +37,7 @@ export function Plans() {
   const [statusFilter, setStatusFilter] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [deletingPlan, setDeletingPlan] = useState<PlanRow | null>(null);
+  const [viewingPlan, setViewingPlan] = useState<PlanRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
@@ -246,76 +248,44 @@ export function Plans() {
           <table className="data-table sleek-plans-table">
             <thead>
               <tr>
-                <th style={{ width: "24%" }}>Plan Name</th>
-                <th style={{ width: "12%" }}>Price</th>
-                <th style={{ width: "10%" }}>Duration</th>
-                <th style={{ width: "13%" }}>Limits</th>
-                <th style={{ width: "9%" }}>Grace</th>
-                <th style={{ width: "10%" }}>Courses</th>
-                <th style={{ width: "6%" }}>Subs</th>
-                <th style={{ width: "8%" }}>Status</th>
+                <th style={{ width: "32%" }}>Plan Name</th>
+                <th style={{ width: "22%" }}>Price & Duration</th>
+                <th style={{ width: "20%" }}>Limits (std / stf / tst)</th>
+                <th style={{ width: "12%" }}>Status</th>
                 <th className="table-actions-heading" style={{ textAlign: "right", paddingRight: 20 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredPlans.length === 0 && (
-                <tr><td colSpan={9} className="empty-cell">No subscription plans found.</td></tr>
+                <tr><td colSpan={5} className="empty-cell">No subscription plans found.</td></tr>
               )}
               {filteredPlans.map((plan) => (
                 <tr key={plan.id}>
                   <td>
                     <div className="table-item-details">
                       <span className="table-item-title" style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{plan.name}</span>
-                      {plan.description && (
-                        <span
-                          className="table-item-subtitle"
-                          style={{
-                            fontSize: 12,
-                            color: "#64748b",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            maxWidth: 220,
-                            display: "block",
-                          }}
-                          title={plan.description}
-                        >
-                          {plan.description}
-                        </span>
-                      )}
+                      <span className="table-item-subtitle" style={{ fontSize: 12, color: "#64748b" }}>
+                        Target: {plan.audience.replace("_", " ")}
+                      </span>
                     </div>
                   </td>
                   <td>
-                    <strong style={{ fontSize: 13.5, whiteSpace: "nowrap", color: "#0f172a" }}>
-                      {plan.currency || "INR"} {Number(plan.price).toLocaleString("en-IN")}
-                    </strong>
+                    <div className="table-item-details">
+                      <strong style={{ fontSize: 14, color: "#0f172a", whiteSpace: "nowrap" }}>
+                        {plan.currency || "INR"} {Number(plan.price).toLocaleString("en-IN")}
+                      </strong>
+                      <span style={{ fontSize: 12, color: "#64748b" }}>
+                        {plan.duration_days} days
+                      </span>
+                    </div>
                   </td>
-                  <td style={{ whiteSpace: "nowrap", color: "#334155" }}>{plan.duration_days} days</td>
                   <td>
                     <span
-                      style={{
-                        fontSize: 12.5,
-                        fontWeight: 600,
-                        color: "#334155",
-                        background: "#f1f5f9",
-                        padding: "3px 8px",
-                        borderRadius: 6,
-                        display: "inline-block",
-                        whiteSpace: "nowrap",
-                      }}
+                      className="plan-limits-pill"
                       title={`${plan.student_limit} Students / ${plan.staff_limit} Staff / ${plan.test_limit} Tests`}
                     >
                       {plan.student_limit} / {plan.staff_limit} / {plan.test_limit}
                     </span>
-                  </td>
-                  <td style={{ whiteSpace: "nowrap", color: "#334155" }}>{plan.grace_days} days</td>
-                  <td>
-                    <span className="badge badge-gray" style={{ fontWeight: 600, width: "max-content" }}>
-                      {plan.module_count} Courses
-                    </span>
-                  </td>
-                  <td>
-                    <strong style={{ fontSize: 14, color: "#0f172a" }}>{plan.subscription_count}</strong>
                   </td>
                   <td>
                     <span className={`badge ${!plan.is_active ? "badge-inactive" : plan.is_published ? "badge-green" : "badge-amber"}`}>
@@ -328,10 +298,19 @@ export function Plans() {
                       onChange={() => toggleActive(plan)}
                       tooltip={plan.is_active ? "Deactivate Plan" : "Reactivate Plan"}
                     />
+                    <button
+                      type="button"
+                      className="action-btn-icon action-view"
+                      onClick={() => setViewingPlan(plan)}
+                      data-tooltip="View Full Plan Details"
+                    >
+                      <Icon name="eye" />
+                    </button>
                     <Link className="action-btn-icon action-edit" to={`/super-admin/plans/${plan.id}`} data-tooltip="Edit Plan">
                       <Icon name="edit" />
                     </Link>
                     <button
+                      type="button"
                       className="action-btn-icon danger action-delete"
                       onClick={() => setDeletingPlan(plan)}
                       data-tooltip="Delete Plan"
@@ -345,6 +324,129 @@ export function Plans() {
           </table>
         </div>
       )}
+
+      {/* Ultra-Premium Plan Details Modal Dialog */}
+      {viewingPlan &&
+        createPortal(
+          <div className="plan-dialog-backdrop" onClick={() => setViewingPlan(null)}>
+            <div className="plan-dialog-card" onClick={(e) => e.stopPropagation()}>
+              <div className="plan-dialog-header">
+                <div className="plan-dialog-header-left">
+                  <div className="plan-dialog-icon">
+                    <Icon name="plan" />
+                  </div>
+                  <div>
+                    <div className="plan-dialog-title-row">
+                      <h2 className="plan-dialog-title">{viewingPlan.name}</h2>
+                      <span className={`badge ${!viewingPlan.is_active ? "badge-inactive" : viewingPlan.is_published ? "badge-green" : "badge-amber"}`}>
+                        {!viewingPlan.is_active ? "Inactive" : viewingPlan.is_published ? "Active" : "Draft"}
+                      </span>
+                    </div>
+                    <span className="plan-dialog-price">
+                      {viewingPlan.currency || "INR"} {Number(viewingPlan.price).toLocaleString("en-IN")}
+                      <small> / {viewingPlan.duration_days} Days Billing Cycle</small>
+                    </span>
+                  </div>
+                </div>
+                <button type="button" className="plan-dialog-close" onClick={() => setViewingPlan(null)} title="Close Modal">
+                  <Icon name="x" />
+                </button>
+              </div>
+
+              <div className="plan-dialog-body">
+                {viewingPlan.description && (
+                  <div className="plan-dialog-section">
+                    <label className="plan-dialog-label">Plan Overview & Description</label>
+                    <p className="plan-dialog-desc">{viewingPlan.description}</p>
+                  </div>
+                )}
+
+                <div className="plan-dialog-grid">
+                  <div className="plan-metric-card metric-students">
+                    <div className="plan-metric-icon">
+                      <Icon name="user" />
+                    </div>
+                    <div className="plan-metric-info">
+                      <span className="plan-metric-label">Student Limit</span>
+                      <strong className="plan-metric-val">{viewingPlan.student_limit.toLocaleString()} Students</strong>
+                    </div>
+                  </div>
+
+                  <div className="plan-metric-card metric-staff">
+                    <div className="plan-metric-icon">
+                      <Icon name="admin" />
+                    </div>
+                    <div className="plan-metric-info">
+                      <span className="plan-metric-label">Staff Limit</span>
+                      <strong className="plan-metric-val">{viewingPlan.staff_limit.toLocaleString()} Staff Members</strong>
+                    </div>
+                  </div>
+
+                  <div className="plan-metric-card metric-tests">
+                    <div className="plan-metric-icon">
+                      <Icon name="session" />
+                    </div>
+                    <div className="plan-metric-info">
+                      <span className="plan-metric-label">Test Limit</span>
+                      <strong className="plan-metric-val">{viewingPlan.test_limit.toLocaleString()} Mock Tests</strong>
+                    </div>
+                  </div>
+
+                  <div className="plan-metric-card metric-grace">
+                    <div className="plan-metric-icon">
+                      <Icon name="due" />
+                    </div>
+                    <div className="plan-metric-info">
+                      <span className="plan-metric-label">Grace Period</span>
+                      <strong className="plan-metric-val">{viewingPlan.grace_days} Days Extension</strong>
+                    </div>
+                  </div>
+
+                  <div className="plan-metric-card metric-courses">
+                    <div className="plan-metric-icon">
+                      <Icon name="courses" />
+                    </div>
+                    <div className="plan-metric-info">
+                      <span className="plan-metric-label">Assigned Courses</span>
+                      <strong className="plan-metric-val">{viewingPlan.module_count} Included Courses</strong>
+                    </div>
+                  </div>
+
+                  <div className="plan-metric-card metric-subs">
+                    <div className="plan-metric-icon">
+                      <Icon name="subscription" />
+                    </div>
+                    <div className="plan-metric-info">
+                      <span className="plan-metric-label">Active Subscriptions</span>
+                      <strong className="plan-metric-val">{viewingPlan.subscription_count} Active Subscribers</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="plan-dialog-meta">
+                  <div>
+                    <span style={{ color: "#64748b" }}>Target Audience: </span>
+                    <strong style={{ textTransform: "capitalize", color: "#0f172a" }}>{viewingPlan.audience.replace("_", " ")}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: "#64748b" }}>Publish Status: </span>
+                    <strong style={{ color: "#0f172a" }}>{viewingPlan.is_published ? "Published" : "Draft"}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="plan-dialog-footer">
+                <button type="button" className="secondary-button" onClick={() => setViewingPlan(null)}>
+                  Close
+                </button>
+                <Link to={`/super-admin/plans/${viewingPlan.id}`} className="button-link" onClick={() => setViewingPlan(null)}>
+                  Edit Plan
+                </Link>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
 
       <ConfirmModal
         isOpen={Boolean(deletingPlan)}

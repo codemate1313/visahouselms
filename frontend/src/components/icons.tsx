@@ -44,9 +44,16 @@ export type IconName =
   | "overview"
   | "projects"
   | "toggleOn"
-  | "toggleOff";
+  | "toggleOff"
+  | "eye";
 
 const ICON_PATHS: Record<IconName, ReactNode> = {
+  eye: (
+    <>
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
   toggleOn: (
     <>
       <rect x="2" y="6" width="20" height="12" rx="6" fill="var(--green-600)" stroke="none" />

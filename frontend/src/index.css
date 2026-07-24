@@ -4301,24 +4301,292 @@ button.danger:hover:not(:disabled) {
   justify-content: center;
 }
 
-.sleek-plans-table .table-actions-heading,
-.sleek-plans-table .institute-row-actions {
-  min-width: 130px !important;
-  width: 130px !important;
-  max-width: 130px !important;
+/* Sleek Plans Table Layout & Vertical Centering */
+.sleek-plans-table {
+  table-layout: fixed !important;
+  width: 100% !important;
 }
 
-.action-btn-icon {
-  width: 36px !important;
-  height: 36px !important;
-  padding: 0 !important;
-  min-width: 36px !important;
+.sleek-plans-table tr {
+  height: 56px !important;
+}
+
+.sleek-plans-table th,
+.sleek-plans-table td {
+  vertical-align: middle !important;
+}
+
+.sleek-plans-table th:nth-child(1), .sleek-plans-table td:nth-child(1) { width: 32% !important; }
+.sleek-plans-table th:nth-child(2), .sleek-plans-table td:nth-child(2) { width: 22% !important; }
+.sleek-plans-table th:nth-child(3), .sleek-plans-table td:nth-child(3) { width: 20% !important; }
+.sleek-plans-table th:nth-child(4), .sleek-plans-table td:nth-child(4) { width: 12% !important; }
+.sleek-plans-table th:nth-child(5), .sleek-plans-table td:nth-child(5) { width: 14% !important; }
+
+.plan-limits-pill {
   display: inline-flex !important;
   align-items: center !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #475569 !important;
+  white-space: nowrap !important;
+  box-shadow: none !important;
+}
+
+.action-btn-icon.action-view {
+  color: #0284c7 !important;
+  background: #f0f9ff !important;
+  border: 1px solid #bae6fd !important;
+}
+
+.action-btn-icon.action-view:hover {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25) !important;
+}
+
+/* Premium Plan Details Dialog Modal */
+.plan-dialog-backdrop {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 999999 !important;
+  background: rgba(15, 23, 42, 0.55) !important;
+  backdrop-filter: blur(10px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(160%) !important;
+  display: flex !important;
+  align-items: center !important;
   justify-content: center !important;
+  padding: 24px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  animation: fadeIn 200ms ease-out !important;
+}
+
+.plan-dialog-card {
+  width: 100% !important;
+  max-width: 600px !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px -10px rgba(15, 23, 42, 0.28), 0 10px 25px -5px rgba(0, 0, 0, 0.12) !important;
+  margin: auto !important;
+  animation: modalPop 240ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.plan-dialog-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 20px 24px !important;
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.plan-dialog-header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+}
+
+.plan-dialog-icon {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  display: grid !important;
+  place-items: center !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25) !important;
+  flex-shrink: 0 !important;
+}
+
+.plan-dialog-icon svg {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+.plan-dialog-title-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.plan-dialog-title {
+  font-size: 18px !important;
+  font-weight: 750 !important;
+  color: #0f172a !important;
+  margin: 0 !important;
+}
+
+.plan-dialog-price {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #dc2626 !important;
+}
+
+.plan-dialog-price small {
+  color: #64748b !important;
+  font-weight: 500 !important;
+}
+
+.plan-dialog-close {
+  width: 32px !important;
+  height: 32px !important;
   border-radius: 50% !important;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06) !important;
-  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #64748b !important;
+  display: grid !important;
+  place-items: center !important;
+  cursor: pointer !important;
+  transition: all 150ms ease !important;
+  padding: 0 !important;
+}
+
+.plan-dialog-close:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.plan-dialog-body {
+  padding: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 18px !important;
+}
+
+.plan-dialog-label {
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: #64748b !important;
+  display: block !important;
+  margin-bottom: 4px !important;
+}
+
+.plan-dialog-desc {
+  font-size: 13.5px !important;
+  color: #334155 !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  background: #f8fafc !important;
+  padding: 12px 14px !important;
+  border-radius: 10px !important;
+  border: 1px solid #f1f5f9 !important;
+}
+
+.plan-dialog-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.plan-metric-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 12px 14px !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+}
+
+.plan-metric-icon {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #475569 !important;
+  flex-shrink: 0 !important;
+}
+
+.metric-students .plan-metric-icon { color: #2563eb !important; background: #eff6ff !important; border-color: #bfdbfe !important; }
+.metric-staff .plan-metric-icon { color: #7c3aed !important; background: #f5f3ff !important; border-color: #ddd6fe !important; }
+.metric-tests .plan-metric-icon { color: #d97706 !important; background: #fffbeb !important; border-color: #fde68a !important; }
+.metric-grace .plan-metric-icon { color: #059669 !important; background: #ecfdf5 !important; border-color: #a7f3d0 !important; }
+.metric-courses .plan-metric-icon { color: #4f46e5 !important; background: #eeedfe !important; border-color: #c7d2fe !important; }
+.metric-subs .plan-metric-icon { color: #0284c7 !important; background: #f0f9ff !important; border-color: #bae6fd !important; }
+
+.plan-metric-icon svg {
+  width: 17px !important;
+  height: 17px !important;
+}
+
+.plan-metric-info {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+}
+
+.plan-metric-label {
+  font-size: 11.5px !important;
+  color: #64748b !important;
+}
+
+.plan-metric-val {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+.plan-dialog-meta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-top: 14px !important;
+  border-top: 1px solid #f1f5f9 !important;
+  font-size: 12.5px !important;
+  color: #64748b !important;
+}
+
+.plan-dialog-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  padding: 16px 24px !important;
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+.plan-dialog-footer .secondary-button,
+button.secondary-button,
+.secondary-button {
+  background: #ffffff !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  font-weight: 600 !important;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.plan-dialog-footer .secondary-button:hover,
+button.secondary-button:hover,
+.secondary-button:hover {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #0f172a !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25) !important;
+}
+
+.plan-dialog-footer .button-link:hover,
+.button-link:hover,
+a.button-link:hover {
+  color: #ffffff !important;
 }
 
 .action-btn-icon svg {
