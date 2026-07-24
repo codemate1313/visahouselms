@@ -18123,45 +18123,79 @@ th[aria-sort="descending"] .table-sort-button::after {
 }
 
 .portal-user-chip {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  padding: 5px 14px 5px 6px !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 40px !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+.portal-user-chip:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
 }
 
 .portal-user-avatar {
-  width: 43px;
-  height: 43px;
-  flex: 0 0 auto;
-  object-fit: cover;
-  border-radius: 50%;
+  width: 36px !important;
+  height: 36px !important;
+  flex: 0 0 auto !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
 }
 
 .portal-user-avatar.is-initials {
-  display: grid;
-  place-items: center;
-  color: #ffffff;
-  background: var(--portal-icon-color);
-  font-size: 13px;
-  font-weight: 800;
+  display: grid !important;
+  place-items: center !important;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #e11d2e 0%, #b91323 100%) !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  box-shadow: 0 2px 6px rgba(225, 29, 46, 0.3) !important;
 }
 
 .portal-user-text {
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-  color: #9aa2af;
-  font-size: 13px;
-  line-height: 1.15;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  text-align: left !important;
+  line-height: 1.2 !important;
 }
 
 .portal-user-text strong {
-  overflow: hidden;
-  color: #24262d;
-  font-size: 15px;
-  font-weight: 760;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: hidden !important;
+  color: #0f172a !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.portal-user-text span {
+  color: #64748b !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.portal-user-chevron {
+  width: 16px !important;
+  height: 16px !important;
+  color: #64748b !important;
+  transition: transform 0.2s ease !important;
+}
+
+.portal-user-chevron.is-open {
+  transform: rotate(180deg) !important;
 }
 
 .student-notification-shell {

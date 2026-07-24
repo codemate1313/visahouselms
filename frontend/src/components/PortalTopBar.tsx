@@ -74,6 +74,7 @@ export function PortalTopBar({
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<number | null>(null);
@@ -82,6 +83,10 @@ export function PortalTopBar({
   const initials = userInitials(user?.first_name, user?.last_name, user?.email);
   const subtitle = roleLabel ?? readableRole(user?.role);
   const quickLinks = useMemo(() => quickLinksForRole(user?.role), [user?.role]);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [user?.avatar_url]);
 
   function cancelScheduledClose() {
     if (closeTimer.current !== null) {
@@ -159,8 +164,8 @@ export function PortalTopBar({
             aria-expanded={menuOpen}
             onClick={() => (menuOpen ? closeMenuNow() : openMenu())}
           >
-            {resolvedAvatarUrl ? (
-              <img src={resolvedAvatarUrl} alt="" className="portal-user-avatar" />
+            {resolvedAvatarUrl && !imgError ? (
+              <img src={resolvedAvatarUrl} alt="" className="portal-user-avatar" onError={() => setImgError(true)} />
             ) : (
               <span className="portal-user-avatar is-initials">{initials}</span>
             )}
