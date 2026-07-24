@@ -246,20 +246,15 @@ export function Plans() {
           <table className="data-table sleek-plans-table">
             <thead>
               <tr>
-                <th style={{ width: "26%" }}>Plan Name</th>
-                <th>Price</th>
-                <th>Duration</th>
-                <th>
-                  LIMITS
-                  <span style={{ display: "block", fontSize: 9.5, fontWeight: 500, color: "var(--slate-400)", textTransform: "lowercase", marginTop: 2 }}>
-                    (std / stf / tst)
-                  </span>
-                </th>
-                <th>Grace</th>
-                <th>Courses</th>
-                <th>Subs</th>
-                <th>Status</th>
-                <th className="table-actions-heading" style={{ textAlign: "center", width: 140, minWidth: 140 }}>Actions</th>
+                <th style={{ width: "24%" }}>Plan Name</th>
+                <th style={{ width: "12%" }}>Price</th>
+                <th style={{ width: "10%" }}>Duration</th>
+                <th style={{ width: "13%" }}>Limits</th>
+                <th style={{ width: "9%" }}>Grace</th>
+                <th style={{ width: "10%" }}>Courses</th>
+                <th style={{ width: "6%" }}>Subs</th>
+                <th style={{ width: "8%" }}>Status</th>
+                <th className="table-actions-heading" style={{ textAlign: "right", paddingRight: 20 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -270,42 +265,64 @@ export function Plans() {
                 <tr key={plan.id}>
                   <td>
                     <div className="table-item-details">
-                      <span className="table-item-title" style={{ fontSize: 14, fontWeight: 650 }}>{plan.name}</span>
+                      <span className="table-item-title" style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{plan.name}</span>
                       {plan.description && (
-                        <span className="table-item-subtitle" style={{ fontSize: 12, color: "var(--slate-500)" }}>
+                        <span
+                          className="table-item-subtitle"
+                          style={{
+                            fontSize: 12,
+                            color: "#64748b",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            maxWidth: 220,
+                            display: "block",
+                          }}
+                          title={plan.description}
+                        >
                           {plan.description}
                         </span>
                       )}
                     </div>
                   </td>
                   <td>
-                    <strong style={{ fontSize: 13.5, whiteSpace: "nowrap" }}>
-                      {plan.currency || "INR"} {plan.price}
+                    <strong style={{ fontSize: 13.5, whiteSpace: "nowrap", color: "#0f172a" }}>
+                      {plan.currency || "INR"} {Number(plan.price).toLocaleString("en-IN")}
                     </strong>
                   </td>
-                  <td style={{ whiteSpace: "nowrap" }}>{plan.duration_days} days</td>
+                  <td style={{ whiteSpace: "nowrap", color: "#334155" }}>{plan.duration_days} days</td>
                   <td>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: "var(--slate-700)", whiteSpace: "nowrap" }} title={`${plan.student_limit} Students / ${plan.staff_limit} Staff / ${plan.test_limit} Tests`}>
+                    <span
+                      style={{
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        color: "#334155",
+                        background: "#f1f5f9",
+                        padding: "3px 8px",
+                        borderRadius: 6,
+                        display: "inline-block",
+                        whiteSpace: "nowrap",
+                      }}
+                      title={`${plan.student_limit} Students / ${plan.staff_limit} Staff / ${plan.test_limit} Tests`}
+                    >
                       {plan.student_limit} / {plan.staff_limit} / {plan.test_limit}
                     </span>
                   </td>
-                  <td>{plan.grace_days} days</td>
+                  <td style={{ whiteSpace: "nowrap", color: "#334155" }}>{plan.grace_days} days</td>
                   <td>
-                    <div className="table-item-details">
-                      <span className="badge badge-gray" style={{ fontWeight: 600, width: "max-content" }}>
-                        {plan.module_count} courses
-                      </span>
-                    </div>
+                    <span className="badge badge-gray" style={{ fontWeight: 600, width: "max-content" }}>
+                      {plan.module_count} Courses
+                    </span>
                   </td>
                   <td>
-                    <strong style={{ fontSize: 13.5 }}>{plan.subscription_count}</strong>
+                    <strong style={{ fontSize: 14, color: "#0f172a" }}>{plan.subscription_count}</strong>
                   </td>
                   <td>
                     <span className={`badge ${!plan.is_active ? "badge-inactive" : plan.is_published ? "badge-green" : "badge-amber"}`}>
                       {!plan.is_active ? "Inactive" : plan.is_published ? "Active" : "Draft"}
                     </span>
                   </td>
-                  <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>
+                  <td className="table-actions institute-row-actions">
                     <ToggleSwitch
                       checked={plan.is_active}
                       onChange={() => toggleActive(plan)}
