@@ -22,8 +22,9 @@
 
 .theme-toggle:hover {
   transform: scale(1.05);
-  background: #e2e8f0;
+  background: var(--primary-hover);
   border-color: rgba(0, 0, 0, 0.12);
+  color: #ffffff;
 }
 
 .theme-toggle:active {
