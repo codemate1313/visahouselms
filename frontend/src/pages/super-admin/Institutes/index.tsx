@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { confirmExport } from "@/utils/confirmExport";
 import { institutesStrings as strings } from "./Institutes.strings";
 import type { InstituteRow, SortKey } from "./types";
 import { exportInstitutesExcel, exportInstitutesPDF } from "./exportHelpers";
@@ -114,6 +115,16 @@ export function Institutes() {
     }
   }
 
+  async function handleExportPdf() {
+    if (!await confirmExport("pdf", "institutes")) return;
+    exportInstitutesPDF(filteredRows);
+  }
+
+  async function handleExportExcel() {
+    if (!await confirmExport("excel", "institutes")) return;
+    exportInstitutesExcel(filteredRows);
+  }
+
   return (
     <div>
       {error && <p className="error-text">{error}</p>}
@@ -125,8 +136,8 @@ export function Institutes() {
         onSubscriptionFilterChange={setSubscriptionFilter}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
-        onExportPdf={() => exportInstitutesPDF(filteredRows)}
-        onExportExcel={() => exportInstitutesExcel(filteredRows)}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
         resultCount={filteredRows.length}
       />
 

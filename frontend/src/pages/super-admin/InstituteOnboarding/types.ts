@@ -24,7 +24,7 @@ export interface Onboarding {
   course_count: number;
   module_ids: number[];
   admin_permissions: Record<string, boolean>;
-  branding: { primary_color: string; secondary_color: string };
+  branding: { primary_color: string; secondary_color: string; logo_url?: string | null };
   payment: { amount_paid: string; status: string } | null;
   admin_email?: string;
   admin_temp_password?: string;

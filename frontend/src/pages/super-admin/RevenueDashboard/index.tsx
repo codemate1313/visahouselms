@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
+import { confirmExport } from "@/utils/confirmExport";
 import { revenueDashboardStrings as strings } from "./RevenueDashboard.strings";
 import type { InstituteRow, Summary } from "./types";
 import { exportRevenueExcel, exportRevenuePDF } from "./exportHelpers";
@@ -39,6 +40,18 @@ export function RevenueDashboard() {
     apiClient.get("/super-admin/institutes").then(({ data }) => setInstitutes(data));
   }, []);
 
+  async function handleExportPdf() {
+    if (!summary) return;
+    if (!await confirmExport("pdf", "revenue data")) return;
+    exportRevenuePDF(summary);
+  }
+
+  async function handleExportExcel() {
+    if (!summary) return;
+    if (!await confirmExport("excel", "revenue data")) return;
+    exportRevenueExcel(summary);
+  }
+
   if (error) return <p className="error-text">{error}</p>;
   if (!summary) return <p>{strings.loading}</p>;
 
@@ -64,8 +77,8 @@ export function RevenueDashboard() {
           setDateFrom("");
           setDateTo("");
         }}
-        onExportPdf={() => exportRevenuePDF(summary)}
-        onExportExcel={() => exportRevenueExcel(summary)}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
         transactionCount={summary.transaction_count}
       />
 

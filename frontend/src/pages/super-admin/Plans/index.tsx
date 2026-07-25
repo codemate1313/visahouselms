@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { confirmExport } from "@/utils/confirmExport";
 import { plansStrings as strings } from "./Plans.strings";
 import type { PlanRow } from "./types";
 import { exportPlansExcel, exportPlansPDF } from "./exportHelpers";
@@ -97,6 +98,16 @@ export function Plans() {
     }
   }
 
+  async function handleExportPdf() {
+    if (!await confirmExport("pdf", "direct student plans")) return;
+    exportPlansPDF(filteredPlans);
+  }
+
+  async function handleExportExcel() {
+    if (!await confirmExport("excel", "direct student plans")) return;
+    exportPlansExcel(filteredPlans);
+  }
+
   return (
     <div>
       {error && <p className="error-text">{error}</p>}
@@ -106,8 +117,8 @@ export function Plans() {
         onSearchChange={setSearch}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
-        onExportPdf={() => exportPlansPDF(filteredPlans)}
-        onExportExcel={() => exportPlansExcel(filteredPlans)}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
         resultCount={filteredPlans.length}
       />
 

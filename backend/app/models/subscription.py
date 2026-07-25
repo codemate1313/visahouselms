@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, ForeignKey, Integer, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -15,6 +15,9 @@ class Subscription(Base):
     # vs a direct/B2C student's personal subscription) - enforced at the
     # application layer in subscription_service, not a DB constraint.
     institute_id: Mapped[Optional[int]] = mapped_column(ForeignKey("institutes.id"), nullable=True, index=True)
+    institute_id_snapshot: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
+    institute_name_snapshot: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    institute_slug_snapshot: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     plan_id: Mapped[int] = mapped_column(ForeignKey("plans.id"), nullable=False)
     starts_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)

@@ -1,4 +1,5 @@
 import type { StudentPlanCatalogItem } from "@/api/types";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { courseCatalogStrings as strings } from "../CourseCatalog.strings";
 
 interface PlanGridProps {
@@ -17,9 +18,7 @@ export function PlanGrid({ plans, onGoToCourse, onChoosePlan }: PlanGridProps) {
           <p>{plan.description || strings.defaultDescription}</p>
           <div className="course-meta">
             <span>{strings.testsCount(plan.module_count)}</span>
-            <span>
-              {plan.currency} {Number(plan.price).toLocaleString("en-IN")}
-            </span>
+            <span>{formatCurrencyAmount(plan.price, plan.currency)}</span>
           </div>
           {plan.entitled ? (
             <button onClick={onGoToCourse}>{strings.goToCourse}</button>

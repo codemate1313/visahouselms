@@ -157,7 +157,20 @@ export function Login({
 
         <div className="login-form-side">
           <div className="vh-auth-brand">
-            <span className="vh-auth-logo">VH</span>
+            <span className="vh-auth-logo">
+              <img
+                src="/brand/vh-mark.png"
+                alt="Visa House Logo"
+                className="vh-auth-logo-img"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  target.style.display = "none";
+                  const textFallback = target.nextElementSibling as HTMLElement;
+                  if (textFallback) textFallback.style.display = "inline";
+                }}
+              />
+              <span className="vh-auth-logo-fallback" style={{ display: "none" }}>VH</span>
+            </span>
             <div>
               <div className="vh-auth-name">{strings.brandName}</div>
               <div className="vh-auth-tag">{strings.brandTag}</div>
@@ -242,7 +255,7 @@ export function Login({
                 <button
                   type="button"
                   onClick={() => handleSwitchPortalMode("INSTITUTE_ADMIN")}
-                  style={{ background: "none", border: "none", color: "var(--rose-600)", fontWeight: 700, cursor: "pointer", padding: 0, fontSize: "inherit", textDecoration: "underline" }}
+                  style={{ background: "none", border: "none", color: "#e11d2e", fontWeight: 700, cursor: "pointer", padding: 0, fontSize: "inherit", textDecoration: "underline" }}
                 >
                   {strings.institutePortalLink}
                 </button>
@@ -253,7 +266,7 @@ export function Login({
                 <button
                   type="button"
                   onClick={() => handleSwitchPortalMode("SUPER_ADMIN")}
-                  style={{ background: "none", border: "none", color: "var(--rose-600)", fontWeight: 750, cursor: "pointer", padding: 0, fontSize: "inherit", textDecoration: "underline" }}
+                  style={{ background: "none", border: "none", color: "#e11d2e", fontWeight: 750, cursor: "pointer", padding: 0, fontSize: "inherit", textDecoration: "underline" }}
                 >
                   {strings.superAdminLink}
                 </button>

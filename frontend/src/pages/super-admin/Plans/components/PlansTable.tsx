@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { plansStrings as strings } from "../Plans.strings";
 import type { PlanRow } from "../types";
 
@@ -50,7 +51,7 @@ export function PlansTable({ plans, onToggleActive, onView, onRequestDelete }: P
               <td>
                 <div className="table-item-details">
                   <strong style={{ fontSize: 14, color: "#0f172a", whiteSpace: "nowrap" }}>
-                    {plan.currency || "INR"} {Number(plan.price).toLocaleString("en-IN")}
+                    {formatCurrencyAmount(plan.price, plan.currency)}
                   </strong>
                   <span style={{ fontSize: 12, color: "#64748b" }}>
                     {plan.duration_days} {t.daysSuffix}

@@ -22,7 +22,7 @@ export function TerminalAuthGate({ password, onPasswordChange, error, connecting
         <PasswordInput id="terminal_password" value={password} onChange={(e) => onPasswordChange(e.target.value)} required />
         {error && <p className="error-text">{error}</p>}
         <div className="form-actions">
-          <button type="submit" disabled={connecting || !password}>
+          <button type="submit" className="button-link primary-submit-btn" disabled={connecting || !password}>
             {connecting ? t.opening : t.openTerminal}
           </button>
         </div>

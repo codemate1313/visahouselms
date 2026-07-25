@@ -8,8 +8,7 @@ import { usePageTitleStore } from "../store/pageTitleStore";
 import { Icon, type IconName } from "./icons";
 import { NotificationBell } from "./StudentNotificationBell";
 import { DashboardRangeAndThemeToggle } from "./DashboardRangeAndThemeToggle";
-
-const HOVER_CLOSE_DELAY = 220;
+import { ThemeToggle } from "./ThemeToggle";
 
 interface QuickLink {
   title: string;
@@ -304,7 +303,6 @@ export function PortalTopBar({
   const [imgError, setImgError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const closeTimer = useRef<number | null>(null);
 
   const pageMeta = useMemo(() => getPageMeta(location.pathname, user), [location.pathname, user]);
   const resolvedAvatarUrl = avatarUrl(user?.avatar_url);
@@ -317,29 +315,12 @@ export function PortalTopBar({
     setImgError(false);
   }, [user?.avatar_url]);
 
-  function cancelScheduledClose() {
-    if (closeTimer.current !== null) {
-      window.clearTimeout(closeTimer.current);
-      closeTimer.current = null;
-    }
-  }
-
   function openMenu() {
-    cancelScheduledClose();
     setMenuOpen(true);
   }
 
   function closeMenuNow() {
-    cancelScheduledClose();
     setMenuOpen(false);
-  }
-
-  function scheduleClose() {
-    cancelScheduledClose();
-    closeTimer.current = window.setTimeout(() => {
-      setMenuOpen(false);
-      closeTimer.current = null;
-    }, HOVER_CLOSE_DELAY);
   }
 
   useEffect(() => {
@@ -369,8 +350,6 @@ export function PortalTopBar({
     };
   }, [menuOpen]);
 
-  useEffect(() => () => cancelScheduledClose(), []);
-
   async function handleLogout() {
     closeMenuNow();
     await logoutAndRedirectHome();
@@ -396,13 +375,9 @@ export function PortalTopBar({
         {(location.pathname === "/super-admin/dashboard" || location.pathname === "/super-admin/revenue") && (
           <DashboardRangeAndThemeToggle />
         )}
+        <ThemeToggle className="portal-topbar-theme-toggle" />
         <NotificationBell eyebrow={notificationEyebrow} fallbackRoute={fallbackRoute} notificationsPath={notificationsPath} notificationsHref={notificationsHref} />
-        <div
-          className="portal-user-menu"
-          ref={menuRef}
-          onMouseEnter={openMenu}
-          onMouseLeave={scheduleClose}
-        >
+        <div className="portal-user-menu" ref={menuRef}>
           <button
             type="button"
             className="portal-user-chip"

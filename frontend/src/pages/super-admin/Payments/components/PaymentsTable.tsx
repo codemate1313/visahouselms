@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { paymentsStrings as strings } from "../Payments.strings";
 import type { PaymentRow } from "../types";
 
@@ -64,11 +65,11 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
               </td>
               <td>
                 <strong style={{ fontSize: 13.5 }}>
-                  {row.currency || "INR"} {Number(row.amount_paid).toLocaleString("en-IN")}
+                  {formatCurrencyAmount(row.amount_paid, row.currency)}
                 </strong>
                 {Number(row.due_amount) > 0 && (
                   <div className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--sa-sidebar-red)", fontWeight: 600 }}>
-                    {t.duePrefix} {row.currency || "INR"} {Number(row.due_amount).toLocaleString("en-IN")}
+                    {t.duePrefix} {formatCurrencyAmount(row.due_amount, row.currency)}
                   </div>
                 )}
               </td>

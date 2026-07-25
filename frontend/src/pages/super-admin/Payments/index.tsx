@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { confirmExport } from "@/utils/confirmExport";
 import type { PlanRow } from "@/pages/super-admin/Plans";
 import { paymentsStrings as strings } from "./Payments.strings";
 import type { InstituteRow, MethodRow, PaymentRow } from "./types";
@@ -135,6 +136,16 @@ export function Payments() {
     }
   }
 
+  async function handleExportPdf() {
+    if (!await confirmExport("pdf", "payments")) return;
+    exportPaymentsPDF(rows);
+  }
+
+  async function handleExportExcel() {
+    if (!await confirmExport("excel", "payments")) return;
+    exportPaymentsExcel(rows);
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -189,8 +200,8 @@ export function Payments() {
         onDateFromChange={setDateFrom}
         dateTo={dateTo}
         onDateToChange={setDateTo}
-        onExportPdf={() => exportPaymentsPDF(rows)}
-        onExportExcel={() => exportPaymentsExcel(rows)}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
         resultCount={rows.length}
       />
 

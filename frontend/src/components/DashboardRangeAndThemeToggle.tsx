@@ -1,5 +1,4 @@
 import { type TimeRange, useDashboardRangeStore } from "../store/dashboardRangeStore";
-import { ThemeToggle } from "./ThemeToggle";
 import "./DashboardRangeAndThemeToggle.css";
 
 export function DashboardRangeAndThemeToggle() {
@@ -9,7 +8,6 @@ export function DashboardRangeAndThemeToggle() {
 
   return (
     <div className="dash-controls-wrapper">
-      {/* Segmented Time-Range Pill Selector */}
       <div className="segmented-range-pill" role="tablist" aria-label="Dashboard time range">
         {ranges.map((r) => {
           const isActive = range === r;
@@ -27,10 +25,6 @@ export function DashboardRangeAndThemeToggle() {
           );
         })}
       </div>
-
-      {/* Theme state now lives in useThemeStore and is applied globally by
-          useApplyTheme() at the app root. */}
-      <ThemeToggle />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { paymentsStrings as strings } from "../Payments.strings";
 import type { MethodRow, PaymentRow } from "../types";
 
@@ -38,7 +39,7 @@ export function DuePaymentModal({
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <h2>{t.heading}</h2>
         <p className="hint">
-          {dueFor.institute_name} — {dueFor.invoice_number} — {t.duePrefix} {dueFor.currency || "INR"} {dueFor.due_amount}
+          {dueFor.institute_name} — {dueFor.invoice_number} — {t.duePrefix} {formatCurrencyAmount(dueFor.due_amount, dueFor.currency)}
         </p>
         <form onSubmit={onSubmit} style={{ marginTop: 16 }}>
           <label htmlFor="due_amount">{t.amountLabel}<RequiredMark /></label>

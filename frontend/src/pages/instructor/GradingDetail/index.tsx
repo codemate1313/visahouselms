@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import type { GradingDetail as GradingDetailType } from "@/api/types";
+import type { GradingDetail as GradingDetailType, GradingQueueItem } from "@/api/types";
 import { Button } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { gradingDetailStrings as strings } from "./GradingDetail.strings";
@@ -10,6 +10,7 @@ import { PartGradingCard } from "./components/PartGradingCard";
 
 export function GradingDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isInstituteInstructor = user?.role === "INST_INSTRUCTOR";
   const [detail, setDetail] = useState<GradingDetailType | null>(null);
@@ -21,7 +22,10 @@ export function GradingDetail() {
     apiClient
       .get<GradingDetailType>(`/instructor/grading/${id}`)
       .then(({ data }) => { setDetail(data); setError(null); })
-      .catch(() => setError(strings.errors.load));
+      .catch((err: unknown) => {
+        setDetail(null);
+        setError(extractErrorMessage(err, strings.errors.load));
+      });
   }
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
 
@@ -49,9 +53,64 @@ export function GradingDetail() {
     }
   }
 
+  async function handleNextReview() {
+    setBusy(true);
+    try {
+      const { data } = await apiClient.get<GradingQueueItem[]>("/instructor/grading");
+      const nextItem = data.find(
+        (item) =>
+          String(item.id) !== String(id) &&
+          (item.queue.status === "pending" || item.queue.assigned_to_id === user?.id),
+      );
+      if (nextItem) {
+        navigate(isInstituteInstructor ? `/institute-instructor/grading/${nextItem.id}` : `/super-admin/instructor/grading/${nextItem.id}`);
+      } else {
+        navigate(isInstituteInstructor ? "/institute-instructor/grading" : "/super-admin/instructor/grading");
+      }
+    } catch {
+      navigate(isInstituteInstructor ? "/institute-instructor/grading" : "/super-admin/instructor/grading");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const [openPartIds, setOpenPartIds] = useState<Record<number, boolean>>({});
+
+  const isPartOpen = (partId: number, isGraded: boolean) => {
+    if (openPartIds[partId] !== undefined) return openPartIds[partId];
+    return !isGraded;
+  };
+
+  const handleToggleOpen = (partId: number, open: boolean) => {
+    setOpenPartIds((prev) => ({ ...prev, [partId]: open }));
+  };
+
+  const handleGradedNext = (currentPartId: number) => {
+    const currentIndex = subjectiveParts.findIndex((p) => p.id === currentPartId);
+    const nextPart = subjectiveParts.slice(currentIndex + 1).find((p) => p.grade?.status !== "graded") || subjectiveParts[currentIndex + 1];
+
+    setOpenPartIds((prev) => {
+      const updated = { ...prev, [currentPartId]: false };
+      if (nextPart) {
+        updated[nextPart.id] = true;
+      }
+      return updated;
+    });
+
+    if (nextPart) {
+      setTimeout(() => {
+        const el = document.getElementById(`part-card-${nextPart.id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 120);
+    }
+  };
+
   if (error && !detail) return <p className="error-text">{error}</p>;
   if (!detail) return <p>{strings.loading}</p>;
   const subjectiveParts = detail.parts.filter((part) => !part.auto_marked);
+  const allSubjectivePartsGraded = subjectiveParts.length > 0 && subjectiveParts.every((part) => part.grade?.status === "graded");
   const claimedByMe = detail.queue.assigned_to_id === user?.id;
   const claimedByOther = detail.queue.assigned_to_id != null && !claimedByMe;
   const hasOpenReevaluation = detail.reevaluation && ["pending", "in_review"].includes(detail.reevaluation.status);
@@ -86,6 +145,25 @@ export function GradingDetail() {
         <strong>{strings.cefrNote.title}</strong>
         <p>{strings.cefrNote.body}</p>
       </div>
+      {allSubjectivePartsGraded && (
+        <section className="evaluation-completed-card">
+          <div className="completed-icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <h2>{strings.completion.title}</h2>
+          <p>{strings.completion.subtitle}</p>
+          <div className="completed-actions">
+            <Button disabled={busy} onClick={handleNextReview}>
+              {strings.completion.nextReview}
+            </Button>
+            <Link className="button-link secondary-button" to={isInstituteInstructor ? "/institute-instructor/grading" : "/super-admin/instructor/grading"}>
+              {strings.completion.backToQueue}
+            </Link>
+          </div>
+        </section>
+      )}
       {claimedByOther && (
         <div className="banner">
           <strong>{strings.readOnly.title}</strong> {strings.readOnly.claimedBy(detail.queue.assigned_to_name ?? "")}
@@ -139,7 +217,17 @@ export function GradingDetail() {
         </section>
       )}
       {subjectiveParts.map((part) => (
-        <PartGradingCard key={part.id} part={part} attemptId={id!} canEdit={canEdit} aiConfigured={detail.ai_assistance.configured} onGraded={setDetail} />
+        <PartGradingCard
+          key={part.id}
+          part={part}
+          attemptId={id!}
+          canEdit={canEdit}
+          aiConfigured={detail.ai_assistance.configured}
+          onGraded={setDetail}
+          isOpen={isPartOpen(part.id, part.grade?.status === "graded")}
+          onToggleOpen={(open) => handleToggleOpen(part.id, open)}
+          onGradedNext={handleGradedNext}
+        />
       ))}
     </div>
   );

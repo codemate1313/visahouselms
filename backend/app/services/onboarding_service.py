@@ -157,3 +157,10 @@ def publish(db: Session, actor: User, institute_id: int, ip: Optional[str]) -> d
     db.add_all([payment, institute])
     db.commit()
     return _serialize(db, institute)
+
+
+def delete_draft(db: Session, actor: User, institute_id: int, ip: Optional[str]) -> None:
+    institute = institute_service.get_institute_or_404(db, institute_id)
+    if institute.onboarding_status != "draft":
+        raise HTTPException(status_code=400, detail="Only draft onboardings can be deleted")
+    institute_service.delete_institute(db, actor, institute_id, ip)

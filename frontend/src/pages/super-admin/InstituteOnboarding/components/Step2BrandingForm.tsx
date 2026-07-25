@@ -1,4 +1,5 @@
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { BrandingPreview } from "@/pages/super-admin/InstituteBranding/components/BrandingPreview";
 import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.strings";
 import { INITIAL } from "../helpers";
 
@@ -6,13 +7,14 @@ interface Step2BrandingFormProps {
   form: typeof INITIAL;
   set: (field: keyof typeof INITIAL) => (event: { target: { value: string } }) => void;
   instituteName: string | undefined;
+  logoSrc: string | null;
   adminCredential: { email: string; password: string } | null;
   onLogoChange: (file: File | null) => void;
   busy: boolean;
   onSave: () => void;
 }
 
-export function Step2BrandingForm({ form, set, instituteName, adminCredential, onLogoChange, busy, onSave }: Step2BrandingFormProps) {
+export function Step2BrandingForm({ form, set, instituteName, logoSrc, adminCredential, onLogoChange, busy, onSave }: Step2BrandingFormProps) {
   const t = strings.step2;
   return (
     <CollapsiblePanel className="form-card wide" title={t.title} description={t.description}>
@@ -44,10 +46,15 @@ export function Step2BrandingForm({ form, set, instituteName, adminCredential, o
       </div>
       <label>{t.logo}</label>
       <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => onLogoChange(event.target.files?.[0] || null)} />
-      <div className="branding-preview onboarding-brand-preview" style={{ background: form.secondary_color, borderColor: form.primary_color }}>
-        <strong style={{ color: form.primary_color }}>{instituteName}</strong>
-        <span>{t.portalLabel}</span>
-      </div>
+      <BrandingPreview
+        primary={form.primary_color}
+        secondary={form.secondary_color}
+        fontFamily="system-ui"
+        headingWeight={700}
+        bodyWeight={400}
+        logoSrc={logoSrc}
+        instituteName={instituteName}
+      />
       <div className="form-actions">
         <button onClick={onSave} disabled={busy}>
           {busy ? t.saving : t.saveBrandingAndReview}

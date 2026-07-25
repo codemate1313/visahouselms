@@ -18,16 +18,16 @@
   height: 40px;
   padding: 0 34px 0 36px;
   border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
   font-size: 13.5px;
-  color: #0f172a;
+  color: var(--text);
   outline: none;
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
 .ui-search-input input:focus {
-  background: #ffffff;
+  background: var(--surface);
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-soft);
 }
@@ -52,14 +52,20 @@
 }
 
 .ui-search-input-clear:hover {
-  color: #0f172a;
-  background: #e2e8f0;
+  color: var(--text);
+  background: var(--surface-muted);
 }
 
 [data-theme="dark"] .ui-search-input input {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.14);
   color: #e2e8f0;
+}
+
+[data-theme="dark"] .ui-search-input input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary);
+  color: #f7f7fa;
 }
 
 [data-theme="dark"] .ui-search-input-clear:hover {

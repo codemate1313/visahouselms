@@ -9,6 +9,10 @@ export const instituteOnboardingsStrings = {
   exportExcel: "Export Excel",
   onboardInstitute: "Onboard institute",
   loading: "Loading...",
+  errors: {
+    load: "Failed to load institute onboardings.",
+    delete: "Failed to delete draft onboarding.",
+  },
   table: {
     institute: "Institute",
     agreement: "Agreement",
@@ -25,6 +29,12 @@ export const instituteOnboardingsStrings = {
     accountsIssuedSuffix: (count: number) => `${count} accounts issued`,
     continueOnboarding: "Continue Onboarding",
     viewDetails: "View Details",
+    deleteDraft: "Delete Draft",
+  },
+  deleteModal: {
+    title: "Delete draft onboarding",
+    message: (name: string) => `Delete the draft onboarding for ${name}? This removes the draft institute, pending payment record, assigned courses, branding, and draft admin account.`,
+    confirmText: "Delete Draft",
   },
   pdf: {
     header: "IELTS LMS — Institute Onboarding Report",

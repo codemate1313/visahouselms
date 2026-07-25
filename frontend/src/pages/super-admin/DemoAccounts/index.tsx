@@ -1,6 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { confirmExport } from "@/utils/confirmExport";
 import { demoAccountsStrings as strings } from "./DemoAccounts.strings";
 import type { CreatedDemo, DemoRow } from "./types";
 import { exportDemoAccountsExcel, exportDemoAccountsPDF } from "./exportHelpers";
@@ -90,6 +91,16 @@ export function DemoAccounts() {
     setCopied(true);
   }
 
+  async function handleExportPdf() {
+    if (!await confirmExport("pdf", "demo accounts")) return;
+    exportDemoAccountsPDF(filteredRows);
+  }
+
+  async function handleExportExcel() {
+    if (!await confirmExport("excel", "demo accounts")) return;
+    exportDemoAccountsExcel(filteredRows);
+  }
+
   return (
     <div>
       {created && <CreatedDemoModal created={created} copied={copied} onCopyPassword={copyPassword} onDone={() => setCreated(null)} />}
@@ -101,8 +112,8 @@ export function DemoAccounts() {
         onSearchChange={setSearch}
         stateFilter={stateFilter}
         onStateFilterChange={setStateFilter}
-        onExportPdf={() => exportDemoAccountsPDF(filteredRows)}
-        onExportExcel={() => exportDemoAccountsExcel(filteredRows)}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
         showForm={showForm}
         onToggleForm={() => setShowForm((v) => !v)}
       />

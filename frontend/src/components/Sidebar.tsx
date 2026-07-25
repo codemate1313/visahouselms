@@ -239,7 +239,7 @@ export function Sidebar({
                       <button
                         type="button"
                         className={`sidebar-item-btn ${
-                          collapsed && isParentActive ? "is-active" : ""
+                          isParentActive && (collapsed || !isExpanded) ? "is-active" : ""
                         }`}
                         onClick={() => toggleAccordion(item.key)}
                         title={collapsed ? item.label : undefined}

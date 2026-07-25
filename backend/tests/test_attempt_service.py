@@ -415,8 +415,18 @@ class AttemptServiceTestCase(unittest.TestCase):
             last_name="Admin",
             is_active=True,
         )
+        second_sa = User(
+            email="fallback.sa@routing.test",
+            password_hash=hash_password("FallbackPassword!1"),
+            role_id=self.instructor_role.id,
+            first_name="Fallback",
+            last_name="Examiner",
+            is_active=True,
+        )
         self.student.institute_id = institute.id
-        self.db.add_all([institute_instructor, institute_admin, self.student])
+        self.db.add_all(
+            [institute_instructor, institute_admin, second_sa, self.student]
+        )
         self.db.commit()
 
         self.assertEqual(attempt_service.list_grading_queue(self.db, self.instructor), [])
@@ -428,7 +438,14 @@ class AttemptServiceTestCase(unittest.TestCase):
         institute_instructor.is_active = False
         self.db.add(institute_instructor)
         self.db.commit()
-        self.assertEqual(attempt_service.list_grading_queue(self.db, self.instructor), [])
+        self.assertEqual(
+            [item["id"] for item in attempt_service.list_grading_queue(self.db, self.instructor)],
+            [attempt.id],
+        )
+        self.assertEqual(
+            [item["id"] for item in attempt_service.list_grading_queue(self.db, second_sa)],
+            [attempt.id],
+        )
 
         institute_admin.is_active = False
         self.db.add(institute_admin)
@@ -437,6 +454,49 @@ class AttemptServiceTestCase(unittest.TestCase):
             [item["id"] for item in attempt_service.list_grading_queue(self.db, self.instructor)],
             [attempt.id],
         )
+
+    def test_sa_fallback_is_global_and_claimed_submission_is_locked(self):
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(
+            self.db, self.student, attempt_out["id"]
+        )
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(
+                    self.db,
+                    attempt,
+                    question.id,
+                    {"text": "Global grading bucket response."},
+                )
+        attempt_service.submit_attempt(self.db, attempt)
+
+        second_sa = User(
+            email="second.sa@example.com",
+            password_hash=hash_password("SecondTeacherPassword!1"),
+            role_id=self.instructor_role.id,
+            first_name="Second",
+            last_name="Examiner",
+            is_active=True,
+        )
+        self.db.add(second_sa)
+        self.db.commit()
+        self.db.refresh(second_sa)
+
+        self.assertEqual(
+            [item["id"] for item in attempt_service.list_grading_queue(self.db, second_sa)],
+            [attempt.id],
+        )
+        grading_service.claim(self.db, self.instructor, attempt)
+
+        with self.assertRaises(Exception) as claim_error:
+            grading_service.claim(self.db, second_sa, attempt)
+        self.assertIn("Author Teacher", str(claim_error.exception.detail))
+
+        with self.assertRaises(Exception) as open_error:
+            attempt_service.get_grading_detail(self.db, second_sa, attempt.id)
+        self.assertIn("Author Teacher", str(open_error.exception.detail))
 
     def test_cefr_percentage_policy_boundaries_are_versioned(self):
         self.assertEqual(cefr_service.level_for_percentage(Decimal("39.9")), "Below B1")

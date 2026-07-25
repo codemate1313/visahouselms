@@ -87,7 +87,7 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
       {loading ? (
         <p>{strings.loading}</p>
       ) : (
-        <table className="data-table">
+        <table className="data-table sessions-table">
           <thead>
             <tr>
               <th>{strings.table.device}</th>
@@ -108,17 +108,19 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
                 <td>{new Date(session.created_at).toLocaleString()}</td>
                 <td>{new Date(session.expires_at).toLocaleString()}</td>
                 <td className="table-actions">
-                  {!session.is_current && (
-                    <button
-                      type="button"
-                      onClick={() => handleRevoke(session)}
-                      className="danger"
-                      aria-label={strings.revokeSession}
-                      data-tooltip={strings.revokeSession}
-                    >
-                      <Icon name="revoke" />
-                    </button>
-                  )}
+                  <div className="table-actions sessions-table-actions">
+                    {!session.is_current && (
+                      <button
+                        type="button"
+                        onClick={() => handleRevoke(session)}
+                        className="danger"
+                        aria-label={strings.revokeSession}
+                        data-tooltip={strings.revokeSession}
+                      >
+                        <Icon name="revoke" />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

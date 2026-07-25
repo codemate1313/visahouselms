@@ -1,20 +1,37 @@
 import unittest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 from app.core.security import hash_password
 from app.models import Base
 from app.models.exam_module import ExamModule, InstituteModule
+from app.models.institute import Institute
+from app.models.payment import Payment
 from app.models.plan import Plan
 from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, SA_INSTRUCTOR, STUDENT, SUPER_ADMIN, Role
 from app.models.subscription import Subscription
 from app.models.user import User
-from app.services import institute_admin_service, module_authoring_service, onboarding_service, plan_service
+from app.services import (
+    institute_admin_service,
+    institute_service,
+    module_authoring_service,
+    onboarding_service,
+    payment_service,
+    plan_service,
+    revenue_service,
+)
 
 
 class InstituteOnboardingServiceTests(unittest.TestCase):
     def setUp(self) -> None:
         self.engine = create_engine("sqlite:///:memory:")
+
+        @event.listens_for(self.engine, "connect")
+        def enable_foreign_keys(dbapi_connection, _connection_record) -> None:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+
         Base.metadata.create_all(self.engine)
         self.db = sessionmaker(bind=self.engine)()
         roles = [Role(name=name) for name in (INSTITUTE_ADMIN, INST_INSTRUCTOR, SA_INSTRUCTOR, STUDENT, SUPER_ADMIN)]
@@ -118,3 +135,97 @@ class InstituteOnboardingServiceTests(unittest.TestCase):
             self.db, self.super_admin, self.module.id, institute_id, None
         )
         self.assertTrue(restored["is_active"])
+
+    def test_delete_draft_removes_onboarding_rows(self) -> None:
+        created = onboarding_service.create_draft(
+            self.db,
+            self.super_admin,
+            {
+                "name": "Delete Draft Academy",
+                "contact_email": "delete@draft.test",
+                "admin_email": "admin-delete@draft.test",
+                "admin_first_name": "Draft",
+                "admin_last_name": "Admin",
+                "admin_permissions": {},
+                "agreement_reference": "AGR-DELETE",
+                "agreement_notes": None,
+                "agreed_amount": 12000,
+                "amount_received": 1000,
+                "currency": "INR",
+                "payment_method_id": None,
+                "payment_reference": "Cash draft",
+                "student_limit": 50,
+                "staff_limit": 1,
+                "access_duration_days": 365,
+                "primary_color": "#e53935",
+                "secondary_color": "#17191d",
+                "module_ids": [self.module.id],
+            },
+            "127.0.0.1",
+        )
+
+        institute_id = created["id"]
+        onboarding_service.delete_draft(self.db, self.super_admin, institute_id, "127.0.0.1")
+
+        self.assertIsNone(self.db.get(Institute, institute_id))
+        payment = self.db.query(Payment).filter(Payment.institute_id_snapshot == institute_id).one()
+        self.assertIsNone(payment.institute_id)
+        self.assertIsNone(payment.user_id)
+        self.assertEqual(payment.institute_name_snapshot, "Delete Draft Academy")
+        self.assertFalse(self.db.query(User).filter(User.institute_id == institute_id).first())
+        self.assertFalse(self.db.query(InstituteModule).filter(InstituteModule.institute_id == institute_id).first())
+
+    def test_super_admin_deletes_published_institute_and_retains_financial_history(self) -> None:
+        created = onboarding_service.create_draft(
+            self.db,
+            self.super_admin,
+            {
+                "name": "Published Delete Academy",
+                "contact_email": "finance@published-delete.test",
+                "admin_email": "admin@published-delete.test",
+                "admin_first_name": "Published",
+                "admin_last_name": "Admin",
+                "admin_permissions": {},
+                "agreement_reference": "AGR-PUBLISHED-DELETE",
+                "agreement_notes": "Financial history must survive",
+                "agreed_amount": 24000,
+                "amount_received": 12000,
+                "currency": "INR",
+                "payment_method_id": None,
+                "payment_reference": "Receipt 240",
+                "student_limit": 50,
+                "staff_limit": 2,
+                "access_duration_days": 365,
+                "primary_color": "#e53935",
+                "secondary_color": "#17191d",
+                "module_ids": [self.module.id],
+            },
+            "127.0.0.1",
+        )
+        institute_id = created["id"]
+        onboarding_service.publish(self.db, self.super_admin, institute_id, "127.0.0.1")
+
+        institute_service.delete_institute(
+            self.db, self.super_admin, institute_id, "127.0.0.1"
+        )
+
+        self.assertIsNone(self.db.get(Institute, institute_id))
+        self.assertFalse(self.db.query(User).filter(User.institute_id == institute_id).first())
+        payment = self.db.query(Payment).filter(Payment.institute_id_snapshot == institute_id).one()
+        subscription = (
+            self.db.query(Subscription)
+            .filter(Subscription.institute_id_snapshot == institute_id)
+            .one()
+        )
+        self.assertIsNone(payment.institute_id)
+        self.assertEqual(payment.institute_name_snapshot, "Published Delete Academy")
+        self.assertIsNone(subscription.institute_id)
+        self.assertEqual(subscription.institute_name_snapshot, "Published Delete Academy")
+        self.assertIsNotNone(subscription.cancelled_at)
+        retained_payment = payment_service.list_payments(self.db)[0]
+        self.assertEqual(retained_payment["institute_name"], "Published Delete Academy")
+        revenue = revenue_service.summary(self.db)
+        self.assertEqual(
+            revenue["by_institute"][0]["institute_name"],
+            "Published Delete Academy",
+        )

@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -14,6 +14,9 @@ class Payment(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     source: Mapped[str] = mapped_column(String(10), nullable=False)  # b2b | b2c
     institute_id: Mapped[Optional[int]] = mapped_column(ForeignKey("institutes.id"), nullable=True)
+    institute_id_snapshot: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
+    institute_name_snapshot: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    institute_slug_snapshot: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
     plan_id: Mapped[Optional[int]] = mapped_column(ForeignKey("plans.id"), nullable=True)
     course_id: Mapped[Optional[int]] = mapped_column(ForeignKey("courses.id"), nullable=True)

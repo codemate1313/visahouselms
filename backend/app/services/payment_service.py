@@ -56,7 +56,9 @@ def _serialize(payment: Payment) -> dict:
         "id": payment.id,
         "source": payment.source,
         "institute_id": payment.institute_id,
-        "institute_name": payment.institute.name if payment.institute else None,
+        "institute_name": (
+            payment.institute.name if payment.institute else payment.institute_name_snapshot
+        ),
         "user_id": payment.user_id,
         "plan_id": payment.plan_id,
         "plan_name": payment.plan.name if payment.plan else None,
@@ -322,6 +324,7 @@ def list_payments(
                     Payment.invoice_number.like(pattern),
                     Payment.gateway_reference.like(pattern),
                     Institute.name.like(pattern),
+                    Payment.institute_name_snapshot.like(pattern),
                     Plan.name.like(pattern),
                 )
             )

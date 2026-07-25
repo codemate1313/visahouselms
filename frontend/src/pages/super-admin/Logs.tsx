@@ -86,9 +86,20 @@ export function Logs() {
                 )}
                 {data?.items.map((row, index) => (
                   <tr key={String(row.id ?? index)}>
-                    {columns.map((column) => (
-                      <td key={column}>{String(row[column] ?? "")}</td>
-                    ))}
+                    {columns.map((column) => {
+                      const value = String(row[column] ?? "");
+                      const isStackTrace = column.toLowerCase().replaceAll(" ", "_") === "stack_trace";
+
+                      return (
+                        <td key={column} className={isStackTrace ? "log-stack-trace-cell" : undefined}>
+                          {isStackTrace ? (
+                            <span className="log-stack-trace-text" title={value}>
+                              {value}
+                            </span>
+                          ) : value}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>

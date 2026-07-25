@@ -54,6 +54,10 @@
   transform: none;
 }
 
+.portal-topbar-theme-toggle {
+  flex: 0 0 auto;
+}
+
 /* Icon crossfade: both icons occupy the same cell and swap on state. */
 .theme-toggle-icon {
   position: relative;

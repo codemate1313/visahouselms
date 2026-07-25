@@ -5,6 +5,7 @@ import type { InstructorAccount, InstructorPasswordReset } from "@/api/types";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { confirmExport } from "@/utils/confirmExport";
 import { instructorsStrings as strings } from "./Instructors.strings";
 import type { PasswordNotice } from "./types";
 import { extractTemporaryPassword } from "./helpers";
@@ -182,6 +183,16 @@ export function Instructors() {
     await loadInstructors();
   }
 
+  async function handleExportPdf() {
+    if (!await confirmExport("pdf", "SA instructors")) return;
+    exportInstructorsPDF(instructors);
+  }
+
+  async function handleExportExcel() {
+    if (!await confirmExport("excel", "SA instructors")) return;
+    exportInstructorsExcel(instructors);
+  }
+
   return (
     <div>
       {passwordNotice && (
@@ -193,8 +204,8 @@ export function Instructors() {
         onSearchChange={setSearch}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
-        onExportPdf={() => exportInstructorsPDF(instructors)}
-        onExportExcel={() => exportInstructorsExcel(instructors)}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
         resultCount={instructors.length}
         onSubmit={handleSearch}
       />

@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { confirmExport } from "@/utils/confirmExport";
 import { couponsStrings as strings } from "./Coupons.strings";
 import type { CouponRow } from "./types";
 import { exportCouponsExcel, exportCouponsPDF } from "./exportHelpers";
@@ -89,6 +90,16 @@ export function Coupons() {
     }
   }
 
+  async function handleExportPdf() {
+    if (!await confirmExport("pdf", "coupons")) return;
+    exportCouponsPDF(coupons);
+  }
+
+  async function handleExportExcel() {
+    if (!await confirmExport("excel", "coupons")) return;
+    exportCouponsExcel(coupons);
+  }
+
   return (
     <div>
       <CouponsFilterBar
@@ -98,8 +109,8 @@ export function Coupons() {
         onScopeFilterChange={setScopeFilter}
         activeFilter={activeFilter}
         onActiveFilterChange={setActiveFilter}
-        onExportPdf={() => exportCouponsPDF(coupons)}
-        onExportExcel={() => exportCouponsExcel(coupons)}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
         resultCount={coupons.length}
       />
 

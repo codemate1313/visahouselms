@@ -38,6 +38,7 @@ export const modulesStrings = {
     title: "Delete Draft Course",
   },
   readyToPublish: "Ready to publish",
+  editModule: "Edit",
   requirementsRemaining: (count: number) => `${count} requirement${count === 1 ? "" : "s"} remaining`,
   partsLabel: "parts",
   questionsLabel: "questions",

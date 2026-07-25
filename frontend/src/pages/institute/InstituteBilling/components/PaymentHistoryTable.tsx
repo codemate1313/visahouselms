@@ -1,3 +1,4 @@
+import { formatCurrencyAmount } from "@/utils/currency";
 import { instituteBillingStrings as strings } from "../InstituteBilling.strings";
 import type { Payment } from "../types";
 
@@ -31,7 +32,7 @@ export function PaymentHistoryTable({ payments }: PaymentHistoryTableProps) {
               <tr key={payment.id}>
                 <td>{payment.invoice_number ?? t.pendingInvoice}</td>
                 <td>{payment.plan_name ?? "-"}</td>
-                <td>{payment.currency} {Number(payment.final_amount).toLocaleString("en-IN")}</td>
+                <td>{formatCurrencyAmount(payment.final_amount, payment.currency)}</td>
                 <td>
                   <span className={`badge ${payment.status === "paid" ? "badge-green" : "badge-amber"}`}>{payment.status}</span>
                 </td>

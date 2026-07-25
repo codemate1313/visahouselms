@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { GradingQueueItem } from "@/api/types";
 import { Icon } from "@/components/icons";
+import { useAuthStore } from "@/store/authStore";
 import { gradingQueueStrings as strings } from "../GradingQueue.strings";
 
 const STATUS_CLASS: Record<string, string> = { pending: "badge-amber", claimed: "badge-blue", completed: "badge-green" };
@@ -12,6 +13,7 @@ interface GradingQueueTableProps {
 
 export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps) {
   const t = strings.table;
+  const userId = useAuthStore((state) => state.user?.id);
   return (
     <div className="table-wrap">
       <table className="data-table">
@@ -28,8 +30,13 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => (
-            <tr key={item.id} className="clickable">
+          {items.map((item) => {
+            const claimedByOther =
+              item.queue.status === "claimed" &&
+              item.queue.assigned_to_id != null &&
+              item.queue.assigned_to_id !== userId;
+            return (
+            <tr key={item.id} className={claimedByOther ? "" : "clickable"}>
               <td>{item.student_name}</td>
               <td>
                 {item.module_title}
@@ -41,12 +48,22 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
               <td>{item.flag_count > 0 ? <span className="badge badge-red">{item.flag_count}</span> : "—"}</td>
               <td>{item.parts_to_grade}</td>
               <td className="table-actions">
-                <Link to={`${gradingBase}/${item.id}`} aria-label={t.gradeSubmission} data-tooltip={t.gradeSubmission}>
-                  <Icon name="grading" />
-                </Link>
+                {claimedByOther ? (
+                  <span
+                    className="badge badge-blue"
+                    data-tooltip={t.evaluatingBy(item.queue.assigned_to_name ?? t.anotherInstructor)}
+                  >
+                    <Icon name="lock" />
+                    {t.evaluating}
+                  </span>
+                ) : (
+                  <Link to={`${gradingBase}/${item.id}`} aria-label={t.gradeSubmission} data-tooltip={t.gradeSubmission}>
+                    <Icon name="grading" />
+                  </Link>
+                )}
               </td>
             </tr>
-          ))}
+          )})}
         </tbody>
       </table>
     </div>

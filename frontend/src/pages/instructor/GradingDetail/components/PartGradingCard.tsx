@@ -22,9 +22,12 @@ interface PartGradingCardProps {
   canEdit: boolean;
   aiConfigured: boolean;
   onGraded: (detail: GradingDetailType) => void;
+  isOpen: boolean;
+  onToggleOpen: (open: boolean) => void;
+  onGradedNext?: (currentPartId: number) => void;
 }
 
-export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGraded }: PartGradingCardProps) {
+export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGraded, isOpen, onToggleOpen, onGradedNext }: PartGradingCardProps) {
   const t = strings.part;
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
@@ -65,6 +68,7 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
       const { data } = await apiClient.post<GradingDetailType>(`/instructor/grading/${attemptId}/parts/${part.id}`, { criteria, comment: comment || undefined });
       onGraded(data);
       showSuccess(t.gradedMessage(part.title), t.savedTitle);
+      onGradedNext?.(part.id);
     } catch (err: unknown) {
       showError(extractErrorMessage(err, t.saveErrorMessage), t.saveErrorTitle);
     } finally {
@@ -73,7 +77,7 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
   }
 
   return (
-    <section className="workspace-panel grading-part-panel">
+    <section id={`part-card-${part.id}`} className="workspace-panel grading-part-panel">
       <div className="panel-heading">
         <div>
           <h2>{part.title}</h2>
@@ -116,7 +120,7 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
         </div>
       )}
 
-      <details className="rubric-details" open>
+      <details className="rubric-details" open={isOpen} onToggle={(e) => onToggleOpen(e.currentTarget.open)}>
         <summary>{t.rubricSummary(part.rubric.length)}</summary>
         <div className="cefr-anchor-scale" aria-label={t.cefrAnchorAriaLabel}>
           {part.cefr_scale.map((anchor) => (
@@ -136,16 +140,33 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
               </div>
               <p>{criterion.description}</p>
               <label htmlFor={`criterion-${part.id}-${criterion.criterion}`}>{t.markLabel(criterion.max_marks)}</label>
-              <input
-                id={`criterion-${part.id}-${criterion.criterion}`}
-                type="number"
-                min={0}
-                max={criterion.max_marks}
-                step={0.5}
-                value={marks[criterion.criterion]}
-                disabled={!canEdit}
-                onChange={(event) => setMarks((current) => ({ ...current, [criterion.criterion]: event.target.value }))}
-              />
+              <div className="sleek-score-combo">
+                <input
+                  id={`criterion-${part.id}-${criterion.criterion}`}
+                  type="number"
+                  min={0}
+                  max={criterion.max_marks}
+                  step={0.5}
+                  className="sleek-score-input"
+                  placeholder="0.0"
+                  value={marks[criterion.criterion]}
+                  disabled={!canEdit}
+                  onChange={(event) => setMarks((current) => ({ ...current, [criterion.criterion]: event.target.value }))}
+                />
+                <select
+                  className="sleek-score-dropdown"
+                  value={marks[criterion.criterion]}
+                  disabled={!canEdit}
+                  onChange={(event) => setMarks((current) => ({ ...current, [criterion.criterion]: event.target.value }))}
+                >
+                  <option value="">Select preset score...</option>
+                  {Array.from({ length: Math.floor(criterion.max_marks * 2) + 1 }, (_, i) => i * 0.5).map((scoreVal) => (
+                    <option key={scoreVal} value={scoreVal}>
+                      {scoreVal} / {criterion.max_marks} marks
+                    </option>
+                  ))}
+                </select>
+              </div>
             </article>
           ))}
         </div>

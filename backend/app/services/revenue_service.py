@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.institute import Institute
@@ -26,7 +26,12 @@ def summary(
         if date_to is not None:
             query = query.filter(Payment.created_at <= date_to)
         if institute_id is not None:
-            query = query.filter(Payment.institute_id == institute_id)
+            query = query.filter(
+                or_(
+                    Payment.institute_id == institute_id,
+                    Payment.institute_id_snapshot == institute_id,
+                )
+            )
         return query
 
     revenue_rows = _apply_common(db.query(Payment).filter(Payment.status.in_(REVENUE_STATUSES))).all()
@@ -37,14 +42,26 @@ def summary(
     due_rows = _apply_common(db.query(Payment).filter(Payment.status.in_(DUE_STATUSES))).all()
     total_due = sum((p.final_amount - p.amount_paid for p in due_rows), Decimal("0"))
 
+    institute_identity_id = func.coalesce(Payment.institute_id, Payment.institute_id_snapshot)
+    institute_identity_name = func.coalesce(Institute.name, Payment.institute_name_snapshot)
     by_institute_query = _apply_common(
-        db.query(Institute.id, Institute.name, func.sum(Payment.amount_paid), func.count(Payment.id))
-        .join(Payment, Payment.institute_id == Institute.id)
-        .filter(Payment.status.in_(REVENUE_STATUSES))
+        db.query(
+            institute_identity_id,
+            institute_identity_name,
+            func.sum(Payment.amount_paid),
+            func.count(Payment.id),
+        )
+        .outerjoin(Institute, Payment.institute_id == Institute.id)
+        .filter(
+            Payment.status.in_(REVENUE_STATUSES),
+            institute_identity_name.is_not(None),
+        )
     )
     by_institute = [
         {"institute_id": iid, "institute_name": name, "total": str(total_amt), "count": count}
-        for iid, name, total_amt, count in by_institute_query.group_by(Institute.id, Institute.name).all()
+        for iid, name, total_amt, count in by_institute_query.group_by(
+            institute_identity_id, institute_identity_name
+        ).all()
     ]
 
     # MySQL and SQLite expose different month-formatting functions. Keep the
@@ -72,7 +89,9 @@ def summary(
     dues = [
         {
             "id": p.id,
-            "institute_name": p.institute.name if p.institute else None,
+            "institute_name": (
+                p.institute.name if p.institute else p.institute_name_snapshot
+            ),
             "invoice_number": p.invoice_number,
             "final_amount": str(p.final_amount),
             "amount_paid": str(p.amount_paid),

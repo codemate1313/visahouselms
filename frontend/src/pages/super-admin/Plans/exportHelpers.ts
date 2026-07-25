@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { currencySymbol, formatCurrencyAmount } from "@/utils/currency";
 import { plansStrings as strings } from "./Plans.strings";
 import type { PlanRow } from "./types";
 
@@ -27,7 +28,7 @@ export function exportPlansPDF(plans: PlanRow[]) {
     body: plans.map((plan, i) => [
       i + 1,
       plan.name,
-      `${plan.currency || "INR"} ${plan.price}`,
+      formatCurrencyAmount(plan.price, plan.currency),
       `${plan.duration_days} days`,
       `${plan.student_limit} / ${plan.staff_limit} / ${plan.test_limit}`,
       `${plan.grace_days} days`,
@@ -64,7 +65,7 @@ export function exportPlansExcel(plans: PlanRow[]) {
       plan.name,
       plan.description ?? "",
       plan.price,
-      plan.currency || "INR",
+      currencySymbol(plan.currency),
       plan.duration_days,
       plan.student_limit,
       plan.staff_limit,

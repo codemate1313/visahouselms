@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { currencySymbol, formatCurrencyAmount } from "@/utils/currency";
 import { instituteOnboardingsStrings as strings } from "./InstituteOnboardings.strings";
 import type { OnboardingRow } from "./types";
 
@@ -24,9 +25,9 @@ export function exportOnboardingsPDF(rows: OnboardingRow[]) {
       i + 1,
       row.name,
       row.contact_email ?? "—",
-      `${row.agreement_currency || "INR"} ${Number(row.agreed_amount || 0).toLocaleString("en-IN")}`,
+      formatCurrencyAmount(row.agreed_amount || 0, row.agreement_currency),
       row.payment
-        ? `${row.agreement_currency || "INR"} ${Number(row.payment.amount_paid || 0).toLocaleString("en-IN")} (${row.payment.status || "paid"})`
+        ? `${formatCurrencyAmount(row.payment.amount_paid || 0, row.agreement_currency)} (${row.payment.status || "paid"})`
         : strings.pdf.notRecorded,
       `${row.student_limit} students / ${row.staff_limit} staff (${row.member_count} accounts)`,
       row.course_count,
@@ -61,7 +62,7 @@ export function exportOnboardingsExcel(rows: OnboardingRow[]) {
       row.name,
       row.contact_email ?? "",
       row.agreed_amount || "0",
-      row.agreement_currency || "INR",
+      currencySymbol(row.agreement_currency),
       row.payment?.amount_paid || "0",
       row.payment?.status || "pending",
       row.student_limit,

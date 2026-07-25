@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { instituteBrandingStrings as strings } from "../InstituteBranding.strings";
 
 interface BrandingPreviewProps {
@@ -13,9 +13,18 @@ interface BrandingPreviewProps {
 
 export function BrandingPreview({ primary, secondary, fontFamily, headingWeight, bodyWeight, logoSrc, instituteName }: BrandingPreviewProps) {
   const t = strings.preview;
+  const [previewTheme, setPreviewTheme] = useState<"light" | "dark">(() => {
+    if (typeof document === "undefined") {
+      return "light";
+    }
+
+    return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+  });
+
   return (
     <div
       className="branding-dashboard-preview"
+      data-preview-theme={previewTheme}
       style={{
         "--preview-primary": primary,
         "--preview-secondary": secondary,
@@ -50,7 +59,25 @@ export function BrandingPreview({ primary, secondary, fontFamily, headingWeight,
             <h3 style={{ fontWeight: headingWeight }}>{t.welcome}</h3>
             <p>{t.description}</p>
           </div>
-          <button className="branding-preview-button">{t.viewAssignedTests}</button>
+          <div className="branding-preview-header-actions">
+            <div className="branding-preview-theme-toggle" aria-label="Preview theme toggle" role="group">
+              <button
+                type="button"
+                className={previewTheme === "light" ? "is-active" : ""}
+                onClick={() => setPreviewTheme("light")}
+              >
+                Light
+              </button>
+              <button
+                type="button"
+                className={previewTheme === "dark" ? "is-active" : ""}
+                onClick={() => setPreviewTheme("dark")}
+              >
+                Dark
+              </button>
+            </div>
+            <button className="branding-preview-button">{t.viewAssignedTests}</button>
+          </div>
         </div>
         <div className="branding-preview-stats">
           <article>

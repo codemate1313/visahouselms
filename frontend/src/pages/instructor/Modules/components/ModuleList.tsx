@@ -26,8 +26,12 @@ export function ModuleList({ modules, onDeleteDraft }: ModuleListProps) {
               <span><strong>{module.question_count}</strong> {strings.questionsLabel}</span>
               <span><strong>{module.duration_minutes}</strong> {strings.minutesLabel}</span>
             </div>
-            <small className={module.ready_to_publish ? "ready-label" : "needs-work-label"}>
-              {module.ready_to_publish ? strings.readyToPublish : strings.requirementsRemaining(module.validation_errors.length)}
+            <small className={module.status === "published" ? "edit-label" : module.ready_to_publish ? "ready-label" : "needs-work-label"}>
+              {module.status === "published"
+                ? strings.editModule
+                : module.ready_to_publish
+                ? strings.readyToPublish
+                : strings.requirementsRemaining(module.validation_errors.length)}
             </small>
           </Link>
           {module.status === "draft" && (

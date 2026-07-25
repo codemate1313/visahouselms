@@ -1,6 +1,6 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { apiClient } from "@/api/client";
+import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { instituteOnboardingStrings as strings } from "./InstituteOnboarding.strings";
@@ -74,6 +74,15 @@ export function InstituteOnboarding() {
     const allChecked = PERMISSIONS.every((permission) => adminPermissions[permission.key]);
     setAdminPermissions(Object.fromEntries(PERMISSIONS.map(({ key }) => [key, !allChecked])) as Record<string, boolean>);
   }
+
+  const existingLogoSrc = onboarding?.branding?.logo_url ? `${API_BASE_URL}${onboarding.branding.logo_url}` : null;
+  const uploadedLogoSrc = useMemo(() => (logo ? URL.createObjectURL(logo) : null), [logo]);
+
+  useEffect(() => {
+    return () => {
+      if (uploadedLogoSrc) URL.revokeObjectURL(uploadedLogoSrc);
+    };
+  }, [uploadedLogoSrc]);
 
   async function createDraft(event: FormEvent) {
     event.preventDefault();
@@ -184,6 +193,7 @@ export function InstituteOnboarding() {
           form={form}
           set={set}
           instituteName={onboarding?.name}
+          logoSrc={uploadedLogoSrc ?? existingLogoSrc}
           adminCredential={adminCredential}
           onLogoChange={setLogo}
           busy={busy}

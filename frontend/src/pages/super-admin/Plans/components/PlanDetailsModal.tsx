@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { plansStrings as strings } from "../Plans.strings";
 import type { PlanRow } from "../types";
 
@@ -27,7 +28,7 @@ export function PlanDetailsModal({ plan, onClose }: PlanDetailsModalProps) {
                 </span>
               </div>
               <span className="plan-dialog-price">
-                {plan.currency || "INR"} {Number(plan.price).toLocaleString("en-IN")}
+                {formatCurrencyAmount(plan.price, plan.currency)}
                 <small> / {plan.duration_days} {t.billingCycleSuffix}</small>
               </span>
             </div>

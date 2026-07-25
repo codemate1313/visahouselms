@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import HTTPException, status
+from sqlalchemy import or_, update
 from sqlalchemy.orm import Session
 
 from app.models.attempt import (
@@ -20,7 +21,7 @@ from app.models.attempt import (
     TestAttempt,
 )
 from app.models.exam_module import ExamModule
-from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, SA_INSTRUCTOR, Role
+from app.models.role import INST_INSTRUCTOR, SA_INSTRUCTOR, Role
 from app.models.user import User
 
 OPEN_REEVALUATION_STATUSES = (REEVALUATION_PENDING, REEVALUATION_IN_REVIEW)
@@ -30,14 +31,14 @@ def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-def _institute_has_active_staff(db: Session, institute_id: int) -> bool:
+def _institute_has_active_instructor(db: Session, institute_id: int) -> bool:
     return (
         db.query(User)
         .filter(
             User.institute_id == institute_id,
             User.is_active.is_(True),
             User.deleted_at.is_(None),
-            User.role.has(Role.name.in_((INSTITUTE_ADMIN, INST_INSTRUCTOR))),
+            User.role.has(Role.name == INST_INSTRUCTOR),
         )
         .first()
         is not None
@@ -47,9 +48,9 @@ def _institute_has_active_staff(db: Session, institute_id: int) -> bool:
 def can_grade_attempt(db: Session, actor: User, attempt: TestAttempt) -> bool:
     if actor.role.name == INST_INSTRUCTOR:
         return actor.institute_id is not None and attempt.user.institute_id == actor.institute_id
-    if actor.role.name != SA_INSTRUCTOR or attempt.module.created_by_id != actor.id:
+    if actor.role.name != SA_INSTRUCTOR:
         return False
-    return attempt.user.institute_id is None or not _institute_has_active_staff(
+    return attempt.user.institute_id is None or not _institute_has_active_instructor(
         db, attempt.user.institute_id
     )
 
@@ -66,7 +67,7 @@ def ensure_queue_entry(
             "direct_student"
             if attempt.user.institute_id is None
             else "institute_instructor"
-            if _institute_has_active_staff(db, attempt.user.institute_id)
+            if _institute_has_active_instructor(db, attempt.user.institute_id)
             else "sa_fallback"
         )
         entry = GradingQueueEntry(
@@ -111,11 +112,7 @@ def claim(db: Session, actor: User, attempt: TestAttempt) -> dict:
     entry = ensure_queue_entry(db, attempt)
     if entry.status == QUEUE_COMPLETED and not latest_open_reevaluation(db, attempt.id):
         raise HTTPException(status_code=409, detail="This grading item is already complete")
-    if entry.assigned_to_id not in (None, actor.id):
-        raise HTTPException(status_code=409, detail="This submission is claimed by another instructor")
-    entry.status = QUEUE_CLAIMED
-    entry.assigned_to_id = actor.id
-    entry.claimed_at = entry.claimed_at or _now()
+    entry = _claim_entry(db, entry, actor)
     request = latest_open_reevaluation(db, attempt.id)
     if request:
         request.status = REEVALUATION_IN_REVIEW
@@ -149,14 +146,59 @@ def require_or_claim(db: Session, actor: User, attempt: TestAttempt) -> GradingQ
     entry = ensure_queue_entry(db, attempt)
     if entry.status == QUEUE_COMPLETED and not latest_open_reevaluation(db, attempt.id):
         raise HTTPException(status_code=409, detail="Completed grading is read-only unless a reevaluation is open")
-    if entry.assigned_to_id not in (None, actor.id):
-        raise HTTPException(status_code=409, detail="This submission is claimed by another instructor")
-    if entry.assigned_to_id is None:
-        entry.assigned_to_id = actor.id
-        entry.claimed_at = _now()
-    entry.status = QUEUE_CLAIMED
-    db.add(entry)
+    return _claim_entry(db, entry, actor)
+
+
+def _claim_entry(
+    db: Session, entry: GradingQueueEntry, actor: User
+) -> GradingQueueEntry:
+    claimed_at = entry.claimed_at or _now()
+    result = db.execute(
+        update(GradingQueueEntry)
+        .where(
+            GradingQueueEntry.id == entry.id,
+            or_(
+                GradingQueueEntry.assigned_to_id.is_(None),
+                GradingQueueEntry.assigned_to_id == actor.id,
+            ),
+        )
+        .values(
+            status=QUEUE_CLAIMED,
+            assigned_to_id=actor.id,
+            claimed_at=claimed_at,
+        )
+    )
+    if result.rowcount != 1:
+        db.expire(entry)
+        db.refresh(entry)
+        owner = (
+            f"{entry.assigned_to.first_name} {entry.assigned_to.last_name}"
+            if entry.assigned_to
+            else "another instructor"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"This submission is currently being evaluated by {owner}.",
+        )
+    db.expire(entry)
+    db.refresh(entry)
     return entry
+
+
+def ensure_available_to_open(
+    db: Session, actor: User, attempt: TestAttempt
+) -> None:
+    entry = ensure_queue_entry(db, attempt)
+    if entry.status == QUEUE_CLAIMED and entry.assigned_to_id not in (None, actor.id):
+        owner = (
+            f"{entry.assigned_to.first_name} {entry.assigned_to.last_name}"
+            if entry.assigned_to
+            else "another instructor"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"This submission is currently being evaluated by {owner}.",
+        )
 
 
 def complete_if_ready(db: Session, attempt: TestAttempt) -> None:
@@ -181,8 +223,6 @@ def list_queue(db: Session, actor: User, status_filter: Optional[str] = None) ->
     query = _attempt_query(db).join(ExamModule, TestAttempt.module_id == ExamModule.id)
     if actor.role.name == INST_INSTRUCTOR:
         query = query.join(User, TestAttempt.user_id == User.id).filter(User.institute_id == actor.institute_id)
-    else:
-        query = query.filter(ExamModule.created_by_id == actor.id)
     attempts = [attempt for attempt in query.order_by(TestAttempt.submitted_at.asc()).all() if can_grade_attempt(db, actor, attempt)]
     rows = []
     for attempt in attempts:

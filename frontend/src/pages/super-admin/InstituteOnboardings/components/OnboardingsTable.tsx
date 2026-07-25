@@ -1,13 +1,15 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { instituteOnboardingsStrings as strings } from "../InstituteOnboardings.strings";
 import type { OnboardingRow } from "../types";
 
 interface OnboardingsTableProps {
   rows: OnboardingRow[];
+  onRequestDelete: (row: OnboardingRow) => void;
 }
 
-export function OnboardingsTable({ rows }: OnboardingsTableProps) {
+export function OnboardingsTable({ rows, onRequestDelete }: OnboardingsTableProps) {
   const t = strings.table;
   return (
     <div className="table-wrap">
@@ -48,13 +50,13 @@ export function OnboardingsTable({ rows }: OnboardingsTableProps) {
                 </td>
                 <td>
                   <strong style={{ fontSize: 13.5 }}>
-                    {row.agreement_currency || "INR"} {Number(row.agreed_amount || 0).toLocaleString("en-IN")}
+                    {formatCurrencyAmount(row.agreed_amount || 0, row.agreement_currency)}
                   </strong>
                 </td>
                 <td>
                   <div className="table-item-details">
                     <span className="table-item-title" style={{ fontSize: 13, fontWeight: 500 }}>
-                      {row.payment ? `${row.agreement_currency || "INR"} ${Number(row.payment.amount_paid || 0).toLocaleString("en-IN")}` : t.notRecorded}
+                      {row.payment ? formatCurrencyAmount(row.payment.amount_paid || 0, row.agreement_currency) : t.notRecorded}
                     </span>
                     <span className="table-item-subtitle" style={{ fontSize: 11.5, color: row.payment?.status === "paid" ? "var(--green-600)" : "var(--slate-400)" }}>
                       {row.payment?.status || t.pending}
@@ -62,13 +64,15 @@ export function OnboardingsTable({ rows }: OnboardingsTableProps) {
                   </div>
                 </td>
                 <td>
-                  <div className="table-item-details">
-                    <span className="table-item-title" style={{ fontSize: 13, fontWeight: 500 }}>
-                      {t.studentsStaffSuffix(row.student_limit, row.staff_limit)}
-                    </span>
-                    <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--slate-400)" }}>
-                      {t.accountsIssuedSuffix(row.member_count)}
-                    </span>
+                  <div className="onboarding-allocation-cell">
+                    <div className="table-item-details onboarding-allocation-pill">
+                      <span className="table-item-title">
+                        {t.studentsStaffSuffix(row.student_limit, row.staff_limit)}
+                      </span>
+                      <span className="table-item-subtitle">
+                        {t.accountsIssuedSuffix(row.member_count)}
+                      </span>
+                    </div>
                   </div>
                 </td>
                 <td>
@@ -89,6 +93,16 @@ export function OnboardingsTable({ rows }: OnboardingsTableProps) {
                   >
                     <Icon name={row.onboarding_status === "draft" ? "edit" : "overview"} />
                   </Link>
+                  {row.onboarding_status === "draft" && (
+                    <button
+                      type="button"
+                      className="action-btn-icon action-delete"
+                      onClick={() => onRequestDelete(row)}
+                      data-tooltip={t.deleteDraft}
+                    >
+                      <Icon name="trash" />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))

@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { couponsStrings as strings } from "./Coupons.strings";
 import type { CouponRow } from "./types";
 
@@ -22,7 +23,7 @@ export function exportCouponsPDF(coupons: CouponRow[]) {
     body: coupons.map((c, i) => [
       i + 1,
       c.code,
-      c.discount_type === "percent" ? `${c.value}%` : `INR ${c.value}`,
+      c.discount_type === "percent" ? `${c.value}%` : formatCurrencyAmount(c.value),
       c.scope,
       `${c.usage_count}${c.usage_limit ? ` / ${c.usage_limit}` : ""}`,
       `${c.valid_from ? new Date(c.valid_from).toLocaleDateString("en-GB") : "—"} to ${c.valid_until ? new Date(c.valid_until).toLocaleDateString("en-GB") : "—"}`,

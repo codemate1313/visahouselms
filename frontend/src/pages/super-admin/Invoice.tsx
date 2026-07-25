@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { invoiceStrings as strings } from "./Invoice.strings";
 
 interface PaymentDetail {
@@ -82,29 +83,29 @@ export function Invoice() {
           <tbody>
             <tr>
               <td>{payment.plan_name ?? t.purchase} ({payment.source.toUpperCase()})</td>
-              <td>{payment.currency} {payment.amount}</td>
+              <td>{formatCurrencyAmount(payment.amount, payment.currency)}</td>
             </tr>
             {Number(payment.discount_amount) > 0 && (
               <tr>
                 <td>{t.discount} {payment.coupon_code && `(${payment.coupon_code})`}</td>
-                <td>- {payment.currency} {payment.discount_amount}</td>
+                <td>- {formatCurrencyAmount(payment.discount_amount, payment.currency)}</td>
               </tr>
             )}
           </tbody>
           <tfoot>
             <tr>
               <td><strong>{t.total}</strong></td>
-              <td><strong>{payment.currency} {payment.final_amount}</strong></td>
+              <td><strong>{formatCurrencyAmount(payment.final_amount, payment.currency)}</strong></td>
             </tr>
             {Number(payment.due_amount) > 0 && (
               <>
                 <tr>
                   <td>{t.amountPaid}</td>
-                  <td>{payment.currency} {payment.amount_paid}</td>
+                  <td>{formatCurrencyAmount(payment.amount_paid, payment.currency)}</td>
                 </tr>
                 <tr>
                   <td><strong>{t.balanceDue}</strong></td>
-                  <td><strong>{payment.currency} {payment.due_amount}</strong></td>
+                  <td><strong>{formatCurrencyAmount(payment.due_amount, payment.currency)}</strong></td>
                 </tr>
               </>
             )}

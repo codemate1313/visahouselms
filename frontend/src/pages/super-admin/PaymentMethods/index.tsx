@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { confirmExport } from "@/utils/confirmExport";
 import { paymentMethodsStrings as strings } from "./PaymentMethods.strings";
 import type { MethodRow } from "./types";
 import { exportMethodsExcel, exportMethodsPDF } from "./exportHelpers";
@@ -98,6 +99,16 @@ export function PaymentMethods() {
     }
   }
 
+  async function handleExportPdf() {
+    if (!await confirmExport("pdf", "payment methods")) return;
+    exportMethodsPDF(filteredMethods);
+  }
+
+  async function handleExportExcel() {
+    if (!await confirmExport("excel", "payment methods")) return;
+    exportMethodsExcel(filteredMethods);
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -114,8 +125,8 @@ export function PaymentMethods() {
         onSearchChange={setSearch}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
-        onExportPdf={() => exportMethodsPDF(filteredMethods)}
-        onExportExcel={() => exportMethodsExcel(filteredMethods)}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
         resultCount={filteredMethods.length}
       />
 

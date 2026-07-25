@@ -39,3 +39,8 @@ def get_onboarding(institute_id: int, db: Session = Depends(get_db)):
 @router.post("/{institute_id}/publish")
 def publish_onboarding(institute_id: int, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     return onboarding_service.publish(db, actor, institute_id, _ip(request))
+
+
+@router.delete("/{institute_id}", status_code=204)
+def delete_draft_onboarding(institute_id: int, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    onboarding_service.delete_draft(db, actor, institute_id, _ip(request))

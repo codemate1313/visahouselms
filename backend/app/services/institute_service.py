@@ -1,14 +1,19 @@
+import json
+import logging
 import re
 import secrets
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import HTTPException, UploadFile, status
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.security import hash_password
 from app.core.uploads import read_validated_image
 from app.models.audit_log import AuditLog
+from app.models.base import Base
 from app.models.demo_account import DemoAccount
 from app.models.institute import Institute
 from app.models.institute_branding import InstituteBranding
@@ -30,6 +35,7 @@ DEFAULT_ADMIN_PERMISSIONS = {
     "manage_staff": False,
     "view_billing": False,
 }
+logger = logging.getLogger(__name__)
 
 
 def normalized_admin_permissions(value: Optional[dict]) -> dict:
@@ -99,7 +105,12 @@ def _serialize(db: Session, institute: Institute) -> dict:
 
 
 def list_institutes(db: Session) -> List[dict]:
-    institutes = db.query(Institute).order_by(Institute.name).all()
+    institutes = (
+        db.query(Institute)
+        .filter(Institute.onboarding_status == "published")
+        .order_by(Institute.name)
+        .all()
+    )
     return [_serialize(db, i) for i in institutes]
 
 
@@ -205,39 +216,306 @@ def set_institute_active(db: Session, actor: User, institute_id: int, active: bo
 
 
 def delete_institute(db: Session, actor: User, institute_id: int, ip: Optional[str]) -> None:
-    """Guarded like Plans (subscriptions) and Coupons (payments): an institute
-    with any subscription or payment history can only be suspended, never
-    hard-deleted, to protect revenue/audit history. A fresh institute with no
-    history deletes cleanly, cascading its branding/demo/user rows."""
+    """Permanently remove tenant data while retaining detached financial history."""
     institute = get_institute_or_404(db, institute_id)
+    tables = Base.metadata.tables
+    user_ids = list(
+        db.execute(select(tables["users"].c.id).where(tables["users"].c.institute_id == institute_id)).scalars()
+    )
+    attempt_ids = (
+        list(
+            db.execute(
+                select(tables["test_attempts"].c.id).where(
+                    tables["test_attempts"].c.user_id.in_(user_ids)
+                )
+            ).scalars()
+        )
+        if user_ids
+        else []
+    )
+    announcement_filter = tables["announcements"].c.institute_id == institute_id
+    if user_ids:
+        announcement_filter = or_(
+            announcement_filter,
+            tables["announcements"].c.created_by_id.in_(user_ids),
+        )
+    announcement_ids = list(
+        db.execute(
+            select(tables["announcements"].c.id).where(announcement_filter)
+        ).scalars()
+    )
+    institute_course_ids = list(
+        db.execute(
+            select(tables["institute_courses"].c.id).where(
+                tables["institute_courses"].c.institute_id == institute_id
+            )
+        ).scalars()
+    )
 
-    has_subscriptions = db.query(Subscription).filter(Subscription.institute_id == institute_id).count() > 0
-    has_payments = db.query(Payment).filter(Payment.institute_id == institute_id).count() > 0
-    if has_subscriptions or has_payments:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This institute has subscription or payment history and cannot be deleted - suspend it instead",
+    storage_paths = _institute_storage_paths(
+        db, tables, institute_id, user_ids, attempt_ids
+    )
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    _audit(
+        db,
+        actor,
+        "institute.delete",
+        institute.id,
+        ip,
+        {
+            "name": institute.name,
+            "slug": institute.slug,
+            "financial_records_retained": True,
+        },
+    )
+    db.flush()
+
+    # Financial and contract rows are immutable history. Detach their live
+    # foreign keys and retain the deleted institute identity as a snapshot.
+    payment_scope = tables["payments"].c.institute_id == institute_id
+    subscription_scope = tables["subscriptions"].c.institute_id == institute_id
+    if user_ids:
+        payment_scope = or_(payment_scope, tables["payments"].c.user_id.in_(user_ids))
+        subscription_scope = or_(
+            subscription_scope, tables["subscriptions"].c.user_id.in_(user_ids)
+        )
+    db.execute(
+        update(tables["payments"])
+        .where(payment_scope)
+        .values(
+            institute_id=None,
+            institute_id_snapshot=institute.id,
+            institute_name_snapshot=institute.name,
+            institute_slug_snapshot=institute.slug,
+            user_id=None,
+        )
+    )
+    db.execute(
+        update(tables["subscriptions"])
+        .where(subscription_scope)
+        .values(
+            institute_id=None,
+            institute_id_snapshot=institute.id,
+            institute_name_snapshot=institute.name,
+            institute_slug_snapshot=institute.slug,
+            user_id=None,
+            cancelled_at=now,
+        )
+    )
+
+    if user_ids:
+        _delete_user_operational_data(
+            db,
+            tables,
+            user_ids,
+            attempt_ids,
+            announcement_ids,
+            institute_course_ids,
+            actor.id,
         )
 
-    _audit(db, actor, "institute.delete", institute.id, ip, {"name": institute.name})
+    for table_name in (
+        "ai_eval_limits",
+        "leaderboard_snapshots",
+        "institute_modules",
+        "institute_courses",
+        "settings",
+        "demo_accounts",
+        "institute_branding",
+    ):
+        table = tables[table_name]
+        db.execute(delete(table).where(table.c.institute_id == institute_id))
 
-    user_ids = [uid for (uid,) in db.query(User.id).filter(User.institute_id == institute_id).all()]
-    if user_ids:
-        # api_logs/audit_logs/user_sessions all FK to users.id (ON DELETE has
-        # no cascade/set-null) - logs are historical records, so detach them
-        # (keep the row, null the actor) rather than deleting log history;
-        # sessions are just live refresh tokens, safe to drop outright
-        from app.models.api_log import ApiLog
-
-        db.query(ApiLog).filter(ApiLog.user_id.in_(user_ids)).update({"user_id": None}, synchronize_session=False)
-        db.query(AuditLog).filter(AuditLog.user_id.in_(user_ids)).update({"user_id": None}, synchronize_session=False)
-        db.query(UserSession).filter(UserSession.user_id.in_(user_ids)).delete(synchronize_session=False)
-
-    db.query(InstituteBranding).filter(InstituteBranding.institute_id == institute_id).delete()
-    db.query(DemoAccount).filter(DemoAccount.institute_id == institute_id).delete()
-    db.query(User).filter(User.institute_id == institute_id).delete()
-    db.delete(institute)
+    _remove_deleted_announcement_targets(
+        db, tables["announcements"], institute_id, user_ids
+    )
+    db.execute(delete(tables["announcements"]).where(announcement_filter))
+    db.execute(delete(tables["users"]).where(tables["users"].c.institute_id == institute_id))
+    db.execute(delete(tables["institutes"]).where(tables["institutes"].c.id == institute_id))
     db.commit()
+
+    _delete_storage_files(storage_paths)
+
+
+def _institute_storage_paths(
+    db: Session,
+    tables,
+    institute_id: int,
+    user_ids: list[int],
+    attempt_ids: list[int],
+) -> list[str]:
+    paths: list[str] = []
+    paths.extend(
+        path
+        for path in db.execute(
+            select(tables["institute_branding"].c.logo_path).where(
+                tables["institute_branding"].c.institute_id == institute_id
+            )
+        ).scalars()
+        if path
+    )
+    if user_ids:
+        paths.extend(
+            path
+            for path in db.execute(
+                select(tables["users"].c.avatar_path).where(
+                    tables["users"].c.id.in_(user_ids)
+                )
+            ).scalars()
+            if path
+        )
+    if attempt_ids:
+        paths.extend(
+            path
+            for path in db.execute(
+                select(tables["attempt_answers"].c.audio_path).where(
+                    tables["attempt_answers"].c.attempt_id.in_(attempt_ids)
+                )
+            ).scalars()
+            if path
+        )
+    return paths
+
+
+def _delete_user_operational_data(
+    db: Session,
+    tables,
+    user_ids: list[int],
+    attempt_ids: list[int],
+    announcement_ids: list[int],
+    institute_course_ids: list[int],
+    replacement_user_id: int,
+) -> None:
+    notifications_filter = tables["student_notifications"].c.user_id.in_(user_ids)
+    if attempt_ids:
+        notifications_filter = or_(
+            notifications_filter,
+            tables["student_notifications"].c.attempt_id.in_(attempt_ids),
+        )
+    if announcement_ids:
+        notifications_filter = or_(
+            notifications_filter,
+            tables["student_notifications"].c.announcement_id.in_(announcement_ids),
+        )
+    db.execute(delete(tables["student_notifications"]).where(notifications_filter))
+
+    if attempt_ids:
+        for table_name in (
+            "ai_evaluations",
+            "grading_queue",
+            "reevaluation_requests",
+            "student_badges",
+            "attempt_answers",
+            "attempt_part_grades",
+            "attempt_flags",
+        ):
+            table = tables[table_name]
+            db.execute(delete(table).where(table.c.attempt_id.in_(attempt_ids)))
+        db.execute(delete(tables["test_attempts"]).where(tables["test_attempts"].c.id.in_(attempt_ids)))
+
+    enrollment_filter = tables["enrollments"].c.user_id.in_(user_ids)
+    if institute_course_ids:
+        enrollment_filter = or_(
+            enrollment_filter,
+            tables["enrollments"].c.institute_course_id.in_(institute_course_ids),
+        )
+    db.execute(delete(tables["enrollments"]).where(enrollment_filter))
+    db.execute(delete(tables["student_badges"]).where(tables["student_badges"].c.user_id.in_(user_ids)))
+    db.execute(delete(tables["leaderboard_snapshots"]).where(tables["leaderboard_snapshots"].c.user_id.in_(user_ids)))
+    db.execute(delete(tables["instructor_profiles"]).where(tables["instructor_profiles"].c.user_id.in_(user_ids)))
+    db.execute(delete(tables["user_devices"]).where(tables["user_devices"].c.user_id.in_(user_ids)))
+    db.execute(delete(tables["user_sessions"]).where(tables["user_sessions"].c.user_id.in_(user_ids)))
+
+    # Retained platform content must not keep a foreign key to a deleted user.
+    for table_name, column_name in (
+        ("courses", "created_by_id"),
+        ("course_assets", "uploaded_by_id"),
+        ("question_banks", "created_by_id"),
+        ("questions", "created_by_id"),
+        ("assessments", "created_by_id"),
+        ("exam_modules", "created_by_id"),
+        ("exam_module_assets", "uploaded_by_id"),
+        ("exam_module_questions", "created_by_id"),
+    ):
+        table = tables[table_name]
+        db.execute(
+            update(table)
+            .where(table.c[column_name].in_(user_ids))
+            .values({column_name: replacement_user_id})
+        )
+
+    for table_name, column_name in (
+        ("attempt_part_grades", "grader_id"),
+        ("grading_queue", "assigned_to_id"),
+        ("reevaluation_requests", "assigned_to_id"),
+        ("api_logs", "user_id"),
+        ("audit_logs", "user_id"),
+        ("error_logs", "user_id"),
+    ):
+        table = tables[table_name]
+        db.execute(
+            update(table)
+            .where(table.c[column_name].in_(user_ids))
+            .values({column_name: None})
+        )
+
+
+def _remove_deleted_announcement_targets(
+    db: Session,
+    announcements,
+    institute_id: int,
+    user_ids: list[int],
+) -> None:
+    rows = db.execute(
+        select(
+            announcements.c.id,
+            announcements.c.target_institute_ids,
+            announcements.c.target_user_ids,
+        ).where(announcements.c.institute_id.is_(None))
+    ).all()
+    deleted_users = set(user_ids)
+    for row in rows:
+        institute_targets = _without_json_ids(row.target_institute_ids, {institute_id})
+        user_targets = _without_json_ids(row.target_user_ids, deleted_users)
+        if (
+            institute_targets != row.target_institute_ids
+            or user_targets != row.target_user_ids
+        ):
+            db.execute(
+                update(announcements)
+                .where(announcements.c.id == row.id)
+                .values(
+                    target_institute_ids=institute_targets,
+                    target_user_ids=user_targets,
+                )
+            )
+
+
+def _without_json_ids(value: Optional[str], removed: set[int]) -> Optional[str]:
+    if not value or not removed:
+        return value
+    try:
+        ids = [int(item) for item in json.loads(value)]
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return value
+    remaining = [item for item in ids if item not in removed]
+    return json.dumps(remaining) if remaining else None
+
+
+def _delete_storage_files(relative_paths: list[str]) -> None:
+    root = settings.storage_path.resolve()
+    for relative_path in set(relative_paths):
+        candidate = (root / relative_path).resolve()
+        if candidate != root and root in candidate.parents:
+            try:
+                candidate.unlink(missing_ok=True)
+            except OSError:
+                logger.warning(
+                    "Could not remove deleted institute file %s",
+                    candidate,
+                    exc_info=True,
+                )
 
 
 def _get_or_create_branding(db: Session, institute_id: int) -> InstituteBranding:

@@ -1,5 +1,6 @@
 import { SearchableSelect } from "@/components/ui";
 import type { PlanRow } from "@/pages/super-admin/Plans";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
 import { STATE_BADGES, stateLabel } from "../helpers";
 import type { InstituteRow, StatusResponse } from "../types";
@@ -71,7 +72,7 @@ export function SubscriptionManageCard({
                     .filter((p) => p.is_active)
                     .map((plan) => ({
                       value: String(plan.id),
-                      label: `${plan.name} (${plan.currency || "INR"} ${plan.price} / ${plan.duration_days}d)`,
+                      label: `${plan.name} (${formatCurrencyAmount(plan.price, plan.currency)} / ${plan.duration_days}d)`,
                     })),
                 ]}
                 value={planChoice}

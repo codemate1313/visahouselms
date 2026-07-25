@@ -29,7 +29,7 @@
   /* Semantic status colors */
   --primary: #e11d2e;
   --primary-hover: #b91323;
-  --primary-soft: rgba(225, 29, 46, 0.1);
+  --primary-soft: color-mix(in srgb, var(--primary) 14%, transparent);
   --danger: #dc2626;
   --danger-hover: #b91c1c;
   --success: #1f7a4d;
@@ -154,23 +154,80 @@
   color: #f7f7fa;
 }
 
-/* Shared surfaces */
+/* Shared surfaces in dark mode */
 [data-theme="dark"] .workspace-panel,
 [data-theme="dark"] .content-area-card,
-[data-theme="dark"] .empty-state {
-  background: rgba(22, 22, 27, 0.86);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.42);
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .form-card,
+[data-theme="dark"] .onboarding-section-card,
+[data-theme="dark"] .profile-card,
+[data-theme="dark"] .settings-card,
+[data-theme="dark"] .admin-card,
+[data-theme="dark"] .table-wrap,
+[data-theme="dark"] .data-table-container,
+[data-theme="dark"] .instructor-tree-group,
+[data-theme="dark"] .sleek-course-card,
+[data-theme="dark"] .collapsible-panel,
+[data-theme="dark"] .collapsible-form-card,
+[data-theme="dark"] .search-bar,
+[data-theme="dark"] .assigned-tests-search,
+[data-theme="dark"] .card,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .summary-card,
+[data-theme="dark"] .overview-card,
+[data-theme="dark"] .kpi-card,
+[data-theme="dark"] .pn-card,
+[data-theme="dark"] .announcement-card,
+[data-theme="dark"] .log-item,
+[data-theme="dark"] .invoice-card,
+[data-theme="dark"] .subscription-card,
+[data-theme="dark"] .plan-card,
+[data-theme="dark"] .coupon-card,
+[data-theme="dark"] .demo-account-card,
+[data-theme="dark"] .module-card,
+[data-theme="dark"] .test-card,
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .custom-dialog-box,
+[data-theme="dark"] .portal-user-dropdown {
+  background: rgba(22, 22, 27, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.42) !important;
+  color: #f3f4f6 !important;
 }
 
-[data-theme="dark"] .page-header h1 {
-  color: #f7f7fa;
+[data-theme="dark"] .course-tree-children,
+[data-theme="dark"] .collapsible-panel-toggle,
+[data-theme="dark"] .collapsible-panel-static-header,
+[data-theme="dark"] .instructor-summary-bar:hover,
+[data-theme="dark"] .fact-value.type-pill,
+[data-theme="dark"] .instructor-courses-badge,
+[data-theme="dark"] .instructor-chevron-toggle {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f3f4f6 !important;
+}
+
+[data-theme="dark"] .instructor-summary-bar {
+  background: transparent !important;
+  color: #f3f4f6 !important;
+}
+
+[data-theme="dark"] .page-header h1,
+[data-theme="dark"] .instructor-info-title strong,
+[data-theme="dark"] .course-card-title,
+[data-theme="dark"] .collapsible-panel-title,
+[data-theme="dark"] .fact-value {
+  color: #f7f7fa !important;
 }
 
 [data-theme="dark"] .page-subtitle,
 [data-theme="dark"] .page-eyebrow,
-[data-theme="dark"] .empty-message {
-  color: rgba(242, 242, 245, 0.6);
+[data-theme="dark"] .empty-message,
+[data-theme="dark"] .course-card-desc,
+[data-theme="dark"] .collapsible-panel-description,
+[data-theme="dark"] .fact-label,
+[data-theme="dark"] .fact-value.date-val {
+  color: rgba(242, 242, 245, 0.6) !important;
 }
 
 /* Table chrome */
@@ -210,5 +267,7 @@
   --glass-bg: rgba(24, 27, 34, 0.85);
   --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   --app-bg-gradient: linear-gradient(135deg, #0d0e12 0%, #13151b 50%, #1a1d26 100%);
+  --sidebar-active-text: #ffffff;
+  --sidebar-active-bg: rgba(255, 255, 255, 0.12);
 }
 

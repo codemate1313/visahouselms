@@ -6,6 +6,7 @@ import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useAuthStore } from "@/store/authStore";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { confirmExport } from "@/utils/confirmExport";
 import { accountsListStrings as strings } from "./AccountsList.strings";
 import { exportAccountsExcel, exportAccountsPDF } from "./exportHelpers";
 import { AccountsFilterBar } from "./components/AccountsFilterBar";
@@ -168,6 +169,16 @@ export function AccountsList() {
     await loadAccounts();
   }
 
+  async function handleExportPdf() {
+    if (!await confirmExport("pdf", "super admin accounts")) return;
+    exportAccountsPDF(filteredAccounts);
+  }
+
+  async function handleExportExcel() {
+    if (!await confirmExport("excel", "super admin accounts")) return;
+    exportAccountsExcel(filteredAccounts);
+  }
+
   return (
     <div>
       <AccountsFilterBar
@@ -175,8 +186,8 @@ export function AccountsList() {
         onSearchChange={setSearch}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
-        onExportPdf={() => exportAccountsPDF(filteredAccounts)}
-        onExportExcel={() => exportAccountsExcel(filteredAccounts)}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
         resultCount={filteredAccounts.length}
       />
 

@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { currencySymbol, formatCurrencyAmount } from "@/utils/currency";
 import { paymentsStrings as strings } from "./Payments.strings";
 import type { PaymentRow } from "./types";
 
@@ -24,8 +25,8 @@ export function exportPaymentsPDF(rows: PaymentRow[]) {
       r.invoice_number ?? "—",
       r.source.toUpperCase(),
       `${r.institute_name ?? "—"} ${r.plan_name ? `/ ${r.plan_name}` : ""}`,
-      `${r.currency || "INR"} ${Number(r.amount_paid).toLocaleString("en-IN")}`,
-      `${r.currency || "INR"} ${Number(r.due_amount).toLocaleString("en-IN")}`,
+      formatCurrencyAmount(r.amount_paid, r.currency),
+      formatCurrencyAmount(r.due_amount, r.currency),
       r.status.toUpperCase(),
       new Date(r.created_at).toLocaleDateString("en-GB"),
     ]),
@@ -46,7 +47,7 @@ export function exportPaymentsExcel(rows: PaymentRow[]) {
       r.source,
       r.institute_name ?? "",
       r.plan_name ?? "",
-      r.currency || "INR",
+      currencySymbol(r.currency),
       r.final_amount,
       r.amount_paid,
       r.due_amount,

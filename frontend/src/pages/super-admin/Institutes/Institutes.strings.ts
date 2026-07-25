@@ -38,9 +38,10 @@ export const institutesStrings = {
     delete: "Delete Institute",
   },
   deleteModal: {
-    title: "Delete Institute",
-    message: (name: string) => `Are you sure you want to delete institute "${name}"? This action cannot be undone.`,
-    confirmText: "Delete Institute",
+    title: "Permanently Delete Institute",
+    message: (name: string) =>
+      `Delete "${name}" and all of its users, learning activity, settings, branding, and assignments? Financial records will be retained for accounting. This action cannot be undone.`,
+    confirmText: "Delete Permanently",
   },
   errors: {
     load: "Failed to load institutes.",

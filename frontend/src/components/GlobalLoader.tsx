@@ -1,52 +1,53 @@
 import { useEffect, useState } from "react";
 import { useLoaderStore } from "../store/loaderStore";
 
-const LOADER_FLAGS = [
-  { symbol: "🇨🇦", name: "Canada" },
-  { symbol: "🇺🇸", name: "United States" },
-  { symbol: "🇬🇧", name: "United Kingdom" },
-  { symbol: "🇩🇪", name: "Germany" },
-  { symbol: "🇦🇺", name: "Australia" },
-  { symbol: "🇪🇺", name: "European Union" },
-  {
-    symbol: "\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}",
-    name: "England",
-  },
-] as const;
-
 export function GlobalLoader() {
   const isLoading = useLoaderStore((state) => state.isLoading);
   const message = useLoaderStore((state) => state.message);
-  const [flagIndex, setFlagIndex] = useState(0);
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) {
-      setFlagIndex(0);
-      return;
-    }
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    const timer = window.setInterval(() => {
-      setFlagIndex((current) => (current + 1) % LOADER_FLAGS.length);
-    }, 650);
-    return () => window.clearInterval(timer);
-  }, [isLoading]);
+    const checkTheme = () => {
+      const theme = document.documentElement.getAttribute("data-theme") || document.body.getAttribute("data-theme");
+      setIsDark(theme === "dark");
+    };
+    checkTheme();
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class"] });
+    return () => observer.disconnect();
+  }, []);
 
   if (!isLoading) return null;
 
-  const flag = LOADER_FLAGS[flagIndex];
-
   return (
     <div
-      className="global-3d-loader-backdrop"
+      className={`global-3d-loader-backdrop ${isDark ? "is-dark" : "is-light"}`}
       aria-label={message}
       aria-live="polite"
       aria-atomic="true"
       role="status"
     >
       <div className="simple-loader-content">
-        <div className="flag-loader-box" aria-hidden="true">
-          <span key={flag.name} className="flag-loader-symbol">{flag.symbol}</span>
+        <div className="vh-global-loader-box" aria-hidden="true">
+          <div className="vh-loader-orbital-ring" />
+          <div className="vh-loader-badge">
+            <img
+              src={isDark ? "/brand/vh-mark-dark.png" : "/brand/vh-mark-light.png"}
+              alt="Visa House Logo"
+              className="vh-loader-logo-img"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src !== window.location.origin + "/brand/vh-mark.png") {
+                  target.src = "/brand/vh-mark.png";
+                  return;
+                }
+                target.style.display = "none";
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = "flex";
+              }}
+            />
+            <span className="vh-loader-logo-text" style={{ display: "none" }}>VH</span>
+          </div>
         </div>
         <p key={message} className="simple-loader-message">{message}</p>
       </div>

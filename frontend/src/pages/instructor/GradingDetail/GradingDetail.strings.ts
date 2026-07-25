@@ -54,6 +54,13 @@ export const gradingDetailStrings = {
     saveErrorMessage: "Failed to save the grade.",
     saveErrorTitle: "Grading Failed",
   },
+  completion: {
+    title: "Evaluation Completed!",
+    subtitle: "You have successfully graded all subjective parts for this test submission.",
+    nextReview: "Grade Next Submission",
+    backToQueue: "Back to Grading Queue",
+    goHome: "Go to Dashboard",
+  },
   levels: {
     notScored: "Not scored",
     c2: "C2",

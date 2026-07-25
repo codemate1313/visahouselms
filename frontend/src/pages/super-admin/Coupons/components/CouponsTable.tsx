@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { couponsStrings as strings } from "../Coupons.strings";
 import type { CouponRow } from "../types";
 
@@ -43,7 +44,7 @@ export function CouponsTable({ coupons, onToggleActive, onRequestDelete }: Coupo
               </td>
               <td>
                 <strong style={{ fontSize: 13.5, color: "var(--sa-sidebar-red)" }}>
-                  {coupon.discount_type === "percent" ? `${coupon.value}%` : `INR ${coupon.value}`}
+                  {coupon.discount_type === "percent" ? `${coupon.value}%` : formatCurrencyAmount(coupon.value)}
                 </strong>
               </td>
               <td>

@@ -19,8 +19,6 @@ interface NotificationBellProps {
   title?: string;
 }
 
-const HOVER_CLOSE_DELAY = 220;
-
 export function NotificationBell({
   eyebrow = "Updates",
   fallbackRoute = "/",
@@ -31,7 +29,6 @@ export function NotificationBell({
   const navigate = useNavigate();
   const shellRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const closeTimer = useRef<number | null>(null);
   const [notifications, setNotifications] = useState<StudentNotification[]>([]);
   const [panelVisible, setPanelVisible] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -106,27 +103,9 @@ export function NotificationBell({
     };
   }, [closePanel, panelVisible]);
 
-  const cancelScheduledClose = useCallback(() => {
-    if (closeTimer.current !== null) {
-      window.clearTimeout(closeTimer.current);
-      closeTimer.current = null;
-    }
-  }, []);
-
   const openPanel = useCallback(() => {
-    cancelScheduledClose();
     setPanelVisible(true);
-  }, [cancelScheduledClose]);
-
-  const scheduleClose = useCallback(() => {
-    cancelScheduledClose();
-    closeTimer.current = window.setTimeout(() => {
-      closeTimer.current = null;
-      closePanel();
-    }, HOVER_CLOSE_DELAY);
-  }, [cancelScheduledClose, closePanel]);
-
-  useEffect(() => () => cancelScheduledClose(), [cancelScheduledClose]);
+  }, []);
 
   const unread = notifications.filter((notification) => !notification.read_at);
 
@@ -210,12 +189,7 @@ export function NotificationBell({
   }
 
   return (
-    <div
-      className="student-notification-shell"
-      ref={shellRef}
-      onMouseEnter={openPanel}
-      onMouseLeave={scheduleClose}
-    >
+    <div className="student-notification-shell" ref={shellRef}>
       <button
         type="button"
         className={`student-notification-bell${unread.length ? " has-unread" : ""}`}

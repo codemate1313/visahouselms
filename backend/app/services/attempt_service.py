@@ -846,6 +846,7 @@ def get_grading_detail(db: Session, actor: User, attempt_id: int) -> dict:
     from app.services import ai_evaluation_service, grading_service
 
     attempt = get_attempt_for_grading_or_404(db, actor, attempt_id)
+    grading_service.ensure_available_to_open(db, actor, attempt)
     view = get_student_view(db, attempt)
     view["student_name"] = f"{attempt.user.first_name} {attempt.user.last_name}"
     view["student_email"] = attempt.user.email

@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { SearchableSelect } from "@/components/ui";
 import type { PlanRow } from "@/pages/super-admin/Plans";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { paymentsStrings as strings } from "../Payments.strings";
 import type { InstituteRow, MethodRow } from "../types";
 
@@ -49,7 +50,7 @@ export function RecordPaymentForm({
   const selectedPlan = plans.find((p) => String(p.id) === planId);
 
   return (
-    <form className="form-card wide onboarding-section-card" onSubmit={onSubmit} style={{ marginBottom: 24 }}>
+    <form className="form-card wide onboarding-section-card payment-record-form" onSubmit={onSubmit} style={{ marginBottom: 24 }}>
       <h2>{t.heading}</h2>
       <p className="hint" style={{ marginBottom: 16 }}>
         {t.description}
@@ -71,7 +72,7 @@ export function RecordPaymentForm({
           <label htmlFor="plan">{t.planLabel}</label>
           <SearchableSelect
             id="plan"
-            options={[{ value: "", label: t.selectPlan }, ...plans.filter((p) => p.is_active).map((p) => ({ value: p.id, label: `${p.name} - ${p.currency || "INR"} ${p.price}` }))]}
+            options={[{ value: "", label: t.selectPlan }, ...plans.filter((p) => p.is_active).map((p) => ({ value: p.id, label: `${p.name} - ${formatCurrencyAmount(p.price, p.currency)}` }))]}
             value={planId}
             onChange={(value) => onPlanIdChange(String(value))}
             searchPlaceholder={t.searchPlans}

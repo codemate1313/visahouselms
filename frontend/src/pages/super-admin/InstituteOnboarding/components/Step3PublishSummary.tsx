@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.strings";
 import type { Onboarding } from "../types";
 
@@ -15,21 +16,21 @@ export function Step3PublishSummary({ onboarding, busy, onPublish }: Step3Publis
   const isPublished = onboarding.onboarding_status === "published";
   const statusLabel = isPublished ? t.publishedAndLive : t.draftReady;
   const heroTitle = isPublished ? t.live : t.readyToPublish;
+  const agreementAmount = formatCurrencyAmount(onboarding.agreed_amount || 0, onboarding.agreement_currency);
+  const paidAmount = formatCurrencyAmount(onboarding.payment?.amount_paid || 0, onboarding.agreement_currency);
 
   return (
     <CollapsiblePanel
       className="form-card wide publish-summary-card"
       title={heroTitle}
-      description={`${onboarding.agreement_currency || "INR"} ${Number(onboarding.agreed_amount || 0).toLocaleString("en-IN")} ${t.agreementSuffix} · ${onboarding.payment?.status || "pending"} ${t.paymentSuffix} · ${onboarding.access_duration_days} days ${t.validitySuffix}`}
+      description={`${agreementAmount} ${t.agreementSuffix} · ${onboarding.payment?.status || "pending"} ${t.paymentSuffix} · ${onboarding.access_duration_days} days ${t.validitySuffix}`}
       badge={<span className={`badge ${isPublished ? "badge-green" : "badge-amber"}`}>{statusLabel}</span>}
     >
       <div className="publish-hero-header">
         <span className={`badge ${isPublished ? "badge-green" : "badge-amber"}`}>{statusLabel}</span>
         <h2 className="publish-hero-title">{heroTitle}</h2>
         <p className="publish-hero-subtitle">
-          <strong>
-            {onboarding.agreement_currency || "INR"} {Number(onboarding.agreed_amount || 0).toLocaleString("en-IN")}
-          </strong>{" "}
+          <strong>{agreementAmount}</strong>{" "}
           {t.agreementSuffix} ·
           <span className="capitalize-text"> {onboarding.payment?.status || "pending"}</span> {t.paymentSuffix} ·
           <strong> {onboarding.access_duration_days} days</strong> {t.validitySuffix}
@@ -61,9 +62,7 @@ export function Step3PublishSummary({ onboarding, busy, onPublish }: Step3Publis
         </div>
         <div className="publish-stat-box">
           <span className="stat-label">{t.stats.paymentReceived}</span>
-          <span className="stat-value">
-            {onboarding.agreement_currency || "INR"} {Number(onboarding.payment?.amount_paid || 0).toLocaleString("en-IN")}
-          </span>
+          <span className="stat-value">{paidAmount}</span>
         </div>
       </div>
 
