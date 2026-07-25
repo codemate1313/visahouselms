@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmAction } from "../../components/confirmDialog";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import { usePageTitleStore } from "../../store/pageTitleStore";
 import type { PlanRow } from "./Plans";
@@ -305,7 +306,15 @@ export function Subscriptions() {
   }
 
   async function cancel(subscriptionId: number) {
-    if (!window.confirm("Are you sure you want to cancel this subscription?")) return;
+    const confirmed = await confirmAction(
+      "Are you sure you want to cancel this subscription? The institute will lose access upon expiration.",
+      {
+        title: "Cancel Subscription",
+        confirmText: "Cancel Subscription",
+        variant: "warning",
+      }
+    );
+    if (!confirmed) return;
     setError(null); setNotice(null);
     try {
       await apiClient.post(`/super-admin/subscriptions/${subscriptionId}/cancel`);

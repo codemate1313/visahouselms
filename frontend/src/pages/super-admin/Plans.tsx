@@ -6,6 +6,7 @@ import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmAction } from "../../components/confirmDialog";
 import { ConfirmModal } from "../../components/ConfirmModal";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
@@ -77,8 +78,18 @@ export function Plans() {
   }, [filteredPlans.length, setItemCount]);
 
   async function toggleActive(plan: PlanRow) {
-    setError(null);
     const action = plan.is_active ? "deactivate" : "reactivate";
+    const confirmed = await confirmAction(
+      `Are you sure you want to ${plan.is_active ? "deactivate" : "activate"} plan "${plan.name}"?`,
+      {
+        title: plan.is_active ? "Deactivate Plan" : "Activate Plan",
+        confirmText: plan.is_active ? "Deactivate" : "Activate",
+        variant: plan.is_active ? "warning" : "primary",
+      }
+    );
+    if (!confirmed) return;
+
+    setError(null);
     setPlans((current) =>
       current.map((item) => item.id === plan.id ? { ...item, is_active: !plan.is_active } : item)
     );

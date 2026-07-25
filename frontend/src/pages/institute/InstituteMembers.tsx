@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
-import { confirmDelete } from "../../components/confirmDialog";
+import { confirmAction, confirmDelete } from "../../components/confirmDialog";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
 import { useAuthStore } from "../../store/authStore";
@@ -104,8 +104,18 @@ export function InstituteMembers({ role, instituteId }: Props) {
   useEffect(() => { load(); }, [load]);
 
   async function toggle(member: InstituteMember) {
+    const isDeactivating = member.is_active;
+    const confirmed = await confirmAction(
+      `Are you sure you want to ${isDeactivating ? "deactivate" : "activate"} member "${member.first_name} ${member.last_name}" (${member.email})?`,
+      {
+        title: isDeactivating ? "Deactivate Member" : "Activate Member",
+        confirmText: isDeactivating ? "Deactivate" : "Activate",
+        variant: isDeactivating ? "warning" : "primary",
+      }
+    );
+    if (!confirmed) return;
     try {
-      await apiClient.post(`${apiBase}/members/${member.id}/${member.is_active ? "deactivate" : "reactivate"}`);
+      await apiClient.post(`${apiBase}/members/${member.id}/${isDeactivating ? "deactivate" : "reactivate"}`);
       await load();
     } catch (err: unknown) {
       setError(extractErrorMessage(err, "Failed to update the member status."));
@@ -113,7 +123,15 @@ export function InstituteMembers({ role, instituteId }: Props) {
   }
 
   async function resetPassword(member: InstituteMember) {
-    if (!window.confirm(`Reset the password for ${member.email}?`)) return;
+    const confirmed = await confirmAction(
+      `Are you sure you want to reset the password for ${member.email}?`,
+      {
+        title: "Reset Member Password",
+        confirmText: "Reset Password",
+        variant: "warning",
+      }
+    );
+    if (!confirmed) return;
     try {
       const { data } = await apiClient.post(`${apiBase}/members/${member.id}/reset-password`);
       setCredential({ name: `${member.first_name} ${member.last_name}`, password: data.temporary_password });
@@ -150,6 +168,15 @@ export function InstituteMembers({ role, instituteId }: Props) {
   async function bulkSetActive(active: boolean) {
     const targets = selectableMembers.filter((member) => selectedIds.has(member.id) && member.is_active !== active);
     if (!targets.length) return;
+    const confirmed = await confirmAction(
+      `Are you sure you want to ${active ? "activate" : "deactivate"} ${targets.length} selected member${targets.length === 1 ? "" : "s"}?`,
+      {
+        title: active ? "Activate Members" : "Deactivate Members",
+        confirmText: active ? "Activate" : "Deactivate",
+        variant: active ? "primary" : "warning",
+      }
+    );
+    if (!confirmed) return;
     setBulkBusy(true);
     setError(null);
     const results = await Promise.allSettled(
@@ -287,8 +314,11 @@ export function InstituteMembers({ role, instituteId }: Props) {
         <div className="bulk-actions-bar">
           <span><strong>{selectedIds.size}</strong> selected</span>
           <div className="bulk-actions-buttons">
-            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>Activate</button>
-            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>Deactivate</button>
+            {selectableMembers.some((member) => selectedIds.has(member.id) && !member.is_active) ? (
+              <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>Activate</button>
+            ) : (
+              <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>Deactivate</button>
+            )}
             <button type="button" className="danger" disabled={bulkBusy} onClick={bulkRemove}>Delete</button>
             <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => setSelectedIds(new Set())}>Clear</button>
           </div>

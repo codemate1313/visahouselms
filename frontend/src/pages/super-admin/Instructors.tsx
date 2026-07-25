@@ -6,7 +6,7 @@ import * as XLSX from "xlsx";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import type { InstructorAccount, InstructorPasswordReset } from "../../api/types";
-import { confirmDelete } from "../../components/confirmDialog";
+import { confirmAction, confirmDelete } from "../../components/confirmDialog";
 import { ConfirmModal } from "../../components/ConfirmModal";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
@@ -73,7 +73,16 @@ export function Instructors() {
 
   async function toggleActive(instructor: InstructorAccount) {
     const action = instructor.is_active ? "deactivate" : "reactivate";
-    if (instructor.is_active && !window.confirm(`Deactivate ${instructor.email}? Their active sessions will be revoked.`)) return;
+    const confirmed = await confirmAction(
+      `Are you sure you want to ${instructor.is_active ? "deactivate" : "activate"} instructor "${instructor.first_name || instructor.email}"? Their active sessions will be revoked.`,
+      {
+        title: instructor.is_active ? "Deactivate Instructor" : "Activate Instructor",
+        confirmText: instructor.is_active ? "Deactivate" : "Activate",
+        variant: instructor.is_active ? "warning" : "primary",
+      }
+    );
+    if (!confirmed) return;
+
     setError(null);
     setInstructors((current) =>
       current.map((item) => item.id === instructor.id ? { ...item, is_active: !instructor.is_active } : item)
@@ -89,7 +98,16 @@ export function Instructors() {
   }
 
   async function resetPassword(instructor: InstructorAccount) {
-    if (!window.confirm(`Reset the password for ${instructor.email}? Their active sessions will be revoked.`)) return;
+    const confirmed = await confirmAction(
+      `Are you sure you want to reset the password for ${instructor.email}? Their active sessions will be revoked.`,
+      {
+        title: "Reset Instructor Password",
+        confirmText: "Reset Password",
+        variant: "warning",
+      }
+    );
+    if (!confirmed) return;
+
     setError(null);
     try {
       const { data } = await apiClient.post<InstructorPasswordReset>(`/super-admin/instructors/${instructor.id}/reset-password`);
@@ -147,7 +165,16 @@ export function Instructors() {
   async function bulkSetActive(active: boolean) {
     const targets = instructors.filter((instructor) => selectedIds.has(instructor.id) && instructor.is_active !== active);
     if (!targets.length) return;
-    if (!active && !window.confirm(`Deactivate ${targets.length} instructor${targets.length === 1 ? "" : "s"}? Their active sessions will be revoked.`)) return;
+    const confirmed = await confirmAction(
+      `Are you sure you want to ${active ? "activate" : "deactivate"} ${targets.length} selected instructor${targets.length === 1 ? "" : "s"}?`,
+      {
+        title: active ? "Activate Instructors" : "Deactivate Instructors",
+        confirmText: active ? "Activate" : "Deactivate",
+        variant: active ? "primary" : "warning",
+      }
+    );
+    if (!confirmed) return;
+
     setBulkBusy(true);
     setError(null);
     const results = await Promise.allSettled(
@@ -289,8 +316,11 @@ export function Instructors() {
         <div className="bulk-actions-bar">
           <span><strong>{selectedIds.size}</strong> selected</span>
           <div className="bulk-actions-buttons">
-            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>Activate</button>
-            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>Deactivate</button>
+            {instructors.some((instructor) => selectedIds.has(instructor.id) && !instructor.is_active) ? (
+              <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>Activate</button>
+            ) : (
+              <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>Deactivate</button>
+            )}
             <button type="button" className="danger" disabled={bulkBusy} onClick={bulkDelete}>Delete</button>
             <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => setSelectedIds(new Set())}>Clear</button>
           </div>

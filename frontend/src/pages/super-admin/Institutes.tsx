@@ -5,6 +5,7 @@ import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { API_BASE_URL, apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmAction } from "../../components/confirmDialog";
 import { ConfirmModal } from "../../components/ConfirmModal";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
@@ -96,8 +97,18 @@ export function Institutes() {
   }
 
   async function toggleActive(row: InstituteRow) {
-    setError(null);
     const action = row.is_active ? "suspend" : "reactivate";
+    const confirmed = await confirmAction(
+      `Are you sure you want to ${row.is_active ? "suspend" : "reactivate"} institute "${row.name}"?`,
+      {
+        title: row.is_active ? "Suspend Institute" : "Reactivate Institute",
+        confirmText: row.is_active ? "Suspend" : "Reactivate",
+        variant: row.is_active ? "warning" : "primary",
+      }
+    );
+    if (!confirmed) return;
+
+    setError(null);
     setRows((current) =>
       current.map((item) => item.id === row.id ? { ...item, is_active: !row.is_active } : item)
     );

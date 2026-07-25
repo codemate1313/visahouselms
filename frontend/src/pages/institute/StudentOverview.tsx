@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
-import { confirmDelete } from "../../components/confirmDialog";
+import { confirmAction, confirmDelete } from "../../components/confirmDialog";
 import { Icon } from "../../components/icons";
 import { extractErrorMessage } from "../../api/errors";
 import { useAuthStore } from "../../store/authStore";
@@ -70,18 +70,44 @@ export function StudentOverview({ instituteId }: { instituteId?: number }) {
 
   async function updateStatus() {
     if (!data) return;
-    await apiClient.post(`${apiBase}/members/${id}/${data.student.is_active ? "deactivate" : "reactivate"}`);
+    const isDeactivating = data.student.is_active;
+    const confirmed = await confirmAction(
+      `Are you sure you want to ${isDeactivating ? "deactivate" : "activate"} student "${data.student.first_name} ${data.student.last_name}"?`,
+      {
+        title: isDeactivating ? "Deactivate Student" : "Activate Student",
+        confirmText: isDeactivating ? "Deactivate" : "Activate",
+        variant: isDeactivating ? "warning" : "primary",
+      }
+    );
+    if (!confirmed) return;
+    await apiClient.post(`${apiBase}/members/${id}/${isDeactivating ? "deactivate" : "reactivate"}`);
     await load();
   }
 
   async function revokeSessions() {
-    if (!window.confirm("Sign this student out from the active device?")) return;
+    const confirmed = await confirmAction(
+      "Are you sure you want to sign this student out from the active device?",
+      {
+        title: "Revoke Active Session",
+        confirmText: "Sign Out Device",
+        variant: "warning",
+      }
+    );
+    if (!confirmed) return;
     await apiClient.post(`${apiBase}/students/${id}/revoke-sessions`);
     await load();
   }
 
   async function resetPassword() {
-    if (!window.confirm("Reset this student's password and sign out the active device?")) return;
+    const confirmed = await confirmAction(
+      "Are you sure you want to reset this student's password and sign out the active device?",
+      {
+        title: "Reset Student Password",
+        confirmText: "Reset Password",
+        variant: "warning",
+      }
+    );
+    if (!confirmed) return;
     const response = await apiClient.post(`${apiBase}/members/${id}/reset-password`);
     setTemporaryPassword(response.data.temporary_password);
     await load();

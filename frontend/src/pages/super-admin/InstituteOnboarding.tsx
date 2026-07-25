@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import { CollapsiblePanel } from "../../components/CollapsiblePanel";
+import { confirmAction } from "../../components/confirmDialog";
 import { SearchableSelect } from "../../components/SearchableSelect";
 
 interface ModuleOption { id: number; title: string; module_type: string; duration_minutes: number; created_by_name: string }
@@ -155,7 +156,16 @@ export function InstituteOnboarding() {
   }
 
   async function publish() {
-    if (!instituteId || !window.confirm("Publish this institute and activate its administrator account?")) return;
+    if (!instituteId) return;
+    const confirmed = await confirmAction(
+      "Are you sure you want to publish this institute and activate its administrator account?",
+      {
+        title: "Publish Institute",
+        confirmText: "Publish Institute",
+        variant: "primary",
+      }
+    );
+    if (!confirmed) return;
     setBusy(true);
     try {
       const { data } = await apiClient.post<Onboarding>(`/super-admin/onboarding/${instituteId}/publish`);

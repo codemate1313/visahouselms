@@ -199,6 +199,11 @@ export function Login({
       const { data: user } = await apiClient.get("/auth/me", {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       });
+      if (user.role !== selectedRole) {
+        setError(`These credentials belong to a ${roleLabel(user.role)} account, not a ${roleLabel(selectedRole)} account.`);
+        showError(`You tried to sign in as a ${roleLabel(selectedRole)}, but these credentials are for a ${roleLabel(user.role)}.`, "Role Mismatch");
+        return;
+      }
       const destination = destinationFor(user);
       if (!destination) {
         setError("This role does not have a portal yet.");

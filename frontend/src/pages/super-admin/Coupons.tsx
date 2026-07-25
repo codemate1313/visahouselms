@@ -5,6 +5,7 @@ import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
+import { confirmAction } from "../../components/confirmDialog";
 import { ConfirmModal } from "../../components/ConfirmModal";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
@@ -66,8 +67,18 @@ export function Coupons() {
   }, [coupons.length, setItemCount]);
 
   async function toggleActive(coupon: CouponRow) {
-    setError(null);
     const action = coupon.is_active ? "deactivate" : "reactivate";
+    const confirmed = await confirmAction(
+      `Are you sure you want to ${coupon.is_active ? "deactivate" : "activate"} coupon code "${coupon.code}"?`,
+      {
+        title: coupon.is_active ? "Deactivate Coupon" : "Activate Coupon",
+        confirmText: coupon.is_active ? "Deactivate" : "Activate",
+        variant: coupon.is_active ? "warning" : "primary",
+      }
+    );
+    if (!confirmed) return;
+
+    setError(null);
     setCoupons((current) =>
       current.map((item) => item.id === coupon.id ? { ...item, is_active: !coupon.is_active } : item)
     );

@@ -6,7 +6,7 @@ import * as XLSX from "xlsx";
 import { API_BASE_URL, apiClient } from "../../api/client";
 import { extractErrorMessage } from "../../api/errors";
 import type { SuperAdminAccount } from "../../api/types";
-import { confirmDelete } from "../../components/confirmDialog";
+import { confirmAction, confirmDelete } from "../../components/confirmDialog";
 import { ConfirmModal } from "../../components/ConfirmModal";
 import { Icon } from "../../components/icons";
 import { SearchableSelect } from "../../components/SearchableSelect";
@@ -58,8 +58,18 @@ export function AccountsList() {
   }, [filteredAccounts.length, setItemCount]);
 
   async function handleToggleActive(account: SuperAdminAccount) {
-    setError(null);
     const action = account.is_active ? "deactivate" : "reactivate";
+    const confirmed = await confirmAction(
+      `Are you sure you want to ${account.is_active ? "deactivate" : "activate"} account "${account.first_name} ${account.last_name}"?`,
+      {
+        title: account.is_active ? "Deactivate Account" : "Activate Account",
+        confirmText: account.is_active ? "Deactivate" : "Activate",
+        variant: account.is_active ? "warning" : "primary",
+      }
+    );
+    if (!confirmed) return;
+
+    setError(null);
     setAccounts((current) =>
       current.map((item) => item.id === account.id ? { ...item, is_active: !account.is_active } : item)
     );
@@ -126,6 +136,17 @@ export function AccountsList() {
   async function bulkSetActive(active: boolean) {
     const targets = filteredAccounts.filter((account) => selectedIds.has(account.id) && account.is_active !== active);
     if (!targets.length) return;
+
+    const confirmed = await confirmAction(
+      `Are you sure you want to ${active ? "activate" : "deactivate"} ${targets.length} selected account${targets.length === 1 ? "" : "s"}?`,
+      {
+        title: active ? "Activate Accounts" : "Deactivate Accounts",
+        confirmText: active ? "Activate" : "Deactivate",
+        variant: active ? "primary" : "warning",
+      }
+    );
+    if (!confirmed) return;
+
     setBulkBusy(true);
     setError(null);
     const results = await Promise.allSettled(
@@ -258,8 +279,11 @@ export function AccountsList() {
         <div className="bulk-actions-bar">
           <span><strong>{selectedIds.size}</strong> selected</span>
           <div className="bulk-actions-buttons">
-            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>Activate</button>
-            <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>Deactivate</button>
+            {filteredAccounts.some((account) => selectedIds.has(account.id) && !account.is_active) ? (
+              <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>Activate</button>
+            ) : (
+              <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>Deactivate</button>
+            )}
             <button type="button" className="danger" disabled={bulkBusy} onClick={bulkDelete}>Delete</button>
             <button type="button" className="secondary-button" disabled={bulkBusy} onClick={() => setSelectedIds(new Set())}>Clear</button>
           </div>

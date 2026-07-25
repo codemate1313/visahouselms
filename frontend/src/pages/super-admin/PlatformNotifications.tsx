@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
 import type { Announcement, TargetInstituteOption, TargetStudentOption } from "../../api/types";
+import { confirmDelete } from "../../components/confirmDialog";
 import { Icon, type IconName } from "../../components/icons";
 import { usePageTitleStore } from "../../store/pageTitleStore";
 
@@ -131,7 +132,9 @@ export function PlatformNotifications() {
   }
 
   async function deleteAnnouncement(id: number) {
-    if (!window.confirm("Are you sure you want to delete this notification?")) return;
+    const item = announcements.find((n) => n.id === id);
+    const title = item ? item.title : "notification";
+    if (!(await confirmDelete(`Are you sure you want to delete notification "${title}"? This action cannot be undone.`, "Delete Notification"))) return;
     try {
       await apiClient.delete(`/super-admin/announcements/${id}`);
       await loadData();

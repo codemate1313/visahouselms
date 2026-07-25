@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
+import { confirmAction, confirmDelete } from "../../components/confirmDialog";
 import { usePageTitleStore } from "../../store/pageTitleStore";
 import "./SuperAdminBlogs.css";
 
@@ -37,14 +38,26 @@ export function SuperAdminBlogs() {
     fetchItems();
   }, []);
 
-  const handleDelete = (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this blog post?")) return;
+  const handleDelete = async (id: number) => {
+    const item = items.find((i) => i.id === id);
+    const title = item ? item.title : "blog post";
+    if (!(await confirmDelete(`Are you sure you want to delete the blog post "${title}"? This action cannot be undone.`, "Delete Blog Post"))) return;
     apiClient.delete(`/super-admin/blogs/${id}`).then(() => {
       fetchItems();
     });
   };
 
-  const handleToggleActive = (item: BlogAdminItem) => {
+  const handleToggleActive = async (item: BlogAdminItem) => {
+    const newStatus = item.is_published ? "Draft" : "Published";
+    const confirmed = await confirmAction(
+      `Are you sure you want to change the visibility of "${item.title}" to ${newStatus}?`,
+      {
+        title: "Change Blog Visibility",
+        confirmText: item.is_published ? "Unpublish" : "Publish",
+        variant: item.is_published ? "warning" : "primary",
+      }
+    );
+    if (!confirmed) return;
     const updated = { is_published: !item.is_published };
     apiClient.put(`/super-admin/blogs/${item.id}`, updated).then(() => {
       fetchItems();

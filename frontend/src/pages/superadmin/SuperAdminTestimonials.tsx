@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "../../api/client";
+import { confirmAction, confirmDelete } from "../../components/confirmDialog";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
 import { usePageTitleStore } from "../../store/pageTitleStore";
 import "./SuperAdminTestimonials.css";
@@ -111,14 +112,26 @@ export function SuperAdminTestimonials() {
       .finally(() => setSaving(false));
   };
 
-  const handleDelete = (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this testimonial?")) return;
+  const handleDelete = async (id: number) => {
+    const item = items.find((i) => i.id === id);
+    const name = item?.student_name || "testimonial";
+    if (!(await confirmDelete(`Are you sure you want to delete the testimonial by "${name}"? This action cannot be undone.`, "Delete Testimonial"))) return;
     apiClient.delete(`/super-admin/testimonials/${id}`).then(() => {
       fetchItems();
     });
   };
 
-  const handleToggleActive = (item: TestimonialAdminItem) => {
+  const handleToggleActive = async (item: TestimonialAdminItem) => {
+    const newStatus = item.is_active ? "Draft" : "Published";
+    const confirmed = await confirmAction(
+      `Are you sure you want to change the status of "${item.student_name}"'s testimonial to ${newStatus}?`,
+      {
+        title: "Change Testimonial Visibility",
+        confirmText: item.is_active ? "Unpublish" : "Publish",
+        variant: item.is_active ? "warning" : "primary",
+      }
+    );
+    if (!confirmed) return;
     apiClient.put(`/super-admin/testimonials/${item.id}`, { is_active: !item.is_active }).then(() => {
       fetchItems();
     });

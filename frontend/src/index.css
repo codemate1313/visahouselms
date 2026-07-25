@@ -3498,7 +3498,7 @@ button {
 
 button:hover:not(:disabled) {
   background: var(--primary-hover);
-  box-shadow: 0 7px 18px rgba(225, 29, 46, 0.18);
+  box-shadow: 0 7px 18px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
 button:active:not(:disabled) {
@@ -3982,7 +3982,7 @@ button.danger:hover:not(:disabled) {
 
 .button-link:hover {
   background: var(--primary-hover);
-  box-shadow: 0 10px 24px rgba(225, 29, 46, 0.22);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 22%, transparent);
   transform: translateY(-1px);
 }
 
@@ -5448,37 +5448,37 @@ textarea:focus {
 
 /* ---------- Shared role profiles ---------- */
 .role-profile-page {
-  --profile-accent: #e11d48;
-  --profile-accent-strong: #be123c;
-  --profile-accent-secondary: #7c3aed;
-  --profile-cover-start: #ffe4e8;
-  --profile-cover-end: #eee7ff;
+  --profile-accent: var(--primary);
+  --profile-accent-strong: var(--primary-hover);
+  --profile-accent-secondary: var(--primary);
+  --profile-cover-start: var(--primary-soft);
+  --profile-cover-end: var(--primary-soft);
   width: min(1240px, 100%);
   min-width: 0;
 }
 
 .role-profile-page[data-profile-tone="instructor"] {
-  --profile-accent: #dc2626;
-  --profile-accent-strong: #b91c1c;
-  --profile-accent-secondary: #4f46e5;
-  --profile-cover-start: #fee2e2;
-  --profile-cover-end: #e0e7ff;
+  --profile-accent: var(--primary);
+  --profile-accent-strong: var(--primary-hover);
+  --profile-accent-secondary: var(--primary);
+  --profile-cover-start: var(--primary-soft);
+  --profile-cover-end: var(--primary-soft);
 }
 
 .role-profile-page[data-profile-tone="institute"] {
-  --profile-accent: #0f8a67;
-  --profile-accent-strong: #087052;
-  --profile-accent-secondary: #2563eb;
-  --profile-cover-start: #dff8ef;
-  --profile-cover-end: #e5edff;
+  --profile-accent: var(--primary);
+  --profile-accent-strong: var(--primary-hover);
+  --profile-accent-secondary: var(--primary);
+  --profile-cover-start: var(--primary-soft);
+  --profile-cover-end: var(--primary-soft);
 }
 
 .role-profile-page[data-profile-tone="student"] {
-  --profile-accent: #e11d48;
-  --profile-accent-strong: #be123c;
-  --profile-accent-secondary: #0f9f88;
-  --profile-cover-start: #ffe4e8;
-  --profile-cover-end: #ddf7f2;
+  --profile-accent: var(--primary);
+  --profile-accent-strong: var(--primary-hover);
+  --profile-accent-secondary: var(--primary);
+  --profile-cover-start: var(--primary-soft);
+  --profile-cover-end: var(--primary-soft);
 }
 
 .role-profile-page-header {
@@ -5563,7 +5563,7 @@ textarea:focus {
   place-items: center;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #e11d2e 0%, #b91323 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
   color: #ffffff;
   font-size: 32px;
   font-weight: 800;
@@ -5664,7 +5664,7 @@ textarea:focus {
 .role-profile-upload-button svg {
   width: 16px;
   height: 16px;
-  color: #e11d2e;
+  color: var(--primary);
 }
 
 .role-profile-form-panel {
@@ -5740,20 +5740,20 @@ textarea:focus {
 .role-profile-form .form-actions button {
   min-height: 46px;
   padding: 0 24px;
-  background: linear-gradient(135deg, #e11d2e 0%, #b91323 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
   border: none;
   border-radius: 12px;
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(225, 29, 46, 0.3);
+  box-shadow: 0 4px 14px var(--primary-soft);
   transition: all 0.2s ease;
 }
 
 .role-profile-form .form-actions button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(225, 29, 46, 0.4);
+  box-shadow: 0 6px 20px var(--primary-soft);
 }
 
 .role-profile-page>.assessment-updates-panel {
@@ -11428,9 +11428,9 @@ button.danger-text {
 /* Premium Soft Red Tint Hover Effect (Overriding global button rules!) */
 .huge-sidebar .sidebar-item-link:hover:not(:disabled),
 .huge-sidebar .sidebar-item-btn:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.07) !important;
+  background: color-mix(in srgb, var(--primary) 7%, transparent) !important;
   color: #111827 !important;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.06);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 6%, transparent);
 }
 
 .huge-sidebar:not(.is-collapsed) .sidebar-item-link:hover:not(:disabled),
@@ -11711,8 +11711,8 @@ button.danger-text {
 
 /* Sub-item Premium Hover Effect */
 .sidebar-subitem-link:hover {
-  color: #dc2626 !important;
-  background: rgba(239, 68, 68, 0.07) !important;
+  color: var(--primary) !important;
+  background: color-mix(in srgb, var(--primary) 7%, transparent) !important;
   transform: translateX(4px);
 }
 
@@ -11721,7 +11721,7 @@ button.danger-text {
   background: var(--sidebar-active-bg) !important;
   color: var(--sidebar-active-text) !important;
   font-weight: 600;
-  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 .super-admin-portal .huge-sidebar {
@@ -14376,8 +14376,8 @@ button.danger-text {
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: var(--primary-soft);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14424,8 +14424,8 @@ button.danger-text {
 }
 
 .confirm-modal-icon.is-primary {
-  background: rgba(225, 29, 46, 0.1);
-  color: #e11d2e;
+  background: var(--primary-soft);
+  color: var(--primary);
 }
 
 .logout-modal-actions {
@@ -14458,17 +14458,17 @@ button.danger-text {
 }
 
 .logout-modal-btn.confirm-btn {
-  background: #ef4444;
+  background: var(--primary);
   color: #ffffff;
-  border: 1px solid #ef4444;
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+  border: 1px solid var(--primary);
+  box-shadow: 0 4px 14px var(--primary-soft);
 }
 
 .logout-modal-btn.confirm-btn:hover {
-  background: #dc2626;
-  border-color: #dc2626;
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 6px 18px var(--primary-soft);
 }
 
 .logout-modal-btn.confirm-btn.btn-warning {
@@ -14483,14 +14483,14 @@ button.danger-text {
 }
 
 .logout-modal-btn.confirm-btn.btn-primary {
-  border-color: #e11d2e;
-  background: #e11d2e;
-  box-shadow: 0 4px 14px rgba(225, 29, 46, 0.24);
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: 0 4px 14px var(--primary-soft);
 }
 
 .logout-modal-btn.confirm-btn.btn-primary:hover {
-  border-color: #b91323;
-  background: #b91323;
+  border-color: var(--primary-hover);
+  background: var(--primary-hover);
 }
 
 .custom-dialog-icon-badge.badge-warning {
@@ -19217,7 +19217,7 @@ th[aria-sort="descending"] .table-sort-button::after {
   font-weight: 800 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.08em !important;
-  color: #e11d2e !important;
+  color: var(--primary) !important;
   line-height: 1.2 !important;
 }
 
@@ -19337,10 +19337,10 @@ th[aria-sort="descending"] .table-sort-button::after {
   display: grid !important;
   place-items: center !important;
   color: #ffffff !important;
-  background: linear-gradient(135deg, #e11d2e 0%, #b91323 100%) !important;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%) !important;
   font-size: 13px !important;
   font-weight: 750 !important;
-  box-shadow: 0 2px 6px rgba(225, 29, 46, 0.3) !important;
+  box-shadow: 0 2px 6px var(--primary-soft) !important;
 }
 
 .portal-user-text {
@@ -19426,7 +19426,7 @@ th[aria-sort="descending"] .table-sort-button::after {
   width: 22px !important;
   height: 22px !important;
   flex: 0 0 22px !important;
-  color: #e11d2e !important;
+  color: var(--primary) !important;
   margin-top: 2px !important;
 }
 
@@ -19467,7 +19467,7 @@ th[aria-sort="descending"] .table-sort-button::after {
 }
 
 .portal-user-dropdown-item.is-logout svg {
-  color: #e11d2e !important;
+  color: var(--primary) !important;
   margin-top: 0 !important;
 }
 
@@ -21508,7 +21508,8 @@ th[aria-sort="descending"] .table-sort-button::after {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding: 10px 6px;
+  margin: -10px -6px;
 }
 
 .assigned-tests-filter-pills::-webkit-scrollbar {
@@ -21521,22 +21522,31 @@ th[aria-sort="descending"] .table-sort-button::after {
   border-radius: 30px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--slate-600);
-  background: var(--slate-100);
+  color: var(--slate-600) !important;
+  background: var(--slate-100) !important;
   border: 1px solid transparent;
   cursor: pointer;
+  box-shadow: none !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .filter-pill:hover {
-  background: var(--slate-200);
+  background: var(--slate-200) !important;
+  color: var(--slate-800) !important;
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
 }
 
 .filter-pill.selected {
-  background: var(--institute-primary, #4f46e5);
-  color: #fff;
-  box-shadow: 0 8px 16px color-mix(in srgb, var(--institute-primary, #4f46e5) 30%, transparent);
+  background: var(--primary) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 16px var(--primary-soft) !important;
+}
+
+.filter-pill.selected:hover {
+  background: var(--primary-hover) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 20px var(--primary-soft) !important;
 }
 
 .assigned-tests-search {
