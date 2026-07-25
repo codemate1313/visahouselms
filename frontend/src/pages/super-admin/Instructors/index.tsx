@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { InstructorAccount, InstructorPasswordReset } from "@/api/types";
-import { confirmDelete } from "@/components/confirmDialog";
+import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { instructorsStrings as strings } from "./Instructors.strings";
@@ -61,7 +61,16 @@ export function Instructors() {
 
   async function toggleActive(instructor: InstructorAccount) {
     const action = instructor.is_active ? "deactivate" : "reactivate";
-    if (instructor.is_active && !window.confirm(strings.deactivateConfirm(instructor.email))) return;
+    const confirmed = await confirmAction(
+      strings.toggleConfirm(instructor.is_active ? "deactivate" : "activate", instructor.first_name || instructor.email),
+      {
+        title: instructor.is_active ? strings.deactivateTitle : strings.activateTitle,
+        confirmText: instructor.is_active ? "Deactivate" : "Activate",
+        variant: instructor.is_active ? "warning" : "primary",
+      }
+    );
+    if (!confirmed) return;
+
     setError(null);
     setInstructors((current) =>
       current.map((item) => item.id === instructor.id ? { ...item, is_active: !instructor.is_active } : item)
@@ -77,7 +86,12 @@ export function Instructors() {
   }
 
   async function resetPassword(instructor: InstructorAccount) {
-    if (!window.confirm(strings.resetPasswordConfirm(instructor.email))) return;
+    const confirmed = await confirmAction(strings.resetPasswordConfirm(instructor.email), {
+      title: strings.resetPasswordTitle,
+      confirmText: "Reset Password",
+      variant: "warning",
+    });
+    if (!confirmed) return;
     setError(null);
     try {
       const { data } = await apiClient.post<InstructorPasswordReset>(`/super-admin/instructors/${instructor.id}/reset-password`);
@@ -135,7 +149,13 @@ export function Instructors() {
   async function bulkSetActive(active: boolean) {
     const targets = instructors.filter((instructor) => selectedIds.has(instructor.id) && instructor.is_active !== active);
     if (!targets.length) return;
-    if (!active && !window.confirm(strings.bulkDeactivateConfirm(targets.length))) return;
+    const confirmed = await confirmAction(strings.toggleManyConfirm(active ? "activate" : "deactivate", targets.length), {
+      title: active ? strings.activateManyTitle : strings.deactivateManyTitle,
+      confirmText: active ? "Activate" : "Deactivate",
+      variant: active ? "primary" : "warning",
+    });
+    if (!confirmed) return;
+
     setBulkBusy(true);
     setError(null);
     const results = await Promise.allSettled(
@@ -185,6 +205,7 @@ export function Instructors() {
         <InstructorsBulkActionsBar
           selectedCount={selectedIds.size}
           busy={bulkBusy}
+          hasInactiveSelected={instructors.some((instructor) => selectedIds.has(instructor.id) && !instructor.is_active)}
           onActivate={() => bulkSetActive(true)}
           onDeactivate={() => bulkSetActive(false)}
           onDelete={bulkDelete}

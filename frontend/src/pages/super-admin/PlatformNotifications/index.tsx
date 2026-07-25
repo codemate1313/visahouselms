@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { Announcement } from "@/api/types";
+import { confirmDelete } from "@/components/confirmDialog";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { normalizeSearch } from "./helpers";
 import { platformNotificationsStrings as strings } from "./PlatformNotifications.strings";
@@ -101,7 +102,9 @@ export function PlatformNotifications() {
   }
 
   async function deleteAnnouncement(id: number) {
-    if (!window.confirm(strings.deleteConfirm)) return;
+    const item = announcements.find((n) => n.id === id);
+    const title = item ? item.title : strings.deleteFallbackTitle;
+    if (!(await confirmDelete(strings.deleteConfirm(title), strings.deleteConfirmTitle))) return;
     try {
       await apiClient.delete(`/super-admin/announcements/${id}`);
       await loadData();

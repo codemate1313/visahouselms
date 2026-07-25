@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { confirmDelete } from "@/components/confirmDialog";
+import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { useAuthStore } from "@/store/authStore";
 import { instituteMembersStrings as strings } from "./InstituteMembers.strings";
 import type { ImportResult, InstituteMember, MemberCapacity } from "./types";
@@ -82,8 +82,18 @@ export function InstituteMembers({ role, instituteId }: Props) {
   useEffect(() => { load(); }, [load]);
 
   async function toggle(member: InstituteMember) {
+    const isDeactivating = member.is_active;
+    const confirmed = await confirmAction(
+      strings.confirm.toggleMember(isDeactivating ? "deactivate" : "activate", `${member.first_name} ${member.last_name}`, member.email),
+      {
+        title: isDeactivating ? strings.confirm.deactivateMemberTitle : strings.confirm.activateMemberTitle,
+        confirmText: isDeactivating ? "Deactivate" : "Activate",
+        variant: isDeactivating ? "warning" : "primary",
+      }
+    );
+    if (!confirmed) return;
     try {
-      await apiClient.post(`${apiBase}/members/${member.id}/${member.is_active ? "deactivate" : "reactivate"}`);
+      await apiClient.post(`${apiBase}/members/${member.id}/${isDeactivating ? "deactivate" : "reactivate"}`);
       await load();
     } catch (err: unknown) {
       setError(extractErrorMessage(err, strings.errors.updateStatus));
@@ -91,7 +101,12 @@ export function InstituteMembers({ role, instituteId }: Props) {
   }
 
   async function resetPassword(member: InstituteMember) {
-    if (!window.confirm(strings.confirm.resetPassword(member.email))) return;
+    const confirmed = await confirmAction(strings.confirm.resetPassword(member.email), {
+      title: strings.confirm.resetPasswordTitle,
+      confirmText: strings.confirm.resetPasswordConfirm,
+      variant: "warning",
+    });
+    if (!confirmed) return;
     try {
       const { data } = await apiClient.post(`${apiBase}/members/${member.id}/reset-password`);
       setCredential({ name: `${member.first_name} ${member.last_name}`, password: data.temporary_password });
@@ -128,6 +143,12 @@ export function InstituteMembers({ role, instituteId }: Props) {
   async function bulkSetActive(active: boolean) {
     const targets = selectableMembers.filter((member) => selectedIds.has(member.id) && member.is_active !== active);
     if (!targets.length) return;
+    const confirmed = await confirmAction(strings.confirm.toggleMany(active ? "activate" : "deactivate", targets.length), {
+      title: active ? strings.confirm.activateManyTitle : strings.confirm.deactivateManyTitle,
+      confirmText: active ? "Activate" : "Deactivate",
+      variant: active ? "primary" : "warning",
+    });
+    if (!confirmed) return;
     setBulkBusy(true);
     setError(null);
     const results = await Promise.allSettled(
@@ -231,6 +252,7 @@ export function InstituteMembers({ role, instituteId }: Props) {
         <MembersBulkActionsBar
           selectedCount={selectedIds.size}
           busy={bulkBusy}
+          hasInactiveSelected={selectableMembers.some((member) => selectedIds.has(member.id) && !member.is_active)}
           onActivate={() => bulkSetActive(true)}
           onDeactivate={() => bulkSetActive(false)}
           onDelete={bulkRemove}

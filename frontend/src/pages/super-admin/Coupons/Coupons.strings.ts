@@ -44,6 +44,11 @@ export const couponsStrings = {
     toggle: (action: string) => `Failed to ${action} coupon.`,
     delete: "Failed to delete coupon.",
   },
+  confirm: {
+    toggle: (action: string, code: string) => `Are you sure you want to ${action} coupon code "${code}"?`,
+    activateTitle: "Activate Coupon",
+    deactivateTitle: "Deactivate Coupon",
+  },
   pdf: {
     header: "IELTS LMS — Discount Coupons Report",
     generatedPrefix: "Generated:",

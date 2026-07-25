@@ -52,6 +52,14 @@ export const accountsListStrings = {
   },
   bulkDeleteConfirm: (count: number) => `Are you sure you want to delete ${count} account${count === 1 ? "" : "s"}? This action cannot be undone.`,
   bulkDeleteConfirmTitle: "Delete Accounts",
+  confirm: {
+    toggleActive: (action: string, name: string) => `Are you sure you want to ${action} account "${name}"?`,
+    activateTitle: "Activate Account",
+    deactivateTitle: "Deactivate Account",
+    toggleMany: (action: string, count: number) => `Are you sure you want to ${action} ${count} selected account${count === 1 ? "" : "s"}?`,
+    activateManyTitle: "Activate Accounts",
+    deactivateManyTitle: "Deactivate Accounts",
+  },
   pdf: {
     header: "IELTS LMS — Super Admin Accounts",
     columns: ["#", "Name", "Email", "Status", "Created"],

@@ -23,7 +23,9 @@ export const platformNotificationsStrings = {
   studentRequiredError: "Please select at least one target student.",
   saveError: "Notification could not be saved or published.",
   deleteError: "Failed to delete notification.",
-  deleteConfirm: "Are you sure you want to delete this notification?",
+  deleteConfirm: (title: string) => `Are you sure you want to delete notification "${title}"? This action cannot be undone.`,
+  deleteConfirmTitle: "Delete Notification",
+  deleteFallbackTitle: "notification",
   publisher: {
     title: "New Platform Notification",
     subtitle: "Publish a targeted or scheduled announcement with custom audience selection.",

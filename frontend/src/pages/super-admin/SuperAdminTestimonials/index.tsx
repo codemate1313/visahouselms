@@ -1,5 +1,6 @@
 import { type DragEvent, type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
+import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import "./SuperAdminTestimonials.css";
 import { superAdminTestimonialsStrings as strings } from "./SuperAdminTestimonials.strings";
@@ -103,14 +104,23 @@ export function SuperAdminTestimonials() {
       .finally(() => setSaving(false));
   };
 
-  const handleDelete = (id: number) => {
-    if (!window.confirm(strings.deleteConfirm)) return;
+  const handleDelete = async (id: number) => {
+    const item = items.find((i) => i.id === id);
+    const name = item?.student_name || strings.deleteFallbackName;
+    if (!(await confirmDelete(strings.deleteConfirm(name), strings.deleteConfirmTitle))) return;
     apiClient.delete(`/super-admin/testimonials/${id}`).then(() => {
       fetchItems();
     });
   };
 
-  const handleToggleActive = (item: TestimonialAdminItem) => {
+  const handleToggleActive = async (item: TestimonialAdminItem) => {
+    const newStatus = item.is_active ? strings.draftLabel : strings.publishedLabel;
+    const confirmed = await confirmAction(strings.toggleVisibilityConfirm(item.student_name, newStatus), {
+      title: strings.toggleVisibilityTitle,
+      confirmText: item.is_active ? strings.unpublishLabel : strings.publishLabel,
+      variant: item.is_active ? "warning" : "primary",
+    });
+    if (!confirmed) return;
     apiClient.put(`/super-admin/testimonials/${item.id}`, { is_active: !item.is_active }).then(() => {
       fetchItems();
     });

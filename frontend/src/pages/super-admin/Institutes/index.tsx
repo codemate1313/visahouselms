@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { institutesStrings as strings } from "./Institutes.strings";
@@ -73,8 +74,15 @@ export function Institutes() {
   }
 
   async function toggleActive(row: InstituteRow) {
-    setError(null);
     const action = row.is_active ? "suspend" : "reactivate";
+    const confirmed = await confirmAction(strings.confirm.toggle(row.is_active ? "suspend" : "reactivate", row.name), {
+      title: row.is_active ? strings.confirm.suspendTitle : strings.confirm.reactivateTitle,
+      confirmText: row.is_active ? "Suspend" : "Reactivate",
+      variant: row.is_active ? "warning" : "primary",
+    });
+    if (!confirmed) return;
+
+    setError(null);
     setRows((current) =>
       current.map((item) => item.id === row.id ? { ...item, is_active: !row.is_active } : item)
     );

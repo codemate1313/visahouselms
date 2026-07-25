@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { couponsStrings as strings } from "./Coupons.strings";
@@ -51,8 +52,15 @@ export function Coupons() {
   }, [coupons.length, setItemCount]);
 
   async function toggleActive(coupon: CouponRow) {
-    setError(null);
     const action = coupon.is_active ? "deactivate" : "reactivate";
+    const confirmed = await confirmAction(strings.confirm.toggle(coupon.is_active ? "deactivate" : "activate", coupon.code), {
+      title: coupon.is_active ? strings.confirm.deactivateTitle : strings.confirm.activateTitle,
+      confirmText: coupon.is_active ? "Deactivate" : "Activate",
+      variant: coupon.is_active ? "warning" : "primary",
+    });
+    if (!confirmed) return;
+
+    setError(null);
     setCoupons((current) =>
       current.map((item) => item.id === coupon.id ? { ...item, is_active: !coupon.is_active } : item)
     );

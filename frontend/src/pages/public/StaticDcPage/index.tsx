@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AuthOverlay } from "./components/AuthOverlay";
 import type { AuthMode, PublicTheme } from "./types";
 
@@ -20,16 +21,28 @@ function getInitialPublicTheme(): PublicTheme {
 
 export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
   const src = useMemo(() => `/dc-pages/${fileName}`, [fileName]);
+  const location = useLocation();
+  const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<AuthMode | null>(null);
   const [publicTheme, setPublicTheme] = useState<PublicTheme>(() => getInitialPublicTheme());
   const pageBackground = publicTheme === "dark" ? "#0a0a0f" : "#f7f5f2";
+
+  useEffect(() => {
+    if (location.pathname === "/login") {
+      setAuthMode("login");
+    } else if (location.pathname === "/register") {
+      setAuthMode("register");
+    } else {
+      setAuthMode(null);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type === "vh-auth") {
         const mode = event.data.mode === "login" ? "login" : "register";
-        setAuthMode(mode);
+        navigate(mode === "login" ? "/login" : "/register");
       }
       if (event.data?.type === "vh-theme") {
         const theme = event.data.theme === "dark" ? "dark" : "light";
@@ -39,7 +52,7 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     function handleSystemThemeChange() {
@@ -56,11 +69,15 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
     return () => media?.removeEventListener?.("change", handleSystemThemeChange);
   }, []);
 
+  function handleClose() {
+    navigate("/", { replace: true });
+  }
+
   useEffect(() => {
     if (!authMode) return undefined;
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setAuthMode(null);
+      if (event.key === "Escape") handleClose();
     }
 
     document.body.style.overflow = "hidden";

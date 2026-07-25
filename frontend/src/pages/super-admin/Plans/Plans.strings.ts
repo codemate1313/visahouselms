@@ -63,6 +63,11 @@ export const plansStrings = {
     toggle: (action: string) => `Failed to ${action} plan.`,
     delete: "Failed to delete plan.",
   },
+  confirm: {
+    toggle: (action: string, name: string) => `Are you sure you want to ${action} plan "${name}"?`,
+    activateTitle: "Activate Plan",
+    deactivateTitle: "Deactivate Plan",
+  },
   pdf: {
     header: "IELTS LMS — Subscription Plans Report",
     generatedPrefix: "Generated:",

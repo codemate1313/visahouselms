@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { confirmAction } from "@/components/confirmDialog";
 import { instituteOnboardingStrings as strings } from "./InstituteOnboarding.strings";
 import { INITIAL, INITIAL_PERMISSIONS, PERMISSIONS } from "./helpers";
 import type { Method, ModuleOption, Onboarding } from "./types";
@@ -126,7 +127,13 @@ export function InstituteOnboarding() {
   }
 
   async function publish() {
-    if (!instituteId || !window.confirm(strings.publishConfirm)) return;
+    if (!instituteId) return;
+    const confirmed = await confirmAction(strings.publishConfirm, {
+      title: strings.publishConfirmTitle,
+      confirmText: strings.publishConfirmButton,
+      variant: "primary",
+    });
+    if (!confirmed) return;
     setBusy(true);
     try {
       const { data } = await apiClient.post<Onboarding>(`/super-admin/onboarding/${instituteId}/publish`);

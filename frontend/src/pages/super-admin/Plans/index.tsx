@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { plansStrings as strings } from "./Plans.strings";
@@ -59,8 +60,15 @@ export function Plans() {
   }, [filteredPlans.length, setItemCount]);
 
   async function toggleActive(plan: PlanRow) {
-    setError(null);
     const action = plan.is_active ? "deactivate" : "reactivate";
+    const confirmed = await confirmAction(strings.confirm.toggle(plan.is_active ? "deactivate" : "activate", plan.name), {
+      title: plan.is_active ? strings.confirm.deactivateTitle : strings.confirm.activateTitle,
+      confirmText: plan.is_active ? "Deactivate" : "Activate",
+      variant: plan.is_active ? "warning" : "primary",
+    });
+    if (!confirmed) return;
+
+    setError(null);
     setPlans((current) =>
       current.map((item) => item.id === plan.id ? { ...item, is_active: !plan.is_active } : item)
     );

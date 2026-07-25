@@ -9,7 +9,9 @@ export const instituteOnboardingStrings = {
     saveBranding: "Failed to save branding.",
     publish: "Failed to publish institute.",
   },
-  publishConfirm: "Publish this institute and activate its administrator account?",
+  publishConfirm: "Are you sure you want to publish this institute and activate its administrator account?",
+  publishConfirmTitle: "Publish Institute",
+  publishConfirmButton: "Publish Institute",
   step1: {
     instituteAdminDetails: {
       title: "Institute & Admin Details",

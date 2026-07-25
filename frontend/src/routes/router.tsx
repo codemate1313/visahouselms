@@ -51,7 +51,6 @@ import {
   Plans,
   PlatformNotifications,
   Profile,
-  Register,
   ResetPassword,
   RevenueDashboard,
   Sessions,
@@ -88,6 +87,8 @@ export const router = createBrowserRouter([
     element: <LandingLayout />,
     children: [
       { path: "/", element: <Home /> },
+      { path: "/login", element: <Home /> },
+      { path: "/register", element: <Home /> },
       { path: "/about", element: <AboutUs /> },
       { path: "/plans", element: <ShowcasePlans /> },
       { path: "/contact", element: <ContactUs /> },
@@ -104,8 +105,6 @@ export const router = createBrowserRouter([
   { path: "/sa-instructor-login", element: <Navigate to="/super-admin/login?role=SA_INSTRUCTOR" replace /> },
   { path: "/instructor", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
   { path: "/instructor/*", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
-  { path: "/login", element: <Login allowedRoles={["INSTITUTE_ADMIN", "INST_INSTRUCTOR", "STUDENT"]} title="Portal Login" subtitle="Select your role and sign in to your portal" /> },
-  { path: "/register", element: <Register /> },
   { path: "/reset-password", element: <ResetPassword /> },
   {
     element: <ProtectedRoute allowedRoles={["SUPER_ADMIN"]} />,

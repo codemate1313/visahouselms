@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { confirmDelete } from "@/components/confirmDialog";
+import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { useAuthStore } from "@/store/authStore";
 import { studentOverviewStrings as strings } from "./StudentOverview.strings";
 import type { StudentOverviewData } from "./types";
@@ -42,18 +42,35 @@ export function StudentOverview({ instituteId }: { instituteId?: number }) {
 
   async function updateStatus() {
     if (!data) return;
-    await apiClient.post(`${apiBase}/members/${id}/${data.student.is_active ? "deactivate" : "reactivate"}`);
+    const isDeactivating = data.student.is_active;
+    const confirmed = await confirmAction(strings.confirm.toggleStatus(isDeactivating ? "deactivate" : "activate", `${data.student.first_name} ${data.student.last_name}`), {
+      title: isDeactivating ? strings.confirm.deactivateTitle : strings.confirm.activateTitle,
+      confirmText: isDeactivating ? "Deactivate" : "Activate",
+      variant: isDeactivating ? "warning" : "primary",
+    });
+    if (!confirmed) return;
+    await apiClient.post(`${apiBase}/members/${id}/${isDeactivating ? "deactivate" : "reactivate"}`);
     await load();
   }
 
   async function revokeSessions() {
-    if (!window.confirm(strings.confirm.revokeSessions)) return;
+    const confirmed = await confirmAction(strings.confirm.revokeSessions, {
+      title: strings.confirm.revokeSessionsTitle,
+      confirmText: strings.confirm.revokeSessionsConfirm,
+      variant: "warning",
+    });
+    if (!confirmed) return;
     await apiClient.post(`${apiBase}/students/${id}/revoke-sessions`);
     await load();
   }
 
   async function resetPassword() {
-    if (!window.confirm(strings.confirm.resetPassword)) return;
+    const confirmed = await confirmAction(strings.confirm.resetPassword, {
+      title: strings.confirm.resetPasswordTitle,
+      confirmText: strings.confirm.resetPasswordConfirm,
+      variant: "warning",
+    });
+    if (!confirmed) return;
     const response = await apiClient.post(`${apiBase}/members/${id}/reset-password`);
     setTemporaryPassword(response.data.temporary_password);
     await load();

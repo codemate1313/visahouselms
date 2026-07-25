@@ -47,6 +47,11 @@ export const institutesStrings = {
     toggle: (action: string) => `Failed to ${action} institute.`,
     delete: "Failed to delete institute.",
   },
+  confirm: {
+    toggle: (action: string, name: string) => `Are you sure you want to ${action} institute "${name}"?`,
+    suspendTitle: "Suspend Institute",
+    reactivateTitle: "Reactivate Institute",
+  },
   pdf: {
     header: "IELTS LMS — Institutes Report",
     generatedPrefix: "Generated:",

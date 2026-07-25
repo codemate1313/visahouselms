@@ -106,6 +106,11 @@ export function Login({
       const { data: user } = await apiClient.get("/auth/me", {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       });
+      if (user.role !== selectedRole) {
+        setError(strings.roleMismatchError(roleLabel(user.role), roleLabel(selectedRole)));
+        showError(strings.roleMismatchToast(roleLabel(selectedRole), roleLabel(user.role)), strings.roleMismatchTitle);
+        return;
+      }
       const destination = destinationFor(user);
       if (!destination) {
         setError(strings.noPortalError);

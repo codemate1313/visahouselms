@@ -95,7 +95,15 @@ export const instituteMembersStrings = {
     deleteMany: (count: number) =>
       `Are you sure you want to delete ${count} member${count === 1 ? "" : "s"}? Their accounts will be signed out while test history is retained.`,
     deleteManyTitle: "Delete Members",
-    resetPassword: (email: string) => `Reset the password for ${email}?`,
+    resetPassword: (email: string) => `Are you sure you want to reset the password for ${email}?`,
+    resetPasswordTitle: "Reset Member Password",
+    resetPasswordConfirm: "Reset Password",
+    toggleMember: (action: string, name: string, email: string) => `Are you sure you want to ${action} member "${name}" (${email})?`,
+    activateMemberTitle: "Activate Member",
+    deactivateMemberTitle: "Deactivate Member",
+    toggleMany: (action: string, count: number) => `Are you sure you want to ${action} ${count} selected member${count === 1 ? "" : "s"}?`,
+    activateManyTitle: "Activate Members",
+    deactivateManyTitle: "Deactivate Members",
   },
   errors: {
     load: (label: string) => `Failed to load ${label.toLowerCase()}.`,

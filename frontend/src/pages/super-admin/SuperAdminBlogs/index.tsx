@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
+import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import "./SuperAdminBlogs.css";
 import { superAdminBlogsStrings as strings } from "./SuperAdminBlogs.strings";
@@ -30,14 +31,23 @@ export function SuperAdminBlogs() {
     fetchItems();
   }, []);
 
-  const handleDelete = (id: number) => {
-    if (!window.confirm(strings.deleteConfirm)) return;
+  const handleDelete = async (id: number) => {
+    const item = items.find((i) => i.id === id);
+    const title = item ? item.title : strings.deleteFallbackTitle;
+    if (!(await confirmDelete(strings.deleteConfirm(title), strings.deleteConfirmTitle))) return;
     apiClient.delete(`/super-admin/blogs/${id}`).then(() => {
       fetchItems();
     });
   };
 
-  const handleToggleActive = (item: BlogAdminItem) => {
+  const handleToggleActive = async (item: BlogAdminItem) => {
+    const newStatus = item.is_published ? strings.draftLabel : strings.publishedLabel;
+    const confirmed = await confirmAction(strings.toggleVisibilityConfirm(item.title, newStatus), {
+      title: strings.toggleVisibilityTitle,
+      confirmText: item.is_published ? strings.unpublishLabel : strings.publishLabel,
+      variant: item.is_published ? "warning" : "primary",
+    });
+    if (!confirmed) return;
     const updated = { is_published: !item.is_published };
     apiClient.put(`/super-admin/blogs/${item.id}`, updated).then(() => {
       fetchItems();

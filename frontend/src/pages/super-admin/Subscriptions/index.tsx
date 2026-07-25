@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { confirmAction } from "@/components/confirmDialog";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import type { PlanRow } from "@/pages/super-admin/Plans";
 import { subscriptionsStrings as strings } from "./Subscriptions.strings";
@@ -87,7 +88,12 @@ export function Subscriptions() {
   }
 
   async function cancel(subscriptionId: number) {
-    if (!window.confirm(strings.cancelConfirm)) return;
+    const confirmed = await confirmAction(strings.cancelConfirm, {
+      title: strings.cancelConfirmTitle,
+      confirmText: strings.cancelConfirmButton,
+      variant: "warning",
+    });
+    if (!confirmed) return;
     setError(null); setNotice(null);
     try {
       await apiClient.post(`/super-admin/subscriptions/${subscriptionId}/cancel`);

@@ -24,7 +24,9 @@ export const subscriptionsStrings = {
   renewing: "Renewing...",
   renew: "Renew",
   cancelSubscription: "Cancel subscription",
-  cancelConfirm: "Are you sure you want to cancel this subscription?",
+  cancelConfirm: "Are you sure you want to cancel this subscription? The institute will lose access upon expiration.",
+  cancelConfirmTitle: "Cancel Subscription",
+  cancelConfirmButton: "Cancel Subscription",
   cancel: "Cancel",
   cancelTooltip: "Cancel Subscription",
   quotaChart: {
