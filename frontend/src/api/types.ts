@@ -5,6 +5,9 @@ export interface SuperAdminAccount {
   last_name: string;
   is_active: boolean;
   force_password_reset: boolean;
+  is_owner?: boolean;
+  is_developer_verified?: boolean;
+  role_name?: string | null;
   dob?: string | null;
   phone_number?: string | null;
   address?: string | null;

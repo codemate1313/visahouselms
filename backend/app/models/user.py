@@ -19,6 +19,8 @@ class User(Base):
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     force_password_reset: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_owner: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_developer_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     avatar_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     dob: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     phone_number: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
@@ -32,3 +34,7 @@ class User(Base):
     instructor_profile: Mapped[Optional["InstructorProfile"]] = relationship(  # noqa: F821
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
+
+    @property
+    def role_name(self) -> Optional[str]:
+        return self.role.name if self.role else None

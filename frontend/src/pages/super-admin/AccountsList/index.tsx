@@ -118,6 +118,7 @@ export function AccountsList() {
   }
 
   function toggleSelect(id: number) {
+    if (filteredAccounts.find((account) => account.id === id)?.is_owner) return;
     setSelectedIds((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id); else next.add(id);
@@ -126,13 +127,14 @@ export function AccountsList() {
   }
 
   function toggleSelectAll() {
+    const selectableAccounts = filteredAccounts.filter((account) => !account.is_owner);
     setSelectedIds((current) =>
-      current.size === filteredAccounts.length ? new Set() : new Set(filteredAccounts.map((account) => account.id))
+      current.size === selectableAccounts.length ? new Set() : new Set(selectableAccounts.map((account) => account.id))
     );
   }
 
   async function bulkSetActive(active: boolean) {
-    const targets = filteredAccounts.filter((account) => selectedIds.has(account.id) && account.is_active !== active);
+    const targets = filteredAccounts.filter((account) => selectedIds.has(account.id) && !account.is_owner && account.is_active !== active);
     if (!targets.length) return;
     const confirmed = await confirmAction(strings.confirm.toggleMany(active ? "activate" : "deactivate", targets.length), {
       title: active ? strings.confirm.activateManyTitle : strings.confirm.deactivateManyTitle,
@@ -153,7 +155,7 @@ export function AccountsList() {
   }
 
   async function bulkDelete() {
-    const targets = filteredAccounts.filter((account) => selectedIds.has(account.id));
+    const targets = filteredAccounts.filter((account) => selectedIds.has(account.id) && !account.is_owner);
     if (!targets.length) return;
     if (!await confirmDelete(strings.bulkDeleteConfirm(targets.length), strings.bulkDeleteConfirmTitle)) return;
     setBulkBusy(true);

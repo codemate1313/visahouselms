@@ -153,6 +153,8 @@ def _current_user_response(user: User) -> CurrentUser:
         last_name=user.last_name,
         force_password_reset=user.force_password_reset,
         avatar_url=account_service.avatar_url_for(user),
+        is_owner=user.is_owner,
+        is_developer_verified=user.is_developer_verified,
     )
 
 

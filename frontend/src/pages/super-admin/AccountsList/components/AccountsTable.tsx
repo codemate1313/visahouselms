@@ -27,6 +27,7 @@ export function AccountsTable({
   onRequestDelete,
 }: AccountsTableProps) {
   const t = strings.table;
+  const selectableAccounts = accounts.filter((account) => !account.is_owner);
   return (
     <div className="table-wrap">
       <table className="data-table sleek-accounts-table">
@@ -36,10 +37,11 @@ export function AccountsTable({
               <input
                 type="checkbox"
                 aria-label="Select all accounts"
-                checked={accounts.length > 0 && selectedIds.size === accounts.length}
+                checked={selectableAccounts.length > 0 && selectedIds.size === selectableAccounts.length}
                 ref={(el) => {
-                  if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < accounts.length;
+                  if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < selectableAccounts.length;
                 }}
+                disabled={selectableAccounts.length === 0}
                 onChange={onToggleSelectAll}
               />
             </th>
@@ -65,6 +67,7 @@ export function AccountsTable({
                   type="checkbox"
                   aria-label={`Select ${account.first_name} ${account.last_name}`}
                   checked={selectedIds.has(account.id)}
+                  disabled={account.is_owner}
                   onChange={() => onToggleSelect(account.id)}
                 />
               </td>
@@ -87,6 +90,16 @@ export function AccountsTable({
                           {t.you}
                         </span>
                       )}
+                      {account.is_owner && (
+                        <span className="badge badge-red" style={{ fontSize: 10 }}>
+                          Owner
+                        </span>
+                      )}
+                      {account.role_name === "DEVELOPER" && (
+                        <span className="badge badge-blue" style={{ fontSize: 10 }}>
+                          Developer
+                        </span>
+                      )}
                       {account.force_password_reset && (
                         <span className="badge badge-amber" style={{ fontSize: 10 }}>
                           {t.resetRequired}
@@ -104,30 +117,36 @@ export function AccountsTable({
               </td>
               <td>{new Date(account.created_at).toLocaleDateString("en-GB")}</td>
               <td className="table-actions institute-row-actions">
-                <ToggleSwitch
-                  checked={account.is_active}
-                  onChange={() => onToggleActive(account)}
-                  tooltip={account.is_active ? t.deactivate : t.reactivate}
-                />
-                <Link className="action-btn-icon action-edit" to={`/super-admin/accounts/${account.id}`} data-tooltip={t.edit}>
-                  <Icon name="edit" />
-                </Link>
-                <button
-                  type="button"
-                  className="action-btn-icon action-branding"
-                  onClick={() => onForceReset(account)}
-                  data-tooltip={account.force_password_reset ? t.clearPasswordReset : t.requirePasswordReset}
-                >
-                  <Icon name="lock" />
-                </button>
-                <button
-                  type="button"
-                  className="action-btn-icon danger action-delete"
-                  onClick={() => onRequestDelete(account)}
-                  data-tooltip={t.delete}
-                >
-                  <Icon name="trash" />
-                </button>
+                {account.is_owner ? (
+                  <span className="badge badge-gray">Protected</span>
+                ) : (
+                  <>
+                    <ToggleSwitch
+                      checked={account.is_active}
+                      onChange={() => onToggleActive(account)}
+                      tooltip={account.is_active ? t.deactivate : t.reactivate}
+                    />
+                    <Link className="action-btn-icon action-edit" to={`/super-admin/accounts/${account.id}`} data-tooltip={t.edit}>
+                      <Icon name="edit" />
+                    </Link>
+                    <button
+                      type="button"
+                      className="action-btn-icon action-branding"
+                      onClick={() => onForceReset(account)}
+                      data-tooltip={account.force_password_reset ? t.clearPasswordReset : t.requirePasswordReset}
+                    >
+                      <Icon name="lock" />
+                    </button>
+                    <button
+                      type="button"
+                      className="action-btn-icon danger action-delete"
+                      onClick={() => onRequestDelete(account)}
+                      data-tooltip={t.delete}
+                    >
+                      <Icon name="trash" />
+                    </button>
+                  </>
+                )}
               </td>
             </tr>
           ))}

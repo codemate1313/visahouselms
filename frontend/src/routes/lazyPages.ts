@@ -4,6 +4,7 @@ export const NotificationsInbox = lazy(() => import("../pages/NotificationsInbox
 export const Register = lazy(() => import("../pages/Register").then((module) => ({ default: module.Register })));
 export const ResetPassword = lazy(() => import("../pages/ResetPassword").then((module) => ({ default: module.ResetPassword })));
 export const TestingLoginSelector = lazy(() => import("../pages/TestingLoginSelector").then((module) => ({ default: module.TestingLoginSelector })));
+export const DeveloperPanel = lazy(() => import("../pages/developer/DeveloperPanel").then((module) => ({ default: module.DeveloperPanel })));
 export const AboutUs = lazy(() => import("../pages/public/AboutUs").then((module) => ({ default: module.AboutUs })));
 export const ContactUs = lazy(() => import("../pages/public/ContactUs").then((module) => ({ default: module.ContactUs })));
 export const Home = lazy(() => import("../pages/public/Home").then((module) => ({ default: module.Home })));

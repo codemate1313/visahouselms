@@ -114,6 +114,8 @@ def me(user: User = Depends(get_current_user)):
         last_name=user.last_name,
         force_password_reset=user.force_password_reset,
         avatar_url=account_service.avatar_url_for(user),
+        is_owner=user.is_owner,
+        is_developer_verified=user.is_developer_verified,
         institute_permissions=(
             institute_service.normalized_admin_permissions(user.institute.admin_permissions)
             if user.institute and user.role.name == "INSTITUTE_ADMIN"

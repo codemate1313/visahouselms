@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     super_admin_password: Optional[str] = None
     super_admin_first_name: str = "Super"
     super_admin_last_name: str = "Admin"
+    developer_access_slug: str = "vh-control-9f4c2a"
 
     @model_validator(mode="after")
     def validate_production_secrets(self) -> "Settings":

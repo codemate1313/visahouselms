@@ -16,6 +16,8 @@ export interface AuthUser {
   force_password_reset: boolean;
   avatar_url: string | null;
   institute_permissions: Record<string, boolean> | null;
+  is_owner?: boolean;
+  is_developer_verified?: boolean;
 }
 
 interface AuthState {

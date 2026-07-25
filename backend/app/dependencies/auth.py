@@ -8,6 +8,7 @@ from app.core.security import TOKEN_TYPE_ACCESS, decode_token
 from app.database import get_db
 from app.models.user import User
 from app.models.user_session import UserSession
+from app.models.role import DEVELOPER
 
 bearer_scheme = HTTPBearer()
 
@@ -96,6 +97,26 @@ def require_role(*allowed_roles: str):
         return user
 
     return _check
+
+
+def require_verified_developer(user: User = Depends(get_current_user)) -> User:
+    if user.role.name != DEVELOPER or not user.is_developer_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Verified developer access is required",
+        )
+    return user
+
+
+def require_super_admin_or_verified_developer(user: User = Depends(get_current_user)) -> User:
+    if user.role.name == DEVELOPER and user.is_developer_verified:
+        return user
+    if user.role.name == "SUPER_ADMIN":
+        return user
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="You do not have permission to perform this action",
+    )
 
 
 def require_password_change_complete(user: User = Depends(get_current_user)) -> User:

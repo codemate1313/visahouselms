@@ -15,6 +15,7 @@ from app.routers import (
     coupons,
     dashboard,
     demo_accounts,
+    developer,
     dev_settings,
     grading_admin,
     institutes,
@@ -76,6 +77,7 @@ async def security_headers(request: Request, call_next):
 app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(super_admin.router)
+app.include_router(developer.router)
 app.include_router(dev_settings.router)
 app.include_router(grading_admin.router)
 app.include_router(backups.router)

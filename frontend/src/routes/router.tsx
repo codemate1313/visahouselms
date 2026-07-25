@@ -14,6 +14,7 @@ import {
   Dashboard,
   DashboardLayout,
   DemoAccounts,
+  DeveloperPanel,
   DeveloperSettings,
   GradingDetail,
   GradingOversight,
@@ -82,6 +83,8 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import { BlogsList } from "../pages/public/BlogsList";
 import { BlogDetail } from "../pages/public/BlogDetail";
 
+const developerAccessSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+
 export const router = createBrowserRouter([
   {
     element: <LandingLayout />,
@@ -98,6 +101,7 @@ export const router = createBrowserRouter([
   },
   { path: "/testing-login", element: <TestingLoginSelector /> },
   { path: "/super-admin/login", element: <Login allowedRoles={["SUPER_ADMIN", "SA_INSTRUCTOR"]} title="Super Admin & Author Portal" subtitle="Sign in to platform management or assessment authoring" /> },
+  { path: `/${developerAccessSlug}/login`, element: <Login allowedRoles={["DEVELOPER"]} title="Developer Control" subtitle="Verified developer access only" /> },
   { path: "/sa-instructor/login", element: <Navigate to="/super-admin/login?role=SA_INSTRUCTOR" replace /> },
   { path: "/super-admin", element: <Navigate to="/super-admin/login" replace /> },
   { path: "/super-admin/instructor", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
@@ -170,6 +174,14 @@ export const router = createBrowserRouter([
           { path: "revenue", element: <RevenueDashboard /> },
         ],
       },
+    ],
+  },
+  {
+    element: <ProtectedRoute allowedRoles={["DEVELOPER"]} />,
+    children: [
+      { path: `/${developerAccessSlug}`, element: <Navigate to={`/${developerAccessSlug}/panel`} replace /> },
+      { path: `/${developerAccessSlug}/panel`, element: <DeveloperPanel /> },
+      { path: `/${developerAccessSlug}/change-password`, element: <ChangePassword apiBase={`/developer/${developerAccessSlug}`} /> },
     ],
   },
   {

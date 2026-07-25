@@ -271,7 +271,7 @@ def register(
 def request_password_reset(db: Session, email: str) -> None:
     normalized_email = email.strip().lower()
     user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
-    if user is None or not user.is_active:
+    if user is None or not user.is_active or user.is_owner:
         return
 
     now = datetime.now(timezone.utc)
@@ -310,6 +310,8 @@ def confirm_password_reset(db: Session, token: str, new_password: str) -> None:
     user = db.get(User, user_id)
     if user is None or not user.is_active:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Account not found or inactive")
+    if user.is_owner:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Owner password cannot be reset")
 
     user.password_hash = hash_password(new_password)
     user.force_password_reset = False

@@ -62,6 +62,8 @@ class CurrentUser(BaseModel):
     force_password_reset: bool = False
     avatar_url: Optional[str] = None
     institute_permissions: Optional[dict] = None
+    is_owner: bool = False
+    is_developer_verified: bool = False
 
 
 class ForgotPasswordRequest(BaseModel):

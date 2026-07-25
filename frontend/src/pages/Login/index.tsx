@@ -135,8 +135,11 @@ export function Login({
   }
 
   const isSuperAdminPortal = selectedRole === "SUPER_ADMIN" || selectedRole === "SA_INSTRUCTOR";
+  const isDeveloperPortal = selectedRole === "DEVELOPER";
 
-  const activeRoleOptions = isSuperAdminPortal
+  const activeRoleOptions = isDeveloperPortal
+    ? ALL_ROLE_OPTIONS.filter((item) => item.role === "DEVELOPER")
+    : isSuperAdminPortal
     ? ALL_ROLE_OPTIONS.filter((item) => item.role === "SUPER_ADMIN" || item.role === "SA_INSTRUCTOR")
     : ALL_ROLE_OPTIONS.filter((item) => item.role === "INSTITUTE_ADMIN" || item.role === "INST_INSTRUCTOR" || item.role === "STUDENT");
 
@@ -229,7 +232,11 @@ export function Login({
               <a href="/register">{strings.registerLink}</a>
             </p>
 
-            {isSuperAdminPortal ? (
+            {isDeveloperPortal ? (
+              <p className="form-legal-note is-placeholder" aria-hidden="true">
+                Developer access
+              </p>
+            ) : isSuperAdminPortal ? (
               <p className="form-legal-note">
                 {strings.institutePortalPrompt}
                 <button

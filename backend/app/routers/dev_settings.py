@@ -3,9 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.core.cache import app_cache
 from app.database import get_db
-from app.dependencies.auth import get_current_user, require_role
+from app.dependencies.auth import get_current_user, require_super_admin_or_verified_developer
 from app.models.audit_log import AuditLog
-from app.models.role import SUPER_ADMIN
 from app.models.user import User
 from app.schemas.dev import (
     AiEvaluationSettingsIn,
@@ -24,7 +23,7 @@ from app.config import settings as app_config
 router = APIRouter(
     prefix="/super-admin/dev-settings",
     tags=["dev-settings"],
-    dependencies=[Depends(require_role(SUPER_ADMIN))],
+    dependencies=[Depends(require_super_admin_or_verified_developer)],
 )
 
 

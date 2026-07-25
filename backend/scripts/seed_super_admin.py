@@ -24,6 +24,11 @@ def main() -> None:
     try:
         existing = db.query(User).filter(User.email == settings.super_admin_email).first()
         if existing is not None:
+            if not db.query(User).filter(User.is_owner.is_(True)).first():
+                existing.is_owner = True
+                db.add(existing)
+                db.commit()
+                print(f"Marked existing super admin '{settings.super_admin_email}' as application owner.")
             print(f"Super admin '{settings.super_admin_email}' already exists, skipping.")
             return
 
@@ -40,6 +45,7 @@ def main() -> None:
             first_name=settings.super_admin_first_name,
             last_name=settings.super_admin_last_name,
             is_active=True,
+            is_owner=not db.query(User).filter(User.is_owner.is_(True)).first(),
         )
         db.add(user)
         db.commit()
