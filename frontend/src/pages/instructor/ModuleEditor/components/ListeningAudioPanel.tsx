@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { SearchableSelect } from "@/components/ui";
+import { RequiredMark, SearchableSelect } from "@/components/ui";
 import { API_BASE_URL } from "@/api/client";
 import type { ExamModuleAsset, ExamModulePart } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
@@ -49,9 +49,9 @@ export function ListeningAudioPanel({
         <div className="audio-method-grid">
           <form onSubmit={onUploadAudio}>
             <h3>{t.uploadHeading}</h3>
-            <label htmlFor="audio-title">{t.audioTitleLabel}</label>
+            <label htmlFor="audio-title">{t.audioTitleLabel}<RequiredMark /></label>
             <input id="audio-title" value={audioTitle} onChange={(event) => onAudioTitleChange(event.target.value)} required />
-            <label htmlFor="audio-file">{t.fileLabel}</label>
+            <label htmlFor="audio-file">{t.fileLabel}<RequiredMark /></label>
             <input id="audio-file" type="file" accept=".mp3,audio/mpeg" onChange={(event) => onAudioFileChange(event.target.files?.[0] ?? null)} required />
             <button type="submit" disabled={busy || !audioFile}>
               {busy ? t.working : t.attach}
@@ -59,9 +59,9 @@ export function ListeningAudioPanel({
           </form>
           <form onSubmit={onGenerateAudio}>
             <h3>{t.generateHeading}</h3>
-            <label htmlFor="tts-title">{t.audioTitleLabel}</label>
+            <label htmlFor="tts-title">{t.audioTitleLabel}<RequiredMark /></label>
             <input id="tts-title" value={tts.title} onChange={(event) => onTtsChange({ ...tts, title: event.target.value })} required />
-            <label htmlFor="tts-conversation">{t.conversationLabel}</label>
+            <label htmlFor="tts-conversation">{t.conversationLabel}<RequiredMark /></label>
             <textarea
               id="tts-conversation"
               rows={8}

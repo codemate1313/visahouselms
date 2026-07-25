@@ -1,4 +1,5 @@
 import type { ChangeEvent, FormEvent } from "react";
+import { RequiredMark } from "@/components/ui";
 import { instituteMemberFormStrings as strings } from "../InstituteMemberForm.strings";
 
 interface MemberFormFieldsProps {
@@ -19,10 +20,10 @@ export function MemberFormFields({ isNew, label, form, saving, error, onFieldCha
       <h1>{isNew ? strings.addTitle(label) : strings.editTitle(label)}</h1>
       <form className="form-card wide" onSubmit={onSubmit}>
         <div className="form-grid">
-          <div><label htmlFor="first_name">{f.firstName}</label><input id="first_name" value={form.first_name} onChange={onFieldChange("first_name")} required /></div>
-          <div><label htmlFor="last_name">{f.lastName}</label><input id="last_name" value={form.last_name} onChange={onFieldChange("last_name")} required /></div>
+          <div><label htmlFor="first_name">{f.firstName}<RequiredMark /></label><input id="first_name" value={form.first_name} onChange={onFieldChange("first_name")} required /></div>
+          <div><label htmlFor="last_name">{f.lastName}<RequiredMark /></label><input id="last_name" value={form.last_name} onChange={onFieldChange("last_name")} required /></div>
         </div>
-        <label htmlFor="email">{f.email}</label><input id="email" type="email" value={form.email} onChange={onFieldChange("email")} required />
+        <label htmlFor="email">{f.email}<RequiredMark /></label><input id="email" type="email" value={form.email} onChange={onFieldChange("email")} required />
         <label htmlFor="phone_number">{f.phoneNumber}</label><input id="phone_number" value={form.phone_number} onChange={onFieldChange("phone_number")} />
         <label htmlFor="address">{f.address}</label><input id="address" value={form.address} onChange={onFieldChange("address")} />
         {error && <p className="error-text">{error}</p>}

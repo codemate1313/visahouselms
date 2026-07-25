@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { RequiredMark } from "@/components/ui";
 import { useLoginSliderStore } from "@/store/loginSliderStore";
 import { useToastStore } from "@/store/toastStore";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
@@ -101,11 +102,11 @@ export function LoginSliderTab() {
       <CollapsiblePanel className="nested-collapsible-panel compact" title={t.addSectionTitle} description={t.addSectionDescription}>
         <form onSubmit={handleAdd} style={{ display: "grid", gap: 12, maxWidth: 600 }}>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>{t.imageUrlLabel}</label>
+            <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>{t.imageUrlLabel}<RequiredMark /></label>
             <input type="url" placeholder={t.imageUrlInputPlaceholder} value={newUrl} onChange={(e) => setNewUrl(e.target.value)} required />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>{t.titleLabel}</label>
+            <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>{t.titleLabel}<RequiredMark /></label>
             <input type="text" placeholder={t.titleInputPlaceholder} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} required />
           </div>
           <div>

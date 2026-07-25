@@ -1,4 +1,5 @@
 import type { FormEvent } from "react";
+import { RequiredMark } from "@/components/ui";
 import { demoAccountsStrings as strings } from "../DemoAccounts.strings";
 
 interface DemoFormState {
@@ -28,34 +29,34 @@ export function NewDemoForm({ form, set, error, saving, onSubmit }: NewDemoFormP
         {t.description}
       </p>
 
-      <label htmlFor="name">{t.instituteName}</label>
+      <label htmlFor="name">{t.instituteName}<RequiredMark /></label>
       <input id="name" value={form.name} onChange={set("name")} required placeholder={t.instituteNamePlaceholder} />
 
       <h3 className="section-subheading" style={{ marginTop: 20 }}>
         {t.demoAdminHeading}
       </h3>
-      <label htmlFor="admin_email">{t.adminEmail}</label>
+      <label htmlFor="admin_email">{t.adminEmail}<RequiredMark /></label>
       <input id="admin_email" type="email" value={form.admin_email} onChange={set("admin_email")} required placeholder={t.adminEmailPlaceholder} />
 
       <div className="form-grid" style={{ marginTop: 12 }}>
         <div>
-          <label htmlFor="admin_first_name">{t.firstName}</label>
+          <label htmlFor="admin_first_name">{t.firstName}<RequiredMark /></label>
           <input id="admin_first_name" value={form.admin_first_name} onChange={set("admin_first_name")} required />
         </div>
         <div>
-          <label htmlFor="admin_last_name">{t.lastName}</label>
+          <label htmlFor="admin_last_name">{t.lastName}<RequiredMark /></label>
           <input id="admin_last_name" value={form.admin_last_name} onChange={set("admin_last_name")} required />
         </div>
         <div>
-          <label htmlFor="duration_days">{t.durationDays}</label>
+          <label htmlFor="duration_days">{t.durationDays}<RequiredMark /></label>
           <input id="duration_days" type="number" min="1" value={form.duration_days} onChange={set("duration_days")} required />
         </div>
         <div>
-          <label htmlFor="course_limit">{t.courseLimit}</label>
+          <label htmlFor="course_limit">{t.courseLimit}<RequiredMark /></label>
           <input id="course_limit" type="number" min="0" value={form.course_limit} onChange={set("course_limit")} required />
         </div>
         <div>
-          <label htmlFor="test_limit">{t.testLimit}</label>
+          <label htmlFor="test_limit">{t.testLimit}<RequiredMark /></label>
           <input id="test_limit" type="number" min="0" value={form.test_limit} onChange={set("test_limit")} required />
         </div>
       </div>

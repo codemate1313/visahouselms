@@ -1,3 +1,4 @@
+import { RequiredMark } from "@/components/ui";
 import { instituteFormStrings as strings } from "../InstituteForm.strings";
 
 interface SessionPolicyFieldsetProps {
@@ -11,7 +12,7 @@ export function SessionPolicyFieldset({ sessionDurationHours, onSessionDurationH
     <fieldset className="permission-fieldset">
       <legend>{t.legend}</legend>
       <p className="hint">{t.description}</p>
-      <label htmlFor="session-duration-hours">{t.lifetimeLabel}</label>
+      <label htmlFor="session-duration-hours">{t.lifetimeLabel}<RequiredMark /></label>
       <input
         id="session-duration-hours"
         type="number"

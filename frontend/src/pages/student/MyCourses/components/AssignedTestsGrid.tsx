@@ -2,16 +2,6 @@ import type { StudentPlanModule } from "@/api/types";
 import { ArrowIcon, ClockIcon, ModuleTypeIcon, SpinnerIcon } from "../icons";
 import { myCoursesStrings as strings } from "../MyCourses.strings";
 
-function moduleTone(type: string) {
-  switch (type) {
-    case "reading": return "rose";
-    case "speaking": return "emerald";
-    case "writing": return "amber";
-    case "listening": return "indigo";
-    default: return "purple";
-  }
-}
-
 interface AssignedTestsGridProps {
   modules: StudentPlanModule[];
   starting: number | null;
@@ -27,7 +17,7 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
         if (!moduleId) return null;
         const isStarting = starting === moduleId;
         return (
-          <div className="assigned-test-card" data-tone={moduleTone(module.module_type)} key={moduleId}>
+          <div className="assigned-test-card" key={moduleId}>
             <div className="assigned-test-top">
               <div className="assigned-test-icon">
                 <ModuleTypeIcon type={module.module_type} />

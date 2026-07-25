@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { API_BASE_URL } from "@/api/client";
+import { RequiredMark } from "@/components/ui";
 import { seoSettingsStrings as strings } from "./SuperAdminSEOSettings.strings";
 
 export function SuperAdminSEOSettings() {
@@ -52,7 +53,7 @@ export function SuperAdminSEOSettings() {
       <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 space-y-6 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{strings.fields.siteName}</label>
+            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{strings.fields.siteName}<RequiredMark /></label>
             <input
               type="text"
               required
@@ -63,7 +64,7 @@ export function SuperAdminSEOSettings() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{strings.fields.titleTemplate}</label>
+            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{strings.fields.titleTemplate}<RequiredMark /></label>
             <input
               type="text"
               required
@@ -76,7 +77,7 @@ export function SuperAdminSEOSettings() {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{strings.fields.defaultTitle}</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{strings.fields.defaultTitle}<RequiredMark /></label>
           <input
             type="text"
             required
@@ -87,7 +88,7 @@ export function SuperAdminSEOSettings() {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{strings.fields.metaDescription}</label>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{strings.fields.metaDescription}<RequiredMark /></label>
           <textarea
             required
             rows={3}

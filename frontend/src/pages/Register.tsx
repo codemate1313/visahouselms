@@ -6,6 +6,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { HeroSlider } from "@/components/auth/HeroSlider";
 import { PasswordInput } from "@/components/PasswordInput";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { RequiredMark } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { registerStrings as strings } from "./Register.strings";
@@ -81,7 +82,7 @@ export function Register() {
           <form onSubmit={handleSubmit} className="concise-form">
             <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <div className="form-group">
-                <label htmlFor="first_name">{strings.firstNameLabel}</label>
+                <label htmlFor="first_name">{strings.firstNameLabel}<RequiredMark /></label>
                 <input
                   id="first_name"
                   value={firstName}
@@ -93,7 +94,7 @@ export function Register() {
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="last_name">{strings.lastNameLabel}</label>
+                <label htmlFor="last_name">{strings.lastNameLabel}<RequiredMark /></label>
                 <input
                   id="last_name"
                   value={lastName}
@@ -107,7 +108,7 @@ export function Register() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="email">{strings.emailLabel}</label>
+              <label htmlFor="email">{strings.emailLabel}<RequiredMark /></label>
               <input
                 id="email"
                 type="email"

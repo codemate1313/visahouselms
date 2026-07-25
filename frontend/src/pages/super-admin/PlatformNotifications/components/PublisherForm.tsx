@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import type { TargetInstituteOption, TargetStudentOption } from "@/api/types";
+import { RequiredMark } from "@/components/ui";
 import { platformNotificationsStrings as strings } from "../PlatformNotifications.strings";
 import type { NotificationStatus } from "../types";
 import { AudienceCardGrid } from "./AudienceCardGrid";
@@ -84,7 +85,7 @@ export function PublisherForm({
 
       <form onSubmit={onSubmit} className="pn-form">
         <div className="pn-form-group">
-          <label htmlFor="platform-notification-title">{t.titleLabel}</label>
+          <label htmlFor="platform-notification-title">{t.titleLabel}<RequiredMark /></label>
           <input
             id="platform-notification-title"
             value={title}
@@ -96,7 +97,7 @@ export function PublisherForm({
         </div>
 
         <div className="pn-form-group">
-          <label htmlFor="platform-notification-message">{t.messageLabel}</label>
+          <label htmlFor="platform-notification-message">{t.messageLabel}<RequiredMark /></label>
           <textarea
             id="platform-notification-message"
             rows={4}

@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { PasswordInput } from "@/components/PasswordInput";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { RequiredMark } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { evaluatePassword } from "@/utils/passwordStrength";
 import { changePasswordStrings as strings } from "./ChangePassword.strings";
@@ -64,7 +65,7 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
       )}
 
       <form className="form-card" onSubmit={handleSubmit}>
-        <label htmlFor="current_password">{strings.currentPasswordLabel}</label>
+        <label htmlFor="current_password">{strings.currentPasswordLabel}<RequiredMark /></label>
         <PasswordInput
           id="current_password"
           value={currentPassword}
@@ -72,7 +73,7 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
           required
         />
 
-        <label htmlFor="new_password">{strings.newPasswordLabel}</label>
+        <label htmlFor="new_password">{strings.newPasswordLabel}<RequiredMark /></label>
         <PasswordInput
           id="new_password"
           value={newPassword}
@@ -81,7 +82,7 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
         />
         <PasswordStrengthMeter password={newPassword} />
 
-        <label htmlFor="confirm_password">{strings.confirmPasswordLabel}</label>
+        <label htmlFor="confirm_password">{strings.confirmPasswordLabel}<RequiredMark /></label>
         <PasswordInput
           id="confirm_password"
           value={confirmPassword}

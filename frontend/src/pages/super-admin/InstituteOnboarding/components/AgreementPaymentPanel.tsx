@@ -1,5 +1,5 @@
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
-import { SearchableSelect } from "@/components/ui";
+import { RequiredMark, SearchableSelect } from "@/components/ui";
 import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.strings";
 import { INITIAL } from "../helpers";
 import type { Method } from "../types";
@@ -17,15 +17,15 @@ export function AgreementPaymentPanel({ form, set, methods, onPaymentMethodChang
     <CollapsiblePanel className="form-card onboarding-section-card" title={t.title} description={t.description}>
       <div className="form-grid">
         <div>
-          <label>{t.agreedAmount}</label>
+          <label>{t.agreedAmount}<RequiredMark /></label>
           <input type="number" min="1" value={form.agreed_amount} onChange={set("agreed_amount")} required placeholder={t.amountPlaceholder} />
         </div>
         <div>
-          <label>{t.amountReceived}</label>
+          <label>{t.amountReceived}<RequiredMark /></label>
           <input type="number" min="1" value={form.amount_received} onChange={set("amount_received")} required placeholder={t.amountPlaceholder} />
         </div>
         <div>
-          <label>{t.currency}</label>
+          <label>{t.currency}<RequiredMark /></label>
           <input value={form.currency} onChange={set("currency")} required />
         </div>
         <div>
@@ -58,15 +58,15 @@ export function AgreementPaymentPanel({ form, set, methods, onPaymentMethodChang
       </h3>
       <div className="form-grid">
         <div>
-          <label>{t.studentLimit}</label>
+          <label>{t.studentLimit}<RequiredMark /></label>
           <input type="number" min="0" value={form.student_limit} onChange={set("student_limit")} required />
         </div>
         <div>
-          <label>{t.instructorLimit}</label>
+          <label>{t.instructorLimit}<RequiredMark /></label>
           <input type="number" min="0" value={form.staff_limit} onChange={set("staff_limit")} required />
         </div>
         <div>
-          <label>{t.durationDays}</label>
+          <label>{t.durationDays}<RequiredMark /></label>
           <input type="number" min="1" value={form.access_duration_days} onChange={set("access_duration_days")} required />
         </div>
       </div>

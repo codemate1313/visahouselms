@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { RequiredMark } from "@/components/ui";
 import type { TargetStudentOption } from "@/api/types";
 import { instituteAnnouncementsStrings as strings } from "../InstituteAnnouncements.strings";
 import type { AnnouncementStatus } from "../types";
@@ -62,7 +63,7 @@ export function PublisherPanel({
   return (
     <CollapsiblePanel className="workspace-panel announcement-publisher-panel" title={t.title} description={t.description}>
       <form onSubmit={onSubmit}>
-        <label htmlFor="institute-announcement-title">{t.titleLabel}</label>
+        <label htmlFor="institute-announcement-title">{t.titleLabel}<RequiredMark /></label>
         <input
           id="institute-announcement-title"
           value={title}
@@ -71,7 +72,7 @@ export function PublisherPanel({
           required
         />
 
-        <label htmlFor="institute-announcement-message">{t.messageLabel}</label>
+        <label htmlFor="institute-announcement-message">{t.messageLabel}<RequiredMark /></label>
         <textarea
           id="institute-announcement-message"
           rows={5}

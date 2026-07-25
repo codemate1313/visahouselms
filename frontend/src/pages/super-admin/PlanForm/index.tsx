@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { RequiredMark } from "@/components/ui";
 import { planFormStrings as strings } from "./PlanForm.strings";
 import { PlanCoursePicker, type PlanModule } from "./components/PlanCoursePicker";
 
@@ -98,25 +99,25 @@ export function PlanForm() {
         </div>
       </div>
       <form className="form-card wide" onSubmit={submit}>
-        <label>{f.name}</label>
+        <label>{f.name}<RequiredMark /></label>
         <input value={form.name} onChange={set("name")} required />
         <label>{f.description}</label>
         <textarea rows={3} value={form.description} onChange={set("description")} />
         <div className="form-grid">
           <div>
-            <label>{f.price}</label>
+            <label>{f.price}<RequiredMark /></label>
             <input type="number" min="0" step="0.01" value={form.price} onChange={set("price")} required />
           </div>
           <div>
-            <label>{f.currency}</label>
+            <label>{f.currency}<RequiredMark /></label>
             <input value={form.currency} onChange={set("currency")} required />
           </div>
           <div>
-            <label>{f.durationDays}</label>
+            <label>{f.durationDays}<RequiredMark /></label>
             <input type="number" min="1" value={form.duration_days} onChange={set("duration_days")} required />
           </div>
           <div>
-            <label>{f.testLimit}</label>
+            <label>{f.testLimit}<RequiredMark /></label>
             <input type="number" min="0" value={form.test_limit} onChange={set("test_limit")} required />
           </div>
         </div>

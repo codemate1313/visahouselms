@@ -1,0 +1,4 @@
+.ui-required-mark {
+  color: var(--danger);
+  font-weight: 700;
+}

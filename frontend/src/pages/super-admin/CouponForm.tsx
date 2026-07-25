@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { SearchableSelect } from "@/components/ui";
+import { RequiredMark, SearchableSelect } from "@/components/ui";
 import type { PlanRow } from "./Plans";
 import { couponFormStrings as strings } from "./CouponForm.strings";
 
@@ -91,7 +91,7 @@ export function CouponForm() {
     <div>
       <h1>{isNew ? strings.newTitle : strings.editTitle}</h1>
       <form className="form-card wide" onSubmit={handleSubmit}>
-        <label htmlFor="code">{strings.codeLabel}</label>
+        <label htmlFor="code">{strings.codeLabel}<RequiredMark /></label>
         <input
           id="code"
           value={form.code}
@@ -119,7 +119,7 @@ export function CouponForm() {
             />
           </div>
           <div>
-            <label htmlFor="value">{strings.valueLabel(form.discount_type === "percent")}</label>
+            <label htmlFor="value">{strings.valueLabel(form.discount_type === "percent")}<RequiredMark /></label>
             <input id="value" type="number" min="0" step="0.01" value={form.value} onChange={set("value")} required />
           </div>
           <div>

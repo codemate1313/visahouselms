@@ -3,7 +3,7 @@ import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { InstructorAccount } from "@/api/types";
 import { ProfileEditorShell } from "@/components/ProfileEditorShell";
-import { Button } from "@/components/ui";
+import { Button, RequiredMark } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { instructorProfileStrings as strings } from "./InstructorProfile.strings";
 
@@ -96,15 +96,15 @@ export function InstructorProfile() {
       <form className="role-profile-form" onSubmit={save}>
         <div className="form-grid">
           <div>
-            <label htmlFor="instructor-first-name">{strings.fields.firstName}</label>
+            <label htmlFor="instructor-first-name">{strings.fields.firstName}<RequiredMark /></label>
             <input id="instructor-first-name" value={profile.first_name} onChange={(event) => update("first_name", event.target.value)} required />
           </div>
           <div>
-            <label htmlFor="instructor-last-name">{strings.fields.lastName}</label>
+            <label htmlFor="instructor-last-name">{strings.fields.lastName}<RequiredMark /></label>
             <input id="instructor-last-name" value={profile.last_name} onChange={(event) => update("last_name", event.target.value)} required />
           </div>
         </div>
-        <label htmlFor="instructor-email">{strings.fields.email}</label>
+        <label htmlFor="instructor-email">{strings.fields.email}<RequiredMark /></label>
         <input id="instructor-email" type="email" value={profile.email} onChange={(event) => update("email", event.target.value)} required />
 
         <label htmlFor="instructor-title">{strings.fields.title}</label>

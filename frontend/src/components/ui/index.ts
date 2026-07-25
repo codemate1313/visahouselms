@@ -14,3 +14,4 @@ export { PageHeader } from "./PageHeader";
 export type { PageHeaderProps } from "./PageHeader";
 export { SearchableSelect } from "./SearchableSelect";
 export type { SelectOption } from "./SearchableSelect";
+export { RequiredMark } from "./RequiredMark";

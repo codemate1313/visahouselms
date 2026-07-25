@@ -1,4 +1,4 @@
-import { SearchIcon } from "../icons";
+import { SearchInput } from "@/components/ui";
 import { myCoursesStrings as strings } from "../MyCourses.strings";
 
 interface ModuleFilterBarProps {
@@ -28,16 +28,7 @@ export function ModuleFilterBar({ availableTypes, typeFilter, onTypeFilterChange
           </button>
         ))}
       </div>
-      <div className="assigned-tests-search">
-        <SearchIcon />
-        <input
-          type="text"
-          className="assigned-tests-search-input"
-          placeholder={strings.searchPlaceholder}
-          value={search}
-          onChange={(event) => onSearchChange(event.target.value)}
-        />
-      </div>
+      <SearchInput value={search} onChange={onSearchChange} placeholder={strings.searchPlaceholder} width={320} />
     </div>
   );
 }

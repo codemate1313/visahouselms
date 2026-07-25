@@ -1,4 +1,5 @@
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { RequiredMark } from "@/components/ui";
 import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.strings";
 import { INITIAL } from "../helpers";
 
@@ -13,7 +14,7 @@ export function InstituteAdminDetailsPanel({ form, set }: InstituteAdminDetailsP
     <CollapsiblePanel className="form-card onboarding-section-card" title={t.title} description={t.description}>
       <div className="form-grid">
         <div>
-          <label htmlFor="ob-name">{t.instituteName}</label>
+          <label htmlFor="ob-name">{t.instituteName}<RequiredMark /></label>
           <input id="ob-name" value={form.name} onChange={set("name")} required placeholder={t.instituteNamePlaceholder} />
         </div>
         <div>
@@ -27,15 +28,15 @@ export function InstituteAdminDetailsPanel({ form, set }: InstituteAdminDetailsP
       </h3>
       <div className="form-grid">
         <div>
-          <label>{t.adminEmail}</label>
+          <label>{t.adminEmail}<RequiredMark /></label>
           <input type="email" value={form.admin_email} onChange={set("admin_email")} required placeholder={t.adminEmailPlaceholder} />
         </div>
         <div>
-          <label>{t.firstName}</label>
+          <label>{t.firstName}<RequiredMark /></label>
           <input value={form.admin_first_name} onChange={set("admin_first_name")} required placeholder={t.firstNamePlaceholder} />
         </div>
         <div>
-          <label>{t.lastName}</label>
+          <label>{t.lastName}<RequiredMark /></label>
           <input value={form.admin_last_name} onChange={set("admin_last_name")} required placeholder={t.lastNamePlaceholder} />
         </div>
       </div>

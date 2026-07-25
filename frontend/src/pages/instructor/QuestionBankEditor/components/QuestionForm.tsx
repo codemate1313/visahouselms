@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { SearchableSelect } from "@/components/ui";
+import { RequiredMark, SearchableSelect } from "@/components/ui";
 import type { QuestionDraft, QuestionType } from "@/api/types";
 import { questionBankEditorStrings as strings } from "../QuestionBankEditor.strings";
 import { ANSWER_FREE_TYPES, CHOICE_TYPES, QUESTION_TYPES } from "../helpers";
@@ -78,7 +78,7 @@ export function QuestionForm({
         rows={4}
         placeholder={t.passagePlaceholder}
       />
-      <label htmlFor="question-prompt">{t.promptLabel}</label>
+      <label htmlFor="question-prompt">{t.promptLabel}<RequiredMark /></label>
       <textarea id="question-prompt" value={question.prompt} onChange={(event) => onChange({ ...question, prompt: event.target.value })} rows={4} required />
       {hasChoices && (
         <fieldset className="option-editor">
@@ -115,7 +115,7 @@ export function QuestionForm({
       )}
       {!hasChoices && !ANSWER_FREE_TYPES.has(question.question_type) && (
         <>
-          <label htmlFor="accepted-answers">{t.acceptedAnswersLabel}</label>
+          <label htmlFor="accepted-answers">{t.acceptedAnswersLabel}<RequiredMark /></label>
           <input
             id="accepted-answers"
             value={question.correct_answers.join(", ")}
@@ -127,7 +127,7 @@ export function QuestionForm({
       )}
       <div className="form-grid">
         <div>
-          <label htmlFor="question-points">{t.pointsLabel}</label>
+          <label htmlFor="question-points">{t.pointsLabel}<RequiredMark /></label>
           <input
             id="question-points"
             type="number"

@@ -1,4 +1,5 @@
 import type { FormEvent } from "react";
+import { RequiredMark } from "@/components/ui";
 import { loginStrings as strings } from "../Login.strings";
 
 interface ForgotPasswordModalProps {
@@ -41,7 +42,7 @@ export function ForgotPasswordModal({ email, onEmailChange, sent, loading, error
         ) : (
           <form onSubmit={onSubmit} style={{ marginTop: 16 }}>
             <div className="form-group" style={{ textAlign: "left", marginBottom: 16 }}>
-              <label htmlFor="forgot-email">{t.emailLabel}</label>
+              <label htmlFor="forgot-email">{t.emailLabel}<RequiredMark /></label>
               <input id="forgot-email" type="email" placeholder="name@example.com" value={email} onChange={(e) => onEmailChange(e.target.value)} required />
             </div>
             {error && (

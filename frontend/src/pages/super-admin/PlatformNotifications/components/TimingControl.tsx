@@ -1,4 +1,5 @@
 import { Icon } from "@/components/icons";
+import { RequiredMark } from "@/components/ui";
 import { platformNotificationsStrings as strings, timingOptions } from "../PlatformNotifications.strings";
 import type { NotificationStatus } from "../types";
 
@@ -36,7 +37,7 @@ export function TimingControl({ status, onStatusChange, scheduledAt, onScheduled
 
       {status === "scheduled" && (
         <div style={{ marginTop: 12 }}>
-          <label htmlFor="scheduled-datetime-input">{strings.publisher.scheduleLabel}</label>
+          <label htmlFor="scheduled-datetime-input">{strings.publisher.scheduleLabel}<RequiredMark /></label>
           <input
             id="scheduled-datetime-input"
             type="datetime-local"

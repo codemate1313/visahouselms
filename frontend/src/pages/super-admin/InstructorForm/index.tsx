@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { InstructorAccount, InstructorAccountCreated } from "@/api/types";
+import { RequiredMark } from "@/components/ui";
 import { instructorFormStrings as strings } from "./InstructorForm.strings";
 import { extractTemporaryPassword } from "./helpers";
 import { CreatedInstructorView } from "./components/CreatedInstructorView";
@@ -128,24 +129,24 @@ export function InstructorForm() {
 
         <div className="form-grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
           <div>
-            <label htmlFor="first_name">{strings.firstName}</label>
+            <label htmlFor="first_name">{strings.firstName}<RequiredMark /></label>
             <input id="first_name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required maxLength={100} />
           </div>
 
           <div>
-            <label htmlFor="last_name">{strings.lastName}</label>
+            <label htmlFor="last_name">{strings.lastName}<RequiredMark /></label>
             <input id="last_name" value={lastName} onChange={(e) => setLastName(e.target.value)} required maxLength={100} />
           </div>
         </div>
 
         <label htmlFor="email" style={{ marginTop: "12px" }}>
-          {strings.email}
+          {strings.email}<RequiredMark />
         </label>
         <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
 
         <div className="form-grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "16px", marginTop: "12px" }}>
           <div>
-            <label htmlFor="title">{strings.title}</label>
+            <label htmlFor="title">{strings.title}<RequiredMark /></label>
             <input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={120} />
           </div>
 

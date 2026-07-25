@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
-import { SearchableSelect } from "@/components/ui";
+import { RequiredMark, SearchableSelect } from "@/components/ui";
 import type { Assessment, Course } from "@/api/types";
 import { testEditorStrings as strings } from "../TestEditor.strings";
 
@@ -63,7 +63,7 @@ export function TestDetailsForm({ isNew, test, courses, form, onFormChange, onCo
             />
           </div>
         </div>
-        <label htmlFor="test-title">{t.titleLabel}</label>
+        <label htmlFor="test-title">{t.titleLabel}<RequiredMark /></label>
         <input id="test-title" value={form.title} readOnly={!canEdit} onChange={(event) => onFormChange({ ...form, title: event.target.value })} required />
         <label htmlFor="test-description">{t.descriptionLabel}</label>
         <textarea id="test-description" rows={3} value={form.description} readOnly={!canEdit} onChange={(event) => onFormChange({ ...form, description: event.target.value })} />

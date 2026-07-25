@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { RequiredMark } from "@/components/ui";
 import { instituteFormStrings as strings } from "./InstituteForm.strings";
 import { DEFAULT_PERMISSIONS, type CreatedInstitute, type InstitutePermissions } from "./types";
 import { CreatedInstituteModal } from "./components/CreatedInstituteModal";
@@ -116,7 +117,7 @@ export function InstituteForm() {
         )}
       </div>
       <form className="form-card wide" onSubmit={handleSubmit}>
-        <label htmlFor="name">{strings.nameLabel}</label>
+        <label htmlFor="name">{strings.nameLabel}<RequiredMark /></label>
         <input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
 
         <label htmlFor="contact_email">{strings.contactEmailLabel}</label>

@@ -1,4 +1,5 @@
 import type { FormEvent } from "react";
+import { RequiredMark } from "@/components/ui";
 import { superAdminTestimonialsStrings as strings } from "../SuperAdminTestimonials.strings";
 import type { TestimonialAdminItem } from "../types";
 
@@ -28,7 +29,7 @@ export function TestimonialFormModal({ editingItem, onChange, saving, onClose, o
           <form id="testimonial-form" onSubmit={onSave}>
             <div className="sat-form-grid">
               <div className="sat-form-group">
-                <label>{t.nameLabel}</label>
+                <label>{t.nameLabel}<RequiredMark /></label>
                 <input
                   type="text"
                   required
@@ -80,7 +81,7 @@ export function TestimonialFormModal({ editingItem, onChange, saving, onClose, o
                 />
               </div>
               <div className="sat-form-group full-width">
-                <label>{t.quoteLabel}</label>
+                <label>{t.quoteLabel}<RequiredMark /></label>
                 <textarea
                   required
                   rows={4}

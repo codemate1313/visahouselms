@@ -41,7 +41,7 @@ export const superAdminTestimonialsStrings = {
   modal: {
     editTitle: "Edit Testimonial",
     addTitle: "Add New Testimonial",
-    nameLabel: "Student Name *",
+    nameLabel: "Student Name",
     namePlaceholder: "e.g. Ananya Sharma",
     targetScoreLabel: "Target Score",
     targetScorePlaceholder: "e.g. Achieved Band 8.0",
@@ -50,7 +50,7 @@ export const superAdminTestimonialsStrings = {
     avatarLabel: "Avatar Image URL",
     avatarPlaceholder: "https://example.com/photo.jpg",
     ratingLabel: "Rating (1-5)",
-    quoteLabel: "Quote *",
+    quoteLabel: "Quote",
     quotePlaceholder: "Student's testimonial text...",
     displayOrderLabel: "Display Order",
     publishImmediatelyLabel: "Publish immediately (Active)",

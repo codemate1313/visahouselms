@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { PasswordInput } from "@/components/PasswordInput";
+import { RequiredMark } from "@/components/ui";
 import { terminalStrings as strings } from "../Terminal.strings";
 
 interface TerminalAuthGateProps {
@@ -17,7 +18,7 @@ export function TerminalAuthGate({ password, onPasswordChange, error, connecting
       <h1>{strings.title}</h1>
       <form className="form-card" onSubmit={onConnect}>
         <p className="hint">{t.hint}</p>
-        <label htmlFor="terminal_password">{t.passwordLabel}</label>
+        <label htmlFor="terminal_password">{t.passwordLabel}<RequiredMark /></label>
         <PasswordInput id="terminal_password" value={password} onChange={(e) => onPasswordChange(e.target.value)} required />
         {error && <p className="error-text">{error}</p>}
         <div className="form-actions">

@@ -7,6 +7,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { getDeviceIdentity } from "@/auth/device";
 import { HeroSlider } from "@/components/auth/HeroSlider";
 import { PasswordInput } from "@/components/PasswordInput";
+import { RequiredMark } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { ALL_ROLE_OPTIONS, destinationFor, roleLabel } from "./helpers";
@@ -142,12 +143,15 @@ export function Login({
   return (
     <div className="login-concise-page" ref={containerRef}>
       <div className="login-glowing-orbs" aria-hidden="true">
-        <div className="glowing-orb orb-primary" />
         <div className="glowing-orb orb-secondary" />
         <div className="glowing-orb orb-tertiary" />
       </div>
 
       <div className="login-ref-card">
+        <div className="login-slider-container">
+          <HeroSlider />
+        </div>
+
         <div className="login-form-side">
           <div className="vh-auth-brand">
             <span className="vh-auth-logo">VH</span>
@@ -174,7 +178,7 @@ export function Login({
 
           <form onSubmit={handleSubmit} className="concise-form">
             <div className="form-group">
-              <label htmlFor="email">{strings.emailLabel}</label>
+              <label htmlFor="email">{strings.emailLabel}<RequiredMark /></label>
               <input
                 id="email"
                 type="email"
@@ -249,10 +253,6 @@ export function Login({
               </p>
             )}
           </div>
-        </div>
-
-        <div className="login-slider-container">
-          <HeroSlider />
         </div>
       </div>
 

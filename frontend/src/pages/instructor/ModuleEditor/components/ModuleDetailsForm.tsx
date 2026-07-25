@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
-import { Button } from "@/components/ui";
+import { Button, RequiredMark } from "@/components/ui";
 import type { ExamModule } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
@@ -24,7 +24,7 @@ export function ModuleDetailsForm({ module, details, onDetailsChange, isEditable
         description={t.description}
         badge={<span className="count-chip">{module.duration_minutes} min</span>}
       >
-        <label htmlFor="module-title">{t.titleLabel}</label>
+        <label htmlFor="module-title">{t.titleLabel}<RequiredMark /></label>
         <input
           id="module-title"
           value={details.title}

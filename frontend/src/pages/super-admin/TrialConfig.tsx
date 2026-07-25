@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { RequiredMark } from "@/components/ui";
 import { trialConfigStrings as strings } from "./TrialConfig.strings";
 
 export function TrialConfig() {
@@ -62,15 +63,15 @@ export function TrialConfig() {
 
         <div className="form-grid" style={{ marginTop: 8 }}>
           <div>
-            <label htmlFor="duration">{strings.durationLabel}</label>
+            <label htmlFor="duration">{strings.durationLabel}<RequiredMark /></label>
             <input id="duration" type="number" min="1" value={durationDays} onChange={(e) => setDurationDays(e.target.value)} required />
           </div>
           <div>
-            <label htmlFor="course_limit">{strings.courseLimitLabel}</label>
+            <label htmlFor="course_limit">{strings.courseLimitLabel}<RequiredMark /></label>
             <input id="course_limit" type="number" min="0" value={courseLimit} onChange={(e) => setCourseLimit(e.target.value)} required />
           </div>
           <div>
-            <label htmlFor="test_limit">{strings.testLimitLabel}</label>
+            <label htmlFor="test_limit">{strings.testLimitLabel}<RequiredMark /></label>
             <input id="test_limit" type="number" min="0" value={testLimit} onChange={(e) => setTestLimit(e.target.value)} required />
           </div>
         </div>

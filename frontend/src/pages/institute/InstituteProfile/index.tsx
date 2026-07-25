@@ -2,6 +2,7 @@ import { type ChangeEvent, type FormEvent, useState } from "react";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { ProfileEditorShell } from "@/components/ProfileEditorShell";
+import { RequiredMark } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { instituteProfileStrings as strings } from "./InstituteProfile.strings";
 
@@ -75,15 +76,15 @@ export function InstituteProfile() {
       <form className="role-profile-form" onSubmit={submit}>
         <div className="form-grid">
           <div>
-            <label htmlFor="institute-first-name">{strings.firstName}</label>
+            <label htmlFor="institute-first-name">{strings.firstName}<RequiredMark /></label>
             <input id="institute-first-name" value={form.first_name} onChange={(event) => setForm({ ...form, first_name: event.target.value })} required />
           </div>
           <div>
-            <label htmlFor="institute-last-name">{strings.lastName}</label>
+            <label htmlFor="institute-last-name">{strings.lastName}<RequiredMark /></label>
             <input id="institute-last-name" value={form.last_name} onChange={(event) => setForm({ ...form, last_name: event.target.value })} required />
           </div>
         </div>
-        <label htmlFor="institute-email">{strings.emailAddress}</label>
+        <label htmlFor="institute-email">{strings.emailAddress}<RequiredMark /></label>
         <input id="institute-email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
 
         {error && <p className="error-text">{error}</p>}

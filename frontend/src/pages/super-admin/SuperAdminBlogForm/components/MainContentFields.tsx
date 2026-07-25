@@ -1,3 +1,4 @@
+import { RequiredMark } from "@/components/ui";
 import { superAdminBlogFormStrings as strings } from "../SuperAdminBlogForm.strings";
 import type { BlogFormData } from "../types";
 
@@ -13,7 +14,7 @@ export function MainContentFields({ formData, onTitleChange, onFieldChange }: Ma
     <div className="sab-form-main-card">
       <div className="sab-field-group">
         <label>
-          <span>{t.articleTitle}</span>
+          <span>{t.articleTitle}<RequiredMark /></span>
           {formData.slug && <span className="sab-slug-hint">/{formData.slug}</span>}
         </label>
         <input
@@ -27,7 +28,7 @@ export function MainContentFields({ formData, onTitleChange, onFieldChange }: Ma
       </div>
 
       <div className="sab-field-group">
-        <label>{t.slug}</label>
+        <label>{t.slug}<RequiredMark /></label>
         <input
           type="text"
           required
@@ -39,7 +40,7 @@ export function MainContentFields({ formData, onTitleChange, onFieldChange }: Ma
       </div>
 
       <div className="sab-field-group">
-        <label>{t.summary}</label>
+        <label>{t.summary}<RequiredMark /></label>
         <textarea
           required
           rows={3}
@@ -54,7 +55,7 @@ export function MainContentFields({ formData, onTitleChange, onFieldChange }: Ma
       </div>
 
       <div className="sab-field-group">
-        <label>{t.content}</label>
+        <label>{t.content}<RequiredMark /></label>
         <textarea
           required
           rows={14}

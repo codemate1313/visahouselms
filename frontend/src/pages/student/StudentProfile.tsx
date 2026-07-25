@@ -2,6 +2,7 @@ import { type ChangeEvent, type FormEvent, useState } from "react";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { ProfileEditorShell } from "@/components/ProfileEditorShell";
+import { RequiredMark } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { studentProfileStrings as strings } from "./StudentProfile.strings";
 
@@ -77,15 +78,15 @@ export function StudentProfile() {
       <form className="role-profile-form" onSubmit={handleSubmit}>
         <div className="form-grid">
           <div>
-            <label htmlFor="student-first-name">{strings.firstNameLabel}</label>
+            <label htmlFor="student-first-name">{strings.firstNameLabel}<RequiredMark /></label>
             <input id="student-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} required />
           </div>
           <div>
-            <label htmlFor="student-last-name">{strings.lastNameLabel}</label>
+            <label htmlFor="student-last-name">{strings.lastNameLabel}<RequiredMark /></label>
             <input id="student-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} required />
           </div>
         </div>
-        <label htmlFor="student-email">{strings.emailLabel}</label>
+        <label htmlFor="student-email">{strings.emailLabel}<RequiredMark /></label>
         <input id="student-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
 
         {error && <p className="error-text">{error}</p>}

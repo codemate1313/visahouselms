@@ -1,3 +1,4 @@
+import { RequiredMark } from "@/components/ui";
 import { instituteAnnouncementsStrings as strings } from "../InstituteAnnouncements.strings";
 import type { AnnouncementStatus } from "../types";
 
@@ -27,7 +28,7 @@ export function PublishTimingSelector({ status, onStatusChange, scheduledAt, onS
 
       {status === "scheduled" && (
         <div>
-          <label htmlFor="scheduled-datetime-input">{t.scheduleLabel}</label>
+          <label htmlFor="scheduled-datetime-input">{t.scheduleLabel}<RequiredMark /></label>
           <input
             id="scheduled-datetime-input"
             type="datetime-local"

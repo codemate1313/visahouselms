@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { SearchableSelect } from "@/components/ui";
+import { RequiredMark, SearchableSelect } from "@/components/ui";
 import type { ExamModulePart, QuestionDraft, QuestionType } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { ANSWER_FREE_TYPES, CHOICE_TYPES } from "../helpers";
@@ -59,7 +59,7 @@ export function ManualQuestionForm({
           onChange={(event) => onManualChange({ ...manual, passage: event.target.value })}
           placeholder={t.passagePlaceholder}
         />
-        <label htmlFor="module-question-prompt">{t.promptLabel}</label>
+        <label htmlFor="module-question-prompt">{t.promptLabel}<RequiredMark /></label>
         <textarea
           id="module-question-prompt"
           rows={4}
@@ -87,7 +87,7 @@ export function ManualQuestionForm({
         )}
         {!CHOICE_TYPES.has(manual.question_type) && !ANSWER_FREE_TYPES.has(manual.question_type) && (
           <>
-            <label htmlFor="module-answers">{t.acceptedAnswersLabel}</label>
+            <label htmlFor="module-answers">{t.acceptedAnswersLabel}<RequiredMark /></label>
             <input
               id="module-answers"
               value={manual.correct_answers.join(", ")}
@@ -101,7 +101,7 @@ export function ManualQuestionForm({
         )}
         <div className="form-grid">
           <div>
-            <label htmlFor="module-points">{t.pointsLabel}</label>
+            <label htmlFor="module-points">{t.pointsLabel}<RequiredMark /></label>
             <input
               id="module-points"
               type="number"

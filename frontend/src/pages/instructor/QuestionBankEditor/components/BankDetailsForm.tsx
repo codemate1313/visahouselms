@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { SearchableSelect } from "@/components/ui";
+import { RequiredMark, SearchableSelect } from "@/components/ui";
 import type { Course, QuestionBank } from "@/api/types";
 import { questionBankEditorStrings as strings } from "../QuestionBankEditor.strings";
 
@@ -59,7 +59,7 @@ export function BankDetailsForm({ isNew, bank, bankForm, onBankFormChange, cours
           />
         </div>
       </div>
-      <label htmlFor="bank-title">{t.titleLabel}</label>
+      <label htmlFor="bank-title">{t.titleLabel}<RequiredMark /></label>
       <input
         id="bank-title"
         value={bankForm.title}

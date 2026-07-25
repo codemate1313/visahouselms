@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { SearchableSelect } from "@/components/ui";
+import { RequiredMark, SearchableSelect } from "@/components/ui";
 import type { ExamModule, ExamModuleType, IeltsSection } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { COMPOSITE_TYPES, SOURCE_SECTIONS } from "../helpers";
@@ -58,7 +58,7 @@ export function NewModuleForm({
       {error && <p className="error-text notice-line">{error}</p>}
       <form className="form-card module-create-form" onSubmit={onSubmit}>
         <span className={`section-chip section-${requestedType}`}>{typeLabel}</span>
-        <label htmlFor="new-module-title">{t.titleLabel}</label>
+        <label htmlFor="new-module-title">{t.titleLabel}<RequiredMark /></label>
         <input
           id="new-module-title"
           value={details.title}

@@ -1,4 +1,5 @@
 import type { FormEvent } from "react";
+import { RequiredMark } from "@/components/ui";
 import { attemptResultDetailsStrings as strings } from "../AttemptResultDetails.strings";
 
 interface ReevaluationFormProps {
@@ -19,7 +20,7 @@ export function ReevaluationForm({ reason, onReasonChange, requesting, onSubmit 
           <p>{t.description}</p>
         </div>
       </div>
-      <label htmlFor="reevaluation-reason">{t.reasonLabel}</label>
+      <label htmlFor="reevaluation-reason">{t.reasonLabel}<RequiredMark /></label>
       <textarea
         id="reevaluation-reason"
         rows={4}
