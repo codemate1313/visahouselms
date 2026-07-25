@@ -1,0 +1,37 @@
+export const moduleControlStrings = {
+  searchPlaceholder: "Search courses by title or keyword...",
+  statusOptions: {
+    allStatuses: "All statuses",
+    draft: "Draft",
+    published: "Published",
+    archived: "Archived",
+  },
+  search: "Search",
+  loading: "Loading courses...",
+  empty: {
+    title: "No courses found",
+    description: "Try clearing your search filters or check back later.",
+  },
+  coursesSuffix: (count: number) => `${count} course${count === 1 ? "" : "s"}`,
+  noDescriptionSuffix: (label: string) => `${label} course`,
+  hidden: "Hidden",
+  manage: "Manage",
+  facts: {
+    type: "Type",
+    questions: "Questions",
+    institutes: "Institutes",
+    created: "Created",
+    published: "Published",
+    notPublished: "Not published",
+    updated: "Updated",
+    noChanges: "No changes",
+  },
+  moduleTypeLabels: {
+    listening: "Listening",
+    reading: "Reading",
+    writing: "Writing",
+    speaking: "Speaking",
+    fullMock: "Full Mock",
+    finalTest: "Final Test",
+  },
+} as const;

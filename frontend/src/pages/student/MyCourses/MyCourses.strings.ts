@@ -1,0 +1,41 @@
+export const myCoursesStrings = {
+  eyebrow: "Learning",
+  loadError: "Failed to load your learning plan.",
+  titles: {
+    instituteStudent: "Assigned Tests",
+    directStudent: "My Tests",
+  },
+  subtitles: {
+    instituteStudent: "Start a test allotted to your institute.",
+    directStudent: "Start a test included in your active plan.",
+  },
+  all: "All",
+  searchPlaceholder: "Search tests...",
+  empty: {
+    instituteTitle: "No tests assigned",
+    directTitle: "No active learning plan",
+    instituteDescription: "Contact your institute administrator to confirm course access.",
+    directDescription: "Choose or upgrade a plan to unlock tests.",
+    noModulesInstitute: "No published tests are assigned to your institute yet.",
+    noModulesDirect: "No published tests are attached to this plan yet.",
+    noFilterMatches: "No tests match your filters. Try clearing the search or selecting a different category.",
+  },
+  defaultPlanDescription: "Your assigned assessment access.",
+  accessUntil: (date: string) => `Access until ${date}`,
+  testsCount: (count: number) => `${count} test${count === 1 ? "" : "s"}`,
+  minutesSuffix: (minutes: number) => `${minutes} minutes`,
+  starting: "Starting...",
+  startTest: "Start test",
+  errors: {
+    startModule: "Failed to start the test.",
+    startModuleTitle: "Could Not Start",
+  },
+  moduleTypeLabels: {
+    reading: "Reading",
+    speaking: "Speaking",
+    writing: "Writing",
+    listening: "Listening",
+    full_mock: "Full Mock Test",
+    final_test: "Final Test",
+  },
+} as const;

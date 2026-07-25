@@ -1,0 +1,28 @@
+export const courseCatalogStrings = {
+  eyebrow: "Catalog",
+  title: "Learning Plans",
+  subtitle: "Browse available plans and choose the assessment access you need.",
+  loadError: "Failed to load the plan catalog.",
+  loading: "Loading...",
+  empty: {
+    title: "No plans available yet",
+    description: "Check back soon.",
+  },
+  defaultDescription: "Assessment access plan.",
+  durationSuffix: (days: number) => `${days} days`,
+  testsCount: (count: number) => `${count} test${count === 1 ? "" : "s"}`,
+  goToCourse: "Go to course →",
+  choosePlan: "Choose plan",
+  checkout: {
+    heading: (name: string) => `Choose "${name}"`,
+    couponLabel: "Coupon code (optional)",
+    couponPlaceholder: "e.g. WELCOME10",
+    cancel: "Cancel",
+    processing: "Processing...",
+    confirmPurchase: "Confirm purchase",
+    purchaseComplete: (name: string) => `You now have access to "${name}".`,
+    purchaseCompleteTitle: "Purchase Complete",
+    purchaseFailed: "Purchase failed.",
+    checkoutFailedTitle: "Checkout Failed",
+  },
+} as const;

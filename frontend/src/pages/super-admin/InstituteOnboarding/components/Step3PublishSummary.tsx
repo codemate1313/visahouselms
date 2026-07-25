@@ -1,0 +1,88 @@
+import { Link, useNavigate } from "react-router-dom";
+import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.strings";
+import type { Onboarding } from "../types";
+
+interface Step3PublishSummaryProps {
+  onboarding: Onboarding;
+  busy: boolean;
+  onPublish: () => void;
+}
+
+export function Step3PublishSummary({ onboarding, busy, onPublish }: Step3PublishSummaryProps) {
+  const t = strings.step3;
+  const navigate = useNavigate();
+  const isPublished = onboarding.onboarding_status === "published";
+  const statusLabel = isPublished ? t.publishedAndLive : t.draftReady;
+  const heroTitle = isPublished ? t.live : t.readyToPublish;
+
+  return (
+    <CollapsiblePanel
+      className="form-card wide publish-summary-card"
+      title={heroTitle}
+      description={`${onboarding.agreement_currency || "INR"} ${Number(onboarding.agreed_amount || 0).toLocaleString("en-IN")} ${t.agreementSuffix} · ${onboarding.payment?.status || "pending"} ${t.paymentSuffix} · ${onboarding.access_duration_days} days ${t.validitySuffix}`}
+      badge={<span className={`badge ${isPublished ? "badge-green" : "badge-amber"}`}>{statusLabel}</span>}
+    >
+      <div className="publish-hero-header">
+        <span className={`badge ${isPublished ? "badge-green" : "badge-amber"}`}>{statusLabel}</span>
+        <h2 className="publish-hero-title">{heroTitle}</h2>
+        <p className="publish-hero-subtitle">
+          <strong>
+            {onboarding.agreement_currency || "INR"} {Number(onboarding.agreed_amount || 0).toLocaleString("en-IN")}
+          </strong>{" "}
+          {t.agreementSuffix} ·
+          <span className="capitalize-text"> {onboarding.payment?.status || "pending"}</span> {t.paymentSuffix} ·
+          <strong> {onboarding.access_duration_days} days</strong> {t.validitySuffix}
+        </p>
+      </div>
+
+      <div className="publish-stats-grid">
+        <div className="publish-stat-box">
+          <span className="stat-label">{t.stats.studentAllocation}</span>
+          <span className="stat-value">{onboarding.student_limit}</span>
+        </div>
+        <div className="publish-stat-box">
+          <span className="stat-label">{t.stats.instructorAllocation}</span>
+          <span className="stat-value">{onboarding.staff_limit}</span>
+        </div>
+        <div className="publish-stat-box">
+          <span className="stat-label">{t.stats.assignedTests}</span>
+          <span className="stat-value">{t.stats.unlimited}</span>
+        </div>
+        <div className="publish-stat-box">
+          <span className="stat-label">{t.stats.includedCourses}</span>
+          <span className="stat-value">{onboarding.course_count}</span>
+        </div>
+        <div className="publish-stat-box">
+          <span className="stat-label">{t.stats.adminPermissions}</span>
+          <span className="stat-value">
+            {Object.values(onboarding.admin_permissions || {}).filter(Boolean).length} {t.stats.enabledSuffix}
+          </span>
+        </div>
+        <div className="publish-stat-box">
+          <span className="stat-label">{t.stats.paymentReceived}</span>
+          <span className="stat-value">
+            {onboarding.agreement_currency || "INR"} {Number(onboarding.payment?.amount_paid || 0).toLocaleString("en-IN")}
+          </span>
+        </div>
+      </div>
+
+      {onboarding.onboarding_status === "draft" ? (
+        <div className="publish-actions-row">
+          <button type="button" className="button-link primary-publish-btn" onClick={onPublish} disabled={busy}>
+            {busy ? t.publishing : t.publishInstitute}
+          </button>
+        </div>
+      ) : (
+        <div className="publish-actions-row">
+          <Link className="button-link" to={`/super-admin/institutes/${onboarding.id}`}>
+            {t.manageInstitute}
+          </Link>
+          <button type="button" className="secondary-done-btn" onClick={() => navigate("/super-admin/onboarding")}>
+            {t.done}
+          </button>
+        </div>
+      )}
+    </CollapsiblePanel>
+  );
+}

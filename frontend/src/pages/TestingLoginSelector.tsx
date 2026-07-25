@@ -1,15 +1,14 @@
 import { Link } from "react-router-dom";
-import { Icon } from "../components/icons";
+import { Icon } from "@/components/icons";
+import { testingLoginSelectorStrings as strings } from "./TestingLoginSelector.strings";
 
 export function TestingLoginSelector() {
   return (
     <div className="testing-login-page">
       <section className="testing-login-panel" aria-labelledby="testing-login-title">
-        <div className="testing-login-kicker">Testing access</div>
-        <h1 id="testing-login-title">Choose account type</h1>
-        <p>
-          Select which portal you want to test. Each option opens the correct login screen for that role.
-        </p>
+        <div className="testing-login-kicker">{strings.kicker}</div>
+        <h1 id="testing-login-title">{strings.title}</h1>
+        <p>{strings.description}</p>
 
         <div className="testing-login-actions">
           <Link className="testing-login-card testing-login-card-primary" to="/super-admin/login">
@@ -17,8 +16,8 @@ export function TestingLoginSelector() {
               <Icon name="admin" />
             </span>
             <span>
-              <strong>Super Admin</strong>
-              <small>Platform owner dashboard, SaaS controls, accounts and revenue.</small>
+              <strong>{strings.superAdmin.title}</strong>
+              <small>{strings.superAdmin.description}</small>
             </span>
             <span className="testing-login-arrow" aria-hidden="true">→</span>
           </Link>
@@ -28,15 +27,15 @@ export function TestingLoginSelector() {
               <Icon name="grading" />
             </span>
             <span>
-              <strong>SA Instructor</strong>
-              <small>Assessment authoring, modules, mock tests and grading queue.</small>
+              <strong>{strings.saInstructor.title}</strong>
+              <small>{strings.saInstructor.description}</small>
             </span>
             <span className="testing-login-arrow" aria-hidden="true">→</span>
           </Link>
         </div>
 
         <Link className="testing-login-secondary" to="/login">
-          Continue to institute/student portal login
+          {strings.continueLabel}
         </Link>
       </section>
     </div>

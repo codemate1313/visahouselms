@@ -65,11 +65,15 @@ import {
   StudentProfile,
   StudentProgress,
   Subscriptions,
+  SuperAdminBlogForm,
+  SuperAdminBlogs,
   SuperAdminInstituteAccounts,
   SuperAdminInstituteStudents,
   SuperAdminInstructorForm,
+  SuperAdminSEOSettings,
   SuperAdminStudentForm,
   SuperAdminStudentOverview,
+  SuperAdminTestimonials,
   Terminal,
   TestRunner,
   TestingLoginSelector,
@@ -78,10 +82,6 @@ import {
 import { ProtectedRoute } from "./ProtectedRoute";
 import { BlogsList } from "../pages/public/BlogsList";
 import { BlogDetail } from "../pages/public/BlogDetail";
-import { SuperAdminTestimonials } from "../pages/superadmin/SuperAdminTestimonials";
-import { SuperAdminBlogs } from "../pages/superadmin/SuperAdminBlogs";
-import { SuperAdminBlogForm } from "../pages/superadmin/SuperAdminBlogForm";
-import { SuperAdminSEOSettings } from "../pages/superadmin/SuperAdminSEOSettings";
 
 export const router = createBrowserRouter([
   {

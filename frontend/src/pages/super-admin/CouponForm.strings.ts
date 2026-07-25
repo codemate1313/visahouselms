@@ -1,0 +1,33 @@
+export const couponFormStrings = {
+  newTitle: "New Coupon",
+  editTitle: "Edit Coupon",
+  loading: "Loading...",
+  codeLabel: "Code",
+  codePlaceholder: "WELCOME10",
+  codeImmutableHint: "Codes can't be changed after creation.",
+  discountTypeLabel: "Discount type",
+  discountTypes: {
+    percent: "Percent",
+    flat: "Flat amount",
+  },
+  valueLabel: (isPercent: boolean) => `Value ${isPercent ? "(%)" : "(₹)"}`,
+  scopeLabel: "Scope",
+  scopes: {
+    all: "All products",
+    plan: "Specific plan",
+  },
+  planLabel: "Plan",
+  selectPlanPlaceholder: "Select a plan...",
+  searchPlansPlaceholder: "Search plans...",
+  usageLimitLabel: "Usage limit",
+  usageLimitPlaceholder: "Unlimited",
+  validFromLabel: "Valid from",
+  validUntilLabel: "Valid until",
+  saving: "Saving...",
+  saveCoupon: "Save Coupon",
+  cancel: "Cancel",
+  errors: {
+    load: "Failed to load coupon.",
+    save: "Failed to save coupon.",
+  },
+} as const;

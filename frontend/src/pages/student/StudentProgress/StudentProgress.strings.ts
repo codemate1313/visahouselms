@@ -1,0 +1,30 @@
+export const studentProgressStrings = {
+  eyebrow: "Student progress",
+  title: "Achievements & ranking",
+  subtitle: "Your CEFR milestones and standing inside your institute cohort.",
+  loadError: "Failed to load your progress.",
+  loading: "Loading...",
+  stats: {
+    badgesEarned: "Badges earned",
+    instituteRank: "Institute rank",
+    averageScore: "Average score",
+    bestCefr: "Best CEFR",
+  },
+  badges: {
+    title: "Badges",
+    description: "Badges unlock automatically when a graded result meets the stated requirement.",
+    earned: "Earned",
+    locked: "Locked",
+  },
+  leaderboard: {
+    title: "Institute leaderboard",
+    description: "Ranked by average percentage across graded tests. Equal averages share a rank.",
+    rank: "Rank",
+    student: "Student",
+    tests: "Tests",
+    average: "Average",
+    bestCefr: "Best CEFR",
+    you: "You",
+    empty: "Complete a graded test to join your institute leaderboard.",
+  },
+} as const;

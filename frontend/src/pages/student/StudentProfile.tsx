@@ -1,8 +1,9 @@
 import { type ChangeEvent, type FormEvent, useState } from "react";
-import { API_BASE_URL, apiClient } from "../../api/client";
-import { extractErrorMessage } from "../../api/errors";
-import { ProfileEditorShell } from "../../components/ProfileEditorShell";
-import { useAuthStore } from "../../store/authStore";
+import { API_BASE_URL, apiClient } from "@/api/client";
+import { extractErrorMessage } from "@/api/errors";
+import { ProfileEditorShell } from "@/components/ProfileEditorShell";
+import { useAuthStore } from "@/store/authStore";
+import { studentProfileStrings as strings } from "./StudentProfile.strings";
 
 export function StudentProfile() {
   const user = useAuthStore((state) => state.user);
@@ -28,9 +29,9 @@ export function StudentProfile() {
         last_name: lastName,
       });
       setUser(data);
-      setSuccess("Profile updated.");
+      setSuccess(strings.notices.saved);
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Failed to update profile."));
+      setError(extractErrorMessage(err, strings.errors.save));
     } finally {
       setSaving(false);
     }
@@ -48,9 +49,9 @@ export function StudentProfile() {
       const { data } = await apiClient.post("/student/me/avatar", form);
       setUser(data);
       setAvatarRevision(Date.now());
-      setSuccess("Avatar updated.");
+      setSuccess(strings.notices.avatarUpdated);
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Failed to upload avatar."));
+      setError(extractErrorMessage(err, strings.errors.avatar));
     } finally {
       setUploading(false);
       event.target.value = "";
@@ -62,7 +63,7 @@ export function StudentProfile() {
 
   return (
     <ProfileEditorShell
-      roleLabel="Student"
+      roleLabel={strings.roleLabel}
       tone="student"
       firstName={firstName}
       lastName={lastName}
@@ -76,22 +77,22 @@ export function StudentProfile() {
       <form className="role-profile-form" onSubmit={handleSubmit}>
         <div className="form-grid">
           <div>
-            <label htmlFor="student-first-name">First name</label>
+            <label htmlFor="student-first-name">{strings.firstNameLabel}</label>
             <input id="student-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} required />
           </div>
           <div>
-            <label htmlFor="student-last-name">Last name</label>
+            <label htmlFor="student-last-name">{strings.lastNameLabel}</label>
             <input id="student-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} required />
           </div>
         </div>
-        <label htmlFor="student-email">Email address</label>
+        <label htmlFor="student-email">{strings.emailLabel}</label>
         <input id="student-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
 
         {error && <p className="error-text">{error}</p>}
         {success && <p className="success-text">{success}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Profile"}</button>
+          <button type="submit" disabled={saving}>{saving ? strings.saving : strings.saveProfile}</button>
         </div>
       </form>
     </ProfileEditorShell>

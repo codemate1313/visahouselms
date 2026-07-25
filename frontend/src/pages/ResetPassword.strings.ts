@@ -1,0 +1,21 @@
+export const resetPasswordStrings = {
+  eyebrow: "Security",
+  title: "Set New Password",
+  subtitle: "Create a strong new password for your account",
+  missingTokenError: "Missing or invalid password reset token.",
+  passwordMismatchError: "Passwords do not match.",
+  genericError: "Failed to reset password. The link may have expired.",
+  invalidTokenBanner: "Invalid or missing reset token. Please request a new link.",
+  newPasswordLabel: "New Password",
+  newPasswordPlaceholder: "Enter new password",
+  confirmPasswordLabel: "Confirm New Password",
+  confirmPasswordPlaceholder: "Re-enter new password",
+  submitBusy: "Resetting password...",
+  submitLabel: "Update Password &rarr;",
+  returnToSignIn: "&larr; Return to Sign in",
+  success: {
+    title: "Password Reset Successfully!",
+    description: "Your password has been updated. You can now sign in with your new credentials.",
+    signInLink: "Sign in to Account &rarr;",
+  },
+};

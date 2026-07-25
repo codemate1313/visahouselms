@@ -1,9 +1,10 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { apiClient } from "../../api/client";
-import { extractErrorMessage } from "../../api/errors";
-import { SearchableSelect } from "../../components/SearchableSelect";
+import { apiClient } from "@/api/client";
+import { extractErrorMessage } from "@/api/errors";
+import { SearchableSelect } from "@/components/ui";
 import type { PlanRow } from "./Plans";
+import { couponFormStrings as strings } from "./CouponForm.strings";
 
 const EMPTY_FORM = {
   code: "",
@@ -47,7 +48,7 @@ export function CouponForm() {
           valid_until: data.valid_until ? data.valid_until.slice(0, 10) : "",
         });
       })
-      .catch(() => setError("Failed to load coupon."))
+      .catch(() => setError(strings.errors.load))
       .finally(() => setLoading(false));
   }, [id, isNew]);
 
@@ -78,37 +79,37 @@ export function CouponForm() {
       }
       navigate("/super-admin/coupons");
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Failed to save coupon."));
+      setError(extractErrorMessage(err, strings.errors.save));
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p>{strings.loading}</p>;
 
   return (
     <div>
-      <h1>{isNew ? "New Coupon" : "Edit Coupon"}</h1>
+      <h1>{isNew ? strings.newTitle : strings.editTitle}</h1>
       <form className="form-card wide" onSubmit={handleSubmit}>
-        <label htmlFor="code">Code</label>
+        <label htmlFor="code">{strings.codeLabel}</label>
         <input
           id="code"
           value={form.code}
           onChange={set("code")}
           disabled={!isNew}
-          placeholder="WELCOME10"
+          placeholder={strings.codePlaceholder}
           required
         />
-        {!isNew && <p className="hint">Codes can't be changed after creation.</p>}
+        {!isNew && <p className="hint">{strings.codeImmutableHint}</p>}
 
         <div className="form-grid">
           <div>
-            <label htmlFor="discount_type">Discount type</label>
+            <label htmlFor="discount_type">{strings.discountTypeLabel}</label>
             <SearchableSelect
               id="discount_type"
               options={[
-                { value: "percent", label: "Percent" },
-                { value: "flat", label: "Flat amount" },
+                { value: "percent", label: strings.discountTypes.percent },
+                { value: "flat", label: strings.discountTypes.flat },
               ]}
               value={form.discount_type}
               onChange={(value) => setForm((prev) => ({ ...prev, discount_type: String(value) as typeof prev.discount_type }))}
@@ -118,16 +119,16 @@ export function CouponForm() {
             />
           </div>
           <div>
-            <label htmlFor="value">Value {form.discount_type === "percent" ? "(%)" : "(₹)"}</label>
+            <label htmlFor="value">{strings.valueLabel(form.discount_type === "percent")}</label>
             <input id="value" type="number" min="0" step="0.01" value={form.value} onChange={set("value")} required />
           </div>
           <div>
-            <label htmlFor="scope">Scope</label>
+            <label htmlFor="scope">{strings.scopeLabel}</label>
             <SearchableSelect
               id="scope"
               options={[
-                { value: "all", label: "All products" },
-                { value: "plan", label: "Specific plan" },
+                { value: "all", label: strings.scopes.all },
+                { value: "plan", label: strings.scopes.plan },
               ]}
               value={form.scope}
               onChange={(value) => setForm((prev) => ({ ...prev, scope: String(value) as typeof prev.scope }))}
@@ -137,27 +138,27 @@ export function CouponForm() {
           </div>
           {form.scope === "plan" && (
             <div>
-              <label htmlFor="scope_plan_id">Plan</label>
+              <label htmlFor="scope_plan_id">{strings.planLabel}</label>
               <SearchableSelect
                 id="scope_plan_id"
-                options={[{ value: "", label: "Select a plan..." }, ...plans.map((plan) => ({ value: plan.id, label: plan.name }))]}
+                options={[{ value: "", label: strings.selectPlanPlaceholder }, ...plans.map((plan) => ({ value: plan.id, label: plan.name }))]}
                 value={form.scope_plan_id}
                 onChange={(value) => setForm((prev) => ({ ...prev, scope_plan_id: String(value) }))}
-                searchPlaceholder="Search plans..."
+                searchPlaceholder={strings.searchPlansPlaceholder}
                 className="form-dropdown-select"
               />
             </div>
           )}
           <div>
-            <label htmlFor="usage_limit">Usage limit</label>
-            <input id="usage_limit" type="number" min="1" value={form.usage_limit} onChange={set("usage_limit")} placeholder="Unlimited" />
+            <label htmlFor="usage_limit">{strings.usageLimitLabel}</label>
+            <input id="usage_limit" type="number" min="1" value={form.usage_limit} onChange={set("usage_limit")} placeholder={strings.usageLimitPlaceholder} />
           </div>
           <div>
-            <label htmlFor="valid_from">Valid from</label>
+            <label htmlFor="valid_from">{strings.validFromLabel}</label>
             <input id="valid_from" type="date" value={form.valid_from} onChange={set("valid_from")} />
           </div>
           <div>
-            <label htmlFor="valid_until">Valid until</label>
+            <label htmlFor="valid_until">{strings.validUntilLabel}</label>
             <input id="valid_until" type="date" value={form.valid_until} onChange={set("valid_until")} />
           </div>
         </div>
@@ -165,8 +166,8 @@ export function CouponForm() {
         {error && <p className="error-text">{error}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Coupon"}</button>
-          <button type="button" onClick={() => navigate("/super-admin/coupons")}>Cancel</button>
+          <button type="submit" disabled={saving}>{saving ? strings.saving : strings.saveCoupon}</button>
+          <button type="button" onClick={() => navigate("/super-admin/coupons")}>{strings.cancel}</button>
         </div>
       </form>
     </div>

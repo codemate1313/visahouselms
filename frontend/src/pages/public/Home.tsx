@@ -1,5 +1,6 @@
 import { StaticDcPage } from "./StaticDcPage";
+import { homeStrings as strings } from "./Home.strings";
 
 export function Home() {
-  return <StaticDcPage fileName="Landing.dc.html" title="Visa House LMS" />;
+  return <StaticDcPage fileName={strings.fileName} title={strings.title} />;
 }

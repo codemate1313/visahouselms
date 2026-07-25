@@ -1,0 +1,22 @@
+export const superAdminBlogsStrings = {
+  searchPlaceholder: "Search by title, category, or author...",
+  statusFilters: ["ALL", "PUBLISHED", "DRAFT"] as const,
+  gridViewTitle: "Grid View",
+  tableViewTitle: "Table View",
+  writeBlogPost: "Write Blog Post",
+  loading: "Loading blogs...",
+  deleteConfirm: "Are you sure you want to delete this blog post?",
+  unpublishTooltip: "Unpublish Article",
+  publishTooltip: "Publish Article",
+  editTooltip: "Edit Article",
+  deleteTooltip: "Delete Article",
+  minReadSuffix: "min read",
+  publishedLabel: "Published",
+  draftLabel: "Draft",
+  tableHeaders: {
+    article: "ARTICLE TITLE & CATEGORY",
+    author: "AUTHOR",
+    status: "STATUS",
+    actions: "ACTIONS",
+  },
+};

@@ -1,0 +1,57 @@
+export const couponsStrings = {
+  searchPlaceholder: "Search coupon code...",
+  scopeFilter: {
+    allScopes: "All scopes",
+    allPlans: "All plans",
+    specificPlan: "Specific plan",
+    specificCourse: "Specific course",
+  },
+  statusFilter: {
+    anyStatus: "Any status",
+    active: "Active",
+    inactive: "Inactive",
+  },
+  exportPdf: "Export PDF",
+  exportExcel: "Export Excel",
+  newCoupon: "+ New Coupon",
+  resultCount: {
+    showing: "Showing",
+    entry: "entry",
+    entries: "entries",
+  },
+  loading: "Loading...",
+  table: {
+    code: "Code",
+    discount: "Discount",
+    scope: "Scope",
+    usage: "Usage",
+    validWindow: "Valid Window",
+    status: "Status",
+    actions: "Actions",
+    empty: "No coupons match these filters.",
+    deactivate: "Deactivate Coupon",
+    reactivate: "Reactivate Coupon",
+    edit: "Edit Coupon",
+    delete: "Delete Coupon",
+  },
+  deleteModal: {
+    title: "Delete Coupon",
+    message: (code: string) => `Are you sure you want to delete coupon "${code}"?`,
+    confirmText: "Delete Coupon",
+  },
+  errors: {
+    load: "Failed to load coupons.",
+    toggle: (action: string) => `Failed to ${action} coupon.`,
+    delete: "Failed to delete coupon.",
+  },
+  pdf: {
+    header: "IELTS LMS — Discount Coupons Report",
+    generatedPrefix: "Generated:",
+    columns: ["#", "Coupon Code", "Discount Value", "Scope", "Usage Count", "Valid Window", "Status"],
+  },
+  excel: {
+    sheetName: "Coupons",
+    columns: ["#", "Coupon Code", "Discount Type", "Value", "Scope", "Usage Count", "Usage Limit", "Valid From", "Valid Until", "Status"],
+    unlimited: "Unlimited",
+  },
+} as const;

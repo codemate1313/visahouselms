@@ -4,6 +4,7 @@ import { logoutAndRedirectHome } from "../../auth/logout";
 import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
 import { PortalTopBar } from "../../components/PortalTopBar";
 import { Sidebar, type MenuSection } from "../../components/Sidebar";
+import { instructorLayoutStrings as strings } from "./InstructorLayout.strings";
 
 const COLLAPSE_STORAGE_KEY = "instructor-lms-sidebar-collapsed";
 
@@ -22,27 +23,27 @@ export function InstructorLayout() {
 
   const sections: MenuSection[] = [
     {
-      title: "MAIN MENU",
+      title: strings.sections.mainMenu,
       items: [
         {
           key: "dashboard",
-          label: "Dashboard",
+          label: strings.items.dashboard,
           icon: "dashboard",
           to: "/super-admin/instructor/dashboard",
         },
         {
           key: "authoring",
-          label: "Authoring",
+          label: strings.items.authoring,
           icon: "module",
           children: [
             {
               key: "modules",
-              label: "Courses",
+              label: strings.items.modules,
               to: "/super-admin/instructor/modules",
             },
             {
               key: "grading",
-              label: "Grading Queue",
+              label: strings.items.grading,
               to: "/super-admin/instructor/grading",
             },
           ],
@@ -50,26 +51,26 @@ export function InstructorLayout() {
       ],
     },
     {
-      title: "SETTINGS",
+      title: strings.sections.settings,
       items: [
         {
           key: "account",
-          label: "Account",
+          label: strings.items.account,
           icon: "user",
           children: [
             {
               key: "profile",
-              label: "My Profile",
+              label: strings.items.profile,
               to: "/super-admin/instructor/profile",
             },
             {
               key: "sessions",
-              label: "Active Sessions",
+              label: strings.items.sessions,
               to: "/super-admin/instructor/sessions",
             },
             {
               key: "change-password",
-              label: "Change Password",
+              label: strings.items.changePassword,
               to: "/super-admin/instructor/change-password",
             },
           ],
@@ -81,8 +82,8 @@ export function InstructorLayout() {
   return (
     <div className="dashboard instructor-portal super-admin-portal">
       <Sidebar
-        brandTitle="IELTS LMS"
-        brandSubtitle="SA Instructor"
+        brandTitle={strings.brandTitle}
+        brandSubtitle={strings.brandSubtitle}
         sections={sections}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((prev) => !prev)}
@@ -90,10 +91,10 @@ export function InstructorLayout() {
       />
       <main className="dashboard-content" style={{ flex: 1, padding: "20px" }}>
         <PortalTopBar
-          notificationEyebrow="Author updates"
+          notificationEyebrow={strings.notificationEyebrow}
           fallbackRoute="/super-admin/instructor/dashboard"
           notificationsHref="/super-admin/instructor/notifications"
-          roleLabel="SA Instructor"
+          roleLabel={strings.roleLabel}
         />
         <GsapRouteAnimator>
           <Outlet />

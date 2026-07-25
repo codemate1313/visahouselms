@@ -1,10 +1,11 @@
 import { type FormEvent, useState } from "react";
-import { apiClient } from "../../api/client";
-import { extractErrorMessage } from "../../api/errors";
-import { PasswordInput } from "../../components/PasswordInput";
-import { PasswordStrengthMeter } from "../../components/PasswordStrengthMeter";
-import { useAuthStore } from "../../store/authStore";
-import { evaluatePassword } from "../../utils/passwordStrength";
+import { apiClient } from "@/api/client";
+import { extractErrorMessage } from "@/api/errors";
+import { PasswordInput } from "@/components/PasswordInput";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { useAuthStore } from "@/store/authStore";
+import { evaluatePassword } from "@/utils/passwordStrength";
+import { changePasswordStrings as strings } from "./ChangePassword.strings";
 
 interface ChangePasswordProps {
   apiBase?: string;
@@ -29,7 +30,7 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
     setSuccess(false);
 
     if (newPassword !== confirmPassword) {
-      setError("New password and confirmation do not match.");
+      setError(strings.errors.mismatch);
       return;
     }
 
@@ -46,7 +47,7 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Failed to change password."));
+      setError(extractErrorMessage(err, strings.errors.save));
     } finally {
       setSaving(false);
     }
@@ -54,16 +55,16 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
 
   return (
     <div>
-      <h1>Change Password</h1>
+      <h1>{strings.title}</h1>
 
       {user?.force_password_reset && (
         <div className="banner warning">
-          An administrator requires you to change your password before continuing.
+          {strings.forceResetBanner}
         </div>
       )}
 
       <form className="form-card" onSubmit={handleSubmit}>
-        <label htmlFor="current_password">Current password</label>
+        <label htmlFor="current_password">{strings.currentPasswordLabel}</label>
         <PasswordInput
           id="current_password"
           value={currentPassword}
@@ -71,7 +72,7 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
           required
         />
 
-        <label htmlFor="new_password">New password</label>
+        <label htmlFor="new_password">{strings.newPasswordLabel}</label>
         <PasswordInput
           id="new_password"
           value={newPassword}
@@ -80,21 +81,21 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
         />
         <PasswordStrengthMeter password={newPassword} />
 
-        <label htmlFor="confirm_password">Confirm new password</label>
+        <label htmlFor="confirm_password">{strings.confirmPasswordLabel}</label>
         <PasswordInput
           id="confirm_password"
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           required
         />
-        {confirmMismatch && <p className="error-text">Passwords do not match.</p>}
+        {confirmMismatch && <p className="error-text">{strings.mismatch}</p>}
 
         {error && <p className="error-text">{error}</p>}
-        {success && <p className="success-text">Password updated successfully.</p>}
+        {success && <p className="success-text">{strings.notices.saved}</p>}
 
         <div className="form-actions">
           <button type="submit" disabled={saving || !strength.allMet || confirmMismatch}>
-            {saving ? "Saving..." : "Update Password"}
+            {saving ? strings.saving : strings.updatePassword}
           </button>
         </div>
       </form>

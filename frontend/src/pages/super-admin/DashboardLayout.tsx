@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
-import { logoutAndRedirectHome } from "../../auth/logout";
-import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
-import { PortalTopBar } from "../../components/PortalTopBar";
-import { Sidebar, type MenuSection } from "../../components/Sidebar";
+import { logoutAndRedirectHome } from "@/auth/logout";
+import { GsapRouteAnimator } from "@/components/GsapRouteAnimator";
+import { PortalTopBar } from "@/components/PortalTopBar";
+import { Sidebar, type MenuSection } from "@/components/Sidebar";
+import { dashboardLayoutStrings as strings } from "./DashboardLayout.strings";
 
 const COLLAPSE_STORAGE_KEY = "ielts-lms-sidebar-collapsed";
 
@@ -20,117 +21,118 @@ export function DashboardLayout() {
     await logoutAndRedirectHome();
   }
 
-  // Original IELTS LMS Super Admin Menu Configuration
+  const m = strings.menu;
+
   const sections: MenuSection[] = [
     {
-      title: "MAIN MENU",
+      title: m.mainMenu,
       items: [
         {
           key: "dashboard",
-          label: "Dashboard",
+          label: m.dashboard,
           icon: "dashboard",
           to: "/super-admin/dashboard",
         },
         {
           key: "accounts",
-          label: "Admin Accounts",
+          label: m.adminAccounts,
           icon: "admin",
           to: "/super-admin/accounts",
         },
         {
           key: "instructors",
-          label: "SA Instructors",
+          label: m.saInstructors,
           icon: "instructors",
           to: "/super-admin/instructors",
         },
         {
           key: "courses",
-          label: "Course Control",
+          label: m.courseControl,
           icon: "module",
           to: "/super-admin/modules",
         },
         {
           key: "grading-oversight",
-          label: "Grading Oversight",
+          label: m.gradingOversight,
           icon: "grading",
           to: "/super-admin/grading",
         },
         {
           key: "notifications",
-          label: "Notifications",
+          label: m.notifications,
           icon: "notifications",
           to: "/super-admin/notifications",
         },
         {
           key: "saas",
-          label: "SaaS",
+          label: m.saas,
           icon: "building",
           children: [
-            { key: "saas_institutes", label: "Institutes", to: "/super-admin/institutes" },
-            { key: "saas_onboarding", label: "Institute Onboarding", to: "/super-admin/onboarding" },
-            { key: "saas_plans", label: "Direct Student Plans", to: "/super-admin/plans" },
-            { key: "saas_subscriptions", label: "Access Agreements", to: "/super-admin/subscriptions" },
-            { key: "saas_trial", label: "Trial Settings", to: "/super-admin/trial-config" },
-            { key: "saas_demo", label: "Demo Accounts", to: "/super-admin/demo-accounts" },
-            { key: "saas_coupons", label: "Coupons", to: "/super-admin/coupons" },
-            { key: "saas_payments", label: "Payments", to: "/super-admin/payments" },
-            { key: "saas_payment_methods", label: "Payment Methods", to: "/super-admin/payment-methods" },
-            { key: "saas_revenue", label: "Revenue", to: "/super-admin/revenue" },
+            { key: "saas_institutes", label: m.saasInstitutes, to: "/super-admin/institutes" },
+            { key: "saas_onboarding", label: m.saasOnboarding, to: "/super-admin/onboarding" },
+            { key: "saas_plans", label: m.saasPlans, to: "/super-admin/plans" },
+            { key: "saas_subscriptions", label: m.saasSubscriptions, to: "/super-admin/subscriptions" },
+            { key: "saas_trial", label: m.saasTrial, to: "/super-admin/trial-config" },
+            { key: "saas_demo", label: m.saasDemo, to: "/super-admin/demo-accounts" },
+            { key: "saas_coupons", label: m.saasCoupons, to: "/super-admin/coupons" },
+            { key: "saas_payments", label: m.saasPayments, to: "/super-admin/payments" },
+            { key: "saas_payment_methods", label: m.saasPaymentMethods, to: "/super-admin/payment-methods" },
+            { key: "saas_revenue", label: m.saasRevenue, to: "/super-admin/revenue" },
           ],
         },
       ],
     },
     {
-      title: "CMS & CONTENT",
+      title: m.cmsContent,
       items: [
         {
           key: "testimonials",
-          label: "Testimonials",
+          label: m.testimonials,
           icon: "user",
           to: "/super-admin/testimonials",
         },
         {
           key: "blogs",
-          label: "Blogs CMS",
+          label: m.blogsCms,
           icon: "module",
           to: "/super-admin/blogs",
         },
         {
           key: "seo_settings",
-          label: "SEO & Meta Settings",
+          label: m.seoSettings,
           icon: "settings",
           to: "/super-admin/seo-settings",
         },
       ],
     },
     {
-      title: "SETTINGS",
+      title: m.settings,
       items: [
         {
           key: "system",
-          label: "System",
+          label: m.system,
           icon: "settings",
           children: [
-            { key: "system_dev", label: "Developer Settings", to: "/super-admin/dev-settings" },
-            { key: "system_logs", label: "Logs", to: "/super-admin/logs" },
-            { key: "system_terminal", label: "CMD Terminal", to: "/super-admin/terminal" },
+            { key: "system_dev", label: m.systemDev, to: "/super-admin/dev-settings" },
+            { key: "system_logs", label: m.systemLogs, to: "/super-admin/logs" },
+            { key: "system_terminal", label: m.systemTerminal, to: "/super-admin/terminal" },
           ],
         },
         {
           key: "profile",
-          label: "My Profile",
+          label: m.myProfile,
           icon: "user",
           to: "/super-admin/profile",
         },
         {
           key: "sessions",
-          label: "Active Sessions",
+          label: m.activeSessions,
           icon: "session",
           to: "/super-admin/sessions",
         },
         {
           key: "change_password",
-          label: "Change Password",
+          label: m.changePassword,
           icon: "lock",
           to: "/super-admin/change-password",
         },
@@ -141,8 +143,8 @@ export function DashboardLayout() {
   return (
     <div className="dashboard super-admin-portal">
       <Sidebar
-        brandTitle="IELTS LMS"
-        brandSubtitle="Super Admin"
+        brandTitle={strings.brandTitle}
+        brandSubtitle={strings.brandSubtitle}
         sections={sections}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((prev) => !prev)}
@@ -150,10 +152,10 @@ export function DashboardLayout() {
       />
       <main className="dashboard-content">
         <PortalTopBar
-          notificationEyebrow="Platform updates"
+          notificationEyebrow={strings.notificationEyebrow}
           fallbackRoute="/super-admin/dashboard"
           notificationsHref="/super-admin/inbox"
-          roleLabel="Super Admin"
+          roleLabel={strings.brandSubtitle}
         />
         <GsapRouteAnimator>
           <Outlet />

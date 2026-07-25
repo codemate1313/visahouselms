@@ -1,0 +1,13 @@
+export const notificationsInboxStrings = {
+  eyebrow: "Updates",
+  title: "Notifications",
+  subtitle: "Everything that needs your attention, in one place.",
+  markAllRead: "Mark all as read",
+  loadingMessage: "Loading notifications...",
+  loadError: "Notifications could not be loaded.",
+  errorTitle: "Something went wrong",
+  retryLabel: "Try again",
+  emptyTitle: "No notifications",
+  emptyDescription: "You are all caught up.",
+  scorePrefix: "Score",
+};

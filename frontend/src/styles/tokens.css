@@ -1,0 +1,96 @@
+/*
+ * Global design tokens — single source of truth for system/chrome colors,
+ * typography defaults, radii, shadows and glass surfaces.
+ *
+ * These are NOT used for tenant-facing brand surfaces: per-institute
+ * primary/secondary colors are set at runtime on `--institute-*` vars by
+ * useInstituteBranding.ts and must keep overriding independently of this file.
+ *
+ * Dark mode is applied via `[data-theme="dark"] .some-class { ... }`
+ * selector overrides throughout the stylesheet, not by swapping these
+ * variable values — keep that pattern when adding new component CSS.
+ */
+
+:root {
+  /* Typography */
+  --app-font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --app-heading-weight: 600;
+  --app-stat-weight: 600;
+  --app-body-weight: 400;
+
+  /* Surfaces & text */
+  --bg: #f5f5f7;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-muted: rgba(247, 247, 249, 0.92);
+  --text: #111113;
+  --text-muted: #6e6e73;
+  --border: rgba(210, 210, 216, 0.72);
+
+  /* Semantic status colors */
+  --primary: #e11d2e;
+  --primary-hover: #b91323;
+  --primary-soft: rgba(225, 29, 46, 0.1);
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --success: #1f7a4d;
+  --warning: #9a6a17;
+  --warning-soft: rgba(255, 224, 138, 0.34);
+
+  /* Nav / chrome */
+  --nav-bg: rgba(255, 255, 255, 0.88);
+  --nav-surface: rgba(17, 17, 19, 0.045);
+  --nav-text: #6e6e73;
+
+  /* Chart color system */
+  --series-1: #e11d2e;
+  --series-2: #6e6e73;
+  --chart-grid: rgba(142, 142, 147, 0.24);
+  --chart-highlight: #e11d2e;
+  --chart-muted: #3b82f6;
+  --emerald-500: #10b981;
+  --amber-500: #f59e0b;
+  --red-500: #e11d2e;
+  --blue-500: #3b82f6;
+  --shade-8b5cf6: #8b5cf6;
+  --purple-500: #8b5cf6;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-700: #334155;
+  --slate-900: #0f172a;
+
+  /* Extended red/rose scale used by decorative gradients across the app.
+     Kept as a named scale (not collapsed into --primary/--danger) because
+     these are deliberately distinct gradient stops, not accidental drift. */
+  --rose-600: #e11d48;
+  --red-700: #b91c2b;
+  --red-600-alt: #ef4444;
+
+  /* Shape / elevation */
+  --radius: 18px;
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-bg-strong: rgba(255, 255, 255, 0.94);
+  --glass-border: rgba(255, 255, 255, 0.95);
+  --glass-shadow: 0 12px 34px rgba(17, 17, 19, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --shadow-sm: 0 1px 2px rgba(17, 17, 19, 0.035), 0 10px 26px rgba(17, 17, 19, 0.045);
+  --shadow-md: 0 18px 48px rgba(17, 17, 19, 0.1);
+
+  /* Sidebar chrome (previously a second, duplicate :root block) */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #f0f0f4;
+  --sidebar-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  --sidebar-text: #4b5563;
+  --sidebar-text-dark: #111827;
+  --sidebar-text-muted: #8e8e93;
+  --sidebar-active-bg: #fee2e2;
+  --sidebar-active-text: #dc2626;
+  --sidebar-logo-bg: #fee2e2;
+  --sidebar-logo-text: #dc2626;
+  --sidebar-red: #ea4335;
+  --sidebar-red-bg: #fee2e2;
+  --sidebar-red-text: #ef4444;
+  --sidebar-width: 272px;
+  --sidebar-collapsed-width: 84px;
+}

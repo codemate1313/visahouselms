@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { loaderMessages } from "../content/common.strings";
 
 interface LoaderStore {
   isLoading: boolean;
@@ -13,16 +14,11 @@ interface LoaderStore {
 let timeoutTimer: ReturnType<typeof setTimeout> | null = null;
 let textCycleTimer: ReturnType<typeof setInterval> | null = null;
 
-const DEFAULT_MESSAGES = [
-  "Processing request...",
-  "Syncing data with server...",
-  "Finalizing changes...",
-  "Almost ready...",
-];
+const DEFAULT_MESSAGES = loaderMessages.cycle;
 
 export const useLoaderStore = create<LoaderStore>((set, get) => ({
   isLoading: false,
-  message: "Loading...",
+  message: loaderMessages.idle,
   activeRequests: 0,
 
   showLoader: (customMessage?: string) => {
@@ -34,7 +30,7 @@ export const useLoaderStore = create<LoaderStore>((set, get) => ({
     // Safety fallback timer: reset loader after 8s max
     timeoutTimer = setTimeout(() => {
       if (textCycleTimer) clearInterval(textCycleTimer);
-      set({ activeRequests: 0, isLoading: false, message: "Loading..." });
+      set({ activeRequests: 0, isLoading: false, message: loaderMessages.idle });
     }, 8000);
 
     // Auto-cycle generic messages if no custom event message is locked
@@ -66,7 +62,7 @@ export const useLoaderStore = create<LoaderStore>((set, get) => ({
       return {
         activeRequests: nextRequests,
         isLoading: nextRequests > 0,
-        message: nextRequests > 0 ? state.message : "Loading...",
+        message: nextRequests > 0 ? state.message : loaderMessages.idle,
       };
     });
   },
@@ -76,7 +72,7 @@ export const useLoaderStore = create<LoaderStore>((set, get) => ({
     if (textCycleTimer) clearInterval(textCycleTimer);
     timeoutTimer = null;
     textCycleTimer = null;
-    set({ activeRequests: 0, isLoading: false, message: "Loading..." });
+    set({ activeRequests: 0, isLoading: false, message: loaderMessages.idle });
   },
 
   setMessage: (msg: string) => set({ message: msg }),

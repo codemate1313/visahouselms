@@ -1,13 +1,14 @@
 import { type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiClient } from "../api/client";
-import { getDeviceIdentity } from "../auth/device";
-import { extractErrorMessage } from "../api/errors";
-import { PasswordInput } from "../components/PasswordInput";
-import { PasswordStrengthMeter } from "../components/PasswordStrengthMeter";
-import { useAuthStore } from "../store/authStore";
-import { useToastStore } from "../store/toastStore";
-import { HeroSlider } from "./Login";
+import { apiClient } from "@/api/client";
+import { getDeviceIdentity } from "@/auth/device";
+import { extractErrorMessage } from "@/api/errors";
+import { HeroSlider } from "@/components/auth/HeroSlider";
+import { PasswordInput } from "@/components/PasswordInput";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { useAuthStore } from "@/store/authStore";
+import { useToastStore } from "@/store/toastStore";
+import { registerStrings as strings } from "./Register.strings";
 
 export function Register() {
   const navigate = useNavigate();
@@ -37,12 +38,12 @@ export function Register() {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       });
       setSession(tokens.access_token, user);
-      showSuccess("Your account is ready.", "Welcome");
+      showSuccess(strings.welcomeToastMessage, strings.welcomeToastTitle);
       navigate("/student/dashboard");
     } catch (requestError: unknown) {
-      const msg = extractErrorMessage(requestError, "Unable to create your account. Please try again.");
+      const msg = extractErrorMessage(requestError, strings.errorFallback);
       setError(msg);
-      showError(msg, "Sign Up Failed");
+      showError(msg, strings.errorTitle);
     } finally {
       setLoading(false);
     }
@@ -50,7 +51,6 @@ export function Register() {
 
   return (
     <div className="login-concise-page">
-      {/* Dynamic Glowing Orbs Background Layer */}
       <div className="login-glowing-orbs" aria-hidden="true">
         <div className="glowing-orb orb-primary" />
         <div className="glowing-orb orb-secondary" />
@@ -58,49 +58,47 @@ export function Register() {
       </div>
 
       <div className="login-ref-card">
-        {/* Left Side: Animated Hero Image Slider */}
         <div className="login-slider-container">
           <HeroSlider />
         </div>
 
-        {/* Right Side: Clean Form */}
         <div className="login-form-side">
           <div className="vh-auth-brand">
             <span className="vh-auth-logo">VH</span>
             <div>
-              <div className="vh-auth-name">Visa House</div>
-              <div className="vh-auth-tag">IELTS LMS</div>
+              <div className="vh-auth-name">{strings.brandName}</div>
+              <div className="vh-auth-tag">{strings.brandTag}</div>
             </div>
           </div>
 
           <div className="login-form-header text-center">
             <h1 className="form-main-title">
-              Create <span className="vh-auth-italic">account.</span>
+              Create <span className="vh-auth-italic">{strings.createAccount}</span>
             </h1>
-            <p className="form-sub-title">Sign up as a student to browse and access IELTS courses.</p>
+            <p className="form-sub-title">{strings.subtitle}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="concise-form">
             <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <div className="form-group">
-                <label htmlFor="first_name">First name</label>
+                <label htmlFor="first_name">{strings.firstNameLabel}</label>
                 <input
                   id="first_name"
                   value={firstName}
                   onChange={(event) => setFirstName(event.target.value)}
-                  placeholder="First name"
+                  placeholder={strings.firstNamePlaceholder}
                   required
                   maxLength={100}
                   autoComplete="given-name"
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="last_name">Last name</label>
+                <label htmlFor="last_name">{strings.lastNameLabel}</label>
                 <input
                   id="last_name"
                   value={lastName}
                   onChange={(event) => setLastName(event.target.value)}
-                  placeholder="Last name"
+                  placeholder={strings.lastNamePlaceholder}
                   required
                   maxLength={100}
                   autoComplete="family-name"
@@ -109,11 +107,11 @@ export function Register() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="email">Email address</label>
+              <label htmlFor="email">{strings.emailLabel}</label>
               <input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder={strings.emailPlaceholder}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
@@ -122,26 +120,22 @@ export function Register() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <PasswordInput
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create a password"
-                autoComplete="new-password"
-              />
+              <label htmlFor="password">{strings.passwordLabel}</label>
+              <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} placeholder={strings.passwordPlaceholder} autoComplete="new-password" />
               <PasswordStrengthMeter password={password} />
             </div>
 
             {error && <div className="concise-error-box">{error}</div>}
 
             <button type="submit" className="concise-submit-btn" disabled={loading}>
-              {loading ? "Creating account..." : "Create account →"}
+              {loading ? strings.submitBusy : strings.submitLabel}
             </button>
           </form>
 
           <div className="login-footer-links text-center">
             <p className="form-legal-note">
-              Already have an account? <Link to="/login">Sign in</Link>
+              {strings.alreadyHaveAccount}
+              <Link to="/login">{strings.signInLink}</Link>
             </p>
           </div>
         </div>

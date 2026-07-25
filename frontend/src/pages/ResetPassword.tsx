@@ -1,8 +1,9 @@
 import { type FormEvent, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { apiClient } from "../api/client";
-import { extractErrorMessage } from "../api/errors";
-import { PasswordInput } from "../components/PasswordInput";
+import { apiClient } from "@/api/client";
+import { extractErrorMessage } from "@/api/errors";
+import { PasswordInput } from "@/components/PasswordInput";
+import { resetPasswordStrings as strings } from "./ResetPassword.strings";
 
 export function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -17,11 +18,11 @@ export function ResetPassword() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!token) {
-      setError("Missing or invalid password reset token.");
+      setError(strings.missingTokenError);
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(strings.passwordMismatchError);
       return;
     }
 
@@ -34,7 +35,7 @@ export function ResetPassword() {
       });
       setSuccess(true);
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Failed to reset password. The link may have expired."));
+      setError(extractErrorMessage(err, strings.genericError));
     } finally {
       setLoading(false);
     }
@@ -42,13 +43,29 @@ export function ResetPassword() {
 
   return (
     <div className="login-page-container" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "var(--slate-50)" }}>
-      <div className="login-card-container" style={{ width: "100%", maxWidth: 440, background: "var(--white)", padding: 32, borderRadius: 16, border: "1px solid var(--slate-200)", boxShadow: "0 10px 30px rgba(var(--slate-900-rgb), 0.06)" }}>
+      <div
+        className="login-card-container"
+        style={{ width: "100%", maxWidth: 440, background: "var(--white)", padding: 32, borderRadius: 16, border: "1px solid var(--slate-200)", boxShadow: "0 10px 30px rgba(var(--slate-900-rgb), 0.06)" }}
+      >
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ display: "inline-block", padding: "6px 14px", background: "rgba(var(--sa-sidebar-red-rgb), 0.1)", borderRadius: 20, color: "var(--sa-sidebar-red)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
-            Security
+          <div
+            style={{
+              display: "inline-block",
+              padding: "6px 14px",
+              background: "rgba(var(--sa-sidebar-red-rgb), 0.1)",
+              borderRadius: 20,
+              color: "var(--sa-sidebar-red)",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              marginBottom: 8,
+            }}
+          >
+            {strings.eyebrow}
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--slate-900)", margin: "4px 0" }}>Set New Password</h1>
-          <p style={{ fontSize: 13.5, color: "var(--slate-500)", margin: 0 }}>Create a strong new password for your account</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--slate-900)", margin: "4px 0" }}>{strings.title}</h1>
+          <p style={{ fontSize: 13.5, color: "var(--slate-500)", margin: 0 }}>{strings.subtitle}</p>
         </div>
 
         {success ? (
@@ -58,47 +75,39 @@ export function ResetPassword() {
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--slate-900)", marginBottom: 8 }}>Password Reset Successfully!</h2>
-            <p style={{ fontSize: 14, color: "var(--slate-500)", marginBottom: 24 }}>Your password has been updated. You can now sign in with your new credentials.</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--slate-900)", marginBottom: 8 }}>{strings.success.title}</h2>
+            <p style={{ fontSize: 14, color: "var(--slate-500)", marginBottom: 24 }}>{strings.success.description}</p>
             <Link to="/login" className="concise-submit-btn" style={{ textDecoration: "none", display: "block", textAlign: "center" }}>
-              Sign in to Account &rarr;
+              {strings.success.signInLink}
             </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="concise-form">
             {!token && (
               <div className="concise-error-box" style={{ marginBottom: 16 }}>
-                Invalid or missing reset token. Please request a new link.
+                {strings.invalidTokenBanner}
               </div>
             )}
 
             <div className="form-group">
-              <label htmlFor="new-password">New Password</label>
-              <PasswordInput
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter new password"
-              />
+              <label htmlFor="new-password">{strings.newPasswordLabel}</label>
+              <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} placeholder={strings.newPasswordPlaceholder} />
             </div>
 
             <div className="form-group">
-              <label htmlFor="confirm-password">Confirm New Password</label>
-              <PasswordInput
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter new password"
-              />
+              <label htmlFor="confirm-password">{strings.confirmPasswordLabel}</label>
+              <PasswordInput value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={strings.confirmPasswordPlaceholder} />
             </div>
 
             {error && <div className="concise-error-box">{error}</div>}
 
             <button type="submit" className="concise-submit-btn" disabled={loading || !token} style={{ marginTop: 16 }}>
-              {loading ? "Resetting password..." : "Update Password &rarr;"}
+              {loading ? strings.submitBusy : strings.submitLabel}
             </button>
 
             <div style={{ textAlign: "center", marginTop: 20 }}>
               <Link to="/login" style={{ fontSize: 13, color: "var(--slate-500)", textDecoration: "none", fontWeight: 600 }}>
-                &larr; Return to Sign in
+                {strings.returnToSignIn}
               </Link>
             </div>
           </form>

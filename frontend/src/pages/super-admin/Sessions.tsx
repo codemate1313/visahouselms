@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { apiClient } from "../../api/client";
-import { extractErrorMessage } from "../../api/errors";
-import { Icon } from "../../components/icons";
+import { apiClient } from "@/api/client";
+import { extractErrorMessage } from "@/api/errors";
+import { Icon } from "@/components/icons";
+import { sessionsStrings as strings } from "./Sessions.strings";
 
 interface SessionInfo {
   id: number;
@@ -13,7 +14,7 @@ interface SessionInfo {
 }
 
 function describeAgent(userAgent: string | null): string {
-  if (!userAgent) return "Unknown device";
+  if (!userAgent) return strings.unknownDevice;
   if (userAgent.includes("curl")) return "curl / API client";
   if (userAgent.includes("Firefox")) return "Firefox";
   if (userAgent.includes("Edg")) return "Edge";
@@ -39,7 +40,7 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
       setSessions(data);
       setError(null);
     } catch {
-      setError("Failed to load sessions.");
+      setError(strings.errors.load);
     } finally {
       setLoading(false);
     }
@@ -57,7 +58,7 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
       await apiClient.delete(`${apiBase}/me/sessions/${session.id}`);
       await loadSessions();
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Failed to revoke session."));
+      setError(extractErrorMessage(err, strings.errors.revoke));
     }
   }
 
@@ -66,34 +67,34 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
     setNotice(null);
     try {
       const { data } = await apiClient.post(`${apiBase}/me/sessions/revoke-others`, {});
-      setNotice(`Revoked ${data.revoked} other session${data.revoked === 1 ? "" : "s"}.`);
+      setNotice(strings.revokedOthers(data.revoked));
       await loadSessions();
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Failed to revoke other sessions."));
+      setError(extractErrorMessage(err, strings.errors.revokeOthers));
     }
   }
 
   return (
     <div>
       <div className="page-header">
-        <h1>Active Sessions</h1>
-        <button onClick={handleRevokeOthers}>Sign out other sessions</button>
+        <h1>{strings.title}</h1>
+        <button onClick={handleRevokeOthers}>{strings.signOutOthers}</button>
       </div>
 
       {error && <p className="error-text">{error}</p>}
       {notice && <p className="success-text">{notice}</p>}
 
       {loading ? (
-        <p>Loading...</p>
+        <p>{strings.loading}</p>
       ) : (
         <table className="data-table">
           <thead>
             <tr>
-              <th>Device</th>
-              <th>IP Address</th>
-              <th>Signed in</th>
-              <th>Expires</th>
-              <th className="table-actions-heading">Actions</th>
+              <th>{strings.table.device}</th>
+              <th>{strings.table.ipAddress}</th>
+              <th>{strings.table.signedIn}</th>
+              <th>{strings.table.expires}</th>
+              <th className="table-actions-heading">{strings.table.actions}</th>
             </tr>
           </thead>
           <tbody>
@@ -101,7 +102,7 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
               <tr key={session.id}>
                 <td>
                   {describeAgent(session.user_agent)}
-                  {session.is_current && <span className="badge badge-green">this session</span>}
+                  {session.is_current && <span className="badge badge-green">{strings.thisSession}</span>}
                 </td>
                 <td>{session.ip_address ?? "—"}</td>
                 <td>{new Date(session.created_at).toLocaleString()}</td>
@@ -112,8 +113,8 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
                       type="button"
                       onClick={() => handleRevoke(session)}
                       className="danger"
-                      aria-label="Revoke session"
-                      data-tooltip="Revoke session"
+                      aria-label={strings.revokeSession}
+                      data-tooltip={strings.revokeSession}
                     >
                       <Icon name="revoke" />
                     </button>

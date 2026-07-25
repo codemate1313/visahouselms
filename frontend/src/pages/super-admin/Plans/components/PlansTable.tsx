@@ -1,0 +1,88 @@
+import { Link } from "react-router-dom";
+import { Icon } from "@/components/icons";
+import { ToggleSwitch } from "@/components/ToggleSwitch";
+import { plansStrings as strings } from "../Plans.strings";
+import type { PlanRow } from "../types";
+
+interface PlansTableProps {
+  plans: PlanRow[];
+  onToggleActive: (plan: PlanRow) => void;
+  onView: (plan: PlanRow) => void;
+  onRequestDelete: (plan: PlanRow) => void;
+}
+
+export function PlansTable({ plans, onToggleActive, onView, onRequestDelete }: PlansTableProps) {
+  const t = strings.table;
+  return (
+    <div className="table-wrap">
+      <table className="data-table sleek-plans-table">
+        <thead>
+          <tr>
+            <th style={{ width: "32%" }}>{t.planName}</th>
+            <th style={{ width: "22%" }}>{t.priceAndDuration}</th>
+            <th style={{ width: "20%" }}>{t.limits}</th>
+            <th style={{ width: "12%" }}>{t.status}</th>
+            <th className="table-actions-heading" style={{ textAlign: "right", paddingRight: 20 }}>
+              {t.actions}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {plans.length === 0 && (
+            <tr>
+              <td colSpan={5} className="empty-cell">
+                {t.empty}
+              </td>
+            </tr>
+          )}
+          {plans.map((plan) => (
+            <tr key={plan.id}>
+              <td>
+                <div className="table-item-details">
+                  <span className="table-item-title" style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
+                    {plan.name}
+                  </span>
+                  <span className="table-item-subtitle" style={{ fontSize: 12, color: "#64748b" }}>
+                    {t.target} {plan.audience.replace("_", " ")}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <div className="table-item-details">
+                  <strong style={{ fontSize: 14, color: "#0f172a", whiteSpace: "nowrap" }}>
+                    {plan.currency || "INR"} {Number(plan.price).toLocaleString("en-IN")}
+                  </strong>
+                  <span style={{ fontSize: 12, color: "#64748b" }}>
+                    {plan.duration_days} {t.daysSuffix}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <span className="plan-limits-pill" title={`${plan.student_limit} Students / ${plan.staff_limit} Staff / ${plan.test_limit} Tests`}>
+                  {plan.student_limit} / {plan.staff_limit} / {plan.test_limit}
+                </span>
+              </td>
+              <td>
+                <span className={`badge ${!plan.is_active ? "badge-inactive" : plan.is_published ? "badge-green" : "badge-amber"}`}>
+                  {!plan.is_active ? strings.statusFilter.inactive : plan.is_published ? strings.statusFilter.active : strings.statusFilter.draft}
+                </span>
+              </td>
+              <td className="table-actions institute-row-actions">
+                <ToggleSwitch checked={plan.is_active} onChange={() => onToggleActive(plan)} tooltip={plan.is_active ? t.deactivate : t.reactivate} />
+                <button type="button" className="action-btn-icon action-view" onClick={() => onView(plan)} data-tooltip={t.viewDetails}>
+                  <Icon name="eye" />
+                </button>
+                <Link className="action-btn-icon action-edit" to={`/super-admin/plans/${plan.id}`} data-tooltip={t.edit}>
+                  <Icon name="edit" />
+                </Link>
+                <button type="button" className="action-btn-icon danger action-delete" onClick={() => onRequestDelete(plan)} data-tooltip={t.delete}>
+                  <Icon name="trash" />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

@@ -1,0 +1,56 @@
+import type { BlogFormData } from "./types";
+
+export const blogFormDefaults: BlogFormData = {
+  title: "",
+  slug: "",
+  summary: "",
+  content_markdown: "",
+  featured_image_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=80",
+  category: "Speaking Tips",
+  tags: "IELTS, Preparation, Speaking, Writing",
+  author_name: "IELTS LMS Editorial Team",
+  read_time_minutes: 5,
+  is_published: true,
+  meta_title: "",
+  meta_description: "",
+};
+
+export const blogFormCategories = ["Speaking Tips", "Reading Passages", "Writing Assessor", "General Guidance"];
+
+export const superAdminBlogFormStrings = {
+  backToArticles: "Back to Articles",
+  editTitle: "Edit Educational Article",
+  createTitle: "Create Educational Article",
+  subtitle: "Draft, optimize SEO metadata, and publish learning content",
+  cancel: "Cancel",
+  saveBusy: "Saving...",
+  updateLabel: "Update Article",
+  publishLabel: "Publish Article",
+  fields: {
+    articleTitle: "Article Title *",
+    articleTitlePlaceholder: "e.g. 10 Strategies to Score Band 8.0 in IELTS Speaking",
+    slug: "URL Slug *",
+    slugPlaceholder: "ielts-speaking-band-8-strategies",
+    summary: "Short Summary (Excerpt) *",
+    summaryPlaceholder: "Brief high-level summary displayed on blog cards and search results...",
+    content: "Article Content (Markdown) *",
+    contentPlaceholder: "# Title&#10;&#10;## Key Section Heading&#10;&#10;Write comprehensive article content with standard Markdown formatting...",
+    coverPreview: "Cover Photo Preview",
+    noImagePreview: "No Image Preview",
+    featuredImageUrl: "Featured Image URL",
+    featuredImageUrlPlaceholder: "https://images.unsplash.com/...",
+    category: "Category",
+    authorName: "Author Name",
+    readTime: "Est. Read Time (Minutes)",
+    publishStatus: "Publish Status",
+    publishStatusLive: "Live on public site",
+    publishStatusDraft: "Saved as draft",
+    seoSectionTitle: "SEO & Social Meta Tags",
+    seoTitleTag: "SEO Title Tag",
+    seoTitleTagPlaceholder: "Article Title | IELTS LMS",
+    tags: "Tags (Comma separated)",
+    tagsPlaceholder: "IELTS, Preparation, Speaking",
+    seoMetaDescription: "SEO Meta Description",
+    seoMetaDescriptionPlaceholder: "Search engine meta description...",
+  },
+};

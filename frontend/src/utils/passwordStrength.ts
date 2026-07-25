@@ -1,3 +1,5 @@
+import { passwordRuleLabels } from "../content/common.strings";
+
 export interface PasswordRule {
   label: string;
   met: boolean;
@@ -13,11 +15,11 @@ export interface PasswordStrength {
 // Mirrors backend/app/core/password_policy.py - keep the two in sync.
 export function evaluatePassword(password: string): PasswordStrength {
   const rules: PasswordRule[] = [
-    { label: "At least 8 characters", met: password.length >= 8 },
-    { label: "An uppercase letter", met: /[A-Z]/.test(password) },
-    { label: "A lowercase letter", met: /[a-z]/.test(password) },
-    { label: "A digit", met: /\d/.test(password) },
-    { label: "A special character", met: /[^A-Za-z0-9]/.test(password) },
+    { label: passwordRuleLabels.minLength, met: password.length >= 8 },
+    { label: passwordRuleLabels.uppercase, met: /[A-Z]/.test(password) },
+    { label: passwordRuleLabels.lowercase, met: /[a-z]/.test(password) },
+    { label: passwordRuleLabels.digit, met: /\d/.test(password) },
+    { label: passwordRuleLabels.specialChar, met: /[^A-Za-z0-9]/.test(password) },
   ];
 
   const metCount = rules.filter((rule) => rule.met).length;

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 
-import { apiClient } from "../../api/client";
-import type { Announcement } from "../../api/types";
-import { CollapsiblePanel } from "../../components/CollapsiblePanel";
+import { apiClient } from "@/api/client";
+import type { Announcement } from "@/api/types";
+import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { studentAnnouncementsStrings as strings } from "./StudentAnnouncements.strings";
 
 function formatDate(value: string | null) {
   return value ? new Date(value).toLocaleString() : "";
@@ -19,34 +20,34 @@ export function StudentAnnouncements() {
         setAnnouncements(data);
         setError(null);
       })
-      .catch(() => setError("Announcements could not be loaded."));
+      .catch(() => setError(strings.loadError));
   }, []);
 
   return (
     <div className="student-announcements-page">
       <div className="page-header">
         <div>
-          <span className="page-eyebrow">Notifications</span>
-          <h1>Announcements</h1>
+          <span className="page-eyebrow">{strings.eyebrow}</span>
+          <h1>{strings.title}</h1>
         </div>
       </div>
       {error && <p className="error-text">{error}</p>}
       <CollapsiblePanel
         className="workspace-panel student-announcements-panel"
-        title="Announcement inbox"
-        description="Read platform and institute announcements."
+        title={strings.panelTitle}
+        description={strings.panelDescription}
         badge={<span className="count-chip">{announcements.length}</span>}
       >
         {announcements.length === 0 && (
           <div className="empty-state">
-            <h2>No announcements yet</h2>
+            <h2>{strings.empty}</h2>
           </div>
         )}
         <div className="announcement-history-list">
           {announcements.map((item) => (
             <article key={item.id}>
               <div>
-                <span className="badge badge-green">{item.institute_id == null ? "Platform" : "Institute"}</span>
+                <span className="badge badge-green">{item.institute_id == null ? strings.platform : strings.institute}</span>
                 <h3>{item.title}</h3>
                 <p>{item.message}</p>
                 <small>{formatDate(item.published_at)}</small>

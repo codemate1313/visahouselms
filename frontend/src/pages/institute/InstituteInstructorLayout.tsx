@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
-import { logoutAndRedirectHome } from "../../auth/logout";
-import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
-import { PortalTopBar } from "../../components/PortalTopBar";
-import { Sidebar, type MenuSection } from "../../components/Sidebar";
-import { useInstituteBranding } from "../../hooks/useInstituteBranding";
-import { useAuthStore } from "../../store/authStore";
+import { logoutAndRedirectHome } from "@/auth/logout";
+import { GsapRouteAnimator } from "@/components/GsapRouteAnimator";
+import { PortalTopBar } from "@/components/PortalTopBar";
+import { Sidebar, type MenuSection } from "@/components/Sidebar";
+import { useInstituteBranding } from "@/hooks/useInstituteBranding";
+import { useAuthStore } from "@/store/authStore";
+import { instituteInstructorLayoutStrings as strings } from "./InstituteInstructorLayout.strings";
 
 const COLLAPSE_STORAGE_KEY = "institute-instructor-sidebar-collapsed";
 
@@ -21,18 +22,18 @@ export function InstituteInstructorLayout() {
   }
 
   const sections: MenuSection[] = [
-    { title: "EVALUATION", items: [{ key: "grading", label: "Grading Queue", icon: "grading", to: "/institute-instructor/grading" }] },
-    { title: "SETTINGS", items: [
-      { key: "sessions", label: "Active Sessions", icon: "session", to: "/institute-instructor/sessions" },
-      { key: "change-password", label: "Change Password", icon: "lock", to: "/institute-instructor/change-password" },
+    { title: strings.menu.evaluation, items: [{ key: "grading", label: strings.menu.grading, icon: "grading", to: "/institute-instructor/grading" }] },
+    { title: strings.menu.settings, items: [
+      { key: "sessions", label: strings.menu.activeSessions, icon: "session", to: "/institute-instructor/sessions" },
+      { key: "change-password", label: strings.menu.changePassword, icon: "lock", to: "/institute-instructor/change-password" },
     ] },
   ];
 
   return (
     <div className="dashboard instructor-portal institute-branded-portal">
       <Sidebar
-        brandTitle={branding?.institute_name ?? "IELTS LMS"}
-        brandSubtitle="Institute Instructor"
+        brandTitle={branding?.institute_name ?? strings.brandTitle}
+        brandSubtitle={strings.brandSubtitle}
         brandLogoUrl={logoUrl}
         sections={sections}
         collapsed={collapsed}
@@ -41,10 +42,10 @@ export function InstituteInstructorLayout() {
       />
       <main className="dashboard-content" style={{ flex: 1, padding: "20px" }}>
         <PortalTopBar
-          notificationEyebrow="Instructor updates"
+          notificationEyebrow={strings.notificationEyebrow}
           fallbackRoute="/institute-instructor/grading"
           notificationsHref="/institute-instructor/notifications"
-          roleLabel="Institute Instructor"
+          roleLabel={strings.roleLabel}
         />
         <GsapRouteAnimator>
           <Outlet />

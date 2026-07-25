@@ -1,0 +1,33 @@
+export const planFormStrings = {
+  createTitle: "Create Direct Student Plan",
+  editTitle: "Edit Direct Student Plan",
+  subtitle: "Bundle published courses for students purchasing access directly from the website.",
+  loading: "Loading...",
+  fields: {
+    name: "Plan name",
+    description: "Description",
+    price: "Price",
+    currency: "Currency",
+    durationDays: "Access duration (days)",
+    testLimit: "Test attempt limit",
+  },
+  coursePicker: {
+    legend: "Included courses",
+    hint: "Add or remove courses at any time. Hidden courses remain configured but are unavailable to students.",
+    selectAll: "Select all",
+    empty: "No published courses are available.",
+    defaultAuthor: "SA Instructor",
+    hiddenSuffix: " · hidden",
+  },
+  publishToggle: {
+    label: "Publish on website",
+    hint: "Only published plans are visible to direct students.",
+  },
+  saving: "Saving...",
+  savePlan: "Save plan",
+  cancel: "Cancel",
+  errors: {
+    load: "Failed to load plan.",
+    save: "Failed to save direct-student plan.",
+  },
+} as const;

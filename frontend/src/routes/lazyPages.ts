@@ -72,3 +72,7 @@ export const Subscriptions = lazy(() => import("../pages/super-admin/Subscriptio
 export const Terminal = lazy(() => import("../pages/super-admin/Terminal").then((module) => ({ default: module.Terminal })));
 export const TestRunner = lazy(() => import("../pages/student/TestRunner").then((module) => ({ default: module.TestRunner })));
 export const TrialConfig = lazy(() => import("../pages/super-admin/TrialConfig").then((module) => ({ default: module.TrialConfig })));
+export const SuperAdminBlogs = lazy(() => import("../pages/super-admin/SuperAdminBlogs").then((module) => ({ default: module.SuperAdminBlogs })));
+export const SuperAdminBlogForm = lazy(() => import("../pages/super-admin/SuperAdminBlogForm").then((module) => ({ default: module.SuperAdminBlogForm })));
+export const SuperAdminTestimonials = lazy(() => import("../pages/super-admin/SuperAdminTestimonials").then((module) => ({ default: module.SuperAdminTestimonials })));
+export const SuperAdminSEOSettings = lazy(() => import("../pages/super-admin/SuperAdminSEOSettings").then((module) => ({ default: module.SuperAdminSEOSettings })));

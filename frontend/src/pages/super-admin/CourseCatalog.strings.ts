@@ -1,0 +1,28 @@
+export const courseCatalogStrings = {
+  title: "Instructor Course Hierarchy",
+  subtitle: "Inspect every SA Instructor, their courses, contents, publication dates, and distribution.",
+  searchPlaceholder: "Search course title...",
+  statusOptions: {
+    allStatuses: "All statuses",
+    draft: "Draft",
+    published: "Published",
+    archived: "Archived",
+  },
+  search: "Search",
+  loadError: "Failed to load course hierarchy.",
+  loading: "Loading...",
+  empty: "No courses found",
+  coursesSuffix: (count: number) => `${count} course${count === 1 ? "" : "s"}`,
+  noSummary: "No summary",
+  manage: "Manage",
+  facts: {
+    created: "Created",
+    published: "Published",
+    notPublished: "Not published",
+    modules: "Modules",
+    institutes: "Institutes",
+    resources: "Resources",
+    updated: "Updated",
+    noChanges: "No changes",
+  },
+} as const;

@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { apiClient } from "../../api/client";
-import { extractErrorMessage } from "../../api/errors";
+import { apiClient } from "@/api/client";
+import { extractErrorMessage } from "@/api/errors";
+import { trialConfigStrings as strings } from "./TrialConfig.strings";
 
 export function TrialConfig() {
   const [durationDays, setDurationDays] = useState("14");
@@ -36,41 +37,40 @@ export function TrialConfig() {
         test_limit: Number(testLimit),
         is_enabled: enabled,
       });
-      setNotice("Trial settings saved.");
+      setNotice(strings.notices.saved);
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Failed to save trial settings."));
+      setError(extractErrorMessage(err, strings.errors.save));
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p>{strings.loading}</p>;
 
   return (
     <div>
-      <h1>Direct-Student Trial</h1>
+      <h1>{strings.title}</h1>
       <p className="hint" style={{ marginBottom: 20 }}>
-        Governs the free trial for students who sign up directly (not through
-        an institute). Whichever limit is hit first locks the rest of the trial.
+        {strings.description}
       </p>
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <label className="toggle-row">
           <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
-          <span>Trial enabled</span>
+          <span>{strings.trialEnabled}</span>
         </label>
 
         <div className="form-grid" style={{ marginTop: 8 }}>
           <div>
-            <label htmlFor="duration">Trial duration (days)</label>
+            <label htmlFor="duration">{strings.durationLabel}</label>
             <input id="duration" type="number" min="1" value={durationDays} onChange={(e) => setDurationDays(e.target.value)} required />
           </div>
           <div>
-            <label htmlFor="course_limit">Courses visible</label>
+            <label htmlFor="course_limit">{strings.courseLimitLabel}</label>
             <input id="course_limit" type="number" min="0" value={courseLimit} onChange={(e) => setCourseLimit(e.target.value)} required />
           </div>
           <div>
-            <label htmlFor="test_limit">Tests allowed</label>
+            <label htmlFor="test_limit">{strings.testLimitLabel}</label>
             <input id="test_limit" type="number" min="0" value={testLimit} onChange={(e) => setTestLimit(e.target.value)} required />
           </div>
         </div>
@@ -79,7 +79,7 @@ export function TrialConfig() {
         {notice && <p className="success-text">{notice}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={saving}>{saving ? "Saving..." : "Save"}</button>
+          <button type="submit" disabled={saving}>{saving ? strings.saving : strings.save}</button>
         </div>
       </form>
     </div>

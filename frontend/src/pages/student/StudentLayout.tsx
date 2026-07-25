@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
-import { logoutAndRedirectHome } from "../../auth/logout";
-import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
-import { PortalTopBar } from "../../components/PortalTopBar";
-import { Sidebar, type MenuItem, type MenuSection } from "../../components/Sidebar";
-import { useInstituteBranding } from "../../hooks/useInstituteBranding";
-import { useAuthStore } from "../../store/authStore";
+import { logoutAndRedirectHome } from "@/auth/logout";
+import { GsapRouteAnimator } from "@/components/GsapRouteAnimator";
+import { PortalTopBar } from "@/components/PortalTopBar";
+import { Sidebar, type MenuItem, type MenuSection } from "@/components/Sidebar";
+import { useInstituteBranding } from "@/hooks/useInstituteBranding";
+import { useAuthStore } from "@/store/authStore";
+import { studentLayoutStrings as strings } from "./StudentLayout.strings";
 
 const COLLAPSE_STORAGE_KEY = "student-lms-sidebar-collapsed";
 
@@ -16,6 +17,7 @@ export function StudentLayout() {
   const user = useAuthStore((state) => state.user);
   const isInstituteStudent = user?.institute_id != null;
   const { branding, logoUrl } = useInstituteBranding(isInstituteStudent ? user?.institute_slug : null);
+  const roleLabel = isInstituteStudent ? strings.instituteStudent : strings.directStudent;
 
   useEffect(() => {
     localStorage.setItem(COLLAPSE_STORAGE_KEY, collapsed ? "1" : "0");
@@ -25,29 +27,30 @@ export function StudentLayout() {
     await logoutAndRedirectHome();
   }
 
+  const menu = strings.menu;
   const mainItems: MenuItem[] = [
-    { key: "dashboard", label: "Dashboard", icon: "dashboard", to: "/student/dashboard" },
+    { key: "dashboard", label: menu.dashboard, icon: "dashboard", to: "/student/dashboard" },
   ];
   if (!isInstituteStudent) {
-    mainItems.push({ key: "catalog", label: "Plans & Upgrades", icon: "courses", to: "/student/courses" });
+    mainItems.push({ key: "catalog", label: menu.plansAndUpgrades, icon: "courses", to: "/student/courses" });
   }
   mainItems.push(
-    { key: "my-courses", label: "My Tests", icon: "module", to: "/student/my-courses" },
-    { key: "attempts", label: "My Test History", icon: "grading", to: "/student/attempts" },
-    { key: "progress", label: "Progress", icon: "analytics", to: "/student/progress" },
+    { key: "my-courses", label: menu.myTests, icon: "module", to: "/student/my-courses" },
+    { key: "attempts", label: menu.myTestHistory, icon: "grading", to: "/student/attempts" },
+    { key: "progress", label: menu.progress, icon: "analytics", to: "/student/progress" },
   );
 
   const sections: MenuSection[] = [
     {
-      title: "MAIN MENU",
+      title: menu.mainMenu,
       items: mainItems,
     },
     {
-      title: "SETTINGS",
+      title: menu.settings,
       items: [
-        { key: "profile", label: "My Profile", icon: "user", to: "/student/profile" },
-        { key: "sessions", label: "Active Sessions", icon: "session", to: "/student/sessions" },
-        { key: "change-password", label: "Change Password", icon: "lock", to: "/student/change-password" },
+        { key: "profile", label: menu.myProfile, icon: "user", to: "/student/profile" },
+        { key: "sessions", label: menu.activeSessions, icon: "session", to: "/student/sessions" },
+        { key: "change-password", label: menu.changePassword, icon: "lock", to: "/student/change-password" },
       ],
     },
   ];
@@ -55,8 +58,8 @@ export function StudentLayout() {
   return (
     <div className={`dashboard student-portal${isInstituteStudent ? " institute-branded-portal" : " super-admin-portal"}`}>
       <Sidebar
-        brandTitle={branding?.institute_name ?? "IELTS LMS"}
-        brandSubtitle={isInstituteStudent ? "Institute Student" : "Direct Student"}
+        brandTitle={branding?.institute_name ?? strings.defaultBrandTitle}
+        brandSubtitle={roleLabel}
         brandLogoUrl={logoUrl}
         sections={sections}
         collapsed={collapsed}
@@ -65,10 +68,10 @@ export function StudentLayout() {
       />
       <main className="dashboard-content student-dashboard-content">
         <PortalTopBar
-          notificationEyebrow="Student updates"
+          notificationEyebrow={strings.notificationEyebrow}
           fallbackRoute="/student/dashboard"
           notificationsHref="/student/notifications"
-          roleLabel={isInstituteStudent ? "Institute Student" : "Direct Student"}
+          roleLabel={roleLabel}
         />
         <GsapRouteAnimator>
           <Outlet />

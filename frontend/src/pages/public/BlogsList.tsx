@@ -1,5 +1,6 @@
 import { StaticDcPage } from "./StaticDcPage";
+import { blogsListStrings as strings } from "./BlogsList.strings";
 
 export function BlogsList() {
-  return <StaticDcPage fileName="Blogs.dc.html" title="Visa House LMS Blogs" />;
+  return <StaticDcPage fileName={strings.fileName} title={strings.title} />;
 }

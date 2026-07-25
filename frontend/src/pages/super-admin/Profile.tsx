@@ -1,8 +1,9 @@
 import { type ChangeEvent, type FormEvent, useState } from "react";
-import { API_BASE_URL, apiClient } from "../../api/client";
-import { extractErrorMessage } from "../../api/errors";
-import { ProfileEditorShell } from "../../components/ProfileEditorShell";
-import { useAuthStore } from "../../store/authStore";
+import { API_BASE_URL, apiClient } from "@/api/client";
+import { extractErrorMessage } from "@/api/errors";
+import { ProfileEditorShell } from "@/components/ProfileEditorShell";
+import { useAuthStore } from "@/store/authStore";
+import { profileStrings as strings } from "./Profile.strings";
 
 export function Profile() {
   const user = useAuthStore((state) => state.user);
@@ -29,9 +30,9 @@ export function Profile() {
         last_name: lastName,
       });
       setUser(data);
-      setSuccess("Profile updated.");
+      setSuccess(strings.notices.saved);
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Failed to update profile."));
+      setError(extractErrorMessage(err, strings.errors.save));
     } finally {
       setSaving(false);
     }
@@ -49,9 +50,9 @@ export function Profile() {
       const { data } = await apiClient.post("/super-admin/me/avatar", form);
       setUser(data);
       setAvatarRevision(Date.now());
-      setSuccess("Avatar updated.");
+      setSuccess(strings.notices.avatarUpdated);
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Failed to upload avatar."));
+      setError(extractErrorMessage(err, strings.errors.avatar));
     } finally {
       setUploading(false);
       event.target.value = "";
@@ -65,7 +66,7 @@ export function Profile() {
 
   return (
     <ProfileEditorShell
-      roleLabel="Super Admin"
+      roleLabel={strings.roleLabel}
       tone="super-admin"
       firstName={firstName}
       lastName={lastName}
@@ -79,22 +80,22 @@ export function Profile() {
       <form className="role-profile-form" onSubmit={handleSubmit}>
         <div className="form-grid">
           <div>
-            <label htmlFor="super-admin-first-name">First name</label>
+            <label htmlFor="super-admin-first-name">{strings.firstNameLabel}</label>
             <input id="super-admin-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} required />
           </div>
           <div>
-            <label htmlFor="super-admin-last-name">Last name</label>
+            <label htmlFor="super-admin-last-name">{strings.lastNameLabel}</label>
             <input id="super-admin-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} required />
           </div>
         </div>
-        <label htmlFor="super-admin-email">Email address</label>
+        <label htmlFor="super-admin-email">{strings.emailLabel}</label>
         <input id="super-admin-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
 
         {error && <p className="error-text">{error}</p>}
         {success && <p className="success-text">{success}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Profile"}</button>
+          <button type="submit" disabled={saving}>{saving ? strings.saving : strings.saveProfile}</button>
         </div>
       </form>
     </ProfileEditorShell>
