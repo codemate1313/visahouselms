@@ -10,4 +10,7 @@ export const notificationsInboxStrings = {
   emptyTitle: "No notifications",
   emptyDescription: "You are all caught up.",
   scorePrefix: "Score",
+  pinnedLabel: "Pinned",
+  unpinnedLabel: "All notifications",
+  emptyPinnedHint: "Pin a notification to keep it at the top of your inbox.",
 };

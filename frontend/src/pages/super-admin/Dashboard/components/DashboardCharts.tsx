@@ -37,13 +37,13 @@ export function DashboardCharts({ summary }: DashboardChartsProps) {
 
   return (
     <div className="dashboard-charts-grid">
-      <BarChart data={institutesByRevenue} orientation="horizontal" formatValue={formatMoney} ariaLabel={t.byInstituteAriaLabel} emptyMessage={t.revenueEmpty} />
+      <BarChart data={institutesByRevenue} title={t.byInstituteTitle} orientation="horizontal" formatValue={formatMoney} ariaLabel={t.byInstituteAriaLabel} emptyMessage={t.revenueEmpty} />
 
-      <BarChart data={revenueByMonth} orientation="vertical" formatValue={formatMoney} ariaLabel={t.byMonthAriaLabel} emptyMessage={t.revenueEmpty} />
+      <BarChart data={revenueByMonth} title={t.byMonthTitle} orientation="vertical" formatValue={formatMoney} ariaLabel={t.byMonthAriaLabel} emptyMessage={t.revenueEmpty} />
 
-      <DonutChart data={paymentStatusData} centerLabel={t.paymentStatusCenterLabel} ariaLabel={t.paymentStatusAriaLabel} emptyMessage={t.paymentStatusEmpty} />
+      <DonutChart data={paymentStatusData} title={t.paymentStatusTitle} centerLabel={t.paymentStatusCenterLabel} ariaLabel={t.paymentStatusAriaLabel} emptyMessage={t.paymentStatusEmpty} />
 
-      <BarChart data={instituteStateData} orientation="vertical" legend={instituteStateLegend} ariaLabel={t.instituteStateAriaLabel} emptyMessage={t.instituteStateEmpty} />
+      <BarChart data={instituteStateData} title={t.instituteStateTitle} orientation="vertical" legend={instituteStateLegend} ariaLabel={t.instituteStateAriaLabel} emptyMessage={t.instituteStateEmpty} />
     </div>
   );
 }

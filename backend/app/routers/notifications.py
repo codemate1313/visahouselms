@@ -28,3 +28,21 @@ def read_notification(
 ):
     return notification_service.mark_notification_read(db, user, notification_id)
 
+
+@router.patch("/{notification_id}/pin")
+def pin_notification(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return notification_service.set_notification_pinned(db, user, notification_id, True)
+
+
+@router.patch("/{notification_id}/unpin")
+def unpin_notification(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return notification_service.set_notification_pinned(db, user, notification_id, False)
+

@@ -581,6 +581,7 @@ export interface StudentNotification {
   title: string;
   message: string;
   read_at: string | null;
+  pinned_at: string | null;
   created_at: string;
   module_title: string | null;
   module_type: ExamModuleType | null;

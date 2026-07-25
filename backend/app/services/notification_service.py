@@ -103,6 +103,7 @@ def _notification_out(notification: StudentNotification) -> dict:
         "title": notification.title,
         "message": notification.message,
         "read_at": _utc_out(notification.read_at),
+        "pinned_at": _utc_out(notification.pinned_at),
         "created_at": _utc_out(notification.created_at),
         "module_title": attempt.module.title if attempt is not None else None,
         "module_type": attempt.module.module_type if attempt is not None else None,
@@ -120,7 +121,13 @@ def list_user_notifications(db: Session, user: User) -> list[dict]:
         db.query(StudentNotification)
         .options(joinedload(StudentNotification.attempt).joinedload(TestAttempt.module))
         .filter(StudentNotification.user_id == user.id)
-        .order_by(StudentNotification.created_at.desc(), StudentNotification.id.desc())
+        # Pinned first (most recently pinned on top), then the usual newest-first feed.
+        .order_by(
+            StudentNotification.pinned_at.is_(None).asc(),
+            StudentNotification.pinned_at.desc(),
+            StudentNotification.created_at.desc(),
+            StudentNotification.id.desc(),
+        )
         .limit(50)
         .all()
     )
@@ -142,6 +149,25 @@ def mark_notification_read(db: Session, user: User, notification_id: int) -> dic
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
     if notification.read_at is None:
         notification.read_at = _now()
+        db.add(notification)
+        db.commit()
+        db.refresh(notification)
+    return _notification_out(notification)
+
+
+def set_notification_pinned(db: Session, user: User, notification_id: int, pinned: bool) -> dict:
+    """Pin/unpin a notification so it sticks to the top of the user's inbox."""
+    notification = (
+        db.query(StudentNotification)
+        .options(joinedload(StudentNotification.attempt).joinedload(TestAttempt.module))
+        .filter(StudentNotification.id == notification_id, StudentNotification.user_id == user.id)
+        .first()
+    )
+    if notification is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
+    desired = _now() if pinned else None
+    if (notification.pinned_at is not None) != pinned:
+        notification.pinned_at = desired
         db.add(notification)
         db.commit()
         db.refresh(notification)

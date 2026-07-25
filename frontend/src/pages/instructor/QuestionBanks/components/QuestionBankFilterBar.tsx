@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { Button, SearchableSelect, SearchInput } from "@/components/ui";
+import { Button, Checkbox, SearchableSelect, SearchInput } from "@/components/ui";
 import type { Course } from "@/api/types";
 import { questionBanksStrings as strings } from "../QuestionBanks.strings";
 
@@ -64,7 +64,7 @@ export function QuestionBankFilterBar({
         className="status-filter-select"
       />
       <label className="inline-check">
-        <input type="checkbox" checked={mine} onChange={(event) => onMineChange(event.target.checked)} /> {strings.myBanks}
+        <Checkbox checked={mine} onChange={(event) => onMineChange(event.target.checked)} /> {strings.myBanks}
       </label>
       <Button type="submit" size="sm">
         {strings.search}

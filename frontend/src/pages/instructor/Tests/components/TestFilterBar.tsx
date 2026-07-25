@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { Button, SearchableSelect, SearchInput } from "@/components/ui";
+import { Button, Checkbox, SearchableSelect, SearchInput } from "@/components/ui";
 import type { Course } from "@/api/types";
 import { testsStrings as strings } from "../Tests.strings";
 
@@ -57,7 +57,7 @@ export function TestFilterBar({
         className="status-filter-select"
       />
       <label className="inline-check">
-        <input type="checkbox" checked={mine} onChange={(event) => onMineChange(event.target.checked)} /> {strings.myTests}
+        <Checkbox checked={mine} onChange={(event) => onMineChange(event.target.checked)} /> {strings.myTests}
       </label>
       <Button type="submit" size="sm">
         {strings.search}

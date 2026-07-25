@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
+import { Checkbox } from "@/components/ui";
 import type { SuperAdminAccount } from "@/api/types";
 import { accountsListStrings as strings } from "../AccountsList.strings";
 
@@ -34,13 +35,10 @@ export function AccountsTable({
         <thead>
           <tr>
             <th className="table-select-heading">
-              <input
-                type="checkbox"
+              <Checkbox
                 aria-label="Select all accounts"
                 checked={selectableAccounts.length > 0 && selectedIds.size === selectableAccounts.length}
-                ref={(el) => {
-                  if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < selectableAccounts.length;
-                }}
+                indeterminate={selectedIds.size > 0 && selectedIds.size < selectableAccounts.length}
                 disabled={selectableAccounts.length === 0}
                 onChange={onToggleSelectAll}
               />
@@ -63,8 +61,7 @@ export function AccountsTable({
           {accounts.map((account) => (
             <tr key={account.id}>
               <td className="table-select-cell">
-                <input
-                  type="checkbox"
+                <Checkbox
                   aria-label={`Select ${account.first_name} ${account.last_name}`}
                   checked={selectedIds.has(account.id)}
                   disabled={account.is_owner}

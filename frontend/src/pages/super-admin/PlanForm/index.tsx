@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { RequiredMark } from "@/components/ui";
+import { Checkbox, RequiredMark } from "@/components/ui";
 import { planFormStrings as strings } from "./PlanForm.strings";
 import { PlanCoursePicker, type PlanModule } from "./components/PlanCoursePicker";
 
@@ -123,8 +123,7 @@ export function PlanForm() {
         </div>
         <PlanCoursePicker modules={modules} selected={selected} onToggle={toggle} onToggleAll={toggleAll} />
         <label className="toggle-row">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={form.is_published}
             onChange={(event) => setForm((current) => ({ ...current, is_published: event.target.checked }))}
           />

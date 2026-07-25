@@ -15,3 +15,5 @@ export type { PageHeaderProps } from "./PageHeader";
 export { SearchableSelect } from "./SearchableSelect";
 export type { SelectOption } from "./SearchableSelect";
 export { RequiredMark } from "./RequiredMark";
+export { Checkbox } from "./Checkbox";
+export type { CheckboxProps, CheckboxSize } from "./Checkbox";

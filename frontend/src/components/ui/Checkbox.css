@@ -1,0 +1,122 @@
+.ui-checkbox {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  vertical-align: middle;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.ui-checkbox-sm {
+  --ui-checkbox-size: 16px;
+}
+
+.ui-checkbox-md {
+  --ui-checkbox-size: 19px;
+}
+
+.ui-checkbox-lg {
+  --ui-checkbox-size: 23px;
+}
+
+/* Native input stays interactive (focus, keyboard, form semantics) but
+   visually invisible — it's stretched over the custom box below it. */
+.ui-checkbox-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.ui-checkbox-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ui-checkbox-size);
+  height: var(--ui-checkbox-size);
+  border-radius: calc(var(--ui-checkbox-size) * 0.32);
+  border: 1.75px solid var(--border);
+  background: var(--surface);
+  color: #fff;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ui-checkbox-icon {
+  width: 68%;
+  height: 68%;
+  overflow: visible;
+}
+
+.ui-checkbox-check,
+.ui-checkbox-dash {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition:
+    stroke-dashoffset 0.28s cubic-bezier(0.65, 0, 0.35, 1),
+    opacity 0.1s ease;
+}
+
+/* Hover / focus */
+.ui-checkbox:hover .ui-checkbox-box {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+}
+
+.ui-checkbox-input:focus-visible + .ui-checkbox-box {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+/* Tactile press feedback — released with the bouncy easing above, which
+   is what gives the toggle its "pop". */
+.ui-checkbox-input:active:not(:disabled) + .ui-checkbox-box {
+  transform: scale(0.86);
+}
+
+/* Checked / indeterminate */
+.ui-checkbox-input:checked + .ui-checkbox-box,
+.ui-checkbox-input:indeterminate + .ui-checkbox-box {
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--primary) 32%, transparent);
+}
+
+.ui-checkbox-input:checked + .ui-checkbox-box .ui-checkbox-check {
+  stroke-dashoffset: 0;
+  opacity: 1;
+  transition-delay: 0.03s;
+}
+
+.ui-checkbox-input:indeterminate + .ui-checkbox-box .ui-checkbox-dash {
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+
+/* Disabled */
+.ui-checkbox:has(.ui-checkbox-input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+[data-theme="dark"] .ui-checkbox-box {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+[data-theme="dark"] .ui-checkbox:hover .ui-checkbox-box {
+  border-color: color-mix(in srgb, var(--primary) 65%, rgba(255, 255, 255, 0.16));
+}

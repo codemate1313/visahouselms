@@ -1,3 +1,4 @@
+import { Checkbox } from "@/components/ui";
 import { planFormStrings as strings } from "../PlanForm.strings";
 
 export interface PlanModule {
@@ -24,12 +25,9 @@ export function PlanCoursePicker({ modules, selected, onToggle, onToggleAll }: P
       <p className="hint">{t.hint}</p>
       {modules.length > 0 && (
         <label className="plan-course-option select-all-option">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={selected.size === modules.length}
-            ref={(el) => {
-              if (el) el.indeterminate = selected.size > 0 && selected.size < modules.length;
-            }}
+            indeterminate={selected.size > 0 && selected.size < modules.length}
             onChange={onToggleAll}
           />
           <span>
@@ -42,7 +40,7 @@ export function PlanCoursePicker({ modules, selected, onToggle, onToggleAll }: P
       ) : (
         modules.map((module) => (
           <label className="plan-course-option" key={module.id}>
-            <input type="checkbox" checked={selected.has(module.id)} onChange={() => onToggle(module.id)} />
+            <Checkbox checked={selected.has(module.id)} onChange={() => onToggle(module.id)} />
             <span>
               <strong>{module.title}</strong>
               <small>

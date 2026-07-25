@@ -15,7 +15,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
   a { color: inherit; text-decoration: none; }
-  a:hover { color: var(--ac, #e11d48); }
+  a:hover { color: var(--ac, #e11d2e); }
   @keyframes vh-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
   @keyframes vh-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes vh-pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
@@ -34,11 +34,31 @@
   .vh-back { transform: rotateY(180deg); }
   .vh-nav { display: flex; align-items: center; gap: 30px; }
   .vh-nav-link { position: relative; font-size: 14px; font-weight: 500; color: var(--ink2, #9095a3); text-decoration: none; padding-bottom: 6px; transition: color 0.25s ease; }
-  .vh-nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--ac, #e11d48); transform: scaleX(0); transform-origin: left center; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .vh-nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--ac, #e11d2e); transform: scaleX(0); transform-origin: left center; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
   .vh-nav-link:hover, .vh-nav-link.vh-active { color: var(--ink, #f5f5f7); }
   .vh-nav-link:hover::after, .vh-nav-link.vh-active::after { transform: scaleX(1); }
   @keyframes vh-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  ::selection { background: var(--ac, #e11d48); color: #fff; }
+  ::selection { background: var(--ac, #e11d2e); color: #fff; }
+  /* FAQ accordion — spring motion sampled from animate-ui's Radix accordion
+     (framer-motion { type: 'spring', stiffness: 150, damping: 22 } => zeta 0.898, settles in 485ms) */
+  .vh-acc { --acc-dur: 485ms; --acc-spring: linear(0, 0.0264, 0.0913, 0.1775, 0.2733, 0.3705, 0.4637, 0.5499, 0.6273, 0.6952, 0.7538, 0.8035, 0.845, 0.8792, 0.9071, 0.9295, 0.9474, 0.9614, 0.9723, 0.9807, 0.987, 0.9917, 0.9951, 0.9975, 1); display: flex; flex-direction: column; gap: 12px; }
+  .vh-acc-item { background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 16px; transition: border-color .35s ease, box-shadow .35s ease, transform .35s ease; }
+  .vh-acc-item:hover { border-color: var(--acLine); }
+  .vh-acc-item.vh-acc-open { border-color: var(--acLine); box-shadow: 0 20px 44px -28px var(--ac); }
+  .vh-acc-trigger { width: 100%; font-family: inherit; font-size: 16px; font-weight: 600; color: var(--ink); background: transparent; border: none; border-radius: 16px; cursor: pointer; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; text-align: left; }
+  .vh-acc-trigger:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
+  .vh-acc-icon { position: relative; flex: 0 0 18px; width: 18px; height: 18px; color: var(--ac); transition: transform var(--acc-dur) var(--acc-spring); }
+  .vh-acc-icon::before, .vh-acc-icon::after { content: ""; position: absolute; top: 50%; left: 50%; width: 16px; height: 2px; border-radius: 2px; background: currentColor; transform: translate(-50%, -50%); }
+  .vh-acc-icon::after { transform: translate(-50%, -50%) rotate(90deg); }
+  .vh-acc-item.vh-acc-open .vh-acc-icon { transform: rotate(135deg); }
+  .vh-acc-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--acc-dur) var(--acc-spring); }
+  .vh-acc-item.vh-acc-open .vh-acc-panel { grid-template-rows: 1fr; }
+  .vh-acc-panel-inner { overflow: hidden; }
+  .vh-acc-body { padding: 0 24px 20px; font-size: 14.5px; line-height: 1.6; color: var(--ink2); opacity: 0; transform: translateY(-8px); transition: opacity .22s ease, transform var(--acc-dur) var(--acc-spring); }
+  .vh-acc-item.vh-acc-open .vh-acc-body { opacity: 1; transform: translateY(0); transition-delay: .07s; }
+  @media (prefers-reduced-motion: reduce) {
+    .vh-acc-panel, .vh-acc-icon, .vh-acc-body { transition-duration: 1ms; }
+  }
   /* Social Icons Hover Effect (Footer) */
   .footer-social-icons { display: flex; justify-content: flex-start; align-items: center; flex-direction: row; column-gap: 0.5rem; padding: 0; margin: 0; list-style: none; }
   .footer-social-icons .icon-content { margin: 0; position: relative; }
@@ -69,7 +89,7 @@
   <header style="position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: var(--headerBg); border-bottom: 1px solid var(--line);">
     <div style="max-width: 1280px; margin: 0 auto; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
       <a href="/" style="display: flex; align-items: center; gap: 11px;">
-        <span style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 15px; box-shadow: 0 8px 24px -8px var(--ac);">VH</span>
+        <img src="{{ logoSrc }}" alt="Visa House" width="38" height="38" style="width: 38px; height: 38px; object-fit: contain; display: block; flex: 0 0 38px;">
         <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.3px;">Visa House</span>
         <span style="font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 4px 8px; background: var(--chip); border: 1px solid var(--line); border-radius: 6px; color: var(--ink2);">IELTS LMS</span>
       </a>
@@ -80,7 +100,7 @@
       </nav>
       <div style="display: flex; align-items: center; gap: 10px;">
         <button type="button" onClick="{{ cycleTheme }}" title="Theme: {{ themeLabel }}" style="font-family: inherit; width: 40px; height: 40px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; display: grid; place-items: center; transition: transform .2s, background .2s;" style-hover="{transform: 'scale(1.08)', background: 'var(--chipHi)'}" style-active="{transform: 'scale(0.94)'}">{{ themeIcon }}</button>
-        <button type="button" style="font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 100px; border: none; background: var(--ac); color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .2s, box-shadow .2s;" style-hover="{transform: 'translateY(-2px)', boxShadow: '0 12px 28px -12px rgba(225, 29, 72, 0.4)'}" style-active="{transform: 'translateY(0)'}">
+        <button type="button" style="font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 100px; border: none; background: var(--ac); color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .2s, box-shadow .2s;" style-hover="{transform: 'translateY(-2px)', boxShadow: '0 12px 28px -12px rgba(225, 29, 46, 0.4)'}" style-active="{transform: 'translateY(0)'}">
           Sign in
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
         </button>
@@ -91,10 +111,7 @@
 
   <section style="position: relative; max-width: 1120px; margin: 0 auto; padding: 96px 32px 60px; text-align: center;">
     <div style="animation: vh-rise .7s ease both;">
-      <div style="display: inline-flex; align-items: center; gap: 9px; padding: 8px 14px; border-radius: 100px; background: var(--chip); border: 1px solid var(--line); font-size: 12.5px; font-weight: 500; color: var(--ink2); margin-bottom: 28px;">
-        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--ac); animation: vh-pulse 2s ease-in-out infinite; box-shadow: 0 0 12px var(--ac);"></span>
-        Simple plans, serious outcomes
-      </div>
+      
       <h1 style="font-size: 72px; line-height: 0.98; letter-spacing: -3px; font-weight: 600; margin-bottom: 24px;">
         One platform.
         <span style="font-family: inherit; font-style: normal; font-weight: 700; background: linear-gradient(135deg, var(--ac), var(--ac2)); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -0.8px;"> Two audiences.</span>
@@ -213,20 +230,20 @@
       <span style="display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 6px 12px; border-radius: 100px; background: var(--acWash); color: var(--ac); border: 1px solid var(--acLine);">FAQ</span>
       <h2 style="font-size: 40px; font-weight: 600; letter-spacing: -1.5px; margin-top: 16px;">Common questions</h2>
     </div>
-    <div style="display: flex; flex-direction: column; gap: 12px;">
-      <details class="vh-reveal" style="background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 16px; padding: 20px 24px;">
-        <summary style="font-size: 16px; font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;">Can I switch between monthly and annual? <span style="color: var(--ac); font-size: 20px;">+</span></summary>
-        <p style="font-size: 14.5px; line-height: 1.6; color: var(--ink2); margin-top: 12px;">Yes. Upgrade or downgrade any time from your billing page. Annual saves 20% and is prorated on switch.</p>
-      </details><details class="vh-reveal" style="background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 16px; padding: 20px 24px;">
-        <summary style="font-size: 16px; font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;">Does the institute plan include instructor accounts? <span style="color: var(--ac); font-size: 20px;">+</span></summary>
-        <p style="font-size: 14.5px; line-height: 1.6; color: var(--ink2); margin-top: 12px;">Every institute plan comes with one Institute Admin and up to five instructor seats. Extra seats can be added.</p>
-      </details><details class="vh-reveal" style="background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 16px; padding: 20px 24px;">
-        <summary style="font-size: 16px; font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;">How does the AI feedback pricing work? <span style="color: var(--ac); font-size: 20px;">+</span></summary>
-        <p style="font-size: 14.5px; line-height: 1.6; color: var(--ink2); margin-top: 12px;">AI drafts on writing are included in all plans. Monthly usage caps apply per direct/institute scope &mdash; see the docs for exact limits.</p>
-      </details><details class="vh-reveal" style="background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 16px; padding: 20px 24px;">
-        <summary style="font-size: 16px; font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;">Can we white-label the platform? <span style="color: var(--ac); font-size: 20px;">+</span></summary>
-        <p style="font-size: 14.5px; line-height: 1.6; color: var(--ink2); margin-top: 12px;">The Institute and Enterprise plans include full branding &mdash; your logo, colors, and domain across the portal.</p>
-      </details>
+    <div class="vh-acc">
+      <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="4">
+        <div class="{{ f.itemClass }}">
+          <button type="button" class="vh-acc-trigger" onClick="{{ f.toggle }}" aria-expanded="{{ f.expanded }}">
+            <span>{{ f.q }}</span>
+            <span class="vh-acc-icon" aria-hidden="true"></span>
+          </button>
+          <div class="vh-acc-panel">
+            <div class="vh-acc-panel-inner">
+              <div class="vh-acc-body">{{ f.a }}</div>
+            </div>
+          </div>
+        </div>
+      </sc-for>
     </div>
   </section>
 
@@ -250,7 +267,7 @@
     <div style="max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 40px;">
       <div>
         <div style="display: flex; align-items: center; gap: 11px; margin-bottom: 16px;">
-          <span style="width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px;">VH</span>
+          <img src="{{ logoSrc }}" alt="Visa House" width="34" height="34" style="width: 34px; height: 34px; object-fit: contain; display: block; flex: 0 0 34px;">
           <span style="font-size: 17px; font-weight: 700;">Visa House</span>
         </div>
         <ul class="footer-social-icons">
@@ -310,7 +327,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
 class Component extends DCLogic {
-  state = { theme: this.getInitialTheme(), billing: "monthly" };
+  state = { theme: this.getInitialTheme(), billing: "monthly", faqOpen: -1 };
 
   getInitialTheme() {
     try {
@@ -367,17 +384,17 @@ class Component extends DCLogic {
     const dark = this.isDark();
     try { window.parent.postMessage({ type: "vh-theme", theme: dark ? "dark" : "light" }, window.location.origin); } catch {}
     const set = (k, v) => this._root.style.setProperty(k, v);
-    set("--ac", "#e11d48");
-    set("--ac2", "#f43f5e");
+    set("--ac", "#e11d2e");
+    set("--ac2", "#ef4444");
     if (dark) {
       set("--bg", "#0a0a0f"); set("--ink", "#f5f5f7"); set("--ink2", "#9095a3");
-      set("--line", "rgba(255,255,255,0.1)"); set("--acLine", "rgba(225, 29, 72,0.35)"); set("--acWash", "rgba(225, 29, 72,0.14)");
+      set("--line", "rgba(255,255,255,0.1)"); set("--acLine", "rgba(225, 29, 46,0.35)"); set("--acWash", "rgba(225, 29, 46,0.14)");
       set("--card", "rgba(20,20,28,0.55)"); set("--cardSolid", "rgba(20,20,28,0.9)");
       set("--chip", "rgba(255,255,255,0.06)"); set("--chipHi", "rgba(255,255,255,0.12)"); set("--headerBg", "rgba(10,10,15,0.65)");
       set("--orbA", "0.28"); set("--orbB", "0.2"); set("--orbC", "0.14");
     } else {
       set("--bg", "#f7f5f2"); set("--ink", "#0e0d10"); set("--ink2", "#5f6270");
-      set("--line", "rgba(14,13,16,0.1)"); set("--acLine", "rgba(225, 29, 72,0.35)"); set("--acWash", "rgba(225, 29, 72,0.08)");
+      set("--line", "rgba(14,13,16,0.1)"); set("--acLine", "rgba(225, 29, 46,0.35)"); set("--acWash", "rgba(225, 29, 46,0.08)");
       set("--card", "rgba(255,255,255,0.7)"); set("--cardSolid", "rgba(255,255,255,0.95)");
       set("--chip", "rgba(14,13,16,0.04)"); set("--chipHi", "rgba(14,13,16,0.08)"); set("--headerBg", "rgba(247,245,242,0.7)");
       set("--orbA", "0.22"); set("--orbB", "0.16"); set("--orbC", "0.12");
@@ -393,6 +410,9 @@ class Component extends DCLogic {
   setMonthly = () => this.setState({ billing: "monthly" });
   setAnnual = () => this.setState({ billing: "annual" });
 
+  // Single-open accordion, matching animate-ui's default type="single" collapsible behaviour
+  toggleFaq = (i) => this.setState((s) => ({ faqOpen: s.faqOpen === i ? -1 : i }));
+
   renderVals() {
     const svg = (paths, size = 22) => React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.9, strokeLinecap: "round", strokeLinejoin: "round" }, paths.map((p, i) => React.createElement(p.tag, { key: i, ...p.attrs })));
     const annual = this.state.billing === "annual";
@@ -401,11 +421,24 @@ class Component extends DCLogic {
       light: svg([{ tag: "circle", attrs: { cx: 12, cy: 12, r: 4.2 } }, { tag: "path", attrs: { d: "M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" } }], 17),
       dark: svg([{ tag: "path", attrs: { d: "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" } }], 17),
     };
+    const faqs = [
+      { q: "Can I switch between monthly and annual?", a: "Yes. Upgrade or downgrade any time from your billing page. Annual saves 20% and is prorated on switch." },
+      { q: "Does the institute plan include instructor accounts?", a: "Every institute plan comes with one Institute Admin and up to five instructor seats. Extra seats can be added." },
+      { q: "How does the AI feedback pricing work?", a: "AI drafts on writing are included in all plans. Monthly usage caps apply per direct/institute scope — see the docs for exact limits." },
+      { q: "Can we white-label the platform?", a: "The Institute and Enterprise plans include full branding — your logo, colors, and domain across the portal." },
+    ].map((f, i) => ({
+      ...f,
+      itemClass: this.state.faqOpen === i ? "vh-acc-item vh-acc-open" : "vh-acc-item",
+      expanded: this.state.faqOpen === i ? "true" : "false",
+      toggle: () => this.toggleFaq(i),
+    }));
     return {
       rootRef: this.rootRef,
+      logoSrc: this.state.theme === "dark" ? "/brand/vh-mark-dark.png" : "/brand/vh-mark-light.png",
       cycleTheme: this.cycleTheme,
       setMonthly: this.setMonthly,
       setAnnual: this.setAnnual,
+      faqs,
       themeLabel: this.state.theme[0].toUpperCase() + this.state.theme.slice(1),
       themeIcon: themeIcons[this.state.theme],
       monthlyColor: annual ? "var(--ink2)" : "var(--bg)",

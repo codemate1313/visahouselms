@@ -14,6 +14,7 @@ import {
   Dashboard,
   DashboardLayout,
   DemoAccounts,
+  DeveloperLayout,
   DeveloperPanel,
   DeveloperSettings,
   GradingDetail,
@@ -179,9 +180,16 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute allowedRoles={["DEVELOPER"]} />,
     children: [
-      { path: `/${developerAccessSlug}`, element: <Navigate to={`/${developerAccessSlug}/panel`} replace /> },
-      { path: `/${developerAccessSlug}/panel`, element: <DeveloperPanel /> },
-      { path: `/${developerAccessSlug}/change-password`, element: <ChangePassword apiBase={`/developer/${developerAccessSlug}`} /> },
+      {
+        path: `/${developerAccessSlug}`,
+        element: <DeveloperLayout />,
+        children: [
+          { path: "", element: <Navigate to="panel" replace /> },
+          { path: "panel", element: <DeveloperPanel /> },
+          { path: "settings", element: <DeveloperSettings /> },
+          { path: "change-password", element: <ChangePassword apiBase={`/developer/${developerAccessSlug}`} /> },
+        ],
+      },
     ],
   },
   {

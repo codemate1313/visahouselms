@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
+import { Checkbox } from "@/components/ui";
 import type { InstituteMember } from "../types";
 import { instituteMembersStrings as strings } from "../InstituteMembers.strings";
 
@@ -44,13 +45,10 @@ export function MembersTable({
           <tr>
             {canManage && (
               <th className="table-select-heading">
-                <input
-                  type="checkbox"
+                <Checkbox
                   aria-label={`Select all ${label.toLowerCase()}`}
                   checked={selectableMembers.length > 0 && selectedIds.size === selectableMembers.length}
-                  ref={(el) => {
-                    if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < selectableMembers.length;
-                  }}
+                  indeterminate={selectedIds.size > 0 && selectedIds.size < selectableMembers.length}
                   onChange={onToggleSelectAll}
                 />
               </th>
@@ -79,8 +77,7 @@ export function MembersTable({
               {canManage && (
                 <td className="table-select-cell">
                   {!member.deleted_at && (
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       aria-label={`Select ${member.first_name} ${member.last_name}`}
                       checked={selectedIds.has(member.id)}
                       onChange={() => onToggleSelect(member.id)}

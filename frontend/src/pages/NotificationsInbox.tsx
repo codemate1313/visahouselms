@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import type { StudentNotification } from "@/api/types";
 import { Icon } from "@/components/icons";
+import { PinList, type PinListItem } from "@/components/PinList";
 import { destinationFor, notificationTime, scoreLabel } from "@/utils/notificationHelpers";
 import { notificationsInboxStrings as strings } from "./NotificationsInbox.strings";
+import "./NotificationsInbox.css";
+
+type PinnableNotification = StudentNotification & PinListItem;
 
 interface NotificationsInboxProps {
   fallbackRoute: string;
@@ -59,11 +63,47 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
     }
   }
 
+  async function togglePin(notification: StudentNotification) {
+    const shouldPin = !notification.pinned_at;
+    const pinnedAt = shouldPin ? new Date().toISOString() : null;
+    const previous = notifications;
+    // Optimistic: the pin list animates off this state, so it has to flip now
+    // rather than waiting on the round trip.
+    setNotifications((items) =>
+      items.map((item) => (item.id === notification.id ? { ...item, pinned_at: pinnedAt } : item)),
+    );
+    try {
+      const { data } = await apiClient.patch<StudentNotification>(
+        `/notifications/${notification.id}/${shouldPin ? "pin" : "unpin"}`,
+        undefined,
+        { headers: { "X-Skip-Loader": "1" } },
+      );
+      setNotifications((items) => items.map((item) => (item.id === notification.id ? data : item)));
+    } catch {
+      setNotifications(previous);
+    }
+  }
+
   function openNotification(notification: StudentNotification) {
     void markRead(notification);
     const destination = destinationFor(notification, fallbackRoute);
     if (destination !== fallbackRoute) navigate(destination);
   }
+
+  // Pinned first (newest pin on top), then the newest-first feed — mirroring
+  // the server ordering so the list does not jump after a refetch.
+  const pinnableItems = useMemo<PinnableNotification[]>(() => {
+    const byRecency = (a: StudentNotification, b: StudentNotification) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    return [...notifications]
+      .sort((a, b) => {
+        if (a.pinned_at && b.pinned_at) return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
+        if (a.pinned_at) return -1;
+        if (b.pinned_at) return 1;
+        return byRecency(a, b);
+      })
+      .map((notification) => ({ ...notification, pinned: Boolean(notification.pinned_at) }));
+  }, [notifications]);
 
   return (
     <div className="notifications-inbox-page">
@@ -97,11 +137,14 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
             <p>{strings.emptyDescription}</p>
           </div>
         ) : (
-          <div className="notifications-inbox-list">
-            {notifications.map((notification) => (
+          <PinList
+            items={pinnableItems}
+            onTogglePin={(notification) => void togglePin(notification)}
+            labels={{ pinned: strings.pinnedLabel, unpinned: strings.unpinnedLabel }}
+            emptyPinnedHint={strings.emptyPinnedHint}
+            renderItem={(notification) => (
               <button
                 type="button"
-                key={notification.id}
                 className={`notifications-inbox-item${notification.read_at ? " is-read" : " is-unread"}`}
                 onClick={() => openNotification(notification)}
               >
@@ -121,8 +164,8 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
                   <time dateTime={notification.created_at}>{notificationTime(notification.created_at)}</time>
                 </span>
               </button>
-            ))}
-          </div>
+            )}
+          />
         )}
       </section>
     </div>

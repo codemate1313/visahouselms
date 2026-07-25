@@ -17,6 +17,7 @@ export function RevenueCharts({ summary }: RevenueChartsProps) {
           value: Number(row.total) || 0,
           subtext: `${row.count} ${t.txnsSuffix}`,
         }))}
+        title={t.byInstituteAriaLabel}
         orientation="horizontal"
         formatValue={(val) => formatCurrency(String(val))}
         ariaLabel={t.byInstituteAriaLabel}
@@ -29,6 +30,7 @@ export function RevenueCharts({ summary }: RevenueChartsProps) {
           value: Number(row.total) || 0,
           subtext: `${row.count} ${t.txnsSuffix}`,
         }))}
+        title={t.byMonthAriaLabel}
         orientation="vertical"
         formatValue={(val) => formatCurrency(String(val))}
         ariaLabel={t.byMonthAriaLabel}

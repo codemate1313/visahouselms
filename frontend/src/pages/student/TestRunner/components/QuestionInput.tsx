@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "@/api/client";
 import type { AttemptQuestion, AttemptResponse } from "@/api/types";
+import { Checkbox } from "@/components/ui";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 
 interface QuestionInputProps {
@@ -49,8 +50,7 @@ export function QuestionInput({ index, question, saving, recording, onChange, on
             const checked = list.includes(option.key);
             return (
               <label key={option.key} className="test-runner-option">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={checked}
                   onChange={(e) => {
                     const next = e.target.checked ? [...list, option.key] : list.filter((k) => k !== option.key);

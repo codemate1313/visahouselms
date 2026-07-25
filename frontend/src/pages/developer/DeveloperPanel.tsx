@@ -2,18 +2,14 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { SuperAdminAccount } from "@/api/types";
-import { logoutAndRedirectHome } from "@/auth/logout";
-import { Button, Card, Input, PageHeader, RequiredMark } from "@/components/ui";
-import { DeveloperSettings } from "@/pages/super-admin/DeveloperSettings";
-import { useAuthStore } from "@/store/authStore";
+import { Button, Card, Checkbox, Input, RequiredMark } from "@/components/ui";
+import "./DeveloperPanel.css";
 
 const developerSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
 const developerApiBase = `/developer/${developerSlug}`;
 
 export function DeveloperPanel() {
-  const user = useAuthStore((state) => state.user);
   const [accounts, setAccounts] = useState<SuperAdminAccount[]>([]);
-  const [activeTab, setActiveTab] = useState<"accounts" | "settings">("accounts");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,88 +81,144 @@ export function DeveloperPanel() {
   }
 
   return (
-    <div className="dashboard super-admin-portal">
-      <main className="dashboard-content" style={{ marginLeft: 0, width: "100%" }}>
-        <PageHeader
-          title="Application Control"
-          subtitle={`Verified developer layer. Signed in as ${user?.email ?? "developer"}.`}
-          actions={<Button variant="secondary" onClick={() => void logoutAndRedirectHome()}>Logout</Button>}
-        />
+    <div className="developer-portal-container">
+      {error && <p className="error-text" style={{ marginBottom: 16 }}>{error}</p>}
 
-        <div className="tabs" style={{ marginBottom: 18 }}>
-          <button className={activeTab === "accounts" ? "active" : ""} type="button" onClick={() => setActiveTab("accounts")}>Protected accounts</button>
-          <button className={activeTab === "settings" ? "active" : ""} type="button" onClick={() => setActiveTab("settings")}>Developer settings</button>
-        </div>
+      <div className="grid two-cols">
+        <Card className="developer-card">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--primary)" }}>
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Account Authority
+          </h2>
+          <p className="muted-text">Owner accounts are immutable from this layer. Only verified developer accounts can open this panel.</p>
+          
+          {loading ? (
+            <p>Loading accounts...</p>
+          ) : (
+            <div className="dev-table-wrap">
+              <table className="dev-data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Controls</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...grouped.owners, ...grouped.developers, ...grouped.superAdmins].map((account) => (
+                    <tr key={account.id}>
+                      <td>
+                        <strong style={{ display: "block", marginBottom: "4px" }}>
+                          {account.first_name} {account.last_name}
+                        </strong>
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                          {account.is_owner && <span className="dev-badge dev-badge-owner">Owner</span>}
+                          {account.is_developer_verified && <span className="dev-badge dev-badge-verified">Verified</span>}
+                        </div>
+                      </td>
+                      <td>{account.email}</td>
+                      <td style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>
+                        {account.role_name ?? "SUPER_ADMIN"}
+                      </td>
+                      <td>
+                        <span className={`dev-badge ${account.is_active ? "dev-badge-active" : "dev-badge-inactive"}`}>
+                          {account.is_active ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td>
+                        {account.is_owner ? (
+                          <span className="dev-badge dev-badge-locked">Locked</span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            className={account.force_password_reset ? "dev-btn-reset-active" : "dev-btn-reset"}
+                            onClick={() => void toggleForceReset(account)}
+                          >
+                            {account.force_password_reset ? "Clear reset" : "Require reset"}
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
 
-        {error && <p className="error-text">{error}</p>}
-
-        {activeTab === "settings" ? (
-          <DeveloperSettings />
-        ) : (
-          <div className="grid two-cols">
-            <Card>
-              <h2>Account authority</h2>
-              <p className="muted-text">Owner accounts are immutable from this layer. Only verified developer accounts can open this panel.</p>
-              {loading ? (
-                <p>Loading accounts...</p>
-              ) : (
-                <div className="table-wrap">
-                  <table className="data-table">
-                    <thead>
-                      <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Controls</th></tr>
-                    </thead>
-                    <tbody>
-                      {[...grouped.owners, ...grouped.developers, ...grouped.superAdmins].map((account) => (
-                        <tr key={account.id}>
-                          <td>
-                            <strong>{account.first_name} {account.last_name}</strong>
-                            {account.is_owner && <span className="badge badge-red" style={{ marginLeft: 8 }}>Owner</span>}
-                            {account.is_developer_verified && <span className="badge badge-blue" style={{ marginLeft: 8 }}>Verified</span>}
-                          </td>
-                          <td>{account.email}</td>
-                          <td>{account.role_name ?? "SUPER_ADMIN"}</td>
-                          <td><span className={`badge ${account.is_active ? "badge-green" : "badge-gray"}`}>{account.is_active ? "Active" : "Inactive"}</span></td>
-                          <td>
-                            {account.is_owner ? (
-                              <span className="badge badge-gray">Locked</span>
-                            ) : (
-                              <Button size="sm" variant="secondary" onClick={() => void toggleForceReset(account)}>
-                                {account.force_password_reset ? "Clear reset" : "Require reset"}
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </Card>
-
-            <Card>
-              <h2>Create controlled account</h2>
-              <form className="stack" onSubmit={createAccount}>
-                <label>Account type<RequiredMark /></label>
-                <select value={form.mode} onChange={(event) => setForm((current) => ({ ...current, mode: event.target.value as "super-admin" | "developer" }))}>
-                  <option value="super-admin">Super Admin</option>
-                  <option value="developer">Verified Developer</option>
-                </select>
-                <Input label="Email" required type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
-                <Input label="Temporary password" required type="password" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} />
-                <Input label="First name" required value={form.first_name} onChange={(event) => setForm((current) => ({ ...current, first_name: event.target.value }))} />
-                <Input label="Last name" required value={form.last_name} onChange={(event) => setForm((current) => ({ ...current, last_name: event.target.value }))} />
-                {form.mode === "developer" && (
-                  <label className="checkbox-row">
-                    <input type="checkbox" checked={form.is_developer_verified} onChange={(event) => setForm((current) => ({ ...current, is_developer_verified: event.target.checked }))} />
-                    Verified developer access
-                  </label>
-                )}
-                <Button type="submit" disabled={busy}>{busy ? "Creating..." : "Create account"}</Button>
-              </form>
-            </Card>
-          </div>
-        )}
-      </main>
+        <Card className="developer-card">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--primary)" }}>
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="8.5" cy="7" r="4"/>
+              <line x1="20" y1="8" x2="20" y2="14"/>
+              <line x1="23" y1="11" x2="17" y2="11"/>
+            </svg>
+            Create Controlled Account
+          </h2>
+          <form className="dev-form" onSubmit={createAccount}>
+            <div className="dev-form-group">
+              <label>Account type<RequiredMark /></label>
+              <select
+                className="dev-select"
+                value={form.mode}
+                onChange={(event) => setForm((current) => ({ ...current, mode: event.target.value as "super-admin" | "developer" }))}
+              >
+                <option value="super-admin">Super Admin</option>
+                <option value="developer">Verified Developer</option>
+              </select>
+            </div>
+            
+            <Input
+              label="Email"
+              required
+              type="email"
+              value={form.email}
+              onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+            />
+            
+            <Input
+              label="Temporary password"
+              required
+              type="password"
+              value={form.password}
+              onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+            />
+            
+            <Input
+              label="First name"
+              required
+              value={form.first_name}
+              onChange={(event) => setForm((current) => ({ ...current, first_name: event.target.value }))}
+            />
+            
+            <Input
+              label="Last name"
+              required
+              value={form.last_name}
+              onChange={(event) => setForm((current) => ({ ...current, last_name: event.target.value }))}
+            />
+            
+            {form.mode === "developer" && (
+              <label className="dev-checkbox-container">
+                <Checkbox
+                  checked={form.is_developer_verified}
+                  onChange={(event) => setForm((current) => ({ ...current, is_developer_verified: event.target.checked }))}
+                />
+                Verified developer access
+              </label>
+            )}
+            
+            <Button className="dev-submit-btn" type="submit" disabled={busy}>
+              {busy ? "Creating..." : "Create account"}
+            </Button>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }

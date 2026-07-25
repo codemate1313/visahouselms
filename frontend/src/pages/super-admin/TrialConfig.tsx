@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { RequiredMark } from "@/components/ui";
+import { Checkbox, RequiredMark } from "@/components/ui";
 import { trialConfigStrings as strings } from "./TrialConfig.strings";
 
 export function TrialConfig() {
@@ -57,7 +57,7 @@ export function TrialConfig() {
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <label className="toggle-row">
-          <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
+          <Checkbox checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
           <span>{strings.trialEnabled}</span>
         </label>
 

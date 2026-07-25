@@ -1,3 +1,4 @@
+import { Checkbox } from "@/components/ui";
 import { instituteFormStrings as strings } from "../InstituteForm.strings";
 import type { InstitutePermissions } from "../types";
 
@@ -18,12 +19,9 @@ export function PermissionsFieldset({ permissions, onPermissionsChange }: Permis
       <p className="hint">{t.description}</p>
       <div className="permission-grid">
         <label className="permission-option select-all-option">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={allChecked}
-            ref={(el) => {
-              if (el) el.indeterminate = someChecked && !allChecked;
-            }}
+            indeterminate={someChecked && !allChecked}
             onChange={(event) => onPermissionsChange(Object.fromEntries(options.map((option) => [option.key, event.target.checked])) as InstitutePermissions)}
           />
           <span>
@@ -32,8 +30,7 @@ export function PermissionsFieldset({ permissions, onPermissionsChange }: Permis
         </label>
         {options.map((option) => (
           <label className="permission-option" key={option.key}>
-            <input
-              type="checkbox"
+            <Checkbox
               checked={permissions[option.key]}
               onChange={(event) =>
                 onPermissionsChange({

@@ -1,4 +1,4 @@
-import { SearchableSelect } from "@/components/ui";
+import { Checkbox, SearchableSelect } from "@/components/ui";
 import type { ExamModule, ExamModulePart, QuestionDraft, QuestionImportPreview, QuestionType } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { ANSWER_FREE_TYPES } from "../helpers";
@@ -81,7 +81,7 @@ export function ImportReviewPanel({
         {preview.questions.map((question, index) => (
           <article className={`preview-question${selectedImports.has(index) ? " selected" : ""}`} key={index}>
             <label className="preview-selector">
-              <input type="checkbox" checked={selectedImports.has(index)} onChange={() => toggleImport(index)} /> {t.includeItem(index + 1)}
+              <Checkbox checked={selectedImports.has(index)} onChange={() => toggleImport(index)} /> {t.includeItem(index + 1)}
             </label>
             <label>{t.typeLabel}</label>
             <SearchableSelect

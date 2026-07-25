@@ -1,4 +1,5 @@
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { Checkbox } from "@/components/ui";
 import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.strings";
 import { PERMISSIONS } from "../helpers";
 
@@ -22,12 +23,9 @@ export function PermissionsPanel({ adminPermissions, onTogglePermission, onToggl
     >
       <div className="permission-grid">
         <label className="permission-option select-all-option">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={allChecked}
-            ref={(el) => {
-              if (el) el.indeterminate = someChecked && !allChecked;
-            }}
+            indeterminate={someChecked && !allChecked}
             onChange={onToggleAll}
           />
           <span>
@@ -36,8 +34,7 @@ export function PermissionsPanel({ adminPermissions, onTogglePermission, onToggl
         </label>
         {PERMISSIONS.map((permission) => (
           <label className="permission-option" key={permission.key}>
-            <input
-              type="checkbox"
+            <Checkbox
               checked={Boolean(adminPermissions[permission.key])}
               onChange={(event) => onTogglePermission(permission.key, event.target.checked)}
             />

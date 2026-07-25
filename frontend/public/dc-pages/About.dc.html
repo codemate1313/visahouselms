@@ -15,7 +15,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
   a { color: inherit; text-decoration: none; }
-  a:hover { color: var(--ac, #e11d48); }
+  a:hover { color: var(--ac, #e11d2e); }
   @keyframes vh-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
   @keyframes vh-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes vh-pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
@@ -34,11 +34,11 @@
   .vh-back { transform: rotateY(180deg); }
   .vh-nav { display: flex; align-items: center; gap: 30px; }
   .vh-nav-link { position: relative; font-size: 14px; font-weight: 500; color: var(--ink2, #9095a3); text-decoration: none; padding-bottom: 6px; transition: color 0.25s ease; }
-  .vh-nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--ac, #e11d48); transform: scaleX(0); transform-origin: left center; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .vh-nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--ac, #e11d2e); transform: scaleX(0); transform-origin: left center; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
   .vh-nav-link:hover, .vh-nav-link.vh-active { color: var(--ink, #f5f5f7); }
   .vh-nav-link:hover::after, .vh-nav-link.vh-active::after { transform: scaleX(1); }
   @keyframes vh-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  ::selection { background: var(--ac, #e11d48); color: #fff; }
+  ::selection { background: var(--ac, #e11d2e); color: #fff; }
   /* Social Icons Hover Effect (Footer) */
   .footer-social-icons { display: flex; justify-content: flex-start; align-items: center; flex-direction: row; column-gap: 0.5rem; padding: 0; margin: 0; list-style: none; }
   .footer-social-icons .icon-content { margin: 0; position: relative; }
@@ -69,7 +69,7 @@
   <header style="position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: var(--headerBg); border-bottom: 1px solid var(--line);">
     <div style="max-width: 1280px; margin: 0 auto; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
       <a href="/" style="display: flex; align-items: center; gap: 11px;">
-        <span style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 15px; box-shadow: 0 8px 24px -8px var(--ac);">VH</span>
+        <img src="{{ logoSrc }}" alt="Visa House" width="38" height="38" style="width: 38px; height: 38px; object-fit: contain; display: block; flex: 0 0 38px;">
         <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.3px;">Visa House</span>
         <span style="font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 4px 8px; background: var(--chip); border: 1px solid var(--line); border-radius: 6px; color: var(--ink2);">IELTS LMS</span>
       </a>
@@ -80,14 +80,13 @@
       </nav>
       <div style="display: flex; align-items: center; gap: 10px;">
         <button type="button" onClick="{{ cycleTheme }}" title="Theme: {{ themeLabel }}" style="font-family: inherit; width: 40px; height: 40px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; display: grid; place-items: center; transition: transform .2s, background .2s;" style-hover="{transform: 'scale(1.08)', background: 'var(--chipHi)'}" style-active="{transform: 'scale(0.94)'}">{{ themeIcon }}</button>
-        <button type="button" style="font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 100px; border: none; background: var(--ac); color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .2s, box-shadow .2s;" style-hover="{transform: 'translateY(-2px)', boxShadow: '0 12px 28px -12px rgba(225, 29, 72, 0.4)'}" style-active="{transform: 'translateY(0)'}">
+        <button type="button" style="font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 100px; border: none; background: var(--ac); color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .2s, box-shadow .2s;" style-hover="{transform: 'translateY(-2px)', boxShadow: '0 12px 28px -12px rgba(225, 29, 46, 0.4)'}" style-active="{transform: 'translateY(0)'}">
           Sign in
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
         </button>
       </div>
     </div>
   </header>
-
 
   <section style="position: relative; max-width: 1120px; margin: 0 auto; padding: 96px 32px 60px; text-align: center;">
     <div style="animation: vh-rise .7s ease both;">
@@ -139,11 +138,8 @@
         </div>
       </div>
     </div>
-    <div style="position: relative; aspect-ratio: 4/3; border-radius: 20px; border: 1px solid var(--line); overflow: hidden; background-color: var(--card); background-image: repeating-linear-gradient(45deg, var(--line) 0 10px, transparent 10px 20px); display: grid; place-items: center;">
-      <div style="text-align: center; font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--ink2);">
-        <div style="font-size: 24px; margin-bottom: 8px;">&#9638;</div>
-        team photo &mdash; drop image here
-      </div>
+    <div style="position: relative; aspect-ratio: 4/3; border-radius: 20px; border: 1px solid var(--line); overflow: hidden; background-color: var(--card);">
+      <img src="/images/about_team.jpg" alt="Visa House team working together around a table" style="width: 100%; height: 100%; object-fit: cover; display: block;">
     </div>
   </section>
 
@@ -193,7 +189,7 @@
     <div style="max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 40px;">
       <div>
         <div style="display: flex; align-items: center; gap: 11px; margin-bottom: 16px;">
-          <span style="width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px;">VH</span>
+          <img src="{{ logoSrc }}" alt="Visa House" width="34" height="34" style="width: 34px; height: 34px; object-fit: contain; display: block; flex: 0 0 34px;">
           <span style="font-size: 17px; font-weight: 700;">Visa House</span>
         </div>
         <ul class="footer-social-icons">
@@ -310,17 +306,17 @@ class Component extends DCLogic {
     const dark = this.isDark();
     try { window.parent.postMessage({ type: "vh-theme", theme: dark ? "dark" : "light" }, window.location.origin); } catch {}
     const set = (k, v) => this._root.style.setProperty(k, v);
-    set("--ac", "#e11d48");
-    set("--ac2", "#f43f5e");
+    set("--ac", "#e11d2e");
+    set("--ac2", "#ef4444");
     if (dark) {
       set("--bg", "#0a0a0f"); set("--ink", "#f5f5f7"); set("--ink2", "#9095a3");
-      set("--line", "rgba(255,255,255,0.1)"); set("--acLine", "rgba(225, 29, 72,0.35)"); set("--acWash", "rgba(225, 29, 72,0.14)");
+      set("--line", "rgba(255,255,255,0.1)"); set("--acLine", "rgba(225, 29, 46,0.35)"); set("--acWash", "rgba(225, 29, 46,0.14)");
       set("--card", "rgba(20,20,28,0.55)"); set("--cardSolid", "rgba(20,20,28,0.9)");
       set("--chip", "rgba(255,255,255,0.06)"); set("--chipHi", "rgba(255,255,255,0.12)"); set("--headerBg", "rgba(10,10,15,0.65)");
       set("--orbA", "0.28"); set("--orbB", "0.2"); set("--orbC", "0.14");
     } else {
       set("--bg", "#f7f5f2"); set("--ink", "#0e0d10"); set("--ink2", "#5f6270");
-      set("--line", "rgba(14,13,16,0.1)"); set("--acLine", "rgba(225, 29, 72,0.35)"); set("--acWash", "rgba(225, 29, 72,0.08)");
+      set("--line", "rgba(14,13,16,0.1)"); set("--acLine", "rgba(225, 29, 46,0.35)"); set("--acWash", "rgba(225, 29, 46,0.08)");
       set("--card", "rgba(255,255,255,0.7)"); set("--cardSolid", "rgba(255,255,255,0.95)");
       set("--chip", "rgba(14,13,16,0.04)"); set("--chipHi", "rgba(14,13,16,0.08)"); set("--headerBg", "rgba(247,245,242,0.7)");
       set("--orbA", "0.22"); set("--orbB", "0.16"); set("--orbC", "0.12");
@@ -341,6 +337,7 @@ class Component extends DCLogic {
     };
     return {
       rootRef: this.rootRef,
+      logoSrc: this.state.theme === "dark" ? "/brand/vh-mark-dark.png" : "/brand/vh-mark-light.png",
       cycleTheme: this.cycleTheme,
       themeLabel: this.state.theme[0].toUpperCase() + this.state.theme.slice(1),
       themeIcon: themeIcons[this.state.theme],

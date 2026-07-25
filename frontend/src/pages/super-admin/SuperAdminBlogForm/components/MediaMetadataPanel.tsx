@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Checkbox } from "@/components/ui";
 import { blogFormCategories, superAdminBlogFormStrings as strings } from "../SuperAdminBlogForm.strings";
 import type { BlogFormData } from "../types";
 
@@ -77,12 +78,7 @@ export function MediaMetadataPanel({ formData, onFieldChange }: MediaMetadataPan
           <strong>{t.publishStatus}</strong>
           <span>{formData.is_published ? t.publishStatusLive : t.publishStatusDraft}</span>
         </div>
-        <input
-          type="checkbox"
-          checked={formData.is_published}
-          onChange={(e) => onFieldChange("is_published", e.target.checked)}
-          style={{ width: "20px", height: "20px", accentColor: "#e11d2e", cursor: "pointer" }}
-        />
+        <Checkbox size="lg" checked={formData.is_published} onChange={(e) => onFieldChange("is_published", e.target.checked)} />
       </div>
 
       <div className="sab-seo-card">

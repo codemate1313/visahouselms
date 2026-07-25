@@ -10,6 +10,8 @@ interface DonutDatum {
 
 interface DonutChartProps {
   data: DonutDatum[];
+  /** Visible card heading — what this specific chart shows (e.g. "Payment Status"). */
+  title: string;
   centerLabel?: string;
   ariaLabel: string;
   emptyMessage?: string;
@@ -18,6 +20,7 @@ interface DonutChartProps {
 
 export function DonutChart({
   data,
+  title,
   centerLabel = "total",
   ariaLabel,
   emptyMessage = "No data available.",
@@ -44,7 +47,15 @@ export function DonutChart({
   let consumed = 0;
 
   if (!rows.length || total === 0) {
-    return <div className={`chart-card ${cardVariant === "tinted" ? "tinted-bg" : ""} chart-empty`} role="status">{emptyMessage}</div>;
+    return (
+      <div className={`chart-card ${cardVariant === "tinted" ? "tinted-bg" : ""} chart-empty`} role="status">
+        <span className="chart-info-tag">
+          <span className="info-dot"><Icon name="analytics" /></span>
+          <span>{title}</span>
+        </span>
+        <p>{emptyMessage}</p>
+      </div>
+    );
   }
 
   const activeItem = hoveredIndex !== null ? rows[hoveredIndex] : null;
@@ -55,7 +66,7 @@ export function DonutChart({
       <div className="chart-card-toolbar">
         <span className="chart-info-tag">
           <span className="info-dot"><Icon name="analytics" /></span>
-          <span>Breakdown</span>
+          <span>{title}</span>
         </span>
         {/* View Toggle Pill Control (≡ / 田) */}
         <div className="chart-view-toggle-pill">

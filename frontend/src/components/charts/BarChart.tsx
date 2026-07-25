@@ -10,6 +10,8 @@ export interface BarChartDatum {
 
 interface BarChartProps {
   data: BarChartDatum[];
+  /** Visible card heading — what this specific chart shows (e.g. "Revenue by Institute"). */
+  title: string;
   orientation?: "horizontal" | "vertical";
   color?: string;
   legend?: { label: string; color: string }[];
@@ -28,6 +30,7 @@ function shortLabel(label: string, maximum: number): string {
 
 export function BarChart({
   data,
+  title,
   orientation = "vertical",
   color,
   legend,
@@ -54,7 +57,15 @@ export function BarChart({
   const gridMax = maximum < 10 ? Math.max(1, maximum) : Math.ceil(maximum * 1.15);
 
   if (!rows.length || maximum === 0) {
-    return <div className="chart-card chart-empty" role="status">{emptyMessage}</div>;
+    return (
+      <div className="chart-card chart-empty" role="status">
+        <div className="chart-title-area">
+          <span className="info-icon-badge"><Icon name="analytics" /></span>
+          <span className="chart-tag-text">{title}</span>
+        </div>
+        <p>{emptyMessage}</p>
+      </div>
+    );
   }
 
   const activeIdx = hoveredIndex;
@@ -82,29 +93,10 @@ export function BarChart({
     <section className="chart-card reference-styled-chart">
       {/* Top Header Bar */}
       <div className="chart-card-toolbar">
-        {legend?.length ? (
-          <div className="chart-legend" aria-label="Chart legend">
-            {legend.map((item, idx) => (
-              <span
-                className={`chart-legend-item ${activeIdx === idx ? "legend-active" : ""}`}
-                key={item.label}
-                tabIndex={0}
-                onMouseEnter={() => setHoveredIndex(idx)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                onFocus={() => setHoveredIndex(idx)}
-                onBlur={() => setHoveredIndex(null)}
-              >
-                <i className="chart-legend-swatch" style={{ background: item.color }} />
-                <span className="legend-label-text">{item.label}</span>
-              </span>
-            ))}
-          </div>
-        ) : (
-          <div className="chart-title-area">
-            <span className="info-icon-badge"><Icon name="analytics" /></span>
-            <span className="chart-tag-text">Analytics Overview</span>
-          </div>
-        )}
+        <div className="chart-title-area">
+          <span className="info-icon-badge"><Icon name="analytics" /></span>
+          <span className="chart-tag-text">{title}</span>
+        </div>
 
         {/* Reference Toggle Pill Control (≡ / 田) */}
         <div className="chart-view-toggle-pill">
@@ -126,6 +118,25 @@ export function BarChart({
           </button>
         </div>
       </div>
+
+      {legend?.length ? (
+        <div className="chart-legend chart-legend-row" aria-label="Chart legend">
+          {legend.map((item, idx) => (
+            <span
+              className={`chart-legend-item ${activeIdx === idx ? "legend-active" : ""}`}
+              key={item.label}
+              tabIndex={0}
+              onMouseEnter={() => setHoveredIndex(idx)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              onFocus={() => setHoveredIndex(idx)}
+              onBlur={() => setHoveredIndex(null)}
+            >
+              <i className="chart-legend-swatch" style={{ background: item.color }} />
+              <span className="legend-label-text">{item.label}</span>
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       {showTable ? (
         <div className="chart-data-table-wrap">

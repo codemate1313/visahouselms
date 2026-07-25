@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { RequiredMark } from "@/components/ui";
+import { Checkbox, RequiredMark } from "@/components/ui";
 import { superAdminTestimonialsStrings as strings } from "../SuperAdminTestimonials.strings";
 import type { TestimonialAdminItem } from "../types";
 
@@ -102,8 +102,7 @@ export function TestimonialFormModal({ editingItem, onChange, saving, onClose, o
               </div>
               <div className="sat-form-group sat-checkbox-group">
                 <label className="sat-checkbox-label">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={editingItem.is_active || false}
                     onChange={(e) => onChange({ ...editingItem, is_active: e.target.checked })}
                   />

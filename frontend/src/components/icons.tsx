@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 export type IconName =
+  | "pin"
   | "dashboard"
   | "admin"
   | "instructors"
@@ -153,6 +154,13 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
     <>
       <circle cx="11" cy="11" r="7" />
       <path d="M20 20l-4.5-4.5" />
+    </>
+  ),
+  // Pin Icon (pushpin, used by the pinnable notification list)
+  pin: (
+    <>
+      <path d="M12 17v5" />
+      <path d="M9 10.8V4h6v6.8a2 2 0 0 0 .6 1.4l1.9 1.9a1 1 0 0 1-.7 1.7H6.2a1 1 0 0 1-.7-1.7l1.9-1.9a2 2 0 0 0 .6-1.4z" />
     </>
   ),
   // Help Center Icon (Question circle)

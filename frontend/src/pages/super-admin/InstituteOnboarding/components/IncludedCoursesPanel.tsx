@@ -1,4 +1,5 @@
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { Checkbox } from "@/components/ui";
 import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.strings";
 import type { ModuleOption } from "../types";
 
@@ -21,12 +22,9 @@ export function IncludedCoursesPanel({ modules, selectedModules, onToggleModule,
       <div className="plan-course-picker">
         {modules.length > 0 && (
           <label className="plan-course-option select-all-option">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={selectedModules.size === modules.length}
-              ref={(el) => {
-                if (el) el.indeterminate = selectedModules.size > 0 && selectedModules.size < modules.length;
-              }}
+              indeterminate={selectedModules.size > 0 && selectedModules.size < modules.length}
               onChange={onToggleAll}
             />
             <span>
@@ -36,7 +34,7 @@ export function IncludedCoursesPanel({ modules, selectedModules, onToggleModule,
         )}
         {modules.map((module) => (
           <label className="plan-course-option" key={module.id}>
-            <input type="checkbox" checked={selectedModules.has(module.id)} onChange={() => onToggleModule(module.id)} />
+            <Checkbox checked={selectedModules.has(module.id)} onChange={() => onToggleModule(module.id)} />
             <span>
               <strong>{module.title}</strong>
               <small>

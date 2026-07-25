@@ -1,0 +1,111 @@
+/* Reusable global theme toggle. Visual parity with the circular button that
+   previously lived in DashboardRangeAndThemeToggle, so drop-in replacement
+   inside the portal top bar does not shift the chrome. */
+
+.theme-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  background: #ececee;
+  display: grid;
+  place-items: center;
+  color: #1e293b;
+  cursor: pointer;
+  flex-shrink: 0;
+  outline: none;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.22s ease,
+    border-color 0.22s ease, color 0.22s ease;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.05);
+  background: #e2e8f0;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Labelled variant for settings rows / dropdown menus. */
+.theme-toggle.has-label {
+  width: auto;
+  height: 36px;
+  border-radius: 10px;
+  padding: 0 14px 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.theme-toggle.has-label:hover {
+  transform: none;
+}
+
+/* Icon crossfade: both icons occupy the same cell and swap on state. */
+.theme-toggle-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+}
+
+.theme-toggle-icon svg {
+  grid-area: 1 / 1;
+  transition: opacity 0.24s ease, transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.theme-toggle-sun {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.theme-toggle-moon {
+  opacity: 0;
+  transform: rotate(-70deg) scale(0.6);
+}
+
+[data-theme="dark"] .theme-toggle-sun {
+  opacity: 0;
+  transform: rotate(70deg) scale(0.6);
+}
+
+[data-theme="dark"] .theme-toggle-moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle,
+  .theme-toggle-icon svg {
+    transition-duration: 0.01ms;
+  }
+
+  .theme-toggle:hover,
+  .theme-toggle:active {
+    transform: none;
+  }
+}

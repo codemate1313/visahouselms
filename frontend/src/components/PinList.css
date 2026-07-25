@@ -1,0 +1,193 @@
+/* Grouped pin list (animate-ui `pin-list` port). Layout motion is driven by
+   GSAP Flip in PinList.tsx; this file owns the static presentation only. */
+
+.pin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.pin-list-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pin-list-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.pin-list-label svg {
+  width: 14px;
+  height: 14px;
+  color: var(--primary);
+}
+
+.pin-list-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--text-muted);
+}
+
+/* The pinned count reads as a small brand badge — same solid-red/white
+   contrast the app's sidebar and unread-count badge already use — so
+   "Pinned" registers as the notable, branded group at a glance. */
+.pin-list-group-pinned .pin-list-count {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.pin-list-empty-hint {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.pin-list-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pin-list-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  /* Flip animates transforms; keeping rows on their own layer avoids
+     sub-pixel text shimmer while a row is in flight. */
+  will-change: transform;
+}
+
+.pin-list-row > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Pinned rows read as "stuck to the top" with an accent edge. */
+.pin-list-group-pinned .pin-list-row > :first-child {
+  border-color: var(--primary-soft);
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.pin-list-pin {
+  flex: 0 0 38px;
+  width: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  height: 38px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.18s ease, color 0.18s ease, background 0.18s ease,
+    border-color 0.18s ease, transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pin-list-pin svg {
+  width: 17px;
+  height: 17px;
+}
+
+.pin-list-row:hover .pin-list-pin,
+.pin-list-pin:focus-visible,
+.pin-list-pin.is-pinned {
+  opacity: 1;
+}
+
+.pin-list-pin:hover:not(:disabled) {
+  background: var(--surface-muted);
+  border-color: var(--border);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.pin-list-pin:active:not(:disabled) {
+  transform: translateY(0) scale(0.94);
+}
+
+/* Pinned = solid brand red with a white glyph, not a pale tint — the same
+   bold, high-contrast red/white pairing the sidebar uses for its active
+   item, so a pinned row reads as clearly "branded on" rather than a faint
+   hint of color. */
+.pin-list-pin.is-pinned {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 38%, transparent);
+}
+
+.pin-list-pin.is-pinned:hover:not(:disabled) {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.pin-list-pin:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.pin-list-pin:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pin-list-pin {
+    transition-duration: 0.01ms;
+  }
+}
+
+/* Touch devices never fire hover — keep the affordance permanently visible. */
+@media (hover: none) {
+  .pin-list-pin {
+    opacity: 1;
+  }
+}
+
+[data-theme="dark"] .pin-list-count {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .pin-list-empty-hint {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+[data-theme="dark"] .pin-list-pin:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+}

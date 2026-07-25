@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { PasswordInput } from "@/components/PasswordInput";
+import { Checkbox } from "@/components/ui";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 
 export function AiEvaluationTab() {
@@ -52,7 +53,7 @@ export function AiEvaluationTab() {
         badge={<span className={`badge ${configured ? "badge-green" : "badge-gray"}`}>{configured ? t.readyBadge : t.notConfiguredBadge}</span>}
       >
         <label className="toggle-row">
-          <input type="checkbox" checked={form.enabled} onChange={(event) => setForm({ ...form, enabled: event.target.checked })} />
+          <Checkbox checked={form.enabled} onChange={(event) => setForm({ ...form, enabled: event.target.checked })} />
           <span>{t.enableLabel}</span>
         </label>
         <div className="form-grid">

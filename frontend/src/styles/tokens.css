@@ -94,3 +94,121 @@
   --sidebar-width: 272px;
   --sidebar-collapsed-width: 84px;
 }
+
+/*
+ * ---------------------------------------------------------------------------
+ * Foundational dark mode
+ * ---------------------------------------------------------------------------
+ * `data-theme` is written to <html> and <body> by useApplyTheme() from
+ * useThemeStore. Per the convention at the top of this file, dark mode is
+ * expressed as `[data-theme="dark"] <selector>` overrides rather than by
+ * reassigning the :root token values — that keeps the runtime
+ * `--institute-*` branding vars free to override independently.
+ *
+ * This block covers the base chrome only (page background, text, shared
+ * surfaces). Component-level dark rules belong next to their component CSS,
+ * following the same selector pattern.
+ */
+
+[data-theme="dark"] body,
+[data-theme="dark"] button,
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background:
+    radial-gradient(circle at 86% 10%, rgba(225, 29, 46, 0.1) 0, rgba(225, 29, 46, 0) 26%),
+    linear-gradient(135deg, #121216 0%, #0e0e12 46%, #08080b 100%);
+  background-attachment: fixed;
+  color: #f2f2f5;
+}
+
+/* Inputs/buttons must not inherit the page gradient as their own fill. */
+[data-theme="dark"] button,
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: transparent;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f2f2f5;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: rgba(242, 242, 245, 0.42);
+}
+
+[data-theme="dark"] body::before {
+  background: linear-gradient(90deg, rgba(225, 29, 46, 0.06), transparent 34%, rgba(255, 255, 255, 0.04));
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4 {
+  color: #f7f7fa;
+}
+
+/* Shared surfaces */
+[data-theme="dark"] .workspace-panel,
+[data-theme="dark"] .content-area-card,
+[data-theme="dark"] .empty-state {
+  background: rgba(22, 22, 27, 0.86);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.42);
+}
+
+[data-theme="dark"] .page-header h1 {
+  color: #f7f7fa;
+}
+
+[data-theme="dark"] .page-subtitle,
+[data-theme="dark"] .page-eyebrow,
+[data-theme="dark"] .empty-message {
+  color: rgba(242, 242, 245, 0.6);
+}
+
+/* Table chrome */
+[data-theme="dark"] table th {
+  color: rgba(242, 242, 245, 0.62);
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] table td {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Scrollbars follow the surface, not the light default. */
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Avoid a white flash before React mounts and during theme swaps. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0d0e12;
+  --surface: #181b22;
+  --surface-muted: #212530;
+  --text: #f3f4f6;
+  --text-muted: #9ca3af;
+  --border: rgba(255, 255, 255, 0.1);
+  --nav-bg: rgba(24, 27, 34, 0.92);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(24, 27, 34, 0.85);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --app-bg-gradient: linear-gradient(135deg, #0d0e12 0%, #13151b 50%, #1a1d26 100%);
+}
+

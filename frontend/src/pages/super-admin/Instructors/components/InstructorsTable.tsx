@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
+import { Checkbox } from "@/components/ui";
 import type { InstructorAccount } from "@/api/types";
 import { instructorsStrings as strings } from "../Instructors.strings";
 
@@ -30,13 +31,10 @@ export function InstructorsTable({
         <thead>
           <tr>
             <th className="table-select-heading">
-              <input
-                type="checkbox"
+              <Checkbox
                 aria-label="Select all instructors"
                 checked={instructors.length > 0 && selectedIds.size === instructors.length}
-                ref={(el) => {
-                  if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < instructors.length;
-                }}
+                indeterminate={selectedIds.size > 0 && selectedIds.size < instructors.length}
                 onChange={onToggleSelectAll}
               />
             </th>
@@ -59,8 +57,7 @@ export function InstructorsTable({
             instructors.map((instructor) => (
               <tr key={instructor.id}>
                 <td className="table-select-cell">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     aria-label={`Select ${instructor.first_name} ${instructor.last_name}`}
                     checked={selectedIds.has(instructor.id)}
                     onChange={() => onToggleSelect(instructor.id)}

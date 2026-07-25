@@ -30,6 +30,7 @@ def main() -> None:
     _run("Seeding sample assessment modules", [PYTHON, "scripts/seed_dummy_modules.py"])
     _run("Seeding QA accounts, institute, access, and plan", [PYTHON, "scripts/seed_test_credentials.py"])
     _run("Seeding testing blogs, testimonials, and SEO settings", [PYTHON, "scripts/seed_cms_and_seo.py"])
+    _run("Seeding portal inbox notifications", [PYTHON, "scripts/seed_notifications.py"])
 
     print(
         "\nLocal seed complete.\n"

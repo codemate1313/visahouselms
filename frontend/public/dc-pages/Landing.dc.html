@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
 <body>
 <x-dc>
@@ -15,7 +16,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
   a { color: inherit; text-decoration: none; }
-  a:hover { color: var(--ac, #e11d48); }
+  a:hover { color: var(--ac, #e11d2e); }
   @keyframes vh-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
   @keyframes vh-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes vh-pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
@@ -34,9 +35,27 @@
   .vh-back { transform: rotateY(180deg); }
   .vh-parallax { will-change: transform; transition: transform .12s linear; }
   .vh-ielts-band { position: absolute; left: 50%; width: 110vw; height: 170px; border-radius: 999px; transform: translateX(-50%) rotate(-5deg); opacity: var(--bandOpacity); pointer-events: none; }
-  .vh-hero-card { box-shadow: 0 34px 80px -24px rgba(0,0,0,0.38), 0 0 0 1px var(--line); }
-  .vh-exam-tab { background: var(--chip); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; color: var(--ink2); }
-  .vh-exam-tab.is-active { background: var(--acWash); border-color: var(--acLine); color: var(--ink); }
+  .vh-dot { width: 8px; background: var(--line); height: 8px; border-radius: 4px; display: inline-block; cursor: pointer; transition: all 0.3s ease; }
+  .vh-dot.active { width: 24px; background: var(--ac); }
+  /* Hero slider: fluid type that scales with the page, identical across all slides */
+  /* Reserve exactly 3 lines so every slide's heading block is the same height and the hero never shifts */
+  .vh-hero-title { font-size: clamp(28px, 4.05vw, 52px); line-height: 1.06; letter-spacing: -0.034em; font-weight: 600; margin-bottom: 0.46em; color: var(--ink); height: 3.18em; text-wrap: balance; overflow-wrap: break-word; }
+  .vh-hero-title .vh-hero-title-accent { font-family: inherit; font-style: normal; font-weight: 700; letter-spacing: -0.015em; background: linear-gradient(135deg, var(--ac), var(--ac2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .vh-hero-desc { font-size: clamp(14.5px, 1.42vw, 18px); line-height: 1.6; color: var(--ink2); max-width: 28em; margin-bottom: 2em; min-height: 4.8em; }
+  .vh-hero-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 2.1vw, 28px); align-items: start; width: 100%; }
+  .vh-hero-stat-group { min-width: 0; }
+  .vh-hero-stat-group + .vh-hero-stat-group { border-left: 1px solid var(--line); padding-left: clamp(14px, 2.1vw, 28px); }
+  .vh-hero-stat-value { font-size: clamp(18px, 2.1vw, 27px); line-height: 1.15; font-weight: 700; letter-spacing: -0.012em; white-space: nowrap; background: linear-gradient(135deg, var(--ink), var(--ink2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .vh-hero-stat-label { font-size: clamp(11.5px, 1.02vw, 13px); line-height: 1.35; color: var(--ink2); font-weight: 500; margin-top: 4px; min-height: 2.7em; }
+  @media (max-width: 900px) {
+    .vh-hero-slide-container { grid-template-columns: 1fr !important; gap: 36px !important; }
+    .vh-hero-title { height: auto; min-height: 0; }
+    .vh-hero-desc, .vh-hero-stat-label { min-height: 0; }
+  }
+  @media (max-width: 640px) {
+    .vh-hero-stats { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); row-gap: 18px; }
+    .vh-hero-stat-group + .vh-hero-stat-group { border-left: none; padding-left: 0; }
+  }
   .testimonials-section { position: relative; z-index: 10; max-width: 1200px; margin: 60px auto; padding: 0 24px; }
   .testimonials-header-wrap { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
   .testimonial-slider-controls { display: flex; align-items: center; gap: 12px; }
@@ -48,7 +67,7 @@
   .testimonial-slider-wrapper:hover .testimonial-slider-track { animation-play-state: paused; }
   @keyframes testimonial-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(calc(-50% - 12px)); } }
   .testimonial-card { flex: 0 0 360px; width: 360px; background: var(--cardSolid); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: 22px; padding: 26px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.06); transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease; user-select: none; }
-  .testimonial-card:hover { transform: translateY(-6px); border-color: var(--acLine); box-shadow: 0 20px 45px rgba(225, 29, 72, 0.12); }
+  .testimonial-card:hover { transform: translateY(-6px); border-color: var(--acLine); box-shadow: 0 20px 45px rgba(225, 29, 46, 0.12); }
   .testimonial-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
   .testimonial-avatar { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ac); background: var(--grad); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 800; flex-shrink: 0; overflow: hidden; position: relative; }
   .testimonial-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; position: absolute; inset: 0; }
@@ -59,11 +78,11 @@
   .testimonial-stars { display: flex; gap: 3px; color: #f59e0b; font-size: 14px; }
   .vh-nav { display: flex; align-items: center; gap: 30px; }
   .vh-nav-link { position: relative; font-size: 14px; font-weight: 500; color: var(--ink2, #9095a3); text-decoration: none; padding-bottom: 6px; transition: color 0.25s ease; }
-  .vh-nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--ac, #e11d48); transform: scaleX(0); transform-origin: left center; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .vh-nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--ac, #e11d2e); transform: scaleX(0); transform-origin: left center; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
   .vh-nav-link:hover, .vh-nav-link.vh-active { color: var(--ink, #f5f5f7); }
   .vh-nav-link:hover::after, .vh-nav-link.vh-active::after { transform: scaleX(1); }
   @keyframes vh-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  ::selection { background: var(--ac, #e11d48); color: #fff; }
+  ::selection { background: var(--ac, #e11d2e); color: #fff; }
   /* Social Icons Hover Effect (Footer) */
   .footer-social-icons { display: flex; justify-content: flex-start; align-items: center; flex-direction: row; column-gap: 0.5rem; padding: 0; margin: 0; list-style: none; }
   .footer-social-icons .icon-content { margin: 0; position: relative; }
@@ -96,7 +115,7 @@
   <header style="position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: var(--headerBg); border-bottom: 1px solid var(--line);">
     <div style="max-width: 1280px; margin: 0 auto; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
       <a href="#top" style="display: flex; align-items: center; gap: 11px;">
-        <span style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 15px; box-shadow: 0 8px 24px -8px var(--ac);">VH</span>
+        <img src="{{ logoSrc }}" alt="Visa House" width="38" height="38" style="width: 38px; height: 38px; object-fit: contain; display: block; flex: 0 0 38px;">
         <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.3px;">Visa House</span>
         <span style="font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 4px 8px; background: var(--chip); border: 1px solid var(--line); border-radius: 6px; color: var(--ink2);">IELTS LMS</span>
       </a>
@@ -107,7 +126,7 @@
       </nav>
       <div style="display: flex; align-items: center; gap: 10px;">
         <button type="button" onClick="{{ cycleTheme }}" title="Theme: {{ themeLabel }}" style="font-family: inherit; width: 40px; height: 40px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; display: grid; place-items: center; transition: transform .2s, background .2s;" style-hover="{transform: 'scale(1.08)', background: 'var(--chipHi)'}" style-active="{transform: 'scale(0.94)'}">{{ themeIcon }}</button>
-        <button type="button" style="font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 100px; border: none; background: var(--ac); color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .2s, box-shadow .2s;" style-hover="{transform: 'translateY(-2px)', boxShadow: '0 12px 28px -12px rgba(225, 29, 72, 0.4)'}" style-active="{transform: 'translateY(0)'}">
+        <button type="button" style="font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 100px; border: none; background: var(--ac); color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .2s, box-shadow .2s;" style-hover="{transform: 'translateY(-2px)', boxShadow: '0 12px 28px -12px rgba(225, 29, 46, 0.4)'}" style-active="{transform: 'translateY(0)'}">
           Sign in
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
         </button>
@@ -115,121 +134,32 @@
     </div>
   </header>
 
-  <section id="top" style="position: relative; max-width: 1280px; margin: 0 auto; padding: 88px 32px 60px; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center;">
-    <div style="animation: vh-rise .7s ease both;">
-      <div style="display: inline-flex; align-items: center; gap: 9px; padding: 8px 14px; border-radius: 100px; background: var(--chip); border: 1px solid var(--line); font-size: 12.5px; font-weight: 500; color: var(--ink2); margin-bottom: 28px;">
-        <span style="width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: vh-pulse 2s ease-in-out infinite; box-shadow: 0 0 12px #22c55e;"></span>
-        AI evaluator live · 15,000+ students prepared
+  <section id="top" style="position: relative; max-width: 1280px; margin: 0 auto; padding: 88px 32px 100px; min-height: 600px; display: flex; flex-direction: column; justify-content: center;">
+    <div class="vh-hero-slide-container" style="position: relative; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center;">
+      {{ activeHeroSlide }}
+    </div>
+
+    <div style="position: absolute; bottom: 20px; left: 32px; display: flex; align-items: center; gap: 14px; z-index: 10;">
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span class="{{ heroDotClass0 }}" onClick="{{ selectHero0 }}"></span>
+        <span class="{{ heroDotClass1 }}" onClick="{{ selectHero1 }}"></span>
+        <span class="{{ heroDotClass2 }}" onClick="{{ selectHero2 }}"></span>
       </div>
-      <h1 style="font-size: 72px; line-height: 0.98; letter-spacing: -3px; font-weight: 600; margin-bottom: 24px;">
-        Master IELTS with real exam simulations
-        <span style="font-family: inherit; font-style: normal; font-weight: 700; background: linear-gradient(135deg, var(--ac), var(--ac2)); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -0.8px;"> &amp; AI feedback.</span>
-      </h1>
-      <p style="font-size: 18px; line-height: 1.6; color: var(--ink2); max-width: 500px; margin-bottom: 36px;">
-        Authentic computer-delivered test environments — with instant AI speaking evaluation, automated writing feedback, and real-time institute tracking.
-      </p>
-      <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 44px;">
-        <button type="button" style="font-family: inherit; font-size: 15px; font-weight: 600; padding: 16px 28px; border-radius: 100px; border: none; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: 9px; box-shadow: 0 12px 32px -8px var(--ac); transition: transform .2s, box-shadow .2s;" style-hover="{transform: 'translateY(-3px)', boxShadow: '0 20px 44px -10px var(--ac)'}" style-active="{transform: 'translateY(-1px)'}">
-          Sign up for free
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+      <div style="width: 1px; height: 16px; background: var(--line);"></div>
+      <div style="display: flex; gap: 6px;">
+        <button type="button" onClick="{{ prevHeroSlide }}" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" style-hover="{background: 'var(--chipHi)', transform: 'translateX(-2px)'}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
-        <a href="#plans" style="font-size: 15px; font-weight: 600; padding: 16px 26px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); transition: transform .2s, background .2s;" style-hover="{transform: 'translateY(-3px)', background: 'var(--chipHi)'}">View plans &amp; pricing →</a>
+        <button type="button" onClick="{{ nextHeroSlide }}" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" style-hover="{background: 'var(--chipHi)', transform: 'translateX(2px)'}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
       </div>
-      <div style="display: flex; gap: 36px;">
-        <div>
-          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.4px; background: linear-gradient(135deg, var(--ink), var(--ink2)); -webkit-background-clip: text; background-clip: text; color: transparent;">{{ stat0 }}</div>
-          <div style="font-size: 13px; color: var(--ink2); font-weight: 500;">Students prepared</div>
-        </div>
-        <div style="width: 1px; background: var(--line);"></div>
-        <div>
-          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.4px; background: linear-gradient(135deg, var(--ink), var(--ink2)); -webkit-background-clip: text; background-clip: text; color: transparent;">{{ stat1 }}</div>
-          <div style="font-size: 13px; color: var(--ink2); font-weight: 500;">Partner institutes</div>
-        </div>
-        <div style="width: 1px; background: var(--line);"></div>
-        <div>
-          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.4px; background: linear-gradient(135deg, var(--ink), var(--ink2)); -webkit-background-clip: text; background-clip: text; color: transparent;">{{ stat2 }}</div>
-          <div style="font-size: 13px; color: var(--ink2); font-weight: 500;">Target band rate</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="vh-parallax" data-depth="-0.05" style="position: relative; animation: vh-rise .9s ease both;">
-      <div class="vh-parallax" data-depth="0.12" style="position: absolute; inset: -30px; background: radial-gradient(circle at 60% 40%, var(--ac), transparent 60%); opacity: 0.26; filter: blur(54px);"></div>
-      <div class="vh-hero-card" style="position: relative; background: var(--cardSolid); backdrop-filter: blur(18px); border: 1px solid var(--line); border-radius: 18px; overflow: hidden;">
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--line);">
-          <div style="display: flex; gap: 6px;">
-            <span style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f57;"></span>
-            <span style="width: 10px; height: 10px; border-radius: 50%; background: #ffbd2e;"></span>
-            <span style="width: 10px; height: 10px; border-radius: 50%; background: #28c840;"></span>
-          </div>
-          <div style="font-size: 12px; font-weight: 600; color: var(--ac); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px;">
-            <span style="width: 5px; height: 5px; border-radius: 50%; background: var(--ac); animation: vh-pulse 1.2s infinite;"></span>
-            58:40 remaining
-          </div>
-          <div style="font-size: 11px; font-weight: 500; color: var(--ink2);">Computer-delivered IELTS</div>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 11.5px; font-weight: 700;">
-          <div class="vh-exam-tab is-active">Listening</div>
-          <div class="vh-exam-tab">Reading</div>
-          <div class="vh-exam-tab">Writing</div>
-          <div class="vh-exam-tab">Speaking</div>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr;">
-          <div style="padding: 20px; border-right: 1px solid var(--line);">
-            <div style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--ac); margin-bottom: 10px;">PART 3 · READING</div>
-            <h4 style="font-size: 16px; font-weight: 600; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.3px;">The Evolution of Renewable Energy Architecture</h4>
-            <p style="font-size: 12.5px; line-height: 1.65; color: var(--ink2);">Modern sustainable architecture integrates solar kinetic facades that adjust dynamically throughout the day, reducing thermal load…</p>
-          </div>
-          <div style="padding: 20px;">
-            <div style="font-size: 12px; font-weight: 600; margin-bottom: 12px;"><span style="color: var(--ac);">Q1.</span> Kinetic facades primarily function by:</div>
-            <div style="display: flex; flex-direction: column; gap: 9px;">
-              <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--acWash); border: 1px solid var(--ac); font-size: 12.5px; font-weight: 500;">
-                <span style="width: 15px; height: 15px; border-radius: 50%; border: 4px solid var(--ac);"></span>
-                A. Adjusting solar tracking angles
-              </div>
-              <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); font-size: 12.5px; color: var(--ink2);">
-                <span style="width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--line);"></span>
-                B. Storing excess geothermal heat
-              </div>
-              <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); font-size: 12.5px; color: var(--ink2);">
-                <span style="width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--line);"></span>
-                C. Filtering ambient air quality
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div style="position: absolute; right: -18px; bottom: -22px; background: var(--cardSolid); backdrop-filter: blur(20px); border: 1px solid var(--line); color: var(--ink); border-radius: 16px; padding: 14px 18px; box-shadow: 0 24px 48px -16px rgba(0,0,0,0.4); animation: vh-float 4s ease-in-out infinite; display: flex; align-items: center; gap: 12px;">
-        <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--ac), var(--ac2)); display: grid; place-items: center; box-shadow: 0 8px 20px -6px var(--ac);">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-        </div>
-        <div>
-          <div style="font-size: 13px; font-weight: 700;">AI Speaking · Band 7.5</div>
-          <div style="font-size: 11px; color: var(--ink2);">Fluency &amp; pronunciation scored</div>
-        </div>
-      </div>
-      <div style="position: absolute; left: -22px; top: 20%; background: var(--cardSolid); backdrop-filter: blur(20px); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; animation: vh-float 5s ease-in-out infinite 0.5s; box-shadow: 0 20px 40px -16px rgba(0,0,0,0.4);">
-        <div style="width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #7c5cff, #a48cff); display: grid; place-items: center;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        </div>
-        <div style="font-size: 12px; font-weight: 700;">150+ students tracked</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 30px 32px 72px;">
-    <div style="display: flex; align-items: center; gap: 32px; flex-wrap: wrap; justify-content: center; padding: 28px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
-      <span style="font-size: 11.5px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink2);">Trusted by leading institutes</span>
-      <sc-for list="{{ logos }}" as="name" hint-placeholder-count="5">
-        <span style="font-size: 18px; font-weight: 600; letter-spacing: -0.3px; color: var(--ink); opacity: 0.4;">{{ name }}</span>
-      </sc-for>
     </div>
   </section>
 
   <section id="modules" class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 96px;">
-    <div style="max-width: 660px; margin-bottom: 48px;">
-      <span style="display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 6px 12px; border-radius: 100px; background: var(--acWash); color: var(--ac); border: 1px solid var(--acLine);">All four modules</span>
-      <h2 style="font-size: 52px; font-weight: 600; letter-spacing: -0.8px; line-height: 1.02; margin: 16px 0 16px;">Designed for realistic <span style="font-family: inherit; font-style: normal; font-weight: 700; color: var(--ac);">IELTS success</span></h2>
+    <div style="max-width: 660px; margin: 0 auto 48px; text-align: center;">
+      <h2 style="font-size: 40px; font-weight: 600; letter-spacing: -0.8px; line-height: 1.02; margin: 0 0 16px;">Designed for realistic <span style="font-family: inherit; font-style: normal; font-weight: 700; color: var(--ac);">IELTS success</span></h2>
       <p style="font-size: 17px; line-height: 1.6; color: var(--ink2);">Whether preparing independently or managing an entire institute batch, Visa House delivers complete, exam-accurate coverage.</p>
     </div>
     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
@@ -339,6 +269,76 @@
     </div>
   </section>
 
+
+  <section class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 0 32px 96px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; flex-wrap: wrap; gap: 20px;">
+      <div>
+        <span style="display: inline-block; font-size: 11.5px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--ac); margin-bottom: 8px;">Latest from our blog</span>
+        <h2 style="font-size: 32px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.12; margin: 0;">Insights &amp; strategies from IELTS examiners</h2>
+      </div>
+      <a href="/blogs" style="font-size: 14px; font-weight: 600; padding: 12px 24px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;" style-hover="{background: 'var(--chipHi)', transform: 'translateY(-2px)'}">
+        View all blog posts
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;">
+      <!-- Blog Card 1 -->
+      <a href="/blogs" style="display: flex; flex-direction: column; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; text-decoration: none; color: inherit; transition: all 0.3s;" style-hover="{transform: 'translateY(-6px)', boxShadow: '0 20px 40px -15px rgba(0,0,0,0.15)', borderColor: 'var(--acLine)'}">
+        <div style="position: relative; aspect-ratio: 16/10; overflow: hidden; border-bottom: 1px solid var(--line);">
+          <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?w=500&auto=format&fit=crop&q=80" alt="Cue card strategy" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" style-hover="{transform: 'scale(1.05)'}"/>
+          <span style="position: absolute; top: 16px; left: 16px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; background: var(--cardSolid); border: 1px solid var(--line); padding: 4px 10px; border-radius: 100px; color: var(--ink);">Speaking</span>
+        </div>
+        <div style="padding: 24px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h3 style="font-size: 19px; font-weight: 700; letter-spacing: -0.4px; line-height: 1.3; color: var(--ink); margin-bottom: 10px;">How Part 2 cue cards trip up strong speakers</h3>
+            <p style="font-size: 14px; line-height: 1.6; color: var(--ink2); margin-bottom: 20px;">Structure beats vocabulary. The 4-line speaking frame our senior examiners use to ensure coherence under pressure.</p>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink2); border-top: 1px solid var(--line); padding-top: 16px;">
+            <span style="font-weight: 500;">Priya Nair &middot; 22 Jul</span>
+            <span>6 min read</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Blog Card 2 -->
+      <a href="/blogs" style="display: flex; flex-direction: column; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; text-decoration: none; color: inherit; transition: all 0.3s;" style-hover="{transform: 'translateY(-6px)', boxShadow: '0 20px 40px -15px rgba(0,0,0,0.15)', borderColor: 'var(--acLine)'}">
+        <div style="position: relative; aspect-ratio: 16/10; overflow: hidden; border-bottom: 1px solid var(--line);">
+          <img src="https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=500&auto=format&fit=crop&q=80" alt="Writing description opener" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" style-hover="{transform: 'scale(1.05)'}"/>
+          <span style="position: absolute; top: 16px; left: 16px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; background: var(--cardSolid); border: 1px solid var(--line); padding: 4px 10px; border-radius: 100px; color: var(--ink);">Writing</span>
+        </div>
+        <div style="padding: 24px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h3 style="font-size: 19px; font-weight: 700; letter-spacing: -0.4px; line-height: 1.3; color: var(--ink); margin-bottom: 10px;">Task 1: the graph description opener that always works</h3>
+            <p style="font-size: 14px; line-height: 1.6; color: var(--ink2); margin-bottom: 20px;">One sentence, three moves. Copy this structural template to open every academic graph or chart description flawlessly.</p>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink2); border-top: 1px solid var(--line); padding-top: 16px;">
+            <span style="font-weight: 500;">Arjun Mehta &middot; 18 Jul</span>
+            <span>5 min read</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Blog Card 3 -->
+      <a href="/blogs" style="display: flex; flex-direction: column; background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; text-decoration: none; color: inherit; transition: all 0.3s;" style-hover="{transform: 'translateY(-6px)', boxShadow: '0 20px 40px -15px rgba(0,0,0,0.15)', borderColor: 'var(--acLine)'}">
+        <div style="position: relative; aspect-ratio: 16/10; overflow: hidden; border-bottom: 1px solid var(--line);">
+          <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&auto=format&fit=crop&q=80" alt="Listening note-taking shorthand" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" style-hover="{transform: 'scale(1.05)'}"/>
+          <span style="position: absolute; top: 16px; left: 16px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; background: var(--cardSolid); border: 1px solid var(--line); padding: 4px 10px; border-radius: 100px; color: var(--ink);">Listening</span>
+        </div>
+        <div style="padding: 24px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h3 style="font-size: 19px; font-weight: 700; letter-spacing: -0.4px; line-height: 1.3; color: var(--ink); margin-bottom: 10px;">Section 4 note-taking: the shorthand that saves marks</h3>
+            <p style="font-size: 14px; line-height: 1.6; color: var(--ink2); margin-bottom: 20px;">Full sentences lose you marks due to writing delays. Learn abbreviations and symbols to capture every answer.</p>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink2); border-top: 1px solid var(--line); padding-top: 16px;">
+            <span style="font-weight: 500;">Sana Iqbal &middot; 14 Jul</span>
+            <span>4 min read</span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </section>
+
   <section id="plans" class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 0 32px 96px;">
     <div style="position: relative; overflow: hidden; border-radius: 28px; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; padding: 68px 56px; display: flex; align-items: center; justify-content: space-between; gap: 40px; flex-wrap: wrap; box-shadow: 0 30px 60px -20px var(--ac);">
       <div style="position: absolute; right: -80px; top: -80px; width: 320px; height: 320px; border-radius: 50%; background: rgba(255,255,255,0.12);"></div>
@@ -358,7 +358,7 @@
     <div style="max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 40px;">
       <div>
         <div style="display: flex; align-items: center; gap: 11px; margin-bottom: 16px;">
-          <span style="width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px;">VH</span>
+          <img src="{{ logoSrc }}" alt="Visa House" width="34" height="34" style="width: 34px; height: 34px; object-fit: contain; display: block; flex: 0 0 34px;">
           <span style="font-size: 17px; font-weight: 700;">Visa House</span>
         </div>
         <ul class="footer-social-icons">
@@ -418,7 +418,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
 class Component extends DCLogic {
-  state = { s0: 0, s1: 0, s2: 0, theme: this.getInitialTheme(), rev: 0 };
+  state = { s0: 0, s1: 0, s2: 0, theme: this.getInitialTheme(), rev: 0, heroTab: 0 };
 
   getInitialTheme() {
     try {
@@ -429,10 +429,10 @@ class Component extends DCLogic {
   }
 
   reviews = [
-    { quote: "The mock environment felt identical to test day. The AI speaking feedback told me exactly where I was losing fluency marks — I went from", highlight: "6.5 to 8.0", tail: ".", name: "Priya Nair", role: "Academic candidate", score: "Band 8.0", meta: "Achieved Band 8.0 · Academic", init: "PN", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80", grad: "linear-gradient(135deg, #e11d48, #7c5cff)" },
+    { quote: "The mock environment felt identical to test day. The AI speaking feedback told me exactly where I was losing fluency marks — I went from", highlight: "6.5 to 8.0", tail: ".", name: "Priya Nair", role: "Academic candidate", score: "Band 8.0", meta: "Achieved Band 8.0 · Academic", init: "PN", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80", grad: "linear-gradient(135deg, #e11d2e, #7c5cff)" },
     { quote: "Writing feedback broke my essay down criterion by criterion. Task response and coherence tips got me straight from", highlight: "6.0 to 7.5", tail: " in six weeks.", name: "Arjun Mehta", role: "General Training", score: "Band 7.5", meta: "Achieved Band 7.5 · General", init: "AM", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80", grad: "linear-gradient(135deg, #00d4ff, #22c55e)" },
     { quote: "Our institute batch dashboard is unreal. We could spot every weak student in one glance — 42 of 50 hit their target band, up from", highlight: "23 last cycle", tail: ".", name: "Dr. Meera Kapoor", role: "Institute director", score: "42/50 targets", meta: "Director · Meridian Institute", init: "MK", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80", grad: "linear-gradient(135deg, #7c5cff, #a48cff)" },
-    { quote: "The listening simulations use actual British and Australian accents. Practicing with the real audio quality made test day feel like a", highlight: "regular practice session", tail: ".", name: "Sana Iqbal", role: "Academic candidate", score: "Band 8.5", meta: "Achieved Band 8.5 · Academic", init: "SI", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80", grad: "linear-gradient(135deg, #fb7185, #e11d48)" },
+    { quote: "The listening simulations use actual British and Australian accents. Practicing with the real audio quality made test day feel like a", highlight: "regular practice session", tail: ".", name: "Sana Iqbal", role: "Academic candidate", score: "Band 8.5", meta: "Achieved Band 8.5 · Academic", init: "SI", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80", grad: "linear-gradient(135deg, #fb7185, #e11d2e)" },
   ];
 
   rootRef = (el) => {
@@ -464,6 +464,9 @@ class Component extends DCLogic {
     this._revTimer = setInterval(() => {
       this.setState((s) => ({ rev: (s.rev + 1) % this.reviews.length }));
     }, 5500);
+    this._heroTimer = setInterval(() => {
+      this.setState((s) => ({ heroTab: (s.heroTab + 1) % 3 }), () => this.animateHeroSlide());
+    }, 4000);
   }
 
   componentWillUnmount() {
@@ -471,6 +474,7 @@ class Component extends DCLogic {
     window.removeEventListener("scroll", this._onParallax);
     this._io?.disconnect?.();
     clearInterval(this._revTimer);
+    clearInterval(this._heroTimer);
   }
 
   goReview = (i) => {
@@ -482,6 +486,44 @@ class Component extends DCLogic {
   };
   prevReview = () => this.goReview(this.state.rev - 1);
   nextReview = () => this.goReview(this.state.rev + 1);
+
+  selectHero = (tabIndex) => {
+    clearInterval(this._heroTimer);
+    this.setState({ heroTab: tabIndex }, () => {
+      this.animateHeroSlide();
+      this._heroTimer = setInterval(() => {
+        this.setState((s) => ({ heroTab: (s.heroTab + 1) % 3 }), () => this.animateHeroSlide());
+      }, 4000);
+    });
+  };
+  selectHero0 = () => this.selectHero(0);
+  selectHero1 = () => this.selectHero(1);
+  selectHero2 = () => this.selectHero(2);
+
+  prevHeroSlide = () => {
+    const prev = (this.state.heroTab - 1 + 3) % 3;
+    this.selectHero(prev);
+  };
+  nextHeroSlide = () => {
+    const next = (this.state.heroTab + 1) % 3;
+    this.selectHero(next);
+  };
+
+  animateHeroSlide() {
+    if (!this._root || !window.gsap) return;
+    const slideLeft = this._root.querySelector(".vh-hero-slide-left");
+    const slideRight = this._root.querySelector(".vh-hero-slide-right");
+    if (slideLeft && slideRight) {
+      window.gsap.fromTo(slideLeft.children,
+        { opacity: 0, y: 25, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power4.out", stagger: 0.06 }
+      );
+      window.gsap.fromTo(slideRight.querySelector("div"),
+        { opacity: 0, scale: 0.92, rotateY: 8 },
+        { opacity: 1, scale: 1, rotateY: 0, duration: 0.75, ease: "power3.out" }
+      );
+    }
+  }
 
   scrollTestimonialsLeft = () => {
     this._testimonials?.scrollBy({ left: -384, behavior: "smooth" });
@@ -536,15 +578,15 @@ class Component extends DCLogic {
     const dark = this.isDark();
     try { window.parent.postMessage({ type: "vh-theme", theme: dark ? "dark" : "light" }, window.location.origin); } catch {}
     const set = (k, v) => this._root.style.setProperty(k, v);
-    set("--ac", "#e11d48");
-    set("--ac2", "#f43f5e");
+    set("--ac", "#e11d2e");
+    set("--ac2", "#ef4444");
     if (dark) {
       set("--bg", "#0a0a0f");
       set("--ink", "#f5f5f7");
       set("--ink2", "#9095a3");
       set("--line", "rgba(255,255,255,0.1)");
-      set("--acLine", "rgba(225, 29, 72,0.35)");
-      set("--acWash", "rgba(225, 29, 72,0.14)");
+      set("--acLine", "rgba(225, 29, 46,0.35)");
+      set("--acWash", "rgba(225, 29, 46,0.14)");
       set("--card", "rgba(20,20,28,0.55)");
       set("--cardSolid", "rgba(20,20,28,0.9)");
       set("--chip", "rgba(255,255,255,0.06)");
@@ -559,8 +601,8 @@ class Component extends DCLogic {
       set("--ink", "#0e0d10");
       set("--ink2", "#5f6270");
       set("--line", "rgba(14,13,16,0.1)");
-      set("--acLine", "rgba(225, 29, 72,0.35)");
-      set("--acWash", "rgba(225, 29, 72,0.08)");
+      set("--acLine", "rgba(225, 29, 46,0.35)");
+      set("--acWash", "rgba(225, 29, 46,0.08)");
       set("--card", "rgba(255,255,255,0.7)");
       set("--cardSolid", "rgba(255,255,255,0.95)");
       set("--chip", "rgba(14,13,16,0.04)");
@@ -595,6 +637,7 @@ class Component extends DCLogic {
   }
 
   renderVals() {
+    const heroTab = this.state.heroTab;
     const nf = (n) => Math.round(n).toLocaleString("en-IN");
     const svg = (paths, size = 22) => React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.9, strokeLinecap: "round", strokeLinejoin: "round" }, paths.map((p, i) => React.createElement(p.tag, { key: i, ...p.attrs })));
 
@@ -639,6 +682,96 @@ class Component extends DCLogic {
       )
     );
 
+    const heroSlides = [
+      {
+        badge: "AI Evaluator Live · 15,000+ Students Prepared",
+        heading: "Master IELTS with Real Exam Simulations",
+        highlight: " & Exam Timers.",
+        desc: "Authentic computer-delivered test environments — with exact IELTS timing, section tracking, and auto-saving interfaces.",
+        image: "/images/slide_simulation.jpg",
+        ctaText: "Sign up for free",
+        ctaLink: "/register",
+        altText: "View plans & pricing →",
+        altLink: "#plans",
+        stats: [
+          { value: "15,000+", label: "Students prepared" },
+          { value: "180+", label: "Partner institutes" },
+          { value: "98.4%", label: "Target band rate" }
+        ]
+      },
+      {
+        badge: "Instant AI Score Feedback · Speaks & Essays",
+        heading: "Instant Speaking & Writing Analysis",
+        highlight: " & CEFR Bands.",
+        desc: "Our advanced neural networks evaluate pronunciation, grammatical accuracy, coherence, and task response with pinpoint accuracy.",
+        image: "/images/slide_ai_feedback.jpg",
+        ctaText: "Try Speaking Demo",
+        ctaLink: "/login",
+        altText: "Learn about AI scoring →",
+        altLink: "#modules",
+        stats: [
+          { value: "Band 8.5", label: "Average speaking score" },
+          { value: "Real-time", label: "Speech-to-text conversion" },
+          { value: "24/7", label: "Instant evaluation availability" }
+        ]
+      },
+      {
+        badge: "Detailed Learning Analytics & Dashboards",
+        heading: "Track Your Journey to Your Dream Band",
+        highlight: " & Performance Charts.",
+        desc: "Interactive analytics dashboards isolate your weak areas and highlight vocabulary or speed gaps across all four IELTS modules.",
+        image: "/images/slide_progress.jpg",
+        ctaText: "View Dashboard Demo",
+        ctaLink: "/login",
+        altText: "See how we track progress →",
+        altLink: "#steps",
+        stats: [
+          { value: "Weak-spots", label: "Detected automatically" },
+          { value: "Leaderboard", label: "Institute batch ranks" },
+          { value: "One-Click", label: "PDF report downloads" }
+        ]
+      }
+    ];
+
+    const activeSlideData = heroSlides[heroTab];
+
+    const activeHeroSlide = React.createElement("div", { key: "hero-slide-" + heroTab, style: { display: "contents" } },
+      React.createElement("div", { className: "vh-hero-slide-left", style: { display: "flex", flexDirection: "column", alignItems: "flex-start" } },
+
+        React.createElement("h1", { className: "vh-hero-title" },
+          activeSlideData.heading,
+          React.createElement("span", { className: "vh-hero-title-accent" }, activeSlideData.highlight)
+        ),
+        React.createElement("p", { className: "vh-hero-desc" },
+          activeSlideData.desc
+        ),
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 44 } },
+          React.createElement("button", { type: "button", onClick: () => { window.parent.postMessage({ type: "vh-auth", mode: "register" }, window.location.origin); }, style: { fontFamily: "inherit", fontSize: 15, fontWeight: 600, padding: "16px 28px", borderRadius: 100, border: "none", background: "linear-gradient(135deg, var(--ac), var(--ac2))", color: "#fff", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 9, boxShadow: "0 12px 32px -8px var(--ac)", transition: "transform .2s, box-shadow .2s" } },
+            activeSlideData.ctaText,
+            React.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round" },
+              React.createElement("path", { d: "M5 12h14" }),
+              React.createElement("path", { d: "m13 6 6 6-6 6" })
+            )
+          ),
+          React.createElement("a", { href: activeSlideData.altLink, style: { fontSize: 15, fontWeight: 600, padding: "16px 26px", borderRadius: 100, border: "1px solid var(--line)", background: "var(--chip)", color: "var(--ink)", transition: "transform .2s, background .2s" } },
+            activeSlideData.altText
+          )
+        ),
+        React.createElement("div", { className: "vh-hero-stats" },
+          activeSlideData.stats.map((s, i) => React.createElement("div", { key: i, className: "vh-hero-stat-group" },
+            React.createElement("div", { className: "vh-hero-stat-value" }, s.value),
+            React.createElement("div", { className: "vh-hero-stat-label" }, s.label)
+          ))
+        )
+      ),
+      React.createElement("div", { className: "vh-hero-slide-right", style: { position: "relative", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" } },
+        React.createElement("div", { style: { position: "absolute", inset: -30, background: "radial-gradient(circle at 60% 40%, var(--ac), transparent 60%)", opacity: 0.26, filter: "blur(54px)" } }),
+        React.createElement("div", { style: { position: "relative", borderRadius: 24, overflow: "hidden", border: "1px solid var(--line)", boxShadow: "0 34px 80px -24px rgba(0,0,0,0.38)", width: "100%", paddingTop: "80%" } },
+          React.createElement("img", { src: activeSlideData.image, alt: activeSlideData.heading, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" } })
+        )
+      )
+    );
+
     const themeIcons = {
       light: svg([
         { tag: "circle", attrs: { cx: 12, cy: 12, r: 4.2 } },
@@ -651,7 +784,17 @@ class Component extends DCLogic {
 
     const review = this.reviews[this.state.rev];
     return {
+      activeHeroSlide,
+      heroDotClass0: heroTab === 0 ? "vh-dot active" : "vh-dot",
+      heroDotClass1: heroTab === 1 ? "vh-dot active" : "vh-dot",
+      heroDotClass2: heroTab === 2 ? "vh-dot active" : "vh-dot",
+      selectHero0: this.selectHero0,
+      selectHero1: this.selectHero1,
+      selectHero2: this.selectHero2,
+      prevHeroSlide: this.prevHeroSlide,
+      nextHeroSlide: this.nextHeroSlide,
       rootRef: this.rootRef,
+      logoSrc: this.state.theme === "dark" ? "/brand/vh-mark-dark.png" : "/brand/vh-mark-light.png",
       cycleTheme: this.cycleTheme,
       review,
       reviewKey: "r" + this.state.rev,
@@ -687,9 +830,8 @@ class Component extends DCLogic {
         { label: "Blogs", href: "/blogs", className: "vh-nav-link" },
         { label: "Contact", href: "/contact", className: "vh-nav-link" },
       ],
-      logos: ["Meridian", "Cambridge Point", "Aspire", "Lingua", "NorthGate"],
       modules: [
-        { num: "01", title: "Listening Simulations", desc: "High-fidelity native-accent audio with section progress, waveform seeking and answer autocommit.", g1: "#e11d48", g2: "#f43f5e", wash1: "rgba(225, 29, 72,0.10)", wash2: "rgba(225, 29, 72,0.02)", status: "Audio playing", preview: wavePreview("#e11d48"), icon: svg([
+        { num: "01", title: "Listening Simulations", desc: "High-fidelity native-accent audio with section progress, waveform seeking and answer autocommit.", g1: "#e11d2e", g2: "#ef4444", wash1: "rgba(225, 29, 46,0.10)", wash2: "rgba(225, 29, 46,0.02)", status: "Audio playing", preview: wavePreview("#e11d2e"), icon: svg([
           { tag: "path", attrs: { d: "M3 18v-6a9 9 0 0 1 18 0v6" } },
           { tag: "path", attrs: { d: "M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" } },
         ], 32) },

@@ -1,4 +1,4 @@
-import { SearchableSelect } from "@/components/ui";
+import { Checkbox, SearchableSelect } from "@/components/ui";
 import type { QuestionDraft, QuestionImportPreview, QuestionType } from "@/api/types";
 import { questionBankEditorStrings as strings } from "../QuestionBankEditor.strings";
 import { QUESTION_TYPES } from "../helpers";
@@ -78,7 +78,7 @@ export function ImportReviewSection({
         {preview.questions.map((question, index) => (
           <article className={`preview-question${selectedImports.has(index) ? " selected" : ""}`} key={index}>
             <label className="preview-selector">
-              <input type="checkbox" checked={selectedImports.has(index)} onChange={() => toggleImport(index)} /> {t.includeQuestion(index + 1)}
+              <Checkbox checked={selectedImports.has(index)} onChange={() => toggleImport(index)} /> {t.includeQuestion(index + 1)}
             </label>
             <div className="form-grid">
               <div>

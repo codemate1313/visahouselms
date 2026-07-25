@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { apiClient } from "../api/client";
 import type { StudentNotification } from "../api/types";
 import { notificationTime, scoreLabel } from "../utils/notificationHelpers";
 import { Icon } from "./icons";
+import { PinList, type PinListItem } from "./PinList";
+
+type PinnableNotification = StudentNotification & PinListItem;
+
+const VISIBLE_COUNT = 6;
 
 interface NotificationBellProps {
   eyebrow?: string;
@@ -124,7 +129,25 @@ export function NotificationBell({
   useEffect(() => () => cancelScheduledClose(), [cancelScheduledClose]);
 
   const unread = notifications.filter((notification) => !notification.read_at);
-  const visibleNotifications = notifications.slice(0, 6);
+
+  // Pinned first (newest pin on top), then newest-first — same ordering the
+  // server returns, re-applied client-side so an optimistic pin/unpin
+  // reorders immediately instead of waiting on the next poll. This has to
+  // happen before the slice below, or a just-pinned older notification could
+  // still fall outside the popover's visible window.
+  const pinnableItems = useMemo<PinnableNotification[]>(() => {
+    const byRecency = (a: StudentNotification, b: StudentNotification) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    return [...notifications]
+      .sort((a, b) => {
+        if (a.pinned_at && b.pinned_at) return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
+        if (a.pinned_at) return -1;
+        if (b.pinned_at) return 1;
+        return byRecency(a, b);
+      })
+      .slice(0, VISIBLE_COUNT)
+      .map((notification) => ({ ...notification, pinned: Boolean(notification.pinned_at) }));
+  }, [notifications]);
 
   async function markRead(notification: StudentNotification) {
     if (notification.read_at) return;
@@ -156,6 +179,25 @@ export function NotificationBell({
         undefined,
         { headers: { "X-Skip-Loader": "1" } },
       );
+    } catch {
+      setNotifications(previous);
+    }
+  }
+
+  async function togglePin(notification: StudentNotification) {
+    const shouldPin = !notification.pinned_at;
+    const pinnedAt = shouldPin ? new Date().toISOString() : null;
+    const previous = notifications;
+    setNotifications((items) =>
+      items.map((item) => (item.id === notification.id ? { ...item, pinned_at: pinnedAt } : item)),
+    );
+    try {
+      const { data } = await apiClient.patch<StudentNotification>(
+        `${notificationsPath}/${notification.id}/${shouldPin ? "pin" : "unpin"}`,
+        undefined,
+        { headers: { "X-Skip-Loader": "1" } },
+      );
+      setNotifications((items) => items.map((item) => (item.id === notification.id ? data : item)));
     } catch {
       setNotifications(previous);
     }
@@ -216,34 +258,37 @@ export function NotificationBell({
                 <p>{error}</p>
                 <button type="button" onClick={() => void loadNotifications()}>Try again</button>
               </div>
-            ) : visibleNotifications.length === 0 ? (
+            ) : pinnableItems.length === 0 ? (
               <div className="student-notification-state">
                 <strong>No notifications</strong>
                 <p>{eyebrow}. You are all caught up.</p>
               </div>
             ) : (
-              visibleNotifications.map((notification) => (
-                <button
-                  type="button"
-                  className={`student-notification-item${notification.read_at ? " is-read" : " is-unread"}`}
-                  key={notification.id}
-                  onClick={() => openNotification(notification)}
-                >
-                  <span className="student-notification-item-icon">
-                    <Icon name="notifications" />
-                  </span>
-                  <span className="student-notification-item-content">
-                    <strong>{notification.title}</strong>
-                    <span className="student-notification-message">
-                      {notification.message}
-                      {scoreLabel(notification) ? ` Score ${scoreLabel(notification)}.` : ""}
+              <PinList
+                items={pinnableItems}
+                onTogglePin={(notification) => void togglePin(notification)}
+                renderItem={(notification) => (
+                  <button
+                    type="button"
+                    className={`student-notification-item${notification.read_at ? " is-read" : " is-unread"}`}
+                    onClick={() => openNotification(notification)}
+                  >
+                    <span className="student-notification-item-icon">
+                      <Icon name="notifications" />
                     </span>
-                  </span>
-                  <time className="student-notification-time" dateTime={notification.created_at}>
-                    {notificationTime(notification.created_at)}
-                  </time>
-                </button>
-              ))
+                    <span className="student-notification-item-content">
+                      <strong>{notification.title}</strong>
+                      <span className="student-notification-message">
+                        {notification.message}
+                        {scoreLabel(notification) ? ` Score ${scoreLabel(notification)}.` : ""}
+                      </span>
+                    </span>
+                    <time className="student-notification-time" dateTime={notification.created_at}>
+                      {notificationTime(notification.created_at)}
+                    </time>
+                  </button>
+                )}
+              />
             )}
           </div>
 

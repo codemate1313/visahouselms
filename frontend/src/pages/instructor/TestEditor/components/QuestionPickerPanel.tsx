@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
-import { SearchableSelect, SearchInput } from "@/components/ui";
+import { Checkbox, SearchableSelect, SearchInput } from "@/components/ui";
 import type { Assessment, Question } from "@/api/types";
 import { testEditorStrings as strings } from "../TestEditor.strings";
 
@@ -73,7 +73,7 @@ export function QuestionPickerPanel({
         <div className="question-picker-list">
           {filtered.map((question) => (
             <label className={`question-picker-item${questionIds.includes(question.id) ? " chosen" : ""}`} key={question.id}>
-              <input type="checkbox" disabled={!canEdit} checked={questionIds.includes(question.id)} onChange={() => onToggleQuestion(question.id)} />
+              <Checkbox disabled={!canEdit} checked={questionIds.includes(question.id)} onChange={() => onToggleQuestion(question.id)} />
               <span>
                 <strong>{question.prompt}</strong>
                 <small>
