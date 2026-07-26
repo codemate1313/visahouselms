@@ -305,11 +305,8 @@ def register(
     password: str,
     first_name: str,
     last_name: str,
-    user_agent: Optional[str],
     ip_address: Optional[str],
-    device_identifier: Optional[str] = None,
-    device_name: Optional[str] = None,
-) -> Tuple[str, str]:
+) -> User:
     """Public self-registration for a direct (B2C) student - institute_id is
     always NULL here; institute students are created by their institute."""
     normalized_email = email.strip().lower()
@@ -342,15 +339,6 @@ def register(
             ip_address=ip_address,
         )
     )
-    device = _resolve_device(
-        db,
-        user,
-        device_identifier,
-        device_name,
-        user_agent,
-        ip_address,
-        enforce_single_device=True,
-    )
     db.commit()
     db.refresh(user)
 
@@ -365,7 +353,7 @@ def register(
         import logging
         logging.getLogger(__name__).warning("Failed to send welcome email for %s: %s", user.email, exc)
 
-    return issue_token_pair(db, user, user_agent, ip_address, device=device)
+    return user
 
 
 def request_password_reset(db: Session, email: str) -> None:

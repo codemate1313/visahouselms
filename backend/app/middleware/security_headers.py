@@ -39,7 +39,7 @@ async def add_security_headers(
         "camera=(self), microphone=(self), display-capture=(self), fullscreen=(self)"
     )
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
-    response.headers["Cross-Origin-Resource-Policy"] = "same-site"
+    response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
     response.headers["Content-Security-Policy"] = CONTENT_SECURITY_POLICY
     if request.url.path.startswith(NO_STORE_PREFIXES):
         response.headers["Cache-Control"] = "no-store, max-age=0"

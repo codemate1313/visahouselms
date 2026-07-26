@@ -683,3 +683,38 @@ export interface AvatarSettings {
   presenter_image_url: string | null;
   voice_id: string | null;
 }
+
+/** Roles listed in the Super Admin user directory, in tab order. */
+export const DIRECTORY_ROLES = [
+  "SUPER_ADMIN",
+  "SA_INSTRUCTOR",
+  "INSTITUTE_ADMIN",
+  "INST_INSTRUCTOR",
+  "STUDENT",
+] as const;
+
+export type DirectoryRole = (typeof DIRECTORY_ROLES)[number];
+
+export interface DirectoryUser {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role_name: DirectoryRole;
+  is_active: boolean;
+  force_password_reset: boolean;
+  is_owner: boolean;
+  avatar_path: string | null;
+  institute_id: number | null;
+  institute_name: string | null;
+  institute_slug: string | null;
+  created_at: string;
+}
+
+export interface DirectoryUserPage {
+  items: DirectoryUser[];
+  total: number;
+  page: number;
+  page_size: number;
+  role_counts: Record<DirectoryRole, number>;
+}

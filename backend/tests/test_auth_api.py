@@ -7,6 +7,7 @@ to service-level tests but fails here.
 """
 
 import unittest
+from unittest import mock
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -18,6 +19,7 @@ from app.core.security import create_login_otp_token, hash_login_otp_code, hash_
 from app.config import settings
 from app.database import get_db
 from app.main import app
+from app.middleware import request_logging
 from app.models import Base
 from app.models.role import INSTITUTE_ADMIN, STUDENT, SUPER_ADMIN, Role
 from app.models.user import User
@@ -45,10 +47,17 @@ class AuthApiTestCase(unittest.TestCase):
         self.db.commit()
 
         app.dependency_overrides[get_db] = self._override_get_db
+        # The request-logging middleware opens its own session straight from
+        # app.database, so without this it would write to the real database.
+        self._logging_patch = mock.patch.object(
+            request_logging, "SessionLocal", self.Session
+        )
+        self._logging_patch.start()
         self.client = TestClient(app)
         reset_rate_limits()
 
     def tearDown(self) -> None:
+        self._logging_patch.stop()
         app.dependency_overrides.clear()
         reset_rate_limits()
         self.db.close()

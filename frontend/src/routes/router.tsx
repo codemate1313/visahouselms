@@ -4,7 +4,6 @@ import { Login } from "../pages/Login";
 import {
   AboutUs,
   AccountForm,
-  AccountsList,
   AttemptResult,
   AttemptResultDetails,
   ChangePassword,
@@ -32,7 +31,6 @@ import {
   InstituteMembers,
   InstituteOnboarding,
   InstituteProfile,
-  Instructors,
   InstructorDashboard,
   InstructorForm,
   InstructorLayout,
@@ -79,6 +77,7 @@ import {
   TestRunner,
   TestingLoginSelector,
   TrialConfig,
+  Users,
 } from "./lazyPages";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { BlogsList } from "../pages/public/BlogsList";
@@ -124,10 +123,15 @@ export const router = createBrowserRouter([
           { path: "blogs/new", element: <SuperAdminBlogForm /> },
           { path: "blogs/:id", element: <SuperAdminBlogForm /> },
           { path: "seo-settings", element: <SuperAdminSEOSettings /> },
-          { path: "accounts", element: <AccountsList /> },
+          // Unified cross-role directory. The per-role create/edit forms below
+          // remain the place accounts are actually managed.
+          { path: "users", element: <Navigate to="/super-admin/users/super-admins" replace /> },
+          { path: "users/:role", element: <Users /> },
+          // The old single-role list screens now live as tabs of the directory.
+          { path: "accounts", element: <Navigate to="/super-admin/users/super-admins" replace /> },
           { path: "accounts/new", element: <AccountForm /> },
           { path: "accounts/:id", element: <AccountForm /> },
-          { path: "instructors", element: <Instructors /> },
+          { path: "instructors", element: <Navigate to="/super-admin/users/sa-instructors" replace /> },
           { path: "instructors/new", element: <InstructorForm /> },
           { path: "instructors/:id", element: <InstructorForm /> },
           { path: "modules", element: <ModuleControl /> },

@@ -116,6 +116,29 @@ def _send_login_otp(db: Session, user: User, otp_code: str) -> None:
         ) from exc
 
 
+def _send_register_otp(db: Session, user: User, otp_code: str) -> None:
+    if settings.dev_static_otp_code and settings.app_environment != "production":
+        logging.getLogger(__name__).warning(
+            "DEV_STATIC_OTP_CODE is active - skipping OTP email for %s, use code %s",
+            user.email,
+            otp_code,
+        )
+        return
+
+    subject, plain, html = email_template_service.render_register_otp_email(
+        user.first_name or "there",
+        otp_code,
+        settings.login_otp_expire_minutes,
+    )
+    try:
+        smtp_service.send_email(db, user.email, subject, plain, html)
+    except HTTPException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Unable to send verification email. Please contact the administrator to configure SMTP mail delivery.",
+        ) from exc
+
+
 def _safe_return_path(path: Optional[str]) -> str:
     if not path or not path.startswith("/") or path.startswith("//"):
         return "/login"
@@ -134,17 +157,20 @@ def _google_redirect_uri(request: Request) -> str:
 def _otp_challenge_for(
     db: Session,
     user: User,
-    payload: Union[LoginRequest, GoogleOtpRequest],
+    payload: Union[LoginRequest, GoogleOtpRequest, RegisterRequest],
     auth_method: str,
 ) -> TokenResponse:
     otp_code = generate_login_otp_code()
-    _send_login_otp(db, user, otp_code)
+    if auth_method == "register":
+        _send_register_otp(db, user, otp_code)
+    else:
+        _send_login_otp(db, user, otp_code)
     challenge = create_login_otp_token(
         user.id,
         user.role.name,
         user.institute_id,
         auth_method,
-        payload.remember_me,
+        getattr(payload, "remember_me", True),
         payload.device_id,
         payload.device_name,
         hash_login_otp_code(otp_code),
@@ -380,19 +406,15 @@ def register(payload: RegisterRequest, request: Request, response: Response, db:
         "Too many registration attempts. Please try again later.",
     )
     device_identifier = _device_identifier(request, response, payload.device_id)
-    access_token, refresh_token = auth_service.register(
+    user = auth_service.register(
         db,
         payload.email,
         payload.password,
         payload.first_name,
         payload.last_name,
-        request.headers.get("user-agent"),
         client_ip,
-        device_identifier,
-        payload.device_name,
     )
-    set_refresh_cookie(response, refresh_token)
-    return TokenResponse(access_token=access_token)
+    return _otp_challenge_for(db, user, payload, "register")
 
 
 @router.post("/refresh", response_model=TokenResponse)

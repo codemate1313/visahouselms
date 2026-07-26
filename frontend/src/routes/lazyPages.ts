@@ -42,7 +42,7 @@ export const StudentLayout = lazy(() => import("../pages/student/StudentLayout")
 export const StudentProfile = lazy(() => import("../pages/student/StudentProfile").then((module) => ({ default: module.StudentProfile })));
 export const StudentProgress = lazy(() => import("../pages/student/StudentProgress").then((module) => ({ default: module.StudentProgress })));
 export const AccountForm = lazy(() => import("../pages/super-admin/AccountForm").then((module) => ({ default: module.AccountForm })));
-export const AccountsList = lazy(() => import("../pages/super-admin/AccountsList").then((module) => ({ default: module.AccountsList })));
+export const Users = lazy(() => import("../pages/super-admin/Users").then((module) => ({ default: module.Users })));
 export const ChangePassword = lazy(() => import("../pages/super-admin/ChangePassword").then((module) => ({ default: module.ChangePassword })));
 export const CouponForm = lazy(() => import("../pages/super-admin/CouponForm").then((module) => ({ default: module.CouponForm })));
 export const Coupons = lazy(() => import("../pages/super-admin/Coupons").then((module) => ({ default: module.Coupons })));
@@ -54,7 +54,7 @@ export const GradingOversight = lazy(() => import("../pages/super-admin/GradingO
 export const InstituteBranding = lazy(() => import("../pages/super-admin/InstituteBranding").then((module) => ({ default: module.InstituteBranding })));
 export const InstituteForm = lazy(() => import("../pages/super-admin/InstituteForm").then((module) => ({ default: module.InstituteForm })));
 export const InstructorForm = lazy(() => import("../pages/super-admin/InstructorForm").then((module) => ({ default: module.InstructorForm })));
-export const Instructors = lazy(() => import("../pages/super-admin/Instructors").then((module) => ({ default: module.Instructors })));
+
 export const Institutes = lazy(() => import("../pages/super-admin/Institutes").then((module) => ({ default: module.Institutes })));
 export const Invoice = lazy(() => import("../pages/super-admin/Invoice").then((module) => ({ default: module.Invoice })));
 export const Logs = lazy(() => import("../pages/super-admin/Logs").then((module) => ({ default: module.Logs })));

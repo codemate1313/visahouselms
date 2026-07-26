@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, Header, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Header, Query, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -11,6 +11,7 @@ from app.models.user import User
 from app.schemas.auth import CurrentUser
 from app.schemas.user import (
     ChangePasswordRequest,
+    DirectoryUserPage,
     ForceResetRequest,
     ProfileUpdateRequest,
     RevokeOthersRequest,
@@ -30,6 +31,30 @@ router = APIRouter(
 
 def _client_ip(request: Request) -> Optional[str]:
     return request.client.host if request.client else None
+
+
+@router.get("/users", response_model=DirectoryUserPage)
+def list_directory_users(
+    role: Optional[str] = Query(default=None, max_length=40),
+    q: Optional[str] = Query(default=None, max_length=200),
+    status: Optional[str] = Query(default=None, pattern="^(active|inactive)$"),
+    institute_id: Optional[int] = Query(default=None, ge=1),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    """Cross-institute directory backing the tabbed Users screen. Every role is
+    read through one shape here; the per-role endpoints below remain the place
+    where accounts are created and edited."""
+    return super_admin_service.list_directory_users(
+        db,
+        role=role,
+        search=q,
+        status_filter=status,
+        institute_id=institute_id,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get("/accounts", response_model=List[SuperAdminAccountOut])

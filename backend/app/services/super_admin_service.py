@@ -2,11 +2,20 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy import func, or_
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.security import hash_password, verify_password
 from app.models.audit_log import AuditLog
-from app.models.role import DEVELOPER, SUPER_ADMIN, Role
+from app.models.role import (
+    DEVELOPER,
+    INST_INSTRUCTOR,
+    INSTITUTE_ADMIN,
+    SA_INSTRUCTOR,
+    STUDENT,
+    SUPER_ADMIN,
+    Role,
+)
 from app.models.user import User
 
 
@@ -331,3 +340,123 @@ def update_developer_account(
     db.commit()
     db.refresh(user)
     return user
+
+
+# --- unified user directory ------------------------------------------------
+# Backs the Super Admin "Users" screen. The per-role account routers each list a
+# single role from their own table joins; this is the one place that reads every
+# role through one shape so the tabbed directory cannot drift from them.
+
+DIRECTORY_ROLES = [SUPER_ADMIN, SA_INSTRUCTOR, INSTITUTE_ADMIN, INST_INSTRUCTOR, STUDENT]
+MAX_PAGE_SIZE = 200
+
+
+def _directory_base_query(db: Session):
+    """Live (non soft-deleted) users in a directory-visible role."""
+    return (
+        db.query(User)
+        .join(Role, User.role_id == Role.id)
+        .filter(User.deleted_at.is_(None), Role.name.in_(DIRECTORY_ROLES))
+    )
+
+
+def _apply_directory_filters(
+    query,
+    role: Optional[str],
+    search: Optional[str],
+    status_filter: Optional[str],
+    institute_id: Optional[int],
+):
+    if role:
+        query = query.filter(Role.name == role)
+    if institute_id is not None:
+        query = query.filter(User.institute_id == institute_id)
+    if status_filter == "active":
+        query = query.filter(User.is_active.is_(True))
+    elif status_filter == "inactive":
+        query = query.filter(User.is_active.is_(False))
+    if search:
+        term = f"%{search.strip()}%"
+        query = query.filter(
+            or_(
+                User.email.ilike(term),
+                User.first_name.ilike(term),
+                User.last_name.ilike(term),
+            )
+        )
+    return query
+
+
+def directory_role_counts(db: Session) -> dict:
+    """Row count per role, used for the tab badges. Always unfiltered by role so
+    every tab shows its true total."""
+    rows = (
+        _directory_base_query(db)
+        .with_entities(Role.name, func.count(User.id))
+        .group_by(Role.name)
+        .all()
+    )
+    counts = {name: 0 for name in DIRECTORY_ROLES}
+    for name, total in rows:
+        counts[name] = total
+    return counts
+
+
+def list_directory_users(
+    db: Session,
+    role: Optional[str] = None,
+    search: Optional[str] = None,
+    status_filter: Optional[str] = None,
+    institute_id: Optional[int] = None,
+    page: int = 1,
+    page_size: int = 25,
+) -> dict:
+    """Paginated cross-institute user listing for the Super Admin directory.
+
+    Students alone can run to thousands of rows, so this always paginates rather
+    than returning the whole table the way the per-role endpoints do.
+    """
+    if role is not None and role not in DIRECTORY_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown role '{role}'",
+        )
+    page = max(1, page)
+    page_size = max(1, min(page_size, MAX_PAGE_SIZE))
+
+    query = _apply_directory_filters(
+        _directory_base_query(db), role, search, status_filter, institute_id
+    )
+    total = query.order_by(None).count()
+    users = (
+        query.options(joinedload(User.role), joinedload(User.institute))
+        .order_by(User.created_at.desc(), User.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    return {
+        "items": [
+            {
+                "id": user.id,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "role_name": user.role.name,
+                "is_active": user.is_active,
+                "force_password_reset": user.force_password_reset,
+                "is_owner": user.is_owner,
+                "avatar_path": user.avatar_path,
+                "institute_id": user.institute_id,
+                "institute_name": user.institute.name if user.institute else None,
+                "institute_slug": user.institute.slug if user.institute else None,
+                "created_at": user.created_at,
+            }
+            for user in users
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "role_counts": directory_role_counts(db),
+    }

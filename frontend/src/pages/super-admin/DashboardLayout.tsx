@@ -34,16 +34,16 @@ export function DashboardLayout() {
           to: "/super-admin/dashboard",
         },
         {
-          key: "accounts",
-          label: m.adminAccounts,
+          key: "users",
+          label: m.users,
           icon: "admin",
-          to: "/super-admin/accounts",
-        },
-        {
-          key: "instructors",
-          label: m.saInstructors,
-          icon: "instructors",
-          to: "/super-admin/instructors",
+          children: [
+            { key: "users_super_admins", label: m.usersSuperAdmins, to: "/super-admin/users/super-admins" },
+            { key: "users_sa_instructors", label: m.usersSaInstructors, to: "/super-admin/users/sa-instructors" },
+            { key: "users_institute_admins", label: m.usersInstituteAdmins, to: "/super-admin/users/institute-admins" },
+            { key: "users_institute_staff", label: m.usersInstituteStaff, to: "/super-admin/users/institute-staff" },
+            { key: "users_students", label: m.usersStudents, to: "/super-admin/users/students" },
+          ],
         },
         {
           key: "courses",

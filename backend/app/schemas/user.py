@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, EmailStr, field_validator
 
@@ -122,3 +122,32 @@ class InitialPasswordRequest(BaseModel):
     def check_password_strength(cls, value: str) -> str:
         validate_password_strength(value)
         return value
+
+
+class DirectoryUserOut(BaseModel):
+    """One row of the Super Admin cross-role user directory. Institute fields are
+    null for platform-wide roles (super admins and SA instructors)."""
+
+    id: int
+    email: str
+    first_name: str
+    last_name: str
+    role_name: str
+    is_active: bool
+    force_password_reset: bool
+    is_owner: bool = False
+    avatar_path: Optional[str] = None
+    institute_id: Optional[int] = None
+    institute_name: Optional[str] = None
+    institute_slug: Optional[str] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class DirectoryUserPage(BaseModel):
+    items: List[DirectoryUserOut]
+    total: int
+    page: int
+    page_size: int
+    role_counts: Dict[str, int]

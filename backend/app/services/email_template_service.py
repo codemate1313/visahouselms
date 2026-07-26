@@ -267,3 +267,58 @@ The IELTS LMS Team
     )
 
     return subject, plain, html
+
+
+def render_register_otp_email(first_name: str, otp_code: str, expires_minutes: int) -> tuple[str, str, str]:
+    """Returns (subject, plain_text, html_content)."""
+    subject = "Verify your email address for IELTS LMS"
+
+    plain = f"""Hi {first_name},
+
+Thank you for registering with IELTS LMS!
+
+Your email verification code is:
+
+{otp_code}
+
+This code expires in {expires_minutes} minutes. If you did not create an account, you can safely ignore this email.
+
+Best regards,
+The IELTS LMS Team
+"""
+
+    content_html = f"""
+    <p style="margin-top: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Hi {first_name},</p>
+    <p>Thank you for creating an account with <strong>IELTS LMS</strong>. To complete your registration and activate your student portal, please verify your email address.</p>
+
+    <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 24px; margin: 24px 0; text-align: center;">
+      <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #15803d; margin-bottom: 10px;">
+        Verification Code
+      </div>
+      <div style="font-size: 36px; font-weight: 900; letter-spacing: 0.22em; color: #0f172a; line-height: 1;">
+        {otp_code}
+      </div>
+      <div style="font-size: 12px; color: #64748b; margin-top: 14px;">
+        Expires in {expires_minutes} minutes
+      </div>
+    </div>
+
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 16px 18px; margin: 24px 0;">
+      <div style="font-size: 13.5px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">
+        Account Security
+      </div>
+      <div style="font-size: 13px; color: #64748b; line-height: 1.5;">
+        If you didn't attempt to register an account, please ignore this message.
+      </div>
+    </div>
+    """
+
+    html = render_base_email(
+        badge_label="Email Verification",
+        title="Verify Your Email",
+        subtitle="Activate your new IELTS LMS account.",
+        content_html=content_html,
+        badge_color="#15803d",
+    )
+
+    return subject, plain, html

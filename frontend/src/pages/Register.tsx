@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { getDeviceIdentity } from "@/auth/device";
 import { extractErrorMessage } from "@/api/errors";
@@ -24,6 +25,34 @@ export function Register() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const [otpChallengeId, setOtpChallengeId] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpLoading, setOtpLoading] = useState(false);
+
+  function authErrorMessage(requestError: unknown) {
+    if (axios.isAxiosError(requestError)) {
+      const detail = requestError.response?.data?.detail;
+      return typeof detail === "string" ? detail : strings.connectionError;
+    }
+    if (requestError instanceof Error && requestError.message) {
+      return requestError.message;
+    }
+    return strings.genericAuthError;
+  }
+
+  async function completeLogin(accessToken?: string | null) {
+    if (!accessToken) {
+      throw new Error(strings.otpInvalidToken);
+    }
+    const { data: user } = await apiClient.get("/auth/me", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    setSession(accessToken, user);
+    showSuccess(strings.welcomeToastMessage, strings.welcomeToastTitle);
+    navigate("/student/dashboard");
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
@@ -36,12 +65,19 @@ export function Register() {
         last_name: lastName.trim(),
         ...getDeviceIdentity(),
       });
-      const { data: user } = await apiClient.get("/auth/me", {
-        headers: { Authorization: `Bearer ${tokens.access_token}` },
-      });
-      setSession(tokens.access_token, user);
-      showSuccess(strings.welcomeToastMessage, strings.welcomeToastTitle);
-      navigate("/student/dashboard");
+      
+      if (tokens.otp_required) {
+        if (!tokens.otp_challenge_id) {
+          throw new Error(strings.otpInvalidResponse);
+        }
+        setOtpChallengeId(tokens.otp_challenge_id);
+        setOtpCode("");
+        setOtpError(null);
+        showSuccess(strings.otpSentToast, strings.otpSentTitle);
+        return;
+      }
+      
+      await completeLogin(tokens.access_token);
     } catch (requestError: unknown) {
       const msg = extractErrorMessage(requestError, strings.errorFallback);
       setError(msg);
@@ -64,6 +100,23 @@ export function Register() {
       device_name: device.device_name,
     });
     window.location.href = `${API_BASE_URL}/auth/google/login?${params.toString()}`;
+  }
+
+  async function handleOtpSubmit(event: FormEvent) {
+    event.preventDefault();
+    setOtpError(null);
+    setOtpLoading(true);
+    try {
+      const { data: tokens } = await apiClient.post("/auth/verify-otp", {
+        challenge_id: otpChallengeId,
+        otp_code: otpCode.trim(),
+      });
+      await completeLogin(tokens.access_token);
+    } catch (requestError: unknown) {
+      setOtpError(authErrorMessage(requestError));
+    } finally {
+      setOtpLoading(false);
+    }
   }
 
   return (
@@ -166,6 +219,44 @@ export function Register() {
           </div>
         </div>
       </div>
+      
+      {otpChallengeId && (
+        <div className="logout-modal-backdrop otp-login-backdrop" role="presentation">
+          <form className="logout-modal-card otp-login-card" onSubmit={handleOtpSubmit}>
+            <div className="logout-modal-icon-badge otp-login-icon" aria-hidden="true">✉️</div>
+            <h2 className="logout-modal-title">{strings.otpTitle}</h2>
+            <p className="logout-modal-description">
+              {strings.otpDescription}
+            </p>
+            <label className="otp-code-label" htmlFor="register-otp-code">{strings.otpLabel}</label>
+            <input
+              id="register-otp-code"
+              className="otp-code-input"
+              value={otpCode}
+              onChange={(event) => setOtpCode(event.target.value)}
+              placeholder={strings.otpPlaceholder}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              required
+            />
+            {otpError && <div className="concise-error-box otp-error-box">{otpError}</div>}
+            <div className="logout-modal-actions">
+              <button
+                type="button"
+                className="logout-modal-btn cancel-btn"
+                disabled={otpLoading}
+                onClick={() => setOtpChallengeId(null)}
+              >
+                {strings.otpCancelLabel}
+              </button>
+              <button type="submit" className="logout-modal-btn confirm-btn" disabled={otpLoading}>
+                {otpLoading ? strings.otpVerifyBusy : strings.otpVerifyLabel}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

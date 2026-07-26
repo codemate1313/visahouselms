@@ -1,0 +1,89 @@
+export const usersStrings = {
+  title: "Users",
+  loading: "Loading users...",
+  searchPlaceholder: "Search name or email...",
+  statusFilter: {
+    allStatuses: "All statuses",
+    active: "Active",
+    inactive: "Inactive",
+  },
+  columns: {
+    name: "NAME",
+    email: "EMAIL",
+    institute: "INSTITUTE",
+    status: "STATUS",
+    created: "CREATED",
+    actions: "ACTIONS",
+  },
+  tabs: {
+    SUPER_ADMIN: "Super Admins",
+    SA_INSTRUCTOR: "SA Instructors",
+    INSTITUTE_ADMIN: "Institute Admins",
+    INST_INSTRUCTOR: "Institute Staff",
+    STUDENT: "Students",
+  },
+  /** Label for the create button, per tab. Roles with no create screen are omitted. */
+  newLabel: {
+    SUPER_ADMIN: "+ New Admin",
+    SA_INSTRUCTOR: "+ New Instructor",
+  },
+  badges: {
+    you: "You",
+    owner: "Owner",
+    active: "Active",
+    inactive: "Inactive",
+    passwordReset: "Password reset pending",
+  },
+  platformScope: "Platform-wide",
+  exportPdf: "Export PDF",
+  exportExcel: "Export Excel",
+  bulkActions: {
+    selectedSuffix: "selected",
+    activate: "Activate",
+    deactivate: "Deactivate",
+    delete: "Delete",
+    clear: "Clear",
+  },
+  empty: "No users match these filters.",
+  actions: {
+    protected: "Protected",
+    manage: "Manage in institute",
+    edit: "Edit",
+    deactivate: "Deactivate",
+    reactivate: "Reactivate",
+    requirePasswordReset: "Require password reset",
+    clearPasswordReset: "Clear password reset",
+    resetPassword: "Issue temporary password",
+    delete: "Delete",
+  },
+  confirm: {
+    toggleTitle: (active: boolean) => (active ? "Deactivate account" : "Activate account"),
+    toggle: (active: boolean, name: string) =>
+      `Are you sure you want to ${active ? "deactivate" : "activate"} ${name}?`,
+    deleteTitle: "Delete user",
+    delete: (name: string) => `Permanently delete ${name}? This cannot be undone.`,
+    resetPasswordTitle: "Issue temporary password",
+    resetPassword: (email: string) =>
+      `Issue a new temporary password for ${email}? Their current password stops working immediately.`,
+  },
+  passwordNotice: {
+    heading: "Temporary password issued",
+    forEmail: (email: string) => `for ${email}`,
+    copy: "Copy",
+    dismiss: "Dismiss",
+  },
+  pagination: {
+    prev: "← Prev",
+    next: "Next →",
+    pageOf: (page: number, totalPages: number, total: number) =>
+      `Page ${page} of ${totalPages} (${total} ${total === 1 ? "entry" : "entries"})`,
+  },
+  errors: {
+    load: "Failed to load users.",
+    toggleActive: (action: string) => `Failed to ${action} this account.`,
+    forceReset: "Failed to update the password reset requirement.",
+    resetPassword: "Failed to issue a temporary password.",
+    missingPassword: "The server did not return a temporary password.",
+    delete: "Failed to delete this account.",
+  },
+} as const;

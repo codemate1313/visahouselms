@@ -55,6 +55,12 @@ type PageMetaRoute = {
 
 const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/dashboard", eyebrow: "PLATFORM OVERVIEW", title: (name) => `${getGreeting()}, ${name}` },
+  { match: "/super-admin/users/super-admins", eyebrow: "USER MANAGEMENT", title: "Super Admins" },
+  { match: "/super-admin/users/sa-instructors", eyebrow: "USER MANAGEMENT", title: "SA Instructors" },
+  { match: "/super-admin/users/institute-admins", eyebrow: "USER MANAGEMENT", title: "Institute Admins" },
+  { match: "/super-admin/users/institute-staff", eyebrow: "USER MANAGEMENT", title: "Institute Staff" },
+  { match: "/super-admin/users/students", eyebrow: "USER MANAGEMENT", title: "Students" },
+  { match: "/super-admin/users", eyebrow: "USER MANAGEMENT", title: "Users" },
   { match: "/super-admin/accounts/new", eyebrow: "SYSTEM MANAGEMENT", title: "Create Admin Account" },
   { match: /\/super-admin\/accounts\/\d+/, eyebrow: "SYSTEM MANAGEMENT", title: "Edit Admin Account" },
   { match: "/super-admin/accounts", eyebrow: "SYSTEM MANAGEMENT", title: "Super Admin Accounts" },

@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Optional
 
@@ -55,6 +56,10 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         except ValueError:
             response_bytes = 0
 
+        # Telemetry must never turn a served response into a failure, so a
+        # logging error is swallowed the same way the global handler swallows
+        # its own. Without this, anything that breaks the log write (FK error,
+        # database down) surfaces to the caller as a 500.
         db = SessionLocal()
         try:
             db.add(
@@ -82,6 +87,11 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 )
             )
             db.commit()
+        except Exception:
+            db.rollback()
+            logging.getLogger(__name__).exception(
+                "Request logging failed for %s %s", request.method, request.url.path
+            )
         finally:
             db.close()
 
