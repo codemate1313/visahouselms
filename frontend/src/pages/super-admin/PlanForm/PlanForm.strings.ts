@@ -19,6 +19,16 @@ export const planFormStrings = {
     defaultAuthor: "SA Instructor",
     hiddenSuffix: " · hidden",
   },
+  featureEditor: {
+    legend: "Pricing card features",
+    hint: "These bullets appear, ticked, on the public pricing card. Leave empty to fall back to an automatic list built from the plan's courses and limits.",
+    empty: "No features added — the pricing card will use the automatic list.",
+    placeholder: "e.g. AI writing & speaking feedback",
+    itemLabel: (position: number) => `Feature ${position}`,
+    add: "+ Add feature",
+    remove: "Remove feature",
+    removeGlyph: "x",
+  },
   publishToggle: {
     label: "Publish on website",
     hint: "Only published plans are visible to direct students.",

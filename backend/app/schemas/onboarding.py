@@ -22,7 +22,7 @@ class InstituteOnboardingCreate(BaseModel):
     student_limit: int = Field(ge=0)
     staff_limit: int = Field(ge=0)
     access_duration_days: int = Field(gt=0)
-    ai_monthly_limit: Optional[int] = Field(default=0, ge=0, le=100000)
+    ai_student_monthly_limit: Optional[int] = Field(default=0, ge=0, le=100000)
     primary_color: str = "#e53935"
     secondary_color: str = "#17191d"
     module_ids: list[int] = Field(default_factory=list)

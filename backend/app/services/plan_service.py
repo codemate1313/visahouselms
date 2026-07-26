@@ -12,6 +12,17 @@ from app.models.subscription import Subscription
 from app.models.user import User
 
 
+MAX_FEATURE_LENGTH = 120
+
+
+def _clean_features(features: Optional[List[str]]) -> List[str]:
+    """Trim, drop blanks and cap length - these strings land verbatim on the
+    public pricing card."""
+    if not features:
+        return []
+    return [item.strip()[:MAX_FEATURE_LENGTH] for item in features if item and item.strip()]
+
+
 def _audit(db: Session, actor: User, action: str, plan_id: Optional[int], ip: Optional[str], details=None) -> None:
     db.add(
         AuditLog(
@@ -54,6 +65,7 @@ def _serialize(plan: Plan, subscription_count: Optional[int] = None) -> dict:
         "audience": plan.audience,
         "is_published": plan.is_published,
         "is_internal": plan.is_internal,
+        "features": list(plan.features or []),
         "created_at": plan.created_at,
         "module_count": len(plan.modules),
         "modules": [
@@ -93,6 +105,30 @@ def _resolve_modules(db: Session, module_ids: List[int]) -> List[ExamModule]:
     return modules
 
 
+def live_plan_query(db: Session):
+    """A "live" plan is one the public pricing page can actually show."""
+    return db.query(Plan).filter(
+        Plan.is_active.is_(True),
+        Plan.is_published.is_(True),
+        Plan.is_internal.is_(False),
+    )
+
+
+def _ensure_not_last_live_plan(db: Session, plan: Plan) -> None:
+    """The platform must always keep one plan the public pricing page can list,
+    so taking the last live plan down is refused rather than silently emptying
+    the landing page."""
+    is_live = plan.is_active and plan.is_published and not plan.is_internal
+    if not is_live:
+        return
+    if live_plan_query(db).filter(Plan.id != plan.id).count() > 0:
+        return
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="At least one live plan is required - publish another plan before taking this one down",
+    )
+
+
 def get_plan_or_404(db: Session, plan_id: int) -> Plan:
     plan = db.get(Plan, plan_id)
     if plan is None:
@@ -126,6 +162,7 @@ def create_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> dict
         is_active=True,
         audience=data.get("audience", "both"),
         is_published=data.get("is_published", False),
+        features=_clean_features(data.get("features")),
         modules=modules,
     )
     db.add(plan)
@@ -144,11 +181,16 @@ def update_plan(db: Session, actor: User, plan_id: int, data: dict, ip: Optional
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A plan with this name already exists")
         plan.name = data["name"]
 
+    if data.get("is_published") is False:
+        _ensure_not_last_live_plan(db, plan)
+
     for field in ("description", "currency", "duration_days", "student_limit", "test_limit", "staff_limit", "grace_days", "audience", "is_published"):
         if field in data and data[field] is not None:
             setattr(plan, field, data[field])
     if "price" in data and data["price"] is not None:
         plan.price = Decimal(str(data["price"]))
+    if "features" in data and data["features"] is not None:
+        plan.features = _clean_features(data["features"])
     if "module_ids" in data and data["module_ids"] is not None:
         plan.modules = _resolve_modules(db, data["module_ids"])
     if plan.is_published and not plan.modules:
@@ -164,6 +206,8 @@ def update_plan(db: Session, actor: User, plan_id: int, data: dict, ip: Optional
 
 def set_plan_active(db: Session, actor: User, plan_id: int, active: bool, ip: Optional[str]) -> dict:
     plan = get_plan_or_404(db, plan_id)
+    if not active:
+        _ensure_not_last_live_plan(db, plan)
     plan.is_active = active
     db.add(plan)
     _audit(db, actor, "plan.activate" if active else "plan.deactivate", plan.id, ip)
@@ -175,6 +219,7 @@ def set_plan_active(db: Session, actor: User, plan_id: int, active: bool, ip: Op
 
 def delete_plan(db: Session, actor: User, plan_id: int, ip: Optional[str]) -> None:
     plan = get_plan_or_404(db, plan_id)
+    _ensure_not_last_live_plan(db, plan)
     has_subscriptions = (
         db.query(Subscription).filter(Subscription.plan_id == plan.id).count() > 0
     )
@@ -215,6 +260,96 @@ def list_available_modules_for_plans(
         }
         for module in modules
     ]
+
+
+MONTHLY_MAX_DAYS = 45
+ANNUAL_MIN_DAYS = 300
+
+
+def _billing_period(duration_days: int) -> str:
+    if duration_days <= MONTHLY_MAX_DAYS:
+        return "monthly"
+    if duration_days >= ANNUAL_MIN_DAYS:
+        return "annual"
+    return "custom"
+
+
+def _period_label(plan: Plan) -> str:
+    per_student = " / student" if plan.audience == "institutes" else ""
+    period = _billing_period(plan.duration_days)
+    if period == "monthly":
+        return f"{per_student} / month".lstrip()
+    if period == "annual":
+        return f"{per_student} / year".lstrip()
+    return f"{per_student} / {plan.duration_days} days".lstrip()
+
+
+def _landing_features(plan: Plan, modules: List[dict]) -> List[str]:
+    """The Super Admin's authored bullet list wins; plans that predate it (or
+    were saved with an empty list) fall back to bullets derived from what the
+    plan actually grants, so no pricing card ever renders featureless."""
+    authored = _clean_features(plan.features)
+    if authored:
+        return authored
+
+    features = [module["title"] for module in modules[:4]]
+    if len(modules) > 4:
+        features.append(f"+{len(modules) - 4} more modules")
+    features.append("Unlimited students" if plan.student_limit == 0 else f"Up to {plan.student_limit:,} students")
+    features.append("Unlimited mock tests" if plan.test_limit == 0 else f"{plan.test_limit:,} mock tests per cycle")
+    if plan.staff_limit:
+        features.append(f"{plan.staff_limit:,} staff seats")
+    if plan.grace_days:
+        features.append(f"{plan.grace_days}-day grace period")
+    return features
+
+
+def list_landing_plans(db: Session) -> List[dict]:
+    """Published, active, non-internal plans for the unauthenticated marketing
+    pricing page - no entitlement data, since there is no session."""
+    plans = live_plan_query(db).options(joinedload(Plan.modules)).order_by(Plan.price).all()
+    counts = {
+        plan_id: count
+        for plan_id, count in (
+            db.query(Subscription.plan_id, func.count(Subscription.id))
+            .group_by(Subscription.plan_id)
+            .all()
+        )
+    }
+
+    result = []
+    for plan in plans:
+        modules = [
+            {"id": module.id, "title": module.title, "module_type": module.module_type}
+            for module in plan.modules
+            if module.status == "published" and module.is_visible
+        ]
+        result.append(
+            {
+                "id": plan.id,
+                "name": plan.name,
+                "description": plan.description,
+                "price": str(plan.price),
+                "currency": plan.currency,
+                "duration_days": plan.duration_days,
+                "audience": plan.audience,
+                "billing_period": _billing_period(plan.duration_days),
+                "period_label": _period_label(plan),
+                "modules": modules,
+                "features": _landing_features(plan, modules),
+                "subscription_count": counts.get(plan.id, 0),
+            }
+        )
+
+    # "Most popular" is earned by subscriber count; with no subscribers yet the
+    # middle card carries the badge so the layout still has a focal point.
+    if result:
+        top = max(result, key=lambda item: item["subscription_count"])
+        popular = top if top["subscription_count"] > 0 else result[len(result) // 2]
+        for item in result:
+            item["is_popular"] = item is popular
+
+    return result
 
 
 def list_public_plans(db: Session, user: User) -> List[dict]:

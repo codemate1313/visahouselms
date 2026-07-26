@@ -35,6 +35,23 @@ export const ROLE_ACTIONS: Partial<Record<DirectoryRole, RoleActions>> = {
   },
 };
 
+/**
+ * Endpoint that issues a new temporary password, or null when the role has no
+ * directory-level reset. Institute admins are tenant-scoped and so have no
+ * `base` above, but they are the one account that can lock an institute out
+ * entirely - their reset is institute-scoped rather than directory-scoped.
+ */
+export function passwordResetPath(user: DirectoryUser): string | null {
+  if (user.is_owner) return null;
+  if (user.role_name === "SA_INSTRUCTOR") {
+    return `/super-admin/instructors/${user.id}/reset-password`;
+  }
+  if (user.role_name === "INSTITUTE_ADMIN" && user.institute_id) {
+    return `/super-admin/institutes/${user.institute_id}/admins/${user.id}/reset-password`;
+  }
+  return null;
+}
+
 /** Read-only destination for tenant-scoped roles, or null when unresolvable. */
 export function tenantManageLink(user: DirectoryUser): string | null {
   if (!user.institute_id) return null;

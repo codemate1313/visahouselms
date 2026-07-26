@@ -184,6 +184,7 @@ def change_password(
 
     actor.password_hash = hash_password(new_password)
     actor.force_password_reset = False
+    actor.password_changed_at = datetime.now(timezone.utc)
     db.add(actor)
     _audit(db, actor, "account.change_password", actor.id, ip)
     db.commit()
@@ -197,6 +198,7 @@ def set_initial_password(db: Session, actor: User, new_password: str, ip: Option
         )
     actor.password_hash = hash_password(new_password)
     actor.force_password_reset = False
+    actor.password_changed_at = datetime.now(timezone.utc)
     db.add(actor)
     _audit(db, actor, "account.set_initial_password", actor.id, ip)
     db.commit()

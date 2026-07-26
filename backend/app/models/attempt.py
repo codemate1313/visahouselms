@@ -293,6 +293,10 @@ class AiEvaluationLimit(Base):
     institute_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("institutes.id", ondelete="CASCADE"), nullable=True, index=True
     )
+    # Set on per-student rows; NULL on the institute-wide and direct pools.
+    user_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     period_key: Mapped[str] = mapped_column(String(7), nullable=False, index=True)
     monthly_limit: Mapped[int] = mapped_column(Integer, nullable=False)
     used_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

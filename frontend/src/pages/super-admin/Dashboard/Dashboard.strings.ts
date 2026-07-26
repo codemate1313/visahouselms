@@ -1,6 +1,11 @@
 export const dashboardStrings = {
   loading: "Loading...",
   loadError: "Failed to load dashboard.",
+  noLivePlan: {
+    title: "No live plan — your public pricing page is empty",
+    body: "Visitors on the Plans page see nothing to buy until at least one plan is active and published.",
+    cta: "Create a plan",
+  },
   metricTitles: {
     institutes: "Total Institutes",
     subscriptions: "Active Subscriptions",

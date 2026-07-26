@@ -56,7 +56,7 @@ export function InstituteForm() {
   const [studentLimit, setStudentLimit] = useState<number | "">(50);
   const [staffLimit, setStaffLimit] = useState<number | "">(0);
   const [accessDurationDays, setAccessDurationDays] = useState<number | "">(365);
-  const [aiMonthlyLimit, setAiMonthlyLimit] = useState<number | "">(0);
+  const [aiStudentMonthlyLimit, setAiStudentMonthlyLimit] = useState<number | "">(0);
 
   // Courses & Permissions
   const [modules, setModules] = useState<ModuleOption[]>([]);
@@ -95,7 +95,7 @@ export function InstituteForm() {
         setName(data.name ?? "");
         setContactEmail(data.contact_email ?? "");
         setSessionDurationHours(data.session_duration_hours ?? 24);
-        setAiMonthlyLimit(data.ai_monthly_limit ?? 0);
+        setAiStudentMonthlyLimit(data.ai_student_monthly_limit ?? 0);
         setPermissions({ ...DEFAULT_PERMISSIONS, ...data.admin_permissions });
         setAgreementReference(data.agreement_reference ?? "");
         setAgreementNotes(data.agreement_notes ?? "");
@@ -192,7 +192,7 @@ export function InstituteForm() {
     const payload: Record<string, unknown> = {
       name,
       session_duration_hours: sessionDurationHours,
-      ai_monthly_limit: aiMonthlyLimit === "" ? 0 : Number(aiMonthlyLimit),
+      ai_student_monthly_limit: aiStudentMonthlyLimit === "" ? 0 : Number(aiStudentMonthlyLimit),
       student_limit: studentLimit === "" ? 50 : Number(studentLimit),
       staff_limit: staffLimit === "" ? 0 : Number(staffLimit),
       access_duration_days: accessDurationDays === "" ? 365 : Number(accessDurationDays),
@@ -444,7 +444,7 @@ export function InstituteForm() {
 
             <div className="form-section-header" style={{ marginTop: 32 }}>
               <h2 className="form-section-title">Capacity & Quota Allocations</h2>
-              <p className="form-section-subtitle">Define student/staff account limits, contract access duration, and monthly AI grading quota.</p>
+              <p className="form-section-subtitle">Define student/staff account limits and contract access duration.</p>
             </div>
             <div className="form-grid-4col">
               <div>
@@ -458,18 +458,6 @@ export function InstituteForm() {
               <div>
                 <label htmlFor="access_duration_days">Access Duration (Days)<RequiredMark /></label>
                 <input id="access_duration_days" type="number" min="1" value={accessDurationDays} onChange={(e) => setAccessDurationDays(e.target.value === "" ? "" : Number(e.target.value))} required />
-              </div>
-              <div>
-                <label htmlFor="ai-monthly-limit">AI Monthly Evaluation Quota</label>
-                <input
-                  id="ai-monthly-limit"
-                  type="number"
-                  min="0"
-                  max="100000"
-                  value={aiMonthlyLimit}
-                  onChange={(e) => setAiMonthlyLimit(e.target.value === "" ? "" : Number(e.target.value))}
-                  placeholder="0 (Global default limit)"
-                />
               </div>
             </div>
           </div>
@@ -528,16 +516,19 @@ export function InstituteForm() {
 
             <fieldset className="permission-fieldset" style={{ marginTop: 24 }}>
               <legend>AI evaluation limit</legend>
-              <p className="hint">Custom monthly AI grading quota for this institute. Set to 0 (or leave empty) to use the global default limit.</p>
-              <label htmlFor="ai-monthly-limit-perm">Monthly evaluation limit</label>
+              <p className="hint">
+                How many AI evaluations each of this institute's students may use per month. Set to 0 (or leave empty)
+                to use the global default limit.
+              </p>
+              <label htmlFor="ai-student-monthly-limit-perm">Per-student monthly limit</label>
               <input
-                id="ai-monthly-limit-perm"
+                id="ai-student-monthly-limit-perm"
                 type="number"
                 min="0"
                 max="100000"
-                value={aiMonthlyLimit}
-                onChange={(event) => setAiMonthlyLimit(event.target.value === "" ? "" : Number(event.target.value))}
-                placeholder="0 (Use global limit)"
+                value={aiStudentMonthlyLimit}
+                onChange={(event) => setAiStudentMonthlyLimit(event.target.value === "" ? "" : Number(event.target.value))}
+                placeholder="0 (Global default limit)"
               />
             </fieldset>
 

@@ -6,7 +6,7 @@ import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { Checkbox } from "@/components/ui";
 import type { DirectoryUser } from "@/api/types";
 import { usersStrings as strings } from "../Users.strings";
-import { ROLE_ACTIONS, isProtected, tenantManageLink } from "../userActions";
+import { ROLE_ACTIONS, isProtected, passwordResetPath, tenantManageLink } from "../userActions";
 
 interface UsersTableProps {
   users: DirectoryUser[];
@@ -41,6 +41,7 @@ export function UsersTable({
   const t = strings.columns;
   const b = strings.badges;
   const a = strings.actions;
+  const p = strings.passwordTrail;
 
   function renderActions(user: DirectoryUser) {
     if (isProtected(user)) {
@@ -49,14 +50,29 @@ export function UsersTable({
 
     const actions = ROLE_ACTIONS[user.role_name];
     if (!actions) {
-      // Tenant-scoped role: hand off to the institute's own accounts screen.
+      // Tenant-scoped role: hand off to the institute's own accounts screen,
+      // plus an in-place password reset for roles that support one.
       const link = tenantManageLink(user);
-      return link ? (
-        <Link className="action-btn-icon action-edit" to={link} data-tooltip={a.manage}>
-          <Icon name="edit" />
-        </Link>
-      ) : (
-        <span className="text-muted">—</span>
+      const resetPath = passwordResetPath(user);
+      if (!link && !resetPath) return <span className="text-muted">—</span>;
+      return (
+        <div className="row-actions-inline">
+          {link && (
+            <Link className="action-btn-icon action-edit" to={link} data-tooltip={a.manage}>
+              <Icon name="edit" />
+            </Link>
+          )}
+          {resetPath && (
+            <button
+              type="button"
+              className="action-btn-icon action-branding"
+              onClick={() => onResetPassword(user)}
+              data-tooltip={a.resetPassword}
+            >
+              <Icon name="lock" />
+            </button>
+          )}
+        </div>
       );
     }
 
@@ -102,6 +118,24 @@ export function UsersTable({
     );
   }
 
+  /** Last password change, with who did it on hover. Falls back to the audit
+   *  trail's timestamp when the column predates an account's last change. */
+  function renderPasswordChanged(user: DirectoryUser) {
+    const event = user.last_password_change;
+    const changedAt = user.password_changed_at ?? event?.at ?? null;
+    if (!changedAt) {
+      return <span className="text-muted" data-tooltip={p.neverTooltip}>{p.never}</span>;
+    }
+
+    const by = event ? (event.by_self ? p.bySelf : p.byAdmin(event.by_name)) : null;
+    return (
+      <span data-tooltip={by ?? undefined}>
+        {new Date(changedAt).toLocaleDateString("en-GB")}
+        {by && <small className="password-changed-by">{by}</small>}
+      </span>
+    );
+  }
+
   return (
     <div className="table-wrap">
       <table className="data-table sleek-accounts-table sleek-users-table">
@@ -121,6 +155,7 @@ export function UsersTable({
             <th className="col-email">{t.email}</th>
             {showInstitute && <th className="col-institute">{t.institute}</th>}
             <th className="col-status">{t.status}</th>
+            <th className="col-password">{t.passwordChanged}</th>
             <th className="col-created">{t.created}</th>
             <th className="table-actions-heading col-actions">{t.actions}</th>
           </tr>
@@ -128,7 +163,7 @@ export function UsersTable({
         <tbody>
           {users.length === 0 && (
             <tr>
-              <td colSpan={(showInstitute ? 6 : 5) + (selectable ? 1 : 0)} className="empty-cell">
+              <td colSpan={(showInstitute ? 7 : 6) + (selectable ? 1 : 0)} className="empty-cell">
                 {strings.empty}
               </td>
             </tr>
@@ -192,6 +227,7 @@ export function UsersTable({
                   {user.is_active ? b.active : b.inactive}
                 </span>
               </td>
+              <td className="col-password">{renderPasswordChanged(user)}</td>
               <td className="col-created">{new Date(user.created_at).toLocaleDateString("en-GB")}</td>
               <td className="table-actions institute-row-actions account-row-actions col-actions">
                 {renderActions(user)}

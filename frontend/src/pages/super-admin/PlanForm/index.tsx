@@ -5,6 +5,10 @@ import { extractErrorMessage } from "@/api/errors";
 import { Checkbox, RequiredMark } from "@/components/ui";
 import { planFormStrings as strings } from "./PlanForm.strings";
 import { PlanCoursePicker, type PlanModule } from "./components/PlanCoursePicker";
+import { PlanFeatureEditor } from "./components/PlanFeatureEditor";
+
+// Mirrors MAX_FEATURES in app/schemas/plan.py.
+const MAX_FEATURES = 12;
 
 const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", test_limit: "20", grace_days: "0", is_published: false };
 
@@ -15,6 +19,7 @@ export function PlanForm() {
   const [form, setForm] = useState(EMPTY);
   const [modules, setModules] = useState<PlanModule[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [features, setFeatures] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +43,7 @@ export function PlanForm() {
             is_published: Boolean(data.is_published),
           });
           setSelected(new Set((data.modules || []).map((module: PlanModule) => module.id)));
+          setFeatures(data.features || []);
         }
       })
       .catch(() => setError(strings.errors.load))
@@ -57,6 +63,15 @@ export function PlanForm() {
   function toggleAll() {
     setSelected((current) => (current.size === modules.length ? new Set() : new Set(modules.map((module) => module.id))));
   }
+  function setFeature(index: number, value: string) {
+    setFeatures((current) => current.map((item, i) => (i === index ? value : item)));
+  }
+  function addFeature() {
+    setFeatures((current) => (current.length >= MAX_FEATURES ? current : [...current, ""]));
+  }
+  function removeFeature(index: number) {
+    setFeatures((current) => current.filter((_, i) => i !== index));
+  }
   async function submit(event: FormEvent) {
     event.preventDefault();
     setSaving(true);
@@ -74,6 +89,7 @@ export function PlanForm() {
       audience: "direct_students",
       is_published: form.is_published,
       module_ids: [...selected],
+      features: features.map((item) => item.trim()).filter(Boolean),
     };
     try {
       if (isNew) await apiClient.post("/super-admin/plans", payload);
@@ -122,6 +138,13 @@ export function PlanForm() {
           </div>
         </div>
         <PlanCoursePicker modules={modules} selected={selected} onToggle={toggle} onToggleAll={toggleAll} />
+        <PlanFeatureEditor
+          features={features}
+          maxFeatures={MAX_FEATURES}
+          onChange={setFeature}
+          onAdd={addFeature}
+          onRemove={removeFeature}
+        />
         <label className="toggle-row">
           <Checkbox
             checked={form.is_published}

@@ -111,7 +111,7 @@ def _serialize(db: Session, institute: Institute) -> dict:
         "logo_url": f"/storage/{branding.logo_path}" if branding and branding.logo_path else None,
         "admin_permissions": normalized_admin_permissions(institute.admin_permissions),
         "session_duration_hours": institute.session_duration_hours,
-        "ai_monthly_limit": institute.ai_monthly_limit,
+        "ai_student_monthly_limit": institute.ai_student_monthly_limit,
         "is_active": institute.is_active,
         "onboarding_status": institute.onboarding_status,
         "subscription_state": sub_state,
@@ -168,7 +168,7 @@ def create_institute(
     ip: Optional[str],
     active: bool = True,
     onboarding_status: str = "published",
-    ai_monthly_limit: Optional[int] = None,
+    ai_student_monthly_limit: Optional[int] = None,
 ) -> dict:
     if db.query(User).filter(User.email == admin_email).first() is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Admin email already in use")
@@ -183,7 +183,9 @@ def create_institute(
         contact_email=contact_email,
         admin_permissions=normalized_admin_permissions(admin_permissions),
         session_duration_hours=session_duration_hours,
-        ai_monthly_limit=ai_monthly_limit if ai_monthly_limit and ai_monthly_limit > 0 else None,
+        ai_student_monthly_limit=(
+            ai_student_monthly_limit if ai_student_monthly_limit and ai_student_monthly_limit > 0 else None
+        ),
         is_active=active,
         onboarding_status=onboarding_status,
     )
@@ -234,9 +236,9 @@ def update_institute(
         institute.admin_permissions = normalized_admin_permissions(payload["admin_permissions"])
     if "session_duration_hours" in payload and payload["session_duration_hours"]:
         institute.session_duration_hours = payload["session_duration_hours"]
-    if "ai_monthly_limit" in payload:
-        limit = payload["ai_monthly_limit"]
-        institute.ai_monthly_limit = limit if limit and limit > 0 else None
+    if "ai_student_monthly_limit" in payload:
+        per_student = payload["ai_student_monthly_limit"]
+        institute.ai_student_monthly_limit = per_student if per_student and per_student > 0 else None
 
     # Agreement & Quota fields
     if "agreement_reference" in payload:
@@ -322,6 +324,83 @@ def update_institute(
     db.commit()
     db.refresh(institute)
     return _serialize(db, institute)
+
+
+def list_institute_admins(db: Session, institute_id: int) -> List[User]:
+    role = db.query(Role).filter(Role.name == INSTITUTE_ADMIN).first()
+    if role is None:
+        return []
+    return (
+        db.query(User)
+        .filter(
+            User.institute_id == institute_id,
+            User.role_id == role.id,
+            User.deleted_at.is_(None),
+        )
+        .order_by(User.id)
+        .all()
+    )
+
+
+def get_institute_admin_or_404(db: Session, institute_id: int, admin_id: int) -> User:
+    admin = next((user for user in list_institute_admins(db, institute_id) if user.id == admin_id), None)
+    if admin is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Institute admin not found")
+    return admin
+
+
+def reset_admin_password(
+    db: Session,
+    actor: User,
+    institute_id: int,
+    admin_id: int,
+    ip: Optional[str],
+) -> dict:
+    """Issue a fresh temporary password for an institute's admin account.
+
+    The tenant-scoped member endpoints only manage instructors and students, so
+    the admin account - the one that can lock an institute out entirely if its
+    password is lost - had no reset path outside the forgot-password email flow.
+    """
+    admin = get_institute_admin_or_404(db, institute_id, admin_id)
+    if admin.is_owner:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Owner password cannot be reset")
+
+    temporary_password = secrets.token_urlsafe(9)
+    admin.password_hash = hash_password(temporary_password)
+    admin.force_password_reset = True
+    admin.password_changed_at = datetime.now(timezone.utc)
+    revoked = _revoke_sessions(db, admin.id)
+    db.add(admin)
+    db.add(
+        AuditLog(
+            user_id=actor.id,
+            action="institute_admin.reset_password",
+            entity_type="user",
+            entity_id=admin.id,
+            details={"institute_id": institute_id, "email": admin.email, "sessions_revoked": revoked},
+            ip_address=ip,
+        )
+    )
+    db.commit()
+    return {
+        "temporary_password": temporary_password,
+        "email": admin.email,
+        "sessions_revoked": revoked,
+    }
+
+
+def _revoke_sessions(db: Session, user_id: int) -> int:
+    now = datetime.now(timezone.utc)
+    sessions = (
+        db.query(UserSession)
+        .filter(UserSession.user_id == user_id, UserSession.revoked_at.is_(None))
+        .all()
+    )
+    for session in sessions:
+        session.revoked_at = now
+        db.add(session)
+    return len(sessions)
 
 
 def set_institute_active(db: Session, actor: User, institute_id: int, active: bool, ip: Optional[str]) -> dict:

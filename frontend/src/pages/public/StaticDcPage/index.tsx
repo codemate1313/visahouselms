@@ -9,6 +9,10 @@ import type { AuthMode, PublicTheme } from "./types";
 interface StaticDcPageProps {
   fileName: string;
   title: string;
+  /** Server data handed to the framed page as `window.__vhData`. */
+  bootstrap?: unknown;
+  /** Holds the loading screen until `bootstrap` has been fetched. */
+  bootstrapPending?: boolean;
 }
 
 function getInitialPublicTheme(): PublicTheme {
@@ -22,10 +26,12 @@ function getInitialPublicTheme(): PublicTheme {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function buildPublicPageHtml(html: string, fileName: string) {
+function buildPublicPageHtml(html: string, fileName: string, bootstrap: unknown) {
   const baseHref = `${window.location.origin}/dc-pages/${fileName}`;
   const parentOrigin = JSON.stringify(window.location.origin);
-  const injectedHead = `<base href="${baseHref}"><script>window.__vhParentOrigin=${parentOrigin};</script>`;
+  // `</script>` inside the payload would otherwise close the injected tag early.
+  const data = JSON.stringify(bootstrap ?? null).replace(/</g, "\\u003c");
+  const injectedHead = `<base href="${baseHref}"><script>window.__vhParentOrigin=${parentOrigin};window.__vhData=${data};</script>`;
 
   if (html.includes("<head>")) return html.replace("<head>", `<head>${injectedHead}`);
   return `${injectedHead}${html}`;
@@ -42,7 +48,7 @@ function buildLoadingHtml(publicTheme: PublicTheme, title: string) {
 </html>`;
 }
 
-export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
+export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = false }: StaticDcPageProps) {
   const src = useMemo(() => `/dc-pages/${fileName}`, [fileName]);
   const location = useLocation();
   const navigate = useNavigate();
@@ -86,6 +92,9 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
   useEffect(() => {
     let cancelled = false;
     setPageHtml(buildLoadingHtml(publicTheme, title));
+    // Rendering now would boot the framed page against empty data, and the
+    // late arrival would reload the iframe - wait for the payload instead.
+    if (bootstrapPending) return undefined;
 
     fetch(src, { credentials: "same-origin", cache: "no-store" })
       .then((response) => {
@@ -93,7 +102,7 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
         return response.text();
       })
       .then((html) => {
-        if (!cancelled) setPageHtml(buildPublicPageHtml(html, fileName));
+        if (!cancelled) setPageHtml(buildPublicPageHtml(html, fileName, bootstrap));
       })
       .catch(() => {
         if (cancelled) return;
@@ -113,7 +122,7 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
     return () => {
       cancelled = true;
     };
-  }, [fileName, publicTheme, src, title]);
+  }, [bootstrap, bootstrapPending, fileName, publicTheme, src, title]);
 
   useEffect(() => {
     function handleSystemThemeChange() {

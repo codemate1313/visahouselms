@@ -13,5 +13,7 @@ export interface PlanRow {
   is_published: boolean;
   audience: "both" | "direct_students" | "institutes";
   module_count: number;
+  /** Authored pricing-card bullets; empty means the public page derives them. */
+  features: string[];
   subscription_count: number;
 }

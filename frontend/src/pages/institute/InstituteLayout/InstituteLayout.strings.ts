@@ -7,6 +7,7 @@ export const instituteLayoutStrings = {
     institute: "INSTITUTE",
     dashboard: "Dashboard",
     students: "Students",
+    aiQuota: "AI Quota",
     announcements: "Announcements",
     instructors: "Instructors",
     subscription: "Subscription",

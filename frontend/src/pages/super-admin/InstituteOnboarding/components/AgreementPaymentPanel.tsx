@@ -70,8 +70,8 @@ export function AgreementPaymentPanel({ form, set, methods, onPaymentMethodChang
           <input type="number" min="1" value={form.access_duration_days} onChange={set("access_duration_days")} required />
         </div>
         <div>
-          <label>AI Monthly Limit</label>
-          <input type="number" min="0" max="100000" value={form.ai_monthly_limit} onChange={set("ai_monthly_limit")} placeholder="0 (Global default)" />
+          <label>Per-Student AI Limit</label>
+          <input type="number" min="0" max="100000" value={form.ai_student_monthly_limit} onChange={set("ai_student_monthly_limit")} placeholder="0 (Global default)" />
         </div>
       </div>
     </CollapsiblePanel>

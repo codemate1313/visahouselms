@@ -3,6 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+MAX_FEATURES = 12
+
 
 class PlanCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
@@ -17,6 +19,9 @@ class PlanCreate(BaseModel):
     module_ids: list[int] = Field(default_factory=list)
     audience: str = Field(default="both", pattern="^(both|direct_students|institutes)$")
     is_published: bool = False
+    # Marketing bullets for the public pricing card; empty falls back to a list
+    # derived from the plan's modules and limits.
+    features: list[str] = Field(default_factory=list, max_length=MAX_FEATURES)
 
 
 class PlanUpdate(BaseModel):
@@ -32,6 +37,7 @@ class PlanUpdate(BaseModel):
     module_ids: Optional[list[int]] = None
     audience: Optional[str] = Field(default=None, pattern="^(both|direct_students|institutes)$")
     is_published: Optional[bool] = None
+    features: Optional[list[str]] = Field(default=None, max_length=MAX_FEATURES)
 
 
 class AssignSubscriptionRequest(BaseModel):

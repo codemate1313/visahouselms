@@ -11,6 +11,7 @@ export const ContactUs = lazy(() => import("../pages/public/ContactUs").then((mo
 export const Home = lazy(() => import("../pages/public/Home").then((module) => ({ default: module.Home })));
 export const ShowcasePlans = lazy(() => import("../pages/public/Plans").then((module) => ({ default: module.Plans })));
 export const InstituteAnnouncements = lazy(() => import("../pages/institute/InstituteAnnouncements").then((module) => ({ default: module.InstituteAnnouncements })));
+export const InstituteAiQuota = lazy(() => import("../pages/institute/InstituteAiQuota").then((module) => ({ default: module.InstituteAiQuota })));
 export const InstituteBilling = lazy(() => import("../pages/institute/InstituteBilling").then((module) => ({ default: module.InstituteBilling })));
 export const InstituteDashboard = lazy(() => import("../pages/institute/InstituteDashboard").then((module) => ({ default: module.InstituteDashboard })));
 export const InstituteInstructorLayout = lazy(() => import("../pages/institute/InstituteInstructorLayout").then((module) => ({ default: module.InstituteInstructorLayout })));

@@ -12,7 +12,7 @@ from app.models.institute import Institute
 from app.models.payment import Payment
 from app.models.role import SA_INSTRUCTOR, Role
 from app.models.user import User
-from app.services import demo_service, payment_service, revenue_service, subscription_service, super_admin_service
+from app.services import demo_service, payment_service, plan_service, revenue_service, subscription_service, super_admin_service
 
 SUBSCRIPTION_STATES = (
     subscription_service.STATE_ACTIVE,
@@ -458,6 +458,9 @@ def get_summary(db: Session) -> dict:
             "subscriptions_active": subscription_breakdown[subscription_service.STATE_ACTIVE],
             "demo_accounts_active": demo_active_count,
             "coupons_active": coupons_active,
+            # Drives the "publish a plan" warning - a platform with no live plan
+            # shows an empty public pricing page.
+            "plans_live": plan_service.live_plan_query(db).count(),
             "super_admin_accounts": super_admin_accounts,
             "sa_instructor_accounts": sa_instructor_accounts,
             "modules_total": db.query(ExamModule).filter(ExamModule.deleted_at.is_(None)).count(),

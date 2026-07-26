@@ -6,6 +6,7 @@ import type { DashboardSummary } from "./types";
 import { DashboardStats } from "./components/DashboardStats";
 import { SubscriptionUsagePanel } from "./components/SubscriptionUsagePanel";
 import { RecentMembersPanel } from "./components/RecentMembersPanel";
+import { AccessCountdownCard } from "./components/AccessCountdownCard";
 
 export function InstituteDashboard() {
   const user = useAuthStore((state) => state.user);
@@ -41,6 +42,8 @@ export function InstituteDashboard() {
           <p className="page-subtitle">{strings.subtitle}</p>
         </div>
       </div>
+
+      {summary.access && <AccessCountdownCard access={summary.access} canSeeBilling={canSeeBilling} />}
 
       <DashboardStats
         counts={summary.counts}

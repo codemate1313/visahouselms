@@ -50,15 +50,19 @@ export function exportUsersPDF(users: DirectoryUser[], role: DirectoryRole, show
 
 export function exportUsersExcel(users: DirectoryUser[], role: DirectoryRole, showInstitute: boolean) {
   const header = showInstitute
-    ? ["#", "First Name", "Last Name", "Email", "Institute", "Status", "Password Reset", "Created"]
-    : ["#", "First Name", "Last Name", "Email", "Status", "Password Reset", "Created"];
+    ? ["#", "First Name", "Last Name", "Email", "Institute", "Status", "Password Reset", "Password Changed", "Created"]
+    : ["#", "First Name", "Last Name", "Email", "Status", "Password Reset", "Password Changed", "Created"];
 
   const rows: (string | number)[][] = users.map((user, index) => {
     const created = new Date(user.created_at).toLocaleDateString("en-GB");
     const reset = user.force_password_reset ? "Yes" : "No";
+    const changedAt = user.password_changed_at ?? user.last_password_change?.at ?? null;
+    const changed = changedAt
+      ? new Date(changedAt).toLocaleDateString("en-GB")
+      : strings.passwordTrail.never;
     return showInstitute
-      ? [index + 1, user.first_name, user.last_name, user.email, user.institute_name ?? "—", statusLabel(user), reset, created]
-      : [index + 1, user.first_name, user.last_name, user.email, statusLabel(user), reset, created];
+      ? [index + 1, user.first_name, user.last_name, user.email, user.institute_name ?? "—", statusLabel(user), reset, changed, created]
+      : [index + 1, user.first_name, user.last_name, user.email, statusLabel(user), reset, changed, created];
   });
 
   const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);

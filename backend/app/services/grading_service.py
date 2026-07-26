@@ -344,6 +344,9 @@ def resolve_reevaluation(
 
 def usage_summary(db: Session) -> dict:
     period = _now().strftime("%Y-%m")
+    # One bucket per evaluation - a per-student row for institute students, the
+    # shared direct pool for B2C - so every row can be totalled without
+    # double-counting.
     rows = db.query(AiEvaluationLimit).filter(AiEvaluationLimit.period_key == period).all()
     return {
         "period": period,

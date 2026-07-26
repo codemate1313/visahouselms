@@ -49,7 +49,7 @@ def create_institute(
         payload.admin_permissions.model_dump(),
         payload.session_duration_hours,
         _client_ip(request),
-        ai_monthly_limit=payload.ai_monthly_limit,
+        ai_student_monthly_limit=payload.ai_student_monthly_limit,
     )
     # If extra agreement/branding attributes were provided, save them
     if payload.agreement_reference or payload.agreed_amount or payload.module_ids or payload.primary_color:
@@ -256,6 +256,21 @@ def reset_institute_member_password(
             db, actor, member_id, _client_ip(request), scoped_institute_id=institute_id
         )
     }
+
+
+@router.post("/{institute_id}/admins/{admin_id}/reset-password")
+def reset_institute_admin_password(
+    institute_id: int,
+    admin_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Institute admins are not 'members' (that endpoint covers instructors and
+    students only), so their reset lives here."""
+    return institute_service.reset_admin_password(
+        db, actor, institute_id, admin_id, _client_ip(request)
+    )
 
 
 @router.post("/{institute_id}/students/{student_id}/revoke-sessions")

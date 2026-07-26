@@ -160,6 +160,17 @@ def list_members(
     )
 
 
+@router.get("/ai-quota", dependencies=[Depends(require_password_change_complete)])
+def ai_quota(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    institute_admin_service.require_admin_permission(
+        actor,
+        "view_students",
+        "manage_students",
+        "view_student_activity",
+    )
+    return institute_admin_service.ai_quota_overview(db, actor)
+
+
 @router.get("/member-capacity", dependencies=[Depends(require_password_change_complete)])
 def member_capacity(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     institute_admin_service.require_admin_permission(

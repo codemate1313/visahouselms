@@ -18,7 +18,7 @@ import { Button } from "@/components/ui";
 import { confirmExport } from "@/utils/confirmExport";
 import { usersStrings as strings } from "./Users.strings";
 import { UsersTable } from "./components/UsersTable";
-import { ROLE_ACTIONS } from "./userActions";
+import { ROLE_ACTIONS, passwordResetPath } from "./userActions";
 import { exportUsersExcel, exportUsersPDF } from "./exportHelpers";
 
 const PAGE_SIZE = 25;
@@ -201,14 +201,12 @@ export function Users() {
     });
     if (!confirmed) return;
 
-    const base = ROLE_ACTIONS[user.role_name]?.base;
-    if (!base) return;
+    const path = passwordResetPath(user);
+    if (!path) return;
 
     setError(null);
     try {
-      const { data: result } = await apiClient.post<{ temporary_password?: string }>(
-        `${base}/${user.id}/reset-password`
-      );
+      const { data: result } = await apiClient.post<{ temporary_password?: string }>(path);
       if (!result?.temporary_password) {
         setPasswordNotice(null);
         setError(strings.errors.missingPassword);

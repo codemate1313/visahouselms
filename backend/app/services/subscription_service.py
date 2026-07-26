@@ -18,6 +18,10 @@ STATE_ACTIVE = "active"
 STATE_GRACE = "grace"
 STATE_EXPIRED = "expired"
 
+# stamped on the audit row when the expiry sweep suspends an institute, so a
+# later renewal can tell its own suspension apart from a manual Super Admin one
+SUSPENSION_REASON = "subscription_expired"
+
 
 def _audit(db: Session, actor: User, action: str, entity_id: Optional[int], ip: Optional[str], details=None) -> None:
     db.add(
@@ -84,6 +88,128 @@ def current_user_subscription(db: Session, user_id: int) -> Tuple[Optional[Subsc
     if now < subscription.expires_at + timedelta(days=subscription.grace_days):
         return subscription, STATE_GRACE
     return subscription, STATE_EXPIRED
+
+
+def _access_ends_at(subscription: Subscription) -> datetime:
+    """The hard cut-off: grace days are still full access, so the institute and
+    every account under it only lose access once grace has run out too."""
+    return subscription.expires_at + timedelta(days=subscription.grace_days)
+
+
+def access_window(db: Session, institute_id: int) -> dict:
+    """Countdown payload for the institute admin dashboard deadline card. Always
+    returned (unlike subscription_status, which is gated on view_billing) because
+    losing access affects every account in the institute, not just billing."""
+    institute = db.get(Institute, institute_id)
+    suspended = institute is not None and not institute.is_active
+    subscription, state = current_subscription(db, institute_id)
+    if subscription is None:
+        return {
+            "state": state,
+            "plan_name": None,
+            "expires_at": None,
+            "grace_days": 0,
+            "access_ends_at": None,
+            "seconds_remaining": None,
+            "seconds_to_expiry": None,
+            "institute_suspended": suspended,
+        }
+
+    now = _now()
+    access_ends_at = _access_ends_at(subscription)
+    return {
+        "state": state,
+        "plan_name": subscription.plan.name if subscription.plan else None,
+        "expires_at": subscription.expires_at,
+        "grace_days": subscription.grace_days,
+        "access_ends_at": access_ends_at,
+        "seconds_remaining": max(0, int((access_ends_at - now).total_seconds())),
+        "seconds_to_expiry": max(0, int((subscription.expires_at - now).total_seconds())),
+        "institute_suspended": suspended,
+    }
+
+
+def suspend_expired_institutes(db: Session) -> int:
+    """Called from the job_service scheduler tick: once an institute's plan is
+    past expiry *and* its grace window, the institute is suspended - which is
+    what already blocks login for every downline account (admin, instructors and
+    students all carry institute_id, and auth_service refuses a login whose
+    institute is inactive). Live sessions are revoked too so access stops at the
+    deadline instead of at the next token expiry."""
+    from app.services import account_service
+
+    institutes = db.query(Institute).filter(Institute.is_active.is_(True)).all()
+    suspended = 0
+    for institute in institutes:
+        subscription, state = current_subscription(db, institute.id)
+        if subscription is None or state != STATE_EXPIRED:
+            continue
+
+        institute.is_active = False
+        db.add(institute)
+        member_ids = [
+            user_id
+            for (user_id,) in db.query(User.id).filter(User.institute_id == institute.id).all()
+        ]
+        for user_id in member_ids:
+            account_service.revoke_all_sessions(db, user_id)
+        db.add(
+            AuditLog(
+                user_id=None,
+                action="institute.suspend",
+                entity_type="institute",
+                entity_id=institute.id,
+                details={
+                    "reason": SUSPENSION_REASON,
+                    "subscription_id": subscription.id,
+                    "access_ended_at": _access_ends_at(subscription).isoformat(),
+                    "accounts_disabled": len(member_ids),
+                },
+                ip_address=None,
+            )
+        )
+        suspended += 1
+
+    if suspended:
+        db.commit()
+    return suspended
+
+
+def _reactivate_if_expiry_suspended(db: Session, institute: Institute) -> bool:
+    """Undo an automatic expiry suspension when a plan is assigned or renewed.
+    A suspension the Super Admin applied by hand is left alone - only the sweep's
+    own suspension (the newest activity on the institute) is reversed."""
+    if institute.is_active:
+        return False
+
+    last = (
+        db.query(AuditLog)
+        .filter(
+            AuditLog.entity_type == "institute",
+            AuditLog.entity_id == institute.id,
+            AuditLog.action.in_(["institute.suspend", "institute.reactivate"]),
+        )
+        .order_by(AuditLog.id.desc())
+        .first()
+    )
+    if last is None or last.action != "institute.suspend":
+        return False
+    if not isinstance(last.details, dict) or last.details.get("reason") != SUSPENSION_REASON:
+        return False
+
+    institute.is_active = True
+    db.add(institute)
+    db.add(
+        AuditLog(
+            user_id=None,
+            action="institute.reactivate",
+            entity_type="institute",
+            entity_id=institute.id,
+            details={"reason": "subscription_renewed"},
+            ip_address=None,
+        )
+    )
+    return True
 
 
 def usage(db: Session, institute_id: int) -> dict:
@@ -195,7 +321,7 @@ def assign(
     starts_at: Optional[datetime],
     ip: Optional[str],
 ) -> dict:
-    get_institute_or_404(db, institute_id)
+    institute = get_institute_or_404(db, institute_id)
     plan = get_plan_or_404(db, plan_id)
     if not plan.is_active:
         raise HTTPException(
@@ -213,6 +339,7 @@ def assign(
     )
     db.add(subscription)
     db.flush()
+    _reactivate_if_expiry_suspended(db, institute)
     _audit(db, actor, "subscription.assign", subscription.id, ip, {"institute_id": institute_id, "plan": plan.name})
     db.commit()
     db.refresh(subscription)
@@ -227,7 +354,7 @@ def renew(
     plan_id: Optional[int],
     ip: Optional[str],
 ) -> dict:
-    get_institute_or_404(db, institute_id)
+    institute = get_institute_or_404(db, institute_id)
     existing, state = current_subscription(db, institute_id)
     if existing is None:
         raise HTTPException(
@@ -253,6 +380,7 @@ def renew(
     )
     db.add(subscription)
     db.flush()
+    _reactivate_if_expiry_suspended(db, institute)
     _audit(db, actor, "subscription.renew", subscription.id, ip, {"institute_id": institute_id, "plan": plan.name})
     db.commit()
     db.refresh(subscription)

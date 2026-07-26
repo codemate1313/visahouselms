@@ -33,7 +33,7 @@ export function InstituteOnboarding() {
     setAdminPermissions(record.admin_permissions || INITIAL_PERMISSIONS);
     setForm((current) => ({
       ...current,
-      ai_monthly_limit: String(record.ai_monthly_limit ?? 0),
+      ai_student_monthly_limit: String(record.ai_student_monthly_limit ?? 0),
       primary_color: record.branding?.primary_color || current.primary_color,
       secondary_color: record.branding?.secondary_color || current.secondary_color,
     }));
@@ -99,7 +99,7 @@ export function InstituteOnboarding() {
         student_limit: Number(form.student_limit),
         staff_limit: Number(form.staff_limit),
         access_duration_days: Number(form.access_duration_days),
-        ai_monthly_limit: Number(form.ai_monthly_limit || 0),
+        ai_student_monthly_limit: Number(form.ai_student_monthly_limit || 0),
         module_ids: [...selectedModules],
         admin_permissions: adminPermissions,
       });

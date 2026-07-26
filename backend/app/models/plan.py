@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Table, Text, func
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Table, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -41,6 +41,9 @@ class Plan(Base):
     audience: Mapped[str] = mapped_column(String(30), nullable=False, default="both")
     is_published: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_internal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Marketing bullet points shown on the public pricing card, authored by the
+    # Super Admin. Empty/NULL falls back to a list derived from the plan limits.
+    features: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
 

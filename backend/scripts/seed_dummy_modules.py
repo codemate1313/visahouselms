@@ -244,6 +244,7 @@ def _create_module(db, actor: User, module_type: str) -> bool:
                 )
             )
 
+    db.flush()
     print(f"Created module: {title}")
     return True
 

@@ -20,7 +20,7 @@ class InstituteCreate(BaseModel):
     admin_last_name: str = Field(min_length=1, max_length=100)
     admin_permissions: InstitutePermissions = Field(default_factory=InstitutePermissions)
     session_duration_hours: int = Field(default=24, ge=1, le=720)
-    ai_monthly_limit: Optional[int] = Field(default=None, ge=0, le=100000)
+    ai_student_monthly_limit: Optional[int] = Field(default=None, ge=0, le=100000)
     agreement_reference: Optional[str] = Field(default=None, max_length=100)
     agreement_notes: Optional[str] = Field(default=None, max_length=2000)
     agreed_amount: Optional[float] = Field(default=None, ge=0)
@@ -41,7 +41,7 @@ class InstituteUpdate(BaseModel):
     contact_email: Optional[EmailStr] = None
     admin_permissions: Optional[InstitutePermissions] = None
     session_duration_hours: Optional[int] = Field(default=None, ge=1, le=720)
-    ai_monthly_limit: Optional[int] = Field(default=None, ge=0, le=100000)
+    ai_student_monthly_limit: Optional[int] = Field(default=None, ge=0, le=100000)
     agreement_reference: Optional[str] = Field(default=None, max_length=100)
     agreement_notes: Optional[str] = Field(default=None, max_length=2000)
     agreed_amount: Optional[float] = Field(default=None, ge=0)

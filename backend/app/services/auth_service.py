@@ -401,10 +401,11 @@ def confirm_password_reset(db: Session, token: str, new_password: str) -> None:
     if user.is_owner:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Owner password cannot be reset")
 
+    now = datetime.now(timezone.utc)
     user.password_hash = hash_password(new_password)
     user.force_password_reset = False
+    user.password_changed_at = now
 
-    now = datetime.now(timezone.utc)
     active_sessions = (
         db.query(UserSession)
         .filter(UserSession.user_id == user.id, UserSession.revoked_at.is_(None))
@@ -413,6 +414,18 @@ def confirm_password_reset(db: Session, token: str, new_password: str) -> None:
     for session in active_sessions:
         session.revoked_at = now
 
+    # self-service resets went unlogged until now, leaving a gap in the password
+    # trail the directory reads - the actor is the account itself
+    db.add(
+        AuditLog(
+            user_id=user.id,
+            action="account.reset_password_via_email",
+            entity_type="user",
+            entity_id=user.id,
+            details={"sessions_revoked": len(active_sessions)},
+            ip_address=None,
+        )
+    )
     db.commit()
 
 

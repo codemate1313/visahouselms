@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { useToastStore } from "@/store/toastStore";
 import { confirmExport } from "@/utils/confirmExport";
 import { plansStrings as strings } from "./Plans.strings";
 import type { PlanRow } from "./types";
@@ -19,20 +20,23 @@ export function Plans() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [deletingPlan, setDeletingPlan] = useState<PlanRow | null>(null);
   const [viewingPlan, setViewingPlan] = useState<PlanRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
+  // Failed actions are transient, so they surface as toasts rather than as a
+  // banner the Super Admin has to dismiss by navigating away.
+  const showError = useToastStore((state) => state.showError);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await apiClient.get<PlanRow[]>("/super-admin/plans");
       setPlans(data);
-      setError(null);
+      setLoadError(null);
     } catch {
-      setError(strings.errors.load);
+      setLoadError(strings.errors.load);
     } finally {
       setLoading(false);
     }
@@ -69,7 +73,6 @@ export function Plans() {
     });
     if (!confirmed) return;
 
-    setError(null);
     setPlans((current) =>
       current.map((item) => item.id === plan.id ? { ...item, is_active: !plan.is_active } : item)
     );
@@ -79,20 +82,19 @@ export function Plans() {
       setPlans((current) =>
         current.map((item) => item.id === plan.id ? { ...item, is_active: plan.is_active } : item)
       );
-      setError(extractErrorMessage(err, strings.errors.toggle(action)));
+      showError(extractErrorMessage(err, strings.errors.toggle(action)));
     }
   }
 
   async function handleConfirmDelete() {
     if (!deletingPlan) return;
-    setError(null);
     setDeleteLoading(true);
     try {
       await apiClient.delete(`/super-admin/plans/${deletingPlan.id}`);
       setDeletingPlan(null);
       await load();
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, strings.errors.delete));
+      showError(extractErrorMessage(err, strings.errors.delete));
     } finally {
       setDeleteLoading(false);
     }
@@ -110,7 +112,7 @@ export function Plans() {
 
   return (
     <div>
-      {error && <p className="error-text">{error}</p>}
+      {loadError && <p className="error-text">{loadError}</p>}
 
       <PlansFilterBar
         search={search}

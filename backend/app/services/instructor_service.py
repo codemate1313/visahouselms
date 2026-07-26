@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import secrets
 import string
 from typing import Optional
@@ -243,6 +243,7 @@ def reset_password(
     temporary_password = _temporary_password()
     user.password_hash = hash_password(temporary_password)
     user.force_password_reset = True
+    user.password_changed_at = datetime.now(timezone.utc)
     revoked = account_service.revoke_all_sessions(db, user.id)
     db.add(user)
     _audit(

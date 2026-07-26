@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import HTTPException, status
@@ -274,6 +274,7 @@ def change_password(
 
     actor.password_hash = hash_password(new_password)
     actor.force_password_reset = False
+    actor.password_changed_at = datetime.now(timezone.utc)
     db.add(actor)
     _write_audit_log(db, actor, "super_admin.change_password", actor.id, ip_address)
     db.commit()
@@ -392,6 +393,66 @@ def _apply_directory_filters(
     return query
 
 
+# Every action that rewrites a password hash, whoever triggered it. Kept as an
+# explicit list so an unrelated new audit action cannot silently join the trail.
+PASSWORD_AUDIT_ACTIONS = (
+    "account.change_password",
+    "account.set_initial_password",
+    "account.reset_password_via_email",
+    "super_admin.change_password",
+    "sa_instructor.reset_password",
+    "institute_member.reset_password",
+    "institute_admin.reset_password",
+)
+SELF_SERVICE_PASSWORD_ACTIONS = {
+    "account.change_password",
+    "account.set_initial_password",
+    "account.reset_password_via_email",
+    "super_admin.change_password",
+}
+
+
+def _last_password_changes(db: Session, user_ids: List[int]) -> dict:
+    """Newest password event per user for the rows on screen - one query for the
+    page rather than a join that would fan out the directory listing."""
+    if not user_ids:
+        return {}
+
+    rows = (
+        db.query(AuditLog)
+        .filter(
+            AuditLog.entity_id.in_(user_ids),
+            AuditLog.action.in_(PASSWORD_AUDIT_ACTIONS),
+        )
+        .order_by(AuditLog.created_at.desc(), AuditLog.id.desc())
+        .all()
+    )
+
+    newest: dict = {}
+    for row in rows:
+        if row.entity_id not in newest:
+            newest[row.entity_id] = row
+
+    actor_ids = {row.user_id for row in newest.values() if row.user_id is not None}
+    actors = (
+        {user.id: user for user in db.query(User).filter(User.id.in_(actor_ids)).all()}
+        if actor_ids
+        else {}
+    )
+
+    result = {}
+    for user_id, row in newest.items():
+        actor = actors.get(row.user_id) if row.user_id else None
+        result[user_id] = {
+            "at": row.created_at,
+            "action": row.action,
+            "by_self": row.action in SELF_SERVICE_PASSWORD_ACTIONS or row.user_id == user_id,
+            "by_name": f"{actor.first_name} {actor.last_name}" if actor else None,
+            "ip_address": row.ip_address,
+        }
+    return result
+
+
 def directory_role_counts(db: Session) -> dict:
     """Row count per role, used for the tab badges. Always unfiltered by role so
     every tab shows its true total."""
@@ -442,6 +503,8 @@ def list_directory_users(
         .all()
     )
 
+    password_changes = _last_password_changes(db, [user.id for user in users])
+
     return {
         "items": [
             {
@@ -458,6 +521,8 @@ def list_directory_users(
                 "institute_name": user.institute.name if user.institute else None,
                 "institute_slug": user.institute.slug if user.institute else None,
                 "created_at": user.created_at,
+                "password_changed_at": user.password_changed_at,
+                "last_password_change": password_changes.get(user.id),
             }
             for user in users
         ],

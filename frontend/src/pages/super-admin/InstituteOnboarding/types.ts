@@ -21,7 +21,7 @@ export interface Onboarding {
   student_limit: number;
   staff_limit: number;
   access_duration_days: number;
-  ai_monthly_limit?: number | null;
+  ai_student_monthly_limit?: number | null;
   course_count: number;
   module_ids: number[];
   admin_permissions: Record<string, boolean>;

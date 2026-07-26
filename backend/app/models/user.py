@@ -19,6 +19,9 @@ class User(Base):
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     force_password_reset: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # NULL until the password is changed for the first time, i.e. the account is
+    # still on the password it was created with. audit_logs keeps the full trail.
+    password_changed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     is_owner: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_developer_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     avatar_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)

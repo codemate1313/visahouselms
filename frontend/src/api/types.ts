@@ -709,6 +709,18 @@ export interface DirectoryUser {
   institute_name: string | null;
   institute_slug: string | null;
   created_at: string;
+  /** Null while the account is still on the password it was created with. */
+  password_changed_at: string | null;
+  last_password_change: LastPasswordChange | null;
+}
+
+/** Newest entry in an account's password trail, read from the audit log. */
+export interface LastPasswordChange {
+  at: string;
+  action: string;
+  by_self: boolean;
+  by_name: string | null;
+  ip_address: string | null;
 }
 
 export interface DirectoryUserPage {

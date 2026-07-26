@@ -16,6 +16,14 @@ router = APIRouter(
     dependencies=[Depends(require_role(SUPER_ADMIN))],
 )
 
+# Unauthenticated: powers the marketing pricing page, which has no session yet.
+public_router = APIRouter(prefix="/plans", tags=["plans"])
+
+
+@public_router.get("")
+def list_landing_plans(db: Session = Depends(get_db)):
+    return plan_service.list_landing_plans(db)
+
 
 def _client_ip(request: Request) -> Optional[str]:
     return request.client.host if request.client else None

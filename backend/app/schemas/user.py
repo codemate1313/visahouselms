@@ -124,6 +124,16 @@ class InitialPasswordRequest(BaseModel):
         return value
 
 
+class LastPasswordChangeOut(BaseModel):
+    """Newest entry from the account's password trail in audit_logs."""
+
+    at: datetime
+    action: str
+    by_self: bool
+    by_name: Optional[str] = None
+    ip_address: Optional[str] = None
+
+
 class DirectoryUserOut(BaseModel):
     """One row of the Super Admin cross-role user directory. Institute fields are
     null for platform-wide roles (super admins and SA instructors)."""
@@ -141,6 +151,9 @@ class DirectoryUserOut(BaseModel):
     institute_name: Optional[str] = None
     institute_slug: Optional[str] = None
     created_at: datetime
+    # null means the account is still on the password it was created with
+    password_changed_at: Optional[datetime] = None
+    last_password_change: Optional[LastPasswordChangeOut] = None
 
     model_config = {"from_attributes": True}
 

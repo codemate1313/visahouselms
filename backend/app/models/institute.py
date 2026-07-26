@@ -30,7 +30,12 @@ class Institute(Base):
     staff_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     test_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     access_duration_days: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    # Deprecated: the institute-wide AI pool was replaced by a per-student cap.
+    # Column retained so existing values survive; nothing reads or writes it.
     ai_monthly_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    # The only AI ceiling for an institute's students. NULL/0 falls back to the
+    # platform-wide default monthly limit.
+    ai_student_monthly_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     session_duration_hours: Mapped[int] = mapped_column(Integer, nullable=False, default=24)
     published_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

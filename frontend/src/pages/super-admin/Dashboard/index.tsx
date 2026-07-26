@@ -6,6 +6,7 @@ import type { MetricDetail, MetricKey, Summary } from "./types";
 import { ExecutiveMetricGrid } from "./components/ExecutiveMetricGrid";
 import { DashboardCharts } from "./components/DashboardCharts";
 import { MetricDetailModal } from "./components/MetricDetailModal";
+import { NoLivePlanAlert } from "./components/NoLivePlanAlert";
 
 export function Dashboard() {
   const range = useDashboardRangeStore((state) => state.range);
@@ -73,6 +74,7 @@ export function Dashboard() {
 
   return (
     <div className="dashboard-overview">
+      {summary.counts.plans_live === 0 && <NoLivePlanAlert />}
       <ExecutiveMetricGrid summary={summary} growth={growth} onOpen={openMetric} />
       <DashboardCharts summary={summary} />
 

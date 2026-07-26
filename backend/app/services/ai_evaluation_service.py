@@ -26,6 +26,12 @@ logger = logging.getLogger(__name__)
 DEFAULT_MONTHLY_LIMIT = 100
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 
+POOL_EXHAUSTED = "The monthly AI evaluation limit has been reached"
+STUDENT_EXHAUSTED = (
+    "You have used all {limit} of your monthly AI evaluations. "
+    "Ask your institute admin to raise your quota or try again next month."
+)
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
@@ -72,21 +78,22 @@ def _config(db: Session) -> dict:
     return status
 
 
-def _limit_row(db: Session, attempt: TestAttempt, monthly_limit: int) -> AiEvaluationLimit:
-    period = _now().strftime("%Y-%m")
-    institute_id = attempt.user.institute_id
-    effective_limit = monthly_limit
-    if institute_id:
-        inst = db.query(Institute).filter(Institute.id == institute_id).first()
-        if inst and inst.ai_monthly_limit is not None and inst.ai_monthly_limit > 0:
-            effective_limit = inst.ai_monthly_limit
-
-    scope = f"institute:{institute_id}:{period}" if institute_id else f"direct:{period}"
+def _bucket(
+    db: Session,
+    scope: str,
+    period: str,
+    effective_limit: int,
+    institute_id: Optional[int],
+    user_id: Optional[int],
+) -> AiEvaluationLimit:
+    """Fetch-or-create one monthly counter, re-syncing its ceiling so limit
+    changes take effect mid-period without waiting for the next month."""
     row = db.query(AiEvaluationLimit).filter(AiEvaluationLimit.scope_key == scope).with_for_update().first()
     if row is None:
         row = AiEvaluationLimit(
             scope_key=scope,
             institute_id=institute_id,
+            user_id=user_id,
             period_key=period,
             monthly_limit=effective_limit,
             used_count=0,
@@ -95,9 +102,38 @@ def _limit_row(db: Session, attempt: TestAttempt, monthly_limit: int) -> AiEvalu
         db.flush()
     else:
         row.monthly_limit = effective_limit
-    if row.used_count >= row.monthly_limit:
-        raise HTTPException(status_code=429, detail="The monthly AI evaluation limit has been reached")
+        if row.user_id is None and user_id is not None:
+            row.user_id = user_id
     return row
+
+
+def _limit_rows(db: Session, attempt: TestAttempt, monthly_limit: int) -> list[AiEvaluationLimit]:
+    """Institute students are metered individually - each gets their own monthly
+    bucket, so no student can eat into anyone else's allowance. Direct (B2C)
+    students have no institute to divide, so they share the platform pool."""
+    period = _now().strftime("%Y-%m")
+    institute_id = attempt.user.institute_id
+
+    if not institute_id:
+        pool = _bucket(db, f"direct:{period}", period, monthly_limit, None, None)
+        if pool.used_count >= pool.monthly_limit:
+            raise HTTPException(status_code=429, detail=POOL_EXHAUSTED)
+        return [pool]
+
+    inst = db.query(Institute).filter(Institute.id == institute_id).first()
+    student_limit = monthly_limit
+    if inst and inst.ai_student_monthly_limit is not None and inst.ai_student_monthly_limit > 0:
+        student_limit = inst.ai_student_monthly_limit
+
+    student = _bucket(
+        db, f"student:{attempt.user_id}:{period}", period, student_limit, institute_id, attempt.user_id
+    )
+    if student.used_count >= student.monthly_limit:
+        raise HTTPException(
+            status_code=429,
+            detail=STUDENT_EXHAUSTED.format(limit=student.monthly_limit),
+        )
+    return [student]
 
 
 def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
@@ -320,7 +356,7 @@ def request_suggestion(
         "model": "test-model",
         "monthly_limit": DEFAULT_MONTHLY_LIMIT,
     }
-    limit = _limit_row(db, attempt, int(config["monthly_limit"]))
+    limits = _limit_rows(db, attempt, int(config["monthly_limit"]))
     record = AiEvaluation(
         attempt_id=attempt.id,
         part_id=part.id,
@@ -336,8 +372,9 @@ def request_suggestion(
         suggestion = _normalize(raw, part)
         record.status = "completed"
         record.suggestions = suggestion
-        limit.used_count += 1
-        db.add_all([record, limit])
+        for limit in limits:
+            limit.used_count += 1
+        db.add_all([record, *limits])
         db.commit()
         return {"id": record.id, **suggestion}
     except HTTPException:

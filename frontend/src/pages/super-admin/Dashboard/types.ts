@@ -45,6 +45,7 @@ export interface Summary {
     subscriptions_active: number;
     demo_accounts_active: number;
     coupons_active: number;
+    plans_live: number;
     super_admin_accounts: number;
     sa_instructor_accounts: number;
     modules_total: number;

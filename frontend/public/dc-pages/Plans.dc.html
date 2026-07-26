@@ -60,6 +60,27 @@
   @media (prefers-reduced-motion: reduce) {
     .vh-acc-panel, .vh-acc-icon, .vh-acc-body { transition-duration: 1ms; }
   }
+  /* Pricing cards — rendered from the live plan catalogue, so the grid has to
+     adapt to however many plans the Super Admin has published. */
+  .vh-plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; align-items: stretch; }
+  .vh-plan-grid.vh-plan-grid-few { grid-template-columns: repeat(auto-fit, minmax(280px, 360px)); justify-content: center; }
+  .vh-plan-card { position: relative; display: flex; flex-direction: column; backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 22px; padding: 32px; transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s ease; }
+  .vh-plan-card:hover { transform: translateY(-4px); }
+  .vh-plan-badge { position: absolute; top: 20px; right: 20px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 10px; border-radius: 100px; background: rgba(255,255,255,0.22); }
+  .vh-plan-name { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; padding-right: 96px; }
+  .vh-plan-price-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .vh-plan-price { font-size: 52px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.05; }
+  .vh-plan-period { font-size: 15px; }
+  .vh-plan-desc { font-size: 14.5px; line-height: 1.55; margin-bottom: 8px; }
+  .vh-plan-cta { font-family: inherit; width: 100%; margin-top: 16px; font-size: 15px; font-weight: 600; padding: 14px; border-radius: 100px; border: 1px solid transparent; cursor: pointer; margin-bottom: 26px; transition: transform .2s ease, opacity .2s ease; }
+  .vh-plan-cta:hover { transform: translateY(-1px); opacity: 0.92; }
+  .vh-plan-features { display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
+  .vh-plan-feature { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; }
+  .vh-plan-check { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; margin-top: 1px; }
+  .vh-plan-empty { max-width: 520px; margin: 0 auto; text-align: center; background: var(--card); border: 1px dashed var(--acLine); border-radius: 22px; padding: 48px 32px; }
+  .vh-plan-empty strong { display: block; font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+  .vh-plan-empty span { font-size: 14.5px; line-height: 1.6; color: var(--ink2); }
+  @media (max-width: 900px) { .vh-plan-grid, .vh-plan-grid.vh-plan-grid-few { grid-template-columns: minmax(0, 1fr); } .vh-plan-name { padding-right: 0; } .vh-plan-badge { position: static; display: inline-block; margin-bottom: 12px; } }
   /* Social Icons Hover Effect (Footer) */
   .footer-social-icons { display: flex; justify-content: flex-start; align-items: center; flex-direction: row; column-gap: 0.5rem; padding: 0; margin: 0; list-style: none; }
   .footer-social-icons .icon-content { margin: 0; position: relative; }
@@ -147,108 +168,51 @@
   </section>
 
   <section class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 96px;">
-    <div style="display: flex; justify-content: center; margin-bottom: 40px;">
-      <div style="position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 360px); padding: 4px; background: var(--chip); border: 1px solid var(--line); border-radius: 100px; overflow: hidden;">
-        <span aria-hidden="true" style="position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 2); border-radius: 100px; background: var(--ink); transform: translateX({{ billingPillX }}); transition: transform .38s cubic-bezier(.2,.7,.2,1); box-shadow: 0 10px 24px -14px var(--ink);"></span>
-        <button type="button" onClick="{{ setMonthly }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 100px; border: none; background: transparent; color: {{ monthlyColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">Monthly</button>
-        <button type="button" onClick="{{ setAnnual }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 100px; border: none; background: transparent; color: {{ annualColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">Annual &middot; save 20%</button>
+    <sc-if value="{{ showBillingToggle }}">
+      <div style="display: flex; justify-content: center; margin-bottom: 40px;">
+        <div style="position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 360px); padding: 4px; background: var(--chip); border: 1px solid var(--line); border-radius: 100px; overflow: hidden;">
+          <span aria-hidden="true" style="position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 2); border-radius: 100px; background: var(--ink); transform: translateX({{ billingPillX }}); transition: transform .38s cubic-bezier(.2,.7,.2,1); box-shadow: 0 10px 24px -14px var(--ink);"></span>
+          <button type="button" onClick="{{ setMonthly }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 100px; border: none; background: transparent; color: {{ monthlyColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">Monthly</button>
+          <button type="button" onClick="{{ setAnnual }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 100px; border: none; background: transparent; color: {{ annualColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">Annual</button>
+        </div>
       </div>
-    </div>
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-      
-  <div class="vh-reveal" style="position: relative; background: var(--card); color: var(--ink); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 22px; padding: 32px; box-shadow: none;">
-    
-    <div style="font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--ink2); margin-bottom: 12px;">Student</div>
-    <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px;">
-      <span style="font-size: 52px; font-weight: 700; letter-spacing: -0.8px;">{{ studentPrice }}</span>
-      <span style="font-size: 15px; color: var(--ink2);">{{ studentPeriod }}</span>
-    </div>
-    <p style="font-size: 14.5px; line-height: 1.55; color: var(--ink2); margin-bottom: 24px;">Direct-student access to all four modules with AI feedback.</p>
-    <button type="button" style="font-family: inherit; width: 100%; font-size: 15px; font-weight: 600; padding: 14px; border-radius: 100px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; margin-bottom: 26px;">Choose Student</button>
-    <div style="display: flex; flex-direction: column; gap: 12px;">
-      <div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--acWash); color: var(--ac); display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; ">All 4 IELTS modules</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--acWash); color: var(--ac); display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; ">AI writing &amp; speaking feedback</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--acWash); color: var(--ac); display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; ">CEFR proficiency profile</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--acWash); color: var(--ac); display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; ">Progress dashboard</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--acWash); color: var(--ac); display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; ">PDF report cards</span>
+    </sc-if>
+
+    <sc-if value="{{ hasPlans }}">
+      <div class="{{ planGridClass }}">
+        <sc-for list="{{ planCards }}" as="p" hint-placeholder-count="3">
+          <div class="vh-plan-card" style="background: {{ p.cardBg }}; color: {{ p.cardInk }}; border-color: {{ p.cardBorder }}; box-shadow: {{ p.cardShadow }};">
+            <sc-if value="{{ p.popular }}">
+              <div class="vh-plan-badge">Most popular</div>
+            </sc-if>
+            <div class="vh-plan-name" style="color: {{ p.mutedInk }};">{{ p.name }}</div>
+            <div class="vh-plan-price-row">
+              <span class="vh-plan-price">{{ p.price }}</span>
+              <span class="vh-plan-period" style="color: {{ p.mutedInk }};">{{ p.period }}</span>
+            </div>
+            <sc-if value="{{ p.hasDescription }}">
+              <p class="vh-plan-desc" style="color: {{ p.mutedInk }};">{{ p.description }}</p>
+            </sc-if>
+            <button type="button" class="vh-plan-cta" style="background: {{ p.ctaBg }}; color: {{ p.ctaInk }}; border-color: {{ p.ctaBorder }};" onClick="{{ p.choose }}">{{ p.ctaLabel }}</button>
+            <div class="vh-plan-features">
+              <sc-for list="{{ p.features }}" as="f" hint-placeholder-count="5">
+                <div class="vh-plan-feature" style="color: {{ p.featureInk }};">
+                  <span class="vh-plan-check" style="background: {{ p.checkBg }}; color: {{ p.checkInk }};"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  <span>{{ f }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
       </div>
-    </div>
-  </div>
-      
-  <div class="vh-reveal" style="position: relative; background: linear-gradient(155deg, var(--ac), var(--ac2)); color: #fff; backdrop-filter: blur(12px); border: 1px solid transparent; border-radius: 22px; padding: 32px; box-shadow: 0 30px 60px -24px var(--ac);">
-    <div style="position: absolute; top: 20px; right: 20px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 10px; border-radius: 100px; background: rgba(255,255,255,0.22);">Most popular</div>
-    <div style="font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; opacity: 0.9; margin-bottom: 12px;">Institute</div>
-    <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px;">
-      <span style="font-size: 52px; font-weight: 700; letter-spacing: -0.8px;">{{ institutePrice }}</span>
-      <span style="font-size: 15px; opacity: 0.85;">{{ institutePeriod }}</span>
-    </div>
-    <p style="font-size: 14.5px; line-height: 1.55; opacity: 0.9; margin-bottom: 24px;">Batch management, branding, leaderboards and instructor tools.</p>
-    <button type="button" style="font-family: inherit; width: 100%; font-size: 15px; font-weight: 600; padding: 14px; border-radius: 100px; border: none; background: #fff; color: var(--ac); cursor: pointer; margin-bottom: 26px;">Choose Institute</button>
-    <div style="display: flex; flex-direction: column; gap: 12px;">
-      <div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.22); color: #fff; display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; opacity: 0.95">Everything in Student</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.22); color: #fff; display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; opacity: 0.95">Up to 100 students</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.22); color: #fff; display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; opacity: 0.95">Institute leaderboard</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.22); color: #fff; display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; opacity: 0.95">Custom branding &amp; logo</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.22); color: #fff; display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; opacity: 0.95">Instructor grading queue</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.22); color: #fff; display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; opacity: 0.95">Bulk CSV/XLSX imports</span>
+    </sc-if>
+
+    <sc-if value="{{ showEmptyState }}">
+      <div class="vh-plan-empty">
+        <strong>{{ emptyTitle }}</strong>
+        <span>{{ emptyBody }}</span>
       </div>
-    </div>
-  </div>
-      
-  <div class="vh-reveal" style="position: relative; background: var(--card); color: var(--ink); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 22px; padding: 32px; box-shadow: none;">
-    
-    <div style="font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--ink2); margin-bottom: 12px;">Enterprise</div>
-    <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px;">
-      <span style="font-size: 52px; font-weight: 700; letter-spacing: -0.8px;">Custom</span>
-      <span style="font-size: 15px; color: var(--ink2);">{{ enterprisePeriod }}</span>
-    </div>
-    <p style="font-size: 14.5px; line-height: 1.55; color: var(--ink2); margin-bottom: 24px;">Multi-branch institutes and universities. Dedicated support.</p>
-    <button type="button" style="font-family: inherit; width: 100%; font-size: 15px; font-weight: 600; padding: 14px; border-radius: 100px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; margin-bottom: 26px;">Choose Enterprise</button>
-    <div style="display: flex; flex-direction: column; gap: 12px;">
-      <div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--acWash); color: var(--ac); display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; ">Everything in Institute</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--acWash); color: var(--ac); display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; ">Unlimited students</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--acWash); color: var(--ac); display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; ">SSO &amp; SAML</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--acWash); color: var(--ac); display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; ">Custom exam sets</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--acWash); color: var(--ac); display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; ">Dedicated success manager</span>
-      </div><div style="display: flex; align-items: flex-start; gap: 10px;">
-        <span style="flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--acWash); color: var(--ac); display: grid; place-items: center; margin-top: 1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span style="font-size: 14px; ">SLA-backed uptime</span>
-      </div>
-    </div>
-  </div>
-    </div>
+    </sc-if>
   </section>
 
   <section class="vh-reveal" style="max-width: 1000px; margin: 0 auto; padding: 40px 32px 96px;">
@@ -353,7 +317,17 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
 class Component extends DCLogic {
-  state = { theme: this.getInitialTheme(), billing: "monthly", faqOpen: -1, mobileMenuOpen: false };
+  // Plans come from the Super Admin catalogue, injected by StaticDcPage as
+  // window.__vhData before this frame boots — nothing here is hard-coded.
+  plans = Array.isArray(window.__vhData?.plans) ? window.__vhData.plans : [];
+  plansFailed = Boolean(window.__vhData?.plansFailed);
+
+  state = { theme: this.getInitialTheme(), billing: this.getInitialBilling(), faqOpen: -1, mobileMenuOpen: false };
+
+  getInitialBilling() {
+    const plans = Array.isArray(window.__vhData?.plans) ? window.__vhData.plans : [];
+    return plans.some((p) => p.billing_period === "monthly") ? "monthly" : "annual";
+  }
 
   getInitialTheme() {
     try {
@@ -464,6 +438,13 @@ class Component extends DCLogic {
     try { window.parent.postMessage({ type: "vh-auth", mode: "login" }, window.location.origin); } catch {}
   };
 
+  // Buying a plan starts with an account, so every CTA opens the register
+  // overlay on the parent app.
+  choosePlan = () => {
+    this.closeMobileMenu();
+    try { window.parent.postMessage({ type: "vh-auth", mode: "register" }, window.location.origin); } catch {}
+  };
+
   componentDidMount() {
     this._mq = window.matchMedia("(prefers-color-scheme: dark)");
     this._mqListener = () => {
@@ -537,16 +518,67 @@ class Component extends DCLogic {
   // Single-open accordion, matching animate-ui's default type="single" collapsible behaviour
   toggleFaq = (i) => this.setState((s) => ({ faqOpen: s.faqOpen === i ? -1 : i }));
 
+  formatPrice(plan) {
+    const amount = Number(plan.price);
+    if (!Number.isFinite(amount)) return String(plan.price ?? "");
+    try {
+      return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: plan.currency || "INR",
+        maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+      }).format(amount);
+    } catch {
+      return (plan.currency || "INR") + " " + amount.toLocaleString("en-IN");
+    }
+  }
+
+  // The billing switch only earns its place when the catalogue actually holds
+  // both cadences; "custom"-length plans stay visible under either one.
+  visiblePlans(showToggle) {
+    if (!showToggle) return this.plans;
+    return this.plans.filter((p) => p.billing_period === this.state.billing || p.billing_period === "custom");
+  }
+
+  planCard(plan) {
+    const dark = this.isDark();
+    const featured = Boolean(plan.is_popular);
+    return {
+      popular: featured,
+      name: plan.name,
+      price: this.formatPrice(plan),
+      period: plan.period_label,
+      description: plan.description || "",
+      hasDescription: Boolean(plan.description),
+      ctaLabel: "Choose " + plan.name,
+      choose: this.choosePlan,
+      cardBg: featured ? "linear-gradient(155deg, var(--ac), var(--ac2))" : "var(--card)",
+      cardInk: featured ? "#fff" : "var(--ink)",
+      cardBorder: featured ? "transparent" : "var(--line)",
+      cardShadow: featured ? "0 30px 60px -24px var(--ac)" : "none",
+      mutedInk: featured ? "rgba(255,255,255,0.86)" : "var(--ink2)",
+      featureInk: featured ? "rgba(255,255,255,0.95)" : "var(--ink)",
+      ctaBg: featured ? "#fff" : "transparent",
+      ctaInk: featured ? "var(--ac)" : "var(--ink)",
+      ctaBorder: featured ? "transparent" : "var(--line)",
+      checkBg: featured ? "rgba(255,255,255,0.22)" : "var(--acWash)",
+      checkInk: featured ? "#fff" : "var(--ac)",
+      features: Array.isArray(plan.features) ? plan.features : [],
+      dark,
+    };
+  }
+
   renderVals() {
     const svg = (paths, size = 22) => React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.9, strokeLinecap: "round", strokeLinejoin: "round" }, paths.map((p, i) => React.createElement(p.tag, { key: i, ...p.attrs })));
     const annual = this.state.billing === "annual";
-    const format = (n) => "₹" + Math.round(n).toLocaleString("en-IN");
+    const showBillingToggle =
+      this.plans.some((p) => p.billing_period === "monthly") && this.plans.some((p) => p.billing_period === "annual");
+    const visiblePlans = this.visiblePlans(showBillingToggle);
     const themeIcons = {
       light: svg([{ tag: "circle", attrs: { cx: 12, cy: 12, r: 4.2 } }, { tag: "path", attrs: { d: "M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" } }], 17),
       dark: svg([{ tag: "path", attrs: { d: "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" } }], 17),
     };
     const faqs = [
-      { q: "Can I switch between monthly and annual?", a: "Yes. Upgrade or downgrade any time from your billing page. Annual saves 20% and is prorated on switch." },
+      { q: "Can I switch between monthly and annual?", a: "Yes. Upgrade or downgrade any time from your billing page — the switch is prorated against whatever you have already paid." },
       { q: "Does the institute plan include instructor accounts?", a: "Every institute plan comes with one Institute Admin and up to five instructor seats. Extra seats can be added." },
       { q: "How does the AI feedback pricing work?", a: "AI drafts on writing are included in all plans. Monthly usage caps apply per direct/institute scope — see the docs for exact limits." },
       { q: "Can we white-label the platform?", a: "The Institute and Enterprise plans include full branding — your logo, colors, and domain across the portal." },
@@ -577,11 +609,15 @@ class Component extends DCLogic {
       monthlyColor: annual ? "var(--ink2)" : "var(--bg)",
       annualColor: annual ? "var(--bg)" : "var(--ink2)",
       billingPillX: annual ? "calc(100% + 4px)" : "0px",
-      studentPrice: annual ? format(1499 * 12 * 0.8) : format(1499),
-      studentPeriod: annual ? "/ year" : "/ month",
-      institutePrice: annual ? format(899 * 12 * 0.8) : format(899),
-      institutePeriod: annual ? "/ student / year" : "/ student / month",
-      enterprisePeriod: annual ? "billed annually" : "custom billing",
+      showBillingToggle,
+      hasPlans: visiblePlans.length > 0,
+      showEmptyState: visiblePlans.length === 0,
+      planGridClass: visiblePlans.length < 3 ? "vh-plan-grid vh-plan-grid-few" : "vh-plan-grid",
+      planCards: visiblePlans.map((plan) => this.planCard(plan)),
+      emptyTitle: this.plansFailed ? "Pricing is temporarily unavailable" : "Pricing is being finalised",
+      emptyBody: this.plansFailed
+        ? "We could not load our plans just now. Please refresh in a moment, or contact us and we will walk you through the options."
+        : "No plans are published yet. Get in touch and our team will put together the right package for you.",
       year: new Date().getFullYear(),
       navItems: [
         { label: "Home", href: "/", className: "vh-nav-link", mobileClassName: "vh-drawer-link vh-drawer-item" },

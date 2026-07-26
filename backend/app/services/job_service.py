@@ -186,6 +186,11 @@ def _scheduler_tick() -> None:
         # scheduled announcements
         from app.services import announcement_service
         announcement_service.process_scheduled_announcements(db)
+
+        # institutes whose plan (plus grace) has run out - suspending the
+        # institute is what disables every downline account under it
+        from app.services import subscription_service
+        subscription_service.suspend_expired_institutes(db)
     finally:
         db.close()
 
