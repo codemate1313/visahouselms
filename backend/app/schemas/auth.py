@@ -13,6 +13,18 @@ class LoginRequest(BaseModel):
     remember_me: bool = True
 
 
+class GoogleOtpRequest(BaseModel):
+    email: EmailStr
+    device_id: Optional[str] = Field(default=None, min_length=16, max_length=200)
+    device_name: Optional[str] = Field(default=None, max_length=120)
+    remember_me: bool = True
+
+
+class VerifyOtpRequest(BaseModel):
+    challenge_id: str = Field(min_length=20, max_length=3000)
+    otp_code: str = Field(min_length=4, max_length=12)
+
+
 class RegisterRequest(BaseModel):
     """Public self-registration for direct (B2C) students only - every other
     role in this app is admin-created."""
@@ -48,8 +60,12 @@ class LogoutRequest(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    access_token: str
+    access_token: Optional[str] = None
     token_type: str = "bearer"
+    otp_required: bool = False
+    otp_challenge_id: Optional[str] = None
+    otp_delivery: Optional[str] = None
+    message: Optional[str] = None
 
 
 class CurrentUser(BaseModel):

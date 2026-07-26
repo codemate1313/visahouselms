@@ -159,15 +159,12 @@ def issue_token_pair(
     return access_token, refresh_token
 
 
-def login(
+def authenticate_login_user(
     db: Session,
     email: str,
     password: str,
-    user_agent: Optional[str],
     ip_address: Optional[str],
-    device_identifier: Optional[str] = None,
-    device_name: Optional[str] = None,
-) -> Tuple[str, str]:
+) -> User:
     normalized_email = email.strip().lower()
     user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
     if user is None or not user.is_active or not verify_password(password, user.password_hash):
@@ -187,6 +184,40 @@ def login(
         db.commit()
         raise INVALID_CREDENTIALS
 
+    return user
+
+
+def get_otp_login_user(db: Session, email: str, ip_address: Optional[str]) -> User:
+    normalized_email = email.strip().lower()
+    user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
+    if user is None or not user.is_active:
+        raise INVALID_CREDENTIALS
+
+    if user.institute_id is not None and not user.institute.is_active:
+        db.add(
+            AuditLog(
+                user_id=user.id,
+                action="institute.login_blocked_suspended",
+                entity_type="institute",
+                entity_id=user.institute_id,
+                ip_address=ip_address,
+            )
+        )
+        db.commit()
+        raise INVALID_CREDENTIALS
+
+    return user
+
+
+def issue_login_session(
+    db: Session,
+    user: User,
+    user_agent: Optional[str],
+    ip_address: Optional[str],
+    device_identifier: Optional[str] = None,
+    device_name: Optional[str] = None,
+    auth_method: str = "password",
+) -> Tuple[str, str]:
     device = _resolve_device(
         db,
         user,
@@ -196,7 +227,20 @@ def login(
         ip_address,
         enforce_single_device=user.role.name == STUDENT,
     )
-    return issue_token_pair(db, user, user_agent, ip_address, device=device)
+    return issue_token_pair(db, user, user_agent, ip_address, auth_method=auth_method, device=device)
+
+
+def login(
+    db: Session,
+    email: str,
+    password: str,
+    user_agent: Optional[str],
+    ip_address: Optional[str],
+    device_identifier: Optional[str] = None,
+    device_name: Optional[str] = None,
+) -> Tuple[str, str]:
+    user = authenticate_login_user(db, email, password, ip_address)
+    return issue_login_session(db, user, user_agent, ip_address, device_identifier, device_name)
 
 
 def register(

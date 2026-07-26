@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
+    login_otp_code: str = "123456"
+    login_otp_expire_minutes: int = 10
     refresh_cookie_name: str = "ielts_lms_refresh"
     refresh_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
     refresh_cookie_domain: Optional[str] = None

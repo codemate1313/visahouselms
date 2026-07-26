@@ -18,6 +18,14 @@ import { ForgotPasswordModal } from "./components/ForgotPasswordModal";
 
 export { HeroSlider };
 
+interface LoginStartResponse {
+  access_token?: string | null;
+  otp_required?: boolean;
+  otp_challenge_id?: string | null;
+  otp_delivery?: "email" | "test" | string | null;
+  message?: string | null;
+}
+
 export function Login({
   allowedRoles = ["INSTITUTE_ADMIN", "INST_INSTRUCTOR", "STUDENT"],
   title = strings.defaultTitle,
@@ -63,7 +71,13 @@ export function Login({
   }
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [otpChallengeId, setOtpChallengeId] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpDelivery, setOtpDelivery] = useState<string | null>(null);
 
   const availableRoleOptions = ALL_ROLE_OPTIONS.filter((item) => allowedRoles.includes(item.role));
 
@@ -94,44 +108,122 @@ export function Login({
     changePortal(targetRole);
   }
 
+  function openOtpDialog(tokens: LoginStartResponse) {
+    if (!tokens.otp_required || !tokens.otp_challenge_id) {
+      throw new Error(strings.otpInvalidResponse);
+    }
+    setOtpChallengeId(tokens.otp_challenge_id);
+    setOtpDelivery(tokens.otp_delivery ?? null);
+    setOtpCode("");
+    setOtpError(null);
+    showSuccess(
+      tokens.otp_delivery === "test" ? strings.otpTestToast : strings.otpSentToast,
+      strings.otpSentTitle,
+    );
+  }
+
+  async function completeLogin(accessToken?: string | null) {
+    if (!accessToken) {
+      throw new Error(strings.otpInvalidToken);
+    }
+    const { data: user } = await apiClient.get("/auth/me", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (user.role !== selectedRole) {
+      setError(strings.roleMismatchError(roleLabel(user.role), roleLabel(selectedRole)));
+      showError(strings.roleMismatchToast(roleLabel(selectedRole), roleLabel(user.role)), strings.roleMismatchTitle);
+      return;
+    }
+    const destination = destinationFor(user);
+    if (!destination) {
+      setError(strings.noPortalError);
+      showError(strings.noPortalToast, strings.loginFailedTitle);
+      return;
+    }
+    setSession(accessToken, user);
+    showSuccess(strings.welcomeToast(roleLabel(user.role)), strings.signedInTitle);
+    navigate(destination);
+  }
+
+  function authErrorMessage(requestError: unknown) {
+    if (axios.isAxiosError(requestError)) {
+      const detail = requestError.response?.data?.detail;
+      return typeof detail === "string" ? detail : strings.connectionError;
+    }
+    if (requestError instanceof Error && requestError.message) {
+      return requestError.message;
+    }
+    return strings.genericAuthError;
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const { data: tokens } = await apiClient.post("/auth/login", {
+      const { data: tokens } = await apiClient.post<LoginStartResponse>("/auth/login", {
         email: email.trim().toLowerCase(),
         password,
         remember_me: rememberMe,
         ...getDeviceIdentity(),
       });
-      const { data: user } = await apiClient.get("/auth/me", {
-        headers: { Authorization: `Bearer ${tokens.access_token}` },
-      });
-      if (user.role !== selectedRole) {
-        setError(strings.roleMismatchError(roleLabel(user.role), roleLabel(selectedRole)));
-        showError(strings.roleMismatchToast(roleLabel(selectedRole), roleLabel(user.role)), strings.roleMismatchTitle);
+      if (tokens.otp_required) {
+        openOtpDialog(tokens);
         return;
       }
-      const destination = destinationFor(user);
-      if (!destination) {
-        setError(strings.noPortalError);
-        showError(strings.noPortalToast, strings.loginFailedTitle);
-        return;
-      }
-      setSession(tokens.access_token, user);
-      showSuccess(strings.welcomeToast(roleLabel(user.role)), strings.signedInTitle);
-      navigate(destination);
+      await completeLogin(tokens.access_token);
     } catch (requestError: unknown) {
-      let msg = strings.genericAuthError;
-      if (axios.isAxiosError(requestError)) {
-        const detail = requestError.response?.data?.detail;
-        msg = typeof detail === "string" ? detail : strings.connectionError;
-      }
+      const msg = authErrorMessage(requestError);
       setError(msg);
       showError(msg, strings.authErrorTitle);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGoogleLogin() {
+    setError(null);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setError(strings.googleEmailRequired);
+      showError(strings.googleEmailRequired, strings.authErrorTitle);
+      return;
+    }
+    setGoogleLoading(true);
+    try {
+      const { data: tokens } = await apiClient.post<LoginStartResponse>("/auth/google/request-otp", {
+        email: normalizedEmail,
+        remember_me: rememberMe,
+        ...getDeviceIdentity(),
+      });
+      openOtpDialog(tokens);
+    } catch (requestError: unknown) {
+      const msg = authErrorMessage(requestError);
+      setError(msg);
+      showError(msg, strings.authErrorTitle);
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
+
+  async function handleOtpSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (!otpChallengeId) return;
+    setOtpError(null);
+    setOtpLoading(true);
+    try {
+      const { data: tokens } = await apiClient.post<LoginStartResponse>("/auth/verify-otp", {
+        challenge_id: otpChallengeId,
+        otp_code: otpCode.trim(),
+      });
+      await completeLogin(tokens.access_token);
+      setOtpChallengeId(null);
+    } catch (requestError: unknown) {
+      const msg = authErrorMessage(requestError);
+      setOtpError(msg);
+      showError(msg, strings.authErrorTitle);
+    } finally {
+      setOtpLoading(false);
     }
   }
 
@@ -238,6 +330,15 @@ export function Login({
             <button type="submit" className="concise-submit-btn" disabled={loading}>
               {loading ? strings.signInBusy : strings.signInLabel(roleLabel(selectedRole))}
             </button>
+            <button
+              type="button"
+              className="google-login-btn"
+              disabled={loading || googleLoading}
+              onClick={handleGoogleLogin}
+            >
+              <span className="google-mark" aria-hidden="true">G</span>
+              {googleLoading ? strings.googleLoginBusy : strings.googleLoginLabel}
+            </button>
           </form>
 
           <div className="login-footer-links text-center">
@@ -291,6 +392,44 @@ export function Login({
             setForgotSent(false);
           }}
         />
+      )}
+
+      {otpChallengeId && (
+        <div className="logout-modal-backdrop otp-login-backdrop" role="presentation">
+          <form className="logout-modal-card otp-login-card" onSubmit={handleOtpSubmit}>
+            <div className="logout-modal-icon-badge otp-login-icon" aria-hidden="true">2FA</div>
+            <h2 className="logout-modal-title">{strings.otpTitle}</h2>
+            <p className="logout-modal-description">
+              {otpDelivery === "test" ? strings.otpTestDescription : strings.otpDescription}
+            </p>
+            <label className="otp-code-label" htmlFor="login-otp-code">{strings.otpLabel}</label>
+            <input
+              id="login-otp-code"
+              className="otp-code-input"
+              value={otpCode}
+              onChange={(event) => setOtpCode(event.target.value)}
+              placeholder={strings.otpPlaceholder}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              required
+            />
+            {otpError && <div className="concise-error-box otp-error-box">{otpError}</div>}
+            <div className="logout-modal-actions">
+              <button
+                type="button"
+                className="logout-modal-btn cancel-btn"
+                disabled={otpLoading}
+                onClick={() => setOtpChallengeId(null)}
+              >
+                {strings.otpCancelLabel}
+              </button>
+              <button type="submit" className="logout-modal-btn confirm-btn" disabled={otpLoading}>
+                {otpLoading ? strings.otpVerifyBusy : strings.otpVerifyLabel}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   );

@@ -10,6 +10,7 @@ from app.config import settings
 
 TOKEN_TYPE_ACCESS = "access"
 TOKEN_TYPE_REFRESH = "refresh"
+TOKEN_TYPE_LOGIN_OTP = "login_otp"
 
 
 def hash_password(plain_password: str) -> str:
@@ -28,6 +29,7 @@ def _create_token(
     expires_delta: timedelta,
     auth_method: str = "password",
     session_key: Optional[str] = None,
+    extra_claims: Optional[dict] = None,
 ) -> str:
     now = datetime.now(timezone.utc)
     payload = {
@@ -42,6 +44,8 @@ def _create_token(
     }
     if session_key is not None:
         payload["sid"] = session_key
+    if extra_claims:
+        payload.update(extra_claims)
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
@@ -79,6 +83,30 @@ def create_refresh_token(
         expires_delta or timedelta(minutes=settings.refresh_token_expire_minutes),
         auth_method,
         session_key,
+    )
+
+
+def create_login_otp_token(
+    user_id: int,
+    role: str,
+    institute_id: Optional[int],
+    auth_method: str,
+    remember_me: bool,
+    device_identifier: Optional[str],
+    device_name: Optional[str],
+) -> str:
+    return _create_token(
+        user_id,
+        role,
+        institute_id,
+        TOKEN_TYPE_LOGIN_OTP,
+        timedelta(minutes=settings.login_otp_expire_minutes),
+        auth_method,
+        extra_claims={
+            "remember_me": remember_me,
+            "device_identifier": device_identifier,
+            "device_name": device_name,
+        },
     )
 
 

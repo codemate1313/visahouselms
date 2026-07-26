@@ -882,6 +882,100 @@ h1 {
   transform: translateY(0);
 }
 
+.google-login-btn {
+  width: 100%;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text, #f8fafc);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.google-login-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(225, 29, 46, 0.55);
+  background: rgba(225, 29, 46, 0.08);
+}
+
+.google-login-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.google-mark {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f2937;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.otp-login-card {
+  gap: 0;
+}
+
+.otp-login-icon {
+  width: 54px;
+  height: 54px;
+  color: #ffffff;
+  background: linear-gradient(180deg, #e11d2e 0%, #b91323 100%);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.otp-code-label {
+  width: 100%;
+  margin: 0 0 8px;
+  text-align: left;
+  color: var(--text, #f8fafc);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.otp-code-input {
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.34));
+  background: var(--surface-muted, rgba(15, 23, 42, 0.72));
+  color: var(--text, #f8fafc);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-align: center;
+  outline: none;
+}
+
+.otp-code-input:focus {
+  border-color: #e11d2e;
+  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.18);
+}
+
+.otp-error-box {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
 .login-footer-links {
   display: flex;
   flex-direction: column;

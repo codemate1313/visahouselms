@@ -46,6 +46,7 @@ ADMIN_PERMISSIONS = {
 
 ACCOUNTS = (
     ("qa.superadmin@example.com", SUPER_ADMIN, None, "QA", "Super Admin"),
+    ("tdeep4355@gmail.com", SUPER_ADMIN, None, "Tarundeep", "Super Admin"),
     ("sample.instructor@example.com", SA_INSTRUCTOR, None, "Sample", "Instructor"),
     ("qa.institute.admin@example.com", INSTITUTE_ADMIN, INSTITUTE_SLUG, "QA", "Institute Admin"),
     ("qa.student@example.com", STUDENT, INSTITUTE_SLUG, "QA", "Student"),

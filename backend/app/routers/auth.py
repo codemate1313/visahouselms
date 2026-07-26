@@ -1,25 +1,29 @@
 from typing import Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Request, Response
+import jwt
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.config import settings
 from app.core.auth_cookies import clear_refresh_cookie, get_refresh_token, set_refresh_cookie
+from app.core.security import TOKEN_TYPE_LOGIN_OTP, create_login_otp_token, decode_token
 from app.core.rate_limit import enforce_rate_limit
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import (
     CurrentUser,
     ForgotPasswordRequest,
+    GoogleOtpRequest,
     LoginRequest,
     LogoutRequest,
     RefreshRequest,
     RegisterRequest,
     ResetPasswordRequest,
     TokenResponse,
+    VerifyOtpRequest,
 )
-from app.services import account_service, auth_service, institute_service
+from app.services import account_service, auth_service, institute_service, smtp_service
 from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -41,19 +45,107 @@ def _device_identifier(request: Request, response: Response, supplied: Optional[
     return identifier
 
 
+def _client_ip(request: Request) -> Optional[str]:
+    return request.client.host if request.client else None
+
+
+def _send_login_otp(db: Session, email: str) -> bool:
+    subject = "IELTS LMS login OTP"
+    body = (
+        f"Your IELTS LMS login OTP is {settings.login_otp_code}.\n\n"
+        f"This code expires in {settings.login_otp_expire_minutes} minutes."
+    )
+    html = (
+        "<p>Your IELTS LMS login OTP is:</p>"
+        f"<p style='font-size:28px;font-weight:700;letter-spacing:6px'>{settings.login_otp_code}</p>"
+        f"<p>This code expires in {settings.login_otp_expire_minutes} minutes.</p>"
+    )
+    try:
+        smtp_service.send_email(db, email, subject, body, html)
+        return True
+    except HTTPException:
+        # Local/demo environments often do not have SMTP configured. Keep the
+        # test-only fixed OTP flow usable while production SMTP is being wired.
+        return False
+
+
+def _otp_challenge_for(
+    db: Session,
+    user: User,
+    payload: LoginRequest | GoogleOtpRequest,
+    auth_method: str,
+) -> TokenResponse:
+    sent = _send_login_otp(db, user.email)
+    challenge = create_login_otp_token(
+        user.id,
+        user.role.name,
+        user.institute_id,
+        auth_method,
+        payload.remember_me,
+        payload.device_id,
+        payload.device_name,
+    )
+    return TokenResponse(
+        otp_required=True,
+        otp_challenge_id=challenge,
+        otp_delivery="email" if sent else "test",
+        message="OTP sent to your registered email." if sent else "Use the fixed test OTP to continue.",
+    )
+
+
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
     device_identifier = _device_identifier(request, response, payload.device_id)
-    access_token, refresh_token = auth_service.login(
+    user = auth_service.authenticate_login_user(
         db,
         payload.email,
         payload.password,
-        request.headers.get("user-agent"),
-        request.client.host if request.client else None,
-        device_identifier,
-        payload.device_name,
+        _client_ip(request),
     )
-    set_refresh_cookie(response, refresh_token, persistent=payload.remember_me)
+    payload.device_id = device_identifier
+    return _otp_challenge_for(db, user, payload, "password")
+
+
+@router.post("/google/request-otp", response_model=TokenResponse)
+def google_request_otp(payload: GoogleOtpRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    device_identifier = _device_identifier(request, response, payload.device_id)
+    user = auth_service.get_otp_login_user(db, payload.email, _client_ip(request))
+    payload.device_id = device_identifier
+    return _otp_challenge_for(db, user, payload, "google_otp")
+
+
+@router.post("/verify-otp", response_model=TokenResponse)
+def verify_otp(payload: VerifyOtpRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    try:
+        challenge = decode_token(payload.challenge_id)
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired OTP challenge")
+
+    if challenge.get("type") != TOKEN_TYPE_LOGIN_OTP:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired OTP challenge")
+
+    if payload.otp_code.strip() != settings.login_otp_code:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP code")
+
+    try:
+        user_id = int(challenge["sub"])
+    except (KeyError, TypeError, ValueError):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired OTP challenge")
+
+    user = db.get(User, user_id)
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired OTP challenge")
+
+    access_token, refresh_token = auth_service.issue_login_session(
+        db,
+        user,
+        request.headers.get("user-agent"),
+        _client_ip(request),
+        challenge.get("device_identifier"),
+        challenge.get("device_name"),
+        challenge.get("auth_method", "password"),
+    )
+    set_refresh_cookie(response, refresh_token, persistent=bool(challenge.get("remember_me", True)))
     return TokenResponse(access_token=access_token)
 
 

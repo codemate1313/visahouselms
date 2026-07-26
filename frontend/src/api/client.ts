@@ -11,6 +11,8 @@ function getEventMessage(config: InternalAxiosRequestConfig): string {
 
   // Auth & Profile & Login
   if (url.includes("/auth/register")) return "Creating your account...";
+  if (url.includes("/auth/google/request-otp")) return "Sending Google login OTP...";
+  if (url.includes("/auth/verify-otp")) return "Verifying login OTP...";
   if (url.includes("/auth/login") || url.includes("/auth/me")) return "Signing into IELTS LMS...";
   if (url.includes("/auth/refresh")) return "Refreshing secure session...";
   if (url.includes("/upload-avatar") || url.includes("/me/avatar")) return "Uploading profile picture...";
@@ -92,6 +94,17 @@ apiClient.interceptors.request.use(
 let refreshPromise: Promise<string> | null = null;
 let logoutInProgress = false;
 
+function isAuthEntryRequest(url = ""): boolean {
+  return (
+    url.includes("/auth/login")
+    || url.includes("/auth/google/request-otp")
+    || url.includes("/auth/verify-otp")
+    || url.includes("/auth/refresh")
+    || url.includes("/auth/forgot-password")
+    || url.includes("/auth/reset-password")
+  );
+}
+
 async function refreshAccessToken(): Promise<string> {
   const { setAccessToken, clear } = useAuthStore.getState();
 
@@ -134,6 +147,7 @@ apiClient.interceptors.response.use(
       && originalRequest
       && !originalRequest._retry
       && !logoutInProgress
+      && !isAuthEntryRequest(originalRequest.url)
     ) {
       originalRequest._retry = true;
       try {
