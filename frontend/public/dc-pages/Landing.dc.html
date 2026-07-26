@@ -114,7 +114,7 @@
   <div style="position: relative; z-index: 1;">
 
   <header style="position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: var(--headerBg); border-bottom: 1px solid var(--line);">
-    <div style="max-width: 1280px; margin: 0 auto; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+    <div class="vh-header-bar" style="max-width: 1280px; margin: 0 auto; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
       <a href="#top" style="display: flex; align-items: center; gap: 11px;">
         <img src="{{ logoSrc }}" alt="Visa House" width="38" height="38" style="width: 38px; height: 38px; object-fit: contain; display: block; flex: 0 0 38px;">
         <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.3px;">Visa House</span>
@@ -126,10 +126,36 @@
       </nav>
       <div style="display: flex; align-items: center; gap: 10px;">
         <button type="button" onClick="{{ cycleTheme }}" title="Theme: {{ themeLabel }}" style="font-family: inherit; width: 40px; height: 40px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; display: grid; place-items: center; transition: transform .2s, background .2s;" style-hover="{transform: 'scale(1.08)', background: 'var(--chipHi)'}" style-active="{transform: 'scale(0.94)'}">{{ themeIcon }}</button>
-        <button type="button" style="font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 100px; border: none; background: var(--ac); color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .2s, box-shadow .2s;" style-hover="{transform: 'translateY(-2px)', boxShadow: '0 12px 28px -12px rgba(225, 29, 46, 0.4)'}" style-active="{transform: 'translateY(0)'}">
+        <button type="button" class="vh-desktop-auth" style="font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 100px; border: none; background: var(--ac); color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .2s, box-shadow .2s;" style-hover="{transform: 'translateY(-2px)', boxShadow: '0 12px 28px -12px rgba(225, 29, 46, 0.4)'}" style-active="{transform: 'translateY(0)'}">
           Sign in
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
         </button>
+        <button type="button" class="vh-mobile-toggle" onClick="{{ toggleMobileMenu }}" aria-label="Toggle Navigation" aria-controls="vh-mobile-nav" aria-expanded="{{ mobileMenuExpanded }}">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line ref="{{ line1Ref }}" x1="3" y1="6" x2="21" y2="6" />
+            <line ref="{{ line2Ref }}" x1="3" y1="12" x2="21" y2="12" />
+            <line ref="{{ line3Ref }}" x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="vh-mobile-scrim" ref="{{ scrimRef }}" onClick="{{ closeMobileMenu }}" aria-hidden="true"></div>
+    <div class="vh-mobile-drawer" id="vh-mobile-nav" ref="{{ drawerRef }}">
+      <div class="vh-mobile-drawer-inner">
+        <p class="vh-drawer-eyebrow vh-drawer-item">Navigate</p>
+        <nav class="vh-drawer-nav" onClick="{{ closeMobileMenu }}">
+          <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="5">
+            <a href="{{ item.href }}" class="{{ item.mobileClassName }}">
+              <span>{{ item.label }}</span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+            </a>
+          </sc-for>
+        </nav>
+        <hr class="vh-drawer-divider vh-drawer-item" />
+        <div class="vh-drawer-cta vh-drawer-item">
+          <button type="button" class="vh-drawer-btn vh-drawer-btn-solid" onClick="{{ goLogin }}">Sign in</button>
+        </div>
+        <p class="vh-drawer-foot vh-drawer-item">IELTS mock tests, band analytics &amp; AI feedback.</p>
       </div>
     </div>
   </header>
@@ -418,7 +444,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
 class Component extends DCLogic {
-  state = { s0: 0, s1: 0, s2: 0, theme: this.getInitialTheme(), rev: 0, heroTab: 0 };
+  state = { s0: 0, s1: 0, s2: 0, theme: this.getInitialTheme(), rev: 0, heroTab: 0, mobileMenuOpen: false };
 
   getInitialTheme() {
     try {
@@ -446,6 +472,100 @@ class Component extends DCLogic {
     this._testimonials = el;
   };
 
+  line1Ref = (el) => { this._line1 = el; };
+  line2Ref = (el) => { this._line2 = el; };
+  line3Ref = (el) => { this._line3 = el; };
+  drawerRef = (el) => { this._drawer = el; };
+  scrimRef = (el) => { this._scrim = el; };
+
+  setMobileMenu = (open) => {
+    const drawer = this._drawer;
+    if (!drawer || this.state.mobileMenuOpen === open) return;
+    this.setState({ mobileMenuOpen: open });
+
+    const g = window.gsap;
+    const scrim = this._scrim;
+    const items = drawer.querySelectorAll('.vh-drawer-item');
+
+    try { document.body.style.overflow = open ? 'hidden' : ''; } catch {}
+    if (open) {
+      window.addEventListener('keydown', this._onMenuKey);
+      window.addEventListener('resize', this._onMenuResize);
+    } else {
+      window.removeEventListener('keydown', this._onMenuKey);
+      window.removeEventListener('resize', this._onMenuResize);
+    }
+
+    // No-GSAP fallback keeps the menu usable if the animation lib fails to load.
+    if (!g) {
+      drawer.style.display = open ? 'flex' : 'none';
+      drawer.style.height = open ? 'auto' : '0px';
+      drawer.style.opacity = open ? '1' : '0';
+      if (scrim) {
+        scrim.style.display = open ? 'block' : 'none';
+        scrim.style.opacity = open ? '1' : '0';
+      }
+      return;
+    }
+
+    if (this._line1 && this._line2 && this._line3) {
+      g.to(this._line1, { y: open ? 6 : 0, rotation: open ? 45 : 0, transformOrigin: 'center', duration: 0.34, ease: 'power3.out' });
+      g.to(this._line2, { opacity: open ? 0 : 1, scaleX: open ? 0.4 : 1, transformOrigin: 'center', duration: 0.24, ease: 'power2.out' });
+      g.to(this._line3, { y: open ? -6 : 0, rotation: open ? -45 : 0, transformOrigin: 'center', duration: 0.34, ease: 'power3.out' });
+    }
+
+    if (scrim) {
+      g.killTweensOf(scrim);
+      if (open) {
+        g.set(scrim, { display: 'block' });
+        g.to(scrim, { opacity: 1, duration: 0.35, ease: 'power2.out' });
+      } else {
+        g.to(scrim, { opacity: 0, duration: 0.26, ease: 'power2.in', onComplete: () => {
+          if (!this.state.mobileMenuOpen) g.set(scrim, { display: 'none' });
+        }});
+      }
+    }
+
+    g.killTweensOf(drawer);
+    if (items.length) g.killTweensOf(items);
+
+    if (open) {
+      g.set(drawer, { display: 'flex' });
+      g.fromTo(drawer, { height: 0, opacity: 0 }, { height: 'auto', opacity: 1, duration: 0.46, ease: 'power3.out' });
+      if (items.length) {
+        g.fromTo(items, { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, stagger: 0.045, delay: 0.06, ease: 'power3.out' });
+      }
+    } else {
+      if (items.length) g.to(items, { y: 8, opacity: 0, duration: 0.18, ease: 'power2.in' });
+      g.to(drawer, { height: 0, opacity: 0, duration: 0.32, delay: 0.05, ease: 'power3.in', onComplete: () => {
+        if (!this.state.mobileMenuOpen && this._drawer) g.set(this._drawer, { display: 'none' });
+      }});
+    }
+  };
+
+  toggleMobileMenu = () => {
+    this.setMobileMenu(!this.state.mobileMenuOpen);
+  };
+
+  closeMobileMenu = () => {
+    this.setMobileMenu(false);
+  };
+
+  _onMenuKey = (e) => {
+    if (e.key === 'Escape' || e.key === 'Esc') this.closeMobileMenu();
+  };
+
+  _onMenuResize = () => {
+    if (window.innerWidth > 1024) this.closeMobileMenu();
+  };
+
+  // These pages render inside an iframe, so auth must go through the parent
+  // bridge (see StaticDcPage) rather than navigating this frame.
+  goLogin = () => {
+    this.closeMobileMenu();
+    try { window.parent.postMessage({ type: "vh-auth", mode: "login" }, window.location.origin); } catch {}
+  };
+
   componentDidMount() {
     this._mq = window.matchMedia("(prefers-color-scheme: dark)");
     this._mqListener = () => {
@@ -470,6 +590,10 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
+    window.removeEventListener("keydown", this._onMenuKey);
+    window.removeEventListener("resize", this._onMenuResize);
+    try { document.body.style.overflow = ""; } catch {}
+
     this._mq?.removeEventListener?.("change", this._mqListener);
     window.removeEventListener("scroll", this._onParallax);
     this._io?.disconnect?.();
@@ -796,6 +920,15 @@ class Component extends DCLogic {
       rootRef: this.rootRef,
       logoSrc: this.state.theme === "dark" ? "/brand/vh-mark-dark.png" : "/brand/vh-mark-light.png",
       cycleTheme: this.cycleTheme,
+      toggleMobileMenu: this.toggleMobileMenu,
+      line1Ref: this.line1Ref,
+      line2Ref: this.line2Ref,
+      line3Ref: this.line3Ref,
+      drawerRef: this.drawerRef,
+      scrimRef: this.scrimRef,
+      mobileMenuExpanded: this.state.mobileMenuOpen ? "true" : "false",
+      closeMobileMenu: this.closeMobileMenu,
+      goLogin: this.goLogin,
       review,
       reviewKey: "r" + this.state.rev,
       prevReview: this.prevReview,
@@ -824,11 +957,11 @@ class Component extends DCLogic {
       stat1: nf(this.state.s1) + "+",
       stat2: this.state.s2.toFixed(1) + "%",
       navItems: [
-        { label: "Home", href: "/", className: "vh-nav-link vh-active" },
-        { label: "About", href: "/about", className: "vh-nav-link" },
-        { label: "Plans", href: "/plans", className: "vh-nav-link" },
-        { label: "Blogs", href: "/blogs", className: "vh-nav-link" },
-        { label: "Contact", href: "/contact", className: "vh-nav-link" },
+        { label: "Home", href: "/", className: "vh-nav-link vh-active", mobileClassName: "vh-drawer-link vh-drawer-item vh-active" },
+        { label: "About", href: "/about", className: "vh-nav-link", mobileClassName: "vh-drawer-link vh-drawer-item" },
+        { label: "Plans", href: "/plans", className: "vh-nav-link", mobileClassName: "vh-drawer-link vh-drawer-item" },
+        { label: "Blogs", href: "/blogs", className: "vh-nav-link", mobileClassName: "vh-drawer-link vh-drawer-item" },
+        { label: "Contact", href: "/contact", className: "vh-nav-link", mobileClassName: "vh-drawer-link vh-drawer-item" },
       ],
       modules: [
         { num: "01", title: "Listening Simulations", desc: "High-fidelity native-accent audio with section progress, waveform seeking and answer autocommit.", g1: "#e11d2e", g2: "#ef4444", wash1: "rgba(225, 29, 46,0.10)", wash2: "rgba(225, 29, 46,0.02)", status: "Audio playing", preview: wavePreview("#e11d2e"), icon: svg([

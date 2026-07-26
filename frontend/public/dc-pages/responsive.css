@@ -26,14 +26,253 @@ textarea {
   min-width: 0;
 }
 
+/* ---------------------------------------------------------------
+   Mobile navigation — trigger, scrim and drawer
+   --------------------------------------------------------------- */
+
+.vh-mobile-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 100px;
+  border: 1px solid var(--line);
+  background: var(--chip);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
+}
+
+.vh-mobile-toggle:hover {
+  background: var(--chipHi);
+  border-color: var(--acLine);
+}
+
+.vh-mobile-toggle:active {
+  transform: scale(0.94);
+}
+
+.vh-mobile-scrim {
+  display: none;
+  opacity: 0;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 1;
+  background: rgba(8, 8, 12, 0.4);
+  backdrop-filter: blur(3px) saturate(115%);
+  -webkit-backdrop-filter: blur(3px) saturate(115%);
+}
+
+.vh-mobile-drawer {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  /* Opaque surface: --headerBg is translucent and the drawer has no
+     backdrop-filter of its own, so page content used to bleed through. */
+  background:
+    linear-gradient(180deg, var(--chip) 0%, transparent 180px),
+    var(--bg);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0 0 26px 26px;
+  box-shadow: 0 30px 64px -26px rgba(8, 8, 12, 0.5);
+}
+
+.vh-mobile-drawer-inner {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 16px 24px;
+  max-height: calc(100vh - 74px);
+  max-height: calc(100dvh - 74px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.vh-drawer-eyebrow {
+  margin: 2px 10px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.7px;
+  text-transform: uppercase;
+  color: var(--ink2);
+  opacity: 0.7;
+}
+
+.vh-drawer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vh-drawer-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 16px;
+  border-radius: 14px;
+  font-size: 16.5px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: background 0.24s ease, color 0.24s ease, transform 0.18s ease;
+}
+
+/* the desktop .vh-nav-link underline must never leak into the drawer */
+.vh-drawer-link::after {
+  content: none;
+}
+
+.vh-drawer-link svg {
+  flex: 0 0 auto;
+  opacity: 0.32;
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.24s ease;
+}
+
+.vh-drawer-link:hover,
+.vh-drawer-link:focus-visible {
+  background: var(--chip);
+  outline: none;
+}
+
+.vh-drawer-link:hover svg,
+.vh-drawer-link:focus-visible svg {
+  opacity: 0.75;
+  transform: translateX(3px);
+}
+
+.vh-drawer-link:active {
+  transform: scale(0.985);
+}
+
+.vh-drawer-link.vh-active {
+  color: var(--ac);
+  background: var(--acWash);
+}
+
+.vh-drawer-link.vh-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  border-radius: 0 3px 3px 0;
+  background: var(--ac);
+}
+
+.vh-drawer-link.vh-active svg {
+  opacity: 0.9;
+}
+
+.vh-drawer-divider {
+  height: 1px;
+  border: 0;
+  margin: 16px 10px 18px;
+  background: linear-gradient(90deg, transparent, var(--line), transparent);
+}
+
+.vh-drawer-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vh-drawer-btn {
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 15px 18px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.26s ease, background 0.24s ease,
+    border-color 0.24s ease;
+}
+
+.vh-drawer-btn:active {
+  transform: scale(0.985);
+}
+
+.vh-drawer-btn-solid {
+  background: var(--ac);
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: 0 14px 30px -14px rgba(225, 29, 46, 0.75);
+}
+
+.vh-drawer-btn-solid:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 38px -14px rgba(225, 29, 46, 0.85);
+}
+
+.vh-drawer-btn-solid svg {
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.vh-drawer-btn-solid:hover svg {
+  transform: translateX(3px);
+}
+
+.vh-drawer-foot {
+  margin: 18px 10px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--ink2);
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vh-mobile-toggle,
+  .vh-drawer-link,
+  .vh-drawer-link svg,
+  .vh-drawer-btn,
+  .vh-drawer-btn svg {
+    transition: none;
+  }
+}
+
 @media (max-width: 1024px) {
-  header > div {
+  .vh-header-bar {
     gap: 18px !important;
     padding-inline: 24px !important;
   }
 
   .vh-nav {
-    gap: 18px !important;
+    display: none !important;
+  }
+
+  .vh-desktop-auth {
+    display: none !important;
+  }
+
+  .vh-mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   [style*="grid-template-columns: repeat(4, 1fr)"] {
@@ -50,30 +289,30 @@ textarea {
 }
 
 @media (max-width: 760px) {
-  header > div {
+  .vh-header-bar {
     display: flex !important;
-    flex-wrap: wrap !important;
     gap: 10px 14px !important;
     padding: 11px 18px 9px !important;
   }
 
-  header > div > a:first-child {
+  .vh-header-bar > a:first-child {
     min-width: 0;
   }
 
-  header > div > a:first-child > span {
+  .vh-header-bar > a:first-child > span {
     white-space: nowrap;
   }
 
-  header > div > div:last-child {
+  .vh-header-bar > div:last-child {
     flex: 0 0 auto;
     gap: 8px !important;
   }
 
-  header > div > div:last-child > button:last-child {
+  .vh-header-bar > div:last-child > button:last-child {
     padding: 9px 15px !important;
   }
 
+  /* .vh-nav hidden at 1024px, rules below are mostly obsolete but kept for safety */
   .vh-nav {
     order: 3;
     width: 100%;
@@ -207,13 +446,7 @@ textarea {
     padding: 22px !important;
   }
 
-  .vh-flip:hover .vh-flip-inner {
-    transform: none;
-  }
-
-  .vh-flip:focus-within .vh-flip-inner {
-    transform: rotateY(180deg);
-  }
+  /* the flip is flattened entirely further down — see "Card density" */
 
   [style*="min-height: 340px"] {
     min-height: 220px !important;
@@ -226,7 +459,7 @@ textarea {
 }
 
 @media (max-width: 520px) {
-  header > div {
+  .vh-header-bar {
     padding-inline: 14px !important;
   }
 
@@ -236,20 +469,20 @@ textarea {
     flex-basis: 34px !important;
   }
 
-  header > div > a:first-child {
+  .vh-header-bar > a:first-child {
     gap: 8px !important;
   }
 
-  header > div > a:first-child > span {
+  .vh-header-bar > a:first-child > span {
     font-size: 15px !important;
   }
 
-  header > div > div:last-child > button:first-child {
+  .vh-header-bar > div:last-child > button:first-child {
     width: 36px !important;
     height: 36px !important;
   }
 
-  header > div > div:last-child > button:last-child {
+  .vh-header-bar > div:last-child > button:last-child {
     font-size: 13px !important;
     padding: 8px 13px !important;
   }
@@ -341,5 +574,173 @@ textarea {
 
   .testimonial-slider-track {
     animation: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Card density on small screens
+
+   Every card below is authored for a 3-up desktop grid. Once the grid
+   collapses to a single column the cards keep their desktop padding,
+   type scale and fixed heights, so they read as oversized slabs. These
+   rules retune them for a ~390px viewport.
+   --------------------------------------------------------------- */
+
+@media (max-width: 760px) {
+  /* "How it works" cards. The flip needs a fixed 280px because both faces are
+     inset:0 absolute — but the flip is already disabled on touch, so the back
+     face is unreachable and that height only buys a dead gap under the number
+     badge. Drop the 3D layer entirely and let the front face size to content. */
+  /* !important throughout: the page's own <style> is injected into <head> after
+     this file, so equal-specificity rules there would otherwise win. */
+  .vh-flip {
+    perspective: none !important;
+    height: auto !important;
+  }
+
+  .vh-flip-inner {
+    height: auto !important;
+    transform: none !important;
+    transform-style: flat !important;
+    transition: none !important;
+  }
+
+  .vh-flip .vh-face:not(.vh-back) {
+    position: static;
+  }
+
+  .vh-flip .vh-back {
+    display: none;
+  }
+
+  .vh-flip .vh-face {
+    padding: 20px !important;
+    border-radius: 18px;
+    gap: 16px;
+  }
+
+  .vh-flip .vh-face h3 {
+    font-size: 20px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .vh-flip .vh-face p {
+    font-size: 13.5px !important;
+    line-height: 1.5 !important;
+  }
+
+  .vh-flip .vh-face > div:first-child > div:first-child {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+    font-size: 13px !important;
+  }
+
+  /* The flip is disabled on touch (see the .vh-flip rules above), so the back
+     face is unreachable — don't advertise a hover affordance that does nothing. */
+  .vh-flip .vh-face:not(.vh-back) > div:last-child {
+    display: none !important;
+  }
+
+  /* Blog cards */
+  [style*="aspect-ratio: 16/9"] {
+    aspect-ratio: 2 / 1 !important;
+  }
+
+  [style*="border-radius: 20px"][style*="overflow: hidden"] > [style*="padding: 22px"] {
+    padding: 18px !important;
+  }
+
+  /* featured blog headline — not covered by the 48/44/40px rule above.
+     Scoped to h2 so About's 34px timeline years are left alone. */
+  h2[style*="font-size: 34px"] {
+    font-size: clamp(24px, 6.6vw, 30px) !important;
+    letter-spacing: 0 !important;
+  }
+
+  /* Full-bleed accent CTA panel ("Prefer to see it first?") */
+  [style*="padding: 68px 56px"] > [style*="width: 320px"],
+  [style*="padding: 68px 56px"] > [style*="width: 240px"] {
+    width: 190px !important;
+    height: 190px !important;
+  }
+
+  [style*="padding: 68px 56px"] [style*="border-radius: 100px"] {
+    padding: 14px 22px !important;
+    font-size: 14px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .vh-flip .vh-face {
+    padding: 18px !important;
+    gap: 14px;
+  }
+
+  .vh-flip .vh-face h3 {
+    font-size: 18.5px !important;
+  }
+
+  .vh-flip .vh-face p {
+    font-size: 13px !important;
+  }
+
+  /* Blog cards */
+  [style*="aspect-ratio: 16/9"] {
+    aspect-ratio: 2.1 / 1 !important;
+  }
+
+  [style*="border-radius: 20px"][style*="overflow: hidden"] > [style*="padding: 22px"] {
+    padding: 15px !important;
+  }
+
+  [style*="border-radius: 20px"][style*="overflow: hidden"] h3 {
+    font-size: 16px !important;
+  }
+
+  [style*="border-radius: 20px"][style*="overflow: hidden"] p {
+    font-size: 13px !important;
+    margin-bottom: 12px !important;
+  }
+
+  [style*="padding: 68px 56px"] {
+    padding: 22px 18px !important;
+    gap: 16px !important;
+    border-radius: 18px !important;
+  }
+
+  /* beats the generic 48/44/40px heading clamp above, which still resolves to
+     ~33px here and costs this panel three lines of headline */
+  [style*="padding: 68px 56px"] h2 {
+    font-size: clamp(21px, 6.2vw, 26px) !important;
+    line-height: 1.12 !important;
+    margin-bottom: 8px !important;
+  }
+
+  [style*="padding: 68px 56px"] p {
+    font-size: 13.5px !important;
+    line-height: 1.5 !important;
+  }
+
+  /* stack the CTA buttons full-width instead of letting them wrap raggedly */
+  [style*="padding: 68px 56px"] > [style*="display: flex"][style*="gap: 14px"] {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px !important;
+  }
+
+  [style*="padding: 68px 56px"] [style*="border-radius: 100px"] {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 11px 18px !important;
+    font-size: 13.5px !important;
+  }
+
+  /* the decorative circles still read as larger than the card they sit in */
+  [style*="padding: 68px 56px"] > [style*="width: 320px"],
+  [style*="padding: 68px 56px"] > [style*="width: 240px"] {
+    width: 150px !important;
+    height: 150px !important;
   }
 }

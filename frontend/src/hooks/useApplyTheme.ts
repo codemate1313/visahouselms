@@ -22,17 +22,8 @@ export function useApplyTheme() {
     document.body.setAttribute("data-theme", theme);
     document.documentElement.style.colorScheme = theme;
 
-    const isDark =
-      theme === "dark" ||
-      document.documentElement.getAttribute("data-theme") === "dark" ||
-      Boolean(window.matchMedia?.("(prefers-color-scheme: dark)").matches);
-    const iconUrl = isDark ? "/brand/vh-mark-dark-96.png" : "/brand/vh-mark-96.png";
-    const defaultFavicon =
-      document.getElementById("app-favicon-default") ||
-      document.querySelector("link[rel='icon']:not([media])");
-    if (defaultFavicon) {
-      defaultFavicon.setAttribute("href", iconUrl);
-    }
+    // The favicon is deliberately not touched here — the tab icon stays the same
+    // in both themes. See the <link rel="icon"> comment in index.html.
 
     // Legacy/non-React listeners (and the iframed dc-pages bridge) key off this.
     window.dispatchEvent(new CustomEvent<Theme>(THEME_CHANGE_EVENT, { detail: theme }));

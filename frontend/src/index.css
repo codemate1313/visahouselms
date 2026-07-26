@@ -15489,7 +15489,7 @@ th[aria-sort="descending"] .table-sort-button::after {
   cursor: pointer;
 }
 
-@media (max-width: 850px) {
+@media (max-width: 1024px) {
   .landing-nav-menu {
     display: none;
   }
@@ -15502,10 +15502,6 @@ th[aria-sort="descending"] .table-sort-button::after {
 .landing-mobile-menu {
   background: var(--bg-card, #ffffff);
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  padding: 16px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
 
 .mobile-nav-link {
@@ -18159,7 +18155,10 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 @media (max-width: 640px) {
   .static-auth-modal {
+    /* flex-start + auto margins on the child, not align-items: center — centring a
+       flex item that overflows its scroll container clips the top out of reach. */
     align-items: flex-start;
+    justify-content: center;
     padding: 8px;
     overflow-y: auto;
   }
@@ -18168,6 +18167,8 @@ th[aria-sort="descending"] .table-sort-button::after {
     width: 100%;
     max-width: none;
     max-height: none;
+    /* centres the card when it fits, collapses to 0 when it doesn't */
+    margin: auto;
   }
 
   .static-auth-modal-wrapper .login-ref-card {
@@ -20429,6 +20430,10 @@ th[aria-sort="descending"] .table-sort-button::after {
   width: 320px !important;
   padding: 16px 12px !important;
   background: var(--surface) !important;
+  /* same translucent --surface as the notification popover — needs the blur so
+     page content behind it does not read through */
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
   border: 1px solid var(--border) !important;
   border-radius: 24px !important;
   box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.28), 0 4px 12px rgba(15, 23, 42, 0.12) !important;
@@ -20662,6 +20667,10 @@ th[aria-sort="descending"] .table-sort-button::after {
   overflow: hidden;
   color: #20242c;
   background: var(--surface) !important;
+  /* --surface is rgba(255,255,255,.9) in light theme, so without a backdrop
+     filter the dashboard cards read straight through this panel. */
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
   border: 1px solid #e7e9ef;
   border-radius: 14px;
   box-shadow: 0 18px 48px rgba(15, 23, 42, 0.16);
@@ -25350,6 +25359,27 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
     min-height: 40px !important;
   }
 
+  /* The popover is up to 430px wide and right-anchored to the bell — but the bell
+     is not the rightmost control (the avatar is), so on a narrow screen its left
+     edge lands off the viewport and the header gets cut off. Drop the shell out of
+     the positioning chain so the popover anchors to the app bar instead and spans
+     its full width. No magic offsets, so it survives the bar changing height. */
+  .portal-app-bar {
+    position: relative !important;
+  }
+
+  .portal-app-bar .student-notification-shell {
+    position: static !important;
+  }
+
+  .portal-app-bar .student-notification-popover {
+    top: calc(100% + 8px) !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-height: calc(100dvh - 200px) !important;
+  }
+
   .portal-user-avatar {
     width: 40px !important;
     height: 40px !important;
@@ -25368,7 +25398,31 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   .range-pill-option {
     flex: 1 !important;
     text-align: center !important;
-    padding: 6px 8px !important;
+    padding: 7px 6px !important;
+    font-size: 12.5px !important;
+  }
+
+  /* Only /super-admin/dashboard and /super-admin/revenue put the 7D/30D/90D pill
+     in the top bar, which leaves four control groups fighting over the 140px
+     .portal-app-actions gets here. The pill will not shrink below its min-content
+     width, so the whole cluster overflows left — with justify-content: flex-end
+     that overflow lands on top of the page title. Give the actions their own
+     full-width row on those two routes instead of trying to squeeze them in. */
+  .portal-app-bar:has(.dash-controls-wrapper) {
+    flex-wrap: wrap !important;
+    row-gap: 10px !important;
+  }
+
+  .portal-app-bar:has(.dash-controls-wrapper) .portal-app-title-group {
+    flex-basis: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .portal-app-actions:has(.dash-controls-wrapper) {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
   }
 
   /* Profile avatar chip visual layout on mobile */

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
+import gsap from "gsap";
 
 interface LandingHeaderProps {
   onOpenLogin: () => void;
@@ -9,6 +10,30 @@ export function LandingHeader({ onOpenLogin }: LandingHeaderProps) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
+
+  const line1Ref = useRef<SVGLineElement>(null);
+  const line2Ref = useRef<SVGLineElement>(null);
+  const line3Ref = useRef<SVGLineElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      gsap.to(line1Ref.current, { y: 6, rotation: 45, transformOrigin: "center", duration: 0.3, ease: "power2.inOut" });
+      gsap.to(line2Ref.current, { opacity: 0, duration: 0.2, ease: "power2.inOut" });
+      gsap.to(line3Ref.current, { y: -6, rotation: -45, transformOrigin: "center", duration: 0.3, ease: "power2.inOut" });
+      
+      gsap.set(menuRef.current, { display: "flex" });
+      gsap.to(menuRef.current, { height: "auto", opacity: 1, duration: 0.4, ease: "power3.out" });
+    } else {
+      gsap.to(line1Ref.current, { y: 0, rotation: 0, duration: 0.3, ease: "power2.inOut" });
+      gsap.to(line2Ref.current, { opacity: 1, duration: 0.3, ease: "power2.inOut" });
+      gsap.to(line3Ref.current, { y: 0, rotation: 0, duration: 0.3, ease: "power2.inOut" });
+      
+      gsap.to(menuRef.current, { height: 0, opacity: 0, duration: 0.3, ease: "power3.in", onComplete: () => {
+        gsap.set(menuRef.current, { display: "none" });
+      } });
+    }
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     const checkTheme = () => {
@@ -88,14 +113,19 @@ export function LandingHeader({ onOpenLogin }: LandingHeaderProps) {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle Navigation"
           >
-            {mobileMenuOpen ? "✕" : "☰"}
+            {/* GSAP Hamburger Icon */}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line ref={line1Ref} x1="3" y1="6" x2="21" y2="6" />
+              <line ref={line2Ref} x1="3" y1="12" x2="21" y2="12" />
+              <line ref={line3Ref} x1="3" y1="18" x2="21" y2="18" />
+            </svg>
           </button>
         </div>
       </div>
 
       {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="landing-mobile-menu">
+      <div className="landing-mobile-menu" ref={menuRef} style={{ height: 0, opacity: 0, overflow: 'hidden', display: 'none' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px 24px' }}>
           {navItems.map((item) => (
             <Link
               key={item.path}
@@ -117,7 +147,7 @@ export function LandingHeader({ onOpenLogin }: LandingHeaderProps) {
             Sign In to Portal
           </button>
         </div>
-      )}
+      </div>
     </header>
   );
 }
