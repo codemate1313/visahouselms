@@ -17714,7 +17714,8 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .login-modal-wrapper .login-ref-card {
   min-height: 670px;
-  height: min(670px, calc(100dvh - 36px));
+  height: auto;
+  max-height: calc(100dvh - 36px);
   min-width: 0;
   overflow: hidden;
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45) !important;
@@ -17788,7 +17789,8 @@ th[aria-sort="descending"] .table-sort-button::after {
   width: 100%;
   max-width: 1040px;
   min-height: clamp(560px, 88dvh, 670px);
-  height: min(670px, calc(100dvh - 36px));
+  height: auto;
+  max-height: calc(100dvh - 36px);
   min-width: 0;
   padding: 16px;
   gap: 16px;
@@ -20741,23 +20743,22 @@ th[aria-sort="descending"] .table-sort-button::after {
 }
 
 .student-notification-read-all {
-  width: 100%;
-  min-height: 32px;
-  padding: 0;
-  color: var(--portal-icon-color);
-  background: var(--surface);
+  min-height: auto;
+  padding: 4px 8px;
+  color: var(--portal-brand-color, #4338ca);
+  background: transparent;
   border: 0;
-  border-bottom: 1px solid #eceef3;
-  border-radius: 0;
+  border-radius: 4px;
   box-shadow: none;
-  text-align: right;
-  font-size: 10.5px;
-  font-weight: 750;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .student-notification-read-all:hover {
-  color: var(--portal-icon-color) !important;
-  background: var(--surface) !important;
+  color: var(--portal-brand-color, #3730a3) !important;
+  background: var(--surface-hover, #f3f4f6) !important;
   box-shadow: none !important;
   transform: none;
 }
@@ -23418,16 +23419,23 @@ th[aria-sort="descending"] .table-sort-button::after {
   color: #6b7280 !important;
 }
 
-[data-theme="dark"] .student-notification-read-all,
 [data-theme="dark"] .student-notification-view-all {
   background: transparent !important;
   border-bottom-color: rgba(255, 255, 255, 0.05) !important;
   color: #9ca3af !important;
 }
 
-[data-theme="dark"] .student-notification-read-all:hover,
 [data-theme="dark"] .student-notification-view-all:hover {
   color: #ffffff !important;
+}
+
+[data-theme="dark"] .student-notification-read-all {
+  color: var(--portal-brand-color, #818cf8) !important;
+}
+
+[data-theme="dark"] .student-notification-read-all:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--portal-brand-color, #a5b4fc) !important;
 }
 
 /* Dark-mode hardening for legacy/local component CSS that still ships fixed

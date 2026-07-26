@@ -5,6 +5,11 @@ export const testRunnerStrings = {
     writing: "Writing",
     speaking: "Speaking",
   },
+  desktopRequired: {
+    heading: "Computer Required",
+    description: "To perform this IELTS test, you must use a desktop or laptop computer. Mobile and tablet devices are not supported for timed exam attempts.",
+    backToDashboard: "Back to Dashboard",
+  },
   loadError: "Unable to load this test attempt.",
   loading: "Loading your test...",
   errors: {

@@ -26,7 +26,9 @@ from app.models.attempt import (
 )
 from app.models.course import COURSE_PUBLISHED, Course
 from app.models.institute import Institute
+from app.models.plan import Plan
 from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, SA_INSTRUCTOR, STUDENT, Role
+from app.models.subscription import Subscription
 from app.models.user import User
 from app.services import ai_evaluation_service, attempt_service, grading_service, module_authoring_service, notification_service, student_analysis_service
 from app.services import cefr_service
@@ -288,6 +290,30 @@ class AttemptServiceTestCase(unittest.TestCase):
         institute = Institute(name="Staffed Academy", slug="staffed-academy", is_active=True)
         self.db.add_all([institute_role, institute])
         self.db.flush()
+        # start_attempt runs enforce_limit, so the institute needs a live
+        # subscription before a student attached to it can begin an attempt.
+        plan = Plan(
+            name="Staffed Academy Plan",
+            price=Decimal("1000.00"),
+            duration_days=30,
+            student_limit=10,
+            staff_limit=5,
+            test_limit=50,
+            grace_days=7,
+            is_active=True,
+        )
+        self.db.add(plan)
+        self.db.flush()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        self.db.add(
+            Subscription(
+                institute_id=institute.id,
+                plan_id=plan.id,
+                starts_at=now - timedelta(days=1),
+                expires_at=now + timedelta(days=29),
+                grace_days=7,
+            )
+        )
         self.db.add(
             User(
                 email="staff@academy.test",

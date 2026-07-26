@@ -32,6 +32,16 @@ class Settings(BaseSettings):
     settings_encryption_key: Optional[str] = None
     registration_rate_limit: int = 5
     registration_rate_window_seconds: int = 3600
+    login_rate_limit: int = 10
+    login_rate_window_seconds: int = 900
+    otp_attempt_limit: int = 5
+    otp_ip_rate_limit: int = 30
+    otp_rate_window_seconds: int = 900
+    password_reset_rate_limit: int = 5
+    password_reset_rate_window_seconds: int = 3600
+    # Local-only convenience: fixes the login OTP to a known value. Rejected
+    # outright in production by validate_production_secrets below.
+    dev_static_otp_code: Optional[str] = None
     mysql_bin_dir: str = "/opt/homebrew/opt/mysql/bin"
 
     super_admin_email: Optional[str] = None
@@ -57,6 +67,8 @@ class Settings(BaseSettings):
             raise ValueError("ALLOWED_HOSTS must be explicitly configured in production")
         if self.refresh_cookie_samesite == "none" and self.app_environment != "production":
             raise ValueError("SameSite=None refresh cookies are only allowed in production")
+        if self.app_environment == "production" and self.dev_static_otp_code:
+            raise ValueError("DEV_STATIC_OTP_CODE must not be set in production")
         return self
 
     @property

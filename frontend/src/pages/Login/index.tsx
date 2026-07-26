@@ -261,27 +261,6 @@ export function Login({
         </div>
 
         <div className="login-form-side">
-          <div className="vh-auth-brand">
-            <span className="vh-auth-logo">
-              <img
-                src="/brand/vh-mark.png"
-                alt="Visa House Logo"
-                className="vh-auth-logo-img"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  target.style.display = "none";
-                  const textFallback = target.nextElementSibling as HTMLElement;
-                  if (textFallback) textFallback.style.display = "inline";
-                }}
-              />
-              <span className="vh-auth-logo-fallback" style={{ display: "none" }}>VH</span>
-            </span>
-            <div>
-              <div className="vh-auth-name">{strings.brandName}</div>
-              <div className="vh-auth-tag">{strings.brandTag}</div>
-            </div>
-          </div>
-
           <div className="login-form-header text-center">
             <h1 className="form-main-title">
               {title === strings.defaultTitle ? (

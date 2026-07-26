@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
+import { TableAvatar } from "@/components/TableAvatar";
 import { institutesStrings as strings } from "../Institutes.strings";
 import type { InstituteRow, SortKey } from "../types";
 
@@ -57,9 +58,11 @@ export function InstitutesTable({ rows, sortKey, sortDirection, onChangeSort, on
             <tr key={row.id}>
               <td>
                 <div className="table-item-cell">
-                  <div className="table-avatar-tile">
-                    {row.logo_url ? <img src={`${API_BASE_URL}${row.logo_url}`} alt={`${row.name} logo`} /> : row.name.charAt(0).toUpperCase()}
-                  </div>
+                  <TableAvatar
+                    src={row.logo_url ? `${API_BASE_URL}${row.logo_url}` : null}
+                    name={row.name}
+                    alt={`${row.name} logo`}
+                  />
                   <div className="table-item-details">
                     <span className="table-item-title">{row.name}</span>
                     <span className="table-item-subtitle">

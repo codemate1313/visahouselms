@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Union
 from urllib.parse import urlencode
 from uuid import uuid4
@@ -21,7 +22,7 @@ from app.core.security import (
     hash_login_otp_code,
     verify_login_otp_code,
 )
-from app.core.rate_limit import enforce_rate_limit
+from app.core.rate_limit import clear_rate_limit, enforce_rate_limit
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import (
     CurrentUser,
@@ -68,7 +69,39 @@ def _client_ip(request: Request) -> Optional[str]:
     return request.client.host if request.client else None
 
 
+def _rate_limit_ip(request: Request) -> str:
+    return _client_ip(request) or "unknown"
+
+
+def _limit_login_attempt(request: Request, email: str) -> None:
+    """Throttles credential guessing per IP and per targeted account, so
+    rotating either one alone does not buy an attacker extra attempts."""
+    enforce_rate_limit(
+        f"login-ip:{_rate_limit_ip(request)}",
+        settings.login_rate_limit,
+        settings.login_rate_window_seconds,
+        "Too many login attempts. Please try again later.",
+    )
+    enforce_rate_limit(
+        f"login-email:{email.strip().lower()}",
+        settings.login_rate_limit,
+        settings.login_rate_window_seconds,
+        "Too many login attempts. Please try again later.",
+    )
+
+
 def _send_login_otp(db: Session, user: User, otp_code: str) -> None:
+    # With a fixed local OTP the mail is redundant, and requiring SMTP would
+    # otherwise make local sign-in impossible. Production still treats a failed
+    # send as fatal, because there the code only reaches the user by email.
+    if settings.dev_static_otp_code and settings.app_environment != "production":
+        logging.getLogger(__name__).warning(
+            "DEV_STATIC_OTP_CODE is active - skipping OTP email for %s, use code %s",
+            user.email,
+            otp_code,
+        )
+        return
+
     subject, plain, html = email_template_service.render_login_otp_email(
         user.first_name or "there",
         otp_code,
@@ -116,11 +149,16 @@ def _otp_challenge_for(
         payload.device_name,
         hash_login_otp_code(otp_code),
     )
+    static_otp_active = bool(settings.dev_static_otp_code) and settings.app_environment != "production"
     return TokenResponse(
         otp_required=True,
         otp_challenge_id=challenge,
-        otp_delivery="email",
-        message="OTP sent to your registered email.",
+        otp_delivery="static" if static_otp_active else "email",
+        message=(
+            "Testing mode: use the configured static OTP code."
+            if static_otp_active
+            else "OTP sent to your registered email."
+        ),
     )
 
 
@@ -259,6 +297,7 @@ def google_callback(
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    _limit_login_attempt(request, payload.email)
     device_identifier = _device_identifier(request, response, payload.device_id)
     user = auth_service.authenticate_login_user(
         db,
@@ -272,6 +311,7 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
 
 @router.post("/google/request-otp", response_model=TokenResponse)
 def google_request_otp(payload: GoogleOtpRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    _limit_login_attempt(request, payload.email)
     device_identifier = _device_identifier(request, response, payload.device_id)
     user = auth_service.get_otp_login_user(db, payload.email, _client_ip(request))
     payload.device_id = device_identifier
@@ -287,6 +327,22 @@ def verify_otp(payload: VerifyOtpRequest, request: Request, response: Response, 
 
     if challenge.get("type") != TOKEN_TYPE_LOGIN_OTP:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired OTP challenge")
+
+    # The challenge is a stateless JWT, so without an attempt cap keyed to its
+    # jti the same token could be replayed until the 6-digit code is guessed.
+    challenge_key = f"otp-challenge:{challenge.get('jti')}"
+    enforce_rate_limit(
+        f"otp-ip:{_rate_limit_ip(request)}",
+        settings.otp_ip_rate_limit,
+        settings.otp_rate_window_seconds,
+        "Too many OTP attempts. Please try again later.",
+    )
+    enforce_rate_limit(
+        challenge_key,
+        settings.otp_attempt_limit,
+        settings.login_otp_expire_minutes * 60,
+        "Too many incorrect codes. Please sign in again to get a new code.",
+    )
 
     if not verify_login_otp_code(payload.otp_code, str(challenge.get("otp_hash") or "")):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP code")
@@ -309,6 +365,7 @@ def verify_otp(payload: VerifyOtpRequest, request: Request, response: Response, 
         challenge.get("device_name"),
         challenge.get("auth_method", "password"),
     )
+    clear_rate_limit(challenge_key)
     set_refresh_cookie(response, refresh_token, persistent=bool(challenge.get("remember_me", True)))
     return TokenResponse(access_token=access_token)
 
@@ -320,6 +377,7 @@ def register(payload: RegisterRequest, request: Request, response: Response, db:
         f"register:{client_ip}",
         settings.registration_rate_limit,
         settings.registration_rate_window_seconds,
+        "Too many registration attempts. Please try again later.",
     )
     device_identifier = _device_identifier(request, response, payload.device_id)
     access_token, refresh_token = auth_service.register(
@@ -381,12 +439,32 @@ def me(user: User = Depends(get_current_user)):
 
 
 @router.post("/forgot-password", status_code=202)
-def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):
+    # Capped per address as well as per IP so the endpoint cannot be used to
+    # flood one mailbox from rotating clients.
+    enforce_rate_limit(
+        f"forgot-ip:{_rate_limit_ip(request)}",
+        settings.password_reset_rate_limit,
+        settings.password_reset_rate_window_seconds,
+        "Too many password reset requests. Please try again later.",
+    )
+    enforce_rate_limit(
+        f"forgot-email:{payload.email.strip().lower()}",
+        settings.password_reset_rate_limit,
+        settings.password_reset_rate_window_seconds,
+        "Too many password reset requests. Please try again later.",
+    )
     auth_service.request_password_reset(db, payload.email)
     return {"message": "If an active account exists for this email, a password reset link has been sent."}
 
 
 @router.post("/reset-password", status_code=200)
-def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+def reset_password(payload: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)):
+    enforce_rate_limit(
+        f"reset-ip:{_rate_limit_ip(request)}",
+        settings.password_reset_rate_limit,
+        settings.password_reset_rate_window_seconds,
+        "Too many password reset attempts. Please try again later.",
+    )
     auth_service.confirm_password_reset(db, payload.token, payload.new_password)
     return {"message": "Password updated successfully. You can now log in with your new password."}

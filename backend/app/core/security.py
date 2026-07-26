@@ -145,6 +145,16 @@ def decode_token(token: str) -> dict:
 
 
 def generate_login_otp_code() -> str:
+    """Returns the code that will be mailed to the user and hashed into the
+    login challenge.
+
+    DEV_STATIC_OTP_CODE makes local sign-in predictable without weakening the
+    verification path: the fixed code is hashed and checked exactly like a
+    random one, so there is no bypass branch in /auth/verify-otp. Settings
+    validation refuses to start the app if it is set in production.
+    """
+    if settings.dev_static_otp_code and settings.app_environment != "production":
+        return settings.dev_static_otp_code
     return f"{secrets.randbelow(1_000_000):06d}"
 
 

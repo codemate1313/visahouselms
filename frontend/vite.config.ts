@@ -7,7 +7,9 @@ const securityHeaders = {
     "default-src 'self'",
     "base-uri 'self'",
     "object-src 'none'",
-    "img-src 'self' data: blob: https:",
+    // The dev backend serves /storage avatars and logos over plain http on
+    // :8000, so it needs listing here exactly as connect-src does below.
+    "img-src 'self' data: blob: https: http://localhost:8000 http://127.0.0.1:8000",
     "font-src 'self' data: https://fonts.gstatic.com",
     "media-src 'self' blob:",
     "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 ws://localhost:* ws://127.0.0.1:* https:",

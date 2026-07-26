@@ -29,6 +29,7 @@ import { TestRunnerFooter } from "./components/TestRunnerFooter";
 import { SubmitConfirmModal } from "./components/SubmitConfirmModal";
 import { FullscreenGate } from "./components/FullscreenGate";
 import { SecurityWatermark } from "./components/SecurityWatermark";
+import { DesktopRequiredNotice } from "./components/DesktopRequiredNotice";
 
 export function TestRunner() {
   const { id } = useParams();
@@ -57,88 +58,6 @@ export function TestRunner() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
 
-  if (isMobileDevice) {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--background, #0f172a)",
-        color: "var(--text, #ffffff)",
-        padding: "24px",
-        textAlign: "center",
-        fontFamily: "'Inter', system-ui, sans-serif"
-      }}>
-        <div style={{
-          maxWidth: "440px",
-          background: "var(--surface, #1e293b)",
-          padding: "40px 32px",
-          borderRadius: "24px",
-          boxShadow: "0 20px 40px rgba(0, 0, 0, 0.3)",
-          border: "1px solid var(--border, rgba(255, 255, 255, 0.08))",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center"
-        }}>
-          {/* Monitor/Computer Icon */}
-          <div style={{
-            width: "80px",
-            height: "80px",
-            borderRadius: "50%",
-            background: "color-mix(in srgb, var(--primary, #e11d2e) 15%, transparent)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: "24px"
-          }}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--primary, #e11d2e)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-              <line x1="8" y1="21" x2="16" y2="21" />
-              <line x1="12" y1="17" x2="12" y2="21" />
-            </svg>
-          </div>
-
-          <h2 style={{
-            fontSize: "24px",
-            fontWeight: "800",
-            marginBottom: "12px",
-            letterSpacing: "-0.5px"
-          }}>Computer Required</h2>
-
-          <p style={{
-            fontSize: "15px",
-            lineHeight: "1.6",
-            color: "var(--text-secondary, #94a3b8)",
-            marginBottom: "32px"
-          }}>
-            To perform this IELTS test, you must use a desktop or laptop computer. Mobile and tablet devices are not supported for timed exam attempts.
-          </p>
-
-          <button
-            onClick={() => navigate("/student/dashboard")}
-            style={{
-              width: "100%",
-              padding: "14px 28px",
-              borderRadius: "12px",
-              background: "var(--primary, #e11d2e)",
-              color: "#ffffff",
-              fontSize: "15px",
-              fontWeight: "600",
-              border: "none",
-              cursor: "pointer",
-              transition: "transform 0.2s, filter 0.2s"
-            }}
-            onMouseOver={(e) => e.currentTarget.style.filter = "brightness(1.15)"}
-            onMouseOut={(e) => e.currentTarget.style.filter = "none"}
-          >
-            Back to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
   const [savingIds, setSavingIds] = useState<Set<number>>(new Set());
   const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -786,6 +705,12 @@ export function TestRunner() {
       sourcePaneRef.current?.scrollTo({ top: 0 });
       questionPaneRef.current?.scrollTo({ top: 0 });
     });
+  }
+
+  // Declared after every hook: this branch flips on window resize, so returning
+  // above the hook calls would change hook order and crash a running attempt.
+  if (isMobileDevice) {
+    return <DesktopRequiredNotice onBackToDashboard={() => navigate("/student/dashboard")} />;
   }
 
   if (error) return <p className="error-text">{error}</p>;

@@ -216,14 +216,14 @@ export function NotificationBell({
         >
           <div className="student-notification-header">
             <h2 id="portal-notification-title">{title}</h2>
-          </div>
-
-          <div className="student-notification-list">
             {unread.length > 0 && (
               <button type="button" className="student-notification-read-all" onClick={() => void markAllRead()}>
                 Mark all as read
               </button>
             )}
+          </div>
+
+          <div className="student-notification-list">
 
             {loading ? (
               <p className="student-notification-state">Loading notifications...</p>

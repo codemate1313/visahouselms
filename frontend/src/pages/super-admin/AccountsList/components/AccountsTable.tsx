@@ -3,6 +3,7 @@ import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { Checkbox } from "@/components/ui";
+import { TableAvatar } from "@/components/TableAvatar";
 import type { SuperAdminAccount } from "@/api/types";
 import { accountsListStrings as strings } from "../AccountsList.strings";
 
@@ -144,13 +145,10 @@ export function AccountsTable({
               </td>
               <td>
                 <div className="table-item-cell">
-                  <div className="table-avatar-tile">
-                    {account.avatar_path ? (
-                      <img src={`${API_BASE_URL}/storage/${account.avatar_path}`} alt="" />
-                    ) : (
-                      account.first_name.charAt(0).toUpperCase()
-                    )}
-                  </div>
+                  <TableAvatar
+                    src={account.avatar_path ? `${API_BASE_URL}/storage/${account.avatar_path}` : null}
+                    name={account.first_name}
+                  />
                   <div>
                     <strong className="table-item-title" style={{ fontSize: 13.5 }}>
                       {account.first_name} {account.last_name}
