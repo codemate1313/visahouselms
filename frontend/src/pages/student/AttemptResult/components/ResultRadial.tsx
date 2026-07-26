@@ -2,10 +2,10 @@ import type { AttemptMetrics } from "@/pages/student/attemptMetrics";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
 
 export const RADIAL_COLORS = {
-  correct: "var(--shade-16865b)",
-  incorrect: "var(--primary)",
-  pending: "var(--shade-d79018)",
-  unanswered: "var(--shade-d7d9df)",
+  correct: "#10b981",
+  incorrect: "#ef4444",
+  pending: "#f59e0b",
+  unanswered: "#6b7280",
 };
 
 interface ResultRadialProps {

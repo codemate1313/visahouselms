@@ -10,6 +10,7 @@ export function StudentProgress() {
   const [badges, setBadges] = useState<StudentBadge[] | null>(null);
   const [leaderboard, setLeaderboard] = useState<StudentLeaderboard | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [scope, setScope] = useState<"institute" | "global">("institute");
 
   useEffect(() => {
     async function load() {
@@ -17,7 +18,7 @@ export function StudentProgress() {
         // Achievement refresh also updates the persisted institute standings,
         // so load it before reading the leaderboard snapshot.
         const badgeResponse = await apiClient.get<StudentBadge[]>("/student/achievements");
-        const leaderboardResponse = await apiClient.get<StudentLeaderboard>("/student/leaderboard");
+        const leaderboardResponse = await apiClient.get<StudentLeaderboard>(`/student/leaderboard?scope=${scope}`);
         setBadges(badgeResponse.data);
         setLeaderboard(leaderboardResponse.data);
       } catch {
@@ -25,7 +26,7 @@ export function StudentProgress() {
       }
     }
     load();
-  }, []);
+  }, [scope]);
 
   if (error) return <p className="error-text">{error}</p>;
   if (!badges || !leaderboard) return <p>{strings.loading}</p>;
@@ -42,9 +43,13 @@ export function StudentProgress() {
         </div>
       </div>
 
+      <LeaderboardPanel
+        leaderboard={leaderboard}
+        scope={scope}
+        onScopeChange={setScope}
+      />
       <ProgressStatTiles badges={badges} earnedCount={earned.length} leaderboard={leaderboard} />
       <BadgesPanel badges={badges} earnedCount={earned.length} />
-      <LeaderboardPanel leaderboard={leaderboard} />
     </div>
   );
 }

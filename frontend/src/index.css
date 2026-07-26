@@ -9183,7 +9183,8 @@ button.danger-text {
   padding: 28px 24px 22px;
   background: var(--surface);
   border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(203, 213, 225, 0.68);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12931,7 +12932,7 @@ button.danger-text {
 [data-theme="dark"] .student-portal .huge-sidebar .sidebar-item-link.is-active,
 [data-theme="dark"] .student-portal .huge-sidebar .sidebar-item-btn.is-active,
 [data-theme="dark"] .student-portal .huge-sidebar .sidebar-subitem-link.is-sub-active {
-  color: #ffffff !important;
+  color: var(--sidebar-active-text, var(--primary, #0b2388)) !important;
 }
 
 [data-theme="dark"] .super-admin-portal .huge-sidebar .sidebar-item-link.is-active,
@@ -12949,7 +12950,7 @@ button.danger-text {
 [data-theme="dark"] .huge-sidebar .sidebar-item-btn.is-active .sidebar-accordion-arrow,
 [data-theme="dark"] .student-portal .huge-sidebar .sidebar-item-link.is-active .sidebar-icon,
 [data-theme="dark"] .student-portal .huge-sidebar .sidebar-item-btn.is-active .sidebar-icon {
-  color: #ffffff !important;
+  color: var(--sidebar-active-text, var(--primary, #0b2388)) !important;
 }
 
 [data-theme="dark"] .super-admin-portal .huge-sidebar .sidebar-item-link.is-active .sidebar-icon,
@@ -14029,7 +14030,7 @@ button.danger-text {
 
 .cefr-result-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 22px;
 }
@@ -14051,14 +14052,18 @@ button.danger-text {
 
 .cefr-overall {
   display: flex;
-  width: 120px;
+  min-width: 120px;
+  width: max-content !important;
+  max-width: 180px;
   height: 96px;
+  padding: 0 16px !important;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #17171a;
   color: #fff;
+  box-sizing: border-box;
 }
 
 .cefr-overall.is-pending {
@@ -14076,12 +14081,88 @@ button.danger-text {
 
 .cefr-overall strong {
   margin-top: 3px;
-  font-size: 30px;
+  font-size: 20px !important;
+  font-weight: 800;
   letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .cefr-overall.is-pending strong {
   font-size: 15px;
+}
+
+/* Gradients for Overall Grade level badges */
+.cefr-overall.grade-a1,
+.cefr-overall.grade-a2,
+.cefr-overall.grade-below-b1 {
+  background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%) !important;
+  color: #ffffff !important;
+}
+
+.cefr-overall.grade-b1 {
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%) !important;
+  color: #ffffff !important;
+}
+
+.cefr-overall.grade-b2 {
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%) !important;
+  color: #ffffff !important;
+}
+
+.cefr-overall.grade-c1 {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+}
+
+.cefr-overall.grade-c2 {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Color accents for individual skill labels */
+.skill-grade-label.grade-text-a1,
+.skill-grade-label.grade-text-a2,
+.skill-grade-label.grade-text-below-b1 {
+  color: #ef4444 !important;
+}
+
+.skill-grade-label.grade-text-b1 {
+  color: #f59e0b !important;
+}
+
+.skill-grade-label.grade-text-b2 {
+  color: #10b981 !important;
+}
+
+.skill-grade-label.grade-text-c1 {
+  color: #3b82f6 !important;
+}
+
+.skill-grade-label.grade-text-c2 {
+  color: #8b5cf6 !important;
+}
+
+/* Left borders for skill cards */
+.cefr-skill-grid article.grade-card-a1,
+.cefr-skill-grid article.grade-card-a2,
+.cefr-skill-grid article.grade-card-below-b1 {
+  border-left: 4px solid #ef4444 !important;
+}
+
+.cefr-skill-grid article.grade-card-b1 {
+  border-left: 4px solid #f59e0b !important;
+}
+
+.cefr-skill-grid article.grade-card-b2 {
+  border-left: 4px solid #10b981 !important;
+}
+
+.cefr-skill-grid article.grade-card-c1 {
+  border-left: 4px solid #3b82f6 !important;
+}
+
+.cefr-skill-grid article.grade-card-c2 {
+  border-left: 4px solid #8b5cf6 !important;
 }
 
 .cefr-skill-grid {
@@ -15641,7 +15722,8 @@ button.danger-text {
   padding: 30px 26px 24px;
   background: var(--surface);
   border-radius: 8px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(203, 213, 225, 0.72);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -20103,6 +20185,22 @@ th[aria-sort="descending"] .table-sort-button::after {
   max-width: 160px !important;
   min-width: 160px !important;
   flex: 0 0 160px !important;
+}
+
+.searchable-select-container.student-filter-select,
+.student-filter-select {
+  width: 180px !important;
+  max-width: 180px !important;
+  min-width: 180px !important;
+  flex: 0 0 180px !important;
+}
+
+.searchable-select-container.institute-filter-select,
+.institute-filter-select {
+  width: 220px !important;
+  max-width: 220px !important;
+  min-width: 220px !important;
+  flex: 0 0 220px !important;
 }
 
 .status-filter-select .searchable-select-dropdown {
@@ -25371,7 +25469,7 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
   border-color: var(--primary) !important;
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--primary) 28%, transparent) !important;
+  box-shadow: none !important;
 }
 
 [data-theme="dark"] .dashboard .button-link:not(.secondary-link-btn):hover,
@@ -26691,4 +26789,278 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
     gap: 24px;
   }
 }
+
+/* Fix notification items and absolute pin buttons positioning */
+.pin-list-row {
+  position: relative !important;
+}
+.pin-list-row .student-notification-item {
+  padding-right: 58px !important;
+}
+.pin-list-pin {
+  position: absolute !important;
+  right: 10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 99 !important;
+}
+
+
+/* Leaderboard Podium styling */
+.leaderboard-podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: -6px !important;
+  margin: 32px auto 40px;
+  max-width: 600px;
+  width: 100%;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+.podium-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 150px;
+  text-align: center;
+  position: relative;
+}
+
+.podium-col.first {
+  order: 2; /* Golden center */
+  z-index: 3;
+}
+
+.podium-col.second {
+  order: 1; /* Silver left */
+  z-index: 2;
+}
+
+.podium-col.third {
+  order: 3; /* Bronze right */
+  z-index: 1;
+}
+
+/* 3D-ish pedestals with heights */
+.podium-pedestal {
+  width: 100%;
+  border-radius: 12px 12px 0 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 10px 25px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.podium-col.first .podium-pedestal {
+  height: 130px;
+  background: linear-gradient(135deg, #ffd700, #b8860b);
+  border: 1px solid #ffd700;
+}
+
+.podium-col.second .podium-pedestal {
+  height: 90px;
+  background: linear-gradient(135deg, #c0c0c0, #708090);
+  border: 1px solid #c0c0c0;
+}
+
+.podium-col.third .podium-pedestal {
+  height: 65px;
+  background: linear-gradient(135deg, #cd7f32, #8b4513);
+  border: 1px solid #cd7f32;
+}
+
+/* Labels on pedestals */
+.podium-pedestal::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.podium-col.first .podium-pedestal::after {
+  content: "1";
+}
+
+.podium-col.second .podium-pedestal::after {
+  content: "2";
+}
+
+.podium-col.third .podium-pedestal::after {
+  content: "3";
+}
+
+/* Avatars & Medals styling */
+.podium-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 12px;
+  font-weight: bold;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+.podium-avatar.gold {
+  border: 3px solid #ffd700;
+  background: radial-gradient(circle, #fff3b0 0%, #ffd700 100%);
+  color: #8b6508;
+  width: 78px;
+  height: 78px;
+}
+
+.podium-avatar.silver {
+  border: 3px solid #c0c0c0;
+  background: radial-gradient(circle, #f0f0f0 0%, #c0c0c0 100%);
+  color: #4f5d73;
+}
+
+.podium-avatar.bronze {
+  border: 3px solid #cd7f32;
+  background: radial-gradient(circle, #ffe4c4 0%, #cd7f32 100%);
+  color: #5c2e0b;
+}
+
+/* Crown / Medals indicators */
+.podium-crown {
+  position: absolute;
+  top: -24px;
+  font-size: 24px;
+  animation: floatCrown 2.5s ease-in-out infinite;
+}
+
+@keyframes floatCrown {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(2deg); }
+}
+
+.podium-rank {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.podium-avatar.gold .podium-rank {
+  font-size: 24px;
+}
+
+/* Info container above pedestal */
+.podium-info {
+  margin-bottom: 24px;
+  z-index: 2;
+}
+
+.podium-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.podium-score {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 1px;
+}
+
+.podium-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Current User Standing Row card style */
+.current-user-rank-line {
+  margin-top: 24px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  border-radius: 16px;
+}
+
+.user-rank-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.user-rank-row {
+  display: grid;
+  grid-template-columns: 80px 1.5fr 1fr 1fr 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-rank-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-rank-cell span {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.user-rank-cell strong {
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.user-rank-cell.rank strong {
+  font-size: 18px;
+  color: var(--primary);
+}
+
+@media (max-width: 580px) {
+  .user-rank-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .user-rank-cell.student {
+    grid-column: span 2;
+  }
+}
+
+/* Placeholder & empty pedestal styles */
+.podium-info.placeholder {
+  opacity: 0.45;
+}
+
+.podium-avatar.empty {
+  border: 3px dashed var(--border) !important;
+  background: color-mix(in srgb, var(--text-main) 4%, transparent) !important;
+  color: var(--text-muted) !important;
+  opacity: 0.65;
+  box-shadow: none !important;
+}
+
+.podium-col.empty-pedestal .podium-pedestal {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--text-main) 6%, transparent) 0%, color-mix(in srgb, var(--text-main) 2%, transparent) 100%) !important;
+  border: 1px dashed var(--border) !important;
+  border-radius: 12px 12px 0 0 !important;
+  box-shadow: none !important;
+}
+
+.podium-col.empty-pedestal .podium-pedestal::after {
+  color: var(--text-muted) !important;
+  opacity: 0.25;
+}
+
 

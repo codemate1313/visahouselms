@@ -64,12 +64,29 @@ export function Users() {
   >(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [studentFilter, setStudentFilter] = useState<"all" | "direct" | "institutes">("all");
+  const [selectedInstituteId, setSelectedInstituteId] = useState<string>("");
+  const [institutes, setInstitutes] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    async function fetchInstitutes() {
+      try {
+        const { data: insts } = await apiClient.get<any[]>("/super-admin/institutes");
+        setInstitutes(insts || []);
+      } catch (err) {
+        console.error("Failed to load institutes", err);
+      }
+    }
+    fetchInstitutes();
+  }, []);
 
   // Filters and selection describe the visible tab, so switching tabs starts
   // clean - carrying a selection across tabs would target the wrong endpoints.
   useEffect(() => {
     setSearch("");
     setStatusFilter("");
+    setStudentFilter("all");
+    setSelectedInstituteId("");
     setPage(1);
     setSelectedIds(new Set());
     setPasswordNotice(null);
@@ -78,14 +95,28 @@ export function Users() {
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
+      const params: any = {
+        role: activeRole,
+        q: search.trim() || undefined,
+        status: statusFilter || undefined,
+        page,
+        page_size: PAGE_SIZE,
+      };
+
+      if (activeRole === "STUDENT") {
+        if (studentFilter === "direct") {
+          params.direct = true;
+        } else if (studentFilter === "institutes") {
+          params.direct = false;
+        }
+      } else if (activeRole === "INSTITUTE_ADMIN" || activeRole === "INST_INSTRUCTOR") {
+        if (selectedInstituteId) {
+          params.institute_id = Number(selectedInstituteId);
+        }
+      }
+
       const { data: page_ } = await apiClient.get<DirectoryUserPage>("/super-admin/users", {
-        params: {
-          role: activeRole,
-          q: search.trim() || undefined,
-          status: statusFilter || undefined,
-          page,
-          page_size: PAGE_SIZE,
-        },
+        params,
       });
       setData(page_);
       setError(null);
@@ -94,7 +125,7 @@ export function Users() {
     } finally {
       setLoading(false);
     }
-  }, [activeRole, search, statusFilter, page]);
+  }, [activeRole, search, statusFilter, studentFilter, selectedInstituteId, page]);
 
   // Debounced so typing in the search box does not fire a request per keystroke.
   useEffect(() => {
@@ -337,6 +368,41 @@ export function Users() {
           searchable={false}
           className="status-filter-select"
         />
+
+        {activeRole === "STUDENT" && (
+          <SearchableSelect
+            options={[
+              { value: "all", label: "All Students" },
+              { value: "direct", label: "Direct Students" },
+              { value: "institutes", label: "Institute Students" },
+            ]}
+            value={studentFilter}
+            onChange={(value) => {
+              setStudentFilter(value as any);
+              setPage(1);
+            }}
+            placeholder="All Students"
+            searchable={false}
+            className="student-filter-select"
+          />
+        )}
+
+        {(activeRole === "INSTITUTE_ADMIN" || activeRole === "INST_INSTRUCTOR") && (
+          <SearchableSelect
+            options={[
+              { value: "", label: "All Institutes" },
+              ...institutes.map((inst) => ({ value: String(inst.id), label: inst.name })),
+            ]}
+            value={selectedInstituteId}
+            onChange={(value) => {
+              setSelectedInstituteId(String(value));
+              setPage(1);
+            }}
+            placeholder="All Institutes"
+            searchable={true}
+            className="institute-filter-select"
+          />
+        )}
 
         <div className="export-btn-group">
           <button

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import type { AttemptSummary } from "@/api/types";
 import { Icon } from "@/components/icons";
+import { SearchableSelect } from "@/components/ui";
 import { studentAttemptsStrings as strings } from "./StudentAttempts.strings";
 
 const STATUS_CLASS: Record<string, string> = {
@@ -18,6 +19,7 @@ export function StudentAttempts() {
   const [attempts, setAttempts] = useState<AttemptSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
   useEffect(() => {
     apiClient
@@ -32,6 +34,11 @@ export function StudentAttempts() {
 
   const statusLabels = strings.statusLabels;
 
+  const filteredAttempts = attempts.filter((attempt) => {
+    if (selectedStatus === "all") return true;
+    return attempt.status === selectedStatus;
+  });
+
   return (
     <div>
       <div className="page-header">
@@ -41,10 +48,35 @@ export function StudentAttempts() {
           <p className="page-subtitle">{strings.subtitle}</p>
         </div>
       </div>
+
+      <div className="filter-bar" style={{ marginBottom: 20 }}>
+        <SearchableSelect
+          options={[
+            { value: "all", label: "All Statuses" },
+            { value: "ready", label: strings.statusLabels.ready },
+            { value: "in_progress", label: strings.statusLabels.in_progress },
+            { value: "submitted", label: strings.statusLabels.submitted },
+            { value: "grading", label: strings.statusLabels.grading },
+            { value: "graded", label: strings.statusLabels.graded },
+            { value: "expired", label: strings.statusLabels.expired },
+          ]}
+          value={selectedStatus}
+          onChange={(val) => setSelectedStatus(String(val))}
+          placeholder="Filter by status"
+          searchable={false}
+          className="status-filter-select"
+        />
+      </div>
+
       {attempts.length === 0 ? (
         <div className="empty-state">
           <h2>{strings.empty.title}</h2>
           <p>{strings.empty.description}</p>
+        </div>
+      ) : filteredAttempts.length === 0 ? (
+        <div className="empty-state">
+          <h2>No attempts found</h2>
+          <p>Try selecting a different status filter.</p>
         </div>
       ) : (
         <div className="table-wrap">
@@ -60,7 +92,7 @@ export function StudentAttempts() {
               </tr>
             </thead>
             <tbody>
-              {attempts.map((attempt) => (
+              {filteredAttempts.map((attempt) => (
                 <tr key={attempt.id} className="clickable">
                   <td>{attempt.module_title}</td>
                   <td>
@@ -69,15 +101,27 @@ export function StudentAttempts() {
                     </span>
                   </td>
                   <td>{new Date(attempt.started_at).toLocaleString()}</td>
-                  <td>{attempt.raw_score && attempt.max_score ? `${attempt.raw_score} / ${attempt.max_score}` : "—"}</td>
+                  <td>
+                    {attempt.raw_score && attempt.max_score
+                      ? `${attempt.raw_score} / ${attempt.max_score}`
+                      : "—"}
+                  </td>
                   <td>{attempt.band_label ?? "—"}</td>
                   <td className="table-actions">
                     {attempt.status === "ready" || attempt.status === "in_progress" ? (
-                      <Link to={`/student/attempts/${attempt.id}/take`} aria-label={strings.resumeTest} data-tooltip={strings.resumeTest}>
+                      <Link
+                        to={`/student/attempts/${attempt.id}/take`}
+                        aria-label={strings.resumeTest}
+                        data-tooltip={strings.resumeTest}
+                      >
                         <Icon name="module" />
                       </Link>
                     ) : (
-                      <Link to={`/student/attempts/${attempt.id}/result`} aria-label={strings.viewResult} data-tooltip={strings.viewResult}>
+                      <Link
+                        to={`/student/attempts/${attempt.id}/result`}
+                        aria-label={strings.viewResult}
+                        data-tooltip={strings.viewResult}
+                      >
                         <Icon name="overview" />
                       </Link>
                     )}

@@ -366,10 +366,15 @@ def _apply_directory_filters(
     search: Optional[str],
     status_filter: Optional[str],
     institute_id: Optional[int],
+    direct: Optional[bool] = None,
 ):
     if role:
         query = query.filter(Role.name == role)
-    if institute_id is not None:
+    if direct is True:
+        query = query.filter(User.institute_id.is_(None))
+    elif direct is False:
+        query = query.filter(User.institute_id.isnot(None))
+    elif institute_id is not None:
         query = query.filter(User.institute_id == institute_id)
     if status_filter == "active":
         query = query.filter(User.is_active.is_(True))
@@ -408,6 +413,7 @@ def list_directory_users(
     search: Optional[str] = None,
     status_filter: Optional[str] = None,
     institute_id: Optional[int] = None,
+    direct: Optional[bool] = None,
     page: int = 1,
     page_size: int = 25,
 ) -> dict:
@@ -425,7 +431,7 @@ def list_directory_users(
     page_size = max(1, min(page_size, MAX_PAGE_SIZE))
 
     query = _apply_directory_filters(
-        _directory_base_query(db), role, search, status_filter, institute_id
+        _directory_base_query(db), role, search, status_filter, institute_id, direct
     )
     total = query.order_by(None).count()
     users = (

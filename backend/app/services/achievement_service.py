@@ -215,13 +215,81 @@ def list_student_badges(db: Session, user: User) -> list[dict]:
     ]
 
 
-def student_leaderboard(db: Session, user: User) -> dict:
+def student_leaderboard(db: Session, user: User, scope: str = "institute") -> dict:
+    if scope == "global":
+        attempts = (
+            db.query(TestAttempt)
+            .join(User, TestAttempt.user_id == User.id)
+            .filter(
+                User.is_active.is_(True),
+                User.deleted_at.is_(None),
+                TestAttempt.status == ATTEMPT_GRADED,
+                TestAttempt.max_score.is_not(None),
+            )
+            .all()
+        )
+        by_user: dict[int, list[TestAttempt]] = defaultdict(list)
+        for attempt in attempts:
+            if Decimal(attempt.max_score or 0) > 0:
+                by_user[attempt.user_id].append(attempt)
+
+        standings = []
+        user_ids_list = list(by_user.keys())
+        users_map = {}
+        if user_ids_list:
+            users_map = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids_list)).all()}
+
+        for user_id, user_attempts in by_user.items():
+            u = users_map.get(user_id)
+            if not u:
+                continue
+            average = (sum((_percentage(attempt) for attempt in user_attempts), Decimal("0")) / len(user_attempts)).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+            standings.append(
+                {
+                    "user_id": user_id,
+                    "display_name": f"{u.first_name} {u.last_name[:1]}.",
+                    "average": average,
+                    "attempts_count": len(user_attempts),
+                    "best_cefr_level": _best_level(user_attempts),
+                }
+            )
+        standings.sort(key=lambda row: (-row["average"], -row["attempts_count"], row["user_id"]))
+
+        entries = []
+        previous_score = None
+        rank = 0
+        for index, standing in enumerate(standings, start=1):
+            if standing["average"] != previous_score:
+                rank = index
+                previous_score = standing["average"]
+            entries.append(
+                {
+                    "rank": rank,
+                    "user_id": standing["user_id"],
+                    "display_name": standing["display_name"],
+                    "attempts_count": standing["attempts_count"],
+                    "average_percentage": str(standing["average"]),
+                    "best_cefr_level": standing["best_cefr_level"],
+                    "is_current_student": standing["user_id"] == user.id,
+                }
+            )
+        current = next((entry for entry in entries if entry["is_current_student"]), None)
+        return {
+            "scope": "global",
+            "period": PERIOD_ALL_TIME,
+            "entries": entries[:50],
+            "current_student": current,
+            "message": None,
+        }
+
     if user.institute_id is None:
         return {
             "scope": "direct_student",
             "entries": [],
             "current_student": None,
-            "message": "Leaderboards are available only within an institute cohort.",
+            "message": "Institute leaderboards are available only within an institute cohort.",
         }
 
     rows = (

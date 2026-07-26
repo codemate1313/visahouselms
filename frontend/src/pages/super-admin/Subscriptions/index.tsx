@@ -117,7 +117,11 @@ export function Subscriptions() {
 
       <InstituteSelector institutes={institutes} selected={selected} onSelect={setSelected} />
 
-      {institutes.length === 0 && <p className="hint">{strings.noInstitutes}</p>}
+      {institutes.length === 0 && (
+        <p className="hint" style={{ textAlign: "center", marginTop: 32, fontSize: "14.5px", color: "var(--text-muted)", width: "100%" }}>
+          {strings.noInstitutes}
+        </p>
+      )}
       {error && <p className="error-text">{error}</p>}
       {notice && <p className="success-text">{notice}</p>}
 

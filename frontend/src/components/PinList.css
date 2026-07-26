@@ -88,31 +88,35 @@
 .pin-list-row > :first-child {
   flex: 1;
   min-width: 0;
+  padding-right: 56px !important; /* Ensure space for the absolute pin button */
 }
 
 /* Pinned rows read as "stuck to the top" with an accent edge. */
 .pin-list-group-pinned .pin-list-row > :first-child {
-  border-color: var(--primary-soft);
-  box-shadow: inset 3px 0 0 var(--primary);
+  border-color: var(--primary-soft) !important;
+  box-shadow: inset 3px 0 0 var(--primary) !important;
 }
 
 .pin-list-pin {
-  flex: 0 0 38px;
-  width: 38px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  align-self: center;
-  height: 38px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
+  position: absolute !important;
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 5 !important;
+  width: 38px !important;
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  cursor: pointer !important;
   opacity: 0;
   transition: opacity 0.18s ease, color 0.18s ease, background 0.18s ease,
-    border-color 0.18s ease, transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+    border-color 0.18s ease, transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 }
 
 .pin-list-pin svg {
@@ -127,14 +131,14 @@
 }
 
 .pin-list-pin:hover:not(:disabled) {
-  background: var(--surface-muted);
-  border-color: var(--border);
-  color: var(--text);
-  transform: translateY(-1px);
+  background: var(--surface-muted) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+  transform: translateY(-50%) translateY(-1px) !important;
 }
 
 .pin-list-pin:active:not(:disabled) {
-  transform: translateY(0) scale(0.94);
+  transform: translateY(-50%) scale(0.94) !important;
 }
 
 /* Pinned = solid brand red with a white glyph, not a pale tint — the same

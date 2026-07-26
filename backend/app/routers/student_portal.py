@@ -359,8 +359,12 @@ def achievements(db: Session = Depends(get_db), user: User = Depends(require_stu
 
 
 @router.get("/leaderboard")
-def leaderboard(db: Session = Depends(get_db), user: User = Depends(require_student)):
-    return achievement_service.student_leaderboard(db, user)
+def leaderboard(
+    scope: str = "institute",
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    return achievement_service.student_leaderboard(db, user, scope=scope)
 
 
 @router.get("/speaking-examiners")

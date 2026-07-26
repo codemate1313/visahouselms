@@ -39,6 +39,7 @@ def list_directory_users(
     q: Optional[str] = Query(default=None, max_length=200),
     status: Optional[str] = Query(default=None, pattern="^(active|inactive)$"),
     institute_id: Optional[int] = Query(default=None, ge=1),
+    direct: Optional[bool] = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1, le=200),
     db: Session = Depends(get_db),
@@ -52,6 +53,7 @@ def list_directory_users(
         search=q,
         status_filter=status,
         institute_id=institute_id,
+        direct=direct,
         page=page,
         page_size=page_size,
     )
