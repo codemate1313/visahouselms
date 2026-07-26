@@ -212,9 +212,14 @@ export function Login({
     setError(null);
     setGoogleLoading(true);
     const device = getDeviceIdentity();
+    const returnParams = new URLSearchParams(location.search);
+    returnParams.delete("google_error");
+    returnParams.delete("google_otp_challenge");
+    returnParams.delete("google_otp_delivery");
+    const returnSearch = returnParams.toString();
     const params = new URLSearchParams({
       role: selectedRole,
-      return_path: `${location.pathname}${location.search}`,
+      return_path: `${location.pathname}${returnSearch ? `?${returnSearch}` : ""}`,
       remember_me: rememberMe ? "true" : "false",
       device_id: device.device_id,
       device_name: device.device_name,
