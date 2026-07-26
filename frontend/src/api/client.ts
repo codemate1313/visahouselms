@@ -2,7 +2,7 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "../store/authStore";
 import { useLoaderStore } from "../store/loaderStore";
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 const baseURL = API_BASE_URL;
 
 function getEventMessage(config: InternalAxiosRequestConfig): string {
@@ -75,7 +75,8 @@ apiClient.interceptors.request.use(
       config.headers.set("Authorization", `Bearer ${token}`);
     }
 
-    if (!config.headers.has("X-Skip-Loader")) {
+    const method = config.method?.toLowerCase();
+    if (method !== "get" && !config.headers.has("X-Skip-Loader")) {
       const msg = getEventMessage(config);
       useLoaderStore.getState().showLoader(msg);
     }

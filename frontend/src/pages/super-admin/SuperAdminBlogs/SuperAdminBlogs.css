@@ -11,8 +11,15 @@
 }
 
 @keyframes sat-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Header */
@@ -117,9 +124,17 @@
   line-height: 1.1;
 }
 
-.sab-text-green { color: #10b981; }
-.sab-text-yellow { color: #f59e0b; }
-.sab-text-red { color: #e11d2e; }
+.sab-text-green {
+  color: #10b981;
+}
+
+.sab-text-yellow {
+  color: #f59e0b;
+}
+
+.sab-text-red {
+  color: #e11d2e;
+}
 
 /* Buttons */
 .sab-btn {
@@ -366,7 +381,7 @@
   border-radius: 8px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .sab-card-cover-actions {
@@ -556,8 +571,13 @@
   border-radius: 50%;
 }
 
-.sab-status-pill.published .dot { background: #10b981; }
-.sab-status-pill.draft .dot { background: #f59e0b; }
+.sab-status-pill.published .dot {
+  background: #10b981;
+}
+
+.sab-status-pill.draft .dot {
+  background: #f59e0b;
+}
 
 .sab-card-date {
   font-size: 12px;
@@ -579,21 +599,31 @@
   cursor: pointer;
   transition: all 0.2s;
 }
+
 .sab-toggle-btn.active {
   background: rgba(var(--emerald-500-rgb), 0.1);
   color: var(--emerald-500);
   border-color: rgba(var(--emerald-500-rgb), 0.2);
 }
+
 .sab-toggle-btn.small {
   padding: 0.25rem 0.5rem;
 }
+
 .sab-toggle-btn .dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
 }
-.sab-toggle-btn .dot.on { background: var(--emerald-500); box-shadow: 0 0 6px var(--emerald-500); }
-.sab-toggle-btn .dot.off { background: var(--text-muted); }
+
+.sab-toggle-btn .dot.on {
+  background: var(--emerald-500);
+  box-shadow: 0 0 6px var(--emerald-500);
+}
+
+.sab-toggle-btn .dot.off {
+  background: var(--text-muted);
+}
 
 .sab-order-badge {
   font-size: 0.75rem;
@@ -774,14 +804,17 @@
   font-size: 0.75rem;
   font-weight: 600;
 }
+
 .sab-status-badge.active {
   background: var(--emerald-100);
   color: var(--emerald-600);
 }
+
 .sab-status-badge.inactive {
   background: var(--gray-100);
   color: var(--gray-500);
 }
+
 .sab-status-badge .dot {
   width: 6px;
   height: 6px;
@@ -802,6 +835,7 @@
   padding: 1rem;
   animation: sat-fade-in 0.2s ease-out;
 }
+
 .sab-modal {
   background: var(--glass-bg-strong);
   width: 100%;
@@ -813,6 +847,7 @@
   flex-direction: column;
   max-height: 90vh;
 }
+
 .sab-modal-header {
   display: flex;
   align-items: center;
@@ -820,12 +855,14 @@
   padding: 1.5rem;
   border-bottom: 1px solid var(--border);
 }
+
 .sab-modal-header h2 {
   font-size: 1.25rem;
   font-weight: 700;
   margin: 0;
   color: var(--text);
 }
+
 .sab-modal-close {
   background: none;
   border: none;
@@ -838,6 +875,7 @@
   justify-content: center;
   transition: background 0.2s;
 }
+
 .sab-modal-close:hover {
   background: var(--surface-muted);
   color: var(--text);
@@ -845,34 +883,37 @@
 
 .sab-modal-body {
   padding: 1.5rem;
-  flex: 1;
-  min-height: 0;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
+
 .sab-form-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.25rem;
 }
+
 @media (min-width: 600px) {
   .sab-form-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
 .sab-form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
+
 .sab-form-group.full-width {
   grid-column: 1 / -1;
 }
+
 .sab-form-group label {
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--text);
 }
+
 .sab-input {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -884,11 +925,13 @@
   font-family: var(--app-font-family);
   transition: all 0.2s;
 }
+
 .sab-input:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-soft);
 }
+
 .sab-textarea {
   resize: vertical;
 }
@@ -900,6 +943,7 @@
   border-radius: 10px;
   border: 1px solid var(--border);
 }
+
 .sab-checkbox-label {
   display: flex;
   align-items: center;
@@ -909,6 +953,7 @@
   font-weight: 600;
   color: var(--text);
 }
+
 .sab-checkbox-label input {
   width: 18px;
   height: 18px;
@@ -924,7 +969,8 @@
 }
 
 /* Utils */
-.sab-loading, .sab-empty {
+.sab-loading,
+.sab-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -935,45 +981,23 @@
   border-radius: var(--radius);
   border: 1px solid var(--border);
 }
+
 .sab-spinner {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #e11d2e 0%, #b91323 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 24px rgba(225, 29, 46, 0.4);
-  position: relative;
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: sat-spin 1s linear infinite;
   margin-bottom: 1rem;
-  animation: sab-pulse 1.6s ease-in-out infinite;
 }
 
-.sab-spinner::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 17px;
-  padding: 2.5px;
-  background: conic-gradient(from 0deg, #e11d2e 0%, #ff4d5e 40%, transparent 75%, #e11d2e 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: sat-spin 1.2s linear infinite;
+@keyframes sat-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.sab-spinner::after {
-  content: "VH";
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 16px;
-  letter-spacing: -0.5px;
-}
-
-@keyframes sab-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
-}
 .sab-empty-icon {
   width: 64px;
   height: 64px;
@@ -985,12 +1009,14 @@
   justify-content: center;
   margin-bottom: 1.5rem;
 }
+
 .sab-empty h3 {
   font-size: 1.25rem;
   font-weight: 700;
   margin: 0 0 0.5rem 0;
   color: var(--text);
 }
+
 .sab-empty p {
   margin: 0;
   color: var(--text-muted);
@@ -999,11 +1025,10 @@
 [data-theme="dark"] .sab-header,
 [data-theme="dark"] .sab-toolbar,
 [data-theme="dark"] .sab-card,
-[data-theme="dark"] .sab-modal,
 [data-theme="dark"] .sab-modal-content,
 [data-theme="dark"] .sab-loading,
 [data-theme="dark"] .sab-empty {
-  background: rgba(22, 22, 27, 0.96) !important;
+  background: rgba(22, 22, 27, 0.88) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.34) !important;
   color: #f3f4f6 !important;
@@ -1050,9 +1075,7 @@
 [data-theme="dark"] .sab-card-title,
 [data-theme="dark"] .sab-author-name,
 [data-theme="dark"] .sab-empty h3,
-[data-theme="dark"] .sab-modal h2,
 [data-theme="dark"] .sab-modal-content h2,
-[data-theme="dark"] .sab-modal-header h2,
 [data-theme="dark"] .sab-form-group label,
 [data-theme="dark"] .sab-checkbox-label {
   color: #f7f7fa !important;
@@ -1068,13 +1091,9 @@
   color: #a5adbb !important;
 }
 
-[data-theme="dark"] .sab-card-footer {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
+[data-theme="dark"] .sab-card-footer,
 [data-theme="dark"] .sab-modal-footer {
-  background: rgba(22, 22, 27, 0.98) !important;
-  border-top-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 [data-theme="dark"] .sab-modal-footer .sab-btn-secondary {

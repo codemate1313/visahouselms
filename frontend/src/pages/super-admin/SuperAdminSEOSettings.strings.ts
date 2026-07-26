@@ -1,12 +1,12 @@
 export const seoSettingsStrings = {
   defaults: {
-    site_name: "IELTS LMS Pro",
-    default_title: "IELTS LMS Pro | Computer-Delivered Exam Platform & AI Feedback",
-    title_template: "%s | IELTS LMS Pro",
+    site_name: "Visa House",
+    default_title: "Visa House | Computer-Delivered Exam Platform & AI Feedback",
+    title_template: "%s | Visa House",
     default_meta_description: "Experience authentic computer-delivered IELTS environments with AI Speaking & Writing scoring.",
-    default_meta_keywords: "IELTS LMS, IELTS Practice, AI IELTS Evaluation, Computer Delivered IELTS",
+    default_meta_keywords: "Visa House, IELTS Practice, AI IELTS Evaluation, Computer Delivered IELTS",
     default_og_image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
-    twitter_handle: "@ieltslmspro",
+    twitter_handle: "@visahouse",
     robots_txt: "User-agent: *\nAllow: /",
     custom_head_tags: "",
   },

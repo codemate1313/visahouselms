@@ -1,8 +1,8 @@
 export const loginStrings = {
-  defaultTitle: "IELTS LMS",
+  defaultTitle: "Visa House",
   defaultSubtitle: "Enter your credentials to access your dashboard",
   brandName: "Visa House",
-  brandTag: "IELTS LMS",
+  brandTag: "Visa House",
   welcomeBack: "back.",
   emailLabel: "Email address",
   emailPlaceholder: "name@example.com",

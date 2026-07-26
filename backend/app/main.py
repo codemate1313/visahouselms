@@ -2,11 +2,13 @@ import traceback
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.middleware.request_logging import RequestLoggingMiddleware, _extract_user_id
+from app.middleware.security_headers import add_security_headers
 from app.routers import (
     announcements,
     auth,
@@ -48,6 +50,7 @@ settings.storage_path.mkdir(parents=True, exist_ok=True)
 app.mount("/storage", StaticFiles(directory=str(settings.storage_path)), name="storage")
 
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_host_list)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
@@ -58,21 +61,7 @@ app.add_middleware(
 )
 
 
-@app.middleware("http")
-async def security_headers(request: Request, call_next):
-    response = await call_next(request)
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Permissions-Policy"] = (
-        "camera=(self), microphone=(self), display-capture=(self), fullscreen=(self)"
-    )
-    if request.url.path.startswith("/student/attempts"):
-        response.headers["Cache-Control"] = "no-store, max-age=0"
-        response.headers["Pragma"] = "no-cache"
-    if request.url.scheme == "https":
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    return response
+app.middleware("http")(add_security_headers)
 
 app.include_router(auth.router)
 app.include_router(dashboard.router)

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 const socialLinks = [
@@ -40,6 +41,19 @@ const socialLinks = [
 ];
 
 export function LandingFooter() {
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const checkTheme = () => {
+      const theme = document.documentElement.getAttribute("data-theme") || document.body.getAttribute("data-theme");
+      setIsDark(theme === "dark");
+    };
+    checkTheme();
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class"] });
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <footer className="landing-footer">
       <div className="landing-footer-container">
@@ -47,11 +61,20 @@ export function LandingFooter() {
           {/* Brand Info */}
           <div className="footer-brand-col">
             <Link to="/" className="landing-brand-logo footer-logo">
-              <div className="brand-icon-box">
-                <span className="brand-dot" />
-                <span className="brand-icon-text">IELTS</span>
+              <div className="vh-brand-logo-box">
+                <img
+                  src={isDark ? "/brand/vh-mark-dark.png" : "/brand/vh-mark-light.png"}
+                  alt="Visa House Logo"
+                  className="vh-brand-logo-img"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src !== window.location.origin + "/brand/vh-mark.png") {
+                      target.src = "/brand/vh-mark.png";
+                    }
+                  }}
+                />
               </div>
-              <span className="brand-title">LMS <span className="brand-title-accent">PRO</span></span>
+              <span className="brand-title">Visa <span className="brand-title-accent">House</span></span>
             </Link>
             <p className="footer-brand-desc">
               The premier AI-powered IELTS preparation platform for institutes and direct students. Authentic exam simulation, automated speaking evaluation, and instant writing feedback.

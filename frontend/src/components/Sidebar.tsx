@@ -98,6 +98,35 @@ export function Sidebar({
   // Keep track of expanded accordions
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isOpenOnMobile, setIsOpenOnMobile] = useState(false);
+  const [isMobileScreen, setIsMobileScreen] = useState(() => window.innerWidth <= 768);
+
+  const isCollapsed = collapsed && !isMobileScreen;
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileScreen(window.innerWidth <= 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Automatically close mobile sidebar when path changes
+  useEffect(() => {
+    setIsOpenOnMobile(false);
+  }, [location.pathname]);
+
+  // Handle document body scrolling block when mobile drawer is open
+  useEffect(() => {
+    if (isMobileScreen && isOpenOnMobile) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileScreen, isOpenOnMobile]);
 
   // Automatically expand parent accordions when current active key belongs to a child
   useEffect(() => {
@@ -152,9 +181,23 @@ export function Sidebar({
     };
 
     updateIndicator();
-    const timer = setTimeout(updateIndicator, 60);
-    return () => clearTimeout(timer);
-  }, [activeKey, location.pathname, expandedKeys, collapsed]);
+
+    if (!navRef.current) return;
+    const observer = new ResizeObserver(updateIndicator);
+    observer.observe(navRef.current);
+
+    const parentSidebar = navRef.current.closest(".huge-sidebar");
+    if (parentSidebar) {
+      parentSidebar.addEventListener("transitionend", updateIndicator);
+    }
+
+    return () => {
+      observer.disconnect();
+      if (parentSidebar) {
+        parentSidebar.removeEventListener("transitionend", updateIndicator);
+      }
+    };
+  }, [activeKey, location.pathname, expandedKeys, isCollapsed]);
 
   const toggleAccordion = (key: string) => {
     setExpandedKeys((prev) => ({
@@ -165,7 +208,36 @@ export function Sidebar({
 
   return (
     <>
-    <aside className={`huge-sidebar ${collapsed ? "is-collapsed" : ""}`}>
+      {isMobileScreen && (
+        <button
+          type="button"
+          className="mobile-sidebar-toggle-btn"
+          onClick={() => setIsOpenOnMobile((prev) => !prev)}
+          aria-label="Toggle Navigation Menu"
+        >
+          {isOpenOnMobile ? (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          ) : (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          )}
+        </button>
+      )}
+
+      {isMobileScreen && isOpenOnMobile && (
+        <div
+          className="mobile-sidebar-backdrop"
+          onClick={() => setIsOpenOnMobile(false)}
+        />
+      )}
+
+      <aside className={`huge-sidebar ${isCollapsed ? "is-collapsed" : ""} ${isMobileScreen ? "mobile-sidebar-drawer" : ""} ${isOpenOnMobile ? "is-mobile-open" : ""}`}>
       {/* Brand Header */}
       <div className="sidebar-brand-container">
         {brandLogoUrl && (
@@ -173,7 +245,7 @@ export function Sidebar({
             <img src={brandLogoUrl} alt={`${brandTitle} logo`} className="sidebar-brand-logo-image" />
           </div>
         )}
-        {!collapsed && (
+        {!isCollapsed && (
           <div className="sidebar-brand-text">
             <h1 className="sidebar-brand-title">{brandTitle}</h1>
             {brandSubtitle && (
@@ -181,17 +253,17 @@ export function Sidebar({
             )}
           </div>
         )}
-        {onToggleCollapse && (
+        {onToggleCollapse && !isMobileScreen && (
           <button
             type="button"
             className="sidebar-collapse-btn"
             onClick={onToggleCollapse}
-            title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            aria-label={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             <Icon
               name="chevronDown"
-              className={`collapse-chevron ${collapsed ? "rotated" : ""}`}
+              className={`collapse-chevron ${isCollapsed ? "rotated" : ""}`}
             />
           </button>
         )}
@@ -219,7 +291,7 @@ export function Sidebar({
             <ul className="sidebar-menu-list">
               {section.items.map((item) => {
                 const isAccordion = !!(item.children && item.children.length > 0);
-                const isExpanded = !!expandedKeys[item.key] || collapsed;
+                const isExpanded = !!expandedKeys[item.key] || isCollapsed;
 
                 // Check if any child of this accordion is currently active
                 const isParentActive =
@@ -239,10 +311,10 @@ export function Sidebar({
                       <button
                         type="button"
                         className={`sidebar-item-btn ${
-                          isParentActive && (collapsed || !isExpanded) ? "is-active" : ""
+                          isParentActive && (isCollapsed || !isExpanded) ? "is-active" : ""
                         }`}
                         onClick={() => toggleAccordion(item.key)}
-                        title={collapsed ? item.label : undefined}
+                        title={isCollapsed ? item.label : undefined}
                       >
                         <div className="sidebar-item-icon-wrap">
                           <Icon name={item.icon} className="sidebar-icon" />
@@ -266,13 +338,13 @@ export function Sidebar({
                           }`}
                         />
 
-                        {collapsed && (
+                        {isCollapsed && (
                           <div className="sidebar-tooltip">{item.label}</div>
                         )}
                       </button>
 
                       {/* Sub-menu Dropdown List with connector line */}
-                      <div className={`sidebar-submenu-transition-wrapper ${isExpanded && !collapsed ? 'is-open' : ''}`}>
+                      <div className={`sidebar-submenu-transition-wrapper ${isExpanded && !isCollapsed ? 'is-open' : ''}`}>
                         <div className="sidebar-submenu-wrapper">
                           <div className="sidebar-tree-line" />
                           <ul className="sidebar-submenu-list">
@@ -313,7 +385,7 @@ export function Sidebar({
                       className={`sidebar-item-link ${
                         isItemDirectlyActive ? "is-active" : ""
                       } ${item.isRed ? "is-red" : ""}`}
-                      title={collapsed ? item.label : undefined}
+                      title={isCollapsed ? item.label : undefined}
                     >
                       <div className="sidebar-item-icon-wrap">
                         <Icon name={item.icon} className="sidebar-icon" />
@@ -328,7 +400,7 @@ export function Sidebar({
                           {item.badge}
                         </span>
                       )}
-                      {collapsed && (
+                      {isCollapsed && (
                         <div className="sidebar-tooltip">{item.label}</div>
                       )}
                     </NavLink>
@@ -349,13 +421,13 @@ export function Sidebar({
                 type="button"
                 className="sidebar-item-link sidebar-footer-btn is-red"
                 onClick={() => setShowLogoutModal(true)}
-                title={collapsed ? "Logout" : undefined}
+                title={isCollapsed ? "Logout" : undefined}
               >
                 <div className="sidebar-item-icon-wrap">
                   <Icon name="logout" className="sidebar-icon" />
                 </div>
                 <span className="sidebar-item-label">Logout</span>
-                {collapsed && (
+                {isCollapsed && (
                   <div className="sidebar-tooltip">Logout</div>
                 )}
               </button>

@@ -11,8 +11,15 @@
 }
 
 @keyframes sat-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Header */
@@ -117,9 +124,17 @@
   line-height: 1.1;
 }
 
-.sat-text-green { color: #10b981; }
-.sat-text-yellow { color: #f59e0b; }
-.sat-text-red { color: #e11d2e; }
+.sat-text-green {
+  color: #10b981;
+}
+
+.sat-text-yellow {
+  color: #f59e0b;
+}
+
+.sat-text-red {
+  color: #e11d2e;
+}
 
 /* Buttons */
 .sat-btn {
@@ -498,8 +513,14 @@
   border-radius: 50%;
 }
 
-.sat-toggle-btn .dot.on { background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.4); }
-.sat-toggle-btn .dot.off { background: #94a3b8; }
+.sat-toggle-btn .dot.on {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+}
+
+.sat-toggle-btn .dot.off {
+  background: #94a3b8;
+}
 
 .sat-order-badge {
   font-size: 12px;
@@ -694,10 +715,7 @@
 
 .sat-modal-body {
   padding: 24px;
-  flex: 1;
-  min-height: 0;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .sat-form-grid {
@@ -784,7 +802,8 @@
 }
 
 /* Utils */
-.sat-loading, .sat-empty {
+.sat-loading,
+.sat-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -797,47 +816,19 @@
 }
 
 .sat-spinner {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #e11d2e 0%, #b91323 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 24px rgba(225, 29, 46, 0.4);
-  position: relative;
-  margin-bottom: 16px;
-  animation: sat-pulse 1.6s ease-in-out infinite;
-}
-
-.sat-spinner::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 17px;
-  padding: 2.5px;
-  background: conic-gradient(from 0deg, #e11d2e 0%, #ff4d5e 40%, transparent 75%, #e11d2e 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: sat-spin 1.2s linear infinite;
-}
-
-.sat-spinner::after {
-  content: "VH";
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 16px;
-  letter-spacing: -0.5px;
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #e11d2e;
+  border-radius: 50%;
+  animation: sat-spin 0.8s linear infinite;
+  margin-bottom: 14px;
 }
 
 @keyframes sat-spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes sat-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .sat-empty-icon {
@@ -913,12 +904,11 @@ tr.is-drag-over {
 [data-theme="dark"] .sat-header,
 [data-theme="dark"] .sat-toolbar,
 [data-theme="dark"] .sat-card,
-[data-theme="dark"] .sat-modal,
 [data-theme="dark"] .sat-modal-content,
 [data-theme="dark"] .sat-loading,
 [data-theme="dark"] .sat-empty,
 [data-theme="dark"] .sat-table-card {
-  background: rgba(22, 22, 27, 0.96) !important;
+  background: rgba(22, 22, 27, 0.88) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.34) !important;
   color: #f3f4f6 !important;
@@ -963,9 +953,7 @@ tr.is-drag-over {
 [data-theme="dark"] .sat-metric-value,
 [data-theme="dark"] .sat-card-name,
 [data-theme="dark"] .sat-empty h3,
-[data-theme="dark"] .sat-modal h2,
 [data-theme="dark"] .sat-modal-content h2,
-[data-theme="dark"] .sat-modal-header h2,
 [data-theme="dark"] .sat-form-group label,
 [data-theme="dark"] .sat-checkbox-label,
 [data-theme="dark"] .sat-table th,
@@ -986,47 +974,10 @@ tr.is-drag-over {
 
 [data-theme="dark"] .sat-card-footer,
 [data-theme="dark"] .sat-card-header,
+[data-theme="dark"] .sat-modal-footer,
 [data-theme="dark"] .sat-table th,
 [data-theme="dark"] .sat-table td {
   border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-[data-theme="dark"] .sat-modal-footer {
-  background: rgba(22, 22, 27, 0.98) !important;
-  border-top-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-[data-theme="dark"] .sat-modal-footer .sat-btn-secondary {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  color: #f7f7fa !important;
-}
-
-[data-theme="dark"] .sat-modal-footer .sat-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.14) !important;
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] .sat-table-wrapper {
-  background: rgba(22, 22, 27, 0.94) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.34) !important;
-}
-
-[data-theme="dark"] .sat-table th {
-  background: rgba(255, 255, 255, 0.05) !important;
-  color: rgba(255, 255, 255, 0.72) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-[data-theme="dark"] .sat-table td {
-  background: transparent !important;
-  border-color: rgba(255, 255, 255, 0.07) !important;
-}
-
-[data-theme="dark"] .sat-table tr.inactive-row td {
-  background: rgba(255, 255, 255, 0.02) !important;
-  opacity: 0.65;
 }
 
 [data-theme="dark"] .sat-table-name,

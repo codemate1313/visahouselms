@@ -80,7 +80,7 @@ export function Register() {
           </div>
 
           <form onSubmit={handleSubmit} className="concise-form">
-            <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div className="auth-name-grid">
               <div className="form-group">
                 <label htmlFor="first_name">{strings.firstNameLabel}<RequiredMark /></label>
                 <input

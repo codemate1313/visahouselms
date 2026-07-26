@@ -32,7 +32,7 @@ def _device_identifier(request: Request, response: Response, supplied: Optional[
     response.set_cookie(
         DEVICE_COOKIE,
         identifier,
-        max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
+        max_age=settings.refresh_token_expire_minutes * 60,
         httponly=True,
         secure=settings.refresh_cookie_secure,
         samesite=settings.refresh_cookie_samesite,

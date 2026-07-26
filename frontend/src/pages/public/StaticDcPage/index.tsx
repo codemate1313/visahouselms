@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthOverlay } from "./components/AuthOverlay";
 import type { AuthMode, PublicTheme } from "./types";
@@ -19,12 +19,34 @@ function getInitialPublicTheme(): PublicTheme {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+function buildPublicPageHtml(html: string, fileName: string) {
+  const baseHref = `${window.location.origin}/dc-pages/${fileName}`;
+  const parentOrigin = JSON.stringify(window.location.origin);
+  const injectedHead = `<base href="${baseHref}"><script>window.__vhParentOrigin=${parentOrigin};</script>`;
+
+  if (html.includes("<head>")) return html.replace("<head>", `<head>${injectedHead}`);
+  return `${injectedHead}${html}`;
+}
+
+function buildLoadingHtml(publicTheme: PublicTheme, title: string) {
+  const dark = publicTheme === "dark";
+  return `<!doctype html>
+<html>
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+  <body style="margin:0;min-height:100vh;display:grid;place-items:center;background:${dark ? "#0a0a0f" : "#f7f5f2"};color:${dark ? "#f5f5f7" : "#111113"};font-family:Inter,system-ui,sans-serif;">
+    <span style="font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.65;">Loading ${title}</span>
+  </body>
+</html>`;
+}
+
 export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
   const src = useMemo(() => `/dc-pages/${fileName}`, [fileName]);
   const location = useLocation();
   const navigate = useNavigate();
+  const frameRef = useRef<HTMLIFrameElement>(null);
   const [authMode, setAuthMode] = useState<AuthMode | null>(null);
   const [publicTheme, setPublicTheme] = useState<PublicTheme>(() => getInitialPublicTheme());
+  const [pageHtml, setPageHtml] = useState(() => buildLoadingHtml(getInitialPublicTheme(), title));
   const pageBackground = publicTheme === "dark" ? "#0a0a0f" : "#f7f5f2";
 
   useEffect(() => {
@@ -39,7 +61,9 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) return;
+      const isTrustedPublicPage =
+        event.origin === window.location.origin || event.source === frameRef.current?.contentWindow;
+      if (!isTrustedPublicPage) return;
       if (event.data?.type === "vh-auth") {
         const mode = event.data.mode === "login" ? "login" : "register";
         navigate(mode === "login" ? "/login" : "/register");
@@ -53,6 +77,38 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, [navigate]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPageHtml(buildLoadingHtml(publicTheme, title));
+
+    fetch(src, { credentials: "same-origin", cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Failed to load ${src}`);
+        return response.text();
+      })
+      .then((html) => {
+        if (!cancelled) setPageHtml(buildPublicPageHtml(html, fileName));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        const dark = publicTheme === "dark";
+        setPageHtml(`<!doctype html>
+<html>
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+  <body style="margin:0;min-height:100vh;display:grid;place-items:center;background:${dark ? "#0a0a0f" : "#f7f5f2"};color:${dark ? "#f5f5f7" : "#111113"};font-family:Inter,system-ui,sans-serif;">
+    <div style="text-align:center;">
+      <strong style="display:block;font-size:18px;margin-bottom:8px;">Unable to load ${title}</strong>
+      <span style="font-size:14px;opacity:.7;">Refresh the page or return home.</span>
+    </div>
+  </body>
+</html>`);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fileName, publicTheme, src, title]);
 
   useEffect(() => {
     function handleSystemThemeChange() {
@@ -91,8 +147,10 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
   return (
     <div style={{ minHeight: "100vh", background: pageBackground }}>
       <iframe
+        ref={frameRef}
+        key={fileName}
         title={title}
-        src={src}
+        srcDoc={pageHtml}
         style={{
           display: "block",
           width: "100%",
@@ -107,7 +165,7 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
         <AuthOverlay
           authMode={authMode}
           publicTheme={publicTheme}
-          onClose={() => setAuthMode(null)}
+          onClose={handleClose}
           onModeChange={setAuthMode}
         />
       )}

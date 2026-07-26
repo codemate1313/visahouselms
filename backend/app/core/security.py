@@ -76,7 +76,7 @@ def create_refresh_token(
         role,
         institute_id,
         TOKEN_TYPE_REFRESH,
-        expires_delta or timedelta(days=settings.refresh_token_expire_days),
+        expires_delta or timedelta(minutes=settings.refresh_token_expire_minutes),
         auth_method,
         session_key,
     )

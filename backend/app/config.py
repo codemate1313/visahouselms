@@ -15,13 +15,15 @@ class Settings(BaseSettings):
     jwt_secret_key: str
     app_environment: Literal["development", "test", "production"] = "development"
     jwt_algorithm: str = "HS256"
-    access_token_expire_minutes: int = 15
+    access_token_expire_minutes: int = 60
+    refresh_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
     refresh_cookie_name: str = "ielts_lms_refresh"
     refresh_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
     refresh_cookie_domain: Optional[str] = None
     frontend_url: str = "http://localhost:5173"
     cors_origins: str = "http://localhost:5173"
+    allowed_hosts: str = ""
     storage_dir: str = "../storage"
     settings_encryption_key: Optional[str] = None
     registration_rate_limit: int = 5
@@ -46,6 +48,9 @@ class Settings(BaseSettings):
         configured_origins = [origin.strip() for origin in self.cors_origins.split(",")]
         if "*" in configured_origins:
             raise ValueError("Wildcard CORS origins are not allowed with credentialed requests")
+        configured_hosts = [host.strip() for host in self.allowed_hosts.split(",") if host.strip()]
+        if self.app_environment == "production" and (not configured_hosts or "*" in configured_hosts):
+            raise ValueError("ALLOWED_HOSTS must be explicitly configured in production")
         if self.refresh_cookie_samesite == "none" and self.app_environment != "production":
             raise ValueError("SameSite=None refresh cookies are only allowed in production")
         return self
@@ -78,6 +83,15 @@ class Settings(BaseSettings):
         if self.app_environment == "production":
             return None
         return r"http://(localhost|127\.0\.0\.1)(:\d+)?"
+
+    @property
+    def allowed_host_list(self) -> list[str]:
+        hosts = [host.strip() for host in self.allowed_hosts.split(",") if host.strip()]
+        if hosts:
+            return hosts
+        if self.app_environment == "production":
+            return []
+        return ["*"]
 
 
 settings = Settings()

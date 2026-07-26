@@ -155,6 +155,12 @@
     }
     return dcNameFromPath(bootPath);
   }
+  function vhParentOrigin() {
+    const configured = window.__vhParentOrigin;
+    if (typeof configured === "string" && configured) return configured;
+    const origin = window.location && window.location.origin;
+    return origin && origin !== "null" ? origin : "*";
+  }
   function safeDecode(s) {
     try {
       return decodeURIComponent(s);
@@ -1876,12 +1882,12 @@
     let path = "";
     if (text.includes("sign up") || text.includes("register") || text.includes("create account") || text.includes("choose student")) {
       event.preventDefault();
-      window.parent.postMessage({ type: "vh-auth", mode: "register" }, window.location.origin);
+      window.parent.postMessage({ type: "vh-auth", mode: "register" }, vhParentOrigin());
       return;
     }
     if (text.includes("sign in")) {
       event.preventDefault();
-      window.parent.postMessage({ type: "vh-auth", mode: "login" }, window.location.origin);
+      window.parent.postMessage({ type: "vh-auth", mode: "login" }, vhParentOrigin());
       return;
     }
     if (text.includes("choose institute") || text.includes("choose enterprise")) path = "/contact";

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLoaderStore } from "../store/loaderStore";
 
 export function GlobalLoader() {
@@ -19,7 +20,7 @@ export function GlobalLoader() {
 
   if (!isLoading) return null;
 
-  return (
+  return createPortal(
     <div
       className={`global-3d-loader-backdrop ${isDark ? "is-dark" : "is-light"}`}
       aria-label={message}
@@ -51,6 +52,7 @@ export function GlobalLoader() {
         </div>
         <p key={message} className="simple-loader-message">{message}</p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

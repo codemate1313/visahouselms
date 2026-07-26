@@ -1,6 +1,6 @@
 export const instituteInstructorLayoutStrings = {
-  brandTitle: "IELTS LMS",
-  brandSubtitle: "Institute Instructor",
+  brandTitle: "Visa House",
+  brandSubtitle: "Instructor Portal",
   roleLabel: "Institute Instructor",
   notificationEyebrow: "Instructor updates",
   menu: {

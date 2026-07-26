@@ -1,5 +1,5 @@
 export const dashboardLayoutStrings = {
-  brandTitle: "IELTS LMS",
+  brandTitle: "Visa House",
   brandSubtitle: "Super Admin",
   notificationEyebrow: "Platform updates",
   menu: {

@@ -7,6 +7,7 @@ from cryptography.fernet import Fernet
 from starlette.datastructures import Headers
 
 from app.config import Settings
+from app.middleware.security_headers import CONTENT_SECURITY_POLICY
 from app.core.rate_limit import enforce_rate_limit, reset_rate_limits
 from app.core.uploads import read_validated_speaking_answer
 
@@ -51,6 +52,7 @@ class ProductionConfigurationTests(unittest.TestCase):
             app_environment="production",
             settings_encryption_key=Fernet.generate_key().decode("utf-8"),
             cors_origins="https://app.example.com",
+            allowed_hosts="api.example.com",
         )
         self.assertEqual(configured.cors_origin_list, ["https://app.example.com"])
         self.assertIsNone(configured.cors_origin_regex)
@@ -63,6 +65,32 @@ class ProductionConfigurationTests(unittest.TestCase):
                 jwt_secret_key="test-secret",
                 cors_origins="*",
             )
+
+    def test_production_requires_explicit_allowed_hosts(self) -> None:
+        with self.assertRaises(ValueError):
+            Settings(
+                _env_file=None,
+                database_url="sqlite://",
+                jwt_secret_key="test-secret",
+                app_environment="production",
+                settings_encryption_key=Fernet.generate_key().decode("utf-8"),
+                cors_origins="https://app.example.com",
+            )
+
+    def test_development_allows_temporary_demo_hosts(self) -> None:
+        configured = Settings(
+            _env_file=None,
+            database_url="sqlite://",
+            jwt_secret_key="test-secret",
+        )
+        self.assertEqual(configured.allowed_host_list, ["*"])
+
+
+class SecurityHeadersTests(unittest.TestCase):
+    def test_csp_blocks_inline_scripts_and_embedding(self) -> None:
+        self.assertIn("script-src 'self'", CONTENT_SECURITY_POLICY)
+        self.assertIn("object-src 'none'", CONTENT_SECURITY_POLICY)
+        self.assertIn("frame-ancestors 'none'", CONTENT_SECURITY_POLICY)
 
 
 class SpeakingUploadValidationTests(unittest.TestCase):

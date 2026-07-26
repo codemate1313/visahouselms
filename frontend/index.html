@@ -2,29 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" id="app-favicon-dark" type="image/png" href="/brand/vh-mark-dark-96.png" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" id="app-favicon-light" type="image/png" href="/brand/vh-mark-96.png" media="(prefers-color-scheme: light)" />
+    <link rel="icon" id="app-favicon-default" type="image/png" href="/brand/vh-mark-96.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IELTS LMS</title>
-    <script>
-      // Apply the stored/system theme before first paint so dark-mode users
-      // never see a white flash. Mirrors the defaults in src/store/themeStore.ts
-      // ("vh-theme" is shared with the public dc-pages).
-      (function () {
-        try {
-          var saved = window.localStorage.getItem("vh-theme");
-          var theme =
-            saved === "light" || saved === "dark"
-              ? saved
-              : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-                ? "dark"
-                : "light";
-          document.documentElement.setAttribute("data-theme", theme);
-          document.documentElement.style.colorScheme = theme;
-        } catch (e) {
-          document.documentElement.setAttribute("data-theme", "light");
-        }
-      })();
-    </script>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' blob:; connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 ws://localhost:* ws://127.0.0.1:* https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; frame-src 'self'; form-action 'self'"
+    />
+    <title>Visa House</title>
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>
