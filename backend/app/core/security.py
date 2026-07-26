@@ -11,6 +11,7 @@ from app.config import settings
 TOKEN_TYPE_ACCESS = "access"
 TOKEN_TYPE_REFRESH = "refresh"
 TOKEN_TYPE_LOGIN_OTP = "login_otp"
+TOKEN_TYPE_GOOGLE_OAUTH_STATE = "google_oauth_state"
 
 
 def hash_password(plain_password: str) -> str:
@@ -106,6 +107,31 @@ def create_login_otp_token(
             "remember_me": remember_me,
             "device_identifier": device_identifier,
             "device_name": device_name,
+        },
+    )
+
+
+def create_google_oauth_state_token(
+    role: str,
+    return_path: str,
+    remember_me: bool,
+    device_identifier: Optional[str],
+    device_name: Optional[str],
+    mode: str = "login",
+) -> str:
+    return _create_token(
+        0,
+        role,
+        None,
+        TOKEN_TYPE_GOOGLE_OAUTH_STATE,
+        timedelta(minutes=10),
+        "google_oauth",
+        extra_claims={
+            "return_path": return_path,
+            "remember_me": remember_me,
+            "device_identifier": device_identifier,
+            "device_name": device_name,
+            "mode": mode,
         },
     )
 

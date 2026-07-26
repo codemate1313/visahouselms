@@ -209,6 +209,62 @@ def get_otp_login_user(db: Session, email: str, ip_address: Optional[str]) -> Us
     return user
 
 
+def get_or_create_google_student(
+    db: Session,
+    email: str,
+    first_name: str,
+    last_name: str,
+    ip_address: Optional[str],
+) -> User:
+    normalized_email = email.strip().lower()
+    user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
+    if user is not None:
+        if not user.is_active:
+            raise INVALID_CREDENTIALS
+        if user.institute_id is not None and not user.institute.is_active:
+            db.add(
+                AuditLog(
+                    user_id=user.id,
+                    action="institute.login_blocked_suspended",
+                    entity_type="institute",
+                    entity_id=user.institute_id,
+                    ip_address=ip_address,
+                )
+            )
+            db.commit()
+            raise INVALID_CREDENTIALS
+        return user
+
+    role = db.query(Role).filter(Role.name == STUDENT).first()
+    if role is None:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="STUDENT role is not seeded")
+
+    user = User(
+        email=normalized_email,
+        password_hash=hash_password(uuid4().hex + uuid4().hex),
+        role_id=role.id,
+        institute_id=None,
+        first_name=(first_name or "Google").strip()[:100] or "Google",
+        last_name=(last_name or "Student").strip()[:100] or "Student",
+        is_active=True,
+        force_password_reset=False,
+    )
+    db.add(user)
+    db.flush()
+    db.add(
+        AuditLog(
+            user_id=user.id,
+            action="student.google_register",
+            entity_type="user",
+            entity_id=user.id,
+            ip_address=ip_address,
+        )
+    )
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def issue_login_session(
     db: Session,
     user: User,

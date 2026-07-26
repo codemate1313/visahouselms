@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiClient } from "@/api/client";
+import { API_BASE_URL, apiClient } from "@/api/client";
 import { getDeviceIdentity } from "@/auth/device";
 import { extractErrorMessage } from "@/api/errors";
 import { HeroSlider } from "@/components/auth/HeroSlider";
@@ -22,6 +22,7 @@ export function Register() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -48,6 +49,21 @@ export function Register() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleGoogleSignup() {
+    setError(null);
+    setGoogleLoading(true);
+    const device = getDeviceIdentity();
+    const params = new URLSearchParams({
+      role: "STUDENT",
+      mode: "register",
+      return_path: "/login?role=STUDENT",
+      remember_me: "true",
+      device_id: device.device_id,
+      device_name: device.device_name,
+    });
+    window.location.href = `${API_BASE_URL}/auth/google/login?${params.toString()}`;
   }
 
   return (
@@ -130,6 +146,15 @@ export function Register() {
 
             <button type="submit" className="concise-submit-btn" disabled={loading}>
               {loading ? strings.submitBusy : strings.submitLabel}
+            </button>
+            <button
+              type="button"
+              className="google-login-btn"
+              disabled={loading || googleLoading}
+              onClick={handleGoogleSignup}
+            >
+              <span className="google-mark" aria-hidden="true">G</span>
+              {googleLoading ? strings.googleSignupBusy : strings.googleSignupLabel}
             </button>
           </form>
 

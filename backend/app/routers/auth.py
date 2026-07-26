@@ -1,14 +1,23 @@
 from typing import Optional
+from urllib.parse import urlencode
 from uuid import uuid4
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+import requests
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.config import settings
 from app.core.auth_cookies import clear_refresh_cookie, get_refresh_token, set_refresh_cookie
-from app.core.security import TOKEN_TYPE_LOGIN_OTP, create_login_otp_token, decode_token
+from app.core.security import (
+    TOKEN_TYPE_GOOGLE_OAUTH_STATE,
+    TOKEN_TYPE_LOGIN_OTP,
+    create_google_oauth_state_token,
+    create_login_otp_token,
+    decode_token,
+)
 from app.core.rate_limit import enforce_rate_limit
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import (
@@ -29,10 +38,12 @@ from app.models.user import User
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 DEVICE_COOKIE = "ielts_lms_device"
+GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo"
 
 
-def _device_identifier(request: Request, response: Response, supplied: Optional[str]) -> str:
-    identifier = supplied or request.cookies.get(DEVICE_COOKIE) or uuid4().hex
+def _set_device_cookie(response: Response, identifier: str) -> None:
     response.set_cookie(
         DEVICE_COOKIE,
         identifier,
@@ -42,6 +53,11 @@ def _device_identifier(request: Request, response: Response, supplied: Optional[
         samesite=settings.refresh_cookie_samesite,
         path="/",
     )
+
+
+def _device_identifier(request: Request, response: Response, supplied: Optional[str]) -> str:
+    identifier = supplied or request.cookies.get(DEVICE_COOKIE) or uuid4().hex
+    _set_device_cookie(response, identifier)
     return identifier
 
 
@@ -69,6 +85,21 @@ def _send_login_otp(db: Session, email: str) -> bool:
         return False
 
 
+def _safe_return_path(path: Optional[str]) -> str:
+    if not path or not path.startswith("/") or path.startswith("//"):
+        return "/login"
+    return path[:500]
+
+
+def _frontend_redirect(path: str, params: dict[str, str]) -> RedirectResponse:
+    separator = "&" if "?" in path else "?"
+    return RedirectResponse(f"{settings.frontend_url.rstrip('/')}{path}{separator}{urlencode(params)}")
+
+
+def _google_redirect_uri(request: Request) -> str:
+    return settings.google_redirect_uri or str(request.url_for("google_callback"))
+
+
 def _otp_challenge_for(
     db: Session,
     user: User,
@@ -90,6 +121,139 @@ def _otp_challenge_for(
         otp_challenge_id=challenge,
         otp_delivery="email" if sent else "test",
         message="OTP sent to your registered email." if sent else "Use the fixed test OTP to continue.",
+    )
+
+
+@router.get("/google/login")
+def google_login(
+    request: Request,
+    response: Response,
+    role: str = Query(default="INSTITUTE_ADMIN", max_length=80),
+    return_path: str = Query(default="/login", max_length=500),
+    mode: str = Query(default="login", max_length=20),
+    remember_me: bool = True,
+    device_id: Optional[str] = Query(default=None, min_length=16, max_length=200),
+    device_name: Optional[str] = Query(default=None, max_length=120),
+):
+    if not settings.google_client_id or not settings.google_client_secret:
+        return _frontend_redirect(_safe_return_path(return_path), {"role": role, "google_error": "Google login is not configured"})
+
+    device_identifier = _device_identifier(request, response, device_id)
+    state = create_google_oauth_state_token(
+        role,
+        _safe_return_path(return_path),
+        remember_me,
+        device_identifier,
+        device_name,
+        "register" if mode == "register" else "login",
+    )
+    query = urlencode(
+        {
+            "client_id": settings.google_client_id,
+            "redirect_uri": _google_redirect_uri(request),
+            "response_type": "code",
+            "scope": "openid email profile",
+            "state": state,
+            "access_type": "online",
+            "prompt": "select_account",
+        }
+    )
+    redirect = RedirectResponse(f"{GOOGLE_AUTH_URL}?{query}")
+    _set_device_cookie(redirect, device_identifier)
+    return redirect
+
+
+@router.get("/google/callback", name="google_callback")
+def google_callback(
+    request: Request,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    fallback_path = "/login"
+    if error:
+        return _frontend_redirect(fallback_path, {"google_error": "Google login was cancelled"})
+    if not code or not state:
+        return _frontend_redirect(fallback_path, {"google_error": "Google login did not return a valid response"})
+
+    try:
+        state_claims = decode_token(state)
+    except jwt.PyJWTError:
+        return _frontend_redirect(fallback_path, {"google_error": "Google login session expired"})
+
+    if state_claims.get("type") != TOKEN_TYPE_GOOGLE_OAUTH_STATE:
+        return _frontend_redirect(fallback_path, {"google_error": "Google login session expired"})
+
+    return_path = _safe_return_path(state_claims.get("return_path"))
+    role = str(state_claims.get("role") or "INSTITUTE_ADMIN")
+    mode = str(state_claims.get("mode") or "login")
+    try:
+        token_response = requests.post(
+            GOOGLE_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": settings.google_client_id,
+                "client_secret": settings.google_client_secret,
+                "redirect_uri": _google_redirect_uri(request),
+                "grant_type": "authorization_code",
+            },
+            timeout=10,
+        )
+        token_response.raise_for_status()
+        access_token = token_response.json().get("access_token")
+        if not access_token:
+            raise ValueError("Google did not return an access token")
+        userinfo_response = requests.get(
+            GOOGLE_USERINFO_URL,
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10,
+        )
+        userinfo_response.raise_for_status()
+        profile = userinfo_response.json()
+    except (requests.RequestException, ValueError):
+        return _frontend_redirect(return_path, {"role": role, "google_error": "Unable to verify Google login"})
+
+    google_email = str(profile.get("email") or "").strip().lower()
+    if not google_email or profile.get("email_verified") is False:
+        return _frontend_redirect(return_path, {"role": role, "google_error": "Google email is not verified"})
+
+    try:
+        if mode == "register":
+            full_name = str(profile.get("name") or "").strip()
+            given_name = str(profile.get("given_name") or "").strip()
+            family_name = str(profile.get("family_name") or "").strip()
+            if not given_name and full_name:
+                name_parts = full_name.split(maxsplit=1)
+                given_name = name_parts[0]
+                family_name = name_parts[1] if len(name_parts) > 1 else ""
+            user = auth_service.get_or_create_google_student(
+                db,
+                google_email,
+                given_name or "Google",
+                family_name or "Student",
+                _client_ip(request),
+            )
+            role = "STUDENT"
+        else:
+            user = auth_service.get_otp_login_user(db, google_email, _client_ip(request))
+    except HTTPException:
+        return _frontend_redirect(return_path, {"role": role, "google_error": "No active LMS account matches this Google email"})
+
+    payload = GoogleOtpRequest(
+        email=google_email,
+        device_id=state_claims.get("device_identifier"),
+        device_name=state_claims.get("device_name"),
+        remember_me=bool(state_claims.get("remember_me", True)),
+    )
+    challenge = _otp_challenge_for(db, user, payload, "google_oauth")
+    return _frontend_redirect(
+        return_path,
+        {
+            "role": role,
+            "google_otp_challenge": challenge.otp_challenge_id or "",
+            "google_otp_delivery": challenge.otp_delivery or "test",
+        },
     )
 
 

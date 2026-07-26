@@ -1,8 +1,8 @@
 import { type FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import axios from "axios";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { apiClient } from "@/api/client";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { getDeviceIdentity } from "@/auth/device";
 import { HeroSlider } from "@/components/auth/HeroSlider";
@@ -33,6 +33,7 @@ export function Login({
   disableAnimation = false,
 }: LoginProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -95,6 +96,32 @@ export function Login({
       setSelectedRole(requested);
     }
   }, [searchParams, allowedRoles]);
+
+  useEffect(() => {
+    const googleError = searchParams.get("google_error");
+    if (googleError) {
+      setError(googleError);
+      showError(googleError, strings.authErrorTitle);
+      return;
+    }
+    const challenge = searchParams.get("google_otp_challenge");
+    if (challenge) {
+      setOtpChallengeId(challenge);
+      setOtpDelivery(searchParams.get("google_otp_delivery") ?? null);
+      setOtpCode("");
+      setOtpError(null);
+      showSuccess(
+        searchParams.get("google_otp_delivery") === "test" ? strings.otpTestToast : strings.otpSentToast,
+        strings.otpSentTitle,
+      );
+      const cleanedParams = new URLSearchParams(searchParams);
+      cleanedParams.delete("google_otp_challenge");
+      cleanedParams.delete("google_otp_delivery");
+      cleanedParams.delete("google_error");
+      const nextSearch = cleanedParams.toString();
+      window.history.replaceState(window.history.state, "", `${location.pathname}${nextSearch ? `?${nextSearch}` : ""}`);
+    }
+  }, [location.pathname, searchParams, showError, showSuccess]);
 
   function changePortal(role: string) {
     const option = ALL_ROLE_OPTIONS.find((item) => item.role === role);
@@ -183,27 +210,16 @@ export function Login({
 
   async function handleGoogleLogin() {
     setError(null);
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail) {
-      setError(strings.googleEmailRequired);
-      showError(strings.googleEmailRequired, strings.authErrorTitle);
-      return;
-    }
     setGoogleLoading(true);
-    try {
-      const { data: tokens } = await apiClient.post<LoginStartResponse>("/auth/google/request-otp", {
-        email: normalizedEmail,
-        remember_me: rememberMe,
-        ...getDeviceIdentity(),
-      });
-      openOtpDialog(tokens);
-    } catch (requestError: unknown) {
-      const msg = authErrorMessage(requestError);
-      setError(msg);
-      showError(msg, strings.authErrorTitle);
-    } finally {
-      setGoogleLoading(false);
-    }
+    const device = getDeviceIdentity();
+    const params = new URLSearchParams({
+      role: selectedRole,
+      return_path: `${location.pathname}${location.search}`,
+      remember_me: rememberMe ? "true" : "false",
+      device_id: device.device_id,
+      device_name: device.device_name,
+    });
+    window.location.href = `${API_BASE_URL}/auth/google/login?${params.toString()}`;
   }
 
   async function handleOtpSubmit(event: FormEvent) {

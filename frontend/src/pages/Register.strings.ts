@@ -13,6 +13,8 @@ export const registerStrings = {
   passwordPlaceholder: "Create a password",
   submitBusy: "Creating account...",
   submitLabel: "Create account →",
+  googleSignupLabel: "Sign up with Google",
+  googleSignupBusy: "Opening Google...",
   alreadyHaveAccount: "Already have an account? ",
   signInLink: "Sign in",
   welcomeToastMessage: "Your account is ready.",
