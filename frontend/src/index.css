@@ -27000,7 +27000,7 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 
 .user-rank-row {
   display: grid;
-  grid-template-columns: 80px 1.5fr 1fr 1fr 1fr;
+  grid-template-columns: 80px 1.5fr 1fr 1fr minmax(120px, 1fr);
   align-items: center;
   gap: 12px;
 }
@@ -27008,6 +27008,7 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 .user-rank-cell {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
 }
 
 .user-rank-cell span {
