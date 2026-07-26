@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from urllib.parse import urlencode
 from uuid import uuid4
 
@@ -103,7 +103,7 @@ def _google_redirect_uri(request: Request) -> str:
 def _otp_challenge_for(
     db: Session,
     user: User,
-    payload: LoginRequest | GoogleOtpRequest,
+    payload: Union[LoginRequest, GoogleOtpRequest],
     auth_method: str,
 ) -> TokenResponse:
     sent = _send_login_otp(db, user.email)
