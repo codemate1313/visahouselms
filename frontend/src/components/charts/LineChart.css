@@ -1,0 +1,23 @@
+.line-chart-container {
+  padding: 12px 0 6px;
+  overflow: hidden;
+}
+
+.line-chart-svg {
+  display: block;
+}
+
+.line-chart-tooltip {
+  animation: lineTooltipFade 0.15s ease;
+}
+
+@keyframes lineTooltipFade {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -115%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -125%);
+  }
+}

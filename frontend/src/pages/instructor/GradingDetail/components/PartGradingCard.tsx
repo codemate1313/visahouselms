@@ -44,7 +44,7 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
   const [saving, setSaving] = useState(false);
   const [requestingAi, setRequestingAi] = useState(false);
   const allScored = part.rubric.every((criterion) => marks[criterion.criterion] !== "");
-  const supportsAi = part.section_type === "writing";
+  const supportsAi = part.section_type === "writing" || part.section_type === "speaking";
 
   async function requestAiSuggestion() {
     setRequestingAi(true);

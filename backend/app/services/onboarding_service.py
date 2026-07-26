@@ -86,6 +86,7 @@ def create_draft(db: Session, actor: User, data: dict, ip: Optional[str]) -> dic
         db, actor, data["name"], data.get("contact_email"), data["admin_email"],
         data["admin_first_name"], data["admin_last_name"], data["admin_permissions"], 24, ip,
         active=False, onboarding_status="draft",
+        ai_monthly_limit=data.get("ai_monthly_limit"),
     )
     institute = institute_service.get_institute_or_404(db, created["id"])
     institute.agreement_reference = data.get("agreement_reference")
@@ -97,6 +98,8 @@ def create_draft(db: Session, actor: User, data: dict, ip: Optional[str]) -> dic
     # Negotiated institute agreements do not meter test attempts.
     institute.test_limit = None
     institute.access_duration_days = data["access_duration_days"]
+    if data.get("ai_monthly_limit") is not None:
+        institute.ai_monthly_limit = data["ai_monthly_limit"] if data["ai_monthly_limit"] > 0 else None
     admin = _admin(db, institute.id)
     admin.is_active = False
     db.add_all([institute, admin])

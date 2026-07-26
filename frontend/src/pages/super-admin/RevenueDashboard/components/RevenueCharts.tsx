@@ -1,4 +1,5 @@
 import { BarChart } from "@/components/charts/BarChart";
+import { LineChart } from "@/components/charts/LineChart";
 import { revenueDashboardStrings as strings } from "../RevenueDashboard.strings";
 import { formatCurrency } from "../helpers";
 import type { Summary } from "../types";
@@ -11,14 +12,13 @@ export function RevenueCharts({ summary }: RevenueChartsProps) {
   const t = strings.charts;
   return (
     <div className="revenue-tables-grid">
-      <BarChart
+      <LineChart
         data={summary.by_institute.map((row) => ({
           label: row.institute_name,
           value: Number(row.total) || 0,
           subtext: `${row.count} ${t.txnsSuffix}`,
         }))}
         title={t.byInstituteAriaLabel}
-        orientation="horizontal"
         formatValue={(val) => formatCurrency(String(val))}
         ariaLabel={t.byInstituteAriaLabel}
         emptyMessage={t.byInstituteEmpty}

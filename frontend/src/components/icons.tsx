@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 export type IconName =
+  | "plus"
   | "pin"
   | "dashboard"
   | "admin"
@@ -46,9 +47,16 @@ export type IconName =
   | "projects"
   | "toggleOn"
   | "toggleOff"
+  | "arrowLeft"
   | "eye";
 
 const ICON_PATHS: Record<IconName, ReactNode> = {
+  arrowLeft: (
+    <>
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </>
+  ),
   eye: (
     <>
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -369,6 +377,11 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <rect x="5" y="4" width="14" height="17" rx="2" />
       <path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
       <path d="M9 13l2 2 4-4" />
+    </>
+  ),
+  plus: (
+    <>
+      <path d="M12 5v14M5 12h14" />
     </>
   ),
 };

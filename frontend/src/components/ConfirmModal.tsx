@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { CONFIRM_DIALOG_EVENT, type ConfirmRequest, type ConfirmVariant } from "./confirmDialog";
 
 interface ConfirmModalProps {
@@ -49,7 +50,7 @@ export function ConfirmModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       className="logout-modal-backdrop"
       onClick={() => { if (!loading) onClose(); }}
@@ -98,7 +99,8 @@ export function ConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

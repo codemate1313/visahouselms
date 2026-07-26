@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { Icon } from "@/components/icons";
 import { confirmDelete } from "@/components/confirmDialog";
 import type {
   ExamModule,
@@ -295,16 +296,26 @@ export function ModuleEditor() {
 
   return (
     <div className="module-editor-page">
-      <div className="page-header module-editor-header">
-        <div>
-          <div className="module-title-line">
+      {/* Sleek Breadcrumb Navigation Bar */}
+      <div className="module-editor-breadcrumb-bar">
+        <div className="module-editor-breadcrumb-left">
+          <Link to="/super-admin/instructor/modules" className="button secondary module-back-btn">
+            <Icon name="arrowLeft" />
+            All Modules
+          </Link>
+          <div className="breadcrumb-trail">
+            <span className="breadcrumb-separator">/</span>
             <span className={`section-chip section-${module.module_type}`}>{module.module_label}</span>
-            <span className={`badge ${module.status === "published" ? "badge-green" : module.status === "archived" ? "badge-gray" : "badge-amber"}`}>{module.status}</span>
+            <span className="breadcrumb-separator">/</span>
+            <span className="breadcrumb-current-title">{module.title}</span>
           </div>
-          <h1>{module.title}</h1>
-          <p className="page-subtitle">{strings.meta(module.duration_minutes, module.part_count, module.question_count, module.blueprint_version)}</p>
         </div>
-        <Link to="/super-admin/instructor/modules">{strings.newModule.allModulesLink}</Link>
+
+        <div className="module-editor-breadcrumb-right">
+          <span className={`badge ${module.status === "published" ? "badge-green" : module.status === "archived" ? "badge-gray" : "badge-amber"}`}>
+            {module.status}
+          </span>
+        </div>
       </div>
       {error && <p className="error-text notice-line">{error}</p>}
       {notice && <p className="success-text notice-line">{notice}</p>}

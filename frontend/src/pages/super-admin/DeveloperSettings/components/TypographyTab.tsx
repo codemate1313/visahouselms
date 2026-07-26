@@ -76,69 +76,79 @@ export function TypographyTab() {
   const t = strings.typography;
 
   return (
-    <CollapsiblePanel className="form-card wide" title={t.title} description={t.description}>
-      <div style={{ marginBottom: 24 }}>
-        <label style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>{t.fontFamilyLabel}</label>
-        <SearchableSelect
-          options={FONT_FAMILY_OPTIONS}
-          value={config.fontFamily}
-          onChange={(value) => updateConfig({ fontFamily: String(value) })}
-          searchPlaceholder={t.fontFamilySearchPlaceholder}
-          className="form-dropdown-select typography-font-select"
-        />
-      </div>
+    <CollapsiblePanel className="form-card wide developer-panel-card typography-panel-card" title={t.title} description={t.description}>
+      <div className="typography-two-col-grid">
+        {/* Left Column: Font Family + Headings & Stat Weight Sliders */}
+        <div className="typography-col-left">
+          <div className="typography-font-select-wrap">
+            <label style={{ fontWeight: 700, display: "block", marginBottom: 6, fontSize: 13 }}>
+              {t.fontFamilyLabel}
+            </label>
+            <SearchableSelect
+              options={FONT_FAMILY_OPTIONS}
+              value={config.fontFamily}
+              onChange={(value) => updateConfig({ fontFamily: String(value) })}
+              searchPlaceholder={t.fontFamilySearchPlaceholder}
+              className="form-dropdown-select typography-font-select"
+            />
+          </div>
 
-      <div className="typography-slider-panel">
-        <WeightSlider
-          label={t.sliders.headings.label}
-          helper={t.sliders.headings.helper}
-          value={config.headingWeight}
-          min={400}
-          max={800}
-          onChange={(headingWeight) => updateConfig({ headingWeight })}
-        />
-        <WeightSlider
-          label={t.sliders.stat.label}
-          helper={t.sliders.stat.helper}
-          value={config.statWeight}
-          min={500}
-          max={800}
-          onChange={(statWeight) => updateConfig({ statWeight })}
-        />
-        <WeightSlider
-          label={t.sliders.body.label}
-          helper={t.sliders.body.helper}
-          value={config.bodyWeight}
-          min={300}
-          max={500}
-          onChange={(bodyWeight) => updateConfig({ bodyWeight })}
-        />
-      </div>
+          <WeightSlider
+            label={t.sliders.headings.label}
+            helper={t.sliders.headings.helper}
+            value={config.headingWeight}
+            min={400}
+            max={800}
+            onChange={(headingWeight) => updateConfig({ headingWeight })}
+          />
 
-      <div className="typography-preview">
-        <div className="typography-preview-copy">
-          <span>{t.preview.eyebrow}</span>
-          <h2>{t.preview.heading}</h2>
-          <p>{t.preview.subtitle}</p>
+          <WeightSlider
+            label={t.sliders.stat.label}
+            helper={t.sliders.stat.helper}
+            value={config.statWeight}
+            min={500}
+            max={800}
+            onChange={(statWeight) => updateConfig({ statWeight })}
+          />
         </div>
-        <div className="typography-preview-metrics">
-          <div className="typography-preview-stat">
-            <p>{t.preview.revenue}</p>
-            <strong>₹6,599</strong>
-          </div>
-          <div className="typography-preview-stat">
-            <p>{t.preview.institutes}</p>
-            <strong>24</strong>
-          </div>
-          <div className="typography-preview-stat">
-            <p>{t.preview.due}</p>
-            <strong>₹840</strong>
+
+        {/* Right Column: Body Weight Slider + Real-Time Preview */}
+        <div className="typography-col-right">
+          <WeightSlider
+            label={t.sliders.body.label}
+            helper={t.sliders.body.helper}
+            value={config.bodyWeight}
+            min={300}
+            max={500}
+            onChange={(bodyWeight) => updateConfig({ bodyWeight })}
+          />
+
+          <div className="typography-preview">
+            <div className="typography-preview-copy">
+              <span>{t.preview.eyebrow}</span>
+              <h2>{t.preview.heading}</h2>
+              <p>{t.preview.subtitle}</p>
+            </div>
+            <div className="typography-preview-metrics">
+              <div className="typography-preview-stat">
+                <p>{t.preview.revenue}</p>
+                <strong>₹6,599</strong>
+              </div>
+              <div className="typography-preview-stat">
+                <p>{t.preview.institutes}</p>
+                <strong>24</strong>
+              </div>
+              <div className="typography-preview-stat">
+                <p>{t.preview.due}</p>
+                <strong>₹840</strong>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="form-actions">
-        <button type="button" className="secondary-button" onClick={resetConfig}>
+      <div className="form-actions" style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
+        <button type="button" className="button secondary" onClick={resetConfig}>
           {t.resetLabel}
         </button>
       </div>

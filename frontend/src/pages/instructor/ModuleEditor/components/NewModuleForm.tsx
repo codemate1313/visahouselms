@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
+import { Icon } from "@/components/icons";
 import type { ExamModule, ExamModuleType, IeltsSection } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { COMPOSITE_TYPES, SOURCE_SECTIONS } from "../helpers";
@@ -48,12 +49,17 @@ export function NewModuleForm({
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>New {typeLabel}</h1>
-          <p className="page-subtitle">{t.subtitle}</p>
+      <div className="module-editor-breadcrumb-bar">
+        <div className="module-editor-breadcrumb-left">
+          <Link to="/super-admin/instructor/modules" className="button secondary module-back-btn">
+            <Icon name="arrowLeft" />
+            All Modules
+          </Link>
+          <div className="breadcrumb-trail">
+            <span className="breadcrumb-separator">/</span>
+            <span className="breadcrumb-current-title">New {typeLabel}</span>
+          </div>
         </div>
-        <Link to="/super-admin/instructor/modules">{t.allModulesLink}</Link>
       </div>
       {error && <p className="error-text notice-line">{error}</p>}
       <form className="form-card module-create-form" onSubmit={onSubmit}>

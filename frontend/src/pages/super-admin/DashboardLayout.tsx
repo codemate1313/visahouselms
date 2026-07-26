@@ -69,7 +69,6 @@ export function DashboardLayout() {
           icon: "building",
           children: [
             { key: "saas_institutes", label: m.saasInstitutes, to: "/super-admin/institutes" },
-            { key: "saas_onboarding", label: m.saasOnboarding, to: "/super-admin/onboarding" },
             { key: "saas_plans", label: m.saasPlans, to: "/super-admin/plans" },
             { key: "saas_subscriptions", label: m.saasSubscriptions, to: "/super-admin/subscriptions" },
             { key: "saas_trial", label: m.saasTrial, to: "/super-admin/trial-config" },
@@ -114,6 +113,7 @@ export function DashboardLayout() {
           icon: "settings",
           children: [
             { key: "system_dev", label: m.systemDev, to: "/super-admin/dev-settings" },
+            { key: "system_ai", label: "AI Settings", to: "/super-admin/ai-settings" },
             { key: "system_logs", label: m.systemLogs, to: "/super-admin/logs" },
             { key: "system_terminal", label: m.systemTerminal, to: "/super-admin/terminal" },
           ],

@@ -27,8 +27,8 @@ def _client_ip(request: Request) -> Optional[str]:
 
 
 @router.get("")
-def list_institutes(db: Session = Depends(get_db)):
-    return institute_service.list_institutes(db)
+def list_institutes(status: Optional[str] = None, db: Session = Depends(get_db)):
+    return institute_service.list_institutes(db, status=status)
 
 
 @router.post("", status_code=201)
@@ -38,7 +38,7 @@ def create_institute(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    return institute_service.create_institute(
+    res = institute_service.create_institute(
         db,
         actor,
         payload.name,
@@ -49,7 +49,16 @@ def create_institute(
         payload.admin_permissions.model_dump(),
         payload.session_duration_hours,
         _client_ip(request),
+        ai_monthly_limit=payload.ai_monthly_limit,
     )
+    # If extra agreement/branding attributes were provided, save them
+    if payload.agreement_reference or payload.agreed_amount or payload.module_ids or payload.primary_color:
+        temp_pwd = res.get("admin_temp_password")
+        institute_service.update_institute(db, actor, res["id"], payload.model_dump(exclude_unset=True), _client_ip(request))
+        res = institute_service.get_institute(db, res["id"])
+        if temp_pwd:
+            res["admin_temp_password"] = temp_pwd
+    return res
 
 
 @router.get("/{institute_id}")
@@ -65,14 +74,14 @@ def update_institute(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
+    data = payload.model_dump(exclude_unset=True)
+    if "admin_permissions" in data and payload.admin_permissions:
+        data["admin_permissions"] = payload.admin_permissions.model_dump()
     return institute_service.update_institute(
         db,
         actor,
         institute_id,
-        payload.name,
-        payload.contact_email,
-        payload.admin_permissions.model_dump() if payload.admin_permissions else None,
-        payload.session_duration_hours,
+        data,
         _client_ip(request),
     )
 

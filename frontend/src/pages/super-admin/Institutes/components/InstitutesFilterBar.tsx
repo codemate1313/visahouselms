@@ -70,8 +70,9 @@ export function InstitutesFilterBar({
         </button>
       </div>
 
-      <Link to="/super-admin/onboarding/new" className="button-link">
-        {strings.onboardInstitute}
+      <Link to="/super-admin/onboarding/new" className="button-link" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <Icon name="plus" />
+        <span>{strings.onboardInstitute}</span>
       </Link>
 
       <div className="filter-result-count">

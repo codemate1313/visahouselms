@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { developerSettingsStrings as strings, tabLabels, tabOrder } from "./DeveloperSettings.strings";
+import { tabLabels, tabOrder } from "./DeveloperSettings.strings";
 import type { Tab } from "./types";
 import { TypographyTab } from "./components/TypographyTab";
 import { LoginSliderTab } from "./components/LoginSliderTab";
@@ -16,7 +16,6 @@ export function DeveloperSettings() {
 
   return (
     <div>
-      <h1>{strings.pageTitle}</h1>
       <div className="tab-bar">
         {tabOrder.map((t) => (
           <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>

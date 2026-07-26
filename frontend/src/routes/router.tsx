@@ -29,14 +29,12 @@ import {
   InstituteLayout,
   InstituteMemberForm,
   InstituteMembers,
-  InstituteOnboarding,
   InstituteProfile,
   InstructorDashboard,
   InstructorForm,
   InstructorLayout,
   InstructorProfile,
   Institutes,
-  InstituteOnboardings,
   Invoice,
   Logs,
   ModuleControl,
@@ -79,6 +77,7 @@ import {
   TrialConfig,
   Users,
 } from "./lazyPages";
+import { SuperAdminAISettings } from "../pages/super-admin/SuperAdminAISettings";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { BlogsList } from "../pages/public/BlogsList";
 import { BlogDetail } from "../pages/public/BlogDetail";
@@ -123,6 +122,7 @@ export const router = createBrowserRouter([
           { path: "blogs/new", element: <SuperAdminBlogForm /> },
           { path: "blogs/:id", element: <SuperAdminBlogForm /> },
           { path: "seo-settings", element: <SuperAdminSEOSettings /> },
+          { path: "ai-settings", element: <SuperAdminAISettings /> },
           // Unified cross-role directory. The per-role create/edit forms below
           // remain the place accounts are actually managed.
           { path: "users", element: <Navigate to="/super-admin/users/super-admins" replace /> },
@@ -147,9 +147,9 @@ export const router = createBrowserRouter([
           { path: "dev-settings", element: <DeveloperSettings /> },
           { path: "logs", element: <Logs /> },
           { path: "terminal", element: <Terminal /> },
-          { path: "onboarding", element: <InstituteOnboardings /> },
-          { path: "onboarding/new", element: <InstituteOnboarding /> },
-          { path: "onboarding/:id", element: <InstituteOnboarding /> },
+          { path: "onboarding", element: <Navigate to="/super-admin/institutes" replace /> },
+          { path: "onboarding/new", element: <Navigate to="/super-admin/institutes/new" replace /> },
+          { path: "onboarding/:id", element: <Navigate to="/super-admin/institutes" replace /> },
           { path: "plans", element: <Plans /> },
           { path: "plans/new", element: <PlanForm /> },
           { path: "plans/:id", element: <PlanForm /> },

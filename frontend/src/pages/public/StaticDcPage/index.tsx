@@ -136,10 +136,12 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
   }
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("noredirect") === "1") return;
     if (!user || (!authMode && location.pathname !== "/")) return;
     const destination = destinationFor(user);
     if (destination) navigate(destination, { replace: true });
-  }, [authMode, location.pathname, navigate, user]);
+  }, [authMode, location.pathname, location.search, navigate, user]);
 
   useEffect(() => {
     if (!authMode) return undefined;

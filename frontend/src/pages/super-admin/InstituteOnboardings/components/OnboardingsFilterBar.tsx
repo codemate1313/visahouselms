@@ -40,8 +40,9 @@ export function OnboardingsFilterBar({ search, onSearchChange, statusFilter, onS
         </button>
       </div>
 
-      <Link className="button-link" to="/super-admin/onboarding/new">
-        {strings.onboardInstitute}
+      <Link className="button-link" to="/super-admin/onboarding/new" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <Icon name="plus" />
+        <span>{strings.onboardInstitute}</span>
       </Link>
     </div>
   );

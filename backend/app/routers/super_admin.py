@@ -20,7 +20,7 @@ from app.schemas.user import (
     SuperAdminAccountOut,
     SuperAdminAccountUpdate,
 )
-from app.services import account_service, super_admin_service
+from app.services import account_service, ai_evaluation_service, settings_service, super_admin_service
 
 router = APIRouter(
     prefix="/super-admin",
@@ -245,3 +245,33 @@ def revoke_my_other_sessions(
         db, actor, get_refresh_token(request, payload.refresh_token), _client_ip(request)
     )
     return {"revoked": revoked}
+
+
+@router.get("/settings/ai")
+def get_ai_settings(db: Session = Depends(get_db)):
+    return ai_evaluation_service.config_status(db)
+
+
+@router.put("/settings/ai")
+def update_ai_settings(
+    payload: dict,
+    db: Session = Depends(get_db),
+):
+    enabled = payload.get("enabled", True)
+    provider = payload.get("provider", "gemini")
+    model = payload.get("model", "gemini-1.5-flash")
+    api_key = payload.get("api_key")
+    endpoint_url = payload.get("endpoint_url")
+    monthly_limit = payload.get("monthly_limit", 100)
+
+    settings_service.set_setting(db, "ai.enabled", "true" if enabled else "false")
+    settings_service.set_setting(db, "ai.provider", str(provider))
+    settings_service.set_setting(db, "ai.model", str(model))
+    if api_key and api_key != "********":
+        settings_service.set_setting(db, "ai.api_key", str(api_key))
+    if endpoint_url is not None:
+        settings_service.set_setting(db, "ai.endpoint_url", str(endpoint_url))
+    settings_service.set_setting(db, "ai.monthly_limit", str(monthly_limit))
+
+    return ai_evaluation_service.config_status(db)
+

@@ -1,5 +1,6 @@
 import { BarChart } from "@/components/charts/BarChart";
 import { DonutChart } from "@/components/charts/DonutChart";
+import { LineChart } from "@/components/charts/LineChart";
 import { dashboardStrings as strings } from "../Dashboard.strings";
 import { PAYMENT_STATUS_COLORS, SUBSCRIPTION_STATE_COLORS, formatMoney } from "../helpers";
 import type { Summary } from "../types";
@@ -37,7 +38,7 @@ export function DashboardCharts({ summary }: DashboardChartsProps) {
 
   return (
     <div className="dashboard-charts-grid">
-      <BarChart data={institutesByRevenue} title={t.byInstituteTitle} orientation="horizontal" formatValue={formatMoney} ariaLabel={t.byInstituteAriaLabel} emptyMessage={t.revenueEmpty} />
+      <LineChart data={institutesByRevenue} title={t.byInstituteTitle} formatValue={formatMoney} ariaLabel={t.byInstituteAriaLabel} emptyMessage={t.revenueEmpty} />
 
       <BarChart data={revenueByMonth} title={t.byMonthTitle} orientation="vertical" formatValue={formatMoney} ariaLabel={t.byMonthAriaLabel} emptyMessage={t.revenueEmpty} />
 

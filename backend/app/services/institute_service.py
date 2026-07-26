@@ -3,6 +3,7 @@ import logging
 import re
 import secrets
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import List, Optional
 
 from fastapi import HTTPException, UploadFile, status
@@ -15,6 +16,7 @@ from app.core.uploads import read_validated_image
 from app.models.audit_log import AuditLog
 from app.models.base import Base
 from app.models.demo_account import DemoAccount
+from app.models.exam_module import InstituteModule
 from app.models.institute import Institute
 from app.models.institute_branding import InstituteBranding
 from app.models.payment import Payment
@@ -89,6 +91,18 @@ def get_institute_or_404(db: Session, institute_id: int) -> Institute:
 def _serialize(db: Session, institute: Institute) -> dict:
     _, sub_state = current_subscription(db, institute.id)
     branding = db.query(InstituteBranding).filter(InstituteBranding.institute_id == institute.id).first()
+    admin = db.query(User).filter(User.institute_id == institute.id).join(User.role).filter_by(name=INSTITUTE_ADMIN).first()
+    modules = (
+        db.query(InstituteModule)
+        .filter(InstituteModule.institute_id == institute.id, InstituteModule.is_active.is_(True))
+        .all()
+    )
+    payment = (
+        db.query(Payment)
+        .filter(Payment.institute_id == institute.id)
+        .order_by(Payment.id.desc())
+        .first()
+    )
     return {
         "id": institute.id,
         "name": institute.name,
@@ -97,21 +111,44 @@ def _serialize(db: Session, institute: Institute) -> dict:
         "logo_url": f"/storage/{branding.logo_path}" if branding and branding.logo_path else None,
         "admin_permissions": normalized_admin_permissions(institute.admin_permissions),
         "session_duration_hours": institute.session_duration_hours,
+        "ai_monthly_limit": institute.ai_monthly_limit,
         "is_active": institute.is_active,
         "onboarding_status": institute.onboarding_status,
         "subscription_state": sub_state,
         "created_at": institute.created_at,
+        "admin_email": admin.email if admin else None,
+        "admin_first_name": admin.first_name if admin else None,
+        "admin_last_name": admin.last_name if admin else None,
+        "agreement_reference": institute.agreement_reference,
+        "agreement_notes": institute.agreement_notes,
+        "agreed_amount": str(institute.agreed_amount) if institute.agreed_amount is not None else None,
+        "amount_received": str(payment.amount_paid) if payment and payment.amount_paid is not None else None,
+        "payment_method_id": payment.payment_method_id if payment else None,
+        "payment_reference": payment.gateway_reference if payment else None,
+        "agreement_currency": institute.agreement_currency or "INR",
+        "student_limit": institute.student_limit,
+        "staff_limit": institute.staff_limit,
+        "access_duration_days": institute.access_duration_days,
+        "module_ids": [link.module_id for link in modules],
+        "branding": {
+            "primary_color": branding.primary_color if branding else "#e53935",
+            "secondary_color": branding.secondary_color if branding else "#17191d",
+            "logo_url": f"/storage/{branding.logo_path}" if branding and branding.logo_path else None,
+        },
     }
 
 
-def list_institutes(db: Session) -> List[dict]:
-    institutes = (
-        db.query(Institute)
-        .filter(Institute.onboarding_status == "published")
-        .order_by(Institute.name)
-        .all()
-    )
-    return [_serialize(db, i) for i in institutes]
+def list_institutes(db: Session, status: Optional[str] = None) -> List[dict]:
+    query = db.query(Institute).order_by(Institute.name)
+    if status == "published":
+        query = query.filter(Institute.onboarding_status == "published")
+    elif status == "draft":
+        query = query.filter(Institute.onboarding_status == "draft")
+    elif status == "active":
+        query = query.filter(Institute.is_active.is_(True))
+    elif status == "suspended":
+        query = query.filter(Institute.is_active.is_(False))
+    return [_serialize(db, i) for i in query.all()]
 
 
 def get_institute(db: Session, institute_id: int) -> dict:
@@ -131,6 +168,7 @@ def create_institute(
     ip: Optional[str],
     active: bool = True,
     onboarding_status: str = "published",
+    ai_monthly_limit: Optional[int] = None,
 ) -> dict:
     if db.query(User).filter(User.email == admin_email).first() is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Admin email already in use")
@@ -145,6 +183,7 @@ def create_institute(
         contact_email=contact_email,
         admin_permissions=normalized_admin_permissions(admin_permissions),
         session_duration_hours=session_duration_hours,
+        ai_monthly_limit=ai_monthly_limit if ai_monthly_limit and ai_monthly_limit > 0 else None,
         is_active=active,
         onboarding_status=onboarding_status,
     )
@@ -181,22 +220,102 @@ def update_institute(
     db: Session,
     actor: User,
     institute_id: int,
-    name: Optional[str],
-    contact_email: Optional[str],
-    admin_permissions: Optional[dict],
-    session_duration_hours: Optional[int],
+    payload: dict,
     ip: Optional[str],
 ) -> dict:
     institute = get_institute_or_404(db, institute_id)
+    name = payload.get("name")
     if name is not None and name != institute.name:
         institute.name = name
         institute.slug = _unique_slug(db, name, exclude_id=institute.id)
-    if contact_email is not None:
-        institute.contact_email = contact_email
-    if admin_permissions is not None:
-        institute.admin_permissions = normalized_admin_permissions(admin_permissions)
-    if session_duration_hours is not None:
-        institute.session_duration_hours = session_duration_hours
+    if "contact_email" in payload:
+        institute.contact_email = payload["contact_email"]
+    if "admin_permissions" in payload and payload["admin_permissions"]:
+        institute.admin_permissions = normalized_admin_permissions(payload["admin_permissions"])
+    if "session_duration_hours" in payload and payload["session_duration_hours"]:
+        institute.session_duration_hours = payload["session_duration_hours"]
+    if "ai_monthly_limit" in payload:
+        limit = payload["ai_monthly_limit"]
+        institute.ai_monthly_limit = limit if limit and limit > 0 else None
+
+    # Agreement & Quota fields
+    if "agreement_reference" in payload:
+        institute.agreement_reference = payload["agreement_reference"]
+    if "agreement_notes" in payload:
+        institute.agreement_notes = payload["agreement_notes"]
+    if "agreed_amount" in payload and payload["agreed_amount"] is not None:
+        institute.agreed_amount = Decimal(str(payload["agreed_amount"]))
+    if "currency" in payload and payload["currency"]:
+        institute.agreement_currency = payload["currency"].upper()
+    if "student_limit" in payload:
+        institute.student_limit = payload["student_limit"]
+    if "staff_limit" in payload:
+        institute.staff_limit = payload["staff_limit"]
+    if "access_duration_days" in payload:
+        institute.access_duration_days = payload["access_duration_days"]
+    if "onboarding_status" in payload and payload["onboarding_status"]:
+        institute.onboarding_status = payload["onboarding_status"]
+
+    if "amount_received" in payload or "payment_method_id" in payload or "payment_reference" in payload:
+        amt_rec = payload.get("amount_received")
+        if amt_rec is not None:
+            received = Decimal(str(amt_rec))
+            agreed = Decimal(str(payload.get("agreed_amount") or institute.agreed_amount or 0))
+            st = "paid" if (agreed > 0 and received >= agreed) else ("partial" if received > 0 else "unpaid")
+            pm_id = payload.get("payment_method_id")
+            ref = payload.get("payment_reference")
+
+            payment = (
+                db.query(Payment)
+                .filter(Payment.institute_id == institute.id)
+                .order_by(Payment.id.desc())
+                .first()
+            )
+            if payment:
+                payment.amount_paid = received
+                if agreed > 0:
+                    payment.amount = agreed
+                    payment.final_amount = agreed
+                payment.status = st
+                if pm_id:
+                    payment.payment_method_id = pm_id
+                if ref:
+                    payment.gateway_reference = ref
+            else:
+                payment = Payment(
+                    source="b2b",
+                    institute_id=institute.id,
+                    amount=agreed if agreed > 0 else received,
+                    discount_amount=0,
+                    final_amount=agreed if agreed > 0 else received,
+                    amount_paid=received,
+                    currency=institute.agreement_currency or "INR",
+                    payment_method_id=pm_id,
+                    gateway="manual",
+                    gateway_reference=ref,
+                    status=st,
+                    paid_at=datetime.now(timezone.utc) if st == "paid" else None,
+                )
+                db.add(payment)
+                db.flush()
+                payment.invoice_number = f"INV-{payment.id:06d}"
+
+    # Module allocation
+    if "module_ids" in payload and payload["module_ids"] is not None:
+        db.query(InstituteModule).filter(InstituteModule.institute_id == institute.id).delete()
+        for mid in payload["module_ids"]:
+            db.add(InstituteModule(institute_id=institute.id, module_id=mid, is_active=True, assigned_by_id=actor.id))
+
+    # Branding colors
+    if "primary_color" in payload or "secondary_color" in payload:
+        branding = db.query(InstituteBranding).filter(InstituteBranding.institute_id == institute.id).first()
+        if not branding:
+            branding = InstituteBranding(institute_id=institute.id)
+            db.add(branding)
+        if "primary_color" in payload and payload["primary_color"]:
+            branding.primary_color = payload["primary_color"]
+        if "secondary_color" in payload and payload["secondary_color"]:
+            branding.secondary_color = payload["secondary_color"]
 
     db.add(institute)
     _audit(db, actor, "institute.update", institute.id, ip)

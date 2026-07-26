@@ -22,7 +22,7 @@ export function SubscriptionHistoryTable({ history, onCancel }: SubscriptionHist
               <th>{t.starts}</th>
               <th>{t.expires}</th>
               <th>{t.state}</th>
-              <th className="table-actions-heading" style={{ textAlign: "center", width: 110, minWidth: 110 }}>
+              <th className="table-actions-heading" style={{ textAlign: "right", paddingRight: 24, width: 130, minWidth: 130 }}>
                 {t.actions}
               </th>
             </tr>
@@ -38,12 +38,11 @@ export function SubscriptionHistoryTable({ history, onCancel }: SubscriptionHist
                 <td>
                   <span className={`badge ${STATE_BADGES[row.state] ?? "badge-gray"}`}>{stateLabel(row.state)}</span>
                 </td>
-                <td className="table-actions" style={{ justifyContent: "center" }}>
+                <td className="table-actions" style={{ textAlign: "right", paddingRight: 24 }}>
                   {!row.cancelled_at && (row.state === "active" || row.state === "grace") ? (
                     <button
                       type="button"
-                      className="danger-cancel-btn"
-                      style={{ padding: "5px 12px", fontSize: 12 }}
+                      className="danger-cancel-btn table-cancel-btn"
                       onClick={() => onCancel(row.id)}
                       data-tooltip={strings.cancelTooltip}
                     >

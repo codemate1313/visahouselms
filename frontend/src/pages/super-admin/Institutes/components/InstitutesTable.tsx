@@ -41,7 +41,7 @@ export function InstitutesTable({ rows, sortKey, sortDirection, onChangeSort, on
             </th>
             <th>{t.subscription}</th>
             <th>{t.status}</th>
-            <th className="table-actions-heading" style={{ textAlign: "right", paddingRight: 24 }}>
+            <th className="table-actions-heading" style={{ textAlign: "right", paddingRight: 12 }}>
               {t.actions}
             </th>
           </tr>
@@ -90,7 +90,7 @@ export function InstitutesTable({ rows, sortKey, sortDirection, onChangeSort, on
                   {row.onboarding_status === "draft" ? strings.statusFilter.draft : row.is_active ? strings.statusFilter.active : strings.statusFilter.suspended}
                 </span>
               </td>
-              <td className="table-actions institute-row-actions" style={{ paddingRight: 24 }}>
+              <td className="table-actions institute-row-actions" style={{ paddingRight: 12 }}>
                 <ToggleSwitch checked={row.is_active} onChange={() => onToggleActive(row)} tooltip={row.is_active ? t.suspendInstitute : t.reactivateInstitute} />
                 <Link className="action-btn-icon action-edit" to={`/super-admin/institutes/${row.id}`} data-tooltip={t.editInstitute}>
                   <Icon name="edit" />

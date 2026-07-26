@@ -104,11 +104,11 @@ export function UsersTable({
 
   return (
     <div className="table-wrap">
-      <table className="data-table sleek-accounts-table">
+      <table className="data-table sleek-accounts-table sleek-users-table">
         <thead>
           <tr>
             {selectable && (
-              <th className="table-select-heading">
+              <th className="table-select-heading col-checkbox">
                 <Checkbox
                   aria-label="Select all users"
                   checked={selectedIds.size === selectableRows.length}
@@ -117,12 +117,12 @@ export function UsersTable({
                 />
               </th>
             )}
-            <th>{t.name}</th>
-            <th>{t.email}</th>
-            {showInstitute && <th>{t.institute}</th>}
-            <th>{t.status}</th>
-            <th>{t.created}</th>
-            <th className="table-actions-heading">{t.actions}</th>
+            <th className="col-name">{t.name}</th>
+            <th className="col-email">{t.email}</th>
+            {showInstitute && <th className="col-institute">{t.institute}</th>}
+            <th className="col-status">{t.status}</th>
+            <th className="col-created">{t.created}</th>
+            <th className="table-actions-heading col-actions">{t.actions}</th>
           </tr>
         </thead>
         <tbody>
@@ -136,7 +136,7 @@ export function UsersTable({
           {users.map((user) => (
             <tr key={`${user.role_name}-${user.id}`}>
               {selectable && (
-                <td>
+                <td className="col-checkbox">
                   <Checkbox
                     aria-label={`Select ${user.first_name} ${user.last_name}`}
                     checked={selectedIds.has(user.id)}
@@ -145,7 +145,7 @@ export function UsersTable({
                   />
                 </td>
               )}
-              <td>
+              <td className="col-name">
                 <div className="table-item-cell">
                   <TableAvatar
                     src={user.avatar_path ? `${API_BASE_URL}/storage/${user.avatar_path}` : null}
@@ -175,9 +175,9 @@ export function UsersTable({
                   </div>
                 </div>
               </td>
-              <td>{user.email}</td>
+              <td className="col-email">{user.email}</td>
               {showInstitute && (
-                <td>
+                <td className="col-institute">
                   {user.institute_id ? (
                     <Link to={`/super-admin/institutes/${user.institute_id}`}>
                       {user.institute_name}
@@ -187,13 +187,13 @@ export function UsersTable({
                   )}
                 </td>
               )}
-              <td>
+              <td className="col-status">
                 <span className={`badge ${user.is_active ? "badge-green" : "badge-inactive"}`}>
                   {user.is_active ? b.active : b.inactive}
                 </span>
               </td>
-              <td>{new Date(user.created_at).toLocaleDateString("en-GB")}</td>
-              <td className="table-actions institute-row-actions account-row-actions">
+              <td className="col-created">{new Date(user.created_at).toLocaleDateString("en-GB")}</td>
+              <td className="table-actions institute-row-actions account-row-actions col-actions">
                 {renderActions(user)}
               </td>
             </tr>

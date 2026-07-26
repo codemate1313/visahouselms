@@ -13,16 +13,16 @@ export function OnboardingsTable({ rows, onRequestDelete }: OnboardingsTableProp
   const t = strings.table;
   return (
     <div className="table-wrap">
-      <table className="data-table sleek-institutes-table">
+      <table className="data-table sleek-onboardings-table">
         <thead>
           <tr>
-            <th>{t.institute}</th>
-            <th>{t.agreement}</th>
-            <th>{t.payment}</th>
-            <th>{t.allocation}</th>
-            <th>{t.courses}</th>
-            <th>{t.status}</th>
-            <th className="table-actions-heading" style={{ textAlign: "right", paddingRight: 24 }}>
+            <th className="col-institute">{t.institute}</th>
+            <th className="col-agreement">{t.agreement}</th>
+            <th className="col-payment">{t.payment}</th>
+            <th className="col-allocation">{t.allocation}</th>
+            <th className="col-courses">{t.courses}</th>
+            <th className="col-status">{t.status}</th>
+            <th className="table-actions-heading col-actions" style={{ textAlign: "right", paddingRight: 16 }}>
               {t.actions}
             </th>
           </tr>
@@ -37,7 +37,7 @@ export function OnboardingsTable({ rows, onRequestDelete }: OnboardingsTableProp
           ) : (
             rows.map((row) => (
               <tr key={row.id}>
-                <td>
+                <td className="col-institute">
                   <div className="table-item-cell">
                     <div className="table-avatar-tile">{row.name.charAt(0).toUpperCase()}</div>
                     <div className="table-item-details">
@@ -48,12 +48,12 @@ export function OnboardingsTable({ rows, onRequestDelete }: OnboardingsTableProp
                     </div>
                   </div>
                 </td>
-                <td>
+                <td className="col-agreement">
                   <strong style={{ fontSize: 13.5 }}>
                     {formatCurrencyAmount(row.agreed_amount || 0, row.agreement_currency)}
                   </strong>
                 </td>
-                <td>
+                <td className="col-payment">
                   <div className="table-item-details">
                     <span className="table-item-title" style={{ fontSize: 13, fontWeight: 500 }}>
                       {row.payment ? formatCurrencyAmount(row.payment.amount_paid || 0, row.agreement_currency) : t.notRecorded}
@@ -63,7 +63,7 @@ export function OnboardingsTable({ rows, onRequestDelete }: OnboardingsTableProp
                     </span>
                   </div>
                 </td>
-                <td>
+                <td className="col-allocation">
                   <div className="onboarding-allocation-cell">
                     <div className="table-item-details onboarding-allocation-pill">
                       <span className="table-item-title">
@@ -75,17 +75,17 @@ export function OnboardingsTable({ rows, onRequestDelete }: OnboardingsTableProp
                     </div>
                   </div>
                 </td>
-                <td>
+                <td className="col-courses">
                   <span className="badge badge-gray" style={{ fontWeight: 600 }}>
                     {row.course_count}
                   </span>
                 </td>
-                <td>
+                <td className="col-status">
                   <span className={`badge ${row.onboarding_status === "published" ? "badge-green" : "badge-amber"}`}>
                     {row.onboarding_status === "published" ? strings.statusFilter.published : strings.statusFilter.draft}
                   </span>
                 </td>
-                <td className="table-actions" style={{ paddingRight: 24 }}>
+                <td className="table-actions col-actions" style={{ paddingRight: 16 }}>
                   <Link
                     className="action-btn-icon action-edit"
                     to={`/super-admin/onboarding/${row.id}`}

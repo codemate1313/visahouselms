@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import gsap from "gsap";
 import { API_BASE_URL } from "../api/client";
 import { logoutAndRedirectHome } from "../auth/logout";
@@ -77,6 +77,7 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: /\/super-admin\/blogs\/.+/, eyebrow: "CMS & CONTENT", title: "Edit Article" },
   { match: "/super-admin/blogs", eyebrow: "CMS & CONTENT", title: "Educational Blogs" },
   { match: "/super-admin/seo-settings", eyebrow: "CMS & CONTENT", title: "SEO & Meta Settings" },
+  { match: "/super-admin/ai-settings", eyebrow: "SYSTEM", title: "AI Evaluation & Scoring" },
   { match: "/super-admin/onboarding/new", eyebrow: "SAAS MANAGEMENT", title: "New Institute Onboarding" },
   { match: /\/super-admin\/onboarding\/\d+/, eyebrow: "SAAS MANAGEMENT", title: "Edit Institute Onboarding" },
   { match: "/super-admin/onboarding", eyebrow: "SAAS MANAGEMENT", title: "Institute Onboarding" },
@@ -181,6 +182,172 @@ function quickLinksForRole(role: string | undefined): QuickLink[] {
   return commonSettings.map((item) => ({ ...item, path: `/student${item.path}` }));
 }
 
+export interface BreadcrumbItem {
+  label: string;
+  path?: string;
+}
+
+function getBreadcrumbs(pathname: string, eyebrow: string, title: string): BreadcrumbItem[] {
+  // Institutes sub-routes
+  if (/\b\/institutes\/\d+\/branding\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Institutes", path: "/super-admin/institutes" },
+      { label: "Institute Branding" }
+    ];
+  }
+  if (/\b\/institutes\/\d+\/accounts\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Institutes", path: "/super-admin/institutes" },
+      { label: "Institute Accounts" }
+    ];
+  }
+  if (/\b\/institutes\/\d+\/students\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Institutes", path: "/super-admin/institutes" },
+      { label: "Institute Students" }
+    ];
+  }
+  if (pathname === "/super-admin/institutes/new") {
+    return [
+      { label: eyebrow },
+      { label: "Institutes", path: "/super-admin/institutes" },
+      { label: "Create Institute" }
+    ];
+  }
+  if (/\b\/institutes\/\d+\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Institutes", path: "/super-admin/institutes" },
+      { label: "Edit Institute" }
+    ];
+  }
+
+  // Onboarding sub-routes
+  if (pathname === "/super-admin/onboarding/new") {
+    return [
+      { label: eyebrow },
+      { label: "Institute Onboarding", path: "/super-admin/onboarding" },
+      { label: "New Onboarding" }
+    ];
+  }
+  if (/\b\/onboarding\/\d+\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Institute Onboarding", path: "/super-admin/onboarding" },
+      { label: "Edit Onboarding" }
+    ];
+  }
+
+  // Direct Student Plans sub-routes
+  if (pathname === "/super-admin/plans/new") {
+    return [
+      { label: eyebrow },
+      { label: "Direct Student Plans", path: "/super-admin/plans" },
+      { label: "New Plan" }
+    ];
+  }
+  if (/\b\/plans\/\d+\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Direct Student Plans", path: "/super-admin/plans" },
+      { label: "Edit Plan" }
+    ];
+  }
+
+  // Coupons sub-routes
+  if (pathname === "/super-admin/coupons/new") {
+    return [
+      { label: eyebrow },
+      { label: "Coupons", path: "/super-admin/coupons" },
+      { label: "New Coupon" }
+    ];
+  }
+  if (/\b\/coupons\/\d+\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Coupons", path: "/super-admin/coupons" },
+      { label: "Edit Coupon" }
+    ];
+  }
+
+  // Blogs sub-routes
+  if (pathname === "/super-admin/blogs/new") {
+    return [
+      { label: eyebrow },
+      { label: "Educational Blogs", path: "/super-admin/blogs" },
+      { label: "New Article" }
+    ];
+  }
+  if (/\b\/blogs\/.+/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Educational Blogs", path: "/super-admin/blogs" },
+      { label: "Edit Article" }
+    ];
+  }
+
+  // Modules sub-routes
+  if (/\b\/modules\/\d+\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Course Control", path: "/super-admin/modules" },
+      { label: "Module Detail" }
+    ];
+  }
+
+  // Instructor sub-routes
+  if (pathname === "/super-admin/instructor/modules/new") {
+    return [
+      { label: eyebrow },
+      { label: "Module Workspace", path: "/super-admin/instructor/modules" },
+      { label: "New Module" }
+    ];
+  }
+  if (/\b\/instructor\/modules\/\d+\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Module Workspace", path: "/super-admin/instructor/modules" },
+      { label: "Edit Module" }
+    ];
+  }
+  if (/\b\/instructor\/grading\/\d+\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Grading Queue", path: "/super-admin/instructor/grading" },
+      { label: "Grading Detail" }
+    ];
+  }
+
+  // Payments sub-routes
+  if (/\b\/payments\/\d+\/invoice\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Payments", path: "/super-admin/payments" },
+      { label: "Invoice" }
+    ];
+  }
+
+  // Main dashboard pages: hide greeting title from top breadcrumbs
+  if (
+    pathname === "/super-admin/dashboard" ||
+    pathname === "/super-admin" ||
+    pathname === "/institute-portal/dashboard" ||
+    pathname === "/student/dashboard" ||
+    pathname === "/instructor-portal/dashboard"
+  ) {
+    return [{ label: eyebrow }];
+  }
+
+  // Default top-level page
+  return [
+    { label: eyebrow },
+    { label: title }
+  ];
+}
+
 export function PortalTopBar({
   fallbackRoute,
   notificationEyebrow,
@@ -197,6 +364,7 @@ export function PortalTopBar({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const pageMeta = useMemo(() => getPageMeta(location.pathname, user), [location.pathname, user]);
+  const breadcrumbs = useMemo(() => getBreadcrumbs(location.pathname, pageMeta.eyebrow, pageMeta.title), [location.pathname, pageMeta.eyebrow, pageMeta.title]);
   const resolvedAvatarUrl = avatarUrl(user?.avatar_url);
   const name = displayName(user?.first_name, user?.last_name, user?.email);
   const initials = userInitials(user?.first_name, user?.last_name, user?.email);
@@ -248,12 +416,63 @@ export function PortalTopBar({
   }
 
   const itemCount = usePageTitleStore((state) => state.itemCount);
+  const showBackButton =
+    breadcrumbs.length > 2 ||
+    location.pathname.includes("/institutes/") ||
+    location.pathname.includes("/onboarding/") ||
+    location.pathname.includes("/plans/") ||
+    location.pathname.includes("/coupons/") ||
+    location.pathname.includes("/accounts/");
 
   return (
     <header className="portal-app-bar">
       <div className="portal-app-title-group">
-        <span className="portal-app-eyebrow">{pageMeta.eyebrow}</span>
-        <div className="portal-app-heading-row">
+        <nav aria-label="Breadcrumb" className="portal-breadcrumb-nav">
+          <ol className="portal-breadcrumb-list">
+            {breadcrumbs.map((crumb, idx) => {
+              const isLast = idx === breadcrumbs.length - 1;
+              return (
+                <li key={idx} className={`portal-breadcrumb-item${isLast ? " is-active" : ""}`}>
+                  {idx > 0 && <span className="portal-breadcrumb-separator">/</span>}
+                  {crumb.path && !isLast ? (
+                    <Link to={crumb.path} className="portal-breadcrumb-link">
+                      {crumb.label}
+                    </Link>
+                  ) : (
+                    <span className="portal-breadcrumb-text">{crumb.label}</span>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+        <div className="portal-app-heading-row" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {showBackButton && (
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              style={{
+                background: "none",
+                border: "none",
+                outline: "none",
+                boxShadow: "none",
+                color: "var(--text, #0f172a)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                padding: "2px 4px",
+                marginRight: 4,
+                borderRadius: 6,
+                transition: "opacity 0.2s ease",
+              }}
+              title="Go back to previous page"
+            >
+              &larr; Back
+            </button>
+          )}
           <h2 className="portal-app-heading">{pageMeta.title}</h2>
           {itemCount !== null && (
             <span className="portal-app-count-badge">

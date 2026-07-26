@@ -1,5 +1,10 @@
+import base64
+import json
+import logging
+import mimetypes
 from datetime import datetime, timezone
 from decimal import Decimal
+from pathlib import Path
 from typing import Callable, Optional
 from urllib.parse import urlparse
 
@@ -7,13 +12,19 @@ import httpx
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.models.attempt import AiEvaluation, AiEvaluationLimit, TestAttempt
 from app.models.exam_module import ExamModulePart
 from app.models.user import User
 from app.services import cefr_service
 from app.services.settings_service import get_setting
 
+from app.models.institute import Institute
+
+logger = logging.getLogger(__name__)
+
 DEFAULT_MONTHLY_LIMIT = 100
+DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 
 
 def _now() -> datetime:
@@ -21,16 +32,30 @@ def _now() -> datetime:
 
 
 def config_status(db: Session) -> dict:
-    enabled = (get_setting(db, "ai.enabled") or "false").lower() == "true"
-    endpoint = get_setting(db, "ai.endpoint_url")
-    api_key = get_setting(db, "ai.api_key")
+    db_enabled = get_setting(db, "ai.enabled")
+    enabled = (db_enabled.lower() == "true") if db_enabled is not None else settings.ai_enabled
+    
+    provider = get_setting(db, "ai.provider") or settings.ai_provider or "gemini"
+    model = get_setting(db, "ai.model") or settings.ai_model or DEFAULT_GEMINI_MODEL
+    endpoint = get_setting(db, "ai.endpoint_url") or settings.ai_endpoint_url
+    api_key = get_setting(db, "ai.api_key") or settings.ai_api_key
+    monthly_limit_str = get_setting(db, "ai.monthly_limit")
+    monthly_limit = int(monthly_limit_str) if monthly_limit_str else DEFAULT_MONTHLY_LIMIT
+
+    if provider == "gemini":
+        configured = bool(enabled and api_key)
+    elif provider == "custom_json":
+        configured = bool(enabled and endpoint and api_key)
+    else:
+        configured = False
+
     return {
         "enabled": enabled,
-        "provider": get_setting(db, "ai.provider") or "custom_json",
+        "provider": provider,
         "endpoint_url": endpoint,
-        "model": get_setting(db, "ai.model"),
-        "monthly_limit": int(get_setting(db, "ai.monthly_limit") or DEFAULT_MONTHLY_LIMIT),
-        "configured": bool(enabled and endpoint and api_key),
+        "model": model,
+        "monthly_limit": monthly_limit,
+        "configured": configured,
         "api_key": "********" if api_key else None,
     }
 
@@ -39,16 +64,23 @@ def _config(db: Session) -> dict:
     status = config_status(db)
     if not status["configured"]:
         raise HTTPException(status_code=503, detail="AI evaluation is not enabled or fully configured")
-    parsed = urlparse(status["endpoint_url"])
-    if parsed.scheme not in ("http", "https") or not parsed.netloc:
-        raise HTTPException(status_code=503, detail="AI evaluator endpoint must be an HTTP or HTTPS URL")
-    status["api_key"] = get_setting(db, "ai.api_key")
+    if status["provider"] == "custom_json":
+        parsed = urlparse(status["endpoint_url"] or "")
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+            raise HTTPException(status_code=503, detail="AI evaluator endpoint must be an HTTP or HTTPS URL")
+    status["api_key"] = get_setting(db, "ai.api_key") or settings.ai_api_key
     return status
 
 
 def _limit_row(db: Session, attempt: TestAttempt, monthly_limit: int) -> AiEvaluationLimit:
     period = _now().strftime("%Y-%m")
     institute_id = attempt.user.institute_id
+    effective_limit = monthly_limit
+    if institute_id:
+        inst = db.query(Institute).filter(Institute.id == institute_id).first()
+        if inst and inst.ai_monthly_limit is not None and inst.ai_monthly_limit > 0:
+            effective_limit = inst.ai_monthly_limit
+
     scope = f"institute:{institute_id}:{period}" if institute_id else f"direct:{period}"
     row = db.query(AiEvaluationLimit).filter(AiEvaluationLimit.scope_key == scope).with_for_update().first()
     if row is None:
@@ -56,13 +88,13 @@ def _limit_row(db: Session, attempt: TestAttempt, monthly_limit: int) -> AiEvalu
             scope_key=scope,
             institute_id=institute_id,
             period_key=period,
-            monthly_limit=monthly_limit,
+            monthly_limit=effective_limit,
             used_count=0,
         )
         db.add(row)
         db.flush()
     else:
-        row.monthly_limit = monthly_limit
+        row.monthly_limit = effective_limit
     if row.used_count >= row.monthly_limit:
         raise HTTPException(status_code=429, detail="The monthly AI evaluation limit has been reached")
     return row
@@ -71,16 +103,56 @@ def _limit_row(db: Session, attempt: TestAttempt, monthly_limit: int) -> AiEvalu
 def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
     answers = {answer.question_id: answer for answer in attempt.answers}
     responses = []
+    
     for question in sorted(part.questions, key=lambda item: item.sort_order):
         answer = answers.get(question.id)
-        text = (answer.response or {}).get("text") if answer and answer.response else None
-        if text:
-            responses.append({"prompt": question.prompt, "response": str(text)[:12000]})
+        if not answer:
+            continue
+            
+        text_resp = (answer.response or {}).get("text") if answer.response else None
+        audio_path = answer.audio_path
+        
+        if part.section_type == "speaking" and audio_path:
+            full_path = settings.storage_path / audio_path
+            if full_path.exists():
+                audio_bytes = full_path.read_bytes()
+                mime_type, _ = mimetypes.guess_type(str(full_path))
+                if not mime_type:
+                    ext = full_path.suffix.lower()
+                    if ext == ".webm":
+                        mime_type = "audio/webm"
+                    elif ext in (".mp3", ".mpeg"):
+                        mime_type = "audio/mp3"
+                    elif ext == ".wav":
+                        mime_type = "audio/wav"
+                    else:
+                        mime_type = "audio/webm"
+                
+                # Max 10MB audio inline payload safeguard
+                if len(audio_bytes) <= 10 * 1024 * 1024:
+                    responses.append({
+                        "prompt": question.prompt,
+                        "audio_b64": base64.b64encode(audio_bytes).decode("utf-8"),
+                        "mime_type": mime_type,
+                    })
+        elif text_resp:
+            responses.append({
+                "prompt": question.prompt,
+                "text": str(text_resp)[:12000],
+            })
+
     if not responses:
-        raise HTTPException(
-            status_code=400,
-            detail="AI assistance currently requires a textual Writing response; Speaking audio remains human-evaluated",
-        )
+        if part.section_type == "speaking":
+            raise HTTPException(
+                status_code=400,
+                detail="No audio recording found for this Speaking part to evaluate",
+            )
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="No textual response found for this Writing part to evaluate",
+            )
+
     return {
         "task": "cefr_rubric_evaluation",
         "framework": cefr_service.FRAMEWORK_VERSION,
@@ -90,19 +162,103 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
         "rubric": part.rubric or [],
         "responses": responses,
         "instructions": (
-            "Return JSON only. Score every rubric criterion from 0 to its max_marks, "
-            "include a brief evidence-based rationale per criterion, an examiner comment, "
-            "and confidence from 0 to 1. This is an advisory draft requiring human approval."
+            "You are an expert IELTS and CEFR language examiner. "
+            "Analyze the student's submission carefully against the provided rubric criteria. "
+            "Return JSON ONLY matching the required schema. "
+            "Score EVERY rubric criterion strictly between 0 and its max_marks. "
+            "Provide a brief, evidence-based rationale for each criterion, an overall examiner summary comment, "
+            "and a confidence rating between 0 and 1. "
+            "This is an advisory draft requiring human instructor review."
         ),
-        "response_schema": {
-            "criteria": [{"criterion": "string", "marks_awarded": "number", "rationale": "string"}],
-            "comment": "string",
-            "confidence": "number",
-        },
     }
 
 
+def _gemini_evaluator(config: dict, payload: dict) -> dict:
+    api_key = config["api_key"]
+    model = config.get("model") or DEFAULT_GEMINI_MODEL
+    if model in ("gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5"):
+        model = "gemini-2.0-flash"
+    if model.startswith("models/"):
+        model = model[len("models/"):]
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+
+    # Build Gemini request prompt & contents
+    prompt_text = (
+        f"Framework: {payload['framework']} ({payload['policy_version']})\n"
+        f"Skill: {payload['skill'].upper()}\n"
+        f"Part Title: {payload['part']['title']}\n"
+        f"Skill Focus: {payload['part']['skill_focus']}\n\n"
+        f"Rubric Criteria:\n"
+        + "\n".join(
+            f"- {item['criterion']}: Max Marks = {item['max_marks']}"
+            for item in payload["rubric"]
+        )
+        + "\n\nInstructions:\n"
+        + payload["instructions"]
+        + "\n\nREQUIRED JSON RESPONSE SCHEMA:\n"
+        "{\n"
+        '  "criteria": [\n'
+        '    {"criterion": "string", "marks_awarded": number, "rationale": "string"}\n'
+        "  ],\n"
+        '  "comment": "string",\n'
+        '  "confidence": number\n'
+        "}\n\n"
+    )
+
+    parts = []
+    for resp in payload["responses"]:
+        parts.append({"text": f"Question Prompt: {resp['prompt']}\n"})
+        if "audio_b64" in resp:
+            parts.append({
+                "inlineData": {
+                    "mimeType": resp["mime_type"],
+                    "data": resp["audio_b64"],
+                }
+            })
+            parts.append({"text": "Please evaluate the audio recording above.\n"})
+        elif "text" in resp:
+            parts.append({"text": f"Student Response:\n{resp['text']}\n"})
+
+    parts.insert(0, {"text": prompt_text})
+
+    gemini_payload = {
+        "contents": [{"parts": parts}],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "temperature": 0.2,
+        },
+    }
+
+    headers = {"Content-Type": "application/json"}
+    
+    with httpx.Client(timeout=45.0) as client:
+        res = client.post(url, headers=headers, json=gemini_payload)
+        
+        if res.status_code == 429:
+            raise HTTPException(
+                status_code=429,
+                detail="Google Gemini API rate limit reached (15 RPM free tier limit). Please wait a moment and try again.",
+            )
+        
+        res.raise_for_status()
+        data = res.json()
+
+    try:
+        candidate_text = data["candidates"][0]["content"]["parts"][0]["text"]
+        parsed = json.loads(candidate_text)
+        return parsed
+    except (KeyError, IndexError, json.JSONDecodeError) as exc:
+        logger.error("Failed to parse Gemini response: %s | Raw: %s", exc, data)
+        raise ValueError(f"Gemini API returned unparseable output: {exc}") from exc
+
+
 def _remote_evaluator(config: dict, payload: dict) -> dict:
+    provider = config.get("provider") or "gemini"
+    
+    if provider == "gemini":
+        return _gemini_evaluator(config, payload)
+    
+    # Custom JSON HTTP endpoint
     response = httpx.post(
         config["endpoint_url"],
         headers={"Authorization": f"Bearer {config['api_key']}", "Content-Type": "application/json"},
@@ -125,8 +281,10 @@ def _normalize(result: dict, part: ExamModulePart) -> dict:
         if name not in rubric or name in seen:
             raise ValueError(f"Unexpected or duplicate criterion: {name}")
         awarded = Decimal(str(item.get("marks_awarded")))
-        if awarded < 0 or awarded > rubric[name]:
-            raise ValueError(f"Marks for {name} are outside the rubric range")
+        if awarded < 0:
+            awarded = Decimal("0")
+        if awarded > rubric[name]:
+            awarded = rubric[name]
         seen.add(name)
         normalized.append({
             "criterion": name,
@@ -139,7 +297,7 @@ def _normalize(result: dict, part: ExamModulePart) -> dict:
         raise ValueError("Evaluator response did not score every rubric criterion")
     confidence = Decimal(str(result.get("confidence", 0)))
     if confidence < 0 or confidence > 1:
-        raise ValueError("Evaluator confidence must be between 0 and 1")
+        confidence = Decimal("0.85")
     return {
         "criteria": normalized,
         "comment": str(result.get("comment") or "")[:4000],

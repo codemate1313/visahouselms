@@ -9,7 +9,11 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore", protected_namespaces=("model_",))
+    model_config = SettingsConfigDict(
+        env_file=(str(BACKEND_DIR / ".env"), ".env"),
+        extra="ignore",
+        protected_namespaces=("model_",),
+    )
 
     database_url: str
     jwt_secret_key: str
@@ -39,6 +43,13 @@ class Settings(BaseSettings):
     otp_rate_window_seconds: int = 900
     password_reset_rate_limit: int = 5
     password_reset_rate_window_seconds: int = 3600
+
+    ai_enabled: bool = True
+    ai_provider: str = "gemini"
+    ai_model: str = "gemini-1.5-flash"
+    ai_api_key: Optional[str] = None
+    ai_endpoint_url: Optional[str] = None
+
     # Local-only convenience: fixes the login OTP to a known value. Rejected
     # outright in production by validate_production_secrets below.
     dev_static_otp_code: Optional[str] = None
