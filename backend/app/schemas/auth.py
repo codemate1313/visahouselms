@@ -10,6 +10,7 @@ class LoginRequest(BaseModel):
     password: str
     device_id: Optional[str] = Field(default=None, min_length=16, max_length=200)
     device_name: Optional[str] = Field(default=None, max_length=120)
+    remember_me: bool = True
 
 
 class RegisterRequest(BaseModel):

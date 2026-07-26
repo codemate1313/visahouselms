@@ -19,17 +19,19 @@ def get_refresh_token(request: Request, supplied: Optional[str] = None) -> str:
     return token
 
 
-def set_refresh_cookie(response: Response, refresh_token: str) -> None:
-    response.set_cookie(
-        settings.refresh_cookie_name,
-        refresh_token,
-        max_age=settings.refresh_token_expire_minutes * 60,
-        httponly=True,
-        secure=settings.refresh_cookie_secure,
-        samesite=settings.refresh_cookie_samesite,
-        domain=settings.refresh_cookie_domain,
-        path="/",
-    )
+def set_refresh_cookie(response: Response, refresh_token: str, *, persistent: bool = True) -> None:
+    cookie_options = {
+        "key": settings.refresh_cookie_name,
+        "value": refresh_token,
+        "httponly": True,
+        "secure": settings.refresh_cookie_secure,
+        "samesite": settings.refresh_cookie_samesite,
+        "domain": settings.refresh_cookie_domain,
+        "path": "/",
+    }
+    if persistent:
+        cookie_options["max_age"] = settings.refresh_token_expire_days * 24 * 60 * 60
+    response.set_cookie(**cookie_options)
 
 
 def clear_refresh_cookie(response: Response) -> None:

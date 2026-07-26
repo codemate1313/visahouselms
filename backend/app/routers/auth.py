@@ -53,7 +53,7 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
         device_identifier,
         payload.device_name,
     )
-    set_refresh_cookie(response, refresh_token)
+    set_refresh_cookie(response, refresh_token, persistent=payload.remember_me)
     return TokenResponse(access_token=access_token)
 
 

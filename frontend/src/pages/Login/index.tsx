@@ -102,6 +102,7 @@ export function Login({
       const { data: tokens } = await apiClient.post("/auth/login", {
         email: email.trim().toLowerCase(),
         password,
+        remember_me: rememberMe,
         ...getDeviceIdentity(),
       });
       const { data: user } = await apiClient.get("/auth/me", {

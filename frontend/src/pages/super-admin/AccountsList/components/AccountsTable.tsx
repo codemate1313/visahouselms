@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
@@ -28,7 +28,81 @@ export function AccountsTable({
   onRequestDelete,
 }: AccountsTableProps) {
   const t = strings.table;
+  const navigate = useNavigate();
   const selectableAccounts = accounts.filter((account) => !account.is_owner);
+
+  function accountDisplayName(account: SuperAdminAccount) {
+    return `${account.first_name} ${account.last_name}`.trim() || account.email;
+  }
+
+  function handleMobileAction(action: string, account: SuperAdminAccount) {
+    if (action === "toggle") {
+      onToggleActive(account);
+    } else if (action === "edit") {
+      navigate(`/super-admin/accounts/${account.id}`);
+    } else if (action === "reset") {
+      onForceReset(account);
+    } else if (action === "delete") {
+      onRequestDelete(account);
+    }
+  }
+
+  function renderAccountActions(account: SuperAdminAccount) {
+    if (account.is_owner) return <span className="badge badge-gray">Protected</span>;
+
+    return (
+      <>
+        <div className="row-actions-inline">
+          <ToggleSwitch
+            checked={account.is_active}
+            onChange={() => onToggleActive(account)}
+            tooltip={account.is_active ? t.deactivate : t.reactivate}
+          />
+          <Link className="action-btn-icon action-edit" to={`/super-admin/accounts/${account.id}`} data-tooltip={t.edit}>
+            <Icon name="edit" />
+          </Link>
+          <button
+            type="button"
+            className="action-btn-icon action-branding"
+            onClick={() => onForceReset(account)}
+            data-tooltip={account.force_password_reset ? t.clearPasswordReset : t.requirePasswordReset}
+          >
+            <Icon name="lock" />
+          </button>
+          <button
+            type="button"
+            className="action-btn-icon danger action-delete"
+            onClick={() => onRequestDelete(account)}
+            data-tooltip={t.delete}
+          >
+            <Icon name="trash" />
+          </button>
+        </div>
+
+        <div className="row-actions-dropdown">
+          <select
+            className="row-actions-select"
+            defaultValue=""
+            aria-label={`Actions for ${accountDisplayName(account)}`}
+            onChange={(event) => {
+              handleMobileAction(event.currentTarget.value, account);
+              event.currentTarget.value = "";
+            }}
+          >
+            <option value="" disabled>
+              Actions
+            </option>
+            <option value="toggle">{account.is_active ? t.deactivate : t.reactivate}</option>
+            <option value="edit">{t.edit}</option>
+            <option value="reset">{account.force_password_reset ? t.clearPasswordReset : t.requirePasswordReset}</option>
+            <option value="delete">{t.delete}</option>
+          </select>
+          <Icon name="chevronDown" className="row-actions-select-chevron" />
+        </div>
+      </>
+    );
+  }
+
   return (
     <div className="table-wrap">
       <table className="data-table sleek-accounts-table">
@@ -113,37 +187,8 @@ export function AccountsTable({
                 </span>
               </td>
               <td>{new Date(account.created_at).toLocaleDateString("en-GB")}</td>
-              <td className="table-actions institute-row-actions">
-                {account.is_owner ? (
-                  <span className="badge badge-gray">Protected</span>
-                ) : (
-                  <>
-                    <ToggleSwitch
-                      checked={account.is_active}
-                      onChange={() => onToggleActive(account)}
-                      tooltip={account.is_active ? t.deactivate : t.reactivate}
-                    />
-                    <Link className="action-btn-icon action-edit" to={`/super-admin/accounts/${account.id}`} data-tooltip={t.edit}>
-                      <Icon name="edit" />
-                    </Link>
-                    <button
-                      type="button"
-                      className="action-btn-icon action-branding"
-                      onClick={() => onForceReset(account)}
-                      data-tooltip={account.force_password_reset ? t.clearPasswordReset : t.requirePasswordReset}
-                    >
-                      <Icon name="lock" />
-                    </button>
-                    <button
-                      type="button"
-                      className="action-btn-icon danger action-delete"
-                      onClick={() => onRequestDelete(account)}
-                      data-tooltip={t.delete}
-                    >
-                      <Icon name="trash" />
-                    </button>
-                  </>
-                )}
+              <td className="table-actions institute-row-actions account-row-actions">
+                {renderAccountActions(account)}
               </td>
             </tr>
           ))}

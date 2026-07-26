@@ -3670,6 +3670,14 @@ button[aria-label*="Close" i] {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
+.login-modal-close-btn:disabled,
+button[aria-label*="close" i]:disabled,
+button[aria-label*="Close" i]:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.35 !important;
+  pointer-events: none !important;
+}
+
 .login-modal-close-btn:hover:not(:disabled),
 .modal-close:hover:not(:disabled),
 .modal-close-btn:hover:not(:disabled),
@@ -12198,6 +12206,8 @@ button.danger-text {
   position: relative !important;
   z-index: 2 !important;
   transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), color 180ms ease !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
 }
 
 .huge-sidebar .sidebar-item-link:active,
@@ -12226,6 +12236,16 @@ button.danger-text {
 .super-admin-portal .huge-sidebar .sidebar-item-btn.is-active:hover .sidebar-icon,
 .super-admin-portal .huge-sidebar .sidebar-item-link.is-active:hover .sidebar-accordion-arrow,
 .super-admin-portal .huge-sidebar .sidebar-item-btn.is-active:hover .sidebar-accordion-arrow {
+  color: var(--sa-sidebar-red, #b91c2b) !important;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-item-link.is-active::selection,
+.super-admin-portal .huge-sidebar .sidebar-item-link.is-active *::selection,
+.super-admin-portal .huge-sidebar .sidebar-item-btn.is-active::selection,
+.super-admin-portal .huge-sidebar .sidebar-item-btn.is-active *::selection,
+.super-admin-portal .huge-sidebar .sidebar-subitem-link.is-sub-active::selection,
+.super-admin-portal .huge-sidebar .sidebar-subitem-link.is-sub-active *::selection {
+  background: transparent !important;
   color: var(--sa-sidebar-red, #b91c2b) !important;
 }
 
@@ -20127,6 +20147,7 @@ th[aria-sort="descending"] .table-sort-button::after {
   flex-direction: column !important;
   gap: 2px !important;
   min-width: 0 !important;
+  flex: 1 1 auto !important;
 }
 
 .portal-app-eyebrow {
@@ -20142,9 +20163,13 @@ th[aria-sort="descending"] .table-sort-button::after {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
 }
 
 .portal-app-heading {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
   font-size: 18px !important;
   font-weight: 800 !important;
   color: var(--text) !important;
@@ -20207,6 +20232,8 @@ th[aria-sort="descending"] .table-sort-button::after {
   justify-content: flex-end !important;
   gap: 16px !important;
   margin-left: auto !important;
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
 }
 
 .portal-app-divider {
@@ -20295,6 +20322,7 @@ th[aria-sort="descending"] .table-sort-button::after {
 .portal-user-menu {
   position: relative !important;
   display: inline-block !important;
+  flex: 0 0 auto !important;
 }
 
 .portal-user-dropdown {
@@ -20388,6 +20416,56 @@ th[aria-sort="descending"] .table-sort-button::after {
   color: var(--primary) !important;
   font-size: 15px !important;
   font-weight: 700 !important;
+}
+
+.row-actions-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.row-actions-dropdown {
+  position: relative;
+  display: none;
+  min-width: 132px;
+}
+
+.row-actions-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-height: 42px;
+  padding: 0 38px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1;
+  outline: none;
+  box-shadow: none;
+}
+
+.row-actions-select:focus-visible {
+  border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.row-actions-select-chevron {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+[data-theme="dark"] .row-actions-select {
+  background: color-mix(in srgb, var(--surface-muted) 92%, #ffffff 8%);
 }
 
 .student-notification-shell {
@@ -25031,17 +25109,6 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
     color: var(--text-primary, #f8fafc);
   }
 
-  .portal-app-bar {
-    padding-left: 70px !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 12px !important;
-  }
-
-  .portal-app-actions {
-    justify-content: flex-end !important;
-  }
-
   /* Make form and card grids collapse into single column on mobile */
   .dashboard-content form,
   .dashboard-content .form-panel,
@@ -25104,38 +25171,86 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
     max-width: 100% !important;
   }
 
-  /* Make top bar NOT wrap on mobile, maintaining separate left title & right actions */
+  /* Keep the portal top bar compact and non-overlapping on mobile. */
   .portal-app-bar {
     padding-left: 70px !important;
-    padding-right: 16px !important;
+    padding-right: 12px !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
     justify-content: space-between !important;
-    gap: 12px !important;
-    min-height: 70px !important;
+    gap: 8px !important;
+    min-height: 64px !important;
     padding-top: 10px !important;
     padding-bottom: 10px !important;
+    overflow: visible !important;
   }
 
   .portal-app-title-group {
     flex: 1 1 auto !important;
     min-width: 0 !important;
+    max-width: calc(100% - 148px) !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-start !important;
     justify-content: center !important;
   }
 
+  .portal-app-eyebrow {
+    max-width: 100% !important;
+    font-size: 10px !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .portal-app-heading-row {
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 6px !important;
+  }
+
+  .portal-app-heading {
+    max-width: 100% !important;
+    font-size: clamp(18px, 5vw, 24px) !important;
+    line-height: 1.12 !important;
+  }
+
+  .portal-app-count-badge {
+    display: none !important;
+  }
+
   .portal-app-actions {
     flex: 0 0 auto !important;
     width: auto !important;
+    max-width: 140px !important;
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
     justify-content: flex-end !important;
-    gap: 8px !important;
+    gap: 6px !important;
     margin-top: 0 !important;
+    margin-left: 0 !important;
+    min-width: 0 !important;
+  }
+
+  .portal-topbar-theme-toggle,
+  .student-notification-bell,
+  .portal-user-chip {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+
+  .student-notification-shell {
+    min-height: 40px !important;
+  }
+
+  .portal-user-avatar {
+    width: 40px !important;
+    height: 40px !important;
   }
 
   .dash-controls-wrapper {
@@ -25166,8 +25281,8 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
       background: transparent !important;
       box-shadow: none !important;
       border-radius: 50% !important;
-      width: 38px !important;
-      height: 38px !important;
+      width: 40px !important;
+      height: 40px !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
@@ -25175,8 +25290,8 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
     }
 
     .portal-user-avatar {
-      width: 38px !important;
-      height: 38px !important;
+      width: 40px !important;
+      height: 40px !important;
       border-radius: 50% !important;
       border: 1.5px solid var(--border, rgba(0, 0, 0, 0.1)) !important;
       object-fit: cover !important;
@@ -25202,9 +25317,27 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   .dashboard-content .sleek-table,
   .dashboard-content .data-table,
   .dashboard-content table {
-    min-width: 950px !important;
-    width: 950px !important;
+    min-width: 760px !important;
+    width: 760px !important;
     table-layout: auto !important;
+  }
+
+  .dashboard-content .sleek-accounts-table {
+    min-width: 700px !important;
+    width: 700px !important;
+    table-layout: fixed !important;
+  }
+
+  .dashboard-content .account-row-actions .row-actions-inline {
+    display: none !important;
+  }
+
+  .dashboard-content .account-row-actions .row-actions-dropdown {
+    display: inline-block !important;
+  }
+
+  .dashboard-content .account-row-actions {
+    overflow: visible !important;
   }
 
   /* Export Button Group formatting on mobile */
@@ -25267,6 +25400,42 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
     stroke-width: 2.8px !important;
     display: block !important;
     margin: 0 !important;
+  }
+
+  @media (max-width: 430px) {
+    .portal-app-bar {
+      padding-left: 64px !important;
+      padding-right: 10px !important;
+      gap: 6px !important;
+    }
+
+    .portal-app-title-group {
+      max-width: calc(100% - 134px) !important;
+    }
+
+    .portal-app-eyebrow {
+      font-size: 9px !important;
+      letter-spacing: 0.06em !important;
+    }
+
+    .portal-app-heading {
+      font-size: clamp(17px, 5.8vw, 22px) !important;
+    }
+
+    .portal-app-actions {
+      max-width: 128px !important;
+      gap: 4px !important;
+    }
+
+    .portal-topbar-theme-toggle,
+    .student-notification-bell,
+    .portal-user-chip,
+    .portal-user-avatar {
+      width: 38px !important;
+      height: 38px !important;
+      min-width: 38px !important;
+      min-height: 38px !important;
+    }
   }
 
   /* Toolbars wrapping */

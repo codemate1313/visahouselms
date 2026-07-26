@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useLoaderStore } from "@/store/loaderStore";
+import { useAuthStore } from "@/store/authStore";
+import { destinationFor } from "@/pages/Login/helpers";
 import { AuthOverlay } from "./components/AuthOverlay";
 import type { AuthMode, PublicTheme } from "./types";
 
@@ -47,6 +50,8 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
   const [authMode, setAuthMode] = useState<AuthMode | null>(null);
   const [publicTheme, setPublicTheme] = useState<PublicTheme>(() => getInitialPublicTheme());
   const [pageHtml, setPageHtml] = useState(() => buildLoadingHtml(getInitialPublicTheme(), title));
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useLoaderStore((state) => state.isLoading);
   const pageBackground = publicTheme === "dark" ? "#0a0a0f" : "#f7f5f2";
 
   useEffect(() => {
@@ -126,14 +131,21 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
   }, []);
 
   function handleClose() {
+    if (user) return;
     navigate("/", { replace: true });
   }
+
+  useEffect(() => {
+    if (!user || (!authMode && location.pathname !== "/")) return;
+    const destination = destinationFor(user);
+    if (destination) navigate(destination, { replace: true });
+  }, [authMode, location.pathname, navigate, user]);
 
   useEffect(() => {
     if (!authMode) return undefined;
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") handleClose();
+      if (event.key === "Escape" && !isLoading && !user) handleClose();
     }
 
     document.body.style.overflow = "hidden";
@@ -142,7 +154,7 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [authMode]);
+  }, [authMode, isLoading, navigate, user]);
 
   return (
     <div style={{ minHeight: "100vh", background: pageBackground }}>
@@ -167,6 +179,7 @@ export function StaticDcPage({ fileName, title }: StaticDcPageProps) {
           publicTheme={publicTheme}
           onClose={handleClose}
           onModeChange={setAuthMode}
+          closeDisabled={Boolean(user) || isLoading}
         />
       )}
     </div>

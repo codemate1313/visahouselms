@@ -9,9 +9,15 @@ interface AuthOverlayProps {
   publicTheme: PublicTheme;
   onClose: () => void;
   onModeChange: (mode: AuthMode) => void;
+  closeDisabled?: boolean;
 }
 
-export function AuthOverlay({ authMode, publicTheme, onClose, onModeChange }: AuthOverlayProps) {
+export function AuthOverlay({ authMode, publicTheme, onClose, onModeChange, closeDisabled = false }: AuthOverlayProps) {
+  function handleClose() {
+    if (closeDisabled) return;
+    onClose();
+  }
+
   function handleModalClick(event: MouseEvent<HTMLDivElement>) {
     const target = event.target;
     if (!(target instanceof Element)) return;
@@ -30,7 +36,7 @@ export function AuthOverlay({ authMode, publicTheme, onClose, onModeChange }: Au
   return (
     <div
       className={`login-modal-overlay static-auth-modal static-auth-modal-${publicTheme}`}
-      onClick={onClose}
+      onClick={handleClose}
       role="dialog"
       aria-modal="true"
     >
@@ -44,7 +50,8 @@ export function AuthOverlay({ authMode, publicTheme, onClose, onModeChange }: Au
         <button
           type="button"
           className="login-modal-close-btn"
-          onClick={onClose}
+          onClick={handleClose}
+          disabled={closeDisabled}
           aria-label={strings.authOverlay.closeAriaLabel}
           title={strings.authOverlay.closeTitle}
         >
