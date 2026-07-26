@@ -214,3 +214,56 @@ The IELTS LMS Team
     )
 
     return subject, plain, html
+
+
+def render_login_otp_email(first_name: str, otp_code: str, expires_minutes: int) -> tuple[str, str, str]:
+    """Returns (subject, plain_text, html_content)."""
+    subject = "Your IELTS LMS login verification code"
+
+    plain = f"""Hi {first_name},
+
+Your IELTS LMS verification code is:
+
+{otp_code}
+
+This code expires in {expires_minutes} minutes. If you did not try to sign in, ignore this email and contact your administrator.
+
+Best regards,
+The IELTS LMS Team
+"""
+
+    content_html = f"""
+    <p style="margin-top: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Hi {first_name},</p>
+    <p>Use this one-time code to complete your <strong>IELTS LMS</strong> login.</p>
+
+    <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 14px; padding: 24px; margin: 24px 0; text-align: center;">
+      <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #b91c2b; margin-bottom: 10px;">
+        Verification Code
+      </div>
+      <div style="font-size: 36px; font-weight: 900; letter-spacing: 0.22em; color: #0f172a; line-height: 1;">
+        {otp_code}
+      </div>
+      <div style="font-size: 12px; color: #64748b; margin-top: 14px;">
+        Expires in {expires_minutes} minutes
+      </div>
+    </div>
+
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #b91c2b; border-radius: 8px; padding: 16px 18px; margin: 24px 0;">
+      <div style="font-size: 13.5px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">
+        Security Notice
+      </div>
+      <div style="font-size: 13px; color: #64748b; line-height: 1.5;">
+        If you did not request this code, do not share it with anyone. Your account remains protected.
+      </div>
+    </div>
+    """
+
+    html = render_base_email(
+        badge_label="Login OTP",
+        title="Verify Your Login",
+        subtitle="Secure one-time code for your IELTS LMS account.",
+        content_html=content_html,
+        badge_color="#b91c2b",
+    )
+
+    return subject, plain, html

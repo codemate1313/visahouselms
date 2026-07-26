@@ -17,6 +17,9 @@ from app.core.security import (
     create_google_oauth_state_token,
     create_login_otp_token,
     decode_token,
+    generate_login_otp_code,
+    hash_login_otp_code,
+    verify_login_otp_code,
 )
 from app.core.rate_limit import enforce_rate_limit
 from app.dependencies.auth import get_current_user
@@ -32,7 +35,7 @@ from app.schemas.auth import (
     TokenResponse,
     VerifyOtpRequest,
 )
-from app.services import account_service, auth_service, institute_service, smtp_service
+from app.services import account_service, auth_service, email_template_service, institute_service, smtp_service
 from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -65,24 +68,19 @@ def _client_ip(request: Request) -> Optional[str]:
     return request.client.host if request.client else None
 
 
-def _send_login_otp(db: Session, email: str) -> bool:
-    subject = "IELTS LMS login OTP"
-    body = (
-        f"Your IELTS LMS login OTP is {settings.login_otp_code}.\n\n"
-        f"This code expires in {settings.login_otp_expire_minutes} minutes."
-    )
-    html = (
-        "<p>Your IELTS LMS login OTP is:</p>"
-        f"<p style='font-size:28px;font-weight:700;letter-spacing:6px'>{settings.login_otp_code}</p>"
-        f"<p>This code expires in {settings.login_otp_expire_minutes} minutes.</p>"
+def _send_login_otp(db: Session, user: User, otp_code: str) -> None:
+    subject, plain, html = email_template_service.render_login_otp_email(
+        user.first_name or "there",
+        otp_code,
+        settings.login_otp_expire_minutes,
     )
     try:
-        smtp_service.send_email(db, email, subject, body, html)
-        return True
-    except HTTPException:
-        # Local/demo environments often do not have SMTP configured. Keep the
-        # test-only fixed OTP flow usable while production SMTP is being wired.
-        return False
+        smtp_service.send_email(db, user.email, subject, plain, html)
+    except HTTPException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Unable to send OTP email. Please contact the administrator to configure SMTP mail delivery.",
+        ) from exc
 
 
 def _safe_return_path(path: Optional[str]) -> str:
@@ -106,7 +104,8 @@ def _otp_challenge_for(
     payload: Union[LoginRequest, GoogleOtpRequest],
     auth_method: str,
 ) -> TokenResponse:
-    sent = _send_login_otp(db, user.email)
+    otp_code = generate_login_otp_code()
+    _send_login_otp(db, user, otp_code)
     challenge = create_login_otp_token(
         user.id,
         user.role.name,
@@ -115,12 +114,13 @@ def _otp_challenge_for(
         payload.remember_me,
         payload.device_id,
         payload.device_name,
+        hash_login_otp_code(otp_code),
     )
     return TokenResponse(
         otp_required=True,
         otp_challenge_id=challenge,
-        otp_delivery="email" if sent else "test",
-        message="OTP sent to your registered email." if sent else "Use the fixed test OTP to continue.",
+        otp_delivery="email",
+        message="OTP sent to your registered email.",
     )
 
 
@@ -252,7 +252,7 @@ def google_callback(
         {
             "role": role,
             "google_otp_challenge": challenge.otp_challenge_id or "",
-            "google_otp_delivery": challenge.otp_delivery or "test",
+            "google_otp_delivery": challenge.otp_delivery or "email",
         },
     )
 
@@ -288,7 +288,7 @@ def verify_otp(payload: VerifyOtpRequest, request: Request, response: Response, 
     if challenge.get("type") != TOKEN_TYPE_LOGIN_OTP:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired OTP challenge")
 
-    if payload.otp_code.strip() != settings.login_otp_code:
+    if not verify_login_otp_code(payload.otp_code, str(challenge.get("otp_hash") or "")):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP code")
 
     try:

@@ -1,4 +1,6 @@
 import hashlib
+import hmac
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import uuid4
@@ -95,6 +97,7 @@ def create_login_otp_token(
     remember_me: bool,
     device_identifier: Optional[str],
     device_name: Optional[str],
+    otp_hash: str,
 ) -> str:
     return _create_token(
         user_id,
@@ -107,6 +110,7 @@ def create_login_otp_token(
             "remember_me": remember_me,
             "device_identifier": device_identifier,
             "device_name": device_name,
+            "otp_hash": otp_hash,
         },
     )
 
@@ -138,6 +142,24 @@ def create_google_oauth_state_token(
 
 def decode_token(token: str) -> dict:
     return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+
+
+def generate_login_otp_code() -> str:
+    return f"{secrets.randbelow(1_000_000):06d}"
+
+
+def hash_login_otp_code(otp_code: str) -> str:
+    return hmac.new(
+        settings.jwt_secret_key.encode("utf-8"),
+        otp_code.strip().encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def verify_login_otp_code(otp_code: str, otp_hash: str) -> bool:
+    if not otp_hash:
+        return False
+    return hmac.compare_digest(hash_login_otp_code(otp_code), otp_hash)
 
 
 def hash_refresh_token(refresh_token: str) -> str:

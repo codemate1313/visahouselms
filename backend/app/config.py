@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
-    login_otp_code: str = "123456"
     login_otp_expire_minutes: int = 10
     google_client_id: Optional[str] = None
     google_client_secret: Optional[str] = None

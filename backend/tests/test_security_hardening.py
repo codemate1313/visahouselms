@@ -9,6 +9,11 @@ from starlette.datastructures import Headers
 from app.config import Settings
 from app.middleware.security_headers import CONTENT_SECURITY_POLICY
 from app.core.rate_limit import enforce_rate_limit, reset_rate_limits
+from app.core.security import (
+    generate_login_otp_code,
+    hash_login_otp_code,
+    verify_login_otp_code,
+)
 from app.core.uploads import read_validated_speaking_answer
 
 
@@ -91,6 +96,16 @@ class SecurityHeadersTests(unittest.TestCase):
         self.assertIn("script-src 'self'", CONTENT_SECURITY_POLICY)
         self.assertIn("object-src 'none'", CONTENT_SECURITY_POLICY)
         self.assertIn("frame-ancestors 'none'", CONTENT_SECURITY_POLICY)
+
+
+class LoginOtpSecurityTests(unittest.TestCase):
+    def test_generated_otp_is_six_digits_and_verified_by_hash(self) -> None:
+        otp = generate_login_otp_code()
+        self.assertRegex(otp, r"^\d{6}$")
+        otp_hash = hash_login_otp_code(otp)
+        self.assertNotIn(otp, otp_hash)
+        self.assertTrue(verify_login_otp_code(otp, otp_hash))
+        self.assertFalse(verify_login_otp_code("000000" if otp != "000000" else "000001", otp_hash))
 
 
 class SpeakingUploadValidationTests(unittest.TestCase):

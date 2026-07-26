@@ -22,7 +22,7 @@ interface LoginStartResponse {
   access_token?: string | null;
   otp_required?: boolean;
   otp_challenge_id?: string | null;
-  otp_delivery?: "email" | "test" | string | null;
+  otp_delivery?: "email" | string | null;
   message?: string | null;
 }
 
@@ -78,7 +78,6 @@ export function Login({
   const [otpCode, setOtpCode] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
-  const [otpDelivery, setOtpDelivery] = useState<string | null>(null);
 
   const availableRoleOptions = ALL_ROLE_OPTIONS.filter((item) => allowedRoles.includes(item.role));
 
@@ -107,13 +106,9 @@ export function Login({
     const challenge = searchParams.get("google_otp_challenge");
     if (challenge) {
       setOtpChallengeId(challenge);
-      setOtpDelivery(searchParams.get("google_otp_delivery") ?? null);
       setOtpCode("");
       setOtpError(null);
-      showSuccess(
-        searchParams.get("google_otp_delivery") === "test" ? strings.otpTestToast : strings.otpSentToast,
-        strings.otpSentTitle,
-      );
+      showSuccess(strings.otpSentToast, strings.otpSentTitle);
       const cleanedParams = new URLSearchParams(searchParams);
       cleanedParams.delete("google_otp_challenge");
       cleanedParams.delete("google_otp_delivery");
@@ -140,13 +135,9 @@ export function Login({
       throw new Error(strings.otpInvalidResponse);
     }
     setOtpChallengeId(tokens.otp_challenge_id);
-    setOtpDelivery(tokens.otp_delivery ?? null);
     setOtpCode("");
     setOtpError(null);
-    showSuccess(
-      tokens.otp_delivery === "test" ? strings.otpTestToast : strings.otpSentToast,
-      strings.otpSentTitle,
-    );
+    showSuccess(strings.otpSentToast, strings.otpSentTitle);
   }
 
   async function completeLogin(accessToken?: string | null) {
@@ -421,7 +412,7 @@ export function Login({
             <div className="logout-modal-icon-badge otp-login-icon" aria-hidden="true">2FA</div>
             <h2 className="logout-modal-title">{strings.otpTitle}</h2>
             <p className="logout-modal-description">
-              {otpDelivery === "test" ? strings.otpTestDescription : strings.otpDescription}
+              {strings.otpDescription}
             </p>
             <label className="otp-code-label" htmlFor="login-otp-code">{strings.otpLabel}</label>
             <input
