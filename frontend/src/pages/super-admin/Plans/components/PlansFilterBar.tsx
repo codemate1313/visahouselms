@@ -11,9 +11,12 @@ interface PlansFilterBarProps {
   onExportPdf: () => void;
   onExportExcel: () => void;
   resultCount: number;
+  /** Create route for the catalogue being listed. */
+  newPlanPath: string;
+  newPlanLabel: string;
 }
 
-export function PlansFilterBar({ search, onSearchChange, statusFilter, onStatusFilterChange, onExportPdf, onExportExcel, resultCount }: PlansFilterBarProps) {
+export function PlansFilterBar({ search, onSearchChange, statusFilter, onStatusFilterChange, onExportPdf, onExportExcel, resultCount, newPlanPath, newPlanLabel }: PlansFilterBarProps) {
   const t = strings.statusFilter;
   const r = strings.resultCount;
   return (
@@ -43,8 +46,8 @@ export function PlansFilterBar({ search, onSearchChange, statusFilter, onStatusF
         </button>
       </div>
 
-      <Link to="/super-admin/plans/new" className="button-link">
-        {strings.newPlan}
+      <Link to={newPlanPath} className="button-link">
+        {newPlanLabel}
       </Link>
 
       <div className="filter-result-count">

@@ -7,11 +7,11 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.audit_log import AuditLog
 from app.models.exam_module import ExamModule, InstituteModule
 from app.models.institute import Institute
-from app.models.plan import Plan
+from app.models.plan import AUDIENCE_DIRECT, AUDIENCE_INSTITUTES, Plan
 from app.models.role import INST_INSTRUCTOR, STUDENT, Role
 from app.models.subscription import Subscription
 from app.models.user import User
-from app.services.plan_service import get_plan_or_404
+from app.services.plan_service import assert_audience, get_plan_or_404
 
 STATE_NONE = "none"
 STATE_ACTIVE = "active"
@@ -323,6 +323,8 @@ def assign(
 ) -> dict:
     institute = get_institute_or_404(db, institute_id)
     plan = get_plan_or_404(db, plan_id)
+    if not plan.is_internal:
+        assert_audience(plan, AUDIENCE_INSTITUTES)
     if not plan.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -363,6 +365,8 @@ def renew(
         )
 
     plan = get_plan_or_404(db, plan_id if plan_id is not None else existing.plan_id)
+    if not plan.is_internal:
+        assert_audience(plan, AUDIENCE_INSTITUTES)
     if not plan.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -419,6 +423,7 @@ def subscribe_user(
     reachable through payment_service.create_user_plan_payment, exactly how
     assign() itself is only reachable through create_b2b_plan_payment."""
     plan = get_plan_or_404(db, plan_id)
+    assert_audience(plan, AUDIENCE_DIRECT)
     if not plan.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.audit_log import AuditLog
 from app.models.exam_module import ExamModule
-from app.models.plan import Plan
+from app.models.plan import AUDIENCE_DIRECT, AUDIENCE_INSTITUTES, AUDIENCES, Plan
 from app.models.subscription import Subscription
 from app.models.user import User
 
@@ -36,8 +36,18 @@ def _audit(db: Session, actor: User, action: str, plan_id: Optional[int], ip: Op
     )
 
 
-def list_plans(db: Session) -> List[dict]:
-    plans = db.query(Plan).filter(Plan.is_internal.is_(False)).order_by(Plan.created_at).all()
+def list_plans(db: Session, audience: Optional[str] = None) -> List[dict]:
+    """Plans in one catalogue. `audience` is required in practice - the two
+    catalogues are independent, and every screen lists exactly one of them."""
+    query = db.query(Plan).filter(Plan.is_internal.is_(False))
+    if audience is not None:
+        if audience not in AUDIENCES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unknown plan audience '{audience}'",
+            )
+        query = query.filter(Plan.audience == audience)
+    plans = query.order_by(Plan.created_at).all()
     counts = {
         plan_id: count
         for plan_id, count in (
@@ -106,11 +116,15 @@ def _resolve_modules(db: Session, module_ids: List[int]) -> List[ExamModule]:
 
 
 def live_plan_query(db: Session):
-    """A "live" plan is one the public pricing page can actually show."""
+    """A "live" plan is one the public pricing page can actually show - which
+    means direct-student plans only. Institute plans are sold through an access
+    agreement, never listed publicly, so they are not "live" in this sense and
+    can be taken down freely."""
     return db.query(Plan).filter(
         Plan.is_active.is_(True),
         Plan.is_published.is_(True),
         Plan.is_internal.is_(False),
+        Plan.audience == AUDIENCE_DIRECT,
     )
 
 
@@ -118,7 +132,12 @@ def _ensure_not_last_live_plan(db: Session, plan: Plan) -> None:
     """The platform must always keep one plan the public pricing page can list,
     so taking the last live plan down is refused rather than silently emptying
     the landing page."""
-    is_live = plan.is_active and plan.is_published and not plan.is_internal
+    is_live = (
+        plan.is_active
+        and plan.is_published
+        and not plan.is_internal
+        and plan.audience == AUDIENCE_DIRECT
+    )
     if not is_live:
         return
     if live_plan_query(db).filter(Plan.id != plan.id).count() > 0:
@@ -127,6 +146,19 @@ def _ensure_not_last_live_plan(db: Session, plan: Plan) -> None:
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="At least one live plan is required - publish another plan before taking this one down",
     )
+
+
+def assert_audience(plan: Plan, expected: str) -> None:
+    """Guard the boundary between the two catalogues. Internal onboarding plans
+    are institute-only by construction and skip the check."""
+    if plan.audience == expected:
+        return
+    detail = (
+        "This is a direct-student plan and cannot be assigned to an institute"
+        if expected == AUDIENCE_INSTITUTES
+        else "This is an institute plan and cannot be purchased by a student directly"
+    )
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
 
 def get_plan_or_404(db: Session, plan_id: int) -> Plan:
@@ -160,7 +192,7 @@ def create_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> dict
         staff_limit=data["staff_limit"],
         grace_days=data.get("grace_days", 7),
         is_active=True,
-        audience=data.get("audience", "both"),
+        audience=data.get("audience") or AUDIENCE_DIRECT,
         is_published=data.get("is_published", False),
         features=_clean_features(data.get("features")),
         modules=modules,
@@ -183,6 +215,16 @@ def update_plan(db: Session, actor: User, plan_id: int, data: dict, ip: Optional
 
     if data.get("is_published") is False:
         _ensure_not_last_live_plan(db, plan)
+
+    new_audience = data.get("audience")
+    if new_audience is not None and new_audience != plan.audience:
+        # Moving a plan between catalogues would strand whoever is already on
+        # it - an institute holding a plan that is suddenly B2C, or vice versa.
+        if db.query(Subscription).filter(Subscription.plan_id == plan.id).count() > 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This plan has subscriptions and cannot be moved to the other catalogue - create a new plan instead",
+            )
 
     for field in ("description", "currency", "duration_days", "student_limit", "test_limit", "staff_limit", "grace_days", "audience", "is_published"):
         if field in data and data[field] is not None:
@@ -371,7 +413,11 @@ def list_public_plans(db: Session, user: User) -> List[dict]:
     plans = (
         db.query(Plan)
         .options(joinedload(Plan.modules))
-        .filter(Plan.is_active.is_(True), Plan.is_published.is_(True), Plan.audience.in_(("both", "direct_students")))
+        .filter(
+            Plan.is_active.is_(True),
+            Plan.is_published.is_(True),
+            Plan.audience == AUDIENCE_DIRECT,
+        )
         .order_by(Plan.price)
         .all()
     )

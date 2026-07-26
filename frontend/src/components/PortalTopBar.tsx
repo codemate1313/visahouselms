@@ -81,6 +81,9 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/onboarding/new", eyebrow: "SAAS MANAGEMENT", title: "New Institute Onboarding" },
   { match: /\/super-admin\/onboarding\/\d+/, eyebrow: "SAAS MANAGEMENT", title: "Edit Institute Onboarding" },
   { match: "/super-admin/onboarding", eyebrow: "SAAS MANAGEMENT", title: "Institute Onboarding" },
+  { match: "/super-admin/institute-plans/new", eyebrow: "SAAS MANAGEMENT", title: "Create Institute Plan" },
+  { match: /\/super-admin\/institute-plans\/\d+/, eyebrow: "SAAS MANAGEMENT", title: "Edit Institute Plan" },
+  { match: "/super-admin/institute-plans", eyebrow: "SAAS MANAGEMENT", title: "Institute Plans" },
   { match: "/super-admin/plans/new", eyebrow: "SAAS MANAGEMENT", title: "Create Direct Student Plan" },
   { match: /\/super-admin\/plans\/\d+/, eyebrow: "SAAS MANAGEMENT", title: "Edit Direct Student Plan" },
   { match: "/super-admin/plans", eyebrow: "SAAS MANAGEMENT", title: "Direct Student Plans" },
@@ -238,6 +241,22 @@ function getBreadcrumbs(pathname: string, eyebrow: string, title: string): Bread
       { label: eyebrow },
       { label: "Institute Onboarding", path: "/super-admin/onboarding" },
       { label: "Edit Onboarding" }
+    ];
+  }
+
+  // Institute Plans sub-routes (checked first: their paths also contain "/plans/")
+  if (pathname === "/super-admin/institute-plans/new") {
+    return [
+      { label: eyebrow },
+      { label: "Institute Plans", path: "/super-admin/institute-plans" },
+      { label: "New Plan" }
+    ];
+  }
+  if (/\/institute-plans\/\d+\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Institute Plans", path: "/super-admin/institute-plans" },
+      { label: "Edit Plan" }
     ];
   }
 

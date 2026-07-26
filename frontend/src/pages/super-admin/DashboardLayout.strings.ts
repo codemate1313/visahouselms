@@ -18,6 +18,7 @@ export const dashboardLayoutStrings = {
     saasInstitutes: "Institutes",
     saasOnboarding: "Institute Onboarding",
     saasPlans: "Direct Student Plans",
+    saasInstitutePlans: "Institute Plans",
     saasSubscriptions: "Access Agreements",
     saasTrial: "Trial Settings",
     saasDemo: "Demo Accounts",

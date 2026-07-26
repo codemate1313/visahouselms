@@ -17,7 +17,7 @@ class PlanCreate(BaseModel):
     staff_limit: int = Field(ge=0)
     grace_days: int = Field(default=7, ge=0)
     module_ids: list[int] = Field(default_factory=list)
-    audience: str = Field(default="both", pattern="^(both|direct_students|institutes)$")
+    audience: str = Field(default="direct_students", pattern="^(direct_students|institutes)$")
     is_published: bool = False
     # Marketing bullets for the public pricing card; empty falls back to a list
     # derived from the plan's modules and limits.
@@ -35,7 +35,7 @@ class PlanUpdate(BaseModel):
     staff_limit: Optional[int] = Field(default=None, ge=0)
     grace_days: Optional[int] = Field(default=None, ge=0)
     module_ids: Optional[list[int]] = None
-    audience: Optional[str] = Field(default=None, pattern="^(both|direct_students|institutes)$")
+    audience: Optional[str] = Field(default=None, pattern="^(direct_students|institutes)$")
     is_published: Optional[bool] = None
     features: Optional[list[str]] = Field(default=None, max_length=MAX_FEATURES)
 

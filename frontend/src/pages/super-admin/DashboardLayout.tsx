@@ -70,6 +70,7 @@ export function DashboardLayout() {
           children: [
             { key: "saas_institutes", label: m.saasInstitutes, to: "/super-admin/institutes" },
             { key: "saas_plans", label: m.saasPlans, to: "/super-admin/plans" },
+            { key: "saas_institute_plans", label: m.saasInstitutePlans, to: "/super-admin/institute-plans" },
             { key: "saas_subscriptions", label: m.saasSubscriptions, to: "/super-admin/subscriptions" },
             { key: "saas_trial", label: m.saasTrial, to: "/super-admin/trial-config" },
             { key: "saas_demo", label: m.saasDemo, to: "/super-admin/demo-accounts" },

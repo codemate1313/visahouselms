@@ -1,3 +1,28 @@
+/**
+ * The two plan catalogues are independent: a direct-student plan is sold on the
+ * public pricing page and can never be assigned to an institute, an institute
+ * plan is granted through an access agreement and is never listed publicly.
+ * Everything that differs between the two listings lives here.
+ */
+export const planCatalogues = {
+  direct_students: {
+    basePath: "/super-admin/plans",
+    newPlan: "+ New Plan",
+    exportLabel: "direct student plans",
+    empty: "No direct-student plans yet.",
+    audienceLabel: "direct students",
+  },
+  institutes: {
+    basePath: "/super-admin/institute-plans",
+    newPlan: "+ New Institute Plan",
+    exportLabel: "institute plans",
+    empty: "No institute plans yet. Create one to assign it through an access agreement.",
+    audienceLabel: "institutes",
+  },
+} as const;
+
+export type PlanAudience = keyof typeof planCatalogues;
+
 export const plansStrings = {
   searchPlaceholder: "Search plan name or description...",
   statusFilter: {

@@ -74,7 +74,10 @@ export function Payments() {
 
   useEffect(() => {
     apiClient.get("/super-admin/institutes").then(({ data }) => setInstitutes(data));
-    apiClient.get<PlanRow[]>("/super-admin/plans").then(({ data }) => setPlans(data));
+    // the record-payment form is institute + plan, so only B2B plans apply
+    apiClient
+      .get<PlanRow[]>("/super-admin/plans", { params: { audience: "institutes" } })
+      .then(({ data }) => setPlans(data));
     apiClient.get<MethodRow[]>("/super-admin/payment-methods?active_only=true").then(({ data }) => setMethods(data));
   }, []);
 

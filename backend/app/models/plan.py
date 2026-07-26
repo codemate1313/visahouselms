@@ -24,6 +24,14 @@ plan_courses = Table(
 )
 
 
+# A plan belongs to exactly one catalogue. The two are independent: a direct
+# plan can never be assigned to an institute, and an institute plan is never
+# sold on the public pricing page.
+AUDIENCE_DIRECT = "direct_students"
+AUDIENCE_INSTITUTES = "institutes"
+AUDIENCES = (AUDIENCE_DIRECT, AUDIENCE_INSTITUTES)
+
+
 class Plan(Base):
     __tablename__ = "plans"
 
@@ -38,7 +46,7 @@ class Plan(Base):
     staff_limit: Mapped[int] = mapped_column(Integer, nullable=False)
     grace_days: Mapped[int] = mapped_column(Integer, nullable=False, default=7)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    audience: Mapped[str] = mapped_column(String(30), nullable=False, default="both")
+    audience: Mapped[str] = mapped_column(String(30), nullable=False, default=AUDIENCE_DIRECT)
     is_published: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_internal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # Marketing bullet points shown on the public pricing card, authored by the

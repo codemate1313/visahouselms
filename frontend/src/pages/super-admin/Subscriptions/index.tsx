@@ -27,7 +27,10 @@ export function Subscriptions() {
       setInstitutes(data);
       if (data.length > 0) setSelected(data[0].id);
     });
-    apiClient.get("/super-admin/plans").then(({ data }) => setPlans(data));
+    // institute catalogue only - a direct-student plan cannot back an agreement
+    apiClient
+      .get("/super-admin/plans", { params: { audience: "institutes" } })
+      .then(({ data }) => setPlans(data));
   }, []);
 
   useEffect(() => {

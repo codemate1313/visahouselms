@@ -7,12 +7,15 @@ import type { PlanRow } from "../types";
 
 interface PlansTableProps {
   plans: PlanRow[];
+  /** Catalogue this table belongs to, so edit links stay inside it. */
+  basePath: string;
+  emptyMessage: string;
   onToggleActive: (plan: PlanRow) => void;
   onView: (plan: PlanRow) => void;
   onRequestDelete: (plan: PlanRow) => void;
 }
 
-export function PlansTable({ plans, onToggleActive, onView, onRequestDelete }: PlansTableProps) {
+export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onView, onRequestDelete }: PlansTableProps) {
   const t = strings.table;
   return (
     <div className="table-wrap">
@@ -32,7 +35,7 @@ export function PlansTable({ plans, onToggleActive, onView, onRequestDelete }: P
           {plans.length === 0 && (
             <tr>
               <td colSpan={5} className="empty-cell">
-                {t.empty}
+                {emptyMessage}
               </td>
             </tr>
           )}
@@ -73,7 +76,7 @@ export function PlansTable({ plans, onToggleActive, onView, onRequestDelete }: P
                 <button type="button" className="action-btn-icon action-view" onClick={() => onView(plan)} data-tooltip={t.viewDetails}>
                   <Icon name="eye" />
                 </button>
-                <Link className="action-btn-icon action-edit" to={`/super-admin/plans/${plan.id}`} data-tooltip={t.edit}>
+                <Link className="action-btn-icon action-edit" to={`${basePath}/${plan.id}`} data-tooltip={t.edit}>
                   <Icon name="edit" />
                 </Link>
                 <button type="button" className="action-btn-icon danger action-delete" onClick={() => onRequestDelete(plan)} data-tooltip={t.delete}>

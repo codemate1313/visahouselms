@@ -10,7 +10,7 @@ from app.core.payment_gateway import get_gateway
 from app.models.audit_log import AuditLog
 from app.models.institute import Institute
 from app.models.payment import Payment
-from app.models.plan import Plan
+from app.models.plan import AUDIENCE_DIRECT, AUDIENCE_INSTITUTES, Plan
 from app.models.user import User
 from app.services import coupon_service, institute_service, plan_service, subscription_service
 
@@ -106,6 +106,7 @@ def create_b2b_plan_payment(
 ) -> dict:
     institute_service.get_institute_or_404(db, institute_id)
     plan = plan_service.get_plan_or_404(db, plan_id)
+    plan_service.assert_audience(plan, AUDIENCE_INSTITUTES)
     if not plan.is_active:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This plan is deactivated")
 
@@ -237,6 +238,7 @@ def create_user_plan_payment(
     subscription instead of an institute's, and full-payment-only (no
     partial/installment support, matching this flow's B2C-only precedent)."""
     plan = plan_service.get_plan_or_404(db, plan_id)
+    plan_service.assert_audience(plan, AUDIENCE_DIRECT)
     if not plan.is_active:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This plan is deactivated")
 

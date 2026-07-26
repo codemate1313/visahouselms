@@ -6,7 +6,7 @@ import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { useToastStore } from "@/store/toastStore";
 import { confirmExport } from "@/utils/confirmExport";
-import { plansStrings as strings } from "./Plans.strings";
+import { planCatalogues, plansStrings as strings, type PlanAudience } from "./Plans.strings";
 import type { PlanRow } from "./types";
 import { exportPlansExcel, exportPlansPDF } from "./exportHelpers";
 import { PlansFilterBar } from "./components/PlansFilterBar";
@@ -15,7 +15,13 @@ import { PlanDetailsModal } from "./components/PlanDetailsModal";
 
 export type { PlanRow } from "./types";
 
-export function Plans() {
+interface PlansProps {
+  /** Which catalogue this screen lists. The two never mix. */
+  audience?: PlanAudience;
+}
+
+export function Plans({ audience = "direct_students" }: PlansProps) {
+  const catalogue = planCatalogues[audience];
   const [plans, setPlans] = useState<PlanRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -32,7 +38,7 @@ export function Plans() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await apiClient.get<PlanRow[]>("/super-admin/plans");
+      const { data } = await apiClient.get<PlanRow[]>("/super-admin/plans", { params: { audience } });
       setPlans(data);
       setLoadError(null);
     } catch {
@@ -40,7 +46,7 @@ export function Plans() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [audience]);
 
   useEffect(() => {
     load();
@@ -101,12 +107,12 @@ export function Plans() {
   }
 
   async function handleExportPdf() {
-    if (!await confirmExport("pdf", "direct student plans")) return;
+    if (!await confirmExport("pdf", catalogue.exportLabel)) return;
     exportPlansPDF(filteredPlans);
   }
 
   async function handleExportExcel() {
-    if (!await confirmExport("excel", "direct student plans")) return;
+    if (!await confirmExport("excel", catalogue.exportLabel)) return;
     exportPlansExcel(filteredPlans);
   }
 
@@ -122,12 +128,14 @@ export function Plans() {
         onExportPdf={handleExportPdf}
         onExportExcel={handleExportExcel}
         resultCount={filteredPlans.length}
+        newPlanPath={`${catalogue.basePath}/new`}
+        newPlanLabel={catalogue.newPlan}
       />
 
       {loading ? (
         <p>{strings.loading}</p>
       ) : (
-        <PlansTable plans={filteredPlans} onToggleActive={toggleActive} onView={setViewingPlan} onRequestDelete={setDeletingPlan} />
+        <PlansTable plans={filteredPlans} basePath={catalogue.basePath} emptyMessage={catalogue.empty} onToggleActive={toggleActive} onView={setViewingPlan} onRequestDelete={setDeletingPlan} />
       )}
 
       {viewingPlan && <PlanDetailsModal plan={viewingPlan} onClose={() => setViewingPlan(null)} />}

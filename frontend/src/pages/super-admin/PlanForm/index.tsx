@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Checkbox, RequiredMark } from "@/components/ui";
-import { planFormStrings as strings } from "./PlanForm.strings";
+import { planFormCatalogues, planFormStrings as strings, type PlanAudience } from "./PlanForm.strings";
 import { PlanCoursePicker, type PlanModule } from "./components/PlanCoursePicker";
 import { PlanFeatureEditor } from "./components/PlanFeatureEditor";
 
@@ -12,7 +12,13 @@ const MAX_FEATURES = 12;
 
 const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", test_limit: "20", grace_days: "0", is_published: false };
 
-export function PlanForm() {
+interface PlanFormProps {
+  /** Which catalogue the plan being authored belongs to. */
+  audience?: PlanAudience;
+}
+
+export function PlanForm({ audience = "direct_students" }: PlanFormProps) {
+  const catalogue = planFormCatalogues[audience];
   const { id } = useParams();
   const isNew = id === "new" || !id;
   const navigate = useNavigate();
@@ -86,15 +92,16 @@ export function PlanForm() {
       staff_limit: Number(form.staff_limit),
       test_limit: Number(form.test_limit),
       grace_days: Number(form.grace_days),
-      audience: "direct_students",
-      is_published: form.is_published,
+      audience,
+      // never public, whatever a stale form state says
+      is_published: catalogue.showPublishToggle ? form.is_published : false,
       module_ids: [...selected],
       features: features.map((item) => item.trim()).filter(Boolean),
     };
     try {
       if (isNew) await apiClient.post("/super-admin/plans", payload);
       else await apiClient.patch(`/super-admin/plans/${id}`, payload);
-      navigate("/super-admin/plans");
+      navigate(catalogue.basePath);
     } catch (err) {
       setError(extractErrorMessage(err, strings.errors.save));
     } finally {
@@ -110,8 +117,8 @@ export function PlanForm() {
     <div>
       <div className="page-header">
         <div>
-          <h1>{isNew ? strings.createTitle : strings.editTitle}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
+          <h1>{isNew ? catalogue.createTitle : catalogue.editTitle}</h1>
+          <p className="page-subtitle">{catalogue.subtitle}</p>
         </div>
       </div>
       <form className="form-card wide" onSubmit={submit}>
@@ -136,6 +143,24 @@ export function PlanForm() {
             <label>{f.testLimit}<RequiredMark /></label>
             <input type="number" min="0" value={form.test_limit} onChange={set("test_limit")} required />
           </div>
+          {/* Seat counts only mean something for an institute: they are what
+              caps how many students and instructors the tenant can create. */}
+          {catalogue.showSeatLimits && (
+            <>
+              <div>
+                <label>{f.studentLimit}<RequiredMark /></label>
+                <input type="number" min="0" value={form.student_limit} onChange={set("student_limit")} required />
+              </div>
+              <div>
+                <label>{f.staffLimit}<RequiredMark /></label>
+                <input type="number" min="0" value={form.staff_limit} onChange={set("staff_limit")} required />
+              </div>
+              <div>
+                <label>{f.graceDays}<RequiredMark /></label>
+                <input type="number" min="0" value={form.grace_days} onChange={set("grace_days")} required />
+              </div>
+            </>
+          )}
         </div>
         <PlanCoursePicker modules={modules} selected={selected} onToggle={toggle} onToggleAll={toggleAll} />
         <PlanFeatureEditor
@@ -145,20 +170,26 @@ export function PlanForm() {
           onAdd={addFeature}
           onRemove={removeFeature}
         />
-        <label className="toggle-row">
-          <Checkbox
-            checked={form.is_published}
-            onChange={(event) => setForm((current) => ({ ...current, is_published: event.target.checked }))}
-          />
-          <span>
-            <strong>{strings.publishToggle.label}</strong>
-            <small>{strings.publishToggle.hint}</small>
-          </span>
-        </label>
+        {/* Institute plans are granted through an access agreement and never
+            appear on the public pricing page, so there is nothing to publish. */}
+        {catalogue.showPublishToggle ? (
+          <label className="toggle-row">
+            <Checkbox
+              checked={form.is_published}
+              onChange={(event) => setForm((current) => ({ ...current, is_published: event.target.checked }))}
+            />
+            <span>
+              <strong>{catalogue.publishLabel}</strong>
+              <small>{catalogue.publishHint}</small>
+            </span>
+          </label>
+        ) : (
+          <p className="hint">{catalogue.publishHint}</p>
+        )}
         {error && <p className="error-text">{error}</p>}
         <div className="form-actions">
           <button disabled={saving || (form.is_published && !selected.size)}>{saving ? strings.saving : strings.savePlan}</button>
-          <button type="button" onClick={() => navigate("/super-admin/plans")}>
+          <button type="button" onClick={() => navigate(catalogue.basePath)}>
             {strings.cancel}
           </button>
         </div>

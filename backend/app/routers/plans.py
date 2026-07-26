@@ -30,8 +30,15 @@ def _client_ip(request: Request) -> Optional[str]:
 
 
 @router.get("")
-def list_plans(db: Session = Depends(get_db)):
-    return plan_service.list_plans(db)
+def list_plans(
+    audience: Optional[str] = Query(
+        default=None, pattern="^(direct_students|institutes)$"
+    ),
+    db: Session = Depends(get_db),
+):
+    """One catalogue at a time. Omitting `audience` returns both and exists only
+    for callers that genuinely want every plan (exports, tooling)."""
+    return plan_service.list_plans(db, audience=audience)
 
 
 @router.get("/available-modules")

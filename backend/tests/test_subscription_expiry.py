@@ -9,7 +9,7 @@ from app.core.security import hash_password
 from app.models import Base
 from app.models.audit_log import AuditLog
 from app.models.institute import Institute
-from app.models.plan import Plan
+from app.models.plan import AUDIENCE_INSTITUTES, Plan
 from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, STUDENT, SUPER_ADMIN, Role
 from app.models.subscription import Subscription
 from app.models.user import User
@@ -72,6 +72,7 @@ class SubscriptionExpirySuspensionTests(unittest.TestCase):
 
         self.plan = Plan(
             name="Institute Plan",
+            audience=AUDIENCE_INSTITUTES,
             price=Decimal("1000"),
             currency="INR",
             duration_days=30,
