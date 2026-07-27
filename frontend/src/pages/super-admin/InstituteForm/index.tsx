@@ -5,8 +5,17 @@ import { extractErrorMessage } from "@/api/errors";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
 import { BrandingPreview } from "@/pages/super-admin/InstituteBranding/components/BrandingPreview";
 import { instituteFormStrings as strings } from "./InstituteForm.strings";
-import { DEFAULT_PERMISSIONS, type CreatedInstitute, type InstitutePermissions } from "./types";
+import {
+  DEFAULT_PERMISSIONS,
+  EMPTY_NEW_PLAN,
+  planSummaryLine,
+  type CreatedInstitute,
+  type InstitutePermissions,
+  type PlanMode,
+  type PlanOption,
+} from "./types";
 import { CreatedInstituteModal } from "./components/CreatedInstituteModal";
+import { AgreementPlanFieldset } from "./components/AgreementPlanFieldset";
 import { AdminAccountFields } from "./components/AdminAccountFields";
 import { SessionPolicyFieldset } from "./components/SessionPolicyFieldset";
 import { PermissionsFieldset } from "./components/PermissionsFieldset";
@@ -52,11 +61,16 @@ export function InstituteForm() {
   const [paymentMethodId, setPaymentMethodId] = useState<string>("");
   const [paymentReference, setPaymentReference] = useState("");
 
-  // Allocation & Limits
-  const [studentLimit, setStudentLimit] = useState<number | "">(50);
-  const [staffLimit, setStaffLimit] = useState<number | "">(0);
-  const [accessDurationDays, setAccessDurationDays] = useState<number | "">(365);
+  // Allocation & Limits. Seats and validity are the plan's; only the AI cap is
+  // negotiated per institute.
   const [aiStudentMonthlyLimit, setAiStudentMonthlyLimit] = useState<number | "">(0);
+
+  // Agreement plan
+  const [plans, setPlans] = useState<PlanOption[]>([]);
+  const [planMode, setPlanMode] = useState<PlanMode>("existing");
+  const [planId, setPlanId] = useState("");
+  const [newPlan, setNewPlan] = useState(EMPTY_NEW_PLAN);
+  const [assignedPlan, setAssignedPlan] = useState<PlanOption | null>(null);
 
   // Courses & Permissions
   const [modules, setModules] = useState<ModuleOption[]>([]);
@@ -82,9 +96,16 @@ export function InstituteForm() {
     Promise.all([
       apiClient.get<ModuleOption[]>("/super-admin/plans/available-modules"),
       apiClient.get<Method[]>("/super-admin/payment-methods", { params: { active_only: true } }),
-    ]).then(([moduleRes, methodRes]) => {
+      apiClient.get<PlanOption[]>("/super-admin/plans", { params: { audience: "institutes" } }),
+    ]).then(([moduleRes, methodRes, planRes]) => {
       setModules(moduleRes.data);
       setMethods(methodRes.data);
+      // Only assignable plans: the API refuses a deactivated or course-less one.
+      const assignable = planRes.data.filter((plan) => plan.is_active && plan.module_count > 0);
+      setPlans(assignable);
+      // With an empty catalogue there is nothing to assign, so open on the
+      // create-a-plan half rather than a dead dropdown.
+      if (!assignable.length) setPlanMode("new");
     });
 
     if (isNew) return;
@@ -104,9 +125,8 @@ export function InstituteForm() {
         if (data.payment_method_id) setPaymentMethodId(String(data.payment_method_id));
         if (data.payment_reference) setPaymentReference(data.payment_reference);
         setCurrency(data.agreement_currency ?? "INR");
-        setStudentLimit(data.student_limit ?? 50);
-        setStaffLimit(data.staff_limit ?? 0);
-        setAccessDurationDays(data.access_duration_days ?? 365);
+        if (data.plan_id) setPlanId(String(data.plan_id));
+        if (data.plan) setAssignedPlan(data.plan);
         if (data.module_ids) setSelectedModules(new Set(data.module_ids));
         if (data.branding) {
           setPrimaryColor(data.branding.primary_color ?? "#e53935");
@@ -138,6 +158,37 @@ export function InstituteForm() {
     setSelectedModules((curr) => (curr.size === modules.length ? new Set() : new Set(modules.map((m) => m.id))));
   }
 
+  function updateNewPlan(field: keyof typeof EMPTY_NEW_PLAN, value: string) {
+    setNewPlan((curr) => ({ ...curr, [field]: value }));
+  }
+
+  /** The plan's price is a list price; the negotiated amount only starts there,
+   *  so it prefills an untouched field and never overwrites a typed one. */
+  function selectPlan(value: string) {
+    setPlanId(value);
+    const plan = plans.find((option) => String(option.id) === value);
+    if (!plan) return;
+    setAssignedPlan(plan);
+    if (agreedAmount === "") setAgreedAmount(Number(plan.price));
+    setCurrency((curr) => (curr === "INR" ? plan.currency : curr));
+  }
+
+  function changePlanMode(mode: PlanMode) {
+    setPlanMode(mode);
+    // The course picker belongs to whichever half is showing: an assigned plan
+    // brings its own courses, a new plan starts from an empty selection.
+    setSelectedModules(new Set());
+    if (mode === "new") {
+      setPlanId("");
+      setAssignedPlan(null);
+    }
+  }
+
+  // Courses are only editable while authoring a new plan; an assigned plan's
+  // bundle is edited on the plan itself, from the Institute Plans screen.
+  const coursesLocked = planMode === "existing";
+  const activePlan = planMode === "existing" ? plans.find((plan) => String(plan.id) === planId) || assignedPlan : null;
+
   function validateStep(tab: TabKey): boolean {
     if (tab === "profile") {
       if (!name.trim()) {
@@ -148,6 +199,21 @@ export function InstituteForm() {
         setError("Admin email and first name are required to create an institute.");
         return false;
       }
+    }
+    if (tab === "agreement" && isNew) {
+      if (planMode === "existing" && !planId) {
+        setError("Choose an institute plan, or switch to 'Create new plan'.");
+        return false;
+      }
+      if (planMode === "new" && !newPlan.name.trim()) {
+        setError("The new plan needs a name.");
+        return false;
+      }
+    }
+    // A new plan must bundle at least one course - the API refuses an empty one.
+    if (tab === "courses" && planMode === "new" && selectedModules.size === 0) {
+      setError("Select at least one course for the new plan.");
+      return false;
     }
     setError(null);
     return true;
@@ -186,18 +252,45 @@ export function InstituteForm() {
       setActiveTab("profile");
       return;
     }
+    if (!validateStep("agreement")) {
+      setActiveTab("agreement");
+      return;
+    }
+    if (!validateStep("courses")) {
+      setActiveTab("courses");
+      return;
+    }
 
     setSaving(true);
 
+    // Seats, validity and courses ride along with the plan, so they are only
+    // sent when no plan is being assigned (editing an institute that predates
+    // plan-driven creation).
     const payload: Record<string, unknown> = {
       name,
       session_duration_hours: sessionDurationHours,
       ai_student_monthly_limit: aiStudentMonthlyLimit === "" ? 0 : Number(aiStudentMonthlyLimit),
-      student_limit: studentLimit === "" ? 50 : Number(studentLimit),
-      staff_limit: staffLimit === "" ? 0 : Number(staffLimit),
-      access_duration_days: accessDurationDays === "" ? 365 : Number(accessDurationDays),
-      module_ids: [...selectedModules],
     };
+
+    if (planMode === "new") {
+      payload.new_plan = {
+        name: newPlan.name.trim(),
+        description: newPlan.description.trim() || null,
+        price: Number(newPlan.price || 0),
+        currency: newPlan.currency.trim() || "INR",
+        duration_days: Number(newPlan.duration_days || 365),
+        student_limit: Number(newPlan.student_limit || 0),
+        staff_limit: Number(newPlan.staff_limit || 0),
+        test_limit: Number(newPlan.test_limit || 0),
+        grace_days: Number(newPlan.grace_days || 0),
+        module_ids: [...selectedModules],
+        features: [],
+      };
+    } else if (planId) {
+      payload.plan_id = Number(planId);
+    } else {
+      payload.module_ids = [...selectedModules];
+    }
 
     if (contactEmail.trim()) payload.contact_email = contactEmail.trim();
     if (agreementReference.trim()) payload.agreement_reference = agreementReference.trim();
@@ -442,24 +535,16 @@ export function InstituteForm() {
               <textarea id="agreement_notes" rows={2} value={agreementNotes} onChange={(e) => setAgreementNotes(e.target.value)} placeholder="Additional contract terms or special conditions..." />
             </div>
 
-            <div className="form-section-header" style={{ marginTop: 32 }}>
-              <h2 className="form-section-title">Capacity & Quota Allocations</h2>
-              <p className="form-section-subtitle">Define student/staff account limits and contract access duration.</p>
-            </div>
-            <div className="form-grid-4col">
-              <div>
-                <label htmlFor="student_limit">Student Limit<RequiredMark /></label>
-                <input id="student_limit" type="number" min="0" value={studentLimit} onChange={(e) => setStudentLimit(e.target.value === "" ? "" : Number(e.target.value))} required />
-              </div>
-              <div>
-                <label htmlFor="staff_limit">Instructor Limit<RequiredMark /></label>
-                <input id="staff_limit" type="number" min="0" value={staffLimit} onChange={(e) => setStaffLimit(e.target.value === "" ? "" : Number(e.target.value))} required />
-              </div>
-              <div>
-                <label htmlFor="access_duration_days">Access Duration (Days)<RequiredMark /></label>
-                <input id="access_duration_days" type="number" min="1" value={accessDurationDays} onChange={(e) => setAccessDurationDays(e.target.value === "" ? "" : Number(e.target.value))} required />
-              </div>
-            </div>
+            <AgreementPlanFieldset
+              mode={planMode}
+              onModeChange={changePlanMode}
+              plans={plans}
+              planId={planId}
+              onPlanChange={selectPlan}
+              newPlan={newPlan}
+              onNewPlanChange={updateNewPlan}
+              selectedCourseCount={selectedModules.size}
+            />
           </div>
         )}
 
@@ -469,20 +554,34 @@ export function InstituteForm() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <div>
                 <h2 className="form-section-title" style={{ margin: 0 }}>Included Course Modules</h2>
-                <p className="form-section-subtitle" style={{ margin: 0 }}>Select course modules bundle included in this institute's agreement.</p>
+                <p className="form-section-subtitle" style={{ margin: 0 }}>
+                  {coursesLocked
+                    ? "Courses come from the assigned plan — edit them on the plan itself."
+                    : "Select the course modules bundled into this institute's new plan."}
+                </p>
               </div>
-              <button type="button" className="button-link secondary-button" onClick={toggleAllModules} style={{ padding: "6px 16px", fontSize: 12 }}>
-                {selectedModules.size === modules.length ? "Deselect All" : "Select All"}
-              </button>
+              {!coursesLocked && (
+                <button type="button" className="button-link secondary-button" onClick={toggleAllModules} style={{ padding: "6px 16px", fontSize: 12 }}>
+                  {selectedModules.size === modules.length ? "Deselect All" : "Select All"}
+                </button>
+              )}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+            {coursesLocked && (
+              <p className="hint" style={{ marginBottom: 16 }}>
+                {activePlan
+                  ? `${activePlan.module_count} course${activePlan.module_count === 1 ? "" : "s"} included in ${activePlan.name} · ${planSummaryLine(activePlan)}`
+                  : "Choose a plan on the Agreement tab to see the courses it includes."}
+              </p>
+            )}
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14, opacity: coursesLocked ? 0.55 : 1, pointerEvents: coursesLocked ? "none" : "auto" }}>
               {modules.map((module) => {
                 const isSelected = selectedModules.has(module.id);
                 return (
                   <div
                     key={module.id}
-                    onClick={() => toggleModule(module.id)}
+                    onClick={() => !coursesLocked && toggleModule(module.id)}
                     style={{
                       padding: "14px 16px",
                       borderRadius: 12,

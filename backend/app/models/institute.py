@@ -3,7 +3,7 @@ from typing import Optional
 
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, Integer, JSON, Numeric, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -30,6 +30,13 @@ class Institute(Base):
     staff_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     test_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     access_duration_days: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    # The institute plan the agreement was sold on, picked (or authored) during
+    # onboarding. Publish turns it into the institute's first subscription.
+    # NULL on drafts predating plan-driven onboarding, which publish still
+    # handles through the legacy internal-plan path.
+    onboarding_plan_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("plans.id", ondelete="SET NULL"), nullable=True
+    )
     # Deprecated: the institute-wide AI pool was replaced by a per-student cap.
     # Column retained so existing values survive; nothing reads or writes it.
     ai_monthly_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)

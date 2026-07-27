@@ -213,7 +213,10 @@ def get_plan(db: Session, plan_id: int) -> dict:
     return _serialize(plan, count)
 
 
-def create_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> dict:
+def build_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> Plan:
+    """Validate and stage a catalogue plan without committing, so a caller that
+    is already mid-transaction (institute onboarding authors a plan alongside
+    the institute it is for) either gets both rows or neither."""
     if db.query(Plan).filter(Plan.name == data["name"]).first() is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A plan with this name already exists")
 
@@ -239,6 +242,11 @@ def create_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> dict
     db.add(plan)
     db.flush()
     _audit(db, actor, "plan.create", plan.id, ip, {"name": plan.name})
+    return plan
+
+
+def create_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> dict:
+    plan = build_plan(db, actor, data, ip)
     db.commit()
     db.refresh(plan)
     return _serialize(plan, 0)

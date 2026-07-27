@@ -20,10 +20,12 @@ from app.models.exam_module import InstituteModule
 from app.models.institute import Institute
 from app.models.institute_branding import InstituteBranding
 from app.models.payment import Payment
+from app.models.plan import AUDIENCE_INSTITUTES, Plan
 from app.models.role import INSTITUTE_ADMIN, Role
 from app.models.subscription import Subscription
 from app.models.user import User
 from app.models.user_session import UserSession
+from app.services import plan_service, subscription_service
 from app.services.subscription_service import current_subscription
 
 MAX_LOGO_BYTES = 2 * 1024 * 1024
@@ -103,6 +105,7 @@ def _serialize(db: Session, institute: Institute) -> dict:
         .order_by(Payment.id.desc())
         .first()
     )
+    plan = db.get(Plan, institute.onboarding_plan_id) if institute.onboarding_plan_id else None
     return {
         "id": institute.id,
         "name": institute.name,
@@ -129,6 +132,19 @@ def _serialize(db: Session, institute: Institute) -> dict:
         "student_limit": institute.student_limit,
         "staff_limit": institute.staff_limit,
         "access_duration_days": institute.access_duration_days,
+        "plan_id": institute.onboarding_plan_id,
+        "plan": ({
+            "id": plan.id,
+            "name": plan.name,
+            "price": str(plan.price),
+            "currency": plan.currency,
+            "duration_days": plan.duration_days,
+            "student_limit": plan.student_limit,
+            "staff_limit": plan.staff_limit,
+            "test_limit": plan.test_limit,
+            "grace_days": plan.grace_days,
+            "module_count": len(plan.modules),
+        } if plan else None),
         "module_ids": [link.module_id for link in modules],
         "branding": {
             "primary_color": branding.primary_color if branding else "#e53935",
@@ -218,6 +234,34 @@ def create_institute(
     return result
 
 
+def _resolve_agreement_plan(db: Session, actor: User, payload: dict, ip: Optional[str]) -> Optional[Plan]:
+    """The institute plan this agreement is sold on, or None when the payload
+    says nothing about a plan (an edit that only touches branding, say).
+
+    A new plan is authored straight into the institute catalogue so it is
+    available to the next institute too - the point of creating it here is
+    saving the round trip to the Plans screen, not making a private copy.
+    """
+    if payload.get("new_plan"):
+        return plan_service.build_plan(
+            db, actor, {**payload["new_plan"], "audience": AUDIENCE_INSTITUTES, "is_published": False}, ip
+        )
+    if payload.get("plan_id") is None:
+        return None
+    plan = plan_service.get_plan_or_404(db, payload["plan_id"])
+    if plan.is_internal:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This plan is not part of the institute catalogue")
+    plan_service.assert_audience(plan, AUDIENCE_INSTITUTES)
+    if not plan.is_active:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This plan is deactivated and cannot be assigned")
+    if not plan.modules:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This plan has no courses - add courses to it before assigning it to an institute",
+        )
+    return plan
+
+
 def update_institute(
     db: Session,
     actor: User,
@@ -226,6 +270,18 @@ def update_institute(
     ip: Optional[str],
 ) -> dict:
     institute = get_institute_or_404(db, institute_id)
+    # Resolved before anything is written so a bad plan fails the whole save.
+    plan = _resolve_agreement_plan(db, actor, payload, ip)
+    if plan is not None:
+        # Allocation is the plan's, not a second set of numbers free to drift
+        # from the plan the institute is actually subscribed to.
+        payload = {
+            **payload,
+            "student_limit": plan.student_limit,
+            "staff_limit": plan.staff_limit,
+            "access_duration_days": plan.duration_days,
+            "module_ids": [module.id for module in plan.modules],
+        }
     name = payload.get("name")
     if name is not None and name != institute.name:
         institute.name = name
@@ -302,6 +358,16 @@ def update_institute(
                 db.flush()
                 payment.invoice_number = f"INV-{payment.id:06d}"
 
+    # Agreement plan. Assigning one is what gives the institute a subscription,
+    # so seats and validity are enforced from the same place they were sold.
+    if plan is not None and plan.id != institute.onboarding_plan_id:
+        institute.onboarding_plan_id = plan.id
+        # 0 on the plan means the agreement does not meter test attempts.
+        institute.test_limit = plan.test_limit or None
+        needs_subscription = True
+    else:
+        needs_subscription = False
+
     # Module allocation
     if "module_ids" in payload and payload["module_ids"] is not None:
         db.query(InstituteModule).filter(InstituteModule.institute_id == institute.id).delete()
@@ -322,6 +388,10 @@ def update_institute(
     db.add(institute)
     _audit(db, actor, "institute.update", institute.id, ip)
     db.commit()
+    if needs_subscription:
+        # Deferred until the institute row is committed: assign() commits too,
+        # and re-runs the catalogue guards on whatever was just written.
+        subscription_service.assign(db, actor, institute.id, plan.id, None, ip)
     db.refresh(institute)
     return _serialize(db, institute)
 

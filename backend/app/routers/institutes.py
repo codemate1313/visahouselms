@@ -51,8 +51,15 @@ def create_institute(
         _client_ip(request),
         ai_student_monthly_limit=payload.ai_student_monthly_limit,
     )
-    # If extra agreement/branding attributes were provided, save them
-    if payload.agreement_reference or payload.agreed_amount or payload.module_ids or payload.primary_color:
+    # If extra agreement/plan/branding attributes were provided, save them
+    if (
+        payload.agreement_reference
+        or payload.agreed_amount
+        or payload.module_ids
+        or payload.primary_color
+        or payload.plan_id
+        or payload.new_plan
+    ):
         temp_pwd = res.get("admin_temp_password")
         institute_service.update_institute(db, actor, res["id"], payload.model_dump(exclude_unset=True), _client_ip(request))
         res = institute_service.get_institute(db, res["id"])

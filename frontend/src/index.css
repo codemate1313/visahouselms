@@ -19950,6 +19950,80 @@ th[aria-sort="descending"] .table-sort-button::after {
   border-top: 1px solid #f1f5f9;
 }
 
+/* Onboarding plan picker: assign an existing institute plan, or author one
+   here. Token-based so both themes follow without an override block. */
+.plan-mode-switch {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.plan-mode-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-muted);
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.plan-mode-option:hover {
+  border-color: var(--primary);
+}
+
+.plan-mode-option.is-selected {
+  border-color: var(--primary);
+  background: rgba(225, 29, 46, 0.07);
+}
+
+.plan-mode-option input {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  accent-color: var(--primary);
+}
+
+.plan-mode-option span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.plan-mode-option small {
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.plan-mode-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.plan-summary-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+.plan-summary-strip strong {
+  font-size: 16px;
+}
+
+.plan-summary-strip span {
+  color: var(--text-muted);
+  font-size: 13.5px;
+}
+
 .onboarding-form-submit-bar {
   margin-top: 28px;
   padding-top: 20px;
