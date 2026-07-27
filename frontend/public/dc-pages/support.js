@@ -1867,12 +1867,18 @@
       const href = link.getAttribute("href") || "";
       if (!href || href.startsWith("#")) return;
       try {
-        const url = new URL(href, window.location.href);
-        if (url.origin === window.location.origin && !url.pathname.startsWith("/dc-pages/")) {
+        const parentOrigin = vhParentOrigin();
+        const base = (typeof window.__vhParentOrigin === "string" && window.__vhParentOrigin)
+          || (document.baseURI && !document.baseURI.startsWith("about:"))
+          || (window.location && window.location.origin !== "null" && window.location.origin)
+          || window.location.href;
+        const url = new URL(href, base);
+        if (!url.pathname.startsWith("/dc-pages/")) {
           event.preventDefault();
-          window.parent.location.href = `${url.pathname}${url.search}${url.hash}`;
+          window.parent.postMessage({ type: "vh-navigate", href: `${url.pathname}${url.search}${url.hash}` }, parentOrigin);
         }
-      } catch {
+      } catch (err) {
+        console.error("[dc-nav] Error handling link click:", err);
       }
       return;
     }
@@ -1893,6 +1899,6 @@
     if (text.includes("choose institute") || text.includes("choose enterprise")) path = "/contact";
     if (!path) return;
     event.preventDefault();
-    window.parent.location.href = path;
+    window.parent.postMessage({ type: "vh-navigate", href: path }, vhParentOrigin());
   });
 })();

@@ -43,7 +43,10 @@ export function MetricDetailModal({ selectedMetric, metricDetail, metricLoading,
           {metricDetail && metricDetail.items.length > 0 && (
             <div className="dashboard-records-list">
               <div className="records-count-bar">
-                <span className="records-count-label">{t.totalRecords}</span>
+                <div className="records-count-left">
+                  <span className="records-count-indicator" />
+                  <span className="records-count-label">{t.totalRecords}</span>
+                </div>
                 <span className="records-count-badge">{metricDetail.items.length}</span>
               </div>
 

@@ -1,15 +1,18 @@
+import { useState } from "react";
 import { BarChart } from "@/components/charts/BarChart";
 import { DonutChart } from "@/components/charts/DonutChart";
 import { LineChart } from "@/components/charts/LineChart";
 import { dashboardStrings as strings } from "../Dashboard.strings";
 import { PAYMENT_STATUS_COLORS, SUBSCRIPTION_STATE_COLORS, formatMoney } from "../helpers";
 import type { Summary } from "../types";
+import { ChartDetailModal, type ChartKey } from "./ChartDetailModal";
 
 interface DashboardChartsProps {
   summary: Summary;
 }
 
 export function DashboardCharts({ summary }: DashboardChartsProps) {
+  const [selectedChart, setSelectedChart] = useState<ChartKey | null>(null);
   const t = strings.charts;
   const stateLabels = strings.subscriptionStateLabels;
 
@@ -37,14 +40,60 @@ export function DashboardCharts({ summary }: DashboardChartsProps) {
   const instituteStateLegend = instituteStateData.map((d) => ({ label: d.label, color: d.color }));
 
   return (
-    <div className="dashboard-charts-grid">
-      <LineChart data={institutesByRevenue} title={t.byInstituteTitle} formatValue={formatMoney} ariaLabel={t.byInstituteAriaLabel} emptyMessage={t.revenueEmpty} />
+    <>
+      <div className="dashboard-charts-grid">
+        <div
+          className="clickable-chart-card-wrapper"
+          onClick={() => setSelectedChart("byInstitute")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && setSelectedChart("byInstitute")}
+          title="Click to view detailed institute revenue analysis"
+        >
+          <BarChart data={institutesByRevenue} title={t.byInstituteTitle} orientation="vertical" formatValue={formatMoney} ariaLabel={t.byInstituteAriaLabel} emptyMessage={t.revenueEmpty} />
+        </div>
 
-      <BarChart data={revenueByMonth} title={t.byMonthTitle} orientation="vertical" formatValue={formatMoney} ariaLabel={t.byMonthAriaLabel} emptyMessage={t.revenueEmpty} />
+        <div
+          className="clickable-chart-card-wrapper"
+          onClick={() => setSelectedChart("byMonth")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && setSelectedChart("byMonth")}
+          title="Click to view detailed monthly revenue analysis"
+        >
+          <LineChart data={revenueByMonth} title={t.byMonthTitle} formatValue={formatMoney} ariaLabel={t.byMonthAriaLabel} emptyMessage={t.revenueEmpty} />
+        </div>
 
-      <DonutChart data={paymentStatusData} title={t.paymentStatusTitle} centerLabel={t.paymentStatusCenterLabel} ariaLabel={t.paymentStatusAriaLabel} emptyMessage={t.paymentStatusEmpty} />
+        <div
+          className="clickable-chart-card-wrapper"
+          onClick={() => setSelectedChart("paymentStatus")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && setSelectedChart("paymentStatus")}
+          title="Click to view detailed payment status analysis"
+        >
+          <DonutChart data={paymentStatusData} title={t.paymentStatusTitle} centerLabel={t.paymentStatusCenterLabel} ariaLabel={t.paymentStatusAriaLabel} emptyMessage={t.paymentStatusEmpty} />
+        </div>
 
-      <BarChart data={instituteStateData} title={t.instituteStateTitle} orientation="vertical" legend={instituteStateLegend} ariaLabel={t.instituteStateAriaLabel} emptyMessage={t.instituteStateEmpty} />
-    </div>
+        <div
+          className="clickable-chart-card-wrapper"
+          onClick={() => setSelectedChart("instituteState")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && setSelectedChart("instituteState")}
+          title="Click to view detailed subscription state analysis"
+        >
+          <BarChart data={instituteStateData} title={t.instituteStateTitle} orientation="vertical" legend={instituteStateLegend} ariaLabel={t.instituteStateAriaLabel} emptyMessage={t.instituteStateEmpty} />
+        </div>
+      </div>
+
+      {selectedChart && (
+        <ChartDetailModal
+          chartKey={selectedChart}
+          summary={summary}
+          onClose={() => setSelectedChart(null)}
+        />
+      )}
+    </>
   );
 }

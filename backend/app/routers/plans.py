@@ -7,7 +7,7 @@ from app.database import get_db
 from app.dependencies.auth import get_current_user, require_role
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
-from app.schemas.plan import PlanCreate, PlanUpdate
+from app.schemas.plan import PlanCreate, PlanDisplaySettings, PlanUpdate
 from app.services import plan_service
 
 router = APIRouter(
@@ -39,6 +39,25 @@ def list_plans(
     """One catalogue at a time. Omitting `audience` returns both and exists only
     for callers that genuinely want every plan (exports, tooling)."""
     return plan_service.list_plans(db, audience=audience)
+
+
+@router.get("/display-settings")
+def get_display_settings(db: Session = Depends(get_db)):
+    """Which catalogues the public pricing page lists. Declared before
+    `/{plan_id}` so the literal path wins the route match."""
+    return plan_service.get_landing_visibility(db)
+
+
+@router.put("/display-settings")
+def update_display_settings(
+    payload: PlanDisplaySettings,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return plan_service.set_landing_visibility(
+        db, actor, payload.model_dump(exclude_unset=True), _client_ip(request)
+    )
 
 
 @router.get("/available-modules")

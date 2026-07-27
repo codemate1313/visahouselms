@@ -35,22 +35,21 @@ export function HeroSlider() {
           <h2 className="hero-slide-title">{activeSlide.title}</h2>
           <p className="hero-slide-subtitle">{activeSlide.subtitle}</p>
         </div>
+        {/* Dots centered over the image, no nav arrows */}
+        {slides.length > 1 && (
+          <div className="hero-slider-dots">
+            {slides.map((slide, idx) => (
+              <button
+                key={slide.id}
+                type="button"
+                className={`slider-dot ${idx === currentSlideIndex ? "active" : ""}`}
+                onClick={() => setCurrentSlideIndex(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Dots centered BELOW the image, no nav arrows */}
-      {slides.length > 1 && (
-        <div className="hero-slider-dots">
-          {slides.map((slide, idx) => (
-            <button
-              key={slide.id}
-              type="button"
-              className={`slider-dot ${idx === currentSlideIndex ? "active" : ""}`}
-              onClick={() => setCurrentSlideIndex(idx)}
-              aria-label={`Go to slide ${idx + 1}`}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

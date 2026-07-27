@@ -10,9 +10,19 @@ from app.models.exam_module import ExamModule
 from app.models.plan import AUDIENCE_DIRECT, AUDIENCE_INSTITUTES, AUDIENCES, Plan
 from app.models.subscription import Subscription
 from app.models.user import User
+from app.services import settings_service
 
 
 MAX_FEATURE_LENGTH = 120
+
+# Whether each catalogue is listed on the public pricing page. Direct-student
+# plans have always been public, institute plans have not - so the stored
+# defaults preserve that behaviour until the Super Admin says otherwise.
+LANDING_VISIBILITY_KEYS = {
+    AUDIENCE_DIRECT: "landing_plans.show_direct",
+    AUDIENCE_INSTITUTES: "landing_plans.show_institutes",
+}
+LANDING_VISIBILITY_DEFAULTS = {AUDIENCE_DIRECT: True, AUDIENCE_INSTITUTES: False}
 
 
 def _clean_features(features: Optional[List[str]]) -> List[str]:
@@ -115,17 +125,46 @@ def _resolve_modules(db: Session, module_ids: List[int]) -> List[ExamModule]:
     return modules
 
 
-def live_plan_query(db: Session):
-    """A "live" plan is one the public pricing page can actually show - which
-    means direct-student plans only. Institute plans are sold through an access
-    agreement, never listed publicly, so they are not "live" in this sense and
-    can be taken down freely."""
+def live_plan_query(db: Session, audience: str = AUDIENCE_DIRECT):
+    """A "live" plan is one the public pricing page can actually show. Whether a
+    catalogue is listed at all is the Super Admin's call (see
+    `get_landing_visibility`); this query only says which plans within a
+    catalogue are publishable. It defaults to direct-student plans because the
+    "keep one live plan" guard is about the direct catalogue."""
     return db.query(Plan).filter(
         Plan.is_active.is_(True),
         Plan.is_published.is_(True),
         Plan.is_internal.is_(False),
-        Plan.audience == AUDIENCE_DIRECT,
+        Plan.audience == audience,
     )
+
+
+def get_landing_visibility(db: Session) -> dict:
+    """Per-catalogue "show this on the public pricing page" flags. Both may be
+    off, in which case the page falls back to a contact-us panel."""
+    flags = {}
+    for audience, key in LANDING_VISIBILITY_KEYS.items():
+        stored = settings_service.get_setting(db, key)
+        flags[audience] = LANDING_VISIBILITY_DEFAULTS[audience] if stored is None else stored.lower() == "true"
+    return flags
+
+
+def set_landing_visibility(db: Session, actor: User, values: dict, ip: Optional[str] = None) -> dict:
+    """Write the flags the Super Admin toggled. Unknown audiences are rejected
+    rather than silently ignored, so a typo never looks like a saved setting."""
+    unknown = set(values) - set(LANDING_VISIBILITY_KEYS)
+    if unknown:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown plan audience '{sorted(unknown)[0]}'",
+        )
+    # An omitted flag keeps its stored value - only what was sent is written.
+    changed = {audience: bool(flag) for audience, flag in values.items() if flag is not None}
+    for audience, flag in changed.items():
+        settings_service.set_setting(db, LANDING_VISIBILITY_KEYS[audience], "true" if flag else "false")
+    _audit(db, actor, "plan.landing_visibility", None, ip, changed)
+    db.commit()
+    return get_landing_visibility(db)
 
 
 def _ensure_not_last_live_plan(db: Session, plan: Plan) -> None:
@@ -346,11 +385,23 @@ def _landing_features(plan: Plan, modules: List[dict]) -> List[str]:
     return features
 
 
-def list_landing_plans(db: Session) -> List[dict]:
-    """Published, active, non-internal plans for the unauthenticated marketing
-    pricing page - no entitlement data, since there is no session."""
-    plans = live_plan_query(db).options(joinedload(Plan.modules)).order_by(Plan.price).all()
-    counts = {
+def list_landing_plans(db: Session) -> dict:
+    """Both catalogues for the unauthenticated marketing pricing page, each
+    gated by its own visibility flag. A hidden catalogue comes back empty rather
+    than omitted, so the page can render its audience switch from the flags
+    alone. No entitlement data, since there is no session."""
+    visibility = get_landing_visibility(db)
+    counts = _subscription_counts(db)
+    return {
+        "show_direct": visibility[AUDIENCE_DIRECT],
+        "show_institutes": visibility[AUDIENCE_INSTITUTES],
+        AUDIENCE_DIRECT: _landing_group(db, AUDIENCE_DIRECT, counts) if visibility[AUDIENCE_DIRECT] else [],
+        AUDIENCE_INSTITUTES: _landing_group(db, AUDIENCE_INSTITUTES, counts) if visibility[AUDIENCE_INSTITUTES] else [],
+    }
+
+
+def _subscription_counts(db: Session) -> dict:
+    return {
         plan_id: count
         for plan_id, count in (
             db.query(Subscription.plan_id, func.count(Subscription.id))
@@ -358,6 +409,11 @@ def list_landing_plans(db: Session) -> List[dict]:
             .all()
         )
     }
+
+
+def _landing_group(db: Session, audience: str, counts: dict) -> List[dict]:
+    """One catalogue's published, active, non-internal plans as pricing cards."""
+    plans = live_plan_query(db, audience).options(joinedload(Plan.modules)).order_by(Plan.price).all()
 
     result = []
     for plan in plans:

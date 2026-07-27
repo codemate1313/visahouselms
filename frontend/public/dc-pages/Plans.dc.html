@@ -80,6 +80,8 @@
   .vh-plan-empty { max-width: 520px; margin: 0 auto; text-align: center; background: var(--card); border: 1px dashed var(--acLine); border-radius: 22px; padding: 48px 32px; }
   .vh-plan-empty strong { display: block; font-size: 20px; font-weight: 600; margin-bottom: 10px; }
   .vh-plan-empty span { font-size: 14.5px; line-height: 1.6; color: var(--ink2); }
+  .vh-plan-empty-cta { display: inline-block; margin-top: 22px; font-size: 14.5px; font-weight: 600; padding: 12px 26px; border-radius: 100px; background: var(--ac); color: #fff; transition: transform .2s ease, box-shadow .2s ease; }
+  .vh-plan-empty-cta:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 14px 30px -14px var(--ac); }
   @media (max-width: 900px) { .vh-plan-grid, .vh-plan-grid.vh-plan-grid-few { grid-template-columns: minmax(0, 1fr); } .vh-plan-name { padding-right: 0; } .vh-plan-badge { position: static; display: inline-block; margin-bottom: 12px; } }
   /* Social Icons Hover Effect (Footer) */
   .footer-social-icons { display: flex; justify-content: flex-start; align-items: center; flex-direction: row; column-gap: 0.5rem; padding: 0; margin: 0; list-style: none; }
@@ -168,6 +170,16 @@
   </section>
 
   <section class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 96px;">
+    <sc-if value="{{ showAudienceToggle }}">
+      <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+        <div style="position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 420px); padding: 4px; background: var(--chip); border: 1px solid var(--line); border-radius: 100px; overflow: hidden;">
+          <span aria-hidden="true" style="position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 2); border-radius: 100px; background: var(--ink); transform: translateX({{ audiencePillX }}); transition: transform .38s cubic-bezier(.2,.7,.2,1); box-shadow: 0 10px 24px -14px var(--ink);"></span>
+          <button type="button" onClick="{{ setStudentAudience }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 100px; border: none; background: transparent; color: {{ studentAudienceColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">For Students</button>
+          <button type="button" onClick="{{ setInstituteAudience }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 100px; border: none; background: transparent; color: {{ instituteAudienceColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">For Institutes</button>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ showBillingToggle }}">
       <div style="display: flex; justify-content: center; margin-bottom: 40px;">
         <div style="position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 360px); padding: 4px; background: var(--chip); border: 1px solid var(--line); border-radius: 100px; overflow: hidden;">
@@ -211,6 +223,9 @@
       <div class="vh-plan-empty">
         <strong>{{ emptyTitle }}</strong>
         <span>{{ emptyBody }}</span>
+        <sc-if value="{{ showEmptyCta }}">
+          <a href="/contact" class="vh-plan-empty-cta">{{ emptyCta }} &rarr;</a>
+        </sc-if>
       </div>
     </sc-if>
   </section>
@@ -318,15 +333,55 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
 class Component extends DCLogic {
   // Plans come from the Super Admin catalogue, injected by StaticDcPage as
-  // window.__vhData before this frame boots — nothing here is hard-coded.
-  plans = Array.isArray(window.__vhData?.plans) ? window.__vhData.plans : [];
+  // window.__vhData before this frame boots — nothing here is hard-coded. The
+  // two catalogues are listed independently: the Super Admin decides whether
+  // each one appears here at all, so either, both, or neither may be on.
+  studentPlans = Array.isArray(window.__vhData?.studentPlans) ? window.__vhData.studentPlans : [];
+  institutePlans = Array.isArray(window.__vhData?.institutePlans) ? window.__vhData.institutePlans : [];
+  showStudentPlans = Boolean(window.__vhData?.showStudentPlans);
+  showInstitutePlans = Boolean(window.__vhData?.showInstitutePlans);
   plansFailed = Boolean(window.__vhData?.plansFailed);
 
-  state = { theme: this.getInitialTheme(), billing: this.getInitialBilling(), faqOpen: -1, mobileMenuOpen: false };
+  state = {
+    theme: this.getInitialTheme(),
+    audience: this.getInitialAudience(),
+    billing: this.getInitialBilling(),
+    faqOpen: -1,
+    mobileMenuOpen: false,
+  };
+
+  // Whichever catalogue is switched on leads; with both on, students first.
+  getInitialAudience() {
+    return Boolean(window.__vhData?.showStudentPlans) || !window.__vhData?.showInstitutePlans
+      ? "students"
+      : "institutes";
+  }
 
   getInitialBilling() {
-    const plans = Array.isArray(window.__vhData?.plans) ? window.__vhData.plans : [];
-    return plans.some((p) => p.billing_period === "monthly") ? "monthly" : "annual";
+    return this.audiencePlans(this.getInitialAudience()).some((p) => p.billing_period === "monthly")
+      ? "monthly"
+      : "annual";
+  }
+
+  // The plans of one catalogue, gated by its visibility flag so a catalogue the
+  // Super Admin switched off can never be reached through the audience switch.
+  audiencePlans(audience) {
+    if (audience === "institutes") return this.showInstitutePlans ? this.institutePlans : [];
+    return this.showStudentPlans ? this.studentPlans : [];
+  }
+
+  setStudentAudience = () => this.selectAudience("students");
+  setInstituteAudience = () => this.selectAudience("institutes");
+
+  // Switching catalogue can strand the billing cadence on one the new list does
+  // not offer, which would show an empty grid — so re-derive it alongside.
+  selectAudience(audience) {
+    if (this.state.audience === audience) return;
+    const plans = this.audiencePlans(audience);
+    const billing = plans.some((p) => p.billing_period === this.state.billing)
+      ? this.state.billing
+      : plans.some((p) => p.billing_period === "monthly") ? "monthly" : "annual";
+    this.setState({ audience, billing });
   }
 
   getInitialTheme() {
@@ -534,14 +589,22 @@ class Component extends DCLogic {
 
   // The billing switch only earns its place when the catalogue actually holds
   // both cadences; "custom"-length plans stay visible under either one.
-  visiblePlans(showToggle) {
-    if (!showToggle) return this.plans;
-    return this.plans.filter((p) => p.billing_period === this.state.billing || p.billing_period === "custom");
+  visiblePlans(plans, showToggle) {
+    if (!showToggle) return plans;
+    return plans.filter((p) => p.billing_period === this.state.billing || p.billing_period === "custom");
   }
+
+  // Institute plans are granted through an access agreement rather than bought
+  // on the spot, so their card points at sales instead of the register overlay.
+  contactSales = () => {
+    this.closeMobileMenu();
+    try { window.parent.postMessage({ type: "vh-navigate", href: "/contact" }, window.location.origin); } catch {}
+  };
 
   planCard(plan) {
     const dark = this.isDark();
     const featured = Boolean(plan.is_popular);
+    const forInstitutes = plan.audience === "institutes";
     return {
       popular: featured,
       name: plan.name,
@@ -549,8 +612,8 @@ class Component extends DCLogic {
       period: plan.period_label,
       description: plan.description || "",
       hasDescription: Boolean(plan.description),
-      ctaLabel: "Choose " + plan.name,
-      choose: this.choosePlan,
+      ctaLabel: forInstitutes ? "Talk to sales" : "Choose " + plan.name,
+      choose: forInstitutes ? this.contactSales : this.choosePlan,
       cardBg: featured ? "linear-gradient(155deg, var(--ac), var(--ac2))" : "var(--card)",
       cardInk: featured ? "#fff" : "var(--ink)",
       cardBorder: featured ? "transparent" : "var(--line)",
@@ -570,9 +633,14 @@ class Component extends DCLogic {
   renderVals() {
     const svg = (paths, size = 22) => React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.9, strokeLinecap: "round", strokeLinejoin: "round" }, paths.map((p, i) => React.createElement(p.tag, { key: i, ...p.attrs })));
     const annual = this.state.billing === "annual";
+    const institutes = this.state.audience === "institutes";
+    const anyCatalogueShown = this.showStudentPlans || this.showInstitutePlans;
+    const showAudienceToggle = this.showStudentPlans && this.showInstitutePlans;
+    const cataloguePlans = this.audiencePlans(this.state.audience);
     const showBillingToggle =
-      this.plans.some((p) => p.billing_period === "monthly") && this.plans.some((p) => p.billing_period === "annual");
-    const visiblePlans = this.visiblePlans(showBillingToggle);
+      cataloguePlans.some((p) => p.billing_period === "monthly") &&
+      cataloguePlans.some((p) => p.billing_period === "annual");
+    const visiblePlans = this.visiblePlans(cataloguePlans, showBillingToggle);
     const themeIcons = {
       light: svg([{ tag: "circle", attrs: { cx: 12, cy: 12, r: 4.2 } }, { tag: "path", attrs: { d: "M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" } }], 17),
       dark: svg([{ tag: "path", attrs: { d: "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" } }], 17),
@@ -603,6 +671,12 @@ class Component extends DCLogic {
       goLogin: this.goLogin,
       setMonthly: this.setMonthly,
       setAnnual: this.setAnnual,
+      setStudentAudience: this.setStudentAudience,
+      setInstituteAudience: this.setInstituteAudience,
+      showAudienceToggle,
+      audiencePillX: institutes ? "calc(100% + 4px)" : "0px",
+      studentAudienceColor: institutes ? "var(--ink2)" : "var(--bg)",
+      instituteAudienceColor: institutes ? "var(--bg)" : "var(--ink2)",
       faqs,
       themeLabel: this.state.theme[0].toUpperCase() + this.state.theme.slice(1),
       themeIcon: themeIcons[this.state.theme],
@@ -614,10 +688,16 @@ class Component extends DCLogic {
       showEmptyState: visiblePlans.length === 0,
       planGridClass: visiblePlans.length < 3 ? "vh-plan-grid vh-plan-grid-few" : "vh-plan-grid",
       planCards: visiblePlans.map((plan) => this.planCard(plan)),
-      emptyTitle: this.plansFailed ? "Pricing is temporarily unavailable" : "Pricing is being finalised",
+      emptyTitle: this.plansFailed
+        ? "Pricing is temporarily unavailable"
+        : anyCatalogueShown ? "Pricing is being finalised" : "Pricing is available on request",
       emptyBody: this.plansFailed
         ? "We could not load our plans just now. Please refresh in a moment, or contact us and we will walk you through the options."
-        : "No plans are published yet. Get in touch and our team will put together the right package for you.",
+        : anyCatalogueShown
+          ? "No plans are published yet. Get in touch and our team will put together the right package for you."
+          : "We do not list our pricing publicly right now. Contact our team and we will share the plan details that fit you — whether you are studying on your own or running an institute.",
+      emptyCta: anyCatalogueShown ? "" : "Contact our team",
+      showEmptyCta: !anyCatalogueShown,
       year: new Date().getFullYear(),
       navItems: [
         { label: "Home", href: "/", className: "vh-nav-link", mobileClassName: "vh-drawer-link vh-drawer-item" },

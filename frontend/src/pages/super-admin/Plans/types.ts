@@ -1,3 +1,9 @@
+/** Which catalogues the public pricing page lists, keyed by audience. */
+export interface PlanVisibility {
+  direct_students: boolean;
+  institutes: boolean;
+}
+
 export interface PlanRow {
   id: number;
   name: string;

@@ -2,22 +2,24 @@ import { useEffect, useMemo, useState } from "react";
 import { apiClient } from "@/api/client";
 import { StaticDcPage } from "./StaticDcPage";
 import { plansStrings as strings } from "./Plans.strings";
-import type { LandingPlan } from "./Plans.types";
+import type { LandingPlansPayload } from "./Plans.types";
 
 export function Plans() {
-  const [plans, setPlans] = useState<LandingPlan[] | null>(null);
+  const [payload, setPayload] = useState<LandingPlansPayload | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     apiClient
-      .get<LandingPlan[]>("/plans", { headers: { "X-Skip-Loader": "true" } })
+      .get<LandingPlansPayload>("/plans", { headers: { "X-Skip-Loader": "true" } })
       .then(({ data }) => {
-        if (!cancelled) setPlans(data);
+        if (!cancelled) setPayload(data);
       })
       .catch(() => {
         if (!cancelled) {
-          setPlans([]);
+          // A failed load is not the same as "nothing is published": the page
+          // says so, so both catalogues stay switched on with empty lists.
+          setPayload({ show_direct: true, show_institutes: false, direct_students: [], institutes: [] });
           setFailed(true);
         }
       });
@@ -27,8 +29,14 @@ export function Plans() {
   }, []);
 
   const bootstrap = useMemo(
-    () => ({ plans: plans ?? [], plansFailed: failed }),
-    [failed, plans]
+    () => ({
+      studentPlans: payload?.direct_students ?? [],
+      institutePlans: payload?.institutes ?? [],
+      showStudentPlans: payload?.show_direct ?? false,
+      showInstitutePlans: payload?.show_institutes ?? false,
+      plansFailed: failed,
+    }),
+    [failed, payload]
   );
 
   return (
@@ -36,7 +44,7 @@ export function Plans() {
       fileName={strings.fileName}
       title={strings.title}
       bootstrap={bootstrap}
-      bootstrapPending={plans === null}
+      bootstrapPending={payload === null}
     />
   );
 }

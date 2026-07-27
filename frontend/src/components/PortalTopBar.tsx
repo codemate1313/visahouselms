@@ -86,7 +86,8 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/institute-plans", eyebrow: "SAAS MANAGEMENT", title: "Institute Plans" },
   { match: "/super-admin/plans/new", eyebrow: "SAAS MANAGEMENT", title: "Create Direct Student Plan" },
   { match: /\/super-admin\/plans\/\d+/, eyebrow: "SAAS MANAGEMENT", title: "Edit Direct Student Plan" },
-  { match: "/super-admin/plans", eyebrow: "SAAS MANAGEMENT", title: "Direct Student Plans" },
+  // One screen lists both catalogues, switched by the audience control on it.
+  { match: "/super-admin/plans", eyebrow: "SAAS MANAGEMENT", title: "Subscription Plans" },
   { match: "/super-admin/subscriptions", eyebrow: "SAAS MANAGEMENT", title: "Access Agreements" },
   { match: "/super-admin/trial-config", eyebrow: "SAAS MANAGEMENT", title: "Trial Settings" },
   { match: "/super-admin/demo-accounts", eyebrow: "SAAS MANAGEMENT", title: "Demo Accounts" },

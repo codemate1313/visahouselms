@@ -73,11 +73,16 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       const isTrustedPublicPage =
-        event.origin === window.location.origin || event.source === frameRef.current?.contentWindow;
+        event.origin === window.location.origin ||
+        event.origin === "null" ||
+        event.source === frameRef.current?.contentWindow;
       if (!isTrustedPublicPage) return;
       if (event.data?.type === "vh-auth") {
         const mode = event.data.mode === "login" ? "login" : "register";
         navigate(mode === "login" ? "/login" : "/register");
+      }
+      if (event.data?.type === "vh-navigate" && event.data.href) {
+        navigate(event.data.href);
       }
       if (event.data?.type === "vh-theme") {
         const theme = event.data.theme === "dark" ? "dark" : "light";

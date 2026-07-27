@@ -47,3 +47,11 @@ class AssignSubscriptionRequest(BaseModel):
 
 class RenewSubscriptionRequest(BaseModel):
     plan_id: Optional[int] = None
+
+
+class PlanDisplaySettings(BaseModel):
+    """Per-catalogue visibility on the public pricing page. Both are optional so
+    a screen can flip one switch without restating the other."""
+
+    direct_students: Optional[bool] = None
+    institutes: Optional[bool] = None

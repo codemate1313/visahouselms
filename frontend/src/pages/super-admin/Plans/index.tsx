@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
@@ -7,22 +8,30 @@ import { usePageTitleStore } from "@/store/pageTitleStore";
 import { useToastStore } from "@/store/toastStore";
 import { confirmExport } from "@/utils/confirmExport";
 import { planCatalogues, plansStrings as strings, type PlanAudience } from "./Plans.strings";
-import type { PlanRow } from "./types";
+import type { PlanRow, PlanVisibility } from "./types";
 import { exportPlansExcel, exportPlansPDF } from "./exportHelpers";
+import { PlanAudienceBar } from "./components/PlanAudienceBar";
 import { PlansFilterBar } from "./components/PlansFilterBar";
 import { PlansTable } from "./components/PlansTable";
 import { PlanDetailsModal } from "./components/PlanDetailsModal";
 
 export type { PlanRow } from "./types";
 
-interface PlansProps {
-  /** Which catalogue this screen lists. The two never mix. */
-  audience?: PlanAudience;
+function parseAudience(value: string | null): PlanAudience {
+  return value === "institutes" ? "institutes" : "direct_students";
 }
 
-export function Plans({ audience = "direct_students" }: PlansProps) {
+export function Plans() {
+  // One screen, two catalogues. The audience lives in the URL so a refresh, a
+  // back button, or a link out of a plan form lands on the same catalogue.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const audience = parseAudience(searchParams.get("audience"));
   const catalogue = planCatalogues[audience];
   const [plans, setPlans] = useState<PlanRow[]>([]);
+  // Null until the flags arrive, so the switch never flashes a state the Super
+  // Admin did not set.
+  const [visibility, setVisibility] = useState<PlanVisibility | null>(null);
+  const [visibilitySaving, setVisibilitySaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -51,6 +60,47 @@ export function Plans({ audience = "direct_students" }: PlansProps) {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiClient
+      .get<PlanVisibility>("/super-admin/plans/display-settings")
+      .then(({ data }) => {
+        if (!cancelled) setVisibility(data);
+      })
+      .catch(() => {
+        // Non-fatal: the plan list is still usable, so this stays quiet and the
+        // switches simply reflect nothing until the next load.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function changeAudience(next: PlanAudience) {
+    if (next === audience) return;
+    setSearchParams(next === "direct_students" ? {} : { audience: next }, { replace: true });
+    setSearch("");
+    setStatusFilter("");
+  }
+
+  async function changeVisibility(target: PlanAudience, visible: boolean) {
+    const previous = visibility;
+    if (!previous) return;
+    setVisibility({ ...previous, [target]: visible });
+    setVisibilitySaving(true);
+    try {
+      const { data } = await apiClient.put<PlanVisibility>("/super-admin/plans/display-settings", {
+        [target]: visible,
+      });
+      setVisibility(data);
+    } catch (err: unknown) {
+      setVisibility(previous);
+      showError(extractErrorMessage(err, strings.errors.visibility));
+    } finally {
+      setVisibilitySaving(false);
+    }
+  }
 
   const query = search.trim().toLowerCase();
   const filteredPlans = plans.filter((plan) => {
@@ -119,6 +169,14 @@ export function Plans({ audience = "direct_students" }: PlansProps) {
   return (
     <div>
       {loadError && <p className="error-text">{loadError}</p>}
+
+      <PlanAudienceBar
+        audience={audience}
+        onAudienceChange={changeAudience}
+        visibility={visibility}
+        onVisibilityChange={changeVisibility}
+        visibilitySaving={visibilitySaving}
+      />
 
       <PlansFilterBar
         search={search}

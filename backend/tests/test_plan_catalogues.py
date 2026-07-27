@@ -125,15 +125,50 @@ class PlanCatalogueSeparationTests(unittest.TestCase):
         self.assertEqual(caught.exception.status_code, 400)
         self.assertIn("institute plan", caught.exception.detail)
 
-    def test_public_pricing_page_lists_direct_plans_only(self):
+    def test_public_pricing_page_hides_institute_plans_by_default(self):
         self.institute_plan.is_published = True
         self.db.commit()
 
         landing = plan_service.list_landing_plans(self.db)
-        self.assertEqual([item["name"] for item in landing], ["Direct Starter"])
+        self.assertTrue(landing["show_direct"])
+        self.assertFalse(landing["show_institutes"])
+        self.assertEqual([item["name"] for item in landing[AUDIENCE_DIRECT]], ["Direct Starter"])
+        self.assertEqual(landing[AUDIENCE_INSTITUTES], [])
 
         student_view = plan_service.list_public_plans(self.db, self.student)
         self.assertEqual([item["name"] for item in student_view], ["Direct Starter"])
+
+    def test_landing_visibility_flags_gate_each_catalogue(self):
+        self.institute_plan.is_published = True
+        self.db.commit()
+        plan_service.set_landing_visibility(
+            self.db, self.actor, {AUDIENCE_DIRECT: False, AUDIENCE_INSTITUTES: True}, None
+        )
+
+        landing = plan_service.list_landing_plans(self.db)
+        self.assertFalse(landing["show_direct"])
+        self.assertTrue(landing["show_institutes"])
+        self.assertEqual(landing[AUDIENCE_DIRECT], [])
+        self.assertEqual([item["name"] for item in landing[AUDIENCE_INSTITUTES]], ["Campus 50"])
+
+    def test_landing_visibility_can_hide_both_catalogues(self):
+        plan_service.set_landing_visibility(
+            self.db, self.actor, {AUDIENCE_DIRECT: False, AUDIENCE_INSTITUTES: False}, None
+        )
+        landing = plan_service.list_landing_plans(self.db)
+        self.assertFalse(landing["show_direct"] or landing["show_institutes"])
+        self.assertEqual(landing[AUDIENCE_DIRECT] + landing[AUDIENCE_INSTITUTES], [])
+
+    def test_landing_visibility_leaves_omitted_flags_untouched(self):
+        plan_service.set_landing_visibility(self.db, self.actor, {AUDIENCE_INSTITUTES: True}, None)
+        flags = plan_service.get_landing_visibility(self.db)
+        self.assertTrue(flags[AUDIENCE_DIRECT])
+        self.assertTrue(flags[AUDIENCE_INSTITUTES])
+
+    def test_landing_visibility_rejects_unknown_audience(self):
+        with self.assertRaises(HTTPException) as caught:
+            plan_service.set_landing_visibility(self.db, self.actor, {"teachers": True}, None)
+        self.assertEqual(caught.exception.status_code, 400)
 
     def test_last_live_plan_guard_ignores_institute_plans(self):
         # the only live plan is the direct one, so taking it down is refused ...

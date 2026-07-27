@@ -7,24 +7,39 @@
 export const planCatalogues = {
   direct_students: {
     basePath: "/super-admin/plans",
+    tab: "Direct Student Plans",
     newPlan: "+ New Plan",
     exportLabel: "direct student plans",
     empty: "No direct-student plans yet.",
     audienceLabel: "direct students",
+    visibilityHint: "Direct student plans are listed on the public pricing page.",
+    hiddenHint: "Direct student plans are hidden from the public pricing page.",
   },
   institutes: {
     basePath: "/super-admin/institute-plans",
+    tab: "Institute Plans",
     newPlan: "+ New Institute Plan",
     exportLabel: "institute plans",
     empty: "No institute plans yet. Create one to assign it through an access agreement.",
     audienceLabel: "institutes",
+    visibilityHint: "Institute plans are listed on the public pricing page.",
+    hiddenHint: "Institute plans are hidden from the public pricing page.",
   },
 } as const;
 
 export type PlanAudience = keyof typeof planCatalogues;
 
+/** Tab order for the audience switch; also the order used to place its thumb. */
+export const planAudienceOrder: PlanAudience[] = ["direct_students", "institutes"];
+
 export const plansStrings = {
   searchPlaceholder: "Search plan name or description...",
+  visibility: {
+    label: "Show on website",
+    tooltip: "List this catalogue on the public pricing page",
+    bothHiddenNote:
+      "Both catalogues are hidden — the public pricing page invites visitors to contact the team instead.",
+  },
   statusFilter: {
     allStatuses: "All statuses",
     active: "Active",
@@ -85,6 +100,7 @@ export const plansStrings = {
   },
   errors: {
     load: "Failed to load plans.",
+    visibility: "Failed to update website visibility.",
     toggle: (action: string) => `Failed to ${action} plan.`,
     delete: "Failed to delete plan.",
   },

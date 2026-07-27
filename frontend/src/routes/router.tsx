@@ -154,7 +154,9 @@ export const router = createBrowserRouter([
           { path: "plans", element: <Plans /> },
           { path: "plans/new", element: <PlanForm /> },
           { path: "plans/:id", element: <PlanForm /> },
-          { path: "institute-plans", element: <Plans audience="institutes" /> },
+          // Both catalogues share one screen; the old list route survives as a
+          // deep link (plan forms still return to it after saving).
+          { path: "institute-plans", element: <Navigate to="/super-admin/plans?audience=institutes" replace /> },
           { path: "institute-plans/new", element: <PlanForm audience="institutes" /> },
           { path: "institute-plans/:id", element: <PlanForm audience="institutes" /> },
           { path: "subscriptions", element: <Subscriptions /> },
