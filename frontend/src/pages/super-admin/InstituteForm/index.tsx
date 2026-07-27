@@ -4,18 +4,17 @@ import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
 import { BrandingPreview } from "@/pages/super-admin/InstituteBranding/components/BrandingPreview";
+import { useToastStore } from "@/store/toastStore";
 import { instituteFormStrings as strings } from "./InstituteForm.strings";
 import {
   DEFAULT_PERMISSIONS,
-  EMPTY_NEW_PLAN,
-  planSummaryLine,
+  EMPTY_ALLOCATION,
+  allocationSummaryLine,
   type CreatedInstitute,
   type InstitutePermissions,
-  type PlanMode,
-  type PlanOption,
 } from "./types";
 import { CreatedInstituteModal } from "./components/CreatedInstituteModal";
-import { AgreementPlanFieldset } from "./components/AgreementPlanFieldset";
+import { AllocationFieldset } from "./components/AllocationFieldset";
 import { AdminAccountFields } from "./components/AdminAccountFields";
 import { SessionPolicyFieldset } from "./components/SessionPolicyFieldset";
 import { PermissionsFieldset } from "./components/PermissionsFieldset";
@@ -65,12 +64,9 @@ export function InstituteForm() {
   // negotiated per institute.
   const [aiStudentMonthlyLimit, setAiStudentMonthlyLimit] = useState<number | "">(0);
 
-  // Agreement plan
-  const [plans, setPlans] = useState<PlanOption[]>([]);
-  const [planMode, setPlanMode] = useState<PlanMode>("existing");
-  const [planId, setPlanId] = useState("");
-  const [newPlan, setNewPlan] = useState(EMPTY_NEW_PLAN);
-  const [assignedPlan, setAssignedPlan] = useState<PlanOption | null>(null);
+  // What the institute is provisioned with. The plan that enforces it is the
+  // server's business, so nothing here names or prices one.
+  const [allocation, setAllocation] = useState(EMPTY_ALLOCATION);
 
   // Courses & Permissions
   const [modules, setModules] = useState<ModuleOption[]>([]);
@@ -91,21 +87,15 @@ export function InstituteForm() {
   const [saving, setSaving] = useState(false);
   const [created, setCreated] = useState<CreatedInstitute | null>(null);
   const [copied, setCopied] = useState(false);
+  const showSuccess = useToastStore((state) => state.showSuccess);
 
   useEffect(() => {
     Promise.all([
       apiClient.get<ModuleOption[]>("/super-admin/plans/available-modules"),
       apiClient.get<Method[]>("/super-admin/payment-methods", { params: { active_only: true } }),
-      apiClient.get<PlanOption[]>("/super-admin/plans", { params: { audience: "institutes" } }),
-    ]).then(([moduleRes, methodRes, planRes]) => {
+    ]).then(([moduleRes, methodRes]) => {
       setModules(moduleRes.data);
       setMethods(methodRes.data);
-      // Only assignable plans: the API refuses a deactivated or course-less one.
-      const assignable = planRes.data.filter((plan) => plan.is_active && plan.module_count > 0);
-      setPlans(assignable);
-      // With an empty catalogue there is nothing to assign, so open on the
-      // create-a-plan half rather than a dead dropdown.
-      if (!assignable.length) setPlanMode("new");
     });
 
     if (isNew) return;
@@ -125,8 +115,12 @@ export function InstituteForm() {
         if (data.payment_method_id) setPaymentMethodId(String(data.payment_method_id));
         if (data.payment_reference) setPaymentReference(data.payment_reference);
         setCurrency(data.agreement_currency ?? "INR");
-        if (data.plan_id) setPlanId(String(data.plan_id));
-        if (data.plan) setAssignedPlan(data.plan);
+        setAllocation({
+          student_limit: String(data.student_limit ?? 50),
+          staff_limit: String(data.staff_limit ?? 0),
+          access_duration_days: String(data.access_duration_days ?? 365),
+          grace_days: String(data.grace_days ?? 0),
+        });
         if (data.module_ids) setSelectedModules(new Set(data.module_ids));
         if (data.branding) {
           setPrimaryColor(data.branding.primary_color ?? "#e53935");
@@ -158,36 +152,9 @@ export function InstituteForm() {
     setSelectedModules((curr) => (curr.size === modules.length ? new Set() : new Set(modules.map((m) => m.id))));
   }
 
-  function updateNewPlan(field: keyof typeof EMPTY_NEW_PLAN, value: string) {
-    setNewPlan((curr) => ({ ...curr, [field]: value }));
+  function updateAllocation(field: keyof typeof EMPTY_ALLOCATION, value: string) {
+    setAllocation((curr) => ({ ...curr, [field]: value }));
   }
-
-  /** The plan's price is a list price; the negotiated amount only starts there,
-   *  so it prefills an untouched field and never overwrites a typed one. */
-  function selectPlan(value: string) {
-    setPlanId(value);
-    const plan = plans.find((option) => String(option.id) === value);
-    if (!plan) return;
-    setAssignedPlan(plan);
-    if (agreedAmount === "") setAgreedAmount(Number(plan.price));
-    setCurrency((curr) => (curr === "INR" ? plan.currency : curr));
-  }
-
-  function changePlanMode(mode: PlanMode) {
-    setPlanMode(mode);
-    // The course picker belongs to whichever half is showing: an assigned plan
-    // brings its own courses, a new plan starts from an empty selection.
-    setSelectedModules(new Set());
-    if (mode === "new") {
-      setPlanId("");
-      setAssignedPlan(null);
-    }
-  }
-
-  // Courses are only editable while authoring a new plan; an assigned plan's
-  // bundle is edited on the plan itself, from the Institute Plans screen.
-  const coursesLocked = planMode === "existing";
-  const activePlan = planMode === "existing" ? plans.find((plan) => String(plan.id) === planId) || assignedPlan : null;
 
   function validateStep(tab: TabKey): boolean {
     if (tab === "profile") {
@@ -200,19 +167,14 @@ export function InstituteForm() {
         return false;
       }
     }
-    if (tab === "agreement" && isNew) {
-      if (planMode === "existing" && !planId) {
-        setError("Choose an institute plan, or switch to 'Create new plan'.");
-        return false;
-      }
-      if (planMode === "new" && !newPlan.name.trim()) {
-        setError("The new plan needs a name.");
+    if (tab === "agreement") {
+      if (!allocation.access_duration_days || Number(allocation.access_duration_days) < 1) {
+        setError("Access duration must be at least 1 day.");
         return false;
       }
     }
-    // A new plan must bundle at least one course - the API refuses an empty one.
-    if (tab === "courses" && planMode === "new" && selectedModules.size === 0) {
-      setError("Select at least one course for the new plan.");
+    if (tab === "courses" && selectedModules.size === 0) {
+      setError("Select at least one course for this institute.");
       return false;
     }
     setError(null);
@@ -263,34 +225,16 @@ export function InstituteForm() {
 
     setSaving(true);
 
-    // Seats, validity and courses ride along with the plan, so they are only
-    // sent when no plan is being assigned (editing an institute that predates
-    // plan-driven creation).
     const payload: Record<string, unknown> = {
       name,
       session_duration_hours: sessionDurationHours,
       ai_student_monthly_limit: aiStudentMonthlyLimit === "" ? 0 : Number(aiStudentMonthlyLimit),
+      student_limit: Number(allocation.student_limit || 0),
+      staff_limit: Number(allocation.staff_limit || 0),
+      access_duration_days: Number(allocation.access_duration_days || 365),
+      grace_days: Number(allocation.grace_days || 0),
+      module_ids: [...selectedModules],
     };
-
-    if (planMode === "new") {
-      payload.new_plan = {
-        name: newPlan.name.trim(),
-        description: newPlan.description.trim() || null,
-        price: Number(newPlan.price || 0),
-        currency: newPlan.currency.trim() || "INR",
-        duration_days: Number(newPlan.duration_days || 365),
-        student_limit: Number(newPlan.student_limit || 0),
-        staff_limit: Number(newPlan.staff_limit || 0),
-        test_limit: Number(newPlan.test_limit || 0),
-        grace_days: Number(newPlan.grace_days || 0),
-        module_ids: [...selectedModules],
-        features: [],
-      };
-    } else if (planId) {
-      payload.plan_id = Number(planId);
-    } else {
-      payload.module_ids = [...selectedModules];
-    }
 
     if (contactEmail.trim()) payload.contact_email = contactEmail.trim();
     if (agreementReference.trim()) payload.agreement_reference = agreementReference.trim();
@@ -320,6 +264,17 @@ export function InstituteForm() {
         }
 
         setCreated({ id: data.id, admin_email: data.admin_email, admin_temp_password: data.admin_temp_password });
+        // Confirm what the institute was provisioned with, now that onboarding
+        // is done - the form itself no longer restates it.
+        showSuccess(
+          allocationSummaryLine({
+            student_limit: Number(allocation.student_limit || 0),
+            staff_limit: Number(allocation.staff_limit || 0),
+            duration_days: Number(allocation.access_duration_days || 0),
+            module_count: selectedModules.size,
+          }),
+          strings.createdModal.allocationToastTitle,
+        );
       } else {
         await apiClient.patch(`/super-admin/institutes/${id}`, payload);
 
@@ -535,16 +490,7 @@ export function InstituteForm() {
               <textarea id="agreement_notes" rows={2} value={agreementNotes} onChange={(e) => setAgreementNotes(e.target.value)} placeholder="Additional contract terms or special conditions..." />
             </div>
 
-            <AgreementPlanFieldset
-              mode={planMode}
-              onModeChange={changePlanMode}
-              plans={plans}
-              planId={planId}
-              onPlanChange={selectPlan}
-              newPlan={newPlan}
-              onNewPlanChange={updateNewPlan}
-              selectedCourseCount={selectedModules.size}
-            />
+            <AllocationFieldset allocation={allocation} onChange={updateAllocation} />
           </div>
         )}
 
@@ -555,33 +501,21 @@ export function InstituteForm() {
               <div>
                 <h2 className="form-section-title" style={{ margin: 0 }}>Included Course Modules</h2>
                 <p className="form-section-subtitle" style={{ margin: 0 }}>
-                  {coursesLocked
-                    ? "Courses come from the assigned plan — edit them on the plan itself."
-                    : "Select the course modules bundled into this institute's new plan."}
+                  Select the course modules included in this institute's agreement.
                 </p>
               </div>
-              {!coursesLocked && (
-                <button type="button" className="button-link secondary-button" onClick={toggleAllModules} style={{ padding: "6px 16px", fontSize: 12 }}>
-                  {selectedModules.size === modules.length ? "Deselect All" : "Select All"}
-                </button>
-              )}
+              <button type="button" className="button-link secondary-button" onClick={toggleAllModules} style={{ padding: "6px 16px", fontSize: 12 }}>
+                {selectedModules.size === modules.length ? "Deselect All" : "Select All"}
+              </button>
             </div>
 
-            {coursesLocked && (
-              <p className="hint" style={{ marginBottom: 16 }}>
-                {activePlan
-                  ? `${activePlan.module_count} course${activePlan.module_count === 1 ? "" : "s"} included in ${activePlan.name} · ${planSummaryLine(activePlan)}`
-                  : "Choose a plan on the Agreement tab to see the courses it includes."}
-              </p>
-            )}
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14, opacity: coursesLocked ? 0.55 : 1, pointerEvents: coursesLocked ? "none" : "auto" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
               {modules.map((module) => {
                 const isSelected = selectedModules.has(module.id);
                 return (
                   <div
                     key={module.id}
-                    onClick={() => !coursesLocked && toggleModule(module.id)}
+                    onClick={() => toggleModule(module.id)}
                     style={{
                       padding: "14px 16px",
                       borderRadius: 12,
@@ -719,7 +653,6 @@ export function InstituteForm() {
           created={created}
           copied={copied}
           onCopyPassword={copyPassword}
-          onAddStudents={() => navigate(`/super-admin/institutes/${created.id}/students`)}
           onDone={() => navigate("/super-admin/institutes")}
         />
       )}

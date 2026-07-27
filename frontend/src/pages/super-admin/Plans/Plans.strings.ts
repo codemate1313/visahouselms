@@ -1,44 +1,25 @@
 /**
- * The two plan catalogues are independent: a direct-student plan is sold on the
- * public pricing page and can never be assigned to an institute, an institute
- * plan is granted through an access agreement and is never listed publicly.
- * Everything that differs between the two listings lives here.
+ * Plans sold to students buying access directly from the website - the only
+ * catalogue there is. An institute's plan belongs to its own access agreement
+ * and is authored on the institute form, so it is never listed or reused here.
  */
-export const planCatalogues = {
-  direct_students: {
-    basePath: "/super-admin/plans",
-    tab: "Direct Student Plans",
-    newPlan: "+ New Plan",
-    exportLabel: "direct student plans",
-    empty: "No direct-student plans yet.",
-    audienceLabel: "direct students",
-    visibilityHint: "Direct student plans are listed on the public pricing page.",
-    hiddenHint: "Direct student plans are hidden from the public pricing page.",
-  },
-  institutes: {
-    basePath: "/super-admin/institute-plans",
-    tab: "Institute Plans",
-    newPlan: "+ New Institute Plan",
-    exportLabel: "institute plans",
-    empty: "No institute plans yet. Create one to assign it through an access agreement.",
-    audienceLabel: "institutes",
-    visibilityHint: "Institute plans are listed on the public pricing page.",
-    hiddenHint: "Institute plans are hidden from the public pricing page.",
-  },
+export const directStudentCatalogue = {
+  basePath: "/super-admin/plans",
+  newPlan: "+ New Plan",
+  exportLabel: "direct student plans",
+  empty: "No direct-student plans yet.",
+  audienceLabel: "direct students",
+  visibilityHint: "Direct student plans are listed on the public pricing page.",
+  hiddenHint: "Direct student plans are hidden from the public pricing page.",
 } as const;
-
-export type PlanAudience = keyof typeof planCatalogues;
-
-/** Tab order for the audience switch; also the order used to place its thumb. */
-export const planAudienceOrder: PlanAudience[] = ["direct_students", "institutes"];
 
 export const plansStrings = {
   searchPlaceholder: "Search plan name or description...",
   visibility: {
     label: "Show on website",
     tooltip: "List this catalogue on the public pricing page",
-    bothHiddenNote:
-      "Both catalogues are hidden — the public pricing page invites visitors to contact the team instead.",
+    hiddenNote:
+      "Hidden — the public pricing page invites visitors to contact the team instead.",
   },
   statusFilter: {
     allStatuses: "All statuses",

@@ -4,53 +4,39 @@ export interface CreatedInstitute {
   admin_temp_password: string;
 }
 
-/** An institute-catalogue plan the agreement can be sold on. */
-export interface PlanOption {
-  id: number;
-  name: string;
-  price: string;
-  currency: string;
-  duration_days: number;
+/** The provisions an institute currently holds, as the API returns them. */
+export interface InstituteAllocation {
   student_limit: number;
   staff_limit: number;
-  test_limit: number;
+  duration_days: number;
   grace_days: number;
-  is_active: boolean;
   module_count: number;
 }
 
-/** How the agreement gets its plan: pick one from the catalogue, or author a
- *  new one here that is saved to the catalogue alongside the institute. */
-export type PlanMode = "existing" | "new";
-
-/** Fields of a plan authored from inside the institute form. */
-export const EMPTY_NEW_PLAN = {
-  name: "",
-  description: "",
-  price: "",
-  currency: "INR",
-  duration_days: "365",
+/** Provisions allocated on the institute form. There is no plan to name or
+ *  price - the server derives one - and no test ceiling, since an institute's
+ *  students take as many tests as they like. */
+export const EMPTY_ALLOCATION = {
   student_limit: "50",
   staff_limit: "0",
-  test_limit: "0",
+  access_duration_days: "365",
   grace_days: "0",
 };
 
-/** A plan's headline numbers, for the "what this agreement grants" summary. */
-export function planSummaryLine(plan: {
+/** The headline numbers, for the "this institute gets" summary. */
+export function allocationSummaryLine(allocation: {
   student_limit: number;
   staff_limit: number;
   duration_days: number;
-  test_limit?: number;
   module_count?: number;
 }): string {
   const parts = [
-    `${plan.student_limit} students`,
-    `${plan.staff_limit} instructors`,
-    `${plan.duration_days} days`,
-    plan.test_limit ? `${plan.test_limit} tests` : "unlimited tests",
+    `${allocation.student_limit} students`,
+    `${allocation.staff_limit} instructors`,
+    `${allocation.duration_days} days`,
+    "unlimited tests",
   ];
-  if (plan.module_count !== undefined) parts.push(`${plan.module_count} courses`);
+  if (allocation.module_count !== undefined) parts.push(`${allocation.module_count} courses`);
   return parts.join(" · ");
 }
 

@@ -59,6 +59,28 @@ def list_directory_users(
     )
 
 
+@router.post("/users/{user_id}/deactivate")
+def deactivate_directory_user(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Suspend a platform-wide student. Institute members keep using their own
+    institute's member endpoints, which own the tenant rules."""
+    return super_admin_service.set_directory_user_active(db, actor, user_id, False, _client_ip(request))
+
+
+@router.post("/users/{user_id}/reactivate")
+def reactivate_directory_user(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return super_admin_service.set_directory_user_active(db, actor, user_id, True, _client_ip(request))
+
+
 @router.get("/accounts", response_model=List[SuperAdminAccountOut])
 def list_accounts(db: Session = Depends(get_db)):
     return super_admin_service.list_super_admins(db)

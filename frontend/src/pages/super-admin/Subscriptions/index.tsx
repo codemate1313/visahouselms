@@ -3,7 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { usePageTitleStore } from "@/store/pageTitleStore";
-import type { PlanRow } from "@/pages/super-admin/Plans";
+import type { InstituteAllocation } from "@/pages/super-admin/InstituteForm/types";
 import { subscriptionsStrings as strings } from "./Subscriptions.strings";
 import type { InstituteRow, StatusResponse, SubscriptionInfo } from "./types";
 import { InstituteSelector } from "./components/InstituteSelector";
@@ -12,11 +12,12 @@ import { SubscriptionHistoryTable } from "./components/SubscriptionHistoryTable"
 
 export function Subscriptions() {
   const [institutes, setInstitutes] = useState<InstituteRow[]>([]);
-  const [plans, setPlans] = useState<PlanRow[]>([]);
+  // Each institute's provisions come from its own agreement.
+  const [allocation, setAllocation] = useState<InstituteAllocation | null>(null);
+  const [planId, setPlanId] = useState<number | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [history, setHistory] = useState<SubscriptionInfo[]>([]);
-  const [planChoice, setPlanChoice] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -27,10 +28,6 @@ export function Subscriptions() {
       setInstitutes(data);
       if (data.length > 0) setSelected(data[0].id);
     });
-    // institute catalogue only - a direct-student plan cannot back an agreement
-    apiClient
-      .get("/super-admin/plans", { params: { audience: "institutes" } })
-      .then(({ data }) => setPlans(data));
   }, []);
 
   useEffect(() => {
@@ -41,12 +38,15 @@ export function Subscriptions() {
   const load = useCallback(async () => {
     if (selected === null) return;
     try {
-      const [statusRes, historyRes] = await Promise.all([
+      const [statusRes, historyRes, instituteRes] = await Promise.all([
         apiClient.get(`/super-admin/institutes/${selected}/subscription`),
         apiClient.get(`/super-admin/institutes/${selected}/subscriptions`),
+        apiClient.get(`/super-admin/institutes/${selected}`),
       ]);
       setStatus(statusRes.data);
       setHistory(historyRes.data);
+      setAllocation(instituteRes.data.allocation ?? null);
+      setPlanId(instituteRes.data.plan_id ?? null);
       setError(null);
     } catch {
       setError(strings.errors.load);
@@ -59,11 +59,11 @@ export function Subscriptions() {
   }, [load]);
 
   async function assign() {
-    if (!selected || !planChoice) return;
+    if (!selected || !planId) return;
     setError(null); setNotice(null); setBusy(true);
     try {
       await apiClient.post(`/super-admin/institutes/${selected}/subscription`, {
-        plan_id: Number(planChoice),
+        plan_id: planId,
       });
       setNotice(strings.notices.assigned);
       await load();
@@ -78,8 +78,9 @@ export function Subscriptions() {
     if (!selected) return;
     setError(null); setNotice(null); setBusy(true);
     try {
+      // Renewing extends the institute's own plan - nothing else to pick.
       await apiClient.post(`/super-admin/institutes/${selected}/subscription/renew`, {
-        plan_id: planChoice ? Number(planChoice) : null,
+        plan_id: null,
       });
       setNotice(strings.notices.renewed);
       await load();
@@ -132,9 +133,7 @@ export function Subscriptions() {
         <SubscriptionManageCard
           status={status}
           selectedInstitute={selectedInstitute}
-          plans={plans}
-          planChoice={planChoice}
-          onPlanChoiceChange={setPlanChoice}
+          allocation={allocation}
           busy={busy}
           onAssign={assign}
           onRenew={renew}

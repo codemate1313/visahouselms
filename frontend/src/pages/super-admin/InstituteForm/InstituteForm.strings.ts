@@ -36,7 +36,7 @@ export const instituteFormStrings = {
     temporaryPassword: "Temporary password",
     copyPassword: "Copy password",
     copied: "Copied!",
-    addStudents: "Add students",
+    allocationToastTitle: "This institute gets",
     done: "Done",
   },
   errors: {

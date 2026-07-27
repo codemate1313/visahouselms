@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
@@ -7,26 +6,20 @@ import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { useToastStore } from "@/store/toastStore";
 import { confirmExport } from "@/utils/confirmExport";
-import { planCatalogues, plansStrings as strings, type PlanAudience } from "./Plans.strings";
+import { directStudentCatalogue as catalogue, plansStrings as strings } from "./Plans.strings";
 import type { PlanRow, PlanVisibility } from "./types";
 import { exportPlansExcel, exportPlansPDF } from "./exportHelpers";
-import { PlanAudienceBar } from "./components/PlanAudienceBar";
+import { PlanVisibilityBar } from "./components/PlanVisibilityBar";
 import { PlansFilterBar } from "./components/PlansFilterBar";
 import { PlansTable } from "./components/PlansTable";
 import { PlanDetailsModal } from "./components/PlanDetailsModal";
 
 export type { PlanRow } from "./types";
 
-function parseAudience(value: string | null): PlanAudience {
-  return value === "institutes" ? "institutes" : "direct_students";
-}
-
 export function Plans() {
-  // One screen, two catalogues. The audience lives in the URL so a refresh, a
-  // back button, or a link out of a plan form lands on the same catalogue.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const audience = parseAudience(searchParams.get("audience"));
-  const catalogue = planCatalogues[audience];
+  // Direct-student plans are the only catalogue. An institute's plan is part of
+  // its own access agreement and is authored on the institute form, so it is
+  // never listed or reused here.
   const [plans, setPlans] = useState<PlanRow[]>([]);
   // Null until the flags arrive, so the switch never flashes a state the Super
   // Admin did not set.
@@ -47,7 +40,7 @@ export function Plans() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await apiClient.get<PlanRow[]>("/super-admin/plans", { params: { audience } });
+      const { data } = await apiClient.get<PlanRow[]>("/super-admin/plans", { params: { audience: "direct_students" } });
       setPlans(data);
       setLoadError(null);
     } catch {
@@ -55,7 +48,7 @@ export function Plans() {
     } finally {
       setLoading(false);
     }
-  }, [audience]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -77,21 +70,14 @@ export function Plans() {
     };
   }, []);
 
-  function changeAudience(next: PlanAudience) {
-    if (next === audience) return;
-    setSearchParams(next === "direct_students" ? {} : { audience: next }, { replace: true });
-    setSearch("");
-    setStatusFilter("");
-  }
-
-  async function changeVisibility(target: PlanAudience, visible: boolean) {
+  async function changeVisibility(visible: boolean) {
     const previous = visibility;
     if (!previous) return;
-    setVisibility({ ...previous, [target]: visible });
+    setVisibility({ ...previous, direct_students: visible });
     setVisibilitySaving(true);
     try {
       const { data } = await apiClient.put<PlanVisibility>("/super-admin/plans/display-settings", {
-        [target]: visible,
+        direct_students: visible,
       });
       setVisibility(data);
     } catch (err: unknown) {
@@ -170,12 +156,11 @@ export function Plans() {
     <div>
       {loadError && <p className="error-text">{loadError}</p>}
 
-      <PlanAudienceBar
-        audience={audience}
-        onAudienceChange={changeAudience}
-        visibility={visibility}
-        onVisibilityChange={changeVisibility}
-        visibilitySaving={visibilitySaving}
+      <PlanVisibilityBar
+        visible={Boolean(visibility?.direct_students)}
+        loaded={visibility !== null}
+        onChange={changeVisibility}
+        saving={visibilitySaving}
       />
 
       <PlansFilterBar

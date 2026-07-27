@@ -1,6 +1,4 @@
-import { SearchableSelect } from "@/components/ui";
-import type { PlanRow } from "@/pages/super-admin/Plans";
-import { formatCurrencyAmount } from "@/utils/currency";
+import { allocationSummaryLine, type InstituteAllocation } from "@/pages/super-admin/InstituteForm/types";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
 import { STATE_BADGES, stateLabel } from "../helpers";
 import type { InstituteRow, StatusResponse } from "../types";
@@ -10,9 +8,8 @@ import { ValidityGauge } from "./ValidityGauge";
 interface SubscriptionManageCardProps {
   status: StatusResponse;
   selectedInstitute: InstituteRow;
-  plans: PlanRow[];
-  planChoice: string;
-  onPlanChoiceChange: (value: string) => void;
+  /** The institute's provisions, or null if nothing is allocated yet. */
+  allocation: InstituteAllocation | null;
   busy: boolean;
   onAssign: () => void;
   onRenew: () => void;
@@ -22,9 +19,7 @@ interface SubscriptionManageCardProps {
 export function SubscriptionManageCard({
   status,
   selectedInstitute,
-  plans,
-  planChoice,
-  onPlanChoiceChange,
+  allocation,
   busy,
   onAssign,
   onRenew,
@@ -64,26 +59,16 @@ export function SubscriptionManageCard({
           )}
 
           <div className="subscription-actions-bar-v2">
+            {/* Provisions come from the institute's own agreement - there is
+                nothing to switch between here. */}
             <div style={{ width: "100%", marginBottom: 12 }}>
-              <SearchableSelect
-                options={[
-                  { value: "", label: state === "none" ? t.selectPlan : t.samePlan },
-                  ...plans
-                    .filter((p) => p.is_active)
-                    .map((plan) => ({
-                      value: String(plan.id),
-                      label: `${plan.name} (${formatCurrencyAmount(plan.price, plan.currency)} / ${plan.duration_days}d)`,
-                    })),
-                ]}
-                value={planChoice}
-                onChange={(val) => onPlanChoiceChange(String(val))}
-                placeholder={state === "none" ? t.selectPlan : t.samePlan}
-                searchable={false}
-              />
+              <p className="hint" style={{ margin: 0 }}>
+                {allocation ? allocationSummaryLine(allocation) : t.noAllocation}
+              </p>
             </div>
 
             {state === "none" ? (
-              <button type="button" className="button-link primary-submit-btn" disabled={busy || !planChoice} onClick={onAssign} style={{ width: "100%" }}>
+              <button type="button" className="button-link primary-submit-btn" disabled={busy || !allocation} onClick={onAssign} style={{ width: "100%" }}>
                 {busy ? t.assigning : t.assignPlan}
               </button>
             ) : (

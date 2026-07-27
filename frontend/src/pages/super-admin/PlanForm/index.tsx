@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Checkbox, RequiredMark } from "@/components/ui";
-import { planFormCatalogues, planFormStrings as strings, type PlanAudience } from "./PlanForm.strings";
+import { directStudentCatalogue as catalogue, planFormStrings as strings } from "./PlanForm.strings";
 import { PlanCoursePicker, type PlanModule } from "./components/PlanCoursePicker";
 import { PlanFeatureEditor } from "./components/PlanFeatureEditor";
 
@@ -12,13 +12,7 @@ const MAX_FEATURES = 12;
 
 const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", test_limit: "20", grace_days: "0", is_published: false };
 
-interface PlanFormProps {
-  /** Which catalogue the plan being authored belongs to. */
-  audience?: PlanAudience;
-}
-
-export function PlanForm({ audience = "direct_students" }: PlanFormProps) {
-  const catalogue = planFormCatalogues[audience];
+export function PlanForm() {
   const { id } = useParams();
   const isNew = id === "new" || !id;
   const navigate = useNavigate();
@@ -92,9 +86,8 @@ export function PlanForm({ audience = "direct_students" }: PlanFormProps) {
       staff_limit: Number(form.staff_limit),
       test_limit: Number(form.test_limit),
       grace_days: Number(form.grace_days),
-      audience,
-      // never public, whatever a stale form state says
-      is_published: catalogue.showPublishToggle ? form.is_published : false,
+      audience: "direct_students",
+      is_published: form.is_published,
       module_ids: [...selected],
       features: features.map((item) => item.trim()).filter(Boolean),
     };
@@ -143,24 +136,10 @@ export function PlanForm({ audience = "direct_students" }: PlanFormProps) {
             <label>{f.testLimit}<RequiredMark /></label>
             <input type="number" min="0" value={form.test_limit} onChange={set("test_limit")} required />
           </div>
-          {/* Seat counts only mean something for an institute: they are what
-              caps how many students and instructors the tenant can create. */}
-          {catalogue.showSeatLimits && (
-            <>
-              <div>
-                <label>{f.studentLimit}<RequiredMark /></label>
-                <input type="number" min="0" value={form.student_limit} onChange={set("student_limit")} required />
-              </div>
-              <div>
-                <label>{f.staffLimit}<RequiredMark /></label>
-                <input type="number" min="0" value={form.staff_limit} onChange={set("staff_limit")} required />
-              </div>
-              <div>
-                <label>{f.graceDays}<RequiredMark /></label>
-                <input type="number" min="0" value={form.grace_days} onChange={set("grace_days")} required />
-              </div>
-            </>
-          )}
+          <div>
+            <label>{f.graceDays}<RequiredMark /></label>
+            <input type="number" min="0" value={form.grace_days} onChange={set("grace_days")} required />
+          </div>
         </div>
         <PlanCoursePicker modules={modules} selected={selected} onToggle={toggle} onToggleAll={toggleAll} />
         <PlanFeatureEditor
@@ -170,22 +149,16 @@ export function PlanForm({ audience = "direct_students" }: PlanFormProps) {
           onAdd={addFeature}
           onRemove={removeFeature}
         />
-        {/* Institute plans are granted through an access agreement and never
-            appear on the public pricing page, so there is nothing to publish. */}
-        {catalogue.showPublishToggle ? (
-          <label className="toggle-row">
-            <Checkbox
-              checked={form.is_published}
-              onChange={(event) => setForm((current) => ({ ...current, is_published: event.target.checked }))}
-            />
-            <span>
-              <strong>{catalogue.publishLabel}</strong>
-              <small>{catalogue.publishHint}</small>
-            </span>
-          </label>
-        ) : (
-          <p className="hint">{catalogue.publishHint}</p>
-        )}
+        <label className="toggle-row">
+          <Checkbox
+            checked={form.is_published}
+            onChange={(event) => setForm((current) => ({ ...current, is_published: event.target.checked }))}
+          />
+          <span>
+            <strong>{catalogue.publishLabel}</strong>
+            <small>{catalogue.publishHint}</small>
+          </span>
+        </label>
         {error && <p className="error-text">{error}</p>}
         <div className="form-actions">
           <button disabled={saving || (form.is_published && !selected.size)}>{saving ? strings.saving : strings.savePlan}</button>

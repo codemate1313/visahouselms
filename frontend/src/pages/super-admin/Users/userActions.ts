@@ -4,10 +4,9 @@ import type { DirectoryRole, DirectoryUser } from "@/api/types";
  * Per-role API surface for the directory's row actions.
  *
  * Super admins and SA instructors are platform-wide and have their own
- * management endpoints, so the directory can act on them directly. Institute
- * admins, staff and students are tenant-scoped and are managed from their
- * institute's own accounts screen, so those rows only offer a link out - that
- * keeps institute membership rules in one place rather than duplicated here.
+ * management endpoints. Institute staff and students are tenant-scoped: the
+ * directory acts on them through their own institute's member endpoints, so
+ * membership rules stay in one place rather than being duplicated here.
  */
 interface RoleActions {
   /** Base path for deactivate/reactivate/delete. */
@@ -49,6 +48,9 @@ export function passwordResetPath(user: DirectoryUser): string | null {
   if (user.role_name === "INSTITUTE_ADMIN" && user.institute_id) {
     return `/super-admin/institutes/${user.institute_id}/admins/${user.id}/reset-password`;
   }
+  if (MANAGED_TENANT_ROLES.includes(user.role_name) && user.institute_id) {
+    return `/super-admin/institutes/${user.institute_id}/members/${user.id}/reset-password`;
+  }
   return null;
 }
 
@@ -63,4 +65,42 @@ export function tenantManageLink(user: DirectoryUser): string | null {
 
 export function isProtected(user: DirectoryUser): boolean {
   return user.is_owner;
+}
+
+/** Roles the Super Admin manages directly from the directory, wherever they
+ *  live: institute members through their institute, direct students through
+ *  the directory itself. */
+const MANAGED_TENANT_ROLES: DirectoryRole[] = ["INST_INSTRUCTOR", "STUDENT"];
+
+/**
+ * Base path for activate/deactivate/delete on a tenant-scoped row, or null when
+ * the row has no directory-level management.
+ *
+ * An institute member goes through their institute so seat limits and
+ * membership rules are enforced by the one service that owns them. A direct
+ * student belongs to no institute, so the directory manages them itself - and
+ * only suspension, since there is no institute to re-home them into.
+ */
+export function memberActionBase(user: DirectoryUser): string | null {
+  if (user.is_owner || !MANAGED_TENANT_ROLES.includes(user.role_name)) return null;
+  if (user.institute_id) return `/super-admin/institutes/${user.institute_id}/members`;
+  return user.role_name === "STUDENT" ? "/super-admin/users" : null;
+}
+
+/** Whether a tenant row can be deleted outright. Direct students cannot: the
+ *  directory only suspends them. */
+export function canDeleteMember(user: DirectoryUser): boolean {
+  return Boolean(memberActionBase(user)) && Boolean(user.institute_id);
+}
+
+/** Edit form for a tenant-scoped member, or null when there is none. */
+export function memberEditPath(user: DirectoryUser): string | null {
+  if (!user.institute_id) return null;
+  if (user.role_name === "STUDENT") {
+    return `/super-admin/institutes/${user.institute_id}/accounts/students/${user.id}/edit`;
+  }
+  if (user.role_name === "INST_INSTRUCTOR") {
+    return `/super-admin/institutes/${user.institute_id}/accounts/staff/${user.id}/edit`;
+  }
+  return null;
 }

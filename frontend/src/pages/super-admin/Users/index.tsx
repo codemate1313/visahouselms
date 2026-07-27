@@ -18,7 +18,7 @@ import { Button } from "@/components/ui";
 import { confirmExport } from "@/utils/confirmExport";
 import { usersStrings as strings } from "./Users.strings";
 import { UsersTable } from "./components/UsersTable";
-import { ROLE_ACTIONS, passwordResetPath } from "./userActions";
+import { ROLE_ACTIONS, memberActionBase, passwordResetPath } from "./userActions";
 import { exportUsersExcel, exportUsersPDF } from "./exportHelpers";
 
 const PAGE_SIZE = 25;
@@ -41,6 +41,13 @@ export const SLUG_BY_ROLE = Object.fromEntries(
 const NEW_ROUTE: Partial<Record<DirectoryRole, string>> = {
   SUPER_ADMIN: "/super-admin/accounts/new",
   SA_INSTRUCTOR: "/super-admin/instructors/new",
+};
+
+/** Roles created inside an institute: the directory picks one, then hands off
+ *  to that institute's own create form. */
+const TENANT_NEW_PATH: Partial<Record<DirectoryRole, (instituteId: string) => string>> = {
+  STUDENT: (id) => `/super-admin/institutes/${id}/accounts/students/new`,
+  INST_INSTRUCTOR: (id) => `/super-admin/institutes/${id}/accounts/staff/new`,
 };
 
 export function Users() {
@@ -67,6 +74,10 @@ export function Users() {
   const [studentFilter, setStudentFilter] = useState<"all" | "direct" | "institutes">("all");
   const [selectedInstituteId, setSelectedInstituteId] = useState<string>("");
   const [institutes, setInstitutes] = useState<{ id: number; name: string }[]>([]);
+  // Students and institute instructors live inside an institute, so creating
+  // one from the directory asks which institute first.
+  const [showInstituteModal, setShowInstituteModal] = useState(false);
+  const [newStudentInstituteId, setNewStudentInstituteId] = useState<string>("");
 
   useEffect(() => {
     async function fetchInstitutes() {
@@ -164,7 +175,9 @@ export function Users() {
     );
     if (!confirmed) return;
 
-    const base = ROLE_ACTIONS[user.role_name]?.base;
+    // Platform-wide roles have their own endpoints; institute members go
+    // through their institute, and direct students through the directory.
+    const base = ROLE_ACTIONS[user.role_name]?.base ?? memberActionBase(user);
     if (!base) return;
 
     setError(null);
@@ -221,7 +234,7 @@ export function Users() {
 
   async function handleConfirmDelete() {
     if (!deletingUser) return;
-    const base = ROLE_ACTIONS[deletingUser.role_name]?.base;
+    const base = ROLE_ACTIONS[deletingUser.role_name]?.base ?? memberActionBase(deletingUser);
     if (!base) return;
 
     setError(null);
@@ -426,6 +439,19 @@ export function Users() {
             {strings.newLabel[activeRole as keyof typeof strings.newLabel]}
           </Link>
         )}
+
+        {TENANT_NEW_PATH[activeRole] && (
+          <button
+            type="button"
+            className="button-link"
+            onClick={() => {
+              setNewStudentInstituteId(selectedInstituteId);
+              setShowInstituteModal(true);
+            }}
+          >
+            {strings.newLabel[activeRole as keyof typeof strings.newLabel]}
+          </button>
+        )}
       </div>
 
       {selectedRows.length > 0 && (
@@ -525,6 +551,36 @@ export function Users() {
         loading={deleteLoading}
         onConfirm={handleConfirmDelete}
         onClose={() => setDeletingUser(null)}
+      />
+
+      <ConfirmModal
+        isOpen={showInstituteModal}
+        title={strings.selectInstituteModal.title}
+        message={
+          <div style={{ marginTop: 12 }}>
+            <label style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>
+              {strings.selectInstituteModal.label}
+            </label>
+            <SearchableSelect
+              options={institutes.map((inst) => ({ value: String(inst.id), label: inst.name }))}
+              value={newStudentInstituteId}
+              onChange={(val) => setNewStudentInstituteId(String(val))}
+              placeholder="Search and select an institute..."
+              searchable={true}
+            />
+          </div>
+        }
+        confirmText={strings.selectInstituteModal.continue}
+        cancelText={strings.selectInstituteModal.cancel}
+        variant="primary"
+        onConfirm={() => {
+          const buildPath = TENANT_NEW_PATH[activeRole];
+          if (newStudentInstituteId && buildPath) navigate(buildPath(newStudentInstituteId));
+        }}
+        onClose={() => {
+          setShowInstituteModal(false);
+          setNewStudentInstituteId("");
+        }}
       />
     </div>
   );

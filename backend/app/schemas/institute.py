@@ -2,27 +2,6 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.schemas.plan import MAX_FEATURES
-
-
-class InstitutePlanCreate(BaseModel):
-    """A brand-new institute plan authored from inside the institute form. It
-    lands in the institute catalogue like any other, so the Super Admin never
-    has to leave the flow to create one - hence no `audience`/`is_published`,
-    which are fixed by the catalogue this can only ever write to."""
-
-    name: str = Field(min_length=1, max_length=100)
-    description: Optional[str] = None
-    price: float = Field(ge=0)
-    currency: str = "INR"
-    duration_days: int = Field(gt=0)
-    student_limit: int = Field(ge=0)
-    staff_limit: int = Field(ge=0)
-    test_limit: int = Field(default=0, ge=0)
-    grace_days: int = Field(default=0, ge=0)
-    module_ids: list[int] = Field(min_length=1)
-    features: list[str] = Field(default_factory=list, max_length=MAX_FEATURES)
-
 
 class InstitutePermissions(BaseModel):
     view_students: bool = False
@@ -49,14 +28,13 @@ class InstituteCreate(BaseModel):
     currency: Optional[str] = Field(default="INR", min_length=3, max_length=8)
     payment_method_id: Optional[int] = None
     payment_reference: Optional[str] = Field(default=None, max_length=500)
-    # Seats, validity and courses come from the institute plan the agreement is
-    # sold on: either one already in the catalogue, or one authored here. The
-    # explicit limits below stay for callers that predate plan-driven creation.
-    plan_id: Optional[int] = None
-    new_plan: Optional[InstitutePlanCreate] = None
+    # The provisions allocated to this institute. They are enforced through a
+    # plan the server derives and keeps in step (see `_sync_agreement_plan`) -
+    # there is no plan to name, price or list, so none of that is accepted here.
     student_limit: Optional[int] = Field(default=None, ge=0)
     staff_limit: Optional[int] = Field(default=None, ge=0)
     access_duration_days: Optional[int] = Field(default=None, gt=0)
+    grace_days: Optional[int] = Field(default=None, ge=0)
     module_ids: Optional[list[int]] = Field(default_factory=list)
     primary_color: Optional[str] = "#e53935"
     secondary_color: Optional[str] = "#17191d"
@@ -75,11 +53,10 @@ class InstituteUpdate(BaseModel):
     currency: Optional[str] = Field(default=None, min_length=3, max_length=8)
     payment_method_id: Optional[int] = None
     payment_reference: Optional[str] = Field(default=None, max_length=500)
-    plan_id: Optional[int] = None
-    new_plan: Optional[InstitutePlanCreate] = None
     student_limit: Optional[int] = Field(default=None, ge=0)
     staff_limit: Optional[int] = Field(default=None, ge=0)
     access_duration_days: Optional[int] = Field(default=None, gt=0)
+    grace_days: Optional[int] = Field(default=None, ge=0)
     module_ids: Optional[list[int]] = None
     onboarding_status: Optional[str] = None
     primary_color: Optional[str] = None

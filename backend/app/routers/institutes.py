@@ -57,8 +57,8 @@ def create_institute(
         or payload.agreed_amount
         or payload.module_ids
         or payload.primary_color
-        or payload.plan_id
-        or payload.new_plan
+        or payload.student_limit
+        or payload.access_duration_days
     ):
         temp_pwd = res.get("admin_temp_password")
         institute_service.update_institute(db, actor, res["id"], payload.model_dump(exclude_unset=True), _client_ip(request))

@@ -531,3 +531,44 @@ def list_directory_users(
         "page_size": page_size,
         "role_counts": directory_role_counts(db),
     }
+
+
+def set_directory_user_active(
+    db: Session,
+    actor: User,
+    user_id: int,
+    active: bool,
+    ip_address: Optional[str] = None,
+) -> dict:
+    """Suspend or restore a platform-wide student straight from the directory.
+
+    Institute members are deliberately not routed through here: their own
+    institute endpoints own the tenant rules (seat limits, draft institutes,
+    membership), so the directory hands those rows off rather than growing a
+    second way to manage them. A direct student belongs to no institute, so
+    the directory is the only place they can be managed from.
+    """
+    user = db.query(User).filter(User.id == user_id, User.deleted_at.is_(None)).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if user.is_owner:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The owner account cannot be suspended")
+    if user.role.name != STUDENT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{user.role.name} accounts are managed from their own screen",
+        )
+    if user.institute_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This student belongs to an institute - manage them from that institute",
+        )
+
+    user.is_active = active
+    db.add(user)
+    _write_audit_log(
+        db, actor, "student.reactivate" if active else "student.deactivate", user.id, ip_address
+    )
+    db.commit()
+    db.refresh(user)
+    return {"id": user.id, "email": user.email, "is_active": user.is_active}

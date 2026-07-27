@@ -132,16 +132,14 @@ def _serialize(db: Session, institute: Institute) -> dict:
         "student_limit": institute.student_limit,
         "staff_limit": institute.staff_limit,
         "access_duration_days": institute.access_duration_days,
+        # The plan is an implementation detail - what the screens show is the
+        # allocation itself, so only the id leaks out (payments post against it).
         "plan_id": institute.onboarding_plan_id,
-        "plan": ({
-            "id": plan.id,
-            "name": plan.name,
-            "price": str(plan.price),
-            "currency": plan.currency,
-            "duration_days": plan.duration_days,
+        "grace_days": plan.grace_days if plan else 0,
+        "allocation": ({
             "student_limit": plan.student_limit,
             "staff_limit": plan.staff_limit,
-            "test_limit": plan.test_limit,
+            "duration_days": plan.duration_days,
             "grace_days": plan.grace_days,
             "module_count": len(plan.modules),
         } if plan else None),
@@ -234,32 +232,59 @@ def create_institute(
     return result
 
 
-def _resolve_agreement_plan(db: Session, actor: User, payload: dict, ip: Optional[str]) -> Optional[Plan]:
-    """The institute plan this agreement is sold on, or None when the payload
-    says nothing about a plan (an edit that only touches branding, say).
+# Allocating provisions is what the Super Admin does; the plan is only how the
+# platform enforces them, so touching any of these keeps the plan in step.
+ALLOCATION_FIELDS = ("student_limit", "staff_limit", "access_duration_days", "grace_days", "module_ids")
 
-    A new plan is authored straight into the institute catalogue so it is
-    available to the next institute too - the point of creating it here is
-    saving the round trip to the Plans screen, not making a private copy.
+
+def _sync_agreement_plan(
+    db: Session, actor: User, institute: Institute, payload: dict, ip: Optional[str]
+) -> tuple[Optional[Plan], bool]:
+    """Bring the institute's backing plan in line with its allocated
+    provisions, returning it and whether it was newly created. (None, False)
+    when the payload allocates nothing (an edit that only touches branding).
+
+    There is no plan to author: seats, validity and courses are allocated
+    straight to the institute, and the plan that enforces them is derived here
+    - named after the institute, priced at the agreed amount, internal so it
+    never surfaces as a listable, reusable plan. It backs one institute, so it
+    is rewritten in place rather than replaced.
     """
-    if payload.get("new_plan"):
-        return plan_service.build_plan(
-            db, actor, {**payload["new_plan"], "audience": AUDIENCE_INSTITUTES, "is_published": False}, ip
-        )
-    if payload.get("plan_id") is None:
-        return None
-    plan = plan_service.get_plan_or_404(db, payload["plan_id"])
-    if plan.is_internal:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This plan is not part of the institute catalogue")
-    plan_service.assert_audience(plan, AUDIENCE_INSTITUTES)
-    if not plan.is_active:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This plan is deactivated and cannot be assigned")
-    if not plan.modules:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This plan has no courses - add courses to it before assigning it to an institute",
-        )
-    return plan
+    if not any(field in payload for field in ALLOCATION_FIELDS):
+        return None, False
+
+    modules = payload.get("module_ids")
+    if modules is None:
+        modules = [
+            link.module_id
+            for link in db.query(InstituteModule).filter(
+                InstituteModule.institute_id == institute.id, InstituteModule.is_active.is_(True)
+            )
+        ]
+    terms = {
+        "name": f"Agreement {institute.slug} {institute.id}",
+        "description": "Provisions allocated to this institute",
+        "price": float(institute.agreed_amount or 0),
+        "currency": institute.agreement_currency or "INR",
+        "duration_days": institute.access_duration_days or 365,
+        "student_limit": institute.student_limit or 0,
+        "staff_limit": institute.staff_limit or 0,
+        "grace_days": payload.get("grace_days") or 0,
+        "module_ids": modules,
+        "audience": AUDIENCE_INSTITUTES,
+        "is_published": False,
+        "is_internal": True,
+        # Institute students take as many tests as they like.
+        "test_limit": 0,
+    }
+    existing = db.get(Plan, institute.onboarding_plan_id) if institute.onboarding_plan_id else None
+    if existing is None or not existing.is_internal:
+        # An institute onboarded before this column existed already has a plan
+        # under the derived name; adopt it rather than colliding with it.
+        existing = db.query(Plan).filter(Plan.name == terms["name"], Plan.is_internal.is_(True)).first()
+    if existing is not None:
+        return plan_service.apply_plan_terms(db, actor, existing, terms, ip), existing.id != institute.onboarding_plan_id
+    return plan_service.build_plan(db, actor, terms, ip), True
 
 
 def update_institute(
@@ -270,18 +295,6 @@ def update_institute(
     ip: Optional[str],
 ) -> dict:
     institute = get_institute_or_404(db, institute_id)
-    # Resolved before anything is written so a bad plan fails the whole save.
-    plan = _resolve_agreement_plan(db, actor, payload, ip)
-    if plan is not None:
-        # Allocation is the plan's, not a second set of numbers free to drift
-        # from the plan the institute is actually subscribed to.
-        payload = {
-            **payload,
-            "student_limit": plan.student_limit,
-            "staff_limit": plan.staff_limit,
-            "access_duration_days": plan.duration_days,
-            "module_ids": [module.id for module in plan.modules],
-        }
     name = payload.get("name")
     if name is not None and name != institute.name:
         institute.name = name
@@ -358,15 +371,22 @@ def update_institute(
                 db.flush()
                 payment.invoice_number = f"INV-{payment.id:06d}"
 
-    # Agreement plan. Assigning one is what gives the institute a subscription,
-    # so seats and validity are enforced from the same place they were sold.
-    if plan is not None and plan.id != institute.onboarding_plan_id:
+    # The plan that enforces the allocation, derived from the institute's own
+    # numbers - so it runs after those have been applied above. Giving the
+    # institute its first plan is also what gives it a subscription.
+    plan, plan_is_new = _sync_agreement_plan(db, actor, institute, payload, ip)
+    if plan is not None:
         institute.onboarding_plan_id = plan.id
-        # 0 on the plan means the agreement does not meter test attempts.
-        institute.test_limit = plan.test_limit or None
-        needs_subscription = True
-    else:
-        needs_subscription = False
+        # NULL means unmetered: an institute's students take unlimited tests.
+        institute.test_limit = None
+    # An institute that already has a subscription keeps it - its seats and
+    # courses are read from the plan, so an edit updates them without
+    # restarting the access clock. Only a first allocation issues one.
+    needs_subscription = (
+        plan is not None
+        and plan_is_new
+        and db.query(Subscription).filter(Subscription.institute_id == institute.id).count() == 0
+    )
 
     # Module allocation
     if "module_ids" in payload and payload["module_ids"] is not None:

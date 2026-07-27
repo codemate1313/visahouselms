@@ -4,7 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { confirmExport } from "@/utils/confirmExport";
-import type { PlanRow } from "@/pages/super-admin/Plans";
+import type { InstituteAllocation } from "@/pages/super-admin/InstituteForm/types";
 import { paymentsStrings as strings } from "./Payments.strings";
 import type { InstituteRow, MethodRow, PaymentRow } from "./types";
 import { exportPaymentsExcel, exportPaymentsPDF } from "./exportHelpers";
@@ -16,7 +16,9 @@ import { DuePaymentModal } from "./components/DuePaymentModal";
 export function Payments() {
   const [rows, setRows] = useState<PaymentRow[]>([]);
   const [institutes, setInstitutes] = useState<InstituteRow[]>([]);
-  const [plans, setPlans] = useState<PlanRow[]>([]);
+  // The payment is recorded against the selected institute's own agreement, so
+  // its provisions are looked up rather than chosen.
+  const [allocation, setAllocation] = useState<InstituteAllocation | null>(null);
   const [methods, setMethods] = useState<MethodRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -74,12 +76,35 @@ export function Payments() {
 
   useEffect(() => {
     apiClient.get("/super-admin/institutes").then(({ data }) => setInstitutes(data));
-    // the record-payment form is institute + plan, so only B2B plans apply
-    apiClient
-      .get<PlanRow[]>("/super-admin/plans", { params: { audience: "institutes" } })
-      .then(({ data }) => setPlans(data));
     apiClient.get<MethodRow[]>("/super-admin/payment-methods?active_only=true").then(({ data }) => setMethods(data));
   }, []);
+
+  // Selecting an institute resolves the agreement the payment is booked
+  // against, along with the provisions it covers.
+  useEffect(() => {
+    if (!instituteId) {
+      setAllocation(null);
+      setPlanId("");
+      return;
+    }
+    let cancelled = false;
+    apiClient
+      .get(`/super-admin/institutes/${instituteId}`)
+      .then(({ data }) => {
+        if (cancelled) return;
+        setAllocation(data.allocation ?? null);
+        setPlanId(data.plan_id ? String(data.plan_id) : "");
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAllocation(null);
+          setPlanId("");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [instituteId]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -171,12 +196,10 @@ export function Payments() {
       {showForm && (
         <RecordPaymentForm
           institutes={institutes}
-          plans={plans}
+          allocation={allocation}
           methods={methods}
           instituteId={instituteId}
           onInstituteIdChange={setInstituteId}
-          planId={planId}
-          onPlanIdChange={setPlanId}
           couponCode={couponCode}
           onCouponCodeChange={setCouponCode}
           amountReceived={amountReceived}

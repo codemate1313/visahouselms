@@ -6,11 +6,10 @@ interface CreatedInstituteModalProps {
   created: CreatedInstitute;
   copied: boolean;
   onCopyPassword: () => void;
-  onAddStudents: () => void;
   onDone: () => void;
 }
 
-export function CreatedInstituteModal({ created, copied, onCopyPassword, onAddStudents, onDone }: CreatedInstituteModalProps) {
+export function CreatedInstituteModal({ created, copied, onCopyPassword, onDone }: CreatedInstituteModalProps) {
   const t = strings.createdModal;
   return createPortal(
     <div
@@ -85,9 +84,6 @@ export function CreatedInstituteModal({ created, copied, onCopyPassword, onAddSt
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
           <button type="button" className="button-link secondary-button" onClick={onCopyPassword} style={{ padding: "8px 16px", fontSize: 13 }}>
             {copied ? t.copied : t.copyPassword}
-          </button>
-          <button type="button" className="button-link secondary-button" onClick={onAddStudents} style={{ padding: "8px 16px", fontSize: 13 }}>
-            {t.addStudents}
           </button>
           <button type="button" className="primary-submit-btn" onClick={onDone} style={{ padding: "8px 20px", fontSize: 13 }}>
             {t.done}

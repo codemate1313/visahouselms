@@ -6,7 +6,15 @@ import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { Checkbox } from "@/components/ui";
 import type { DirectoryUser } from "@/api/types";
 import { usersStrings as strings } from "../Users.strings";
-import { ROLE_ACTIONS, isProtected, passwordResetPath, tenantManageLink } from "../userActions";
+import {
+  ROLE_ACTIONS,
+  canDeleteMember,
+  isProtected,
+  memberActionBase,
+  memberEditPath,
+  passwordResetPath,
+  tenantManageLink,
+} from "../userActions";
 
 interface UsersTableProps {
   users: DirectoryUser[];
@@ -50,15 +58,24 @@ export function UsersTable({
 
     const actions = ROLE_ACTIONS[user.role_name];
     if (!actions) {
-      // Tenant-scoped role: hand off to the institute's own accounts screen,
-      // plus an in-place password reset for roles that support one.
-      const link = tenantManageLink(user);
+      // Tenant-scoped role. Students and institute instructors are managed in
+      // place; the rest just link out to their institute's accounts screen.
+      const managed = memberActionBase(user);
+      const editPath = memberEditPath(user);
+      const link = editPath ?? tenantManageLink(user);
       const resetPath = passwordResetPath(user);
-      if (!link && !resetPath) return <span className="text-muted">—</span>;
+      if (!managed && !link && !resetPath) return <span className="text-muted">—</span>;
       return (
         <div className="row-actions-inline">
+          {managed && (
+            <ToggleSwitch
+              checked={user.is_active}
+              onChange={() => onToggleActive(user)}
+              tooltip={user.is_active ? a.deactivate : a.reactivate}
+            />
+          )}
           {link && (
-            <Link className="action-btn-icon action-edit" to={link} data-tooltip={a.manage}>
+            <Link className="action-btn-icon action-edit" to={link} data-tooltip={editPath ? a.edit : a.manage}>
               <Icon name="edit" />
             </Link>
           )}
@@ -70,6 +87,16 @@ export function UsersTable({
               data-tooltip={a.resetPassword}
             >
               <Icon name="lock" />
+            </button>
+          )}
+          {canDeleteMember(user) && (
+            <button
+              type="button"
+              className="action-btn-icon danger action-delete"
+              onClick={() => onRequestDelete(user)}
+              data-tooltip={a.delete}
+            >
+              <Icon name="trash" />
             </button>
           )}
         </div>

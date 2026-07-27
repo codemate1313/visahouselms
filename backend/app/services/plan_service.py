@@ -236,12 +236,42 @@ def build_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> Plan:
         is_active=True,
         audience=data.get("audience") or AUDIENCE_DIRECT,
         is_published=data.get("is_published", False),
+        # Internal plans back one institute's agreement and stay out of every
+        # catalogue listing (see the filter in `list_plans`).
+        is_internal=data.get("is_internal", False),
         features=_clean_features(data.get("features")),
         modules=modules,
     )
     db.add(plan)
     db.flush()
     _audit(db, actor, "plan.create", plan.id, ip, {"name": plan.name})
+    return plan
+
+
+def apply_plan_terms(db: Session, actor: User, plan: Plan, data: dict, ip: Optional[str]) -> Plan:
+    """Rewrite an existing plan's terms in place, without committing. Used for a
+    plan that backs exactly one institute's agreement: there is no one else on
+    it, so editing the agreement edits the plan rather than minting a new one."""
+    name = data.get("name")
+    if name and name != plan.name:
+        if db.query(Plan).filter(Plan.name == name, Plan.id != plan.id).first() is not None:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A plan with this name already exists")
+        plan.name = name
+
+    modules = _resolve_modules(db, data.get("module_ids") or [])
+    for field in ("description", "currency", "duration_days", "student_limit", "test_limit", "staff_limit", "grace_days"):
+        if data.get(field) is not None:
+            setattr(plan, field, data[field])
+    if data.get("price") is not None:
+        plan.price = Decimal(str(data["price"]))
+    if data.get("features") is not None:
+        plan.features = _clean_features(data["features"])
+    if modules:
+        plan.modules = modules
+
+    db.add(plan)
+    db.flush()
+    _audit(db, actor, "plan.update", plan.id, ip, {"name": plan.name})
     return plan
 
 

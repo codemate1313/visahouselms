@@ -27,6 +27,14 @@ export const usersStrings = {
   newLabel: {
     SUPER_ADMIN: "+ New Admin",
     SA_INSTRUCTOR: "+ New Instructor",
+    INST_INSTRUCTOR: "+ New Institute Instructor",
+    STUDENT: "+ New Student",
+  },
+  selectInstituteModal: {
+    title: "Choose an institute",
+    label: "The new account belongs to this institute.",
+    continue: "Continue",
+    cancel: "Cancel",
   },
   badges: {
     you: "You",

@@ -1,18 +1,16 @@
 import type { FormEvent } from "react";
 import { SearchableSelect } from "@/components/ui";
-import type { PlanRow } from "@/pages/super-admin/Plans";
-import { formatCurrencyAmount } from "@/utils/currency";
+import { allocationSummaryLine, type InstituteAllocation } from "@/pages/super-admin/InstituteForm/types";
 import { paymentsStrings as strings } from "../Payments.strings";
 import type { InstituteRow, MethodRow } from "../types";
 
 interface RecordPaymentFormProps {
   institutes: InstituteRow[];
-  plans: PlanRow[];
+  /** The selected institute's provisions; null until an institute is picked. */
+  allocation: InstituteAllocation | null;
   methods: MethodRow[];
   instituteId: string;
   onInstituteIdChange: (value: string) => void;
-  planId: string;
-  onPlanIdChange: (value: string) => void;
   couponCode: string;
   onCouponCodeChange: (value: string) => void;
   amountReceived: string;
@@ -28,12 +26,10 @@ interface RecordPaymentFormProps {
 
 export function RecordPaymentForm({
   institutes,
-  plans,
+  allocation,
   methods,
   instituteId,
   onInstituteIdChange,
-  planId,
-  onPlanIdChange,
   couponCode,
   onCouponCodeChange,
   amountReceived,
@@ -47,7 +43,7 @@ export function RecordPaymentForm({
   onSubmit,
 }: RecordPaymentFormProps) {
   const t = strings.recordForm;
-  const selectedPlan = plans.find((p) => String(p.id) === planId);
+
 
   return (
     <form className="form-card wide onboarding-section-card payment-record-form" onSubmit={onSubmit} style={{ marginBottom: 24 }}>
@@ -69,14 +65,14 @@ export function RecordPaymentForm({
           />
         </div>
         <div>
-          <label htmlFor="plan">{t.planLabel}</label>
-          <SearchableSelect
-            id="plan"
-            options={[{ value: "", label: t.selectPlan }, ...plans.filter((p) => p.is_active).map((p) => ({ value: p.id, label: `${p.name} - ${formatCurrencyAmount(p.price, p.currency)}` }))]}
-            value={planId}
-            onChange={(value) => onPlanIdChange(String(value))}
-            searchPlaceholder={t.searchPlans}
-            className="form-dropdown-select"
+          <label htmlFor="agreement">{t.agreementLabel}</label>
+          {/* Read-only: the payment is booked against the institute's own
+              agreement, so there is nothing to choose between. */}
+          <input
+            id="agreement"
+            readOnly
+            value={allocation ? allocationSummaryLine(allocation) : ""}
+            placeholder={t.selectInstituteFirst}
           />
         </div>
         <div>
@@ -92,7 +88,7 @@ export function RecordPaymentForm({
             step="0.01"
             value={amountReceived}
             onChange={(e) => onAmountReceivedChange(e.target.value)}
-            placeholder={selectedPlan ? `${t.fullPricePrefix} ${selectedPlan.price}` : t.fullPrice}
+            placeholder={t.fullPrice}
           />
         </div>
         <div>
