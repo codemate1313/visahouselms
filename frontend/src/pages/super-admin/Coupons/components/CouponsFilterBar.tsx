@@ -60,9 +60,8 @@ export function CouponsFilterBar({
         excelLabel={strings.exportExcel}
       />
 
-      <LinkButton to="/super-admin/coupons/new">
-        <Icon name="plus" />
-        <span>{strings.newCoupon}</span>
+      <LinkButton to="/super-admin/coupons/new" leftIcon={<Icon name="plus" />}>
+        {strings.newCoupon}
       </LinkButton>
 
       <div className="filter-result-count">

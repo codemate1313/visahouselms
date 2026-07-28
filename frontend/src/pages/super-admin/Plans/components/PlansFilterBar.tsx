@@ -40,9 +40,8 @@ export function PlansFilterBar({ search, onSearchChange, statusFilter, onStatusF
         excelLabel={strings.exportExcel}
       />
 
-      <LinkButton to={newPlanPath}>
-        <Icon name="plus" />
-        <span>{newPlanLabel}</span>
+      <LinkButton to={newPlanPath} leftIcon={<Icon name="plus" />}>
+        {newPlanLabel}
       </LinkButton>
 
       <div className="filter-result-count">

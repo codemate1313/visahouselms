@@ -60,7 +60,7 @@ export function Profile() {
     }
   }
 
-  const initials = `${user?.first_name?.[0] ?? ""}${user?.last_name?.[0] ?? ""}`.toUpperCase();
+  const initials = `${user?.first_name?.[0] ?? ""}${user?.last_name?.[0] ?? ""}`.trim().toUpperCase() || "SA";
   const avatarSrc = user?.avatar_url
     ? `${API_BASE_URL}${user.avatar_url}?v=${avatarRevision}`
     : null;

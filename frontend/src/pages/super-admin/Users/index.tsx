@@ -56,24 +56,17 @@ interface CreateActionButtonProps {
 }
 
 function CreateActionButton({ label, to, onClick }: CreateActionButtonProps) {
-  const content = (
-    <>
-      <Icon name="plus" />
-      <span>{label}</span>
-    </>
-  );
-
   if (to) {
     return (
-      <LinkButton to={to}>
-        {content}
+      <LinkButton to={to} leftIcon={<Icon name="plus" />}>
+        {label}
       </LinkButton>
     );
   }
 
   return (
-    <Button onClick={onClick}>
-      {content}
+    <Button onClick={onClick} leftIcon={<Icon name="plus" />}>
+      {label}
     </Button>
   );
 }

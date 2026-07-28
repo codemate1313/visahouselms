@@ -77,7 +77,7 @@ export function InstructorProfile() {
   if (!profile) return <p className="error-text">{error}</p>;
 
   const roleLabel = authUser?.role === "INST_INSTRUCTOR" ? strings.roleLabels.instituteInstructor : strings.roleLabels.saInstructor;
-  const initials = `${authUser?.first_name?.[0] ?? ""}${authUser?.last_name?.[0] ?? ""}`.toUpperCase();
+  const initials = `${authUser?.first_name?.[0] ?? ""}${authUser?.last_name?.[0] ?? ""}`.trim().toUpperCase() || "IP";
   const avatarSrc = authUser?.avatar_url ? `${API_BASE_URL}${authUser.avatar_url}?v=${avatarRevision}` : null;
 
   return (

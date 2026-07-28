@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { TableAvatar } from "@/components/TableAvatar";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
@@ -210,8 +209,8 @@ export function UsersTable({
               <td className="col-name">
                 <div className="table-item-cell">
                   <TableAvatar
-                    src={user.avatar_path ? `${API_BASE_URL}/storage/${user.avatar_path}` : null}
-                    name={user.first_name}
+                    src={user.avatar_path ? (user.avatar_path.startsWith('/') ? user.avatar_path : user.avatar_path.startsWith('storage/') ? `/${user.avatar_path}` : `/storage/${user.avatar_path}`) : null}
+                    name={`${user.first_name} ${user.last_name}`.trim() || user.email || "Super Admin"}
                   />
                   <div>
                     <strong className="table-item-title" style={{ fontSize: 13.5 }}>

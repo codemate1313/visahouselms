@@ -60,9 +60,8 @@ export function InstitutesFilterBar({
         excelLabel={strings.exportExcel}
       />
 
-      <LinkButton to="/super-admin/onboarding/new" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-        <Icon name="plus" />
-        <span>{strings.onboardInstitute}</span>
+      <LinkButton to="/super-admin/onboarding/new" leftIcon={<Icon name="plus" />}>
+        {strings.onboardInstitute}
       </LinkButton>
 
       <div className="filter-result-count">

@@ -151,9 +151,14 @@ function avatarUrl(value: string | null | undefined) {
 }
 
 function userInitials(firstName: string | undefined, lastName: string | undefined, email: string | undefined) {
-  const initials = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.trim();
-  if (initials) return initials.toUpperCase();
-  return (email?.[0] ?? "U").toUpperCase();
+  const f = firstName?.trim() || "";
+  const l = lastName?.trim() || "";
+  if (f && l) return `${f[0]}${l[0]}`.toUpperCase();
+  if (f.length >= 2) return f.slice(0, 2).toUpperCase();
+  if (f) return f[0].toUpperCase();
+  if (email?.trim() && email.trim().length >= 2) return email.trim().slice(0, 2).toUpperCase();
+  if (email?.trim()) return email.trim()[0].toUpperCase();
+  return "SA";
 }
 
 function displayName(firstName: string | undefined, lastName: string | undefined, email: string | undefined) {

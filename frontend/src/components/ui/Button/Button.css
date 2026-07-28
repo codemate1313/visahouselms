@@ -116,6 +116,28 @@
 .ui-btn-icon {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.ui-btn-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1.25;
+}
+
+.ui-btn svg,
+.ui-btn-icon svg,
+.ui-btn-label svg {
+  display: block;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  stroke-width: 2px;
+  vertical-align: middle;
 }
 
 .ui-btn-label:empty {

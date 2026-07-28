@@ -14,8 +14,9 @@
 }
 
 .ui-link-btn svg {
-  width: 15px;
-  height: 15px;
-  stroke-width: 2.4px;
+  width: 18px;
+  height: 18px;
+  stroke-width: 2px;
   flex-shrink: 0;
+  display: block;
 }
