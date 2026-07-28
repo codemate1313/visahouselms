@@ -24,8 +24,15 @@ export function InstituteInstructorLayout() {
   const sections: MenuSection[] = [
     { title: strings.menu.evaluation, items: [{ key: "grading", label: strings.menu.grading, icon: "grading", to: "/institute-instructor/grading" }] },
     { title: strings.menu.settings, items: [
-      { key: "sessions", label: strings.menu.activeSessions, icon: "session", to: "/institute-instructor/sessions" },
-      { key: "change-password", label: strings.menu.changePassword, icon: "lock", to: "/institute-instructor/change-password" },
+      {
+        key: "account",
+        label: "Account",
+        icon: "user",
+        children: [
+          { key: "sessions", label: strings.menu.activeSessions, to: "/institute-instructor/sessions" },
+          { key: "change-password", label: strings.menu.changePassword, to: "/institute-instructor/change-password" },
+        ],
+      },
     ] },
   ];
 

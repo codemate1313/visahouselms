@@ -3,6 +3,7 @@ import type { AttemptSummary } from "@/api/types";
 import { studentDashboardStrings as strings } from "../StudentDashboard.strings";
 import { formatAttemptDate, statusLabel, statusTone } from "../helpers";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui/Button/Button";
 
 interface RecentActivityPanelProps {
   attempts: AttemptSummary[];
@@ -47,8 +48,10 @@ export function RecentActivityPanel({ attempts }: RecentActivityPanelProps) {
       ) : (
         <p className="sd-empty">{t.empty}</p>
       )}
-      <Link className="sd-panel-link" to="/student/attempts">
-        {t.viewFullHistory} <Icon name="arrowRight" />
+      <Link to="/student/attempts" style={{ textDecoration: "none", marginTop: "auto", display: "block" }}>
+        <Button variant="primary" fullWidth rightIcon={<Icon name="arrowRight" />} className="sd-global-btn">
+          {t.viewFullHistory}
+        </Button>
       </Link>
     </section>
   );

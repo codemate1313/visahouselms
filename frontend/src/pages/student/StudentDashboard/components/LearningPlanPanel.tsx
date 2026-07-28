@@ -4,6 +4,7 @@ import { studentDashboardStrings as strings } from "../StudentDashboard.strings"
 import { moduleTone } from "../helpers";
 import type { TestProgressItem } from "../types";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui/Button/Button";
 
 interface LearningPlanPanelProps {
   isInstituteStudent: boolean;
@@ -57,8 +58,10 @@ export function LearningPlanPanel({ isInstituteStudent, plan, testProgress, comp
       ) : (
         <p className="sd-empty">{isInstituteStudent ? t.instituteEmpty : t.directEmpty}</p>
       )}
-      <Link className="sd-panel-link" to="/student/my-courses">
-        {t.goToMyTests} <Icon name="arrowRight" />
+      <Link to="/student/my-courses" style={{ textDecoration: "none", marginTop: "auto", display: "block" }}>
+        <Button variant="primary" fullWidth rightIcon={<Icon name="arrowRight" />} className="sd-global-btn">
+          {t.goToMyTests}
+        </Button>
       </Link>
     </section>
   );

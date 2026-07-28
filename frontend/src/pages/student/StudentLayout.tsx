@@ -48,9 +48,16 @@ export function StudentLayout() {
     {
       title: menu.settings,
       items: [
-        { key: "profile", label: menu.myProfile, icon: "user", to: "/student/profile" },
-        { key: "sessions", label: menu.activeSessions, icon: "session", to: "/student/sessions" },
-        { key: "change-password", label: menu.changePassword, icon: "lock", to: "/student/change-password" },
+        {
+          key: "account",
+          label: "Account",
+          icon: "user",
+          children: [
+            { key: "profile", label: menu.myProfile, to: "/student/profile" },
+            { key: "sessions", label: menu.activeSessions, to: "/student/sessions" },
+            { key: "change-password", label: menu.changePassword, to: "/student/change-password" },
+          ],
+        },
       ],
     },
   ];

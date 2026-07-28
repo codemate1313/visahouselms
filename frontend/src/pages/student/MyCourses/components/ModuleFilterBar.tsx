@@ -13,15 +13,19 @@ export function ModuleFilterBar({ availableTypes, typeFilter, onTypeFilterChange
   const typeLabels = strings.moduleTypeLabels;
   return (
     <div className="assigned-tests-filter-bar">
-      <div className="assigned-tests-filter-pills">
-        <button type="button" className={`filter-pill ${typeFilter === "ALL" ? "selected" : ""}`} onClick={() => onTypeFilterChange("ALL")}>
+      <div className="tab-bar">
+        <button
+          type="button"
+          className={`tab ${typeFilter === "ALL" ? "active" : ""}`}
+          onClick={() => onTypeFilterChange("ALL")}
+        >
           {strings.all}
         </button>
         {availableTypes.map((type) => (
           <button
             key={type}
             type="button"
-            className={`filter-pill ${typeFilter === type ? "selected" : ""}`}
+            className={`tab ${typeFilter === type ? "active" : ""}`}
             onClick={() => onTypeFilterChange(type)}
           >
             {typeLabels[type as keyof typeof typeLabels] ?? type}

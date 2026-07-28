@@ -105,27 +105,9 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/dev-settings", eyebrow: "SETTINGS", title: "Developer Settings" },
   { match: "/super-admin/logs", eyebrow: "SETTINGS", title: "System Logs" },
   { match: "/super-admin/terminal", eyebrow: "SETTINGS", title: "CMD Terminal" },
-  { match: "/super-admin/profile", eyebrow: "ACCOUNT SETTINGS", title: "My Profile" },
-  { match: "/super-admin/sessions", eyebrow: "ACCOUNT SETTINGS", title: "Active Sessions" },
-  { match: "/super-admin/change-password", eyebrow: "ACCOUNT SETTINGS", title: "Change Password" },
-  {
-    match: ["/super-admin/instructor/dashboard", "/instructor-portal/dashboard"],
-    eyebrow: "INSTRUCTOR PORTAL",
-    title: (name) => `${getGreeting()}, ${name}`,
-  },
-  { match: ["/super-admin/instructor/modules", "/instructor-portal/modules"], eyebrow: "CONTENT AUTHORING", title: "Module Workspace" },
-  { match: ["/super-admin/instructor/grading", "/instructor-portal/grading"], eyebrow: "EVALUATION", title: "Grading Queue" },
-  { match: "/super-admin/instructor/notifications", eyebrow: "NOTIFICATIONS", title: "Notification Inbox" },
-  { match: "/institute-portal/dashboard", eyebrow: "INSTITUTE PORTAL", title: (name) => `${getGreeting()}, ${name}` },
-  { match: "/institute-portal/members", eyebrow: "INSTITUTE PORTAL", title: "Members & Staff" },
-  { match: "/institute-portal/billing", eyebrow: "INSTITUTE PORTAL", title: "Subscription & Payments" },
-  { match: "/institute-portal/announcements", eyebrow: "INSTITUTE PORTAL", title: "Announcements" },
-  { match: "/student/dashboard", eyebrow: "STUDENT PORTAL", title: (name) => `${getGreeting()}, ${name}` },
-  { match: "/student/courses", eyebrow: "STUDENT PORTAL", title: "My Courses" },
-  { match: "/student/attempts", eyebrow: "STUDENT PORTAL", title: "Test Attempts" },
-  { match: "/student/progress", eyebrow: "STUDENT PORTAL", title: "Progress & Analytics" },
-  { match: "/student/announcements", eyebrow: "STUDENT PORTAL", title: "Announcements" },
-  { match: "/student/profile", eyebrow: "ACCOUNT SETTINGS", title: "My Profile" },
+  { match: ["/super-admin/profile", "/institute-portal/profile", "/instructor-portal/profile", "/student/profile"], eyebrow: "ACCOUNT", title: "My Profile" },
+  { match: ["/super-admin/sessions", "/institute-portal/sessions", "/instructor-portal/sessions", "/student/sessions"], eyebrow: "ACCOUNT", title: "Active Sessions" },
+  { match: ["/super-admin/change-password", "/institute-portal/change-password", "/instructor-portal/change-password", "/student/change-password"], eyebrow: "ACCOUNT", title: "Change Password" },
 ];
 
 function routeMatches(pathname: string, matcher: PageMetaRoute["match"]): boolean {
@@ -484,7 +466,7 @@ export function PortalTopBar({
           <h2 className="portal-app-heading">{pageMeta.title}</h2>
           {itemCount !== null && (
             <span className="portal-app-count-badge">
-              ({itemCount} {itemCount === 1 ? "entry" : "entries"})
+              {itemCount} {itemCount === 1 ? "entry" : "entries"}
             </span>
           )}
         </div>

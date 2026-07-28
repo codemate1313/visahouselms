@@ -56,9 +56,16 @@ export function InstituteLayout() {
     {
       title: m.settings,
       items: [
-        { key: "profile", label: m.myProfile, icon: "user", to: "/institute-portal/profile" },
-        { key: "sessions", label: m.activeSessions, icon: "session", to: "/institute-portal/sessions" },
-        { key: "change-password", label: m.changePassword, icon: "lock", to: "/institute-portal/change-password" },
+        {
+          key: "account",
+          label: "Account",
+          icon: "user",
+          children: [
+            { key: "profile", label: m.myProfile, to: "/institute-portal/profile" },
+            { key: "sessions", label: m.activeSessions, to: "/institute-portal/sessions" },
+            { key: "change-password", label: m.changePassword, to: "/institute-portal/change-password" },
+          ],
+        },
       ],
     },
   ];

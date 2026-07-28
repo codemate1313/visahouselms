@@ -247,6 +247,7 @@ export function NotificationBell({
                     className={`student-notification-item${notification.read_at ? " is-read" : " is-unread"}`}
                     onClick={() => openNotification(notification)}
                   >
+                    <Icon name="notifications" className="student-notification-item-icon" />
                     <span className="student-notification-item-content">
                       <strong>{notification.title}</strong>
                       <span className="student-notification-message">
