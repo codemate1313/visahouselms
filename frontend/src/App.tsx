@@ -6,6 +6,7 @@ import { GlobalDialog } from "./components/GlobalDialog";
 import { GlobalLoader } from "./components/GlobalLoader";
 import { GlobalSnackbar } from "./components/GlobalSnackbar";
 import { GsapInteractionLayer } from "./components/GsapInteractionLayer";
+import { SessionHeartbeat } from "./components/SessionHeartbeat";
 import { useApplyTheme } from "./hooks/useApplyTheme";
 
 import { router } from "./routes/router";
@@ -28,6 +29,7 @@ function App() {
       <GlobalSnackbar />
       <GlobalConfirmModal />
       <GsapInteractionLayer />
+      <SessionHeartbeat />
       {initialized && (
         <Suspense fallback={null}>
           <RouterProvider router={router} />

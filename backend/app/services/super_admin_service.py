@@ -1,3 +1,5 @@
+import secrets
+import string
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -17,6 +19,20 @@ from app.models.role import (
     Role,
 )
 from app.models.user import User
+from app.services import account_service
+
+
+def _temporary_password() -> str:
+    alphabet = string.ascii_letters + string.digits + "!@#$%"
+    chars = [
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.digits),
+        secrets.choice("!@#$%"),
+        *(secrets.choice(alphabet) for _ in range(10)),
+    ]
+    secrets.SystemRandom().shuffle(chars)
+    return "".join(chars)
 
 
 def _super_admin_role(db: Session) -> Role:
@@ -375,7 +391,7 @@ def _apply_directory_filters(
         query = query.filter(User.institute_id.is_(None))
     elif direct is False:
         query = query.filter(User.institute_id.isnot(None))
-    elif institute_id is not None:
+    if institute_id is not None:
         query = query.filter(User.institute_id == institute_id)
     if status_filter == "active":
         query = query.filter(User.is_active.is_(True))
@@ -403,6 +419,7 @@ PASSWORD_AUDIT_ACTIONS = (
     "sa_instructor.reset_password",
     "institute_member.reset_password",
     "institute_admin.reset_password",
+    "student.direct.reset_password",
 )
 SELF_SERVICE_PASSWORD_ACTIONS = {
     "account.change_password",
@@ -468,6 +485,28 @@ def directory_role_counts(db: Session) -> dict:
     return counts
 
 
+def serialize_directory_user(user: User, last_password_change: Optional[dict] = None) -> dict:
+    return {
+        "id": user.id,
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "role_name": user.role.name,
+        "is_active": user.is_active,
+        "force_password_reset": user.force_password_reset,
+        "is_owner": user.is_owner,
+        "avatar_path": user.avatar_path,
+        "institute_id": user.institute_id,
+        "institute_name": user.institute.name if user.institute else None,
+        "institute_slug": user.institute.slug if user.institute else None,
+        "phone_number": user.phone_number,
+        "address": user.address,
+        "created_at": user.created_at,
+        "password_changed_at": user.password_changed_at,
+        "last_password_change": last_password_change,
+    }
+
+
 def list_directory_users(
     db: Session,
     role: Optional[str] = None,
@@ -507,23 +546,7 @@ def list_directory_users(
 
     return {
         "items": [
-            {
-                "id": user.id,
-                "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "role_name": user.role.name,
-                "is_active": user.is_active,
-                "force_password_reset": user.force_password_reset,
-                "is_owner": user.is_owner,
-                "avatar_path": user.avatar_path,
-                "institute_id": user.institute_id,
-                "institute_name": user.institute.name if user.institute else None,
-                "institute_slug": user.institute.slug if user.institute else None,
-                "created_at": user.created_at,
-                "password_changed_at": user.password_changed_at,
-                "last_password_change": password_changes.get(user.id),
-            }
+            serialize_directory_user(user, password_changes.get(user.id))
             for user in users
         ],
         "total": total,
@@ -572,3 +595,105 @@ def set_directory_user_active(
     db.commit()
     db.refresh(user)
     return {"id": user.id, "email": user.email, "is_active": user.is_active}
+
+
+def get_direct_student_or_404(db: Session, user_id: int) -> User:
+    user = (
+        db.query(User)
+        .join(Role)
+        .filter(
+            User.id == user_id,
+            User.deleted_at.is_(None),
+            User.institute_id.is_(None),
+            Role.name == STUDENT,
+        )
+        .first()
+    )
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Direct student not found")
+    return user
+
+
+def update_direct_student(
+    db: Session,
+    actor: User,
+    user_id: int,
+    email: Optional[str],
+    first_name: Optional[str],
+    last_name: Optional[str],
+    ip_address: Optional[str] = None,
+    dob: Optional[datetime] = None,
+    phone_number: Optional[str] = None,
+    address: Optional[str] = None,
+    avatar_path: Optional[str] = None,
+) -> User:
+    user = get_direct_student_or_404(db, user_id)
+    if email is not None and email != user.email:
+        if db.query(User).filter(func.lower(User.email) == email.lower(), User.id != user.id).first() is not None:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+        user.email = email
+    if first_name is not None:
+        user.first_name = first_name
+    if last_name is not None:
+        user.last_name = last_name
+    if dob is not None:
+        user.dob = dob
+    if phone_number is not None:
+        user.phone_number = phone_number
+    if address is not None:
+        user.address = address
+    if avatar_path is not None:
+        user.avatar_path = avatar_path
+
+    db.add(user)
+    _write_audit_log(db, actor, "student.direct.update", user.id, ip_address)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def reset_direct_student_password(
+    db: Session,
+    actor: User,
+    user_id: int,
+    ip_address: Optional[str] = None,
+) -> str:
+    user = get_direct_student_or_404(db, user_id)
+    temporary_password = _temporary_password()
+    user.password_hash = hash_password(temporary_password)
+    user.force_password_reset = True
+    user.password_changed_at = datetime.now(timezone.utc)
+    revoked = account_service.revoke_all_sessions(db, user.id)
+    db.add(user)
+    _write_audit_log(
+        db,
+        actor,
+        "student.direct.reset_password",
+        user.id,
+        ip_address,
+        {"sessions_revoked": revoked},
+    )
+    db.commit()
+    return temporary_password
+
+
+def delete_direct_student(
+    db: Session,
+    actor: User,
+    user_id: int,
+    ip_address: Optional[str] = None,
+) -> None:
+    user = get_direct_student_or_404(db, user_id)
+    user.is_active = False
+    user.deleted_at = datetime.now(timezone.utc)
+    revoked = account_service.revoke_all_sessions(db, user.id)
+    db.add(user)
+    _write_audit_log(
+        db,
+        actor,
+        "student.direct.archive",
+        user.id,
+        ip_address,
+        {"email": user.email, "sessions_revoked": revoked},
+    )
+    db.commit()

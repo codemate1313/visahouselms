@@ -1,24 +1,25 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Header, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.core.auth_cookies import find_refresh_token, get_refresh_token
 from app.dependencies.auth import (
+    get_current_session,
     get_current_user,
     require_password_change_complete,
     require_role,
 )
 from app.models.role import SA_INSTRUCTOR
 from app.models.user import User
+from app.models.user_session import UserSession
 from app.schemas.auth import CurrentUser
 from app.schemas.instructor import (
     InstructorAccountOut,
     InstructorAccountUpdate,
     InstructorDashboardOut,
 )
-from app.schemas.user import ChangePasswordRequest, RevokeOthersRequest, SessionOut
+from app.schemas.user import ChangePasswordRequest, SessionOut
 from app.services import account_service, instructor_service
 
 router = APIRouter(
@@ -113,12 +114,11 @@ def change_my_password(
 
 @router.get("/me/sessions", response_model=list[SessionOut])
 def list_my_sessions(
-    request: Request,
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
-    x_refresh_token: Optional[str] = Header(default=None),
+    current_session: UserSession = Depends(get_current_session),
 ):
-    return account_service.list_sessions(db, actor, find_refresh_token(request, x_refresh_token))
+    return account_service.list_sessions(db, actor, current_session.id)
 
 
 @router.delete("/me/sessions/{session_id}", status_code=204)
@@ -133,13 +133,13 @@ def revoke_my_session(
 
 @router.post("/me/sessions/revoke-others")
 def revoke_my_other_sessions(
-    payload: RevokeOthersRequest,
     request: Request,
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
+    current_session: UserSession = Depends(get_current_session),
 ):
     return {
         "revoked": account_service.revoke_other_sessions(
-            db, actor, get_refresh_token(request, payload.refresh_token), _ip(request)
+            db, actor, current_session.id, _ip(request)
         )
     }

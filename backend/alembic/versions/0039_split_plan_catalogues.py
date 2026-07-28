@@ -33,20 +33,21 @@ def upgrade() -> None:
         """
     )
     op.execute("UPDATE plans SET audience = 'direct_students' WHERE audience = 'both'")
-    op.alter_column(
-        "plans",
-        "audience",
-        existing_type=sa.String(30),
-        nullable=False,
-        server_default="direct_students",
-    )
+    # SQLite doesn't support ALTER COLUMN — use batch mode (copy-and-move)
+    with op.batch_alter_table("plans") as batch_op:
+        batch_op.alter_column(
+            "audience",
+            existing_type=sa.String(30),
+            nullable=False,
+            server_default="direct_students",
+        )
 
 
 def downgrade() -> None:
-    op.alter_column(
-        "plans",
-        "audience",
-        existing_type=sa.String(30),
-        nullable=False,
-        server_default="both",
-    )
+    with op.batch_alter_table("plans") as batch_op:
+        batch_op.alter_column(
+            "audience",
+            existing_type=sa.String(30),
+            nullable=False,
+            server_default="both",
+        )

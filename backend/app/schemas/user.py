@@ -150,6 +150,8 @@ class DirectoryUserOut(BaseModel):
     institute_id: Optional[int] = None
     institute_name: Optional[str] = None
     institute_slug: Optional[str] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
     created_at: datetime
     # null means the account is still on the password it was created with
     password_changed_at: Optional[datetime] = None

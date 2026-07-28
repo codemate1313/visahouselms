@@ -45,6 +45,9 @@ export function passwordResetPath(user: DirectoryUser): string | null {
   if (user.role_name === "SA_INSTRUCTOR") {
     return `/super-admin/instructors/${user.id}/reset-password`;
   }
+  if (user.role_name === "STUDENT" && !user.institute_id) {
+    return `/super-admin/users/${user.id}/reset-password`;
+  }
   if (user.role_name === "INSTITUTE_ADMIN" && user.institute_id) {
     return `/super-admin/institutes/${user.institute_id}/admins/${user.id}/reset-password`;
   }
@@ -87,14 +90,16 @@ export function memberActionBase(user: DirectoryUser): string | null {
   return user.role_name === "STUDENT" ? "/super-admin/users" : null;
 }
 
-/** Whether a tenant row can be deleted outright. Direct students cannot: the
- *  directory only suspends them. */
+/** Whether a tenant/direct row can be archived from the directory. */
 export function canDeleteMember(user: DirectoryUser): boolean {
-  return Boolean(memberActionBase(user)) && Boolean(user.institute_id);
+  return Boolean(memberActionBase(user));
 }
 
 /** Edit form for a tenant-scoped member, or null when there is none. */
 export function memberEditPath(user: DirectoryUser): string | null {
+  if (user.role_name === "STUDENT" && !user.institute_id) {
+    return `/super-admin/users/${user.id}/edit`;
+  }
   if (!user.institute_id) return null;
   if (user.role_name === "STUDENT") {
     return `/super-admin/institutes/${user.institute_id}/accounts/students/${user.id}/edit`;

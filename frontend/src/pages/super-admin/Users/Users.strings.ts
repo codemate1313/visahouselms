@@ -50,6 +50,8 @@ export const usersStrings = {
     byAdmin: (name: string | null) => (name ? `reset by ${name}` : "reset by an admin"),
   },
   platformScope: "Platform-wide",
+  filteredCount: (visible: number, total: number) =>
+    `Showing ${visible} of ${total} ${total === 1 ? "entry" : "entries"}`,
   exportPdf: "Export PDF",
   exportExcel: "Export Excel",
   bulkActions: {

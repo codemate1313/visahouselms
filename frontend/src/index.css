@@ -5987,6 +5987,21 @@ textarea:focus {
   box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.12);
 }
 
+.directory-count-pill {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface-muted, #f8fafc);
+  color: var(--text-muted, #64748b);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .filter-bar button:not(.searchable-select-trigger) {
   height: 44px;
   padding: 0 24px;

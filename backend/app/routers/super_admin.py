@@ -1,20 +1,20 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, Header, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.core.auth_cookies import find_refresh_token, get_refresh_token
-from app.dependencies.auth import get_current_user, require_role
+from app.dependencies.auth import get_current_session, get_current_user, require_role
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
+from app.models.user_session import UserSession
 from app.schemas.auth import CurrentUser
 from app.schemas.user import (
     ChangePasswordRequest,
+    DirectoryUserOut,
     DirectoryUserPage,
     ForceResetRequest,
     ProfileUpdateRequest,
-    RevokeOthersRequest,
     SessionOut,
     SuperAdminAccountCreate,
     SuperAdminAccountOut,
@@ -79,6 +79,62 @@ def reactivate_directory_user(
     actor: User = Depends(get_current_user),
 ):
     return super_admin_service.set_directory_user_active(db, actor, user_id, True, _client_ip(request))
+
+
+@router.get("/users/{user_id}", response_model=DirectoryUserOut)
+def get_direct_student_user(user_id: int, db: Session = Depends(get_db)):
+    return super_admin_service.serialize_directory_user(
+        super_admin_service.get_direct_student_or_404(db, user_id),
+        None,
+    )
+
+
+@router.patch("/users/{user_id}", response_model=DirectoryUserOut)
+def update_direct_student_user(
+    user_id: int,
+    payload: ProfileUpdateRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    user = super_admin_service.update_direct_student(
+        db,
+        actor,
+        user_id,
+        payload.email,
+        payload.first_name,
+        payload.last_name,
+        _client_ip(request),
+        payload.dob,
+        payload.phone_number,
+        payload.address,
+        payload.avatar_path,
+    )
+    return super_admin_service.serialize_directory_user(user, None)
+
+
+@router.post("/users/{user_id}/reset-password")
+def reset_direct_student_password(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return {
+        "temporary_password": super_admin_service.reset_direct_student_password(
+            db, actor, user_id, _client_ip(request)
+        )
+    }
+
+
+@router.delete("/users/{user_id}", status_code=204)
+def delete_direct_student_user(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    super_admin_service.delete_direct_student(db, actor, user_id, _client_ip(request))
 
 
 @router.get("/accounts", response_model=List[SuperAdminAccountOut])
@@ -240,12 +296,11 @@ async def upload_account_avatar(
 
 @router.get("/me/sessions", response_model=List[SessionOut])
 def list_my_sessions(
-    request: Request,
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
-    x_refresh_token: Optional[str] = Header(default=None),
+    current_session: UserSession = Depends(get_current_session),
 ):
-    return account_service.list_sessions(db, actor, find_refresh_token(request, x_refresh_token))
+    return account_service.list_sessions(db, actor, current_session.id)
 
 
 @router.delete("/me/sessions/{session_id}", status_code=204)
@@ -260,13 +315,13 @@ def revoke_my_session(
 
 @router.post("/me/sessions/revoke-others")
 def revoke_my_other_sessions(
-    payload: RevokeOthersRequest,
     request: Request,
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
+    current_session: UserSession = Depends(get_current_session),
 ):
     revoked = account_service.revoke_other_sessions(
-        db, actor, get_refresh_token(request, payload.refresh_token), _client_ip(request)
+        db, actor, current_session.id, _client_ip(request)
     )
     return {"revoked": revoked}
 
@@ -298,4 +353,3 @@ def update_ai_settings(
     settings_service.set_setting(db, "ai.monthly_limit", str(monthly_limit))
 
     return ai_evaluation_service.config_status(db)
-

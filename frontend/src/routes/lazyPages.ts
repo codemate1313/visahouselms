@@ -44,6 +44,7 @@ export const StudentProfile = lazy(() => import("../pages/student/StudentProfile
 export const StudentProgress = lazy(() => import("../pages/student/StudentProgress").then((module) => ({ default: module.StudentProgress })));
 export const AccountForm = lazy(() => import("../pages/super-admin/AccountForm").then((module) => ({ default: module.AccountForm })));
 export const Users = lazy(() => import("../pages/super-admin/Users").then((module) => ({ default: module.Users })));
+export const DirectStudentForm = lazy(() => import("../pages/super-admin/Users/DirectStudentForm").then((module) => ({ default: module.DirectStudentForm })));
 export const ChangePassword = lazy(() => import("../pages/super-admin/ChangePassword").then((module) => ({ default: module.ChangePassword })));
 export const CouponForm = lazy(() => import("../pages/super-admin/CouponForm").then((module) => ({ default: module.CouponForm })));
 export const Coupons = lazy(() => import("../pages/super-admin/Coupons").then((module) => ({ default: module.Coupons })));

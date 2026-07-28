@@ -708,6 +708,8 @@ export interface DirectoryUser {
   institute_id: number | null;
   institute_name: string | null;
   institute_slug: string | null;
+  phone_number?: string | null;
+  address?: string | null;
   created_at: string;
   /** Null while the account is still on the password it was created with. */
   password_changed_at: string | null;

@@ -6,7 +6,7 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.core.security import hash_password, hash_refresh_token, verify_password
+from app.core.security import hash_password, verify_password
 from app.core.uploads import read_compressed_profile_image
 from app.models.audit_log import AuditLog
 from app.models.user import User
@@ -106,8 +106,7 @@ def _active_sessions_query(db: Session, user_id: int):
     )
 
 
-def list_sessions(db: Session, actor: User, current_refresh_token: Optional[str]) -> List[dict]:
-    current_hash = hash_refresh_token(current_refresh_token) if current_refresh_token else None
+def list_sessions(db: Session, actor: User, current_session_id: Optional[int]) -> List[dict]:
     sessions = _active_sessions_query(db, actor.id).all()
     return [
         {
@@ -116,7 +115,7 @@ def list_sessions(db: Session, actor: User, current_refresh_token: Optional[str]
             "ip_address": s.ip_address,
             "created_at": s.created_at,
             "expires_at": s.expires_at,
-            "is_current": s.refresh_token_hash == current_hash,
+            "is_current": s.id == current_session_id,
         }
         for s in sessions
     ]
@@ -137,11 +136,10 @@ def revoke_session(db: Session, actor: User, session_id: int, ip: Optional[str])
         db.commit()
 
 
-def revoke_other_sessions(db: Session, actor: User, current_refresh_token: str, ip: Optional[str]) -> int:
-    current_hash = hash_refresh_token(current_refresh_token)
+def revoke_other_sessions(db: Session, actor: User, current_session_id: int, ip: Optional[str]) -> int:
     now = datetime.now(timezone.utc)
     sessions = _active_sessions_query(db, actor.id).filter(
-        UserSession.refresh_token_hash != current_hash
+        UserSession.id != current_session_id
     ).all()
     for session in sessions:
         session.revoked_at = now

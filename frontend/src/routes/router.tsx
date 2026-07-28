@@ -16,6 +16,7 @@ import {
   DeveloperLayout,
   DeveloperPanel,
   DeveloperSettings,
+  DirectStudentForm,
   GradingDetail,
   GradingOversight,
   GradingQueue,
@@ -128,6 +129,7 @@ export const router = createBrowserRouter([
           // remain the place accounts are actually managed.
           { path: "users", element: <Navigate to="/super-admin/users/super-admins" replace /> },
           { path: "users/:role", element: <Users /> },
+          { path: "users/:id/edit", element: <DirectStudentForm /> },
           // The old single-role list screens now live as tabs of the directory.
           { path: "accounts", element: <Navigate to="/super-admin/users/super-admins" replace /> },
           { path: "accounts/new", element: <AccountForm /> },

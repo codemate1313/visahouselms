@@ -18,7 +18,7 @@ import { Button } from "@/components/ui";
 import { confirmExport } from "@/utils/confirmExport";
 import { usersStrings as strings } from "./Users.strings";
 import { UsersTable } from "./components/UsersTable";
-import { ROLE_ACTIONS, memberActionBase, passwordResetPath } from "./userActions";
+import { ROLE_ACTIONS, canDeleteMember, memberActionBase, passwordResetPath } from "./userActions";
 import { exportUsersExcel, exportUsersPDF } from "./exportHelpers";
 
 const PAGE_SIZE = 25;
@@ -119,6 +119,9 @@ export function Users() {
           params.direct = true;
         } else if (studentFilter === "institutes") {
           params.direct = false;
+          if (selectedInstituteId) {
+            params.institute_id = Number(selectedInstituteId);
+          }
         }
       } else if (activeRole === "INSTITUTE_ADMIN" || activeRole === "INST_INSTRUCTOR") {
         if (selectedInstituteId) {
@@ -145,9 +148,13 @@ export function Users() {
   }, [loadUsers, search]);
 
   useEffect(() => {
-    setItemCount(data?.total ?? null);
+    // Show the grand total across all roles (not just the current tab/filter).
+    const grandTotal = data?.role_counts
+      ? Object.values(data.role_counts).reduce((sum, n) => sum + n, 0)
+      : null;
+    setItemCount(grandTotal);
     return () => setItemCount(null);
-  }, [data?.total, setItemCount]);
+  }, [data?.role_counts, setItemCount]);
 
   /** Optimistic patch of one row, so toggles feel instant without a refetch. */
   function patchUser(id: number, changes: Partial<DirectoryUser>) {
@@ -251,9 +258,12 @@ export function Users() {
   }
 
   const rows = data?.items ?? [];
-  const roleBase = ROLE_ACTIONS[activeRole]?.base;
-  /** Owner rows are protected, and tenant roles have no directory-level actions. */
-  const selectableRows = roleBase ? rows.filter((user) => !user.is_owner) : [];
+  const rowActionBase = (user: DirectoryUser) =>
+    ROLE_ACTIONS[user.role_name]?.base ?? memberActionBase(user);
+  const rowDeleteBase = (user: DirectoryUser) =>
+    ROLE_ACTIONS[user.role_name]?.base ?? (canDeleteMember(user) ? memberActionBase(user) : null);
+  /** Owner rows are protected; every other row with a writable endpoint can be selected. */
+  const selectableRows = rows.filter((user) => !user.is_owner && Boolean(rowActionBase(user)));
 
   function toggleSelect(id: number) {
     setSelectedIds((current) => {
@@ -275,7 +285,7 @@ export function Users() {
   const selectedRows = selectableRows.filter((user) => selectedIds.has(user.id));
 
   async function handleBulkActive(active: boolean) {
-    if (!roleBase || selectedRows.length === 0) return;
+    if (selectedRows.length === 0) return;
     const verb = active ? "activate" : "deactivate";
     const confirmed = await confirmAction(
       `${active ? "Activate" : "Deactivate"} ${selectedRows.length} selected account(s)?`,
@@ -290,9 +300,11 @@ export function Users() {
     setBulkBusy(true);
     setError(null);
     const results = await Promise.allSettled(
-      selectedRows.map((user) =>
-        apiClient.post(`${roleBase}/${user.id}/${active ? "reactivate" : "deactivate"}`)
-      )
+      selectedRows.map((user) => {
+        const base = rowActionBase(user);
+        if (!base) return Promise.reject(new Error("No action endpoint"));
+        return apiClient.post(`${base}/${user.id}/${active ? "reactivate" : "deactivate"}`);
+      })
     );
     if (results.some((result) => result.status === "rejected")) {
       setError(strings.errors.toggleActive(verb));
@@ -303,9 +315,10 @@ export function Users() {
   }
 
   async function handleBulkDelete() {
-    if (!roleBase || selectedRows.length === 0) return;
+    const deletableRows = selectedRows.filter((user) => Boolean(rowDeleteBase(user)));
+    if (deletableRows.length === 0) return;
     const confirmed = await confirmAction(
-      `Permanently delete ${selectedRows.length} selected account(s)? This cannot be undone.`,
+      `Permanently delete ${deletableRows.length} selected account(s)? This cannot be undone.`,
       { title: strings.confirm.deleteTitle, confirmText: "Delete", variant: "danger" }
     );
     if (!confirmed) return;
@@ -313,7 +326,11 @@ export function Users() {
     setBulkBusy(true);
     setError(null);
     const results = await Promise.allSettled(
-      selectedRows.map((user) => apiClient.delete(`${roleBase}/${user.id}`))
+      deletableRows.map((user) => {
+        const base = rowDeleteBase(user);
+        if (!base) return Promise.reject(new Error("No delete endpoint"));
+        return apiClient.delete(`${base}/${user.id}`);
+      })
     );
     if (results.some((result) => result.status === "rejected")) {
       setError(strings.errors.delete);
@@ -330,6 +347,7 @@ export function Users() {
   }
 
   const total = data?.total ?? 0;
+  const visibleCount = data?.items.length ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const newRoute = NEW_ROUTE[activeRole];
   const showInstitute = activeRole !== "SUPER_ADMIN" && activeRole !== "SA_INSTRUCTOR";
@@ -390,11 +408,29 @@ export function Users() {
             value={studentFilter}
             onChange={(value) => {
               setStudentFilter(value as any);
+              setSelectedInstituteId("");
               setPage(1);
             }}
             placeholder="All Students"
             searchable={false}
             className="student-filter-select"
+          />
+        )}
+
+        {activeRole === "STUDENT" && studentFilter === "institutes" && (
+          <SearchableSelect
+            options={[
+              { value: "", label: "All Institutes" },
+              ...institutes.map((inst) => ({ value: String(inst.id), label: inst.name })),
+            ]}
+            value={selectedInstituteId}
+            onChange={(value) => {
+              setSelectedInstituteId(String(value));
+              setPage(1);
+            }}
+            placeholder="Filter by institute..."
+            searchable={true}
+            className="institute-filter-select"
           />
         )}
 
@@ -414,6 +450,10 @@ export function Users() {
             className="institute-filter-select"
           />
         )}
+
+        <div className="directory-count-pill" aria-live="polite">
+          {strings.filteredCount(visibleCount, total)}
+        </div>
 
         <div className="export-btn-group">
           <button

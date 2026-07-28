@@ -132,6 +132,15 @@ export async function initializeSession(): Promise<void> {
   }
 }
 
+export async function validateCurrentSession(): Promise<void> {
+  if (!useAuthStore.getState().accessToken) return;
+
+  const { data: user } = await apiClient.get("/auth/me", {
+    headers: { "X-Skip-Loader": "1" },
+  });
+  useAuthStore.getState().setUser(user);
+}
+
 apiClient.interceptors.response.use(
   (response) => {
     useLoaderStore.getState().hideLoader();

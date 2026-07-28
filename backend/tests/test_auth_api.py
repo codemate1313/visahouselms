@@ -23,6 +23,7 @@ from app.middleware import request_logging
 from app.models import Base
 from app.models.role import INSTITUTE_ADMIN, STUDENT, SUPER_ADMIN, Role
 from app.models.user import User
+from app.models.user_session import UserSession
 from app.services import account_service, auth_service
 
 PASSWORD = "CorrectHorse!1"
@@ -131,6 +132,70 @@ class AuthApiTestCase(unittest.TestCase):
 
         self.assertEqual(
             self.client.get("/student/me/profile", headers=headers).status_code, 401
+        )
+
+    def test_revoke_others_uses_current_access_session(self):
+        admin = self._make_user("owner@example.com", SUPER_ADMIN)
+        access_a, _ = auth_service.issue_login_session(
+            self.db,
+            admin,
+            "Chrome A",
+            "127.0.0.1",
+            device_identifier="admin-device-a",
+            device_name="Chrome A",
+        )
+        access_b, _ = auth_service.issue_login_session(
+            self.db,
+            admin,
+            "Chrome B",
+            "127.0.0.1",
+            device_identifier="admin-device-b",
+            device_name="Chrome B",
+        )
+        access_c, _ = auth_service.issue_login_session(
+            self.db,
+            admin,
+            "Chrome C",
+            "127.0.0.1",
+            device_identifier="admin-device-c",
+            device_name="Chrome C",
+        )
+
+        response = self.client.post(
+            "/super-admin/me/sessions/revoke-others",
+            headers={"Authorization": f"Bearer {access_b}"},
+            json={},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"revoked": 2})
+        active_sessions = (
+            self.db.query(UserSession)
+            .filter(UserSession.user_id == admin.id, UserSession.revoked_at.is_(None))
+            .all()
+        )
+        self.assertEqual(len(active_sessions), 1)
+        self.assertEqual(active_sessions[0].user_agent, "Chrome B")
+        self.assertEqual(
+            self.client.get(
+                "/super-admin/me/sessions",
+                headers={"Authorization": f"Bearer {access_a}"},
+            ).status_code,
+            401,
+        )
+        self.assertEqual(
+            self.client.get(
+                "/super-admin/me/sessions",
+                headers={"Authorization": f"Bearer {access_c}"},
+            ).status_code,
+            401,
+        )
+        self.assertEqual(
+            self.client.get(
+                "/super-admin/me/sessions",
+                headers={"Authorization": f"Bearer {access_b}"},
+            ).status_code,
+            200,
         )
 
     # --- rate limiting ---------------------------------------------------

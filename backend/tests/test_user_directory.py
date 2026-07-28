@@ -208,6 +208,32 @@ class UserDirectoryTestCase(unittest.TestCase):
         ).json()
         self.assertEqual([r["email"] for r in body["items"]], ["outsider@example.com"])
 
+    def test_student_institute_filter_applies_selected_institute(self):
+        other = Institute(name="South College", slug="south-college", is_active=True)
+        self.db.add(other)
+        self.db.commit()
+        self.db.add(
+            User(
+                email="south-student@example.com",
+                password_hash=hash_password(PASSWORD),
+                role_id=self.roles[STUDENT].id,
+                institute_id=other.id,
+                first_name="South",
+                last_name="Student",
+                is_active=True,
+            )
+        )
+        self.db.commit()
+
+        body = self.client.get(
+            "/super-admin/users",
+            params={"role": STUDENT, "direct": False, "institute_id": other.id},
+            headers=self._headers(self.admin),
+        ).json()
+
+        self.assertEqual(body["total"], 1)
+        self.assertEqual([r["email"] for r in body["items"]], ["south-student@example.com"])
+
     def test_pagination_splits_results_without_overlap(self):
         headers = self._headers(self.admin)
         first = self.client.get(
@@ -250,6 +276,48 @@ class UserDirectoryTestCase(unittest.TestCase):
     def test_page_size_is_capped(self):
         result = super_admin_service.list_directory_users(self.db, page_size=10_000)
         self.assertEqual(result["page_size"], super_admin_service.MAX_PAGE_SIZE)
+
+    def test_direct_student_can_be_edited_reset_and_archived_from_directory(self):
+        direct_student = self._user("direct@example.com", STUDENT)
+        headers = self._headers(self.admin)
+
+        updated = self.client.patch(
+            f"/super-admin/users/{direct_student.id}",
+            json={
+                "email": "direct.updated@example.com",
+                "first_name": "Direct",
+                "last_name": "Updated",
+                "phone_number": "+15550001111",
+                "address": "Direct Campus",
+            },
+            headers=headers,
+        )
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.json()["email"], "direct.updated@example.com")
+        self.assertEqual(updated.json()["phone_number"], "+15550001111")
+
+        reset = self.client.post(
+            f"/super-admin/users/{direct_student.id}/reset-password",
+            headers=headers,
+        )
+        self.assertEqual(reset.status_code, 200)
+        self.assertTrue(reset.json()["temporary_password"])
+        self.db.refresh(direct_student)
+        self.assertTrue(direct_student.force_password_reset)
+
+        deleted = self.client.delete(f"/super-admin/users/{direct_student.id}", headers=headers)
+        self.assertEqual(deleted.status_code, 204)
+        self.db.refresh(direct_student)
+        self.assertFalse(direct_student.is_active)
+        self.assertIsNotNone(direct_student.deleted_at)
+
+    def test_institute_student_is_not_managed_by_direct_student_routes(self):
+        institute_student = self.db.query(User).filter(User.email == "student0@example.com").one()
+        response = self.client.delete(
+            f"/super-admin/users/{institute_student.id}",
+            headers=self._headers(self.admin),
+        )
+        self.assertEqual(response.status_code, 404)
 
 
 if __name__ == "__main__":

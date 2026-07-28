@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, File, Header, HTTPException, Request, Up
 from sqlalchemy.orm import Session
 
 from app.core.uploads import read_validated_speaking_answer
-from app.core.auth_cookies import find_refresh_token, get_refresh_token
 from app.database import get_db
 from app.dependencies.auth import get_current_session
 from app.dependencies.student_access import require_module_access, require_student
@@ -21,7 +20,7 @@ from app.schemas.student import (
     ProctorFlagRequest,
     ReevaluationCreateRequest,
 )
-from app.schemas.user import ChangePasswordRequest, ProfileUpdateRequest, RevokeOthersRequest, SessionOut
+from app.schemas.user import ChangePasswordRequest, ProfileUpdateRequest, SessionOut
 from app.services import (
     account_service,
     achievement_service,
@@ -119,12 +118,11 @@ def change_my_password(
 
 @router.get("/me/sessions", response_model=list[SessionOut])
 def list_my_sessions(
-    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_student),
-    x_refresh_token: Optional[str] = Header(default=None),
+    current_session: UserSession = Depends(get_current_session),
 ):
-    return account_service.list_sessions(db, user, find_refresh_token(request, x_refresh_token))
+    return account_service.list_sessions(db, user, current_session.id)
 
 
 @router.delete("/me/sessions/{session_id}", status_code=204)
@@ -136,13 +134,13 @@ def revoke_my_session(
 
 @router.post("/me/sessions/revoke-others")
 def revoke_my_other_sessions(
-    payload: RevokeOthersRequest,
     request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_student),
+    current_session: UserSession = Depends(get_current_session),
 ):
     revoked = account_service.revoke_other_sessions(
-        db, user, get_refresh_token(request, payload.refresh_token), _ip(request)
+        db, user, current_session.id, _ip(request)
     )
     return {"revoked": revoked}
 
