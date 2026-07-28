@@ -1,9 +1,10 @@
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { plansStrings as strings } from "../Plans.strings";
 import type { PlanRow } from "../types";
+import { LinkButton } from "@/components/ui";
+import { CATALOGUE_STATUS_LABELS } from "@/constants";
 
 interface PlanDetailsModalProps {
   plan: PlanRow;
@@ -24,7 +25,11 @@ export function PlanDetailsModal({ plan, onClose }: PlanDetailsModalProps) {
               <div className="plan-dialog-title-row">
                 <h2 className="plan-dialog-title">{plan.name}</h2>
                 <span className={`badge ${!plan.is_active ? "badge-inactive" : plan.is_published ? "badge-green" : "badge-amber"}`}>
-                  {!plan.is_active ? strings.statusFilter.inactive : plan.is_published ? strings.statusFilter.active : strings.statusFilter.draft}
+                  {!plan.is_active
+                    ? CATALOGUE_STATUS_LABELS.inactive
+                    : plan.is_published
+                      ? CATALOGUE_STATUS_LABELS.active
+                      : CATALOGUE_STATUS_LABELS.draft}
                 </span>
               </div>
               <span className="plan-dialog-price">
@@ -136,9 +141,9 @@ export function PlanDetailsModal({ plan, onClose }: PlanDetailsModalProps) {
           <button type="button" className="secondary-button" onClick={onClose}>
             {t.close}
           </button>
-          <Link to={`/super-admin/plans/${plan.id}`} className="button-link" onClick={onClose}>
+          <LinkButton to={`/super-admin/plans/${plan.id}`} onClick={onClose}>
             {t.editPlan}
-          </Link>
+          </LinkButton>
         </div>
       </div>
     </div>,

@@ -9,6 +9,7 @@ import { Icon, type IconName } from "./icons";
 import { NotificationBell } from "./StudentNotificationBell";
 import { DashboardRangeAndThemeToggle } from "./DashboardRangeAndThemeToggle";
 import { ThemeToggle } from "./ThemeToggle";
+import { commonActions } from "@/content/common.strings";
 
 interface QuickLink {
   title: string;
@@ -472,7 +473,7 @@ export function PortalTopBar({
               }}
               title="Go back to previous page"
             >
-              &larr; Back
+              <Icon name="arrowLeft" /> {commonActions.back}
             </button>
           )}
           <h2 className="portal-app-heading">{pageMeta.title}</h2>

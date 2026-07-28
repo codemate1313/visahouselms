@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { instructorDashboardStrings as strings } from "../InstructorDashboard.strings";
+import { Icon } from "@/components/icons";
 
 interface ModuleAuthoringPanelProps {
   skillModuleCount: number;
@@ -38,7 +39,9 @@ export function ModuleAuthoringPanel({
           <p>{t.listeningMediaDetail(audioCount)}</p>
         </div>
       </div>
-      <Link to="/super-admin/instructor/modules">{t.openWorkspace}</Link>
+      <Link to="/super-admin/instructor/modules">
+        {t.openWorkspace} <Icon name="arrowRight" />
+      </Link>
     </section>
   );
 }

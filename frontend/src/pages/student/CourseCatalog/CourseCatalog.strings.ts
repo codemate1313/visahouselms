@@ -11,7 +11,7 @@ export const courseCatalogStrings = {
   defaultDescription: "Assessment access plan.",
   durationSuffix: (days: number) => `${days} days`,
   testsCount: (count: number) => `${count} test${count === 1 ? "" : "s"}`,
-  goToCourse: "Go to course →",
+  goToCourse: "Go to course",
   choosePlan: "Choose plan",
   checkout: {
     heading: (name: string) => `Choose "${name}"`,

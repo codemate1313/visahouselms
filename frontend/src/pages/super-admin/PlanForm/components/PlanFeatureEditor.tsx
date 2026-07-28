@@ -1,4 +1,5 @@
 import { planFormStrings as strings } from "../PlanForm.strings";
+import { Icon } from "@/components/icons";
 
 interface PlanFeatureEditorProps {
   features: string[];
@@ -42,7 +43,7 @@ export function PlanFeatureEditor({ features, maxFeatures, onChange, onAdd, onRe
       )}
 
       <button type="button" className="plan-feature-add" onClick={onAdd} disabled={features.length >= maxFeatures}>
-        {t.add}
+        <Icon name="plus" /> {t.add}
       </button>
     </fieldset>
   );

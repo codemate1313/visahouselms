@@ -3,6 +3,7 @@ import { RequiredMark, SearchableSelect } from "@/components/ui";
 import type { QuestionDraft, QuestionType } from "@/api/types";
 import { questionBankEditorStrings as strings } from "../QuestionBankEditor.strings";
 import { ANSWER_FREE_TYPES, CHOICE_TYPES, QUESTION_TYPES } from "../helpers";
+import { Icon } from "@/components/icons";
 
 interface QuestionFormProps {
   question: QuestionDraft;
@@ -102,13 +103,13 @@ export function QuestionForm({
                 disabled={question.options.length <= 2}
                 onClick={() => onRemoveOption(index)}
               >
-                ×
+                <Icon name="cross" />
               </button>
             </div>
           ))}
           {question.question_type.startsWith("mcq_") && (
             <button type="button" className="secondary-button add-option" onClick={onAddOption}>
-              {t.addChoice}
+              <Icon name="plus" /> {t.addChoice}
             </button>
           )}
         </fieldset>

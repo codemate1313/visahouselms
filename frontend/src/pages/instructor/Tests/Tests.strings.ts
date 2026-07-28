@@ -1,7 +1,7 @@
 export const testsStrings = {
   title: "Test Builder",
   subtitle: "Assemble course question banks into timed IELTS assessments.",
-  newTest: "+ New Test",
+  newTest: "New Test",
   searchPlaceholder: "Search tests...",
   courseAriaLabel: "Course",
   allCourses: "All courses",

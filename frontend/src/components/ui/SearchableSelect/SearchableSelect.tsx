@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import "./SearchableSelect.css";
+import { Icon } from "@/components/icons";
+import { commonActions } from "@/content/common.strings";
 
 export interface SelectOption {
   value: string | number;
@@ -153,9 +156,10 @@ export function SearchableSelect({
                   type="button"
                   className="select-search-clear"
                   onClick={() => setSearch("")}
-                  title="Clear search"
+                  title={commonActions.clearSearch}
+                  aria-label={commonActions.clearSearch}
                 >
-                  ×
+                  <Icon name="cross" />
                 </button>
               )}
             </div>

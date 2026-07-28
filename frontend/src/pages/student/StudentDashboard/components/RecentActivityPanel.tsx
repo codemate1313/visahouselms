@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { AttemptSummary } from "@/api/types";
 import { studentDashboardStrings as strings } from "../StudentDashboard.strings";
 import { formatAttemptDate, statusLabel, statusTone } from "../helpers";
+import { Icon } from "@/components/icons";
 
 interface RecentActivityPanelProps {
   attempts: AttemptSummary[];
@@ -47,7 +48,7 @@ export function RecentActivityPanel({ attempts }: RecentActivityPanelProps) {
         <p className="sd-empty">{t.empty}</p>
       )}
       <Link className="sd-panel-link" to="/student/attempts">
-        {t.viewFullHistory} <span aria-hidden="true">→</span>
+        {t.viewFullHistory} <Icon name="arrowRight" />
       </Link>
     </section>
   );

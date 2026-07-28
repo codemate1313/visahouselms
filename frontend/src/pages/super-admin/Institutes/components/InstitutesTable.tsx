@@ -5,6 +5,7 @@ import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { TableAvatar } from "@/components/TableAvatar";
 import { institutesStrings as strings } from "../Institutes.strings";
 import type { InstituteRow, SortKey } from "../types";
+import { INSTITUTE_STATUS, INSTITUTE_STATUS_LABELS } from "@/constants";
 
 const STATE_BADGES: Record<string, string> = {
   active: "badge-green",
@@ -87,7 +88,11 @@ export function InstitutesTable({ rows, sortKey, sortDirection, onChangeSort, on
               </td>
               <td>
                 <span className={`badge ${row.is_active ? "badge-green" : "badge-gray"}`}>
-                  {row.onboarding_status === "draft" ? strings.statusFilter.draft : row.is_active ? strings.statusFilter.active : strings.statusFilter.suspended}
+                  {row.onboarding_status === INSTITUTE_STATUS.DRAFT
+                    ? INSTITUTE_STATUS_LABELS.draft
+                    : row.is_active
+                      ? INSTITUTE_STATUS_LABELS.active
+                      : INSTITUTE_STATUS_LABELS.suspended}
                 </span>
               </td>
               <td className="table-actions institute-row-actions" style={{ paddingRight: 12 }}>

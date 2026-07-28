@@ -1,10 +1,11 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import type { Course, QuestionBank } from "@/api/types";
 import { questionBanksStrings as strings } from "./QuestionBanks.strings";
 import { QuestionBankFilterBar } from "./components/QuestionBankFilterBar";
 import { QuestionBankGrid } from "./components/QuestionBankGrid";
+import { LinkButton } from "@/components/ui";
+import { Icon } from "@/components/icons";
 
 export function QuestionBanks() {
   const [banks, setBanks] = useState<QuestionBank[]>([]);
@@ -48,9 +49,9 @@ export function QuestionBanks() {
           <h1>{strings.title}</h1>
           <p className="page-subtitle">{strings.subtitle}</p>
         </div>
-        <Link className="button-link" to="/super-admin/instructor/question-banks/new">
+        <LinkButton to="/super-admin/instructor/question-banks/new" leftIcon={<Icon name="plus" />}>
           {strings.newBank}
-        </Link>
+        </LinkButton>
       </div>
       <QuestionBankFilterBar
         search={search}
@@ -71,9 +72,9 @@ export function QuestionBanks() {
         <div className="empty-state">
           <h2>{strings.empty.title}</h2>
           <p>{strings.empty.description}</p>
-          <Link className="button-link" to="/super-admin/instructor/question-banks/new">
+          <LinkButton to="/super-admin/instructor/question-banks/new">
             {strings.empty.cta}
-          </Link>
+          </LinkButton>
         </div>
       ) : (
         <QuestionBankGrid banks={banks} />

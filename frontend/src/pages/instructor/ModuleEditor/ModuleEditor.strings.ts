@@ -23,7 +23,7 @@ export const moduleEditorStrings = {
   },
   newModule: {
     subtitle: "The correct parts, timing, marks and assessment rubric will be created automatically.",
-    allModulesLink: "← All modules",
+    allModulesLink: "All modules",
     titleLabel: "Module title",
     titlePlaceholder: (type: string) => `${type} — Academic Set 1`,
     descriptionLabel: "Description",

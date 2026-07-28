@@ -1,7 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { apiClient } from "@/api/client";
-import { SearchableSelect } from "@/components/ui";
+import { LinkButton, SearchableSelect } from "@/components/ui";
 import type { Course } from "@/api/types";
 import { courseCatalogStrings as strings } from "./CourseCatalog.strings";
 
@@ -96,9 +95,9 @@ export function CourseCatalog() {
                         <h2>{course.title}</h2>
                         <p>{course.summary || strings.noSummary}</p>
                       </div>
-                      <Link className="button-link" to={`/super-admin/courses/${course.id}`}>
+                      <LinkButton to={`/super-admin/courses/${course.id}`}>
                         {strings.manage}
-                      </Link>
+                      </LinkButton>
                     </div>
                     <dl className="tree-course-facts">
                       <div>

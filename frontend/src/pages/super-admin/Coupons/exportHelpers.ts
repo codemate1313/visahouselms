@@ -4,6 +4,7 @@ import * as XLSX from "xlsx";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { couponsStrings as strings } from "./Coupons.strings";
 import type { CouponRow } from "./types";
+import { ACTIVATION_STATUS_LABELS } from "@/constants";
 
 export function exportCouponsPDF(coupons: CouponRow[]) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -27,7 +28,7 @@ export function exportCouponsPDF(coupons: CouponRow[]) {
       c.scope,
       `${c.usage_count}${c.usage_limit ? ` / ${c.usage_limit}` : ""}`,
       `${c.valid_from ? new Date(c.valid_from).toLocaleDateString("en-GB") : "—"} to ${c.valid_until ? new Date(c.valid_until).toLocaleDateString("en-GB") : "—"}`,
-      c.is_active ? strings.statusFilter.active : strings.statusFilter.inactive,
+      c.is_active ? ACTIVATION_STATUS_LABELS.active : ACTIVATION_STATUS_LABELS.inactive,
     ]),
     styles: { fontSize: 9, cellPadding: 4, textColor: [15, 23, 42] },
     headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: "bold" },
@@ -50,7 +51,7 @@ export function exportCouponsExcel(coupons: CouponRow[]) {
       c.usage_limit ?? strings.excel.unlimited,
       c.valid_from ? new Date(c.valid_from).toLocaleDateString("en-GB") : "",
       c.valid_until ? new Date(c.valid_until).toLocaleDateString("en-GB") : "",
-      c.is_active ? strings.statusFilter.active : strings.statusFilter.inactive,
+      c.is_active ? ACTIVATION_STATUS_LABELS.active : ACTIVATION_STATUS_LABELS.inactive,
     ]),
   ];
 

@@ -1,4 +1,5 @@
 import { instituteMemberFormStrings as strings } from "../InstituteMemberForm.strings";
+import { LinkButton } from "@/components/ui";
 
 const SUPER_ADMIN_CONTACT_EMAIL = "support@ieltslmspro.com";
 
@@ -37,12 +38,11 @@ export function CapacityLockedView({ label, isStudent, limitIsZero, error, onBac
           </p>
           {error && <p className="error-text">{error}</p>}
           <div className="feature-lock-actions">
-            <a
-              className="button-link"
+            <LinkButton
               href={`mailto:${SUPER_ADMIN_CONTACT_EMAIL}?subject=Enable%20${isStudent ? "student" : "instructor"}%20feature`}
             >
               {t.contactCta}
-            </a>
+            </LinkButton>
             <button type="button" className="secondary-action" onClick={onBack}>{strings.actions.back}</button>
           </div>
           <p className="hint">{t.emailPrefix} {SUPER_ADMIN_CONTACT_EMAIL}</p>

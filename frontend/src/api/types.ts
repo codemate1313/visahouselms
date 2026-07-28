@@ -1,3 +1,12 @@
+/*
+ * API payload shapes. Domain vocabularies (statuses, sections, attempt
+ * states, CEFR levels) are declared in `@/constants` and re-exported here,
+ * so the runtime values and these types can never drift apart.
+ */
+
+import type { AttemptStatus, CefrLevel, ExamModuleStatus, IeltsSection } from "@/constants";
+
+export type { AttemptStatus, CefrLevel, ExamModuleStatus, IeltsSection };
 export interface SuperAdminAccount {
   id: number;
   email: string;
@@ -98,7 +107,6 @@ export interface Course {
   modules: CourseModuleLink[];
 }
 
-export type IeltsSection = "listening" | "reading" | "writing" | "speaking";
 export type QuestionType = "mcq_single" | "mcq_multiple" | "true_false_not_given" | "yes_no_not_given" | "short_answer" | "fill_blank" | "essay" | "speaking_prompt";
 
 export interface QuestionOption {
@@ -181,7 +189,6 @@ export interface Assessment {
 }
 
 export type ExamModuleType = "reading" | "speaking" | "writing" | "listening" | "full_mock" | "final_test";
-export type ExamModuleStatus = "draft" | "published" | "archived";
 
 export interface ModuleRubricCriterion {
   criterion: string;
@@ -332,7 +339,6 @@ export interface StudentCurrentPlan {
   access_type: "institute" | "direct";
 }
 
-export type AttemptStatus = "ready" | "in_progress" | "submitted" | "grading" | "graded" | "expired";
 
 export interface AttemptResponse {
   selected?: string | string[];
@@ -411,7 +417,6 @@ export interface AiEvaluationSuggestion {
   policy_version: string;
 }
 
-export type CefrLevel = "Below B1" | "B1" | "B2" | "C1" | "C2";
 
 export interface CefrScaleAnchor {
   level: CefrLevel;

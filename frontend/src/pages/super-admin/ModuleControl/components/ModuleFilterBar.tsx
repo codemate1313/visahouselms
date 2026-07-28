@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { SearchableSelect } from "@/components/ui";
 import { moduleControlStrings as strings } from "../ModuleControl.strings";
+import { ALL_STATUSES_LABEL, EXAM_MODULE_STATUS_OPTIONS } from "@/constants";
 
 interface ModuleFilterBarProps {
   search: string;
@@ -11,7 +12,6 @@ interface ModuleFilterBarProps {
 }
 
 export function ModuleFilterBar({ search, onSearchChange, status, onStatusChange, onSubmit }: ModuleFilterBarProps) {
-  const t = strings.statusOptions;
   return (
     <form className="filter-bar course-filter-bar" onSubmit={onSubmit}>
       <div className="search-input-wrapper">
@@ -19,14 +19,11 @@ export function ModuleFilterBar({ search, onSearchChange, status, onStatusChange
       </div>
       <SearchableSelect
         options={[
-          { value: "", label: t.allStatuses },
-          { value: "draft", label: t.draft },
-          { value: "published", label: t.published },
-          { value: "archived", label: t.archived },
+          ...EXAM_MODULE_STATUS_OPTIONS,
         ]}
         value={status}
         onChange={(val) => onStatusChange(String(val))}
-        placeholder={t.allStatuses}
+        placeholder={ALL_STATUSES_LABEL}
         searchable={false}
         className="status-filter-select"
       />

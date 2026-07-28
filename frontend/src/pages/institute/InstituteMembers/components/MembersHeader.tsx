@@ -1,5 +1,4 @@
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui";
+import { Button, LinkButton } from "@/components/ui";
 import { instituteMembersStrings as strings } from "../InstituteMembers.strings";
 
 interface MembersHeaderProps {
@@ -50,24 +49,24 @@ export function MembersHeader({
           </Button>
         )}
         {isSuperAdmin && canAddStudents && (
-          <Link className="button-link" to={`${basePath}/students/new`}>
+          <LinkButton to={`${basePath}/students/new`}>
             {strings.addStudent}
-          </Link>
+          </LinkButton>
         )}
         {isSuperAdmin && canAddStaff && (
-          <Link className="button-link secondary-button" to={`${basePath}/staff/new`}>
+          <LinkButton variant="secondary" to={`${basePath}/staff/new`}>
             {strings.addInstructor}
-          </Link>
+          </LinkButton>
         )}
         {!isSuperAdmin && isStudent && canManage && canAddStudents && (
-          <Link className="button-link" to={`${basePath}/new`}>
+          <LinkButton to={`${basePath}/new`}>
             {strings.addStudent}
-          </Link>
+          </LinkButton>
         )}
         {!isSuperAdmin && !isStudent && canManage && canAddStaff && (
-          <Link className="button-link" to={`${basePath}/new`}>
+          <LinkButton to={`${basePath}/new`}>
             {strings.addInstructor}
-          </Link>
+          </LinkButton>
         )}
         {canProvision && (
           <input

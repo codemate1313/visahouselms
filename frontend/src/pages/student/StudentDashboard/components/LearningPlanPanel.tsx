@@ -3,6 +3,7 @@ import type { StudentCurrentPlan } from "@/api/types";
 import { studentDashboardStrings as strings } from "../StudentDashboard.strings";
 import { moduleTone } from "../helpers";
 import type { TestProgressItem } from "../types";
+import { Icon } from "@/components/icons";
 
 interface LearningPlanPanelProps {
   isInstituteStudent: boolean;
@@ -57,7 +58,7 @@ export function LearningPlanPanel({ isInstituteStudent, plan, testProgress, comp
         <p className="sd-empty">{isInstituteStudent ? t.instituteEmpty : t.directEmpty}</p>
       )}
       <Link className="sd-panel-link" to="/student/my-courses">
-        {t.goToMyTests} <span aria-hidden="true">→</span>
+        {t.goToMyTests} <Icon name="arrowRight" />
       </Link>
     </section>
   );

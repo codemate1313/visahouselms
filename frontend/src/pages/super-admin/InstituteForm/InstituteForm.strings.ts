@@ -29,6 +29,15 @@ export const instituteFormStrings = {
   saving: "Saving...",
   save: "Save",
   cancel: "Cancel",
+  /** Multi-step create/edit flow along the top of the form. */
+  wizard: {
+    previousStep: "Previous Step",
+    nextStep: "Next Step",
+    createInstitute: "Create Institute",
+    selectAllModules: "Select All",
+    deselectAllModules: "Deselect All",
+    manageAccounts: "Manage Accounts",
+  },
   createdModal: {
     heading: "Institute created",
     description: "Share these credentials with the institute admin now — the password won't be shown again. They'll be required to change it on first login.",

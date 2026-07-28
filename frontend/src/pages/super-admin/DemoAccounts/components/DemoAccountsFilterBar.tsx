@@ -1,6 +1,6 @@
-import { Icon } from "@/components/icons";
-import { SearchableSelect, SearchInput } from "@/components/ui";
+import { Button, ExportButtons, SearchInput, SearchableSelect } from "@/components/ui";
 import { demoAccountsStrings as strings } from "../DemoAccounts.strings";
+import { Icon } from "@/components/icons";
 
 interface DemoAccountsFilterBarProps {
   search: string;
@@ -42,18 +42,20 @@ export function DemoAccountsFilterBar({
         className="status-filter-select"
       />
 
-      <div className="export-btn-group">
-        <button type="button" className="export-btn export-pdf" onClick={onExportPdf} data-tooltip={strings.exportPdf}>
-          <Icon name="filePdf" />
-        </button>
-        <button type="button" className="export-btn export-excel" onClick={onExportExcel} data-tooltip={strings.exportExcel}>
-          <Icon name="spreadsheet" />
-        </button>
-      </div>
+      <ExportButtons
+        onExportPdf={onExportPdf}
+        onExportExcel={onExportExcel}
+        pdfLabel={strings.exportPdf}
+        excelLabel={strings.exportExcel}
+      />
 
-      <button type="button" className={showForm ? "secondary-link-btn" : "button-link"} onClick={onToggleForm}>
+      <Button
+        variant={showForm ? "secondary" : "primary"}
+        leftIcon={showForm ? undefined : <Icon name="plus" />}
+        onClick={onToggleForm}
+      >
         {showForm ? strings.cancel : strings.newDemo}
-      </button>
+      </Button>
     </div>
   );
 }

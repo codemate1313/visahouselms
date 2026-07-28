@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { Attempt } from "@/api/types";
@@ -10,6 +10,7 @@ import { CefrProfilePanel } from "./components/CefrProfilePanel";
 import { PartReviewSection } from "./components/PartReviewSection";
 import { ReevaluationStatus } from "./components/ReevaluationStatus";
 import { ReevaluationForm } from "./components/ReevaluationForm";
+import { LinkButton } from "@/components/ui";
 
 export function AttemptResultDetails() {
   const { id } = useParams();
@@ -60,12 +61,12 @@ export function AttemptResultDetails() {
           <p className="page-subtitle">{statusLabels[attempt.status as keyof typeof statusLabels] ?? attempt.status}</p>
         </div>
         <div className="result-header-actions">
-          <Link className="secondary-button button-link" to={`/student/attempts/${attempt.id}/result`}>
+          <LinkButton variant="secondary" to={`/student/attempts/${attempt.id}/result`}>
             {strings.resultOverview}
-          </Link>
-          <Link className="button-link" to="/student/attempts">
+          </LinkButton>
+          <LinkButton to="/student/attempts">
             {strings.allAttempts}
-          </Link>
+          </LinkButton>
         </div>
       </div>
       {error && <p className="error-text">{error}</p>}

@@ -5,7 +5,7 @@
  */
 export const directStudentCatalogue = {
   basePath: "/super-admin/plans",
-  newPlan: "+ New Plan",
+  newPlan: "New Plan",
   exportLabel: "direct student plans",
   empty: "No direct-student plans yet.",
   audienceLabel: "direct students",
@@ -21,15 +21,9 @@ export const plansStrings = {
     hiddenNote:
       "Hidden — the public pricing page invites visitors to contact the team instead.",
   },
-  statusFilter: {
-    allStatuses: "All statuses",
-    active: "Active",
-    draft: "Draft",
-    inactive: "Inactive",
-  },
   exportPdf: "Export PDF",
   exportExcel: "Export Excel",
-  newPlan: "+ New Plan",
+  newPlan: "New Plan",
   resultCount: {
     showing: "Showing",
     entry: "entry",

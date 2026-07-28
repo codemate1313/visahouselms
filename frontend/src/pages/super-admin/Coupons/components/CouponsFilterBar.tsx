@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
-import { SearchableSelect, SearchInput } from "@/components/ui";
+import { ExportButtons, LinkButton, SearchInput, SearchableSelect } from "@/components/ui";
 import { couponsStrings as strings } from "../Coupons.strings";
+import { ALL_SCOPES_LABEL, ANY_STATUS_LABEL, BOOLEAN_ACTIVE_OPTIONS, COUPON_SCOPE_OPTIONS } from "@/constants";
 
 interface CouponsFilterBarProps {
   search: string;
@@ -26,8 +26,6 @@ export function CouponsFilterBar({
   onExportExcel,
   resultCount,
 }: CouponsFilterBarProps) {
-  const s = strings.scopeFilter;
-  const t = strings.statusFilter;
   const r = strings.resultCount;
   return (
     <div className="filter-bar institutes-filter-bar">
@@ -35,43 +33,37 @@ export function CouponsFilterBar({
 
       <SearchableSelect
         options={[
-          { value: "", label: s.allScopes },
-          { value: "all", label: s.allPlans },
-          { value: "plan", label: s.specificPlan },
-          { value: "course", label: s.specificCourse },
+          ...COUPON_SCOPE_OPTIONS,
         ]}
         value={scopeFilter}
         onChange={(val) => onScopeFilterChange(String(val))}
-        placeholder={s.allScopes}
+        placeholder={ALL_SCOPES_LABEL}
         searchable={false}
         className="status-filter-select"
       />
 
       <SearchableSelect
         options={[
-          { value: "", label: t.anyStatus },
-          { value: "true", label: t.active },
-          { value: "false", label: t.inactive },
+          ...BOOLEAN_ACTIVE_OPTIONS,
         ]}
         value={activeFilter}
         onChange={(val) => onActiveFilterChange(String(val))}
-        placeholder={t.anyStatus}
+        placeholder={ANY_STATUS_LABEL}
         searchable={false}
         className="status-filter-select"
       />
 
-      <div className="export-btn-group">
-        <button type="button" className="export-btn export-pdf" onClick={onExportPdf} data-tooltip={strings.exportPdf}>
-          <Icon name="filePdf" />
-        </button>
-        <button type="button" className="export-btn export-excel" onClick={onExportExcel} data-tooltip={strings.exportExcel}>
-          <Icon name="spreadsheet" />
-        </button>
-      </div>
+      <ExportButtons
+        onExportPdf={onExportPdf}
+        onExportExcel={onExportExcel}
+        pdfLabel={strings.exportPdf}
+        excelLabel={strings.exportExcel}
+      />
 
-      <Link to="/super-admin/coupons/new" className="button-link">
-        {strings.newCoupon}
-      </Link>
+      <LinkButton to="/super-admin/coupons/new">
+        <Icon name="plus" />
+        <span>{strings.newCoupon}</span>
+      </LinkButton>
 
       <div className="filter-result-count">
         {r.showing} <strong>{resultCount}</strong> {resultCount === 1 ? r.entry : r.entries}

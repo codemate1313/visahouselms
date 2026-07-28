@@ -1,4 +1,5 @@
 import { evaluatePassword } from "../utils/passwordStrength";
+import { Icon } from "@/components/icons";
 
 const SCORE_CLASSES = ["", "score-1", "score-2", "score-3", "score-4"];
 
@@ -31,7 +32,7 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
         <ul className="strength-rules">
           {strength.rules.map((rule) => (
             <li key={rule.label} className={rule.met ? "met" : "unmet"}>
-              {rule.met ? "✓" : "✗"} {rule.label}
+              <Icon name={rule.met ? "check" : "cross"} /> {rule.label}
             </li>
           ))}
         </ul>

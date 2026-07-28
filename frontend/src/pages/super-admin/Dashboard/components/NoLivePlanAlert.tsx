@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { dashboardStrings as strings } from "../Dashboard.strings";
+import { LinkButton } from "@/components/ui";
 
 /** The public pricing page renders whatever plans are live, so zero live plans
  *  means prospects land on an empty page — surfaced here until it is fixed. */
@@ -12,9 +12,9 @@ export function NoLivePlanAlert() {
         <strong>{t.title}</strong>
         <span>{t.body}</span>
       </div>
-      <Link className="button-link" to="/super-admin/plans/new">
+      <LinkButton to="/super-admin/plans/new">
         {t.cta}
-      </Link>
+      </LinkButton>
     </div>
   );
 }

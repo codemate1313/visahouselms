@@ -4,9 +4,14 @@ import * as XLSX from "xlsx";
 import { currencySymbol, formatCurrencyAmount } from "@/utils/currency";
 import { plansStrings as strings } from "./Plans.strings";
 import type { PlanRow } from "./types";
+import { CATALOGUE_STATUS_LABELS } from "@/constants";
 
 function statusLabel(plan: PlanRow) {
-  return !plan.is_active ? strings.statusFilter.inactive : plan.is_published ? strings.statusFilter.active : strings.statusFilter.draft;
+  return !plan.is_active
+    ? CATALOGUE_STATUS_LABELS.inactive
+    : plan.is_published
+      ? CATALOGUE_STATUS_LABELS.active
+      : CATALOGUE_STATUS_LABELS.draft;
 }
 
 export function exportPlansPDF(plans: PlanRow[]) {

@@ -1,7 +1,7 @@
 export const questionBanksStrings = {
   title: "Question Banks",
   subtitle: "Create questions one at a time or extract them from PDF and CSV files.",
-  newBank: "+ New Question Bank",
+  newBank: "New Question Bank",
   searchPlaceholder: "Search question banks...",
   searchAriaLabel: "Search question banks",
   sectionAriaLabel: "IELTS section",

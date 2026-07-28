@@ -58,8 +58,10 @@
 }
 
 .ui-btn-primary:disabled {
-  background: rgba(225, 29, 46, 0.22);
-  border-color: rgba(225, 29, 46, 0.3);
+  /* Derived from --primary so a disabled button stays recognisably the
+     portal's color instead of the old hardcoded brand red. */
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
   color: rgba(255, 255, 255, 0.6);
   box-shadow: none;
   opacity: 0.8;

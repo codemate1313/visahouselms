@@ -1,6 +1,5 @@
-import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
-import { SearchableSelect, SearchInput } from "@/components/ui";
+import { ExportButtons, LinkButton, SearchInput, SearchableSelect } from "@/components/ui";
 import { instituteOnboardingsStrings as strings } from "../InstituteOnboardings.strings";
 
 interface OnboardingsFilterBarProps {
@@ -31,19 +30,17 @@ export function OnboardingsFilterBar({ search, onSearchChange, statusFilter, onS
         className="status-filter-select"
       />
 
-      <div className="export-btn-group">
-        <button type="button" className="export-btn export-pdf" onClick={onExportPdf} data-tooltip={strings.exportPdf}>
-          <Icon name="filePdf" />
-        </button>
-        <button type="button" className="export-btn export-excel" onClick={onExportExcel} data-tooltip={strings.exportExcel}>
-          <Icon name="spreadsheet" />
-        </button>
-      </div>
+      <ExportButtons
+        onExportPdf={onExportPdf}
+        onExportExcel={onExportExcel}
+        pdfLabel={strings.exportPdf}
+        excelLabel={strings.exportExcel}
+      />
 
-      <Link className="button-link" to="/super-admin/onboarding/new" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+      <LinkButton to="/super-admin/onboarding/new" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
         <Icon name="plus" />
         <span>{strings.onboardInstitute}</span>
-      </Link>
+      </LinkButton>
     </div>
   );
 }

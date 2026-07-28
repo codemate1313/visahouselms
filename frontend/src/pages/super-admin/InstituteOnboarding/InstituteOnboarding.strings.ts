@@ -1,7 +1,7 @@
 export const instituteOnboardingStrings = {
   defaultTitle: "Onboard Institute",
   subtitle: "Record the agreement, configure access and branding, then publish the institute.",
-  allOnboardings: "← All onboardings",
+  allOnboardings: "All onboardings",
   steps: ["Agreement", "Branding", "Publish"],
   errors: {
     load: "Failed to load onboarding.",
@@ -61,7 +61,7 @@ export const instituteOnboardingStrings = {
       minsSuffix: "mins",
     },
     creatingDraft: "Creating draft...",
-    createDraftAndContinue: "Create draft and continue →",
+    createDraftAndContinue: "Create draft and continue",
   },
   step2: {
     title: "Institute branding",

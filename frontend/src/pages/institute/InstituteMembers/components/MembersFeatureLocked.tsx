@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { instituteMembersStrings as strings } from "../InstituteMembers.strings";
+import { LinkButton } from "@/components/ui";
 
 const SUPER_ADMIN_CONTACT_EMAIL = "support@ieltslmspro.com";
 
@@ -59,9 +60,9 @@ export function MembersFeatureLocked({ canViewBilling }: MembersFeatureLockedPro
         <h2 id="instructor-feature-lock-title">{t.title}</h2>
         <p>{t.description}</p>
         <div className="feature-lock-actions">
-          <a className="button-link" href={`mailto:${SUPER_ADMIN_CONTACT_EMAIL}?subject=Enable%20instructor%20feature`}>
+          <LinkButton href={`mailto:${SUPER_ADMIN_CONTACT_EMAIL}?subject=Enable%20instructor%20feature`}>
             {t.contactCta}
-          </a>
+          </LinkButton>
           {canViewBilling && (
             <Link className="secondary-action link-action" to="/institute-portal/billing">
               {t.viewSubscription}

@@ -1,8 +1,8 @@
-import { Link } from "react-router-dom";
 import type { Attempt } from "@/api/types";
 import type { AttemptMetrics } from "@/pages/student/attemptMetrics";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
 import { RADIAL_COLORS, ResultRadial } from "./ResultRadial";
+import { LinkButton } from "@/components/ui";
 
 interface PerformanceOverviewPanelProps {
   attempt: Attempt;
@@ -54,9 +54,9 @@ export function PerformanceOverviewPanel({ attempt, metrics }: PerformanceOvervi
             <span>{t.submitted}</span>
             <strong>{attempt.submitted_at ? new Date(attempt.submitted_at).toLocaleDateString() : "-"}</strong>
           </div>
-          <Link className="button-link" to={`/student/attempts/${attempt.id}/result/details`}>
+          <LinkButton to={`/student/attempts/${attempt.id}/result/details`}>
             {t.viewDetailedReview}
-          </Link>
+          </LinkButton>
         </div>
       </div>
     </section>

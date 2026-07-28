@@ -1,0 +1,112 @@
+/*
+ * Export button pair. Moved verbatim out of index.css — the `!important` flags
+ * are preserved because `.filter-bar button:not(...)` in index.css still sets
+ * competing padding/height on descendant buttons, and these must outrank it.
+ */
+
+.export-btn-group {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+.export-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+  flex-shrink: 0 !important;
+  outline: none !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+.export-btn svg {
+  display: block !important;
+  flex-shrink: 0 !important;
+  width: 18px !important;
+  height: 18px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  stroke-width: 2px !important;
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+.export-btn svg path,
+.export-btn svg rect,
+.export-btn svg line,
+.export-btn svg polyline,
+.export-btn svg * {
+  stroke-width: 2px !important;
+  stroke: currentColor !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Format-semantic colors — deliberately not themed. */
+.export-btn.export-pdf {
+  color: #dc2626 !important;
+  background: #fef2f2 !important;
+  border: 1.5px solid #fca5a5 !important;
+}
+
+.export-btn.export-pdf:hover,
+.export-btn.export-pdf:focus {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25) !important;
+}
+
+.export-btn.export-excel {
+  color: #16a34a !important;
+  background: #f0fdf4 !important;
+  border: 1.5px solid #86efac !important;
+}
+
+.export-btn.export-excel:hover,
+.export-btn.export-excel:focus {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25) !important;
+}
+
+[data-theme="dark"] .export-btn.export-pdf {
+  color: #fca5a5 !important;
+  background: rgba(220, 38, 38, 0.12) !important;
+  border-color: rgba(252, 165, 165, 0.35) !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.18) !important;
+}
+
+[data-theme="dark"] .export-btn.export-pdf:hover,
+[data-theme="dark"] .export-btn.export-pdf:focus {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.28) !important;
+}
+
+[data-theme="dark"] .export-btn.export-excel {
+  color: #86efac !important;
+  background: rgba(22, 163, 74, 0.12) !important;
+  border-color: rgba(134, 239, 172, 0.34) !important;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.18) !important;
+}
+
+[data-theme="dark"] .export-btn.export-excel:hover,
+[data-theme="dark"] .export-btn.export-excel:focus {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.28) !important;
+}

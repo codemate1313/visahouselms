@@ -1,8 +1,8 @@
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { RequiredMark, SearchableSelect } from "@/components/ui";
+import { Button, LinkButton, RequiredMark, SearchableSelect } from "@/components/ui";
 import { BrandingPreview } from "@/pages/super-admin/InstituteBranding/components/BrandingPreview";
 import { useToastStore } from "@/store/toastStore";
 import { instituteFormStrings as strings } from "./InstituteForm.strings";
@@ -18,6 +18,7 @@ import { AllocationFieldset } from "./components/AllocationFieldset";
 import { AdminAccountFields } from "./components/AdminAccountFields";
 import { SessionPolicyFieldset } from "./components/SessionPolicyFieldset";
 import { PermissionsFieldset } from "./components/PermissionsFieldset";
+import { Icon } from "@/components/icons";
 
 interface ModuleOption {
   id: number;
@@ -375,7 +376,7 @@ export function InstituteForm() {
                         : "var(--text-muted, #64748b)",
                     }}
                   >
-                    {isCompleted ? "✓" : tab.step}
+                    {isCompleted ? <Icon name="check" /> : tab.step}
                   </span>
                   <span>{tab.label}</span>
                 </button>
@@ -383,7 +384,7 @@ export function InstituteForm() {
                 {!isLast && (
                   <div style={{ display: "flex", alignItems: "center", margin: "0 6px", color: isCompleted ? "var(--primary, #e11d2e)" : "#cbd5e1" }}>
                     <div style={{ width: 14, height: 2, background: isCompleted ? "var(--primary, #e11d2e)" : "#e2e8f0", borderRadius: 1 }} />
-                    <span style={{ fontSize: 12, marginLeft: -2, fontWeight: 700 }}>&rarr;</span>
+                    <Icon name="arrowRight" />
                   </div>
                 )}
               </div>
@@ -392,9 +393,9 @@ export function InstituteForm() {
         </div>
 
         {!isNew && (
-          <Link className="button-link" to={`/super-admin/institutes/${id}/accounts`} style={{ flexShrink: 0 }}>
+          <LinkButton to={`/super-admin/institutes/${id}/accounts`} style={{ flexShrink: 0 }}>
             {strings.accounts}
-          </Link>
+          </LinkButton>
         )}
       </div>
 
@@ -436,9 +437,9 @@ export function InstituteForm() {
                   <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted, #64748b)" }}>
                     Admin credentials created during onboarding. To manage or reset user accounts for this institute, visit the <strong>Accounts</strong> sub-page.
                   </p>
-                  <Link className="button-link secondary-button" to={`/super-admin/institutes/${id}/accounts`} style={{ marginTop: 12, display: "inline-flex" }}>
-                    Manage Accounts
-                  </Link>
+                  <LinkButton variant="secondary" to={`/super-admin/institutes/${id}/accounts`} style={{ marginTop: 12 }}>
+                    {strings.wizard.manageAccounts}
+                  </LinkButton>
                 </div>
               </div>
             )}
@@ -504,9 +505,9 @@ export function InstituteForm() {
                   Select the course modules included in this institute's agreement.
                 </p>
               </div>
-              <button type="button" className="button-link secondary-button" onClick={toggleAllModules} style={{ padding: "6px 16px", fontSize: 12 }}>
-                {selectedModules.size === modules.length ? "Deselect All" : "Select All"}
-              </button>
+              <Button variant="secondary" size="sm" onClick={toggleAllModules}>
+                {selectedModules.size === modules.length ? strings.wizard.deselectAllModules : strings.wizard.selectAllModules}
+              </Button>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
@@ -620,13 +621,13 @@ export function InstituteForm() {
         <div className="form-actions" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginTop: 32, paddingTop: 16, borderTop: "1px solid var(--border, #e2e8f0)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {currentTabIndex > 0 && (
-              <button type="button" className="button-link secondary-button" onClick={handlePrevStep} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                &larr; Previous Step
-              </button>
+              <Button variant="secondary" leftIcon={<Icon name="arrowLeft" />} onClick={handlePrevStep}>
+                {strings.wizard.previousStep}
+              </Button>
             )}
-            <button type="button" className="button-link secondary-button" onClick={() => navigate("/super-admin/institutes")}>
+            <Button variant="secondary" onClick={() => navigate("/super-admin/institutes")}>
               {strings.cancel}
-            </button>
+            </Button>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -637,11 +638,11 @@ export function InstituteForm() {
                 onClick={handleNextStep}
                 style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
               >
-                Next Step &rarr;
+                {strings.wizard.nextStep} <Icon name="arrowRight" />
               </button>
             ) : (
               <button type="submit" disabled={saving} className="primary-submit-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                {saving ? strings.saving : isNew ? "Create Institute" : strings.save}
+                {saving ? strings.saving : isNew ? strings.wizard.createInstitute : strings.save}
               </button>
             )}
           </div>

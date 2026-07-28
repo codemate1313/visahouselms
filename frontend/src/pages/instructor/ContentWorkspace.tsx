@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { contentWorkspaceStrings as strings } from "./ContentWorkspace.strings";
+import { LinkButton } from "@/components/ui";
 
 export function ContentWorkspace() {
   return (
@@ -16,9 +16,9 @@ export function ContentWorkspace() {
             <span className="phase-chip">{strings.areaTypeLabel}</span>
             <h2>{area.name}</h2>
             <p>{area.detail}</p>
-            <Link className="button-link" to={`/super-admin/instructor/modules/new/${area.type}`}>
+            <LinkButton to={`/super-admin/instructor/modules/new/${area.type}`}>
               {strings.createCta(area.name)}
-            </Link>
+            </LinkButton>
           </section>
         ))}
       </div>

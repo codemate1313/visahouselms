@@ -2,6 +2,7 @@ import { Icon } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { paymentMethodsStrings as strings } from "../PaymentMethods.strings";
 import type { MethodRow } from "../types";
+import { ACTIVATION_STATUS_LABELS } from "@/constants";
 
 interface MethodsTableProps {
   methods: MethodRow[];
@@ -38,7 +39,7 @@ export function MethodsTable({ methods, onToggleActive, onRequestDelete }: Metho
               </td>
               <td>
                 <span className={`badge ${method.is_active ? "badge-green" : "badge-inactive"}`}>
-                  {method.is_active ? strings.statusFilter.active : strings.statusFilter.inactive}
+                  {method.is_active ? ACTIVATION_STATUS_LABELS.active : ACTIVATION_STATUS_LABELS.inactive}
                 </span>
               </td>
               <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>

@@ -6,7 +6,7 @@ export const testEditorStrings = {
     final: "Final test",
   },
   newTest: "New Test",
-  allTestsLink: "← All tests",
+  allTestsLink: "All tests",
   loading: "Loading...",
   ownedByBanner: (name: string) => `This test is owned by ${name}. You can view it, but only its creator can change it.`,
   statusBar: {

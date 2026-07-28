@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { ModuleBlueprint } from "@/api/types";
 import { modulesStrings as strings } from "../Modules.strings";
+import { Icon } from "@/components/icons";
 
 interface ModuleTypeGridProps {
   blueprints: ModuleBlueprint[];
@@ -20,7 +21,9 @@ export function ModuleTypeGrid({ blueprints }: ModuleTypeGridProps) {
             <h2>{blueprint.label}</h2>
             <p>{strings.typeDetail[blueprint.module_type]}</p>
           </div>
-          <span className="module-create-label">{strings.createCta}</span>
+          <span className="module-create-label">
+            {strings.createCta} <Icon name="arrowRight" />
+          </span>
         </Link>
       ))}
     </section>

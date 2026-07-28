@@ -1,17 +1,5 @@
 export const institutesStrings = {
   searchPlaceholder: "Search name, slug, or email...",
-  subscriptionFilter: {
-    allSubscriptions: "All subscriptions",
-    active: "Active",
-    grace: "Grace period",
-    expired: "Expired",
-  },
-  statusFilter: {
-    allStatuses: "All statuses",
-    active: "Active",
-    suspended: "Suspended",
-    draft: "Draft",
-  },
   exportPdf: "Export PDF",
   exportExcel: "Export Excel",
   onboardInstitute: "Onboard Institute",

@@ -3,6 +3,8 @@ import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { BrandingPreview } from "@/pages/super-admin/InstituteBranding/components/BrandingPreview";
 import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.strings";
 import { INITIAL } from "../helpers";
+import { Icon } from "@/components/icons";
+import { commonActions } from "@/content/common.strings";
 
 interface Step2BrandingFormProps {
   form: typeof INITIAL;
@@ -58,7 +60,7 @@ export function Step2BrandingForm({ form, set, instituteName, logoSrc, adminCred
                   onClick={() => copyToClipboard(adminCredential.email, false)}
                   title="Copy email"
                 >
-                  {copiedEmail ? "✓ Copied" : "Copy"}
+                  {copiedEmail ? <><Icon name="check" /> {commonActions.copied}</> : commonActions.copy}
                 </button>
               </div>
             </div>
@@ -73,7 +75,7 @@ export function Step2BrandingForm({ form, set, instituteName, logoSrc, adminCred
                   onClick={() => copyToClipboard(adminCredential.password, true)}
                   title="Copy password"
                 >
-                  {copiedPass ? "✓ Copied" : "Copy"}
+                  {copiedPass ? <><Icon name="check" /> {commonActions.copied}</> : commonActions.copy}
                 </button>
               </div>
             </div>

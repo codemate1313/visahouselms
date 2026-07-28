@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { SearchableSelect, SearchInput } from "@/components/ui";
+import { Button, ExportButtons, LinkButton, SearchInput, SearchableSelect } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import {
@@ -14,7 +14,6 @@ import {
   type DirectoryUserPage,
 } from "@/api/types";
 import { Icon } from "@/components/icons";
-import { Button } from "@/components/ui";
 import { confirmExport } from "@/utils/confirmExport";
 import { usersStrings as strings } from "./Users.strings";
 import { UsersTable } from "./components/UsersTable";
@@ -49,6 +48,35 @@ const TENANT_NEW_PATH: Partial<Record<DirectoryRole, (instituteId: string) => st
   STUDENT: (id) => `/super-admin/institutes/${id}/accounts/students/new`,
   INST_INSTRUCTOR: (id) => `/super-admin/institutes/${id}/accounts/staff/new`,
 };
+
+interface CreateActionButtonProps {
+  label: string;
+  to?: string;
+  onClick?: () => void;
+}
+
+function CreateActionButton({ label, to, onClick }: CreateActionButtonProps) {
+  const content = (
+    <>
+      <Icon name="plus" />
+      <span>{label}</span>
+    </>
+  );
+
+  if (to) {
+    return (
+      <LinkButton to={to}>
+        {content}
+      </LinkButton>
+    );
+  }
+
+  return (
+    <Button onClick={onClick}>
+      {content}
+    </Button>
+  );
+}
 
 export function Users() {
   const { role: roleSlug } = useParams();
@@ -455,42 +483,26 @@ export function Users() {
           {strings.filteredCount(visibleCount, total)}
         </div>
 
-        <div className="export-btn-group">
-          <button
-            type="button"
-            className="export-btn export-pdf"
-            onClick={() => handleExport("pdf")}
-            data-tooltip={strings.exportPdf}
-          >
-            <Icon name="filePdf" />
-          </button>
-          <button
-            type="button"
-            className="export-btn export-excel"
-            onClick={() => handleExport("excel")}
-            data-tooltip={strings.exportExcel}
-          >
-            <Icon name="spreadsheet" />
-          </button>
-        </div>
+        <ExportButtons
+          onExportPdf={() => handleExport("pdf")}
+          onExportExcel={() => handleExport("excel")}
+          pdfLabel={strings.exportPdf}
+          excelLabel={strings.exportExcel}
+        />
 
-        {newRoute && (
-          <Link to={newRoute} className="button-link">
-            {strings.newLabel[activeRole as keyof typeof strings.newLabel]}
-          </Link>
-        )}
-
-        {TENANT_NEW_PATH[activeRole] && (
-          <button
-            type="button"
-            className="button-link"
-            onClick={() => {
-              setNewStudentInstituteId(selectedInstituteId);
-              setShowInstituteModal(true);
-            }}
-          >
-            {strings.newLabel[activeRole as keyof typeof strings.newLabel]}
-          </button>
+        {(newRoute || TENANT_NEW_PATH[activeRole]) && (
+          <CreateActionButton
+            label={strings.newLabel[activeRole as keyof typeof strings.newLabel]}
+            to={newRoute}
+            onClick={
+              TENANT_NEW_PATH[activeRole]
+                ? () => {
+                    setNewStudentInstituteId(selectedInstituteId);
+                    setShowInstituteModal(true);
+                  }
+                : undefined
+            }
+          />
         )}
       </div>
 
@@ -568,7 +580,7 @@ export function Users() {
           {totalPages > 1 && (
             <div className="pagination">
               <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-                {strings.pagination.prev}
+                <Icon name="arrowLeft" /> {strings.pagination.prev}
               </button>
               <span>{strings.pagination.pageOf(page, totalPages, total)}</span>
               <button
@@ -576,7 +588,7 @@ export function Users() {
                 disabled={page >= totalPages}
                 onClick={() => setPage(page + 1)}
               >
-                {strings.pagination.next}
+                {strings.pagination.next} <Icon name="arrowRight" />
               </button>
             </div>
           )}

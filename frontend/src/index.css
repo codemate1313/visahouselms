@@ -4278,25 +4278,6 @@ button.danger:hover:not(:disabled) {
   text-transform: uppercase;
 }
 
-.button-link {
-  text-decoration: none;
-  background: var(--primary);
-  color: white;
-  flex: 0 0 auto;
-  padding: 12px 18px;
-  border-radius: 16px;
-  font-size: 14px;
-  font-weight: 600;
-  box-shadow: 0 7px 18px rgba(225, 29, 46, 0.16);
-  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
-}
-
-.button-link:hover {
-  background: var(--primary-hover);
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 22%, transparent);
-  transform: translateY(-1px);
-}
-
 /* ---------- Modern, Premium & Interactive Tables ---------- */
 .table-wrap {
   width: 100%;
@@ -5407,12 +5388,6 @@ button.secondary-button:hover,
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25) !important;
 }
 
-.plan-dialog-footer .button-link:hover,
-.button-link:hover,
-a.button-link:hover {
-  color: #ffffff !important;
-}
-
 .action-btn-icon svg {
   width: 15px !important;
   height: 15px !important;
@@ -6013,7 +5988,13 @@ textarea:focus {
   white-space: nowrap;
 }
 
-.filter-bar button:not(.searchable-select-trigger) {
+/*
+ * Legacy styling for hand-rolled buttons still sitting in filter bars.
+ * `.ui-btn` is excluded so the shared Button/LinkButton primitives keep their
+ * own themed appearance — this rule hardcodes a rose fill that does not follow
+ * the portal's sidebar color, and must not win over the design system.
+ */
+.filter-bar button:not(.searchable-select-trigger):not(.export-btn):not(.ui-btn) {
   height: 44px;
   padding: 0 24px;
   font-size: 14px;
@@ -6032,13 +6013,13 @@ textarea:focus {
   gap: 8px;
 }
 
-.filter-bar button:hover {
+.filter-bar button:not(.export-btn):not(.ui-btn):hover {
   background: #be123c;
   box-shadow: 0 6px 20px rgba(225, 29, 72, 0.35);
   transform: translateY(-1px);
 }
 
-.filter-bar button:active {
+.filter-bar button:not(.export-btn):not(.ui-btn):active {
   transform: translateY(0);
 }
 
@@ -7380,16 +7361,6 @@ button.secondary-button {
   font-weight: var(--app-heading-weight, 700);
 }
 
-.institute-branded-portal .button-link {
-  background: var(--institute-primary, #0b2388);
-  box-shadow: 0 7px 18px color-mix(in srgb, var(--institute-secondary, #1e2130) 18%, transparent);
-}
-
-.institute-branded-portal .button-link:hover {
-  background: var(--primary-hover);
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--institute-secondary, #1e2130) 24%, transparent);
-}
-
 .stat-value-text {
   font-size: 20px;
   text-transform: capitalize;
@@ -7632,7 +7603,7 @@ button.secondary-button {
   margin: 22px 0 12px;
 }
 
-.feature-lock-actions .button-link,
+.feature-lock-actions .ui-link-btn,
 .feature-lock-actions .secondary-action {
   min-height: 44px;
   display: inline-flex;
@@ -9639,14 +9610,14 @@ button.danger-text {
 /* Premium analytics record table row */
 .dashboard-record-card {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) minmax(240px, 1.5fr) auto;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(260px, 2fr) auto;
   align-items: center;
   gap: 24px;
   background: transparent;
   border: 0;
   border-bottom: 1px solid #e2e8f0;
   border-radius: 0;
-  padding: 20px 12px;
+  padding: 18px 12px;
   box-shadow: none;
   transition: background 180ms ease;
 }
@@ -9755,7 +9726,7 @@ button.danger-text {
   border-radius: 0;
   flex-shrink: 0;
   min-width: 92px;
-  order: 3;
+  margin-left: auto;
 }
 
 .record-value-num {
@@ -9776,9 +9747,11 @@ button.danger-text {
 }
 
 .record-metadata-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 12px 24px;
+  align-items: center;
+  width: 100%;
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
@@ -13123,7 +13096,8 @@ button.danger-text {
 }
 
 .super-admin-portal .huge-sidebar {
-  --sa-sidebar-red: #b91c2b;
+  /* Inherits the portal brand red so sidebar and buttons can never drift. */
+  --sa-sidebar-red: var(--portal-primary, #b91c2b);
   --sa-sidebar-red-deep: #8f1420;
   --sidebar-bg: var(--sa-sidebar-red);
   --sidebar-border: rgba(255, 255, 255, 0.18);
@@ -15668,13 +15642,6 @@ button.danger-text {
   gap: 8px;
 }
 
-.result-header-actions .secondary-button.button-link {
-  border: 1px solid #d6d8dd;
-  background: rgba(255, 255, 255, 0.78);
-  color: #33353b;
-  box-shadow: none;
-}
-
 .result-overview-panel,
 .student-analysis-panel {
   border: 1px solid rgba(210, 212, 218, 0.84);
@@ -15845,7 +15812,7 @@ button.danger-text {
   font-size: 18px;
 }
 
-.result-overview-meta .button-link {
+.result-overview-meta .ui-link-btn {
   align-self: flex-start;
   padding: 10px 14px;
   border-radius: 6px;
@@ -19901,83 +19868,6 @@ th[aria-sort="descending"] .table-sort-button::after {
   font-weight: 700;
 }
 
-/* Export Buttons */
-.export-btn-group {
-  display: flex !important;
-  gap: 8px !important;
-  align-items: center !important;
-}
-
-.export-btn {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
-  padding: 0 !important;
-  border-radius: 10px !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-  position: relative !important;
-  flex-shrink: 0 !important;
-  outline: none !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
-}
-
-.export-btn svg {
-  display: block !important;
-  flex-shrink: 0 !important;
-  width: 18px !important;
-  height: 18px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  stroke-width: 2px !important;
-  stroke: currentColor !important;
-  fill: none !important;
-}
-
-.export-btn svg path,
-.export-btn svg rect,
-.export-btn svg line,
-.export-btn svg polyline,
-.export-btn svg * {
-  stroke-width: 2px !important;
-  stroke: currentColor !important;
-  fill: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-.export-btn.export-pdf {
-  color: #dc2626 !important;
-  background: #fef2f2 !important;
-  border: 1.5px solid #fca5a5 !important;
-}
-
-.export-btn.export-pdf:hover,
-.export-btn.export-pdf:focus {
-  background: #dc2626 !important;
-  color: #ffffff !important;
-  border-color: #dc2626 !important;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25) !important;
-}
-
-.export-btn.export-excel {
-  color: #16a34a !important;
-  background: #f0fdf4 !important;
-  border: 1.5px solid #86efac !important;
-}
-
-.export-btn.export-excel:hover,
-.export-btn.export-excel:focus {
-  background: #16a34a !important;
-  color: #ffffff !important;
-  border-color: #16a34a !important;
-  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25) !important;
-}
-
 /* ---------- Institute Onboarding Step 3 & Wizard Styling ---------- */
 .publish-summary-card {
   padding: 32px;
@@ -20720,14 +20610,10 @@ th[aria-sort="descending"] .table-sort-button::after {
   margin: 0;
 }
 
-/* ---------- Premium Searchable Dropdown ---------- */
-.searchable-select-container {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-  z-index: 20;
-}
-
+/* ---------- Premium Searchable Dropdown ----------
+ * Core appearance now lives in components/ui/SearchableSelect/SearchableSelect.css.
+ * What remains here is call-site layout: fixed widths per filter context and the
+ * z-index escalation on containers holding an open dropdown. */
 .searchable-select-container.status-filter-select,
 .status-filter-select {
   width: 160px !important;
@@ -20792,206 +20678,6 @@ th[aria-sort="descending"] .table-sort-button::after {
   width: 190px;
   max-width: 220px;
   flex: 0 0 190px;
-}
-
-.searchable-select-container * {
-  box-sizing: border-box !important;
-}
-
-.searchable-select-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  height: 42px;
-  padding: 0 14px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  background: var(--surface);
-  color: #0f172a;
-  font-size: 13.5px;
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
-  transition: all 180ms ease;
-  user-select: none;
-}
-
-.searchable-select-trigger:hover:not(:disabled) {
-  border-color: #94a3b8;
-  background: #f8fafc;
-}
-
-.searchable-select-container.is-open .searchable-select-trigger {
-  border-color: #b91c2b;
-  box-shadow: 0 0 0 3px rgba(185, 28, 43, 0.12);
-  background: var(--surface);
-}
-
-.searchable-select-container.is-open {
-  z-index: 20000;
-}
-
-.selected-value-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.selected-value-label.is-placeholder {
-  color: #94a3b8;
-}
-
-.select-chevron-icon {
-  color: #64748b;
-  flex-shrink: 0;
-  margin-left: 6px;
-  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.select-chevron-icon.is-rotated {
-  transform: rotate(180deg);
-  color: #0f172a;
-}
-
-.searchable-select-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  min-width: 100%;
-  max-width: 340px;
-  z-index: 3100;
-  isolation: isolate;
-  opacity: 1;
-  background-color: var(--surface) !important;
-  background-image: none !important;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
-  padding: 6px 0;
-  overflow: hidden;
-  transform-origin: top center;
-  will-change: opacity, transform;
-  animation: selectDropdownFade 180ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.searchable-select-dropdown.align-right {
-  left: auto !important;
-  right: 0 !important;
-}
-
-@keyframes selectDropdownFade {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.select-search-header {
-  position: relative;
-  padding: 8px 10px;
-  border-bottom: 1px solid #f1f5f9;
-  box-sizing: border-box;
-  width: 100%;
-  background: var(--surface);
-}
-
-.select-search-icon {
-  position: absolute;
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #94a3b8;
-  pointer-events: none;
-}
-
-.select-search-input {
-  box-sizing: border-box !important;
-  width: 100% !important;
-  height: 34px !important;
-  padding: 6px 26px 6px 30px !important;
-  border-radius: 7px !important;
-  border: 1px solid #e2e8f0 !important;
-  background: #f8fafc !important;
-  font-size: 13px !important;
-  color: #0f172a !important;
-  outline: none !important;
-  transition: all 180ms ease !important;
-}
-
-.select-search-input:focus {
-  background: var(--surface);
-  border-color: #b91c2b;
-  box-shadow: 0 0 0 2px rgba(185, 28, 43, 0.08);
-}
-
-.select-search-clear {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-
-.select-search-clear:hover {
-  color: #0f172a;
-}
-
-.select-options-list {
-  max-height: 220px;
-  overflow-y: auto;
-  padding: 4px 6px;
-  background: var(--surface);
-}
-
-.select-option-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 12px;
-  border-radius: 8px;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: #1e293b;
-  cursor: pointer;
-  background: var(--surface);
-  transition: background 140ms ease, color 140ms ease;
-  user-select: none;
-}
-
-.select-option-item:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-.select-option-item.is-disabled {
-  color: #94a3b8;
-  cursor: not-allowed;
-  opacity: 0.62;
-}
-
-.select-option-item.is-selected {
-  background: color-mix(in srgb, var(--primary) 14%, transparent);
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.select-option-item.is-selected .option-main-label,
-.select-option-item.is-selected .option-check-icon {
-  color: var(--primary);
 }
 
 .filter-bar,
@@ -21207,8 +20893,24 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 /* ---------- Super Admin viewport containment ---------- */
 .super-admin-portal {
-  --portal-icon-color: #b91c2b;
-  --portal-icon-bg: color-mix(in srgb, #b91c2b 12%, #ffffff);
+  /*
+   * Brand red for this portal. The sidebar already painted itself with this
+   * value via its own `--sa-sidebar-red`; remapping `--primary` here is what
+   * makes every shared primitive (Button, LinkButton, SearchInput focus ring,
+   * SearchableSelect, Checkbox, …) resolve to the same red as the sidebar
+   * instead of the global `--primary: #e11d2e`.
+   *
+   * Scoped to the portal wrapper on purpose: landing pages render under
+   * LandingLayout, outside this class, so they keep the global brand red.
+   * Institute portals get the equivalent remap from `.institute-branded-portal`,
+   * which drives the same tokens off `--institute-primary`.
+   */
+  --portal-primary: #b91c2b;
+  --primary: var(--portal-primary);
+  --primary-hover: color-mix(in srgb, var(--portal-primary) 82%, #111113);
+  --primary-soft: color-mix(in srgb, var(--portal-primary) 14%, transparent);
+  --portal-icon-color: var(--portal-primary);
+  --portal-icon-bg: color-mix(in srgb, var(--portal-primary) 12%, #ffffff);
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
@@ -24848,7 +24550,9 @@ th[aria-sort="descending"] .table-sort-button::after {
 [data-theme="dark"] .select-search-input:focus {
   background: rgba(255, 255, 255, 0.08) !important;
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.16) !important;
+  /* Follows the portal's brand color rather than the old hardcoded red, so the
+     focus ring matches the sidebar in both super-admin and institute portals. */
+  box-shadow: 0 0 0 3px var(--primary-soft) !important;
 }
 
 [data-theme="dark"] .chart-tooltip,
@@ -25318,7 +25022,7 @@ th[aria-sort="descending"] .table-sort-button::after {
 [data-theme="dark"] .data-table,
 [data-theme="dark"] .data-table td,
 [data-theme="dark"] .data-table td strong,
-[data-theme="dark"] .data-table td a:not(.action-btn-icon):not(.button-link),
+[data-theme="dark"] .data-table td a:not(.action-btn-icon):not(.ui-link-btn),
 [data-theme="dark"] .data-table td span:not(.badge):not(.status-dot):not(.table-action-icon),
 [data-theme="dark"] .data-table td p,
 [data-theme="dark"] .data-table td small,
@@ -25326,25 +25030,25 @@ th[aria-sort="descending"] .table-sort-button::after {
 [data-theme="dark"] .sleek-institutes-table,
 [data-theme="dark"] .sleek-institutes-table td,
 [data-theme="dark"] .sleek-institutes-table td strong,
-[data-theme="dark"] .sleek-institutes-table td a:not(.action-btn-icon):not(.button-link),
+[data-theme="dark"] .sleek-institutes-table td a:not(.action-btn-icon):not(.ui-link-btn),
 [data-theme="dark"] .sleek-institutes-table td span:not(.badge):not(.status-dot):not(.table-action-icon),
 [data-theme="dark"] .sleek-institutes-table .table-item-title,
 [data-theme="dark"] .sleek-accounts-table,
 [data-theme="dark"] .sleek-accounts-table td,
 [data-theme="dark"] .sleek-accounts-table td strong,
-[data-theme="dark"] .sleek-accounts-table td a:not(.action-btn-icon):not(.button-link),
+[data-theme="dark"] .sleek-accounts-table td a:not(.action-btn-icon):not(.ui-link-btn),
 [data-theme="dark"] .sleek-accounts-table td span:not(.badge):not(.status-dot):not(.table-action-icon),
 [data-theme="dark"] .sleek-accounts-table .table-item-title,
 [data-theme="dark"] .sleek-plans-table,
 [data-theme="dark"] .sleek-plans-table td,
 [data-theme="dark"] .sleek-plans-table td strong,
-[data-theme="dark"] .sleek-plans-table td a:not(.action-btn-icon):not(.button-link),
+[data-theme="dark"] .sleek-plans-table td a:not(.action-btn-icon):not(.ui-link-btn),
 [data-theme="dark"] .sleek-plans-table td span:not(.badge):not(.status-dot):not(.table-action-icon),
 [data-theme="dark"] .sleek-plans-table .table-item-title,
 [data-theme="dark"] .sleek-access-table,
 [data-theme="dark"] .sleek-access-table td,
 [data-theme="dark"] .sleek-access-table td strong,
-[data-theme="dark"] .sleek-access-table td a:not(.action-btn-icon):not(.button-link),
+[data-theme="dark"] .sleek-access-table td a:not(.action-btn-icon):not(.ui-link-btn),
 [data-theme="dark"] .sleek-access-table td span:not(.badge):not(.status-dot):not(.table-action-icon),
 [data-theme="dark"] .sleek-access-table .table-item-title,
 [data-theme="dark"] .invoice-table,
@@ -26090,14 +25794,14 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
   color: #6ee7b7 !important;
 }
 
-[data-theme="dark"] .result-overview-meta .button-link {
+[data-theme="dark"] .result-overview-meta .ui-link-btn {
   background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%) !important;
   border-color: #7c3aed !important;
   color: #ffffff !important;
   box-shadow: none !important;
 }
 
-[data-theme="dark"] .result-overview-meta .button-link:hover {
+[data-theme="dark"] .result-overview-meta .ui-link-btn:hover {
   background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%) !important;
   border-color: #8b5cf6 !important;
 }
@@ -26109,28 +25813,6 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 }
 
 /* Legacy portal actions: retain clear primary/secondary hierarchy in dark mode. */
-[data-theme="dark"] .dashboard .button-link:not(.secondary-link-btn),
-[data-theme="dark"] .dashboard button.button-link:not(.secondary-link-btn),
-[data-theme="dark"] .dashboard a.button-link:not(.secondary-link-btn),
-[data-theme="dark"] .dashboard .primary-submit-btn,
-[data-theme="dark"] .dashboard .primary-publish-btn {
-  background: var(--primary) !important;
-  border-color: var(--primary) !important;
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
-  box-shadow: none !important;
-}
-
-[data-theme="dark"] .dashboard .button-link:not(.secondary-link-btn):hover,
-[data-theme="dark"] .dashboard button.button-link:not(.secondary-link-btn):hover,
-[data-theme="dark"] .dashboard a.button-link:not(.secondary-link-btn):hover,
-[data-theme="dark"] .dashboard .primary-submit-btn:hover:not(:disabled),
-[data-theme="dark"] .dashboard .primary-publish-btn:hover:not(:disabled) {
-  background: var(--primary-hover) !important;
-  border-color: var(--primary-hover) !important;
-  color: #ffffff !important;
-}
-
 [data-theme="dark"] .dashboard .secondary-link-btn,
 [data-theme="dark"] .dashboard a.secondary-link-btn,
 [data-theme="dark"] .dashboard button.secondary-link-btn {
@@ -26270,36 +25952,6 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 
 /* Export buttons keep their file-type colors in dark mode instead of being
    flattened into the generic toolbar button palette. */
-[data-theme="dark"] .export-btn.export-pdf {
-  color: #fca5a5 !important;
-  background: rgba(220, 38, 38, 0.12) !important;
-  border-color: rgba(252, 165, 165, 0.35) !important;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.18) !important;
-}
-
-[data-theme="dark"] .export-btn.export-pdf:hover,
-[data-theme="dark"] .export-btn.export-pdf:focus {
-  background: #dc2626 !important;
-  color: #ffffff !important;
-  border-color: #dc2626 !important;
-  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.28) !important;
-}
-
-[data-theme="dark"] .export-btn.export-excel {
-  color: #86efac !important;
-  background: rgba(22, 163, 74, 0.12) !important;
-  border-color: rgba(134, 239, 172, 0.34) !important;
-  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.18) !important;
-}
-
-[data-theme="dark"] .export-btn.export-excel:hover,
-[data-theme="dark"] .export-btn.export-excel:focus {
-  background: #16a34a !important;
-  color: #ffffff !important;
-  border-color: #16a34a !important;
-  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.28) !important;
-}
-
 /* Module control detail keeps semantic actions and dark summary tiles instead
    of inheriting the generic dark toolbar/card rules. */
 [data-theme="dark"] .module-detail-page .course-admin-actions-bar {
@@ -26377,7 +26029,6 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 }
 
 /* Primary actions should keep depth without the red ambient glow. */
-.button-link,
 .primary-submit-btn,
 .primary-publish-btn,
 .btn-action-primary,
@@ -26390,7 +26041,6 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14) !important;
 }
 
-.button-link:hover,
 .primary-submit-btn:hover:not(:disabled),
 .primary-publish-btn:hover:not(:disabled),
 .btn-action-primary:hover:not(:disabled),
@@ -27947,7 +27597,7 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   color: var(--text-muted);
 }
 
-.access-countdown-body .button-link {
+.access-countdown-body .ui-link-btn {
   margin-top: 4px;
   padding: 9px 15px;
   font-size: 13px;

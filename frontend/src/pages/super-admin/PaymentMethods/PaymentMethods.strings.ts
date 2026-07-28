@@ -9,11 +9,6 @@ export const paymentMethodsStrings = {
     addMethod: "Add Method",
   },
   searchPlaceholder: "Search method name...",
-  statusFilter: {
-    allStatuses: "All statuses",
-    active: "Active",
-    inactive: "Inactive",
-  },
   exportPdf: "Export PDF",
   exportExcel: "Export Excel",
   resultCount: {

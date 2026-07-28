@@ -1,11 +1,5 @@
 export const moduleControlStrings = {
   searchPlaceholder: "Search courses by title or keyword...",
-  statusOptions: {
-    allStatuses: "All statuses",
-    draft: "Draft",
-    published: "Published",
-    archived: "Archived",
-  },
   search: "Search",
   loading: "Loading courses...",
   empty: {

@@ -1,5 +1,4 @@
-import { Icon } from "@/components/icons";
-import { SearchableSelect } from "@/components/ui";
+import { ExportButtons, SearchableSelect } from "@/components/ui";
 import { revenueDashboardStrings as strings } from "../RevenueDashboard.strings";
 import type { InstituteRow } from "../types";
 
@@ -57,14 +56,12 @@ export function RevenueFilterBar({
         </button>
       )}
 
-      <div className="export-btn-group">
-        <button type="button" className="export-btn export-pdf" onClick={onExportPdf} data-tooltip={strings.exportPdf}>
-          <Icon name="filePdf" />
-        </button>
-        <button type="button" className="export-btn export-excel" onClick={onExportExcel} data-tooltip={strings.exportExcel}>
-          <Icon name="spreadsheet" />
-        </button>
-      </div>
+      <ExportButtons
+        onExportPdf={onExportPdf}
+        onExportExcel={onExportExcel}
+        pdfLabel={strings.exportPdf}
+        excelLabel={strings.exportExcel}
+      />
 
       <div className="filter-result-count">
         {r.showing} <strong>{transactionCount}</strong> {transactionCount === 1 ? r.transaction : r.transactions}

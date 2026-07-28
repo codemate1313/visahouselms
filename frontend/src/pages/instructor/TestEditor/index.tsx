@@ -10,6 +10,7 @@ import { TestStatusBar } from "./components/TestStatusBar";
 import { TestDetailsForm } from "./components/TestDetailsForm";
 import { QuestionPickerPanel } from "./components/QuestionPickerPanel";
 import { TestOrderPanel } from "./components/TestOrderPanel";
+import { Icon } from "@/components/icons";
 
 export function TestEditor() {
   const { id } = useParams();
@@ -147,7 +148,7 @@ export function TestEditor() {
           )}
         </div>
         <Link className="text-link" to="/super-admin/instructor/tests">
-          {strings.allTestsLink}
+          <Icon name="arrowLeft" /> {strings.allTestsLink}
         </Link>
       </div>
       {test && <TestStatusBar test={test} isOwner={test.created_by_id === userId} onChangeStatus={changeStatus} />}

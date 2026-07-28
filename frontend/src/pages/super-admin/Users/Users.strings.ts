@@ -25,10 +25,10 @@ export const usersStrings = {
   },
   /** Label for the create button, per tab. Roles with no create screen are omitted. */
   newLabel: {
-    SUPER_ADMIN: "+ New Admin",
-    SA_INSTRUCTOR: "+ New Instructor",
-    INST_INSTRUCTOR: "+ New Institute Instructor",
-    STUDENT: "+ New Student",
+    SUPER_ADMIN: "New Super Admin",
+    SA_INSTRUCTOR: "New Instructor",
+    INST_INSTRUCTOR: "New Institute Instructor",
+    STUDENT: "New Student",
   },
   selectInstituteModal: {
     title: "Choose an institute",
@@ -90,8 +90,8 @@ export const usersStrings = {
     dismiss: "Dismiss",
   },
   pagination: {
-    prev: "← Prev",
-    next: "Next →",
+    prev: "Prev",
+    next: "Next",
     pageOf: (page: number, totalPages: number, total: number) =>
       `Page ${page} of ${totalPages} (${total} ${total === 1 ? "entry" : "entries"})`,
   },

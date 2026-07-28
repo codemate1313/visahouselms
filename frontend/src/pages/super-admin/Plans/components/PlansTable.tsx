@@ -4,6 +4,7 @@ import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { plansStrings as strings } from "../Plans.strings";
 import type { PlanRow } from "../types";
+import { CATALOGUE_STATUS_LABELS } from "@/constants";
 
 interface PlansTableProps {
   plans: PlanRow[];
@@ -68,7 +69,11 @@ export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onVi
               </td>
               <td>
                 <span className={`badge ${!plan.is_active ? "badge-inactive" : plan.is_published ? "badge-green" : "badge-amber"}`}>
-                  {!plan.is_active ? strings.statusFilter.inactive : plan.is_published ? strings.statusFilter.active : strings.statusFilter.draft}
+                  {!plan.is_active
+                    ? CATALOGUE_STATUS_LABELS.inactive
+                    : plan.is_published
+                      ? CATALOGUE_STATUS_LABELS.active
+                      : CATALOGUE_STATUS_LABELS.draft}
                 </span>
               </td>
               <td className="table-actions institute-row-actions">

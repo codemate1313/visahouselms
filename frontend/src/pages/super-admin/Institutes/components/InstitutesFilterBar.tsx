@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
-import { SearchableSelect, SearchInput } from "@/components/ui";
+import { ExportButtons, LinkButton, SearchInput, SearchableSelect } from "@/components/ui";
 import { institutesStrings as strings } from "../Institutes.strings";
+import { ALL_STATUSES_LABEL, ALL_SUBSCRIPTIONS_LABEL, INSTITUTE_STATUS_OPTIONS, SUBSCRIPTION_STATUS_OPTIONS } from "@/constants";
 
 interface InstitutesFilterBarProps {
   search: string;
@@ -26,8 +26,6 @@ export function InstitutesFilterBar({
   onExportExcel,
   resultCount,
 }: InstitutesFilterBarProps) {
-  const sub = strings.subscriptionFilter;
-  const stat = strings.statusFilter;
   const r = strings.resultCount;
   return (
     <div className="filter-bar institutes-filter-bar">
@@ -35,45 +33,37 @@ export function InstitutesFilterBar({
 
       <SearchableSelect
         options={[
-          { value: "", label: sub.allSubscriptions },
-          { value: "active", label: sub.active },
-          { value: "grace", label: sub.grace },
-          { value: "expired", label: sub.expired },
+          ...SUBSCRIPTION_STATUS_OPTIONS,
         ]}
         value={subscriptionFilter}
         onChange={(val) => onSubscriptionFilterChange(String(val))}
-        placeholder={sub.allSubscriptions}
+        placeholder={ALL_SUBSCRIPTIONS_LABEL}
         searchable={false}
         className="status-filter-select"
       />
 
       <SearchableSelect
         options={[
-          { value: "", label: stat.allStatuses },
-          { value: "active", label: stat.active },
-          { value: "suspended", label: stat.suspended },
-          { value: "draft", label: stat.draft },
+          ...INSTITUTE_STATUS_OPTIONS,
         ]}
         value={statusFilter}
         onChange={(val) => onStatusFilterChange(String(val))}
-        placeholder={stat.allStatuses}
+        placeholder={ALL_STATUSES_LABEL}
         searchable={false}
         className="status-filter-select"
       />
 
-      <div className="export-btn-group">
-        <button type="button" className="export-btn export-pdf" onClick={onExportPdf} data-tooltip={strings.exportPdf}>
-          <Icon name="filePdf" />
-        </button>
-        <button type="button" className="export-btn export-excel" onClick={onExportExcel} data-tooltip={strings.exportExcel}>
-          <Icon name="spreadsheet" />
-        </button>
-      </div>
+      <ExportButtons
+        onExportPdf={onExportPdf}
+        onExportExcel={onExportExcel}
+        pdfLabel={strings.exportPdf}
+        excelLabel={strings.exportExcel}
+      />
 
-      <Link to="/super-admin/onboarding/new" className="button-link" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+      <LinkButton to="/super-admin/onboarding/new" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
         <Icon name="plus" />
         <span>{strings.onboardInstitute}</span>
-      </Link>
+      </LinkButton>
 
       <div className="filter-result-count">
         {r.showing} <strong>{resultCount}</strong> {resultCount === 1 ? r.entry : r.entries}

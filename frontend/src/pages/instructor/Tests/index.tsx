@@ -1,10 +1,11 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import type { Assessment, Course } from "@/api/types";
 import { testsStrings as strings } from "./Tests.strings";
 import { TestFilterBar } from "./components/TestFilterBar";
 import { TestGrid } from "./components/TestGrid";
+import { LinkButton } from "@/components/ui";
+import { Icon } from "@/components/icons";
 
 export function Tests() {
   const [tests, setTests] = useState<Assessment[]>([]);
@@ -48,9 +49,9 @@ export function Tests() {
           <h1>{strings.title}</h1>
           <p className="page-subtitle">{strings.subtitle}</p>
         </div>
-        <Link className="button-link" to="/super-admin/instructor/tests/new">
+        <LinkButton to="/super-admin/instructor/tests/new" leftIcon={<Icon name="plus" />}>
           {strings.newTest}
-        </Link>
+        </LinkButton>
       </div>
       <TestFilterBar
         search={search}
@@ -71,9 +72,9 @@ export function Tests() {
         <div className="empty-state">
           <h2>{strings.empty.title}</h2>
           <p>{strings.empty.description}</p>
-          <Link className="button-link" to="/super-admin/instructor/tests/new">
+          <LinkButton to="/super-admin/instructor/tests/new">
             {strings.empty.cta}
-          </Link>
+          </LinkButton>
         </div>
       ) : (
         <TestGrid tests={tests} />

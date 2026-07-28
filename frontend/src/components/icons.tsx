@@ -2,6 +2,12 @@ import type { ReactNode } from "react";
 
 export type IconName =
   | "plus"
+  | "minus"
+  | "check"
+  | "cross"
+  | "arrowRight"
+  | "arrowUp"
+  | "arrowDown"
   | "pin"
   | "dashboard"
   | "admin"
@@ -382,6 +388,39 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
   plus: (
     <>
       <path d="M12 5v14M5 12h14" />
+    </>
+  ),
+  minus: (
+    <>
+      <path d="M5 12h14" />
+    </>
+  ),
+  check: (
+    <>
+      <polyline points="20 6 9 17 4 12" />
+    </>
+  ),
+  cross: (
+    <>
+      <path d="M18 6L6 18M6 6l12 12" />
+    </>
+  ),
+  arrowRight: (
+    <>
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
+    </>
+  ),
+  arrowUp: (
+    <>
+      <line x1="12" y1="19" x2="12" y2="5" />
+      <polyline points="5 12 12 5 19 12" />
+    </>
+  ),
+  arrowDown: (
+    <>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <polyline points="19 12 12 19 5 12" />
     </>
   ),
 };

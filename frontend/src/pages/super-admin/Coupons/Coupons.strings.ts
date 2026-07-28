@@ -1,19 +1,8 @@
 export const couponsStrings = {
   searchPlaceholder: "Search coupon code...",
-  scopeFilter: {
-    allScopes: "All scopes",
-    allPlans: "All plans",
-    specificPlan: "Specific plan",
-    specificCourse: "Specific course",
-  },
-  statusFilter: {
-    anyStatus: "Any status",
-    active: "Active",
-    inactive: "Inactive",
-  },
   exportPdf: "Export PDF",
   exportExcel: "Export Excel",
-  newCoupon: "+ New Coupon",
+  newCoupon: "New Coupon",
   resultCount: {
     showing: "Showing",
     entry: "entry",

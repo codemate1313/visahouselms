@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { API_BASE_URL } from "@/api/client";
 import { RequiredMark } from "@/components/ui";
 import { seoSettingsStrings as strings } from "./SuperAdminSEOSettings.strings";
+import { Icon } from "@/components/icons";
 
 export function SuperAdminSEOSettings() {
   const [formData, setFormData] = useState(strings.defaults);
@@ -46,7 +47,7 @@ export function SuperAdminSEOSettings() {
     <div>
       {savedSuccess && (
         <p className="success-text" style={{ marginBottom: 16 }}>
-          ✓ {strings.savedBanner}
+          <Icon name="check" /> {strings.savedBanner}
         </p>
       )}
 

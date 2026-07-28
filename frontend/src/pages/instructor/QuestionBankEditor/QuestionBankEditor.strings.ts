@@ -1,6 +1,6 @@
 export const questionBankEditorStrings = {
   newBank: "New Question Bank",
-  allBanksLink: "← All question banks",
+  allBanksLink: "All question banks",
   loading: "Loading...",
   ownedByBanner: (name: string) => `This bank is owned by ${name}. You can view it, but only its creator can make changes.`,
   bankDetails: {
@@ -47,7 +47,7 @@ export const questionBankEditorStrings = {
     passagePlaceholder: "Optional reading passage, transcript, or speaking context",
     promptLabel: "Question",
     choicesLegend: "Choices and correct answer",
-    addChoice: "+ Add choice",
+    addChoice: "Add choice",
     acceptedAnswersLabel: "Accepted answer(s)",
     acceptedAnswersPlaceholder: "Separate alternatives with commas",
     pointsLabel: "Points",

@@ -1,8 +1,9 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.strings";
 import type { Onboarding } from "../types";
+import { Button, LinkButton } from "@/components/ui";
 
 interface Step3PublishSummaryProps {
   onboarding: Onboarding;
@@ -68,15 +69,15 @@ export function Step3PublishSummary({ onboarding, busy, onPublish }: Step3Publis
 
       {onboarding.onboarding_status === "draft" ? (
         <div className="publish-actions-row">
-          <button type="button" className="button-link primary-publish-btn" onClick={onPublish} disabled={busy}>
+          <Button onClick={onPublish} disabled={busy}>
             {busy ? t.publishing : t.publishInstitute}
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="publish-actions-row">
-          <Link className="button-link" to={`/super-admin/institutes/${onboarding.id}`}>
+          <LinkButton to={`/super-admin/institutes/${onboarding.id}`}>
             {t.manageInstitute}
-          </Link>
+          </LinkButton>
           <button type="button" className="secondary-done-btn" onClick={() => navigate("/super-admin/onboarding")}>
             {t.done}
           </button>

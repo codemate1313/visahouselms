@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { useAuthStore } from "@/store/authStore";
 import { instructorDashboardStrings as strings } from "./InstructorDashboard.strings";
@@ -7,6 +6,8 @@ import { DashboardStats } from "./components/DashboardStats";
 import { ModuleAuthoringPanel } from "./components/ModuleAuthoringPanel";
 import { ProfileReadinessPanel } from "./components/ProfileReadinessPanel";
 import { RecentActivityPanel } from "./components/RecentActivityPanel";
+import { LinkButton } from "@/components/ui";
+import { Icon } from "@/components/icons";
 
 interface Summary {
   profile_completion: number;
@@ -50,9 +51,9 @@ export function InstructorDashboard() {
           <h1>{strings.welcome(user?.first_name)}</h1>
           <p className="page-subtitle">{strings.subtitle}</p>
         </div>
-        <Link className="button-link" to="/super-admin/instructor/modules">
+        <LinkButton to="/super-admin/instructor/modules" leftIcon={<Icon name="plus" />}>
           {strings.createModule}
-        </Link>
+        </LinkButton>
       </div>
 
       <DashboardStats

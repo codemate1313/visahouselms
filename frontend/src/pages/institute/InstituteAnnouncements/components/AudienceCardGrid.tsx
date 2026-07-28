@@ -1,4 +1,5 @@
 import { audienceCards } from "../InstituteAnnouncements.strings";
+import { Icon } from "@/components/icons";
 
 interface AudienceCardGridProps {
   selectedAudiences: string[];
@@ -25,7 +26,7 @@ export function AudienceCardGrid({ selectedAudiences, onToggle }: AudienceCardGr
               }
             }}
           >
-            <div className="audience-card-checkbox-custom">{isSelected && <span>✓</span>}</div>
+            <div className="audience-card-checkbox-custom">{isSelected && <Icon name="check" />}</div>
             <div className="audience-card-body">
               <span className="audience-card-title">
                 <span className="audience-card-icon">{card.icon}</span>

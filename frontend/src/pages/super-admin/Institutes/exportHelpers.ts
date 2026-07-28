@@ -3,9 +3,14 @@ import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { institutesStrings as strings } from "./Institutes.strings";
 import type { InstituteRow } from "./types";
+import { INSTITUTE_STATUS, INSTITUTE_STATUS_LABELS } from "@/constants";
 
 function statusLabel(row: InstituteRow) {
-  return row.onboarding_status === "draft" ? strings.statusFilter.draft : row.is_active ? strings.statusFilter.active : strings.statusFilter.suspended;
+  return row.onboarding_status === INSTITUTE_STATUS.DRAFT
+    ? INSTITUTE_STATUS_LABELS.draft
+    : row.is_active
+      ? INSTITUTE_STATUS_LABELS.active
+      : INSTITUTE_STATUS_LABELS.suspended;
 }
 
 export function exportInstitutesPDF(rows: InstituteRow[]) {

@@ -1,19 +1,58 @@
+/*
+ * Shared dashboard UI primitives.
+ *
+ * Every primitive lives in its own folder with its own stylesheet
+ * (`Button/Button.tsx` + `Button/Button.css`) and is re-exported here, so call
+ * sites import from `@/components/ui` and never restate a control's markup or
+ * styling.
+ *
+ * Theming: all brand-colored surfaces resolve through `var(--primary)`, which
+ * each portal wrapper remaps — `.super-admin-portal` to its sidebar red and
+ * `.institute-branded-portal` to the institute's own color. That is what keeps
+ * buttons, focus rings and dropdowns matching the sidebar they sit next to.
+ * Landing pages render outside those wrappers and are unaffected.
+ */
+
 export { Button } from "./Button";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./Button";
+
+export { LinkButton } from "./LinkButton";
+export type { LinkButtonProps } from "./LinkButton";
+
+export { IconButton } from "./IconButton";
+export type { IconButtonProps, IconButtonVariant, IconButtonSize } from "./IconButton";
+
+export { ExportButtons } from "./ExportButtons";
+export type { ExportButtonsProps } from "./ExportButtons";
+
 export { SearchInput } from "./SearchInput";
 export type { SearchInputProps } from "./SearchInput";
+
 export { Input } from "./Input";
 export type { InputProps } from "./Input";
-export { Card } from "./Card";
-export type { CardProps } from "./Card";
-export { Badge } from "./Badge";
-export type { BadgeProps, BadgeTone } from "./Badge";
-export { EmptyState } from "./EmptyState";
-export type { EmptyStateProps } from "./EmptyState";
-export { PageHeader } from "./PageHeader";
-export type { PageHeaderProps } from "./PageHeader";
+
+export { Textarea } from "./Textarea";
+export type { TextareaProps } from "./Textarea";
+
 export { SearchableSelect } from "./SearchableSelect";
 export type { SelectOption } from "./SearchableSelect";
-export { RequiredMark } from "./RequiredMark";
+
 export { Checkbox } from "./Checkbox";
 export type { CheckboxProps, CheckboxSize } from "./Checkbox";
+
+export { FilterBar } from "./FilterBar";
+export type { FilterBarProps } from "./FilterBar";
+
+export { Card } from "./Card";
+export type { CardProps } from "./Card";
+
+export { Badge } from "./Badge";
+export type { BadgeProps, BadgeTone } from "./Badge";
+
+export { EmptyState } from "./EmptyState";
+export type { EmptyStateProps } from "./EmptyState";
+
+export { PageHeader } from "./PageHeader";
+export type { PageHeaderProps } from "./PageHeader";
+
+export { RequiredMark } from "./RequiredMark";

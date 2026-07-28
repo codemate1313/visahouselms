@@ -3,6 +3,8 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { PasswordInput } from "@/components/PasswordInput";
 import { RequiredMark } from "@/components/ui";
+import { Icon } from "@/components/icons";
+import { superAdminAiSettingsStrings as strings } from "./SuperAdminAISettings.strings";
 
 interface AiSettingsData {
   enabled: boolean;
@@ -46,7 +48,7 @@ export function SuperAdminAISettings() {
         setLoading(false);
       })
       .catch((err: unknown) => {
-        setError(extractErrorMessage(err, "Failed to load AI evaluation settings"));
+        setError(extractErrorMessage(err, strings.errors.load));
         setLoading(false);
       });
   }
@@ -85,12 +87,12 @@ export function SuperAdminAISettings() {
       })
       .catch((err: unknown) => {
         setSaving(false);
-        setError(extractErrorMessage(err, "Failed to update AI evaluation settings"));
+        setError(extractErrorMessage(err, strings.errors.save));
       });
   };
 
   if (loading) {
-    return <p className="hint">Loading AI evaluation settings...</p>;
+    return <p className="hint">{strings.loading}</p>;
   }
 
   const isMaskedKey = Boolean(rawApiKey && rawApiKey.includes("*"));
@@ -99,13 +101,13 @@ export function SuperAdminAISettings() {
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <div>
-          <h1>AI Evaluation & Scoring Settings</h1>
+          <h1>{strings.title}</h1>
           <p className="hint">
-            Configure AI scoring engines for automatic Writing and Speaking test evaluations.
+            {strings.subtitle}
           </p>
         </div>
         <span className={`badge ${formData.configured ? "badge-green" : "badge-gray"}`}>
-          {formData.configured ? "Engine Configured & Ready" : "Setup Required"}
+          {formData.configured ? strings.configuredBadge : strings.setupRequiredBadge}
         </span>
       </div>
 
@@ -117,7 +119,7 @@ export function SuperAdminAISettings() {
         {/* Provider Selector */}
         <div>
           <label className="font-bold">
-            AI Evaluation Provider Mode <RequiredMark />
+            {strings.providerLegend} <RequiredMark />
           </label>
           <div className="ai-provider-grid">
             
@@ -134,10 +136,10 @@ export function SuperAdminAISettings() {
                   checked={formData.provider === "gemini"}
                   onChange={() => setFormData({ ...formData, provider: "gemini", enabled: true })}
                 />
-                <label htmlFor="provider-gemini">Google Gemini 1.5 / 2.0 Flash</label>
+                <label htmlFor="provider-gemini">{strings.providers.gemini.label}</label>
               </div>
               <p className="ai-provider-card-desc">
-                Direct multimodality: evaluates Writing (text) and Speaking (raw audio) natively. Free-tier supported.
+                {strings.providers.gemini.description}
               </p>
             </div>
 
@@ -154,10 +156,10 @@ export function SuperAdminAISettings() {
                   checked={formData.provider === "custom_json"}
                   onChange={() => setFormData({ ...formData, provider: "custom_json", enabled: true })}
                 />
-                <label htmlFor="provider-custom">Our System AI Evaluator (Custom JSON Endpoint)</label>
+                <label htmlFor="provider-custom">{strings.providers.customJson.label}</label>
               </div>
               <p className="ai-provider-card-desc">
-                Connects to our internal custom HTTP JSON evaluator microservice or self-hosted LLM server (Ollama, vLLM).
+                {strings.providers.customJson.description}
               </p>
             </div>
 
@@ -174,10 +176,10 @@ export function SuperAdminAISettings() {
                   checked={formData.provider === "disabled"}
                   onChange={() => setFormData({ ...formData, provider: "disabled", enabled: false })}
                 />
-                <label htmlFor="provider-disabled">Disabled</label>
+                <label htmlFor="provider-disabled">{strings.providers.disabled.label}</label>
               </div>
               <p className="ai-provider-card-desc">
-                Disable AI scoring suggestions. All evaluations remain 100% human examiner rated.
+                {strings.providers.disabled.description}
               </p>
             </div>
 
@@ -193,36 +195,36 @@ export function SuperAdminAISettings() {
               <div style={{ marginBottom: 20 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
                   <label htmlFor="gemini-key-input" style={{ margin: 0 }}>
-                    Google Gemini API Key <RequiredMark />
+                    {strings.geminiKeyLabel} <RequiredMark />
                   </label>
                   {isMaskedKey && (
                     <span className="badge badge-green">
-                      ✓ API Key Saved & Active (Encrypted)
+                      <Icon name="check" /> {strings.apiKeyActiveBadge}
                     </span>
                   )}
                 </div>
                 <PasswordInput
                   id="gemini-key-input"
                   required
-                  placeholder="Enter API key (e.g. AQ.Ab8RN6...)"
+                  placeholder={strings.geminiKeyPlaceholder}
                   value={rawApiKey}
                   onChange={(e) => setRawApiKey(e.target.value)}
                 />
                 {isMaskedKey ? (
                   <p className="hint text-xs" style={{ marginTop: 6 }}>
-                    🔒 <strong>Security Note:</strong> Your API key is active and encrypted at rest in the database. For security compliance, saved secrets are masked as <code>********</code> when loaded. To replace it, type a new API key.
+                    <Icon name="lock" /> <strong>{strings.securityNoteLabel}</strong> {strings.securityNoteBody}
                   </p>
                 ) : (
                   <p className="hint text-xs" style={{ marginTop: 6 }}>
-                    Get a free API key from{" "}
+                    {strings.geminiKeyHelpPrefix}{" "}
                     <a
-                      href="https://aistudio.google.com/"
+                      href={strings.geminiKeyHelpUrl}
                       target="_blank"
                       rel="noreferrer"
                       style={{ color: "#2563eb" }}
                     >
-                      Google AI Studio
-                    </a>. Key is encrypted at rest.
+                      {strings.geminiKeyHelpLinkLabel}
+                    </a>{strings.geminiKeyHelpSuffix}
                   </p>
                 )}
               </div>
@@ -232,13 +234,13 @@ export function SuperAdminAISettings() {
             {formData.provider === "custom_json" && (
               <div style={{ marginBottom: 20 }}>
                 <label htmlFor="custom-url-input">
-                  Custom Evaluator Endpoint URL <RequiredMark />
+                  {strings.endpointLabel} <RequiredMark />
                 </label>
                 <input
                   id="custom-url-input"
                   type="url"
                   required
-                  placeholder="https://api.yourdomain.com/v1/evaluate"
+                  placeholder={strings.endpointPlaceholder}
                   value={formData.endpoint_url || ""}
                   onChange={(e) => setFormData({ ...formData, endpoint_url: e.target.value })}
                 />
@@ -248,16 +250,16 @@ export function SuperAdminAISettings() {
             {/* Fields Grid */}
             <div className="form-grid">
               <div>
-                <label htmlFor="ai-model-input">Model Name</label>
+                <label htmlFor="ai-model-input">{strings.modelLabel}</label>
                 <input
                   id="ai-model-input"
                   type="text"
-                  value={formData.model || "gemini-2.0-flash"}
+                  value={formData.model || strings.defaultModel}
                   onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                 />
               </div>
               <div>
-                <label htmlFor="monthly-quota-input">Monthly Evaluation Quota Limit</label>
+                <label htmlFor="monthly-quota-input">{strings.monthlyQuotaLabel}</label>
                 <input
                   id="monthly-quota-input"
                   type="number"
@@ -274,7 +276,7 @@ export function SuperAdminAISettings() {
 
         <div className="form-actions">
           <button type="submit" disabled={saving}>
-            {saving ? "Saving AI Settings..." : "Save AI Settings"}
+            {saving ? strings.saving : strings.save}
           </button>
         </div>
       </form>

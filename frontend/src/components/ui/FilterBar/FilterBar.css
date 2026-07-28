@@ -1,0 +1,31 @@
+/*
+ * Keeps the legacy `.filter-bar` class alongside `.ui-filter-bar` so pages can
+ * migrate incrementally: existing index.css rules (widths of
+ * `.status-filter-select`, the `:has(.is-open)` z-index escalation, the
+ * responsive stacking) continue to apply unchanged during the transition.
+ */
+
+.ui-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Pushes the tally, and only the tally, to the trailing edge. */
+.ui-filter-bar .filter-result-count {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .ui-filter-bar {
+    align-items: stretch;
+  }
+
+  .ui-filter-bar .filter-result-count {
+    margin-left: 0;
+  }
+}

@@ -54,7 +54,7 @@ export function StudentTargetPicker({
           const active = selectedIds.includes(st.id);
           return (
             <button type="button" key={st.id} className={`pn-chip ${active ? "is-active" : ""}`} onClick={() => onToggle(st.id)}>
-              <span>{active ? "✓" : "+"}</span>
+              <Icon name={active ? "check" : "plus"} />
               <strong>{st.name}</strong>
             </button>
           );

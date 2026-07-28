@@ -12,7 +12,7 @@ export const seoSettingsStrings = {
   },
   heading: "Centralized SEO & Meta Tag Settings",
   subheading: "Configure site-wide meta titles, descriptions, OpenGraph share images, keywords, and robots indexing.",
-  savedBanner: "✓ SEO Settings updated successfully! Public pages will now reflect these tags dynamically.",
+  savedBanner: "SEO Settings updated successfully! Public pages will now reflect these tags dynamically.",
   fields: {
     siteName: "Site Brand Name",
     titleTemplate: "Title Template Pattern",

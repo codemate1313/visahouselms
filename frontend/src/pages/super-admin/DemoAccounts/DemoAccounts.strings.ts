@@ -34,7 +34,7 @@ export const demoAccountsStrings = {
   exportPdf: "Export PDF",
   exportExcel: "Export Excel",
   cancel: "Cancel",
-  newDemo: "+ New Demo",
+  newDemo: "New Demo",
   loading: "Loading...",
   table: {
     institute: "Institute",

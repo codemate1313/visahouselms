@@ -1,5 +1,4 @@
-import { Icon } from "@/components/icons";
-import { SearchableSelect, SearchInput } from "@/components/ui";
+import { ExportButtons, SearchInput, SearchableSelect } from "@/components/ui";
 import { paymentsStrings as strings } from "../Payments.strings";
 import type { InstituteRow } from "../types";
 
@@ -77,14 +76,12 @@ export function PaymentsFilterBar({
         <input type="date" value={dateTo} onChange={(e) => onDateToChange(e.target.value)} className="date-input-field" aria-label={strings.dateTo} />
       </div>
 
-      <div className="export-btn-group">
-        <button type="button" className="export-btn export-pdf" onClick={onExportPdf} data-tooltip={strings.exportPdf}>
-          <Icon name="filePdf" />
-        </button>
-        <button type="button" className="export-btn export-excel" onClick={onExportExcel} data-tooltip={strings.exportExcel}>
-          <Icon name="spreadsheet" />
-        </button>
-      </div>
+      <ExportButtons
+        onExportPdf={onExportPdf}
+        onExportExcel={onExportExcel}
+        pdfLabel={strings.exportPdf}
+        excelLabel={strings.exportExcel}
+      />
 
       <div className="filter-result-count">
         {r.showing} <strong>{resultCount}</strong> {resultCount === 1 ? r.entry : r.entries}

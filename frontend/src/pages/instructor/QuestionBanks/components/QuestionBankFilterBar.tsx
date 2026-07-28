@@ -2,6 +2,7 @@ import type { FormEvent } from "react";
 import { Button, Checkbox, SearchableSelect, SearchInput } from "@/components/ui";
 import type { Course } from "@/api/types";
 import { questionBanksStrings as strings } from "../QuestionBanks.strings";
+import { IELTS_SECTION_OPTIONS } from "@/constants";
 
 interface QuestionBankFilterBarProps {
   search: string;
@@ -28,7 +29,6 @@ export function QuestionBankFilterBar({
   onMineChange,
   onSubmit,
 }: QuestionBankFilterBarProps) {
-  const sections = strings.sectionLabels;
   return (
     <form className="filter-bar responsive-filters" onSubmit={onSubmit}>
       <SearchInput
@@ -41,11 +41,7 @@ export function QuestionBankFilterBar({
       <SearchableSelect
         ariaLabel={strings.sectionAriaLabel}
         options={[
-          { value: "", label: strings.allSections },
-          { value: "listening", label: sections.listening },
-          { value: "reading", label: sections.reading },
-          { value: "writing", label: sections.writing },
-          { value: "speaking", label: sections.speaking },
+          ...IELTS_SECTION_OPTIONS,
         ]}
         value={section}
         onChange={(value) => onSectionChange(String(value))}

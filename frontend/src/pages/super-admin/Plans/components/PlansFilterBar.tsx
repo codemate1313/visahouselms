@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
-import { SearchableSelect, SearchInput } from "@/components/ui";
+import { ExportButtons, LinkButton, SearchInput, SearchableSelect } from "@/components/ui";
 import { plansStrings as strings } from "../Plans.strings";
+import { ALL_STATUSES_LABEL, CATALOGUE_STATUS_OPTIONS } from "@/constants";
 
 interface PlansFilterBarProps {
   search: string;
@@ -17,7 +17,6 @@ interface PlansFilterBarProps {
 }
 
 export function PlansFilterBar({ search, onSearchChange, statusFilter, onStatusFilterChange, onExportPdf, onExportExcel, resultCount, newPlanPath, newPlanLabel }: PlansFilterBarProps) {
-  const t = strings.statusFilter;
   const r = strings.resultCount;
   return (
     <div className="filter-bar institutes-filter-bar">
@@ -25,30 +24,26 @@ export function PlansFilterBar({ search, onSearchChange, statusFilter, onStatusF
 
       <SearchableSelect
         options={[
-          { value: "", label: t.allStatuses },
-          { value: "active", label: t.active },
-          { value: "draft", label: t.draft },
-          { value: "inactive", label: t.inactive },
+          ...CATALOGUE_STATUS_OPTIONS,
         ]}
         value={statusFilter}
         onChange={(val) => onStatusFilterChange(String(val))}
-        placeholder={t.allStatuses}
+        placeholder={ALL_STATUSES_LABEL}
         searchable={false}
         className="status-filter-select"
       />
 
-      <div className="export-btn-group">
-        <button type="button" className="export-btn export-pdf" onClick={onExportPdf} data-tooltip={strings.exportPdf}>
-          <Icon name="filePdf" />
-        </button>
-        <button type="button" className="export-btn export-excel" onClick={onExportExcel} data-tooltip={strings.exportExcel}>
-          <Icon name="spreadsheet" />
-        </button>
-      </div>
+      <ExportButtons
+        onExportPdf={onExportPdf}
+        onExportExcel={onExportExcel}
+        pdfLabel={strings.exportPdf}
+        excelLabel={strings.exportExcel}
+      />
 
-      <Link to={newPlanPath} className="button-link">
-        {newPlanLabel}
-      </Link>
+      <LinkButton to={newPlanPath}>
+        <Icon name="plus" />
+        <span>{newPlanLabel}</span>
+      </LinkButton>
 
       <div className="filter-result-count">
         {r.showing} <strong>{resultCount}</strong> {resultCount === 1 ? r.entry : r.entries}

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { GradingDetail as GradingDetailType, GradingQueueItem } from "@/api/types";
-import { Button } from "@/components/ui";
+import { Button, LinkButton } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { gradingDetailStrings as strings } from "./GradingDetail.strings";
 import { PartGradingCard } from "./components/PartGradingCard";
@@ -135,9 +135,9 @@ export function GradingDetail() {
               {strings.release}
             </Button>
           )}
-          <Link className="button-link secondary-button" to={isInstituteInstructor ? "/institute-instructor/grading" : "/super-admin/instructor/grading"}>
+          <LinkButton variant="secondary" to={isInstituteInstructor ? "/institute-instructor/grading" : "/super-admin/instructor/grading"}>
             {strings.backToQueue}
-          </Link>
+          </LinkButton>
         </div>
       </div>
       {error && <p className="error-text">{error}</p>}
@@ -158,9 +158,9 @@ export function GradingDetail() {
             <Button disabled={busy} onClick={handleNextReview}>
               {strings.completion.nextReview}
             </Button>
-            <Link className="button-link secondary-button" to={isInstituteInstructor ? "/institute-instructor/grading" : "/super-admin/instructor/grading"}>
+            <LinkButton variant="secondary" to={isInstituteInstructor ? "/institute-instructor/grading" : "/super-admin/instructor/grading"}>
               {strings.completion.backToQueue}
-            </Link>
+            </LinkButton>
           </div>
         </section>
       )}

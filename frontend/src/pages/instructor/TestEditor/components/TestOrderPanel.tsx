@@ -1,6 +1,7 @@
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import type { Assessment, Question } from "@/api/types";
 import { testEditorStrings as strings } from "../TestEditor.strings";
+import { Icon } from "@/components/icons";
 
 interface TestOrderPanelProps {
   test: Assessment;
@@ -39,13 +40,13 @@ export function TestOrderPanel({ test, questionIds, byId, canEdit, saving, onMov
                 {canEdit && (
                   <div>
                     <button aria-label={t.moveUp} disabled={index === 0} onClick={() => onMoveQuestion(index, -1)}>
-                      ↑
+                      <Icon name="arrowUp" />
                     </button>
                     <button aria-label={t.moveDown} disabled={index === questionIds.length - 1} onClick={() => onMoveQuestion(index, 1)}>
-                      ↓
+                      <Icon name="arrowDown" />
                     </button>
                     <button aria-label={t.remove} className="danger-text" onClick={() => onRemoveQuestion(questionId)}>
-                      ×
+                      <Icon name="cross" />
                     </button>
                   </div>
                 )}

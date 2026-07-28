@@ -1,7 +1,7 @@
 export const paymentsStrings = {
   title: "Payments",
   subtitle: "Record and manage financial transactions, invoices, and partial due balances.",
-  recordPayment: "+ Record Payment",
+  recordPayment: "Record Payment",
   cancel: "Cancel",
   recordedBannerPrefix: "Payment recorded — invoice",
   viewInvoice: "View invoice",

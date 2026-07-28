@@ -2,7 +2,7 @@ export const instructorDashboardStrings = {
   eyebrow: "Instructor workspace",
   welcome: (firstName: string | undefined) => `Welcome, ${firstName}`,
   subtitle: "Create complete LanguageCert Academic assessment modules.",
-  createModule: "+ Create Module",
+  createModule: "Create Module",
   errors: {
     load: "Failed to load your workspace.",
   },
@@ -24,12 +24,12 @@ export const instructorDashboardStrings = {
       `${fullMock} full mocks and ${finalTest} final tests.`,
     listeningMediaTitle: "Listening media",
     listeningMediaDetail: (count: number) => `${count} uploaded or text-to-speech MP3 files.`,
-    openWorkspace: "Open module workspace →",
+    openWorkspace: "Open module workspace",
   },
   profileReadiness: {
     title: "Profile readiness",
     description: "A complete profile helps content reviews and ownership.",
-    completeYourProfile: "Complete your profile →",
+    completeYourProfile: "Complete your profile",
   },
   recentActivity: {
     title: "Recent activity",

@@ -1,0 +1,21 @@
+/*
+ * Anchor-only resets. Everything visual comes from Button.css — keep it that
+ * way so LinkButton and Button stay identical by construction.
+ */
+
+.ui-link-btn {
+  text-decoration: none;
+  /* Anchors ignore `disabled`, and a router Link is always actionable. */
+  flex: 0 0 auto;
+}
+
+.ui-link-btn:hover {
+  text-decoration: none;
+}
+
+.ui-link-btn svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.4px;
+  flex-shrink: 0;
+}

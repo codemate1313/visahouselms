@@ -5,6 +5,7 @@ import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Checkbox } from "@/components/ui";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
+import { Icon } from "@/components/icons";
 
 export function AiEvaluationTab() {
   const [form, setForm] = useState({
@@ -116,7 +117,7 @@ export function AiEvaluationTab() {
           <label className="m-0 font-bold">{form.provider === "gemini" ? "Google Gemini API Key" : t.apiKeyLabel}</label>
           {isMaskedKey && (
             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">
-              ✓ Saved & Active (Encrypted at Rest)
+              <Icon name="check" /> {t.apiKeyActiveBadge}
             </span>
           )}
         </div>

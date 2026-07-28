@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { paymentMethodsStrings as strings } from "./PaymentMethods.strings";
 import type { MethodRow } from "./types";
+import { ACTIVATION_STATUS_LABELS } from "@/constants";
 
 export function exportMethodsPDF(methods: MethodRow[]) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -16,7 +17,7 @@ export function exportMethodsPDF(methods: MethodRow[]) {
   autoTable(doc, {
     startY: 24,
     head: [strings.pdf.columns as unknown as string[]],
-    body: methods.map((m, i) => [i + 1, m.name, m.is_active ? strings.statusFilter.active : strings.statusFilter.inactive]),
+    body: methods.map((m, i) => [i + 1, m.name, m.is_active ? ACTIVATION_STATUS_LABELS.active : ACTIVATION_STATUS_LABELS.inactive]),
     styles: { fontSize: 9, cellPadding: 4 },
     headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: "bold" },
   });
@@ -27,7 +28,7 @@ export function exportMethodsPDF(methods: MethodRow[]) {
 export function exportMethodsExcel(methods: MethodRow[]) {
   const wsData: (string | number)[][] = [
     [...strings.excel.columns],
-    ...methods.map((m, i) => [i + 1, m.name, m.is_active ? strings.statusFilter.active : strings.statusFilter.inactive]),
+    ...methods.map((m, i) => [i + 1, m.name, m.is_active ? ACTIVATION_STATUS_LABELS.active : ACTIVATION_STATUS_LABELS.inactive]),
   ];
 
   const ws = XLSX.utils.aoa_to_sheet(wsData);

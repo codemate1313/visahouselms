@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui";
 import type { ImportResult } from "../types";
 import { instituteMembersStrings as strings } from "../InstituteMembers.strings";
+import { Icon } from "@/components/icons";
 
 interface ImportResultModalProps {
   result: ImportResult;
@@ -19,7 +20,7 @@ export function ImportResultModal({ result, onClose, onDownloadCredentials }: Im
             <p>{t.summary(result.summary.created, result.summary.skipped, result.summary.remaining_slots)}</p>
           </div>
           <button className="modal-close" type="button" aria-label="Close" onClick={onClose}>
-            ×
+            <Icon name="cross" />
           </button>
         </div>
         {result.created.length > 0 && (

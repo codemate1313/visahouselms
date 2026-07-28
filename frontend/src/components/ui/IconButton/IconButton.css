@@ -1,0 +1,114 @@
+.ui-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  outline: none;
+  position: relative;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.05s;
+}
+
+.ui-icon-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.ui-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-icon-btn svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+/* Sizes */
+.ui-icon-btn-sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.ui-icon-btn-sm svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ui-icon-btn-md {
+  width: 36px;
+  height: 36px;
+}
+
+.ui-icon-btn-lg {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.ui-icon-btn-lg svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Variants */
+.ui-icon-btn-plain:hover:not(:disabled) {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.ui-icon-btn-outline {
+  border-color: var(--border);
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.ui-icon-btn-outline:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 4px 12px var(--primary-soft);
+}
+
+.ui-icon-btn-solid {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 4px 12px var(--primary-soft);
+}
+
+.ui-icon-btn-solid:hover:not(:disabled) {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.ui-icon-btn-danger {
+  color: var(--danger);
+}
+
+.ui-icon-btn-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger-hover);
+}
+
+[data-theme="dark"] .ui-icon-btn-plain:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7f7fa;
+}
+
+[data-theme="dark"] .ui-icon-btn-outline {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .ui-icon-btn-outline:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary);
+  color: #f7f7fa;
+}

@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { Attempt, ReevaluationRequestView, StudentResultAnalysis } from "@/api/types";
@@ -9,6 +9,7 @@ import { PerformanceOverviewPanel } from "./components/PerformanceOverviewPanel"
 import { AnalysisPanel } from "./components/AnalysisPanel";
 import { ReevaluationStatus } from "./components/ReevaluationStatus";
 import { ReevaluationRequestForm } from "./components/ReevaluationRequestForm";
+import { LinkButton } from "@/components/ui";
 
 export function AttemptResult() {
   const { id } = useParams();
@@ -69,9 +70,9 @@ export function AttemptResult() {
           <h1>{attempt.module_title}</h1>
           <p className="page-subtitle">{statusLabels[attempt.status as keyof typeof statusLabels] ?? attempt.status}</p>
         </div>
-        <Link className="button-link" to="/student/attempts">
+        <LinkButton to="/student/attempts">
           {strings.allAttempts}
-        </Link>
+        </LinkButton>
       </div>
 
       <PerformanceOverviewPanel attempt={attempt} metrics={metrics} />

@@ -1,5 +1,7 @@
 import type { InputHTMLAttributes } from "react";
 import "./SearchInput.css";
+import { Icon } from "@/components/icons";
+import { commonActions } from "@/content/common.strings";
 
 export interface SearchInputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "onChange" | "width"> {
@@ -56,9 +58,9 @@ export function SearchInput({
           type="button"
           className="ui-search-input-clear"
           onClick={() => onChange("")}
-          aria-label="Clear search"
+          aria-label={commonActions.clearSearch}
         >
-          ×
+          <Icon name="cross" />
         </button>
       )}
     </div>

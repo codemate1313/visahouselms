@@ -19,7 +19,7 @@ export function TestingLoginSelector() {
               <strong>{strings.superAdmin.title}</strong>
               <small>{strings.superAdmin.description}</small>
             </span>
-            <span className="testing-login-arrow" aria-hidden="true">→</span>
+            <Icon name="arrowRight" />
           </Link>
 
           <Link className="testing-login-card" to="/sa-instructor/login">
@@ -30,7 +30,7 @@ export function TestingLoginSelector() {
               <strong>{strings.saInstructor.title}</strong>
               <small>{strings.saInstructor.description}</small>
             </span>
-            <span className="testing-login-arrow" aria-hidden="true">→</span>
+            <Icon name="arrowRight" />
           </Link>
         </div>
 

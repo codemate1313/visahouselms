@@ -4,6 +4,7 @@ import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { couponsStrings as strings } from "../Coupons.strings";
 import type { CouponRow } from "../types";
+import { ACTIVATION_STATUS_LABELS } from "@/constants";
 
 interface CouponsTableProps {
   coupons: CouponRow[];
@@ -67,7 +68,7 @@ export function CouponsTable({ coupons, onToggleActive, onRequestDelete }: Coupo
               </td>
               <td>
                 <span className={`badge ${coupon.is_active ? "badge-green" : "badge-inactive"}`}>
-                  {coupon.is_active ? strings.statusFilter.active : strings.statusFilter.inactive}
+                  {coupon.is_active ? ACTIVATION_STATUS_LABELS.active : ACTIVATION_STATUS_LABELS.inactive}
                 </span>
               </td>
               <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>

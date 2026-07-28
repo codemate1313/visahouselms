@@ -2,6 +2,7 @@ import type { FormEvent } from "react";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
 import type { Course, QuestionBank } from "@/api/types";
 import { questionBankEditorStrings as strings } from "../QuestionBankEditor.strings";
+import { IELTS_SECTION_LABELS, toOptions } from "@/constants";
 
 interface BankFormState {
   course_id: string;
@@ -24,7 +25,6 @@ interface BankDetailsFormProps {
 
 export function BankDetailsForm({ isNew, bank, bankForm, onBankFormChange, courses, canEdit, saving, onSubmit, onDelete }: BankDetailsFormProps) {
   const t = strings.bankDetails;
-  const sections = t.sectionLabels;
   return (
     <form className="form-card wide bank-details-form" onSubmit={onSubmit}>
       <h2>{t.heading}</h2>
@@ -46,10 +46,7 @@ export function BankDetailsForm({ isNew, bank, bankForm, onBankFormChange, cours
           <SearchableSelect
             id="bank-section"
             options={[
-              { value: "listening", label: sections.listening },
-              { value: "reading", label: sections.reading },
-              { value: "writing", label: sections.writing },
-              { value: "speaking", label: sections.speaking },
+              ...toOptions(IELTS_SECTION_LABELS),
             ]}
             value={bankForm.section}
             onChange={(value) => onBankFormChange({ ...bankForm, section: String(value) })}

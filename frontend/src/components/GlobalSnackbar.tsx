@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { type ToastItem, useToastStore } from "../store/toastStore";
+import { Icon } from "@/components/icons";
 
 function SnackbarCard({ toast }: { toast: ToastItem }) {
   const removeToast = useToastStore((s) => s.removeToast);
@@ -59,7 +60,7 @@ function SnackbarCard({ toast }: { toast: ToastItem }) {
         onClick={() => removeToast(toast.id)}
         aria-label="Close notification"
       >
-        ×
+        <Icon name="cross" />
       </button>
 
       <div

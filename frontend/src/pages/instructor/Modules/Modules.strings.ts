@@ -4,7 +4,7 @@ export const modulesStrings = {
   title: "Courses",
   subtitle: "Choose the assessment type, then build its questions and media inside the generated parts.",
   createAriaLabel: "Create an assessment module",
-  createCta: "Create →",
+  createCta: "Create",
   yourCourses: {
     title: "Your courses",
     description: "Draft, validate, publish, and update each assessment course.",

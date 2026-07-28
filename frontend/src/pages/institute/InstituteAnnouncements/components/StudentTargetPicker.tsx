@@ -1,5 +1,6 @@
 import type { TargetStudentOption } from "@/api/types";
 import { instituteAnnouncementsStrings as strings } from "../InstituteAnnouncements.strings";
+import { Icon } from "@/components/icons";
 
 interface StudentTargetPickerProps {
   students: TargetStudentOption[];
@@ -36,7 +37,7 @@ export function StudentTargetPicker({ students, selectedIds, search, onSearchCha
           const active = selectedIds.includes(st.id);
           return (
             <button type="button" key={st.id} className={`chip-option ${active ? "active" : ""}`} onClick={() => onToggle(st.id)}>
-              <span>{active ? "✓" : "+"}</span>
+              <Icon name={active ? "check" : "plus"} />
               <strong>{st.name}</strong>
               <small>{st.email}</small>
             </button>

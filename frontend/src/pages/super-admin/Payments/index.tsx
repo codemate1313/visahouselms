@@ -12,6 +12,8 @@ import { RecordPaymentForm } from "./components/RecordPaymentForm";
 import { PaymentsFilterBar } from "./components/PaymentsFilterBar";
 import { PaymentsTable } from "./components/PaymentsTable";
 import { DuePaymentModal } from "./components/DuePaymentModal";
+import { Button } from "@/components/ui";
+import { Icon } from "@/components/icons";
 
 export function Payments() {
   const [rows, setRows] = useState<PaymentRow[]>([]);
@@ -181,9 +183,13 @@ export function Payments() {
           <h1>{strings.title}</h1>
           <p className="page-subtitle">{strings.subtitle}</p>
         </div>
-        <button type="button" className={showForm ? "secondary-link-btn" : "button-link"} onClick={() => setShowForm((v) => !v)}>
+        <Button
+          variant={showForm ? "secondary" : "primary"}
+          leftIcon={showForm ? undefined : <Icon name="plus" />}
+          onClick={() => setShowForm((v) => !v)}
+        >
           {showForm ? strings.cancel : strings.recordPayment}
-        </button>
+        </Button>
       </div>
 
       {result && (

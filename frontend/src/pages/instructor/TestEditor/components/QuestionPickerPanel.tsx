@@ -1,8 +1,8 @@
-import { Link } from "react-router-dom";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
-import { Checkbox, SearchableSelect, SearchInput } from "@/components/ui";
+import { Checkbox, LinkButton, SearchInput, SearchableSelect } from "@/components/ui";
 import type { Assessment, Question } from "@/api/types";
 import { testEditorStrings as strings } from "../TestEditor.strings";
+import { IELTS_SECTION_OPTIONS } from "@/constants";
 
 interface QuestionPickerPanelProps {
   test: Assessment;
@@ -32,7 +32,6 @@ export function QuestionPickerPanel({
   onToggleAllFiltered,
 }: QuestionPickerPanelProps) {
   const t = strings.questionPicker;
-  const sections = t.sectionLabels;
   return (
     <CollapsiblePanel
       className="authoring-panel"
@@ -44,11 +43,7 @@ export function QuestionPickerPanel({
         <SearchInput value={search} onChange={onSearchChange} placeholder={t.searchPlaceholder} width={220} />
         <SearchableSelect
           options={[
-            { value: "", label: sections.allSections },
-            { value: "listening", label: sections.listening },
-            { value: "reading", label: sections.reading },
-            { value: "writing", label: sections.writing },
-            { value: "speaking", label: sections.speaking },
+            ...IELTS_SECTION_OPTIONS,
           ]}
           value={section}
           onChange={(value) => onSectionChange(String(value))}
@@ -65,9 +60,9 @@ export function QuestionPickerPanel({
         <div className="empty-state compact-empty">
           <h2>{t.emptyTitle}</h2>
           <p>{t.emptyDescription(test.course_title)}</p>
-          <Link className="button-link" to="/super-admin/instructor/question-banks/new">
+          <LinkButton to="/super-admin/instructor/question-banks/new">
             {t.newQuestionBank}
-          </Link>
+          </LinkButton>
         </div>
       ) : (
         <div className="question-picker-list">

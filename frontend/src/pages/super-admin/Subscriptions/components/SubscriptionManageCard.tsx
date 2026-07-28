@@ -4,6 +4,7 @@ import { STATE_BADGES, stateLabel } from "../helpers";
 import type { InstituteRow, StatusResponse } from "../types";
 import { QuotaPieChart } from "./QuotaPieChart";
 import { ValidityGauge } from "./ValidityGauge";
+import { Button } from "@/components/ui";
 
 interface SubscriptionManageCardProps {
   status: StatusResponse;
@@ -68,14 +69,14 @@ export function SubscriptionManageCard({
             </div>
 
             {state === "none" ? (
-              <button type="button" className="button-link primary-submit-btn" disabled={busy || !allocation} onClick={onAssign} style={{ width: "100%" }}>
+              <Button fullWidth disabled={busy || !allocation} onClick={onAssign}>
                 {busy ? t.assigning : t.assignPlan}
-              </button>
+              </Button>
             ) : (
               <div className="actions-button-group" style={{ width: "100%" }}>
-                <button type="button" className="button-link primary-submit-btn" disabled={busy} onClick={onRenew} style={{ flex: 1 }}>
+                <Button disabled={busy} onClick={onRenew} style={{ flex: 1 }}>
                   {busy ? t.renewing : t.renew}
-                </button>
+                </Button>
                 {current && !current.cancelled_at && (
                   <button type="button" className="danger-cancel-btn" disabled={busy} onClick={() => onCancel(current.id)} style={{ flex: 1 }}>
                     {t.cancelSubscription}

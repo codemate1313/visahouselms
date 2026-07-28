@@ -34,7 +34,7 @@ export const planFormStrings = {
     empty: "No features added — the pricing card will use the automatic list.",
     placeholder: "e.g. AI writing & speaking feedback",
     itemLabel: (position: number) => `Feature ${position}`,
-    add: "+ Add feature",
+    add: "Add feature",
     remove: "Remove feature",
     removeGlyph: "x",
   },

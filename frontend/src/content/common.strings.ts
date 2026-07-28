@@ -17,6 +17,9 @@ export const commonActions = {
   retry: "Retry",
   clearAll: "Clear all",
   selectAll: "Select all",
+  copy: "Copy",
+  copied: "Copied",
+  clearSearch: "Clear search",
 } as const;
 
 export const loaderMessages = {

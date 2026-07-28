@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { instituteFormStrings as strings } from "../InstituteForm.strings";
 import type { CreatedInstitute } from "../types";
+import { Button } from "@/components/ui";
 
 interface CreatedInstituteModalProps {
   created: CreatedInstitute;
@@ -82,9 +83,9 @@ export function CreatedInstituteModal({ created, copied, onCopyPassword, onDone 
         </div>
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-          <button type="button" className="button-link secondary-button" onClick={onCopyPassword} style={{ padding: "8px 16px", fontSize: 13 }}>
+          <Button variant="secondary" size="sm" onClick={onCopyPassword}>
             {copied ? t.copied : t.copyPassword}
-          </button>
+          </Button>
           <button type="button" className="primary-submit-btn" onClick={onDone} style={{ padding: "8px 20px", fontSize: 13 }}>
             {t.done}
           </button>

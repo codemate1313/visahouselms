@@ -6,6 +6,8 @@ import { apiClient } from "@/api/client";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { invoiceStrings as strings } from "./Invoice.strings";
 import "./Invoice.css";
+import { commonActions } from "@/content/common.strings";
+import { Icon } from "@/components/icons";
 
 interface PaymentDetail {
   id: number;
@@ -205,7 +207,7 @@ export function Invoice() {
       <div className="invoice-page-container">
         <div className="invoice-top-bar">
           <button className="invoice-back-btn" onClick={() => navigate("/super-admin/payments")}>
-            ← {strings.backToPayments}
+            <Icon name="arrowLeft" /> {strings.backToPayments}
           </button>
         </div>
         <div className="error-text" style={{ padding: "40px", textAlign: "center" }}>{error}</div>
@@ -487,7 +489,9 @@ export function Invoice() {
           <div className="invoice-modal-content">
             <div className="invoice-modal-header">
               <h3>{strings.modals.recordPaymentTitle}</h3>
-              <button className="invoice-modal-close" onClick={() => setShowPaymentModal(false)}>×</button>
+              <button className="invoice-modal-close" aria-label={commonActions.close} onClick={() => setShowPaymentModal(false)}>
+                <Icon name="cross" />
+              </button>
             </div>
             <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: 0 }}>
               {strings.modals.recordPaymentDesc}
@@ -545,7 +549,9 @@ export function Invoice() {
           <div className="invoice-modal-content">
             <div className="invoice-modal-header">
               <h3>{strings.modals.emailReceiptTitle}</h3>
-              <button className="invoice-modal-close" onClick={() => setShowEmailModal(false)}>×</button>
+              <button className="invoice-modal-close" aria-label={commonActions.close} onClick={() => setShowEmailModal(false)}>
+                <Icon name="cross" />
+              </button>
             </div>
 
             <form onSubmit={handleSendEmailSubmit}>

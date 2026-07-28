@@ -12,6 +12,7 @@ import { QuestionForm } from "./components/QuestionForm";
 import { BulkImportPanel } from "./components/BulkImportPanel";
 import { ImportReviewSection } from "./components/ImportReviewSection";
 import { SavedQuestionsSection } from "./components/SavedQuestionsSection";
+import { Icon } from "@/components/icons";
 
 export function QuestionBankEditor() {
   const { id } = useParams();
@@ -202,7 +203,7 @@ export function QuestionBankEditor() {
           )}
         </div>
         <Link to="/super-admin/instructor/question-banks" className="text-link">
-          {strings.allBanksLink}
+          <Icon name="arrowLeft" /> {strings.allBanksLink}
         </Link>
       </div>
       {error && <p className="error-text notice-line">{error}</p>}
