@@ -28025,3 +28025,47 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 [data-theme="dark"] .plan-visibility-note {
   color: #fbbf24;
 }
+
+/* Premium SVG Chart Animations & Theme Overrides */
+.chart-line-animated {
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: chartLineDraw 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.chart-area-animated {
+  animation: chartFadeArea 0.8s ease-out forwards;
+}
+
+.chart-bar-animated {
+  animation: chartFadeArea 0.6s ease-out forwards;
+}
+
+@keyframes chartLineDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes chartFadeArea {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-theme="dark"] .chart-card.reference-styled-chart {
+  background: #13151b !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f3f4f6 !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .chart-tag-text,
+[data-theme="dark"] .chart-info-tag {
+  color: #9ca3af !important;
+}

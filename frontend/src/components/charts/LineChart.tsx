@@ -25,7 +25,7 @@ function safeValue(val: number): number {
 export function LineChart({
   data,
   title,
-  color = "var(--primary, #e11d2e)",
+  color = "#e11d2e",
   formatValue = (v) => v.toLocaleString("en-IN"),
   ariaLabel = title,
   emptyMessage = "No data available.",
@@ -39,7 +39,7 @@ export function LineChart({
   }));
 
   const maximum = Math.max(0, ...rows.map((r) => r.value));
-  const gridMax = maximum < 10 ? Math.max(1, maximum) : Math.ceil(maximum * 1.15);
+  const gridMax = maximum < 10 ? Math.max(1, maximum) : Math.ceil(maximum * 1.2);
 
   if (!rows.length || maximum === 0) {
     return (
@@ -53,31 +53,38 @@ export function LineChart({
     );
   }
 
-  // SVG viewBox geometry: 500 x 240
-  const width = 500;
+  // SVG dimensions
+  const width = 520;
   const height = 240;
   const paddingLeft = 70;
   const paddingRight = 30;
-  const paddingTop = 30;
+  const paddingTop = 35;
   const paddingBottom = 45;
 
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
 
-  // Calculate coordinates for points
-  const points = rows.map((r, i) => {
-    const x = rows.length === 1
-      ? paddingLeft + chartWidth / 2
-      : paddingLeft + (i / (rows.length - 1)) * chartWidth;
-    const y = paddingTop + chartHeight - (gridMax > 0 ? (r.value / gridMax) * chartHeight : 0);
-    return { x, y, label: r.label, value: r.value, item: r };
-  });
+  // Single-point or Multi-point dataset handling
+  let points: Array<{ x: number; y: number; label: string; value: number; item: (typeof rows)[0] }> = [];
 
-  // Smooth Bezier path generator
+  if (rows.length === 1) {
+    const single = rows[0];
+    const yVal = paddingTop + chartHeight - (gridMax > 0 ? (single.value / gridMax) * chartHeight : 0);
+    points = [
+      { x: paddingLeft + chartWidth * 0.15, y: paddingTop + chartHeight, label: "", value: 0, item: single },
+      { x: paddingLeft + chartWidth * 0.5, y: yVal, label: single.label, value: single.value, item: single },
+      { x: paddingLeft + chartWidth * 0.85, y: paddingTop + chartHeight, label: "", value: 0, item: single },
+    ];
+  } else {
+    points = rows.map((r, i) => {
+      const x = paddingLeft + (i / (rows.length - 1)) * chartWidth;
+      const y = paddingTop + chartHeight - (gridMax > 0 ? (r.value / gridMax) * chartHeight : 0);
+      return { x, y, label: r.label, value: r.value, item: r };
+    });
+  }
+
   function createDPath(pts: typeof points): string {
     if (!pts.length) return "";
-    if (pts.length === 1) return `M ${pts[0].x} ${pts[0].y}`;
-
     let path = `M ${pts[0].x} ${pts[0].y}`;
     for (let i = 0; i < pts.length - 1; i++) {
       const p0 = pts[i];
@@ -89,23 +96,22 @@ export function LineChart({
   }
 
   const pathD = createDPath(points);
-  const areaD = points.length > 1
+  const areaD = points.length > 0
     ? `${pathD} L ${points[points.length - 1].x} ${paddingTop + chartHeight} L ${points[0].x} ${paddingTop + chartHeight} Z`
     : "";
 
   const tickCount = 5;
   const ticks = Array.from({ length: tickCount }, (_, i) => (gridMax / (tickCount - 1)) * i);
+  const displayPoints = rows.length === 1 ? [points[1]] : points;
 
   return (
     <section className="chart-card reference-styled-chart" aria-label={ariaLabel}>
-      {/* Top Header Bar */}
       <div className="chart-card-toolbar">
         <div className="chart-title-area">
           <span className="info-icon-badge"><Icon name="analytics" /></span>
           <span className="chart-tag-text">{title}</span>
         </div>
 
-        {/* Reference Toggle Pill Control (≡ / 田) */}
         <div className="chart-view-toggle-pill">
           <button
             type="button"
@@ -113,7 +119,7 @@ export function LineChart({
             onClick={() => setShowTable(false)}
             title="Graph View"
           >
-            &equiv;
+            {"≡"}
           </button>
           <button
             type="button"
@@ -121,7 +127,7 @@ export function LineChart({
             onClick={() => setShowTable(true)}
             title="Table View"
           >
-            &#9638;
+            {"田"}
           </button>
         </div>
       </div>
@@ -151,8 +157,9 @@ export function LineChart({
         <div className="line-chart-container" style={{ position: "relative", width: "100%" }}>
           <svg viewBox={`0 0 ${width} ${height}`} className="line-chart-svg" style={{ width: "100%", height: "auto" }}>
             <defs>
-              <linearGradient id="lineChartGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+              <linearGradient id={`lineGrad-${title.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={color} stopOpacity="0.32" />
+                <stop offset="70%" stopColor={color} stopOpacity="0.08" />
                 <stop offset="100%" stopColor={color} stopOpacity="0.0" />
               </linearGradient>
             </defs>
@@ -162,59 +169,115 @@ export function LineChart({
               const y = paddingTop + chartHeight - (gridMax > 0 ? (val / gridMax) * chartHeight : 0);
               return (
                 <g key={idx}>
-                  <line x1={paddingLeft} y1={y} x2={width - paddingRight} y2={y} stroke="var(--border, #e2e8f0)" strokeDasharray="3 3" opacity="0.6" />
-                  <text x={paddingLeft - 10} y={y + 4} textAnchor="end" fontSize="11" fill="var(--text-muted, #64748b)">
+                  <line
+                    x1={paddingLeft}
+                    y1={y}
+                    x2={width - paddingRight}
+                    y2={y}
+                    stroke="var(--border-subtle, rgba(148, 163, 184, 0.2))"
+                    strokeDasharray="4 4"
+                  />
+                  <text
+                    x={paddingLeft - 12}
+                    y={y + 4}
+                    textAnchor="end"
+                    fontSize="11.5"
+                    fontWeight="600"
+                    fill="var(--chart-text, #64748b)"
+                  >
                     {formatValue(val)}
                   </text>
                 </g>
               );
             })}
 
-            {/* Area Fill */}
-            {areaD && <path d={areaD} fill="url(#lineChartGradient)" />}
+            {/* Gradient Area Fill */}
+            {areaD && (
+              <path
+                d={areaD}
+                fill={`url(#lineGrad-${title.replace(/\s+/g, '-')})`}
+                className="chart-area-animated"
+              />
+            )}
 
-            {/* Line Path */}
-            {pathD && <path d={pathD} fill="none" stroke={color} strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />}
+            {/* Animated Smooth Line Path */}
+            {pathD && (
+              <path
+                d={pathD}
+                fill="none"
+                stroke={color}
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="chart-line-animated"
+              />
+            )}
 
-            {/* Data Dots & Interactive Points */}
-            {points.map((pt, i) => {
-              const isHovered = hoveredIndex === i;
+            {/* Data Dots & X-Axis Labels */}
+            {displayPoints.map((pt, i) => {
+              const originalIndex = rows.length === 1 ? 0 : i;
+              const isHovered = hoveredIndex === originalIndex;
               return (
-                <g key={i} onMouseEnter={() => setHoveredIndex(i)} onMouseLeave={() => setHoveredIndex(null)} style={{ cursor: "pointer" }}>
-                  <circle cx={pt.x} cy={pt.y} r={isHovered ? 6 : 4} fill={isHovered ? "#ffffff" : color} stroke={color} strokeWidth={isHovered ? 3 : 2} />
-                  {/* X Axis Label */}
-                  <text x={pt.x} y={height - 12} textAnchor="middle" fontSize="11" fill="var(--text-muted, #64748b)">
-                    {pt.label.length > 12 ? `${pt.label.slice(0, 10)}…` : pt.label}
-                  </text>
+                <g
+                  key={i}
+                  onMouseEnter={() => setHoveredIndex(originalIndex)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r={isHovered ? 7 : 5}
+                    fill={isHovered ? "#ffffff" : color}
+                    stroke={color}
+                    strokeWidth={isHovered ? 3.5 : 2.5}
+                    style={{ transition: "all 180ms ease" }}
+                  />
+                  {pt.label && (
+                    <text
+                      x={pt.x}
+                      y={height - 12}
+                      textAnchor="middle"
+                      fontSize="12"
+                      fontWeight="600"
+                      fill="var(--chart-text, #64748b)"
+                    >
+                      {pt.label.length > 14 ? `${pt.label.slice(0, 12)}…` : pt.label}
+                    </text>
+                  )}
                 </g>
               );
             })}
           </svg>
 
-          {/* Hover Tooltip Overlay */}
-          {hoveredIndex !== null && points[hoveredIndex] && (
+          {/* Hover Tooltip Card */}
+          {hoveredIndex !== null && rows[hoveredIndex] && (
             <div
               className="line-chart-tooltip"
               style={{
                 position: "absolute",
-                left: `${(points[hoveredIndex].x / width) * 100}%`,
-                top: `${(points[hoveredIndex].y / height) * 100}%`,
-                transform: "translate(-50%, -125%)",
-                background: "var(--surface, #ffffff)",
-                border: "1px solid var(--border, #cbd5e1)",
-                borderRadius: "8px",
-                padding: "6px 12px",
-                boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
+                left: rows.length === 1 ? "50%" : `${(displayPoints[hoveredIndex]?.x ?? 0) / width * 100}%`,
+                top: rows.length === 1 ? "35%" : `${(displayPoints[hoveredIndex]?.y ?? 0) / height * 100}%`,
+                transform: "translate(-50%, -130%)",
+                background: "var(--tooltip-bg, #0f172a)",
+                color: "#ffffff",
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: "10px",
+                padding: "8px 14px",
+                boxShadow: "0 8px 24px rgba(0, 0, 0, 0.3)",
                 pointerEvents: "none",
-                zIndex: 10,
-                fontSize: 12,
+                zIndex: 20,
+                fontSize: 12.5,
                 fontWeight: 600,
-                color: "var(--text, #0f172a)",
                 whiteSpace: "nowrap",
               }}
             >
-              <div>{points[hoveredIndex].label}</div>
-              <div style={{ color: "var(--primary, #e11d2e)" }}>{formatValue(points[hoveredIndex].value)}</div>
+              <div style={{ opacity: 0.8, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                {rows[hoveredIndex].label}
+              </div>
+              <div style={{ color: "#38bdf8", fontSize: 15, fontWeight: 800, marginTop: 2 }}>
+                {formatValue(rows[hoveredIndex].value)}
+              </div>
             </div>
           )}
         </div>
