@@ -144,6 +144,12 @@ export function TestRunner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, navigate, securityHeaders, showError]);
 
+  const updateSecurityMedia = useCallback((next: Partial<SecurityMediaState>) => {
+    const merged = { ...mediaStateRef.current, ...next };
+    mediaStateRef.current = merged;
+    setMediaState(merged);
+  }, []);
+
   const handleViolationPolicy = useCallback((policy: ViolationPolicyResponse) => {
     setAttempt((current) => current ? { ...current, security_risk_score: policy.risk_score } : current);
     if (policy.violation_count <= 0 || policy.violation_count === lastViolationNoticeCountRef.current) return;
@@ -152,6 +158,11 @@ export function TestRunner() {
       submittedRef.current = true;
       setSubmitting(false);
       stopSecurityMedia();
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      }
+      setFullscreenActive(false);
+      updateSecurityMedia({ fullscreen: false });
       sessionStorage.removeItem(securityStorageKey(id, "token"));
     }
     setViolationNotice({
@@ -160,7 +171,7 @@ export function TestRunner() {
       autoSubmitted: policy.auto_submitted,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, updateSecurityMedia]);
 
   // Countdown timer, driven by the server's expires_at - purely a display,
   // the server rejects writes past its own clock independently.
@@ -200,12 +211,6 @@ export function TestRunner() {
   const immersiveAttemptId = isImmersiveAttempt ? attempt?.id : null;
   const isFinalAttempt = attempt?.is_final ?? false;
 
-  const updateSecurityMedia = useCallback((next: Partial<SecurityMediaState>) => {
-    const merged = { ...mediaStateRef.current, ...next };
-    mediaStateRef.current = merged;
-    setMediaState(merged);
-  }, []);
-
   const onRequiredTrackEnded = useCallback((kind: "camera" | "microphone" | "screen") => {
     updateSecurityMedia({ [kind]: false });
     const flag: ProctorFlagType = kind === "camera"
@@ -219,7 +224,7 @@ export function TestRunner() {
   // Composite tests occupy the full viewport. Final Tests additionally retain
   // strict proctor flagging and mandatory live media throughout the sitting.
   useEffect(() => {
-    if (!immersiveAttemptId) return;
+    if (!attempt || (attempt.status !== "ready" && attempt.status !== "in_progress")) return;
     developerFullscreenBypass.current = false;
     setFullscreenActive(Boolean(document.fullscreenElement));
 
@@ -243,22 +248,27 @@ export function TestRunner() {
       event.returnValue = "";
     }
     function onClipboard(event: ClipboardEvent) {
-      if (!isFinalAttempt || submittedRef.current) return;
       event.preventDefault();
-      recordFlag("clipboard", { operation: event.type });
+      if (isFinalAttempt && !submittedRef.current) {
+        recordFlag("clipboard", { operation: event.type });
+      }
     }
     function onContextMenu(event: MouseEvent) {
-      if (!isFinalAttempt || submittedRef.current) return;
       event.preventDefault();
-      recordFlag("context_menu");
+      if (isFinalAttempt && !submittedRef.current) recordFlag("context_menu");
     }
     function onKeyDown(event: KeyboardEvent) {
-      if (!isFinalAttempt || submittedRef.current) return;
       const command = event.metaKey || event.ctrlKey;
-      if (command && event.key.toLowerCase() === "p") {
+      const key = event.key.toLowerCase();
+      if (command && ["c", "x", "v"].includes(key)) {
+        event.preventDefault();
+        if (isFinalAttempt && !submittedRef.current) {
+          recordFlag("clipboard", { operation: key === "c" ? "copy" : key === "x" ? "cut" : "paste", source: "keyboard" });
+        }
+      } else if (isFinalAttempt && !submittedRef.current && command && key === "p") {
         event.preventDefault();
         recordFlag("print_attempt");
-      } else if (event.key === "PrintScreen") {
+      } else if (isFinalAttempt && !submittedRef.current && event.key === "PrintScreen") {
         event.preventDefault();
         recordFlag("print_attempt", { key: "PrintScreen" });
       }
@@ -268,24 +278,24 @@ export function TestRunner() {
     document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener("blur", onBlur);
     window.addEventListener("beforeunload", onBeforeUnload);
-    document.addEventListener("copy", onClipboard);
-    document.addEventListener("cut", onClipboard);
-    document.addEventListener("paste", onClipboard);
-    document.addEventListener("contextmenu", onContextMenu);
-    window.addEventListener("keydown", onKeyDown);
+    document.addEventListener("copy", onClipboard, true);
+    document.addEventListener("cut", onClipboard, true);
+    document.addEventListener("paste", onClipboard, true);
+    document.addEventListener("contextmenu", onContextMenu, true);
+    window.addEventListener("keydown", onKeyDown, true);
     return () => {
       document.removeEventListener("fullscreenchange", onFullscreenChange);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("beforeunload", onBeforeUnload);
-      document.removeEventListener("copy", onClipboard);
-      document.removeEventListener("cut", onClipboard);
-      document.removeEventListener("paste", onClipboard);
-      document.removeEventListener("contextmenu", onContextMenu);
-      window.removeEventListener("keydown", onKeyDown);
-      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+      document.removeEventListener("copy", onClipboard, true);
+      document.removeEventListener("cut", onClipboard, true);
+      document.removeEventListener("paste", onClipboard, true);
+      document.removeEventListener("contextmenu", onContextMenu, true);
+      window.removeEventListener("keydown", onKeyDown, true);
+      if (immersiveAttemptId && document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     };
-  }, [immersiveAttemptId, isFinalAttempt, recordFlag, updateSecurityMedia]);
+  }, [attempt?.id, attempt?.status, immersiveAttemptId, isFinalAttempt, recordFlag, updateSecurityMedia]);
 
   async function enterFullscreen() {
     developerFullscreenBypass.current = false;
@@ -774,26 +784,38 @@ export function TestRunner() {
     ? <img src={logoUrl} alt={`${branding?.institute_name ?? "Institute"} logo`} />
     : brandInitials;
   const testContext = branding?.institute_name ?? (isInstituteStudent ? "Institute" : "Visa House LMS");
+  const violationModal = violationNotice ? (
+    <ViolationPolicyModal
+      count={violationNotice.count}
+      limit={violationNotice.limit}
+      autoSubmitted={violationNotice.autoSubmitted}
+      onContinue={() => setViolationNotice(null)}
+      onViewResult={() => navigate(`/student/attempts/${attempt.id}/result`, { replace: true })}
+    />
+  ) : null;
 
   if (attempt.is_final && (attempt.status === "ready" || !securityAuthorized || !strictSecurityActive)) {
     return (
-      <SecurityCheckPage
-        attempt={attempt}
-        brandedTestClass={brandedTestClass}
-        brandMark={brandMark}
-        testContext={testContext}
-        secondsLeft={secondsLeft}
-        mediaState={mediaState}
-        cameraPreviewRef={cameraPreviewRef}
-        concurrentTab={concurrentTab}
-        securityError={securityError}
-        securityStarting={securityStarting}
-        mediaPermissionsReady={mediaPermissionsReady}
-        fullscreenActive={fullscreenActive}
-        rulesAccepted={rulesAccepted}
-        onRulesAcceptedChange={setRulesAccepted}
-        onStartSecureSession={startSecureSession}
-      />
+      <>
+        <SecurityCheckPage
+          attempt={attempt}
+          brandedTestClass={brandedTestClass}
+          brandMark={brandMark}
+          testContext={testContext}
+          secondsLeft={secondsLeft}
+          mediaState={mediaState}
+          cameraPreviewRef={cameraPreviewRef}
+          concurrentTab={concurrentTab}
+          securityError={securityError}
+          securityStarting={securityStarting}
+          mediaPermissionsReady={mediaPermissionsReady}
+          fullscreenActive={fullscreenActive}
+          rulesAccepted={rulesAccepted}
+          onRulesAcceptedChange={setRulesAccepted}
+          onStartSecureSession={startSecureSession}
+        />
+        {violationModal}
+      </>
     );
   }
 
@@ -869,17 +891,9 @@ export function TestRunner() {
         />
       )}
 
-      {violationNotice && (
-        <ViolationPolicyModal
-          count={violationNotice.count}
-          limit={violationNotice.limit}
-          autoSubmitted={violationNotice.autoSubmitted}
-          onContinue={() => setViolationNotice(null)}
-          onViewResult={() => navigate(`/student/attempts/${attempt.id}/result`, { replace: true })}
-        />
-      )}
+      {violationModal}
 
-      {isImmersiveAttempt && !fullscreenActive && !developerFullscreenBypass.current && (
+      {isImmersiveAttempt && !fullscreenActive && !developerFullscreenBypass.current && !violationNotice?.autoSubmitted && (
         <FullscreenGate isFinal={attempt.is_final} secondsLeft={secondsLeft} onEnterFullscreen={enterFullscreen} />
       )}
     </div>
