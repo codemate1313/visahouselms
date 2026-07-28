@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { PasswordInput } from "@/components/PasswordInput";
@@ -6,6 +7,7 @@ import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { RequiredMark } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { evaluatePassword } from "@/utils/passwordStrength";
+import { destinationFor } from "@/pages/Login/helpers";
 import { changePasswordStrings as strings } from "./ChangePassword.strings";
 
 interface ChangePasswordProps {
@@ -13,8 +15,10 @@ interface ChangePasswordProps {
 }
 
 export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps) {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
+  const isFirstLoginPasswordSetup = Boolean(user?.force_password_reset);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,12 +41,19 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
 
     setSaving(true);
     try {
-      await apiClient.post(`${apiBase}/me/change-password`, {
-        current_password: currentPassword,
-        new_password: newPassword,
+      await apiClient.post(`${apiBase}/me/change-password`, isFirstLoginPasswordSetup
+        ? { new_password: newPassword }
+        : {
+            current_password: currentPassword,
+            new_password: newPassword,
       });
       const { data: freshUser } = await apiClient.get("/auth/me");
       setUser(freshUser);
+      if (isFirstLoginPasswordSetup) {
+        const destination = destinationFor(freshUser);
+        navigate(destination ?? "/", { replace: true });
+        return;
+      }
       setSuccess(true);
       setCurrentPassword("");
       setNewPassword("");
@@ -55,23 +66,27 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
   }
 
   return (
-    <div>
+    <div className="change-password-page">
       <h1>{strings.title}</h1>
 
-      {user?.force_password_reset && (
+      {isFirstLoginPasswordSetup && (
         <div className="banner warning">
           {strings.forceResetBanner}
         </div>
       )}
 
       <form className="form-card" onSubmit={handleSubmit}>
-        <label htmlFor="current_password">{strings.currentPasswordLabel}<RequiredMark /></label>
-        <PasswordInput
-          id="current_password"
-          value={currentPassword}
-          onChange={(event) => setCurrentPassword(event.target.value)}
-          required
-        />
+        {!isFirstLoginPasswordSetup && (
+          <>
+            <label htmlFor="current_password">{strings.currentPasswordLabel}<RequiredMark /></label>
+            <PasswordInput
+              id="current_password"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              required
+            />
+          </>
+        )}
 
         <label htmlFor="new_password">{strings.newPasswordLabel}<RequiredMark /></label>
         <PasswordInput
@@ -95,7 +110,7 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
         {success && <p className="success-text">{strings.notices.saved}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={saving || !strength.allMet || confirmMismatch}>
+          <button type="submit" disabled={saving || !strength.allMet || confirmMismatch || (!isFirstLoginPasswordSetup && !currentPassword)}>
             {saving ? strings.saving : strings.updatePassword}
           </button>
         </div>

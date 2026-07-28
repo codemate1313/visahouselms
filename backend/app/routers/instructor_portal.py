@@ -107,6 +107,9 @@ def change_my_password(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
+    if actor.force_password_reset:
+        account_service.set_initial_password(db, actor, payload.new_password, _ip(request))
+        return
     account_service.change_password(
         db, actor, payload.current_password, payload.new_password, _ip(request)
     )

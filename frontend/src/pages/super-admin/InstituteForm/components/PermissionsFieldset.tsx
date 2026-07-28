@@ -1,4 +1,6 @@
+import { Icon } from "@/components/icons";
 import { Checkbox } from "@/components/ui";
+import { getPermissionIcon } from "@/pages/super-admin/permissionIcons";
 import { instituteFormStrings as strings } from "../InstituteForm.strings";
 import type { InstitutePermissions } from "../types";
 
@@ -19,18 +21,30 @@ export function PermissionsFieldset({ permissions, onPermissionsChange }: Permis
       <p className="hint">{t.description}</p>
       <div className="permission-grid">
         <label className="permission-option select-all-option">
+          <span className="permission-option-icon" aria-hidden="true">
+            <Icon name={getPermissionIcon("select_all")} />
+          </span>
+          <span className="permission-option-copy">
+            <strong>{t.selectAll}</strong>
+          </span>
           <Checkbox
+            className="permission-state-checkbox"
             checked={allChecked}
             indeterminate={someChecked && !allChecked}
             onChange={(event) => onPermissionsChange(Object.fromEntries(options.map((option) => [option.key, event.target.checked])) as InstitutePermissions)}
           />
-          <span>
-            <strong>{t.selectAll}</strong>
-          </span>
         </label>
         {options.map((option) => (
           <label className="permission-option" key={option.key}>
+            <span className="permission-option-icon" aria-hidden="true">
+              <Icon name={getPermissionIcon(option.key)} />
+            </span>
+            <span className="permission-option-copy">
+              <strong>{option.label}</strong>
+              <small>{option.description}</small>
+            </span>
             <Checkbox
+              className="permission-state-checkbox"
               checked={permissions[option.key]}
               onChange={(event) =>
                 onPermissionsChange({
@@ -39,10 +53,6 @@ export function PermissionsFieldset({ permissions, onPermissionsChange }: Permis
                 })
               }
             />
-            <span>
-              <strong>{option.label}</strong>
-              <small>{option.description}</small>
-            </span>
           </label>
         ))}
       </div>

@@ -15,7 +15,7 @@ from app.schemas.user import (
     SuperAdminAccountCreate,
     SuperAdminAccountOut,
 )
-from app.services import super_admin_service
+from app.services import account_service, super_admin_service
 
 router = APIRouter(
     prefix=f"/developer/{settings.developer_access_slug}",
@@ -40,6 +40,9 @@ def change_my_password(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
+    if actor.force_password_reset:
+        account_service.set_initial_password(db, actor, payload.new_password, _client_ip(request))
+        return
     super_admin_service.change_password(
         db, actor, payload.current_password, payload.new_password, _client_ip(request)
     )

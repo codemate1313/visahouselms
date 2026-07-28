@@ -167,10 +167,12 @@ def revoke_all_sessions(db: Session, user_id: int) -> int:
 def change_password(
     db: Session,
     actor: User,
-    current_password: str,
+    current_password: Optional[str],
     new_password: str,
     ip: Optional[str],
 ) -> None:
+    if not current_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is required")
     if not verify_password(current_password, actor.password_hash):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
 

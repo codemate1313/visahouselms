@@ -565,6 +565,7 @@ class AttemptServiceTestCase(unittest.TestCase):
         session = SimpleNamespace(device_id=41)
         payload = {
             "client_id": "test-client-identifier-0001",
+            "rules_consent": True,
             "camera_active": True,
             "microphone_active": True,
             "screen_share_active": True,
@@ -601,6 +602,7 @@ class AttemptServiceTestCase(unittest.TestCase):
             session,
             {
                 "client_id": client_id,
+                "rules_consent": True,
                 "camera_active": True,
                 "microphone_active": True,
                 "screen_share_active": True,
@@ -641,6 +643,50 @@ class AttemptServiceTestCase(unittest.TestCase):
         )
         with self.assertRaises(Exception):
             attempt_service.require_live_security(attempt)
+
+    def test_final_test_requires_consent_and_auto_submits_after_three_violations(self):
+        module = self._build_reading_module()
+        module.module_type = "final_test"
+        self.db.add(module)
+        self.db.commit()
+
+        created = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, created["id"])
+        session = SimpleNamespace(device_id=43)
+        client_id = "test-client-identifier-0003"
+        base_payload = {
+            "client_id": client_id,
+            "camera_active": True,
+            "microphone_active": True,
+            "screen_share_active": True,
+            "fullscreen_active": True,
+            "display_surface": "monitor",
+        }
+
+        with self.assertRaises(Exception):
+            attempt_service.secure_preflight(
+                self.db, attempt, session, {**base_payload, "rules_consent": False}, "127.0.0.1"
+            )
+
+        preflight = attempt_service.secure_preflight(
+            self.db, attempt, session, {**base_payload, "rules_consent": True}, "127.0.0.1"
+        )
+        attempt_service.begin_secure_attempt(self.db, attempt, session, preflight["attempt_token"])
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt.id)
+
+        first = attempt_service.record_flag(self.db, attempt, "blur", None, client_sequence=1)
+        second = attempt_service.record_flag(self.db, attempt, "visibility_change", None, client_sequence=2)
+        self.assertEqual(first["violation_count"], 1)
+        self.assertEqual(second["violation_count"], 2)
+        self.assertFalse(second["auto_submitted"])
+
+        third = attempt_service.record_flag(self.db, attempt, "fullscreen_exit", None, client_sequence=3)
+        self.assertEqual(third["violation_count"], 3)
+        self.assertTrue(third["auto_submitted"])
+
+        self.db.refresh(attempt)
+        self.assertIn(attempt.status, {ATTEMPT_GRADED, ATTEMPT_GRADING})
+        self.assertTrue(attempt.security_media_state["auto_submitted_for_violations"])
 
 
 if __name__ == "__main__":

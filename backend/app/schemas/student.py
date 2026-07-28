@@ -22,6 +22,7 @@ class ProctorFlagRequest(BaseModel):
 
 class FinalTestPreflightRequest(BaseModel):
     client_id: str = Field(min_length=16, max_length=64)
+    rules_consent: bool
     camera_active: bool
     microphone_active: bool
     screen_share_active: bool

@@ -113,6 +113,9 @@ def change_my_password(
     db: Session = Depends(get_db),
     user: User = Depends(require_student),
 ):
+    if user.force_password_reset:
+        account_service.set_initial_password(db, user, payload.new_password, _ip(request))
+        return
     account_service.change_password(db, user, payload.current_password, payload.new_password, _ip(request))
 
 

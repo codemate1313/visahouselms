@@ -30,6 +30,20 @@ import { SubmitConfirmModal } from "./components/SubmitConfirmModal";
 import { FullscreenGate } from "./components/FullscreenGate";
 import { SecurityWatermark } from "./components/SecurityWatermark";
 import { DesktopRequiredNotice } from "./components/DesktopRequiredNotice";
+import { ViolationPolicyModal } from "./components/ViolationPolicyModal";
+
+interface ViolationPolicyResponse {
+  risk_score: number;
+  violation_count: number;
+  violation_limit: number;
+  auto_submitted: boolean;
+}
+
+interface ViolationNotice {
+  count: number;
+  limit: number;
+  autoSubmitted: boolean;
+}
 
 export function TestRunner() {
   const { id } = useParams();
@@ -68,6 +82,8 @@ export function TestRunner() {
   const [securityError, setSecurityError] = useState<string | null>(null);
   const [mediaState, setMediaState] = useState<SecurityMediaState>(EMPTY_MEDIA_STATE);
   const [concurrentTab, setConcurrentTab] = useState(false);
+  const [rulesAccepted, setRulesAccepted] = useState(false);
+  const [violationNotice, setViolationNotice] = useState<ViolationNotice | null>(null);
   const [watermarkTime, setWatermarkTime] = useState(() => new Date());
   const submittedRef = useRef(false);
   const developerFullscreenBypass = useRef(false);
@@ -85,6 +101,7 @@ export function TestRunner() {
   const mediaStateRef = useRef<SecurityMediaState>(EMPTY_MEDIA_STATE);
   const tabInstanceIdRef = useRef(randomId());
   const concurrentFlaggedRef = useRef(false);
+  const lastViolationNoticeCountRef = useRef(0);
 
   const securityHeaders = useCallback(() => (
     attemptTokenRef.current ? { "X-Attempt-Token": attemptTokenRef.current } : {}
@@ -127,6 +144,24 @@ export function TestRunner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, navigate, securityHeaders, showError]);
 
+  const handleViolationPolicy = useCallback((policy: ViolationPolicyResponse) => {
+    setAttempt((current) => current ? { ...current, security_risk_score: policy.risk_score } : current);
+    if (policy.violation_count <= 0 || policy.violation_count === lastViolationNoticeCountRef.current) return;
+    lastViolationNoticeCountRef.current = policy.violation_count;
+    if (policy.auto_submitted) {
+      submittedRef.current = true;
+      setSubmitting(false);
+      stopSecurityMedia();
+      sessionStorage.removeItem(securityStorageKey(id, "token"));
+    }
+    setViolationNotice({
+      count: policy.violation_count,
+      limit: policy.violation_limit,
+      autoSubmitted: policy.auto_submitted,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
   // Countdown timer, driven by the server's expires_at - purely a display,
   // the server rejects writes past its own clock independently.
   useEffect(() => {
@@ -147,7 +182,7 @@ export function TestRunner() {
       if (!attemptTokenRef.current) return;
       eventSequenceRef.current += 1;
       sessionStorage.setItem(securityStorageKey(id, "event-sequence"), String(eventSequenceRef.current));
-      apiClient.post(
+      apiClient.post<ViolationPolicyResponse>(
         `/student/attempts/${id}/flags`,
         {
           flag_type: flagType,
@@ -156,9 +191,9 @@ export function TestRunner() {
           client_occurred_at: new Date().toISOString(),
         },
         { headers: { ...securityHeaders(), "X-Skip-Loader": "1" } },
-      ).catch(() => {});
+      ).then(({ data }) => handleViolationPolicy(data)).catch(() => {});
     },
-    [id, securityHeaders],
+    [handleViolationPolicy, id, securityHeaders],
   );
 
   const isImmersiveAttempt = attempt ? IMMERSIVE_MODULE_TYPES.has(attempt.module_type) : false;
@@ -296,6 +331,10 @@ export function TestRunner() {
 
   async function startSecureSession() {
     if (!attempt?.is_final || securityStarting) return;
+    if (!rulesAccepted) {
+      setSecurityError(strings.security.consentRequired);
+      return;
+    }
     setSecurityStarting(true);
     setSecurityError(null);
     setConcurrentTab(false);
@@ -390,6 +429,7 @@ export function TestRunner() {
         `/student/attempts/${id}/security/preflight`,
         {
           client_id: securityClientIdRef.current,
+          rules_consent: true,
           camera_active: true,
           microphone_active: true,
           screen_share_active: true,
@@ -449,7 +489,7 @@ export function TestRunner() {
       heartbeatSequenceRef.current += 1;
       const state = mediaStateRef.current;
       try {
-        const { data } = await apiClient.post<{ risk_score: number }>(
+        const { data } = await apiClient.post<ViolationPolicyResponse>(
           `/student/attempts/${id}/security/heartbeat`,
           {
             sequence: heartbeatSequenceRef.current,
@@ -466,7 +506,7 @@ export function TestRunner() {
           },
           { headers: { ...securityHeaders(), "X-Skip-Loader": "1" } },
         );
-        setAttempt((current) => current ? { ...current, security_risk_score: data.risk_score } : current);
+        handleViolationPolicy(data);
       } catch (err: unknown) {
         const status = (err as { response?: { status?: number } })?.response?.status;
         if (status === 403 || status === 409) {
@@ -483,7 +523,7 @@ export function TestRunner() {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [attempt?.id, attempt?.is_final, attempt?.status, activeHeartbeatPartId, securityAuthorized, id, securityHeaders]);
+  }, [attempt?.id, attempt?.is_final, attempt?.status, activeHeartbeatPartId, handleViolationPolicy, securityAuthorized, id, securityHeaders]);
 
   useEffect(() => {
     if (!attempt?.is_final || attempt.status !== "in_progress") return;
@@ -750,6 +790,8 @@ export function TestRunner() {
         securityStarting={securityStarting}
         mediaPermissionsReady={mediaPermissionsReady}
         fullscreenActive={fullscreenActive}
+        rulesAccepted={rulesAccepted}
+        onRulesAcceptedChange={setRulesAccepted}
         onStartSecureSession={startSecureSession}
       />
     );
@@ -824,6 +866,16 @@ export function TestRunner() {
           submitting={submitting}
           onClose={() => setConfirmSubmit(false)}
           onConfirm={submit}
+        />
+      )}
+
+      {violationNotice && (
+        <ViolationPolicyModal
+          count={violationNotice.count}
+          limit={violationNotice.limit}
+          autoSubmitted={violationNotice.autoSubmitted}
+          onContinue={() => setViolationNotice(null)}
+          onViewResult={() => navigate(`/student/attempts/${attempt.id}/result`, { replace: true })}
         />
       )}
 

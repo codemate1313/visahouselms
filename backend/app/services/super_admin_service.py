@@ -283,8 +283,10 @@ def set_managed_force_password_reset(
 
 
 def change_password(
-    db: Session, actor: User, current_password: str, new_password: str, ip_address: Optional[str]
+    db: Session, actor: User, current_password: Optional[str], new_password: str, ip_address: Optional[str]
 ) -> None:
+    if not current_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is required")
     if not verify_password(current_password, actor.password_hash):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
 

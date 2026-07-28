@@ -104,7 +104,7 @@ class ForceResetRequest(BaseModel):
 
 
 class ChangePasswordRequest(BaseModel):
-    current_password: str
+    current_password: Optional[str] = None
     new_password: str
 
     @field_validator("new_password")

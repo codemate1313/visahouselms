@@ -18,6 +18,8 @@ interface SecurityCheckPageProps {
   securityStarting: boolean;
   mediaPermissionsReady: boolean;
   fullscreenActive: boolean;
+  rulesAccepted: boolean;
+  onRulesAcceptedChange: (accepted: boolean) => void;
   onStartSecureSession: () => void;
 }
 
@@ -34,6 +36,8 @@ export function SecurityCheckPage({
   securityStarting,
   mediaPermissionsReady,
   fullscreenActive,
+  rulesAccepted,
+  onRulesAcceptedChange,
   onStartSecureSession,
 }: SecurityCheckPageProps) {
   const t = strings.security;
@@ -80,9 +84,23 @@ export function SecurityCheckPage({
 
           {concurrentTab && <p className="test-security-alert">{t.concurrentTabAlert}</p>}
           {securityError && <p className="test-security-alert">{securityError}</p>}
+          <div className="test-security-rules">
+            <strong>{t.rulesHeading}</strong>
+            <ul>
+              {t.rules.map((rule) => <li key={rule}>{rule}</li>)}
+            </ul>
+            <label className="test-security-consent">
+              <input
+                type="checkbox"
+                checked={rulesAccepted}
+                onChange={(event) => onRulesAcceptedChange(event.target.checked)}
+              />
+              <span>{t.consentLabel}</span>
+            </label>
+          </div>
           <p className="test-security-privacy">{t.privacyNote}</p>
           <div className="test-security-actions">
-            <button type="button" onClick={onStartSecureSession} disabled={securityStarting || concurrentTab}>
+            <button type="button" onClick={onStartSecureSession} disabled={securityStarting || concurrentTab || !rulesAccepted}>
               {securityStarting
                 ? t.activating
                 : mediaPermissionsReady && !fullscreenActive

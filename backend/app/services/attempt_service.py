@@ -33,6 +33,7 @@ from app.services import cefr_service
 # the student their last answer - the server clock is still authoritative.
 EXPIRY_BUFFER_MINUTES = 2
 FINAL_TEST_HEARTBEAT_GRACE_SECONDS = 30
+FINAL_TEST_AUTO_SUBMIT_VIOLATION_LIMIT = 3
 _randomizer = SystemRandom()
 
 FLAG_SEVERITY = {
@@ -50,6 +51,17 @@ FLAG_SEVERITY = {
     "ip_change": "medium",
 }
 FLAG_RISK_WEIGHT = {"low": 1, "medium": 2, "high": 3, "critical": 5}
+AUTO_SUBMIT_FLAG_TYPES = {
+    "blur",
+    "visibility_change",
+    "fullscreen_exit",
+    "camera_stopped",
+    "microphone_stopped",
+    "screen_share_stopped",
+    "screen_surface_invalid",
+    "concurrent_tab",
+    "ip_change",
+}
 
 
 def _now() -> datetime:
@@ -438,7 +450,7 @@ def _add_security_flag(
             return duplicate
     severity = FLAG_SEVERITY[flag_type]
     flag = AttemptFlag(
-        attempt_id=attempt.id,
+        attempt=attempt,
         flag_type=flag_type,
         severity=severity,
         client_sequence=client_sequence,
@@ -454,6 +466,40 @@ def _add_security_flag(
     return flag
 
 
+def _final_test_violation_count(attempt: TestAttempt) -> int:
+    if not attempt.is_final:
+        return 0
+    return sum(1 for flag in attempt.flags if flag.flag_type in AUTO_SUBMIT_FLAG_TYPES)
+
+
+def _violation_policy_payload(attempt: TestAttempt) -> dict:
+    count = _final_test_violation_count(attempt)
+    return {
+        "violation_count": count,
+        "violation_limit": FINAL_TEST_AUTO_SUBMIT_VIOLATION_LIMIT,
+        "auto_submitted": bool(
+            attempt.security_media_state
+            and attempt.security_media_state.get("auto_submitted_for_violations")
+        ),
+    }
+
+
+def _maybe_auto_submit_for_violations(db: Session, attempt: TestAttempt) -> None:
+    if not attempt.is_final or attempt.status != ATTEMPT_IN_PROGRESS:
+        return
+    count = _final_test_violation_count(attempt)
+    if count < FINAL_TEST_AUTO_SUBMIT_VIOLATION_LIMIT:
+        return
+    attempt.security_media_state = {
+        **(attempt.security_media_state or {}),
+        "auto_submitted_for_violations": True,
+        "auto_submit_reason": "final_test_rule_violations",
+        "auto_submit_violation_count": count,
+        "auto_submitted_at": _now().isoformat(),
+    }
+    submit_attempt(db, attempt)
+
+
 def secure_preflight(
     db: Session,
     attempt: TestAttempt,
@@ -467,6 +513,11 @@ def secure_preflight(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This Final Test can no longer be resumed")
     if session.device_id is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="A registered student device is required")
+    if payload.get("rules_consent") is not True:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You must accept the Final Test security rules before starting",
+        )
     if not all(
         payload.get(key)
         for key in ("camera_active", "microphone_active", "screen_share_active", "fullscreen_active")
@@ -518,6 +569,8 @@ def secure_preflight(
         "visible": True,
         "focused": True,
         "display_surface": "monitor",
+        "rules_consent": True,
+        "rules_consented_at": _now().isoformat(),
     }
     db.add(attempt)
     db.commit()
@@ -612,11 +665,13 @@ def record_heartbeat(
         )
     }
     db.add(attempt)
+    _maybe_auto_submit_for_violations(db, attempt)
     db.commit()
     return {
         "received": True,
         "server_at": _utc_out(attempt.security_last_heartbeat_at),
         "risk_score": attempt.security_risk_score,
+        **_violation_policy_payload(attempt),
     }
 
 
@@ -726,8 +781,9 @@ def record_flag(
     if state_key and attempt.security_media_state:
         attempt.security_media_state = {**attempt.security_media_state, state_key: False}
         db.add(attempt)
+    _maybe_auto_submit_for_violations(db, attempt)
     db.commit()
-    return {"recorded": True, "risk_score": attempt.security_risk_score}
+    return {"recorded": True, "risk_score": attempt.security_risk_score, **_violation_policy_payload(attempt)}
 
 
 def _normalize(value) -> str:

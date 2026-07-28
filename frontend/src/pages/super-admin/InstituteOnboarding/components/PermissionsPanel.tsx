@@ -1,5 +1,7 @@
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { Icon } from "@/components/icons";
 import { Checkbox } from "@/components/ui";
+import { getPermissionIcon } from "@/pages/super-admin/permissionIcons";
 import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.strings";
 import { PERMISSIONS } from "../helpers";
 
@@ -23,25 +25,33 @@ export function PermissionsPanel({ adminPermissions, onTogglePermission, onToggl
     >
       <div className="permission-grid">
         <label className="permission-option select-all-option">
+          <span className="permission-option-icon" aria-hidden="true">
+            <Icon name={getPermissionIcon("select_all")} />
+          </span>
+          <span className="permission-option-copy">
+            <strong>{t.selectAll}</strong>
+          </span>
           <Checkbox
+            className="permission-state-checkbox"
             checked={allChecked}
             indeterminate={someChecked && !allChecked}
             onChange={onToggleAll}
           />
-          <span>
-            <strong>{t.selectAll}</strong>
-          </span>
         </label>
         {PERMISSIONS.map((permission) => (
           <label className="permission-option" key={permission.key}>
-            <Checkbox
-              checked={Boolean(adminPermissions[permission.key])}
-              onChange={(event) => onTogglePermission(permission.key, event.target.checked)}
-            />
-            <span>
+            <span className="permission-option-icon" aria-hidden="true">
+              <Icon name={getPermissionIcon(permission.key)} />
+            </span>
+            <span className="permission-option-copy">
               <strong>{permission.label}</strong>
               <small>{permission.description}</small>
             </span>
+            <Checkbox
+              className="permission-state-checkbox"
+              checked={Boolean(adminPermissions[permission.key])}
+              onChange={(event) => onTogglePermission(permission.key, event.target.checked)}
+            />
           </label>
         ))}
       </div>
