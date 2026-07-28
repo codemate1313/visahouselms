@@ -573,8 +573,41 @@ class Component extends DCLogic {
     this.animateStats();
     this.applyTheme();
     this.bindParallax();
+
+    const applyTestimonials = (list) => {
+      if (Array.isArray(list) && list.length > 0) {
+        const mapped = list.map((t) => ({
+          quote: t.quote || "",
+          highlight: "",
+          tail: "",
+          name: t.student_name || "Student",
+          role: t.student_role || "Academic Candidate",
+          score: t.target_score || "Band 8.0",
+          meta: `${t.target_score || "Band 8.0"} · ${t.student_role || "Academic"}`,
+          init: (t.student_name || "S").split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase(),
+          avatar: t.avatar_url || "",
+          grad: "linear-gradient(135deg, #e11d2e, #7c5cff)",
+        }));
+        this.reviews = mapped;
+        this.forceUpdate?.() || this.setState({ rev: 0 });
+      }
+    };
+
+    if (window.__vhData && Array.isArray(window.__vhData.testimonials) && window.__vhData.testimonials.length > 0) {
+      applyTestimonials(window.__vhData.testimonials);
+    } else {
+      fetch("/api/v1/testimonials")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data) applyTestimonials(data);
+        })
+        .catch(() => {});
+    }
+
     this._revTimer = setInterval(() => {
-      this.setState((s) => ({ rev: (s.rev + 1) % this.reviews.length }));
+      if (this.reviews && this.reviews.length > 0) {
+        this.setState((s) => ({ rev: (s.rev + 1) % this.reviews.length }));
+      }
     }, 5500);
     this._heroTimer = setInterval(() => {
       this.setState((s) => ({ heroTab: (s.heroTab + 1) % 3 }), () => this.animateHeroSlide());

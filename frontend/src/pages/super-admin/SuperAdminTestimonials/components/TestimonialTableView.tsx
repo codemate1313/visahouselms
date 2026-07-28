@@ -32,7 +32,6 @@ export function TestimonialTableView({
       <table className="sat-table">
         <thead>
           <tr>
-            <th style={{ width: 40 }}></th>
             <th>{t.name}</th>
             <th>{t.score}</th>
             <th>{t.quote}</th>
@@ -52,18 +51,6 @@ export function TestimonialTableView({
               onDrop={(e) => onDrop(e, index)}
               className={`${!item.is_active ? "inactive-row" : ""} ${dragState.draggedIndex === index ? "is-dragging" : ""} ${dragState.dragOverIndex === index ? "is-drag-over" : ""}`}
             >
-              <td>
-                <div className="sat-drag-handle" title={strings.dragRowHandleTitle}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="8" cy="6" r="1.8" />
-                    <circle cx="16" cy="6" r="1.8" />
-                    <circle cx="8" cy="12" r="1.8" />
-                    <circle cx="16" cy="12" r="1.8" />
-                    <circle cx="8" cy="18" r="1.8" />
-                    <circle cx="16" cy="18" r="1.8" />
-                  </svg>
-                </div>
-              </td>
               <td>
                 <div className="sat-table-student">
                   {item.avatar_url ? (

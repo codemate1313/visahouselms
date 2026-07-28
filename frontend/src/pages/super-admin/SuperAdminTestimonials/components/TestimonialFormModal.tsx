@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { Checkbox, RequiredMark } from "@/components/ui";
+import { Button, Checkbox, RequiredMark } from "@/components/ui";
 import { superAdminTestimonialsStrings as strings } from "../SuperAdminTestimonials.strings";
 import type { TestimonialAdminItem } from "../types";
 
@@ -113,12 +113,12 @@ export function TestimonialFormModal({ editingItem, onChange, saving, onClose, o
           </form>
         </div>
         <div className="sat-modal-footer">
-          <button type="button" onClick={onClose} className="sat-btn sat-btn-secondary">
+          <Button type="button" onClick={onClose} variant="secondary" size="md">
             {t.cancel}
-          </button>
-          <button type="submit" form="testimonial-form" disabled={saving} className="sat-btn sat-btn-primary">
+          </Button>
+          <Button type="submit" form="testimonial-form" loading={saving} variant="primary" size="md">
             {saving ? t.saveBusy : t.saveLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -38,16 +38,6 @@ export function TestimonialGridView({
           className={`sat-card ${!item.is_active ? "inactive" : ""} ${dragState.draggedIndex === index ? "is-dragging" : ""} ${dragState.dragOverIndex === index ? "is-drag-over" : ""}`}
         >
           <div className="sat-card-header">
-            <div className="sat-drag-handle" title={strings.dragHandleTitle}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="8" cy="6" r="1.8" />
-                <circle cx="16" cy="6" r="1.8" />
-                <circle cx="8" cy="12" r="1.8" />
-                <circle cx="16" cy="12" r="1.8" />
-                <circle cx="8" cy="18" r="1.8" />
-                <circle cx="16" cy="18" r="1.8" />
-              </svg>
-            </div>
             <img
               src={item.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(item.student_name)}
               alt={item.student_name}
