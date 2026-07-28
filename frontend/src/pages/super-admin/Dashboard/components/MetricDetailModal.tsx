@@ -1,6 +1,8 @@
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { dashboardStrings as strings } from "../Dashboard.strings";
 import { formatDetailValue } from "../helpers";
+import { MetricBreakdownPanel } from "./MetricBreakdownPanel";
 import type { MetricDetail, MetricKey } from "../types";
 
 interface MetricDetailModalProps {
@@ -13,6 +15,20 @@ interface MetricDetailModalProps {
 
 export function MetricDetailModal({ selectedMetric, metricDetail, metricLoading, metricError, onClose }: MetricDetailModalProps) {
   const t = strings.detailModal;
+  // Which breakdown group the records are narrowed to, if any.
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+
+  // A different metric is a different set of groups, so the old selection
+  // cannot survive the switch.
+  useEffect(() => setSelectedGroup(null), [selectedMetric]);
+
+  const visibleItems = useMemo(
+    () => (selectedGroup === null
+      ? metricDetail?.items ?? []
+      : (metricDetail?.items ?? []).filter((item) => item.group_key === selectedGroup)),
+    [metricDetail, selectedGroup],
+  );
+  const selectedGroupLabel = metricDetail?.breakdown?.groups.find((group) => group.key === selectedGroup)?.label ?? null;
   return createPortal(
     <div className="dashboard-detail-backdrop" onMouseDown={onClose}>
       <section
@@ -40,17 +56,28 @@ export function MetricDetailModal({ selectedMetric, metricDetail, metricLoading,
           {metricLoading && <div className="dashboard-detail-state">{t.loadingDetails}</div>}
           {metricError && <div className="dashboard-detail-state error-text">{metricError}</div>}
           {metricDetail && metricDetail.items.length === 0 && <div className="dashboard-detail-state">{metricDetail.empty_message}</div>}
+
+          {metricDetail && metricDetail.items.length > 0 && metricDetail.breakdown && (
+            <MetricBreakdownPanel
+              breakdown={metricDetail.breakdown}
+              selectedKey={selectedGroup}
+              onSelectKey={setSelectedGroup}
+            />
+          )}
+
           {metricDetail && metricDetail.items.length > 0 && (
             <div className="dashboard-records-list">
               <div className="records-count-bar">
                 <div className="records-count-left">
                   <span className="records-count-indicator" />
-                  <span className="records-count-label">{t.totalRecords}</span>
+                  <span className="records-count-label">
+                    {selectedGroupLabel ? t.showingFor(selectedGroupLabel) : t.totalRecords}
+                  </span>
                 </div>
-                <span className="records-count-badge">{metricDetail.items.length}</span>
+                <span className="records-count-badge">{visibleItems.length}</span>
               </div>
 
-              {metricDetail.items.map((item) => (
+              {visibleItems.map((item) => (
                 <article className="dashboard-record-card" key={`${metricDetail.metric}-${item.id}`}>
                   <div className="record-identity">
                     <div className="record-title-group">

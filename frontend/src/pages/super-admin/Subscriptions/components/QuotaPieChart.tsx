@@ -13,16 +13,18 @@ export function QuotaPieChart({ usage, limits }: QuotaPieChartProps) {
   const studentLimit = limits.students ?? 0;
   const staffUsed = usage.staff ?? 0;
   const staffLimit = limits.staff ?? 0;
-  const testUsed = usage.tests ?? 0;
-  const testLimit = limits.tests ?? 0;
+  // Courses are handed out of a shared catalogue, so the "limit" is how many
+  // exist to give - unlike seats, which are what the agreement bought.
+  const courseUsed = usage.courses ?? 0;
+  const courseLimit = limits.courses ?? 0;
 
-  const totalUsed = studentUsed + staffUsed + testUsed;
-  const totalLimit = studentLimit + staffLimit + testLimit;
+  const totalUsed = studentUsed + staffUsed + courseUsed;
+  const totalLimit = studentLimit + staffLimit + courseLimit;
   const overallPercent = totalLimit > 0 ? Math.min(100, Math.round((totalUsed / totalLimit) * 100)) : 0;
 
   const studentPercent = studentLimit > 0 ? Math.min(100, Math.round((studentUsed / studentLimit) * 100)) : 0;
   const staffPercent = staffLimit > 0 ? Math.min(100, Math.round((staffUsed / staffLimit) * 100)) : 0;
-  const testPercent = testLimit > 0 ? Math.min(100, Math.round((testUsed / testLimit) * 100)) : 0;
+  const coursePercent = courseLimit > 0 ? Math.min(100, Math.round((courseUsed / courseLimit) * 100)) : 0;
 
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
@@ -67,10 +69,10 @@ export function QuotaPieChart({ usage, limits }: QuotaPieChartProps) {
                 <td>{staffPercent}%</td>
               </tr>
               <tr>
-                <td>{t.assignedTests}</td>
-                <td>{testUsed}</td>
-                <td>{testLimit}</td>
-                <td>{testPercent}%</td>
+                <td>{t.courses}</td>
+                <td>{courseUsed}</td>
+                <td>{courseLimit}</td>
+                <td>{coursePercent}%</td>
               </tr>
             </tbody>
           </table>
@@ -110,9 +112,9 @@ export function QuotaPieChart({ usage, limits }: QuotaPieChartProps) {
             <div className="legend-item">
               <span className="legend-dot dot-tests" />
               <div className="legend-info">
-                <span className="legend-name">{t.assignedTests}</span>
+                <span className="legend-name">{t.courses}</span>
                 <strong className="legend-stat">
-                  {testUsed} / {testLimit} ({testPercent}%)
+                  {courseUsed} / {courseLimit} ({coursePercent}%)
                 </strong>
               </div>
             </div>

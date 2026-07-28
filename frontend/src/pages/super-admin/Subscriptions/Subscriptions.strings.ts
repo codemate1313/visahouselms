@@ -10,6 +10,7 @@ export const subscriptionsStrings = {
     grace: "In grace period",
     expired: "Expired",
     cancelled: "Cancelled",
+    scheduled: "Scheduled",
     none: "No subscription",
   },
   noActivePlan: "No Active Plan",
@@ -17,6 +18,7 @@ export const subscriptionsStrings = {
   expires: "Expires:",
   graceDaysLeft: "Grace days left:",
   daysLeft: "Days left:",
+  startsInDays: "Starts in (days):",
   noAllocation: "Nothing allocated to this institute yet — set its provisions on the institute form.",
   assigning: "Assigning...",
   assignPlan: "Assign plan",
@@ -38,7 +40,7 @@ export const subscriptionsStrings = {
     share: "Share",
     students: "Students",
     instructors: "Instructors",
-    assignedTests: "Assigned Tests",
+    courses: "Courses",
   },
   validityGauge: {
     title: "Subscription Health",
@@ -46,6 +48,7 @@ export const subscriptionsStrings = {
     activeDescription: "Plan active with full portal access.",
     graceDescription: "Grace period active. Please renew.",
     expiredDescription: "Subscription expired.",
+    scheduledDescription: "Renewed ahead of time - this term starts when the current one ends.",
   },
   history: {
     heading: "Subscription History",

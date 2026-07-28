@@ -3,7 +3,6 @@ import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.st
 import { INITIAL } from "../helpers";
 import type { Method, ModuleOption } from "../types";
 import { InstituteAdminDetailsPanel } from "./InstituteAdminDetailsPanel";
-import { PermissionsPanel } from "./PermissionsPanel";
 import { AgreementPaymentPanel } from "./AgreementPaymentPanel";
 import { IncludedCoursesPanel } from "./IncludedCoursesPanel";
 import { Icon } from "@/components/icons";
@@ -11,9 +10,6 @@ import { Icon } from "@/components/icons";
 interface Step1AgreementFormProps {
   form: typeof INITIAL;
   set: (field: keyof typeof INITIAL) => (event: { target: { value: string } }) => void;
-  adminPermissions: Record<string, boolean>;
-  onTogglePermission: (key: string, checked: boolean) => void;
-  onToggleAllPermissions: () => void;
   methods: Method[];
   onPaymentMethodChange: (value: string) => void;
   modules: ModuleOption[];
@@ -27,9 +23,6 @@ interface Step1AgreementFormProps {
 export function Step1AgreementForm({
   form,
   set,
-  adminPermissions,
-  onTogglePermission,
-  onToggleAllPermissions,
   methods,
   onPaymentMethodChange,
   modules,
@@ -45,7 +38,6 @@ export function Step1AgreementForm({
       <div className="onboarding-grid-two-col">
         <div className="onboarding-col">
           <InstituteAdminDetailsPanel form={form} set={set} />
-          <PermissionsPanel adminPermissions={adminPermissions} onTogglePermission={onTogglePermission} onToggleAll={onToggleAllPermissions} />
         </div>
 
         <div className="onboarding-col">

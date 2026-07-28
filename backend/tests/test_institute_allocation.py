@@ -5,6 +5,7 @@ listed, and never capping how many tests its students take.
 import unittest
 
 from fastapi import HTTPException
+from pydantic import ValidationError
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
@@ -78,7 +79,7 @@ class InstituteAllocationTests(unittest.TestCase):
     def _institute(self, name: str = "Agreement Academy") -> Institute:
         created = institute_service.create_institute(
             self.db, self.actor, name, None, f"admin-{name.replace(' ', '-').lower()}@agreement.test",
-            "Institute", "Admin", {}, 24, None,
+            "Institute", "Admin", 24, None,
         )
         return institute_service.get_institute_or_404(self.db, created["id"])
 
@@ -265,6 +266,33 @@ class InstituteAllocationTests(unittest.TestCase):
             self.assertNotIn("test_limit", fields)
             self.assertIn("student_limit", fields)
             self.assertIn("access_duration_days", fields)
+
+    def test_the_commercial_terms_are_required_to_create_an_institute(self) -> None:
+        base = {
+            "name": "Terms Academy", "admin_email": "terms@agreement.example.com",
+            "admin_first_name": "Terms", "admin_last_name": "Admin",
+            "agreement_reference": "AG-1", "agreed_amount": 9000, "amount_received": 9000,
+            "currency": "INR", "payment_method_id": 1,
+        }
+        InstituteCreate(**base)  # complete payload is accepted
+
+        for omitted in ("agreement_reference", "agreed_amount", "amount_received", "currency", "payment_method_id"):
+            with self.assertRaises(ValidationError, msg=f"{omitted} should be required"):
+                InstituteCreate(**{key: value for key, value in base.items() if key != omitted})
+
+        # ...and the money has to add up.
+        with self.assertRaises(ValidationError):
+            InstituteCreate(**{**base, "amount_received": 12000})
+
+    def test_permissions_are_not_settable_per_institute(self) -> None:
+        # Institute admins hold the full set by virtue of the role, so there is
+        # nothing for a caller to pick.
+        for schema in (InstituteCreate, InstituteUpdate):
+            self.assertNotIn("admin_permissions", set(schema.model_fields))
+
+        institute = self._institute("Full Permissions Academy")
+        granted = institute_service.normalized_admin_permissions(institute.admin_permissions)
+        self.assertTrue(granted and all(granted.values()))
 
 
 if __name__ == "__main__":

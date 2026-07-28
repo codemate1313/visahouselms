@@ -28,6 +28,28 @@ export interface MetricDetailItem {
   value_type: DetailValueType;
   currency: string | null;
   metadata: MetricDetailValue[];
+  /** Which breakdown group this record belongs to; null when the metric has no
+   *  breakdown. Selecting a group in the panel narrows the list to its rows. */
+  group_key: string | null;
+}
+
+/** One slice of a metric's headline figure — a payment method, for revenue. */
+export interface MetricBreakdownGroup {
+  key: string;
+  payment_method_id: number | null;
+  label: string;
+  total: string;
+  count: number;
+  currency: string;
+  /** Percent of the metric total, server-computed so the segments always sum to 100. */
+  share: number;
+}
+
+export interface MetricBreakdown {
+  label: string;
+  total: string;
+  currency: string;
+  groups: MetricBreakdownGroup[];
 }
 
 export interface MetricDetail {
@@ -36,6 +58,7 @@ export interface MetricDetail {
   description: string;
   empty_message: string;
   items: MetricDetailItem[];
+  breakdown: MetricBreakdown | null;
 }
 
 export interface Summary {

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from decimal import Decimal
 
 from fastapi import HTTPException, status
 from sqlalchemy import func
@@ -10,6 +10,7 @@ from app.models.coupon import Coupon
 from app.models.exam_module import ExamModule, ExamModulePart
 from app.models.institute import Institute
 from app.models.payment import Payment
+from app.models.payment_method import PaymentMethod
 from app.models.role import SA_INSTRUCTOR, Role
 from app.models.user import User
 from app.services import demo_service, payment_service, plan_service, revenue_service, subscription_service, super_admin_service
@@ -46,6 +47,7 @@ def _item(
     value_type: str = "text",
     currency: str | None = None,
     metadata: list[dict] | None = None,
+    group_key: str | None = None,
 ) -> dict:
     return {
         "id": item_id,
@@ -58,16 +60,30 @@ def _item(
         "value_type": value_type,
         "currency": currency,
         "metadata": metadata or [],
+        # Which breakdown group this row belongs to, so selecting a group in the
+        # panel can narrow the list below it. None on details that have no
+        # breakdown.
+        "group_key": group_key,
     }
 
 
-def _detail(metric: str, title: str, description: str, empty_message: str, items: list[dict]) -> dict:
+def _detail(
+    metric: str,
+    title: str,
+    description: str,
+    empty_message: str,
+    items: list[dict],
+    breakdown: dict | None = None,
+) -> dict:
     return {
         "metric": metric,
         "title": title,
         "description": description,
         "empty_message": empty_message,
         "items": items,
+        # Optional composition of the headline figure - drawn above the records
+        # by whichever metric has one. None means "just the list".
+        "breakdown": breakdown,
     }
 
 
@@ -113,7 +129,11 @@ def _payment_tone(payment: Payment) -> str:
 def _payment_rows(db: Session, statuses: tuple[str, ...]) -> tuple[list[Payment], dict[int, User]]:
     payments = (
         db.query(Payment)
-        .options(joinedload(Payment.institute), joinedload(Payment.plan))
+        .options(
+            joinedload(Payment.institute),
+            joinedload(Payment.plan),
+            joinedload(Payment.payment_method),
+        )
         .filter(Payment.status.in_(statuses))
         .order_by(Payment.created_at.desc(), Payment.id.desc())
         .all()
@@ -170,8 +190,7 @@ def _subscriptions_detail(db: Session) -> dict:
         subscription, state = subscription_service.current_subscription(db, institute.id)
         if subscription is None or state != subscription_service.STATE_ACTIVE:
             continue
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
-        days_remaining = max(0, (subscription.expires_at - now).days)
+        days_remaining = subscription_service.days_until(subscription.expires_at)
         items.append(
             _item(
                 item_id=str(subscription.id),
@@ -198,6 +217,65 @@ def _subscriptions_detail(db: Session) -> dict:
     )
 
 
+def _method_name(payment: Payment) -> str:
+    return payment.payment_method.name if payment.payment_method else revenue_service.UNSPECIFIED_METHOD_NAME
+
+
+def _method_key(payment: Payment) -> str:
+    """Stable identity for a payment method, used to key both the breakdown and
+    the colour a method carries. Falls back to the name so payments with no
+    method row still group together instead of each becoming their own slice."""
+    return str(payment.payment_method_id) if payment.payment_method_id is not None else "unspecified"
+
+
+def _revenue_breakdown(payments: list[Payment], db: Session) -> list[dict]:
+    """Cash collected per payment method, including all active payment methods.
+
+    Pre-populates active payment methods so every configured method appears as
+    a tab even if no revenue/transactions exist for it yet.
+    """
+    all_methods = db.query(PaymentMethod).filter(PaymentMethod.is_active.is_(True)).order_by(PaymentMethod.id.asc()).all()
+
+    groups: dict[str, dict] = {}
+    for pm in all_methods:
+        key = str(pm.id)
+        groups[key] = {
+            "key": key,
+            "payment_method_id": pm.id,
+            "label": pm.name,
+            "total": Decimal("0"),
+            "count": 0,
+            "currency": "INR",
+        }
+
+    for payment in payments:
+        key = _method_key(payment)
+        if key not in groups:
+            groups[key] = {
+                "key": key,
+                "payment_method_id": payment.payment_method_id,
+                "label": _method_name(payment),
+                "total": Decimal("0"),
+                "count": 0,
+                "currency": payment.currency,
+            }
+        groups[key]["total"] += payment.amount_paid
+        groups[key]["count"] += 1
+        if payment.currency:
+            groups[key]["currency"] = payment.currency
+
+    collected = sum((group["total"] for group in groups.values()), Decimal("0"))
+    ordered = sorted(groups.values(), key=lambda group: (group["count"] == 0, -group["total"], group["label"]))
+    return [
+        {
+            **group,
+            "total": str(group["total"]),
+            "share": float(group["total"] / collected * 100) if collected else 0.0,
+        }
+        for group in ordered
+    ]
+
+
 def _revenue_detail(db: Session) -> dict:
     payments, users = _payment_rows(db, revenue_service.REVENUE_STATUSES)
     items = [
@@ -211,8 +289,10 @@ def _revenue_detail(db: Session) -> dict:
             value_label="Collected",
             value_type="money",
             currency=payment.currency,
+            group_key=_method_key(payment),
             metadata=[
                 _meta("Account type", "Institute" if payment.source == "b2b" else "Direct student"),
+                _meta("Payment method", _method_name(payment)),
                 _meta("Invoice total", str(payment.final_amount), "money", payment.currency),
                 _meta("Received", _iso(payment.paid_at or payment.created_at), "date"),
             ],
@@ -225,6 +305,12 @@ def _revenue_detail(db: Session) -> dict:
         "Payments collected from institutes and direct students.",
         "No revenue has been collected yet.",
         items,
+        breakdown={
+            "label": "Revenue by payment method",
+            "total": str(sum((payment.amount_paid for payment in payments), Decimal("0"))),
+            "currency": payments[0].currency if payments else "INR",
+            "groups": _revenue_breakdown(payments, db),
+        },
     )
 
 

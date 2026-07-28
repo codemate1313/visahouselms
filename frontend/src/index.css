@@ -9553,6 +9553,288 @@ button.danger-text {
   padding: 24px 32px 32px;
 }
 
+/* ---------- Metric breakdown (share of a headline figure) ----------
+   Categorical slots, validated against this dialog's own surfaces
+   (#f8fafc light, #181b22 dark) for the lightness band, chroma floor,
+   colour-vision separation and contrast. The slot ORDER is the safety
+   mechanism, not a preference - do not re-order or add a 6th hue; a longer
+   tail folds into the neutral "Other" slice instead. Three light-mode hues
+   sit under 3:1 on the surface by design, which is why every value is also
+   printed in the legend rows below the bar. */
+.metric-breakdown {
+  --bd-slot-0: #898781;
+  --bd-slot-1: #2a78d6;
+  --bd-slot-2: #eb6834;
+  --bd-slot-3: #1baf7a;
+  --bd-slot-4: #eda100;
+  --bd-slot-5: #e87ba4;
+  --bd-surface: #f8fafc;
+  --bd-ink: #0f172a;
+  --bd-ink-soft: #52514e;
+  --bd-ink-muted: #898781;
+  --bd-hairline: rgba(15, 23, 42, 0.08);
+  margin-bottom: 22px;
+}
+
+[data-theme="dark"] .metric-breakdown {
+  --bd-slot-0: #898781;
+  --bd-slot-1: #3987e5;
+  --bd-slot-2: #d95926;
+  --bd-slot-3: #199e70;
+  --bd-slot-4: #c98500;
+  --bd-slot-5: #d55181;
+  --bd-surface: #181b22;
+  --bd-ink: #f7f7fa;
+  --bd-ink-soft: #c3c2b7;
+  --bd-ink-muted: #898781;
+  --bd-hairline: rgba(255, 255, 255, 0.1);
+}
+
+/* The portal's own tab affordance, made to survive a long method list inside
+   a fixed-width dialog: it scrolls sideways rather than wrapping into a second
+   row that would push the figure below the fold. */
+.metric-breakdown .metric-breakdown-tabs {
+  gap: 2px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  white-space: nowrap;
+}
+
+.metric-breakdown .metric-breakdown-tabs .tab {
+  flex: 0 0 auto;
+  box-shadow: none;
+  background-color: transparent;
+  background-image: none;
+  font-size: 13px;
+  padding: 9px 13px;
+}
+
+.metric-breakdown-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.metric-breakdown-eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bd-ink-muted);
+}
+
+.metric-breakdown-total {
+  display: block;
+  margin-top: 2px;
+  /* The figure this panel takes apart. Proportional figures - tabular ones
+     make a large standalone number look loose. */
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--bd-ink);
+}
+
+.metric-breakdown-caption {
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--bd-ink-soft);
+}
+
+/* The bar: one row, segments sized by share. Separation between fills is a
+   2px gap in the surface colour, never a stroke around each segment. */
+.metric-breakdown-bar {
+  display: flex;
+  gap: 2px;
+  height: 18px;
+  margin-bottom: 16px;
+}
+
+/* These are <button>s inside an app whose base `button` rule paints every
+   button in the brand colour with padding and a shadow. Each of those is
+   reset here, scoped under the panel, so a segment or legend row can never
+   inherit a fill that misstates the data. */
+.metric-breakdown .metric-breakdown-segment {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  box-shadow: none;
+  background-color: var(--bd-slot-1);
+  background-image: none;
+  cursor: pointer;
+  transition: opacity 160ms ease, transform 160ms ease;
+  /* The hit target is the segment plus its gap and a little air above and
+     below - a 18px band is easy to miss with a pointer. */
+  outline-offset: 3px;
+}
+
+.metric-breakdown-segment::after {
+  content: "";
+  position: absolute;
+  inset: -8px -2px;
+}
+
+.metric-breakdown-bar > .metric-breakdown-segment:first-child {
+  border-radius: 9px 2px 2px 9px;
+}
+
+.metric-breakdown-bar > .metric-breakdown-segment:last-child {
+  border-radius: 2px 9px 9px 2px;
+}
+
+.metric-breakdown-bar > .metric-breakdown-segment:only-child {
+  border-radius: 9px;
+}
+
+.metric-breakdown .metric-breakdown-segment[data-slot="0"] { background-color: var(--bd-slot-0); }
+.metric-breakdown .metric-breakdown-segment[data-slot="1"] { background-color: var(--bd-slot-1); }
+.metric-breakdown .metric-breakdown-segment[data-slot="2"] { background-color: var(--bd-slot-2); }
+.metric-breakdown .metric-breakdown-segment[data-slot="3"] { background-color: var(--bd-slot-3); }
+.metric-breakdown .metric-breakdown-segment[data-slot="4"] { background-color: var(--bd-slot-4); }
+.metric-breakdown .metric-breakdown-segment[data-slot="5"] { background-color: var(--bd-slot-5); }
+
+.metric-breakdown .metric-breakdown-segment:hover,
+.metric-breakdown .metric-breakdown-segment:focus-visible {
+  transform: scaleY(1.28);
+}
+
+.metric-breakdown .metric-breakdown-segment[data-dimmed] {
+  opacity: 0.28;
+}
+
+.metric-breakdown .metric-breakdown-segment[data-selected] {
+  transform: scaleY(1.28);
+}
+
+/* Only rendered when the segment is wide enough to hold it; white on the
+   fill, which clears contrast on every slot in the set. */
+.metric-breakdown-segment-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #ffffff;
+  pointer-events: none;
+}
+
+/* The legend is also the table view: name, volume, share and amount in text,
+   so no value here depends on telling two hues apart. */
+.metric-breakdown-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.metric-breakdown .metric-breakdown-legend-row {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto 56px 110px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  box-shadow: none;
+  background-color: transparent;
+  background-image: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background 150ms ease, opacity 150ms ease;
+}
+
+.metric-breakdown .metric-breakdown-legend-row[data-static] {
+  cursor: default;
+}
+
+.metric-breakdown .metric-breakdown-legend-row:hover,
+.metric-breakdown .metric-breakdown-legend-row:focus-visible {
+  background-color: var(--bd-hairline);
+}
+
+.metric-breakdown .metric-breakdown-legend-row[data-dimmed] {
+  opacity: 0.45;
+}
+
+.metric-breakdown .metric-breakdown-legend-row[data-selected] {
+  background-color: var(--bd-hairline);
+}
+
+.metric-breakdown-key {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--bd-slot-1);
+}
+
+.metric-breakdown .metric-breakdown-legend-row[data-slot="0"] .metric-breakdown-key { background-color: var(--bd-slot-0); }
+.metric-breakdown .metric-breakdown-legend-row[data-slot="1"] .metric-breakdown-key { background-color: var(--bd-slot-1); }
+.metric-breakdown .metric-breakdown-legend-row[data-slot="2"] .metric-breakdown-key { background-color: var(--bd-slot-2); }
+.metric-breakdown .metric-breakdown-legend-row[data-slot="3"] .metric-breakdown-key { background-color: var(--bd-slot-3); }
+.metric-breakdown .metric-breakdown-legend-row[data-slot="4"] .metric-breakdown-key { background-color: var(--bd-slot-4); }
+.metric-breakdown .metric-breakdown-legend-row[data-slot="5"] .metric-breakdown-key { background-color: var(--bd-slot-5); }
+
+/* Text wears text tokens, never the series colour - the swatch beside it is
+   what carries identity. */
+.metric-breakdown-name {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--bd-ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metric-breakdown-count {
+  font-size: 12px;
+  color: var(--bd-ink-muted);
+}
+
+.metric-breakdown-share,
+.metric-breakdown-amount {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.metric-breakdown-share {
+  font-size: 12.5px;
+  color: var(--bd-ink-soft);
+}
+
+.metric-breakdown-amount {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--bd-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metric-breakdown-segment {
+    transition: opacity 160ms ease;
+  }
+
+  .metric-breakdown-segment:hover,
+  .metric-breakdown-segment:focus-visible,
+  .metric-breakdown-segment[data-selected] {
+    transform: none;
+    opacity: 1;
+  }
+}
+
 .dashboard-records-list {
   display: flex;
   flex-direction: column;
@@ -11533,7 +11815,12 @@ button.danger-text {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  /* Dialog tier, alongside .custom-dialog-backdrop and .logout-modal-backdrop.
+     It has to clear the page chrome underneath it - a .filter-bar is raised to
+     1200, and to 20000 while one of its dropdowns is open, so a lower modal
+     had the toolbar punching through its own backdrop. Stays below the toast
+     container and the global loader, which belong on top of a dialog. */
+  z-index: 99999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -24394,13 +24681,23 @@ th[aria-sort="descending"] .table-sort-button::after {
 }
 
 [data-theme="dark"] .dashboard-detail-close {
-  background: #ffffff !important;
-  color: #e11d2e !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: none !important;
 }
 
-[data-theme="dark"] .dashboard-detail-close:hover {
-  background: #ffffff !important;
-  color: #b91323 !important;
+[data-theme="dark"] .dashboard-detail-close .dashboard-close-icon,
+[data-theme="dark"] .dashboard-detail-close svg {
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .dashboard-detail-close:hover,
+[data-theme="dark"] .dashboard-detail-close:focus-visible {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
 [data-theme="dark"] .plan-dialog-close {

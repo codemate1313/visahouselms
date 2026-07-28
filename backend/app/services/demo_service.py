@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.audit_log import AuditLog
 from app.models.demo_account import DemoAccount
 from app.models.user import User
-from app.services import institute_service
+from app.services import institute_service, subscription_service
 
 STATE_ACTIVE = "active"
 STATE_EXPIRED = "expired"
@@ -43,7 +43,7 @@ def _serialize(demo: DemoAccount) -> dict:
     state = _state(demo)
     days_remaining = None
     if state == STATE_ACTIVE:
-        days_remaining = max(0, (demo.expires_at - _now()).days)
+        days_remaining = subscription_service.days_until(demo.expires_at, _now())
     return {
         "id": demo.id,
         "institute_id": demo.institute_id,
@@ -72,7 +72,7 @@ def create_demo(
     ip: Optional[str],
 ) -> dict:
     institute_result = institute_service.create_institute(
-        db, actor, name, None, admin_email, admin_first_name, admin_last_name, {}, 24, ip
+        db, actor, name, None, admin_email, admin_first_name, admin_last_name, 24, ip
     )
 
     demo = DemoAccount(

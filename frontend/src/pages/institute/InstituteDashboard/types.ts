@@ -35,9 +35,4 @@ export interface AccessWindow {
   institute_suspended: boolean;
 }
 
-export const STATE_CLASS: Record<string, string> = {
-  active: "badge-green",
-  grace: "badge-amber",
-  expired: "badge-red",
-  none: "badge-gray",
-};
+export { SUBSCRIPTION_STATE_BADGES as STATE_CLASS } from "@/constants";

@@ -50,6 +50,15 @@ export const dashboardStrings = {
     loadingDetails: "Loading details...",
     loadDetailsError: "Failed to load these details.",
     totalRecords: "Total Records",
+    showingFor: (label: string) => `Showing ${label} only`,
+  },
+  breakdownPanel: {
+    acrossMethods: (count: number) => `across ${count} payment ${count === 1 ? "method" : "methods"}`,
+    transactions: (count: number) => `${count} ${count === 1 ? "txn" : "txns"}`,
+    otherLabel: (count: number) => `Other (${count})`,
+    allMethods: "All methods",
+    shareOfTotal: (share: string, total: string) => `${share}% of ${total} collected`,
+    barAria: (parts: string) => `Share of revenue by payment method: ${parts}`,
   },
   growth: {
     "7D": { rev: "+18% growth", sub: "7D Live", inst: "Active" },

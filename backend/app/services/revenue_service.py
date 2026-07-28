@@ -7,11 +7,15 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.institute import Institute
 from app.models.payment import Payment
+from app.models.payment_method import PaymentMethod
 
 # revenue counts cash actually collected, including the received portion of a
 # partial payment - not just fully-settled invoices
 REVENUE_STATUSES = ("paid", "partial")
 DUE_STATUSES = ("pending", "partial")
+
+# what a payment with no method on it is reported as
+UNSPECIFIED_METHOD_NAME = "Unspecified"
 
 
 def summary(
@@ -19,6 +23,7 @@ def summary(
     date_from: Optional[datetime] = None,
     date_to: Optional[datetime] = None,
     institute_id: Optional[int] = None,
+    payment_method_id: Optional[int] = None,
 ) -> dict:
     def _apply_common(query):
         if date_from is not None:
@@ -32,6 +37,8 @@ def summary(
                     Payment.institute_id_snapshot == institute_id,
                 )
             )
+        if payment_method_id is not None:
+            query = query.filter(Payment.payment_method_id == payment_method_id)
         return query
 
     revenue_rows = _apply_common(db.query(Payment).filter(Payment.status.in_(REVENUE_STATUSES))).all()
@@ -62,6 +69,34 @@ def summary(
         for iid, name, total_amt, count in by_institute_query.group_by(
             institute_identity_id, institute_identity_name
         ).all()
+    ]
+
+    # Cash collected per payment method. A payment recorded before methods were
+    # catalogued (or against one since deleted) has no method row, so it is
+    # reported under a null id rather than dropped - the parts have to add up to
+    # the total the same screen is showing.
+    by_method_query = _apply_common(
+        db.query(
+            Payment.payment_method_id,
+            func.coalesce(PaymentMethod.name, UNSPECIFIED_METHOD_NAME),
+            func.sum(Payment.amount_paid),
+            func.count(Payment.id),
+        )
+        .outerjoin(PaymentMethod, Payment.payment_method_id == PaymentMethod.id)
+        .filter(Payment.status.in_(REVENUE_STATUSES))
+    )
+    by_method = [
+        {
+            "payment_method_id": method_id,
+            "payment_method_name": name,
+            "total": str(total_amt),
+            "count": count,
+        }
+        for method_id, name, total_amt, count in by_method_query.group_by(
+            Payment.payment_method_id, PaymentMethod.name
+        )
+        .order_by(func.sum(Payment.amount_paid).desc())
+        .all()
     ]
 
     # MySQL and SQLite expose different month-formatting functions. Keep the
@@ -108,6 +143,7 @@ def summary(
         "total_due": str(total_due),
         "transaction_count": len(revenue_rows),
         "by_institute": by_institute,
+        "by_method": by_method,
         "by_month": by_month,
         "dues": dues,
     }

@@ -1,11 +1,14 @@
 import { ExportButtons, SearchableSelect } from "@/components/ui";
 import { revenueDashboardStrings as strings } from "../RevenueDashboard.strings";
-import type { InstituteRow } from "../types";
+import type { InstituteRow, MethodRow } from "../types";
 
 interface RevenueFilterBarProps {
   institutes: InstituteRow[];
   instituteFilter: string;
   onInstituteFilterChange: (value: string) => void;
+  methods: MethodRow[];
+  methodFilter: string;
+  onMethodFilterChange: (value: string) => void;
   dateFrom: string;
   onDateFromChange: (value: string) => void;
   dateTo: string;
@@ -20,6 +23,9 @@ export function RevenueFilterBar({
   institutes,
   instituteFilter,
   onInstituteFilterChange,
+  methods,
+  methodFilter,
+  onMethodFilterChange,
   dateFrom,
   onDateFromChange,
   dateTo,
@@ -44,13 +50,25 @@ export function RevenueFilterBar({
         className="status-filter-select"
       />
 
+      <SearchableSelect
+        options={[
+          { value: "", label: strings.allMethods },
+          ...methods.map((m) => ({ value: String(m.id), label: m.name })),
+        ]}
+        value={methodFilter}
+        onChange={(val) => onMethodFilterChange(String(val))}
+        placeholder={strings.allMethods}
+        searchPlaceholder={strings.searchMethod}
+        className="status-filter-select"
+      />
+
       <div className="date-filter-wrap">
         <input type="date" value={dateFrom} onChange={(e) => onDateFromChange(e.target.value)} className="date-input-field" aria-label={strings.dateFrom} />
         <span className="date-sep-text">{strings.dateSeparator}</span>
         <input type="date" value={dateTo} onChange={(e) => onDateToChange(e.target.value)} className="date-input-field" aria-label={strings.dateTo} />
       </div>
 
-      {(instituteFilter || dateFrom || dateTo) && (
+      {(instituteFilter || methodFilter || dateFrom || dateTo) && (
         <button type="button" className="clear-search-btn reset-filters-btn" onClick={onResetFilters}>
           {strings.resetFilters}
         </button>

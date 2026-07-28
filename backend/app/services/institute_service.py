@@ -31,24 +31,27 @@ from app.services.subscription_service import current_subscription
 MAX_LOGO_BYTES = 2 * 1024 * 1024
 ALLOWED_FONT_FAMILIES = {"Plus Jakarta Sans", "Inter", "Sora", "Outfit", "system-ui"}
 ALLOWED_FONT_WEIGHTS = {400, 500, 600, 700, 800}
-DEFAULT_ADMIN_PERMISSIONS = {
-    "view_students": False,
-    "manage_students": False,
-    "view_student_activity": False,
-    "manage_student_sessions": False,
-    "manage_staff": False,
-    "view_billing": False,
-}
+ADMIN_PERMISSION_KEYS = (
+    "view_students",
+    "manage_students",
+    "view_student_activity",
+    "manage_student_sessions",
+    "manage_staff",
+    "view_billing",
+)
 logger = logging.getLogger(__name__)
 
 
-def normalized_admin_permissions(value: Optional[dict]) -> dict:
-    permissions = DEFAULT_ADMIN_PERMISSIONS.copy()
-    if value:
-        permissions.update(
-            {key: bool(value.get(key)) for key in DEFAULT_ADMIN_PERMISSIONS if key in value}
-        )
-    return permissions
+def normalized_admin_permissions(value: Optional[dict] = None) -> dict:
+    """Every institute admin holds the full set.
+
+    These were once picked per institute, which meant an admin could be locked
+    out of managing their own institute's people. They come with the role now,
+    so the stored column is no longer consulted - an institute saved under the
+    old behaviour reads as fully permitted without a backfill. `value` is
+    accepted and ignored so callers need not care which era a row is from.
+    """
+    return {key: True for key in ADMIN_PERMISSION_KEYS}
 
 
 def _audit(db: Session, actor: User, action: str, entity_id: Optional[int], ip: Optional[str], details=None) -> None:
@@ -177,7 +180,6 @@ def create_institute(
     admin_email: str,
     admin_first_name: str,
     admin_last_name: str,
-    admin_permissions: dict,
     session_duration_hours: int,
     ip: Optional[str],
     active: bool = True,
@@ -195,7 +197,7 @@ def create_institute(
         name=name,
         slug=_unique_slug(db, name),
         contact_email=contact_email,
-        admin_permissions=normalized_admin_permissions(admin_permissions),
+        admin_permissions=normalized_admin_permissions(),
         session_duration_hours=session_duration_hours,
         ai_student_monthly_limit=(
             ai_student_monthly_limit if ai_student_monthly_limit and ai_student_monthly_limit > 0 else None
@@ -233,8 +235,36 @@ def create_institute(
 
 
 # Allocating provisions is what the Super Admin does; the plan is only how the
-# platform enforces them, so touching any of these keeps the plan in step.
-ALLOCATION_FIELDS = ("student_limit", "staff_limit", "access_duration_days", "grace_days", "module_ids")
+# platform enforces them, so touching any of these keeps the plan in step. The
+# agreed amount belongs here too: the plan's price is what a b2b payment bills.
+ALLOCATION_FIELDS = (
+    "student_limit", "staff_limit", "access_duration_days", "grace_days", "module_ids",
+    "agreed_amount", "currency",
+)
+
+
+def _agreement_plan(db: Session, institute: Institute) -> Optional[Plan]:
+    """The internal plan this institute already runs on, if any.
+
+    The link on the institute is the answer when it is set. It is not always:
+    an institute onboarded before the column existed has none, and one
+    published through the onboarding wizard has none either. Falling back to
+    the plan its live subscription enforces finds those even after a rename -
+    the derived name, which is the last resort, moves with the slug.
+    """
+    linked = db.get(Plan, institute.onboarding_plan_id) if institute.onboarding_plan_id else None
+    if linked is not None and linked.is_internal:
+        return linked
+
+    subscription, _ = current_subscription(db, institute.id)
+    if subscription is not None and subscription.plan is not None and subscription.plan.is_internal:
+        return subscription.plan
+
+    return (
+        db.query(Plan)
+        .filter(Plan.name == f"Agreement {institute.slug} {institute.id}", Plan.is_internal.is_(True))
+        .first()
+    )
 
 
 def _sync_agreement_plan(
@@ -261,6 +291,13 @@ def _sync_agreement_plan(
                 InstituteModule.institute_id == institute.id, InstituteModule.is_active.is_(True)
             )
         ]
+    # Resolved first: an edit is a partial payload, and the plan already in
+    # force is what an omitted term falls back to. Every other term below has
+    # a column on the institute to fall back to - the grace period does not.
+    existing = _agreement_plan(db, institute)
+    grace_days = payload.get("grace_days")
+    if grace_days is None:
+        grace_days = existing.grace_days if existing is not None else 0
     terms = {
         "name": f"Agreement {institute.slug} {institute.id}",
         "description": "Provisions allocated to this institute",
@@ -269,7 +306,7 @@ def _sync_agreement_plan(
         "duration_days": institute.access_duration_days or 365,
         "student_limit": institute.student_limit or 0,
         "staff_limit": institute.staff_limit or 0,
-        "grace_days": payload.get("grace_days") or 0,
+        "grace_days": grace_days,
         "module_ids": modules,
         "audience": AUDIENCE_INSTITUTES,
         "is_published": False,
@@ -277,11 +314,6 @@ def _sync_agreement_plan(
         # Institute students take as many tests as they like.
         "test_limit": 0,
     }
-    existing = db.get(Plan, institute.onboarding_plan_id) if institute.onboarding_plan_id else None
-    if existing is None or not existing.is_internal:
-        # An institute onboarded before this column existed already has a plan
-        # under the derived name; adopt it rather than colliding with it.
-        existing = db.query(Plan).filter(Plan.name == terms["name"], Plan.is_internal.is_(True)).first()
     if existing is not None:
         return plan_service.apply_plan_terms(db, actor, existing, terms, ip), existing.id != institute.onboarding_plan_id
     return plan_service.build_plan(db, actor, terms, ip), True
@@ -301,8 +333,6 @@ def update_institute(
         institute.slug = _unique_slug(db, name, exclude_id=institute.id)
     if "contact_email" in payload:
         institute.contact_email = payload["contact_email"]
-    if "admin_permissions" in payload and payload["admin_permissions"]:
-        institute.admin_permissions = normalized_admin_permissions(payload["admin_permissions"])
     if "session_duration_hours" in payload and payload["session_duration_hours"]:
         institute.session_duration_hours = payload["session_duration_hours"]
     if "ai_student_monthly_limit" in payload:
@@ -379,6 +409,9 @@ def update_institute(
         institute.onboarding_plan_id = plan.id
         # NULL means unmetered: an institute's students take unlimited tests.
         institute.test_limit = None
+        # Seats and courses are read from the plan, but a running term carries
+        # its own grace_days and plan_id - so re-term it in place.
+        subscription_service.sync_open_terms_to_plan(db, institute.id, plan)
     # An institute that already has a subscription keeps it - its seats and
     # courses are read from the plan, so an edit updates them without
     # restarting the access clock. Only a first allocation issues one.

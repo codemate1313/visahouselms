@@ -52,7 +52,9 @@ export function SubscriptionManageCard({
               </p>
               {current.days_remaining != null && (
                 <p>
-                  <span>{state === "grace" ? t.graceDaysLeft : t.daysLeft}</span>{" "}
+                  <span>
+                    {state === "grace" ? t.graceDaysLeft : state === "scheduled" ? t.startsInDays : t.daysLeft}
+                  </span>{" "}
                   <strong className="highlight-days">{current.days_remaining}</strong>
                 </p>
               )}

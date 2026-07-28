@@ -21,6 +21,7 @@ def get_summary(
     date_from: Optional[datetime] = None,
     date_to: Optional[datetime] = None,
     institute_id: Optional[int] = None,
+    payment_method_id: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
-    return revenue_service.summary(db, date_from, date_to, institute_id)
+    return revenue_service.summary(db, date_from, date_to, institute_id, payment_method_id)

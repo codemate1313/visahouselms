@@ -5,14 +5,13 @@ import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { TableAvatar } from "@/components/TableAvatar";
 import { institutesStrings as strings } from "../Institutes.strings";
 import type { InstituteRow, SortKey } from "../types";
-import { INSTITUTE_STATUS, INSTITUTE_STATUS_LABELS } from "@/constants";
-
-const STATE_BADGES: Record<string, string> = {
-  active: "badge-green",
-  grace: "badge-amber",
-  expired: "badge-red",
-  none: "badge-gray",
-};
+import {
+  INSTITUTE_STATUS,
+  INSTITUTE_STATUS_LABELS,
+  SUBSCRIPTION_STATE_BADGES,
+  SUBSCRIPTION_STATUS_LABELS,
+  type SubscriptionStatus,
+} from "@/constants";
 
 interface InstitutesTableProps {
   rows: InstituteRow[];
@@ -84,7 +83,9 @@ export function InstitutesTable({ rows, sortKey, sortDirection, onChangeSort, on
                 </div>
               </td>
               <td>
-                <span className={`badge ${STATE_BADGES[row.subscription_state] ?? "badge-gray"}`}>{row.subscription_state}</span>
+                <span className={`badge ${SUBSCRIPTION_STATE_BADGES[row.subscription_state] ?? "badge-gray"}`}>
+                  {SUBSCRIPTION_STATUS_LABELS[row.subscription_state as SubscriptionStatus] ?? row.subscription_state}
+                </span>
               </td>
               <td>
                 <span className={`badge ${row.is_active ? "badge-green" : "badge-gray"}`}>

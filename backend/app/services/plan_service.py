@@ -266,7 +266,9 @@ def apply_plan_terms(db: Session, actor: User, plan: Plan, data: dict, ip: Optio
         plan.price = Decimal(str(data["price"]))
     if data.get("features") is not None:
         plan.features = _clean_features(data["features"])
-    if modules:
+    if data.get("module_ids") is not None:
+        # An empty list is an instruction, not a missing value: the caller took
+        # every course off the agreement and the plan must stop granting them.
         plan.modules = modules
 
     db.add(plan)

@@ -39,7 +39,18 @@ export function GsapRouteAnimator({ children, className }: GsapRouteAnimatorProp
       gsap.fromTo(
         scope,
         { autoAlpha: 0, y: 12 },
-        { autoAlpha: 1, y: 0, duration: 0.32, ease: "power2.out" },
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.32,
+          ease: "power2.out",
+          // Drop the finished transform instead of leaving matrix(1,0,0,1,0,0)
+          // behind. Any transform - identity included - makes this element the
+          // containing block for its position:fixed descendants, which pinned
+          // every modal backdrop to the content area rather than the viewport,
+          // so the sidebar and header stayed unblurred behind an open dialog.
+          clearProps: "transform",
+        },
       );
 
       const childrenToAnimate = gsap.utils.toArray<HTMLElement>(ANIMATED_CHILDREN, scope).slice(0, 24);
@@ -55,6 +66,7 @@ export function GsapRouteAnimator({ children, className }: GsapRouteAnimatorProp
             ease: "power3.out",
             stagger: 0.035,
             delay: 0.04,
+            clearProps: "transform",
           },
         );
       }

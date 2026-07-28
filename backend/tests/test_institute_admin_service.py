@@ -165,15 +165,18 @@ class InstituteAdminServiceTests(unittest.TestCase):
         self.assertFalse(capacity["can_add"]["staff"])
         self.assertTrue(capacity["can_add"]["students"])
 
-    def test_permissions_default_to_denied_and_are_enforced(self):
+    def test_every_institute_admin_holds_the_full_permission_set(self):
+        """Permissions come with the role, not per institute. A row saved when
+        they were still picked one by one reads as fully permitted too - there
+        is no backfill, so the read path has to be what grants them."""
         self.institute.admin_permissions = {"view_students": True}
         self.db.commit()
         self.db.refresh(self.actor)
 
-        institute_admin_service.require_admin_permission(self.actor, "view_students")
-        with self.assertRaises(HTTPException) as raised:
-            institute_admin_service.require_admin_permission(self.actor, "manage_students")
-        self.assertEqual(raised.exception.status_code, 403)
+        granted = institute_admin_service.admin_permissions(self.actor)
+        self.assertTrue(all(granted.values()))
+        for permission in granted:
+            institute_admin_service.require_admin_permission(self.actor, permission)
 
     def test_super_admin_can_provision_students_for_a_scoped_institute(self):
         created = institute_admin_service.create_member(

@@ -15,9 +15,4 @@ export interface SubscriptionStatus {
   subscription: { plan_name: string; expires_at: string; days_remaining: number | null } | null;
 }
 
-export const STATE_CLASS: Record<string, string> = {
-  active: "badge-green",
-  grace: "badge-amber",
-  expired: "badge-red",
-  none: "badge-gray",
-};
+export { SUBSCRIPTION_STATE_BADGES as STATE_CLASS } from "@/constants";

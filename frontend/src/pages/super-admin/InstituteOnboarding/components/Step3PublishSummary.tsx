@@ -56,12 +56,6 @@ export function Step3PublishSummary({ onboarding, busy, onPublish }: Step3Publis
           <span className="stat-value">{onboarding.course_count}</span>
         </div>
         <div className="publish-stat-box">
-          <span className="stat-label">{t.stats.adminPermissions}</span>
-          <span className="stat-value">
-            {Object.values(onboarding.admin_permissions || {}).filter(Boolean).length} {t.stats.enabledSuffix}
-          </span>
-        </div>
-        <div className="publish-stat-box">
           <span className="stat-label">{t.stats.paymentReceived}</span>
           <span className="stat-value">{paidAmount}</span>
         </div>

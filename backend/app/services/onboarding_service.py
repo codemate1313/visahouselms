@@ -84,7 +84,7 @@ def create_draft(db: Session, actor: User, data: dict, ip: Optional[str]) -> dic
 
     created = institute_service.create_institute(
         db, actor, data["name"], data.get("contact_email"), data["admin_email"],
-        data["admin_first_name"], data["admin_last_name"], data["admin_permissions"], 24, ip,
+        data["admin_first_name"], data["admin_last_name"], 24, ip,
         active=False, onboarding_status="draft",
         ai_student_monthly_limit=data.get("ai_student_monthly_limit"),
     )
@@ -155,6 +155,9 @@ def publish(db: Session, actor: User, institute_id: int, ip: Optional[str]) -> d
     db.flush()
     payment.plan_id = plan.id
     payment.subscription_id = subscription.id
+    # Recorded so a later edit rewrites this plan instead of deriving a second
+    # one from the institute's (by then possibly renamed) name.
+    institute.onboarding_plan_id = plan.id
     institute.onboarding_status = "published"
     institute.published_at = start
     institute.is_active = True

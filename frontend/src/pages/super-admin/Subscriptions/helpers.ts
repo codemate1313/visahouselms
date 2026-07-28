@@ -1,12 +1,7 @@
+import { SUBSCRIPTION_STATE_BADGES } from "@/constants";
 import { subscriptionsStrings as strings } from "./Subscriptions.strings";
 
-export const STATE_BADGES: Record<string, string> = {
-  active: "badge-green",
-  grace: "badge-amber",
-  expired: "badge-red",
-  cancelled: "badge-gray",
-  none: "badge-gray",
-};
+export const STATE_BADGES = SUBSCRIPTION_STATE_BADGES;
 
 export function stateLabel(state: string): string {
   const labels = strings.state;

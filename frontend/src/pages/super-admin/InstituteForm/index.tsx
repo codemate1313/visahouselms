@@ -1,4 +1,4 @@
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, type FormEvent, type KeyboardEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
@@ -6,18 +6,11 @@ import { Button, LinkButton, RequiredMark, SearchableSelect } from "@/components
 import { BrandingPreview } from "@/pages/super-admin/InstituteBranding/components/BrandingPreview";
 import { useToastStore } from "@/store/toastStore";
 import { instituteFormStrings as strings } from "./InstituteForm.strings";
-import {
-  DEFAULT_PERMISSIONS,
-  EMPTY_ALLOCATION,
-  allocationSummaryLine,
-  type CreatedInstitute,
-  type InstitutePermissions,
-} from "./types";
+import { EMPTY_ALLOCATION, allocationSummaryLine, type CreatedInstitute } from "./types";
 import { CreatedInstituteModal } from "./components/CreatedInstituteModal";
 import { AllocationFieldset } from "./components/AllocationFieldset";
 import { AdminAccountFields } from "./components/AdminAccountFields";
 import { SessionPolicyFieldset } from "./components/SessionPolicyFieldset";
-import { PermissionsFieldset } from "./components/PermissionsFieldset";
 import { Icon } from "@/components/icons";
 
 interface ModuleOption {
@@ -69,11 +62,11 @@ export function InstituteForm() {
   // server's business, so nothing here names or prices one.
   const [allocation, setAllocation] = useState(EMPTY_ALLOCATION);
 
-  // Courses & Permissions
+  // Courses & access policy. Institute admins hold every permission by virtue
+  // of the role, so there is nothing to pick here.
   const [modules, setModules] = useState<ModuleOption[]>([]);
   const [methods, setMethods] = useState<Method[]>([]);
   const [selectedModules, setSelectedModules] = useState<Set<number>>(new Set());
-  const [permissions, setPermissions] = useState<InstitutePermissions>(DEFAULT_PERMISSIONS);
   const [sessionDurationHours, setSessionDurationHours] = useState(24);
 
   // Branding
@@ -108,7 +101,6 @@ export function InstituteForm() {
         setContactEmail(data.contact_email ?? "");
         setSessionDurationHours(data.session_duration_hours ?? 24);
         setAiStudentMonthlyLimit(data.ai_student_monthly_limit ?? 0);
-        setPermissions({ ...DEFAULT_PERMISSIONS, ...data.admin_permissions });
         setAgreementReference(data.agreement_reference ?? "");
         setAgreementNotes(data.agreement_notes ?? "");
         setAgreedAmount(data.agreed_amount != null ? Number(data.agreed_amount) : "");
@@ -169,6 +161,33 @@ export function InstituteForm() {
       }
     }
     if (tab === "agreement") {
+      // The commercial terms are what the institute is provisioned against, so
+      // none of them are optional - an agreement with no reference or no money
+      // recorded cannot be reconciled later.
+      if (!agreementReference.trim()) {
+        setError("Agreement Reference is required.");
+        return false;
+      }
+      if (agreedAmount === "") {
+        setError("Agreed Amount is required.");
+        return false;
+      }
+      if (amountReceived === "") {
+        setError("Amount Received is required.");
+        return false;
+      }
+      if (Number(amountReceived) > Number(agreedAmount)) {
+        setError("Amount Received cannot exceed the Agreed Amount.");
+        return false;
+      }
+      if (!currency.trim()) {
+        setError("Currency is required.");
+        return false;
+      }
+      if (!paymentMethodId) {
+        setError("Payment Method is required.");
+        return false;
+      }
       if (!allocation.access_duration_days || Number(allocation.access_duration_days) < 1) {
         setError("Access duration must be at least 1 day.");
         return false;
@@ -182,8 +201,20 @@ export function InstituteForm() {
     return true;
   }
 
+  /** Creating walks the steps in order, so each one is gated on being valid.
+   *  Editing is not a walk: the steps are tabs into an institute that already
+   *  exists, and gating them would strand an older record - one saved before
+   *  the agreement fields were mandatory - on the step holding the blank. The
+   *  rules are not waived, just moved: handleSubmit checks every step and
+   *  opens the offending one. */
+  function canLeaveStep() {
+    if (isNew) return validateStep(activeTab);
+    setError(null);
+    return true;
+  }
+
   function handleNextStep() {
-    if (!validateStep(activeTab)) return;
+    if (!canLeaveStep()) return;
     if (currentTabIndex < TAB_KEYS.length - 1) {
       setActiveTab(TAB_KEYS[currentTabIndex + 1]);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -201,14 +232,30 @@ export function InstituteForm() {
   function handleTabClick(targetTab: TabKey) {
     const targetIdx = TAB_KEYS.indexOf(targetTab);
     if (targetIdx > currentTabIndex) {
-      if (!validateStep(activeTab)) return;
+      if (!canLeaveStep()) return;
     }
     setError(null);
     setActiveTab(targetTab);
   }
 
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
+    // Nothing in this form is type="submit" any more (see the actions bar), so
+    // this only ever runs if a browser finds some other route to submitting.
     event.preventDefault();
+    void save();
+  }
+
+  function blockImplicitSubmit(event: KeyboardEvent<HTMLFormElement>) {
+    // Every field sits in one <form>, so Enter in any of them would submit it -
+    // saving from whichever step is open and leaving the later ones unseen.
+    // Saving is an explicit button press; multi-line notes keep their newlines.
+    const target = event.target as HTMLElement;
+    if (event.key === "Enter" && target.tagName !== "TEXTAREA") {
+      event.preventDefault();
+    }
+  }
+
+  async function save() {
     setError(null);
 
     if (!validateStep("profile")) {
@@ -237,17 +284,16 @@ export function InstituteForm() {
       module_ids: [...selectedModules],
     };
 
+    payload.agreement_reference = agreementReference.trim();
+    payload.agreed_amount = Number(agreedAmount);
+    payload.amount_received = Number(amountReceived);
+    payload.currency = currency.trim();
+    payload.payment_method_id = Number(paymentMethodId);
     if (contactEmail.trim()) payload.contact_email = contactEmail.trim();
-    if (agreementReference.trim()) payload.agreement_reference = agreementReference.trim();
     if (agreementNotes.trim()) payload.agreement_notes = agreementNotes.trim();
-    if (agreedAmount !== "") payload.agreed_amount = Number(agreedAmount);
-    if (amountReceived !== "") payload.amount_received = Number(amountReceived);
-    if (currency.trim()) payload.currency = currency.trim();
-    if (paymentMethodId) payload.payment_method_id = Number(paymentMethodId);
     if (paymentReference.trim()) payload.payment_reference = paymentReference.trim();
     if (primaryColor) payload.primary_color = primaryColor;
     if (secondaryColor) payload.secondary_color = secondaryColor;
-    if (permissions) payload.admin_permissions = permissions;
 
     try {
       if (isNew) {
@@ -285,6 +331,9 @@ export function InstituteForm() {
           await apiClient.post(`/super-admin/institutes/${id}/branding/logo`, formData);
         }
 
+        // Saving is done with the institute, whichever step it was pressed
+        // from - the steps are there to reach a field, not to be walked.
+        showSuccess(strings.wizard.savedToast);
         navigate("/super-admin/institutes");
       }
     } catch (err: unknown) {
@@ -306,7 +355,7 @@ export function InstituteForm() {
     { key: "profile", step: 1, label: "Profile & Admin" },
     { key: "agreement", step: 2, label: "Agreement & Quotas" },
     { key: "courses", step: 3, label: `Courses (${selectedModules.size})` },
-    { key: "permissions", step: 4, label: "Permissions & AI Policy" },
+    { key: "permissions", step: 4, label: "Access & AI Policy" },
     { key: "branding", step: 5, label: "Branding & Preview" },
   ];
 
@@ -399,7 +448,7 @@ export function InstituteForm() {
         )}
       </div>
 
-      <form className="institute-form-card" onSubmit={handleSubmit}>
+      <form className="institute-form-card" onSubmit={handleSubmit} onKeyDown={blockImplicitSubmit}>
         {/* TAB 1: Profile & Admin */}
         {activeTab === "profile" && (
           <div>
@@ -455,25 +504,26 @@ export function InstituteForm() {
             </div>
             <div className="form-grid-3col">
               <div>
-                <label htmlFor="agreement_reference">Agreement Reference</label>
+                <label htmlFor="agreement_reference">Agreement Reference<RequiredMark /></label>
                 <input id="agreement_reference" value={agreementReference} onChange={(e) => setAgreementReference(e.target.value)} placeholder="e.g. AG-2026-081" />
               </div>
               <div>
-                <label htmlFor="agreed_amount">Agreed Amount</label>
+                <label htmlFor="agreed_amount">Agreed Amount<RequiredMark /></label>
                 <input id="agreed_amount" type="number" min="0" value={agreedAmount} onChange={(e) => setAgreedAmount(e.target.value === "" ? "" : Number(e.target.value))} placeholder="50000" />
               </div>
               <div>
-                <label htmlFor="amount_received">Amount Received</label>
+                <label htmlFor="amount_received">Amount Received<RequiredMark /></label>
                 <input id="amount_received" type="number" min="0" value={amountReceived} onChange={(e) => setAmountReceived(e.target.value === "" ? "" : Number(e.target.value))} placeholder="50000" />
               </div>
               <div>
-                <label htmlFor="currency">Currency</label>
+                <label htmlFor="currency">Currency<RequiredMark /></label>
                 <input id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} placeholder="INR" />
               </div>
               <div>
-                <label htmlFor="payment_method">Payment Method</label>
+                <label htmlFor="payment_method">Payment Method<RequiredMark /></label>
                 <SearchableSelect
-                  options={[{ value: "", label: "Manual / Unspecified" }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
+                  options={methods.map((m) => ({ value: m.id, label: m.name }))}
+                  placeholder="Select payment method..."
                   value={paymentMethodId}
                   onChange={(val) => setPaymentMethodId(String(val))}
                   searchable={false}
@@ -566,7 +616,6 @@ export function InstituteForm() {
               />
             </fieldset>
 
-            <PermissionsFieldset permissions={permissions} onPermissionsChange={setPermissions} />
           </div>
         )}
 
@@ -631,8 +680,24 @@ export function InstituteForm() {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Creating walks the steps in order; editing does not. An edit is
+                usually one field on one step, so Save is on every step and
+                validates the whole form regardless of where it is pressed. */}
+            {/* On the last step the primary button is already Save. */}
+            {!isNew && currentTabIndex < TAB_KEYS.length - 1 && (
+              <Button variant="secondary" disabled={saving} onClick={() => void save()}>
+                {saving ? strings.saving : strings.save}
+              </Button>
+            )}
+            {/* Distinct keys, and neither is type="submit". React flushes a
+                click synchronously, so a single node that switched from
+                "button" to "submit" mid-click would still be a submit button
+                by the time the browser ran the click's default action - which
+                submitted the form on the way into the last step and skipped
+                it. Separate nodes, explicit handlers, no default action. */}
             {currentTabIndex < TAB_KEYS.length - 1 ? (
               <button
+                key="next-step"
                 type="button"
                 className="primary-submit-btn"
                 onClick={handleNextStep}
@@ -641,7 +706,14 @@ export function InstituteForm() {
                 {strings.wizard.nextStep} <Icon name="arrowRight" />
               </button>
             ) : (
-              <button type="submit" disabled={saving} className="primary-submit-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <button
+                key="save"
+                type="button"
+                disabled={saving}
+                className="primary-submit-btn"
+                onClick={() => void save()}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
                 {saving ? strings.saving : isNew ? strings.wizard.createInstitute : strings.save}
               </button>
             )}

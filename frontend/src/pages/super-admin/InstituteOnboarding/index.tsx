@@ -4,7 +4,7 @@ import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { instituteOnboardingStrings as strings } from "./InstituteOnboarding.strings";
-import { INITIAL, INITIAL_PERMISSIONS, PERMISSIONS } from "./helpers";
+import { INITIAL } from "./helpers";
 import type { Method, ModuleOption, Onboarding } from "./types";
 import { OnboardingStepper } from "./components/OnboardingStepper";
 import { Step1AgreementForm } from "./components/Step1AgreementForm";
@@ -17,7 +17,6 @@ export function InstituteOnboarding() {
   const { id } = useParams();
   const [step, setStep] = useState(id ? 2 : 1);
   const [form, setForm] = useState(INITIAL);
-  const [adminPermissions, setAdminPermissions] = useState(INITIAL_PERMISSIONS);
   const [modules, setModules] = useState<ModuleOption[]>([]);
   const [methods, setMethods] = useState<Method[]>([]);
   const [selectedModules, setSelectedModules] = useState<Set<number>>(new Set());
@@ -32,7 +31,6 @@ export function InstituteOnboarding() {
     const { data: record } = await apiClient.get<Onboarding>(`/super-admin/onboarding/${targetId}`);
     setOnboarding(record);
     setSelectedModules(new Set(record.module_ids || []));
-    setAdminPermissions(record.admin_permissions || INITIAL_PERMISSIONS);
     setForm((current) => ({
       ...current,
       ai_student_monthly_limit: String(record.ai_student_monthly_limit ?? 0),
@@ -69,14 +67,7 @@ export function InstituteOnboarding() {
     setSelectedModules((current) => current.size === modules.length ? new Set() : new Set(modules.map((module) => module.id)));
   }
 
-  function togglePermission(key: string, checked: boolean) {
-    setAdminPermissions((current) => ({ ...current, [key]: checked }));
-  }
 
-  function toggleAllPermissions() {
-    const allChecked = PERMISSIONS.every((permission) => adminPermissions[permission.key]);
-    setAdminPermissions(Object.fromEntries(PERMISSIONS.map(({ key }) => [key, !allChecked])) as Record<string, boolean>);
-  }
 
   const existingLogoSrc = onboarding?.branding?.logo_url ? `${API_BASE_URL}${onboarding.branding.logo_url}` : null;
   const uploadedLogoSrc = useMemo(() => (logo ? URL.createObjectURL(logo) : null), [logo]);
@@ -89,8 +80,16 @@ export function InstituteOnboarding() {
 
   async function createDraft(event: FormEvent) {
     event.preventDefault();
-    setBusy(true);
     setError(null);
+    if (!form.payment_method_id) {
+      setError(strings.errors.paymentMethodRequired);
+      return;
+    }
+    if (Number(form.amount_received) > Number(form.agreed_amount)) {
+      setError(strings.errors.receivedExceedsAgreed);
+      return;
+    }
+    setBusy(true);
     try {
       const { data } = await apiClient.post<Onboarding & { admin_email: string; admin_temp_password: string }>("/super-admin/onboarding", {
         ...form,
@@ -103,7 +102,6 @@ export function InstituteOnboarding() {
         access_duration_days: Number(form.access_duration_days),
         ai_student_monthly_limit: Number(form.ai_student_monthly_limit || 0),
         module_ids: [...selectedModules],
-        admin_permissions: adminPermissions,
       });
       setOnboarding(data);
       setAdminCredential({ email: data.admin_email, password: data.admin_temp_password });
@@ -178,9 +176,6 @@ export function InstituteOnboarding() {
         <Step1AgreementForm
           form={form}
           set={set}
-          adminPermissions={adminPermissions}
-          onTogglePermission={togglePermission}
-          onToggleAllPermissions={toggleAllPermissions}
           methods={methods}
           onPaymentMethodChange={(value) => setForm((prev) => ({ ...prev, payment_method_id: value }))}
           modules={modules}

@@ -39,7 +39,9 @@ export function SubscriptionHistoryTable({ history, onCancel }: SubscriptionHist
                   <span className={`badge ${STATE_BADGES[row.state] ?? "badge-gray"}`}>{stateLabel(row.state)}</span>
                 </td>
                 <td className="table-actions" style={{ textAlign: "right", paddingRight: 24 }}>
-                  {!row.cancelled_at && (row.state === "active" || row.state === "grace") ? (
+                  {/* Anything not yet over can be called off - including a term
+                      that has been paid for but has not started. */}
+                  {!row.cancelled_at && ["active", "grace", "scheduled"].includes(row.state) ? (
                     <button
                       type="button"
                       className="danger-cancel-btn table-cancel-btn"

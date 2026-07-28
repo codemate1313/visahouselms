@@ -80,6 +80,15 @@ export function exportRevenueExcel(summary: Summary) {
       row.total,
       row.count,
     ]),
+    [],
+    [e.revenueByMethod],
+    [...e.methodColumns],
+    ...summary.by_method.map((row, i) => [
+      i + 1,
+      row.payment_method_name,
+      row.total,
+      row.count,
+    ]),
   ];
 
   const ws = XLSX.utils.aoa_to_sheet(wsData);

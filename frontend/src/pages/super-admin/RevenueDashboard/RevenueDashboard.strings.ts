@@ -2,6 +2,8 @@ export const revenueDashboardStrings = {
   title: "Revenue Analytics",
   subtitle: "Financial performance breakdown across B2B institutes and B2C direct students.",
   allInstitutes: "All institutes",
+  allMethods: "All payment methods",
+  searchMethod: "Search payment method...",
   searchInstitute: "Search institute...",
   dateFrom: "From Date",
   dateTo: "To Date",
@@ -64,7 +66,9 @@ export const revenueDashboardStrings = {
     totalTransactions: "Total Transactions",
     revenueByInstitute: "Revenue By Institute",
     revenueByMonth: "Revenue By Month",
+    revenueByMethod: "Revenue By Payment Method",
     columns: ["#", "Institute Name", "Revenue Total", "Transactions"],
     monthColumns: ["#", "Month", "Revenue Total", "Transactions"],
+    methodColumns: ["#", "Payment Method", "Revenue Total", "Transactions"],
   },
 } as const;

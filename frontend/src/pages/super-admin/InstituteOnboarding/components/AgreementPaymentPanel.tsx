@@ -29,9 +29,9 @@ export function AgreementPaymentPanel({ form, set, methods, onPaymentMethodChang
           <input value={form.currency} onChange={set("currency")} required />
         </div>
         <div>
-          <label>{t.paymentMethod}</label>
+          <label>{t.paymentMethod}<RequiredMark /></label>
           <SearchableSelect
-            options={[{ value: "", label: t.manualUnspecified }, ...methods.map((method) => ({ value: method.id, label: method.name }))]}
+            options={methods.map((method) => ({ value: method.id, label: method.name }))}
             value={form.payment_method_id}
             onChange={(value) => onPaymentMethodChange(String(value))}
             searchPlaceholder={t.searchPaymentMethods}
@@ -43,8 +43,8 @@ export function AgreementPaymentPanel({ form, set, methods, onPaymentMethodChang
           <input value={form.payment_reference} onChange={set("payment_reference")} placeholder={t.receiptPlaceholder} />
         </div>
         <div>
-          <label>{t.agreementReference}</label>
-          <input value={form.agreement_reference} onChange={set("agreement_reference")} placeholder={t.agreementReferencePlaceholder} />
+          <label>{t.agreementReference}<RequiredMark /></label>
+          <input value={form.agreement_reference} onChange={set("agreement_reference")} required placeholder={t.agreementReferencePlaceholder} />
         </div>
       </div>
 

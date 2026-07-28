@@ -46,25 +46,17 @@ def create_institute(
         payload.admin_email,
         payload.admin_first_name,
         payload.admin_last_name,
-        payload.admin_permissions.model_dump(),
         payload.session_duration_hours,
         _client_ip(request),
         ai_student_monthly_limit=payload.ai_student_monthly_limit,
     )
-    # If extra agreement/plan/branding attributes were provided, save them
-    if (
-        payload.agreement_reference
-        or payload.agreed_amount
-        or payload.module_ids
-        or payload.primary_color
-        or payload.student_limit
-        or payload.access_duration_days
-    ):
-        temp_pwd = res.get("admin_temp_password")
-        institute_service.update_institute(db, actor, res["id"], payload.model_dump(exclude_unset=True), _client_ip(request))
-        res = institute_service.get_institute(db, res["id"])
-        if temp_pwd:
-            res["admin_temp_password"] = temp_pwd
+    # The agreement, its provisions and branding always come with the payload -
+    # create_institute() only writes the institute and its admin account.
+    temp_pwd = res.get("admin_temp_password")
+    institute_service.update_institute(db, actor, res["id"], payload.model_dump(exclude_unset=True), _client_ip(request))
+    res = institute_service.get_institute(db, res["id"])
+    if temp_pwd:
+        res["admin_temp_password"] = temp_pwd
     return res
 
 
@@ -82,8 +74,6 @@ def update_institute(
     actor: User = Depends(get_current_user),
 ):
     data = payload.model_dump(exclude_unset=True)
-    if "admin_permissions" in data and payload.admin_permissions:
-        data["admin_permissions"] = payload.admin_permissions.model_dump()
     return institute_service.update_institute(
         db,
         actor,

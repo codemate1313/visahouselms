@@ -15,7 +15,23 @@ export function ValidityGauge({ daysRemaining, state }: ValidityGaugeProps) {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percent / 100) * circumference;
 
-  const strokeColor = state === "active" ? "var(--green-600)" : state === "grace" ? "var(--amber-600)" : "var(--danger)";
+  const strokeColor =
+    state === "active"
+      ? "var(--green-600)"
+      : state === "grace"
+        ? "var(--amber-600)"
+        : state === "scheduled"
+          ? "var(--slate-500)"
+          : "var(--danger)";
+
+  const description =
+    state === "active"
+      ? t.activeDescription
+      : state === "grace"
+        ? t.graceDescription
+        : state === "scheduled"
+          ? t.scheduledDescription
+          : t.expiredDescription;
 
   return (
     <div className="validity-gauge-card">
@@ -35,9 +51,7 @@ export function ValidityGauge({ daysRemaining, state }: ValidityGaugeProps) {
           <span className={`badge ${STATE_BADGES[state]}`} style={{ width: "max-content", marginBottom: 6 }}>
             {stateLabel(state)}
           </span>
-          <p className="gauge-desc">
-            {state === "active" ? t.activeDescription : state === "grace" ? t.graceDescription : t.expiredDescription}
-          </p>
+          <p className="gauge-desc">{description}</p>
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from math import ceil
 from typing import List, Optional, Tuple
 
 from fastapi import HTTPException, status
@@ -17,6 +18,10 @@ STATE_NONE = "none"
 STATE_ACTIVE = "active"
 STATE_GRACE = "grace"
 STATE_EXPIRED = "expired"
+# A term bought before the running one ends starts at that expiry, so it sits
+# in the future. It is not access yet - only the term covering *now* is.
+STATE_SCHEDULED = "scheduled"
+STATE_CANCELLED = "cancelled"
 
 # stamped on the audit row when the expiry sweep suspends an institute, so a
 # later renewal can tell its own suspension apart from a manual Super Admin one
@@ -48,46 +53,55 @@ def get_institute_or_404(db: Session, institute_id: int) -> Institute:
     return institute
 
 
+def _state_of(subscription: Subscription, now: datetime) -> str:
+    """The one place a stored row is turned into a lifecycle state, so every
+    screen that shows a term agrees about what it is."""
+    if subscription.cancelled_at is not None:
+        return STATE_CANCELLED
+    if now < subscription.starts_at:
+        return STATE_SCHEDULED
+    if now < subscription.expires_at:
+        return STATE_ACTIVE
+    if now < subscription.expires_at + timedelta(days=subscription.grace_days):
+        return STATE_GRACE
+    return STATE_EXPIRED
+
+
+def _pick_current(rows: List[Subscription], now: datetime) -> Tuple[Optional[Subscription], str]:
+    """The term that governs access right now. Renewing early leaves two open
+    rows, so "latest expiry" is not the answer - the one that has actually
+    started is, and only if none has does a scheduled term stand in."""
+    started = [row for row in rows if row.starts_at <= now]
+    if started:
+        current = max(started, key=lambda row: row.expires_at)
+    elif rows:
+        current = min(rows, key=lambda row: row.starts_at)
+    else:
+        return None, STATE_NONE
+    return current, _state_of(current, now)
+
+
 def current_subscription(db: Session, institute_id: int) -> Tuple[Optional[Subscription], str]:
-    """Latest non-cancelled subscription and its derived state."""
-    subscription = (
+    """The institute's governing subscription and its derived state."""
+    rows = (
         db.query(Subscription)
         .options(joinedload(Subscription.plan))
         .filter(Subscription.institute_id == institute_id, Subscription.cancelled_at.is_(None))
-        .order_by(Subscription.expires_at.desc())
-        .first()
+        .all()
     )
-    if subscription is None:
-        return None, STATE_NONE
-
-    now = _now()
-    if now < subscription.expires_at:
-        return subscription, STATE_ACTIVE
-    if now < subscription.expires_at + timedelta(days=subscription.grace_days):
-        return subscription, STATE_GRACE
-    return subscription, STATE_EXPIRED
+    return _pick_current(rows, _now())
 
 
 def current_user_subscription(db: Session, user_id: int) -> Tuple[Optional[Subscription], str]:
-    """Personal (B2C direct-student) mirror of current_subscription - latest
-    non-cancelled subscription owned by this user (not an institute) and its
-    derived state."""
-    subscription = (
+    """Personal (B2C direct-student) mirror of current_subscription - the
+    governing subscription owned by this user (not an institute)."""
+    rows = (
         db.query(Subscription)
         .options(joinedload(Subscription.plan).joinedload(Plan.modules))
         .filter(Subscription.user_id == user_id, Subscription.cancelled_at.is_(None))
-        .order_by(Subscription.expires_at.desc())
-        .first()
+        .all()
     )
-    if subscription is None:
-        return None, STATE_NONE
-
-    now = _now()
-    if now < subscription.expires_at:
-        return subscription, STATE_ACTIVE
-    if now < subscription.expires_at + timedelta(days=subscription.grace_days):
-        return subscription, STATE_GRACE
-    return subscription, STATE_EXPIRED
+    return _pick_current(rows, _now())
 
 
 def _access_ends_at(subscription: Subscription) -> datetime:
@@ -243,17 +257,48 @@ def usage(db: Session, institute_id: int) -> dict:
         .filter(User.institute_id == institute_id)
         .count()
     )
-    return {"students": students, "staff": staff, "tests": tests}
+    courses = (
+        db.query(InstituteModule)
+        .join(ExamModule, InstituteModule.module_id == ExamModule.id)
+        .filter(
+            InstituteModule.institute_id == institute_id,
+            InstituteModule.is_active.is_(True),
+            ExamModule.deleted_at.is_(None),
+        )
+        .count()
+    )
+    return {"students": students, "staff": staff, "tests": tests, "courses": courses}
+
+
+def days_until(deadline: datetime, now: Optional[datetime] = None) -> int:
+    """Whole days a countdown should show. Rounded up, so a 30-day term reads
+    "30 days left" on the day it is granted and "1" on its final day - a
+    truncating subtraction loses a day at both ends and makes a fresh
+    agreement look like it was issued yesterday."""
+    seconds = (deadline - (now or _now())).total_seconds()
+    return max(0, ceil(seconds / 86400))
+
+
+def _publishable_course_count(db: Session) -> int:
+    """Every course the Super Admin could hand to an institute - the pool the
+    allocated ones are counted against."""
+    return (
+        db.query(ExamModule)
+        .filter(ExamModule.status == "published", ExamModule.deleted_at.is_(None))
+        .count()
+    )
 
 
 def _serialize(subscription: Subscription, state: str) -> dict:
     now = _now()
     days_remaining = None
     if state == STATE_ACTIVE:
-        days_remaining = max(0, (subscription.expires_at - now).days)
+        days_remaining = days_until(subscription.expires_at, now)
     elif state == STATE_GRACE:
-        grace_end = subscription.expires_at + timedelta(days=subscription.grace_days)
-        days_remaining = max(0, (grace_end - now).days)
+        days_remaining = days_until(subscription.expires_at + timedelta(days=subscription.grace_days), now)
+    elif state == STATE_SCHEDULED:
+        # Days until this term takes over, not days of access it will grant.
+        days_remaining = days_until(subscription.starts_at, now)
     return {
         "id": subscription.id,
         "institute_id": subscription.institute_id,
@@ -280,6 +325,9 @@ def subscription_status(db: Session, institute_id: int) -> dict:
             "students": subscription.plan.student_limit,
             "staff": subscription.plan.staff_limit,
             "tests": None if subscription.plan.is_internal else subscription.plan.test_limit,
+            # Courses are allocated from a shared catalogue rather than capped,
+            # so the "limit" is how many there are to give.
+            "courses": _publishable_course_count(db),
         }
     return {
         "subscription": _serialize(subscription, state) if subscription else None,
@@ -299,18 +347,7 @@ def history(db: Session, institute_id: int) -> List[dict]:
         .all()
     )
     now = _now()
-    result = []
-    for row in rows:
-        if row.cancelled_at is not None:
-            state = "cancelled"
-        elif now < row.expires_at:
-            state = STATE_ACTIVE
-        elif now < row.expires_at + timedelta(days=row.grace_days):
-            state = STATE_GRACE
-        else:
-            state = STATE_EXPIRED
-        result.append(_serialize(row, state))
-    return result
+    return [_serialize(row, _state_of(row, now)) for row in rows]
 
 
 def assign(
@@ -345,6 +382,13 @@ def assign(
     _audit(db, actor, "subscription.assign", subscription.id, ip, {"institute_id": institute_id, "plan": plan.name})
     db.commit()
     db.refresh(subscription)
+    # A paid plan landing on a demo institute ends the demo: its own expiry
+    # would otherwise still suspend an institute that is now a customer.
+    # Local import - demo_service reaches back into institute_service, which
+    # imports this module.
+    from app.services import demo_service
+
+    demo_service.mark_converted_if_demo(db, actor, institute_id, ip)
     _, state = current_subscription(db, institute_id)
     return _serialize(subscription, state)
 
@@ -390,6 +434,53 @@ def renew(
     db.refresh(subscription)
     _, new_state = current_subscription(db, institute_id)
     return _serialize(subscription, new_state)
+
+
+def sync_open_terms_to_plan(db: Session, institute_id: int, plan: Plan) -> int:
+    """Point every term that has not ended yet at `plan` and re-read the terms
+    a subscription copies rather than looks up.
+
+    Editing an agreement rewrites its plan in place, so seats and courses reach
+    the institute on their own. Three things do not: `grace_days` and the end
+    date are stored on the row, and the row's plan_id can point at an older
+    plan. Re-granting 30 days as 60 has to move the deadline the institute is
+    counting down to, or the edit is only cosmetic.
+
+    The start date is left alone, so the term is re-cut from where it began
+    rather than restarted from today. Shortening an agreement therefore can
+    end it - that is the edit doing what it says. Staged, not committed: the
+    caller owns the transaction.
+    """
+    now = _now()
+    touched = 0
+    rows = (
+        db.query(Subscription)
+        .filter(Subscription.institute_id == institute_id, Subscription.cancelled_at.is_(None))
+        .all()
+    )
+    # Oldest first, because a term renewed early begins where its predecessor
+    # ends - move one deadline and the queue behind it has to follow.
+    open_rows = sorted((row for row in rows if _access_ends_at(row) > now), key=lambda row: row.starts_at)
+    handover: Optional[datetime] = None
+    for row in open_rows:
+        starts_at = handover if handover is not None else row.starts_at
+        expires_at = starts_at + timedelta(days=plan.duration_days)
+        handover = expires_at
+        unchanged = (
+            row.plan_id == plan.id
+            and row.grace_days == plan.grace_days
+            and row.starts_at == starts_at
+            and row.expires_at == expires_at
+        )
+        if unchanged:
+            continue
+        row.plan_id = plan.id
+        row.grace_days = plan.grace_days
+        row.starts_at = starts_at
+        row.expires_at = expires_at
+        db.add(row)
+        touched += 1
+    return touched
 
 
 def cancel(db: Session, actor: User, subscription_id: int, ip: Optional[str]) -> dict:
@@ -464,18 +555,7 @@ def user_subscription_history(db: Session, user_id: int) -> List[dict]:
         .all()
     )
     now = _now()
-    result = []
-    for row in rows:
-        if row.cancelled_at is not None:
-            state = "cancelled"
-        elif now < row.expires_at:
-            state = STATE_ACTIVE
-        elif now < row.expires_at + timedelta(days=row.grace_days):
-            state = STATE_GRACE
-        else:
-            state = STATE_EXPIRED
-        result.append(_serialize(row, state))
-    return result
+    return [_serialize(row, _state_of(row, now)) for row in rows]
 
 
 def my_current_plan_view(db: Session, user: User) -> dict:

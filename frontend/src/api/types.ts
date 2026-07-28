@@ -334,7 +334,7 @@ export interface StudentCurrentPlan {
     description: string | null;
     modules: StudentPlanModule[];
   } | null;
-  state: "none" | "active" | "grace" | "expired";
+  state: "none" | "active" | "grace" | "expired" | "scheduled";
   expires_at: string | null;
   access_type: "institute" | "direct";
 }

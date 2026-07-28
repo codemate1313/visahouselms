@@ -1,5 +1,3 @@
-import type { PermissionKey } from "./types";
-
 export const instituteFormStrings = {
   breadcrumbInstitutes: "Institutes",
   newTitle: "New Institute",
@@ -21,11 +19,6 @@ export const instituteFormStrings = {
     description: "Controls how long institute account sessions remain valid after login. Refreshing the page does not extend this limit.",
     lifetimeLabel: "Session lifetime (hours)",
   },
-  permissions: {
-    legend: "Institute Admin permissions",
-    description: "Student account creation remains exclusive to the Super Admin.",
-    selectAll: "Select all",
-  },
   saving: "Saving...",
   save: "Save",
   cancel: "Cancel",
@@ -34,6 +27,7 @@ export const instituteFormStrings = {
     previousStep: "Previous Step",
     nextStep: "Next Step",
     createInstitute: "Create Institute",
+    savedToast: "Institute saved.",
     selectAllModules: "Select All",
     deselectAllModules: "Deselect All",
     manageAccounts: "Manage Accounts",
@@ -52,12 +46,4 @@ export const instituteFormStrings = {
     load: "Failed to load institute.",
     save: "Failed to save institute.",
   },
-  permissionOptions: [
-    { key: "view_students" as PermissionKey, label: "View students", description: "See the institute student directory." },
-    { key: "manage_students" as PermissionKey, label: "Manage students", description: "Edit, activate, deactivate, and delete student accounts." },
-    { key: "view_student_activity" as PermissionKey, label: "View student activity", description: "Review test attempts, grading history, and known devices." },
-    { key: "manage_student_sessions" as PermissionKey, label: "Manage student sessions", description: "Revoke a student's active login session." },
-    { key: "manage_staff" as PermissionKey, label: "Manage instructors", description: "Create, edit, activate, and deactivate institute instructors." },
-    { key: "view_billing" as PermissionKey, label: "View subscription", description: "See the assigned plan, limits, and offline payment history." },
-  ],
 } as const;
