@@ -39,6 +39,7 @@ from app.routers import (
     student_portal,
     subscriptions,
     super_admin,
+    support,
     terminal,
     testimonials_router,
     trial_config,
@@ -93,6 +94,8 @@ app.include_router(payment_methods.router)
 app.include_router(revenue.router)
 app.include_router(student_portal.router)
 app.include_router(notifications.router)
+app.include_router(support.public_router)
+app.include_router(support.admin_router)
 app.include_router(announcements.institute_router)
 app.include_router(announcements.platform_router)
 app.include_router(announcements.student_router)

@@ -1,0 +1,36 @@
+export const supportTicketsStrings = {
+  title: "Support Tickets",
+  subtitle: "Customer enquiries from the public contact page.",
+  loading: "Loading support tickets...",
+  errors: {
+    load: "Failed to load support tickets.",
+    update: "Failed to update support ticket.",
+  },
+  filters: {
+    search: "Search enquiries...",
+    status: "Status",
+    priority: "Priority",
+    all: "All",
+  },
+  table: {
+    customer: "Customer",
+    enquiry: "Enquiry",
+    status: "Status",
+    priority: "Priority",
+    received: "Received",
+    actions: "Actions",
+    empty: "No support tickets found.",
+  },
+  detail: {
+    title: "Ticket Details",
+    emptyTitle: "Select a ticket",
+    emptyBody: "Open any enquiry to view the full message and update its status.",
+    customer: "Customer",
+    institute: "Institute",
+    phone: "Phone",
+    message: "Message",
+    note: "Admin note",
+    notePlaceholder: "Add follow-up notes, call outcome, or internal context.",
+    save: "Save changes",
+  },
+} as const;

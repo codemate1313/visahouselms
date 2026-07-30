@@ -34,6 +34,7 @@ from app.models.request_log import RequestLog
 from app.models.role import Role
 from app.models.subscription import Subscription
 from app.models.setting import Setting
+from app.models.support_ticket import SupportTicket
 from app.models.testimonials import Testimonial
 from app.models.blogs import BlogPost
 from app.models.seo_settings import SEOSetting
@@ -73,6 +74,7 @@ __all__ = [
     "Backup",
     "Plan",
     "Subscription",
+    "SupportTicket",
     "InstituteBranding",
     "InstructorProfile",
     "TrialConfig",

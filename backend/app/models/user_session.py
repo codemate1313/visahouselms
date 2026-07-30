@@ -26,4 +26,5 @@ class UserSession(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
+    user: Mapped["User"] = relationship()  # noqa: F821
     device: Mapped[Optional["UserDevice"]] = relationship()  # noqa: F821

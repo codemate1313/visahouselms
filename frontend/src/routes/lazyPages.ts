@@ -73,6 +73,7 @@ export const Profile = lazy(() => import("../pages/super-admin/Profile").then((m
 export const RevenueDashboard = lazy(() => import("../pages/super-admin/RevenueDashboard").then((module) => ({ default: module.RevenueDashboard })));
 export const Sessions = lazy(() => import("../pages/super-admin/Sessions").then((module) => ({ default: module.Sessions })));
 export const Subscriptions = lazy(() => import("../pages/super-admin/Subscriptions").then((module) => ({ default: module.Subscriptions })));
+export const SupportTickets = lazy(() => import("../pages/super-admin/SupportTickets").then((module) => ({ default: module.SupportTickets })));
 export const Terminal = lazy(() => import("../pages/super-admin/Terminal").then((module) => ({ default: module.Terminal })));
 export const TestRunner = lazy(() => import("../pages/student/TestRunner").then((module) => ({ default: module.TestRunner })));
 export const TrialConfig = lazy(() => import("../pages/super-admin/TrialConfig").then((module) => ({ default: module.TrialConfig })));

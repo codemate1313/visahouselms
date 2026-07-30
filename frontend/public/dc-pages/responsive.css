@@ -317,11 +317,12 @@ textarea {
     order: 3;
     width: 100%;
     gap: 22px !important;
-    overflow-x: auto;
+    overflow-x: hidden;
     overscroll-behavior-inline: contain;
     padding: 5px 1px 7px;
     scrollbar-width: none;
     scroll-snap-type: inline proximity;
+    flex-wrap: wrap;
   }
 
   .vh-nav::-webkit-scrollbar {
@@ -329,9 +330,9 @@ textarea {
   }
 
   .vh-nav-link {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
     scroll-snap-align: start;
-    white-space: nowrap;
+    white-space: normal;
   }
 
   section[style*="max-width"] {

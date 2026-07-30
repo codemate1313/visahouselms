@@ -4,10 +4,10 @@ import { BarChart } from "@/components/charts/BarChart";
 import { DonutChart } from "@/components/charts/DonutChart";
 import { LineChart } from "@/components/charts/LineChart";
 import { dashboardStrings as strings } from "../Dashboard.strings";
-import { PAYMENT_STATUS_COLORS, SUBSCRIPTION_STATE_COLORS, formatMoney } from "../helpers";
+import { PAYMENT_STATUS_COLORS, STUDENT_TYPE_COLORS, SUBSCRIPTION_STATE_COLORS, formatMoney } from "../helpers";
 import type { Summary } from "../types";
 
-export type ChartKey = "byInstitute" | "byMonth" | "paymentStatus" | "instituteState";
+export type ChartKey = "byInstitute" | "byMonth" | "paymentStatus" | "studentType" | "instituteState";
 
 interface FilterOption {
   id: string;
@@ -101,6 +101,16 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
             { id: "partial", label: "Partial Payments" },
             { id: "paid", label: "Completed Paid" },
             { id: "failed", label: "Failed / Refused" },
+          ],
+        };
+      case "studentType":
+        return {
+          label: "STUDENT TYPE",
+          defaultOption: "all",
+          options: [
+            { id: "all", label: "All Students" },
+            { id: "direct", label: "Direct Students" },
+            { id: "institute", label: "Institute Students" },
           ],
         };
       case "instituteState":
@@ -275,6 +285,36 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
         centerLabel={t.paymentStatusCenterLabel}
         ariaLabel={t.paymentStatusAriaLabel}
         emptyMessage={t.paymentStatusEmpty}
+      />
+    );
+  } else if (chartKey === "studentType") {
+    title = t.studentTypeTitle;
+    description = "Distribution of direct learners and institute-enrolled students";
+    let rawData = (summary.student_type_breakdown ?? []).map((s) => ({
+      label: s.label,
+      value: s.count,
+      color: STUDENT_TYPE_COLORS[s.type] ?? "var(--series-1)",
+      type: s.type,
+    }));
+
+    if (activeFilter !== "all") {
+      rawData = rawData.filter((d) => d.type === activeFilter);
+    }
+
+    const totalCount = rawData.reduce((acc, curr) => acc + curr.value, 0);
+    breakdownItems = rawData.map((d) => ({
+      label: d.label,
+      value: `${d.value} students`,
+      share: totalCount > 0 ? `${Math.round((d.value / totalCount) * 100)}%` : "0%",
+      color: d.color,
+    }));
+    chartElement = (
+      <DonutChart
+        data={rawData}
+        title={title}
+        centerLabel={t.studentTypeCenterLabel}
+        ariaLabel={t.studentTypeAriaLabel}
+        emptyMessage={t.studentTypeEmpty}
       />
     );
   } else if (chartKey === "instituteState") {

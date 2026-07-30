@@ -166,6 +166,7 @@ def create_account(
         phone_number=payload.phone_number,
         address=payload.address,
         avatar_path=payload.avatar_path,
+        can_view_monetary_analytics=payload.can_view_monetary_analytics,
     )
 
 
@@ -189,6 +190,7 @@ def update_account(
         phone_number=payload.phone_number,
         address=payload.address,
         avatar_path=payload.avatar_path,
+        can_view_monetary_analytics=payload.can_view_monetary_analytics,
     )
 
 
@@ -263,6 +265,7 @@ def _current_user_response(user: User) -> CurrentUser:
         avatar_url=account_service.avatar_url_for(user),
         is_owner=user.is_owner,
         is_developer_verified=user.is_developer_verified,
+        can_view_monetary_analytics=user.is_owner or user.can_view_monetary_analytics,
     )
 
 

@@ -4,6 +4,7 @@ import { logoutAndRedirectHome } from "@/auth/logout";
 import { GsapRouteAnimator } from "@/components/GsapRouteAnimator";
 import { PortalTopBar } from "@/components/PortalTopBar";
 import { Sidebar, type MenuSection } from "@/components/Sidebar";
+import { useAuthStore } from "@/store/authStore";
 import { dashboardLayoutStrings as strings } from "./DashboardLayout.strings";
 
 const COLLAPSE_STORAGE_KEY = "ielts-lms-sidebar-collapsed";
@@ -12,6 +13,8 @@ export function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1"
   );
+  const user = useAuthStore((state) => state.user);
+  const canViewMoney = Boolean(user?.is_owner || user?.can_view_monetary_analytics);
 
   useEffect(() => {
     localStorage.setItem(COLLAPSE_STORAGE_KEY, collapsed ? "1" : "0");
@@ -22,6 +25,21 @@ export function DashboardLayout() {
   }
 
   const m = strings.menu;
+  const saasItems = [
+    { key: "saas_institutes", label: m.saasInstitutes, to: "/super-admin/institutes" },
+    { key: "saas_plans", label: m.saasPlans, to: "/super-admin/plans" },
+    { key: "saas_subscriptions", label: m.saasSubscriptions, to: "/super-admin/subscriptions" },
+    { key: "saas_trial", label: m.saasTrial, to: "/super-admin/trial-config" },
+    { key: "saas_demo", label: m.saasDemo, to: "/super-admin/demo-accounts" },
+    ...(canViewMoney
+      ? [
+          { key: "saas_coupons", label: m.saasCoupons, to: "/super-admin/coupons" },
+          { key: "saas_payments", label: m.saasPayments, to: "/super-admin/payments" },
+          { key: "saas_payment_methods", label: m.saasPaymentMethods, to: "/super-admin/payment-methods" },
+          { key: "saas_revenue", label: m.saasRevenue, to: "/super-admin/revenue" },
+        ]
+      : []),
+  ];
 
   const sections: MenuSection[] = [
     {
@@ -64,20 +82,16 @@ export function DashboardLayout() {
           to: "/super-admin/notifications",
         },
         {
+          key: "support-tickets",
+          label: m.supportTickets,
+          icon: "help",
+          to: "/super-admin/support-tickets",
+        },
+        {
           key: "saas",
           label: m.saas,
           icon: "building",
-          children: [
-            { key: "saas_institutes", label: m.saasInstitutes, to: "/super-admin/institutes" },
-            { key: "saas_plans", label: m.saasPlans, to: "/super-admin/plans" },
-            { key: "saas_subscriptions", label: m.saasSubscriptions, to: "/super-admin/subscriptions" },
-            { key: "saas_trial", label: m.saasTrial, to: "/super-admin/trial-config" },
-            { key: "saas_demo", label: m.saasDemo, to: "/super-admin/demo-accounts" },
-            { key: "saas_coupons", label: m.saasCoupons, to: "/super-admin/coupons" },
-            { key: "saas_payments", label: m.saasPayments, to: "/super-admin/payments" },
-            { key: "saas_payment_methods", label: m.saasPaymentMethods, to: "/super-admin/payment-methods" },
-            { key: "saas_revenue", label: m.saasRevenue, to: "/super-admin/revenue" },
-          ],
+          children: saasItems,
         },
       ],
     },

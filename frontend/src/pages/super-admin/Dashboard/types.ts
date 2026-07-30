@@ -1,5 +1,8 @@
 export type MetricKey =
   | "institutes"
+  | "students"
+  | "online_students"
+  | "active_tests"
   | "subscriptions"
   | "revenue"
   | "dues"
@@ -62,9 +65,15 @@ export interface MetricDetail {
 }
 
 export interface Summary {
+  permissions: {
+    can_view_monetary_analytics: boolean;
+  };
   counts: {
     institutes_total: number;
     institutes_active: number;
+    students_total: number;
+    students_online: number;
+    students_giving_tests: number;
     subscriptions_active: number;
     demo_accounts_active: number;
     coupons_active: number;
@@ -80,9 +89,10 @@ export interface Summary {
     b2c_revenue: string;
     total_due: string;
     transaction_count: number;
-  };
+  } | null;
   revenue_by_institute: { institute_id: number; institute_name: string; total: string; count: number }[];
   revenue_by_month: { month: string; total: string; count: number }[];
   payment_status_breakdown: { status: string; count: number }[];
+  student_type_breakdown: { type: "direct" | "institute"; label: string; count: number }[];
   institute_status_breakdown: { state: string; count: number }[];
 }

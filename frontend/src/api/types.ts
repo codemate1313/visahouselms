@@ -16,12 +16,45 @@ export interface SuperAdminAccount {
   force_password_reset: boolean;
   is_owner?: boolean;
   is_developer_verified?: boolean;
+  can_view_monetary_analytics?: boolean;
   role_name?: string | null;
   dob?: string | null;
   phone_number?: string | null;
   address?: string | null;
   avatar_path?: string | null;
   created_at: string;
+}
+
+export type SupportTicketStatus = "new" | "open" | "resolved" | "closed";
+export type SupportTicketPriority = "low" | "normal" | "high";
+
+export interface SupportTicket {
+  id: number;
+  source: string;
+  name: string;
+  email: string;
+  phone_number: string | null;
+  institute_name: string | null;
+  subject: string;
+  message: string;
+  category: string;
+  status: SupportTicketStatus;
+  priority: SupportTicketPriority;
+  admin_note: string | null;
+  assigned_to_id: number | null;
+  assigned_to_name: string | null;
+  assigned_to_email: string | null;
+  created_at: string;
+  updated_at: string | null;
+  resolved_at: string | null;
+}
+
+export interface SupportTicketListResponse {
+  items: SupportTicket[];
+  total: number;
+  page: number;
+  page_size: number;
+  counts: Record<SupportTicketStatus | "all", number>;
 }
 
 export interface InstructorAccount {

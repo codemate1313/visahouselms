@@ -14,6 +14,7 @@ export const dashboardLayoutStrings = {
     courseControl: "Course Control",
     gradingOversight: "Grading Oversight",
     notifications: "Notifications",
+    supportTickets: "Support Tickets",
     saas: "SaaS",
     saasInstitutes: "Institutes",
     saasOnboarding: "Institute Onboarding",

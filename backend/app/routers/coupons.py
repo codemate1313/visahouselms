@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_user, require_role
+from app.dependencies.auth import get_current_user, require_monetary_analytics_access, require_role
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
 from app.schemas.payment import CouponCreate, CouponUpdate
@@ -13,7 +13,7 @@ from app.services import coupon_service
 router = APIRouter(
     prefix="/super-admin/coupons",
     tags=["coupons"],
-    dependencies=[Depends(require_role(SUPER_ADMIN))],
+    dependencies=[Depends(require_role(SUPER_ADMIN)), Depends(require_monetary_analytics_access)],
 )
 
 

@@ -76,7 +76,7 @@ export function Dashboard() {
     <div className="dashboard-overview">
       {summary.counts.plans_live === 0 && <NoLivePlanAlert />}
       <ExecutiveMetricGrid summary={summary} growth={growth} onOpen={openMetric} />
-      <DashboardCharts summary={summary} />
+      {summary.permissions.can_view_monetary_analytics && summary.revenue && <DashboardCharts summary={summary} />}
 
       {selectedMetric && (
         <MetricDetailModal

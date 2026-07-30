@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import require_role
+from app.dependencies.auth import get_current_user, require_role
 from app.models.role import SUPER_ADMIN
+from app.models.user import User
 from app.services import dashboard_service
 
 router = APIRouter(
@@ -16,14 +17,17 @@ router = APIRouter(
 
 
 @router.get("/summary")
-def get_summary(db: Session = Depends(get_db)):
-    return dashboard_service.get_summary(db)
+def get_summary(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    return dashboard_service.get_summary(db, actor)
 
 
 @router.get("/metrics/{metric}")
 def get_metric_detail(
     metric: Literal[
         "institutes",
+        "students",
+        "online_students",
+        "active_tests",
         "subscriptions",
         "revenue",
         "dues",
@@ -33,5 +37,6 @@ def get_metric_detail(
         "modules",
     ],
     db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
 ):
-    return dashboard_service.get_metric_detail(db, metric)
+    return dashboard_service.get_metric_detail(db, metric, actor)

@@ -6,6 +6,7 @@ import { GlobalDialog } from "./components/GlobalDialog";
 import { GlobalLoader } from "./components/GlobalLoader";
 import { GlobalSnackbar } from "./components/GlobalSnackbar";
 import { GsapInteractionLayer } from "./components/GsapInteractionLayer";
+import { ResponsiveTableCards } from "./components/ResponsiveTableCards";
 import { SessionHeartbeat } from "./components/SessionHeartbeat";
 import { useApplyTheme } from "./hooks/useApplyTheme";
 
@@ -29,6 +30,7 @@ function App() {
       <GlobalSnackbar />
       <GlobalConfirmModal />
       <GsapInteractionLayer />
+      <ResponsiveTableCards />
       <SessionHeartbeat />
       {initialized && (
         <Suspense fallback={null}>

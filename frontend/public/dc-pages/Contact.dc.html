@@ -133,27 +133,28 @@
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
         <div style="grid-column: span 1;">
           <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Your name</label>
-          <input type="text" placeholder="Priya Nair" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          <input ref="{{ nameRef }}" type="text" placeholder="Priya Nair" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
         </div><div style="grid-column: span 1;">
           <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Work email</label>
-          <input type="text" placeholder="priya@institute.com" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          <input ref="{{ emailRef }}" type="email" placeholder="priya@institute.com" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
         </div><div style="grid-column: span 2;">
           <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Institute name</label>
-          <input type="text" placeholder="Meridian Institute" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          <input ref="{{ instituteRef }}" type="text" placeholder="Meridian Institute" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
         </div><div style="grid-column: span 1;">
           <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Approx. students</label>
-          <input type="text" placeholder="150" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          <input ref="{{ studentsRef }}" type="text" placeholder="150" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
         </div><div style="grid-column: span 1;">
           <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Country</label>
-          <input type="text" placeholder="India" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          <input ref="{{ countryRef }}" type="text" placeholder="India" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
         </div>
         <div style="grid-column: span 2;">
           <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">What are you trying to solve?</label>
-          <textarea rows="4" placeholder="Tell us about your batches, current tools, and what you would like to demo." style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none; resize: vertical;"></textarea>
+          <textarea ref="{{ messageRef }}" rows="4" placeholder="Tell us about your batches, current tools, and what you would like to demo." style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none; resize: vertical;"></textarea>
         </div>
       </div>
-      <button type="button" style="font-family: inherit; margin-top: 24px; font-size: 15px; font-weight: 600; padding: 14px 28px; border-radius: 100px; border: none; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; cursor: pointer; box-shadow: 0 12px 32px -8px var(--ac); display: inline-flex; align-items: center; gap: 8px;">
-        Request demo
+      <div ref="{{ formStatusRef }}" aria-live="polite" style="display: none; margin-top: 18px; font-size: 14px; line-height: 1.5; padding: 12px 14px; border-radius: 12px;"></div>
+      <button type="button" onClick="{{ submitDemoRequest }}" style="font-family: inherit; margin-top: 24px; font-size: 15px; font-weight: 600; padding: 14px 28px; border-radius: 100px; border: none; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; cursor: pointer; box-shadow: 0 12px 32px -8px var(--ac); display: inline-flex; align-items: center; gap: 8px;">
+        {{ submitLabel }}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
       </button>
     </div>
@@ -265,7 +266,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
 class Component extends DCLogic {
-  state = { theme: this.getInitialTheme(), mobileMenuOpen: false };
+  state = { theme: this.getInitialTheme(), mobileMenuOpen: false, submittingDemo: false };
 
   getInitialTheme() {
     try {
@@ -287,6 +288,13 @@ class Component extends DCLogic {
   line3Ref = (el) => { this._line3 = el; };
   drawerRef = (el) => { this._drawer = el; };
   scrimRef = (el) => { this._scrim = el; };
+  nameRef = (el) => { this._name = el; };
+  emailRef = (el) => { this._email = el; };
+  instituteRef = (el) => { this._institute = el; };
+  studentsRef = (el) => { this._students = el; };
+  countryRef = (el) => { this._country = el; };
+  messageRef = (el) => { this._message = el; };
+  formStatusRef = (el) => { this._formStatus = el; };
 
   setMobileMenu = (open) => {
     const drawer = this._drawer;
@@ -389,6 +397,7 @@ class Component extends DCLogic {
     };
     this._mq.addEventListener?.("change", this._mqListener);
     this.applyTheme();
+    window.addEventListener("message", this._onSupportResult);
   }
 
   componentWillUnmount() {
@@ -398,7 +407,74 @@ class Component extends DCLogic {
 
     this._mq?.removeEventListener?.("change", this._mqListener);
     this._io?.disconnect?.();
+    window.removeEventListener("message", this._onSupportResult);
   }
+
+  getValue(el) {
+    return (el?.value || "").trim();
+  }
+
+  setFormStatus(message, tone = "info") {
+    if (!this._formStatus) return;
+    const isError = tone === "error";
+    this._formStatus.style.display = "block";
+    this._formStatus.style.color = isError ? "#991b1b" : "#166534";
+    this._formStatus.style.border = isError ? "1px solid rgba(153,27,27,0.22)" : "1px solid rgba(22,101,52,0.22)";
+    this._formStatus.style.background = isError ? "rgba(254,226,226,0.72)" : "rgba(220,252,231,0.72)";
+    this._formStatus.textContent = message;
+  }
+
+  submitDemoRequest = () => {
+    if (this.state.submittingDemo) return;
+    const name = this.getValue(this._name);
+    const email = this.getValue(this._email);
+    const institute = this.getValue(this._institute);
+    const students = this.getValue(this._students);
+    const country = this.getValue(this._country);
+    const message = this.getValue(this._message);
+    if (!name || !email || !institute || !message) {
+      this.setFormStatus("Please add your name, work email, institute name, and message.", "error");
+      return;
+    }
+    const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    this._pendingRequestId = requestId;
+    this.setState({ submittingDemo: true });
+    this.setFormStatus("Sending your enquiry...");
+    try {
+      window.parent.postMessage({
+        type: "vh-support-ticket",
+        requestId,
+        payload: {
+          name,
+          email,
+          institute_name: institute,
+          subject: `Partner demo request - ${institute}`,
+          category: "demo",
+          message: [
+            message,
+            students ? `Approx. students: ${students}` : "",
+            country ? `Country: ${country}` : "",
+          ].filter(Boolean).join("\n\n"),
+        },
+      }, window.location.origin);
+    } catch {
+      this.setState({ submittingDemo: false });
+      this.setFormStatus("We could not send this enquiry. Please email partners@visahouse.io.", "error");
+    }
+  };
+
+  _onSupportResult = (event) => {
+    if (event.data?.type !== "vh-support-ticket-result" || event.data.requestId !== this._pendingRequestId) return;
+    this.setState({ submittingDemo: false });
+    if (event.data.ok) {
+      this.setFormStatus("Thanks. Your enquiry has been received and is now with our support team.");
+      [this._name, this._email, this._institute, this._students, this._country, this._message].forEach((el) => {
+        if (el) el.value = "";
+      });
+      return;
+    }
+    this.setFormStatus(event.data.error || "We could not send this enquiry. Please email partners@visahouse.io.", "error");
+  };
 
   observeReveal() {
     if (this._io) this._io.disconnect();
@@ -459,6 +535,15 @@ class Component extends DCLogic {
       line3Ref: this.line3Ref,
       drawerRef: this.drawerRef,
       scrimRef: this.scrimRef,
+      nameRef: this.nameRef,
+      emailRef: this.emailRef,
+      instituteRef: this.instituteRef,
+      studentsRef: this.studentsRef,
+      countryRef: this.countryRef,
+      messageRef: this.messageRef,
+      formStatusRef: this.formStatusRef,
+      submitDemoRequest: this.submitDemoRequest,
+      submitLabel: this.state.submittingDemo ? "Sending..." : "Request demo",
       mobileMenuExpanded: this.state.mobileMenuOpen ? "true" : "false",
       closeMobileMenu: this.closeMobileMenu,
       goLogin: this.goLogin,

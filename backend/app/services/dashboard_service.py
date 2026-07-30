@@ -1,18 +1,22 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from fastapi import HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, selectinload
 
+from app.dependencies.auth import can_view_monetary_analytics
+from app.models.attempt import ATTEMPT_IN_PROGRESS, Enrollment, TestAttempt
 from app.models.coupon import Coupon
 from app.models.exam_module import ExamModule, ExamModulePart
 from app.models.institute import Institute
 from app.models.payment import Payment
 from app.models.payment_method import PaymentMethod
-from app.models.role import SA_INSTRUCTOR, Role
+from app.models.role import SA_INSTRUCTOR, STUDENT, Role
 from app.models.user import User
+from app.models.user_session import UserSession
 from app.services import demo_service, payment_service, plan_service, revenue_service, subscription_service, super_admin_service
 
 SUBSCRIPTION_STATES = (
@@ -491,9 +495,151 @@ def _modules_detail(db: Session) -> dict:
     )
 
 
-def get_metric_detail(db: Session, metric: str) -> dict:
+def _student_name(student: User) -> str:
+    return f"{student.first_name} {student.last_name}".strip() or student.email
+
+
+def _students_detail(db: Session) -> dict:
+    student_role = db.query(Role).filter(Role.name == STUDENT).first()
+    students = (
+        db.query(User)
+        .options(joinedload(User.institute))
+        .filter(User.role_id == student_role.id, User.deleted_at.is_(None))
+        .order_by(User.created_at.desc(), User.id.desc())
+        .all()
+        if student_role
+        else []
+    )
+    enrollment_counts = dict(
+        db.query(Enrollment.user_id, func.count(Enrollment.id))
+        .filter(Enrollment.is_active.is_(True))
+        .group_by(Enrollment.user_id)
+        .all()
+    )
+    items = [
+        _item(
+            item_id=str(student.id),
+            title=_student_name(student),
+            subtitle=student.email,
+            status_label="Active" if student.is_active else "Inactive",
+            status_tone="green" if student.is_active else "red",
+            value=enrollment_counts.get(student.id, 0),
+            value_label="Enrolled courses",
+            value_type="number",
+            metadata=[
+                _meta("Account type", student.institute.name if student.institute else "Direct student"),
+                _meta("Joined", _iso(student.created_at), "date"),
+            ],
+        )
+        for student in students
+    ]
+    return _detail(
+        "students",
+        "Students Enrolled",
+        "All student accounts and their active course enrollments.",
+        "No students have been enrolled yet.",
+        items,
+    )
+
+
+def _online_students_detail(db: Session) -> dict:
+    now = datetime.now(timezone.utc)
+    student_role = db.query(Role).filter(Role.name == STUDENT).first()
+    if student_role is None:
+        sessions = []
+    else:
+        sessions = (
+            db.query(UserSession)
+            .join(User, UserSession.user_id == User.id)
+            .options(joinedload(UserSession.device), joinedload(UserSession.user).joinedload(User.institute))
+            .filter(
+                User.role_id == student_role.id,
+                User.is_active.is_(True),
+                User.deleted_at.is_(None),
+                UserSession.revoked_at.is_(None),
+                UserSession.expires_at > now,
+            )
+            .order_by(UserSession.created_at.desc(), UserSession.id.desc())
+            .all()
+        )
+    items = [
+        _item(
+            item_id=str(session.id),
+            title=_student_name(session.user),
+            subtitle=session.user.email,
+            status_label="Online",
+            status_tone="green",
+            value=session.device.name if session.device and session.device.name else "Active session",
+            value_label="Device",
+            metadata=[
+                _meta("Institute", session.user.institute.name if session.user.institute else "Direct student"),
+                _meta("IP address", session.ip_address or "Unknown"),
+                _meta("Expires", _iso(session.expires_at), "date"),
+            ],
+        )
+        for session in sessions
+    ]
+    return _detail(
+        "online_students",
+        "Students Online",
+        "Student accounts with active, unrevoked sessions.",
+        "No students are online right now.",
+        items,
+    )
+
+
+def _active_tests_detail(db: Session) -> dict:
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    attempts = (
+        db.query(TestAttempt)
+        .options(
+            joinedload(TestAttempt.user).joinedload(User.institute),
+            joinedload(TestAttempt.module),
+            joinedload(TestAttempt.course),
+        )
+        .filter(TestAttempt.status == ATTEMPT_IN_PROGRESS, TestAttempt.expires_at > now)
+        .order_by(TestAttempt.started_at.desc(), TestAttempt.id.desc())
+        .all()
+    )
+    items = [
+        _item(
+            item_id=str(attempt.id),
+            title=_student_name(attempt.user),
+            subtitle=attempt.module.title if attempt.module else "Assessment attempt",
+            status_label="In progress",
+            status_tone="blue",
+            value=_iso(attempt.expires_at),
+            value_label="Expires",
+            value_type="date",
+            metadata=[
+                _meta("Institute", attempt.user.institute.name if attempt.user and attempt.user.institute else "Direct student"),
+                _meta("Started", _iso(attempt.started_at), "date"),
+                _meta("Course", attempt.course.title if attempt.course else "Module access"),
+            ],
+        )
+        for attempt in attempts
+    ]
+    return _detail(
+        "active_tests",
+        "Students Giving Tests",
+        "Live student attempts that have started and not expired.",
+        "No students are giving tests right now.",
+        items,
+    )
+
+
+def get_metric_detail(db: Session, metric: str, actor: User | None = None) -> dict:
+    money_metrics = {"revenue", "dues", "transactions"}
+    if actor is not None and metric in money_metrics and not can_view_monetary_analytics(actor):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Monetary analytics access is restricted by the owner account",
+        )
     handlers = {
         "institutes": _institutes_detail,
+        "students": _students_detail,
+        "online_students": _online_students_detail,
+        "active_tests": _active_tests_detail,
         "subscriptions": _subscriptions_detail,
         "revenue": _revenue_detail,
         "dues": _dues_detail,
@@ -508,10 +654,11 @@ def get_metric_detail(db: Session, metric: str) -> dict:
     return handler(db)
 
 
-def get_summary(db: Session) -> dict:
+def get_summary(db: Session, actor: User | None = None) -> dict:
     institutes = db.query(Institute).all()
     institutes_total = len(institutes)
     institutes_active = sum(1 for i in institutes if i.is_active)
+    can_view_money = actor is None or can_view_monetary_analytics(actor)
 
     subscription_breakdown = {state: 0 for state in SUBSCRIPTION_STATES}
     for institute in institutes:
@@ -529,18 +676,74 @@ def get_summary(db: Session) -> dict:
         if instructor_role
         else 0
     )
-
-    revenue = revenue_service.summary(db)
-
-    payment_status_rows = (
-        db.query(Payment.status, func.count(Payment.id)).group_by(Payment.status).all()
+    student_role = db.query(Role).filter(Role.name == STUDENT).first()
+    students_total = (
+        db.query(User)
+        .filter(User.role_id == student_role.id, User.deleted_at.is_(None))
+        .count()
+        if student_role
+        else 0
     )
+    direct_students_total = (
+        db.query(User)
+        .filter(
+            User.role_id == student_role.id,
+            User.deleted_at.is_(None),
+            User.institute_id.is_(None),
+        )
+        .count()
+        if student_role
+        else 0
+    )
+    institute_students_total = (
+        db.query(User)
+        .filter(
+            User.role_id == student_role.id,
+            User.deleted_at.is_(None),
+            User.institute_id.isnot(None),
+        )
+        .count()
+        if student_role
+        else 0
+    )
+    students_online = (
+        db.query(func.count(func.distinct(UserSession.user_id)))
+        .join(User, UserSession.user_id == User.id)
+        .filter(
+            User.role_id == student_role.id,
+            User.is_active.is_(True),
+            User.deleted_at.is_(None),
+            UserSession.revoked_at.is_(None),
+            UserSession.expires_at > datetime.now(timezone.utc),
+        )
+        .scalar()
+        if student_role
+        else 0
+    )
+    students_giving_tests = (
+        db.query(func.count(func.distinct(TestAttempt.user_id)))
+        .filter(
+            TestAttempt.status == ATTEMPT_IN_PROGRESS,
+            TestAttempt.expires_at > datetime.now(timezone.utc).replace(tzinfo=None),
+        )
+        .scalar()
+    )
+
+    revenue = revenue_service.summary(db) if can_view_money else None
+
+    payment_status_rows = db.query(Payment.status, func.count(Payment.id)).group_by(Payment.status).all() if can_view_money else []
     payment_status_breakdown = [{"status": status, "count": count} for status, count in payment_status_rows]
 
     return {
+        "permissions": {
+            "can_view_monetary_analytics": can_view_money,
+        },
         "counts": {
             "institutes_total": institutes_total,
             "institutes_active": institutes_active,
+            "students_total": students_total,
+            "students_online": students_online or 0,
+            "students_giving_tests": students_giving_tests or 0,
             "subscriptions_active": subscription_breakdown[subscription_service.STATE_ACTIVE],
             "demo_accounts_active": demo_active_count,
             "coupons_active": coupons_active,
@@ -554,16 +757,24 @@ def get_summary(db: Session) -> dict:
                 ExamModule.status == "published", ExamModule.deleted_at.is_(None)
             ).count(),
         },
-        "revenue": {
-            "total_revenue": revenue["total_revenue"],
-            "b2b_revenue": revenue["b2b_revenue"],
-            "b2c_revenue": revenue["b2c_revenue"],
-            "total_due": revenue["total_due"],
-            "transaction_count": revenue["transaction_count"],
-        },
-        "revenue_by_institute": sorted(revenue["by_institute"], key=lambda r: float(r["total"]), reverse=True)[:6],
-        "revenue_by_month": revenue["by_month"],
+        "revenue": (
+            {
+                "total_revenue": revenue["total_revenue"],
+                "b2b_revenue": revenue["b2b_revenue"],
+                "b2c_revenue": revenue["b2c_revenue"],
+                "total_due": revenue["total_due"],
+                "transaction_count": revenue["transaction_count"],
+            }
+            if revenue
+            else None
+        ),
+        "revenue_by_institute": sorted(revenue["by_institute"], key=lambda r: float(r["total"]), reverse=True)[:6] if revenue else [],
+        "revenue_by_month": revenue["by_month"] if revenue else [],
         "payment_status_breakdown": payment_status_breakdown,
+        "student_type_breakdown": [
+            {"type": "direct", "label": "Direct Students", "count": direct_students_total},
+            {"type": "institute", "label": "Institute Students", "count": institute_students_total},
+        ],
         "institute_status_breakdown": [
             {"state": state, "count": count} for state, count in subscription_breakdown.items()
         ],

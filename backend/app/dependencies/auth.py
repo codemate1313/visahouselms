@@ -119,6 +119,19 @@ def require_super_admin_or_verified_developer(user: User = Depends(get_current_u
     )
 
 
+def can_view_monetary_analytics(user: User) -> bool:
+    return user.is_owner or bool(user.can_view_monetary_analytics)
+
+
+def require_monetary_analytics_access(user: User = Depends(get_current_user)) -> User:
+    if user.role.name != "SUPER_ADMIN" or not can_view_monetary_analytics(user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Monetary analytics access is restricted by the owner account",
+        )
+    return user
+
+
 def require_password_change_complete(user: User = Depends(get_current_user)) -> User:
     if user.force_password_reset:
         raise HTTPException(

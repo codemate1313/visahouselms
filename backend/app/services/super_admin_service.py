@@ -128,8 +128,14 @@ def create_super_admin(
     phone_number: Optional[str] = None,
     address: Optional[str] = None,
     avatar_path: Optional[str] = None,
+    can_view_monetary_analytics: bool = False,
 ) -> User:
     role = _super_admin_role(db)
+    if can_view_monetary_analytics and not actor.is_owner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the owner account can grant monetary analytics access",
+        )
     if db.query(User).filter(User.email == email).first() is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
 
@@ -145,10 +151,18 @@ def create_super_admin(
         phone_number=phone_number,
         address=address,
         avatar_path=avatar_path,
+        can_view_monetary_analytics=can_view_monetary_analytics if actor.is_owner else False,
     )
     db.add(user)
     db.flush()
-    _write_audit_log(db, actor, "super_admin.create", user.id, ip_address, {"email": email})
+    _write_audit_log(
+        db,
+        actor,
+        "super_admin.create",
+        user.id,
+        ip_address,
+        {"email": email, "can_view_monetary_analytics": user.can_view_monetary_analytics},
+    )
     db.commit()
     db.refresh(user)
     return user
@@ -166,6 +180,7 @@ def update_super_admin(
     phone_number: Optional[str] = None,
     address: Optional[str] = None,
     avatar_path: Optional[str] = None,
+    can_view_monetary_analytics: Optional[bool] = None,
 ) -> User:
     user = get_super_admin_or_404(db, account_id)
     _assert_owner_not_mutated(actor, user, "changed")
@@ -186,9 +201,27 @@ def update_super_admin(
         user.address = address
     if avatar_path is not None:
         user.avatar_path = avatar_path
+    if can_view_monetary_analytics is not None:
+        if not actor.is_owner:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the owner account can change monetary analytics access",
+            )
+        user.can_view_monetary_analytics = can_view_monetary_analytics
 
     db.add(user)
-    _write_audit_log(db, actor, "super_admin.update", user.id, ip_address)
+    _write_audit_log(
+        db,
+        actor,
+        "super_admin.update",
+        user.id,
+        ip_address,
+        (
+            {"can_view_monetary_analytics": user.can_view_monetary_analytics}
+            if can_view_monetary_analytics is not None
+            else None
+        ),
+    )
     db.commit()
     db.refresh(user)
     return user

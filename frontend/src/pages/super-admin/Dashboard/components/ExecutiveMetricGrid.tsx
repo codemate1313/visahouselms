@@ -12,6 +12,19 @@ export function ExecutiveMetricGrid({ summary, growth, onOpen }: ExecutiveMetric
   const { counts, revenue } = summary;
   const t = strings.metricTitles;
   const b = strings.badges;
+  const canViewMoney = summary.permissions.can_view_monetary_analytics && revenue !== null;
+
+  if (!canViewMoney) {
+    return (
+      <div className="executive-metric-grid">
+        <MetricItem metricKey="students" iconName="user" onOpen={onOpen} label={t.students} numericValue={counts.students_total} badgeText={b.enrolled} badgeTheme="green" />
+        <MetricItem metricKey="institutes" iconName="building" onOpen={onOpen} label={t.institutes} numericValue={counts.institutes_total} badgeText={growth.inst} badgeTheme="blue" />
+        <MetricItem metricKey="online_students" iconName="session" onOpen={onOpen} label={t.online_students} numericValue={counts.students_online} badgeText={b.online} badgeTheme="green" />
+        <MetricItem metricKey="active_tests" iconName="grading" onOpen={onOpen} label={t.active_tests} numericValue={counts.students_giving_tests} badgeText={b.live} badgeTheme="purple" />
+      </div>
+    );
+  }
+
   return (
     <div className="executive-metric-grid">
       <MetricItem metricKey="institutes" iconName="building" onOpen={onOpen} label={t.institutes} numericValue={counts.institutes_total} badgeText={growth.inst} badgeTheme="green" />

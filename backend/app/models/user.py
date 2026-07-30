@@ -24,6 +24,7 @@ class User(Base):
     password_changed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     is_owner: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_developer_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    can_view_monetary_analytics: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     avatar_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     dob: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     phone_number: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)

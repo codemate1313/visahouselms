@@ -35,6 +35,13 @@ export const accountFormStrings = {
     address: "Address",
     addressPlaceholder: "123 Main Street, Suite 100",
   },
+  permissions: {
+    title: "Owner Permissions",
+    description: "Owner-controlled visibility for financial and revenue analytics.",
+    monetaryTitle: "Monetary analytics",
+    monetaryDescription: "Allow this Super Admin to open revenue, payments, dues, transactions, and payment method analytics.",
+    ownerOnly: "Only the owner account can change this permission.",
+  },
   saving: "Saving...",
   saveAccount: "Save Account",
   cancel: "Cancel",

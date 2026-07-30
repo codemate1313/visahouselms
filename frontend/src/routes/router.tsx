@@ -64,6 +64,7 @@ import {
   StudentProfile,
   StudentProgress,
   Subscriptions,
+  SupportTickets,
   SuperAdminBlogForm,
   SuperAdminBlogs,
   SuperAdminInstituteAccounts,
@@ -81,6 +82,7 @@ import {
 } from "./lazyPages";
 import { SuperAdminAISettings } from "../pages/super-admin/SuperAdminAISettings";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { MonetaryAnalyticsRoute } from "./MonetaryAnalyticsRoute";
 import { BlogsList } from "../pages/public/BlogsList";
 import { BlogDetail } from "../pages/public/BlogDetail";
 
@@ -141,6 +143,7 @@ export const router = createBrowserRouter([
           { path: "modules/:id", element: <ModuleControlDetail /> },
           { path: "grading", element: <GradingOversight /> },
           { path: "notifications", element: <PlatformNotifications /> },
+          { path: "support-tickets", element: <SupportTickets /> },
           { path: "inbox", element: <NotificationsInbox fallbackRoute="/super-admin/dashboard" /> },
           { path: "courses", element: <Navigate to="/super-admin/modules" replace /> },
           { path: "courses/:id", element: <Navigate to="/super-admin/modules" replace /> },
@@ -178,13 +181,13 @@ export const router = createBrowserRouter([
           { path: "institutes/:id/students/:studentId/edit", element: <SuperAdminStudentForm /> },
           { path: "trial-config", element: <TrialConfig /> },
           { path: "demo-accounts", element: <DemoAccounts /> },
-          { path: "coupons", element: <Coupons /> },
-          { path: "coupons/new", element: <CouponForm /> },
-          { path: "coupons/:id", element: <CouponForm /> },
-          { path: "payments", element: <Payments /> },
-          { path: "payments/:id/invoice", element: <Invoice /> },
-          { path: "payment-methods", element: <PaymentMethods /> },
-          { path: "revenue", element: <RevenueDashboard /> },
+          { path: "coupons", element: <MonetaryAnalyticsRoute><Coupons /></MonetaryAnalyticsRoute> },
+          { path: "coupons/new", element: <MonetaryAnalyticsRoute><CouponForm /></MonetaryAnalyticsRoute> },
+          { path: "coupons/:id", element: <MonetaryAnalyticsRoute><CouponForm /></MonetaryAnalyticsRoute> },
+          { path: "payments", element: <MonetaryAnalyticsRoute><Payments /></MonetaryAnalyticsRoute> },
+          { path: "payments/:id/invoice", element: <MonetaryAnalyticsRoute><Invoice /></MonetaryAnalyticsRoute> },
+          { path: "payment-methods", element: <MonetaryAnalyticsRoute><PaymentMethods /></MonetaryAnalyticsRoute> },
+          { path: "revenue", element: <MonetaryAnalyticsRoute><RevenueDashboard /></MonetaryAnalyticsRoute> },
         ],
       },
     ],

@@ -81,6 +81,7 @@ class CurrentUser(BaseModel):
     institute_permissions: Optional[dict] = None
     is_owner: bool = False
     is_developer_verified: bool = False
+    can_view_monetary_analytics: bool = False
 
 
 class ForgotPasswordRequest(BaseModel):

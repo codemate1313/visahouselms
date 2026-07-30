@@ -14,7 +14,7 @@ from app.models.institute import Institute
 from app.models.payment import Payment
 from app.models.payment_method import PaymentMethod
 from app.models.plan import Plan
-from app.models.role import SA_INSTRUCTOR, SUPER_ADMIN, Role
+from app.models.role import SA_INSTRUCTOR, STUDENT, SUPER_ADMIN, Role
 from app.models.subscription import Subscription
 from app.models.user import User
 from app.services import dashboard_service, revenue_service
@@ -28,7 +28,8 @@ class DashboardServiceTests(unittest.TestCase):
 
         super_role = Role(name=SUPER_ADMIN)
         instructor_role = Role(name=SA_INSTRUCTOR)
-        self.db.add_all([super_role, instructor_role])
+        student_role = Role(name=STUDENT)
+        self.db.add_all([super_role, instructor_role, student_role])
         self.db.flush()
         self.instructor = User(
             email="instructor@dashboard.test",
@@ -38,8 +39,33 @@ class DashboardServiceTests(unittest.TestCase):
             last_name="Author",
             is_active=True,
         )
-        self.db.add(self.instructor)
-        self.db.flush()
+        self.owner = User(
+            email="owner@dashboard.test",
+            password_hash=hash_password("OwnerPassword!1"),
+            role_id=super_role.id,
+            first_name="Owner",
+            last_name="Admin",
+            is_active=True,
+            is_owner=True,
+        )
+        self.restricted_admin = User(
+            email="restricted@dashboard.test",
+            password_hash=hash_password("RestrictedPassword!1"),
+            role_id=super_role.id,
+            first_name="Restricted",
+            last_name="Admin",
+            is_active=True,
+            can_view_monetary_analytics=False,
+        )
+        self.student = User(
+            email="student@dashboard.test",
+            password_hash=hash_password("StudentPassword!1"),
+            role_id=student_role.id,
+            first_name="Student",
+            last_name="Learner",
+            is_active=True,
+            institute_id=None,
+        )
         self.institute = Institute(
             name="Balance Due Academy",
             slug="balance-due-academy",
@@ -47,6 +73,17 @@ class DashboardServiceTests(unittest.TestCase):
             is_active=True,
             onboarding_status="published",
             student_limit=50,
+        )
+        self.db.add_all([self.instructor, self.owner, self.restricted_admin, self.student, self.institute])
+        self.db.flush()
+        self.institute_student = User(
+            email="institute-student@dashboard.test",
+            password_hash=hash_password("StudentPassword!1"),
+            role_id=student_role.id,
+            first_name="Institute",
+            last_name="Learner",
+            is_active=True,
+            institute_id=self.institute.id,
         )
         self.plan = Plan(
             name="Dashboard Access",
@@ -62,7 +99,7 @@ class DashboardServiceTests(unittest.TestCase):
             is_published=False,
             is_internal=True,
         )
-        self.db.add_all([self.institute, self.plan])
+        self.db.add_all([self.institute_student, self.plan])
         self.db.flush()
 
         now = datetime.utcnow()
@@ -226,6 +263,38 @@ class DashboardServiceTests(unittest.TestCase):
         with self.assertRaises(HTTPException) as context:
             dashboard_service.get_metric_detail(self.db, "unknown")
         self.assertEqual(context.exception.status_code, 404)
+
+    def test_restricted_super_admin_summary_hides_monetary_analytics(self) -> None:
+        summary = dashboard_service.get_summary(self.db, self.restricted_admin)
+
+        self.assertFalse(summary["permissions"]["can_view_monetary_analytics"])
+        self.assertIsNone(summary["revenue"])
+        self.assertEqual(summary["revenue_by_institute"], [])
+        self.assertEqual(summary["revenue_by_month"], [])
+        self.assertEqual(summary["payment_status_breakdown"], [])
+        self.assertEqual(summary["counts"]["students_total"], 2)
+        self.assertIn("students_online", summary["counts"])
+        self.assertIn("students_giving_tests", summary["counts"])
+
+    def test_summary_includes_student_type_analytics(self) -> None:
+        summary = dashboard_service.get_summary(self.db, self.owner)
+
+        by_type = {row["type"]: row for row in summary["student_type_breakdown"]}
+        self.assertEqual(by_type["direct"]["count"], 1)
+        self.assertEqual(by_type["institute"]["count"], 1)
+        self.assertEqual(by_type["direct"]["label"], "Direct Students")
+        self.assertEqual(by_type["institute"]["label"], "Institute Students")
+
+    def test_restricted_super_admin_cannot_open_money_metric_details(self) -> None:
+        with self.assertRaises(HTTPException) as context:
+            dashboard_service.get_metric_detail(self.db, "revenue", self.restricted_admin)
+        self.assertEqual(context.exception.status_code, 403)
+
+    def test_restricted_super_admin_can_open_operational_metric_details(self) -> None:
+        detail = dashboard_service.get_metric_detail(self.db, "students", self.restricted_admin)
+
+        self.assertEqual(detail["metric"], "students")
+        self.assertIn("Student Learner", {item["title"] for item in detail["items"]})
 
 
 if __name__ == "__main__":

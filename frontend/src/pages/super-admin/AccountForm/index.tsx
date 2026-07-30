@@ -2,6 +2,8 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { Icon } from "@/components/icons";
+import { useAuthStore } from "@/store/authStore";
 import { evaluatePassword } from "@/utils/passwordStrength";
 import { accountFormStrings as strings } from "./AccountForm.strings";
 import { AvatarPanel } from "./components/AvatarPanel";
@@ -13,6 +15,8 @@ export function AccountForm() {
   const { id } = useParams();
   const isNew = id === "new" || id === undefined;
   const navigate = useNavigate();
+  const currentUser = useAuthStore((state) => state.user);
+  const canEditOwnerPermissions = Boolean(currentUser?.is_owner);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,6 +28,7 @@ export function AccountForm() {
   const [avatarPath, setAvatarPath] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
   const [avatarFileName, setAvatarFileName] = useState("");
+  const [canViewMonetaryAnalytics, setCanViewMonetaryAnalytics] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew);
@@ -44,10 +49,17 @@ export function AccountForm() {
           setAvatarPath(data.avatar_path);
           setAvatarPreview(`/storage/${data.avatar_path}`);
         }
+        setCanViewMonetaryAnalytics(Boolean(data.can_view_monetary_analytics ?? false));
       })
       .catch(() => setError(strings.errors.load))
       .finally(() => setLoading(false));
   }, [id, isNew]);
+
+  useEffect(() => {
+    if (isNew && !canEditOwnerPermissions) {
+      setCanViewMonetaryAnalytics(false);
+    }
+  }, [canEditOwnerPermissions, isNew]);
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -85,6 +97,7 @@ export function AccountForm() {
         phone_number: phoneNumber || null,
         address: address || null,
         avatar_path: avatarPath || null,
+        can_view_monetary_analytics: canViewMonetaryAnalytics,
         ...(isNew ? { password } : {}),
       };
 
@@ -148,6 +161,31 @@ export function AccountForm() {
             address={address}
             onAddressChange={setAddress}
           />
+
+          <fieldset className="permission-fieldset account-permissions-panel">
+            <legend>{strings.permissions.title}</legend>
+            <p>{strings.permissions.description}</p>
+            <label className="permission-option" htmlFor="monetary-analytics-access">
+              <input
+                id="monetary-analytics-access"
+                type="checkbox"
+                checked={canViewMonetaryAnalytics}
+                disabled={!canEditOwnerPermissions}
+                onChange={(event) => setCanViewMonetaryAnalytics(event.target.checked)}
+              />
+              <span className="permission-option-icon" aria-hidden="true">
+                <Icon name={canViewMonetaryAnalytics ? "revenue" : "lock"} />
+              </span>
+              <span className="permission-option-copy">
+                <strong>{strings.permissions.monetaryTitle}</strong>
+                <small>{strings.permissions.monetaryDescription}</small>
+              </span>
+              <span className="permission-state-checkbox" aria-hidden="true">
+                <span />
+              </span>
+            </label>
+            {!canEditOwnerPermissions && <p className="muted-text">{strings.permissions.ownerOnly}</p>}
+          </fieldset>
 
           {error && <p className="error-text">{error}</p>}
 

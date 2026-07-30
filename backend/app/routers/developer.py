@@ -67,6 +67,7 @@ def create_super_admin(
         phone_number=payload.phone_number,
         address=payload.address,
         avatar_path=payload.avatar_path,
+        can_view_monetary_analytics=False,
     )
 
 

@@ -15,6 +15,11 @@ export const PAYMENT_STATUS_COLORS: Record<string, string> = {
   refunded: "#8b5cf6",
 };
 
+export const STUDENT_TYPE_COLORS: Record<string, string> = {
+  direct: "#3b82f6",
+  institute: "#10b981",
+};
+
 export function formatMoney(value: number): string {
   return `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 }

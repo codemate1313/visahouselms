@@ -18,6 +18,7 @@ export interface AuthUser {
   institute_permissions: Record<string, boolean> | null;
   is_owner?: boolean;
   is_developer_verified?: boolean;
+  can_view_monetary_analytics?: boolean;
 }
 
 interface AuthState {

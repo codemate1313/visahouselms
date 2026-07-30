@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useLoaderStore } from "@/store/loaderStore";
 import { useAuthStore } from "@/store/authStore";
 import { destinationFor } from "@/pages/Login/helpers";
+import { API_BASE_URL } from "@/api/client";
 import { AuthOverlay } from "./components/AuthOverlay";
 import type { AuthMode, PublicTheme } from "./types";
 
@@ -87,6 +88,30 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
       if (event.data?.type === "vh-theme") {
         const theme = event.data.theme === "dark" ? "dark" : "light";
         setPublicTheme(theme);
+      }
+      if (event.data?.type === "vh-support-ticket") {
+        const requestId = event.data.requestId;
+        fetch(`${API_BASE_URL}/support/tickets`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(event.data.payload ?? {}),
+        })
+          .then(async (response) => {
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              throw new Error(payload.detail || "Unable to submit enquiry.");
+            }
+            frameRef.current?.contentWindow?.postMessage(
+              { type: "vh-support-ticket-result", requestId, ok: true, payload },
+              window.location.origin
+            );
+          })
+          .catch((error: Error) => {
+            frameRef.current?.contentWindow?.postMessage(
+              { type: "vh-support-ticket-result", requestId, ok: false, error: error.message },
+              window.location.origin
+            );
+          });
       }
     }
 

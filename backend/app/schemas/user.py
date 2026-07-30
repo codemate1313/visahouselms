@@ -15,6 +15,7 @@ class SuperAdminAccountOut(BaseModel):
     force_password_reset: bool
     is_owner: bool = False
     is_developer_verified: bool = False
+    can_view_monetary_analytics: bool = False
     role_name: Optional[str] = None
     dob: Optional[datetime] = None
     phone_number: Optional[str] = None
@@ -35,6 +36,7 @@ class SuperAdminAccountCreate(BaseModel):
     address: Optional[str] = None
     avatar_path: Optional[str] = None
     is_developer_verified: bool = False
+    can_view_monetary_analytics: bool = False
 
     @field_validator("password")
     @classmethod
@@ -51,6 +53,7 @@ class SuperAdminAccountUpdate(BaseModel):
     phone_number: Optional[str] = None
     address: Optional[str] = None
     avatar_path: Optional[str] = None
+    can_view_monetary_analytics: Optional[bool] = None
 
 
 class DeveloperAccountCreate(BaseModel):
