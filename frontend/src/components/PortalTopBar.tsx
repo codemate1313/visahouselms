@@ -407,6 +407,7 @@ export function PortalTopBar({
 
   const itemCount = usePageTitleStore((state) => state.itemCount);
   const showBackButton =
+    location.pathname === "/super-admin/subscriptions" ||
     breadcrumbs.length > 2 ||
     location.pathname.includes("/institutes/") ||
     location.pathname.includes("/onboarding/") ||

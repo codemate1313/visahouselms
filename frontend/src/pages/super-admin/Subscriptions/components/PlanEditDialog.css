@@ -1,0 +1,105 @@
+.subscription-plan-edit-dialog {
+  max-height: min(860px, calc(100dvh - 32px));
+}
+
+.subscription-plan-edit-intro {
+  margin: 0 0 18px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.subscription-plan-edit-section {
+  padding: 18px 0;
+  border-top: 1px solid var(--border);
+}
+
+.subscription-plan-edit-section:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.subscription-plan-edit-heading {
+  margin-bottom: 14px;
+}
+
+.subscription-plan-edit-heading h3 {
+  margin: 0 0 4px;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.subscription-plan-edit-heading p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.subscription-plan-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.subscription-plan-edit-grid.agreement-grid {
+  grid-template-columns: minmax(180px, 1.5fr) minmax(140px, 1fr) minmax(100px, 0.7fr);
+}
+
+.subscription-plan-edit-grid label,
+.subscription-plan-edit-notes {
+  display: grid;
+  gap: 7px;
+}
+
+.subscription-plan-edit-grid label > span,
+.subscription-plan-edit-notes > span {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.subscription-plan-edit-notes {
+  margin-top: 14px;
+}
+
+.subscription-plan-edit-dialog .plan-course-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 270px;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.subscription-plan-edit-dialog .plan-course-picker legend,
+.subscription-plan-edit-dialog .plan-course-picker > .hint {
+  display: none;
+}
+
+.subscription-plan-edit-dialog .plan-course-option {
+  margin: 0;
+}
+
+.subscription-plan-edit-dialog .select-all-option,
+.subscription-plan-edit-dialog .empty-message {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 760px) {
+  .subscription-plan-edit-dialog {
+    max-height: calc(100dvh - 16px);
+  }
+
+  .subscription-plan-edit-grid,
+  .subscription-plan-edit-grid.agreement-grid,
+  .subscription-plan-edit-dialog .plan-course-picker {
+    grid-template-columns: 1fr;
+  }
+
+  .subscription-plan-edit-dialog .select-all-option,
+  .subscription-plan-edit-dialog .empty-message {
+    grid-column: auto;
+  }
+}

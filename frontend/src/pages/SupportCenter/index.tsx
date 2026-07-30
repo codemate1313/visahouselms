@@ -14,6 +14,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
+import { useAuthStore } from "@/store/authStore";
 import { supportCenterStrings as strings } from "./SupportCenter.strings";
 import "./SupportCenter.css";
 
@@ -41,6 +42,8 @@ export function SupportCenter() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const showSuccess = useToastStore((state) => state.showSuccess);
+  const role = useAuthStore((state) => state.user?.role);
+  const usesInstituteSupport = role === "STUDENT" || role === "INST_INSTRUCTOR";
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
@@ -83,7 +86,11 @@ export function SupportCenter() {
 
   return (
     <div className="support-center-page">
-      <PageHeader eyebrow={strings.eyebrow} title={strings.title} subtitle={strings.subtitle} />
+      <PageHeader
+        eyebrow={strings.eyebrow}
+        title={strings.title}
+        subtitle={usesInstituteSupport ? strings.instituteSubtitle : strings.subtitle}
+      />
 
       {error && <p className="error-text">{error}</p>}
 
@@ -91,7 +98,7 @@ export function SupportCenter() {
         <Card as="form" className="support-query-form" onSubmit={submitTicket}>
           <div className="support-panel-heading">
             <h2>{strings.form.title}</h2>
-            <p>{strings.form.description}</p>
+            <p>{usesInstituteSupport ? strings.form.instituteDescription : strings.form.description}</p>
           </div>
 
           <label className="support-field-label">
@@ -167,6 +174,13 @@ export function SupportCenter() {
                     <h3>{ticket.subject}</h3>
                     <Badge tone={statusTone(ticket.status)}>{strings.status[ticket.status]}</Badge>
                   </div>
+                  <span className="support-ticket-destination">
+                    {ticket.queue === "institute"
+                      ? strings.routing.institute
+                      : ticket.escalated_at
+                        ? strings.routing.forwarded
+                        : strings.routing.platform}
+                  </span>
                   <p>{ticket.message}</p>
                   <div className="support-ticket-card-meta">
                     <span>{strings.history.ticketNumber(ticket.id)}</span>

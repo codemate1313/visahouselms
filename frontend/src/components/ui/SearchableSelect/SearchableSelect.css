@@ -207,7 +207,8 @@
   user-select: none;
 }
 
-.select-option-item:hover {
+.select-option-item:hover,
+.select-option-item.is-highlighted {
   background: var(--surface-muted);
   color: var(--text);
 }

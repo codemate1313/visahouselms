@@ -1,34 +1,85 @@
+import { useState } from "react";
 import { allocationSummaryLine, type InstituteAllocation } from "@/pages/super-admin/InstituteForm/types";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
 import { STATE_BADGES, stateLabel } from "../helpers";
-import type { InstituteRow, StatusResponse } from "../types";
+import type { InstituteRow, StatusResponse, SubscriptionInfo } from "../types";
 import { QuotaPieChart } from "./QuotaPieChart";
 import { ValidityGauge } from "./ValidityGauge";
 import { Button } from "@/components/ui";
+import { Icon } from "@/components/icons";
+import { OngoingPlanDialog } from "./OngoingPlanDialog";
+import { PlanRenewalDialog } from "./PlanRenewalDialog";
+import {
+  PlanEditDialog,
+  type InstitutePlanEditValues,
+} from "./PlanEditDialog";
+import type { AgreementAttachment } from "@/pages/super-admin/InstituteForm/components/AgreementAttachments";
 
 interface SubscriptionManageCardProps {
   status: StatusResponse;
   selectedInstitute: InstituteRow;
   /** The institute's provisions, or null if nothing is allocated yet. */
   allocation: InstituteAllocation | null;
+  agreementDocument: AgreementAttachment | null;
   busy: boolean;
+  cancelledSubscription: SubscriptionInfo | null;
+  planEditValues: InstitutePlanEditValues | null;
   onAssign: () => void;
-  onRenew: () => void;
+  onDownloadAttachment: (attachment: AgreementAttachment) => void;
+  onEditPlan: (
+    values: InstitutePlanEditValues,
+    files: { agreementDocument: File | null; paymentProof: File | null },
+  ) => Promise<boolean>;
+  onRemoveAttachment: (kind: "agreement" | "payment-proof") => void;
+  onRenew: (planId: number) => void;
+  onRestart: (planId: number) => void;
   onCancel: (subscriptionId: number) => void;
+  paymentProof: AgreementAttachment | null;
 }
 
 export function SubscriptionManageCard({
   status,
   selectedInstitute,
   allocation,
+  agreementDocument,
   busy,
+  cancelledSubscription,
+  planEditValues,
   onAssign,
+  onDownloadAttachment,
+  onEditPlan,
+  onRemoveAttachment,
   onRenew,
+  onRestart,
   onCancel,
+  paymentProof,
 }: SubscriptionManageCardProps) {
+  const [showPlanDialog, setShowPlanDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [renewalMode, setRenewalMode] = useState<"renew" | "restart" | null>(null);
   const t = strings;
   const current = status.subscription;
   const state = status.state;
+  const hasOngoingPlan = Boolean(
+    current
+    && !current.cancelled_at
+    && (state === "active" || state === "grace" || state === "scheduled"),
+  );
+  const canRestart = state === "none" && cancelledSubscription !== null;
+  const renewalSource = renewalMode === "restart" ? cancelledSubscription : current;
+  const planDurationDays = renewalSource
+    ? Math.max(0, Math.round(
+      (new Date(renewalSource.expires_at).getTime() - new Date(renewalSource.starts_at).getTime())
+      / 86_400_000,
+    ))
+    : 0;
+  const reviewAllocation = allocation ?? (renewalSource ? {
+    student_limit: status.limits?.students ?? 0,
+    staff_limit: status.limits?.staff ?? 0,
+    duration_days: planDurationDays,
+    grace_days: renewalSource.grace_days,
+    module_count: status.usage.courses ?? 0,
+  } : null);
 
   return (
     <div className="form-card wide subscription-manage-card-v2">
@@ -70,21 +121,32 @@ export function SubscriptionManageCard({
               </p>
             </div>
 
-            {state === "none" ? (
+            {canRestart ? (
+              <Button
+                fullWidth
+                disabled={busy}
+                leftIcon={<Icon name="restore" />}
+                onClick={() => setRenewalMode("restart")}
+              >
+                {t.restartPlan}
+              </Button>
+            ) : state === "none" ? (
               <Button fullWidth disabled={busy || !allocation} onClick={onAssign}>
                 {busy ? t.assigning : t.assignPlan}
               </Button>
+            ) : hasOngoingPlan && current ? (
+              <Button
+                fullWidth
+                disabled={busy}
+                leftIcon={<Icon name="settings" />}
+                onClick={() => setShowPlanDialog(true)}
+              >
+                {t.manageOngoingPlan}
+              </Button>
             ) : (
-              <div className="actions-button-group" style={{ width: "100%" }}>
-                <Button disabled={busy} onClick={onRenew} style={{ flex: 1 }}>
-                  {busy ? t.renewing : t.renew}
-                </Button>
-                {current && !current.cancelled_at && (
-                  <button type="button" className="danger-cancel-btn" disabled={busy} onClick={() => onCancel(current.id)} style={{ flex: 1 }}>
-                    {t.cancelSubscription}
-                  </button>
-                )}
-              </div>
+              <Button fullWidth disabled={busy || !current} onClick={() => setRenewalMode("renew")}>
+                {t.reviewRenewal}
+              </Button>
             )}
           </div>
         </div>
@@ -94,6 +156,58 @@ export function SubscriptionManageCard({
           <ValidityGauge daysRemaining={current?.days_remaining ?? null} state={state} />
         </div>
       </div>
+
+      {current && (
+        <OngoingPlanDialog
+          open={showPlanDialog}
+          busy={busy}
+          planName={current.plan_name ?? t.noActivePlan}
+          expiresAt={current.expires_at}
+          onClose={() => setShowPlanDialog(false)}
+          onEdit={() => setShowEditDialog(true)}
+          onRenew={() => setRenewalMode("renew")}
+          onCancel={() => onCancel(current.id)}
+        />
+      )}
+
+      {renewalSource && (
+        <PlanRenewalDialog
+          open={renewalMode !== null}
+          mode={renewalMode ?? "renew"}
+          busy={busy}
+          planName={renewalSource.plan_name ?? t.noActivePlan}
+          nextStartDate={renewalMode === "renew" ? renewalSource.expires_at : null}
+          allocation={reviewAllocation}
+          onClose={() => setRenewalMode(null)}
+          onEdit={() => {
+            setRenewalMode(null);
+            setShowEditDialog(true);
+          }}
+          onConfirm={() => {
+            setRenewalMode(null);
+            if (renewalMode === "restart") {
+              onRestart(renewalSource.plan_id);
+            } else {
+              onRenew(renewalSource.plan_id);
+            }
+          }}
+        />
+      )}
+
+      {planEditValues && (
+        <PlanEditDialog
+          open={showEditDialog}
+          busy={busy}
+          instituteName={selectedInstitute.name}
+          initialValues={planEditValues}
+          agreementDocument={agreementDocument}
+          paymentProof={paymentProof}
+          onClose={() => setShowEditDialog(false)}
+          onDownloadAttachment={onDownloadAttachment}
+          onRemoveAttachment={onRemoveAttachment}
+          onSave={onEditPlan}
+        />
+      )}
     </div>
   );
 }

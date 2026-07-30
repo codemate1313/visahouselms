@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { TableAvatar } from "@/components/TableAvatar";
 import { Checkbox } from "@/components/ui";
 import type { DirectoryUser } from "@/api/types";
@@ -14,7 +15,6 @@ import {
   passwordResetPath,
   tenantManageLink,
 } from "../userActions";
-import { RowActionMenu } from "./RowActionMenu";
 
 interface UsersTableProps {
   users: DirectoryUser[];

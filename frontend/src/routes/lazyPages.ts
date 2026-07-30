@@ -21,6 +21,7 @@ export const InstituteMemberForm = lazy(() => import("../pages/institute/Institu
 export const SuperAdminInstructorForm = lazy(() => import("../pages/institute/InstituteMemberForm").then((module) => ({ default: module.SuperAdminInstructorForm })));
 export const SuperAdminStudentForm = lazy(() => import("../pages/institute/InstituteMemberForm").then((module) => ({ default: module.SuperAdminStudentForm })));
 export const InstituteMembers = lazy(() => import("../pages/institute/InstituteMembers").then((module) => ({ default: module.InstituteMembers })));
+export const InstituteSupportTickets = lazy(() => import("../pages/super-admin/SupportTickets").then((module) => ({ default: module.InstituteSupportTickets })));
 export const SuperAdminInstituteAccounts = lazy(() => import("../pages/institute/InstituteMembers").then((module) => ({ default: module.SuperAdminInstituteAccounts })));
 export const SuperAdminInstituteStudents = lazy(() => import("../pages/institute/InstituteMembers").then((module) => ({ default: module.SuperAdminInstituteStudents })));
 export const InstituteProfile = lazy(() => import("../pages/institute/InstituteProfile").then((module) => ({ default: module.InstituteProfile })));

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
-import { ToggleSwitch } from "@/components/ToggleSwitch";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { plansStrings as strings } from "../Plans.strings";
 import type { PlanRow } from "../types";
@@ -77,16 +77,26 @@ export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onVi
                 </span>
               </td>
               <td className="table-actions institute-row-actions">
-                <ToggleSwitch checked={plan.is_active} onChange={() => onToggleActive(plan)} tooltip={plan.is_active ? t.deactivate : t.reactivate} />
-                <button type="button" className="action-btn-icon action-view" onClick={() => onView(plan)} data-tooltip={t.viewDetails}>
-                  <Icon name="eye" />
-                </button>
-                <Link className="action-btn-icon action-edit" to={`${basePath}/${plan.id}`} data-tooltip={t.edit}>
-                  <Icon name="edit" />
-                </Link>
-                <button type="button" className="action-btn-icon danger action-delete" onClick={() => onRequestDelete(plan)} data-tooltip={t.delete}>
-                  <Icon name="trash" />
-                </button>
+                <RowActionMenu
+                  items={[
+                    <button key="status" type="button" onClick={() => onToggleActive(plan)}>
+                      <Icon name={plan.is_active ? "toggleOff" : "toggleOn"} />
+                      <span>{plan.is_active ? t.deactivate : t.reactivate}</span>
+                    </button>,
+                    <button key="view" type="button" onClick={() => onView(plan)}>
+                      <Icon name="eye" />
+                      <span>{t.viewDetails}</span>
+                    </button>,
+                    <Link key="edit" to={`${basePath}/${plan.id}`}>
+                      <Icon name="edit" />
+                      <span>{t.edit}</span>
+                    </Link>,
+                    <button key="delete" type="button" className="danger" onClick={() => onRequestDelete(plan)}>
+                      <Icon name="trash" />
+                      <span>{t.delete}</span>
+                    </button>,
+                  ]}
+                />
               </td>
             </tr>
           ))}

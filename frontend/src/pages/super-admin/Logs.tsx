@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { SearchInput } from "@/components/ui";
@@ -23,13 +23,15 @@ export function Logs() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
+  const searchRef = useRef(search);
+  searchRef.current = search;
 
-  async function loadLogs() {
+  const loadLogs = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const { data: response } = await apiClient.get<LogResponse>(`/super-admin/logs/${type}`, {
-        params: { search: search.trim() || undefined, page_size: 50 },
+        params: { search: searchRef.current.trim() || undefined, page_size: 50 },
       });
       setData(response);
       setItemCount(response.total ?? response.items.length);
@@ -39,12 +41,12 @@ export function Logs() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [setItemCount, type]);
 
   useEffect(() => {
     void loadLogs();
     return () => setItemCount(null);
-  }, [type]);
+  }, [loadLogs, setItemCount]);
 
   const columns = data?.items[0] ? Object.keys(data.items[0]).slice(0, 8) : [];
 

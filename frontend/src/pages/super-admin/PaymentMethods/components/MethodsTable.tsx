@@ -1,5 +1,5 @@
 import { Icon } from "@/components/icons";
-import { ToggleSwitch } from "@/components/ToggleSwitch";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { paymentMethodsStrings as strings } from "../PaymentMethods.strings";
 import type { MethodRow } from "../types";
 import { ACTIVATION_STATUS_LABELS } from "@/constants";
@@ -43,14 +43,18 @@ export function MethodsTable({ methods, onToggleActive, onRequestDelete }: Metho
                 </span>
               </td>
               <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>
-                <ToggleSwitch
-                  checked={method.is_active}
-                  onChange={() => onToggleActive(method)}
-                  tooltip={method.is_active ? t.deactivate : t.reactivate}
+                <RowActionMenu
+                  items={[
+                    <button key="status" type="button" onClick={() => onToggleActive(method)}>
+                      <Icon name={method.is_active ? "toggleOff" : "toggleOn"} />
+                      <span>{method.is_active ? t.deactivate : t.reactivate}</span>
+                    </button>,
+                    <button key="delete" type="button" className="danger" onClick={() => onRequestDelete(method)}>
+                      <Icon name="trash" />
+                      <span>{t.delete}</span>
+                    </button>,
+                  ]}
                 />
-                <button className="action-btn-icon danger action-delete" onClick={() => onRequestDelete(method)} data-tooltip={t.delete}>
-                  <Icon name="trash" />
-                </button>
               </td>
             </tr>
           ))}

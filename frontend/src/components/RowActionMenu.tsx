@@ -10,6 +10,7 @@ import { Icon } from "@/components/icons";
 
 interface RowActionMenuProps {
   items: ReactElement[];
+  label?: string;
 }
 
 interface MenuPosition {
@@ -18,7 +19,7 @@ interface MenuPosition {
   top?: number;
 }
 
-export function RowActionMenu({ items }: RowActionMenuProps) {
+export function RowActionMenu({ items, label = "More actions" }: RowActionMenuProps) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<MenuPosition>({ right: 12, top: 0 });
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -76,9 +77,9 @@ export function RowActionMenu({ items }: RowActionMenuProps) {
         ref={triggerRef}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label="More actions"
+        aria-label={label}
         className="action-btn-icon action-menu-trigger"
-        data-tooltip="More actions"
+        data-tooltip={label}
         onClick={() => setOpen((value) => !value)}
         type="button"
       >
@@ -87,7 +88,7 @@ export function RowActionMenu({ items }: RowActionMenuProps) {
       {open && createPortal(
         <div
           ref={panelRef}
-          className="users-row-action-menu-panel"
+          className="row-action-menu-panel users-row-action-menu-panel"
           onClick={(event) => {
             if ((event.target as HTMLElement).closest("button, a")) setOpen(false);
           }}

@@ -23,6 +23,10 @@ SUPPORT_PRIORITY_NORMAL = "normal"
 SUPPORT_PRIORITY_HIGH = "high"
 SUPPORT_PRIORITIES = {SUPPORT_PRIORITY_LOW, SUPPORT_PRIORITY_NORMAL, SUPPORT_PRIORITY_HIGH}
 
+SUPPORT_QUEUE_INSTITUTE = "institute"
+SUPPORT_QUEUE_SUPER_ADMIN = "super_admin"
+SUPPORT_QUEUES = {SUPPORT_QUEUE_INSTITUTE, SUPPORT_QUEUE_SUPER_ADMIN}
+
 
 class SupportTicket(Base):
     __tablename__ = "support_tickets"
@@ -42,10 +46,25 @@ class SupportTicket(Base):
     assigned_to_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    requester_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    institute_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("institutes.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    queue: Mapped[str] = mapped_column(
+        String(30), nullable=False, default=SUPPORT_QUEUE_SUPER_ADMIN, index=True
+    )
+    escalated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+    escalated_by_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), index=True)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now(), nullable=True)
     resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
     ip_address: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
     user_agent: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
-    assigned_to: Mapped[Optional["User"]] = relationship()  # noqa: F821
+    assigned_to: Mapped[Optional["User"]] = relationship(foreign_keys=[assigned_to_id])  # noqa: F821
+    requester: Mapped[Optional["User"]] = relationship(foreign_keys=[requester_id])  # noqa: F821
+    escalated_by: Mapped[Optional["User"]] = relationship(foreign_keys=[escalated_by_id])  # noqa: F821

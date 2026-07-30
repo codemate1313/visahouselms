@@ -170,14 +170,14 @@
   font-weight: 800;
   font-size: 20px;
   box-shadow: 0 4px 12px rgba(163, 28, 40, 0.25);
-  letter-spacing: -0.5px;
+  letter-spacing: 0;
 }
 
 .invoice-brand-info h2 {
   margin: 0 0 4px;
   font-size: 22px;
   font-weight: 800;
-  letter-spacing: -0.5px;
+  letter-spacing: 0;
   color: var(--text-main, #0f172a);
 }
 
@@ -318,7 +318,7 @@
   font-size: 22px;
   font-weight: 800;
   color: var(--text-main, #0f172a);
-  letter-spacing: -0.5px;
+  letter-spacing: 0;
 }
 
 .invoice-metric-tile.tile-highlight-paid .invoice-metric-value {

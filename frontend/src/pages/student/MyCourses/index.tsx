@@ -34,7 +34,7 @@ export function MyCourses() {
       .finally(() => setLoading(false));
   }, []);
 
-  const allModules = access?.plan?.modules ?? [];
+  const allModules = useMemo(() => access?.plan?.modules ?? [], [access?.plan?.modules]);
 
   const availableTypes = useMemo(
     () => Array.from(new Set(allModules.map((m) => m.module_type))),
@@ -48,7 +48,6 @@ export function MyCourses() {
       if (q && !m.title.toLowerCase().includes(q)) return false;
       return true;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allModules, typeFilter, search]);
 
   async function startModule(moduleId: number, moduleType: string) {

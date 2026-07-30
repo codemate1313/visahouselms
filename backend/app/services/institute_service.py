@@ -4,6 +4,7 @@ import re
 import secrets
 from datetime import datetime, timezone
 from decimal import Decimal
+from pathlib import Path
 from typing import List, Optional
 
 from fastapi import HTTPException, UploadFile, status
@@ -29,6 +30,11 @@ from app.services import plan_service, subscription_service
 from app.services.subscription_service import current_subscription
 
 MAX_LOGO_BYTES = 2 * 1024 * 1024
+MAX_AGREEMENT_ATTACHMENT_BYTES = 20 * 1024 * 1024
+AGREEMENT_ATTACHMENT_FIELDS = {
+    "agreement": ("agreement_document_path", "agreement_document_name"),
+    "payment-proof": ("payment_proof_path", "payment_proof_name"),
+}
 ALLOWED_FONT_FAMILIES = {"Plus Jakarta Sans", "Inter", "Sora", "Outfit", "system-ui"}
 ALLOWED_FONT_WEIGHTS = {400, 500, 600, 700, 800}
 ADMIN_PERMISSION_KEYS = (
@@ -40,6 +46,18 @@ ADMIN_PERMISSION_KEYS = (
     "view_billing",
 )
 logger = logging.getLogger(__name__)
+
+
+def _attachment_summary(institute: Institute, kind: str) -> Optional[dict]:
+    path_field, name_field = AGREEMENT_ATTACHMENT_FIELDS[kind]
+    relative_path = getattr(institute, path_field)
+    original_name = getattr(institute, name_field)
+    if not relative_path or not original_name:
+        return None
+    return {
+        "name": original_name,
+        "download_url": f"/super-admin/institutes/{institute.id}/documents/{kind}",
+    }
 
 
 def normalized_admin_permissions(value: Optional[dict] = None) -> dict:
@@ -127,6 +145,8 @@ def _serialize(db: Session, institute: Institute) -> dict:
         "admin_last_name": admin.last_name if admin else None,
         "agreement_reference": institute.agreement_reference,
         "agreement_notes": institute.agreement_notes,
+        "agreement_document": _attachment_summary(institute, "agreement"),
+        "payment_proof": _attachment_summary(institute, "payment-proof"),
         "agreed_amount": str(institute.agreed_amount) if institute.agreed_amount is not None else None,
         "amount_received": str(payment.amount_paid) if payment and payment.amount_paid is not None else None,
         "payment_method_id": payment.payment_method_id if payment else None,
@@ -672,6 +692,14 @@ def _institute_storage_paths(
     attempt_ids: list[int],
 ) -> list[str]:
     paths: list[str] = []
+    institute_files = db.execute(
+        select(
+            tables["institutes"].c.agreement_document_path,
+            tables["institutes"].c.payment_proof_path,
+        ).where(tables["institutes"].c.id == institute_id)
+    ).first()
+    if institute_files:
+        paths.extend(path for path in institute_files if path)
     paths.extend(
         path
         for path in db.execute(
@@ -937,6 +965,109 @@ async def save_logo(db: Session, actor: User, institute_id: int, upload: UploadF
     db.commit()
     db.refresh(branding)
     return _serialize_branding(branding, institute.name)
+
+
+def _agreement_attachment_fields(kind: str) -> tuple[str, str]:
+    fields = AGREEMENT_ATTACHMENT_FIELDS.get(kind)
+    if fields is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment type not found")
+    return fields
+
+
+async def save_agreement_attachment(
+    db: Session,
+    actor: User,
+    institute_id: int,
+    kind: str,
+    upload: UploadFile,
+    ip: Optional[str],
+) -> dict:
+    institute = get_institute_or_404(db, institute_id)
+    path_field, name_field = _agreement_attachment_fields(kind)
+    supplied_name = (upload.filename or "attachment").replace("\x00", "").replace("\\", "/")
+    original_name = Path(supplied_name).name[:255]
+    if not original_name:
+        original_name = "attachment"
+    content = await upload.read(MAX_AGREEMENT_ATTACHMENT_BYTES + 1)
+    if not content:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Attachment cannot be empty")
+    if len(content) > MAX_AGREEMENT_ATTACHMENT_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Agreement attachments cannot exceed 20 MB",
+        )
+
+    attachments_dir = settings.storage_path / "institute_agreements" / str(institute_id)
+    attachments_dir.mkdir(parents=True, exist_ok=True)
+    relative_path = (
+        Path("institute_agreements")
+        / str(institute_id)
+        / f"{kind}-{secrets.token_hex(12)}"
+    ).as_posix()
+    (settings.storage_path / relative_path).write_bytes(content)
+
+    old_relative_path = getattr(institute, path_field)
+    setattr(institute, path_field, relative_path)
+    setattr(institute, name_field, original_name)
+    db.add(institute)
+    _audit(
+        db,
+        actor,
+        "institute.update_agreement_attachment",
+        institute_id,
+        ip,
+        {"kind": kind, "filename": original_name},
+    )
+    db.commit()
+    db.refresh(institute)
+    if old_relative_path and old_relative_path != relative_path:
+        _delete_storage_files([old_relative_path])
+    return _attachment_summary(institute, kind) or {}
+
+
+def agreement_attachment_download(
+    db: Session,
+    institute_id: int,
+    kind: str,
+) -> tuple[Path, str]:
+    institute = get_institute_or_404(db, institute_id)
+    path_field, name_field = _agreement_attachment_fields(kind)
+    relative_path = getattr(institute, path_field)
+    original_name = getattr(institute, name_field)
+    if not relative_path or not original_name:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found")
+    root = settings.storage_path.resolve()
+    file_path = (root / relative_path).resolve()
+    if root not in file_path.parents or not file_path.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment file not found")
+    return file_path, original_name
+
+
+def delete_agreement_attachment(
+    db: Session,
+    actor: User,
+    institute_id: int,
+    kind: str,
+    ip: Optional[str],
+) -> None:
+    institute = get_institute_or_404(db, institute_id)
+    path_field, name_field = _agreement_attachment_fields(kind)
+    relative_path = getattr(institute, path_field)
+    if not relative_path:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found")
+    setattr(institute, path_field, None)
+    setattr(institute, name_field, None)
+    db.add(institute)
+    _audit(
+        db,
+        actor,
+        "institute.delete_agreement_attachment",
+        institute_id,
+        ip,
+        {"kind": kind},
+    )
+    db.commit()
+    _delete_storage_files([relative_path])
 
 
 def get_public_branding(db: Session, slug: str) -> dict:

@@ -91,14 +91,13 @@ export function SpeakingAvatar({ attemptId, partId, isCandidateRecording = false
 
     return () => {
       isMounted = false;
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
     };
   }, [attemptId, partId, selectedExaminer]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    return () => audio?.pause();
+  }, [avatarData]);
 
   // Handle viseme animation ticker during audio playback
   useEffect(() => {

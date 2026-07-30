@@ -10,6 +10,7 @@ import { StatCardsGrid, type StatCard } from "./components/StatCardsGrid";
 import { LearningPlanPanel } from "./components/LearningPlanPanel";
 import { RecentActivityPanel } from "./components/RecentActivityPanel";
 import type { TestProgressItem } from "./types";
+import { DailyEnglishChallenge } from "./components/DailyEnglishChallenge";
 
 export function StudentDashboard() {
   const user = useAuthStore((state) => state.user);
@@ -78,6 +79,8 @@ export function StudentDashboard() {
         title={strings.welcome(user?.first_name)}
         subtitle={strings.subtitle}
       />
+
+      <DailyEnglishChallenge />
 
       <StatCardsGrid stats={statCards} />
 

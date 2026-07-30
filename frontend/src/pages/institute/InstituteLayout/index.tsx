@@ -56,6 +56,7 @@ export function InstituteLayout() {
     {
       title: m.supportSection,
       items: [
+        { key: "support-tickets", label: m.supportTickets, icon: "notifications", to: "/institute-portal/support-tickets" },
         { key: "support", label: m.support, icon: "help", to: "/institute-portal/support" },
       ],
     },

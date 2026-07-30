@@ -1,6 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -363,6 +364,50 @@ async def upload_logo(
     actor: User = Depends(get_current_user),
 ):
     return await institute_service.save_logo(db, actor, institute_id, file, _client_ip(request))
+
+
+@router.post("/{institute_id}/documents/{kind}")
+async def upload_agreement_attachment(
+    institute_id: int,
+    kind: str,
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return await institute_service.save_agreement_attachment(
+        db, actor, institute_id, kind, file, _client_ip(request)
+    )
+
+
+@router.get("/{institute_id}/documents/{kind}")
+def download_agreement_attachment(
+    institute_id: int,
+    kind: str,
+    db: Session = Depends(get_db),
+):
+    file_path, original_name = institute_service.agreement_attachment_download(
+        db, institute_id, kind
+    )
+    return FileResponse(
+        path=file_path,
+        media_type="application/octet-stream",
+        filename=original_name,
+        content_disposition_type="attachment",
+    )
+
+
+@router.delete("/{institute_id}/documents/{kind}", status_code=204)
+def remove_agreement_attachment(
+    institute_id: int,
+    kind: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    institute_service.delete_agreement_attachment(
+        db, actor, institute_id, kind, _client_ip(request)
+    )
 
 
 @public_router.get("/{slug}/branding")

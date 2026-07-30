@@ -1,7 +1,7 @@
 .ui-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 6000;
+  z-index: 99999;
   display: grid;
   place-items: center;
   padding: 20px;
@@ -11,14 +11,20 @@
 }
 
 .ui-modal-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(100%, 520px);
   max-height: calc(100dvh - 40px);
-  overflow: auto;
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow-md);
   padding: 22px;
+}
+
+.ui-modal-card:focus {
+  outline: none;
 }
 
 .ui-modal-sm {
@@ -37,6 +43,28 @@
   margin-bottom: 14px;
 }
 
+.ui-modal-header .ui-icon-btn {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  min-height: 30px !important;
+  margin: -5px -5px 0 0;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.ui-modal-header .ui-icon-btn:hover:not(:disabled) {
+  border-radius: 8px !important;
+  background: var(--surface-muted) !important;
+  color: var(--text) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
 .ui-modal-header h2 {
   margin: 0;
   color: var(--text);
@@ -45,7 +73,16 @@
 }
 
 .ui-modal-body {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   color: var(--text-muted);
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.ui-modal-body::-webkit-scrollbar {
+  display: none;
 }
 
 .ui-modal-actions {
@@ -54,6 +91,17 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 22px;
+}
+
+@media (max-width: 520px) {
+  .ui-modal-backdrop {
+    padding: 8px;
+  }
+
+  .ui-modal-card {
+    max-height: calc(100dvh - 16px);
+    padding: 18px;
+  }
 }
 
 [data-theme="dark"] .ui-modal-card {

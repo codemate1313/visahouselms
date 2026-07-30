@@ -27,6 +27,12 @@ class SupportTicketUpdate(BaseModel):
     assigned_to_id: Optional[int] = None
 
 
+class InstituteSupportTicketUpdate(BaseModel):
+    status: Optional[str] = Field(default=None, max_length=20)
+    priority: Optional[str] = Field(default=None, max_length=20)
+    admin_note: Optional[str] = Field(default=None, max_length=5000)
+
+
 class SupportTicketResponse(BaseModel):
     id: int
     source: str
@@ -43,6 +49,12 @@ class SupportTicketResponse(BaseModel):
     assigned_to_id: Optional[int] = None
     assigned_to_name: Optional[str] = None
     assigned_to_email: Optional[str] = None
+    requester_id: Optional[int] = None
+    institute_id: Optional[int] = None
+    queue: str
+    escalated_at: Optional[datetime] = None
+    escalated_by_id: Optional[int] = None
+    escalated_by_name: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     resolved_at: Optional[datetime] = None
@@ -69,6 +81,8 @@ class PortalSupportTicketResponse(BaseModel):
     category: str
     status: str
     priority: str
+    queue: str
+    escalated_at: Optional[datetime] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     resolved_at: Optional[datetime] = None

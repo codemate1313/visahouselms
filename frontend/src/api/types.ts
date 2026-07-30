@@ -27,6 +27,7 @@ export interface SuperAdminAccount {
 
 export type SupportTicketStatus = "new" | "open" | "resolved" | "closed";
 export type SupportTicketPriority = "low" | "normal" | "high";
+export type SupportTicketQueue = "institute" | "super_admin";
 
 export interface SupportTicket {
   id: number;
@@ -44,6 +45,12 @@ export interface SupportTicket {
   assigned_to_id: number | null;
   assigned_to_name: string | null;
   assigned_to_email: string | null;
+  requester_id: number | null;
+  institute_id: number | null;
+  queue: SupportTicketQueue;
+  escalated_at: string | null;
+  escalated_by_id: number | null;
+  escalated_by_name: string | null;
   created_at: string;
   updated_at: string | null;
   resolved_at: string | null;
@@ -64,6 +71,8 @@ export interface PortalSupportTicket {
   category: string;
   status: SupportTicketStatus;
   priority: SupportTicketPriority;
+  queue: SupportTicketQueue;
+  escalated_at: string | null;
   created_at: string;
   updated_at: string | null;
   resolved_at: string | null;

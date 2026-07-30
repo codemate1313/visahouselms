@@ -210,6 +210,7 @@ export function TestRunner() {
   const isImmersiveAttempt = attempt ? IMMERSIVE_MODULE_TYPES.has(attempt.module_type) : false;
   const immersiveAttemptId = isImmersiveAttempt ? attempt?.id : null;
   const isFinalAttempt = attempt?.is_final ?? false;
+  const attemptStatus = attempt?.status;
 
   const onRequiredTrackEnded = useCallback((kind: "camera" | "microphone" | "screen") => {
     updateSecurityMedia({ [kind]: false });
@@ -224,7 +225,7 @@ export function TestRunner() {
   // Composite tests occupy the full viewport. Final Tests additionally retain
   // strict proctor flagging and mandatory live media throughout the sitting.
   useEffect(() => {
-    if (!attempt || (attempt.status !== "ready" && attempt.status !== "in_progress")) return;
+    if (attemptStatus !== "ready" && attemptStatus !== "in_progress") return;
     developerFullscreenBypass.current = false;
     setFullscreenActive(Boolean(document.fullscreenElement));
 
@@ -295,7 +296,7 @@ export function TestRunner() {
       window.removeEventListener("keydown", onKeyDown, true);
       if (immersiveAttemptId && document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     };
-  }, [attempt?.id, attempt?.status, immersiveAttemptId, isFinalAttempt, recordFlag, updateSecurityMedia]);
+  }, [attemptStatus, immersiveAttemptId, isFinalAttempt, recordFlag, updateSecurityMedia]);
 
   async function enterFullscreen() {
     developerFullscreenBypass.current = false;

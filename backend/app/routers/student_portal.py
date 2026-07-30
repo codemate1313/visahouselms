@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Header, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.uploads import read_validated_speaking_answer
@@ -14,6 +14,7 @@ from app.models.user_session import UserSession
 from app.schemas.auth import CurrentUser
 from app.schemas.student import (
     AnswerSaveRequest,
+    DailyEnglishAnswerRequest,
     FinalTestHeartbeatRequest,
     FinalTestPreflightRequest,
     PlanSubscribeRequest,
@@ -32,6 +33,8 @@ from app.services import (
     plan_service,
     student_analysis_service,
     subscription_service,
+    daily_english_service,
+    english_discovery_service,
 )
 
 router = APIRouter(
@@ -59,6 +62,48 @@ def _current_user_out(user: User) -> CurrentUser:
         is_owner=user.is_owner,
         is_developer_verified=user.is_developer_verified,
     )
+
+
+@router.get("/daily-english")
+def get_daily_english_challenge(
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    return daily_english_service.get_daily_challenge(db, user)
+
+
+@router.post("/daily-english/answer")
+def answer_daily_english_question(
+    payload: DailyEnglishAnswerRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    return daily_english_service.answer_daily_question(
+        db,
+        user,
+        payload.question_id,
+        payload.answer_index,
+    )
+
+
+@router.get("/english-discovery")
+def get_english_discovery(
+    exclude_page_ids: Optional[str] = Query(default=None, max_length=300),
+):
+    excluded: set[int] = set()
+    if exclude_page_ids:
+        try:
+            excluded = {
+                int(value)
+                for value in exclude_page_ids.split(",")
+                if value.strip()
+            }
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid excluded page IDs",
+            ) from exc
+    return english_discovery_service.get_random_english_fact(excluded)
 
 
 @router.get("/me/profile", response_model=CurrentUser)

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
-import { ToggleSwitch } from "@/components/ToggleSwitch";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { couponsStrings as strings } from "../Coupons.strings";
 import type { CouponRow } from "../types";
@@ -72,17 +72,22 @@ export function CouponsTable({ coupons, onToggleActive, onRequestDelete }: Coupo
                 </span>
               </td>
               <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>
-                <ToggleSwitch
-                  checked={coupon.is_active}
-                  onChange={() => onToggleActive(coupon)}
-                  tooltip={coupon.is_active ? t.deactivate : t.reactivate}
+                <RowActionMenu
+                  items={[
+                    <button key="status" type="button" onClick={() => onToggleActive(coupon)}>
+                      <Icon name={coupon.is_active ? "toggleOff" : "toggleOn"} />
+                      <span>{coupon.is_active ? t.deactivate : t.reactivate}</span>
+                    </button>,
+                    <Link key="edit" to={`/super-admin/coupons/${coupon.id}`}>
+                      <Icon name="edit" />
+                      <span>{t.edit}</span>
+                    </Link>,
+                    <button key="delete" type="button" className="danger" onClick={() => onRequestDelete(coupon)}>
+                      <Icon name="trash" />
+                      <span>{t.delete}</span>
+                    </button>,
+                  ]}
                 />
-                <Link className="action-btn-icon action-edit" to={`/super-admin/coupons/${coupon.id}`} data-tooltip={t.edit}>
-                  <Icon name="edit" />
-                </Link>
-                <button className="action-btn-icon danger action-delete" onClick={() => onRequestDelete(coupon)} data-tooltip={t.delete}>
-                  <Icon name="trash" />
-                </button>
               </td>
             </tr>
           ))}

@@ -2,9 +2,11 @@ export const supportCenterStrings = {
   eyebrow: "SUPPORT",
   title: "Support & Queries",
   subtitle: "Raise a ticket and track updates from the support team.",
+  instituteSubtitle: "Raise a ticket with your institute admin and track its progress.",
   form: {
     title: "Raise a query",
     description: "Describe the issue clearly so the team can route it correctly.",
+    instituteDescription: "Your institute admin receives this query first and can forward it to Super Admin when needed.",
     category: "Category",
     subject: "Subject",
     subjectPlaceholder: "Brief summary of the issue",
@@ -35,6 +37,11 @@ export const supportCenterStrings = {
     open: "In Progress",
     resolved: "Resolved",
     closed: "Closed",
+  },
+  routing: {
+    institute: "With Institute Admin",
+    forwarded: "Forwarded to Super Admin",
+    platform: "With Super Admin",
   },
   success: "Your support ticket has been submitted.",
   errors: {

@@ -20,6 +20,7 @@ from app.models.coupon import Coupon
 from app.models.course import Course, CourseAsset, InstituteCourse
 from app.models.crash_log import CrashLog
 from app.models.demo_account import DemoAccount
+from app.models.daily_english import DailyEnglishChallenge
 from app.models.error_log import ErrorLog
 from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion, InstituteModule
 from app.models.institute import Institute
@@ -79,6 +80,7 @@ __all__ = [
     "InstructorProfile",
     "TrialConfig",
     "DemoAccount",
+    "DailyEnglishChallenge",
     "Coupon",
     "Course",
     "CourseAsset",

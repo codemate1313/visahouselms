@@ -8,6 +8,9 @@ from sqlalchemy.orm import Session
 from app.models.support_ticket import (
     SUPPORT_PRIORITIES,
     SUPPORT_PRIORITY_NORMAL,
+    SUPPORT_QUEUE_INSTITUTE,
+    SUPPORT_QUEUE_SUPER_ADMIN,
+    SUPPORT_QUEUES,
     SUPPORT_STATUS_CLOSED,
     SUPPORT_STATUS_NEW,
     SUPPORT_STATUS_OPEN,
@@ -15,12 +18,14 @@ from app.models.support_ticket import (
     SUPPORT_STATUSES,
     SupportTicket,
 )
+from app.models.role import INST_INSTRUCTOR, STUDENT
 from app.models.user import User
 from app.schemas.support import PortalSupportTicketCreate, SupportTicketCreate, SupportTicketUpdate
 
 
 def serialize_ticket(ticket: SupportTicket) -> dict:
     assigned_to = ticket.assigned_to
+    escalated_by = ticket.escalated_by
     return {
         "id": ticket.id,
         "source": ticket.source,
@@ -37,6 +42,14 @@ def serialize_ticket(ticket: SupportTicket) -> dict:
         "assigned_to_id": ticket.assigned_to_id,
         "assigned_to_name": f"{assigned_to.first_name} {assigned_to.last_name}" if assigned_to else None,
         "assigned_to_email": assigned_to.email if assigned_to else None,
+        "requester_id": ticket.requester_id,
+        "institute_id": ticket.institute_id,
+        "queue": ticket.queue,
+        "escalated_at": ticket.escalated_at,
+        "escalated_by_id": ticket.escalated_by_id,
+        "escalated_by_name": (
+            f"{escalated_by.first_name} {escalated_by.last_name}" if escalated_by else None
+        ),
         "created_at": ticket.created_at,
         "updated_at": ticket.updated_at,
         "resolved_at": ticket.resolved_at,
@@ -50,7 +63,12 @@ def create_ticket(
     ip_address: Optional[str] = None,
     source: str = "public_contact",
     user_agent: Optional[str] = None,
+    requester_id: Optional[int] = None,
+    institute_id: Optional[int] = None,
+    queue: str = SUPPORT_QUEUE_SUPER_ADMIN,
 ) -> SupportTicket:
+    if queue not in SUPPORT_QUEUES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid support ticket queue")
     ticket = SupportTicket(
         source=source,
         name=payload.name.strip(),
@@ -64,6 +82,9 @@ def create_ticket(
         priority=SUPPORT_PRIORITY_NORMAL,
         ip_address=ip_address,
         user_agent=user_agent[:255] if user_agent else None,
+        requester_id=requester_id,
+        institute_id=institute_id,
+        queue=queue,
     )
     db.add(ticket)
     db.commit()
@@ -80,6 +101,7 @@ def create_portal_ticket(
     user_agent: Optional[str] = None,
 ) -> SupportTicket:
     role_name = user.role_name or "user"
+    institute_queue = role_name in {STUDENT, INST_INSTRUCTOR} and user.institute_id is not None
     return create_ticket(
         db,
         SupportTicketCreate(
@@ -94,6 +116,9 @@ def create_portal_ticket(
         ip_address=ip_address,
         source=f"portal_{role_name.lower()}",
         user_agent=user_agent,
+        requester_id=user.id,
+        institute_id=user.institute_id,
+        queue=SUPPORT_QUEUE_INSTITUTE if institute_queue else SUPPORT_QUEUE_SUPER_ADMIN,
     )
 
 
@@ -101,8 +126,14 @@ def list_portal_tickets(db: Session, user: User) -> list[dict]:
     tickets = db.scalars(
         select(SupportTicket)
         .where(
-            func.lower(SupportTicket.email) == user.email.strip().lower(),
             SupportTicket.source.like("portal_%"),
+            or_(
+                SupportTicket.requester_id == user.id,
+                (
+                    (SupportTicket.requester_id.is_(None))
+                    & (func.lower(SupportTicket.email) == user.email.strip().lower())
+                ),
+            ),
         )
         .order_by(SupportTicket.created_at.desc(), SupportTicket.id.desc())
     ).all()
@@ -114,6 +145,8 @@ def list_portal_tickets(db: Session, user: User) -> list[dict]:
             "category": ticket.category,
             "status": ticket.status,
             "priority": ticket.priority,
+            "queue": ticket.queue,
+            "escalated_at": ticket.escalated_at,
             "created_at": ticket.created_at,
             "updated_at": ticket.updated_at,
             "resolved_at": ticket.resolved_at,
@@ -130,13 +163,22 @@ def list_tickets(
     search: Optional[str] = None,
     source_filter: Optional[str] = None,
     status_group: Optional[str] = None,
+    queue: str = SUPPORT_QUEUE_SUPER_ADMIN,
+    institute_id: Optional[int] = None,
     page: int = 1,
     page_size: int = 25,
 ) -> dict:
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
-    stmt = select(SupportTicket)
-    count_stmt = select(SupportTicket.status, func.count(SupportTicket.id))
+    if queue not in SUPPORT_QUEUES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid support ticket queue")
+    stmt = select(SupportTicket).where(SupportTicket.queue == queue)
+    count_stmt = select(SupportTicket.status, func.count(SupportTicket.id)).where(
+        SupportTicket.queue == queue
+    )
+    if institute_id is not None:
+        stmt = stmt.where(SupportTicket.institute_id == institute_id)
+        count_stmt = count_stmt.where(SupportTicket.institute_id == institute_id)
 
     if source_filter == "customer":
         stmt = stmt.where(SupportTicket.source == "public_contact")
@@ -194,15 +236,32 @@ def list_tickets(
     }
 
 
-def get_ticket(db: Session, ticket_id: int) -> SupportTicket:
+def get_ticket(
+    db: Session,
+    ticket_id: int,
+    *,
+    queue: Optional[str] = None,
+    institute_id: Optional[int] = None,
+) -> SupportTicket:
     ticket = db.get(SupportTicket, ticket_id)
-    if not ticket:
+    if (
+        not ticket
+        or (queue is not None and ticket.queue != queue)
+        or (institute_id is not None and ticket.institute_id != institute_id)
+    ):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Support ticket not found")
     return ticket
 
 
-def update_ticket(db: Session, ticket_id: int, payload: SupportTicketUpdate) -> SupportTicket:
-    ticket = get_ticket(db, ticket_id)
+def update_ticket(
+    db: Session,
+    ticket_id: int,
+    payload: SupportTicketUpdate,
+    *,
+    queue: Optional[str] = None,
+    institute_id: Optional[int] = None,
+) -> SupportTicket:
+    ticket = get_ticket(db, ticket_id, queue=queue, institute_id=institute_id)
     data = payload.model_dump(exclude_unset=True)
 
     if "status" in data and data["status"] is not None:
@@ -221,6 +280,32 @@ def update_ticket(db: Session, ticket_id: int, payload: SupportTicketUpdate) -> 
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assigned user not found")
         ticket.assigned_to_id = data["assigned_to_id"]
 
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+
+
+def forward_ticket_to_super_admin(
+    db: Session,
+    ticket_id: int,
+    institute_admin: User,
+) -> SupportTicket:
+    if institute_admin.institute_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Institute membership is required",
+        )
+    ticket = get_ticket(
+        db,
+        ticket_id,
+        queue=SUPPORT_QUEUE_INSTITUTE,
+        institute_id=institute_admin.institute_id,
+    )
+    ticket.queue = SUPPORT_QUEUE_SUPER_ADMIN
+    ticket.escalated_at = datetime.utcnow()
+    ticket.escalated_by_id = institute_admin.id
+    if ticket.status == SUPPORT_STATUS_NEW:
+        ticket.status = SUPPORT_STATUS_OPEN
     db.commit()
     db.refresh(ticket)
     return ticket

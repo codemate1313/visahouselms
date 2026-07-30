@@ -12,6 +12,11 @@ import { AllocationFieldset } from "./components/AllocationFieldset";
 import { AdminAccountFields } from "./components/AdminAccountFields";
 import { SessionPolicyFieldset } from "./components/SessionPolicyFieldset";
 import { Icon } from "@/components/icons";
+import { confirmAction } from "@/components/confirmDialog";
+import {
+  AgreementAttachments,
+  type AgreementAttachment,
+} from "./components/AgreementAttachments";
 
 interface ModuleOption {
   id: number;
@@ -53,6 +58,10 @@ export function InstituteForm() {
   const [currency, setCurrency] = useState("INR");
   const [paymentMethodId, setPaymentMethodId] = useState<string>("");
   const [paymentReference, setPaymentReference] = useState("");
+  const [agreementDocumentFile, setAgreementDocumentFile] = useState<File | null>(null);
+  const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
+  const [agreementDocument, setAgreementDocument] = useState<AgreementAttachment | null>(null);
+  const [paymentProof, setPaymentProof] = useState<AgreementAttachment | null>(null);
 
   // Allocation & Limits. Seats and validity are the plan's; only the AI cap is
   // negotiated per institute.
@@ -107,6 +116,8 @@ export function InstituteForm() {
         if (data.amount_received != null) setAmountReceived(data.amount_received);
         if (data.payment_method_id) setPaymentMethodId(String(data.payment_method_id));
         if (data.payment_reference) setPaymentReference(data.payment_reference);
+        setAgreementDocument(data.agreement_document ?? null);
+        setPaymentProof(data.payment_proof ?? null);
         setCurrency(data.agreement_currency ?? "INR");
         setAllocation({
           student_limit: String(data.student_limit ?? 50),
@@ -309,6 +320,7 @@ export function InstituteForm() {
           formData.append("file", logoFile);
           await apiClient.post(`/super-admin/institutes/${instituteId}/branding/logo`, formData);
         }
+        await uploadAgreementAttachments(instituteId);
 
         setCreated({ id: data.id, admin_email: data.admin_email, admin_temp_password: data.admin_temp_password });
         // Confirm what the institute was provisioned with, now that onboarding
@@ -330,6 +342,7 @@ export function InstituteForm() {
           formData.append("file", logoFile);
           await apiClient.post(`/super-admin/institutes/${id}/branding/logo`, formData);
         }
+        await uploadAgreementAttachments(Number(id));
 
         // Saving is done with the institute, whichever step it was pressed
         // from - the steps are there to reach a field, not to be walked.
@@ -340,6 +353,63 @@ export function InstituteForm() {
       setError(extractErrorMessage(err, strings.errors.save));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function uploadAgreementAttachments(instituteId: number) {
+    const uploads: Promise<unknown>[] = [];
+    if (agreementDocumentFile) {
+      const formData = new FormData();
+      formData.append("file", agreementDocumentFile);
+      uploads.push(apiClient.post(
+        `/super-admin/institutes/${instituteId}/documents/agreement`,
+        formData,
+      ));
+    }
+    if (paymentProofFile) {
+      const formData = new FormData();
+      formData.append("file", paymentProofFile);
+      uploads.push(apiClient.post(
+        `/super-admin/institutes/${instituteId}/documents/payment-proof`,
+        formData,
+      ));
+    }
+    await Promise.all(uploads);
+  }
+
+  async function downloadAttachment(attachment: AgreementAttachment) {
+    try {
+      const { data } = await apiClient.get<Blob>(attachment.download_url, {
+        responseType: "blob",
+      });
+      const objectUrl = URL.createObjectURL(data);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = attachment.name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to download attachment."));
+    }
+  }
+
+  async function removeAttachment(kind: "agreement" | "payment-proof") {
+    if (isNew || !id) return;
+    const confirmed = await confirmAction("Remove this attachment permanently?", {
+      title: "Remove attachment",
+      confirmText: "Remove",
+      variant: "warning",
+    });
+    if (!confirmed) return;
+    try {
+      await apiClient.delete(`/super-admin/institutes/${id}/documents/${kind}`);
+      if (kind === "agreement") setAgreementDocument(null);
+      else setPaymentProof(null);
+      showSuccess("Attachment removed.", "Agreement updated");
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to remove attachment."));
     }
   }
 
@@ -540,6 +610,18 @@ export function InstituteForm() {
               <label htmlFor="agreement_notes">Agreement Notes</label>
               <textarea id="agreement_notes" rows={2} value={agreementNotes} onChange={(e) => setAgreementNotes(e.target.value)} placeholder="Additional contract terms or special conditions..." />
             </div>
+
+            <AgreementAttachments
+              agreementDocument={agreementDocument}
+              agreementDocumentFile={agreementDocumentFile}
+              paymentProof={paymentProof}
+              paymentProofFile={paymentProofFile}
+              onAgreementDocumentChange={setAgreementDocumentFile}
+              onPaymentProofChange={setPaymentProofFile}
+              onDownload={(attachment) => void downloadAttachment(attachment)}
+              onRemoveAgreementDocument={() => void removeAttachment("agreement")}
+              onRemovePaymentProof={() => void removeAttachment("payment-proof")}
+            />
 
             <AllocationFieldset allocation={allocation} onChange={updateAllocation} />
           </div>

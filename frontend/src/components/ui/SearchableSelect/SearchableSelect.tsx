@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import "./SearchableSelect.css";
 import { Icon } from "@/components/icons";
 import { commonActions } from "@/content/common.strings";
@@ -40,17 +40,24 @@ export function SearchableSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [alignRight, setAlignRight] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const generatedId = useId();
+  const listboxId = `${id ?? generatedId}-listbox`;
 
   const selectedOption = options.find((opt) => String(opt.value) === String(value));
 
-  const filteredOptions = options.filter(
-    (opt) =>
-      !searchable ||
-      !search ||
-      opt.label.toLowerCase().includes(search.toLowerCase()) ||
-      (opt.sublabel && opt.sublabel.toLowerCase().includes(search.toLowerCase()))
+  const filteredOptions = useMemo(
+    () => options.filter(
+      (opt) =>
+        !searchable ||
+        !search ||
+        opt.label.toLowerCase().includes(search.toLowerCase()) ||
+        (opt.sublabel && opt.sublabel.toLowerCase().includes(search.toLowerCase()))
+    ),
+    [options, search, searchable],
   );
 
   useEffect(() => {
@@ -73,10 +80,24 @@ export function SearchableSelect({
       if (searchable) {
         setTimeout(() => searchInputRef.current?.focus(), 40);
       }
+      const selectedIndex = filteredOptions.findIndex(
+        (option) => !option.disabled && String(option.value) === String(value),
+      );
+      setHighlightedIndex(selectedIndex >= 0 ? selectedIndex : filteredOptions.findIndex((option) => !option.disabled));
     } else {
       setSearch("");
+      setHighlightedIndex(-1);
     }
-  }, [isOpen, searchable]);
+  }, [filteredOptions, isOpen, searchable, value]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const firstEnabled = filteredOptions.findIndex((option) => !option.disabled);
+    setHighlightedIndex((current) => {
+      if (current >= 0 && current < filteredOptions.length && !filteredOptions[current]?.disabled) return current;
+      return firstEnabled;
+    });
+  }, [filteredOptions, isOpen]);
 
   function handleSelect(optValue: string | number) {
     onChange(optValue);
@@ -84,8 +105,34 @@ export function SearchableSelect({
     setSearch("");
   }
 
+  function moveHighlight(direction: 1 | -1) {
+    if (filteredOptions.length === 0) return;
+    setHighlightedIndex((current) => {
+      let next = current;
+      for (let count = 0; count < filteredOptions.length; count += 1) {
+        next = (next + direction + filteredOptions.length) % filteredOptions.length;
+        if (!filteredOptions[next]?.disabled) return next;
+      }
+      return current;
+    });
+  }
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Escape") {
+      setIsOpen(false);
+      triggerRef.current?.focus();
+    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!isOpen) {
+        setIsOpen(true);
+      } else {
+        moveHighlight(e.key === "ArrowDown" ? 1 : -1);
+      }
+    } else if (e.key === "Enter" && isOpen && highlightedIndex >= 0) {
+      e.preventDefault();
+      const option = filteredOptions[highlightedIndex];
+      if (option && !option.disabled) handleSelect(option.value);
+    } else if (e.key === "Tab") {
       setIsOpen(false);
     }
   }
@@ -100,10 +147,13 @@ export function SearchableSelect({
         type="button"
         className="searchable-select-trigger"
         id={id}
+        ref={triggerRef}
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
+        aria-controls={isOpen ? listboxId : undefined}
+        aria-activedescendant={isOpen && highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined}
         aria-label={ariaLabel ?? placeholder}
       >
         <span className={`selected-value-label ${!selectedOption ? "is-placeholder" : ""}`}>
@@ -125,7 +175,7 @@ export function SearchableSelect({
       </button>
 
       {isOpen && (
-        <div className={`searchable-select-dropdown ${alignRight ? "align-right" : ""}`} role="listbox">
+        <div id={listboxId} className={`searchable-select-dropdown ${alignRight ? "align-right" : ""}`} role="listbox">
           {searchable && (
             <div className="select-search-header">
               <svg
@@ -169,16 +219,23 @@ export function SearchableSelect({
             {filteredOptions.length === 0 ? (
               <div className="select-empty-message">{emptyMessage}</div>
             ) : (
-              filteredOptions.map((opt) => {
-                const isSelected = String(opt.value) === String(value);
-                return (
-                  <div
-                    key={opt.value}
+            filteredOptions.map((opt, optionIndex) => {
+              const isSelected = String(opt.value) === String(value);
+              return (
+                <div
+                  key={opt.value}
+                    id={`${listboxId}-option-${optionIndex}`}
                     className={`select-option-item ${isSelected ? "is-selected" : ""} ${
+                      optionIndex === highlightedIndex ? "is-highlighted" : ""
+                    } ${
                       opt.disabled ? "is-disabled" : ""
                     }`}
                     onClick={() => !opt.disabled && handleSelect(opt.value)}
+                    onMouseEnter={() => {
+                      if (!opt.disabled) setHighlightedIndex(optionIndex);
+                    }}
                     role="option"
+                    aria-disabled={opt.disabled || undefined}
                     aria-selected={isSelected}
                   >
                     <div className="option-text-group">

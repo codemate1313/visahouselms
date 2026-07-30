@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLoaderStore } from "@/store/loaderStore";
 import { useAuthStore } from "@/store/authStore";
@@ -169,10 +169,10 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
     return () => media?.removeEventListener?.("change", handleSystemThemeChange);
   }, []);
 
-  function handleClose() {
+  const handleClose = useCallback(() => {
     if (user) return;
     navigate("/", { replace: true });
-  }
+  }, [navigate, user]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -195,7 +195,7 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [authMode, isLoading, navigate, user]);
+  }, [authMode, handleClose, isLoading, user]);
 
   return (
     <div style={{ minHeight: "100vh", background: pageBackground }}>

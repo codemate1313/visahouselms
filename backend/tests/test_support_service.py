@@ -6,8 +6,13 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.security import hash_password
 from app.models import Base
-from app.models.role import SUPER_ADMIN, Role
-from app.models.support_ticket import SUPPORT_STATUS_RESOLVED
+from app.models.institute import Institute
+from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, STUDENT, SUPER_ADMIN, Role
+from app.models.support_ticket import (
+    SUPPORT_QUEUE_INSTITUTE,
+    SUPPORT_QUEUE_SUPER_ADMIN,
+    SUPPORT_STATUS_RESOLVED,
+)
 from app.models.user import User
 from app.schemas.support import PortalSupportTicketCreate, SupportTicketCreate, SupportTicketUpdate
 from app.services import support_service
@@ -19,18 +24,52 @@ class SupportServiceTests(unittest.TestCase):
         Base.metadata.create_all(self.engine)
         self.db = sessionmaker(bind=self.engine)()
 
-        role = Role(name=SUPER_ADMIN)
-        self.db.add(role)
+        roles = {
+            name: Role(name=name)
+            for name in (SUPER_ADMIN, INSTITUTE_ADMIN, INST_INSTRUCTOR, STUDENT)
+        }
+        self.db.add_all(roles.values())
+        self.db.flush()
+        self.institute = Institute(name="Meridian Institute", slug="meridian")
+        self.other_institute = Institute(name="Other Institute", slug="other")
+        self.db.add_all([self.institute, self.other_institute])
         self.db.flush()
         self.admin = User(
             email="support-admin@example.com",
             password_hash=hash_password("AdminPassword!1"),
-            role_id=role.id,
+            role_id=roles[SUPER_ADMIN].id,
             first_name="Support",
             last_name="Admin",
             is_active=True,
         )
-        self.db.add(self.admin)
+        self.institute_admin = User(
+            email="institute-admin@example.com",
+            password_hash=hash_password("AdminPassword!1"),
+            role_id=roles[INSTITUTE_ADMIN].id,
+            institute_id=self.institute.id,
+            first_name="Institute",
+            last_name="Admin",
+            is_active=True,
+        )
+        self.student = User(
+            email="student@example.com",
+            password_hash=hash_password("StudentPassword!1"),
+            role_id=roles[STUDENT].id,
+            institute_id=self.institute.id,
+            first_name="Portal",
+            last_name="Student",
+            is_active=True,
+        )
+        self.other_instructor = User(
+            email="instructor@example.com",
+            password_hash=hash_password("InstructorPassword!1"),
+            role_id=roles[INST_INSTRUCTOR].id,
+            institute_id=self.other_institute.id,
+            first_name="Other",
+            last_name="Instructor",
+            is_active=True,
+        )
+        self.db.add_all([self.admin, self.institute_admin, self.student, self.other_instructor])
         self.db.commit()
 
     def tearDown(self) -> None:
@@ -67,6 +106,58 @@ class SupportServiceTests(unittest.TestCase):
         self._create_ticket(email=self.admin.email)
 
         self.assertEqual(support_service.list_portal_tickets(self.db, self.admin), [])
+
+    def test_student_ticket_is_routed_to_its_institute(self) -> None:
+        ticket = self._create_portal_ticket(self.student)
+
+        self.assertEqual(ticket.queue, SUPPORT_QUEUE_INSTITUTE)
+        self.assertEqual(ticket.requester_id, self.student.id)
+        self.assertEqual(ticket.institute_id, self.institute.id)
+        institute_result = support_service.list_tickets(
+            self.db,
+            queue=SUPPORT_QUEUE_INSTITUTE,
+            institute_id=self.institute.id,
+        )
+        super_admin_result = support_service.list_tickets(self.db)
+
+        self.assertEqual([item["id"] for item in institute_result["items"]], [ticket.id])
+        self.assertEqual(super_admin_result["items"], [])
+
+    def test_institute_queue_is_tenant_scoped(self) -> None:
+        own_ticket = self._create_portal_ticket(self.student)
+        other_ticket = self._create_portal_ticket(self.other_instructor)
+
+        result = support_service.list_tickets(
+            self.db,
+            queue=SUPPORT_QUEUE_INSTITUTE,
+            institute_id=self.institute.id,
+        )
+
+        self.assertEqual([item["id"] for item in result["items"]], [own_ticket.id])
+        with self.assertRaises(HTTPException) as context:
+            support_service.get_ticket(
+                self.db,
+                other_ticket.id,
+                queue=SUPPORT_QUEUE_INSTITUTE,
+                institute_id=self.institute.id,
+            )
+        self.assertEqual(context.exception.status_code, 404)
+
+    def test_institute_admin_can_forward_ticket_to_super_admin(self) -> None:
+        ticket = self._create_portal_ticket(self.student)
+
+        forwarded = support_service.forward_ticket_to_super_admin(
+            self.db,
+            ticket.id,
+            self.institute_admin,
+        )
+
+        self.assertEqual(forwarded.queue, SUPPORT_QUEUE_SUPER_ADMIN)
+        self.assertEqual(forwarded.status, "open")
+        self.assertEqual(forwarded.escalated_by_id, self.institute_admin.id)
+        self.assertIsNotNone(forwarded.escalated_at)
+        result = support_service.list_tickets(self.db)
+        self.assertEqual([item["id"] for item in result["items"]], [ticket.id])
 
     def test_list_tickets_filters_searches_and_returns_counts(self) -> None:
         self._create_ticket(subject="Need onboarding", name="Priya Nair")
@@ -162,6 +253,17 @@ class SupportServiceTests(unittest.TestCase):
             ),
             ip_address="127.0.0.1",
             user_agent="unittest",
+        )
+
+    def _create_portal_ticket(self, user: User):
+        return support_service.create_portal_ticket(
+            self.db,
+            PortalSupportTicketCreate(
+                subject="Portal support request",
+                message="I need help with an institute portal workflow.",
+                category="technical",
+            ),
+            user,
         )
 
 

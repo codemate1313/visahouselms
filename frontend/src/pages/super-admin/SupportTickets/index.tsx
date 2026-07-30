@@ -10,6 +10,7 @@ import type {
 import { Badge, Button, PageHeader, SearchableSelect, SearchInput, SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { useToastStore } from "@/store/toastStore";
 import { supportTicketsStrings as strings } from "./SupportTickets.strings";
 
 const STATUSES: Array<SupportTicketStatus | ""> = ["", "new", "open", "resolved", "closed"];
@@ -43,7 +44,13 @@ function priorityTone(priority: SupportTicketPriority) {
   return "info";
 }
 
-export function SupportTickets() {
+interface SupportTicketInboxProps {
+  scope: "institute" | "super-admin";
+}
+
+function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
+  const isInstituteInbox = scope === "institute";
+  const apiBase = isInstituteInbox ? "/institute/support-tickets" : "/super-admin/support-tickets";
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [counts, setCounts] = useState<SupportTicketListResponse["counts"]>({
     all: 0,
@@ -65,6 +72,7 @@ export function SupportTickets() {
   const [draftPriority, setDraftPriority] = useState<SupportTicketPriority>("normal");
   const [draftNote, setDraftNote] = useState("");
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
+  const showSuccess = useToastStore((state) => state.showSuccess);
 
   const selectedTicket = useMemo(
     () => tickets.find((ticket) => ticket.id === selectedId) ?? tickets[0] ?? null,
@@ -76,12 +84,12 @@ export function SupportTickets() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await apiClient.get<SupportTicketListResponse>("/super-admin/support-tickets", {
+      const { data } = await apiClient.get<SupportTicketListResponse>(apiBase, {
         params: {
           search: search.trim() || undefined,
           status: status || undefined,
           priority: priority || undefined,
-          source: source || undefined,
+          source: isInstituteInbox ? undefined : source || undefined,
           status_group: queue,
           page_size: 50,
         },
@@ -99,7 +107,7 @@ export function SupportTickets() {
     } finally {
       setLoading(false);
     }
-  }, [priority, queue, search, setItemCount, source, status]);
+  }, [apiBase, isInstituteInbox, priority, queue, search, setItemCount, source, status]);
 
   useEffect(() => {
     void load();
@@ -119,7 +127,7 @@ export function SupportTickets() {
     setError(null);
     try {
       await apiClient.patch<SupportTicket>(
-        `/super-admin/support-tickets/${selectedTicket.id}`,
+        `${apiBase}/${selectedTicket.id}`,
         {
           status: draftStatus,
           priority: draftPriority,
@@ -134,12 +142,27 @@ export function SupportTickets() {
     }
   }
 
+  async function forwardSelected() {
+    if (!selectedTicket || !isInstituteInbox) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await apiClient.post(`${apiBase}/${selectedTicket.id}/forward`);
+      showSuccess(strings.forward.success);
+      await load();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.forward.error));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="support-ticket-page">
       <PageHeader
         appearance="compact"
-        title={strings.title}
-        subtitle={strings.subtitle}
+        title={isInstituteInbox ? strings.instituteTitle : strings.title}
+        subtitle={isInstituteInbox ? strings.instituteSubtitle : strings.subtitle}
         actions={
           <Button variant="secondary" leftIcon={<Icon name="notifications" />} onClick={() => void load()}>
             Refresh
@@ -147,17 +170,19 @@ export function SupportTickets() {
         }
       />
 
-      <SegmentedControl
-        className="support-ticket-source-segment"
-        ariaLabel="Support request source"
-        options={[
-          { value: "", label: strings.filters.sources.all },
-          { value: "portal", label: strings.filters.sources.portal },
-          { value: "customer", label: strings.filters.sources.customer },
-        ]}
-        value={source}
-        onChange={(value) => setSource(value as "" | "portal" | "customer")}
-      />
+      {!isInstituteInbox && (
+        <SegmentedControl
+          className="support-ticket-source-segment"
+          ariaLabel="Support request source"
+          options={[
+            { value: "", label: strings.filters.sources.all },
+            { value: "portal", label: strings.filters.sources.portal },
+            { value: "customer", label: strings.filters.sources.customer },
+          ]}
+          value={source}
+          onChange={(value) => setSource(value as "" | "portal" | "customer")}
+        />
+      )}
 
       <SegmentedControl
         className="support-ticket-queue-segment"
@@ -290,6 +315,13 @@ export function SupportTickets() {
                 <a href={`mailto:${selectedTicket.email}`}>{selectedTicket.email}</a>
                 {selectedTicket.phone_number && <small>{strings.detail.phone}: {selectedTicket.phone_number}</small>}
                 {selectedTicket.institute_name && <small>{strings.detail.institute}: {selectedTicket.institute_name}</small>}
+                {!isInstituteInbox && selectedTicket.escalated_at && (
+                  <small>
+                    {strings.detail.forwardedBy}: {selectedTicket.escalated_by_name || strings.detail.instituteAdmin}
+                    {" · "}
+                    {formatDate(selectedTicket.escalated_at)}
+                  </small>
+                )}
               </div>
 
               <div className="support-ticket-message">
@@ -339,9 +371,21 @@ export function SupportTickets() {
                 />
               </label>
 
-              <Button loading={saving} leftIcon={<Icon name="check" />} onClick={() => void saveSelected()}>
-                {strings.detail.save}
-              </Button>
+              <div className="support-ticket-detail-actions">
+                <Button loading={saving} leftIcon={<Icon name="check" />} onClick={() => void saveSelected()}>
+                  {strings.detail.save}
+                </Button>
+                {isInstituteInbox && (
+                  <Button
+                    disabled={saving}
+                    leftIcon={<Icon name="arrowRight" />}
+                    onClick={() => void forwardSelected()}
+                    variant="secondary"
+                  >
+                    {strings.forward.action}
+                  </Button>
+                )}
+              </div>
             </>
           ) : (
             <div className="support-ticket-empty-detail">
@@ -354,4 +398,12 @@ export function SupportTickets() {
       </div>
     </div>
   );
+}
+
+export function SupportTickets() {
+  return <SupportTicketInbox scope="super-admin" />;
+}
+
+export function InstituteSupportTickets() {
+  return <SupportTicketInbox scope="institute" />;
 }

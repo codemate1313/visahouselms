@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
-import { ToggleSwitch } from "@/components/ToggleSwitch";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { TableAvatar } from "@/components/TableAvatar";
 import { institutesStrings as strings } from "../Institutes.strings";
 import type { InstituteRow, SortKey } from "../types";
@@ -97,19 +97,30 @@ export function InstitutesTable({ rows, sortKey, sortDirection, onChangeSort, on
                 </span>
               </td>
               <td className="table-actions institute-row-actions" style={{ paddingRight: 12 }}>
-                <ToggleSwitch checked={row.is_active} onChange={() => onToggleActive(row)} tooltip={row.is_active ? t.suspendInstitute : t.reactivateInstitute} />
-                <Link className="action-btn-icon action-edit" to={`/super-admin/institutes/${row.id}`} data-tooltip={t.editInstitute}>
-                  <Icon name="edit" />
-                </Link>
-                <Link className="action-btn-icon action-students" to={`/super-admin/institutes/${row.id}/students`} data-tooltip={t.manageStudents}>
-                  <Icon name="user" />
-                </Link>
-                <Link className="action-btn-icon action-branding" to={`/super-admin/institutes/${row.id}/branding`} data-tooltip={t.branding}>
-                  <Icon name="settings" />
-                </Link>
-                <button className="action-btn-icon danger action-delete" onClick={() => onRequestDelete(row)} data-tooltip={t.delete}>
-                  <Icon name="trash" />
-                </button>
+                <RowActionMenu
+                  items={[
+                    <button key="status" type="button" onClick={() => onToggleActive(row)}>
+                      <Icon name={row.is_active ? "toggleOff" : "toggleOn"} />
+                      <span>{row.is_active ? t.suspendInstitute : t.reactivateInstitute}</span>
+                    </button>,
+                    <Link key="edit" to={`/super-admin/institutes/${row.id}`}>
+                      <Icon name="edit" />
+                      <span>{t.editInstitute}</span>
+                    </Link>,
+                    <Link key="students" to={`/super-admin/institutes/${row.id}/students`}>
+                      <Icon name="user" />
+                      <span>{t.manageStudents}</span>
+                    </Link>,
+                    <Link key="branding" to={`/super-admin/institutes/${row.id}/branding`}>
+                      <Icon name="settings" />
+                      <span>{t.branding}</span>
+                    </Link>,
+                    <button key="delete" type="button" className="danger" onClick={() => onRequestDelete(row)}>
+                      <Icon name="trash" />
+                      <span>{t.delete}</span>
+                    </button>,
+                  ]}
+                />
               </td>
             </tr>
           ))}

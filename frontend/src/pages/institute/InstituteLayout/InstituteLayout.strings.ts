@@ -13,6 +13,7 @@ export const instituteLayoutStrings = {
     subscription: "Subscription",
     supportSection: "SUPPORT",
     support: "Raise a Query",
+    supportTickets: "Support Inbox",
     settings: "SETTINGS",
     myProfile: "My Profile",
     activeSessions: "Active Sessions",

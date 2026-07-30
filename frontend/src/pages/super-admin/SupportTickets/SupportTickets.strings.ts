@@ -1,6 +1,8 @@
 export const supportTicketsStrings = {
   title: "Support Tickets",
   subtitle: "Manage portal support tickets and public customer enquiries.",
+  instituteTitle: "Support Inbox",
+  instituteSubtitle: "Handle student and instructor queries for your institute, or forward them to Super Admin.",
   loading: "Loading support tickets...",
   errors: {
     load: "Failed to load support tickets.",
@@ -38,8 +40,15 @@ export const supportTicketsStrings = {
     institute: "Institute",
     phone: "Phone",
     message: "Message",
+    forwardedBy: "Forwarded by",
+    instituteAdmin: "Institute Admin",
     note: "Admin note",
     notePlaceholder: "Add follow-up notes, call outcome, or internal context.",
     save: "Save changes",
+  },
+  forward: {
+    action: "Forward to Super Admin",
+    success: "The ticket has been forwarded to Super Admin.",
+    error: "Failed to forward the support ticket.",
   },
 } as const;

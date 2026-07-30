@@ -1,0 +1,122 @@
+.agreement-attachments {
+  margin: 24px 0 28px;
+}
+
+.agreement-attachments-heading {
+  margin-bottom: 14px;
+}
+
+.agreement-attachments-heading h3 {
+  margin: 0 0 4px;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.agreement-attachments-heading p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.agreement-attachments-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.agreement-attachment-field {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.agreement-attachment-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.agreement-attachment-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.agreement-attachment-content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.agreement-attachment-content strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.agreement-attachment-content small {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.agreement-attachment-name {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agreement-attachment-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.agreement-attachment-upload {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.agreement-attachment-upload:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.agreement-attachment-upload:focus-within {
+  box-shadow: var(--focus-ring);
+}
+
+.agreement-attachment-upload svg {
+  width: 15px;
+  height: 15px;
+}
+
+@media (max-width: 760px) {
+  .agreement-attachments-grid {
+    grid-template-columns: 1fr;
+  }
+}

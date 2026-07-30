@@ -8,6 +8,11 @@ class PlanSubscribeRequest(BaseModel):
     coupon_code: Optional[str] = Field(default=None, max_length=50)
 
 
+class DailyEnglishAnswerRequest(BaseModel):
+    question_id: str = Field(min_length=1, max_length=60)
+    answer_index: int = Field(ge=0, le=3)
+
+
 class AnswerSaveRequest(BaseModel):
     response: Optional[dict] = None
     revision: Optional[int] = Field(default=None, ge=1)
