@@ -1,0 +1,152 @@
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.metric-card:not([role="button"]) {
+  cursor: default;
+}
+
+.metric-card-footer-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 6px;
+}
+
+.metric-card-caption {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.metric-card-number.stat-value-text,
+.metric-card-number.stat-value-date {
+  font-size: clamp(16px, 1.6vw, 22px);
+  line-height: 1.25;
+  white-space: normal;
+}
+
+.panel-cta {
+  width: fit-content;
+  margin-top: auto;
+}
+
+.activity-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  margin: 0 0 24px;
+}
+
+.activity-item {
+  display: flex;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(226, 232, 240, 0.78);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.54);
+}
+
+.activity-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: var(--radius-pill);
+  margin-top: 6px;
+  flex: 0 0 auto;
+  background: var(--slate-300);
+}
+
+.activity-item[data-tone="success"] .activity-dot {
+  background: var(--emerald-500);
+}
+
+.activity-item[data-tone="warning"] .activity-dot {
+  background: var(--amber-500);
+}
+
+.activity-item[data-tone="info"] .activity-dot {
+  background: var(--blue-500);
+}
+
+.activity-body {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.activity-main,
+.activity-side {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.activity-main {
+  min-width: 0;
+}
+
+.activity-main strong {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.activity-main small,
+.activity-side small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.activity-side {
+  align-items: flex-end;
+  flex: 0 0 auto;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.status-pill.is-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.status-pill.is-warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.status-pill.is-info {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+
+.status-pill.is-muted {
+  background: var(--slate-100);
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .activity-body {
+    flex-direction: column;
+  }
+
+  .activity-side {
+    align-items: flex-start;
+  }
+}

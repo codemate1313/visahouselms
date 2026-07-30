@@ -35,6 +35,9 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
               item.queue.status === "claimed" &&
               item.queue.assigned_to_id != null &&
               item.queue.assigned_to_id !== userId;
+            const claimedByMe =
+              item.queue.status === "claimed" &&
+              item.queue.assigned_to_id === userId;
             return (
             <tr key={item.id} className={claimedByOther ? "" : "clickable"}>
               <td>{item.student_name}</td>
@@ -43,7 +46,13 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
                 {item.is_reevaluation && <span className="badge badge-red">{t.reevaluationBadge}</span>}
               </td>
               <td><span className={`badge ${STATUS_CLASS[item.queue.status] ?? "badge-gray"}`}>{item.queue.status}</span></td>
-              <td>{item.queue.assigned_to_name ?? t.unclaimed}</td>
+              <td>
+                {claimedByMe
+                  ? t.youAreGrading
+                  : claimedByOther
+                    ? t.gradingBy(item.queue.assigned_to_name ?? t.anotherInstructor)
+                    : t.unclaimed}
+              </td>
               <td>{item.queue.due_at ? new Date(item.queue.due_at).toLocaleDateString() : "—"}</td>
               <td>{item.flag_count > 0 ? <span className="badge badge-red">{item.flag_count}</span> : "—"}</td>
               <td>{item.parts_to_grade}</td>
@@ -54,7 +63,7 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
                     data-tooltip={t.evaluatingBy(item.queue.assigned_to_name ?? t.anotherInstructor)}
                   >
                     <Icon name="lock" />
-                    {t.evaluating}
+                    {t.gradingNow}
                   </span>
                 ) : (
                   <Link to={`${gradingBase}/${item.id}`} aria-label={t.gradeSubmission} data-tooltip={t.gradeSubmission}>

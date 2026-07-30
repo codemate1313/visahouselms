@@ -39,7 +39,7 @@
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface-muted);
   border: 1px solid var(--border);
   font-size: 11px;
@@ -61,7 +61,7 @@
   margin: 0;
   padding: 14px 16px;
   border: 1px dashed var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   font-size: 13px;
   color: var(--text-muted);
 }
@@ -110,7 +110,7 @@
   justify-content: center !important;
   padding: 0 !important;
   border: 1px solid transparent !important;
-  border-radius: 10px !important;
+  border-radius: var(--radius-md) !important;
   background: transparent !important;
   color: var(--text-muted) !important;
   cursor: pointer !important;

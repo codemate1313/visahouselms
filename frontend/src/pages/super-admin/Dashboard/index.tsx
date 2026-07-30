@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { useDashboardRangeStore } from "@/store/dashboardRangeStore";
+import { useAuthStore } from "@/store/authStore";
 import { dashboardStrings as strings } from "./Dashboard.strings";
 import type { MetricDetail, MetricKey, Summary } from "./types";
 import { ExecutiveMetricGrid } from "./components/ExecutiveMetricGrid";
@@ -10,6 +11,7 @@ import { NoLivePlanAlert } from "./components/NoLivePlanAlert";
 
 export function Dashboard() {
   const range = useDashboardRangeStore((state) => state.range);
+  const user = useAuthStore((state) => state.user);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<MetricKey | null>(null);
@@ -74,6 +76,14 @@ export function Dashboard() {
 
   return (
     <div className="dashboard-overview">
+      <div className="page-header">
+        <div>
+          <span className="page-eyebrow">{strings.eyebrow}</span>
+          <h1>{strings.welcome(user?.first_name)}</h1>
+          <p className="page-subtitle">{strings.subtitle}</p>
+        </div>
+      </div>
+
       {summary.counts.plans_live === 0 && <NoLivePlanAlert />}
       <ExecutiveMetricGrid summary={summary} growth={growth} onOpen={openMetric} />
       {summary.permissions.can_view_monetary_analytics && summary.revenue && <DashboardCharts summary={summary} />}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { AiEvaluationSuggestion, AttemptPart, GradingDetail as GradingDetailType } from "@/api/types";
-import { Button } from "@/components/ui";
+import { Button, SearchableSelect } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import { gradingDetailStrings as strings } from "../GradingDetail.strings";
 
@@ -153,19 +153,24 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
                   disabled={!canEdit}
                   onChange={(event) => setMarks((current) => ({ ...current, [criterion.criterion]: event.target.value }))}
                 />
-                <select
-                  className="sleek-score-dropdown"
+                <SearchableSelect
+                  ariaLabel={t.markLabel(criterion.max_marks)}
+                  className="sleek-score-select"
+                  options={[
+                    { value: "", label: "Select preset score..." },
+                    ...Array.from({ length: Math.floor(criterion.max_marks * 2) + 1 }, (_, i) => {
+                      const scoreVal = i * 0.5;
+                      return {
+                        value: String(scoreVal),
+                        label: `${scoreVal} / ${criterion.max_marks} marks`,
+                      };
+                    }),
+                  ]}
+                  searchable={false}
                   value={marks[criterion.criterion]}
                   disabled={!canEdit}
-                  onChange={(event) => setMarks((current) => ({ ...current, [criterion.criterion]: event.target.value }))}
-                >
-                  <option value="">Select preset score...</option>
-                  {Array.from({ length: Math.floor(criterion.max_marks * 2) + 1 }, (_, i) => i * 0.5).map((scoreVal) => (
-                    <option key={scoreVal} value={scoreVal}>
-                      {scoreVal} / {criterion.max_marks} marks
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => setMarks((current) => ({ ...current, [criterion.criterion]: String(value) }))}
+                />
               </div>
             </article>
           ))}

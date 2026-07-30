@@ -1,4 +1,5 @@
 export const instituteMemberFormStrings = {
+  loading: "Loading...",
   addTitle: (label: string) => `Add ${label}`,
   editTitle: (label: string) => `Edit ${label}`,
   createdTitle: (isStudent: boolean) => `${isStudent ? "Student" : "Instructor"} created`,

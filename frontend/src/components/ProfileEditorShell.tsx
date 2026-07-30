@@ -3,6 +3,11 @@ import { CollapsiblePanel } from "./CollapsiblePanel";
 
 type ProfileTone = "super-admin" | "instructor" | "institute" | "student";
 
+const profileEditorShellStrings = {
+  uploading: "Uploading...",
+  uploadPhoto: "Upload New Photo",
+};
+
 interface ProfileEditorShellProps {
   roleLabel: string;
   tone: ProfileTone;
@@ -94,7 +99,7 @@ export function ProfileEditorShell({
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              <span>{uploading ? "Uploading..." : "Upload New Photo"}</span>
+              <span>{uploading ? profileEditorShellStrings.uploading : profileEditorShellStrings.uploadPhoto}</span>
             </label>
             <input
               id={avatarInputId}

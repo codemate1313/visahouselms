@@ -12,7 +12,7 @@ export const usersStrings = {
     email: "EMAIL",
     institute: "INSTITUTE",
     status: "STATUS",
-    passwordChanged: "PASSWORD CHANGED",
+    passwordChanged: "PASSWORD",
     created: "CREATED",
     actions: "ACTIONS",
   },

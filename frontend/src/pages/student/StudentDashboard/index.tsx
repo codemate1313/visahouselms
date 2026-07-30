@@ -63,15 +63,23 @@ export function StudentDashboard() {
 
   const statCards: StatCard[] = [
     { key: "available", label: strings.stats.available, value: myPlan.plan?.modules.length ?? 0, tone: "blue" },
-    { key: "completed", label: strings.stats.completed, value: completedTests, tone: "emerald" },
+    { key: "completed", label: strings.stats.completed, value: completedTests, tone: "green" },
     { key: "pending", label: strings.stats.pending, value: pendingTests, tone: "slate" },
     { key: "in_progress", label: strings.stats.inProgress, value: inProgress, tone: "purple" },
     { key: "awaiting", label: strings.stats.awaitingGrading, value: pendingGrading, tone: "amber" },
-    { key: "graded", label: strings.stats.graded, value: graded, tone: "primary" },
+    { key: "graded", label: strings.stats.graded, value: graded, tone: "green" },
   ];
 
   return (
     <div className="sd-dashboard" ref={containerRef}>
+      <div className="page-header">
+        <div>
+          <span className="page-eyebrow">{strings.eyebrow}</span>
+          <h1>{strings.welcome(user?.first_name)}</h1>
+          <p className="page-subtitle">{strings.subtitle}</p>
+        </div>
+      </div>
+
       <StatCardsGrid stats={statCards} />
 
       <div className="sd-grid">

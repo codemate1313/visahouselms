@@ -1,3 +1,4 @@
+import { MetricCard } from "@/components/dashboard/MetricCard";
 import { revenueDashboardStrings as strings } from "../RevenueDashboard.strings";
 import { formatCurrency } from "../helpers";
 import type { Summary } from "../types";
@@ -9,27 +10,12 @@ interface RevenueKpiRowProps {
 export function RevenueKpiRow({ summary }: RevenueKpiRowProps) {
   const t = strings.kpi;
   return (
-    <div className="stat-tile-row revenue-kpi-row">
-      <div className="stat-tile revenue-kpi-tile">
-        <p className="stat-label">{t.totalRevenue}</p>
-        <p className="stat-value">{formatCurrency(summary.total_revenue)}</p>
-      </div>
-      <div className="stat-tile revenue-kpi-tile">
-        <p className="stat-label">{t.b2b}</p>
-        <p className="stat-value">{formatCurrency(summary.b2b_revenue)}</p>
-      </div>
-      <div className="stat-tile revenue-kpi-tile">
-        <p className="stat-label">{t.b2c}</p>
-        <p className="stat-value">{formatCurrency(summary.b2c_revenue)}</p>
-      </div>
-      <div className="stat-tile revenue-kpi-tile">
-        <p className="stat-label">{t.totalDue}</p>
-        <p className="stat-value due-text">{formatCurrency(summary.total_due)}</p>
-      </div>
-      <div className="stat-tile revenue-kpi-tile">
-        <p className="stat-label">{t.transactions}</p>
-        <p className="stat-value">{summary.transaction_count}</p>
-      </div>
+    <div className="metric-grid revenue-kpi-row">
+      <MetricCard label={t.totalRevenue} value={formatCurrency(summary.total_revenue)} className="revenue-kpi-tile" tone="green" icon="revenue" />
+      <MetricCard label={t.b2b} value={formatCurrency(summary.b2b_revenue)} className="revenue-kpi-tile" tone="blue" icon="building" />
+      <MetricCard label={t.b2c} value={formatCurrency(summary.b2c_revenue)} className="revenue-kpi-tile" tone="purple" icon="user" />
+      <MetricCard label={t.totalDue} value={formatCurrency(summary.total_due)} className="revenue-kpi-tile" valueClassName="due-text" tone="amber" icon="due" />
+      <MetricCard label={t.transactions} value={summary.transaction_count} className="revenue-kpi-tile" tone="slate" icon="transactions" />
     </div>
   );
 }

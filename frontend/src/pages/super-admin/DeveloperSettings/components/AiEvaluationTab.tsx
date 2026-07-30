@@ -3,7 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { PasswordInput } from "@/components/PasswordInput";
-import { Checkbox } from "@/components/ui";
+import { Checkbox, SearchableSelect } from "@/components/ui";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 import { Icon } from "@/components/icons";
 
@@ -74,14 +74,16 @@ export function AiEvaluationTab() {
         <div className="form-grid">
           <div>
             <label>AI Evaluation Provider</label>
-            <select
+            <SearchableSelect
+              ariaLabel="AI Evaluation Provider"
+              options={[
+                { value: "gemini", label: "Google Gemini (Writing + Speaking Audio)" },
+                { value: "custom_json", label: "Custom HTTP JSON Endpoint" },
+              ]}
+              searchable={false}
               value={form.provider}
-              onChange={(event) => setForm({ ...form, provider: event.target.value })}
-              className="w-full text-sm p-2 rounded-lg border border-gray-300 dark:border-slate-700 dark:bg-slate-900"
-            >
-              <option value="gemini">Google Gemini (Writing + Speaking Audio)</option>
-              <option value="custom_json">Custom HTTP JSON Endpoint</option>
-            </select>
+              onChange={(value) => setForm({ ...form, provider: String(value) })}
+            />
           </div>
           <div>
             <label>{t.modelLabel}</label>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { GradingAdminOverview } from "@/api/types";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { MetricCard } from "@/components/dashboard/MetricCard";
 import { gradingOversightStrings as strings } from "./GradingOversight.strings";
 
 const STATUS_CLASS: Record<string, string> = { pending: "badge-amber", in_review: "badge-blue", resolved: "badge-green", rejected: "badge-red" };
@@ -27,23 +28,11 @@ export function GradingOversight() {
           <p className="page-subtitle">{strings.subtitle}</p>
         </div>
       </div>
-      <div className="stat-tile-row">
-        <div className="stat-tile">
-          <p className="stat-label">{strings.stats.unclaimed}</p>
-          <p className="stat-value">{overview.queue.pending}</p>
-        </div>
-        <div className="stat-tile">
-          <p className="stat-label">{strings.stats.claimed}</p>
-          <p className="stat-value">{overview.queue.claimed}</p>
-        </div>
-        <div className="stat-tile">
-          <p className="stat-label">{strings.stats.completed}</p>
-          <p className="stat-value">{overview.queue.completed}</p>
-        </div>
-        <div className="stat-tile">
-          <p className="stat-label">{strings.stats.aiDrafts}</p>
-          <p className="stat-value">{overview.ai_usage.used}</p>
-        </div>
+      <div className="metric-grid">
+        <MetricCard label={strings.stats.unclaimed} value={overview.queue.pending} tone="amber" icon="grading" />
+        <MetricCard label={strings.stats.claimed} value={overview.queue.claimed} tone="blue" icon="session" />
+        <MetricCard label={strings.stats.completed} value={overview.queue.completed} tone="green" icon="check" />
+        <MetricCard label={strings.stats.aiDrafts} value={overview.ai_usage.used} tone="purple" icon="analytics" />
       </div>
       <CollapsiblePanel
         className="workspace-panel"

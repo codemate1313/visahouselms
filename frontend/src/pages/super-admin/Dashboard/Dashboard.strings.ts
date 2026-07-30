@@ -1,6 +1,9 @@
 export const dashboardStrings = {
   loading: "Loading...",
   loadError: "Failed to load dashboard.",
+  eyebrow: "Super Admin Dashboard",
+  welcome: (firstName: string | undefined) => `Welcome, ${firstName ?? "admin"}`,
+  subtitle: "Monitor platform activity, subscriptions, student progress, and operating health.",
   noLivePlan: {
     title: "No live plan — your public pricing page is empty",
     body: "Visitors on the Plans page see nothing to buy until at least one plan is active and published.",

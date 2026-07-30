@@ -357,6 +357,8 @@ def assign(
     plan_id: int,
     starts_at: Optional[datetime],
     ip: Optional[str],
+    *,
+    commit: bool = True,
 ) -> dict:
     institute = get_institute_or_404(db, institute_id)
     plan = get_plan_or_404(db, plan_id)
@@ -380,8 +382,6 @@ def assign(
     db.flush()
     _reactivate_if_expiry_suspended(db, institute)
     _audit(db, actor, "subscription.assign", subscription.id, ip, {"institute_id": institute_id, "plan": plan.name})
-    db.commit()
-    db.refresh(subscription)
     # A paid plan landing on a demo institute ends the demo: its own expiry
     # would otherwise still suspend an institute that is now a customer.
     # Local import - demo_service reaches back into institute_service, which
@@ -389,6 +389,11 @@ def assign(
     from app.services import demo_service
 
     demo_service.mark_converted_if_demo(db, actor, institute_id, ip)
+    if commit:
+        db.commit()
+    else:
+        db.flush()
+    db.refresh(subscription)
     _, state = current_subscription(db, institute_id)
     return _serialize(subscription, state)
 
@@ -399,6 +404,8 @@ def renew(
     institute_id: int,
     plan_id: Optional[int],
     ip: Optional[str],
+    *,
+    commit: bool = True,
 ) -> dict:
     institute = get_institute_or_404(db, institute_id)
     existing, state = current_subscription(db, institute_id)
@@ -430,7 +437,10 @@ def renew(
     db.flush()
     _reactivate_if_expiry_suspended(db, institute)
     _audit(db, actor, "subscription.renew", subscription.id, ip, {"institute_id": institute_id, "plan": plan.name})
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
     db.refresh(subscription)
     _, new_state = current_subscription(db, institute_id)
     return _serialize(subscription, new_state)
@@ -508,6 +518,8 @@ def subscribe_user(
     user_id: int,
     plan_id: int,
     ip: Optional[str],
+    *,
+    commit: bool = True,
 ) -> Subscription:
     """Personal (B2C) mirror of assign() - grants a direct student a
     subscription to a plan. Not exposed as a standalone endpoint; only
@@ -541,7 +553,10 @@ def subscribe_user(
             ip_address=ip,
         )
     )
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
     db.refresh(subscription)
     return subscription
 

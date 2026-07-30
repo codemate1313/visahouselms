@@ -1,6 +1,7 @@
 import { dashboardStrings as strings } from "../Dashboard.strings";
 import type { MetricKey, Summary } from "../types";
-import { MetricItem } from "./MetricItem";
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import { formatMoney } from "../helpers";
 
 interface ExecutiveMetricGridProps {
   summary: Summary;
@@ -17,24 +18,24 @@ export function ExecutiveMetricGrid({ summary, growth, onOpen }: ExecutiveMetric
   if (!canViewMoney) {
     return (
       <div className="executive-metric-grid">
-        <MetricItem metricKey="students" iconName="user" onOpen={onOpen} label={t.students} numericValue={counts.students_total} badgeText={b.enrolled} badgeTheme="green" />
-        <MetricItem metricKey="institutes" iconName="building" onOpen={onOpen} label={t.institutes} numericValue={counts.institutes_total} badgeText={growth.inst} badgeTheme="blue" />
-        <MetricItem metricKey="online_students" iconName="session" onOpen={onOpen} label={t.online_students} numericValue={counts.students_online} badgeText={b.online} badgeTheme="green" />
-        <MetricItem metricKey="active_tests" iconName="grading" onOpen={onOpen} label={t.active_tests} numericValue={counts.students_giving_tests} badgeText={b.live} badgeTheme="purple" />
+        <MetricCard icon="user" onClick={() => onOpen("students")} label={t.students} value={counts.students_total} badge={b.enrolled} tone="green" />
+        <MetricCard icon="building" onClick={() => onOpen("institutes")} label={t.institutes} value={counts.institutes_total} badge={growth.inst} tone="blue" />
+        <MetricCard icon="session" onClick={() => onOpen("online_students")} label={t.online_students} value={counts.students_online} badge={b.online} tone="green" />
+        <MetricCard icon="grading" onClick={() => onOpen("active_tests")} label={t.active_tests} value={counts.students_giving_tests} badge={b.live} tone="purple" />
       </div>
     );
   }
 
   return (
     <div className="executive-metric-grid">
-      <MetricItem metricKey="institutes" iconName="building" onOpen={onOpen} label={t.institutes} numericValue={counts.institutes_total} badgeText={growth.inst} badgeTheme="green" />
-      <MetricItem metricKey="subscriptions" iconName="subscription" onOpen={onOpen} label={t.subscriptions} numericValue={counts.subscriptions_active} badgeText={growth.sub} badgeTheme="blue" />
-      <MetricItem metricKey="revenue" iconName="revenue" onOpen={onOpen} label={t.revenue} numericValue={Number(revenue.total_revenue)} isCurrency badgeText={growth.rev} badgeTheme="green" />
-      <MetricItem metricKey="dues" iconName="due" onOpen={onOpen} label={t.dues} numericValue={Number(revenue.total_due)} isCurrency valueClassName="due-text" badgeText={b.pending} badgeTheme="amber" />
-      <MetricItem metricKey="transactions" iconName="transactions" onOpen={onOpen} label={t.transactions} numericValue={revenue.transaction_count} badgeText={b.settled} badgeTheme="slate" />
-      <MetricItem metricKey="demos" iconName="demo" onOpen={onOpen} label={t.demos} numericValue={counts.demo_accounts_active} badgeText={b.demo} badgeTheme="blue" />
-      <MetricItem metricKey="instructors" iconName="instructors" onOpen={onOpen} label={t.instructors} numericValue={counts.sa_instructor_accounts} badgeText={b.verified} badgeTheme="green" />
-      <MetricItem metricKey="modules" iconName="module" onOpen={onOpen} label={t.modules} numericValue={counts.modules_published} badgeText={b.published} badgeTheme="purple" />
+      <MetricCard icon="building" onClick={() => onOpen("institutes")} label={t.institutes} value={counts.institutes_total} badge={growth.inst} tone="green" />
+      <MetricCard icon="subscription" onClick={() => onOpen("subscriptions")} label={t.subscriptions} value={counts.subscriptions_active} badge={growth.sub} tone="blue" />
+      <MetricCard icon="revenue" onClick={() => onOpen("revenue")} label={t.revenue} value={Number(revenue.total_revenue)} valueFormatter={formatMoney} badge={growth.rev} tone="green" />
+      <MetricCard icon="due" onClick={() => onOpen("dues")} label={t.dues} value={Number(revenue.total_due)} valueFormatter={formatMoney} valueClassName="due-text" badge={b.pending} tone="amber" />
+      <MetricCard icon="transactions" onClick={() => onOpen("transactions")} label={t.transactions} value={revenue.transaction_count} badge={b.settled} tone="slate" />
+      <MetricCard icon="demo" onClick={() => onOpen("demos")} label={t.demos} value={counts.demo_accounts_active} badge={b.demo} tone="blue" />
+      <MetricCard icon="instructors" onClick={() => onOpen("instructors")} label={t.instructors} value={counts.sa_instructor_accounts} badge={b.verified} tone="green" />
+      <MetricCard icon="module" onClick={() => onOpen("modules")} label={t.modules} value={counts.modules_published} badge={b.published} tone="purple" />
     </div>
   );
 }

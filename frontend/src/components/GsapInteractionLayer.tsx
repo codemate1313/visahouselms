@@ -6,7 +6,7 @@ const INTERACTIVE_SELECTOR = [
   "a",
   ".tab",
   ".sidebar-item",
-  ".stat-tile",
+  ".metric-card",
   ".feature-card",
   ".pricing-card",
   ".typography-slider-row",

@@ -1,10 +1,9 @@
-import { Link } from "react-router-dom";
 import type { StudentCurrentPlan } from "@/api/types";
+import { LinkButton } from "@/components/ui";
 import { studentDashboardStrings as strings } from "../StudentDashboard.strings";
 import { moduleTone } from "../helpers";
 import type { TestProgressItem } from "../types";
 import { Icon } from "@/components/icons";
-import { Button } from "@/components/ui/Button/Button";
 
 interface LearningPlanPanelProps {
   isInstituteStudent: boolean;
@@ -17,8 +16,8 @@ interface LearningPlanPanelProps {
 export function LearningPlanPanel({ isInstituteStudent, plan, testProgress, completedTests, pendingTests }: LearningPlanPanelProps) {
   const t = strings.learningPlan;
   return (
-    <section className="sd-panel">
-      <div className="sd-panel-head">
+    <section className="workspace-panel">
+      <div className="panel-heading">
         <div>
           <h2>{isInstituteStudent ? t.instituteHeading : t.directHeading}</h2>
           <p>{isInstituteStudent ? t.instituteDescription : t.directDescription}</p>
@@ -56,13 +55,11 @@ export function LearningPlanPanel({ isInstituteStudent, plan, testProgress, comp
           ))}
         </div>
       ) : (
-        <p className="sd-empty">{isInstituteStudent ? t.instituteEmpty : t.directEmpty}</p>
+        <p className="empty-message">{isInstituteStudent ? t.instituteEmpty : t.directEmpty}</p>
       )}
-      <Link to="/student/my-courses" style={{ textDecoration: "none", marginTop: "auto", display: "block" }}>
-        <Button variant="primary" fullWidth rightIcon={<Icon name="arrowRight" />} className="sd-global-btn">
-          {t.goToMyTests}
-        </Button>
-      </Link>
+      <LinkButton to="/student/my-courses" variant="secondary" className="panel-cta" rightIcon={<Icon name="arrowRight" />}>
+        {t.goToMyTests}
+      </LinkButton>
     </section>
   );
 }

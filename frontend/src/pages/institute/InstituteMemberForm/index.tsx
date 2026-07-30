@@ -84,7 +84,7 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
     }
   }
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p>{strings.loading}</p>;
 
   if (isNew) {
     const resource: "students" | "staff" = isStudent ? "students" : "staff";

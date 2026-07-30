@@ -7,7 +7,7 @@ import type {
   SupportTicketPriority,
   SupportTicketStatus,
 } from "@/api/types";
-import { Badge, Button, PageHeader, SearchInput } from "@/components/ui";
+import { Badge, Button, PageHeader, SearchableSelect, SearchInput } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { supportTicketsStrings as strings } from "./SupportTickets.strings";
@@ -163,13 +163,17 @@ export function SupportTickets() {
           }}
           placeholder={strings.filters.search}
         />
-        <select className="input" value={priority} onChange={(event) => setPriority(event.target.value as SupportTicketPriority | "")}>
-          {PRIORITIES.map((item) => (
-            <option key={item || "all"} value={item}>
-              {item ? label(item) : `${strings.filters.all} ${strings.filters.priority}`}
-            </option>
-          ))}
-        </select>
+        <SearchableSelect
+          ariaLabel={strings.filters.priority}
+          className="support-ticket-select"
+          options={PRIORITIES.map((item) => ({
+            value: item,
+            label: item ? label(item) : `${strings.filters.all} ${strings.filters.priority}`,
+          }))}
+          searchable={false}
+          value={priority}
+          onChange={(value) => setPriority(String(value) as SupportTicketPriority | "")}
+        />
         <Button variant="secondary" leftIcon={<Icon name="search" />} onClick={() => void load()}>
           Search
         </Button>
@@ -258,22 +262,34 @@ export function SupportTickets() {
               </div>
 
               <div className="support-ticket-form-row">
-                <label>
-                  {strings.filters.status}
-                  <select className="input" value={draftStatus} onChange={(event) => setDraftStatus(event.target.value as SupportTicketStatus)}>
-                    {STATUSES.filter(Boolean).map((item) => (
-                      <option key={item} value={item}>{label(item)}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  {strings.filters.priority}
-                  <select className="input" value={draftPriority} onChange={(event) => setDraftPriority(event.target.value as SupportTicketPriority)}>
-                    {PRIORITIES.filter(Boolean).map((item) => (
-                      <option key={item} value={item}>{label(item)}</option>
-                    ))}
-                  </select>
-                </label>
+                <div className="support-ticket-field">
+                  <span>{strings.filters.status}</span>
+                  <SearchableSelect
+                    ariaLabel={strings.filters.status}
+                    className="support-ticket-select"
+                    options={STATUSES.filter(Boolean).map((item) => ({
+                      value: item,
+                      label: label(item),
+                    }))}
+                    searchable={false}
+                    value={draftStatus}
+                    onChange={(value) => setDraftStatus(String(value) as SupportTicketStatus)}
+                  />
+                </div>
+                <div className="support-ticket-field">
+                  <span>{strings.filters.priority}</span>
+                  <SearchableSelect
+                    ariaLabel={strings.filters.priority}
+                    className="support-ticket-select"
+                    options={PRIORITIES.filter(Boolean).map((item) => ({
+                      value: item,
+                      label: label(item),
+                    }))}
+                    searchable={false}
+                    value={draftPriority}
+                    onChange={(value) => setDraftPriority(String(value) as SupportTicketPriority)}
+                  />
+                </div>
               </div>
 
               <label className="support-ticket-note">

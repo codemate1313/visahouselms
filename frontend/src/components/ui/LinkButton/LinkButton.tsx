@@ -8,6 +8,7 @@ interface LinkButtonBaseProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
+  loading?: boolean;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
   className?: string;
@@ -48,6 +49,7 @@ export function LinkButton(props: LinkButtonProps) {
     variant = "primary",
     size = "md",
     fullWidth = false,
+    loading = false,
     leftIcon,
     rightIcon,
     className = "",
@@ -61,6 +63,7 @@ export function LinkButton(props: LinkButtonProps) {
     `ui-btn-${variant}`,
     `ui-btn-${size}`,
     fullWidth ? "ui-btn-full" : "",
+    loading ? "ui-btn-loading ui-link-btn-disabled" : "",
     className,
   ]
     .filter(Boolean)
@@ -68,22 +71,23 @@ export function LinkButton(props: LinkButtonProps) {
 
   const content = (
     <>
-      {leftIcon && <span className="ui-btn-icon ui-btn-icon-left">{leftIcon}</span>}
+      {loading && <span className="ui-btn-spinner" aria-hidden="true" />}
+      {!loading && leftIcon && <span className="ui-btn-icon ui-btn-icon-left">{leftIcon}</span>}
       <span className="ui-btn-label">{children}</span>
-      {rightIcon && <span className="ui-btn-icon ui-btn-icon-right">{rightIcon}</span>}
+      {!loading && rightIcon && <span className="ui-btn-icon ui-btn-icon-right">{rightIcon}</span>}
     </>
   );
 
   if ("href" in rest && rest.href !== undefined) {
     return (
-      <a className={classes} {...(rest as AnchorHTMLAttributes<HTMLAnchorElement>)}>
+      <a className={classes} aria-disabled={loading || undefined} {...(rest as AnchorHTMLAttributes<HTMLAnchorElement>)}>
         {content}
       </a>
     );
   }
 
   return (
-    <Link className={classes} {...(rest as Omit<LinkProps, "className" | "children">)}>
+    <Link className={classes} aria-disabled={loading || undefined} {...(rest as Omit<LinkProps, "className" | "children">)}>
       {content}
     </Link>
   );

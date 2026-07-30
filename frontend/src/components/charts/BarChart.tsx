@@ -24,22 +24,13 @@ function safeValue(value: number): number {
   return Number.isFinite(value) ? Math.max(0, value) : 0;
 }
 
-const BAR_PALETTE = [
-  "#e11d2e", // Primary Red
-  "#3b82f6", // Royal Blue
-  "#10b981", // Emerald Green
-  "#8b5cf6", // Purple
-  "#f59e0b", // Amber
-  "#06b6d4", // Cyan
-  "#ec4899", // Pink
-  "#6366f1", // Indigo
-];
+const BAR_PALETTE = Array.from({ length: 8 }, (_, index) => `var(--series-${index + 1})`);
 
 export function BarChart({
   data,
   title,
   orientation: _orientation = "vertical",
-  color: _color = "#e11d2e",
+  color: _color = "var(--series-1)",
   legend,
   formatValue = (value) => value.toLocaleString("en-IN"),
   ariaLabel,
@@ -93,7 +84,7 @@ export function BarChart({
 
   return (
     <section className="chart-card reference-styled-chart" aria-label={ariaLabel}>
-      <div className="chart-card-toolbar">
+      <div className="chart-toolbar">
         <div className="chart-title-area">
           <span className="info-icon-badge"><Icon name="analytics" /></span>
           <span className="chart-tag-text">{title}</span>
@@ -122,7 +113,7 @@ export function BarChart({
       {legend && legend.length > 0 && (
         <div className="chart-legend-row" style={{ display: "flex", gap: 14, marginBottom: 10, flexWrap: "wrap" }}>
           {legend.map((l) => (
-            <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--chart-text, #475569)" }}>
+            <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--text-muted)" }}>
               <span style={{ width: 10, height: 10, borderRadius: "50%", background: l.color }} />
               <span>{l.label}</span>
             </div>
@@ -180,7 +171,7 @@ export function BarChart({
                     textAnchor="end"
                     fontSize="11.5"
                     fontWeight="600"
-                    fill="var(--chart-text, #64748b)"
+                    fill="var(--text-muted)"
                   >
                     {formatValue(val)}
                   </text>
@@ -238,7 +229,7 @@ export function BarChart({
                     textAnchor="middle"
                     fontSize="12"
                     fontWeight="600"
-                    fill="var(--chart-text, #64748b)"
+                    fill="var(--text-muted)"
                   >
                     {r.label.length > 14 ? `${r.label.slice(0, 12)}…` : r.label}
                   </text>
@@ -256,10 +247,10 @@ export function BarChart({
                 left: `${((paddingLeft + gap + hoveredIndex * (barWidth + (count > 1 ? gap : 0)) + barWidth / 2) / width) * 100}%`,
                 top: `${((paddingTop + chartHeight - (rows[hoveredIndex].value / gridMax) * chartHeight) / height) * 100}%`,
                 transform: "translate(-50%, -130%)",
-                background: "var(--tooltip-bg, #0f172a)",
+                background: "var(--tooltip-bg, var(--text))",
                 color: "#ffffff",
                 border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: "10px",
+                borderRadius: "var(--radius-md)",
                 padding: "8px 14px",
                 boxShadow: "0 8px 24px rgba(0, 0, 0, 0.3)",
                 pointerEvents: "none",

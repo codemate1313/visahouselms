@@ -20,7 +20,7 @@ export function InstituteDashboard() {
   }, []);
 
   if (error) return <p className="error-text">{error}</p>;
-  if (!summary) return <p>Loading...</p>;
+  if (!summary) return <p>{strings.loading}</p>;
 
   const permissions = summary.permissions;
   const canSeeStudents = Boolean(

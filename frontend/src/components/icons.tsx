@@ -49,6 +49,7 @@ export type IconName =
   | "restore"
   | "x"
   | "chevronDown"
+  | "moreVertical"
   | "overview"
   | "projects"
   | "toggleOn"
@@ -255,6 +256,13 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
   ),
   // Chevron Down Icon
   chevronDown: <path d="M6 9l6 6 6-6" />,
+  moreVertical: (
+    <>
+      <circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="19" r="1.6" fill="currentColor" stroke="none" />
+    </>
+  ),
 
   // Existing icons maintained with high visual quality
   admin: (

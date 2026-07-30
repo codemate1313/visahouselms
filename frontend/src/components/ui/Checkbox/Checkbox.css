@@ -8,15 +8,15 @@
 }
 
 .ui-checkbox-sm {
-  --ui-checkbox-size: 16px;
+  --ui-checkbox-size: var(--control-size-sm);
 }
 
 .ui-checkbox-md {
-  --ui-checkbox-size: 19px;
+  --ui-checkbox-size: var(--control-size-md);
 }
 
 .ui-checkbox-lg {
-  --ui-checkbox-size: 23px;
+  --ui-checkbox-size: var(--control-size-lg);
 }
 
 /* Native input stays interactive (focus, keyboard, form semantics) but
@@ -78,7 +78,7 @@
 
 .ui-checkbox-input:focus-visible + .ui-checkbox-box {
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px var(--primary-soft);
+  box-shadow: var(--focus-ring);
 }
 
 /* Tactile press feedback — released with the bouncy easing above, which

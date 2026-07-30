@@ -162,24 +162,31 @@ def create_b2b_plan_payment(
         db, actor, "payment.create", payment.id, ip,
         {"institute_id": institute_id, "plan": plan.name, "status": payment_status},
     )
-    db.commit()
 
     # Subscription activates immediately on any recorded payment (partial or
     # full). Institute self-service renews the current plan from its existing
     # expiry; Super Admin plan changes retain the established assign behavior.
-    current, current_state = subscription_service.current_subscription(db, institute_id)
-    if (
-        renew_if_current
-        and current is not None
-        and current.plan_id == plan_id
-        and current_state in (subscription_service.STATE_ACTIVE, subscription_service.STATE_GRACE)
-    ):
-        subscription = subscription_service.renew(db, actor, institute_id, plan_id, ip)
-    else:
-        subscription = subscription_service.assign(db, actor, institute_id, plan_id, None, ip)
-    payment.subscription_id = subscription["id"]
-    db.add(payment)
-    db.commit()
+    try:
+        current, current_state = subscription_service.current_subscription(db, institute_id)
+        if (
+            renew_if_current
+            and current is not None
+            and current.plan_id == plan_id
+            and current_state in (subscription_service.STATE_ACTIVE, subscription_service.STATE_GRACE)
+        ):
+            subscription = subscription_service.renew(
+                db, actor, institute_id, plan_id, ip, commit=False
+            )
+        else:
+            subscription = subscription_service.assign(
+                db, actor, institute_id, plan_id, None, ip, commit=False
+            )
+        payment.subscription_id = subscription["id"]
+        db.add(payment)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
     payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
     return _serialize(payment)
@@ -262,7 +269,6 @@ def create_user_plan_payment(
     db.add(payment)
     db.flush()
     _audit(db, None, "payment.create", payment.id, ip, {"plan": plan.name, "source": "b2c"})
-    db.commit()
 
     gateway = get_gateway("manual")
     if not gateway.verify_payment(gateway_reference):
@@ -275,14 +281,18 @@ def create_user_plan_payment(
     payment.paid_at = _now()
     payment.invoice_number = f"INV-{payment.id:06d}"
     db.add(payment)
-    if coupon is not None:
-        coupon_service.redeem(db, coupon)
-    db.commit()
-
-    subscription = subscription_service.subscribe_user(db, user_id, plan_id, ip)
-    payment.subscription_id = subscription.id
-    db.add(payment)
-    db.commit()
+    try:
+        if coupon is not None:
+            coupon_service.redeem(db, coupon)
+        subscription = subscription_service.subscribe_user(
+            db, user_id, plan_id, ip, commit=False
+        )
+        payment.subscription_id = subscription.id
+        db.add(payment)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
     payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
     return _serialize(payment)

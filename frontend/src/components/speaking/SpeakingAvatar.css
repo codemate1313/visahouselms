@@ -22,7 +22,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(var(--white-rgb), 0.12);
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   padding: 22px 24px;
   color: var(--white);
   box-shadow: 0 20px 50px rgba(var(--black-rgb), 0.35), inset 0 1px 1px rgba(var(--white-rgb), 0.15);
@@ -97,7 +97,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 20px;
-  border-radius: 30px;
+  border-radius: var(--radius-xl);
   background: rgba(var(--slate-900-rgb), 0.88);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -175,7 +175,7 @@
   color: #ff4d5e;
   border: 1px solid rgba(var(--primary-rgb), 0.35);
   padding: 4px 12px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
 }
 
 .examiner-status-badge {
@@ -210,7 +210,7 @@
   line-height: 1.5;
   background: rgba(var(--white-rgb), 0.05);
   padding: 12px 16px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   border-left: 3px solid var(--primary);
 }
 
@@ -227,7 +227,7 @@
   justify-content: center;
   gap: 8px;
   padding: 10px 20px;
-  border-radius: 24px;
+  border-radius: var(--radius-xl);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -288,10 +288,15 @@
 }
 
 .examiner-select-dropdown {
+  width: min(100%, 260px);
+  max-width: 260px;
+}
+
+.examiner-select-dropdown .searchable-select-trigger {
   background: rgba(var(--slate-900-rgb), 0.9);
   color: var(--slate-100);
   border: 1px solid rgba(var(--white-rgb), 0.18);
-  border-radius: 16px;
+  border-radius: var(--radius);
   padding: 6px 12px;
   font-size: 0.8rem;
   font-weight: 500;

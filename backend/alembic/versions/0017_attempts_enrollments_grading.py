@@ -117,13 +117,15 @@ def upgrade() -> None:
         "UPDATE payments SET course_id = NULL WHERE course_id IS NOT NULL "
         "AND course_id NOT IN (SELECT id FROM courses)"
     )
-    op.create_foreign_key(
-        "fk_payments_course_id", "payments", "courses", ["course_id"], ["id"]
-    )
+    with op.batch_alter_table("payments") as batch:
+        batch.create_foreign_key(
+            "fk_payments_course_id", "courses", ["course_id"], ["id"]
+        )
 
 
 def downgrade() -> None:
-    op.drop_constraint("fk_payments_course_id", "payments", type_="foreignkey")
+    with op.batch_alter_table("payments") as batch:
+        batch.drop_constraint("fk_payments_course_id", type_="foreignkey")
 
     op.drop_index("ix_attempt_flags_attempt_id", table_name="attempt_flags")
     op.drop_table("attempt_flags")

@@ -1,4 +1,5 @@
 export const instituteMembersStrings = {
+  loading: "Loading...",
   eyebrow: "People",
   subtitle: "Manage and inspect institute accounts from one place.",
   downloadTemplate: "Download template",

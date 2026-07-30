@@ -25,6 +25,7 @@ from app.models.role import INST_INSTRUCTOR, SA_INSTRUCTOR, Role
 from app.models.user import User
 
 OPEN_REEVALUATION_STATUSES = (REEVALUATION_PENDING, REEVALUATION_IN_REVIEW)
+GRADING_CLAIM_TTL = timedelta(minutes=5)
 
 
 def _now() -> datetime:
@@ -106,6 +107,44 @@ def _entry_out(entry: Optional[GradingQueueEntry]) -> Optional[dict]:
     }
 
 
+def _claim_cutoff() -> datetime:
+    return _now() - GRADING_CLAIM_TTL
+
+
+def _expire_stale_entry(db: Session, entry: GradingQueueEntry) -> bool:
+    if (
+        entry.status != QUEUE_CLAIMED
+        or entry.claimed_at is None
+        or entry.claimed_at >= _claim_cutoff()
+    ):
+        return False
+    entry.status = QUEUE_PENDING
+    entry.assigned_to_id = None
+    entry.claimed_at = None
+    request = latest_open_reevaluation(db, entry.attempt_id)
+    if request:
+        request.status = REEVALUATION_PENDING
+        request.assigned_to_id = None
+        db.add(request)
+    db.add(entry)
+    db.flush()
+    return True
+
+
+def _expire_stale_claims(db: Session) -> None:
+    stale_entries = (
+        db.query(GradingQueueEntry)
+        .filter(
+            GradingQueueEntry.status == QUEUE_CLAIMED,
+            GradingQueueEntry.claimed_at.is_not(None),
+            GradingQueueEntry.claimed_at < _claim_cutoff(),
+        )
+        .all()
+    )
+    for entry in stale_entries:
+        _expire_stale_entry(db, entry)
+
+
 def claim(db: Session, actor: User, attempt: TestAttempt) -> dict:
     if not can_grade_attempt(db, actor, attempt):
         raise HTTPException(status_code=404, detail="Submission not found")
@@ -152,7 +191,8 @@ def require_or_claim(db: Session, actor: User, attempt: TestAttempt) -> GradingQ
 def _claim_entry(
     db: Session, entry: GradingQueueEntry, actor: User
 ) -> GradingQueueEntry:
-    claimed_at = entry.claimed_at or _now()
+    claimed_at = _now()
+    claim_cutoff = claimed_at - GRADING_CLAIM_TTL
     result = db.execute(
         update(GradingQueueEntry)
         .where(
@@ -160,6 +200,7 @@ def _claim_entry(
             or_(
                 GradingQueueEntry.assigned_to_id.is_(None),
                 GradingQueueEntry.assigned_to_id == actor.id,
+                GradingQueueEntry.claimed_at < claim_cutoff,
             ),
         )
         .values(
@@ -189,6 +230,9 @@ def ensure_available_to_open(
     db: Session, actor: User, attempt: TestAttempt
 ) -> None:
     entry = ensure_queue_entry(db, attempt)
+    if _expire_stale_entry(db, entry):
+        db.commit()
+        db.refresh(entry)
     if entry.status == QUEUE_CLAIMED and entry.assigned_to_id not in (None, actor.id):
         owner = (
             f"{entry.assigned_to.first_name} {entry.assigned_to.last_name}"
@@ -220,6 +264,7 @@ def queue_metadata(db: Session, attempt: TestAttempt) -> Optional[dict]:
 def list_queue(db: Session, actor: User, status_filter: Optional[str] = None) -> list[dict]:
     from app.services.attempt_service import _attempt_query
 
+    _expire_stale_claims(db)
     query = _attempt_query(db).join(ExamModule, TestAttempt.module_id == ExamModule.id)
     if actor.role.name == INST_INSTRUCTOR:
         query = query.join(User, TestAttempt.user_id == User.id).filter(User.institute_id == actor.institute_id)

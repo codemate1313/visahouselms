@@ -8,6 +8,7 @@ import { invoiceStrings as strings } from "./Invoice.strings";
 import "./Invoice.css";
 import { commonActions } from "@/content/common.strings";
 import { Icon } from "@/components/icons";
+import { SearchableSelect } from "@/components/ui";
 
 interface PaymentDetail {
   id: number;
@@ -512,12 +513,18 @@ export function Invoice() {
 
               <div className="invoice-field">
                 <label>{strings.modals.paymentMethod}</label>
-                <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
-                  <option value="Card">Credit / Debit Card</option>
-                  <option value="Bank Transfer">Bank Wire / Transfer</option>
-                  <option value="UPI">UPI / Instant Pay</option>
-                  <option value="Cash / Cheque">Cash / Cheque</option>
-                </select>
+                <SearchableSelect
+                  ariaLabel={strings.modals.paymentMethod}
+                  options={[
+                    { value: "Card", label: "Credit / Debit Card" },
+                    { value: "Bank Transfer", label: "Bank Wire / Transfer" },
+                    { value: "UPI", label: "UPI / Instant Pay" },
+                    { value: "Cash / Cheque", label: "Cash / Cheque" },
+                  ]}
+                  searchable={false}
+                  value={payMethod}
+                  onChange={(value) => setPayMethod(String(value))}
+                />
               </div>
 
               <div className="invoice-field">

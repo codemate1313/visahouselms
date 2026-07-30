@@ -72,7 +72,16 @@ def create_demo(
     ip: Optional[str],
 ) -> dict:
     institute_result = institute_service.create_institute(
-        db, actor, name, None, admin_email, admin_first_name, admin_last_name, 24, ip
+        db,
+        actor,
+        name,
+        None,
+        admin_email,
+        admin_first_name,
+        admin_last_name,
+        24,
+        ip,
+        commit=False,
     )
 
     demo = DemoAccount(
@@ -118,7 +127,7 @@ def mark_converted_if_demo(db: Session, actor: User, institute_id: int, ip: Opti
         demo.converted_at = _now()
         db.add(demo)
         _audit(db, actor, "demo_account.convert", demo.id, ip)
-        db.commit()
+        db.flush()
 
 
 def suspend_expired_demos(db: Session) -> int:

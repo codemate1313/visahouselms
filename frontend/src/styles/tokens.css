@@ -43,7 +43,13 @@
 
   /* Chart color system */
   --series-1: #e11d2e;
-  --series-2: #6e6e73;
+  --series-2: #3b82f6;
+  --series-3: #10b981;
+  --series-4: #8b5cf6;
+  --series-5: #f59e0b;
+  --series-6: #06b6d4;
+  --series-7: #ec4899;
+  --series-8: #6366f1;
   --chart-grid: rgba(142, 142, 147, 0.24);
   --chart-highlight: #e11d2e;
   --chart-muted: #3b82f6;
@@ -69,7 +75,17 @@
   --red-600-alt: #ef4444;
 
   /* Shape / elevation */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
   --radius: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+  --focus-ring: 0 0 0 3px var(--primary-soft);
+  --control-size-sm: 16px;
+  --control-size-md: 19px;
+  --control-size-lg: 23px;
   --glass-bg: rgba(255, 255, 255, 0.82);
   --glass-bg-strong: rgba(255, 255, 255, 0.94);
   --glass-border: rgba(255, 255, 255, 0.95);
@@ -270,4 +286,3 @@
   --sidebar-active-text: #ffffff;
   --sidebar-active-bg: rgba(255, 255, 255, 0.12);
 }
-

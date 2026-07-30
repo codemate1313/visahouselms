@@ -514,7 +514,13 @@ class AttemptServiceTestCase(unittest.TestCase):
             [item["id"] for item in attempt_service.list_grading_queue(self.db, second_sa)],
             [attempt.id],
         )
-        grading_service.claim(self.db, self.instructor, attempt)
+        started = attempt_service.start_grading(self.db, self.instructor, attempt.id)
+        self.assertEqual(started["queue"]["status"], "claimed")
+        self.assertEqual(started["queue"]["assigned_to_name"], "Author Teacher")
+
+        second_queue = attempt_service.list_grading_queue(self.db, second_sa)
+        self.assertEqual(second_queue[0]["queue"]["assigned_to_id"], self.instructor.id)
+        self.assertEqual(second_queue[0]["queue"]["assigned_to_name"], "Author Teacher")
 
         with self.assertRaises(Exception) as claim_error:
             grading_service.claim(self.db, second_sa, attempt)
@@ -523,6 +529,15 @@ class AttemptServiceTestCase(unittest.TestCase):
         with self.assertRaises(Exception) as open_error:
             attempt_service.get_grading_detail(self.db, second_sa, attempt.id)
         self.assertIn("Author Teacher", str(open_error.exception.detail))
+
+        queue = self.db.query(GradingQueueEntry).filter_by(attempt_id=attempt.id).one()
+        queue.claimed_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=6)
+        self.db.add(queue)
+        self.db.commit()
+
+        restarted = attempt_service.start_grading(self.db, second_sa, attempt.id)
+        self.assertEqual(restarted["queue"]["assigned_to_id"], second_sa.id)
+        self.assertEqual(restarted["queue"]["assigned_to_name"], "Second Examiner")
 
     def test_cefr_percentage_policy_boundaries_are_versioned(self):
         self.assertEqual(cefr_service.level_for_percentage(Decimal("39.9")), "Below B1")

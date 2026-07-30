@@ -1,7 +1,7 @@
+import type { ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { TableAvatar } from "@/components/TableAvatar";
-import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { Checkbox } from "@/components/ui";
 import type { DirectoryUser } from "@/api/types";
 import { usersStrings as strings } from "../Users.strings";
@@ -31,6 +31,24 @@ interface UsersTableProps {
   onToggleSelectAll: () => void;
 }
 
+function formatCompactDate(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "2-digit",
+  }).format(new Date(value));
+}
+
+function formatDaysAgo(value: string) {
+  const changedTime = new Date(value).getTime();
+  if (Number.isNaN(changedTime)) return formatCompactDate(value);
+
+  const days = Math.max(0, Math.floor((Date.now() - changedTime) / 86_400_000));
+  if (days === 0) return "Today";
+  if (days === 1) return "1d ago";
+  return `${days}d ago`;
+}
+
 export function UsersTable({
   users,
   currentUserId,
@@ -55,6 +73,22 @@ export function UsersTable({
       return <span className="badge badge-gray">{a.protected}</span>;
     }
 
+    function renderOverflowMenu(items: Array<ReactElement | false | null>) {
+      const availableItems = items.filter(Boolean);
+      if (!availableItems.length) return null;
+
+      return (
+        <details className="row-action-menu">
+          <summary className="action-btn-icon action-menu-trigger" data-tooltip="More actions" aria-label="More actions">
+            <Icon name="moreVertical" />
+          </summary>
+          <div className="row-action-menu-panel">
+            {availableItems}
+          </div>
+        </details>
+      );
+    }
+
     const actions = ROLE_ACTIONS[user.role_name];
     if (!actions) {
       // Tenant-scoped role. Students and institute instructors are managed in
@@ -64,82 +98,69 @@ export function UsersTable({
       const link = editPath ?? tenantManageLink(user);
       const resetPath = passwordResetPath(user);
       if (!managed && !link && !resetPath) return <span className="text-muted">—</span>;
+      const overflowMenu = renderOverflowMenu([
+        Boolean(managed) && (
+          <button key="status" type="button" onClick={() => onToggleActive(user)}>
+            <Icon name={user.is_active ? "toggleOff" : "toggleOn"} />
+            <span>{user.is_active ? a.deactivate : a.reactivate}</span>
+          </button>
+        ),
+        Boolean(resetPath) && (
+          <button key="reset" type="button" onClick={() => onResetPassword(user)}>
+            <Icon name="lock" />
+            <span>{a.resetPassword}</span>
+          </button>
+        ),
+        canDeleteMember(user) && (
+          <button key="delete" type="button" className="danger" onClick={() => onRequestDelete(user)}>
+            <Icon name="trash" />
+            <span>{a.delete}</span>
+          </button>
+        ),
+      ]);
+
       return (
-        <div className="row-actions-inline">
-          {managed && (
-            <ToggleSwitch
-              checked={user.is_active}
-              onChange={() => onToggleActive(user)}
-              tooltip={user.is_active ? a.deactivate : a.reactivate}
-            />
-          )}
+        <div className="row-actions-inline users-row-actions">
           {link && (
-            <Link className="action-btn-icon action-edit" to={link} data-tooltip={editPath ? a.edit : a.manage}>
+            <Link className="action-btn-icon action-neutral" to={link} data-tooltip={editPath ? a.edit : a.manage}>
               <Icon name="edit" />
             </Link>
           )}
-          {resetPath && (
-            <button
-              type="button"
-              className="action-btn-icon action-branding"
-              onClick={() => onResetPassword(user)}
-              data-tooltip={a.resetPassword}
-            >
-              <Icon name="lock" />
-            </button>
-          )}
-          {canDeleteMember(user) && (
-            <button
-              type="button"
-              className="action-btn-icon danger action-delete"
-              onClick={() => onRequestDelete(user)}
-              data-tooltip={a.delete}
-            >
-              <Icon name="trash" />
-            </button>
+          {overflowMenu}
+          {!link && !overflowMenu && (
+            <span className="text-muted">—</span>
           )}
         </div>
       );
     }
 
     return (
-      <div className="row-actions-inline">
-        <ToggleSwitch
-          checked={user.is_active}
-          onChange={() => onToggleActive(user)}
-          tooltip={user.is_active ? a.deactivate : a.reactivate}
-        />
-        <Link className="action-btn-icon action-edit" to={actions.editPath(user)} data-tooltip={a.edit}>
+      <div className="row-actions-inline users-row-actions">
+        <Link className="action-btn-icon action-neutral" to={actions.editPath(user)} data-tooltip={a.edit}>
           <Icon name="edit" />
         </Link>
-        {actions.supportsForceReset && (
-          <button
-            type="button"
-            className="action-btn-icon action-branding"
-            onClick={() => onForceReset(user)}
-            data-tooltip={user.force_password_reset ? a.clearPasswordReset : a.requirePasswordReset}
-          >
-            <Icon name="lock" />
-          </button>
-        )}
-        {actions.supportsPasswordReset && (
-          <button
-            type="button"
-            className="action-btn-icon action-branding"
-            onClick={() => onResetPassword(user)}
-            data-tooltip={a.resetPassword}
-          >
-            <Icon name="lock" />
-          </button>
-        )}
-        <button
-          type="button"
-          className="action-btn-icon danger action-delete"
-          onClick={() => onRequestDelete(user)}
-          data-tooltip={a.delete}
-        >
-          <Icon name="trash" />
-        </button>
+        {renderOverflowMenu([
+          <button key="status" type="button" onClick={() => onToggleActive(user)}>
+            <Icon name={user.is_active ? "toggleOff" : "toggleOn"} />
+            <span>{user.is_active ? a.deactivate : a.reactivate}</span>
+          </button>,
+          actions.supportsForceReset && (
+            <button key="force-reset" type="button" onClick={() => onForceReset(user)}>
+              <Icon name="lock" />
+              <span>{user.force_password_reset ? a.clearPasswordReset : a.requirePasswordReset}</span>
+            </button>
+          ),
+          actions.supportsPasswordReset && (
+            <button key="reset" type="button" onClick={() => onResetPassword(user)}>
+              <Icon name="lock" />
+              <span>{a.resetPassword}</span>
+            </button>
+          ),
+          <button key="delete" type="button" className="danger" onClick={() => onRequestDelete(user)}>
+            <Icon name="trash" />
+            <span>{a.delete}</span>
+          </button>,
+        ])}
       </div>
     );
   }
@@ -154,17 +175,17 @@ export function UsersTable({
     }
 
     const by = event ? (event.by_self ? p.bySelf : p.byAdmin(event.by_name)) : null;
+    const date = formatCompactDate(changedAt);
     return (
-      <span data-tooltip={by ?? undefined}>
-        {new Date(changedAt).toLocaleDateString("en-GB")}
-        {by && <small className="password-changed-by">{by}</small>}
+      <span className="password-chip" data-tooltip={by ? `Changed ${date} ${by}` : `Changed ${date}`}>
+        {formatDaysAgo(changedAt)}
       </span>
     );
   }
 
   return (
-    <div className="table-wrap">
-      <table className="data-table sleek-accounts-table sleek-users-table">
+    <div className="table-wrap users-table-wrap">
+      <table className="data-table sleek-accounts-table sleek-users-table responsive-data-table">
         <thead>
           <tr>
             {selectable && (
@@ -211,6 +232,7 @@ export function UsersTable({
                   <TableAvatar
                     src={user.avatar_path ? (user.avatar_path.startsWith('/') ? user.avatar_path : user.avatar_path.startsWith('storage/') ? `/${user.avatar_path}` : `/storage/${user.avatar_path}`) : null}
                     name={`${user.first_name} ${user.last_name}`.trim() || user.email || "Super Admin"}
+                    seed={`${user.role_name}-${user.id}-${user.email}`}
                   />
                   <div>
                     <strong className="table-item-title" style={{ fontSize: 13.5 }}>
@@ -254,7 +276,7 @@ export function UsersTable({
                 </span>
               </td>
               <td className="col-password">{renderPasswordChanged(user)}</td>
-              <td className="col-created">{new Date(user.created_at).toLocaleDateString("en-GB")}</td>
+              <td className="col-created">{formatCompactDate(user.created_at)}</td>
               <td className="table-actions institute-row-actions account-row-actions col-actions">
                 {renderActions(user)}
               </td>

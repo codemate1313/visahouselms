@@ -46,6 +46,15 @@ export type { FilterBarProps } from "./FilterBar";
 export { Card } from "./Card";
 export type { CardProps } from "./Card";
 
+export { Modal } from "./Modal";
+export type { ModalProps } from "./Modal";
+
+export { Radio, RadioGroup } from "./Radio";
+export type { RadioProps, RadioSize, RadioGroupProps, RadioOption } from "./Radio";
+
+export { SegmentedControl } from "./SegmentedControl";
+export type { SegmentedControlProps, SegmentedOption } from "./SegmentedControl";
+
 export { Badge } from "./Badge";
 export type { BadgeProps, BadgeTone } from "./Badge";
 

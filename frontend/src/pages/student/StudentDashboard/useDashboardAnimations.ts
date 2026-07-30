@@ -11,7 +11,7 @@ export function useDashboardAnimations(containerRef: RefObject<HTMLDivElement | 
       // 1. Entrance Animations
       const tl = gsap.timeline();
 
-      tl.fromTo(".sd-stat-card",
+      tl.fromTo(".metric-card",
         { y: 40, opacity: 0 },
         {
           y: 0,
@@ -24,7 +24,7 @@ export function useDashboardAnimations(containerRef: RefObject<HTMLDivElement | 
         0.15
       );
 
-      tl.fromTo(".sd-panel",
+      tl.fromTo(".workspace-panel",
         { y: 60, opacity: 0 },
         {
           y: 0,
@@ -50,7 +50,7 @@ export function useDashboardAnimations(containerRef: RefObject<HTMLDivElement | 
         0.6
       );
 
-      tl.fromTo(".sd-activity-item",
+      tl.fromTo(".activity-item",
         { x: -30, opacity: 0 },
         {
           x: 0,
@@ -63,22 +63,7 @@ export function useDashboardAnimations(containerRef: RefObject<HTMLDivElement | 
         0.7
       );
 
-      // 2. Stat Numbers Animation
-      gsap.utils.toArray<HTMLElement>(".sd-stat-value", containerRef.current).forEach((el) => {
-        const target = Number(el.dataset.value ?? 0);
-        const proxy = { val: 0 };
-        gsap.to(proxy, {
-          val: target,
-          duration: 1.2,
-          delay: 0.3,
-          ease: "power2.out",
-          onUpdate: () => {
-            el.textContent = String(Math.round(proxy.val));
-          },
-        });
-      });
-
-      // 3. Progress Bars Fill
+      // 2. Progress Bars Fill
       gsap.utils.toArray<HTMLElement>(".sd-progress-fill", containerRef.current).forEach((el, index) => {
         const target = Number(el.dataset.progress ?? 0);
         gsap.fromTo(

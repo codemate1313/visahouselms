@@ -1,3 +1,4 @@
+import { MetricCard } from "@/components/dashboard/MetricCard";
 import { instituteDashboardStrings as strings } from "../InstituteDashboard.strings";
 import type { DashboardSummary } from "../types";
 
@@ -12,30 +13,18 @@ interface DashboardStatsProps {
 export function DashboardStats({ counts, subscriptionState, canSeeStudents, canSeeStaff, canSeeBilling }: DashboardStatsProps) {
   const t = strings.stats;
   return (
-    <div className="stat-tile-row">
+    <div className="metric-grid">
       {canSeeStudents && (
-        <div className="stat-tile">
-          <p className="stat-label">{t.students}</p>
-          <p className="stat-value">{counts.students}</p>
-        </div>
+        <MetricCard label={t.students} value={counts.students} tone="blue" icon="user" />
       )}
       {canSeeStaff && (
-        <div className="stat-tile">
-          <p className="stat-label">{t.instructors}</p>
-          <p className="stat-value">{counts.instructors}</p>
-        </div>
+        <MetricCard label={t.instructors} value={counts.instructors} tone="green" icon="instructors" />
       )}
       {(canSeeStudents || canSeeStaff) && (
-        <div className="stat-tile">
-          <p className="stat-label">{t.activeMembers}</p>
-          <p className="stat-value">{counts.active_members}</p>
-        </div>
+        <MetricCard label={t.activeMembers} value={counts.active_members} tone="purple" icon="session" />
       )}
       {canSeeBilling && (
-        <div className="stat-tile">
-          <p className="stat-label">{t.subscription}</p>
-          <p className="stat-value stat-value-text">{subscriptionState}</p>
-        </div>
+        <MetricCard label={t.subscription} value={subscriptionState ?? "-"} valueClassName="stat-value-text" tone="amber" icon="subscription" />
       )}
     </div>
   );

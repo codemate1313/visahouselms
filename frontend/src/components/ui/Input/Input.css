@@ -14,7 +14,7 @@
   width: 100%;
   height: 40px;
   padding: 0 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--surface);
   font-size: 14px;
@@ -26,7 +26,12 @@
 .ui-input:focus {
   background: var(--surface);
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-soft);
+  box-shadow: var(--focus-ring);
+}
+
+.ui-input::placeholder {
+  color: var(--slate-400);
+  opacity: 1;
 }
 
 .ui-input-error {

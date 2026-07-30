@@ -20,7 +20,7 @@
   justify-content: space-between;
   background: #ffffff;
   padding: 14px 20px;
-  border-radius: 16px;
+  border-radius: var(--radius);
   border: 1px solid #e2e8f0;
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
 }
@@ -41,7 +41,7 @@
   color: #64748b;
   background: #f8fafc;
   border: 1px solid #cbd5e1;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   text-decoration: none;
   transition: all 0.2s ease;
 }
@@ -49,7 +49,7 @@
 .sab-back-btn:hover {
   background: #f1f5f9;
   color: #0f172a;
-  border-color: #94a3b8;
+  border-color: var(--slate-400);
 }
 
 .sab-form-title-group h1 {
@@ -119,20 +119,26 @@
   font-weight: 600;
 }
 
-.sab-input-field {
+.sab-input-field,
+.sab-select-field .searchable-select-trigger {
   width: 100%;
   box-sizing: border-box;
   padding: 10px 14px;
   font-size: 14px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   color: #0f172a;
   font-family: inherit;
   transition: all 0.2s ease;
 }
 
-.sab-input-field:focus {
+.sab-select-field {
+  max-width: none;
+}
+
+.sab-input-field:focus,
+.sab-select-field.is-open .searchable-select-trigger {
   outline: none;
   border-color: #e11d2e;
   box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.12);
@@ -153,7 +159,7 @@
 .sab-image-preview-container {
   width: 100%;
   height: 160px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   overflow: hidden;
   border: 1px dashed #cbd5e1;
   background: #f8fafc;
@@ -174,7 +180,7 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  color: #94a3b8;
+  color: var(--slate-400);
   font-size: 12px;
 }
 
@@ -182,7 +188,7 @@
 .sab-seo-card {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -202,7 +208,7 @@
 .sab-publish-switch-group {
   background: #f8fafc;
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
@@ -245,13 +251,15 @@
   color: #f3f4f6;
 }
 
-[data-theme="dark"] .sab-input-field {
+[data-theme="dark"] .sab-input-field,
+[data-theme="dark"] .sab-select-field .searchable-select-trigger {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.14);
   color: #f7f7fa;
 }
 
-[data-theme="dark"] .sab-input-field:focus {
+[data-theme="dark"] .sab-input-field:focus,
+[data-theme="dark"] .sab-select-field.is-open .searchable-select-trigger {
   background: rgba(255, 255, 255, 0.08);
 }
 

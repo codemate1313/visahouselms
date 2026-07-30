@@ -10,7 +10,7 @@
   align-self: flex-start;
   padding: 8px 14px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--surface) !important;
   color: var(--text) !important;
   font-size: 13px;
@@ -34,7 +34,7 @@
   gap: 12px;
   padding: 14px 16px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--surface) !important;
   text-align: left;
   cursor: pointer;
@@ -68,7 +68,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--primary-soft);
   color: var(--primary);
 }

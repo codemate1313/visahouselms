@@ -15,7 +15,7 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.6) !important;
   box-shadow: 0 8px 32px rgba(225, 29, 46, 0.03) !important;
-  border-radius: 16px !important;
+  border-radius: var(--radius) !important;
   padding: 24px !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -55,7 +55,7 @@
 
 /* Elegant Dev-themed Table */
 .dev-table-wrap {
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--border);
   background: var(--surface-muted);
@@ -111,7 +111,7 @@
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -170,16 +170,21 @@
   letter-spacing: 0.01em;
 }
 
-.dev-select {
+.dev-select,
+.dev-select-control .searchable-select-trigger {
   width: 100%;
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background-color: var(--surface);
   color: var(--text);
   font-size: 0.9rem;
   transition: all 0.2s ease;
   outline: none;
+}
+
+.dev-select-control {
+  max-width: none;
 }
 
 [data-theme="dark"] .developer-portal-container {
@@ -198,7 +203,8 @@
   color: #f3f4f6;
 }
 
-[data-theme="dark"] .dev-select {
+[data-theme="dark"] .dev-select,
+[data-theme="dark"] .dev-select-control .searchable-select-trigger {
   background-color: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.14);
   color: #f7f7fa;
@@ -214,7 +220,8 @@
   color: #a5adbb;
 }
 
-.dev-select:focus {
+.dev-select:focus,
+.dev-select-control.is-open .searchable-select-trigger {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-soft);
 }
@@ -262,7 +269,7 @@
   border: none !important;
   font-weight: 600 !important;
   padding: 12px 20px !important;
-  border-radius: 8px !important;
+  border-radius: var(--radius-sm) !important;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
   cursor: pointer;
   box-shadow: 0 4px 12px var(--primary-soft) !important;

@@ -1,4 +1,5 @@
 import type { AttemptMetrics } from "@/pages/student/attemptMetrics";
+import { MetricCard } from "@/components/dashboard/MetricCard";
 import { attemptResultDetailsStrings as strings } from "../AttemptResultDetails.strings";
 
 interface ResultDetailStatsProps {
@@ -8,25 +9,11 @@ interface ResultDetailStatsProps {
 export function ResultDetailStats({ metrics }: ResultDetailStatsProps) {
   const t = strings.stats;
   return (
-    <div className="stat-tile-row result-detail-stats">
-      <div className="stat-tile">
-        <p className="stat-label">{t.attempted}</p>
-        <p className="stat-value">
-          {metrics.attempted} / {metrics.total}
-        </p>
-      </div>
-      <div className="stat-tile">
-        <p className="stat-label">{t.correct}</p>
-        <p className="stat-value result-correct-text">{metrics.correct}</p>
-      </div>
-      <div className="stat-tile">
-        <p className="stat-label">{t.incorrect}</p>
-        <p className="stat-value due-text">{metrics.incorrect}</p>
-      </div>
-      <div className="stat-tile">
-        <p className="stat-label">{t.unanswered}</p>
-        <p className="stat-value">{metrics.unanswered}</p>
-      </div>
+    <div className="metric-grid result-detail-stats">
+      <MetricCard label={t.attempted} value={`${metrics.attempted} / ${metrics.total}`} tone="blue" icon="grading" />
+      <MetricCard label={t.correct} value={metrics.correct} valueClassName="result-correct-text" tone="green" icon="check" />
+      <MetricCard label={t.incorrect} value={metrics.incorrect} valueClassName="due-text" tone="amber" icon="cross" />
+      <MetricCard label={t.unanswered} value={metrics.unanswered} tone="slate" icon="help" />
     </div>
   );
 }

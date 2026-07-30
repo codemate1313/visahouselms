@@ -1,6 +1,9 @@
 export const studentDashboardStrings = {
   loadError: "Failed to load your dashboard.",
   loading: "Loading...",
+  eyebrow: "Student Dashboard",
+  welcome: (firstName: string | undefined) => `Welcome, ${firstName ?? "student"}`,
+  subtitle: "Track your assigned tests, progress, and recent activity.",
   statusLabels: {
     ready: "Security check required",
     in_progress: "In progress",

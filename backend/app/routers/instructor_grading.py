@@ -34,6 +34,11 @@ def get_submission(attempt_id: int, db: Session = Depends(get_db), actor: User =
     return attempt_service.get_grading_detail(db, actor, attempt_id)
 
 
+@router.post("/{attempt_id}/start")
+def start_grading(attempt_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    return attempt_service.start_grading(db, actor, attempt_id)
+
+
 @router.post("/{attempt_id}/claim")
 def claim_submission(attempt_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     attempt = attempt_service.get_attempt_for_grading_or_404(db, actor, attempt_id)

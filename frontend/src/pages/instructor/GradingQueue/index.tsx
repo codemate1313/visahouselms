@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { GradingQueueItem } from "@/api/types";
+import { MetricCard } from "@/components/dashboard/MetricCard";
 import { SearchableSelect } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { gradingQueueStrings as strings } from "./GradingQueue.strings";
@@ -14,14 +15,33 @@ export function GradingQueue() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
 
-  useEffect(() => {
-    setLoading(true);
-    apiClient
-      .get<GradingQueueItem[]>("/instructor/grading", { params: { status: statusFilter || undefined } })
-      .then(({ data }) => setItems(data))
-      .catch(() => setError(strings.errors.load))
-      .finally(() => setLoading(false));
+  const loadQueue = useCallback(async (showLoading = false) => {
+    if (showLoading) setLoading(true);
+    try {
+      const { data } = await apiClient.get<GradingQueueItem[]>("/instructor/grading", {
+        params: { status: statusFilter || undefined },
+      });
+      setItems(data);
+      setError(null);
+    } catch {
+      setError(strings.errors.load);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
   }, [statusFilter]);
+
+  useEffect(() => {
+    void loadQueue(true);
+    const refreshId = window.setInterval(() => void loadQueue(), 10_000);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void loadQueue();
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(refreshId);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [loadQueue]);
 
   const pending = items.filter((item) => item.queue.status === "pending").length;
   const claimed = items.filter((item) => item.queue.status === "claimed").length;
@@ -37,19 +57,10 @@ export function GradingQueue() {
           </p>
         </div>
       </div>
-      <div className="stat-tile-row">
-        <div className="stat-tile">
-          <p className="stat-label">{strings.stats.pending}</p>
-          <p className="stat-value">{pending}</p>
-        </div>
-        <div className="stat-tile">
-          <p className="stat-label">{strings.stats.claimed}</p>
-          <p className="stat-value">{claimed}</p>
-        </div>
-        <div className="stat-tile">
-          <p className="stat-label">{strings.stats.reevaluations}</p>
-          <p className="stat-value">{reevaluations}</p>
-        </div>
+      <div className="metric-grid">
+        <MetricCard label={strings.stats.pending} value={pending} tone="amber" icon="grading" />
+        <MetricCard label={strings.stats.claimed} value={claimed} tone="blue" icon="session" />
+        <MetricCard label={strings.stats.reevaluations} value={reevaluations} tone="purple" icon="restore" />
       </div>
       <form className="filter-bar" onSubmit={(e) => e.preventDefault()}>
         <SearchableSelect

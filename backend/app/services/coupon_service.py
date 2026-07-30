@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import List, Optional, Tuple
 
 from fastapi import HTTPException, status
+from sqlalchemy import or_, update
 from sqlalchemy.orm import Session
 
 from app.models.audit_log import AuditLog
@@ -185,5 +186,22 @@ def redeem(db: Session, coupon: Coupon) -> None:
     """Increments usage_count - call only once a payment is actually marked
     paid, never on a failed/pending attempt, or a bad gateway retry could
     burn a customer's coupon use for nothing."""
-    coupon.usage_count += 1
-    db.add(coupon)
+    result = db.execute(
+        update(Coupon)
+        .where(
+            Coupon.id == coupon.id,
+            Coupon.is_active.is_(True),
+            or_(
+                Coupon.usage_limit.is_(None),
+                Coupon.usage_count < Coupon.usage_limit,
+            ),
+        )
+        .values(usage_count=Coupon.usage_count + 1)
+    )
+    if result.rowcount != 1:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Coupon usage limit reached",
+        )
+    db.expire(coupon)
+    db.refresh(coupon)

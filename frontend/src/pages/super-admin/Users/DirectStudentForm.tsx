@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { DirectoryUser } from "@/api/types";
 import { MemberFormFields } from "@/pages/institute/InstituteMemberForm/components/MemberFormFields";
+import { usersStrings as strings } from "./Users.strings";
 
 const basePath = "/super-admin/users/students";
 
@@ -61,7 +62,7 @@ export function DirectStudentForm() {
     }
   }
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p>{strings.loading}</p>;
 
   return (
     <MemberFormFields

@@ -265,7 +265,7 @@ export function InstituteMembers({ role, instituteId }: Props) {
       {!staffFeatureLocked && (
         <>
           {loading ? (
-            <p>Loading...</p>
+            <p>{strings.loading}</p>
           ) : (
             <MembersTable
               label={label}

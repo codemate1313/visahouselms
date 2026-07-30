@@ -1,9 +1,8 @@
-import { Link } from "react-router-dom";
 import type { AttemptSummary } from "@/api/types";
+import { LinkButton } from "@/components/ui";
 import { studentDashboardStrings as strings } from "../StudentDashboard.strings";
 import { formatAttemptDate, statusLabel, statusTone } from "../helpers";
 import { Icon } from "@/components/icons";
-import { Button } from "@/components/ui/Button/Button";
 
 interface RecentActivityPanelProps {
   attempts: AttemptSummary[];
@@ -12,20 +11,20 @@ interface RecentActivityPanelProps {
 export function RecentActivityPanel({ attempts }: RecentActivityPanelProps) {
   const t = strings.recentActivity;
   return (
-    <section className="sd-panel">
-      <div className="sd-panel-head">
+    <section className="workspace-panel">
+      <div className="panel-heading">
         <div>
           <h2>{t.heading}</h2>
           <p>{t.description}</p>
         </div>
       </div>
       {attempts.length ? (
-        <ul className="sd-activity-list">
+        <ul className="activity-list">
           {attempts.slice(0, 6).map((attempt) => (
-            <li className="sd-activity-item" data-tone={statusTone(attempt.status)} key={attempt.id}>
-              <span className="sd-activity-dot" />
-              <div className="sd-activity-body">
-                <div className="sd-activity-main">
+            <li className="activity-item" data-tone={statusTone(attempt.status)} key={attempt.id}>
+              <span className="activity-dot" />
+              <div className="activity-body">
+                <div className="activity-main">
                   <span className="sd-test-type">{attempt.module_type.replaceAll("_", " ")}</span>
                   <strong>{attempt.module_title}</strong>
                   <small>
@@ -33,8 +32,8 @@ export function RecentActivityPanel({ attempts }: RecentActivityPanelProps) {
                     {attempt.band_label ? ` · ${attempt.band_label}` : ""}
                   </small>
                 </div>
-                <div className="sd-activity-side">
-                  <span className={`sd-status-pill is-${statusTone(attempt.status)}`}>{statusLabel(attempt.status)}</span>
+                <div className="activity-side">
+                  <span className={`status-pill is-${statusTone(attempt.status)}`}>{statusLabel(attempt.status)}</span>
                   {attempt.raw_score && attempt.max_score && (
                     <small>
                       {Number(attempt.raw_score).toFixed(0)} / {Number(attempt.max_score).toFixed(0)}
@@ -46,13 +45,11 @@ export function RecentActivityPanel({ attempts }: RecentActivityPanelProps) {
           ))}
         </ul>
       ) : (
-        <p className="sd-empty">{t.empty}</p>
+        <p className="empty-message">{t.empty}</p>
       )}
-      <Link to="/student/attempts" style={{ textDecoration: "none", marginTop: "auto", display: "block" }}>
-        <Button variant="primary" fullWidth rightIcon={<Icon name="arrowRight" />} className="sd-global-btn">
-          {t.viewFullHistory}
-        </Button>
-      </Link>
+      <LinkButton to="/student/attempts" variant="secondary" className="panel-cta" rightIcon={<Icon name="arrowRight" />}>
+        {t.viewFullHistory}
+      </LinkButton>
     </section>
   );
 }

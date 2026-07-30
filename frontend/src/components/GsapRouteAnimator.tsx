@@ -5,7 +5,7 @@ import gsap from "gsap";
 const ANIMATED_CHILDREN = [
   "h1",
   ".section-title",
-  ".stat-tile",
+  ".metric-card",
   ".form-card",
   ".table-card",
   ".data-table",

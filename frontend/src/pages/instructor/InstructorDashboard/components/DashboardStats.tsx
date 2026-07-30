@@ -1,3 +1,4 @@
+import { MetricCard } from "@/components/dashboard/MetricCard";
 import { instructorDashboardStrings as strings } from "../InstructorDashboard.strings";
 
 interface DashboardStatsProps {
@@ -9,23 +10,11 @@ interface DashboardStatsProps {
 
 export function DashboardStats({ modules, drafts, published, questions }: DashboardStatsProps) {
   return (
-    <div className="stat-tile-row instructor-stats">
-      <div className="stat-tile">
-        <p className="stat-label">{strings.stats.modules}</p>
-        <p className="stat-value">{modules}</p>
-      </div>
-      <div className="stat-tile">
-        <p className="stat-label">{strings.stats.drafts}</p>
-        <p className="stat-value">{drafts}</p>
-      </div>
-      <div className="stat-tile">
-        <p className="stat-label">{strings.stats.published}</p>
-        <p className="stat-value">{published}</p>
-      </div>
-      <div className="stat-tile">
-        <p className="stat-label">{strings.stats.questions}</p>
-        <p className="stat-value">{questions}</p>
-      </div>
+    <div className="metric-grid instructor-stats">
+      <MetricCard label={strings.stats.modules} value={modules} tone="blue" icon="module" />
+      <MetricCard label={strings.stats.drafts} value={drafts} tone="slate" icon="edit" />
+      <MetricCard label={strings.stats.published} value={published} tone="green" icon="check" />
+      <MetricCard label={strings.stats.questions} value={questions} tone="purple" icon="help" />
     </div>
   );
 }

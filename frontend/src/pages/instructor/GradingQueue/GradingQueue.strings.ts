@@ -37,7 +37,10 @@ export const gradingQueueStrings = {
     reevaluationBadge: "Reevaluation",
     gradeSubmission: "Grade submission",
     evaluating: "In evaluation",
+    gradingNow: "Grading now",
+    youAreGrading: "You are grading",
     anotherInstructor: "another instructor",
+    gradingBy: (name: string) => `${name} is grading`,
     evaluatingBy: (name: string) => `${name} is evaluating this submission`,
   },
 } as const;

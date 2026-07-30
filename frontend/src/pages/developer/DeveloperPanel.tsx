@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { SuperAdminAccount } from "@/api/types";
-import { Button, Card, Checkbox, Input, RequiredMark } from "@/components/ui";
+import { Button, Card, Checkbox, Input, RequiredMark, SearchableSelect } from "@/components/ui";
 import "./DeveloperPanel.css";
 
 const developerSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
@@ -163,14 +163,16 @@ export function DeveloperPanel() {
           <form className="dev-form" onSubmit={createAccount}>
             <div className="dev-form-group">
               <label>Account type<RequiredMark /></label>
-              <select
-                className="dev-select"
+              <SearchableSelect
+                className="dev-select-control"
+                options={[
+                  { value: "super-admin", label: "Super Admin" },
+                  { value: "developer", label: "Verified Developer" },
+                ]}
+                searchable={false}
                 value={form.mode}
-                onChange={(event) => setForm((current) => ({ ...current, mode: event.target.value as "super-admin" | "developer" }))}
-              >
-                <option value="super-admin">Super Admin</option>
-                <option value="developer">Verified Developer</option>
-              </select>
+                onChange={(value) => setForm((current) => ({ ...current, mode: String(value) as "super-admin" | "developer" }))}
+              />
             </div>
             
             <Input

@@ -32,7 +32,7 @@ export function QuotaPieChart({ usage, limits }: QuotaPieChartProps) {
 
   return (
     <div className="quota-analytics-card">
-      <div className="chart-card-toolbar" style={{ marginBottom: 12 }}>
+      <div className="chart-toolbar" style={{ marginBottom: 12 }}>
         <h3 className="analytics-card-title" style={{ margin: 0 }}>{t.title}</h3>
         <div className="chart-view-toggle-pill">
           <button type="button" className={`pill-btn ${!showTable ? "active" : ""}`} onClick={() => setShowTable(false)} title={t.chartViewTitle}>

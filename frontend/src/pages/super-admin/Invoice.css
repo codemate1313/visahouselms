@@ -29,7 +29,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border, #e2e8f0);
   background: var(--surface, #ffffff);
   color: var(--text-muted, #64748b);
@@ -74,7 +74,7 @@
   align-items: center;
   gap: 8px;
   padding: 9px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -124,7 +124,7 @@
 .invoice-card-wrapper {
   background: var(--surface, #ffffff);
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 16px;
+  border-radius: var(--radius);
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.07), 0 0 1px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   position: relative;
@@ -161,7 +161,7 @@
 .invoice-brand-logo-mark {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: linear-gradient(135deg, #a31c28 0%, #7d131d 100%);
   display: flex;
   align-items: center;
@@ -221,7 +221,7 @@
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -299,7 +299,7 @@
 .invoice-metric-tile {
   background: var(--surface-subtle, #f8fafc);
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
@@ -351,7 +351,7 @@
 .invoice-info-card {
   background: var(--surface-subtle, #f8fafc);
   border: 1px solid var(--border-subtle, #e2e8f0);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 18px 20px;
 }
 
@@ -384,7 +384,7 @@
 /* Table Area */
 .invoice-table-wrapper {
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   margin-bottom: 28px;
 }
@@ -484,7 +484,7 @@
 .invoice-timeline-card {
   background: var(--surface-subtle, #f8fafc);
   border: 1px dashed var(--border, #cbd5e1);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 20px;
   margin-bottom: 28px;
 }
@@ -580,7 +580,7 @@
   color: #059669;
   background: #ecfdf5;
   padding: 4px 10px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   border: 1px solid #a7f3d0;
   letter-spacing: 0.5px;
 }
@@ -602,7 +602,7 @@
 .invoice-modal-content {
   background: var(--surface, #ffffff);
   border: 1px solid var(--border, #cbd5e1);
-  border-radius: 16px;
+  border-radius: var(--radius);
   width: 100%;
   max-width: 480px;
   padding: 24px;
@@ -658,7 +658,7 @@
 .invoice-field select,
 .invoice-field textarea {
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border, #cbd5e1);
   font-size: 14px;
   background: var(--surface, #ffffff);
@@ -688,7 +688,7 @@
   background: #0f172a;
   color: #ffffff;
   padding: 12px 20px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 600;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);

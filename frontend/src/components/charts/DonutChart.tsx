@@ -63,7 +63,7 @@ export function DonutChart({
 
   return (
     <section className={`chart-card reference-styled-chart ${cardVariant === "tinted" ? "tinted-bg" : ""}`}>
-      <div className="chart-card-toolbar">
+      <div className="chart-toolbar">
         <span className="chart-info-tag">
           <span className="info-dot"><Icon name="analytics" /></span>
           <span>{title}</span>
@@ -123,7 +123,7 @@ export function DonutChart({
                 cx="110"
                 cy="110"
                 r={radius}
-                stroke="var(--slate-200)"
+                stroke="var(--chart-grid)"
                 strokeWidth="16"
                 fill="none"
               />
@@ -170,14 +170,14 @@ export function DonutChart({
               })}
 
               {/* Center Display */}
-              <text className="donut-total" x="110" y="102" textAnchor="middle" style={{ fontSize: "30px", fontWeight: 800, fill: "var(--slate-900)" }}>
+              <text className="donut-total" x="110" y="102" textAnchor="middle" style={{ fontSize: "30px", fontWeight: 800, fill: "var(--text)" }}>
                 {hoveredIndex !== null ? (
                   activeItem?.value.toLocaleString("en-IN")
                 ) : (
                   <AnimatedCounter value={total} duration={1200} />
                 )}
               </text>
-              <text className="donut-label" x="110" y="124" textAnchor="middle" style={{ fontSize: "11.5px", fontWeight: 600, fill: "var(--slate-500)" }}>
+              <text className="donut-label" x="110" y="124" textAnchor="middle" style={{ fontSize: "11.5px", fontWeight: 600, fill: "var(--text-muted)" }}>
                 {hoveredIndex !== null ? activeItem?.label : centerLabel}
               </text>
             </svg>

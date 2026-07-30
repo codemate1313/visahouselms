@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { API_BASE_URL, apiClient } from "../../api/client";
+import { SearchableSelect } from "@/components/ui";
 import { ExaminerAvatarSvg } from "./ExaminerAvatarSvg";
 import "./SpeakingAvatar.css";
 
@@ -281,19 +282,18 @@ export function SpeakingAvatar({ attemptId, partId, isCandidateRecording = false
 
             {/* Examiner Selector */}
             {examiners.length > 0 && (
-              <select
+              <SearchableSelect
+                ariaLabel="Select IELTS Examiner Voice"
                 className="examiner-select-dropdown"
+                options={examiners.map((ex) => ({
+                  value: ex.id,
+                  label: `${ex.name} (${ex.accent})`,
+                }))}
+                searchable={false}
                 value={selectedExaminer}
-                onChange={(e) => setSelectedExaminer(e.target.value)}
+                onChange={(value) => setSelectedExaminer(String(value))}
                 disabled={isPlaying}
-                aria-label="Select IELTS Examiner Voice"
-              >
-                {examiners.map((ex) => (
-                  <option key={ex.id} value={ex.id}>
-                    {ex.name} ({ex.accent})
-                  </option>
-                ))}
-              </select>
+              />
             )}
           </div>
 

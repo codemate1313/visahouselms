@@ -1,4 +1,5 @@
 export const instituteDashboardStrings = {
+  loading: "Loading...",
   welcome: (firstName: string | undefined) => `Welcome, ${firstName}`,
   subtitle: "Your institute workspace and assigned access.",
   stats: {

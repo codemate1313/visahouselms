@@ -1,3 +1,4 @@
+import { MetricCard } from "@/components/dashboard/MetricCard";
 import { instituteBillingStrings as strings } from "../InstituteBilling.strings";
 import { STATE_CLASS, type SubscriptionStatus } from "../types";
 
@@ -16,21 +17,10 @@ export function SubscriptionSummary({ subscription }: SubscriptionSummaryProps) 
       </div>
 
       {subscription.limits && (
-        <div className="stat-tile-row">
-          <div className="stat-tile">
-            <p className="stat-label">{t.students}</p>
-            <p className="stat-value">{subscription.usage.students} / {subscription.limits.students}</p>
-          </div>
-          <div className="stat-tile">
-            <p className="stat-label">{t.instructors}</p>
-            <p className="stat-value">{subscription.usage.staff} / {subscription.limits.staff}</p>
-          </div>
-          <div className="stat-tile">
-            <p className="stat-label">{t.tests}</p>
-            <p className="stat-value">
-              {subscription.limits.tests === null ? t.unlimited : `${subscription.usage.tests} / ${subscription.limits.tests}`}
-            </p>
-          </div>
+        <div className="metric-grid">
+          <MetricCard label={t.students} value={`${subscription.usage.students} / ${subscription.limits.students}`} tone="blue" icon="user" />
+          <MetricCard label={t.instructors} value={`${subscription.usage.staff} / ${subscription.limits.staff}`} tone="green" icon="instructors" />
+          <MetricCard label={t.tests} value={subscription.limits.tests === null ? t.unlimited : `${subscription.usage.tests} / ${subscription.limits.tests}`} tone="purple" icon="grading" />
         </div>
       )}
     </>

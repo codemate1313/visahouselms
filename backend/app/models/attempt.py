@@ -7,12 +7,14 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    Index,
     JSON,
     Numeric,
     String,
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -125,6 +127,24 @@ class Enrollment(Base):
 
 class TestAttempt(Base):
     __tablename__ = "test_attempts"
+    __table_args__ = (
+        Index(
+            "uq_test_attempt_final_user_module",
+            "user_id",
+            "module_id",
+            unique=True,
+            sqlite_where=text("is_final = 1"),
+            postgresql_where=text("is_final = true"),
+        ),
+        Index(
+            "uq_test_attempt_active_user_module",
+            "user_id",
+            "module_id",
+            unique=True,
+            sqlite_where=text("status = 'in_progress'"),
+            postgresql_where=text("status = 'in_progress'"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)

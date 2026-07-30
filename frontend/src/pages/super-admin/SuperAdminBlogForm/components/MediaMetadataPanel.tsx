@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Checkbox } from "@/components/ui";
+import { Checkbox, SearchableSelect } from "@/components/ui";
 import { blogFormCategories, superAdminBlogFormStrings as strings } from "../SuperAdminBlogForm.strings";
 import type { BlogFormData } from "../types";
 
@@ -41,20 +41,21 @@ export function MediaMetadataPanel({ formData, onFieldChange }: MediaMetadataPan
             setImgError(false);
             onFieldChange("featured_image_url", e.target.value);
           }}
-          className="sab-input-field"
+          className="sab-select-field"
           placeholder={t.featuredImageUrlPlaceholder}
         />
       </div>
 
       <div className="sab-field-group">
         <label>{t.category}</label>
-        <select value={formData.category} onChange={(e) => onFieldChange("category", e.target.value)} className="sab-input-field">
-          {blogFormCategories.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
+        <SearchableSelect
+          ariaLabel={t.category}
+          className="sab-input-field"
+          options={blogFormCategories.map((category) => ({ value: category, label: category }))}
+          searchable={false}
+          value={formData.category}
+          onChange={(value) => onFieldChange("category", String(value))}
+        />
       </div>
 
       <div className="sab-field-group">

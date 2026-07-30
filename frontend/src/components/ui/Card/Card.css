@@ -5,8 +5,32 @@
   box-shadow: var(--shadow-sm);
 }
 
-.ui-card-padded {
+.ui-card-muted {
+  background: var(--surface-muted);
+}
+
+.ui-card-padded.ui-card-sm {
+  padding: 14px;
+}
+
+.ui-card-padded,
+.ui-card-padded.ui-card-md {
   padding: 20px;
+}
+
+.ui-card-padded.ui-card-lg {
+  padding: 28px;
+}
+
+.ui-card-interactive {
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.ui-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+  box-shadow: var(--shadow-md);
 }
 
 [data-theme="dark"] .ui-card {

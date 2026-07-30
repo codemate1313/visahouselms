@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import type { GradingDetail as GradingDetailType, GradingQueueItem } from "@/api/types";
+import type { GradingDetail as GradingDetailType, GradingQueueItem, GradingQueueMetadata } from "@/api/types";
 import { Button, LinkButton } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { gradingDetailStrings as strings } from "./GradingDetail.strings";
@@ -27,7 +27,28 @@ export function GradingDetail() {
         setError(extractErrorMessage(err, strings.errors.load));
       });
   }
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  useEffect(() => {
+    setDetail(null);
+    setError(null);
+    apiClient
+      .post<GradingDetailType>(`/instructor/grading/${id}/start`)
+      .then(({ data }) => setDetail(data))
+      .catch((err: unknown) => setError(extractErrorMessage(err, strings.errors.load)));
+  }, [id]);
+
+  const shouldHeartbeat =
+    detail?.queue.status === "claimed" && detail.queue.assigned_to_id === user?.id;
+
+  useEffect(() => {
+    if (!shouldHeartbeat) return;
+    const heartbeatId = window.setInterval(() => {
+      apiClient
+        .post<GradingQueueMetadata>(`/instructor/grading/${id}/claim`)
+        .then(({ data: queue }) => setDetail((current) => current ? { ...current, queue } : current))
+        .catch((err: unknown) => setError(extractErrorMessage(err, strings.errors.queueAction("claim"))));
+    }, 30_000);
+    return () => window.clearInterval(heartbeatId);
+  }, [id, shouldHeartbeat]);
 
   async function queueAction(action: "claim" | "release") {
     setBusy(true);

@@ -25,7 +25,7 @@ function safeValue(val: number): number {
 export function LineChart({
   data,
   title,
-  color = "#e11d2e",
+  color = "var(--series-1)",
   formatValue = (v) => v.toLocaleString("en-IN"),
   ariaLabel = title,
   emptyMessage = "No data available.",
@@ -106,7 +106,7 @@ export function LineChart({
 
   return (
     <section className="chart-card reference-styled-chart" aria-label={ariaLabel}>
-      <div className="chart-card-toolbar">
+      <div className="chart-toolbar">
         <div className="chart-title-area">
           <span className="info-icon-badge"><Icon name="analytics" /></span>
           <span className="chart-tag-text">{title}</span>
@@ -183,7 +183,7 @@ export function LineChart({
                     textAnchor="end"
                     fontSize="11.5"
                     fontWeight="600"
-                    fill="var(--chart-text, #64748b)"
+                    fill="var(--text-muted)"
                   >
                     {formatValue(val)}
                   </text>
@@ -240,7 +240,7 @@ export function LineChart({
                       textAnchor="middle"
                       fontSize="12"
                       fontWeight="600"
-                      fill="var(--chart-text, #64748b)"
+                      fill="var(--text-muted)"
                     >
                       {pt.label.length > 14 ? `${pt.label.slice(0, 12)}…` : pt.label}
                     </text>
@@ -259,10 +259,10 @@ export function LineChart({
                 left: rows.length === 1 ? "50%" : `${(displayPoints[hoveredIndex]?.x ?? 0) / width * 100}%`,
                 top: rows.length === 1 ? "35%" : `${(displayPoints[hoveredIndex]?.y ?? 0) / height * 100}%`,
                 transform: "translate(-50%, -130%)",
-                background: "var(--tooltip-bg, #0f172a)",
+                background: "var(--tooltip-bg, var(--text))",
                 color: "#ffffff",
                 border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: "10px",
+                borderRadius: "var(--radius-md)",
                 padding: "8px 14px",
                 boxShadow: "0 8px 24px rgba(0, 0, 0, 0.3)",
                 pointerEvents: "none",

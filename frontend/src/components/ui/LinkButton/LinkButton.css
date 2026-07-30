@@ -13,6 +13,10 @@
   text-decoration: none;
 }
 
+.ui-link-btn-disabled {
+  pointer-events: none;
+}
+
 .ui-link-btn svg {
   width: 18px;
   height: 18px;

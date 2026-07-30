@@ -40,7 +40,7 @@
 .theme-toggle.has-label {
   width: auto;
   height: 36px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 0 14px 0 10px;
   display: inline-flex;
   align-items: center;

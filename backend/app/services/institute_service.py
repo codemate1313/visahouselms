@@ -185,6 +185,8 @@ def create_institute(
     active: bool = True,
     onboarding_status: str = "published",
     ai_student_monthly_limit: Optional[int] = None,
+    *,
+    commit: bool = True,
 ) -> dict:
     if db.query(User).filter(User.email == admin_email).first() is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Admin email already in use")
@@ -225,7 +227,10 @@ def create_institute(
     db.add(InstituteBranding(institute_id=institute.id))
 
     _audit(db, actor, "institute.create", institute.id, ip, {"name": name, "admin_email": admin_email})
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
     db.refresh(institute)
 
     result = _serialize(db, institute)
@@ -440,11 +445,11 @@ def update_institute(
 
     db.add(institute)
     _audit(db, actor, "institute.update", institute.id, ip)
-    db.commit()
     if needs_subscription:
-        # Deferred until the institute row is committed: assign() commits too,
-        # and re-runs the catalogue guards on whatever was just written.
-        subscription_service.assign(db, actor, institute.id, plan.id, None, ip)
+        subscription_service.assign(
+            db, actor, institute.id, plan.id, None, ip, commit=False
+        )
+    db.commit()
     db.refresh(institute)
     return _serialize(db, institute)
 

@@ -9,6 +9,7 @@ from typing import Optional
 from uuid import uuid4
 
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.config import settings
@@ -19,6 +20,7 @@ from app.models.attempt import (
     ATTEMPT_READY,
     ATTEMPT_SUBMITTED,
     ATTEMPT_FLAG_TYPES,
+    QUEUE_COMPLETED,
     AttemptAnswer,
     AttemptFlag,
     AttemptPartGrade,
@@ -182,7 +184,27 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         content_snapshot=_build_content_snapshot(module, randomize=is_final),
     )
     db.add(attempt)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        if is_final:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="The Final Test allows only one sitting and has already been attempted",
+            ) from None
+        existing = (
+            db.query(TestAttempt)
+            .filter(
+                TestAttempt.user_id == user.id,
+                TestAttempt.module_id == module.id,
+                TestAttempt.status == ATTEMPT_IN_PROGRESS,
+            )
+            .first()
+        )
+        if existing is not None:
+            return get_student_view(db, get_attempt_or_404(db, user, existing.id))
+        raise
     return get_student_view(db, get_attempt_or_404(db, user, attempt.id))
 
 
@@ -920,6 +942,21 @@ def get_grading_detail(db: Session, actor: User, attempt_id: int) -> dict:
     view["reevaluation"] = grading_service.reevaluation_for_student(db, attempt)
     view["ai_assistance"] = ai_evaluation_service.config_status(db)
     return view
+
+
+def start_grading(db: Session, actor: User, attempt_id: int) -> dict:
+    from app.services import grading_service
+
+    attempt = get_attempt_for_grading_or_404(db, actor, attempt_id)
+    entry = grading_service.queue_entry_for_attempt(db, attempt)
+    if entry is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This submission does not require instructor grading",
+        )
+    if entry.status != QUEUE_COMPLETED or grading_service.latest_open_reevaluation(db, attempt.id):
+        grading_service.claim(db, actor, attempt)
+    return get_grading_detail(db, actor, attempt_id)
 
 
 def _recompute_score(attempt: TestAttempt) -> None:
