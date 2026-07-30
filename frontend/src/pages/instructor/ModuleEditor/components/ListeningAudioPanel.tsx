@@ -96,7 +96,7 @@ export function ListeningAudioPanel({
               className="form-dropdown-select"
             />
             <button type="submit" disabled={busy || !tts.conversation.trim() || detectedTtsSpeakers.length > 6}>
-              {busy ? t.generating : t.generateWith(detectedTtsSpeakers.length)}
+              {busy ? t.savingNarration : t.saveNarration}
             </button>
           </form>
         </div>
@@ -109,11 +109,21 @@ export function ListeningAudioPanel({
             <article key={asset.id}>
               <div>
                 <strong>{asset.title}</strong>
-                <small>{asset.asset_type === "tts_mp3" ? t.generatedVoice(asset.tts_voice ?? "") : asset.original_filename}</small>
+                <small>
+                  {asset.asset_type === "tts_text"
+                    ? t.browserNarration(asset.tts_voice ?? "en-GB", asset.tts_rate ?? "+0%")
+                    : asset.asset_type === "tts_mp3"
+                      ? t.legacyGeneratedVoice(asset.tts_voice ?? "")
+                      : asset.original_filename}
+                </small>
               </div>
-              <audio controls preload="metadata" src={`${API_BASE_URL}${asset.url}`}>
-                Your browser does not support audio.
-              </audio>
+              {asset.asset_type === "tts_text" ? (
+                <p className="hint">{t.generatedOnStudentDevice}</p>
+              ) : asset.url ? (
+                <audio controls preload="metadata" src={`${API_BASE_URL}${asset.url}`}>
+                  Your browser does not support audio.
+                </audio>
+              ) : null}
               {asset.transcript && (
                 <details>
                   <summary>{t.transcript}</summary>

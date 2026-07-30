@@ -48,7 +48,7 @@ export const modulesStrings = {
     reading: "5 parts · 30 auto-marked questions · 50 minutes",
     speaking: "4 equal-weight parts · five examiner criteria · 14 minutes",
     writing: "2 examiner-marked tasks · 32 marks each · 50 minutes",
-    listening: "4 parts · 30 questions · MP3 or text-to-speech audio",
+    listening: "4 parts · 30 questions · MP3 or browser-narrated text",
     full_mock: "Listening, Reading, Writing and Speaking · 15 parts",
     final_test: "Complete final assessment · all four skills · 15 parts",
   } satisfies Record<ExamModuleType, string>,

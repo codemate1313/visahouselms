@@ -77,7 +77,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
     def _complete(self, module_type: str) -> dict:
         created = self._create(module_type)
         module = module_authoring_service.get_module_or_404(self.db, created["id"])
-        for part in module.parts:
+        for part_index, part in enumerate(module.parts):
             count = part.question_limit or part.minimum_questions
             question_type = part.answer_constraints["allowed_question_types"][0]
             points = Decimal(part.max_marks) / count if part.max_marks is not None else Decimal("1")
@@ -94,22 +94,29 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
                     )
                 )
             if module_type == "listening":
-                relative = Path("exam-modules") / str(module.id) / f"{part.part_code}.mp3"
-                stored = settings.storage_path / relative
-                stored.parent.mkdir(parents=True, exist_ok=True)
-                stored.write_bytes(f"ID3-{part.part_code}".encode())
+                is_browser_narration = part_index == 0
+                relative = (
+                    Path("tts-text") / str(module.id) / f"{part.part_code}.txt"
+                    if is_browser_narration
+                    else Path("exam-modules") / str(module.id) / f"{part.part_code}.mp3"
+                )
+                if not is_browser_narration:
+                    stored = settings.storage_path / relative
+                    stored.parent.mkdir(parents=True, exist_ok=True)
+                    stored.write_bytes(f"ID3-{part.part_code}".encode())
                 self.db.add(
                     ExamModuleAsset(
                         module_id=module.id,
                         part_id=part.id,
-                        asset_type="mp3",
+                        asset_type="tts_text" if is_browser_narration else "mp3",
                         title=f"{part.title} audio",
-                        original_filename=f"{part.part_code}.mp3",
+                        original_filename="browser-narration.txt" if is_browser_narration else f"{part.part_code}.mp3",
                         file_path=relative.as_posix(),
-                        mime_type="audio/mpeg",
-                        file_size=stored.stat().st_size,
-                        transcript=None,
-                        tts_voice=None,
+                        mime_type="text/plain" if is_browser_narration else "audio/mpeg",
+                        file_size=42 if is_browser_narration else stored.stat().st_size,
+                        transcript="Guide: Listen carefully to this conversation." if is_browser_narration else None,
+                        tts_voice="en-GB" if is_browser_narration else None,
+                        tts_rate="+0%" if is_browser_narration else None,
                         uploaded_by_id=self.instructor.id,
                     )
                 )
@@ -128,6 +135,14 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertEqual((len(blueprints["listening"]["parts"]), blueprints["listening"]["duration_minutes"]), (4, 40))
         self.assertEqual((len(blueprints["writing"]["parts"]), blueprints["writing"]["duration_minutes"]), (2, 50))
         self.assertEqual((len(blueprints["speaking"]["parts"]), blueprints["speaking"]["duration_minutes"]), (4, 14))
+        speaking_timings = [
+            (
+                part["answer_constraints"]["preparation_seconds"],
+                part["answer_constraints"]["response_seconds"],
+            )
+            for part in blueprints["speaking"]["parts"]
+        ]
+        self.assertEqual(speaking_timings, [(5, 45), (5, 60), (30, 90), (60, 120)])
         self.assertEqual((len(blueprints["full_mock"]["parts"]), blueprints["full_mock"]["duration_minutes"]), (15, 154))
         self.assertEqual(len(blueprints["final_test"]["parts"]), 15)
 
@@ -203,8 +218,32 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertTrue((settings.storage_path / asset["url"].removeprefix("/storage/")).is_file())
         module = module_authoring_service.get_module_or_404(self.db, created["id"])
         errors = module_authoring_service.validation_errors(module)
-        self.assertFalse(any("Listening 1 requires an MP3" in message for message in errors))
-        self.assertTrue(any("Listening 2 requires an MP3" in message for message in errors))
+        media_error = "requires an MP3 upload or browser-narrated transcript"
+        self.assertFalse(any(message.startswith("Listening 1 ") and media_error in message for message in errors))
+        self.assertTrue(any(message.startswith("Listening 2 ") and media_error in message for message in errors))
+
+    def test_browser_narration_stores_text_without_writing_an_mp3(self) -> None:
+        created = self._create("listening")
+        first = created["parts"][0]
+
+        asset = module_authoring_service.add_tts_text_asset(
+            self.db,
+            self.instructor,
+            created["id"],
+            first["id"],
+            title="Campus conversation",
+            transcript="Guide: Welcome to campus.\nStudent: Thank you.",
+            voice="en-GB",
+            rate="+15%",
+            ip=None,
+        )
+
+        stored = self.db.get(ExamModuleAsset, asset["id"])
+        self.assertEqual(asset["asset_type"], "tts_text")
+        self.assertIsNone(asset["url"])
+        self.assertEqual(asset["tts_rate"], "+15%")
+        self.assertEqual(stored.transcript, "Guide: Welcome to campus.\nStudent: Thank you.")
+        self.assertFalse((settings.storage_path / stored.file_path).exists())
 
     def test_final_test_copies_selected_sources_randomizes_and_can_be_deleted_when_published(self) -> None:
         sources = {
@@ -242,9 +281,15 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
 
         source_audio = sources["listening"]["parts"][0]["assets"][0]
         copied_audio = next(part for part in final_test["parts"] if part["part_code"] == "listening_1")["assets"][0]
-        self.assertNotEqual(source_audio["url"], copied_audio["url"])
-        source_audio_path = settings.storage_path / source_audio["url"].removeprefix("/storage/")
-        copied_audio_path = settings.storage_path / copied_audio["url"].removeprefix("/storage/")
+        self.assertEqual(source_audio["asset_type"], "tts_text")
+        self.assertIsNone(source_audio["url"])
+        self.assertIsNone(copied_audio["url"])
+        self.assertEqual(source_audio["transcript"], copied_audio["transcript"])
+        self.assertEqual(source_audio["tts_rate"], copied_audio["tts_rate"])
+        source_mp3 = sources["listening"]["parts"][1]["assets"][0]
+        copied_mp3 = next(part for part in final_test["parts"] if part["part_code"] == "listening_2")["assets"][0]
+        source_audio_path = settings.storage_path / source_mp3["url"].removeprefix("/storage/")
+        copied_audio_path = settings.storage_path / copied_mp3["url"].removeprefix("/storage/")
         self.assertEqual(source_audio_path.read_bytes(), copied_audio_path.read_bytes())
 
         published = module_authoring_service.set_status(

@@ -117,11 +117,12 @@ def _asset_out(asset: ExamModuleAsset) -> dict:
         "asset_type": asset.asset_type,
         "title": asset.title,
         "original_filename": asset.original_filename,
-        "url": f"/storage/{asset.file_path}",
+        "url": None if asset.asset_type == "tts_text" else f"/storage/{asset.file_path}",
         "mime_type": asset.mime_type,
         "file_size": asset.file_size,
         "transcript": asset.transcript,
         "tts_voice": asset.tts_voice,
+        "tts_rate": asset.tts_rate,
         "created_at": asset.created_at,
     }
 
@@ -148,7 +149,7 @@ def validation_errors(module: ExamModule) -> list[str]:
             if total != Decimal(part.max_marks):
                 errors.append(f"{part.title} must total {part.max_marks:g} marks; it currently totals {total:g}.")
         if (part.answer_constraints or {}).get("audio_required") and not part.assets:
-            errors.append(f"{part.title} requires an MP3 upload or generated conversation audio.")
+            errors.append(f"{part.title} requires an MP3 upload or browser-narrated transcript.")
     return errors
 
 
@@ -347,18 +348,24 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
                     )
 
                 for asset in source_part.assets:
-                    source_path = settings.storage_path / asset.file_path
-                    if not source_path.is_file():
-                        raise HTTPException(
-                            status_code=400,
-                            detail=f"Audio file for {source_part.title} is missing from storage",
-                        )
-                    relative = Path("exam-modules") / str(module.id) / f"{uuid4().hex}.mp3"
-                    destination = settings.storage_path / relative
-                    destination.parent.mkdir(parents=True, exist_ok=True)
-                    content = source_path.read_bytes()
-                    destination.write_bytes(content)
-                    created_paths.append(destination)
+                    if asset.asset_type == "tts_text":
+                        relative = Path("tts-text") / str(module.id) / f"{uuid4().hex}.txt"
+                        file_size = len((asset.transcript or "").encode("utf-8"))
+                    else:
+                        source_path = settings.storage_path / asset.file_path
+                        if not source_path.is_file():
+                            raise HTTPException(
+                                status_code=400,
+                                detail=f"Audio file for {source_part.title} is missing from storage",
+                            )
+                        suffix = Path(asset.file_path).suffix or ".bin"
+                        relative = Path("exam-modules") / str(module.id) / f"{uuid4().hex}{suffix}"
+                        destination = settings.storage_path / relative
+                        destination.parent.mkdir(parents=True, exist_ok=True)
+                        content = source_path.read_bytes()
+                        destination.write_bytes(content)
+                        created_paths.append(destination)
+                        file_size = len(content)
                     db.add(
                         ExamModuleAsset(
                             module_id=module.id,
@@ -368,9 +375,10 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
                             original_filename=asset.original_filename,
                             file_path=relative.as_posix(),
                             mime_type=asset.mime_type,
-                            file_size=len(content),
+                            file_size=file_size,
                             transcript=asset.transcript,
                             tts_voice=asset.tts_voice,
+                            tts_rate=asset.tts_rate,
                             uploaded_by_id=actor.id,
                         )
                     )
@@ -580,6 +588,7 @@ def add_audio_asset(
         file_size=len(content),
         transcript=transcript,
         tts_voice=voice,
+        tts_rate=None,
         uploaded_by_id=actor.id,
     )
     try:
@@ -591,6 +600,59 @@ def add_audio_asset(
         db.rollback()
         destination.unlink(missing_ok=True)
         raise
+    db.refresh(asset)
+    return _asset_out(asset)
+
+
+def add_tts_text_asset(
+    db: Session,
+    actor: User,
+    module_id: int,
+    part_id: int,
+    *,
+    title: str,
+    transcript: str,
+    voice: str,
+    rate: str,
+    ip: Optional[str],
+) -> dict:
+    module = get_module_or_404(db, module_id)
+    _require_owner(module, actor)
+    _require_draft(module)
+    part = _part_or_404(module, part_id)
+    if part.section_type != "listening":
+        raise HTTPException(status_code=400, detail="Browser narration can only be attached to a Listening part")
+
+    clean_transcript = "\n".join(line.strip() for line in transcript.splitlines() if line.strip())
+    if not clean_transcript:
+        raise HTTPException(status_code=400, detail="A listening transcript is required")
+
+    virtual_path = Path("tts-text") / str(module.id) / f"{uuid4().hex}.txt"
+    asset = ExamModuleAsset(
+        module_id=module.id,
+        part_id=part.id,
+        asset_type="tts_text",
+        title=title.strip()[:200],
+        original_filename="browser-narration.txt",
+        file_path=virtual_path.as_posix(),
+        mime_type="text/plain",
+        file_size=len(clean_transcript.encode("utf-8")),
+        transcript=clean_transcript,
+        tts_voice=voice,
+        tts_rate=rate,
+        uploaded_by_id=actor.id,
+    )
+    db.add(asset)
+    db.flush()
+    _audit(
+        db,
+        actor,
+        "exam_module.browser_tts.create",
+        module.id,
+        ip,
+        {"part_id": part.id, "voice": voice, "rate": rate},
+    )
+    db.commit()
     db.refresh(asset)
     return _asset_out(asset)
 
@@ -644,6 +706,7 @@ def add_avatar_asset(
         file_size=len(content),
         transcript=script_text,
         tts_voice=None,
+        tts_rate=None,
         uploaded_by_id=actor.id,
     )
     try:

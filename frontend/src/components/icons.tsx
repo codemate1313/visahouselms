@@ -5,6 +5,8 @@ export type IconName =
   | "minus"
   | "check"
   | "cross"
+  | "play"
+  | "pause"
   | "arrowRight"
   | "arrowUp"
   | "arrowDown"
@@ -58,6 +60,13 @@ export type IconName =
   | "eye";
 
 const ICON_PATHS: Record<IconName, ReactNode> = {
+  play: <polygon points="6 4 20 12 6 20 6 4" />,
+  pause: (
+    <>
+      <line x1="9" y1="4" x2="9" y2="20" />
+      <line x1="15" y1="4" x2="15" y2="20" />
+    </>
+  ),
   arrowLeft: (
     <>
       <line x1="19" y1="12" x2="5" y2="12" />

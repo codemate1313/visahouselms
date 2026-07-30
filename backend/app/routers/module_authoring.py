@@ -235,7 +235,7 @@ async def upload_audio(
 
 
 @router.post("/{module_id}/parts/{part_id}/tts", status_code=201)
-async def generate_audio(
+def save_browser_narration(
     module_id: int,
     part_id: int,
     payload: TTSCreate,
@@ -248,22 +248,15 @@ async def generate_audio(
         from fastapi import HTTPException
 
         raise HTTPException(status_code=400, detail="Text-to-speech is available only for Listening parts")
-    content, assignments = await tts_service.synthesize_conversation_mp3(
-        payload.conversation,
-        rate=payload.rate,
-        preferred_voice=payload.voice,
-    )
-    return module_authoring_service.add_audio_asset(
+    return module_authoring_service.add_tts_text_asset(
         db,
         actor,
         module_id,
         part_id,
-        content=content,
         title=payload.title,
-        original_filename="generated-conversation.mp3",
-        asset_type="tts_mp3",
         transcript=payload.conversation,
-        voice=tts_service.voice_assignment_summary(assignments),
+        voice=payload.voice,
+        rate=payload.rate,
         ip=_ip(request),
     )
 

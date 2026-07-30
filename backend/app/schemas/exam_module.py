@@ -109,7 +109,7 @@ class ModuleQuestionBatchCreate(BaseModel):
 class TTSCreate(BaseModel):
     title: str = Field(default="Generated conversation", min_length=1, max_length=200)
     conversation: str = Field(min_length=1, max_length=20000)
-    voice: str = Field(default="en-GB-SoniaNeural", min_length=1, max_length=120)
+    voice: str = Field(default="en-GB", pattern=r"^en-(?:AU|CA|GB|IN|US)$")
     rate: str = Field(default="+0%", pattern=r"^[+-](?:[0-9]|[1-9][0-9]|100)%$")
 
     @field_validator("title", "conversation", "voice")

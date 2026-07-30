@@ -31,6 +31,7 @@ import { FullscreenGate } from "./components/FullscreenGate";
 import { SecurityWatermark } from "./components/SecurityWatermark";
 import { DesktopRequiredNotice } from "./components/DesktopRequiredNotice";
 import { ViolationPolicyModal } from "./components/ViolationPolicyModal";
+import { SpeakingInterviewStage } from "./components/SpeakingInterviewStage";
 
 interface ViolationPolicyResponse {
   risk_score: number;
@@ -76,6 +77,7 @@ export function TestRunner() {
   const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const recorderRef = useRef<MediaRecorder | null>(null);
   const [recordingQuestionId, setRecordingQuestionId] = useState<number | null>(null);
+  const [recordingFailedQuestionId, setRecordingFailedQuestionId] = useState<number | null>(null);
   const [fullscreenActive, setFullscreenActive] = useState(() => Boolean(document.fullscreenElement));
   const [securityAuthorized, setSecurityAuthorized] = useState(false);
   const [securityStarting, setSecurityStarting] = useState(false);
@@ -643,12 +645,13 @@ export function TestRunner() {
     }
   }
 
-  async function recordSpeakingAnswer(questionId: number) {
+  async function recordSpeakingAnswer(questionId: number): Promise<boolean> {
     if (recordingQuestionId === questionId) {
       recorderRef.current?.stop();
-      return;
+      return true;
     }
     try {
+      setRecordingFailedQuestionId(null);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
       const chunks: BlobPart[] = [];
@@ -666,13 +669,16 @@ export function TestRunner() {
             if (!current) return current;
             return {
               ...current,
-              parts: current.parts.map((part) => ({
-                ...part,
-                questions: part.questions.map((q) => (q.id === questionId ? { ...q, response: { recorded: true } } : q)),
-              })),
+              parts: current.parts.map((part) => {
+                const questions = part.questions.map((q) => (
+                  q.id === questionId ? { ...q, response: { recorded: true } } : q
+                ));
+                return { ...part, questions, answered_count: questions.filter(hasAttemptResponse).length };
+              }),
             };
           });
         } catch (err: unknown) {
+          setRecordingFailedQuestionId(questionId);
           showError(extractErrorMessage(err, strings.errors.recordingUpload), strings.errors.recordingUploadTitle);
         } finally {
           setSavingIds((prev) => {
@@ -685,8 +691,24 @@ export function TestRunner() {
       recorderRef.current = recorder;
       recorder.start();
       setRecordingQuestionId(questionId);
+      setAttempt((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          parts: current.parts.map((part) => {
+            const questions = part.questions.map((question) => (
+              question.id === questionId
+                ? { ...question, response: null, audio_path: null }
+                : question
+            ));
+            return { ...part, questions, answered_count: questions.filter(hasAttemptResponse).length };
+          }),
+        };
+      });
+      return true;
     } catch {
       showError(strings.errors.microphoneBlocked, strings.errors.microphoneBlockedTitle);
+      return false;
     }
   }
 
@@ -822,6 +844,59 @@ export function TestRunner() {
 
   if (!currentPart) return <div className="test-runner-loading">{strings.loading}</div>;
 
+  if (currentPart.section_type === "speaking") {
+    const speakingParts = attempt.parts.filter((part) => part.section_type === "speaking");
+    const speakingPartNumber = speakingParts.findIndex((part) => part.id === currentPart.id) + 1;
+    return (
+      <div className={`test-runner-shell${brandedTestClass}`}>
+        <SpeakingInterviewStage
+          attemptId={attempt.id}
+          currentPart={currentPart}
+          isLastTestPart={partIndex >= attempt.parts.length - 1}
+          moduleTitle={attempt.module_title}
+          onContinuePart={() => {
+            if (partIndex < attempt.parts.length - 1) {
+              void selectPart(partIndex + 1);
+            } else {
+              setConfirmSubmit(true);
+            }
+          }}
+          onRecord={recordSpeakingAnswer}
+          speakingPartCount={speakingParts.length}
+          speakingPartNumber={speakingPartNumber}
+          recordingFailedQuestionId={recordingFailedQuestionId}
+          recordingQuestionId={recordingQuestionId}
+          savingIds={savingIds}
+          secondsLeft={secondsLeft}
+        />
+
+        {isFinalAttempt && (
+          <SecurityWatermark
+            firstName={user?.first_name}
+            lastName={user?.last_name}
+            userId={user?.id}
+            attemptId={attempt.id}
+            watermarkTime={watermarkTime}
+          />
+        )}
+        {confirmSubmit && (
+          <SubmitConfirmModal
+            answeredCount={answeredCount}
+            totalQuestions={totalQuestions}
+            isFinal={attempt.is_final}
+            submitting={submitting}
+            onClose={() => setConfirmSubmit(false)}
+            onConfirm={submit}
+          />
+        )}
+        {violationModal}
+        {isImmersiveAttempt && !fullscreenActive && !developerFullscreenBypass.current && !violationNotice?.autoSubmitted && (
+          <FullscreenGate isFinal={attempt.is_final} secondsLeft={secondsLeft} onEnterFullscreen={enterFullscreen} />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={`test-runner-shell${brandedTestClass}`}>
       <TestRunnerHeader
@@ -848,7 +923,7 @@ export function TestRunner() {
         />
 
         <main className="test-runner-body">
-          <SourcePane attemptId={attempt.id} currentPart={currentPart} passages={passages} sourcePaneRef={sourcePaneRef} />
+          <SourcePane currentPart={currentPart} passages={passages} sourcePaneRef={sourcePaneRef} />
           <QuestionPane
             currentPart={currentPart}
             questionPaneRef={questionPaneRef}

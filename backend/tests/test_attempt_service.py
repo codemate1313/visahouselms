@@ -159,6 +159,26 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.db.expire_all()
         return module_authoring_service.get_module_or_404(self.db, module.id)
 
+    def test_active_attempt_receives_browser_narration_text_without_a_file_url(self):
+        asset = SimpleNamespace(
+            id=1,
+            part_id=2,
+            asset_type="tts_text",
+            title="Listening conversation",
+            file_path="tts-text/1/conversation.txt",
+            mime_type="text/plain",
+            transcript="Guide: Listen carefully.",
+            tts_voice="en-GB",
+            tts_rate="+0%",
+        )
+
+        result = attempt_service._asset_out(asset, reveal_transcript=False)
+
+        self.assertIsNone(result["url"])
+        self.assertEqual(result["transcript"], "Guide: Listen carefully.")
+        self.assertEqual(result["tts_voice"], "en-GB")
+        self.assertEqual(result["tts_rate"], "+0%")
+
     def test_reading_attempt_auto_grades_and_computes_band(self):
         module = self._build_reading_module()
         self._course_with_module(module.id)

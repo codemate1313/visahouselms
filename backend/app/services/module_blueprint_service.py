@@ -241,14 +241,25 @@ SPEAKING_PARTS = [
         "instructions": "Allow one minute to prepare and up to two minutes to present.",
     },
 ]
+_SPEAKING_TIMINGS = {
+    "speaking_1": (5, 45),
+    "speaking_2": (5, 60),
+    "speaking_3": (30, 90),
+    "speaking_4": (60, 120),
+}
 for _part in SPEAKING_PARTS:
+    _preparation_seconds, _response_seconds = _SPEAKING_TIMINGS[_part["part_code"]]
     _part.update(
         {
             "question_limit": None,
             "minimum_questions": 1,
             "max_marks": None,
             "auto_marked": False,
-            "answer_constraints": {"allowed_question_types": ["speaking_prompt"]},
+            "answer_constraints": {
+                "allowed_question_types": ["speaking_prompt"],
+                "preparation_seconds": _preparation_seconds,
+                "response_seconds": _response_seconds,
+            },
             "rubric": SPEAKING_RUBRIC,
         }
     )

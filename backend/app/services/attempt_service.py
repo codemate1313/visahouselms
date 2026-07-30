@@ -221,9 +221,11 @@ def _asset_out(asset: ExamModuleAsset, reveal_transcript: bool) -> dict:
         "part_id": asset.part_id,
         "asset_type": asset.asset_type,
         "title": asset.title,
-        "url": f"/storage/{asset.file_path}",
+        "url": None if asset.asset_type == "tts_text" else f"/storage/{asset.file_path}",
         "mime_type": asset.mime_type,
-        "transcript": asset.transcript if reveal_transcript else None,
+        "transcript": asset.transcript if reveal_transcript or asset.asset_type == "tts_text" else None,
+        "tts_voice": asset.tts_voice,
+        "tts_rate": asset.tts_rate,
     }
 
 
@@ -285,6 +287,7 @@ def _serialize_part(
         "auto_marked": part.auto_marked,
         "max_marks": str(part.max_marks) if part.max_marks is not None else None,
         "rubric": part.rubric,
+        "answer_constraints": dict(part.answer_constraints or {}),
         "cefr_scale": cefr_service.assessment_scale(part.section_type) if not part.auto_marked else [],
         "sort_order": part.sort_order,
         "assets": [_asset_out(asset, reveal_transcript=reveal) for asset in part.assets] if include_questions else [],

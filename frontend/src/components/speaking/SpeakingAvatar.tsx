@@ -32,11 +32,18 @@ interface AvatarData {
 interface SpeakingAvatarProps {
   attemptId: number;
   partId: number;
+  questionId?: number;
   isCandidateRecording?: boolean;
   avatarOnly?: boolean;
 }
 
-export function SpeakingAvatar({ attemptId, partId, isCandidateRecording = false, avatarOnly = true }: SpeakingAvatarProps) {
+export function SpeakingAvatar({
+  attemptId,
+  partId,
+  questionId,
+  isCandidateRecording = false,
+  avatarOnly = true,
+}: SpeakingAvatarProps) {
   const [examiners, setExaminers] = useState<Examiner[]>([]);
   const [selectedExaminer, setSelectedExaminer] = useState<string>("sonia");
   const [avatarData, setAvatarData] = useState<AvatarData | null>(null);
@@ -71,7 +78,7 @@ export function SpeakingAvatar({ attemptId, partId, isCandidateRecording = false
       try {
         const { data } = await apiClient.get<AvatarData>(
           `/student/attempts/${attemptId}/speaking-avatar/${partId}`,
-          { params: { examiner_id: selectedExaminer } }
+          { params: { examiner_id: selectedExaminer, question_id: questionId } }
         );
         if (isMounted) {
           setAvatarData(data);
@@ -92,7 +99,7 @@ export function SpeakingAvatar({ attemptId, partId, isCandidateRecording = false
     return () => {
       isMounted = false;
     };
-  }, [attemptId, partId, selectedExaminer]);
+  }, [attemptId, partId, questionId, selectedExaminer]);
 
   useEffect(() => {
     const audio = audioRef.current;

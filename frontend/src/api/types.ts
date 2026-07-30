@@ -254,14 +254,15 @@ export interface ExamModuleAsset {
   id: number;
   module_id: number;
   part_id: number;
-  asset_type: "mp3" | "tts_mp3" | "avatar_mp4";
+  asset_type: "mp3" | "tts_text" | "tts_mp3" | "avatar_mp4";
   title: string;
   original_filename: string;
-  url: string;
+  url: string | null;
   mime_type: string;
   file_size: number;
   transcript: string | null;
   tts_voice: string | null;
+  tts_rate: string | null;
   created_at: string;
 }
 
@@ -421,11 +422,13 @@ export interface AttemptQuestion {
 export interface AttemptAsset {
   id: number;
   part_id: number;
-  asset_type: "mp3" | "tts_mp3" | "avatar_mp4";
+  asset_type: "mp3" | "tts_text" | "tts_mp3" | "avatar_mp4";
   title: string;
-  url: string;
+  url: string | null;
   mime_type: string;
   transcript: string | null;
+  tts_voice: string | null;
+  tts_rate: string | null;
 }
 
 export interface AttemptPartGradeView {
@@ -548,6 +551,11 @@ export interface AttemptPart {
   auto_marked: boolean;
   max_marks: string | null;
   rubric: ModuleRubricCriterion[];
+  answer_constraints: {
+    allowed_question_types?: QuestionType[];
+    preparation_seconds?: number;
+    response_seconds?: number;
+  };
   cefr_scale: CefrScaleAnchor[];
   sort_order: number;
   assets: AttemptAsset[];

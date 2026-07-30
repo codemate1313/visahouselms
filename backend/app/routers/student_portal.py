@@ -423,6 +423,7 @@ async def get_speaking_avatar_for_attempt_part(
     attempt_id: int,
     part_id: int,
     examiner_id: Optional[str] = None,
+    question_id: Optional[int] = None,
     db: Session = Depends(get_db),
     user: User = Depends(require_student),
     session: UserSession = Depends(get_current_session),
@@ -436,8 +437,12 @@ async def get_speaking_avatar_for_attempt_part(
     questions = part_view.get("questions", [])
 
     prompt_text = part_data.get("instructions") or part_data.get("title") or "Listen to the examiner prompt and record your response."
-    if questions and questions[0].get("prompt"):
-        prompt_text = questions[0]["prompt"]
+    selected_question = next(
+        (question for question in questions if question.get("id") == question_id),
+        questions[0] if questions else None,
+    )
+    if selected_question and selected_question.get("prompt"):
+        prompt_text = selected_question["prompt"]
 
     examiner = avatar_service.get_examiner(examiner_id)
     audio_url, visemes, duration = await avatar_service.get_or_create_prompt_audio(prompt_text, examiner["voice"])

@@ -17,7 +17,7 @@ MODULE_TYPES = (
     "final_test",
 )
 MODULE_STATUSES = ("draft", "published", "archived")
-MODULE_ASSET_TYPES = ("mp3", "tts_mp3", "avatar_mp4")
+MODULE_ASSET_TYPES = ("mp3", "tts_text", "tts_mp3", "avatar_mp4")
 
 
 class ExamModule(Base):
@@ -150,6 +150,7 @@ class ExamModuleAsset(Base):
     file_size: Mapped[int] = mapped_column(Integer, nullable=False)
     transcript: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     tts_voice: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    tts_rate: Mapped[Optional[str]] = mapped_column(String(12), nullable=True)
     uploaded_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, server_default=func.now())
 

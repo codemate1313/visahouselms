@@ -23,7 +23,7 @@ export const instructorDashboardStrings = {
     completeTestsDetail: (fullMock: number, finalTest: number) =>
       `${fullMock} full mocks and ${finalTest} final tests.`,
     listeningMediaTitle: "Listening media",
-    listeningMediaDetail: (count: number) => `${count} uploaded or text-to-speech MP3 files.`,
+    listeningMediaDetail: (count: number) => `${count} uploaded audio or browser-narrated transcripts.`,
     openWorkspace: "Open module workspace",
   },
   profileReadiness: {
