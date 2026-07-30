@@ -6,6 +6,8 @@ export const instituteInstructorLayoutStrings = {
   menu: {
     evaluation: "EVALUATION",
     grading: "Grading Queue",
+    supportSection: "SUPPORT",
+    support: "Raise a Query",
     settings: "SETTINGS",
     activeSessions: "Active Sessions",
     changePassword: "Change Password",

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { StudentBadge, StudentLeaderboard } from "@/api/types";
+import { PageHeader } from "@/components/ui";
 import { studentProgressStrings as strings } from "./StudentProgress.strings";
 import { ProgressStatTiles } from "./components/ProgressStatTiles";
 import { BadgesPanel } from "./components/BadgesPanel";
@@ -35,13 +36,7 @@ export function StudentProgress() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader eyebrow={strings.eyebrow} title={strings.title} subtitle={strings.subtitle} />
 
       <LeaderboardPanel
         leaderboard={leaderboard}

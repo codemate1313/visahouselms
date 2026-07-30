@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { useDashboardRangeStore } from "@/store/dashboardRangeStore";
 import { useAuthStore } from "@/store/authStore";
+import { PageHeader } from "@/components/ui";
 import { dashboardStrings as strings } from "./Dashboard.strings";
 import type { MetricDetail, MetricKey, Summary } from "./types";
 import { ExecutiveMetricGrid } from "./components/ExecutiveMetricGrid";
@@ -76,13 +77,11 @@ export function Dashboard() {
 
   return (
     <div className="dashboard-overview">
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{strings.welcome(user?.first_name)}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow={strings.eyebrow}
+        title={strings.welcome(user?.first_name)}
+        subtitle={strings.subtitle}
+      />
 
       {summary.counts.plans_live === 0 && <NoLivePlanAlert />}
       <ExecutiveMetricGrid summary={summary} growth={growth} onOpen={openMetric} />

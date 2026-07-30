@@ -4,9 +4,12 @@ from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import require_role
+from app.dependencies.auth import get_current_user, require_role
 from app.models.role import SUPER_ADMIN
+from app.models.user import User
 from app.schemas.support import (
+    PortalSupportTicketCreate,
+    PortalSupportTicketResponse,
     SupportTicketCreate,
     SupportTicketCreatedResponse,
     SupportTicketListResponse,
@@ -38,10 +41,45 @@ def create_public_ticket(payload: SupportTicketCreate, request: Request, db: Ses
     }
 
 
+@public_router.get("/my-tickets", response_model=list[PortalSupportTicketResponse])
+def list_my_tickets(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return support_service.list_portal_tickets(db, user)
+
+
+@public_router.post(
+    "/my-tickets",
+    response_model=SupportTicketCreatedResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_my_ticket(
+    payload: PortalSupportTicketCreate,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ticket = support_service.create_portal_ticket(
+        db,
+        payload,
+        user,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    return {
+        "id": ticket.id,
+        "status": ticket.status,
+        "message": "Your support ticket has been created.",
+    }
+
+
 @admin_router.get("", response_model=SupportTicketListResponse)
 def list_admin_tickets(
     status_filter: Optional[str] = Query(default=None, alias="status"),
     priority: Optional[str] = Query(default=None),
+    source: Optional[str] = Query(default=None),
+    status_group: Optional[str] = Query(default=None),
     search: Optional[str] = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1, le=100),
@@ -52,6 +90,8 @@ def list_admin_tickets(
         status_filter=status_filter,
         priority_filter=priority,
         search=search,
+        source_filter=source,
+        status_group=status_group,
         page=page,
         page_size=page_size,
     )

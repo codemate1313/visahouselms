@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { GradingQueueItem } from "@/api/types";
 import { MetricCard } from "@/components/dashboard/MetricCard";
-import { SearchableSelect } from "@/components/ui";
+import { PageHeader, SearchableSelect } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { gradingQueueStrings as strings } from "./GradingQueue.strings";
 import { GradingQueueTable } from "./components/GradingQueueTable";
@@ -49,14 +49,10 @@ export function GradingQueue() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">
-            {isInstituteInstructor ? strings.subtitle.instituteInstructor : strings.subtitle.saInstructor}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title={strings.title}
+        subtitle={isInstituteInstructor ? strings.subtitle.instituteInstructor : strings.subtitle.saInstructor}
+      />
       <div className="metric-grid">
         <MetricCard label={strings.stats.pending} value={pending} tone="amber" icon="grading" />
         <MetricCard label={strings.stats.claimed} value={claimed} tone="blue" icon="session" />

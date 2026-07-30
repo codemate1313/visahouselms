@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
+import { Button, PageHeader } from "@/components/ui";
 import { sessionsStrings as strings } from "./Sessions.strings";
 
 interface SessionInfo {
@@ -76,10 +77,10 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
 
   return (
     <div>
-      <div className="page-header">
-        <h1>{strings.title}</h1>
-        <button onClick={handleRevokeOthers}>{strings.signOutOthers}</button>
-      </div>
+      <PageHeader
+        title={strings.title}
+        actions={<Button onClick={handleRevokeOthers}>{strings.signOutOthers}</Button>}
+      />
 
       {error && <p className="error-text">{error}</p>}
       {notice && <p className="success-text">{notice}</p>}

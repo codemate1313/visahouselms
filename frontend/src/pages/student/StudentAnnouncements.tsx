@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { Announcement } from "@/api/types";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { PageHeader } from "@/components/ui";
 import { studentAnnouncementsStrings as strings } from "./StudentAnnouncements.strings";
 
 function formatDate(value: string | null) {
@@ -25,12 +26,7 @@ export function StudentAnnouncements() {
 
   return (
     <div className="student-announcements-page">
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{strings.title}</h1>
-        </div>
-      </div>
+      <PageHeader eyebrow={strings.eyebrow} title={strings.title} />
       {error && <p className="error-text">{error}</p>}
       <CollapsiblePanel
         className="workspace-panel student-announcements-panel"

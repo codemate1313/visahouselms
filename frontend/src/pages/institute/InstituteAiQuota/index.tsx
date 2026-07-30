@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
+import { PageHeader } from "@/components/ui";
 import { instituteAiQuotaStrings as strings } from "./InstituteAiQuota.strings";
 import type { AiQuotaOverview } from "./types";
 
@@ -23,12 +24,7 @@ export function InstituteAiQuota() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader title={strings.title} subtitle={strings.subtitle} />
 
       <div className="ai-quota-cards">
         <div className="ai-quota-card">

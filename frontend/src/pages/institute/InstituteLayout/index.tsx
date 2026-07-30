@@ -54,6 +54,12 @@ export function InstituteLayout() {
       items: instituteItems,
     },
     {
+      title: m.supportSection,
+      items: [
+        { key: "support", label: m.support, icon: "help", to: "/institute-portal/support" },
+      ],
+    },
+    {
       title: m.settings,
       items: [
         {

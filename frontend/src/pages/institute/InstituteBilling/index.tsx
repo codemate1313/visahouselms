@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { PageHeader } from "@/components/ui";
 import { instituteBillingStrings as strings } from "./InstituteBilling.strings";
 import type { Payment, SubscriptionStatus } from "./types";
 import { SubscriptionSummary } from "./components/SubscriptionSummary";
@@ -29,13 +30,7 @@ export function InstituteBilling() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader eyebrow={strings.eyebrow} title={strings.title} subtitle={strings.subtitle} />
 
       {subscription && <SubscriptionSummary subscription={subscription} />}
       {error && <p className="error-text">{error}</p>}

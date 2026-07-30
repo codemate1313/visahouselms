@@ -57,6 +57,18 @@ export interface SupportTicketListResponse {
   counts: Record<SupportTicketStatus | "all", number>;
 }
 
+export interface PortalSupportTicket {
+  id: number;
+  subject: string;
+  message: string;
+  category: string;
+  status: SupportTicketStatus;
+  priority: SupportTicketPriority;
+  created_at: string;
+  updated_at: string | null;
+  resolved_at: string | null;
+}
+
 export interface InstructorAccount {
   id: number;
   email: string;

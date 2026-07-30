@@ -1,4 +1,4 @@
-import { Button, LinkButton } from "@/components/ui";
+import { Button, LinkButton, PageHeader } from "@/components/ui";
 import { instituteMembersStrings as strings } from "../InstituteMembers.strings";
 
 interface MembersHeaderProps {
@@ -31,13 +31,12 @@ export function MembersHeader({
   fileInputRef,
 }: MembersHeaderProps) {
   return (
-    <div className="page-header">
-      <div>
-        <span className="page-eyebrow">{strings.eyebrow}</span>
-        <h1>{label}</h1>
-        <p className="page-subtitle">{strings.subtitle}</p>
-      </div>
-      <div className="page-header-actions">
+    <PageHeader
+      eyebrow={strings.eyebrow}
+      title={label}
+      subtitle={strings.subtitle}
+      actions={
+        <>
         {canProvision && (
           <Button variant="secondary" size="sm" onClick={onDownloadTemplate}>
             {strings.downloadTemplate}
@@ -77,7 +76,8 @@ export function MembersHeader({
             onChange={(event) => event.target.files?.[0] && onImportFile(event.target.files[0])}
           />
         )}
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 }

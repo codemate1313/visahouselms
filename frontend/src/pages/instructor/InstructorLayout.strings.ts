@@ -5,6 +5,7 @@ export const instructorLayoutStrings = {
   roleLabel: "SA Instructor",
   sections: {
     mainMenu: "MAIN MENU",
+    support: "SUPPORT",
     settings: "SETTINGS",
   },
   items: {
@@ -12,6 +13,7 @@ export const instructorLayoutStrings = {
     authoring: "Authoring",
     modules: "Courses",
     grading: "Grading Queue",
+    raiseQuery: "Raise a Query",
     account: "Account",
     profile: "My Profile",
     sessions: "Active Sessions",

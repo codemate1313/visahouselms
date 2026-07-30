@@ -7,13 +7,17 @@ import type {
   SupportTicketPriority,
   SupportTicketStatus,
 } from "@/api/types";
-import { Badge, Button, PageHeader, SearchableSelect, SearchInput } from "@/components/ui";
+import { Badge, Button, PageHeader, SearchableSelect, SearchInput, SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { supportTicketsStrings as strings } from "./SupportTickets.strings";
 
 const STATUSES: Array<SupportTicketStatus | ""> = ["", "new", "open", "resolved", "closed"];
 const PRIORITIES: Array<SupportTicketPriority | ""> = ["", "low", "normal", "high"];
+const QUEUE_STATUSES: Record<"active" | "resolved", SupportTicketStatus[]> = {
+  active: ["new", "open"],
+  resolved: ["resolved", "closed"],
+};
 
 function label(value: string) {
   return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -52,6 +56,8 @@ export function SupportTickets() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<SupportTicketStatus | "">("");
   const [priority, setPriority] = useState<SupportTicketPriority | "">("");
+  const [source, setSource] = useState<"" | "portal" | "customer">("");
+  const [queue, setQueue] = useState<"active" | "resolved">("active");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +70,7 @@ export function SupportTickets() {
     () => tickets.find((ticket) => ticket.id === selectedId) ?? tickets[0] ?? null,
     [selectedId, tickets]
   );
+  const queueTotal = QUEUE_STATUSES[queue].reduce((total, item) => total + (counts[item] ?? 0), 0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,6 +81,8 @@ export function SupportTickets() {
           search: search.trim() || undefined,
           status: status || undefined,
           priority: priority || undefined,
+          source: source || undefined,
+          status_group: queue,
           page_size: 50,
         },
       });
@@ -90,7 +99,7 @@ export function SupportTickets() {
     } finally {
       setLoading(false);
     }
-  }, [priority, search, setItemCount, status]);
+  }, [priority, queue, search, setItemCount, source, status]);
 
   useEffect(() => {
     void load();
@@ -109,7 +118,7 @@ export function SupportTickets() {
     setSaving(true);
     setError(null);
     try {
-      const { data } = await apiClient.patch<SupportTicket>(
+      await apiClient.patch<SupportTicket>(
         `/super-admin/support-tickets/${selectedTicket.id}`,
         {
           status: draftStatus,
@@ -117,7 +126,7 @@ export function SupportTickets() {
           admin_note: draftNote,
         }
       );
-      setTickets((current) => current.map((ticket) => (ticket.id === data.id ? data : ticket)));
+      await load();
     } catch (err: unknown) {
       setError(extractErrorMessage(err, strings.errors.update));
     } finally {
@@ -128,6 +137,7 @@ export function SupportTickets() {
   return (
     <div className="support-ticket-page">
       <PageHeader
+        appearance="compact"
         title={strings.title}
         subtitle={strings.subtitle}
         actions={
@@ -137,8 +147,34 @@ export function SupportTickets() {
         }
       />
 
+      <SegmentedControl
+        className="support-ticket-source-segment"
+        ariaLabel="Support request source"
+        options={[
+          { value: "", label: strings.filters.sources.all },
+          { value: "portal", label: strings.filters.sources.portal },
+          { value: "customer", label: strings.filters.sources.customer },
+        ]}
+        value={source}
+        onChange={(value) => setSource(value as "" | "portal" | "customer")}
+      />
+
+      <SegmentedControl
+        className="support-ticket-queue-segment"
+        ariaLabel="Ticket queue"
+        options={[
+          { value: "active", label: strings.filters.queues.active },
+          { value: "resolved", label: strings.filters.queues.resolved },
+        ]}
+        value={queue}
+        onChange={(value) => {
+          setQueue(value);
+          setStatus("");
+        }}
+      />
+
       <div className="support-ticket-stat-row">
-        {STATUSES.map((item) => {
+        {(["", ...QUEUE_STATUSES[queue]] as Array<SupportTicketStatus | "">).map((item) => {
           const key = item || "all";
           return (
             <button
@@ -148,7 +184,7 @@ export function SupportTickets() {
               onClick={() => setStatus(item)}
             >
               <span>{label(key)}</span>
-              <strong>{counts[key as keyof typeof counts] ?? 0}</strong>
+              <strong>{item ? counts[item] ?? 0 : queueTotal}</strong>
             </button>
           );
         })}

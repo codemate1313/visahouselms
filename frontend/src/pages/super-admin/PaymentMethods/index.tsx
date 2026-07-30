@@ -2,6 +2,7 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { PageHeader } from "@/components/ui";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { confirmExport } from "@/utils/confirmExport";
 import { paymentMethodsStrings as strings } from "./PaymentMethods.strings";
@@ -111,12 +112,7 @@ export function PaymentMethods() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader title={strings.title} subtitle={strings.subtitle} />
 
       <AddMethodForm name={name} onNameChange={setName} saving={saving} error={error} onSubmit={handleSubmit} />
 

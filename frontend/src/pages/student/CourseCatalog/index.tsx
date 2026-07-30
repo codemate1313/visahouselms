@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { StudentPlanCatalogItem } from "@/api/types";
+import { PageHeader } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { courseCatalogStrings as strings } from "./CourseCatalog.strings";
@@ -61,13 +62,7 @@ export function CourseCatalog() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader eyebrow={strings.eyebrow} title={strings.title} subtitle={strings.subtitle} />
       {error && <p className="error-text">{error}</p>}
       {loading ? (
         <p>{strings.loading}</p>

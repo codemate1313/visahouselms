@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { AttemptSummary, StudentCurrentPlan } from "@/api/types";
+import { PageHeader } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { studentDashboardStrings as strings } from "./StudentDashboard.strings";
 import { COMPLETED_STATUSES, attemptTime, progressForStatus, statusLabel } from "./helpers";
@@ -72,13 +73,11 @@ export function StudentDashboard() {
 
   return (
     <div className="sd-dashboard" ref={containerRef}>
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{strings.welcome(user?.first_name)}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow={strings.eyebrow}
+        title={strings.welcome(user?.first_name)}
+        subtitle={strings.subtitle}
+      />
 
       <StatCardsGrid stats={statCards} />
 

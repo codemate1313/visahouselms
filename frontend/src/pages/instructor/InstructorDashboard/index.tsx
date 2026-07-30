@@ -6,7 +6,7 @@ import { DashboardStats } from "./components/DashboardStats";
 import { ModuleAuthoringPanel } from "./components/ModuleAuthoringPanel";
 import { ProfileReadinessPanel } from "./components/ProfileReadinessPanel";
 import { RecentActivityPanel } from "./components/RecentActivityPanel";
-import { LinkButton } from "@/components/ui";
+import { LinkButton, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/icons";
 
 interface Summary {
@@ -45,16 +45,16 @@ export function InstructorDashboard() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{strings.welcome(user?.first_name)}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-        <LinkButton to="/super-admin/instructor/modules" leftIcon={<Icon name="plus" />}>
-          {strings.createModule}
-        </LinkButton>
-      </div>
+      <PageHeader
+        eyebrow={strings.eyebrow}
+        title={strings.welcome(user?.first_name)}
+        subtitle={strings.subtitle}
+        actions={
+          <LinkButton to="/super-admin/instructor/modules" leftIcon={<Icon name="plus" />}>
+            {strings.createModule}
+          </LinkButton>
+        }
+      />
 
       <DashboardStats
         modules={summary.content.modules}

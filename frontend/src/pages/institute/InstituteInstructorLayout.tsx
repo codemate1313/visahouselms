@@ -23,6 +23,12 @@ export function InstituteInstructorLayout() {
 
   const sections: MenuSection[] = [
     { title: strings.menu.evaluation, items: [{ key: "grading", label: strings.menu.grading, icon: "grading", to: "/institute-instructor/grading" }] },
+    {
+      title: strings.menu.supportSection,
+      items: [
+        { key: "support", label: strings.menu.support, icon: "help", to: "/institute-instructor/support" },
+      ],
+    },
     { title: strings.menu.settings, items: [
       {
         key: "account",

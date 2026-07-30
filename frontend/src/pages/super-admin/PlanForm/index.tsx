@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { Checkbox, RequiredMark } from "@/components/ui";
+import { Checkbox, PageHeader, RequiredMark } from "@/components/ui";
 import { directStudentCatalogue as catalogue, planFormStrings as strings } from "./PlanForm.strings";
 import { PlanCoursePicker, type PlanModule } from "./components/PlanCoursePicker";
 import { PlanFeatureEditor } from "./components/PlanFeatureEditor";
@@ -108,12 +108,7 @@ export function PlanForm() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>{isNew ? catalogue.createTitle : catalogue.editTitle}</h1>
-          <p className="page-subtitle">{catalogue.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader title={isNew ? catalogue.createTitle : catalogue.editTitle} subtitle={catalogue.subtitle} />
       <form className="form-card wide" onSubmit={submit}>
         <label>{f.name}<RequiredMark /></label>
         <input value={form.name} onChange={set("name")} required />

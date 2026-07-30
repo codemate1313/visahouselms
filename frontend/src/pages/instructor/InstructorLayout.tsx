@@ -51,6 +51,17 @@ export function InstructorLayout() {
       ],
     },
     {
+      title: strings.sections.support,
+      items: [
+        {
+          key: "support",
+          label: strings.items.raiseQuery,
+          icon: "help",
+          to: "/super-admin/instructor/support",
+        },
+      ],
+    },
+    {
       title: strings.sections.settings,
       items: [
         {

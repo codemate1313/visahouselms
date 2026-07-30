@@ -11,6 +11,8 @@ export const studentLayoutStrings = {
     myTests: "My Tests",
     myTestHistory: "My Test History",
     progress: "Progress",
+    supportSection: "SUPPORT",
+    support: "Raise a Query",
     myProfile: "My Profile",
     activeSessions: "Active Sessions",
     changePassword: "Change Password",

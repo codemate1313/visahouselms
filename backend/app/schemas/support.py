@@ -14,6 +14,12 @@ class SupportTicketCreate(BaseModel):
     category: str = Field(default="general", max_length=60)
 
 
+class PortalSupportTicketCreate(BaseModel):
+    subject: str = Field(min_length=3, max_length=220)
+    message: str = Field(min_length=10, max_length=5000)
+    category: str = Field(default="general", max_length=60)
+
+
 class SupportTicketUpdate(BaseModel):
     status: Optional[str] = Field(default=None, max_length=20)
     priority: Optional[str] = Field(default=None, max_length=20)
@@ -54,3 +60,15 @@ class SupportTicketCreatedResponse(BaseModel):
     id: int
     status: str
     message: str
+
+
+class PortalSupportTicketResponse(BaseModel):
+    id: int
+    subject: str
+    message: str
+    category: str
+    status: str
+    priority: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    resolved_at: Optional[datetime] = None

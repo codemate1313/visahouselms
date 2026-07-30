@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import type { StudentNotification } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { PinList, type PinListItem } from "@/components/PinList";
+import { PageHeader } from "@/components/ui";
 import { destinationFor, notificationTime, scoreLabel } from "@/utils/notificationHelpers";
 import { notificationsInboxStrings as strings } from "./NotificationsInbox.strings";
 import "./NotificationsInbox.css";
@@ -107,18 +108,16 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
 
   return (
     <div className="notifications-inbox-page">
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-        {unread.length > 0 && (
+      <PageHeader
+        eyebrow={strings.eyebrow}
+        title={strings.title}
+        subtitle={strings.subtitle}
+        actions={unread.length > 0 && (
           <button type="button" className="notifications-inbox-mark-all" onClick={() => void markAllRead()}>
             {strings.markAllRead}
           </button>
         )}
-      </div>
+      />
 
       <section className="workspace-panel notifications-inbox-panel">
         {loading ? (

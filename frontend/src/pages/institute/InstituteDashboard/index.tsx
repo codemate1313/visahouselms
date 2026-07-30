@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { useAuthStore } from "@/store/authStore";
+import { PageHeader } from "@/components/ui";
 import { instituteDashboardStrings as strings } from "./InstituteDashboard.strings";
 import type { DashboardSummary } from "./types";
 import { DashboardStats } from "./components/DashboardStats";
@@ -35,13 +36,11 @@ export function InstituteDashboard() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{summary.institute.name}</span>
-          <h1>{strings.welcome(user?.first_name)}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow={summary.institute.name}
+        title={strings.welcome(user?.first_name)}
+        subtitle={strings.subtitle}
+      />
 
       {summary.access && <AccessCountdownCard access={summary.access} canSeeBilling={canSeeBilling} />}
 

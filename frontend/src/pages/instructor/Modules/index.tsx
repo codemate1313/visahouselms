@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { confirmDelete } from "@/components/confirmDialog";
 import type { ExamModule, ModuleBlueprint } from "@/api/types";
+import { PageHeader } from "@/components/ui";
 import { modulesStrings as strings } from "./Modules.strings";
 import { ModuleTypeGrid } from "./components/ModuleTypeGrid";
 import { ModuleFilterBar } from "./components/ModuleFilterBar";
@@ -52,12 +53,7 @@ export function Modules() {
 
   return (
     <div className="module-catalog">
-      <div className="page-header">
-        <div>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader title={strings.title} subtitle={strings.subtitle} />
 
       <ModuleTypeGrid blueprints={blueprints} />
 

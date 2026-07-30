@@ -4,6 +4,7 @@ import gsap from "gsap";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { StudentCurrentPlan } from "@/api/types";
+import { PageHeader } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import { useAuthStore } from "@/store/authStore";
 import { myCoursesStrings as strings } from "./MyCourses.strings";
@@ -95,13 +96,11 @@ export function MyCourses() {
 
   return (
     <div className="my-courses-page" ref={containerRef}>
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{isInstituteStudent ? strings.titles.instituteStudent : strings.titles.directStudent}</h1>
-          <p className="page-subtitle">{isInstituteStudent ? strings.subtitles.instituteStudent : strings.subtitles.directStudent}</p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow={strings.eyebrow}
+        title={isInstituteStudent ? strings.titles.instituteStudent : strings.titles.directStudent}
+        subtitle={isInstituteStudent ? strings.subtitles.instituteStudent : strings.subtitles.directStudent}
+      />
 
       {!loading && access?.plan && allModules.length > 0 && (
         <ModuleFilterBar

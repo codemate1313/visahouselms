@@ -1,6 +1,6 @@
 export const supportTicketsStrings = {
   title: "Support Tickets",
-  subtitle: "Customer enquiries from the public contact page.",
+  subtitle: "Manage portal support tickets and public customer enquiries.",
   loading: "Loading support tickets...",
   errors: {
     load: "Failed to load support tickets.",
@@ -11,6 +11,15 @@ export const supportTicketsStrings = {
     status: "Status",
     priority: "Priority",
     all: "All",
+    sources: {
+      all: "All Requests",
+      portal: "Portal Tickets",
+      customer: "Customer Enquiries",
+    },
+    queues: {
+      active: "New & Open",
+      resolved: "Resolved & Closed",
+    },
   },
   table: {
     customer: "Customer",

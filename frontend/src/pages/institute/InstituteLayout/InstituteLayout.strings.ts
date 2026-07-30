@@ -11,6 +11,8 @@ export const instituteLayoutStrings = {
     announcements: "Announcements",
     instructors: "Instructors",
     subscription: "Subscription",
+    supportSection: "SUPPORT",
+    support: "Raise a Query",
     settings: "SETTINGS",
     myProfile: "My Profile",
     activeSessions: "Active Sessions",

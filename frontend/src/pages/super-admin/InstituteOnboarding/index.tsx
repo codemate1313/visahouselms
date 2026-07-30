@@ -10,7 +10,7 @@ import { OnboardingStepper } from "./components/OnboardingStepper";
 import { Step1AgreementForm } from "./components/Step1AgreementForm";
 import { Step2BrandingForm } from "./components/Step2BrandingForm";
 import { Step3PublishSummary } from "./components/Step3PublishSummary";
-import { LinkButton } from "@/components/ui";
+import { LinkButton, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/icons";
 
 export function InstituteOnboarding() {
@@ -158,15 +158,15 @@ export function InstituteOnboarding() {
 
   return (
     <div className="onboarding-page">
-      <div className="page-header">
-        <div>
-          <h1>{onboarding?.name || strings.defaultTitle}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-        <LinkButton variant="secondary" to="/super-admin/onboarding" leftIcon={<Icon name="arrowLeft" />}>
-          {strings.allOnboardings}
-        </LinkButton>
-      </div>
+      <PageHeader
+        title={onboarding?.name || strings.defaultTitle}
+        subtitle={strings.subtitle}
+        actions={
+          <LinkButton variant="secondary" to="/super-admin/onboarding" leftIcon={<Icon name="arrowLeft" />}>
+            {strings.allOnboardings}
+          </LinkButton>
+        }
+      />
 
       <OnboardingStepper step={step} />
 

@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { Announcement } from "@/api/types";
+import { PageHeader } from "@/components/ui";
 import { normalizeSearch } from "./helpers";
 import { instituteAnnouncementsStrings as strings } from "./InstituteAnnouncements.strings";
 import type { AnnouncementStatus, TargetOptions } from "./types";
@@ -130,12 +131,7 @@ export function InstituteAnnouncements() {
 
   return (
     <div className="announcement-admin-page">
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{strings.title}</h1>
-        </div>
-      </div>
+      <PageHeader eyebrow={strings.eyebrow} title={strings.title} />
       {error && <p className="error-text">{error}</p>}
       <div className="announcement-admin-grid">
         <PublisherPanel

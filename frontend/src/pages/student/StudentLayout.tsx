@@ -46,6 +46,12 @@ export function StudentLayout() {
       items: mainItems,
     },
     {
+      title: menu.supportSection,
+      items: [
+        { key: "support", label: menu.support, icon: "help", to: "/student/support" },
+      ],
+    },
+    {
       title: menu.settings,
       items: [
         {

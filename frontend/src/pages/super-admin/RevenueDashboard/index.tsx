@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { confirmExport } from "@/utils/confirmExport";
+import { PageHeader } from "@/components/ui";
 import { revenueDashboardStrings as strings } from "./RevenueDashboard.strings";
 import type { InstituteRow, MethodRow, Summary } from "./types";
 import { exportRevenueExcel, exportRevenuePDF } from "./exportHelpers";
@@ -63,12 +64,7 @@ export function RevenueDashboard() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader title={strings.title} subtitle={strings.subtitle} />
 
       <RevenueFilterBar
         institutes={institutes}

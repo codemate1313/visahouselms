@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
+import { PageHeader } from "@/components/ui";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import type { InstituteAllocation } from "@/pages/super-admin/InstituteForm/types";
 import { subscriptionsStrings as strings } from "./Subscriptions.strings";
@@ -112,12 +113,7 @@ export function Subscriptions() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader title={strings.title} subtitle={strings.subtitle} />
 
       <InstituteSelector institutes={institutes} selected={selected} onSelect={setSelected} />
 

@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import type { GradingAdminOverview } from "@/api/types";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { MetricCard } from "@/components/dashboard/MetricCard";
+import { PageHeader } from "@/components/ui";
 import { gradingOversightStrings as strings } from "./GradingOversight.strings";
 
 const STATUS_CLASS: Record<string, string> = { pending: "badge-amber", in_review: "badge-blue", resolved: "badge-green", rejected: "badge-red" };
@@ -21,13 +22,7 @@ export function GradingOversight() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader eyebrow={strings.eyebrow} title={strings.title} subtitle={strings.subtitle} />
       <div className="metric-grid">
         <MetricCard label={strings.stats.unclaimed} value={overview.queue.pending} tone="amber" icon="grading" />
         <MetricCard label={strings.stats.claimed} value={overview.queue.claimed} tone="blue" icon="session" />

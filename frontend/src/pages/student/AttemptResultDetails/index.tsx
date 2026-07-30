@@ -10,7 +10,7 @@ import { CefrProfilePanel } from "./components/CefrProfilePanel";
 import { PartReviewSection } from "./components/PartReviewSection";
 import { ReevaluationStatus } from "./components/ReevaluationStatus";
 import { ReevaluationForm } from "./components/ReevaluationForm";
-import { LinkButton } from "@/components/ui";
+import { LinkButton, PageHeader } from "@/components/ui";
 
 export function AttemptResultDetails() {
   const { id } = useParams();
@@ -54,21 +54,21 @@ export function AttemptResultDetails() {
 
   return (
     <div className="attempt-detail-page">
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{attempt.module_title}</h1>
-          <p className="page-subtitle">{statusLabels[attempt.status as keyof typeof statusLabels] ?? attempt.status}</p>
-        </div>
-        <div className="result-header-actions">
+      <PageHeader
+        eyebrow={strings.eyebrow}
+        title={attempt.module_title}
+        subtitle={statusLabels[attempt.status as keyof typeof statusLabels] ?? attempt.status}
+        actions={
+          <div className="result-header-actions">
           <LinkButton variant="secondary" to={`/student/attempts/${attempt.id}/result`}>
             {strings.resultOverview}
           </LinkButton>
           <LinkButton to="/student/attempts">
             {strings.allAttempts}
           </LinkButton>
-        </div>
-      </div>
+          </div>
+        }
+      />
       {error && <p className="error-text">{error}</p>}
 
       <ResultDetailStats metrics={metrics} />

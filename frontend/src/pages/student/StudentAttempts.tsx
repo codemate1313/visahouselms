@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import type { AttemptSummary } from "@/api/types";
 import { Icon } from "@/components/icons";
-import { SearchableSelect } from "@/components/ui";
+import { PageHeader, SearchableSelect } from "@/components/ui";
 import { studentAttemptsStrings as strings } from "./StudentAttempts.strings";
 
 const STATUS_CLASS: Record<string, string> = {
@@ -41,13 +41,7 @@ export function StudentAttempts() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{strings.eyebrow}</span>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-      </div>
+      <PageHeader eyebrow={strings.eyebrow} title={strings.title} subtitle={strings.subtitle} />
 
       <div className="filter-bar" style={{ marginBottom: 20 }}>
         <SearchableSelect

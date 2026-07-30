@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { GradingDetail as GradingDetailType, GradingQueueItem, GradingQueueMetadata } from "@/api/types";
-import { Button, LinkButton } from "@/components/ui";
+import { Button, LinkButton, PageHeader } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { gradingDetailStrings as strings } from "./GradingDetail.strings";
 import { PartGradingCard } from "./components/PartGradingCard";
@@ -139,13 +139,12 @@ export function GradingDetail() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">{detail.queue.routing_reason.replaceAll("_", " ")}</span>
-          <h1>{detail.student_name}</h1>
-          <p className="page-subtitle">{detail.module_title} · {detail.student_email}</p>
-        </div>
-        <div className="page-header-actions">
+      <PageHeader
+        eyebrow={detail.queue.routing_reason.replaceAll("_", " ")}
+        title={detail.student_name}
+        subtitle={`${detail.module_title} · ${detail.student_email}`}
+        actions={
+          <>
           {detail.queue.status === "pending" && (
             <Button disabled={busy} onClick={() => queueAction("claim")}>
               {strings.claim}
@@ -159,8 +158,9 @@ export function GradingDetail() {
           <LinkButton variant="secondary" to={isInstituteInstructor ? "/institute-instructor/grading" : "/super-admin/instructor/grading"}>
             {strings.backToQueue}
           </LinkButton>
-        </div>
-      </div>
+          </>
+        }
+      />
       {error && <p className="error-text">{error}</p>}
       <div className="cefr-grading-note">
         <strong>{strings.cefrNote.title}</strong>

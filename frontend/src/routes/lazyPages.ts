@@ -1,6 +1,7 @@
 import { lazy } from "react";
 
 export const NotificationsInbox = lazy(() => import("../pages/NotificationsInbox").then((module) => ({ default: module.NotificationsInbox })));
+export const SupportCenter = lazy(() => import("../pages/SupportCenter").then((module) => ({ default: module.SupportCenter })));
 export const Register = lazy(() => import("../pages/Register").then((module) => ({ default: module.Register })));
 export const ResetPassword = lazy(() => import("../pages/ResetPassword").then((module) => ({ default: module.ResetPassword })));
 export const TestingLoginSelector = lazy(() => import("../pages/TestingLoginSelector").then((module) => ({ default: module.TestingLoginSelector })));

@@ -12,7 +12,7 @@ import { RecordPaymentForm } from "./components/RecordPaymentForm";
 import { PaymentsFilterBar } from "./components/PaymentsFilterBar";
 import { PaymentsTable } from "./components/PaymentsTable";
 import { DuePaymentModal } from "./components/DuePaymentModal";
-import { Button } from "@/components/ui";
+import { Button, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/icons";
 
 export function Payments() {
@@ -178,19 +178,19 @@ export function Payments() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>{strings.title}</h1>
-          <p className="page-subtitle">{strings.subtitle}</p>
-        </div>
-        <Button
-          variant={showForm ? "secondary" : "primary"}
-          leftIcon={showForm ? undefined : <Icon name="plus" />}
-          onClick={() => setShowForm((v) => !v)}
-        >
-          {showForm ? strings.cancel : strings.recordPayment}
-        </Button>
-      </div>
+      <PageHeader
+        title={strings.title}
+        subtitle={strings.subtitle}
+        actions={
+          <Button
+            variant={showForm ? "secondary" : "primary"}
+            leftIcon={showForm ? undefined : <Icon name="plus" />}
+            onClick={() => setShowForm((v) => !v)}
+          >
+            {showForm ? strings.cancel : strings.recordPayment}
+          </Button>
+        }
+      />
 
       {result && (
         <div className="banner" style={{ background: "var(--shade-dcfce7)", color: "var(--green-700)", border: "1px solid var(--green-300)", borderRadius: 12, padding: "12px 18px", marginBottom: 20 }}>

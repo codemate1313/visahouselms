@@ -14,6 +14,7 @@ import {
   passwordResetPath,
   tenantManageLink,
 } from "../userActions";
+import { RowActionMenu } from "./RowActionMenu";
 
 interface UsersTableProps {
   users: DirectoryUser[];
@@ -77,16 +78,7 @@ export function UsersTable({
       const availableItems = items.filter(Boolean);
       if (!availableItems.length) return null;
 
-      return (
-        <details className="row-action-menu">
-          <summary className="action-btn-icon action-menu-trigger" data-tooltip="More actions" aria-label="More actions">
-            <Icon name="moreVertical" />
-          </summary>
-          <div className="row-action-menu-panel">
-            {availableItems}
-          </div>
-        </details>
-      );
+      return <RowActionMenu items={availableItems as ReactElement[]} />;
     }
 
     const actions = ROLE_ACTIONS[user.role_name];
