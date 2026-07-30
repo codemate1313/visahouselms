@@ -6,8 +6,13 @@ import { developerSettingsStrings as strings } from "../DeveloperSettings.string
 
 export function FcmTab() {
   const [configured, setConfigured] = useState(false);
+  const [webConfigured, setWebConfigured] = useState(false);
   const [projectId, setProjectId] = useState("");
   const [saJson, setSaJson] = useState("");
+  const [webApiKey, setWebApiKey] = useState("");
+  const [webAppId, setWebAppId] = useState("");
+  const [webMessagingSenderId, setWebMessagingSenderId] = useState("");
+  const [webVapidKey, setWebVapidKey] = useState("");
   const [deviceToken, setDeviceToken] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -17,7 +22,12 @@ export function FcmTab() {
   const load = useCallback(() => {
     apiClient.get("/super-admin/dev-settings/fcm").then(({ data }) => {
       setConfigured(data.configured);
+      setWebConfigured(data.web_configured);
       setProjectId(data.project_id ?? "");
+      setWebApiKey(data.web_api_key ?? "");
+      setWebAppId(data.web_app_id ?? "");
+      setWebMessagingSenderId(data.web_messaging_sender_id ?? "");
+      setWebVapidKey(data.web_vapid_key ?? "");
     });
   }, []);
 
@@ -30,6 +40,10 @@ export function FcmTab() {
       await apiClient.put("/super-admin/dev-settings/fcm", {
         project_id: projectId || null,
         service_account_json: saJson || null,
+        web_api_key: webApiKey || null,
+        web_app_id: webAppId || null,
+        web_messaging_sender_id: webMessagingSenderId || null,
+        web_vapid_key: webVapidKey || null,
       });
       setNotice(t.savedNotice);
       setSaJson("");
@@ -72,6 +86,24 @@ export function FcmTab() {
           {t.saJsonLabel} {configured && t.saJsonReplaceHint}
         </label>
         <textarea rows={7} value={saJson} onChange={(e) => setSaJson(e.target.value)} placeholder={t.saJsonPlaceholder} />
+
+        <h4 style={{ margin: "0 0 8px", fontSize: "14px", fontWeight: 600 }}>{t.webConfigTitle}</h4>
+        <p className={webConfigured ? "success-text" : "hint"}>
+          {webConfigured ? t.webConfiguredHint : t.webNotConfiguredHint}
+        </p>
+        <p className="hint">{t.webConfigHint}</p>
+
+        <label>{t.webApiKeyLabel}</label>
+        <input value={webApiKey} onChange={(e) => setWebApiKey(e.target.value)} />
+
+        <label>{t.webAppIdLabel}</label>
+        <input value={webAppId} onChange={(e) => setWebAppId(e.target.value)} />
+
+        <label>{t.webMessagingSenderIdLabel}</label>
+        <input value={webMessagingSenderId} onChange={(e) => setWebMessagingSenderId(e.target.value)} />
+
+        <label>{t.webVapidKeyLabel}</label>
+        <input value={webVapidKey} onChange={(e) => setWebVapidKey(e.target.value)} />
 
         {error && <p className="error-text">{error}</p>}
         {notice && <p className="success-text">{notice}</p>}

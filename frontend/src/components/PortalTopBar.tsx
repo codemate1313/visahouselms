@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import gsap from "gsap";
 import { API_BASE_URL } from "../api/client";
 import { logoutAndRedirectHome } from "../auth/logout";
+import { usePushNotifications } from "../hooks/usePushNotifications";
 import { useAuthStore } from "../store/authStore";
 import { usePageTitleStore } from "../store/pageTitleStore";
 import { Icon, type IconName } from "./icons";
@@ -348,6 +349,7 @@ export function PortalTopBar({
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
+  usePushNotifications(user?.id);
   const [menuOpen, setMenuOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

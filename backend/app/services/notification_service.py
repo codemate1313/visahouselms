@@ -9,7 +9,7 @@ from app.models.attempt import ATTEMPT_GRADED, AttemptPartGrade, TestAttempt
 from app.models.notification import GRADE_RELEASED, StudentNotification
 from app.models.role import STUDENT
 from app.models.user import User
-from app.services import smtp_service
+from app.services import fcm_service, smtp_service
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +41,57 @@ def _grade_notification(attempt: TestAttempt) -> StudentNotification:
     )
 
 
+def push_to_user(db: Session, user_id: int, title: str, body: str, link_url: Optional[str] = None) -> None:
+    """Best-effort FCM push for a single user. No-ops quietly when FCM isn't
+    configured (that's an intentional admin choice, not a failure); an actual
+    send error is logged and recorded so it doesn't vanish silently."""
+    if not fcm_service.get_config_status(db).get("configured"):
+        return
+    try:
+        fcm_service.send_to_user(db, user_id, title, body, link_url=link_url)
+    except Exception as exc:
+        logger.exception("Failed to push notification to user %s", user_id)
+        record_send_failure(db, f"Push notification failed for user {user_id}: {exc}", user_id=user_id)
+
+
+def send_notification_email(db: Session, to_address: str, subject: str, body: str, *, user_id: Optional[int] = None) -> None:
+    """Best-effort email send shared by non-grading notification producers
+    (support tickets, etc.) - mirrors send_grade_released_email's failure handling."""
+    try:
+        smtp_service.send_email(db, to_address, subject, body)
+    except Exception as exc:
+        logger.exception("Failed to send notification email to %s", to_address)
+        record_send_failure(db, f"Notification email to {to_address} failed: {exc}", user_id=user_id)
+
+
+def create_notification(
+    db: Session,
+    *,
+    user_id: int,
+    kind: str,
+    title: str,
+    message: str,
+    link_url: Optional[str] = None,
+    push: bool = True,
+) -> StudentNotification:
+    """Generic in-app notification creator for producers outside grading/announcements
+    (e.g. support tickets). Also attempts a best-effort push to the same user."""
+    notification = StudentNotification(
+        user_id=user_id,
+        kind=kind,
+        title=title,
+        message=message,
+        link_url=link_url,
+        created_at=_now(),
+    )
+    db.add(notification)
+    db.commit()
+    db.refresh(notification)
+    if push:
+        push_to_user(db, user_id, title, message, link_url=link_url)
+    return notification
+
+
 def create_grade_released_notification(db: Session, attempt: TestAttempt) -> StudentNotification:
     existing = (
         db.query(StudentNotification)
@@ -57,6 +108,7 @@ def create_grade_released_notification(db: Session, attempt: TestAttempt) -> Stu
     db.add(notification)
     db.commit()
     db.refresh(notification)
+    push_to_user(db, notification.user_id, notification.title, notification.message, link_url=notification.link_url)
     return notification
 
 
@@ -190,6 +242,29 @@ def mark_all_notifications_read(db: Session, user: User) -> int:
     return len(unread)
 
 
+def record_send_failure(db: Session, message: str, *, user_id: Optional[int] = None) -> None:
+    """Surface a swallowed notification-send failure in the admin-visible Logs UI.
+
+    Outbound sends (email/push) are best-effort and must never raise into the
+    caller, so without this they fail completely silently - an admin has no way
+    to discover that "configured" notifications have stopped going out."""
+    try:
+        from app.services.log_service import record_error
+
+        record_error(
+            db,
+            message=message,
+            stack_trace=None,
+            path=None,
+            method=None,
+            user_id=user_id,
+            ip_address=None,
+            level="WARNING",
+        )
+    except Exception:
+        logger.exception("Failed to record notification-send failure to ErrorLog")
+
+
 def send_grade_released_email(db: Session, attempt: TestAttempt) -> None:
     """Best-effort notification once a Writing/Speaking submission is fully
     graded - failure (unconfigured SMTP, network error, ...) is logged and
@@ -209,5 +284,10 @@ def send_grade_released_email(db: Session, attempt: TestAttempt) -> None:
             lines.append(f"Band: {attempt.band_label}")
         lines += ["", "Log in to the student portal to see the full breakdown."]
         smtp_service.send_email(db, user.email, f'Your "{module.title}" result is ready', "\n".join(lines))
-    except Exception:
+    except Exception as exc:
         logger.exception("Failed to send grade-released email for attempt %s", attempt.id)
+        record_send_failure(
+            db,
+            f"Grade-released email failed for attempt {attempt.id} ({attempt.user.email}): {exc}",
+            user_id=attempt.user_id,
+        )

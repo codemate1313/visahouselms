@@ -7,6 +7,7 @@ from google.auth.transport.requests import Request as GoogleAuthRequest
 from google.oauth2 import service_account
 from sqlalchemy.orm import Session
 
+from app.models.push_device_token import PushDeviceToken
 from app.services.settings_service import get_setting
 
 FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
@@ -69,6 +70,28 @@ def test_credentials(db: Session) -> dict:
     }
 
 
+def _send_raw(
+    url: str,
+    access_token: str,
+    device_token: str,
+    title: str,
+    body: str,
+    link_url: Optional[str] = None,
+) -> requests.Response:
+    message: dict = {
+        "token": device_token,
+        "notification": {"title": title, "body": body},
+    }
+    if link_url:
+        message["webpush"] = {"fcm_options": {"link": link_url}}
+    return requests.post(
+        url,
+        json={"message": message},
+        headers={"Authorization": f"Bearer {access_token}"},
+        timeout=15,
+    )
+
+
 def send_test_notification(db: Session, device_token: str, title: str, body: str) -> dict:
     credentials = _load_credentials(db)
     project_id = get_setting(db, "fcm.project_id") or credentials.project_id
@@ -81,24 +104,61 @@ def send_test_notification(db: Session, device_token: str, title: str, body: str
         )
 
     url = f"https://fcm.googleapis.com/v1/projects/{project_id}/messages:send"
-    payload = {
-        "message": {
-            "token": device_token,
-            "notification": {"title": title, "body": body},
-        }
-    }
-    response = requests.post(
-        url,
-        json=payload,
-        headers={"Authorization": f"Bearer {credentials.token}"},
-        timeout=15,
-    )
+    response = _send_raw(url, credentials.token, device_token, title, body)
     if response.status_code != 200:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"FCM send failed ({response.status_code}): {response.text[:500]}",
         )
     return response.json()
+
+
+def register_device_token(db: Session, user_id: int, token: str, platform: str = "web") -> PushDeviceToken:
+    existing = db.query(PushDeviceToken).filter(PushDeviceToken.token == token).first()
+    if existing is not None:
+        existing.user_id = user_id
+        existing.platform = platform
+        db.add(existing)
+        db.commit()
+        db.refresh(existing)
+        return existing
+    device = PushDeviceToken(user_id=user_id, token=token, platform=platform)
+    db.add(device)
+    db.commit()
+    db.refresh(device)
+    return device
+
+
+def unregister_device_token(db: Session, user_id: int, token: str) -> None:
+    db.query(PushDeviceToken).filter(
+        PushDeviceToken.user_id == user_id, PushDeviceToken.token == token
+    ).delete()
+    db.commit()
+
+
+def send_to_user(db: Session, user_id: int, title: str, body: str, link_url: Optional[str] = None) -> None:
+    """Push `title`/`body` to every device the user has registered. Tokens FCM
+    reports as invalid/unregistered are pruned so they stop being retried."""
+    devices = db.query(PushDeviceToken).filter(PushDeviceToken.user_id == user_id).all()
+    if not devices:
+        return
+
+    credentials = _load_credentials(db)
+    project_id = get_setting(db, "fcm.project_id") or credentials.project_id
+    credentials.refresh(GoogleAuthRequest())
+    url = f"https://fcm.googleapis.com/v1/projects/{project_id}/messages:send"
+
+    stale = []
+    for device in devices:
+        response = _send_raw(url, credentials.token, device.token, title, body, link_url=link_url)
+        if response.status_code == 404 or (
+            response.status_code == 400 and "UNREGISTERED" in response.text
+        ):
+            stale.append(device)
+    for device in stale:
+        db.delete(device)
+    if stale:
+        db.commit()
 
 
 def get_config_status(db: Session) -> dict:
@@ -113,4 +173,39 @@ def get_config_status(db: Session) -> dict:
     return {
         "configured": bool(raw),
         "project_id": project_id or detected_project,
+        "web_configured": get_web_config(db) is not None,
+        # Not secrets (Firebase web config is designed to be visible client-side),
+        # so unlike service_account_json these are safe to echo back for editing.
+        "web_api_key": get_setting(db, "fcm.web_api_key"),
+        "web_app_id": get_setting(db, "fcm.web_app_id"),
+        "web_messaging_sender_id": get_setting(db, "fcm.web_messaging_sender_id"),
+        "web_vapid_key": get_setting(db, "fcm.web_vapid_key"),
+    }
+
+
+def get_web_config(db: Session) -> Optional[dict]:
+    """Public (non-secret) Firebase Web SDK config used by the frontend to
+    register a browser for push notifications. Distinct from the service
+    account JSON, which never leaves the server. Returns None until an admin
+    has filled in every field the client SDK needs."""
+    raw = get_setting(db, "fcm.service_account_json")
+    project_id = get_setting(db, "fcm.project_id")
+    if not project_id and raw:
+        try:
+            project_id = json.loads(raw).get("project_id")
+        except json.JSONDecodeError:
+            project_id = None
+    api_key = get_setting(db, "fcm.web_api_key")
+    app_id = get_setting(db, "fcm.web_app_id")
+    sender_id = get_setting(db, "fcm.web_messaging_sender_id")
+    vapid_key = get_setting(db, "fcm.web_vapid_key")
+    if not (raw and api_key and app_id and sender_id and vapid_key and project_id):
+        return None
+    return {
+        "apiKey": api_key,
+        "authDomain": f"{project_id}.firebaseapp.com",
+        "projectId": project_id,
+        "messagingSenderId": sender_id,
+        "appId": app_id,
+        "vapidKey": vapid_key,
     }

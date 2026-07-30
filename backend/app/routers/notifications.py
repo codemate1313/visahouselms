@@ -1,13 +1,19 @@
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
-from app.services import notification_service
+from app.services import fcm_service, notification_service
 
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
+
+
+class DeviceTokenIn(BaseModel):
+    token: str
+    platform: str = "web"
 
 
 @router.get("")
@@ -45,4 +51,31 @@ def unpin_notification(
     user: User = Depends(get_current_user),
 ):
     return notification_service.set_notification_pinned(db, user, notification_id, False)
+
+
+@router.get("/push/config")
+def push_config(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Public Firebase Web SDK config the frontend needs to register this
+    browser for push. Returns null until an admin has fully configured FCM."""
+    return {"config": fcm_service.get_web_config(db)}
+
+
+@router.post("/push/device-token")
+def register_device_token(
+    payload: DeviceTokenIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    fcm_service.register_device_token(db, user.id, payload.token, payload.platform)
+    return {"registered": True}
+
+
+@router.delete("/push/device-token")
+def unregister_device_token(
+    payload: DeviceTokenIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    fcm_service.unregister_device_token(db, user.id, payload.token)
+    return {"registered": False}
 

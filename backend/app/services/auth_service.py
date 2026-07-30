@@ -351,7 +351,10 @@ def register(
         smtp_service.send_email(db, user.email, subject, plain, html_body=html)
     except Exception as exc:
         import logging
+        from app.services.notification_service import record_send_failure
+
         logging.getLogger(__name__).warning("Failed to send welcome email for %s: %s", user.email, exc)
+        record_send_failure(db, f"Welcome email to {user.email} failed: {exc}", user_id=user.id)
 
     return user
 
@@ -382,7 +385,10 @@ def request_password_reset(db: Session, email: str) -> None:
         smtp_service.send_email(db, user.email, subject, plain, html_body=html)
     except Exception as exc:
         import logging
+        from app.services.notification_service import record_send_failure
+
         logging.getLogger(__name__).exception("Failed to send forgot password email for %s: %s", user.email, exc)
+        record_send_failure(db, f"Password reset email to {user.email} failed: {exc}", user_id=user.id)
 
 
 def confirm_password_reset(db: Session, token: str, new_password: str) -> None:

@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import Optional
 
@@ -18,9 +19,13 @@ from app.models.support_ticket import (
     SUPPORT_STATUSES,
     SupportTicket,
 )
-from app.models.role import INST_INSTRUCTOR, STUDENT
+from app.models.notification import SUPPORT_TICKET_CREATED, SUPPORT_TICKET_UPDATED
+from app.models.role import INST_INSTRUCTOR, INSTITUTE_ADMIN, STUDENT, SUPER_ADMIN, Role
 from app.models.user import User
 from app.schemas.support import PortalSupportTicketCreate, SupportTicketCreate, SupportTicketUpdate
+from app.services import notification_service
+
+logger = logging.getLogger(__name__)
 
 
 def serialize_ticket(ticket: SupportTicket) -> dict:
@@ -56,6 +61,87 @@ def serialize_ticket(ticket: SupportTicket) -> dict:
     }
 
 
+def _staff_for_queue(db: Session, queue: str, institute_id: Optional[int]) -> list[User]:
+    query = db.query(User).join(User.role).filter(User.deleted_at.is_(None), User.is_active.is_(True))
+    if queue == SUPPORT_QUEUE_INSTITUTE and institute_id is not None:
+        query = query.filter(Role.name == INSTITUTE_ADMIN, User.institute_id == institute_id)
+    else:
+        query = query.filter(Role.name == SUPER_ADMIN)
+    return query.all()
+
+
+def _ticket_link(queue: str) -> str:
+    if queue == SUPPORT_QUEUE_INSTITUTE:
+        return "/institute-portal/support-tickets"
+    return "/super-admin/support-tickets"
+
+
+def _notify_ticket_created(db: Session, ticket: SupportTicket) -> None:
+    """Best-effort: alert the owning queue's staff of a new ticket, and confirm
+    receipt to whoever submitted it. Never raises - a failure here must not
+    block ticket creation."""
+    link = _ticket_link(ticket.queue)
+    for staff in _staff_for_queue(db, ticket.queue, ticket.institute_id):
+        notification_service.create_notification(
+            db,
+            user_id=staff.id,
+            kind=SUPPORT_TICKET_CREATED,
+            title=f"New support ticket: {ticket.subject}",
+            message=f"{ticket.name} ({ticket.email}) submitted a {ticket.priority}-priority ticket.",
+            link_url=link,
+        )
+        notification_service.send_notification_email(
+            db,
+            staff.email,
+            f"New support ticket: {ticket.subject}",
+            f"{ticket.name} ({ticket.email}) submitted a new support ticket:\n\n{ticket.message}",
+            user_id=staff.id,
+        )
+    notification_service.send_notification_email(
+        db,
+        ticket.email,
+        "We've received your support request",
+        (
+            f"Hi {ticket.name},\n\n"
+            f'Thanks for reaching out about "{ticket.subject}". Our team will get back to you shortly.'
+        ),
+        user_id=ticket.requester_id,
+    )
+
+
+def _notify_ticket_updated(db: Session, ticket: SupportTicket, *, status_changed: bool, note_changed: bool) -> None:
+    """Best-effort: tell the requester their ticket moved - status changed
+    and/or support left a reply. No-ops if neither happened this update."""
+    if not (status_changed or note_changed):
+        return
+    if status_changed and note_changed:
+        summary = f'Status changed to "{ticket.status}" and support added a reply.'
+    elif status_changed:
+        summary = f'Status changed to "{ticket.status}".'
+    else:
+        summary = "Support added a reply to your ticket."
+
+    if ticket.requester_id is not None:
+        notification_service.create_notification(
+            db,
+            user_id=ticket.requester_id,
+            kind=SUPPORT_TICKET_UPDATED,
+            title=f'Update on "{ticket.subject}"',
+            message=summary,
+        )
+
+    body_lines = [f"Hi {ticket.name},", "", f'Your support ticket "{ticket.subject}" was updated:', summary]
+    if note_changed and ticket.admin_note:
+        body_lines += ["", f"Note from support: {ticket.admin_note}"]
+    notification_service.send_notification_email(
+        db,
+        ticket.email,
+        f"Update on your support ticket: {ticket.subject}",
+        "\n".join(body_lines),
+        user_id=ticket.requester_id,
+    )
+
+
 def create_ticket(
     db: Session,
     payload: SupportTicketCreate,
@@ -89,6 +175,10 @@ def create_ticket(
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
+    try:
+        _notify_ticket_created(db, ticket)
+    except Exception:
+        logger.exception("Failed to send notifications for new support ticket %s", ticket.id)
     return ticket
 
 
@@ -263,6 +353,8 @@ def update_ticket(
 ) -> SupportTicket:
     ticket = get_ticket(db, ticket_id, queue=queue, institute_id=institute_id)
     data = payload.model_dump(exclude_unset=True)
+    previous_status = ticket.status
+    previous_admin_note = ticket.admin_note
 
     if "status" in data and data["status"] is not None:
         if data["status"] not in SUPPORT_STATUSES:
@@ -282,6 +374,15 @@ def update_ticket(
 
     db.commit()
     db.refresh(ticket)
+    try:
+        _notify_ticket_updated(
+            db,
+            ticket,
+            status_changed=ticket.status != previous_status,
+            note_changed=bool(ticket.admin_note) and ticket.admin_note != previous_admin_note,
+        )
+    except Exception:
+        logger.exception("Failed to send notifications for updated support ticket %s", ticket.id)
     return ticket
 
 
@@ -308,4 +409,26 @@ def forward_ticket_to_super_admin(
         ticket.status = SUPPORT_STATUS_OPEN
     db.commit()
     db.refresh(ticket)
+    try:
+        for staff in _staff_for_queue(db, SUPPORT_QUEUE_SUPER_ADMIN, None):
+            notification_service.create_notification(
+                db,
+                user_id=staff.id,
+                kind=SUPPORT_TICKET_CREATED,
+                title=f"Ticket escalated: {ticket.subject}",
+                message=(
+                    f"{institute_admin.first_name} {institute_admin.last_name} escalated a "
+                    f"{ticket.priority}-priority ticket from {ticket.institute_name or 'an institute'}."
+                ),
+                link_url=_ticket_link(SUPPORT_QUEUE_SUPER_ADMIN),
+            )
+            notification_service.send_notification_email(
+                db,
+                staff.email,
+                f"Ticket escalated: {ticket.subject}",
+                f"{institute_admin.first_name} {institute_admin.last_name} escalated this ticket to you:\n\n{ticket.message}",
+                user_id=staff.id,
+            )
+    except Exception:
+        logger.exception("Failed to send notifications for escalated support ticket %s", ticket.id)
     return ticket

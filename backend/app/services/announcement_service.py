@@ -10,6 +10,7 @@ from app.models.notification import ANNOUNCEMENT_PUBLISHED, Announcement, Studen
 from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, SA_INSTRUCTOR, STUDENT, SUPER_ADMIN, Role
 from app.models.user import User
 from app.schemas.announcement import AnnouncementCreate
+from app.services import notification_service
 
 STAFF_ROLES = (SUPER_ADMIN, SA_INSTRUCTOR, INSTITUTE_ADMIN, INST_INSTRUCTOR)
 ALL_NOTIFICATION_ROLES = (*STAFF_ROLES, STUDENT)
@@ -201,6 +202,7 @@ def _create_user_notifications(db: Session, item: Announcement) -> None:
     if target_users:
         query = query.filter(User.id.in_(target_users))
 
+    users = query.all()
     notifications = [
         StudentNotification(
             user_id=user.id,
@@ -211,10 +213,14 @@ def _create_user_notifications(db: Session, item: Announcement) -> None:
             link_url=ANNOUNCEMENT_LINKS.get(user.role.name),
             created_at=item.published_at or _now(),
         )
-        for user in query.all()
+        for user in users
     ]
     if notifications:
         db.add_all(notifications)
+        for user in users:
+            notification_service.push_to_user(
+                db, user.id, item.title, item.message, link_url=ANNOUNCEMENT_LINKS.get(user.role.name)
+            )
 
 
 def get_super_admin_target_options(db: Session) -> dict:

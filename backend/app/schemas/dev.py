@@ -15,6 +15,12 @@ class SmtpSettingsIn(BaseModel):
 class FcmSettingsIn(BaseModel):
     project_id: Optional[str] = None
     service_account_json: Optional[str] = None  # write-only
+    # Firebase Web SDK config - used client-side to register a browser for push;
+    # distinct from the service account JSON above, which stays server-only.
+    web_api_key: Optional[str] = None
+    web_app_id: Optional[str] = None
+    web_messaging_sender_id: Optional[str] = None
+    web_vapid_key: Optional[str] = None
 
 
 class AvatarSettingsIn(BaseModel):

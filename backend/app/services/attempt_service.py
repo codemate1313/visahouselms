@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -36,6 +37,8 @@ from app.services import cefr_service
 EXPIRY_BUFFER_MINUTES = 2
 FINAL_TEST_HEARTBEAT_GRACE_SECONDS = 30
 FINAL_TEST_AUTO_SUBMIT_VIOLATION_LIMIT = 3
+
+logger = logging.getLogger(__name__)
 _randomizer = SystemRandom()
 
 FLAG_SEVERITY = {
@@ -1060,8 +1063,14 @@ def grade_part(
     if just_completed:
         from app.services import achievement_service, notification_service
 
-        achievement_service.refresh_student_achievements(db, attempt.user_id, attempt.id)
-        notification_service.create_grade_released_notification(db, attempt)
+        # Achievements and the in-app notification are best-effort: a failure here
+        # must never turn an already-saved grade into a 500 for the instructor, and
+        # must never prevent the grade-released email below from being attempted.
+        try:
+            achievement_service.refresh_student_achievements(db, attempt.user_id, attempt.id)
+            notification_service.create_grade_released_notification(db, attempt)
+        except Exception:
+            logger.exception("Failed to record achievements/notification for attempt %s", attempt.id)
         notification_service.send_grade_released_email(db, attempt)
     return get_grading_detail(db, actor, attempt_id)
 

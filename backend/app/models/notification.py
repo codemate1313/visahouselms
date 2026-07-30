@@ -9,6 +9,8 @@ from app.models.base import Base
 
 GRADE_RELEASED = "grade_released"
 ANNOUNCEMENT_PUBLISHED = "announcement_published"
+SUPPORT_TICKET_CREATED = "support_ticket_created"
+SUPPORT_TICKET_UPDATED = "support_ticket_updated"
 
 
 class Announcement(Base):

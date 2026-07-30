@@ -31,6 +31,7 @@ from app.models.notification import Announcement, StudentNotification
 from app.models.payment import Payment
 from app.models.payment_method import PaymentMethod
 from app.models.plan import Plan
+from app.models.push_device_token import PushDeviceToken
 from app.models.request_log import RequestLog
 from app.models.role import Role
 from app.models.subscription import Subscription
@@ -76,6 +77,7 @@ __all__ = [
     "Plan",
     "Subscription",
     "SupportTicket",
+    "PushDeviceToken",
     "InstituteBranding",
     "InstructorProfile",
     "TrialConfig",
