@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { Icon } from "../icons";
+import { ChartViewToggle } from "./ChartViewToggle";
 
 export interface BarChartDatum {
   label: string;
@@ -90,24 +91,11 @@ export function BarChart({
           <span className="chart-tag-text">{title}</span>
         </div>
 
-        <div className="chart-view-toggle-pill">
-          <button
-            type="button"
-            className={`pill-btn ${!showTable ? "active" : ""}`}
-            onClick={() => setShowTable(false)}
-            title="Bar View"
-          >
-            {"≡"}
-          </button>
-          <button
-            type="button"
-            className={`pill-btn ${showTable ? "active" : ""}`}
-            onClick={() => setShowTable(true)}
-            title="Table View"
-          >
-            {"田"}
-          </button>
-        </div>
+        <ChartViewToggle
+          chartLabel="Bar view"
+          onChange={setShowTable}
+          showTable={showTable}
+        />
       </div>
 
       {legend && legend.length > 0 && (

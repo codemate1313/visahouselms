@@ -1,3 +1,4 @@
+import { SegmentedControl } from "@/components/ui";
 import { dashboardStrings as strings } from "../Dashboard.strings";
 import type { MetricBreakdown } from "../types";
 
@@ -15,29 +16,20 @@ export function MetricBreakdownPanel({ breakdown, selectedKey, onSelectKey }: Me
 
   return (
     <section className="metric-breakdown" aria-label={breakdown.label}>
-      <div className="tab-bar metric-breakdown-tabs" role="tablist" aria-label={breakdown.label}>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={selectedKey === null}
-          className={`tab ${selectedKey === null ? "active" : ""}`}
-          onClick={() => onSelectKey(null)}
-        >
-          {t.allMethods} ({breakdown.groups.length})
-        </button>
-        {breakdown.groups.map((group) => (
-          <button
-            key={group.key}
-            type="button"
-            role="tab"
-            aria-selected={selectedKey === group.key}
-            className={`tab ${selectedKey === group.key ? "active" : ""}`}
-            onClick={() => onSelectKey(group.key)}
-          >
-            {group.label} ({group.count})
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        ariaLabel={breakdown.label}
+        className="metric-breakdown-tabs"
+        onChange={(value) => onSelectKey(value === "__all__" ? null : value)}
+        options={[
+          { label: `${t.allMethods} (${breakdown.groups.length})`, value: "__all__" },
+          ...breakdown.groups.map((group) => ({
+            label: `${group.label} (${group.count})`,
+            value: group.key,
+          })),
+        ]}
+        size="sm"
+        value={selectedKey ?? "__all__"}
+      />
     </section>
   );
 }

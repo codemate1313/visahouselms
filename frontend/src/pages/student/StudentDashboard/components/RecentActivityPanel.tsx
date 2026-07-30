@@ -1,5 +1,5 @@
 import type { AttemptSummary } from "@/api/types";
-import { LinkButton } from "@/components/ui";
+import { DashboardButton } from "@/components/ui";
 import { studentDashboardStrings as strings } from "../StudentDashboard.strings";
 import { formatAttemptDate, statusLabel, statusTone } from "../helpers";
 import { Icon } from "@/components/icons";
@@ -47,9 +47,9 @@ export function RecentActivityPanel({ attempts }: RecentActivityPanelProps) {
       ) : (
         <p className="empty-message">{t.empty}</p>
       )}
-      <LinkButton to="/student/attempts" variant="secondary" className="panel-cta" rightIcon={<Icon name="arrowRight" />}>
+      <DashboardButton to="/student/attempts" variant="secondary" className="panel-cta" rightIcon={<Icon name="arrowRight" />}>
         {t.viewFullHistory}
-      </LinkButton>
+      </DashboardButton>
     </section>
   );
 }

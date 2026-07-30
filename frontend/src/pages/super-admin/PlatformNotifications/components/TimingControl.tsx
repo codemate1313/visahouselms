@@ -1,5 +1,5 @@
 import { Icon } from "@/components/icons";
-import { RequiredMark } from "@/components/ui";
+import { RequiredMark, SegmentedControl } from "@/components/ui";
 import { platformNotificationsStrings as strings, timingOptions } from "../PlatformNotifications.strings";
 import type { NotificationStatus } from "../types";
 
@@ -11,29 +11,19 @@ interface TimingControlProps {
 }
 
 export function TimingControl({ status, onStatusChange, scheduledAt, onScheduledAtChange }: TimingControlProps) {
-  const activeTimingIdx = timingOptions.findIndex((opt) => opt.key === status);
   return (
     <>
-      <div className="apple-segmented-control">
-        <div
-          className="apple-segmented-thumb"
-          style={{
-            width: "calc((100% - 4px) / 3)",
-            transform: `translateX(calc(${activeTimingIdx} * 100%))`,
-          }}
-        />
-        {timingOptions.map((opt) => (
-          <button
-            key={opt.key}
-            type="button"
-            onClick={() => onStatusChange(opt.key as NotificationStatus)}
-            className={`apple-segmented-tab ${status === opt.key ? "is-active" : ""}`}
-          >
-            <Icon name={opt.icon} />
-            <span>{opt.label}</span>
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        ariaLabel="Notification timing"
+        fullWidth
+        onChange={onStatusChange}
+        options={timingOptions.map((option) => ({
+          icon: <Icon name={option.icon} />,
+          label: option.label,
+          value: option.key as NotificationStatus,
+        }))}
+        value={status}
+      />
 
       {status === "scheduled" && (
         <div style={{ marginTop: 12 }}>

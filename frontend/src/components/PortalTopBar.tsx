@@ -405,15 +405,21 @@ export function PortalTopBar({
     await logoutAndRedirectHome();
   }
 
+  function handleBack() {
+    const historyIndex = Number(window.history.state?.idx ?? 0);
+    if (historyIndex > 0) {
+      navigate(-1);
+      return;
+    }
+    navigate(fallbackRoute, { replace: true });
+  }
+
   const itemCount = usePageTitleStore((state) => state.itemCount);
+  const currentPath = location.pathname.replace(/\/+$/, "");
+  const portalHomePath = fallbackRoute.replace(/\/+$/, "");
   const showBackButton =
-    location.pathname === "/super-admin/subscriptions" ||
-    breadcrumbs.length > 2 ||
-    location.pathname.includes("/institutes/") ||
-    location.pathname.includes("/onboarding/") ||
-    location.pathname.includes("/plans/") ||
-    location.pathname.includes("/coupons/") ||
-    location.pathname.includes("/accounts/");
+    currentPath !== portalHomePath &&
+    !/^\/student\/attempts\/[^/]+\/take$/.test(currentPath);
 
   return (
     <header className="portal-app-bar">
@@ -437,31 +443,16 @@ export function PortalTopBar({
             })}
           </ol>
         </nav>
-        <div className="portal-app-heading-row" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="portal-app-heading-row">
           {showBackButton && (
             <button
               type="button"
-              onClick={() => navigate(-1)}
-              style={{
-                background: "none",
-                border: "none",
-                outline: "none",
-                boxShadow: "none",
-                color: "var(--text, #0f172a)",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 5,
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: "pointer",
-                padding: "2px 4px",
-                marginRight: 4,
-                borderRadius: 6,
-                transition: "opacity 0.2s ease",
-              }}
-              title="Go back to previous page"
+              className="portal-back-button"
+              onClick={handleBack}
+              aria-label={commonActions.back}
+              title={commonActions.back}
             >
-              <Icon name="arrowLeft" /> {commonActions.back}
+              <Icon name="arrowLeft" />
             </button>
           )}
           <h2 className="portal-app-heading">{pageMeta.title}</h2>

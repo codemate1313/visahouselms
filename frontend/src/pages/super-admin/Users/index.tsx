@@ -4,7 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { Button, ExportButtons, LinkButton, SearchInput, SearchableSelect } from "@/components/ui";
+import { Button, ExportButtons, LinkButton, SearchInput, SearchableSelect, SegmentedControl } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import {
@@ -375,22 +375,19 @@ export function Users() {
 
   return (
     <div className="page">
-      <div className="tab-bar">
-        {DIRECTORY_ROLES.map((role) => {
+      <SegmentedControl
+        ariaLabel="User directory role"
+        className="user-directory-tabs"
+        onChange={(role) => navigate(`/super-admin/users/${SLUG_BY_ROLE[role]}`)}
+        options={DIRECTORY_ROLES.map((role) => {
           const count = data?.role_counts?.[role];
-          return (
-            <button
-              key={role}
-              type="button"
-              className={`tab ${role === activeRole ? "active" : ""}`}
-              onClick={() => navigate(`/super-admin/users/${SLUG_BY_ROLE[role]}`)}
-            >
-              {strings.tabs[role]}
-              {count !== undefined && ` (${count})`}
-            </button>
-          );
+          return {
+            label: `${strings.tabs[role]}${count !== undefined ? ` (${count})` : ""}`,
+            value: role,
+          };
         })}
-      </div>
+        value={activeRole}
+      />
 
       <div className="filter-bar institutes-filter-bar">
         <SearchInput
@@ -552,40 +549,35 @@ export function Users() {
 
       {error && <p className="error-text">{error}</p>}
 
-      {loading && !data ? (
-        <p>{strings.loading}</p>
-      ) : (
-        <>
-          <UsersTable
-            users={data?.items ?? []}
-            currentUserId={currentUser?.id}
-            showInstitute={showInstitute}
-            onToggleActive={handleToggleActive}
-            onForceReset={handleForceReset}
-            onResetPassword={handleResetPassword}
-            onRequestDelete={setDeletingUser}
-            selectableRows={selectableRows}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
-            onToggleSelectAll={toggleSelectAll}
-          />
+      <UsersTable
+        users={data?.items ?? []}
+        loading={loading}
+        currentUserId={currentUser?.id}
+        showInstitute={showInstitute}
+        onToggleActive={handleToggleActive}
+        onForceReset={handleForceReset}
+        onResetPassword={handleResetPassword}
+        onRequestDelete={setDeletingUser}
+        selectableRows={selectableRows}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
+        onToggleSelectAll={toggleSelectAll}
+      />
 
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-                <Icon name="arrowLeft" /> {strings.pagination.prev}
-              </button>
-              <span>{strings.pagination.pageOf(page, totalPages, total)}</span>
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                {strings.pagination.next} <Icon name="arrowRight" />
-              </button>
-            </div>
-          )}
-        </>
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button type="button" disabled={page <= 1 || loading} onClick={() => setPage(page - 1)}>
+            <Icon name="arrowLeft" /> {strings.pagination.prev}
+          </button>
+          <span>{strings.pagination.pageOf(page, totalPages, total)}</span>
+          <button
+            type="button"
+            disabled={page >= totalPages || loading}
+            onClick={() => setPage(page + 1)}
+          >
+            {strings.pagination.next} <Icon name="arrowRight" />
+          </button>
+        </div>
       )}
 
       <ConfirmModal

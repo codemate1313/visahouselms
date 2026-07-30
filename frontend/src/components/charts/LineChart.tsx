@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Icon } from "../icons";
+import { ChartViewToggle } from "./ChartViewToggle";
 import "./LineChart.css";
 
 export interface LineChartDatum {
@@ -112,24 +113,11 @@ export function LineChart({
           <span className="chart-tag-text">{title}</span>
         </div>
 
-        <div className="chart-view-toggle-pill">
-          <button
-            type="button"
-            className={`pill-btn ${!showTable ? "active" : ""}`}
-            onClick={() => setShowTable(false)}
-            title="Graph View"
-          >
-            {"≡"}
-          </button>
-          <button
-            type="button"
-            className={`pill-btn ${showTable ? "active" : ""}`}
-            onClick={() => setShowTable(true)}
-            title="Table View"
-          >
-            {"田"}
-          </button>
-        </div>
+        <ChartViewToggle
+          chartLabel="Graph view"
+          onChange={setShowTable}
+          showTable={showTable}
+        />
       </div>
 
       {showTable ? (

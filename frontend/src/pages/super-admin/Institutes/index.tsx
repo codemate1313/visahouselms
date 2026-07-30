@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { Button } from "@/components/ui";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { confirmExport } from "@/utils/confirmExport";
 import { institutesStrings as strings } from "./Institutes.strings";
@@ -20,6 +21,8 @@ export function Institutes() {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDirection, setSortDirection] = useState<"ascending" | "descending">("ascending");
   const [error, setError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   const load = useCallback(async () => {
@@ -65,6 +68,14 @@ export function Institutes() {
     return () => setItemCount(null);
   }, [filteredRows.length, setItemCount]);
 
+  useEffect(() => {
+    setSelectedIds((current) => {
+      const visibleIds = new Set(filteredRows.map((row) => row.id));
+      const next = new Set(Array.from(current).filter((id) => visibleIds.has(id)));
+      return next.size === current.size ? current : next;
+    });
+  }, [filteredRows]);
+
   function changeSort(nextKey: SortKey) {
     if (nextKey === sortKey) {
       setSortDirection((current) => current === "ascending" ? "descending" : "ascending");
@@ -95,6 +106,77 @@ export function Institutes() {
       );
       setError(extractErrorMessage(err, strings.errors.toggle(action)));
     }
+  }
+
+  function toggleSelect(id: number) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((current) =>
+      current.size === filteredRows.length
+        ? new Set()
+        : new Set(filteredRows.map((row) => row.id))
+    );
+  }
+
+  const selectedRows = filteredRows.filter((row) => selectedIds.has(row.id));
+
+  async function bulkSetActive(active: boolean) {
+    if (selectedRows.length === 0) return;
+    const confirmed = await confirmAction(
+      `${active ? "Reactivate" : "Suspend"} ${selectedRows.length} selected institute(s)?`,
+      {
+        title: active ? strings.confirm.reactivateTitle : strings.confirm.suspendTitle,
+        confirmText: active ? "Reactivate" : "Suspend",
+        variant: active ? "primary" : "warning",
+      },
+    );
+    if (!confirmed) return;
+
+    setBulkBusy(true);
+    setError(null);
+    const results = await Promise.allSettled(
+      selectedRows.map((row) =>
+        apiClient.post(`/super-admin/institutes/${row.id}/${active ? "reactivate" : "suspend"}`)
+      )
+    );
+    if (results.some((result) => result.status === "rejected")) {
+      setError(strings.errors.toggle(active ? "reactivate" : "suspend"));
+    }
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+    await load();
+  }
+
+  async function bulkDelete() {
+    if (selectedRows.length === 0) return;
+    const confirmed = await confirmAction(
+      `Permanently delete ${selectedRows.length} selected institute(s)? This cannot be undone.`,
+      {
+        title: strings.deleteModal.title,
+        confirmText: strings.deleteModal.confirmText,
+        variant: "danger",
+      },
+    );
+    if (!confirmed) return;
+
+    setBulkBusy(true);
+    setError(null);
+    const results = await Promise.allSettled(
+      selectedRows.map((row) => apiClient.delete(`/super-admin/institutes/${row.id}`))
+    );
+    if (results.some((result) => result.status === "rejected")) {
+      setError(strings.errors.delete);
+    }
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+    await load();
   }
 
   const [deletingRow, setDeletingRow] = useState<InstituteRow | null>(null);
@@ -141,6 +223,31 @@ export function Institutes() {
         resultCount={filteredRows.length}
       />
 
+      {selectedRows.length > 0 && (
+        <div className="bulk-actions-bar">
+          <span>
+            <strong>{selectedRows.length}</strong> selected
+          </span>
+          <div className="bulk-actions-buttons">
+            {selectedRows.some((row) => !row.is_active) ? (
+              <Button variant="secondary" size="sm" disabled={bulkBusy} onClick={() => void bulkSetActive(true)}>
+                Reactivate
+              </Button>
+            ) : (
+              <Button variant="secondary" size="sm" disabled={bulkBusy} onClick={() => void bulkSetActive(false)}>
+                Suspend
+              </Button>
+            )}
+            <Button variant="danger" size="sm" disabled={bulkBusy} onClick={() => void bulkDelete()}>
+              Delete
+            </Button>
+            <Button variant="secondary" size="sm" disabled={bulkBusy} onClick={() => setSelectedIds(new Set())}>
+              Clear
+            </Button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <p>{strings.loading}</p>
       ) : (
@@ -151,6 +258,9 @@ export function Institutes() {
           onChangeSort={changeSort}
           onToggleActive={toggleActive}
           onRequestDelete={setDeletingRow}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
         />
       )}
 

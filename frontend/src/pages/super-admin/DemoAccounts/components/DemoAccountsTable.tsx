@@ -1,3 +1,4 @@
+import { DataTableCard } from "@/components/ui";
 import { demoAccountsStrings as strings } from "../DemoAccounts.strings";
 import type { DemoRow } from "../types";
 
@@ -14,7 +15,7 @@ interface DemoAccountsTableProps {
 export function DemoAccountsTable({ rows }: DemoAccountsTableProps) {
   const t = strings.table;
   return (
-    <div className="table-wrap">
+    <DataTableCard>
       <table className="data-table sleek-institutes-table">
         <thead>
           <tr>
@@ -59,6 +60,6 @@ export function DemoAccountsTable({ rows }: DemoAccountsTableProps) {
           ))}
         </tbody>
       </table>
-    </div>
+    </DataTableCard>
   );
 }

@@ -1,4 +1,5 @@
 import { type TimeRange, useDashboardRangeStore } from "../store/dashboardRangeStore";
+import { SegmentedControl } from "./ui";
 import "./DashboardRangeAndThemeToggle.css";
 
 export function DashboardRangeAndThemeToggle() {
@@ -8,23 +9,13 @@ export function DashboardRangeAndThemeToggle() {
 
   return (
     <div className="dash-controls-wrapper">
-      <div className="segmented-range-pill" role="tablist" aria-label="Dashboard time range">
-        {ranges.map((r) => {
-          const isActive = range === r;
-          return (
-            <button
-              key={r}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              className={`range-pill-option ${isActive ? "is-active" : ""}`}
-              onClick={() => setRange(r)}
-            >
-              {r}
-            </button>
-          );
-        })}
-      </div>
+      <SegmentedControl
+        ariaLabel="Dashboard time range"
+        onChange={setRange}
+        options={ranges.map((value) => ({ label: value, value }))}
+        size="sm"
+        value={range}
+      />
     </div>
   );
 }

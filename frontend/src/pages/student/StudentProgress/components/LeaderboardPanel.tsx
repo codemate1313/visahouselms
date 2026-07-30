@@ -1,5 +1,6 @@
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import type { StudentLeaderboard } from "@/api/types";
+import { SegmentedControl } from "@/components/ui";
 import { studentProgressStrings as strings } from "../StudentProgress.strings";
 
 interface LeaderboardPanelProps {
@@ -22,42 +23,16 @@ export function LeaderboardPanel({ leaderboard, scope, onScopeChange }: Leaderbo
       description={t.description}
       badge={<span className="count-chip">{leaderboard.entries.length}</span>}
     >
-      <div className="leaderboard-scope-tabs" style={{ marginBottom: 24, display: "flex", gap: 10 }}>
-        <button
-          className={`tab-btn ${scope === "institute" ? "active" : ""}`}
-          onClick={() => onScopeChange("institute")}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "8px",
-            border: "none",
-            background: scope === "institute" ? "var(--primary)" : "var(--surface-muted)",
-            color: scope === "institute" ? "#ffffff" : "var(--text-muted)",
-            fontWeight: 600,
-            fontSize: "12.5px",
-            cursor: "pointer",
-            transition: "all 0.2s"
-          }}
-        >
-          Institute Cohort
-        </button>
-        <button
-          className={`tab-btn ${scope === "global" ? "active" : ""}`}
-          onClick={() => onScopeChange("global")}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "8px",
-            border: "none",
-            background: scope === "global" ? "var(--primary)" : "var(--surface-muted)",
-            color: scope === "global" ? "#ffffff" : "var(--text-muted)",
-            fontWeight: 600,
-            fontSize: "12.5px",
-            cursor: "pointer",
-            transition: "all 0.2s"
-          }}
-        >
-          Global Standings
-        </button>
-      </div>
+      <SegmentedControl
+        ariaLabel="Leaderboard scope"
+        className="leaderboard-scope-tabs"
+        onChange={onScopeChange}
+        options={[
+          { label: "Institute Cohort", value: "institute" },
+          { label: "Global Standings", value: "global" },
+        ]}
+        value={scope}
+      />
 
       {leaderboard.message ? (
         <p className="empty-message">{leaderboard.message}</p>

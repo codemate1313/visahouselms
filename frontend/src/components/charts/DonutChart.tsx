@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { AnimatedCounter } from "../AnimatedCounter";
 import { Icon } from "../icons";
+import { ChartViewToggle } from "./ChartViewToggle";
 
 interface DonutDatum {
   label: string;
@@ -68,25 +69,12 @@ export function DonutChart({
           <span className="info-dot"><Icon name="analytics" /></span>
           <span>{title}</span>
         </span>
-        {/* View Toggle Pill Control (≡ / 田) */}
-        <div className="chart-view-toggle-pill">
-          <button
-            type="button"
-            className={`pill-btn ${!showTable ? "active" : ""}`}
-            onClick={() => setShowTable(false)}
-            title="Chart View"
-          >
-            ≡
-          </button>
-          <button
-            type="button"
-            className={`pill-btn ${showTable ? "active" : ""}`}
-            onClick={() => setShowTable(true)}
-            title="Data Table View"
-          >
-            田
-          </button>
-        </div>
+        <ChartViewToggle
+          chartLabel="Chart view"
+          onChange={setShowTable}
+          showTable={showTable}
+          tableLabel="Data table view"
+        />
       </div>
 
       {showTable ? (

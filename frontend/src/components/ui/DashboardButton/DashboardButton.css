@@ -1,0 +1,59 @@
+.dashboard-btn {
+  --dashboard-button-accent: var(--sidebar-active-text, var(--primary));
+  --primary: var(--dashboard-button-accent);
+  --primary-hover: color-mix(in srgb, var(--dashboard-button-accent) 86%, #000000);
+  --primary-soft: color-mix(in srgb, var(--dashboard-button-accent) 20%, transparent);
+  border-radius: 14px;
+  min-height: 46px;
+  padding-inline: 20px;
+  font-weight: 700;
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--dashboard-button-accent) 18%, transparent);
+}
+
+.dashboard-btn.ui-btn-lg {
+  min-height: 56px;
+  padding-inline: 24px;
+  font-size: 16px;
+}
+
+.dashboard-btn.ui-btn-secondary,
+.dashboard-btn.ui-btn-ghost {
+  color: var(--dashboard-button-accent);
+  border-color: color-mix(in srgb, var(--dashboard-button-accent) 34%, var(--border));
+  box-shadow: none;
+}
+
+.dashboard-btn.ui-btn-secondary:hover:not(:disabled),
+.dashboard-btn.ui-btn-ghost:hover:not(:disabled) {
+  color: var(--dashboard-button-accent);
+  border-color: var(--dashboard-button-accent);
+  background: color-mix(in srgb, var(--dashboard-button-accent) 10%, var(--surface));
+}
+
+.dashboard-btn.ui-btn-text {
+  color: var(--dashboard-button-accent);
+}
+
+.dashboard-btn.ui-btn-danger {
+  box-shadow: 0 12px 26px rgba(220, 38, 38, 0.18);
+}
+
+.dashboard-btn .ui-btn-label {
+  gap: 10px;
+}
+
+.dashboard-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+[data-theme="dark"] .dashboard-btn.ui-btn-secondary,
+[data-theme="dark"] .dashboard-btn.ui-btn-ghost {
+  background: color-mix(in srgb, var(--dashboard-button-accent) 8%, rgba(255, 255, 255, 0.06));
+  border-color: color-mix(in srgb, var(--dashboard-button-accent) 36%, rgba(255, 255, 255, 0.14));
+}
+
+[data-theme="dark"] .dashboard-btn.ui-btn-secondary:hover:not(:disabled),
+[data-theme="dark"] .dashboard-btn.ui-btn-ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--dashboard-button-accent) 14%, rgba(255, 255, 255, 0.08));
+}

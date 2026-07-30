@@ -16,6 +16,17 @@
 export { Button } from "./Button";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./Button";
 
+export { DashboardButton } from "./DashboardButton";
+export type {
+  DashboardAnchorButtonProps,
+  DashboardActionButtonProps,
+  DashboardButtonProps,
+  DashboardRouterButtonProps,
+} from "./DashboardButton";
+
+export { DataTableCard } from "./DataTableCard";
+export type { DataTableCardProps } from "./DataTableCard";
+
 export { LinkButton } from "./LinkButton";
 export type { LinkButtonProps } from "./LinkButton";
 

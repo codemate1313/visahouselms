@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { TableAvatar } from "@/components/TableAvatar";
-import { Checkbox } from "@/components/ui";
+import { Checkbox, DataTableCard } from "@/components/ui";
 import type { DirectoryUser } from "@/api/types";
 import { usersStrings as strings } from "../Users.strings";
 import {
@@ -18,6 +18,7 @@ import {
 
 interface UsersTableProps {
   users: DirectoryUser[];
+  loading?: boolean;
   currentUserId: number | undefined;
   /** Whether the institute column is meaningful for the active tab. */
   showInstitute: boolean;
@@ -30,6 +31,47 @@ interface UsersTableProps {
   selectedIds: Set<number>;
   onToggleSelect: (id: number) => void;
   onToggleSelectAll: () => void;
+}
+
+function SkeletonRow({ showInstitute, selectable }: { showInstitute: boolean; selectable: boolean }) {
+  return (
+    <tr className="table-skeleton-row">
+      {selectable && (
+        <td className="col-checkbox">
+          <div className="skeleton-element skeleton-checkbox" />
+        </td>
+      )}
+      <td className="col-name">
+        <div className="table-item-cell" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div className="skeleton-element skeleton-avatar" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div className="skeleton-element skeleton-text-title" />
+            <div className="skeleton-element skeleton-text-subtitle" />
+          </div>
+        </div>
+      </td>
+      <td className="col-email">
+        <div className="skeleton-element skeleton-text-email" />
+      </td>
+      {showInstitute && (
+        <td className="col-institute">
+          <div className="skeleton-element skeleton-text-institute" />
+        </td>
+      )}
+      <td className="col-status">
+        <div className="skeleton-element skeleton-badge" />
+      </td>
+      <td className="col-password">
+        <div className="skeleton-element skeleton-badge" />
+      </td>
+      <td className="col-created">
+        <div className="skeleton-element skeleton-text-date" />
+      </td>
+      <td className="col-actions">
+        <div className="skeleton-element skeleton-actions" style={{ marginLeft: "auto" }} />
+      </td>
+    </tr>
+  );
 }
 
 function formatCompactDate(value: string) {
@@ -52,6 +94,7 @@ function formatDaysAgo(value: string) {
 
 export function UsersTable({
   users,
+  loading = false,
   currentUserId,
   showInstitute,
   onToggleActive,
@@ -176,7 +219,7 @@ export function UsersTable({
   }
 
   return (
-    <div className="table-wrap users-table-wrap">
+    <DataTableCard className="users-table-wrap">
       <table className="data-table sleek-accounts-table sleek-users-table responsive-data-table">
         <thead>
           <tr>
@@ -200,82 +243,87 @@ export function UsersTable({
           </tr>
         </thead>
         <tbody>
-          {users.length === 0 && (
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonRow key={i} showInstitute={showInstitute} selectable={selectable} />
+            ))
+          ) : users.length === 0 ? (
             <tr>
               <td colSpan={(showInstitute ? 7 : 6) + (selectable ? 1 : 0)} className="empty-cell">
                 {strings.empty}
               </td>
             </tr>
-          )}
-          {users.map((user) => (
-            <tr key={`${user.role_name}-${user.id}`}>
-              {selectable && (
-                <td className="col-checkbox">
-                  <Checkbox
-                    aria-label={`Select ${user.first_name} ${user.last_name}`}
-                    checked={selectedIds.has(user.id)}
-                    disabled={user.is_owner}
-                    onChange={() => onToggleSelect(user.id)}
-                  />
-                </td>
-              )}
-              <td className="col-name">
-                <div className="table-item-cell">
-                  <TableAvatar
-                    src={user.avatar_path ? (user.avatar_path.startsWith('/') ? user.avatar_path : user.avatar_path.startsWith('storage/') ? `/${user.avatar_path}` : `/storage/${user.avatar_path}`) : null}
-                    name={`${user.first_name} ${user.last_name}`.trim() || user.email || "Super Admin"}
-                    seed={`${user.role_name}-${user.id}-${user.email}`}
-                  />
-                  <div>
-                    <strong className="table-item-title" style={{ fontSize: 13.5 }}>
-                      {user.first_name} {user.last_name}
-                    </strong>
-                    <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
-                      {currentUserId === user.id && (
-                        <span className="badge badge-gray" style={{ fontSize: 10 }}>
-                          {b.you}
-                        </span>
-                      )}
-                      {user.is_owner && (
-                        <span className="badge badge-red" style={{ fontSize: 10 }}>
-                          {b.owner}
-                        </span>
-                      )}
-                      {user.force_password_reset && (
-                        <span className="badge badge-amber" style={{ fontSize: 10 }}>
-                          {b.passwordReset}
-                        </span>
-                      )}
+          ) : (
+            users.map((user) => (
+              <tr key={`${user.role_name}-${user.id}`}>
+                {selectable && (
+                  <td className="col-checkbox">
+                    <Checkbox
+                      aria-label={`Select ${user.first_name} ${user.last_name}`}
+                      checked={selectedIds.has(user.id)}
+                      disabled={user.is_owner}
+                      onChange={() => onToggleSelect(user.id)}
+                    />
+                  </td>
+                )}
+                <td className="col-name">
+                  <div className="table-item-cell">
+                    <TableAvatar
+                      src={user.avatar_path ? (user.avatar_path.startsWith('/') ? user.avatar_path : user.avatar_path.startsWith('storage/') ? `/${user.avatar_path}` : `/storage/${user.avatar_path}`) : null}
+                      name={`${user.first_name} ${user.last_name}`.trim() || user.email || "Super Admin"}
+                      seed={`${user.role_name}-${user.id}-${user.email}`}
+                    />
+                    <div>
+                      <strong className="table-item-title" style={{ fontSize: 13.5 }}>
+                        {user.first_name} {user.last_name}
+                      </strong>
+                      <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
+                        {currentUserId === user.id && (
+                          <span className="badge badge-gray" style={{ fontSize: 10 }}>
+                            {b.you}
+                          </span>
+                        )}
+                        {user.is_owner && (
+                          <span className="badge badge-red" style={{ fontSize: 10 }}>
+                            {b.owner}
+                          </span>
+                        )}
+                        {user.force_password_reset && (
+                          <span className="badge badge-amber" style={{ fontSize: 10 }}>
+                            {b.passwordReset}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </td>
-              <td className="col-email">{user.email}</td>
-              {showInstitute && (
-                <td className="col-institute">
-                  {user.institute_id ? (
-                    <Link to={`/super-admin/institutes/${user.institute_id}`}>
-                      {user.institute_name}
-                    </Link>
-                  ) : (
-                    <span className="text-muted">{strings.platformScope}</span>
-                  )}
                 </td>
-              )}
-              <td className="col-status">
-                <span className={`badge ${user.is_active ? "badge-green" : "badge-inactive"}`}>
-                  {user.is_active ? b.active : b.inactive}
-                </span>
-              </td>
-              <td className="col-password">{renderPasswordChanged(user)}</td>
-              <td className="col-created">{formatCompactDate(user.created_at)}</td>
-              <td className="table-actions institute-row-actions account-row-actions col-actions">
-                {renderActions(user)}
-              </td>
-            </tr>
-          ))}
+                <td className="col-email">{user.email}</td>
+                {showInstitute && (
+                  <td className="col-institute">
+                    {user.institute_id ? (
+                      <Link to={`/super-admin/institutes/${user.institute_id}`}>
+                        {user.institute_name}
+                      </Link>
+                    ) : (
+                      <span className="text-muted">{strings.platformScope}</span>
+                    )}
+                  </td>
+                )}
+                <td className="col-status">
+                  <span className={`badge ${user.is_active ? "badge-green" : "badge-inactive"}`}>
+                    {user.is_active ? b.active : b.inactive}
+                  </span>
+                </td>
+                <td className="col-password">{renderPasswordChanged(user)}</td>
+                <td className="col-created">{formatCompactDate(user.created_at)}</td>
+                <td className="table-actions institute-row-actions account-row-actions col-actions">
+                  {renderActions(user)}
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
-    </div>
+    </DataTableCard>
   );
 }

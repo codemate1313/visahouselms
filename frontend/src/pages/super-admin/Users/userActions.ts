@@ -73,7 +73,7 @@ export function isProtected(user: DirectoryUser): boolean {
 /** Roles the Super Admin manages directly from the directory, wherever they
  *  live: institute members through their institute, direct students through
  *  the directory itself. */
-const MANAGED_TENANT_ROLES: DirectoryRole[] = ["INST_INSTRUCTOR", "STUDENT"];
+const MANAGED_TENANT_ROLES: DirectoryRole[] = ["INSTITUTE_ADMIN", "INST_INSTRUCTOR", "STUDENT"];
 
 /**
  * Base path for activate/deactivate/delete on a tenant-scoped row, or null when
@@ -86,6 +86,9 @@ const MANAGED_TENANT_ROLES: DirectoryRole[] = ["INST_INSTRUCTOR", "STUDENT"];
  */
 export function memberActionBase(user: DirectoryUser): string | null {
   if (user.is_owner || !MANAGED_TENANT_ROLES.includes(user.role_name)) return null;
+  if (user.role_name === "INSTITUTE_ADMIN" && user.institute_id) {
+    return `/super-admin/institutes/${user.institute_id}/admins`;
+  }
   if (user.institute_id) return `/super-admin/institutes/${user.institute_id}/members`;
   return user.role_name === "STUDENT" ? "/super-admin/users" : null;
 }
@@ -101,6 +104,9 @@ export function memberEditPath(user: DirectoryUser): string | null {
     return `/super-admin/users/${user.id}/edit`;
   }
   if (!user.institute_id) return null;
+  if (user.role_name === "INSTITUTE_ADMIN") {
+    return `/super-admin/institutes/${user.institute_id}`;
+  }
   if (user.role_name === "STUDENT") {
     return `/super-admin/institutes/${user.institute_id}/accounts/students/${user.id}/edit`;
   }

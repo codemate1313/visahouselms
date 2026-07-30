@@ -15,6 +15,8 @@ export const institutesStrings = {
     subscription: "Subscription",
     status: "Status",
     actions: "Actions",
+    selectAll: "Select all institutes",
+    selectInstitute: (name: string) => `Select ${name}`,
     empty: "No institutes found matching your query.",
     idPrefix: "ID: #",
     slugPrefix: "slug:",

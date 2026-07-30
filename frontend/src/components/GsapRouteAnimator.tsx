@@ -10,7 +10,7 @@ const ANIMATED_CHILDREN = [
   ".table-card",
   ".data-table",
   ".filter-bar",
-  ".tab-bar",
+  ".ui-segmented-control",
   ".card",
   ".panel",
   ".dashboard-card",

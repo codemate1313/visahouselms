@@ -1,5 +1,6 @@
 import { Icon } from "@/components/icons";
 import type { Announcement } from "@/api/types";
+import { SegmentedControl } from "@/components/ui";
 import { formatDate } from "../helpers";
 import { historyStatusTabs, platformNotificationsStrings as strings } from "../PlatformNotifications.strings";
 import type { HistoryStatusFilter } from "../types";
@@ -24,7 +25,6 @@ export function NotificationHistory({
   onDelete,
 }: NotificationHistoryProps) {
   const t = strings.history;
-  const activeTabIdx = historyStatusTabs.indexOf(statusFilter);
 
   return (
     <div className="pn-card pn-history-card">
@@ -47,25 +47,13 @@ export function NotificationHistory({
             className="pn-history-search"
           />
         </div>
-        <div className="apple-segmented-control">
-          <div
-            className="apple-segmented-thumb"
-            style={{
-              width: "calc((100% - 4px) / 4)",
-              transform: `translateX(calc(${activeTabIdx} * 100%))`,
-            }}
-          />
-          {historyStatusTabs.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => onStatusFilterChange(tab)}
-              className={`apple-segmented-tab ${statusFilter === tab ? "is-active" : ""}`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          ariaLabel="Notification status"
+          onChange={onStatusFilterChange}
+          options={historyStatusTabs.map((value) => ({ label: value, value }))}
+          size="sm"
+          value={statusFilter}
+        />
       </div>
 
       <div className="pn-history-list">

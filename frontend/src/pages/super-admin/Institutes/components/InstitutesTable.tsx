@@ -3,6 +3,7 @@ import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { TableAvatar } from "@/components/TableAvatar";
+import { Checkbox, DataTableCard } from "@/components/ui";
 import { institutesStrings as strings } from "../Institutes.strings";
 import type { InstituteRow, SortKey } from "../types";
 import {
@@ -20,28 +21,54 @@ interface InstitutesTableProps {
   onChangeSort: (key: SortKey) => void;
   onToggleActive: (row: InstituteRow) => void;
   onRequestDelete: (row: InstituteRow) => void;
+  selectedIds: Set<number>;
+  onToggleSelect: (id: number) => void;
+  onToggleSelectAll: () => void;
 }
 
-export function InstitutesTable({ rows, sortKey, sortDirection, onChangeSort, onToggleActive, onRequestDelete }: InstitutesTableProps) {
+export function InstitutesTable({
+  rows,
+  sortKey,
+  sortDirection,
+  onChangeSort,
+  onToggleActive,
+  onRequestDelete,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
+}: InstitutesTableProps) {
   const t = strings.table;
+  const hasRows = rows.length > 0;
+  const allSelected = hasRows && selectedIds.size === rows.length;
+  const partiallySelected = selectedIds.size > 0 && selectedIds.size < rows.length;
+
   return (
-    <div className="table-wrap">
-      <table className="data-table sleek-institutes-table">
+    <DataTableCard>
+      <table className="data-table sleek-institutes-table institutes-directory-table responsive-data-table">
         <thead>
           <tr>
-            <th aria-sort={sortKey === "name" ? sortDirection : "none"}>
+            <th className="table-select-heading col-checkbox">
+              <Checkbox
+                aria-label={t.selectAll}
+                checked={allSelected}
+                disabled={!hasRows}
+                indeterminate={partiallySelected}
+                onChange={onToggleSelectAll}
+              />
+            </th>
+            <th className="col-institute" aria-sort={sortKey === "name" ? sortDirection : "none"}>
               <button type="button" className="table-sort-button" onClick={() => onChangeSort("name")}>
                 {t.institute}
               </button>
             </th>
-            <th aria-sort={sortKey === "slug" ? sortDirection : "none"}>
+            <th className="col-contact" aria-sort={sortKey === "slug" ? sortDirection : "none"}>
               <button type="button" className="table-sort-button" onClick={() => onChangeSort("slug")}>
                 {t.contactAndSlug}
               </button>
             </th>
-            <th>{t.subscription}</th>
-            <th>{t.status}</th>
-            <th className="table-actions-heading" style={{ textAlign: "right", paddingRight: 12 }}>
+            <th className="col-subscription">{t.subscription}</th>
+            <th className="col-status">{t.status}</th>
+            <th className="table-actions-heading col-actions">
               {t.actions}
             </th>
           </tr>
@@ -49,14 +76,21 @@ export function InstitutesTable({ rows, sortKey, sortDirection, onChangeSort, on
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={5} className="empty-cell">
+              <td colSpan={6} className="empty-cell">
                 {t.empty}
               </td>
             </tr>
           )}
           {rows.map((row) => (
-            <tr key={row.id}>
-              <td>
+            <tr className={selectedIds.has(row.id) ? "is-selected-row" : ""} key={row.id}>
+              <td className="col-checkbox">
+                <Checkbox
+                  aria-label={t.selectInstitute(row.name)}
+                  checked={selectedIds.has(row.id)}
+                  onChange={() => onToggleSelect(row.id)}
+                />
+              </td>
+              <td className="col-institute" data-label={t.institute}>
                 <div className="table-item-cell">
                   <TableAvatar
                     src={row.logo_url ? `${API_BASE_URL}${row.logo_url}` : null}
@@ -72,7 +106,7 @@ export function InstitutesTable({ rows, sortKey, sortDirection, onChangeSort, on
                   </div>
                 </div>
               </td>
-              <td>
+              <td className="col-contact" data-label={t.contactAndSlug}>
                 <div className="table-item-details">
                   <span className="table-item-title" style={{ fontSize: 13, fontWeight: 500 }}>
                     {row.contact_email ?? "—"}
@@ -82,12 +116,12 @@ export function InstitutesTable({ rows, sortKey, sortDirection, onChangeSort, on
                   </span>
                 </div>
               </td>
-              <td>
+              <td className="col-subscription" data-label={t.subscription}>
                 <span className={`badge ${SUBSCRIPTION_STATE_BADGES[row.subscription_state] ?? "badge-gray"}`}>
                   {SUBSCRIPTION_STATUS_LABELS[row.subscription_state as SubscriptionStatus] ?? row.subscription_state}
                 </span>
               </td>
-              <td>
+              <td className="col-status" data-label={t.status}>
                 <span className={`badge ${row.is_active ? "badge-green" : "badge-gray"}`}>
                   {row.onboarding_status === INSTITUTE_STATUS.DRAFT
                     ? INSTITUTE_STATUS_LABELS.draft
@@ -96,7 +130,7 @@ export function InstitutesTable({ rows, sortKey, sortDirection, onChangeSort, on
                       : INSTITUTE_STATUS_LABELS.suspended}
                 </span>
               </td>
-              <td className="table-actions institute-row-actions" style={{ paddingRight: 12 }}>
+              <td className="table-actions institute-row-actions col-actions" data-label={t.actions}>
                 <RowActionMenu
                   items={[
                     <button key="status" type="button" onClick={() => onToggleActive(row)}>
@@ -126,6 +160,6 @@ export function InstitutesTable({ rows, sortKey, sortDirection, onChangeSort, on
           ))}
         </tbody>
       </table>
-    </div>
+    </DataTableCard>
   );
 }

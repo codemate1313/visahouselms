@@ -6,7 +6,7 @@ import { DashboardStats } from "./components/DashboardStats";
 import { ModuleAuthoringPanel } from "./components/ModuleAuthoringPanel";
 import { ProfileReadinessPanel } from "./components/ProfileReadinessPanel";
 import { RecentActivityPanel } from "./components/RecentActivityPanel";
-import { LinkButton, PageHeader } from "@/components/ui";
+import { DashboardButton, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/icons";
 
 interface Summary {
@@ -50,9 +50,9 @@ export function InstructorDashboard() {
         title={strings.welcome(user?.first_name)}
         subtitle={strings.subtitle}
         actions={
-          <LinkButton to="/super-admin/instructor/modules" leftIcon={<Icon name="plus" />}>
+          <DashboardButton to="/super-admin/instructor/modules" leftIcon={<Icon name="plus" />} size="lg">
             {strings.createModule}
-          </LinkButton>
+          </DashboardButton>
         }
       />
 

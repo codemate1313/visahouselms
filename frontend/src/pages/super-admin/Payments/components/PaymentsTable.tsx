@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
+import { DataTableCard } from "@/components/ui";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { paymentsStrings as strings } from "../Payments.strings";
 import type { PaymentRow } from "../types";
@@ -20,7 +21,7 @@ interface PaymentsTableProps {
 export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
   const t = strings.table;
   return (
-    <div className="table-wrap">
+    <DataTableCard>
       <table className="data-table sleek-institutes-table">
         <thead>
           <tr>
@@ -91,6 +92,6 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
           ))}
         </tbody>
       </table>
-    </div>
+    </DataTableCard>
   );
 }

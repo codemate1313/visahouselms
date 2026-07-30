@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SegmentedControl } from "@/components/ui";
 import { tabLabels, tabOrder } from "./DeveloperSettings.strings";
 import type { Tab } from "./types";
 import { TypographyTab } from "./components/TypographyTab";
@@ -16,13 +17,13 @@ export function DeveloperSettings() {
 
   return (
     <div>
-      <div className="tab-bar">
-        {tabOrder.map((t) => (
-          <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
-            {tabLabels[t]}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        ariaLabel="Developer settings section"
+        className="developer-settings-tabs"
+        onChange={setTab}
+        options={tabOrder.map((value) => ({ label: tabLabels[value], value }))}
+        value={tab}
+      />
       {tab === "typography" && <TypographyTab />}
       {tab === "slider" && <LoginSliderTab />}
       {tab === "smtp" && <SmtpTab />}

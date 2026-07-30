@@ -538,6 +538,95 @@ def reset_admin_password(
     }
 
 
+def _active_admin_count(db: Session, institute_id: int, exclude_admin_id: Optional[int] = None) -> int:
+    query = (
+        db.query(User)
+        .join(Role)
+        .filter(
+            User.institute_id == institute_id,
+            User.deleted_at.is_(None),
+            User.is_active.is_(True),
+            Role.name == INSTITUTE_ADMIN,
+        )
+    )
+    if exclude_admin_id is not None:
+        query = query.filter(User.id != exclude_admin_id)
+    return query.count()
+
+
+def set_admin_active(
+    db: Session,
+    actor: User,
+    institute_id: int,
+    admin_id: int,
+    active: bool,
+    ip: Optional[str],
+) -> dict:
+    admin = get_institute_admin_or_404(db, institute_id, admin_id)
+    if admin.is_owner:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Owner account cannot be suspended")
+    if not active and _active_admin_count(db, institute_id, exclude_admin_id=admin.id) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot suspend the last active institute admin",
+        )
+
+    admin.is_active = active
+    revoked = _revoke_sessions(db, admin.id) if not active else 0
+    db.add(admin)
+    db.add(
+        AuditLog(
+            user_id=actor.id,
+            action="institute_admin.reactivate" if active else "institute_admin.deactivate",
+            entity_type="user",
+            entity_id=admin.id,
+            details={"institute_id": institute_id, "email": admin.email, "sessions_revoked": revoked},
+            ip_address=ip,
+        )
+    )
+    db.commit()
+    db.refresh(admin)
+    return {
+        "id": admin.id,
+        "email": admin.email,
+        "is_active": admin.is_active,
+        "sessions_revoked": revoked,
+    }
+
+
+def delete_admin(
+    db: Session,
+    actor: User,
+    institute_id: int,
+    admin_id: int,
+    ip: Optional[str],
+) -> None:
+    admin = get_institute_admin_or_404(db, institute_id, admin_id)
+    if admin.is_owner:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Owner account cannot be deleted")
+    if _active_admin_count(db, institute_id, exclude_admin_id=admin.id) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete the last active institute admin",
+        )
+
+    admin.is_active = False
+    admin.deleted_at = datetime.now(timezone.utc)
+    revoked = _revoke_sessions(db, admin.id)
+    db.add(admin)
+    db.add(
+        AuditLog(
+            user_id=actor.id,
+            action="institute_admin.archive",
+            entity_type="user",
+            entity_id=admin.id,
+            details={"institute_id": institute_id, "email": admin.email, "sessions_revoked": revoked},
+            ip_address=ip,
+        )
+    )
+    db.commit()
+
+
 def _revoke_sessions(db: Session, user_id: int) -> int:
     now = datetime.now(timezone.utc)
     sessions = (

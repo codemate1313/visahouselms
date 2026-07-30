@@ -1,3 +1,4 @@
+import { DataTableCard } from "@/components/ui";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
 import { STATE_BADGES, stateLabel } from "../helpers";
 import type { SubscriptionInfo } from "../types";
@@ -14,7 +15,7 @@ export function SubscriptionHistoryTable({ history, onCancel }: SubscriptionHist
       <h2 className="section-title" style={{ marginBottom: 16 }}>
         {t.heading}
       </h2>
-      <div className="table-wrap subscription-history-wrap">
+      <DataTableCard className="subscription-history-wrap">
         <table className="data-table sleek-institutes-table subscription-history-table">
           <colgroup>
             <col className="col-plan" />
@@ -65,7 +66,7 @@ export function SubscriptionHistoryTable({ history, onCancel }: SubscriptionHist
             ))}
           </tbody>
         </table>
-      </div>
+      </DataTableCard>
     </div>
   );
 }

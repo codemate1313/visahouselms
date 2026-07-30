@@ -2,7 +2,7 @@ import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
-import { Button } from "@/components/ui";
+import { DashboardButton } from "@/components/ui";
 import { studentDashboardStrings as strings } from "../StudentDashboard.strings";
 import "./DailyEnglishChallenge.css";
 import { EnglishDiscovery } from "./EnglishDiscovery";
@@ -155,7 +155,7 @@ export function DailyEnglishChallenge() {
                 <span>{t.currentStreak}</span>
                 <strong>{challenge.current_streak} {challenge.current_streak === 1 ? t.day : t.days}</strong>
               </div>
-              <Button
+              <DashboardButton
                 leftIcon={<Icon name="eye" />}
                 onClick={() => {
                   setActiveIndex(0);
@@ -164,7 +164,7 @@ export function DailyEnglishChallenge() {
                 variant="secondary"
               >
                 {t.reviewAnswers}
-              </Button>
+              </DashboardButton>
             </div>
           </div>
           <PracticeActivity activity={challenge.activity} />
@@ -238,21 +238,21 @@ export function DailyEnglishChallenge() {
           {error && <p className="error-text">{error}</p>}
 
           <div className="daily-question-navigation">
-            <Button
+            <DashboardButton
               disabled={activeIndex === 0}
               leftIcon={<Icon name="arrowLeft" />}
               onClick={() => setActiveIndex((index) => Math.max(0, index - 1))}
               variant="secondary"
             >
               {t.previous}
-            </Button>
+            </DashboardButton>
             {answered && activeIndex < challenge.questions.length - 1 && (
-              <Button
+              <DashboardButton
                 onClick={() => setActiveIndex((index) => Math.min(challenge.questions.length - 1, index + 1))}
                 rightIcon={<Icon name="arrowRight" />}
               >
                 {t.next}
-              </Button>
+              </DashboardButton>
             )}
             {challenge.completed && activeIndex === challenge.questions.length - 1 && (
               <span className="daily-complete-label">
@@ -260,9 +260,9 @@ export function DailyEnglishChallenge() {
               </span>
             )}
             {challenge.completed && reviewing && (
-              <Button onClick={() => setReviewing(false)} variant="secondary">
+              <DashboardButton onClick={() => setReviewing(false)} variant="secondary">
                 {t.backToResult}
-              </Button>
+              </DashboardButton>
             )}
           </div>
         </div>

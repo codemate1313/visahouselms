@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
+import { DataTableCard } from "@/components/ui";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { instituteOnboardingsStrings as strings } from "../InstituteOnboardings.strings";
 import type { OnboardingRow } from "../types";
@@ -12,7 +13,7 @@ interface OnboardingsTableProps {
 export function OnboardingsTable({ rows, onRequestDelete }: OnboardingsTableProps) {
   const t = strings.table;
   return (
-    <div className="table-wrap">
+    <DataTableCard>
       <table className="data-table sleek-onboardings-table">
         <thead>
           <tr>
@@ -109,6 +110,6 @@ export function OnboardingsTable({ rows, onRequestDelete }: OnboardingsTableProp
           )}
         </tbody>
       </table>
-    </div>
+    </DataTableCard>
   );
 }

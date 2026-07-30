@@ -1,5 +1,5 @@
 import type { StudentCurrentPlan } from "@/api/types";
-import { LinkButton } from "@/components/ui";
+import { DashboardButton } from "@/components/ui";
 import { studentDashboardStrings as strings } from "../StudentDashboard.strings";
 import { moduleTone } from "../helpers";
 import type { TestProgressItem } from "../types";
@@ -57,9 +57,9 @@ export function LearningPlanPanel({ isInstituteStudent, plan, testProgress, comp
       ) : (
         <p className="empty-message">{isInstituteStudent ? t.instituteEmpty : t.directEmpty}</p>
       )}
-      <LinkButton to="/student/my-courses" variant="secondary" className="panel-cta" rightIcon={<Icon name="arrowRight" />}>
+      <DashboardButton to="/student/my-courses" variant="secondary" className="panel-cta" rightIcon={<Icon name="arrowRight" />}>
         {t.goToMyTests}
-      </LinkButton>
+      </DashboardButton>
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
+import { DataTableCard } from "@/components/ui";
 import { paymentMethodsStrings as strings } from "../PaymentMethods.strings";
 import type { MethodRow } from "../types";
 import { ACTIVATION_STATUS_LABELS } from "@/constants";
@@ -13,7 +14,7 @@ interface MethodsTableProps {
 export function MethodsTable({ methods, onToggleActive, onRequestDelete }: MethodsTableProps) {
   const t = strings.table;
   return (
-    <div className="table-wrap">
+    <DataTableCard>
       <table className="data-table sleek-institutes-table">
         <thead>
           <tr>
@@ -60,6 +61,6 @@ export function MethodsTable({ methods, onToggleActive, onRequestDelete }: Metho
           ))}
         </tbody>
       </table>
-    </div>
+    </DataTableCard>
   );
 }

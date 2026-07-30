@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
+import { DataTableCard } from "@/components/ui";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { plansStrings as strings } from "../Plans.strings";
 import type { PlanRow } from "../types";
@@ -19,7 +20,7 @@ interface PlansTableProps {
 export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onView, onRequestDelete }: PlansTableProps) {
   const t = strings.table;
   return (
-    <div className="table-wrap">
+    <DataTableCard>
       <table className="data-table sleek-plans-table">
         <thead>
           <tr>
@@ -102,6 +103,6 @@ export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onVi
           ))}
         </tbody>
       </table>
-    </div>
+    </DataTableCard>
   );
 }

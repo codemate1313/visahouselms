@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
+import { DataTableCard } from "@/components/ui";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { couponsStrings as strings } from "../Coupons.strings";
 import type { CouponRow } from "../types";
@@ -15,7 +16,7 @@ interface CouponsTableProps {
 export function CouponsTable({ coupons, onToggleActive, onRequestDelete }: CouponsTableProps) {
   const t = strings.table;
   return (
-    <div className="table-wrap">
+    <DataTableCard>
       <table className="data-table sleek-institutes-table">
         <thead>
           <tr>
@@ -93,6 +94,6 @@ export function CouponsTable({ coupons, onToggleActive, onRequestDelete }: Coupo
           ))}
         </tbody>
       </table>
-    </div>
+    </DataTableCard>
   );
 }

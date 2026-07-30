@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { SearchInput } from "@/components/ui";
+import { SearchInput, SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 
@@ -95,18 +95,13 @@ export function Logs() {
     <div>
       {/* Top Filter Bar */}
       <div className="logs-filter-toolbar">
-        <div className="logs-tabs">
-          {LOG_TYPES.map((item) => (
-            <button
-              key={item}
-              type="button"
-              className={`logs-tab-btn ${type === item ? "is-active" : ""}`}
-              onClick={() => setType(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          ariaLabel="Log type"
+          onChange={setType}
+          options={LOG_TYPES.map((value) => ({ label: value.toUpperCase(), value }))}
+          size="sm"
+          value={type}
+        />
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <SearchInput

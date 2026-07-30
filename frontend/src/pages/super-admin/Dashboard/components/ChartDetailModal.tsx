@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { BarChart } from "@/components/charts/BarChart";
 import { DonutChart } from "@/components/charts/DonutChart";
 import { LineChart } from "@/components/charts/LineChart";
+import { SegmentedControl } from "@/components/ui";
 import { dashboardStrings as strings } from "../Dashboard.strings";
 import { PAYMENT_STATUS_COLORS, STUDENT_TYPE_COLORS, SUBSCRIPTION_STATE_COLORS, formatMoney } from "../helpers";
 import type { Summary } from "../types";
@@ -138,27 +139,8 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
   const [fromDate, setFromDate] = useState<string>(initialDates.fromDate);
   const [toDate, setToDate] = useState<string>(initialDates.toDate);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [pillStyle, setPillStyle] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
-
   const t = strings.charts;
   const stateLabels = strings.subscriptionStateLabels;
-
-  const activeIndex = filterConfig.options.findIndex((opt) => opt.id === activeFilter);
-
-  useLayoutEffect(() => {
-    if (!containerRef.current) return;
-    const buttons = containerRef.current.querySelectorAll<HTMLButtonElement>(".timeframe-tab-btn");
-    const activeButton = buttons[activeIndex >= 0 ? activeIndex : 0];
-    if (activeButton) {
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const buttonRect = activeButton.getBoundingClientRect();
-      setPillStyle({
-        left: buttonRect.left - containerRect.left,
-        width: buttonRect.width,
-      });
-    }
-  }, [activeIndex, activeFilter]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -393,27 +375,17 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
           <div className="chart-timeframe-toolbar" style={{ flexWrap: "wrap", gap: 14 }}>
             <span className="timeframe-toolbar-label">{filterConfig.label}</span>
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <div className="chart-timeframe-segmented-control" ref={containerRef}>
-                {pillStyle.width > 0 && (
-                  <span
-                    className="timeframe-sliding-pill"
-                    style={{
-                      left: `${pillStyle.left}px`,
-                      width: `${pillStyle.width}px`,
-                    }}
-                  />
-                )}
-                {filterConfig.options.map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    className={`timeframe-tab-btn ${activeFilter === opt.id ? "active" : ""}`}
-                    onClick={() => handlePresetSelect(opt.id)}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+              <SegmentedControl
+                ariaLabel={filterConfig.label}
+                className="chart-timeframe-control"
+                onChange={handlePresetSelect}
+                options={filterConfig.options.map((option) => ({
+                  label: option.label,
+                  value: option.id,
+                }))}
+                size="sm"
+                value={activeFilter}
+              />
 
               {/* Timeline From Date -> To Date Inputs */}
               {(chartKey === "byMonth" || chartKey === "byInstitute") && (

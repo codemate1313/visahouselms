@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChartViewToggle } from "@/components/charts/ChartViewToggle";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
 
 interface QuotaPieChartProps {
@@ -34,14 +35,12 @@ export function QuotaPieChart({ usage, limits }: QuotaPieChartProps) {
     <div className="quota-analytics-card">
       <div className="chart-toolbar" style={{ marginBottom: 12 }}>
         <h3 className="analytics-card-title" style={{ margin: 0 }}>{t.title}</h3>
-        <div className="chart-view-toggle-pill">
-          <button type="button" className={`pill-btn ${!showTable ? "active" : ""}`} onClick={() => setShowTable(false)} title={t.chartViewTitle}>
-            ≡
-          </button>
-          <button type="button" className={`pill-btn ${showTable ? "active" : ""}`} onClick={() => setShowTable(true)} title={t.tableViewTitle}>
-            田
-          </button>
-        </div>
+        <ChartViewToggle
+          chartLabel={t.chartViewTitle}
+          onChange={setShowTable}
+          showTable={showTable}
+          tableLabel={t.tableViewTitle}
+        />
       </div>
 
       {showTable ? (

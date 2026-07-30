@@ -271,6 +271,43 @@ def reset_institute_admin_password(
     )
 
 
+@router.post("/{institute_id}/admins/{admin_id}/deactivate")
+def deactivate_institute_admin(
+    institute_id: int,
+    admin_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return institute_service.set_admin_active(
+        db, actor, institute_id, admin_id, False, _client_ip(request)
+    )
+
+
+@router.post("/{institute_id}/admins/{admin_id}/reactivate")
+def reactivate_institute_admin(
+    institute_id: int,
+    admin_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return institute_service.set_admin_active(
+        db, actor, institute_id, admin_id, True, _client_ip(request)
+    )
+
+
+@router.delete("/{institute_id}/admins/{admin_id}", status_code=204)
+def delete_institute_admin(
+    institute_id: int,
+    admin_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    institute_service.delete_admin(db, actor, institute_id, admin_id, _client_ip(request))
+
+
 @router.post("/{institute_id}/students/{student_id}/revoke-sessions")
 def revoke_institute_student_sessions(
     institute_id: int,

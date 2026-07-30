@@ -1,4 +1,4 @@
-import { RequiredMark } from "@/components/ui";
+import { RequiredMark, SegmentedControl } from "@/components/ui";
 import { instituteAnnouncementsStrings as strings } from "../InstituteAnnouncements.strings";
 import type { AnnouncementStatus } from "../types";
 
@@ -14,17 +14,17 @@ export function PublishTimingSelector({ status, onStatusChange, scheduledAt, onS
   return (
     <div className="schedule-timing-group">
       <label>{t.timingLabel}</label>
-      <div className="schedule-timing-options">
-        <div className={`schedule-timing-pill ${status === "published" ? "selected" : ""}`} onClick={() => onStatusChange("published")}>
-          {t.timingOptions.published}
-        </div>
-        <div className={`schedule-timing-pill ${status === "scheduled" ? "selected" : ""}`} onClick={() => onStatusChange("scheduled")}>
-          {t.timingOptions.scheduled}
-        </div>
-        <div className={`schedule-timing-pill ${status === "draft" ? "selected" : ""}`} onClick={() => onStatusChange("draft")}>
-          {t.timingOptions.draft}
-        </div>
-      </div>
+      <SegmentedControl
+        ariaLabel={t.timingLabel}
+        fullWidth
+        onChange={onStatusChange}
+        options={[
+          { label: t.timingOptions.published, value: "published" },
+          { label: t.timingOptions.scheduled, value: "scheduled" },
+          { label: t.timingOptions.draft, value: "draft" },
+        ]}
+        value={status}
+      />
 
       {status === "scheduled" && (
         <div>

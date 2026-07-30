@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { instituteDashboardStrings as strings } from "../InstituteDashboard.strings";
 import type { AccessWindow } from "../types";
-import { LinkButton } from "@/components/ui";
+import { DashboardButton } from "@/components/ui";
 
 interface AccessCountdownCardProps {
   access: AccessWindow;
@@ -61,9 +61,9 @@ export function AccessCountdownCard({ access, canSeeBilling }: AccessCountdownCa
         <p className="access-countdown-warning">{ended ? t.endedWarning : t.warning}</p>
         {!ended && access.grace_days > 0 && <p className="access-countdown-note">{t.graceNote(access.grace_days)}</p>}
         {canSeeBilling && (
-          <LinkButton to="/institute-portal/billing">
+          <DashboardButton to="/institute-portal/billing">
             {t.renew}
-          </LinkButton>
+          </DashboardButton>
         )}
       </div>
     </div>

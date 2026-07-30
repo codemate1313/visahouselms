@@ -1,5 +1,5 @@
 import { dashboardStrings as strings } from "../Dashboard.strings";
-import { LinkButton } from "@/components/ui";
+import { DashboardButton } from "@/components/ui";
 
 /** The public pricing page renders whatever plans are live, so zero live plans
  *  means prospects land on an empty page — surfaced here until it is fixed. */
@@ -12,9 +12,9 @@ export function NoLivePlanAlert() {
         <strong>{t.title}</strong>
         <span>{t.body}</span>
       </div>
-      <LinkButton to="/super-admin/plans/new">
+      <DashboardButton to="/super-admin/plans/new" size="lg">
         {t.cta}
-      </LinkButton>
+      </DashboardButton>
     </div>
   );
 }
