@@ -447,3 +447,25 @@
   from { opacity: 0.6; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1.05); }
 }
+
+.drawer-error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.drawer-error-container .error-icon {
+  font-size: 48px;
+  color: var(--primary, #b91c2b);
+  margin-bottom: 16px;
+}
+
+.drawer-error-container p {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.6));
+}

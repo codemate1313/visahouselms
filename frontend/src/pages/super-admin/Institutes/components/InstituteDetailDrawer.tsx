@@ -61,6 +61,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [chartData, setChartData] = useState<LineChartDatum[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Tab states for search/filter
   const [studentSearch, setStudentSearch] = useState("");
@@ -75,6 +76,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
     if (!instituteId) return;
 
     setLoading(true);
+    setError(null);
     setActiveTab("overview");
     setStudentSearch("");
     setInstructorSearch("");
@@ -83,15 +85,18 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
 
     Promise.all([
       apiClient.get<InstituteDetails>(`/super-admin/institutes/${instituteId}`),
-      apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=student`),
-      apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=instructor`),
+      apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=STUDENT`),
+      apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=INST_INSTRUCTOR`),
     ])
       .then(([detailsRes, studentsRes, instructorsRes]) => {
         setDetails(detailsRes.data);
         setStudents(studentsRes.data);
         setInstructors(instructorsRes.data);
       })
-      .catch((err) => console.error("Error loading institute details drawer data:", err))
+      .catch((err) => {
+        console.error("Error loading institute details drawer data:", err);
+        setError("Failed to load institute data. Please close and try again.");
+      })
       .finally(() => setLoading(false));
   }, [instituteId]);
 
@@ -191,7 +196,37 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
 
         {/* Content Body */}
         <div className="drawer-content-scroll">
-          {loading ? (
+          {error ? (
+            <div className="drawer-error-container">
+              <Icon name="help" className="error-icon" />
+              <p>{error}</p>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setError(null);
+                  setLoading(true);
+                  Promise.all([
+                    apiClient.get<InstituteDetails>(`/super-admin/institutes/${instituteId}`),
+                    apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=STUDENT`),
+                    apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=INST_INSTRUCTOR`),
+                  ])
+                    .then(([detailsRes, studentsRes, instructorsRes]) => {
+                      setDetails(detailsRes.data);
+                      setStudents(studentsRes.data);
+                      setInstructors(instructorsRes.data);
+                    })
+                    .catch((err) => {
+                      console.error("Error loading institute details drawer data:", err);
+                      setError("Failed to load institute data. Please close and try again.");
+                    })
+                    .finally(() => setLoading(false));
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          ) : loading ? (
             <div className="drawer-spinner-container">
               <div className="drawer-spinner"></div>
             </div>
