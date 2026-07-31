@@ -140,6 +140,7 @@ def _serialize(db: Session, institute: Institute) -> dict:
         "onboarding_status": institute.onboarding_status,
         "subscription_state": sub_state,
         "created_at": institute.created_at,
+        "admin_id": admin.id if admin else None,
         "admin_email": admin.email if admin else None,
         "admin_first_name": admin.first_name if admin else None,
         "admin_last_name": admin.last_name if admin else None,

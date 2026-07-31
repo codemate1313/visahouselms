@@ -25,6 +25,10 @@ interface InstituteDetails {
   ai_student_monthly_limit?: number;
   student_limit?: number;
   staff_limit?: number;
+  admin_id?: number;
+  admin_email?: string;
+  admin_first_name?: string;
+  admin_last_name?: string;
 }
 
 interface Member {
@@ -57,7 +61,6 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
   const [details, setDetails] = useState<InstituteDetails | null>(null);
   const [students, setStudents] = useState<Member[]>([]);
   const [instructors, setInstructors] = useState<Member[]>([]);
-  const [admins, setAdmins] = useState<Member[]>([]);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [chartData, setChartData] = useState<LineChartDatum[]>([]);
   const [loading, setLoading] = useState(false);
@@ -94,13 +97,11 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
       apiClient.get<InstituteDetails>(`/super-admin/institutes/${instituteId}`),
       apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=STUDENT`),
       apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=INST_INSTRUCTOR`),
-      apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=INSTITUTE_ADMIN`),
     ])
-      .then(([detailsRes, studentsRes, instructorsRes, adminsRes]) => {
+      .then(([detailsRes, studentsRes, instructorsRes]) => {
         setDetails(detailsRes.data);
         setStudents(studentsRes.data);
         setInstructors(instructorsRes.data);
-        setAdmins(adminsRes.data);
       })
       .catch((err) => {
         console.error("Error loading institute details drawer data:", err);
@@ -161,9 +162,13 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
   const activityUserOptions = (() => {
     let usersList: { value: number; label: string; sublabel: string }[] = [];
     if (activityRoleFilter === "all" || activityRoleFilter === "INSTITUTE_ADMIN") {
-      usersList = usersList.concat(
-        admins.map((a) => ({ value: a.id, label: `${a.first_name} ${a.last_name}`, sublabel: "Admin" }))
-      );
+      if (details?.admin_id && details?.admin_email) {
+        usersList.push({
+          value: details.admin_id,
+          label: `${details.admin_first_name || ""} ${details.admin_last_name || ""}`.trim() || details.admin_email,
+          sublabel: "Admin",
+        });
+      }
     }
     if (activityRoleFilter === "all" || activityRoleFilter === "INST_INSTRUCTOR") {
       usersList = usersList.concat(
@@ -246,13 +251,11 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                     apiClient.get<InstituteDetails>(`/super-admin/institutes/${instituteId}`),
                     apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=STUDENT`),
                     apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=INST_INSTRUCTOR`),
-                    apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=INSTITUTE_ADMIN`),
                   ])
-                    .then(([detailsRes, studentsRes, instructorsRes, adminsRes]) => {
+                    .then(([detailsRes, studentsRes, instructorsRes]) => {
                       setDetails(detailsRes.data);
                       setStudents(studentsRes.data);
                       setInstructors(instructorsRes.data);
-                      setAdmins(adminsRes.data);
                     })
                     .catch((err) => {
                       console.error("Error loading institute details drawer data:", err);
