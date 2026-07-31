@@ -6,6 +6,15 @@ import { DashboardButton } from "@/components/ui";
 import { studentDashboardStrings as strings } from "../StudentDashboard.strings";
 import "./DailyEnglishChallenge.css";
 
+interface EnglishFact {
+  page_id: number;
+  title: string;
+  fact: string;
+  image_url: string;
+  source_url: string;
+  source_name: string;
+}
+
 interface DailyQuestion {
   id: string;
   category: string;
@@ -64,34 +73,6 @@ function PracticeActivity({ activity }: { activity: ChallengeActivity[] }) {
   );
 }
 
-const LOCAL_FACTS = [
-  {
-    title: "Shortest Sentence",
-    content: "The shortest complete sentence in the English language is 'I am.' It contains a subject (I) and a verb (am) to express a complete thought.",
-    icon: "help" as const,
-  },
-  {
-    title: "Pangram Sentences",
-    content: "A pangram is a sentence that contains every letter in the alphabet. The most famous example is: 'The quick brown fox jumps over the lazy dog.'",
-    icon: "courses" as const,
-  },
-  {
-    title: "The Most Common Word",
-    content: "The word 'the' is the most common word in the English language. It represents about 5% of all written and spoken words.",
-    icon: "search" as const,
-  },
-  {
-    title: "Crutch Words",
-    content: "Words like 'like', 'literally', 'actually', and 'basically' are called 'crutch words'. We repeat them out of habit without adding any value.",
-    icon: "logs" as const,
-  },
-  {
-    title: "Shakespeare's Vocabulary",
-    content: "William Shakespeare is credited with inventing over 1,700 words, including 'lonely', 'bedroom', 'fashionable', 'eyeball', and 'swagger'.",
-    icon: "admin" as const,
-  },
-];
-
 export function DailyEnglishChallenge() {
   const [challenge, setChallenge] = useState<DailyChallenge | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -100,6 +81,9 @@ export function DailyEnglishChallenge() {
   const [error, setError] = useState<string | null>(null);
   const [showFacts, setShowFacts] = useState(false);
   const [factIndex, setFactIndex] = useState(0);
+  const [facts, setFacts] = useState<EnglishFact[]>([]);
+  const [factsLoading, setFactsLoading] = useState(false);
+  const [failedImageId, setFailedImageId] = useState<number | null>(null);
   const t = strings.dailyEnglish;
 
   useEffect(() => {
@@ -111,6 +95,30 @@ export function DailyEnglishChallenge() {
       })
       .catch((err: unknown) => setError(extractErrorMessage(err, t.loadError)));
   }, [t.loadError]);
+
+  // Load exactly 5 facts sequentially to avoid duplicate random entries
+  useEffect(() => {
+    const fetchDiscoveryFacts = async () => {
+      setFactsLoading(true);
+      const loadedFacts: EnglishFact[] = [];
+      const excludedIds: number[] = [];
+      for (let i = 0; i < 5; i++) {
+        try {
+          const excludeParam = excludedIds.join(",");
+          const { data } = await apiClient.get<EnglishFact>("/student/english-discovery", {
+            params: excludeParam ? { exclude_page_ids: excludeParam } : undefined,
+          });
+          loadedFacts.push(data);
+          excludedIds.push(data.page_id);
+        } catch (e) {
+          console.error(`Failed to load fact #${i + 1}`, e);
+        }
+      }
+      setFacts(loadedFacts);
+      setFactsLoading(false);
+    };
+    fetchDiscoveryFacts();
+  }, []);
 
   const activeQuestion = challenge?.questions[activeIndex] ?? null;
   const calendarLabel = useMemo(
@@ -160,31 +168,72 @@ export function DailyEnglishChallenge() {
               </div>
               <div className="daily-fact-card">
                 <div className="daily-fact-content">
-                  <div className="daily-fact-icon-wrapper">
-                    <Icon name={LOCAL_FACTS[factIndex].icon} />
-                  </div>
-                  <div className="daily-fact-text">
-                    <h4>{LOCAL_FACTS[factIndex].title}</h4>
-                    <p>{LOCAL_FACTS[factIndex].content}</p>
-                  </div>
+                  {facts[factIndex] ? (
+                    <>
+                      <a
+                        className={`daily-fact-image-link${failedImageId === facts[factIndex].page_id ? " is-unavailable" : ""}`}
+                        href={facts[factIndex].source_url}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        {failedImageId !== facts[factIndex].page_id && (
+                          <img
+                            alt=""
+                            onError={() => setFailedImageId(facts[factIndex].page_id)}
+                            src={facts[factIndex].image_url}
+                          />
+                        )}
+                        {failedImageId === facts[factIndex].page_id && <span>{facts[factIndex].title.charAt(0)}</span>}
+                      </a>
+                      <div className="daily-fact-text">
+                        <h4>{facts[factIndex].title}</h4>
+                        <p>{facts[factIndex].fact}</p>
+                        <a
+                          href={facts[factIndex].source_url}
+                          rel="noreferrer"
+                          target="_blank"
+                          className="wiki-redirect-link"
+                        >
+                          Read on Wikipedia
+                        </a>
+                      </div>
+                    </>
+                  ) : factsLoading ? (
+                    <div className="daily-facts-loading">
+                      <span className="ui-btn-spinner" aria-hidden="true" />
+                      <span>Loading facts...</span>
+                    </div>
+                  ) : (
+                    <div className="daily-facts-loading">
+                      <span>No facts available today.</span>
+                    </div>
+                  )}
                 </div>
-                <div className="daily-fact-navigation">
-                  <DashboardButton
-                    onClick={() => setFactIndex((idx) => (idx === 0 ? LOCAL_FACTS.length - 1 : idx - 1))}
-                    variant="secondary"
-                    className="fact-nav-btn"
-                  >
-                    <Icon name="arrowLeft" />
-                  </DashboardButton>
-                  <span className="fact-nav-indicator">{factIndex + 1} / {LOCAL_FACTS.length}</span>
-                  <DashboardButton
-                    onClick={() => setFactIndex((idx) => (idx === LOCAL_FACTS.length - 1 ? 0 : idx + 1))}
-                    variant="secondary"
-                    className="fact-nav-btn"
-                  >
-                    <Icon name="arrowRight" />
-                  </DashboardButton>
-                </div>
+                {facts.length > 0 && (
+                  <div className="daily-fact-navigation">
+                    <DashboardButton
+                      onClick={() => {
+                        setFailedImageId(null);
+                        setFactIndex((idx) => (idx === 0 ? facts.length - 1 : idx - 1));
+                      }}
+                      variant="secondary"
+                      className="fact-nav-btn"
+                    >
+                      <Icon name="arrowLeft" />
+                    </DashboardButton>
+                    <span className="fact-nav-indicator">{factIndex + 1} / {facts.length}</span>
+                    <DashboardButton
+                      onClick={() => {
+                        setFailedImageId(null);
+                        setFactIndex((idx) => (idx === facts.length - 1 ? 0 : idx + 1));
+                      }}
+                      variant="secondary"
+                      className="fact-nav-btn"
+                    >
+                      <Icon name="arrowRight" />
+                    </DashboardButton>
+                  </div>
+                )}
               </div>
               <div className="daily-completion-actions">
                 <DashboardButton onClick={() => setShowFacts(false)} variant="secondary">
