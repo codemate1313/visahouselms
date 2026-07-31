@@ -1,6 +1,17 @@
 import type { Tab } from "./types";
 
-export const tabOrder: Tab[] = ["typography", "slider", "smtp", "fcm", "avatar", "ai", "maintenance", "backups", "seed"];
+export const tabOrder: Tab[] = [
+  "typography",
+  "slider",
+  "smtp",
+  "fcm",
+  "avatar",
+  "ai",
+  "payment-gateways",
+  "maintenance",
+  "backups",
+  "seed",
+];
 
 export const tabLabels: Record<Tab, string> = {
   typography: "Typography & Weights",
@@ -9,10 +20,12 @@ export const tabLabels: Record<Tab, string> = {
   fcm: "Firebase FCM",
   avatar: "Avatar (Speaking)",
   ai: "AI Evaluation",
+  "payment-gateways": "Payment Gateways",
   maintenance: "Maintenance",
   backups: "Backups",
   seed: "Seed Data",
 };
+
 
 export const developerSettingsStrings = {
   pageTitle: "Developer Settings",
@@ -228,4 +241,30 @@ export const developerSettingsStrings = {
     addedToastMessage: "New login hero slide added successfully!",
     addedToastTitle: "Slide Added",
   },
+  paymentGateways: {
+    title: "Payment Gateway Credentials & API Keys",
+    description: "Configure Razorpay and Stripe API keys, webhook secrets, and enable/disable payment processing for student subscriptions.",
+    saveSuccess: "Payment gateway settings saved successfully!",
+    saveError: "Failed to save payment gateway settings.",
+    razorpayTitle: "Razorpay Gateway (INR / India)",
+    razorpayDesc: "Configure Razorpay Key ID and Key Secret for processing payments in India.",
+    razorpayEnable: "Enable Razorpay Gateway",
+    razorpayKeyIdLabel: "Razorpay Key ID",
+    razorpayKeyIdPlaceholder: "rzp_live_...",
+    razorpayKeySecretLabel: "Razorpay Key Secret",
+    razorpayKeySecretPlaceholder: "Enter secret key or leave unchanged",
+    razorpayWebhookSecretLabel: "Razorpay Webhook Secret",
+    razorpayWebhookSecretPlaceholder: "Enter webhook secret or leave unchanged",
+    stripeTitle: "Stripe Gateway (International / USD)",
+    stripeDesc: "Configure Stripe Publishable Key and Secret Key for global payments.",
+    stripeEnable: "Enable Stripe Gateway",
+    stripePublishableKeyLabel: "Stripe Publishable Key",
+    stripePublishableKeyPlaceholder: "pk_live_...",
+    stripeSecretKeyLabel: "Stripe Secret Key",
+    stripeSecretKeyPlaceholder: "sk_live_...",
+    stripeWebhookSecretLabel: "Stripe Webhook Secret",
+    stripeWebhookSecretPlaceholder: "whsec_...",
+    saveBtn: "Save Gateway Settings",
+  },
 };
+

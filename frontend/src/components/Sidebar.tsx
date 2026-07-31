@@ -469,7 +469,8 @@ export function Sidebar({
           className="logout-modal-backdrop"
           onClick={() => setShowLogoutModal(false)}
           role="presentation"
-          style={{ position: "fixed", inset: 0, zIndex: 9999 }}
+          style={{ position: "fixed", inset: 0, zIndex: 999999 }}
+
         >
           <div
             className="logout-modal-card"

@@ -6,9 +6,19 @@ from app.core.crypto import decrypt_value, encrypt_value
 from app.models.setting import Setting
 
 # Keys whose values are Fernet-encrypted at rest and never returned by the API.
-SECRET_KEYS = {"smtp.password", "fcm.service_account_json", "avatar.api_key", "ai.api_key"}
+SECRET_KEYS = {
+    "smtp.password",
+    "fcm.service_account_json",
+    "avatar.api_key",
+    "ai.api_key",
+    "payment_gateways.razorpay_key_secret",
+    "payment_gateways.razorpay_webhook_secret",
+    "payment_gateways.stripe_secret_key",
+    "payment_gateways.stripe_webhook_secret",
+}
 
 SECRET_PLACEHOLDER = "********"
+
 
 
 def get_setting(db: Session, key: str) -> Optional[str]:

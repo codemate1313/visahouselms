@@ -42,11 +42,14 @@ from app.models.blogs import BlogPost
 from app.models.seo_settings import SEOSetting
 from app.models.trial_config import TrialConfig
 from app.models.user import User
+from app.models.gst_rate import GstRate
 from app.models.user_device import UserDevice
 from app.models.user_session import UserSession
 
 __all__ = [
     "Base",
+    "GstRate",
+
     "Role",
     "User",
     "UserDevice",

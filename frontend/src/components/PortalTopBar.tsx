@@ -96,6 +96,7 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: /\/super-admin\/payments\/\d+\/invoice/, eyebrow: "SAAS MANAGEMENT", title: "Payment Invoice" },
   { match: "/super-admin/payments", eyebrow: "SAAS MANAGEMENT", title: "Payments" },
   { match: "/super-admin/payment-methods", eyebrow: "SAAS MANAGEMENT", title: "Payment Methods" },
+  { match: "/super-admin/gst-rates", eyebrow: "SAAS MANAGEMENT", title: "GST Master" },
   { match: "/super-admin/revenue", eyebrow: "SAAS MANAGEMENT", title: "Revenue Dashboard" },
   { match: /\/super-admin\/institutes\/\d+\/branding/, eyebrow: "SAAS MANAGEMENT", title: "Institute Branding" },
   { match: /\/super-admin\/institutes\/\d+\/accounts/, eyebrow: "SAAS MANAGEMENT", title: "Institute Accounts" },

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button/Button";
 
 interface CheckoutModalProps {
   plan: StudentPlanCatalogItem;
+  selectedCurrency?: "INR" | "USD";
   couponCode: string;
   onCouponCodeChange: (value: string) => void;
   buying: boolean;
@@ -13,55 +14,525 @@ interface CheckoutModalProps {
   onClose: () => void;
 }
 
-export function CheckoutModal({ plan, couponCode, onCouponCodeChange, buying, onSubmit, onClose }: CheckoutModalProps) {
+
+const MODULE_TYPE_LABELS: Record<string, string> = {
+  listening: "Listening",
+  reading: "Reading",
+  writing: "Writing",
+  speaking: "Speaking",
+  general_listening: "Gen. Listening",
+  general_reading: "Gen. Reading",
+};
+
+const MODULE_TYPE_COLORS: Record<string, string> = {
+  listening: "#2563eb",
+  reading: "#7c3aed",
+  writing: "#059669",
+  speaking: "#ea580c",
+  general_listening: "#0891b2",
+  general_reading: "#9333ea",
+};
+
+// SVG icon components
+function IconClose() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+
+function IconTag() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+      <line x1="7" y1="7" x2="7.01" y2="7" />
+    </svg>
+  );
+}
+
+function IconShield() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
+function IconZap() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+}
+
+function IconCard() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+      <line x1="1" y1="10" x2="23" y2="10" />
+    </svg>
+  );
+}
+
+function IconCalendar() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function IconBox() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+    </svg>
+  );
+}
+
+function IconInfo() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCouponCodeChange, buying, onSubmit, onClose }: CheckoutModalProps) {
   const t = strings.checkout;
+
+  const isUSD = selectedCurrency === "USD" && plan.is_international_enabled && plan.usd_price;
+  const currencyCode = isUSD ? "USD" : (plan.currency || "INR");
+  const basePrice = parseFloat(isUSD ? (plan.usd_price || "0") : plan.price) || 0;
+  const gst = isUSD ? null : plan.gst_rate;
+  let gstAmount = 0;
+  let subtotal = basePrice;
+  let finalTotal = basePrice;
+
+  if (gst && gst.percentage > 0) {
+    if (gst.tax_type === "inclusive") {
+      finalTotal = basePrice;
+      subtotal = finalTotal / (1 + gst.percentage / 100);
+      gstAmount = finalTotal - subtotal;
+    } else {
+      subtotal = basePrice;
+      gstAmount = subtotal * (gst.percentage / 100);
+      finalTotal = subtotal + gstAmount;
+    }
+  }
+
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card catalog-checkout-modal" onClick={(event) => event.stopPropagation()}>
-        <div className="catalog-checkout-header">
-          <div>
-            <h2>{t.heading(plan.name)}</h2>
-            <p className="catalog-checkout-subtitle">Review your plan details and complete purchase</p>
+      <div
+        className="modal-card catalog-checkout-modal"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          boxShadow: "0 32px 80px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12)",
+        }}
+      >
+        {/* ── Header ── */}
+        <div style={{
+          background: "linear-gradient(145deg, #a31c28 0%, #c8202e 55%, #dc2626 100%)",
+          padding: "14px 24px 12px",
+          flexShrink: 0,
+        }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span style={{
+                display: "inline-block",
+                background: "rgba(255,255,255,0.18)",
+                color: "rgba(255,255,255,0.92)",
+                fontSize: "9.5px",
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                padding: "2px 8px",
+                borderRadius: "20px",
+                textTransform: "uppercase",
+                marginBottom: "4px",
+                border: "1px solid rgba(255,255,255,0.2)",
+              }}>Plan Purchase</span>
+              <h2 style={{
+                fontSize: "20px",
+                fontWeight: 800,
+                margin: 0,
+                color: "#fff",
+                letterSpacing: "-0.02em",
+                lineHeight: 1.1,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}>{plan.name}</h2>
+              {plan.description && (
+                <p style={{
+                  fontSize: "11.5px",
+                  color: "rgba(255,255,255,0.7)",
+                  margin: "3px 0 0",
+                  lineHeight: 1.3,
+                }}>
+                  {plan.description}
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              style={{
+                background: "rgba(255,255,255,0.15)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                width: "28px",
+                height: "28px",
+                borderRadius: "50%",
+                color: "#fff",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                transition: "background 0.15s",
+              }}
+            >
+              <IconClose />
+            </button>
           </div>
-          <button type="button" className="catalog-checkout-close" onClick={onClose}>
-            &times;
-          </button>
         </div>
 
-        <div className="catalog-checkout-summary-card">
-          <div className="catalog-checkout-plan-info">
-            <span className="catalog-checkout-plan-name">{plan.name}</span>
-            <span className="catalog-checkout-plan-meta">{plan.duration_days} Days Validity · {plan.module_count} Test Modules</span>
-          </div>
-          <div className="catalog-checkout-plan-price">
-            {formatCurrencyAmount(plan.price, plan.currency)}
-          </div>
-        </div>
+        {/* ── Body ── */}
+        <div style={{ padding: "14px 24px 16px", background: "#fff" }}>
 
-        <form onSubmit={onSubmit} className="catalog-checkout-form">
-          <div className="catalog-coupon-group">
-            <label htmlFor="coupon">{t.couponLabel}</label>
-            <div className="catalog-coupon-input-wrapper">
-              <input
-                id="coupon"
-                value={couponCode}
-                onChange={(event) => onCouponCodeChange(event.target.value.toUpperCase())}
-                placeholder={t.couponPlaceholder}
-                className="catalog-coupon-input"
-              />
+          {/* Price + Validity Row */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr auto",
+            gap: "10px",
+            padding: "10px 14px",
+            background: "#fafafa",
+            border: "1.5px solid #f0f0f0",
+            borderRadius: "12px",
+            marginBottom: "8px",
+          }}>
+            <div>
+              <div style={{
+                fontSize: "9.5px",
+                fontWeight: 700,
+                color: "#94a3b8",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                marginBottom: "3px",
+              }}>Total Amount</div>
+              <div style={{
+                fontSize: "24px",
+                fontWeight: 900,
+                color: "#c8202e",
+                letterSpacing: "-0.03em",
+                lineHeight: 1,
+              }}>
+                {formatCurrencyAmount(finalTotal, currencyCode)}
+              </div>
+              <div style={{
+                fontSize: "10.5px",
+                color: "#94a3b8",
+                marginTop: "3px",
+                fontWeight: 500,
+              }}>
+                {gst && gst.percentage > 0 ? (
+                  gst.tax_type === "inclusive"
+                    ? `Includes ${gst.name} (${gst.percentage}%)`
+                    : `Base ${formatCurrencyAmount(basePrice, currencyCode)} + ${gst.percentage}% GST`
+                ) : (
+                  "One-time payment · No hidden fees"
+                )}
+              </div>
+            </div>
+
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              justifyContent: "center",
+              gap: "2px",
+            }}>
+              <div style={{
+                fontSize: "9.5px",
+                fontWeight: 700,
+                color: "#94a3b8",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+              }}>Validity</div>
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                background: "#fff",
+                border: "1.5px solid #e8ecef",
+                borderRadius: "8px",
+                padding: "5px 10px",
+              }}>
+                <span style={{ color: "#64748b" }}><IconCalendar /></span>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: "16px", fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>{plan.duration_days}</div>
+                  <div style={{ fontSize: "8.5px", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>days</div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="form-actions catalog-checkout-actions">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              {t.cancel}
-            </Button>
-            <Button type="submit" variant="primary" loading={buying} className="catalog-plan-btn">
-              {buying ? t.processing : t.confirmPurchase}
-            </Button>
+          {/* GST Tax Breakdown Detail Card */}
+          {gst && gst.percentage > 0 && (
+            <div style={{
+              background: "#fdf2f2",
+              border: "1px solid #fecaca",
+              borderRadius: "10px",
+              padding: "8px 12px",
+              marginBottom: "8px",
+              fontSize: "11.5px",
+            }}>
+              <div style={{ fontWeight: 800, color: "#991b1b", marginBottom: "4px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>GST Tax Breakdown</span>
+                <span style={{
+                  fontSize: "9.5px",
+                  padding: "1px 6px",
+                  borderRadius: "8px",
+                  background: gst.tax_type === "inclusive" ? "#dbeafe" : "#fee2e2",
+                  color: gst.tax_type === "inclusive" ? "#1e40af" : "#991b1b",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                }}>
+                  {gst.tax_type === "inclusive" ? "Inclusive GST" : "Exclusive GST"}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#475569", marginBottom: "2px" }}>
+                <span>Base Price:</span>
+                <span>{formatCurrencyAmount(subtotal, plan.currency)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#475569", marginBottom: "4px" }}>
+                <span>{gst.name} ({gst.percentage}%):</span>
+                <span>+{formatCurrencyAmount(gstAmount, plan.currency)}</span>
+              </div>
+              <div style={{ borderTop: "1px dashed #fca5a5", paddingTop: "4px", display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#0f172a" }}>
+                <span>Total Payable:</span>
+                <span>{formatCurrencyAmount(finalTotal, plan.currency)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* What's Included */}
+          <div style={{
+            border: "1.5px solid #f0f0f0",
+            borderRadius: "10px",
+            marginBottom: "8px",
+            overflow: "hidden",
+          }}>
+            {/* Section header */}
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "7px 12px",
+              background: "#fafafa",
+              borderBottom: plan.modules.length > 0 ? "1px solid #f0f0f0" : "none",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ color: "#64748b" }}><IconBox /></span>
+                <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#1e293b" }}>
+                  What's Included
+                </span>
+              </div>
+              <span style={{
+                background: "#c8202e",
+                color: "#fff",
+                fontSize: "9.5px",
+                fontWeight: 800,
+                borderRadius: "20px",
+                padding: "2px 8px",
+              }}>
+                {plan.module_count} {plan.module_count === 1 ? "Test" : "Tests"}
+              </span>
+            </div>
+
+            {/* Module list */}
+            {plan.modules.length > 0 ? (
+              <div style={{ padding: "6px 10px", display: "flex", flexDirection: "column", gap: "4px", background: "#fff" }}>
+                {plan.modules.map((mod, idx) => {
+                  const color = MODULE_TYPE_COLORS[mod.module_type] ?? "#475569";
+                  const label = MODULE_TYPE_LABELS[mod.module_type] ?? mod.module_type;
+                  return (
+                    <div key={idx} style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "6px 10px",
+                      background: "#f8fafc",
+                      border: "1px solid #f1f5f9",
+                      borderRadius: "8px",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{
+                          display: "inline-block",
+                          width: "6px",
+                          height: "6px",
+                          borderRadius: "50%",
+                          background: color,
+                          flexShrink: 0,
+                        }} />
+                        <span style={{ fontSize: "11.5px", fontWeight: 600, color: "#1e293b" }}>{mod.title}</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{
+                          fontSize: "9px",
+                          fontWeight: 800,
+                          background: color + "15",
+                          color,
+                          borderRadius: "5px",
+                          padding: "1px 6px",
+                          textTransform: "uppercase",
+                        }}>{label}</span>
+                        <span style={{ fontSize: "10.5px", color: "#94a3b8", fontWeight: 600 }}>{mod.duration_minutes}m</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ padding: "8px 12px", fontSize: "11.5px", color: "#64748b", background: "#fff" }}>
+                {plan.module_count} test module{plan.module_count !== 1 ? "s" : ""} included
+              </div>
+            )}
           </div>
-        </form>
+
+          {/* Trust Badges */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: "6px",
+            marginBottom: "8px",
+          }}>
+            {[
+              { icon: <IconShield />, label: "Secure Payment", sub: "256-bit SSL" },
+              { icon: <IconZap />, label: "Instant Access", sub: "After payment" },
+              { icon: <IconCard />, label: "All Methods", sub: "Card · UPI · Net" },
+            ].map((b) => (
+              <div key={b.label} style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 10px",
+                background: "#fafafa",
+                border: "1px solid #f0f0f0",
+                borderRadius: "8px",
+              }}>
+                <span style={{ color: "#475569", flexShrink: 0 }}>{b.icon}</span>
+                <div>
+                  <div style={{ fontSize: "10px", fontWeight: 700, color: "#334155", lineHeight: 1 }}>{b.label}</div>
+                  <div style={{ fontSize: "8.5px", color: "#94a3b8", marginTop: "2px" }}>{b.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Form */}
+          <form onSubmit={onSubmit}>
+            {/* Coupon */}
+            <div style={{ marginBottom: "8px" }}>
+              <input
+                id="coupon"
+                value={couponCode}
+                onChange={(e) => onCouponCodeChange(e.target.value.toUpperCase())}
+                placeholder="ENTER COUPON CODE (OPTIONAL)"
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1.5px solid #e8ecef",
+                  borderRadius: "9px",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  outline: "none",
+                  color: "#0f172a",
+                  boxSizing: "border-box",
+                  background: "#fafafa",
+                  transition: "border-color 0.15s, background 0.15s",
+                }}
+                onFocus={(e) => { e.target.style.borderColor = "#c8202e"; e.target.style.background = "#fff"; }}
+                onBlur={(e) => { e.target.style.borderColor = "#e8ecef"; e.target.style.background = "#fafafa"; }}
+              />
+            </div>
+
+            {/* Gateway Notice */}
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "7px",
+              padding: "7px 11px",
+              background: isUSD ? "#eff6ff" : "#f8fafc",
+              border: `1px solid ${isUSD ? "#bfdbfe" : "#e2e8f0"}`,
+              borderRadius: "9px",
+              marginBottom: "10px",
+            }}>
+              <span style={{ color: isUSD ? "#2563eb" : "#64748b", flexShrink: 0 }}><IconInfo /></span>
+              <span style={{ fontSize: "11px", color: isUSD ? "#1e40af" : "#475569", fontWeight: 500, lineHeight: 1.3 }}>
+                {isUSD ? (
+                  <>Processed globally via <strong style={{ color: "#1e3a8a" }}>Stripe's</strong> secure 256-bit encrypted gateway (Visa, MC, Amex, Apple Pay).</>
+                ) : (
+                  <>Redirects to <strong style={{ color: "#0f172a" }}>Razorpay's</strong> secure payment gateway (UPI, Cards, NetBanking).</>
+                )}
+              </span>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                type="button"
+                onClick={onClose}
+                style={{
+                  flex: "0 0 auto",
+                  padding: "10px 18px",
+                  border: "1.5px solid #e2e8f0",
+                  background: "#fff",
+                  borderRadius: "9px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  color: "#475569",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#94a3b8"; e.currentTarget.style.color = "#1e293b"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}
+              >
+                Cancel
+              </button>
+              <Button
+                type="submit"
+                variant="primary"
+                loading={buying}
+                className="catalog-plan-btn"
+                style={{
+                  flex: 1,
+                  borderRadius: "9px",
+                  fontSize: "13.5px",
+                  padding: "10px 18px",
+                  fontWeight: 800,
+                } as React.CSSProperties}
+              >
+                {buying ? "Processing..." : `Pay ${formatCurrencyAmount(finalTotal, currencyCode)}`}
+              </Button>
+
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
 }
+

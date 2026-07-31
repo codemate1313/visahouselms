@@ -1,6 +1,8 @@
 from typing import Optional
+from pydantic import BaseModel
 
 from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, Request, UploadFile, status
+
 from sqlalchemy.orm import Session
 
 from app.core.uploads import read_validated_speaking_answer
@@ -208,6 +210,92 @@ def my_plan(db: Session = Depends(get_db), user: User = Depends(require_student)
     return subscription_service.my_current_plan_view(db, user)
 
 
+from app.core.geo_ip import detect_country_code
+
+
+class VerifyRazorpayRequest(BaseModel):
+    razorpay_payment_id: str
+    razorpay_order_id: str
+    razorpay_signature: str
+
+
+class VerifyStripeRequest(BaseModel):
+    payment_intent_id: str
+
+
+class CreateOrderRequest(BaseModel):
+    coupon_code: Optional[str] = None
+    currency: Optional[str] = None
+
+
+@router.get("/detect-location")
+def get_detected_location(request: Request):
+    country_code = detect_country_code(request)
+    return {
+        "country": country_code,
+        "default_currency": "INR" if country_code == "IN" else "USD",
+        "gateway": "razorpay" if country_code == "IN" else "stripe",
+    }
+
+
+@router.get("/payment-config")
+def get_payment_config(db: Session = Depends(get_db)):
+    return payment_service.get_public_payment_config(db)
+
+
+@router.post("/plans/{plan_id}/create-order", status_code=201)
+def create_plan_order(
+    plan_id: int,
+    payload: CreateOrderRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    if user.institute_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your institute manages your plan - self-service purchase is only for direct students",
+        )
+    return payment_service.create_user_plan_order(db, user.id, plan_id, payload.coupon_code, _ip(request), payload.currency)
+
+
+@router.post("/payments/{payment_id}/verify-stripe")
+def verify_stripe_payment(
+    payment_id: int,
+    payload: VerifyStripeRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    if user.institute_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Institute students do not have direct billing payments",
+        )
+    return payment_service.verify_stripe_payment(
+        db, user.id, payment_id, payload.payment_intent_id, _ip(request)
+    )
+
+
+@router.post("/payments/{payment_id}/verify-razorpay")
+def verify_razorpay_payment(
+    payment_id: int,
+    payload: VerifyRazorpayRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    if user.institute_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Institute students do not have direct billing payments",
+        )
+    return payment_service.verify_razorpay_payment(
+        db, user.id, payment_id, payload.razorpay_payment_id, payload.razorpay_order_id, payload.razorpay_signature, _ip(request)
+    )
+
+
+
 @router.post("/plans/{plan_id}/subscribe", status_code=201)
 def subscribe_to_plan(
     plan_id: int,
@@ -222,6 +310,32 @@ def subscribe_to_plan(
             detail="Your institute manages your plan - self-service purchase is only for direct students",
         )
     return payment_service.create_user_plan_payment(db, user.id, plan_id, payload.coupon_code, None, _ip(request))
+
+
+@router.get("/payments")
+def list_my_payments(db: Session = Depends(get_db), user: User = Depends(require_student)):
+    if user.institute_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Institute students do not have direct billing history",
+        )
+    return payment_service.list_user_payments(db, user.id)
+
+
+@router.get("/payments/{payment_id}")
+def get_my_payment_invoice(
+    payment_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    if user.institute_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Institute students do not have direct billing invoices",
+        )
+    return payment_service.get_user_payment_invoice(db, user.id, payment_id)
+
+
 
 
 @router.get("/attempts")

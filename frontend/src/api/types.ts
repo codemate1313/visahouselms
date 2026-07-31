@@ -380,7 +380,18 @@ export interface StudentPlanCatalogItem {
   module_count: number;
   modules: StudentPlanModule[];
   entitled: boolean;
+  is_international_enabled?: boolean;
+  usd_price?: string | null;
+  gst_rate_id?: number | null;
+  gst_rate?: {
+    id: number;
+    name: string;
+    percentage: number;
+    tax_type: "exclusive" | "inclusive";
+  } | null;
 }
+
+
 
 export interface StudentCurrentPlan {
   plan: {

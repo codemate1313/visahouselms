@@ -58,11 +58,28 @@ export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onVi
                   <strong style={{ fontSize: 14, color: "#0f172a", whiteSpace: "nowrap" }}>
                     {formatCurrencyAmount(plan.price, plan.currency)}
                   </strong>
+                  {plan.is_international_enabled && plan.usd_price && (
+                    <span style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "#1d4ed8",
+                      background: "#eff6ff",
+                      border: "1px solid #bfdbfe",
+                      padding: "1px 6px",
+                      borderRadius: "6px",
+                      display: "inline-block",
+                      marginTop: "2px",
+                      width: "fit-content",
+                    }}>
+                      ${plan.usd_price} USD (Intl)
+                    </span>
+                  )}
                   <span style={{ fontSize: 12, color: "#64748b" }}>
                     {plan.duration_days} {t.daysSuffix}
                   </span>
                 </div>
               </td>
+
               <td>
                 <span className="plan-limits-pill" title={`${plan.student_limit} Students / ${plan.staff_limit} Staff / ${plan.test_limit} Tests`}>
                   {plan.student_limit} / {plan.staff_limit} / {plan.test_limit}

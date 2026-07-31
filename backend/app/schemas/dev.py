@@ -62,3 +62,15 @@ class RestoreIn(BaseModel):
 
 class TerminalOpenIn(BaseModel):
     password: str
+
+
+class PaymentGatewaySettingsIn(BaseModel):
+    razorpay_enabled: Optional[bool] = False
+    razorpay_key_id: Optional[str] = None
+    razorpay_key_secret: Optional[str] = None
+    razorpay_webhook_secret: Optional[str] = None
+    stripe_enabled: Optional[bool] = False
+    stripe_publishable_key: Optional[str] = None
+    stripe_secret_key: Optional[str] = None
+    stripe_webhook_secret: Optional[str] = None
+

@@ -34,8 +34,14 @@ export function PlanDetailsModal({ plan, onClose }: PlanDetailsModalProps) {
               </div>
               <span className="plan-dialog-price">
                 {formatCurrencyAmount(plan.price, plan.currency)}
+                {plan.is_international_enabled && plan.usd_price && (
+                  <span style={{ fontSize: 13, marginLeft: 8, color: "#2563eb", fontWeight: 700 }}>
+                    | ${plan.usd_price} USD (Intl)
+                  </span>
+                )}
                 <small> / {plan.duration_days} {t.billingCycleSuffix}</small>
               </span>
+
             </div>
           </div>
           <button type="button" className="plan-dialog-close" onClick={onClose} title={t.closeModalTitle}>

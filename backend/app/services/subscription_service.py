@@ -67,6 +67,10 @@ def _state_of(subscription: Subscription, now: datetime) -> str:
     return STATE_EXPIRED
 
 
+def state_of_subscription(subscription: Subscription) -> str:
+    return _state_of(subscription, _now())
+
+
 def _pick_current(rows: List[Subscription], now: datetime) -> Tuple[Optional[Subscription], str]:
     """The term that governs access right now. Renewing early leaves two open
     rows, so "latest expiry" is not the answer - the one that has actually

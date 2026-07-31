@@ -12,12 +12,14 @@ from app.schemas.dev import (
     BackupSettingsIn,
     FcmSettingsIn,
     LogSettingsIn,
+    PaymentGatewaySettingsIn,
     SmtpSettingsIn,
     TestEmailIn,
     TestFcmIn,
 )
 from app.services import ai_evaluation_service, avatar_service, fcm_service, job_service, smtp_service
 from app.services.settings_service import get_settings_group, set_settings_group
+
 from app.config import settings as app_config
 
 router = APIRouter(
@@ -293,3 +295,30 @@ def job_status(job_id: int, db: Session = Depends(get_db)):
         "started_at": job.started_at,
         "finished_at": job.finished_at,
     }
+
+
+# ---------- Payment Gateways (Razorpay & Stripe) ----------
+
+@router.get("/payment-gateways")
+def get_payment_gateways(db: Session = Depends(get_db)):
+    return get_settings_group(db, "payment_gateways")
+
+
+@router.put("/payment-gateways")
+def put_payment_gateways(
+    payload: PaymentGatewaySettingsIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    data = payload.model_dump()
+    # Convert booleans to string for storage in setting table
+    data["razorpay_enabled"] = "true" if data.get("razorpay_enabled") else "false"
+    data["stripe_enabled"] = "true" if data.get("stripe_enabled") else "false"
+
+    set_settings_group(db, "payment_gateways", data)
+    _audit(db, actor, "dev_settings.update_payment_gateways", request)
+    return get_settings_group(db, "payment_gateways")
+
+
+

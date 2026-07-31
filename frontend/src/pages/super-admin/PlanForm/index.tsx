@@ -2,7 +2,8 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { Checkbox, PageHeader, RequiredMark } from "@/components/ui";
+import { Checkbox, PageHeader, RequiredMark, SearchableSelect } from "@/components/ui";
+
 import { directStudentCatalogue as catalogue, planFormStrings as strings } from "./PlanForm.strings";
 import { PlanCoursePicker, type PlanModule } from "./components/PlanCoursePicker";
 import { PlanFeatureEditor } from "./components/PlanFeatureEditor";
@@ -10,7 +11,16 @@ import { PlanFeatureEditor } from "./components/PlanFeatureEditor";
 // Mirrors MAX_FEATURES in app/schemas/plan.py.
 const MAX_FEATURES = 12;
 
-const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", test_limit: "20", grace_days: "0", is_published: false };
+const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", test_limit: "20", grace_days: "0", is_published: false, gst_rate_id: "", is_international_enabled: false, usd_price: "" };
+
+interface GstOption {
+  id: number;
+  name: string;
+  percentage: number;
+  tax_type: string;
+  is_active: boolean;
+  is_default: boolean;
+}
 
 export function PlanForm() {
   const { id } = useParams();
@@ -18,6 +28,7 @@ export function PlanForm() {
   const navigate = useNavigate();
   const [form, setForm] = useState(EMPTY);
   const [modules, setModules] = useState<PlanModule[]>([]);
+  const [gstRates, setGstRates] = useState<GstOption[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [features, setFeatures] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,11 +36,21 @@ export function PlanForm() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([apiClient.get<PlanModule[]>("/super-admin/plans/available-modules"), ...(isNew ? [] : [apiClient.get(`/super-admin/plans/${id}`)])])
+    Promise.all([
+      apiClient.get<PlanModule[]>("/super-admin/plans/available-modules"),
+      apiClient.get<GstOption[]>("/super-admin/gst-rates"),
+      ...(isNew ? [] : [apiClient.get(`/super-admin/plans/${id}`)]),
+    ])
       .then((responses) => {
         setModules(responses[0].data);
-        if (!isNew) {
-          const data = responses[1].data;
+        setGstRates(responses[1].data);
+        if (isNew) {
+          const defaultGst = responses[1].data.find((r) => r.is_default);
+          if (defaultGst) {
+            setForm((prev) => ({ ...prev, gst_rate_id: String(defaultGst.id) }));
+          }
+        } else {
+          const data = responses[2].data;
           setForm({
             name: data.name || "",
             description: data.description || "",
@@ -41,6 +62,9 @@ export function PlanForm() {
             test_limit: String(data.test_limit),
             grace_days: String(data.grace_days),
             is_published: Boolean(data.is_published),
+            gst_rate_id: data.gst_rate_id ? String(data.gst_rate_id) : "",
+            is_international_enabled: Boolean(data.is_international_enabled),
+            usd_price: data.usd_price ? String(data.usd_price) : "",
           });
           setSelected(new Set((data.modules || []).map((module: PlanModule) => module.id)));
           setFeatures(data.features || []);
@@ -86,6 +110,11 @@ export function PlanForm() {
       staff_limit: Number(form.staff_limit),
       test_limit: Number(form.test_limit),
       grace_days: Number(form.grace_days),
+      gst_rate_id: form.gst_rate_id ? Number(form.gst_rate_id) : null,
+      is_international_enabled: form.is_international_enabled,
+      usd_price: form.is_international_enabled && form.usd_price ? Number(form.usd_price) : null,
+
+      gst_rate_id: form.gst_rate_id ? Number(form.gst_rate_id) : null,
       audience: "direct_students",
       is_published: form.is_published,
       module_ids: [...selected],
@@ -124,6 +153,24 @@ export function PlanForm() {
             <input value={form.currency} onChange={set("currency")} required />
           </div>
           <div>
+            <label>GST Tax Rate</label>
+            <SearchableSelect
+              value={form.gst_rate_id}
+              onChange={(val) => setForm((prev) => ({ ...prev, gst_rate_id: String(val) }))}
+              options={[
+                { value: "", label: "No GST (0% / Exempt)", sublabel: "No tax applied to this plan" },
+                ...gstRates.map((rate) => ({
+                  value: String(rate.id),
+                  label: `${rate.name} (${rate.percentage}%)`,
+                  sublabel: rate.tax_type === "inclusive" ? "Included in Price (Inclusive)" : "Added On Top (Exclusive)",
+                })),
+              ]}
+              placeholder="Select GST Tax Rate..."
+              searchable={false}
+            />
+          </div>
+
+          <div>
             <label>{f.durationDays}<RequiredMark /></label>
             <input type="number" min="1" value={form.duration_days} onChange={set("duration_days")} required />
           </div>
@@ -136,6 +183,49 @@ export function PlanForm() {
             <input type="number" min="0" value={form.grace_days} onChange={set("grace_days")} required />
           </div>
         </div>
+
+        {/* International Pricing Section */}
+        <div style={{
+          margin: "18px 0 24px",
+          padding: "16px 20px",
+          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+          border: "1.5px solid #e2e8f0",
+          borderRadius: "14px",
+        }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: 700, fontSize: "14px", color: "#0f172a" }}>
+            <Checkbox
+              checked={Boolean(form.is_international_enabled)}
+              onChange={(e) => setForm((prev) => ({ ...prev, is_international_enabled: e.target.checked }))}
+            />
+
+            <span>Enable for International Students (USD Pricing & Stripe)</span>
+          </label>
+
+          {form.is_international_enabled && (
+            <div style={{ marginTop: "14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 700, marginBottom: "6px" }}>
+                  International Price (USD $)<RequiredMark />
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 59.00"
+                  value={form.usd_price}
+                  onChange={set("usd_price")}
+                  required={form.is_international_enabled}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", fontSize: "12px", color: "#64748b", background: "#fff", padding: "10px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                <span>Students outside India will be presented <strong>${form.usd_price || "0.00"} USD</strong> and paid via <strong>Stripe Payment Gateway</strong>.</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+
         <PlanCoursePicker modules={modules} selected={selected} onToggle={toggle} onToggleAll={toggleAll} />
         <PlanFeatureEditor
           features={features}

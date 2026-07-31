@@ -6,15 +6,20 @@ import { Button } from "@/components/ui/Button/Button";
 
 interface PlanGridProps {
   plans: StudentPlanCatalogItem[];
+  selectedCurrency?: "INR" | "USD";
   onGoToCourse: () => void;
   onChoosePlan: (plan: StudentPlanCatalogItem) => void;
 }
 
-export function PlanGrid({ plans, onGoToCourse, onChoosePlan }: PlanGridProps) {
+export function PlanGrid({ plans, selectedCurrency = "INR", onGoToCourse, onChoosePlan }: PlanGridProps) {
   return (
     <div className="catalog-plans-grid">
       {plans.map((plan, index) => {
         const isFeatured = index === 0 || plans.length === 1;
+        const isUSD = selectedCurrency === "USD" && plan.is_international_enabled && plan.usd_price;
+        const displayPrice = isUSD ? plan.usd_price : plan.price;
+        const displayCurrency = isUSD ? "USD" : (plan.currency || "INR");
+
         return (
           <div className={`catalog-plan-card${isFeatured ? " is-featured" : ""}`} key={plan.id}>
             {isFeatured && (
@@ -33,13 +38,19 @@ export function PlanGrid({ plans, onGoToCourse, onChoosePlan }: PlanGridProps) {
 
             <div className="catalog-plan-price-box">
               <div className="catalog-plan-price">
-                <span className="catalog-plan-currency-val">{formatCurrencyAmount(plan.price, plan.currency)}</span>
+                <span className="catalog-plan-currency-val">{formatCurrencyAmount(displayPrice, displayCurrency)}</span>
                 <span className="catalog-plan-period">/ {plan.duration_days} days</span>
               </div>
+              {isUSD && (
+                <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#2563eb", background: "#eff6ff", padding: "2px 8px", borderRadius: "10px" }}>
+                  Global Stripe Payment
+                </span>
+              )}
               <div className="catalog-plan-tests-count">
                 <Icon name="module" /> {strings.testsCount(plan.module_count)} included
               </div>
             </div>
+
 
             <div className="catalog-plan-features">
               <span className="catalog-features-title">INCLUDED TEST MODULES ({plan.modules?.length ?? 0}):</span>

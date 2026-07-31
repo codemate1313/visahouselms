@@ -17,6 +17,9 @@ class PlanCreate(BaseModel):
     staff_limit: int = Field(ge=0)
     grace_days: int = Field(default=7, ge=0)
     module_ids: list[int] = Field(default_factory=list)
+    gst_rate_id: Optional[int] = None
+    is_international_enabled: bool = False
+    usd_price: Optional[float] = Field(default=None, ge=0)
     audience: str = Field(default="direct_students", pattern="^(direct_students|institutes)$")
     is_published: bool = False
     # Marketing bullets for the public pricing card; empty falls back to a list
@@ -35,9 +38,14 @@ class PlanUpdate(BaseModel):
     staff_limit: Optional[int] = Field(default=None, ge=0)
     grace_days: Optional[int] = Field(default=None, ge=0)
     module_ids: Optional[list[int]] = None
+    gst_rate_id: Optional[int] = None
+    is_international_enabled: Optional[bool] = None
+    usd_price: Optional[float] = Field(default=None, ge=0)
     audience: Optional[str] = Field(default=None, pattern="^(direct_students|institutes)$")
+
     is_published: Optional[bool] = None
     features: Optional[list[str]] = Field(default=None, max_length=MAX_FEATURES)
+
 
 
 class AssignSubscriptionRequest(BaseModel):

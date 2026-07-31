@@ -31,7 +31,13 @@ class ManualGateway(PaymentGateway):
         return True
 
 
-def get_gateway(name: str = "manual") -> PaymentGateway:
+from app.core.stripe_gateway import StripeGateway
+
+
+def get_gateway(name: str = "manual", secret_key: Optional[str] = None) -> PaymentGateway:
     if name == "manual":
         return ManualGateway()
+    if name == "stripe":
+        return StripeGateway(secret_key=secret_key)
     raise ValueError(f"Unknown payment gateway '{name}'")
+

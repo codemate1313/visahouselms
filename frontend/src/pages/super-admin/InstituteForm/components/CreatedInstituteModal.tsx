@@ -20,7 +20,8 @@ export function CreatedInstituteModal({ created, copied, onCopyPassword, onDone 
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 9999,
+        zIndex: 999999,
+
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

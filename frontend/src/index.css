@@ -8947,7 +8947,8 @@ button.danger-text {
 .custom-dialog-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 99999;
+  z-index: 999999 !important;
+
   background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -11469,12 +11470,7 @@ button.danger-text {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  /* Dialog tier, alongside .custom-dialog-backdrop and .logout-modal-backdrop.
-     It has to clear the page chrome underneath it - a .filter-bar is raised to
-     1200, and to 20000 while one of its dropdowns is open, so a lower modal
-     had the toolbar punching through its own backdrop. Stays below the toast
-     container and the global loader, which belong on top of a dialog. */
-  z-index: 99999;
+  z-index: 999999 !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -11483,6 +11479,7 @@ button.danger-text {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
+
 
 .modal-card {
   width: min(440px, 100%);
@@ -16038,7 +16035,8 @@ button.danger-text {
 .logout-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 99999;
+  z-index: 999999 !important;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21287,7 +21285,8 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .portal-app-bar {
   position: relative !important;
-  z-index: 30000 !important;
+  z-index: 20 !important;
+
   --portal-icon-color: var(--sidebar-active-text, var(--primary));
   --portal-icon-bg: color-mix(in srgb, var(--portal-icon-color) 12%, transparent);
   width: 100% !important;
@@ -23457,6 +23456,14 @@ th[aria-sort="descending"] .table-sort-button::after {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
   padding: 32px;
 }
+
+.assigned-tests-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
 
 .assigned-tests-filter-bar {
   display: flex;
@@ -27487,10 +27494,21 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 
 /* Checkout Modal Styling */
 .catalog-checkout-modal {
-  width: min(480px, calc(100vw - 32px)) !important;
-  padding: 24px !important;
-  border-radius: 24px !important;
+  width: min(540px, calc(100vw - 32px)) !important;
+  max-width: 540px !important;
+  padding: 0 !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  border: none !important;
+  background: #fff !important;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
+
+
+
+
 
 .catalog-checkout-header {
   display: flex;

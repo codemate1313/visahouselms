@@ -25,6 +25,7 @@ export const dashboardLayoutStrings = {
     saasCoupons: "Coupons",
     saasPayments: "Payments",
     saasPaymentMethods: "Payment Methods",
+    saasGstRates: "GST Master",
     saasRevenue: "Revenue",
     cmsContent: "CMS & CONTENT",
     testimonials: "Testimonials",

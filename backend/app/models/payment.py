@@ -23,6 +23,11 @@ class Payment(Base):
 
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     discount_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False, default=0)
+    subtotal_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False, default=0)
+    gst_rate_id: Mapped[Optional[int]] = mapped_column(ForeignKey("gst_rates.id", ondelete="SET NULL"), nullable=True)
+    gst_percentage: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False, default=0)
+    gst_tax_type: Mapped[str] = mapped_column(String(20), nullable=False, default="exclusive")
+    gst_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False, default=0)
     final_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="INR")
 
@@ -44,3 +49,7 @@ class Payment(Base):
     course: Mapped[Optional["Course"]] = relationship()  # noqa: F821
     coupon: Mapped[Optional["Coupon"]] = relationship()  # noqa: F821
     payment_method: Mapped[Optional["PaymentMethod"]] = relationship()  # noqa: F821
+    subscription: Mapped[Optional["Subscription"]] = relationship()  # noqa: F821
+    gst_rate: Mapped[Optional["GstRate"]] = relationship()  # noqa: F821
+
+

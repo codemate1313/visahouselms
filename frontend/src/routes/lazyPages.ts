@@ -55,6 +55,8 @@ export const DashboardLayout = lazy(() => import("../pages/super-admin/Dashboard
 export const DemoAccounts = lazy(() => import("../pages/super-admin/DemoAccounts").then((module) => ({ default: module.DemoAccounts })));
 export const DeveloperSettings = lazy(() => import("../pages/super-admin/DeveloperSettings").then((module) => ({ default: module.DeveloperSettings })));
 export const GradingOversight = lazy(() => import("../pages/super-admin/GradingOversight").then((module) => ({ default: module.GradingOversight })));
+export const GstRates = lazy(() => import("../pages/super-admin/GstRates").then((module) => ({ default: module.GstRates })));
+
 export const InstituteBranding = lazy(() => import("../pages/super-admin/InstituteBranding").then((module) => ({ default: module.InstituteBranding })));
 export const InstituteForm = lazy(() => import("../pages/super-admin/InstituteForm").then((module) => ({ default: module.InstituteForm })));
 export const InstructorForm = lazy(() => import("../pages/super-admin/InstructorForm").then((module) => ({ default: module.InstructorForm })));
@@ -83,3 +85,6 @@ export const SuperAdminBlogs = lazy(() => import("../pages/super-admin/SuperAdmi
 export const SuperAdminBlogForm = lazy(() => import("../pages/super-admin/SuperAdminBlogForm").then((module) => ({ default: module.SuperAdminBlogForm })));
 export const SuperAdminTestimonials = lazy(() => import("../pages/super-admin/SuperAdminTestimonials").then((module) => ({ default: module.SuperAdminTestimonials })));
 export const SuperAdminSEOSettings = lazy(() => import("../pages/super-admin/SuperAdminSEOSettings").then((module) => ({ default: module.SuperAdminSEOSettings })));
+export const StudentPurchaseHistory = lazy(() => import("../pages/student/StudentPurchaseHistory").then((module) => ({ default: module.StudentPurchaseHistory })));
+
+

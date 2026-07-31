@@ -17,8 +17,9 @@ from app.routers import (
     coupons,
     dashboard,
     demo_accounts,
-    developer,
     dev_settings,
+    developer,
+    gst_rates,
     grading_admin,
     institutes,
     institute_admin,
@@ -33,7 +34,9 @@ from app.routers import (
     onboarding,
     payment_methods,
     payments,
+    payment_webhooks,
     plans,
+
     revenue,
     seo_router,
     student_portal,
@@ -91,7 +94,10 @@ app.include_router(module_catalog.router)
 app.include_router(onboarding.router)
 app.include_router(payments.router)
 app.include_router(payment_methods.router)
+app.include_router(gst_rates.router)
+app.include_router(payment_webhooks.router)
 app.include_router(revenue.router)
+
 app.include_router(student_portal.router)
 app.include_router(notifications.router)
 app.include_router(support.public_router)

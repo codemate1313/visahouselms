@@ -85,9 +85,20 @@ def _serialize(plan: Plan, subscription_count: Optional[int] = None) -> dict:
         "audience": plan.audience,
         "is_published": plan.is_published,
         "is_internal": plan.is_internal,
+        "is_international_enabled": plan.is_international_enabled,
+        "usd_price": str(plan.usd_price) if plan.usd_price is not None else None,
         "features": list(plan.features or []),
+
         "created_at": plan.created_at,
+        "gst_rate_id": plan.gst_rate_id,
+        "gst_rate": {
+            "id": plan.gst_rate.id,
+            "name": plan.gst_rate.name,
+            "percentage": float(plan.gst_rate.percentage),
+            "tax_type": plan.gst_rate.tax_type,
+        } if plan.gst_rate else None,
         "module_count": len(plan.modules),
+
         "modules": [
             {
                 "id": module.id,
@@ -240,8 +251,12 @@ def build_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> Plan:
         # catalogue listing (see the filter in `list_plans`).
         is_internal=data.get("is_internal", False),
         features=_clean_features(data.get("features")),
+        gst_rate_id=data.get("gst_rate_id"),
+        is_international_enabled=data.get("is_international_enabled", False),
+        usd_price=Decimal(str(data["usd_price"])) if data.get("usd_price") is not None else None,
         modules=modules,
     )
+
     db.add(plan)
     db.flush()
     _audit(db, actor, "plan.create", plan.id, ip, {"name": plan.name})
@@ -259,11 +274,13 @@ def apply_plan_terms(db: Session, actor: User, plan: Plan, data: dict, ip: Optio
         plan.name = name
 
     modules = _resolve_modules(db, data.get("module_ids") or [])
-    for field in ("description", "currency", "duration_days", "student_limit", "test_limit", "staff_limit", "grace_days"):
+    for field in ("description", "currency", "duration_days", "student_limit", "test_limit", "staff_limit", "grace_days", "gst_rate_id", "is_international_enabled"):
         if data.get(field) is not None:
             setattr(plan, field, data[field])
     if data.get("price") is not None:
         plan.price = Decimal(str(data["price"]))
+    if data.get("usd_price") is not None:
+        plan.usd_price = Decimal(str(data["usd_price"])) if data.get("usd_price") != "" else None
     if data.get("features") is not None:
         plan.features = _clean_features(data["features"])
     if data.get("module_ids") is not None:
@@ -305,11 +322,15 @@ def update_plan(db: Session, actor: User, plan_id: int, data: dict, ip: Optional
                 detail="This plan has subscriptions and cannot be moved to the other catalogue - create a new plan instead",
             )
 
-    for field in ("description", "currency", "duration_days", "student_limit", "test_limit", "staff_limit", "grace_days", "audience", "is_published"):
+    for field in ("description", "currency", "duration_days", "student_limit", "test_limit", "staff_limit", "grace_days", "audience", "is_published", "gst_rate_id", "is_international_enabled"):
         if field in data and data[field] is not None:
             setattr(plan, field, data[field])
+
     if "price" in data and data["price"] is not None:
         plan.price = Decimal(str(data["price"]))
+    if "usd_price" in data:
+        plan.usd_price = Decimal(str(data["usd_price"])) if data["usd_price"] is not None and data["usd_price"] != "" else None
+
     if "features" in data and data["features"] is not None:
         plan.features = _clean_features(data["features"])
     if "module_ids" in data and data["module_ids"] is not None:

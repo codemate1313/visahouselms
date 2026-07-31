@@ -52,12 +52,18 @@ class Plan(Base):
     # Marketing bullet points shown on the public pricing card, authored by the
     # Super Admin. Empty/NULL falls back to a list derived from the plan limits.
     features: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
+    gst_rate_id: Mapped[Optional[int]] = mapped_column(ForeignKey("gst_rates.id", ondelete="SET NULL"), nullable=True)
+    is_international_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    usd_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
 
+
+    gst_rate: Mapped[Optional["GstRate"]] = relationship()  # noqa: F821
     modules: Mapped[List["ExamModule"]] = relationship(  # noqa: F821
         secondary=plan_modules, order_by="ExamModule.title"
     )
     courses: Mapped[List["Course"]] = relationship(  # noqa: F821
         secondary=plan_courses, order_by="Course.title"
     )
+

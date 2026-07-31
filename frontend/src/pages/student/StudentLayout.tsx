@@ -39,6 +39,9 @@ export function StudentLayout() {
     { key: "attempts", label: menu.myTestHistory, icon: "grading", to: "/student/attempts" },
     { key: "progress", label: menu.progress, icon: "analytics", to: "/student/progress" },
   );
+  if (!isInstituteStudent) {
+    mainItems.push({ key: "purchase-history", label: menu.purchaseHistory, icon: "transactions", to: "/student/purchase-history" });
+  }
 
   const sections: MenuSection[] = [
     {
@@ -66,6 +69,7 @@ export function StudentLayout() {
         },
       ],
     },
+
   ];
 
   return (

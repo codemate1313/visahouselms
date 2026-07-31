@@ -9,20 +9,22 @@ const securityHeaders = {
     "object-src 'none'",
     // The dev backend serves /storage avatars and logos over plain http on
     // :8000, so it needs listing here exactly as connect-src does below.
-    "img-src 'self' data: blob: https: http://localhost:8000 http://127.0.0.1:8000",
+    "img-src 'self' data: blob: https: http://localhost:8000 http://127.0.0.1:8000 https://cdn.razorpay.com https://*.razorpay.com https://*.stripe.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "media-src 'self' blob:",
-    "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 ws://localhost:* ws://127.0.0.1:* https:",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com",
+    "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 ws://localhost:* ws://127.0.0.1:* https: https://*.razorpay.com https://*.razorpay.in https://*.stripe.com https://api.stripe.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com https://checkout.razorpay.com https://checkout-static.razorpay.com https://cdn.razorpay.com https://api.razorpay.com https://*.razorpay.com https://*.razorpay.in https://js.stripe.com https://*.stripe.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "frame-src 'self'",
+    "frame-src 'self' https://checkout.razorpay.com https://checkout-static.razorpay.com https://api.razorpay.com https://*.razorpay.com https://*.razorpay.in https://js.stripe.com https://hooks.stripe.com https://*.stripe.com",
     "form-action 'self'",
   ].join('; '),
+
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'SAMEORIGIN',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': 'camera=(self), microphone=(self), display-capture=(self), fullscreen=(self)',
 }
+
 
 // https://vite.dev/config/
 export default defineConfig({
