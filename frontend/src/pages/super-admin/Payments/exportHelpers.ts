@@ -24,7 +24,8 @@ export function exportPaymentsPDF(rows: PaymentRow[]) {
       i + 1,
       r.invoice_number ?? "—",
       r.source.toUpperCase(),
-      `${r.institute_name ?? "—"} ${r.plan_name ? `/ ${r.plan_name}` : ""}`,
+      `${r.institute_name ?? strings.table.directStudent} ${r.plan_name ? `/ ${r.plan_name}` : ""}`,
+      r.gateway_reference ?? "—",
       formatCurrencyAmount(r.amount_paid, r.currency),
       formatCurrencyAmount(r.due_amount, r.currency),
       r.status.toUpperCase(),
@@ -45,8 +46,10 @@ export function exportPaymentsExcel(rows: PaymentRow[]) {
       i + 1,
       r.invoice_number ?? "",
       r.source,
-      r.institute_name ?? "",
+      r.institute_name ?? strings.table.directStudent,
       r.plan_name ?? "",
+      r.gateway ?? "manual",
+      r.gateway_reference ?? "",
       currencySymbol(r.currency),
       r.final_amount,
       r.amount_paid,
@@ -57,9 +60,24 @@ export function exportPaymentsExcel(rows: PaymentRow[]) {
   ];
 
   const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws["!cols"] = [{ wch: 5 }, { wch: 20 }, { wch: 12 }, { wch: 28 }, { wch: 24 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }];
+  ws["!cols"] = [
+    { wch: 5 },
+    { wch: 20 },
+    { wch: 12 },
+    { wch: 28 },
+    { wch: 24 },
+    { wch: 14 },
+    { wch: 30 },
+    { wch: 10 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 16 }
+  ];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, strings.excel.sheetName);
   XLSX.writeFile(wb, `payments-report-${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
+

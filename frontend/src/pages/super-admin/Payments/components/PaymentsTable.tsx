@@ -28,6 +28,7 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
             <th>{t.invoice}</th>
             <th>{t.source}</th>
             <th>{t.instituteOrPlan}</th>
+            <th>{t.reference}</th>
             <th>{t.paidOrDue}</th>
             <th>{t.status}</th>
             <th>{t.date}</th>
@@ -39,7 +40,7 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={7} className="empty-cell">
+              <td colSpan={8} className="empty-cell">
                 {t.empty}
               </td>
             </tr>
@@ -63,6 +64,18 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
                     </span>
                   )}
                 </div>
+              </td>
+              <td>
+                {row.gateway_reference ? (
+                  <div style={{ wordBreak: "break-all", maxWidth: 180, fontSize: 12.5, color: "var(--slate-600)" }}>
+                    <span style={{ fontSize: 10, textTransform: "uppercase", background: "var(--slate-100)", padding: "1px 5px", borderRadius: 4, marginRight: 5, color: "var(--slate-600)", fontWeight: 600 }}>
+                      {row.gateway || "manual"}
+                    </span>
+                    {row.gateway_reference}
+                  </div>
+                ) : (
+                  <span style={{ color: "var(--slate-400)", fontSize: 12.5 }}>—</span>
+                )}
               </td>
               <td>
                 <strong style={{ fontSize: 13.5 }}>
@@ -91,6 +104,7 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
             </tr>
           ))}
         </tbody>
+
       </table>
     </DataTableCard>
   );

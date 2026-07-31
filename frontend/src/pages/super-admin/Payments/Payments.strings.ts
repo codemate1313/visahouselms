@@ -54,6 +54,7 @@ export const paymentsStrings = {
     invoice: "Invoice",
     source: "Source",
     instituteOrPlan: "Institute / Plan",
+    reference: "Reference",
     paidOrDue: "Paid / Due",
     status: "Status",
     date: "Date",
@@ -83,10 +84,10 @@ export const paymentsStrings = {
   pdf: {
     header: "IELTS LMS — Payment Transactions Report",
     generatedPrefix: "Generated:",
-    columns: ["#", "Invoice", "Source", "Institute / Plan", "Amount Paid", "Due Amount", "Status", "Date"],
+    columns: ["#", "Invoice", "Source", "Institute / Plan", "Reference", "Amount Paid", "Due Amount", "Status", "Date"],
   },
   excel: {
     sheetName: "Payments",
-    columns: ["#", "Invoice Number", "Source", "Institute Name", "Plan Name", "Currency", "Final Amount", "Amount Paid", "Due Amount", "Status", "Created At"],
+    columns: ["#", "Invoice Number", "Source", "Institute Name", "Plan Name", "Gateway", "Reference", "Currency", "Final Amount", "Amount Paid", "Due Amount", "Status", "Created At"],
   },
 } as const;

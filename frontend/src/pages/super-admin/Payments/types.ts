@@ -21,4 +21,6 @@ export interface PaymentRow {
   status: string;
   invoice_number: string | null;
   created_at: string;
+  gateway?: string;
+  gateway_reference?: string | null;
 }
