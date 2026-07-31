@@ -58,6 +58,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
   const [details, setDetails] = useState<InstituteDetails | null>(null);
   const [students, setStudents] = useState<Member[]>([]);
   const [instructors, setInstructors] = useState<Member[]>([]);
+  const [admins, setAdmins] = useState<Member[]>([]);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [chartData, setChartData] = useState<LineChartDatum[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,9 +68,15 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
   const [studentSearch, setStudentSearch] = useState("");
   const [instructorSearch, setInstructorSearch] = useState("");
   const [activitySearch, setActivitySearch] = useState("");
+  const [activityRoleFilter, setActivityRoleFilter] = useState<string>("all");
   const [activityUserFilter, setActivityUserFilter] = useState<string | number>("all");
 
   const [, startTransition] = useTransition();
+
+  // Reset user filter when role filter changes to prevent invalid query combinations
+  useEffect(() => {
+    setActivityUserFilter("all");
+  }, [activityRoleFilter]);
 
   // Load details, students, and instructors when drawer opens/institute changes
   useEffect(() => {
@@ -81,17 +88,20 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
     setStudentSearch("");
     setInstructorSearch("");
     setActivitySearch("");
+    setActivityRoleFilter("all");
     setActivityUserFilter("all");
 
     Promise.all([
       apiClient.get<InstituteDetails>(`/super-admin/institutes/${instituteId}`),
       apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=STUDENT`),
       apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=INST_INSTRUCTOR`),
+      apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=INSTITUTE_ADMIN`),
     ])
-      .then(([detailsRes, studentsRes, instructorsRes]) => {
+      .then(([detailsRes, studentsRes, instructorsRes, adminsRes]) => {
         setDetails(detailsRes.data);
         setStudents(studentsRes.data);
         setInstructors(instructorsRes.data);
+        setAdmins(adminsRes.data);
       })
       .catch((err) => {
         console.error("Error loading institute details drawer data:", err);
@@ -105,6 +115,9 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
     if (!instituteId || activeTab !== "activity") return;
 
     const queryParams = new URLSearchParams();
+    if (activityRoleFilter !== "all") {
+      queryParams.append("role", activityRoleFilter);
+    }
     if (activityUserFilter !== "all") {
       queryParams.append("user_id", String(activityUserFilter));
     }
@@ -124,7 +137,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
         setChartData(formattedChartData);
       })
       .catch((err) => console.error("Error loading activity log:", err));
-  }, [instituteId, activeTab, activityUserFilter, activitySearch]);
+  }, [instituteId, activeTab, activityRoleFilter, activityUserFilter, activitySearch]);
 
   if (!instituteId) return null;
 
@@ -145,12 +158,36 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
       i.email.toLowerCase().includes(instructorSearch.toLowerCase())
   );
 
-  // User list for Select options in activity filter
-  const activityUserOptions = [
-    { value: "all", label: "All Users" },
-    ...instructors.map((i) => ({ value: i.id, label: `${i.first_name} ${i.last_name}`, sublabel: "Instructor" })),
-    ...students.map((s) => ({ value: s.id, label: `${s.first_name} ${s.last_name}`, sublabel: "Student" })),
-  ];
+  // Dynamic user list options based on selected role filter
+  const activityUserOptions = (() => {
+    let usersList: { value: number; label: string; sublabel: string }[] = [];
+    if (activityRoleFilter === "all" || activityRoleFilter === "INSTITUTE_ADMIN") {
+      usersList = usersList.concat(
+        admins.map((a) => ({ value: a.id, label: `${a.first_name} ${a.last_name}`, sublabel: "Admin" }))
+      );
+    }
+    if (activityRoleFilter === "all" || activityRoleFilter === "INST_INSTRUCTOR") {
+      usersList = usersList.concat(
+        instructors.map((i) => ({ value: i.id, label: `${i.first_name} ${i.last_name}`, sublabel: "Instructor" }))
+      );
+    }
+    if (activityRoleFilter === "all" || activityRoleFilter === "STUDENT") {
+      usersList = usersList.concat(
+        students.map((s) => ({ value: s.id, label: `${s.first_name} ${s.last_name}`, sublabel: "Student" }))
+      );
+    }
+
+    const placeholderLabel =
+      activityRoleFilter === "INSTITUTE_ADMIN"
+        ? "All Admins"
+        : activityRoleFilter === "INST_INSTRUCTOR"
+          ? "All Instructors"
+          : activityRoleFilter === "STUDENT"
+            ? "All Students"
+            : "All Users";
+
+    return [{ value: "all", label: placeholderLabel }, ...usersList];
+  })();
 
   return createPortal(
     <div className="institute-detail-drawer-overlay" onClick={onClose}>
@@ -391,6 +428,22 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
 
                   {/* Filter & Search Bar */}
                   <div className="activity-filters-row">
+                    <div className="filter-select-col">
+                      <label className="select-col-label">Filter Role</label>
+                      <SearchableSelect
+                        options={[
+                          { value: "all", label: "All Roles" },
+                          { value: "INSTITUTE_ADMIN", label: "Admins" },
+                          { value: "INST_INSTRUCTOR", label: "Instructors" },
+                          { value: "STUDENT", label: "Students" },
+                        ]}
+                        value={activityRoleFilter}
+                        onChange={(val) => setActivityRoleFilter(String(val))}
+                        placeholder="All Roles"
+                        searchable={false}
+                        className="activity-role-select"
+                      />
+                    </div>
                     <div className="filter-select-col">
                       <label className="select-col-label">Filter User</label>
                       <SearchableSelect
