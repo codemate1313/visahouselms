@@ -652,3 +652,118 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
     animation: none;
   }
 }
+
+/* Daily Facts Layout inside Completion Panel */
+.daily-facts-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  max-width: 100%;
+}
+
+.daily-completion-summary .completion-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.daily-fact-card {
+  background: var(--slate-50, #f8fafc);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .daily-fact-card {
+  background: #202636;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.daily-fact-content {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.daily-fact-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--primary, #b91c2b);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+}
+
+.daily-fact-text {
+  flex: 1;
+}
+
+.daily-fact-text h4 {
+  font-size: 16px;
+  font-weight: 750;
+  color: var(--text, #0f172a);
+  margin: 0 0 8px 0;
+}
+
+[data-theme="dark"] .daily-fact-text h4 {
+  color: #ffffff;
+}
+
+.daily-fact-text p {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-muted, #475569);
+  margin: 0;
+}
+
+[data-theme="dark"] .daily-fact-text p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.daily-fact-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  padding-top: 12px;
+}
+
+[data-theme="dark"] .daily-fact-navigation {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fact-nav-btn {
+  padding: 8px !important;
+  min-width: auto !important;
+  height: 36px !important;
+  width: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+}
+
+.fact-nav-indicator {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted, #475569);
+  min-width: 40px;
+  text-align: center;
+}
+
+[data-theme="dark"] .fact-nav-indicator {
+  color: rgba(255, 255, 255, 0.6);
+}

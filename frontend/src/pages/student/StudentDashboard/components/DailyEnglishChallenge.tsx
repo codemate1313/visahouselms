@@ -5,7 +5,6 @@ import { Icon } from "@/components/icons";
 import { DashboardButton } from "@/components/ui";
 import { studentDashboardStrings as strings } from "../StudentDashboard.strings";
 import "./DailyEnglishChallenge.css";
-import { EnglishDiscovery } from "./EnglishDiscovery";
 
 interface DailyQuestion {
   id: string;
@@ -65,12 +64,42 @@ function PracticeActivity({ activity }: { activity: ChallengeActivity[] }) {
   );
 }
 
+const LOCAL_FACTS = [
+  {
+    title: "Shortest Sentence",
+    content: "The shortest complete sentence in the English language is 'I am.' It contains a subject (I) and a verb (am) to express a complete thought.",
+    icon: "help" as const,
+  },
+  {
+    title: "Pangram Sentences",
+    content: "A pangram is a sentence that contains every letter in the alphabet. The most famous example is: 'The quick brown fox jumps over the lazy dog.'",
+    icon: "courses" as const,
+  },
+  {
+    title: "The Most Common Word",
+    content: "The word 'the' is the most common word in the English language. It represents about 5% of all written and spoken words.",
+    icon: "search" as const,
+  },
+  {
+    title: "Crutch Words",
+    content: "Words like 'like', 'literally', 'actually', and 'basically' are called 'crutch words'. We repeat them out of habit without adding any value.",
+    icon: "logs" as const,
+  },
+  {
+    title: "Shakespeare's Vocabulary",
+    content: "William Shakespeare is credited with inventing over 1,700 words, including 'lonely', 'bedroom', 'fashionable', 'eyeball', and 'swagger'.",
+    icon: "admin" as const,
+  },
+];
+
 export function DailyEnglishChallenge() {
   const [challenge, setChallenge] = useState<DailyChallenge | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [reviewing, setReviewing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showFacts, setShowFacts] = useState(false);
+  const [factIndex, setFactIndex] = useState(0);
   const t = strings.dailyEnglish;
 
   useEffect(() => {
@@ -123,53 +152,105 @@ export function DailyEnglishChallenge() {
     return (
       <section className={`workspace-panel daily-english-panel daily-completion is-${fireLevel}`}>
         <div className="daily-completion-layout">
-          <div className="daily-completion-summary">
-            <div className="daily-completion-fire" aria-label={t.fireLabel(challenge.score)}>
-              <span className="daily-fire-halo" />
-              <span className="daily-fire-flame">
-                <i className="daily-fire-outer" />
-                <i className="daily-fire-middle" />
-                <i className="daily-fire-core" />
-              </span>
-              <span className="daily-fire-sparks" aria-hidden="true">
-                {Array.from({ length: sparkCount }, (_, index) => (
-                  <i
-                    key={index}
-                    style={{
-                      "--spark-index": index,
-                      "--spark-x": `${(index - (sparkCount - 1) / 2) * 8}px`,
-                      "--spark-rotate": `${(index - (sparkCount - 1) / 2) * 14}deg`,
-                    } as CSSProperties}
-                  />
-                ))}
-              </span>
-            </div>
-            <div className="daily-completion-copy">
-              <span className="daily-english-eyebrow">{t.eyebrow}</span>
-              <h2>{t.completedHeading}</h2>
-              <p>{t.completedMessage}</p>
-              <strong className="daily-completion-score">{t.complete(challenge.score, challenge.total_questions)}</strong>
-            </div>
-            <div className="daily-completion-actions">
-              <div className="daily-completion-streak">
-                <span>{t.currentStreak}</span>
-                <strong>{challenge.current_streak} {challenge.current_streak === 1 ? t.day : t.days}</strong>
+          {showFacts ? (
+            <div className="daily-facts-summary">
+              <div className="daily-facts-header">
+                <span className="daily-english-eyebrow">English Discovery</span>
+                <h2>English Fact #{factIndex + 1}</h2>
               </div>
-              <DashboardButton
-                leftIcon={<Icon name="eye" />}
-                onClick={() => {
-                  setActiveIndex(0);
-                  setReviewing(true);
-                }}
-                variant="secondary"
-              >
-                {t.reviewAnswers}
-              </DashboardButton>
+              <div className="daily-fact-card">
+                <div className="daily-fact-content">
+                  <div className="daily-fact-icon-wrapper">
+                    <Icon name={LOCAL_FACTS[factIndex].icon} />
+                  </div>
+                  <div className="daily-fact-text">
+                    <h4>{LOCAL_FACTS[factIndex].title}</h4>
+                    <p>{LOCAL_FACTS[factIndex].content}</p>
+                  </div>
+                </div>
+                <div className="daily-fact-navigation">
+                  <DashboardButton
+                    onClick={() => setFactIndex((idx) => (idx === 0 ? LOCAL_FACTS.length - 1 : idx - 1))}
+                    variant="secondary"
+                    className="fact-nav-btn"
+                  >
+                    <Icon name="arrowLeft" />
+                  </DashboardButton>
+                  <span className="fact-nav-indicator">{factIndex + 1} / {LOCAL_FACTS.length}</span>
+                  <DashboardButton
+                    onClick={() => setFactIndex((idx) => (idx === LOCAL_FACTS.length - 1 ? 0 : idx + 1))}
+                    variant="secondary"
+                    className="fact-nav-btn"
+                  >
+                    <Icon name="arrowRight" />
+                  </DashboardButton>
+                </div>
+              </div>
+              <div className="daily-completion-actions">
+                <DashboardButton onClick={() => setShowFacts(false)} variant="secondary">
+                  <Icon name="arrowLeft" /> Back to Result
+                </DashboardButton>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="daily-completion-summary">
+              <div className="daily-completion-fire" aria-label={t.fireLabel(challenge.score)}>
+                <span className="daily-fire-halo" />
+                <span className="daily-fire-flame">
+                  <i className="daily-fire-outer" />
+                  <i className="daily-fire-middle" />
+                  <i className="daily-fire-core" />
+                </span>
+                <span className="daily-fire-sparks" aria-hidden="true">
+                  {Array.from({ length: sparkCount }, (_, index) => (
+                    <i
+                      key={index}
+                      style={{
+                        "--spark-index": index,
+                        "--spark-x": `${(index - (sparkCount - 1) / 2) * 8}px`,
+                        "--spark-rotate": `${(index - (sparkCount - 1) / 2) * 14}deg`,
+                      } as CSSProperties}
+                    />
+                  ))}
+                </span>
+              </div>
+              <div className="daily-completion-copy">
+                <span className="daily-english-eyebrow">{t.eyebrow}</span>
+                <h2>{t.completedHeading}</h2>
+                <p>{t.completedMessage}</p>
+                <strong className="daily-completion-score">{t.complete(challenge.score, challenge.total_questions)}</strong>
+              </div>
+              <div className="daily-completion-actions">
+                <div className="daily-completion-streak">
+                  <span>{t.currentStreak}</span>
+                  <strong>{challenge.current_streak} {challenge.current_streak === 1 ? t.day : t.days}</strong>
+                </div>
+                <div className="completion-btn-row">
+                  <DashboardButton
+                    leftIcon={<Icon name="eye" />}
+                    onClick={() => {
+                      setActiveIndex(0);
+                      setReviewing(true);
+                    }}
+                    variant="secondary"
+                  >
+                    {t.reviewAnswers}
+                  </DashboardButton>
+                  <DashboardButton
+                    rightIcon={<Icon name="arrowRight" />}
+                    onClick={() => {
+                      setFactIndex(0);
+                      setShowFacts(true);
+                    }}
+                  >
+                    Next
+                  </DashboardButton>
+                </div>
+              </div>
+            </div>
+          )}
           <PracticeActivity activity={challenge.activity} />
         </div>
-        <EnglishDiscovery />
       </section>
     );
   }
