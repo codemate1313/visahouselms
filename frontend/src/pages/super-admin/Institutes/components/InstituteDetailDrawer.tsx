@@ -1,4 +1,5 @@
 import { useEffect, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { apiClient } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { SegmentedControl } from "@/components/ui/SegmentedControl/SegmentedControl";
@@ -146,7 +147,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
     ...students.map((s) => ({ value: s.id, label: `${s.first_name} ${s.last_name}`, sublabel: "Student" })),
   ];
 
-  return (
+  return createPortal(
     <div className="institute-detail-drawer-overlay" onClick={onClose}>
       <div className="institute-detail-drawer" onClick={(e) => e.stopPropagation()}>
         {/* Drawer Header */}
@@ -421,6 +422,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
