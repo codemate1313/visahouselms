@@ -22,10 +22,9 @@ interface InstituteDetails {
   created_at: string;
   subscription_state: string;
   logo_url?: string;
-  // plan info could reside in subscription_state, or we can fetch plan info
-  ai_limit?: number;
+  ai_student_monthly_limit?: number;
   student_limit?: number;
-  instructor_limit?: number;
+  staff_limit?: number;
 }
 
 interface Member {
@@ -247,11 +246,13 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                     apiClient.get<InstituteDetails>(`/super-admin/institutes/${instituteId}`),
                     apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=STUDENT`),
                     apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=INST_INSTRUCTOR`),
+                    apiClient.get<Member[]>(`/super-admin/institutes/${instituteId}/members?role=INSTITUTE_ADMIN`),
                   ])
-                    .then(([detailsRes, studentsRes, instructorsRes]) => {
+                    .then(([detailsRes, studentsRes, instructorsRes, adminsRes]) => {
                       setDetails(detailsRes.data);
                       setStudents(studentsRes.data);
                       setInstructors(instructorsRes.data);
+                      setAdmins(adminsRes.data);
                     })
                     .catch((err) => {
                       console.error("Error loading institute details drawer data:", err);
@@ -293,7 +294,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                       </div>
                       <div className="widget-field-row">
                         <span className="field-label">Contact Email</span>
-                        <span className="field-value">{details.contact_email}</span>
+                        <span className="field-value">{details.contact_email || "—"}</span>
                       </div>
                     </div>
 
@@ -301,7 +302,9 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                       <h3>Resource Allocation</h3>
                       <div className="widget-field-row">
                         <span className="field-label">AI Quota Cap</span>
-                        <span className="field-value">{details.ai_limit ?? "Unlimited"} eval/mo</span>
+                        <span className="field-value">
+                          {details.ai_student_monthly_limit ? `${details.ai_student_monthly_limit} eval/student/mo` : "Unlimited eval/student/mo"}
+                        </span>
                       </div>
                       <div className="widget-field-row">
                         <span className="field-label">Student Slots</span>
@@ -312,7 +315,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                       <div className="widget-field-row">
                         <span className="field-label">Instructor Slots</span>
                         <span className="field-value">
-                          {instructors.length} / {details.instructor_limit ?? "Unlimited"}
+                          {instructors.length} / {details.staff_limit ?? "Unlimited"}
                         </span>
                       </div>
                     </div>
