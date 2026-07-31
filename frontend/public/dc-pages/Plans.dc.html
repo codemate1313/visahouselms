@@ -494,10 +494,11 @@ class Component extends DCLogic {
   };
 
   // Buying a plan starts with an account, so every CTA opens the register
-  // overlay on the parent app.
-  choosePlan = () => {
+  // overlay on the parent app. planId is forwarded so the parent can pre-select
+  // the plan after the user signs up.
+  choosePlan = (planId) => {
     this.closeMobileMenu();
-    try { window.parent.postMessage({ type: "vh-auth", mode: "register" }, window.location.origin); } catch {}
+    try { window.parent.postMessage({ type: "vh-auth", mode: "register", planId }, window.location.origin); } catch {}
   };
 
   componentDidMount() {
@@ -613,7 +614,7 @@ class Component extends DCLogic {
       description: plan.description || "",
       hasDescription: Boolean(plan.description),
       ctaLabel: forInstitutes ? "Talk to sales" : "Choose " + plan.name,
-      choose: forInstitutes ? this.contactSales : this.choosePlan,
+      choose: forInstitutes ? this.contactSales : () => this.choosePlan(plan.id),
       cardBg: featured ? "linear-gradient(155deg, var(--ac), var(--ac2))" : "var(--card)",
       cardInk: featured ? "#fff" : "var(--ink)",
       cardBorder: featured ? "transparent" : "var(--line)",

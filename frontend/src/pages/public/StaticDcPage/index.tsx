@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/authStore";
 import { destinationFor } from "@/pages/Login/helpers";
 import { API_BASE_URL } from "@/api/client";
 import { AuthOverlay } from "./components/AuthOverlay";
+import { InstitutePlanBanner } from "./components/InstitutePlanBanner";
 import type { AuthMode, PublicTheme } from "./types";
 
 interface StaticDcPageProps {
@@ -55,6 +56,7 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
   const navigate = useNavigate();
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [authMode, setAuthMode] = useState<AuthMode | null>(null);
+  const [showInstituteBanner, setShowInstituteBanner] = useState(false);
   const [publicTheme, setPublicTheme] = useState<PublicTheme>(() => getInitialPublicTheme());
   const [pageHtml, setPageHtml] = useState(() => buildLoadingHtml(getInitialPublicTheme(), title));
   const user = useAuthStore((state) => state.user);
@@ -79,8 +81,19 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
         event.source === frameRef.current?.contentWindow;
       if (!isTrustedPublicPage) return;
       if (event.data?.type === "vh-auth") {
-        const mode = event.data.mode === "login" ? "login" : "register";
-        navigate(mode === "login" ? "/login" : "/register");
+        if (!user) {
+          // Unauthenticated: open register or login overlay
+          const mode = event.data.mode === "login" ? "login" : "register";
+          navigate(mode === "login" ? "/login" : "/register", {
+            state: { planId: event.data.planId ?? null },
+          });
+        } else if (user.role === "STUDENT" && user.institute_id != null) {
+          // Institute student: show explanation banner — they cannot buy plans
+          setShowInstituteBanner(true);
+        } else if (user.role === "STUDENT") {
+          // Direct student: go straight to the purchase catalog
+          navigate("/student/courses");
+        }
       }
       if (event.data?.type === "vh-navigate" && event.data.href) {
         navigate(event.data.href);
@@ -221,6 +234,17 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
           onClose={handleClose}
           onModeChange={setAuthMode}
           closeDisabled={Boolean(user) || isLoading}
+        />
+      )}
+
+      {showInstituteBanner && (
+        <InstitutePlanBanner
+          publicTheme={publicTheme}
+          onClose={() => setShowInstituteBanner(false)}
+          onGoToCourses={() => {
+            setShowInstituteBanner(false);
+            navigate("/student/my-courses");
+          }}
         />
       )}
     </div>

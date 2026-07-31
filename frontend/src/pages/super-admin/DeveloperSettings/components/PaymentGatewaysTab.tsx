@@ -19,6 +19,14 @@ export function PaymentGatewaysTab() {
     stripe_webhook_secret: "",
   });
 
+  const [connectionStatus, setConnectionStatus] = useState<{
+    razorpay: "success" | "failed" | "not_configured" | "testing";
+    stripe: "success" | "failed" | "not_configured" | "testing";
+  }>({
+    razorpay: "not_configured",
+    stripe: "not_configured",
+  });
+
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -46,8 +54,38 @@ export function PaymentGatewaysTab() {
         stripe_secret_key: data.stripe_secret_key ?? "",
         stripe_webhook_secret: data.stripe_webhook_secret ?? "",
       });
+      // Fetch stored connection status
+      checkConnectionStatus();
     } catch {
       // Keep default empty form
+    }
+  }
+
+  async function checkConnectionStatus() {
+    try {
+      const { data } = await apiClient.get<{ razorpay: string; stripe: string }>("/super-admin/dev-settings/payment-gateways/status");
+      setConnectionStatus({
+        razorpay: data.razorpay as any,
+        stripe: data.stripe as any,
+      });
+    } catch {
+      // Ignore
+    }
+  }
+
+  async function testConnection(gateway: "razorpay" | "stripe") {
+    setConnectionStatus((prev) => ({ ...prev, [gateway]: "testing" }));
+    try {
+      const { data } = await apiClient.post<{ razorpay: string; stripe: string }>(
+        "/super-admin/dev-settings/payment-gateways/test-connection",
+        form
+      );
+      setConnectionStatus((prev) => ({
+        ...prev,
+        [gateway]: data[gateway] as any,
+      }));
+    } catch {
+      setConnectionStatus((prev) => ({ ...prev, [gateway]: "failed" }));
     }
   }
 
@@ -59,6 +97,7 @@ export function PaymentGatewaysTab() {
     try {
       await apiClient.put("/super-admin/dev-settings/payment-gateways", form);
       setNotice(t.saveSuccess);
+      await checkConnectionStatus();
     } catch (err: unknown) {
       setError(extractErrorMessage(err, t.saveError));
     } finally {
@@ -70,6 +109,71 @@ export function PaymentGatewaysTab() {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
+  }
+
+  function renderStatusIndicator(status: "success" | "failed" | "not_configured" | "testing") {
+    if (status === "testing") {
+      return (
+        <span style={{ fontSize: "0.75rem", color: "#64748b", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+          Verifying...
+        </span>
+      );
+    }
+    if (status === "success") {
+      return (
+        <span style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "6px",
+          background: "#dcfce7",
+          color: "#15803d",
+          fontSize: "0.725rem",
+          fontWeight: 700,
+          padding: "2px 8px",
+          borderRadius: "100px",
+          border: "1px solid #bbf7d0",
+        }}>
+          <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 8px #22c55e" }} />
+          Connected
+        </span>
+      );
+    }
+    if (status === "failed") {
+      return (
+        <span style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "6px",
+          background: "#fee2e2",
+          color: "#b91c1c",
+          fontSize: "0.725rem",
+          fontWeight: 700,
+          padding: "2px 8px",
+          borderRadius: "100px",
+          border: "1px solid #fecaca",
+        }}>
+          <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#ef4444", boxShadow: "0 0 8px #ef4444" }} />
+          Connection Failed
+        </span>
+      );
+    }
+    return (
+      <span style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        background: "#f1f5f9",
+        color: "#64748b",
+        fontSize: "0.725rem",
+        fontWeight: 700,
+        padding: "2px 8px",
+        borderRadius: "100px",
+        border: "1px solid #e2e8f0",
+      }}>
+        <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#94a3b8" }} />
+        Not Configured
+      </span>
+    );
   }
 
   const isRazorpayConfigured = Boolean(form.razorpay_enabled && form.razorpay_key_id);
@@ -117,9 +221,12 @@ export function PaymentGatewaysTab() {
                 <Icon name="wallet" />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary, #0f172a)" }}>
-                  {t.razorpayTitle}
-                </h3>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary, #0f172a)" }}>
+                    {t.razorpayTitle}
+                  </h3>
+                  {renderStatusIndicator(connectionStatus.razorpay)}
+                </div>
                 <small style={{ color: "var(--text-muted, #64748b)" }}>{t.razorpayDesc}</small>
               </div>
             </div>
@@ -194,14 +301,25 @@ export function PaymentGatewaysTab() {
             <span>
               <strong>Webhook Callback URL:</strong> <code style={{ color: "#0284c7" }}>{razorpayWebhookUrl}</code>
             </span>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => handleCopy(razorpayWebhookUrl, "razorpay")}
-              style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem" }}
-            >
-              {copiedKey === "razorpay" ? "Copied!" : "Copy URL"}
-            </button>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => testConnection("razorpay")}
+                disabled={connectionStatus.razorpay === "testing"}
+                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface, #f1f5f9)", border: "1px solid var(--border, #cbd5e1)" }}
+              >
+                {connectionStatus.razorpay === "testing" ? "Testing..." : "Test Connection"}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => handleCopy(razorpayWebhookUrl, "razorpay")}
+                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem" }}
+              >
+                {copiedKey === "razorpay" ? "Copied!" : "Copy URL"}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -234,9 +352,12 @@ export function PaymentGatewaysTab() {
                 <Icon name="transactions" />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary, #0f172a)" }}>
-                  {t.stripeTitle}
-                </h3>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary, #0f172a)" }}>
+                    {t.stripeTitle}
+                  </h3>
+                  {renderStatusIndicator(connectionStatus.stripe)}
+                </div>
                 <small style={{ color: "var(--text-muted, #64748b)" }}>{t.stripeDesc}</small>
               </div>
             </div>
@@ -305,14 +426,25 @@ export function PaymentGatewaysTab() {
             <span>
               <strong>Webhook Callback URL:</strong> <code style={{ color: "#9333ea" }}>{stripeWebhookUrl}</code>
             </span>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => handleCopy(stripeWebhookUrl, "stripe")}
-              style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem" }}
-            >
-              {copiedKey === "stripe" ? "Copied!" : "Copy URL"}
-            </button>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => testConnection("stripe")}
+                disabled={connectionStatus.stripe === "testing"}
+                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface, #f1f5f9)", border: "1px solid var(--border, #cbd5e1)" }}
+              >
+                {connectionStatus.stripe === "testing" ? "Testing..." : "Test Connection"}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => handleCopy(stripeWebhookUrl, "stripe")}
+                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem" }}
+              >
+                {copiedKey === "stripe" ? "Copied!" : "Copy URL"}
+              </button>
+            </div>
           </div>
         </div>
 

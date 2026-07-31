@@ -39,27 +39,31 @@ def upgrade() -> None:
     )
 
     # 2. Add gst_rate_id to plans
-    op.add_column("plans", sa.Column("gst_rate_id", sa.Integer(), nullable=True))
-    op.create_foreign_key("fk_plans_gst_rate_id", "plans", "gst_rates", ["gst_rate_id"], ["id"], ondelete="SET NULL")
+    with op.batch_alter_table("plans") as batch_op:
+        batch_op.add_column(sa.Column("gst_rate_id", sa.Integer(), nullable=True))
+        batch_op.create_foreign_key("fk_plans_gst_rate_id", "gst_rates", ["gst_rate_id"], ["id"], ondelete="SET NULL")
 
     # 3. Add GST fields to payments
-    op.add_column("payments", sa.Column("subtotal_amount", sa.Numeric(precision=10, scale=2), nullable=False, server_default="0.00"))
-    op.add_column("payments", sa.Column("gst_rate_id", sa.Integer(), nullable=True))
-    op.add_column("payments", sa.Column("gst_percentage", sa.Numeric(precision=5, scale=2), nullable=False, server_default="0.00"))
-    op.add_column("payments", sa.Column("gst_tax_type", sa.String(length=20), nullable=False, server_default="exclusive"))
-    op.add_column("payments", sa.Column("gst_amount", sa.Numeric(precision=10, scale=2), nullable=False, server_default="0.00"))
-    op.create_foreign_key("fk_payments_gst_rate_id", "payments", "gst_rates", ["gst_rate_id"], ["id"], ondelete="SET NULL")
+    with op.batch_alter_table("payments") as batch_op:
+        batch_op.add_column(sa.Column("subtotal_amount", sa.Numeric(precision=10, scale=2), nullable=False, server_default="0.00"))
+        batch_op.add_column(sa.Column("gst_rate_id", sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column("gst_percentage", sa.Numeric(precision=5, scale=2), nullable=False, server_default="0.00"))
+        batch_op.add_column(sa.Column("gst_tax_type", sa.String(length=20), nullable=False, server_default="exclusive"))
+        batch_op.add_column(sa.Column("gst_amount", sa.Numeric(precision=10, scale=2), nullable=False, server_default="0.00"))
+        batch_op.create_foreign_key("fk_payments_gst_rate_id", "gst_rates", ["gst_rate_id"], ["id"], ondelete="SET NULL")
 
 
 def downgrade() -> None:
-    op.drop_constraint("fk_payments_gst_rate_id", "payments", type_="foreignkey")
-    op.drop_column("payments", "gst_amount")
-    op.drop_column("payments", "gst_tax_type")
-    op.drop_column("payments", "gst_percentage")
-    op.drop_column("payments", "gst_rate_id")
-    op.drop_column("payments", "subtotal_amount")
+    with op.batch_alter_table("payments") as batch_op:
+        batch_op.drop_constraint("fk_payments_gst_rate_id", type_="foreignkey")
+        batch_op.drop_column("gst_amount")
+        batch_op.drop_column("gst_tax_type")
+        batch_op.drop_column("gst_percentage")
+        batch_op.drop_column("gst_rate_id")
+        batch_op.drop_column("subtotal_amount")
 
-    op.drop_constraint("fk_plans_gst_rate_id", "plans", type_="foreignkey")
-    op.drop_column("plans", "gst_rate_id")
+    with op.batch_alter_table("plans") as batch_op:
+        batch_op.drop_constraint("fk_plans_gst_rate_id", type_="foreignkey")
+        batch_op.drop_column("gst_rate_id")
 
     op.drop_table("gst_rates")

@@ -297,7 +297,88 @@ def job_status(job_id: int, db: Session = Depends(get_db)):
     }
 
 
+
 # ---------- Payment Gateways (Razorpay & Stripe) ----------
+
+# NOTE: More-specific sub-routes must be declared BEFORE the base /payment-gateways GET,
+# otherwise FastAPI may shadow them.
+
+@router.get("/payment-gateways/status")
+def get_payment_gateways_status(db: Session = Depends(get_db)):
+    gw_settings = get_settings_group(db, "payment_gateways", mask_secrets=False)
+
+    razorpay_key = gw_settings.get("razorpay_key_id")
+    razorpay_secret = gw_settings.get("razorpay_key_secret")
+    stripe_sec = gw_settings.get("stripe_secret_key")
+
+    razorpay_status = "not_configured"
+    if razorpay_key and razorpay_secret:
+        try:
+            import requests as req_lib
+            res = req_lib.get(
+                "https://api.razorpay.com/v1/orders?count=1",
+                auth=(razorpay_key, razorpay_secret),
+                timeout=5,
+            )
+            razorpay_status = "success" if res.status_code == 200 else "failed"
+        except Exception:
+            razorpay_status = "failed"
+
+    stripe_status = "not_configured"
+    if stripe_sec:
+        try:
+            import urllib.request as urllib_req
+            req2 = urllib_req.Request("https://api.stripe.com/v1/balance")
+            req2.add_header("Authorization", f"Bearer {stripe_sec}")
+            with urllib_req.urlopen(req2, timeout=5) as resp:
+                stripe_status = "success" if resp.status == 200 else "failed"
+        except Exception:
+            stripe_status = "failed"
+
+    return {"razorpay": razorpay_status, "stripe": stripe_status}
+
+
+@router.post("/payment-gateways/test-connection")
+def test_payment_gateways_connection(payload: PaymentGatewaySettingsIn, db: Session = Depends(get_db)):
+    data = payload.model_dump()
+
+    razorpay_key = data.get("razorpay_key_id")
+    razorpay_secret = data.get("razorpay_key_secret")
+    if razorpay_secret == "********" or not razorpay_secret:
+        stored = get_settings_group(db, "payment_gateways", mask_secrets=False)
+        razorpay_secret = stored.get("razorpay_key_secret")
+
+    stripe_sec = data.get("stripe_secret_key")
+    if stripe_sec == "********" or not stripe_sec:
+        stored = get_settings_group(db, "payment_gateways", mask_secrets=False)
+        stripe_sec = stored.get("stripe_secret_key")
+
+    razorpay_status = "not_configured"
+    if razorpay_key and razorpay_secret:
+        try:
+            import requests as req_lib
+            res = req_lib.get(
+                "https://api.razorpay.com/v1/orders?count=1",
+                auth=(razorpay_key, razorpay_secret),
+                timeout=5,
+            )
+            razorpay_status = "success" if res.status_code == 200 else "failed"
+        except Exception:
+            razorpay_status = "failed"
+
+    stripe_status = "not_configured"
+    if stripe_sec:
+        try:
+            import urllib.request as urllib_req
+            req2 = urllib_req.Request("https://api.stripe.com/v1/balance")
+            req2.add_header("Authorization", f"Bearer {stripe_sec}")
+            with urllib_req.urlopen(req2, timeout=5) as resp:
+                stripe_status = "success" if resp.status == 200 else "failed"
+        except Exception:
+            stripe_status = "failed"
+
+    return {"razorpay": razorpay_status, "stripe": stripe_status}
+
 
 @router.get("/payment-gateways")
 def get_payment_gateways(db: Session = Depends(get_db)):
@@ -319,6 +400,3 @@ def put_payment_gateways(
     set_settings_group(db, "payment_gateways", data)
     _audit(db, actor, "dev_settings.update_payment_gateways", request)
     return get_settings_group(db, "payment_gateways")
-
-
-

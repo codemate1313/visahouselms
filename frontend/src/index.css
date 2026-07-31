@@ -21285,7 +21285,7 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .portal-app-bar {
   position: relative !important;
-  z-index: 20 !important;
+  z-index: 25000 !important;
 
   --portal-icon-color: var(--sidebar-active-text, var(--primary));
   --portal-icon-bg: color-mix(in srgb, var(--portal-icon-color) 12%, transparent);
