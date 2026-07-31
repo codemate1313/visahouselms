@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Optional
 from pydantic import BaseModel
 
@@ -29,6 +30,7 @@ from app.services import (
     achievement_service,
     attempt_service,
     avatar_service,
+    coupon_service,
     grading_service,
     notification_service,
     payment_service,
@@ -228,6 +230,11 @@ class CreateOrderRequest(BaseModel):
     currency: Optional[str] = None
 
 
+class ValidateCouponRequest(BaseModel):
+    coupon_code: str
+    currency: Optional[str] = None
+
+
 @router.get("/detect-location")
 def get_detected_location(request: Request):
     country_code = detect_country_code(request)
@@ -241,6 +248,50 @@ def get_detected_location(request: Request):
 @router.get("/payment-config")
 def get_payment_config(db: Session = Depends(get_db)):
     return payment_service.get_public_payment_config(db)
+
+
+@router.post("/plans/{plan_id}/validate-coupon")
+def validate_plan_coupon(
+    plan_id: int,
+    payload: ValidateCouponRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    plan = plan_service.get_plan_or_404(db, plan_id)
+    requested_currency = (payload.currency or plan.currency or "INR").upper()
+    is_usd = requested_currency == "USD" and plan.is_international_enabled and plan.usd_price is not None
+    effective_base_price = Decimal(str(plan.usd_price if is_usd else plan.price))
+
+    discount, coupon = coupon_service.validate_and_price(db, payload.coupon_code, effective_base_price, "plan", plan_id, user.email)
+
+    discounted_base = max(Decimal("0.00"), effective_base_price - discount)
+
+    gst = None if is_usd else plan.gst_rate
+    gst_amount = Decimal("0.00")
+    subtotal = discounted_base
+    final_total = discounted_base
+
+    if gst and gst.percentage > 0:
+        if gst.tax_type == "inclusive":
+            final_total = discounted_base
+            subtotal = (final_total / (1 + Decimal(str(gst.percentage)) / Decimal("100"))).quantize(Decimal("0.01"))
+            gst_amount = final_total - subtotal
+        else:
+            subtotal = discounted_base
+            gst_amount = (subtotal * (Decimal(str(gst.percentage)) / Decimal("100"))).quantize(Decimal("0.01"))
+            final_total = subtotal + gst_amount
+
+    return {
+        "valid": True,
+        "coupon_code": coupon.code if coupon else payload.coupon_code,
+        "discount_amount": float(discount),
+        "discount_type": coupon.discount_type if coupon else None,
+        "discount_value": float(coupon.value) if coupon else None,
+        "discounted_base_price": float(discounted_base),
+        "subtotal": float(subtotal),
+        "gst_amount": float(gst_amount),
+        "final_total": float(final_total),
+    }
 
 
 @router.post("/plans/{plan_id}/create-order", status_code=201)

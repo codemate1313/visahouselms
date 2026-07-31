@@ -152,6 +152,7 @@ export function CouponForm() {
           <div>
             <label htmlFor="usage_limit">{strings.usageLimitLabel}</label>
             <input id="usage_limit" type="number" min="1" value={form.usage_limit} onChange={set("usage_limit")} placeholder={strings.usageLimitPlaceholder} />
+            <p className="hint">{strings.usageLimitHint}</p>
           </div>
           <div>
             <label htmlFor="valid_from">{strings.validFromLabel}</label>

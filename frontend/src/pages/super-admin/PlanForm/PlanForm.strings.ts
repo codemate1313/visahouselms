@@ -30,8 +30,8 @@ export const planFormStrings = {
   },
   featureEditor: {
     legend: "Pricing card features",
-    hint: "These bullets appear, ticked, on the public pricing card. Leave empty to fall back to an automatic list built from the plan's courses and limits.",
-    empty: "No features added — the pricing card will use the automatic list.",
+    hint: "These bullet features appear, ticked, on the pricing card for students.",
+    empty: "No features added yet. Add at least one feature bullet.",
     placeholder: "e.g. AI writing & speaking feedback",
     itemLabel: (position: number) => `Feature ${position}`,
     add: "Add feature",

@@ -13,7 +13,7 @@ interface PlanGridProps {
 
 export function PlanGrid({ plans, selectedCurrency = "INR", onGoToCourse, onChoosePlan }: PlanGridProps) {
   return (
-    <div className="catalog-plans-grid">
+    <div className="uui-pricing-grid">
       {plans.map((plan, index) => {
         const isFeatured = index === 0 || plans.length === 1;
         const isUSD = selectedCurrency === "USD" && plan.is_international_enabled && plan.usd_price;
@@ -21,85 +21,98 @@ export function PlanGrid({ plans, selectedCurrency = "INR", onGoToCourse, onChoo
         const displayCurrency = isUSD ? "USD" : (plan.currency || "INR");
 
         return (
-          <div className={`catalog-plan-card${isFeatured ? " is-featured" : ""}`} key={plan.id}>
-            {isFeatured && (
-              <div className="catalog-plan-badge">
-                <Icon name="plan" /> MOST POPULAR
+          <div
+            className={`uui-pricing-card${isFeatured ? " is-featured" : ""}${plan.entitled ? " is-purchased" : ""}`}
+            key={plan.id}
+          >
+            {/* Top Card Header */}
+            <div className="uui-card-header">
+              <div className="uui-card-title-row">
+                <h3 className="uui-plan-name">{plan.name}</h3>
+                {plan.entitled ? (
+                  <span className="uui-purchased-badge">
+                    <span className="uui-tick-bubble">
+                      <Icon name="check" />
+                    </span>
+                    PURCHASED
+                  </span>
+                ) : isFeatured ? (
+                  <span className="uui-popular-badge">Popular</span>
+                ) : null}
               </div>
-            )}
 
-            <div className="catalog-plan-header">
-              <div className="catalog-plan-duration-chip">
-                <Icon name="due" /> {strings.durationSuffix(plan.duration_days)} validity
+              {/* Price Display */}
+              <div className="uui-price-row">
+                <span className="uui-price-value">
+                  {formatCurrencyAmount(displayPrice, displayCurrency)}
+                </span>
+                <span className="uui-price-period">/ {plan.duration_days} days</span>
               </div>
-              <h2 className="catalog-plan-title">{plan.name}</h2>
-              <p className="catalog-plan-desc">{plan.description || strings.defaultDescription}</p>
-            </div>
 
-            <div className="catalog-plan-price-box">
-              <div className="catalog-plan-price">
-                <span className="catalog-plan-currency-val">{formatCurrencyAmount(displayPrice, displayCurrency)}</span>
-                <span className="catalog-plan-period">/ {plan.duration_days} days</span>
-              </div>
+              {/* Description */}
+              <p className="uui-plan-desc">{plan.description || strings.defaultDescription}</p>
+
               {isUSD && (
-                <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#2563eb", background: "#eff6ff", padding: "2px 8px", borderRadius: "10px" }}>
+                <span className="uui-stripe-tag">
                   Global Stripe Payment
                 </span>
               )}
-              <div className="catalog-plan-tests-count">
-                <Icon name="module" /> {strings.testsCount(plan.module_count)} included
-              </div>
-            </div>
 
-
-            <div className="catalog-plan-features">
-              <span className="catalog-features-title">INCLUDED TEST MODULES ({plan.modules?.length ?? 0}):</span>
-              {plan.modules && plan.modules.length > 0 ? (
-                <ul className="catalog-modules-real-list">
-                  {plan.modules.map((m) => (
-                    <li key={m.id || m.title} className="catalog-real-module-item">
-                      <span className="catalog-check-icon">✓</span>
-                      <div className="catalog-module-info">
-                        <span className="catalog-module-name">{m.title}</span>
-                        <div className="catalog-module-meta-tags">
-                          <span className="catalog-module-type-pill" data-type={m.module_type}>
-                            {m.module_type.replaceAll("_", " ")}
-                          </span>
-                          <span className="catalog-module-duration">{m.duration_minutes} mins</span>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="catalog-no-modules">No test modules linked to this plan.</p>
-              )}
-            </div>
-
-            <div className="catalog-plan-footer">
-              {plan.entitled ? (
-                <div className="catalog-plan-entitled-box">
-                  <div className="catalog-active-badge">✓ Active Subscription</div>
+              {/* Action Button & Status */}
+              <div className="uui-action-group">
+                {plan.entitled ? (
+                  <>
+                    <Button
+                      variant="primary"
+                      fullWidth
+                      rightIcon={<Icon name="arrowRight" />}
+                      onClick={onGoToCourse}
+                      className="uui-btn-primary"
+                    >
+                      {strings.goToCourse}
+                    </Button>
+                    <div className="uui-active-badge">
+                      <span className="uui-tick-bubble-translucent">
+                        <Icon name="check" />
+                      </span>
+                      Active Subscription
+                    </div>
+                  </>
+                ) : (
                   <Button
                     variant="primary"
                     fullWidth
                     rightIcon={<Icon name="arrowRight" />}
-                    onClick={onGoToCourse}
-                    className="catalog-plan-btn"
+                    onClick={() => onChoosePlan(plan)}
+                    className="uui-btn-primary"
                   >
-                    {strings.goToCourse}
+                    {strings.choosePlan}
                   </Button>
-                </div>
+                )}
+              </div>
+            </div>
+
+            {/* Lower Features Section */}
+            <div className="uui-card-features">
+              <div className="uui-features-header">FEATURES</div>
+              <p className="uui-features-subtitle">Plan inclusions and benefits:</p>
+
+              {plan.features && plan.features.length > 0 ? (
+                <ul className="uui-features-list">
+                  {plan.features.map((feat, idx) => (
+                    <li key={idx} className="uui-feature-item">
+                      <span className="uui-feature-check">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+                          <path d="m9 12 2 2 4-4" />
+                        </svg>
+                      </span>
+                      <span className="uui-feature-text">{feat}</span>
+                    </li>
+                  ))}
+                </ul>
               ) : (
-                <Button
-                  variant="primary"
-                  fullWidth
-                  rightIcon={<Icon name="arrowRight" />}
-                  onClick={() => onChoosePlan(plan)}
-                  className="catalog-plan-btn"
-                >
-                  {strings.choosePlan}
-                </Button>
+                <p className="uui-no-features">No feature bullets configured for this plan.</p>
               )}
             </div>
           </div>

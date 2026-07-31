@@ -169,13 +169,14 @@ def create_b2b_plan_payment(
     ip: Optional[str] = None,
     renew_if_current: bool = False,
 ) -> dict:
-    institute_service.get_institute_or_404(db, institute_id)
+    institute = institute_service.get_institute_or_404(db, institute_id)
     plan = plan_service.get_plan_or_404(db, plan_id)
     plan_service.assert_audience(plan, AUDIENCE_INSTITUTES)
     if not plan.is_active:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This plan is deactivated")
 
-    discount, coupon = coupon_service.validate_and_price(db, coupon_code, plan.price, "plan", plan_id)
+    coupon_email = institute.contact_email or f"institute-{institute_id}@internal.local"
+    discount, coupon = coupon_service.validate_and_price(db, coupon_code, plan.price, "plan", plan_id, coupon_email)
     final_amount = plan.price - discount
 
     # defaults to a full one-shot payment, exactly today's behavior, unless a
@@ -221,7 +222,7 @@ def create_b2b_plan_payment(
 
     # discount is priced in regardless of how much has actually been received
     if coupon is not None:
-        coupon_service.redeem(db, coupon)
+        coupon_service.redeem(db, coupon, coupon_email, payment_id=payment.id)
 
     _audit(
         db, actor, "payment.create", payment.id, ip,
@@ -314,7 +315,8 @@ def create_user_plan_payment(
     if not plan.is_active:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This plan is deactivated")
 
-    discount, coupon = coupon_service.validate_and_price(db, coupon_code, plan.price, "plan", plan_id)
+    buyer = db.query(User).filter(User.id == user_id).first()
+    discount, coupon = coupon_service.validate_and_price(db, coupon_code, plan.price, "plan", plan_id, buyer.email)
     gst_calc = calculate_gst_and_totals(plan, discount)
 
     payment = Payment(
@@ -354,7 +356,7 @@ def create_user_plan_payment(
     db.add(payment)
     try:
         if coupon is not None:
-            coupon_service.redeem(db, coupon)
+            coupon_service.redeem(db, coupon, buyer.email, user_id=user_id, payment_id=payment.id)
         subscription = subscription_service.subscribe_user(
             db, user_id, plan_id, ip, commit=False
         )
@@ -472,6 +474,8 @@ def create_user_plan_order(
     if not plan.is_active:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This plan is deactivated")
 
+    buyer = db.query(User).filter(User.id == user_id).first()
+
     # Resolve currency: USD if requested or plan is international-only, otherwise plan default (INR)
     requested_currency = (target_currency or plan.currency or "INR").upper()
     is_usd = requested_currency == "USD" and plan.is_international_enabled and plan.usd_price is not None
@@ -487,7 +491,7 @@ def create_user_plan_order(
         if not stripe_enabled or not secret_key:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Stripe payment gateway is not configured for international USD payments.")
 
-        discount, coupon = coupon_service.validate_and_price(db, coupon_code, effective_base_price, "plan", plan_id)
+        discount, coupon = coupon_service.validate_and_price(db, coupon_code, effective_base_price, "plan", plan_id, buyer.email)
         final_amount = effective_base_price - discount
 
         payment = Payment(
@@ -552,7 +556,7 @@ def create_user_plan_order(
             "payment": payment_result,
         }
 
-    discount, coupon = coupon_service.validate_and_price(db, coupon_code, plan.price, "plan", plan_id)
+    discount, coupon = coupon_service.validate_and_price(db, coupon_code, plan.price, "plan", plan_id, buyer.email)
     gst_calc = calculate_gst_and_totals(plan, discount)
     final_amount = gst_calc["final_amount"]
     amount_paise = int(final_amount * 100)
@@ -655,8 +659,9 @@ def verify_stripe_payment(
         if payment.coupon_id:
             coupon = db.query(Coupon).filter(Coupon.id == payment.coupon_id).first()
             if coupon:
-                coupon_service.redeem(db, coupon)
-        
+                buyer = db.query(User).filter(User.id == user_id).first()
+                coupon_service.redeem(db, coupon, buyer.email, user_id=user_id, payment_id=payment.id)
+
         subscription = subscription_service.subscribe_user(
             db, user_id, payment.plan_id, ip, commit=False
         )
@@ -717,8 +722,9 @@ def verify_razorpay_payment(
         if payment.coupon_id:
             coupon = db.query(Coupon).filter(Coupon.id == payment.coupon_id).first()
             if coupon:
-                coupon_service.redeem(db, coupon)
-        
+                buyer = db.query(User).filter(User.id == user_id).first()
+                coupon_service.redeem(db, coupon, buyer.email, user_id=user_id, payment_id=payment.id)
+
         subscription = subscription_service.subscribe_user(
             db, user_id, payment.plan_id, ip, commit=False
         )

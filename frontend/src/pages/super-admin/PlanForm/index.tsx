@@ -98,8 +98,15 @@ export function PlanForm() {
   }
   async function submit(event: FormEvent) {
     event.preventDefault();
-    setSaving(true);
     setError(null);
+
+    const cleanedFeatures = features.map((item) => item.trim()).filter(Boolean);
+    if (cleanedFeatures.length === 0) {
+      setError("Please add at least one pricing card feature for this plan.");
+      return;
+    }
+
+    setSaving(true);
     const payload = {
       name: form.name,
       description: form.description || null,
@@ -113,12 +120,10 @@ export function PlanForm() {
       gst_rate_id: form.gst_rate_id ? Number(form.gst_rate_id) : null,
       is_international_enabled: form.is_international_enabled,
       usd_price: form.is_international_enabled && form.usd_price ? Number(form.usd_price) : null,
-
-      gst_rate_id: form.gst_rate_id ? Number(form.gst_rate_id) : null,
       audience: "direct_students",
       is_published: form.is_published,
       module_ids: [...selected],
-      features: features.map((item) => item.trim()).filter(Boolean),
+      features: cleanedFeatures,
     };
     try {
       if (isNew) await apiClient.post("/super-admin/plans", payload);

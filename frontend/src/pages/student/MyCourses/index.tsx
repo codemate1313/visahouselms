@@ -5,6 +5,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { StudentCurrentPlan } from "@/api/types";
 import { PageHeader } from "@/components/ui";
+import { Icon } from "@/components/icons";
 import { useToastStore } from "@/store/toastStore";
 import { useAuthStore } from "@/store/authStore";
 import { myCoursesStrings as strings } from "./MyCourses.strings";
@@ -50,7 +51,16 @@ export function MyCourses() {
     });
   }, [allModules, typeFilter, search]);
 
-  async function startModule(moduleId: number, moduleType: string) {
+  async function startModule(moduleId: number, moduleType: string, isLocked?: boolean) {
+    if (isLocked) {
+      showError(
+        "This test module is not included in your active subscription plan. Please upgrade your plan to unlock.",
+        "Course Locked"
+      );
+      navigate("/student/courses");
+      return;
+    }
+
     setStarting(moduleId);
     let enteredFullscreen = false;
     try {
@@ -78,11 +88,19 @@ export function MyCourses() {
     }
   }
 
+  const typeCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: allModules.length };
+    allModules.forEach((m) => {
+      counts[m.module_type] = (counts[m.module_type] || 0) + 1;
+    });
+    return counts;
+  }, [allModules]);
+
   useEffect(() => {
     if (!loading && visibleModules.length > 0) {
       const ctx = gsap.context(() => {
         gsap.fromTo(
-          ".assigned-test-card",
+          ".premium-test-card",
           { y: 30, opacity: 0 },
           { y: 0, opacity: 1, duration: 0.6, stagger: 0.05, ease: "power3.out" }
         );
@@ -101,16 +119,6 @@ export function MyCourses() {
         subtitle={isInstituteStudent ? strings.subtitles.instituteStudent : strings.subtitles.directStudent}
       />
 
-      {!loading && access?.plan && allModules.length > 0 && (
-        <ModuleFilterBar
-          availableTypes={availableTypes}
-          typeFilter={typeFilter}
-          onTypeFilterChange={setTypeFilter}
-          search={search}
-          onSearchChange={setSearch}
-        />
-      )}
-
       {loading ? (
         <div className="assigned-tests-skeleton">
           {Array.from({ length: 6 }).map((_, i) => <div className="skeleton-test-card" key={i} />)}
@@ -124,19 +132,44 @@ export function MyCourses() {
           <p>{isInstituteStudent ? strings.empty.instituteDescription : strings.empty.directDescription}</p>
         </div>
       ) : (
-        <section className="workspace-panel assigned-tests-panel" style={{ marginBottom: 16 }}>
-          <div className="panel-heading">
-            <div>
-              <h2>{access.plan.name}</h2>
-              <p>{access.plan.description || strings.defaultPlanDescription}</p>
+        <div className="my-courses-content-wrapper">
+          {/* Top Hero Membership Card */}
+          <div className="my-courses-hero-card">
+            <div className="my-courses-hero-left">
+              <div className="my-courses-hero-badge">
+                <span className="my-courses-hero-dot" />
+                ACTIVE MEMBERSHIP
+              </div>
+              <h2 className="my-courses-hero-title">{access.plan.name}</h2>
+              <p className="my-courses-hero-desc">{access.plan.description || strings.defaultPlanDescription}</p>
             </div>
-            <div className="assigned-tests-meta">
+            <div className="my-courses-hero-right">
               {!isInstituteStudent && access.expires_at && (
-                <span className="badge badge-gray">{strings.accessUntil(new Date(access.expires_at).toLocaleDateString())}</span>
+                <div className="my-courses-validity-tag">
+                  <Icon name="due" />
+                  <span>{strings.accessUntil(new Date(access.expires_at).toLocaleDateString())}</span>
+                </div>
               )}
-              <span className="assigned-count-pill">{strings.testsCount(visibleModules.length)}</span>
+              <div className="my-courses-count-tag">
+                <Icon name="plan" />
+                <span>{strings.testsCount(allModules.length)}</span>
+              </div>
             </div>
           </div>
+
+          {/* Filter Bar: SegmentedControl + SearchInput */}
+          {allModules.length > 0 && (
+            <ModuleFilterBar
+              availableTypes={availableTypes}
+              typeFilter={typeFilter}
+              onTypeFilterChange={setTypeFilter}
+              search={search}
+              onSearchChange={setSearch}
+              typeCounts={typeCounts}
+            />
+          )}
+
+          {/* Test Cards Grid */}
           {!allModules.length ? (
             <p className="empty-message">{isInstituteStudent ? strings.empty.noModulesInstitute : strings.empty.noModulesDirect}</p>
           ) : !visibleModules.length ? (
@@ -144,7 +177,7 @@ export function MyCourses() {
           ) : (
             <AssignedTestsGrid modules={visibleModules} starting={starting} onStartModule={startModule} />
           )}
-        </section>
+        </div>
       )}
     </div>
   );

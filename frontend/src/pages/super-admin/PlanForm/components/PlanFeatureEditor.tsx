@@ -1,5 +1,6 @@
 import { planFormStrings as strings } from "../PlanForm.strings";
 import { Icon } from "@/components/icons";
+import { RequiredMark } from "@/components/ui";
 
 interface PlanFeatureEditorProps {
   features: string[];
@@ -15,7 +16,7 @@ export function PlanFeatureEditor({ features, maxFeatures, onChange, onAdd, onRe
 
   return (
     <fieldset className="plan-course-picker plan-feature-editor">
-      <legend>{t.legend}</legend>
+      <legend>{t.legend}<RequiredMark /></legend>
       <p className="hint">{t.hint}</p>
 
       {!features.length ? (

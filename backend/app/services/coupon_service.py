@@ -3,17 +3,30 @@ from decimal import Decimal
 from typing import List, Optional, Tuple
 
 from fastapi import HTTPException, status
-from sqlalchemy import or_, update
+from sqlalchemy import func, update
 from sqlalchemy.orm import Session
 
 from app.models.audit_log import AuditLog
-from app.models.coupon import Coupon
+from app.models.coupon import Coupon, CouponRedemption
 from app.models.payment import Payment
 from app.models.user import User
 
 
 def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
+def _redemption_count(db: Session, coupon_id: int, email: str) -> int:
+    return (
+        db.query(func.count(CouponRedemption.id))
+        .filter(CouponRedemption.coupon_id == coupon_id, CouponRedemption.email == email)
+        .scalar()
+        or 0
+    )
 
 
 def _audit(db: Session, actor: User, action: str, coupon_id: Optional[int], ip: Optional[str], details=None) -> None:
@@ -149,11 +162,21 @@ def delete_coupon(db: Session, actor: User, coupon_id: int, ip: Optional[str]) -
 
 
 def validate_and_price(
-    db: Session, code: Optional[str], base_amount: Decimal, scope: str, scope_id: Optional[int]
+    db: Session,
+    code: Optional[str],
+    base_amount: Decimal,
+    scope: str,
+    scope_id: Optional[int],
+    email: str,
 ) -> Tuple[Decimal, Optional[Coupon]]:
     """Returns (discount_amount, coupon_or_none). Raises 400 on any invalid
     coupon rather than silently ignoring it, so a typo'd code never silently
-    charges full price."""
+    charges full price.
+
+    usage_limit is a per-customer cap, checked against CouponRedemption rows
+    keyed by normalized email (not a global total, and not user_id - a
+    deleted-and-recreated account would get a new user_id but keeps the same
+    email, so email is what actually stops reuse)."""
     if not code:
         return Decimal("0"), None
 
@@ -168,8 +191,8 @@ def validate_and_price(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Coupon is not valid yet")
     if coupon.valid_until and now > coupon.valid_until:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Coupon has expired")
-    if coupon.usage_limit is not None and coupon.usage_count >= coupon.usage_limit:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Coupon usage limit reached")
+    if coupon.usage_limit is not None and _redemption_count(db, coupon.id, normalize_email(email)) >= coupon.usage_limit:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You have already used this coupon the maximum number of times")
 
     if coupon.scope == "plan" and (scope != "plan" or coupon.scope_plan_id != scope_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Coupon does not apply to this plan")
@@ -182,26 +205,40 @@ def validate_and_price(
     return discount, coupon
 
 
-def redeem(db: Session, coupon: Coupon) -> None:
-    """Increments usage_count - call only once a payment is actually marked
-    paid, never on a failed/pending attempt, or a bad gateway retry could
-    burn a customer's coupon use for nothing."""
-    result = db.execute(
-        update(Coupon)
-        .where(
-            Coupon.id == coupon.id,
-            Coupon.is_active.is_(True),
-            or_(
-                Coupon.usage_limit.is_(None),
-                Coupon.usage_count < Coupon.usage_limit,
-            ),
-        )
-        .values(usage_count=Coupon.usage_count + 1)
-    )
-    if result.rowcount != 1:
+def redeem(
+    db: Session,
+    coupon: Coupon,
+    email: str,
+    user_id: Optional[int] = None,
+    payment_id: Optional[int] = None,
+) -> None:
+    """Records a per-customer redemption and bumps the informational total
+    counter - call only once a payment is actually marked paid, never on a
+    failed/pending attempt, or a bad gateway retry could burn a customer's
+    coupon use for nothing.
+
+    Locks the coupon row first so two concurrent redemptions by the same
+    email can't both slip past the usage_limit check."""
+    locked = db.query(Coupon).filter(Coupon.id == coupon.id).with_for_update().first()
+    if locked is None or not locked.is_active:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Coupon is not active")
+
+    normalized_email = normalize_email(email)
+    if locked.usage_limit is not None and _redemption_count(db, locked.id, normalized_email) >= locked.usage_limit:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Coupon usage limit reached",
+            detail="You have already used this coupon the maximum number of times",
         )
+
+    db.add(
+        CouponRedemption(
+            coupon_id=locked.id,
+            email=normalized_email,
+            user_id=user_id,
+            payment_id=payment_id,
+        )
+    )
+    db.execute(update(Coupon).where(Coupon.id == locked.id).values(usage_count=Coupon.usage_count + 1))
+    db.flush()
     db.expire(coupon)
     db.refresh(coupon)

@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { SegmentedControl } from "@/components/ui/SegmentedControl/SegmentedControl";
 import { SearchableSelect } from "@/components/ui/SearchableSelect/SearchableSelect";
+import { SearchInput } from "@/components/ui";
 import { LineChart, type LineChartDatum } from "@/components/charts/LineChart";
 import "./InstituteDetailDrawer.css";
 
@@ -65,7 +66,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
   const [chartData, setChartData] = useState<LineChartDatum[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Tab states for search/filter
   const [studentSearch, setStudentSearch] = useState("");
   const [instructorSearch, setInstructorSearch] = useState("");
@@ -75,12 +76,12 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
 
   const [, startTransition] = useTransition();
 
-  // Reset user filter when role filter changes to prevent invalid query combinations
+  // Reset user filter when role filter changes
   useEffect(() => {
     setActivityUserFilter("all");
   }, [activityRoleFilter]);
 
-  // Load details, students, and instructors when drawer opens/institute changes
+  // Load details, students, and instructors when drawer opens
   useEffect(() => {
     if (!instituteId) return;
 
@@ -193,6 +194,16 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
     return [{ value: "all", label: placeholderLabel }, ...usersList];
   })();
 
+  const studentLimit = details?.student_limit ?? 0;
+  const studentUsagePct = studentLimit > 0 ? Math.min(100, Math.round((students.length / studentLimit) * 100)) : 0;
+  
+  const staffLimit = details?.staff_limit ?? 0;
+  const staffUsagePct = staffLimit > 0 ? Math.min(100, Math.round((instructors.length / staffLimit) * 100)) : 0;
+
+  const hasInstructorSlots = Boolean(
+    (details?.staff_limit != null && details.staff_limit > 0) || instructors.length > 0
+  );
+
   return createPortal(
     <div className="institute-detail-drawer-overlay" onClick={onClose}>
       <div className="institute-detail-drawer" onClick={(e) => e.stopPropagation()}>
@@ -207,12 +218,20 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
               />
             ) : (
               <div className="drawer-logo-fallback">
-                {details?.name.slice(0, 2).toUpperCase()}
+                {details?.name.slice(0, 2).toUpperCase() || "IN"}
               </div>
             )}
             <div className="drawer-title-details">
-              <h2>{details?.name || "Loading..."}</h2>
-              <span className="drawer-slug">slug: {details?.slug}</span>
+              <div className="drawer-title-row">
+                <h2>{details?.name || "Loading..."}</h2>
+                {details && (
+                  <span className={`status-pill ${details.is_active ? "is-active" : "is-inactive"}`}>
+                    <span className="status-dot" />
+                    {details.is_active ? "Active" : "Inactive"}
+                  </span>
+                )}
+              </div>
+              <span className="drawer-slug">slug: @{details?.slug}</span>
             </div>
           </div>
           <button className="drawer-close-btn" onClick={onClose} aria-label="Close drawer">
@@ -226,7 +245,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
             options={[
               { value: "overview", label: "Overview & Plan" },
               { value: "students", label: `Students (${students.length})` },
-              { value: "instructors", label: `Instructors (${instructors.length})` },
+              ...(hasInstructorSlots ? [{ value: "instructors", label: `Instructors (${instructors.length})` }] : []),
               { value: "activity", label: "Live Activity" },
             ]}
             value={activeTab}
@@ -269,24 +288,92 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
             </div>
           ) : loading ? (
             <div className="drawer-spinner-container">
-              <div className="drawer-spinner"></div>
+              <div className="drawer-spinner" />
             </div>
           ) : (
             <>
               {/* Tab 1: Overview & Plan */}
               {activeTab === "overview" && details && (
                 <div className="drawer-tab-pane overview-pane">
+                  {/* Hero Metric Quick Stats */}
+                  <div className={`drawer-stats-row ${hasInstructorSlots ? "has-3-cols" : "has-2-cols"}`}>
+                    <div className="drawer-stat-card">
+                      <span className="stat-card-label">Students</span>
+                      <span className="stat-card-value">{students.length}</span>
+                      <span className="stat-card-sub">
+                        {details.student_limit ? `Limit: ${details.student_limit}` : "Unlimited slots"}
+                      </span>
+                    </div>
+                    {hasInstructorSlots && (
+                      <div className="drawer-stat-card">
+                        <span className="stat-card-label">Instructors</span>
+                        <span className="stat-card-value">{instructors.length}</span>
+                        <span className="stat-card-sub">
+                          {details.staff_limit ? `Limit: ${details.staff_limit}` : "Unlimited slots"}
+                        </span>
+                      </div>
+                    )}
+                    <div className="drawer-stat-card">
+                      <span className="stat-card-label">Plan Status</span>
+                      <span className={`stat-card-badge ${details.subscription_state === "active" ? "is-green" : "is-gray"}`}>
+                        {details.subscription_state.toUpperCase()}
+                      </span>
+                      <span className="stat-card-sub">Subscribed</span>
+                    </div>
+                  </div>
+
                   <div className="drawer-card-grid">
+                    {/* Capacity Progress Bar Widget */}
                     <div className="neomorphic-card-widget">
-                      <h3>Subscription Info</h3>
+                      <h3>Seat Capacity & Usage</h3>
+
+                      <div className="capacity-progress-item">
+                        <div className="capacity-header">
+                          <span className="capacity-title">Student Slots</span>
+                          <span className="capacity-numbers">
+                            {students.length} / {details.student_limit ? details.student_limit : "Unlimited"}
+                          </span>
+                        </div>
+                        <div className="capacity-bar-track">
+                          <div
+                            className="capacity-bar-fill"
+                            style={{ width: details.student_limit ? `${studentUsagePct}%` : "100%" }}
+                          />
+                        </div>
+                      </div>
+
+                      {hasInstructorSlots && (
+                        <div className="capacity-progress-item">
+                          <div className="capacity-header">
+                            <span className="capacity-title">Instructor Slots</span>
+                            <span className="capacity-numbers">
+                              {instructors.length} / {details.staff_limit ? details.staff_limit : "Unlimited"}
+                            </span>
+                          </div>
+                          <div className="capacity-bar-track">
+                            <div
+                              className="capacity-bar-fill is-purple"
+                              style={{ width: details.staff_limit ? `${staffUsagePct}%` : "100%" }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Subscription & Contact Info */}
+                    <div className="neomorphic-card-widget">
+                      <h3>Subscription & Details</h3>
+                      
                       <div className="widget-field-row">
-                        <span className="field-label">Status</span>
-                        <span className={`badge ${details.subscription_state === "active" ? "badge-green" : "badge-gray"}`}>
-                          {details.subscription_state.toUpperCase()}
+                        <span className="field-label">AI Student Monthly Cap</span>
+                        <span className="field-value">
+                          {details.ai_student_monthly_limit
+                            ? `${details.ai_student_monthly_limit} evaluations / student / mo`
+                            : "Unlimited evaluations"}
                         </span>
                       </div>
                       <div className="widget-field-row">
-                        <span className="field-label">Created At</span>
+                        <span className="field-label">Created Date</span>
                         <span className="field-value">
                           {new Date(details.created_at).toLocaleDateString(undefined, {
                             year: "numeric",
@@ -299,28 +386,14 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                         <span className="field-label">Contact Email</span>
                         <span className="field-value">{details.contact_email || "—"}</span>
                       </div>
-                    </div>
-
-                    <div className="neomorphic-card-widget">
-                      <h3>Resource Allocation</h3>
-                      <div className="widget-field-row">
-                        <span className="field-label">AI Quota Cap</span>
-                        <span className="field-value">
-                          {details.ai_student_monthly_limit ? `${details.ai_student_monthly_limit} eval/student/mo` : "Unlimited eval/student/mo"}
-                        </span>
-                      </div>
-                      <div className="widget-field-row">
-                        <span className="field-label">Student Slots</span>
-                        <span className="field-value">
-                          {students.length} / {details.student_limit ?? "Unlimited"}
-                        </span>
-                      </div>
-                      <div className="widget-field-row">
-                        <span className="field-label">Instructor Slots</span>
-                        <span className="field-value">
-                          {instructors.length} / {details.staff_limit ?? "Unlimited"}
-                        </span>
-                      </div>
+                      {details.admin_email && (
+                        <div className="widget-field-row">
+                          <span className="field-label">Institute Admin</span>
+                          <span className="field-value">
+                            {details.admin_first_name} {details.admin_last_name} ({details.admin_email})
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -329,20 +402,21 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
               {/* Tab 2: Students List */}
               {activeTab === "students" && (
                 <div className="drawer-tab-pane list-pane">
-                  <div className="drawer-search-wrapper">
-                    <Icon name="search" className="search-icon" />
-                    <input
-                      type="text"
-                      className="drawer-pane-search-input"
-                      placeholder="Search students by name or email..."
+                  <div className="drawer-filter-bar">
+                    <SearchInput
                       value={studentSearch}
-                      onChange={(e) => setStudentSearch(e.target.value)}
+                      onChange={setStudentSearch}
+                      placeholder="Search students by name or email..."
+                      fullWidth
                     />
                   </div>
 
                   <div className="drawer-list-items">
                     {filteredStudents.length === 0 ? (
-                      <div className="drawer-empty-state">No students found.</div>
+                      <div className="drawer-empty-state">
+                        <Icon name="search" />
+                        <p>No students found.</p>
+                      </div>
                     ) : (
                       filteredStudents.map((s) => (
                         <div key={s.id} className="drawer-list-item-card">
@@ -358,7 +432,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                           <div className="item-card-right">
                             {s.active_session_count !== undefined && s.active_session_count > 0 && (
                               <span className="live-indicator">
-                                <span className="indicator-dot"></span>
+                                <span className="indicator-dot" />
                                 {s.active_session_count} active
                               </span>
                             )}
@@ -376,20 +450,21 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
               {/* Tab 3: Instructors List */}
               {activeTab === "instructors" && (
                 <div className="drawer-tab-pane list-pane">
-                  <div className="drawer-search-wrapper">
-                    <Icon name="search" className="search-icon" />
-                    <input
-                      type="text"
-                      className="drawer-pane-search-input"
-                      placeholder="Search instructors by name or email..."
+                  <div className="drawer-filter-bar">
+                    <SearchInput
                       value={instructorSearch}
-                      onChange={(e) => setInstructorSearch(e.target.value)}
+                      onChange={setInstructorSearch}
+                      placeholder="Search instructors by name or email..."
+                      fullWidth
                     />
                   </div>
 
                   <div className="drawer-list-items">
                     {filteredInstructors.length === 0 ? (
-                      <div className="drawer-empty-state">No instructors found.</div>
+                      <div className="drawer-empty-state">
+                        <Icon name="search" />
+                        <p>No instructors found.</p>
+                      </div>
                     ) : (
                       filteredInstructors.map((i) => (
                         <div key={i.id} className="drawer-list-item-card">
@@ -405,7 +480,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                           <div className="item-card-right">
                             {i.active_session_count !== undefined && i.active_session_count > 0 && (
                               <span className="live-indicator">
-                                <span className="indicator-dot"></span>
+                                <span className="indicator-dot" />
                                 {i.active_session_count} active
                               </span>
                             )}
@@ -432,10 +507,10 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                     />
                   </div>
 
-                  {/* Filter & Search Bar */}
-                  <div className="activity-filters-row">
+                  {/* Filter & Search Controls */}
+                  <div className="activity-filters-grid">
                     <div className="filter-select-col">
-                      <label className="select-col-label">Filter Role</label>
+                      <label className="select-col-label">FILTER ROLE</label>
                       <SearchableSelect
                         options={[
                           { value: "all", label: "All Roles" },
@@ -451,7 +526,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                       />
                     </div>
                     <div className="filter-select-col">
-                      <label className="select-col-label">Filter User</label>
+                      <label className="select-col-label">FILTER USER</label>
                       <SearchableSelect
                         options={activityUserOptions}
                         value={activityUserFilter}
@@ -462,17 +537,13 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                       />
                     </div>
                     <div className="filter-search-col">
-                      <label className="select-col-label">Search Activity</label>
-                      <div className="drawer-search-wrapper">
-                        <Icon name="search" className="search-icon" />
-                        <input
-                          type="text"
-                          className="drawer-pane-search-input"
-                          placeholder="Search actions..."
-                          value={activitySearch}
-                          onChange={(e) => setActivitySearch(e.target.value)}
-                        />
-                      </div>
+                      <label className="select-col-label">SEARCH ACTIVITY</label>
+                      <SearchInput
+                        value={activitySearch}
+                        onChange={setActivitySearch}
+                        placeholder="Search actions..."
+                        fullWidth
+                      />
                     </div>
                   </div>
 
@@ -480,7 +551,10 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                   <div className="drawer-activity-feed">
                     <h3>Recent Operations</h3>
                     {activities.length === 0 ? (
-                      <div className="drawer-empty-state">No activity logs found.</div>
+                      <div className="drawer-empty-state">
+                        <Icon name="history" />
+                        <p>No activity logs found matching your filters.</p>
+                      </div>
                     ) : (
                       activities.map((act) => (
                         <div key={act.id} className="activity-feed-card">

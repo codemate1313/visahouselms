@@ -1,5 +1,7 @@
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import type { StudentPlanCatalogItem } from "@/api/types";
+import { apiClient } from "@/api/client";
+import { extractErrorMessage } from "@/api/errors";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { courseCatalogStrings as strings } from "../CourseCatalog.strings";
 import { Button } from "@/components/ui/Button/Button";
@@ -43,15 +45,6 @@ function IconClose() {
   );
 }
 
-
-function IconTag() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-      <line x1="7" y1="7" x2="7.01" y2="7" />
-    </svg>
-  );
-}
 
 function IconShield() {
   return (
@@ -108,7 +101,18 @@ function IconInfo() {
 }
 
 export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCouponCodeChange, buying, onSubmit, onClose }: CheckoutModalProps) {
-  const t = strings.checkout;
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discountAmount: number;
+    discountType: string | null;
+    discountValue: number | null;
+    discountedBasePrice: number;
+    subtotal: number;
+    gstAmount: number;
+    finalTotal: number;
+  } | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
 
   const isUSD = selectedCurrency === "USD" && plan.is_international_enabled && plan.usd_price;
   const currencyCode = isUSD ? "USD" : (plan.currency || "INR");
@@ -118,7 +122,11 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
   let subtotal = basePrice;
   let finalTotal = basePrice;
 
-  if (gst && gst.percentage > 0) {
+  if (appliedCoupon) {
+    gstAmount = appliedCoupon.gstAmount;
+    subtotal = appliedCoupon.subtotal;
+    finalTotal = appliedCoupon.finalTotal;
+  } else if (gst && gst.percentage > 0) {
     if (gst.tax_type === "inclusive") {
       finalTotal = basePrice;
       subtotal = finalTotal / (1 + gst.percentage / 100);
@@ -128,6 +136,51 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
       gstAmount = subtotal * (gst.percentage / 100);
       finalTotal = subtotal + gstAmount;
     }
+  }
+
+  async function handleApplyCoupon() {
+    if (!couponCode.trim()) return;
+    setValidatingCoupon(true);
+    setCouponError(null);
+    try {
+      const { data } = await apiClient.post<{
+        valid: boolean;
+        coupon_code: string;
+        discount_amount: number;
+        discount_type: string | null;
+        discount_value: number | null;
+        discounted_base_price: number;
+        subtotal: number;
+        gst_amount: number;
+        final_total: number;
+      }>(`/student/plans/${plan.id}/validate-coupon`, {
+        coupon_code: couponCode.trim(),
+        currency: selectedCurrency,
+      });
+
+      setAppliedCoupon({
+        code: data.coupon_code,
+        discountAmount: data.discount_amount,
+        discountType: data.discount_type,
+        discountValue: data.discount_value,
+        discountedBasePrice: data.discounted_base_price,
+        subtotal: data.subtotal,
+        gstAmount: data.gst_amount,
+        finalTotal: data.final_total,
+      });
+      setCouponError(null);
+    } catch (err: unknown) {
+      setAppliedCoupon(null);
+      setCouponError(extractErrorMessage(err, "Invalid coupon code"));
+    } finally {
+      setValidatingCoupon(false);
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    setCouponError(null);
+    onCouponCodeChange("");
   }
 
 
@@ -245,7 +298,11 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 marginTop: "3px",
                 fontWeight: 500,
               }}>
-                {gst && gst.percentage > 0 ? (
+                {appliedCoupon && appliedCoupon.discountAmount > 0 ? (
+                  <span style={{ color: "#16a34a", fontWeight: 700 }}>
+                    Discount of {formatCurrencyAmount(appliedCoupon.discountAmount, currencyCode)} applied!
+                  </span>
+                ) : gst && gst.percentage > 0 ? (
                   gst.tax_type === "inclusive"
                     ? `Includes ${gst.name} (${gst.percentage}%)`
                     : `Base ${formatCurrencyAmount(basePrice, currencyCode)} + ${gst.percentage}% GST`
@@ -288,7 +345,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
           </div>
 
           {/* GST Tax Breakdown Detail Card */}
-          {gst && gst.percentage > 0 && (
+          {(gst && gst.percentage > 0 || (appliedCoupon && appliedCoupon.discountAmount > 0)) && (
             <div style={{
               background: "#fdf2f2",
               border: "1px solid #fecaca",
@@ -298,30 +355,40 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
               fontSize: "11.5px",
             }}>
               <div style={{ fontWeight: 800, color: "#991b1b", marginBottom: "4px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>GST Tax Breakdown</span>
-                <span style={{
-                  fontSize: "9.5px",
-                  padding: "1px 6px",
-                  borderRadius: "8px",
-                  background: gst.tax_type === "inclusive" ? "#dbeafe" : "#fee2e2",
-                  color: gst.tax_type === "inclusive" ? "#1e40af" : "#991b1b",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                }}>
-                  {gst.tax_type === "inclusive" ? "Inclusive GST" : "Exclusive GST"}
-                </span>
+                <span>Price & Tax Breakdown</span>
+                {gst && gst.percentage > 0 && (
+                  <span style={{
+                    fontSize: "9.5px",
+                    padding: "1px 6px",
+                    borderRadius: "8px",
+                    background: gst.tax_type === "inclusive" ? "#dbeafe" : "#fee2e2",
+                    color: gst.tax_type === "inclusive" ? "#1e40af" : "#991b1b",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                  }}>
+                    {gst.tax_type === "inclusive" ? "Inclusive GST" : "Exclusive GST"}
+                  </span>
+                )}
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", color: "#475569", marginBottom: "2px" }}>
                 <span>Base Price:</span>
-                <span>{formatCurrencyAmount(subtotal, plan.currency)}</span>
+                <span>{formatCurrencyAmount(basePrice, currencyCode)}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#475569", marginBottom: "4px" }}>
-                <span>{gst.name} ({gst.percentage}%):</span>
-                <span>+{formatCurrencyAmount(gstAmount, plan.currency)}</span>
-              </div>
+              {appliedCoupon && appliedCoupon.discountAmount > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", color: "#16a34a", fontWeight: 700, marginBottom: "2px" }}>
+                  <span>Coupon Discount ({appliedCoupon.code}):</span>
+                  <span>-{formatCurrencyAmount(appliedCoupon.discountAmount, currencyCode)}</span>
+                </div>
+              )}
+              {gst && gst.percentage > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", color: "#475569", marginBottom: "4px" }}>
+                  <span>{gst.name} ({gst.percentage}%):</span>
+                  <span>+{formatCurrencyAmount(gstAmount, currencyCode)}</span>
+                </div>
+              )}
               <div style={{ borderTop: "1px dashed #fca5a5", paddingTop: "4px", display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#0f172a" }}>
                 <span>Total Payable:</span>
-                <span>{formatCurrencyAmount(finalTotal, plan.currency)}</span>
+                <span>{formatCurrencyAmount(finalTotal, currencyCode)}</span>
               </div>
             </div>
           )}
@@ -442,31 +509,118 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
 
           {/* Form */}
           <form onSubmit={onSubmit}>
-            {/* Coupon */}
+            {/* Coupon input & button */}
             <div style={{ marginBottom: "8px" }}>
-              <input
-                id="coupon"
-                value={couponCode}
-                onChange={(e) => onCouponCodeChange(e.target.value.toUpperCase())}
-                placeholder="ENTER COUPON CODE (OPTIONAL)"
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1.5px solid #e8ecef",
-                  borderRadius: "9px",
-                  fontSize: "12px",
+              <div style={{ display: "flex", gap: "6px" }}>
+                <input
+                  id="coupon"
+                  value={couponCode}
+                  onChange={(e) => {
+                    onCouponCodeChange(e.target.value.toUpperCase());
+                    if (appliedCoupon && e.target.value.toUpperCase() !== appliedCoupon.code) {
+                      setAppliedCoupon(null);
+                    }
+                    if (couponError) setCouponError(null);
+                  }}
+                  placeholder="ENTER COUPON CODE (OPTIONAL)"
+                  style={{
+                    flex: 1,
+                    padding: "8px 12px",
+                    border: `1.5px solid ${couponError ? "#f87171" : appliedCoupon ? "#4ade80" : "#e8ecef"}`,
+                    borderRadius: "9px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    outline: "none",
+                    color: "#0f172a",
+                    boxSizing: "border-box",
+                    background: appliedCoupon ? "#f0fdf4" : "#fafafa",
+                    transition: "all 0.15s",
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleApplyCoupon();
+                    }
+                  }}
+                />
+                {appliedCoupon ? (
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    style={{
+                      padding: "8px 14px",
+                      background: "#fee2e2",
+                      border: "1px solid #fca5a5",
+                      color: "#991b1b",
+                      borderRadius: "9px",
+                      fontSize: "11px",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Remove
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={!couponCode.trim() || validatingCoupon}
+                    style={{
+                      padding: "8px 16px",
+                      background: couponCode.trim() ? "#c8202e" : "#e2e8f0",
+                      border: "none",
+                      color: couponCode.trim() ? "#fff" : "#94a3b8",
+                      borderRadius: "9px",
+                      fontSize: "11px",
+                      fontWeight: 800,
+                      cursor: couponCode.trim() ? "pointer" : "not-allowed",
+                      whiteSpace: "nowrap",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {validatingCoupon ? "Validating..." : "APPLY"}
+                  </button>
+                )}
+              </div>
+
+              {/* Success Badge */}
+              {appliedCoupon && (
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginTop: "6px",
+                  padding: "6px 10px",
+                  background: "#ecfdf5",
+                  border: "1px solid #a7f3d0",
+                  borderRadius: "7px",
+                  color: "#065f46",
+                  fontSize: "11px",
                   fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  outline: "none",
-                  color: "#0f172a",
-                  boxSizing: "border-box",
-                  background: "#fafafa",
-                  transition: "border-color 0.15s, background 0.15s",
-                }}
-                onFocus={(e) => { e.target.style.borderColor = "#c8202e"; e.target.style.background = "#fff"; }}
-                onBlur={(e) => { e.target.style.borderColor = "#e8ecef"; e.target.style.background = "#fafafa"; }}
-              />
+                }}>
+                  <span>
+                    ✓ Coupon <strong>{appliedCoupon.code}</strong> Applied! You saved {formatCurrencyAmount(appliedCoupon.discountAmount, currencyCode)}
+                  </span>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {couponError && (
+                <div style={{
+                  marginTop: "5px",
+                  fontSize: "11px",
+                  color: "#dc2626",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}>
+                  <span>⚠️</span> {couponError}
+                </div>
+              )}
             </div>
 
             {/* Gateway Notice */}

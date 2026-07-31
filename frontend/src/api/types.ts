@@ -368,6 +368,7 @@ export interface StudentPlanModule {
   module_type: ExamModuleType;
   duration_minutes: number;
   status?: ExamModuleStatus;
+  is_locked?: boolean;
 }
 
 export interface StudentPlanCatalogItem {
@@ -379,6 +380,7 @@ export interface StudentPlanCatalogItem {
   duration_days: number;
   module_count: number;
   modules: StudentPlanModule[];
+  features?: string[];
   entitled: boolean;
   is_international_enabled?: boolean;
   usd_price?: string | null;

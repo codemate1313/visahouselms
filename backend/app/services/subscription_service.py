@@ -580,15 +580,41 @@ def user_subscription_history(db: Session, user_id: int) -> List[dict]:
 def my_current_plan_view(db: Session, user: User) -> dict:
     """What a student's 'My Plan' page renders: their current (institute or
     personal) subscription's plan and its modules, ready for a 'Start test'
-    button, or plan=None if they have no active/grace subscription."""
+    button, plus locked indicators for modules outside their active plan."""
     if user.institute_id is not None:
         subscription, state = current_subscription(db, user.institute_id)
     else:
         subscription, state = current_user_subscription(db, user.id)
 
+    all_published_modules = (
+        db.query(ExamModule)
+        .filter(
+            ExamModule.status == "published",
+            ExamModule.is_visible.is_(True),
+            ExamModule.deleted_at.is_(None),
+        )
+        .order_by(ExamModule.created_at.desc(), ExamModule.id.desc())
+        .all()
+    )
+
     if subscription is None or state not in (STATE_ACTIVE, STATE_GRACE):
         return {
-            "plan": None,
+            "plan": {
+                "id": 0,
+                "name": "Available Practice & Mock Tests",
+                "description": "Upgrade your plan subscription to unlock access to locked test modules.",
+                "courses": [],
+                "modules": [
+                    {
+                        "module_id": module.id,
+                        "title": module.title,
+                        "module_type": module.module_type,
+                        "duration_minutes": module.duration_minutes,
+                        "is_locked": True,
+                    }
+                    for module in all_published_modules
+                ],
+            },
             "state": state,
             "expires_at": None,
             "access_type": "institute" if user.institute_id is not None else "direct",
@@ -596,7 +622,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
 
     plan = subscription.plan
     if user.institute_id is not None:
-        modules = (
+        institute_modules = (
             db.query(ExamModule)
             .join(InstituteModule, InstituteModule.module_id == ExamModule.id)
             .filter(
@@ -609,12 +635,33 @@ def my_current_plan_view(db: Session, user: User) -> dict:
             .order_by(ExamModule.created_at.desc(), ExamModule.id.desc())
             .all()
         )
+        unlocked_ids = {m.id for m in institute_modules}
     else:
-        modules = [
-            module
-            for module in plan.modules
-            if module.status == "published" and module.is_visible and module.deleted_at is None
-        ]
+        unlocked_ids = {
+            m.id for m in plan.modules if m.status == "published" and m.is_visible and m.deleted_at is None
+        }
+
+    # For direct students, return all published modules with is_locked status
+    modules_list = []
+    if user.institute_id is not None:
+        for module in institute_modules:
+            modules_list.append({
+                "module_id": module.id,
+                "title": module.title,
+                "module_type": module.module_type,
+                "duration_minutes": module.duration_minutes,
+                "is_locked": False,
+            })
+    else:
+        for module in all_published_modules:
+            modules_list.append({
+                "module_id": module.id,
+                "title": module.title,
+                "module_type": module.module_type,
+                "duration_minutes": module.duration_minutes,
+                "is_locked": module.id not in unlocked_ids,
+            })
+
     return {
         "plan": {
             "id": 0 if user.institute_id is not None else plan.id,
@@ -625,15 +672,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 else plan.description
             ),
             "courses": [],
-            "modules": [
-                {
-                    "module_id": module.id,
-                    "title": module.title,
-                    "module_type": module.module_type,
-                    "duration_minutes": module.duration_minutes,
-                }
-                for module in modules
-            ],
+            "modules": modules_list,
         },
         "state": state,
         "expires_at": subscription.expires_at,

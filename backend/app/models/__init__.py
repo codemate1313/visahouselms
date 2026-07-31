@@ -16,7 +16,7 @@ from app.models.attempt import (
 from app.models.audit_log import AuditLog
 from app.models.backup import Backup
 from app.models.base import Base
-from app.models.coupon import Coupon
+from app.models.coupon import Coupon, CouponRedemption
 from app.models.course import Course, CourseAsset, InstituteCourse
 from app.models.crash_log import CrashLog
 from app.models.demo_account import DemoAccount
@@ -87,6 +87,7 @@ __all__ = [
     "DemoAccount",
     "DailyEnglishChallenge",
     "Coupon",
+    "CouponRedemption",
     "Course",
     "CourseAsset",
     "InstituteCourse",

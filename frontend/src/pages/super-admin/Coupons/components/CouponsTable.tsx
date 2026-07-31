@@ -57,7 +57,7 @@ export function CouponsTable({ coupons, onToggleActive, onRequestDelete }: Coupo
               <td>
                 <span style={{ fontSize: 13, fontWeight: 500 }}>
                   {coupon.usage_count}
-                  {coupon.usage_limit ? ` / ${coupon.usage_limit}` : ""}
+                  {coupon.usage_limit ? ` ${t.perCustomerSuffix(coupon.usage_limit)}` : ""}
                 </span>
               </td>
               <td>
