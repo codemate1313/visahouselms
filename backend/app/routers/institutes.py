@@ -447,6 +447,97 @@ def remove_agreement_attachment(
     )
 
 
+@router.get("/{institute_id}/activity")
+def get_institute_activity(
+    institute_id: int,
+    user_id: Optional[int] = Query(default=None),
+    role: Optional[str] = Query(default=None),
+    search: Optional[str] = Query(default=None),
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    from sqlalchemy import or_
+    from app.models.audit_log import AuditLog
+    from app.models.role import Role
+    from datetime import datetime, timedelta
+
+    # Verify institute exists
+    institute_service.get_institute_or_404(db, institute_id)
+
+    query = (
+        db.query(AuditLog, User, Role)
+        .join(User, User.id == AuditLog.user_id)
+        .join(Role, Role.id == User.role_id)
+        .filter(User.institute_id == institute_id)
+    )
+
+    if user_id is not None:
+        query = query.filter(User.id == user_id)
+    if role is not None:
+        query = query.filter(Role.name == role)
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        query = query.filter(
+            or_(
+                AuditLog.action.ilike(term),
+                User.first_name.ilike(term),
+                User.last_name.ilike(term),
+                User.email.ilike(term)
+            )
+        )
+
+    activities = (
+        query.order_by(AuditLog.created_at.desc())
+        .limit(100)
+        .all()
+    )
+
+    serialized_activities = []
+    for log, user, urole in activities:
+        serialized_activities.append({
+            "id": log.id,
+            "created_at": log.created_at,
+            "action": log.action,
+            "entity_type": log.entity_type,
+            "entity_id": log.entity_id,
+            "details": log.details,
+            "ip_address": log.ip_address,
+            "user_id": user.id,
+            "user_name": f"{user.first_name} {user.last_name}",
+            "user_email": user.email,
+            "user_role": urole.name,
+        })
+
+    # Hourly counts for the last 24 hours
+    now = datetime.now()
+    twenty_four_hours_ago = now - timedelta(hours=24)
+
+    chart_query = (
+        db.query(AuditLog)
+        .join(User, User.id == AuditLog.user_id)
+        .filter(User.institute_id == institute_id, AuditLog.created_at >= twenty_four_hours_ago)
+    )
+    if user_id is not None:
+        chart_query = chart_query.filter(User.id == user_id)
+    if role is not None:
+        chart_query = chart_query.join(Role, Role.id == User.role_id).filter(Role.name == role)
+
+    chart_logs = chart_query.all()
+
+    hourly_counts = { (now - timedelta(hours=i)).strftime("%H:00"): 0 for i in range(24) }
+    for log in chart_logs:
+        log_hour = log.created_at.strftime("%H:00")
+        if log_hour in hourly_counts:
+            hourly_counts[log_hour] += 1
+
+    chart_data = [{"time": hr, "count": hourly_counts[hr]} for hr in sorted(hourly_counts.keys())]
+
+    return {
+        "activities": serialized_activities,
+        "chart_data": chart_data
+    }
+
+
 @public_router.get("/{slug}/branding")
 def public_branding(slug: str, db: Session = Depends(get_db)):
     return institute_service.get_public_branding(db, slug)

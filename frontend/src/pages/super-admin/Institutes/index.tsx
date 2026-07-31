@@ -11,6 +11,7 @@ import type { InstituteRow, SortKey } from "./types";
 import { exportInstitutesExcel, exportInstitutesPDF } from "./exportHelpers";
 import { InstitutesFilterBar } from "./components/InstitutesFilterBar";
 import { InstitutesTable } from "./components/InstitutesTable";
+import { InstituteDetailDrawer } from "./components/InstituteDetailDrawer";
 
 export function Institutes() {
   const [rows, setRows] = useState<InstituteRow[]>([]);
@@ -23,6 +24,7 @@ export function Institutes() {
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [selectedDrawerId, setSelectedDrawerId] = useState<number | null>(null);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   const load = useCallback(async () => {
@@ -261,6 +263,7 @@ export function Institutes() {
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
           onToggleSelectAll={toggleSelectAll}
+          onRowClick={setSelectedDrawerId}
         />
       )}
 
@@ -272,6 +275,11 @@ export function Institutes() {
         loading={deleteLoading}
         onConfirm={handleConfirmDelete}
         onClose={() => setDeletingRow(null)}
+      />
+
+      <InstituteDetailDrawer
+        instituteId={selectedDrawerId}
+        onClose={() => setSelectedDrawerId(null)}
       />
     </div>
   );

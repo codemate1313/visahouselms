@@ -24,6 +24,7 @@ interface InstitutesTableProps {
   selectedIds: Set<number>;
   onToggleSelect: (id: number) => void;
   onToggleSelectAll: () => void;
+  onRowClick: (id: number) => void;
 }
 
 export function InstitutesTable({
@@ -36,6 +37,7 @@ export function InstitutesTable({
   selectedIds,
   onToggleSelect,
   onToggleSelectAll,
+  onRowClick,
 }: InstitutesTableProps) {
   const t = strings.table;
   const hasRows = rows.length > 0;
@@ -82,7 +84,24 @@ export function InstitutesTable({
             </tr>
           )}
           {rows.map((row) => (
-            <tr className={selectedIds.has(row.id) ? "is-selected-row" : ""} key={row.id}>
+            <tr
+              className={selectedIds.has(row.id) ? "is-selected-row" : ""}
+              key={row.id}
+              onClick={(e) => {
+                const target = e.target as HTMLElement;
+                if (
+                  target.closest("a") ||
+                  target.closest("button") ||
+                  target.closest("input") ||
+                  target.closest(".col-checkbox") ||
+                  target.closest(".col-actions")
+                ) {
+                  return;
+                }
+                onRowClick(row.id);
+              }}
+              style={{ cursor: "pointer" }}
+            >
               <td className="col-checkbox">
                 <Checkbox
                   aria-label={t.selectInstitute(row.name)}
