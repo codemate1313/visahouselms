@@ -83,6 +83,17 @@ export function ModuleEditor() {
       .finally(() => setLoadingSources(false));
   }, [isNew, requestedType]);
 
+  useEffect(() => {
+    if (editingQuestionId) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [editingQuestionId]);
+
   const selectedPart = useMemo(() => module?.parts?.find((part) => part.id === selectedPartId) ?? null, [module, selectedPartId]);
   const detectedTtsSpeakers = useMemo(() => detectConversationSpeakers(tts.conversation), [tts.conversation]);
   const isEditable = module?.status !== "archived";
@@ -159,7 +170,6 @@ export function ModuleEditor() {
   function editQuestion(question: ExamModuleQuestion) {
     setEditingQuestionId(question.id);
     setManual({ question_type: question.question_type, prompt: question.prompt, instructions: question.instructions, passage: question.passage, options: question.options, correct_answers: question.correct_answers, explanation: question.explanation, points: question.points, difficulty: question.difficulty });
-    document.getElementById("manual-module-question")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   async function deleteQuestion(question: ExamModuleQuestion) {
@@ -359,18 +369,20 @@ export function ModuleEditor() {
 
             {isEditable && manual && (
               <div className="module-entry-grid">
-                <ManualQuestionForm
-                  part={selectedPart}
-                  manual={manual}
-                  editingQuestionId={editingQuestionId}
-                  busy={busy}
-                  onChangeQuestionType={changeQuestionType}
-                  onUpdateOption={updateOption}
-                  onToggleCorrect={toggleCorrect}
-                  onManualChange={setManual}
-                  onSubmit={saveQuestion}
-                  onCancelEdit={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}
-                />
+                {!editingQuestionId && (
+                  <ManualQuestionForm
+                    part={selectedPart}
+                    manual={manual}
+                    editingQuestionId={editingQuestionId}
+                    busy={busy}
+                    onChangeQuestionType={changeQuestionType}
+                    onUpdateOption={updateOption}
+                    onToggleCorrect={toggleCorrect}
+                    onManualChange={setManual}
+                    onSubmit={saveQuestion}
+                    onCancelEdit={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}
+                  />
+                )}
                 <BulkImportForm module={module} part={selectedPart} importFile={importFile} onImportFileChange={setImportFile} busy={busy} onSubmit={previewImport} />
               </div>
             )}
@@ -393,6 +405,25 @@ export function ModuleEditor() {
           </main>
         )}
       </div>
+
+      {editingQuestionId && selectedPart && manual && (
+        <div className="modal-backdrop" onClick={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ width: "min(640px, 100%)", maxHeight: "95vh", overflowY: "auto", padding: 0, border: "none", background: "transparent", boxShadow: "none" }}>
+            <ManualQuestionForm
+              part={selectedPart}
+              manual={manual}
+              editingQuestionId={editingQuestionId}
+              busy={busy}
+              onChangeQuestionType={changeQuestionType}
+              onUpdateOption={updateOption}
+              onToggleCorrect={toggleCorrect}
+              onManualChange={setManual}
+              onSubmit={saveQuestion}
+              onCancelEdit={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
