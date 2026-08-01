@@ -112,6 +112,15 @@ export function SpeakingInterviewStage({
     if (question && recordingFailedQuestionId === question.id) setMode("ready");
   }, [question, recordingFailedQuestionId]);
 
+  useEffect(() => {
+    if (mode === "complete") {
+      const timer = setTimeout(() => {
+        continueInterview();
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [mode]);
+
   if (!question) return null;
 
   const beginPreparation = () => {
@@ -162,6 +171,7 @@ export function SpeakingInterviewStage({
             isCandidateRecording={mode === "recording"}
             partId={currentPart.id}
             questionId={question.id}
+            onAudioEnded={beginPreparation}
           />
         </div>
 

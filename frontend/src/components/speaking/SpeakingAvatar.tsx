@@ -35,6 +35,7 @@ interface SpeakingAvatarProps {
   questionId?: number;
   isCandidateRecording?: boolean;
   avatarOnly?: boolean;
+  onAudioEnded?: () => void;
 }
 
 export function SpeakingAvatar({
@@ -43,6 +44,7 @@ export function SpeakingAvatar({
   questionId,
   isCandidateRecording = false,
   avatarOnly = true,
+  onAudioEnded,
 }: SpeakingAvatarProps) {
   const [examiners, setExaminers] = useState<Examiner[]>([]);
   const [selectedExaminer, setSelectedExaminer] = useState<string>("sonia");
@@ -157,6 +159,21 @@ export function SpeakingAvatar({
     setHasPlayedPrompt(sessionStorage.getItem(promptPlayKey) === "true");
   }, [promptPlayKey]);
 
+  useEffect(() => {
+    if (audioRef.current && audioFullUrl && promptPlayKey) {
+      const alreadyPlayed = sessionStorage.getItem(promptPlayKey) === "true";
+      if (!alreadyPlayed) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch((err) => {
+            console.log("Speaking autoplay failed or blocked:", err);
+            setIsPlaying(false);
+          });
+      }
+    }
+  }, [audioFullUrl, promptPlayKey]);
+
   const togglePlay = () => {
     if (!audioRef.current || !audioFullUrl) return;
     if (isPlaying) {
@@ -175,6 +192,9 @@ export function SpeakingAvatar({
     setHasPlayedPrompt(true);
     if (promptPlayKey) {
       sessionStorage.setItem(promptPlayKey, "true");
+    }
+    if (onAudioEnded) {
+      onAudioEnded();
     }
   };
 

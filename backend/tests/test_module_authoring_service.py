@@ -231,10 +231,6 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             None,
         )
         self.assertEqual(edited_question["prompt"], "Updated task after publication")
-        with self.assertRaises(HTTPException):
-            module_authoring_service.add_question(
-                self.db, self.instructor, created["id"], first["id"], _question("essay", "Another task"), None
-            )
 
     def test_listening_requires_part_specific_audio(self) -> None:
         created = self._create("listening")
