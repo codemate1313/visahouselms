@@ -87,7 +87,6 @@ export function TestRunner() {
   const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
-  const recordingQuestionIdRef = useRef<number | null>(null);
   const [recordingQuestionId, setRecordingQuestionId] = useState<number | null>(null);
   const recordingQuestionIdRef = useRef(recordingQuestionId);
   const [recordingFailedQuestionId, setRecordingFailedQuestionId] = useState<number | null>(null);

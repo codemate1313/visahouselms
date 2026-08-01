@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 export type IconName =
   | "plus"
@@ -58,6 +58,8 @@ export type IconName =
   | "toggleOff"
   | "arrowLeft"
   | "eye"
+  | "history"
+  | "printer"
   | "microphone";
 
 const ICON_PATHS: Record<IconName, ReactNode> = {
@@ -449,9 +451,24 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <polyline points="19 12 12 19 5 12" />
     </>
   ),
+  history: (
+    <>
+      <path d="M3 12a9 9 0 1 0 3-6.7" />
+      <path d="M3 4v5h5" />
+      <path d="M12 7v5l3 2" />
+    </>
+  ),
+  printer: (
+    <>
+      <path d="M7 8V4h10v4" />
+      <path d="M7 17H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2" />
+      <path d="M7 14h10v7H7z" />
+      <path d="M17 12h.01" />
+    </>
+  ),
 };
 
-export function Icon({ name, className }: { name: IconName; className?: string }) {
+export function Icon({ name, className, style }: { name: IconName; className?: string; style?: CSSProperties }) {
   return (
     <svg
       width="18"
@@ -463,6 +480,7 @@ export function Icon({ name, className }: { name: IconName; className?: string }
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
+      style={style}
       aria-hidden="true"
     >
       {ICON_PATHS[name]}

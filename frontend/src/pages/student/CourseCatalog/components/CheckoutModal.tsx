@@ -3,7 +3,6 @@ import type { StudentPlanCatalogItem } from "@/api/types";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { formatCurrencyAmount } from "@/utils/currency";
-import { courseCatalogStrings as strings } from "../CourseCatalog.strings";
 import { Button } from "@/components/ui/Button/Button";
 
 interface CheckoutModalProps {
@@ -689,4 +688,3 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
     </div>
   );
 }
-

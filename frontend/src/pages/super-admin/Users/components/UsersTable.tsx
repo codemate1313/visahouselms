@@ -31,6 +31,7 @@ interface UsersTableProps {
   selectedIds: Set<number>;
   onToggleSelect: (id: number) => void;
   onToggleSelectAll: () => void;
+  onInspectUser?: (user: DirectoryUser) => void;
 }
 
 function SkeletonRow({ showInstitute, selectable }: { showInstitute: boolean; selectable: boolean }) {
@@ -105,7 +106,21 @@ export function UsersTable({
   selectedIds,
   onToggleSelect,
   onToggleSelectAll,
+  onInspectUser,
 }: UsersTableProps) {
+  const handleRowClick = (e: React.MouseEvent, user: DirectoryUser) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest("input[type='checkbox']") ||
+      target.closest(".col-checkbox") ||
+      target.closest(".col-actions")
+    ) {
+      return;
+    }
+    onInspectUser?.(user);
+  };
   const selectable = selectableRows.length > 0;
   const t = strings.columns;
   const b = strings.badges;
@@ -255,7 +270,7 @@ export function UsersTable({
             </tr>
           ) : (
             users.map((user) => (
-              <tr key={`${user.role_name}-${user.id}`}>
+              <tr key={`${user.role_name}-${user.id}`} onClick={(e) => handleRowClick(e, user)} className="clickable-row">
                 {selectable && (
                   <td className="col-checkbox">
                     <Checkbox

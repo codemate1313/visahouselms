@@ -147,6 +147,8 @@ export function SpeakingAvatar({
     };
   }, [isPlaying, avatarData]);
 
+  const examiner = avatarData?.examiner || examiners.find((e) => e.id === selectedExaminer);
+  const audioFullUrl = avatarData?.audio_url ? `${API_BASE_URL}${avatarData.audio_url}` : "";
   const promptPlayKey = avatarData
     ? `speaking-avatar-played:${attemptId}:${partId}:${selectedExaminer}:${avatarData.prompt_text}`
     : "";
@@ -197,9 +199,6 @@ export function SpeakingAvatar({
       onAudioEnded();
     }
   };
-
-  const examiner = avatarData?.examiner || examiners.find((e) => e.id === selectedExaminer);
-  const audioFullUrl = avatarData?.audio_url ? `${API_BASE_URL}${avatarData.audio_url}` : "";
 
   if (avatarOnly) {
     return (

@@ -18,6 +18,7 @@ import { confirmExport } from "@/utils/confirmExport";
 import { usersStrings as strings } from "./Users.strings";
 import { UsersTable } from "./components/UsersTable";
 import { ROLE_ACTIONS, canDeleteMember, memberActionBase, passwordResetPath } from "./userActions";
+import { UserInspectorModal } from "./components/UserInspectorModal";
 import { exportUsersExcel, exportUsersPDF } from "./exportHelpers";
 
 const PAGE_SIZE = 25;
@@ -99,6 +100,7 @@ export function Users() {
   // one from the directory asks which institute first.
   const [showInstituteModal, setShowInstituteModal] = useState(false);
   const [newStudentInstituteId, setNewStudentInstituteId] = useState<string>("");
+  const [inspectingUserId, setInspectingUserId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchInstitutes() {
@@ -562,6 +564,7 @@ export function Users() {
         selectedIds={selectedIds}
         onToggleSelect={toggleSelect}
         onToggleSelectAll={toggleSelectAll}
+        onInspectUser={(user) => setInspectingUserId(user.id)}
       />
 
       {totalPages > 1 && (
@@ -619,6 +622,13 @@ export function Users() {
           setNewStudentInstituteId("");
         }}
       />
+
+      {inspectingUserId !== null && (
+        <UserInspectorModal
+          userId={inspectingUserId}
+          onClose={() => setInspectingUserId(null)}
+        />
+      )}
     </div>
   );
 }

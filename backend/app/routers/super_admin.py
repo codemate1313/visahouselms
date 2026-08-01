@@ -1,10 +1,13 @@
+from datetime import datetime, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_session, get_current_user, require_role
+from app.models.audit_log import AuditLog
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
 from app.models.user_session import UserSession
@@ -31,6 +34,18 @@ router = APIRouter(
 
 def _client_ip(request: Request) -> Optional[str]:
     return request.client.host if request.client else None
+
+
+def _serialize_linked_session(session: UserSession) -> dict:
+    return {
+        "id": session.id,
+        "ip_address": session.ip_address,
+        "user_agent": session.user_agent,
+        "created_at": session.created_at.isoformat() if session.created_at else None,
+        "expires_at": session.expires_at.isoformat() if session.expires_at else None,
+        "revoked_at": session.revoked_at.isoformat() if session.revoked_at else None,
+        "is_active": session.revoked_at is None,
+    }
 
 
 @router.get("/users", response_model=DirectoryUserPage)
@@ -359,3 +374,221 @@ def update_ai_settings(
     settings_service.set_setting(db, "ai.monthly_limit", str(monthly_limit))
 
     return ai_evaluation_service.config_status(db)
+
+
+@router.get("/users/{user_id}/linked-details")
+def get_user_linked_details(
+    user_id: int,
+    db: Session = Depends(get_db),
+):
+    from app.models.attempt import AttemptPartGrade, Enrollment, GradingQueueEntry, TestAttempt
+    from app.models.payment import Payment
+    from app.models.subscription import Subscription
+
+    user = super_admin_service.get_directory_user_or_404(db, user_id)
+    serialized_user = super_admin_service.serialize_directory_user(user, None)
+
+    sessions = (
+        db.query(UserSession)
+        .filter(UserSession.user_id == user_id)
+        .order_by(UserSession.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    serialized_sessions = [_serialize_linked_session(s) for s in sessions]
+
+    enrollments = (
+        db.query(Enrollment)
+        .filter(Enrollment.user_id == user_id)
+        .order_by(Enrollment.granted_at.desc())
+        .all()
+    )
+    serialized_enrollments = [
+        {
+            "id": e.id,
+            "course_title": e.course.title if e.course else "Unknown Course",
+            "source": e.source,
+            "granted_at": e.granted_at.isoformat() if e.granted_at else None,
+            "expires_at": e.expires_at.isoformat() if e.expires_at else None,
+            "is_active": e.is_active,
+        }
+        for e in enrollments
+    ]
+
+    attempts = (
+        db.query(TestAttempt)
+        .filter(TestAttempt.user_id == user_id)
+        .order_by(TestAttempt.started_at.desc())
+        .all()
+    )
+    serialized_attempts = [
+        {
+            "id": a.id,
+            "module_title": a.module.title if a.module else "Unknown Module",
+            "status": a.status,
+            "is_final": a.is_final,
+            "started_at": a.started_at.isoformat() if a.started_at else None,
+            "submitted_at": a.submitted_at.isoformat() if a.submitted_at else None,
+            "raw_score": float(a.raw_score) if a.raw_score is not None else None,
+            "max_score": float(a.max_score) if a.max_score is not None else None,
+            "band_label": a.band_label,
+            "cefr_level": a.cefr_level,
+        }
+        for a in attempts
+    ]
+
+    subscriptions = (
+        db.query(Subscription)
+        .filter(Subscription.user_id == user_id)
+        .order_by(Subscription.starts_at.desc())
+        .all()
+    )
+    serialized_subscriptions = [
+        {
+            "id": sub.id,
+            "plan_title": sub.plan.title if sub.plan else (sub.institute_name_snapshot or "Unknown Plan"),
+            "starts_at": sub.starts_at.isoformat() if sub.starts_at else None,
+            "expires_at": sub.expires_at.isoformat() if sub.expires_at else None,
+            "grace_days": sub.grace_days,
+            "cancelled_at": sub.cancelled_at.isoformat() if sub.cancelled_at else None,
+        }
+        for sub in subscriptions
+    ]
+
+    payments = (
+        db.query(Payment)
+        .filter(Payment.user_id == user_id)
+        .order_by(Payment.created_at.desc())
+        .all()
+    )
+    serialized_payments = [
+        {
+            "id": p.id,
+            "amount": float(p.amount),
+            "final_amount": float(p.final_amount),
+            "gateway": p.gateway,
+            "gateway_reference": p.gateway_reference,
+            "status": p.status,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+            "paid_at": p.paid_at.isoformat() if p.paid_at else None,
+            "invoice_number": p.invoice_number,
+        }
+        for p in payments
+    ]
+
+    audit_logs = (
+        db.query(AuditLog)
+        .filter(or_(AuditLog.user_id == user_id, AuditLog.entity_id == user_id))
+        .order_by(AuditLog.created_at.desc())
+        .limit(20)
+        .all()
+    )
+    actor_ids = {log.user_id for log in audit_logs if log.user_id is not None}
+    actors = {
+        actor.id: actor
+        for actor in db.query(User).filter(User.id.in_(actor_ids)).all()
+    } if actor_ids else {}
+    serialized_audit_logs = [
+        {
+            "id": log.id,
+            "action": log.action,
+            "entity_type": log.entity_type,
+            "entity_id": log.entity_id,
+            "details": log.details,
+            "created_at": log.created_at.isoformat() if log.created_at else None,
+            "ip_address": log.ip_address,
+            "actor": (
+                {
+                    "id": actors[log.user_id].id,
+                    "email": actors[log.user_id].email,
+                    "first_name": actors[log.user_id].first_name,
+                    "last_name": actors[log.user_id].last_name,
+                    "role_name": actors[log.user_id].role.name if actors[log.user_id].role else None,
+                }
+                if log.user_id in actors
+                else None
+            ),
+        }
+        for log in audit_logs
+    ]
+
+    instructor_metrics = None
+    if user.role.name in ("SA_INSTRUCTOR", "INST_INSTRUCTOR"):
+        pending_count = (
+            db.query(GradingQueueEntry)
+            .filter(GradingQueueEntry.assigned_to_id == user_id, GradingQueueEntry.status == "pending")
+            .count()
+        )
+        claimed_count = (
+            db.query(GradingQueueEntry)
+            .filter(GradingQueueEntry.assigned_to_id == user_id, GradingQueueEntry.status == "claimed")
+            .count()
+        )
+        completed_count = (
+            db.query(GradingQueueEntry)
+            .filter(GradingQueueEntry.assigned_to_id == user_id, GradingQueueEntry.status == "completed")
+            .count()
+        )
+        total_graded_parts = (
+            db.query(AttemptPartGrade)
+            .filter(AttemptPartGrade.grader_id == user_id)
+            .count()
+        )
+        instructor_metrics = {
+            "pending_grading_count": pending_count,
+            "claimed_grading_count": claimed_count,
+            "completed_grading_count": completed_count,
+            "total_graded_parts_count": total_graded_parts,
+        }
+
+    return {
+        "user": serialized_user,
+        "sessions": serialized_sessions,
+        "enrollments": serialized_enrollments,
+        "attempts": serialized_attempts,
+        "subscriptions": serialized_subscriptions,
+        "payments": serialized_payments,
+        "audit_logs": serialized_audit_logs,
+        "instructor_metrics": instructor_metrics,
+    }
+
+
+@router.post("/users/{user_id}/sessions/{session_id}/revoke")
+def revoke_user_session(
+    user_id: int,
+    session_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    target = super_admin_service.get_directory_user_or_404(db, user_id)
+    session = (
+        db.query(UserSession)
+        .filter(UserSession.id == session_id, UserSession.user_id == target.id)
+        .first()
+    )
+    if session is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+
+    if session.revoked_at is None:
+        session.revoked_at = datetime.now(timezone.utc)
+        db.add(session)
+        db.add(
+            AuditLog(
+                user_id=actor.id,
+                action="super_admin.revoke_user_session",
+                entity_type="user",
+                entity_id=target.id,
+                details={
+                    "session_id": session.id,
+                    "target_user_id": target.id,
+                    "target_email": target.email,
+                    "target_role": target.role.name if target.role else None,
+                },
+                ip_address=_client_ip(request),
+            )
+        )
+        db.commit()
+        db.refresh(session)
+
+    return _serialize_linked_session(session)

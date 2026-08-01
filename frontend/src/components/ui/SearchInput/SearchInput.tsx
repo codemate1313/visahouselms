@@ -14,6 +14,7 @@ export interface SearchInputProps
    * full-width search bar in another just by passing this prop.
    */
   width?: number | string;
+  fullWidth?: boolean;
 }
 
 /**
@@ -24,13 +25,15 @@ export interface SearchInputProps
 export function SearchInput({
   value,
   onChange,
+  fullWidth,
   width,
   placeholder = "Search...",
   className = "",
   ...rest
 }: SearchInputProps) {
+  const effectiveWidth = fullWidth ? "100%" : width;
   return (
-    <div className={`ui-search-input ${className}`} style={width !== undefined ? { width } : undefined}>
+    <div className={`ui-search-input ${className}`} style={effectiveWidth !== undefined ? { width: effectiveWidth } : undefined}>
       <svg
         className="ui-search-input-icon"
         width="15"

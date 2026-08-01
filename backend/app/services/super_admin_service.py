@@ -649,6 +649,23 @@ def get_direct_student_or_404(db: Session, user_id: int) -> User:
     return user
 
 
+def get_directory_user_or_404(db: Session, user_id: int) -> User:
+    user = (
+        db.query(User)
+        .join(Role)
+        .options(joinedload(User.role), joinedload(User.institute))
+        .filter(
+            User.id == user_id,
+            User.deleted_at.is_(None),
+            Role.name.in_(DIRECTORY_ROLES),
+        )
+        .first()
+    )
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
+
+
 def update_direct_student(
     db: Session,
     actor: User,

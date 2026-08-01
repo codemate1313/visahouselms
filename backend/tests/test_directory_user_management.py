@@ -5,16 +5,21 @@ the tenant rules. A direct student belongs to no institute, so the Super Admin
 directory is the only place they can be suspended from.
 """
 import unittest
+from datetime import datetime, timedelta
 
 from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from starlette.requests import Request
 
 from app.core.security import hash_password
 from app.models import Base
+from app.models.audit_log import AuditLog
 from app.models.institute import Institute
 from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, STUDENT, SUPER_ADMIN, Role
 from app.models.user import User
+from app.models.user_session import UserSession
+from app.routers.super_admin import get_user_linked_details, revoke_user_session
 from app.services import super_admin_service
 
 
@@ -55,6 +60,9 @@ class DirectoryUserManagementTests(unittest.TestCase):
         self.db.flush()
         return user
 
+    def _request(self, host: str = "127.0.0.1") -> Request:
+        return Request({"type": "http", "method": "POST", "path": "/", "client": (host, 5000), "headers": []})
+
     def test_direct_student_can_be_suspended_and_restored(self) -> None:
         suspended = super_admin_service.set_directory_user_active(self.db, self.actor, self.direct_student.id, False)
         self.assertFalse(suspended["is_active"])
@@ -90,6 +98,72 @@ class DirectoryUserManagementTests(unittest.TestCase):
         with self.assertRaises(HTTPException) as raised:
             super_admin_service.set_directory_user_active(self.db, self.actor, 99999, False)
         self.assertEqual(raised.exception.status_code, 404)
+
+    def test_linked_details_supports_directory_visible_non_student_users(self) -> None:
+        now = datetime.utcnow()
+        self.db.add(
+            UserSession(
+                user_id=self.institute_admin.id,
+                refresh_token_hash="session-hash",
+                user_agent="Chrome",
+                ip_address="127.0.0.1",
+                created_at=now,
+                expires_at=now + timedelta(days=1),
+            )
+        )
+        self.db.add(
+            AuditLog(
+                user_id=self.institute_admin.id,
+                action="institute_admin.inspect_test",
+                entity_type="user",
+                entity_id=self.institute_admin.id,
+                details={"field": "value", "count": 2},
+                ip_address="127.0.0.1",
+            )
+        )
+        self.db.commit()
+
+        details = get_user_linked_details(self.institute_admin.id, self.db)
+
+        self.assertEqual(details["user"]["id"], self.institute_admin.id)
+        self.assertEqual(details["user"]["role_name"], INSTITUTE_ADMIN)
+        self.assertEqual(len(details["sessions"]), 1)
+        self.assertTrue(details["sessions"][0]["is_active"])
+        self.assertIn("created_at", details["sessions"][0])
+        self.assertEqual(details["audit_logs"][0]["entity_id"], self.institute_admin.id)
+        self.assertEqual(details["audit_logs"][0]["details"], {"field": "value", "count": 2})
+        self.assertEqual(details["audit_logs"][0]["actor"]["email"], self.institute_admin.email)
+
+    def test_super_admin_can_revoke_linked_user_session(self) -> None:
+        now = datetime.utcnow()
+        session = UserSession(
+            user_id=self.institute_admin.id,
+            refresh_token_hash="target-session-hash",
+            user_agent="Safari",
+            ip_address="10.0.0.2",
+            created_at=now,
+            expires_at=now + timedelta(days=1),
+        )
+        self.db.add(session)
+        self.db.commit()
+
+        payload = revoke_user_session(self.institute_admin.id, session.id, self._request(), self.db, self.actor)
+
+        self.assertEqual(payload["id"], session.id)
+        self.assertFalse(payload["is_active"])
+        self.assertIsNotNone(payload["revoked_at"])
+        self.db.refresh(session)
+        self.assertIsNotNone(session.revoked_at)
+        audit = (
+            self.db.query(AuditLog)
+            .filter(
+                AuditLog.action == "super_admin.revoke_user_session",
+                AuditLog.entity_id == self.institute_admin.id,
+            )
+            .one()
+        )
+        self.assertEqual(audit.user_id, self.actor.id)
+        self.assertEqual(audit.details["session_id"], session.id)
 
 
 if __name__ == "__main__":

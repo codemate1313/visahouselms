@@ -814,3 +814,91 @@ export interface DirectoryUserPage {
   page_size: number;
   role_counts: Record<DirectoryRole, number>;
 }
+
+export interface UserLinkedSession {
+  id: number;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string | null;
+  expires_at: string | null;
+  revoked_at: string | null;
+  is_active: boolean;
+}
+
+export interface UserLinkedEnrollment {
+  id: number;
+  course_title: string;
+  source: string;
+  granted_at: string | null;
+  expires_at: string | null;
+  is_active: boolean;
+}
+
+export interface UserLinkedAttempt {
+  id: number;
+  module_title: string;
+  status: AttemptStatus;
+  is_final: boolean;
+  started_at: string | null;
+  submitted_at: string | null;
+  raw_score: number | null;
+  max_score: number | null;
+  band_label: string | null;
+  cefr_level: CefrLevel | null;
+}
+
+export interface UserLinkedSubscription {
+  id: number;
+  plan_title: string;
+  starts_at: string | null;
+  expires_at: string | null;
+  grace_days: number;
+  cancelled_at: string | null;
+}
+
+export interface UserLinkedPayment {
+  id: number;
+  amount: number;
+  final_amount: number;
+  gateway: string;
+  gateway_reference: string | null;
+  status: string;
+  created_at: string | null;
+  paid_at: string | null;
+  invoice_number: string | null;
+}
+
+export interface UserLinkedAuditLog {
+  id: number;
+  action: string;
+  entity_type: string;
+  entity_id: number | null;
+  details: Record<string, unknown> | null;
+  created_at: string | null;
+  ip_address: string | null;
+  actor: {
+    id: number;
+    email: string;
+    first_name: string;
+    last_name: string;
+    role_name: DirectoryRole | null;
+  } | null;
+}
+
+export interface UserInstructorMetrics {
+  pending_grading_count: number;
+  claimed_grading_count: number;
+  completed_grading_count: number;
+  total_graded_parts_count: number;
+}
+
+export interface UserLinkedDetails {
+  user: DirectoryUser;
+  sessions: UserLinkedSession[];
+  enrollments: UserLinkedEnrollment[];
+  attempts: UserLinkedAttempt[];
+  subscriptions: UserLinkedSubscription[];
+  payments: UserLinkedPayment[];
+  audit_logs: UserLinkedAuditLog[];
+  instructor_metrics: UserInstructorMetrics | null;
+}
