@@ -20,6 +20,20 @@ function App() {
 
   useEffect(() => {
     void initializeSession();
+
+    const handlePlay = (e: Event) => {
+      const audios = document.getElementsByTagName("audio");
+      for (let i = 0; i < audios.length; i++) {
+        if (audios[i] !== e.target) {
+          audios[i].pause();
+        }
+      }
+    };
+    document.addEventListener("play", handlePlay, true);
+
+    return () => {
+      document.removeEventListener("play", handlePlay, true);
+    };
   }, []);
 
   return (
