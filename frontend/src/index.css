@@ -2787,6 +2787,17 @@ h1 {
   font-weight: 700;
 }
 
+.speaking-timing-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.speaking-timing-fields > div {
+  display: grid;
+  gap: 0.45rem;
+}
+
 .rubric-details {
   margin-top: 18px;
   border-top: 1px solid var(--border);
@@ -30582,3 +30593,22 @@ body {
   height: 28px;
   border-radius: 6px;
 }
+
+/* Grading Queue Group Table Separators */
+.table-group-header td {
+  background: var(--bg-card, rgba(0, 0, 0, 0.022)) !important;
+  color: var(--text-muted, #64748b) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  padding: 10px 22px !important;
+  border-bottom: 1px solid var(--border, rgba(0, 0, 0, 0.06)) !important;
+  text-align: left !important;
+}
+[data-theme="dark"] .table-group-header td {
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+

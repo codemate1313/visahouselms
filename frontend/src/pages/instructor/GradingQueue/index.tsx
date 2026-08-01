@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { GradingQueueItem } from "@/api/types";
 import { MetricCard } from "@/components/dashboard/MetricCard";
-import { PageHeader, SearchableSelect } from "@/components/ui";
+import { PageHeader, SearchableSelect, SearchInput } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { gradingQueueStrings as strings } from "./GradingQueue.strings";
 import { GradingQueueTable } from "./components/GradingQueueTable";
@@ -14,6 +14,8 @@ export function GradingQueue() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [skillFilter, setSkillFilter] = useState("");
 
   const loadQueue = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -43,6 +45,23 @@ export function GradingQueue() {
     };
   }, [loadQueue]);
 
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      if (skillFilter && item.module_type !== skillFilter) {
+        return false;
+      }
+      if (search.trim()) {
+        const query = search.toLowerCase();
+        const matchesStudent = item.student_name.toLowerCase().includes(query);
+        const matchesCourse = item.module_title.toLowerCase().includes(query);
+        if (!matchesStudent && !matchesCourse) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [items, search, skillFilter]);
+
   const pending = items.filter((item) => item.queue.status === "pending").length;
   const claimed = items.filter((item) => item.queue.status === "claimed").length;
   const reevaluations = items.filter((item) => item.is_reevaluation).length;
@@ -58,11 +77,17 @@ export function GradingQueue() {
         <MetricCard label={strings.stats.claimed} value={claimed} tone="blue" icon="session" />
         <MetricCard label={strings.stats.reevaluations} value={reevaluations} tone="purple" icon="restore" />
       </div>
-      <form className="filter-bar" onSubmit={(e) => e.preventDefault()}>
+      <form className="filter-bar" onSubmit={(e) => e.preventDefault()} style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "20px" }}>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by student name or test title..."
+          width={280}
+        />
         <SearchableSelect
           ariaLabel={strings.statusFilter.ariaLabel}
           options={[
-            { value: "", label: strings.statusFilter.all },
+            { value: "", label: "All Statuses" },
             { value: "pending", label: strings.statusFilter.unclaimed },
             { value: "claimed", label: strings.statusFilter.claimed },
             { value: "completed", label: strings.statusFilter.completed },
@@ -71,6 +96,20 @@ export function GradingQueue() {
           onChange={(value) => setStatusFilter(String(value))}
           searchable={false}
           className="status-filter-select"
+        />
+        <SearchableSelect
+          ariaLabel="Skill Filter"
+          options={[
+            { value: "", label: "All Skills" },
+            { value: "listening", label: "Listening" },
+            { value: "reading", label: "Reading" },
+            { value: "writing", label: "Writing" },
+            { value: "speaking", label: "Speaking" },
+          ]}
+          value={skillFilter}
+          onChange={(value) => setSkillFilter(String(value))}
+          searchable={false}
+          className="skill-filter-select"
         />
       </form>
       {error && <p className="error-text">{error}</p>}
@@ -81,9 +120,15 @@ export function GradingQueue() {
           <h2>{strings.empty.title}</h2>
           <p>{strings.empty.description}</p>
         </div>
+      ) : filteredItems.length === 0 ? (
+        <div className="empty-state">
+          <h2>No matching items</h2>
+          <p>Try clearing your filters or changing your search query.</p>
+        </div>
       ) : (
-        <GradingQueueTable items={items} gradingBase={gradingBase} />
+        <GradingQueueTable items={filteredItems} gradingBase={gradingBase} />
       )}
     </div>
   );
 }
+
