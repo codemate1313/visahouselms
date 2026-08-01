@@ -11,7 +11,7 @@ import { PlanFeatureEditor } from "./components/PlanFeatureEditor";
 // Mirrors MAX_FEATURES in app/schemas/plan.py.
 const MAX_FEATURES = 12;
 
-const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", test_limit: "20", grace_days: "0", is_published: false, gst_rate_id: "", is_international_enabled: false, usd_price: "" };
+const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", test_limit: "20", grace_days: "0", is_published: false, gst_rate_id: "", is_international_enabled: false, usd_price: "", ai_evaluation_limit: "" };
 
 interface GstOption {
   id: number;
@@ -65,6 +65,7 @@ export function PlanForm() {
             gst_rate_id: data.gst_rate_id ? String(data.gst_rate_id) : "",
             is_international_enabled: Boolean(data.is_international_enabled),
             usd_price: data.usd_price ? String(data.usd_price) : "",
+            ai_evaluation_limit: data.ai_evaluation_limit ? String(data.ai_evaluation_limit) : "",
           });
           setSelected(new Set((data.modules || []).map((module: PlanModule) => module.id)));
           setFeatures(data.features || []);
@@ -120,6 +121,7 @@ export function PlanForm() {
       gst_rate_id: form.gst_rate_id ? Number(form.gst_rate_id) : null,
       is_international_enabled: form.is_international_enabled,
       usd_price: form.is_international_enabled && form.usd_price ? Number(form.usd_price) : null,
+      ai_evaluation_limit: form.ai_evaluation_limit ? Number(form.ai_evaluation_limit) : 0,
       audience: "direct_students",
       is_published: form.is_published,
       module_ids: [...selected],
@@ -186,6 +188,18 @@ export function PlanForm() {
           <div>
             <label>{f.graceDays}<RequiredMark /></label>
             <input type="number" min="0" value={form.grace_days} onChange={set("grace_days")} required />
+          </div>
+          <div>
+            <label>{f.aiEvaluationLimit}</label>
+            <input
+              type="number"
+              min="0"
+              max="100000"
+              placeholder="0 (Global default limit)"
+              value={form.ai_evaluation_limit}
+              onChange={set("ai_evaluation_limit")}
+            />
+            <p className="hint">{f.aiEvaluationLimitHint}</p>
           </div>
         </div>
 

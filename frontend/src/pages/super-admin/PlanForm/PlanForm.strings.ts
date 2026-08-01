@@ -19,6 +19,9 @@ export const planFormStrings = {
     durationDays: "Access duration (days)",
     testLimit: "Test attempt limit",
     graceDays: "Grace period (days)",
+    aiEvaluationLimit: "AI evaluation limit (per student / month)",
+    aiEvaluationLimitHint:
+      "How many AI evaluations a student on this plan may use per month. Set to 0 (or leave empty) to use the global default limit.",
   },
   coursePicker: {
     legend: "Included courses",

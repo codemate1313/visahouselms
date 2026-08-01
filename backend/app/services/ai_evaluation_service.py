@@ -13,8 +13,16 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models.attempt import AiEvaluation, AiEvaluationLimit, TestAttempt
+from app.models.attempt import (
+    AiEvaluation,
+    AiEvaluationLimit,
+    AttemptPartGrade,
+    PART_GRADE_AI_GRADED,
+    PART_GRADE_PENDING,
+    TestAttempt,
+)
 from app.models.exam_module import ExamModulePart
+from app.models.notification import AI_QUOTA_EXHAUSTED
 from app.models.user import User
 from app.services import cefr_service
 from app.services.settings_service import get_setting
@@ -30,6 +38,19 @@ POOL_EXHAUSTED = "The monthly AI evaluation limit has been reached"
 STUDENT_EXHAUSTED = (
     "You have used all {limit} of your monthly AI evaluations. "
     "Ask your institute admin to raise your quota or try again next month."
+)
+DIRECT_STUDENT_EXHAUSTED = (
+    "You have used all {limit} of your monthly AI evaluations. "
+    "Contact the Super Admin for a higher quota, or raise a request from your notifications."
+)
+QUOTA_NOTIFICATION_TITLE = "Your AI evaluation quota is reached"
+QUOTA_NOTIFICATION_MESSAGE = (
+    "You have used all {limit} of your monthly AI evaluations for this account. "
+    "Contact the Super Admin for more, or raise an evaluation request below."
+)
+QUOTA_NOTIFICATION_LINK = (
+    "/student/support?category=ai_evaluation"
+    "&subject=AI+evaluation+quota+reached"
 )
 
 
@@ -107,18 +128,75 @@ def _bucket(
     return row
 
 
+def _direct_student_limit(db: Session, user_id: int, platform_default: int) -> int:
+    """A direct (B2C) student's monthly ceiling comes from their subscribed
+    plan's `ai_evaluation_limit` (set by the Super Admin when authoring the
+    plan), falling back to the platform-wide default when the plan leaves it
+    unset or the student has no active/grace subscription."""
+    from app.services.subscription_service import STATE_ACTIVE, STATE_GRACE, current_user_subscription
+
+    subscription, state = current_user_subscription(db, user_id)
+    if subscription is not None and state in (STATE_ACTIVE, STATE_GRACE) and subscription.plan is not None:
+        limit = subscription.plan.ai_evaluation_limit
+        if limit is not None and limit > 0:
+            return limit
+    return platform_default
+
+
+def _notify_quota_exhausted(db: Session, user: User, limit: int, period: str) -> None:
+    """Best-effort in-app alert so a direct student learns *why* AI-assisted
+    feedback stopped, without spamming a new one every time an instructor
+    retries within the same exhausted month."""
+    from app.models.notification import StudentNotification
+    from app.services import notification_service
+
+    period_start = datetime.strptime(f"{period}-01", "%Y-%m-%d")
+    already_notified = (
+        db.query(StudentNotification)
+        .filter(
+            StudentNotification.user_id == user.id,
+            StudentNotification.kind == AI_QUOTA_EXHAUSTED,
+            StudentNotification.created_at >= period_start,
+        )
+        .first()
+    )
+    if already_notified is not None:
+        return
+    try:
+        notification_service.create_notification(
+            db,
+            user_id=user.id,
+            kind=AI_QUOTA_EXHAUSTED,
+            title=QUOTA_NOTIFICATION_TITLE,
+            message=QUOTA_NOTIFICATION_MESSAGE.format(limit=limit),
+            link_url=QUOTA_NOTIFICATION_LINK,
+        )
+    except Exception:
+        logger.exception("Failed to send AI quota exhausted notification to user %s", user.id)
+
+
 def _limit_rows(db: Session, attempt: TestAttempt, monthly_limit: int) -> list[AiEvaluationLimit]:
-    """Institute students are metered individually - each gets their own monthly
-    bucket, so no student can eat into anyone else's allowance. Direct (B2C)
-    students have no institute to divide, so they share the platform pool."""
+    """Every student - institute or direct - is metered individually against
+    their own monthly bucket, so no student can eat into anyone else's
+    allowance. An institute student's ceiling comes from their institute's
+    per-student setting; a direct student's comes from their plan's
+    `ai_evaluation_limit` (see `_direct_student_limit`). Both fall back to the
+    platform-wide default when unset."""
     period = _now().strftime("%Y-%m")
     institute_id = attempt.user.institute_id
 
     if not institute_id:
-        pool = _bucket(db, f"direct:{period}", period, monthly_limit, None, None)
-        if pool.used_count >= pool.monthly_limit:
-            raise HTTPException(status_code=429, detail=POOL_EXHAUSTED)
-        return [pool]
+        student_limit = _direct_student_limit(db, attempt.user_id, monthly_limit)
+        student = _bucket(
+            db, f"direct_student:{attempt.user_id}:{period}", period, student_limit, None, attempt.user_id
+        )
+        if student.used_count >= student.monthly_limit:
+            _notify_quota_exhausted(db, attempt.user, student.monthly_limit, period)
+            raise HTTPException(
+                status_code=429,
+                detail=DIRECT_STUDENT_EXHAUSTED.format(limit=student.monthly_limit),
+            )
+        return [student]
 
     inst = db.query(Institute).filter(Institute.id == institute_id).first()
     student_limit = monthly_limit
@@ -270,6 +348,11 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
     with httpx.Client(timeout=45.0) as client:
         res = client.post(url, headers=headers, json=gemini_payload)
         
+        if res.status_code == 429 and model != "gemini-flash-latest":
+            logger.info("Primary Gemini model %s returned 429, falling back to gemini-flash-latest", model)
+            fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={api_key}"
+            res = client.post(fallback_url, headers=headers, json=gemini_payload)
+
         if res.status_code == 429:
             raise HTTPException(
                 status_code=429,
@@ -386,3 +469,66 @@ def request_suggestion(
         db.add(record)
         db.commit()
         raise HTTPException(status_code=502, detail=f"AI evaluator returned an invalid response: {exc}")
+
+
+def _apply_ai_grade(db: Session, attempt: TestAttempt, part: ExamModulePart, suggestion: dict) -> None:
+    grade = next((g for g in attempt.part_grades if g.part_id == part.id), None)
+    if grade is None:
+        grade = AttemptPartGrade(attempt_id=attempt.id, part_id=part.id)
+        db.add(grade)
+        attempt.part_grades.append(grade)
+    grade.criteria = suggestion["criteria"]
+    grade.total_marks = sum(
+        (Decimal(item["marks_awarded"]) for item in suggestion["criteria"]), Decimal("0")
+    )
+    grade.comment = suggestion.get("comment")
+    # No human graded this - grader_id stays NULL, status distinguishes it as
+    # AI-sourced so the student/instructor UI can label it and offer a
+    # "request manual evaluation" escalation (the existing reevaluation flow).
+    grade.grader_id = None
+    grade.status = PART_GRADE_AI_GRADED
+    grade.graded_at = _now()
+    db.add(grade)
+
+
+def auto_evaluate_submission(db: Session, attempt: TestAttempt) -> bool:
+    """Best-effort automatic AI grading for a freshly submitted attempt's
+    human-graded parts (Writing/Speaking), run right after submission (via a
+    background job - see job_service's "ai_auto_grade" handler) so the
+    student sees a real result without waiting on an instructor.
+
+    Falls back silently to the pre-existing manual grading queue for any part
+    AI can't or won't cover: not configured, quota exhausted, provider error,
+    or no answerable response yet. Returns True if the quota was exhausted
+    for at least one part, so the caller can flag it (surfaced to the student
+    via the notification already sent from `_limit_rows`)."""
+    if not config_status(db)["configured"]:
+        return False
+
+    quota_exhausted = False
+    for part in attempt.module.parts:
+        if part.auto_marked:
+            continue
+        grade = next((g for g in attempt.part_grades if g.part_id == part.id), None)
+        if grade is not None and grade.status != PART_GRADE_PENDING:
+            continue  # already graded (human beat the job to it, or re-run)
+
+        try:
+            suggestion = request_suggestion(db, attempt.user, attempt, part)
+        except HTTPException as exc:
+            if exc.status_code == 429:
+                quota_exhausted = True
+            continue
+        except Exception:
+            logger.exception(
+                "Automatic AI evaluation failed for attempt %s part %s", attempt.id, part.id
+            )
+            continue
+
+        _apply_ai_grade(db, attempt, part, suggestion)
+        db.commit()
+
+    from app.services.attempt_service import _finalize_if_all_graded
+
+    _finalize_if_all_graded(db, attempt)
+    return quota_exhausted

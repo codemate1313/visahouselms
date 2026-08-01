@@ -6735,6 +6735,11 @@ textarea:focus {
   line-height: 1.55;
 }
 
+.result-ai-graded-badge {
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
 .muted-text {
   color: var(--text-muted);
   font-size: 12.5px;

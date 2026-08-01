@@ -241,13 +241,13 @@ class AcidConsistencyTests(unittest.TestCase):
         self.db.add(coupon)
         self.db.commit()
 
-        coupon_service.redeem(self.db, coupon)
+        coupon_service.redeem(self.db, coupon, email="test@example.com")
         self.db.commit()
 
         stale = self.db.get(Coupon, coupon.id)
         stale.usage_count = 0
         with self.assertRaises(HTTPException) as raised:
-            coupon_service.redeem(self.db, stale)
+            coupon_service.redeem(self.db, stale, email="test@example.com")
         self.assertEqual(raised.exception.status_code, 409)
         self.db.rollback()
         self.assertEqual(self.db.get(Coupon, coupon.id).usage_count, 1)

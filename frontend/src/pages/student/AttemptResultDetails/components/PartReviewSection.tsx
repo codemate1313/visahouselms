@@ -1,4 +1,5 @@
 import type { Attempt, AttemptQuestion } from "@/api/types";
+import { Badge } from "@/components/ui";
 import { formatAttemptAnswer, hasAttemptResponse } from "@/pages/student/attemptMetrics";
 import { attemptResultDetailsStrings as strings } from "../AttemptResultDetails.strings";
 
@@ -20,7 +21,14 @@ export function PartReviewSection({ part }: PartReviewSectionProps) {
     <section className="workspace-panel result-review-part">
       <div className="panel-heading">
         <div>
-          <h2>{part.title}</h2>
+          <h2>
+            {part.title}
+            {part.grade?.status === "ai_graded" && (
+              <Badge tone="info" className="result-ai-graded-badge">
+                {t.aiGradedBadge}
+              </Badge>
+            )}
+          </h2>
           <p>{part.skill_focus}</p>
         </div>
         {(part.max_marks || part.rubric.length > 0) && (
@@ -75,14 +83,16 @@ export function PartReviewSection({ part }: PartReviewSectionProps) {
                     {criterion.cefr_level} - {criterion.marks_awarded}/{criterion.max_marks}
                   </span>
                 </div>
+                {criterion.rationale && <p className="hint">{criterion.rationale}</p>}
               </article>
             ))}
           </div>
           {part.grade.comment && (
             <p className="hint">
-              {t.examinerComment} {part.grade.comment}
+              {part.grade.status === "ai_graded" ? t.aiComment : t.examinerComment} {part.grade.comment}
             </p>
           )}
+          {part.grade.status === "ai_graded" && <p className="hint">{t.aiGradedHint}</p>}
         </div>
       ) : (
         <p className="empty-message">{t.notGradedYet}</p>

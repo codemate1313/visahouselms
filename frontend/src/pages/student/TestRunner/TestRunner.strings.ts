@@ -53,7 +53,7 @@ export const testRunnerStrings = {
     rules: [
       "Do not minimize the browser, switch tabs, switch apps, or leave the test window.",
       "Keep camera, microphone, full screen, and Entire Screen sharing active until submission.",
-      "Do not copy, cut, paste, or use the browser context menu during any test.",
+      "Do not copy, cut, paste, or use the browser context menu during reading or listening tests (copy-paste is allowed for writing tasks).",
       "Two warnings are allowed for leaving the secured browser state.",
       "On the third violation, the test is automatically submitted and marked for rule violations.",
     ],

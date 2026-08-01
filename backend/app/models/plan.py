@@ -55,6 +55,11 @@ class Plan(Base):
     gst_rate_id: Mapped[Optional[int]] = mapped_column(ForeignKey("gst_rates.id", ondelete="SET NULL"), nullable=True)
     is_international_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     usd_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2), nullable=True)
+    # Monthly AI evaluation ceiling for each direct student subscribed to this
+    # plan (mirrors Institute.ai_student_monthly_limit for the B2C catalogue).
+    # NULL/0 falls back to the platform-wide default monthly limit. Meaningless
+    # on institute-audience plans, which meter through the institute instead.
+    ai_evaluation_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
 

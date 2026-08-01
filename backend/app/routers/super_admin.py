@@ -446,7 +446,7 @@ def get_user_linked_details(
     serialized_subscriptions = [
         {
             "id": sub.id,
-            "plan_title": sub.plan.title if sub.plan else (sub.institute_name_snapshot or "Unknown Plan"),
+            "plan_title": sub.plan.name if sub.plan else (sub.institute_name_snapshot or "Unknown Plan"),
             "starts_at": sub.starts_at.isoformat() if sub.starts_at else None,
             "expires_at": sub.expires_at.isoformat() if sub.expires_at else None,
             "grace_days": sub.grace_days,

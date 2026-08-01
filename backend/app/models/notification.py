@@ -11,6 +11,7 @@ GRADE_RELEASED = "grade_released"
 ANNOUNCEMENT_PUBLISHED = "announcement_published"
 SUPPORT_TICKET_CREATED = "support_ticket_created"
 SUPPORT_TICKET_UPDATED = "support_ticket_updated"
+AI_QUOTA_EXHAUSTED = "ai_quota_exhausted"
 
 
 class Announcement(Base):

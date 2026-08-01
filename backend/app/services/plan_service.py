@@ -88,6 +88,7 @@ def _serialize(plan: Plan, subscription_count: Optional[int] = None) -> dict:
         "is_international_enabled": plan.is_international_enabled,
         "usd_price": str(plan.usd_price) if plan.usd_price is not None else None,
         "features": list(plan.features or []),
+        "ai_evaluation_limit": plan.ai_evaluation_limit,
 
         "created_at": plan.created_at,
         "gst_rate_id": plan.gst_rate_id,
@@ -254,6 +255,7 @@ def build_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> Plan:
         gst_rate_id=data.get("gst_rate_id"),
         is_international_enabled=data.get("is_international_enabled", False),
         usd_price=Decimal(str(data["usd_price"])) if data.get("usd_price") is not None else None,
+        ai_evaluation_limit=(data.get("ai_evaluation_limit") or None),
         modules=modules,
     )
 
@@ -330,6 +332,10 @@ def update_plan(db: Session, actor: User, plan_id: int, data: dict, ip: Optional
         plan.price = Decimal(str(data["price"]))
     if "usd_price" in data:
         plan.usd_price = Decimal(str(data["usd_price"])) if data["usd_price"] is not None and data["usd_price"] != "" else None
+    if "ai_evaluation_limit" in data:
+        # 0/None both mean "use the platform-wide default" - only positive
+        # values override it, mirroring Institute.ai_student_monthly_limit.
+        plan.ai_evaluation_limit = data["ai_evaluation_limit"] or None
 
     if "features" in data and data["features"] is not None:
         plan.features = _clean_features(data["features"])

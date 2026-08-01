@@ -265,9 +265,17 @@ def list_queue(db: Session, actor: User, status_filter: Optional[str] = None) ->
     from app.services.attempt_service import _attempt_query
 
     _expire_stale_claims(db)
-    query = _attempt_query(db).join(ExamModule, TestAttempt.module_id == ExamModule.id)
+    # Inner join on User (rather than relying on the lazy-loaded relationship)
+    # so an attempt whose student account was hard-deleted - e.g. by a data
+    # reset script that didn't go through the ORM cascade - is excluded here
+    # instead of crashing can_grade_attempt below on a None `attempt.user`.
+    query = (
+        _attempt_query(db)
+        .join(ExamModule, TestAttempt.module_id == ExamModule.id)
+        .join(User, TestAttempt.user_id == User.id)
+    )
     if actor.role.name == INST_INSTRUCTOR:
-        query = query.join(User, TestAttempt.user_id == User.id).filter(User.institute_id == actor.institute_id)
+        query = query.filter(User.institute_id == actor.institute_id)
     attempts = [attempt for attempt in query.order_by(TestAttempt.submitted_at.asc()).all() if can_grade_attempt(db, actor, attempt)]
     rows = []
     for attempt in attempts:
@@ -389,9 +397,8 @@ def resolve_reevaluation(
 
 def usage_summary(db: Session) -> dict:
     period = _now().strftime("%Y-%m")
-    # One bucket per evaluation - a per-student row for institute students, the
-    # shared direct pool for B2C - so every row can be totalled without
-    # double-counting.
+    # One bucket per student - institute or direct - so every row can be
+    # totalled without double-counting.
     rows = db.query(AiEvaluationLimit).filter(AiEvaluationLimit.period_key == period).all()
     return {
         "period": period,

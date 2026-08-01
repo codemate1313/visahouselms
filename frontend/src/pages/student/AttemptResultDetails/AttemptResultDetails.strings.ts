@@ -39,7 +39,10 @@ export const attemptResultDetailsStrings = {
       result: "Result",
     },
     examinerComment: "Examiner comment:",
+    aiComment: "AI evaluator comment:",
     notGradedYet: "Your instructor has not graded this part yet.",
+    aiGradedBadge: "Evaluated by AI",
+    aiGradedHint: "This part was automatically evaluated by AI. Request instructor review below if you'd like a human to check it.",
   },
   scoreUpdateHint: "Your final score will update once every part has been graded.",
   reevaluation: {

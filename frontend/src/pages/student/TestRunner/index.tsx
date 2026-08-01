@@ -123,6 +123,11 @@ export function TestRunner() {
   ), []);
 
   const activeHeartbeatPartId = attempt?.parts[partIndex]?.id ?? null;
+  const currentPart = attempt?.parts[partIndex];
+  const currentPartRef = useRef(currentPart);
+  useEffect(() => {
+    currentPartRef.current = currentPart;
+  }, [currentPart]);
 
   useEffect(() => {
     apiClient
@@ -327,12 +332,18 @@ export function TestRunner() {
       event.returnValue = "";
     }
     function onClipboard(event: ClipboardEvent) {
+      const activePart = currentPartRef.current;
+      const isWritingTask = activePart?.section_type === "writing" || activePart?.questions?.some((q) => q.question_type === "essay");
+      if (isWritingTask) return;
       event.preventDefault();
       if (isFinalAttempt && !submittedRef.current) {
         recordFlag("clipboard", { operation: event.type });
       }
     }
     function onContextMenu(event: MouseEvent) {
+      const activePart = currentPartRef.current;
+      const isWritingTask = activePart?.section_type === "writing" || activePart?.questions?.some((q) => q.question_type === "essay");
+      if (isWritingTask) return;
       event.preventDefault();
       if (isFinalAttempt && !submittedRef.current) recordFlag("context_menu");
     }
@@ -340,6 +351,9 @@ export function TestRunner() {
       const command = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
       if (command && ["c", "x", "v"].includes(key)) {
+        const activePart = currentPartRef.current;
+        const isWritingTask = activePart?.section_type === "writing" || activePart?.questions?.some((q) => q.question_type === "essay");
+        if (isWritingTask) return;
         event.preventDefault();
         if (isFinalAttempt && !submittedRef.current) {
           recordFlag("clipboard", { operation: key === "c" ? "copy" : key === "x" ? "cut" : "paste", source: "keyboard" });
@@ -843,7 +857,6 @@ export function TestRunner() {
     }
   }
 
-  const currentPart = attempt?.parts[partIndex];
   const answeredCount = useMemo(
     () => attempt?.parts.reduce((sum, part) => sum + part.answered_count, 0) ?? 0,
     [attempt],

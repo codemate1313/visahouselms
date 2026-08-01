@@ -77,11 +77,30 @@ def _generate_avatar(db: Session, payload: Optional[dict]) -> str:
     return f"Avatar video generated: asset {asset['id']}"
 
 
+def _auto_grade_attempt(db: Session, payload: Optional[dict]) -> str:
+    """Runs automatic AI grading for a just-submitted attempt off the request
+    thread - a Gemini/custom-provider call can take tens of seconds per part,
+    too slow to hold the student's submit request open for."""
+    from app.models.attempt import TestAttempt
+    from app.services import ai_evaluation_service
+
+    payload = payload or {}
+    attempt = db.get(TestAttempt, payload["attempt_id"])
+    if attempt is None:
+        raise RuntimeError("Attempt no longer exists")
+    quota_exhausted = ai_evaluation_service.auto_evaluate_submission(db, attempt)
+    graded = sum(1 for grade in attempt.part_grades if grade.status == "ai_graded")
+    total = sum(1 for part in attempt.module.parts if not part.auto_marked)
+    suffix = " (quota exhausted for the rest)" if quota_exhausted else ""
+    return f"AI-graded {graded}/{total} part(s) for attempt {attempt.id}{suffix}."
+
+
 HANDLERS: Dict[str, Callable[[Session, Optional[dict]], str]] = {
     "migrate": _run_migrations,
     "backup": _run_backup,
     "purge_logs": _purge_logs,
     "generate_avatar": _generate_avatar,
+    "ai_auto_grade": _auto_grade_attempt,
 }
 
 

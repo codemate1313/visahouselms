@@ -22,6 +22,7 @@ from app.models.attempt import (
     ATTEMPT_READY,
     ATTEMPT_SUBMITTED,
     ATTEMPT_FLAG_TYPES,
+    PART_GRADE_PENDING,
     QUEUE_COMPLETED,
     AttemptAnswer,
     AttemptFlag,
@@ -937,19 +938,33 @@ def submit_attempt(
     cefr_service.apply_evaluation(attempt)
     db.add(attempt)
     db.flush()
+    ai_evaluation_pending = False
     if needs_grading:
-        from app.services import grading_service
+        from app.services import ai_evaluation_service, grading_service
 
         grading_service.ensure_queue_entry(db, attempt)
+        # Writing/Speaking parts are auto-evaluated by AI (quota permitting)
+        # right after submission so the student gets a real result without
+        # waiting on an instructor - see job_service's "ai_auto_grade" handler.
+        # It runs as a background job rather than inline here because a
+        # provider call can take tens of seconds per part, which is too slow
+        # to hold this request open for.
+        ai_evaluation_pending = ai_evaluation_service.config_status(db)["configured"]
     completed_now = attempt.status == ATTEMPT_GRADED
     attempt_id = attempt.id
     user_id = attempt.user_id
     db.commit()
+    if ai_evaluation_pending:
+        from app.services import job_service
+
+        job_service.enqueue(db, "ai_auto_grade", {"attempt_id": attempt_id})
     if completed_now:
         from app.services import achievement_service
 
         achievement_service.refresh_student_achievements(db, user_id, attempt_id)
-    return get_student_view(db, get_attempt_or_404(db, db.get(User, user_id), attempt_id))
+    view = get_student_view(db, get_attempt_or_404(db, db.get(User, user_id), attempt_id))
+    view["ai_evaluation_pending"] = ai_evaluation_pending
+    return view
 
 
 def get_attempt_for_grading_or_404(db: Session, actor: User, attempt_id: int) -> TestAttempt:
@@ -1025,6 +1040,43 @@ def _recompute_score(attempt: TestAttempt) -> None:
     attempt.max_score = total_max if total_max > 0 else None
 
 
+def _finalize_if_all_graded(db: Session, attempt: TestAttempt) -> bool:
+    """Marks the attempt ATTEMPT_GRADED once every human-graded part carries a
+    grade - human ("graded") or automatic AI ("ai_graded") - recomputing the
+    score/CEFR profile and firing the grade-released notification/email.
+    Shared by human grading (grade_part) and automatic AI grading
+    (ai_evaluation_service.auto_evaluate_submission), so a result looks and
+    behaves the same to the student regardless of who/what produced it."""
+    if attempt.status == ATTEMPT_GRADED:
+        return False
+    if not attempt.part_grades or any(g.status == PART_GRADE_PENDING for g in attempt.part_grades):
+        return False
+
+    _recompute_score(attempt)
+    attempt.status = ATTEMPT_GRADED
+    attempt.graded_at = _now()
+    cefr_service.apply_evaluation(attempt)
+    db.add(attempt)
+
+    from app.services import grading_service
+
+    grading_service.complete_if_ready(db, attempt)
+    db.commit()
+
+    from app.services import achievement_service, notification_service
+
+    # Achievements and the in-app notification are best-effort: a failure here
+    # must never turn an already-saved grade into an error for the caller, and
+    # must never prevent the grade-released email below from being attempted.
+    try:
+        achievement_service.refresh_student_achievements(db, attempt.user_id, attempt.id)
+        notification_service.create_grade_released_notification(db, attempt)
+    except Exception:
+        logger.exception("Failed to record achievements/notification for attempt %s", attempt.id)
+    notification_service.send_grade_released_email(db, attempt)
+    return True
+
+
 def grade_part(
     db: Session,
     actor: User,
@@ -1088,31 +1140,15 @@ def grade_part(
     grade.graded_at = _now()
     db.add(grade)
 
-    just_completed = False
-    if all(g.status == "graded" for g in attempt.part_grades):
-        _recompute_score(attempt)
-        if attempt.status != ATTEMPT_GRADED:
-            just_completed = True
-        attempt.status = ATTEMPT_GRADED
-        attempt.graded_at = _now()
-        grading_service.complete_if_ready(db, attempt)
+    # Partial-progress visibility: recompute CEFR now even if other parts are
+    # still pending, so the student sees an updating profile as each part is
+    # graded, not just on the final one.
     cefr_service.apply_evaluation(attempt)
     db.add(attempt)
-
     db.commit()
-    attempt = get_attempt_for_grading_or_404(db, actor, attempt_id)
-    if just_completed:
-        from app.services import achievement_service, notification_service
 
-        # Achievements and the in-app notification are best-effort: a failure here
-        # must never turn an already-saved grade into a 500 for the instructor, and
-        # must never prevent the grade-released email below from being attempted.
-        try:
-            achievement_service.refresh_student_achievements(db, attempt.user_id, attempt.id)
-            notification_service.create_grade_released_notification(db, attempt)
-        except Exception:
-            logger.exception("Failed to record achievements/notification for attempt %s", attempt.id)
-        notification_service.send_grade_released_email(db, attempt)
+    attempt = get_attempt_for_grading_or_404(db, actor, attempt_id)
+    _finalize_if_all_graded(db, attempt)
     return get_grading_detail(db, actor, attempt_id)
 
 

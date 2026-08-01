@@ -40,7 +40,13 @@ ATTEMPT_STATUSES = (
 
 PART_GRADE_PENDING = "pending"
 PART_GRADE_GRADED = "graded"
-PART_GRADE_STATUSES = (PART_GRADE_PENDING, PART_GRADE_GRADED)
+# Auto-graded from an AI evaluation at submission time (see
+# ai_evaluation_service.auto_evaluate_submission). Counts as a real,
+# published grade - same as PART_GRADE_GRADED - everywhere except that a
+# human never signed off on it, so grader_id stays NULL and the student can
+# still escalate it via the existing reevaluation-request flow.
+PART_GRADE_AI_GRADED = "ai_graded"
+PART_GRADE_STATUSES = (PART_GRADE_PENDING, PART_GRADE_GRADED, PART_GRADE_AI_GRADED)
 
 FLAG_BLUR = "blur"
 FLAG_VISIBILITY_CHANGE = "visibility_change"

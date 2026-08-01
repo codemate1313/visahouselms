@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { PortalSupportTicket, SupportTicketStatus } from "@/api/types";
@@ -34,9 +35,10 @@ function formatDate(value: string) {
 }
 
 export function SupportCenter() {
+  const [searchParams] = useSearchParams();
   const [tickets, setTickets] = useState<PortalSupportTicket[]>([]);
-  const [category, setCategory] = useState("general");
-  const [subject, setSubject] = useState("");
+  const [category, setCategory] = useState(() => searchParams.get("category") || "general");
+  const [subject, setSubject] = useState(() => searchParams.get("subject") || "");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);

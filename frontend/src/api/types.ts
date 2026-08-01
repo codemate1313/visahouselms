@@ -447,10 +447,10 @@ export interface AttemptAsset {
 }
 
 export interface AttemptPartGradeView {
-  criteria: { criterion: string; max_marks: string; marks_awarded: string; cefr_level: CefrLevel }[];
+  criteria: { criterion: string; max_marks: string; marks_awarded: string; cefr_level: CefrLevel; rationale?: string }[];
   total_marks: string | null;
   comment: string | null;
-  status: "pending" | "graded";
+  status: "pending" | "graded" | "ai_graded";
 }
 
 export interface ReevaluationRequestView {
@@ -656,7 +656,7 @@ export interface AttemptSummary {
 
 export interface StudentNotification {
   id: number;
-  kind: "grade_released" | "announcement_published";
+  kind: "grade_released" | "announcement_published" | "ai_quota_exhausted" | (string & {});
   attempt_id: number | null;
   announcement_id: number | null;
   link_url: string | null;

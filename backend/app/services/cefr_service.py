@@ -7,7 +7,7 @@ and declares the local fallback conversion used for the other skills.
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 
-from app.models.attempt import PART_GRADE_GRADED, TestAttempt
+from app.models.attempt import PART_GRADE_AI_GRADED, PART_GRADE_GRADED, TestAttempt
 from app.services.module_blueprint_service import SECTION_BLUEPRINTS
 
 
@@ -137,7 +137,7 @@ def _section_profile(attempt: TestAttempt, skill: str) -> dict:
         rubric_max = sum((_decimal(item.get("max_marks")) for item in (part.rubric or [])), Decimal("0"))
         maximum += rubric_max
         grade = grades_by_part.get(part.id)
-        if grade is None or grade.status != PART_GRADE_GRADED or grade.total_marks is None:
+        if grade is None or grade.status not in (PART_GRADE_GRADED, PART_GRADE_AI_GRADED) or grade.total_marks is None:
             pending = True
         else:
             score += _decimal(grade.total_marks)

@@ -25,6 +25,9 @@ class PlanCreate(BaseModel):
     # Marketing bullets for the public pricing card; empty falls back to a list
     # derived from the plan's modules and limits.
     features: list[str] = Field(default_factory=list, max_length=MAX_FEATURES)
+    # Per-student monthly AI evaluation ceiling for direct-student plans.
+    # NULL/0 falls back to the platform-wide default limit.
+    ai_evaluation_limit: Optional[int] = Field(default=None, ge=0, le=100000)
 
 
 class PlanUpdate(BaseModel):
@@ -45,6 +48,7 @@ class PlanUpdate(BaseModel):
 
     is_published: Optional[bool] = None
     features: Optional[list[str]] = Field(default=None, max_length=MAX_FEATURES)
+    ai_evaluation_limit: Optional[int] = Field(default=None, ge=0, le=100000)
 
 
 

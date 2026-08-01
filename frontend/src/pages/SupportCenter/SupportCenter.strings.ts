@@ -22,6 +22,7 @@ export const supportCenterStrings = {
     grading: "Grading & Results",
     technical: "Technical Issue",
     billing: "Billing & Subscription",
+    ai_evaluation: "AI Evaluation Quota",
   },
   history: {
     title: "My tickets",
