@@ -375,6 +375,9 @@ def create_member(
     db.flush()
     _audit(db, actor, "institute_member.create", user.id, ip, {"email": user.email, "role": role_name})
     db.commit()
+    account_service.send_account_credentials_email(
+        db, user, temporary_password, role_label=role_name.replace("_", " ").title()
+    )
     notification_service.notify_roles(
         db,
         {INSTITUTE_ADMIN},
@@ -515,29 +518,28 @@ def delete_member(
     scoped_institute_id: Optional[int] = None,
 ) -> None:
     user = get_member_or_404(db, actor, member_id, scoped_institute_id)
-    if user.deleted_at is not None:
-        return
-    user.is_active = False
-    user.deleted_at = datetime.now(timezone.utc)
-    revoked = account_service.revoke_all_sessions(db, user.id)
-    db.add(user)
+    deleted_email = user.email
+    deleted_role = user.role.name if user.role else None
+    deleted_institute_id = user.institute_id
+    account_service.revoke_all_sessions(db, user.id)
     _audit(
         db,
         actor,
-        "institute_member.archive",
+        "institute_member.delete",
         user.id,
         ip,
-        {"email": user.email, "role": user.role.name, "sessions_revoked": revoked},
+        {"email": deleted_email, "role": deleted_role},
     )
+    db.delete(user)
     db.commit()
     notification_service.notify_roles(
         db,
         {INSTITUTE_ADMIN},
-        kind="institute_member_archived",
-        title="Institute member archived",
-        message=f"{actor.email} archived {user.email}.",
-        link_url="/institute-portal/students" if user.role.name == STUDENT else "/institute-portal/staff",
-        institute_id=user.institute_id,
+        kind="institute_member_deleted",
+        title="Institute member deleted",
+        message=f"{actor.email} deleted {deleted_email}.",
+        link_url="/institute-portal/students" if deleted_role == STUDENT else "/institute-portal/staff",
+        institute_id=deleted_institute_id,
     )
 
 
@@ -673,6 +675,7 @@ def import_students(
     available = _available_student_slots(db, institute_id)
     seen: set[str] = set()
     created: list[dict] = []
+    created_users: list[tuple[User, str]] = []
     skipped: list[dict] = []
 
     for row_number, row in enumerate(rows, start=2):
@@ -722,8 +725,11 @@ def import_students(
                 "temporary_password": temporary_password,
             }
         )
+        created_users.append((user, temporary_password))
 
     db.commit()
+    for created_user, created_password in created_users:
+        account_service.send_account_credentials_email(db, created_user, created_password, role_label="Student")
     if created:
         notification_service.notify_roles(
             db,

@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.core.security import hash_password
 from app.core.uploads import read_validated_image
+from app.services import account_service
 from app.models.audit_log import AuditLog
 from app.models.base import Base
 from app.models.demo_account import DemoAccount
@@ -258,6 +259,7 @@ def create_institute(
     result["admin_temp_password"] = temp_password
     result["admin_email"] = admin_email
     if commit:
+        account_service.send_account_credentials_email(db, admin, temp_password, role_label="Institute Admin")
         notification_service.notify_roles(
             db,
             {SUPER_ADMIN, DEVELOPER},

@@ -816,16 +816,15 @@ def delete_direct_student(
     ip_address: Optional[str] = None,
 ) -> None:
     user = get_direct_student_or_404(db, user_id)
-    user.is_active = False
-    user.deleted_at = datetime.now(timezone.utc)
-    revoked = account_service.revoke_all_sessions(db, user.id)
-    db.add(user)
+    deleted_email = user.email
+    account_service.revoke_all_sessions(db, user.id)
     _write_audit_log(
         db,
         actor,
-        "student.direct.archive",
+        "student.direct.delete",
         user.id,
         ip_address,
-        {"email": user.email, "sessions_revoked": revoked},
+        {"email": deleted_email},
     )
+    db.delete(user)
     db.commit()

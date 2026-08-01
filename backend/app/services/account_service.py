@@ -29,6 +29,36 @@ def avatar_url_for(user: User) -> Optional[str]:
     return f"/storage/{user.avatar_path}" if user.avatar_path else None
 
 
+def send_account_credentials_email(
+    db: Session,
+    user: User,
+    temporary_password: str,
+    role_label: str = "Account",
+) -> None:
+    """Best-effort email of the auto-generated login (email + temporary
+    password) to a user whose account was just created by an admin or
+    super-admin on their behalf. Never raises - failures are logged and
+    recorded so they don't block the account creation itself."""
+    try:
+        from app.services import email_template_service, smtp_service
+
+        frontend_url = settings.frontend_url or "http://localhost:5173"
+        login_url = f"{frontend_url}/login"
+        subject, plain, html = email_template_service.render_account_credentials_email(
+            user.first_name, user.email, temporary_password, login_url, role_label=role_label
+        )
+        smtp_service.send_email(db, user.email, subject, plain, html_body=html)
+    except Exception as exc:
+        import logging
+
+        from app.services.notification_service import record_send_failure
+
+        logging.getLogger(__name__).warning(
+            "Failed to send account credentials email for %s: %s", user.email, exc
+        )
+        record_send_failure(db, f"Account credentials email to {user.email} failed: {exc}", user_id=user.id)
+
+
 def update_profile(
     db: Session,
     actor: User,

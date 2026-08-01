@@ -1,4 +1,4 @@
-"""Executive, Ultra-Premium Light HTML Email Generator for IELTS LMS.
+"""Executive, Ultra-Premium Light HTML Email Generator for Visa House.
 
 Designed specifically for 100% rendering compatibility across Gmail, Outlook,
 Apple Mail, and mobile clients without SVG stripping or dark inversion bugs.
@@ -57,7 +57,7 @@ def render_base_email(
                 <tr>
                   <td align="left">
                     <span style="font-size: 18px; font-weight: 900; letter-spacing: -0.03em; color: #0f172a;">
-                      IELTS <span style="color: #b91c2b;">LMS</span>
+                      Visa <span style="color: #b91c2b;">House</span>
                     </span>
                   </td>
                   <td align="right">
@@ -97,7 +97,7 @@ def render_base_email(
           <tr>
             <td style="background-color: #f8fafc; border-top: 1px solid #f1f5f9; padding: 24px 36px; text-align: center;">
               <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: #475569;">
-                IELTS LMS Platform &bull; Official Account Notification
+                Visa House Platform &bull; Official Account Notification
               </p>
               <p style="margin: 0; font-size: 11.5px; color: #94a3b8; line-height: 1.5;">
                 If you have questions or need assistance, visit your student portal or contact our support team.
@@ -117,22 +117,22 @@ def render_base_email(
 
 def render_welcome_email(first_name: str, login_url: str) -> tuple[str, str, str]:
     """Returns (subject, plain_text, html_content)."""
-    subject = f"Welcome to IELTS LMS, {first_name}! 🎉"
+    subject = f"Welcome to Visa House, {first_name}! 🎉"
 
     plain = f"""Hi {first_name},
 
-Welcome to IELTS LMS! Your account has been created successfully.
+Welcome to Visa House! Your account has been created successfully.
 
 Log in to access your course materials, practice assessments, and mock tests:
 {login_url}
 
 Best regards,
-The IELTS LMS Team
+The Visa House Team
 """
 
     content_html = f"""
     <p style="margin-top: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Hi {first_name},</p>
-    <p>Welcome aboard! Your <strong>IELTS LMS</strong> student portal account is now active and ready to use.</p>
+    <p>Welcome aboard! Your <strong>Visa House</strong> student portal account is now active and ready to use.</p>
     <p>You can log in to practice all four test modules, take timed mock exams, submit writing and speaking tasks, and track your Band score progress in real-time.</p>
 
     <!-- Clean Light Feature Card -->
@@ -159,7 +159,7 @@ The IELTS LMS Team
 
     html = render_base_email(
         badge_label="Account Ready",
-        title=f"Welcome to IELTS LMS, {first_name}!",
+        title=f"Welcome to Visa House, {first_name}!",
         subtitle="Your student portal is now active and ready for your preparation.",
         content_html=content_html,
         action_url=login_url,
@@ -170,35 +170,137 @@ The IELTS LMS Team
     return subject, plain, html
 
 
-def render_forgot_password_email(first_name: str, reset_url: str) -> tuple[str, str, str]:
-    """Returns (subject, plain_text, html_content)."""
-    subject = "Reset Your Password — IELTS LMS"
+def render_account_credentials_email(
+    first_name: str,
+    email: str,
+    temporary_password: str,
+    login_url: str,
+    role_label: str = "Account",
+) -> tuple[str, str, str]:
+    """Returns (subject, plain_text, html_content).
+
+    Sent when an admin/super-admin creates a new user account on someone
+    else's behalf, so the recipient receives the auto-generated login
+    credentials rather than having to be told them out-of-band.
+    """
+    subject = f"Welcome to Visa House — Your {role_label} Account is Ready"
 
     plain = f"""Hi {first_name},
 
-We received a request to reset your password for your IELTS LMS account.
+Welcome to Visa House! We're delighted to have you on board.
 
-Click the link below to set a new password (link expires in 30 minutes):
-{reset_url}
+Your {role_label} account has been set up and is ready for you. Please find your login credentials below:
 
-If you did not request a password reset, please ignore this message.
+  Email:              {email}
+  Temporary Password: {temporary_password}
 
-Best regards,
-The IELTS LMS Team
+To get started, visit the link below and log in with the credentials above:
+{login_url}
+
+IMPORTANT: For your security, you will be required to create a new password immediately upon your first login. Please do not share these credentials with anyone.
+
+If you did not expect this email or believe it was sent in error, please contact our support team immediately.
+
+Warm regards,
+The Visa House Team
 """
 
     content_html = f"""
-    <p style="margin-top: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Hi {first_name},</p>
-    <p>We received a security request to reset the password for your <strong>IELTS LMS</strong> account.</p>
-    <p>Click the button below to set up a new password. For security reasons, this link will expire in <strong>30 minutes</strong>.</p>
-    
-    <!-- Clean Amber Security Callout -->
-    <div style="background-color: #fffbe6; border: 1px solid #ffe58f; border-left: 4px solid #faad14; border-radius: 8px; padding: 16px 18px; margin: 24px 0;">
-      <div style="font-size: 13.5px; font-weight: 700; color: #873800; margin-bottom: 2px;">
-        Security Notice
+    <p style="margin-top: 0; font-size: 15px; color: #334155; line-height: 1.6;">
+      Dear <strong style="color: #0f172a;">{first_name}</strong>,
+    </p>
+    <p style="font-size: 15px; color: #334155; line-height: 1.7; margin: 0 0 20px 0;">
+      Welcome to <strong style="color: #b91c2b;">Visa House</strong>! We are pleased to inform you that your <strong>{role_label}</strong> account has been successfully created. You now have full access to the Visa House platform.
+    </p>
+    <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin: 0 0 20px 0;">
+      Please use the credentials below to access your account for the first time.
+    </p>
+
+    <!-- Credentials Card -->
+    <div style="background: linear-gradient(135deg, #fafafa 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; margin: 8px 0 24px 0;">
+      <div style="display: flex; align-items: center; margin-bottom: 18px;">
+        <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #b91c2b; background-color: #fef2f2; padding: 4px 10px; border-radius: 20px; display: inline-block;">
+          &#128274;&nbsp; Login Credentials
+        </div>
       </div>
-      <div style="font-size: 13px; color: #a15c00; line-height: 1.5;">
-        If you did not request a password reset, please ignore this email. Your current password remains completely safe and unchanged.
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: separate; border-spacing: 0 10px; font-size: 14px;">
+        <tr>
+          <td style="width: 110px; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; padding: 10px 12px 10px 0;">Email</td>
+          <td style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-weight: 600; color: #1e40af; font-size: 14px;">{email}</td>
+        </tr>
+        <tr>
+          <td style="width: 110px; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; padding: 10px 12px 10px 0;">Password</td>
+          <td style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-weight: 700; color: #0f172a; font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace; letter-spacing: 0.06em; font-size: 15px;">{temporary_password}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Security Notice -->
+    <div style="background-color: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #f59e0b; border-radius: 10px; padding: 16px 18px; margin: 0 0 8px 0;">
+      <div style="display: flex; align-items: flex-start; gap: 10px;">
+        <div>
+          <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 5px;">&#9888;&nbsp; Important Security Notice</div>
+          <div style="font-size: 13px; color: #78350f; line-height: 1.6;">
+            This is a <strong>temporary password</strong>. You will be asked to create a new, secure password the moment you first log in. Please keep this email confidential and do not share your credentials with anyone.
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+
+    html = render_base_email(
+        badge_label="Account Created",
+        title=f"Your {role_label} Account is Ready",
+        subtitle=f"Welcome to Visa House — your gateway to exam success.",
+        content_html=content_html,
+        action_url=login_url,
+        action_text="Access My Account",
+        badge_color="#b91c2b",
+    )
+
+    return subject, plain, html
+
+
+
+def render_forgot_password_email(first_name: str, reset_url: str) -> tuple[str, str, str]:
+    """Returns (subject, plain_text, html_content)."""
+    subject = "Reset Your Password — Visa House"
+
+    plain = f"""Hi {first_name},
+
+We received a security request to reset the password for your Visa House account.
+
+To set up a new password, please click the secure link below. For your protection, this link will expire in exactly 30 minutes.
+
+Reset Password Link:
+{reset_url}
+
+If you did not request this password reset, please ignore this message. Your current password remains secure and unchanged.
+
+Best regards,
+The Visa House Security Team
+"""
+
+    content_html = f"""
+    <p style="margin-top: 0; font-size: 15px; color: #334155; line-height: 1.6;">
+      Dear <strong style="color: #0f172a;">{first_name}</strong>,
+    </p>
+    <p style="font-size: 15px; color: #334155; line-height: 1.7; margin: 0 0 20px 0;">
+      We received a security request to reset the password associated with your <strong style="color: #b91c2b;">Visa House</strong> account.
+    </p>
+    <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin: 0 0 24px 0;">
+      Click the button below to securely set up a new password. For your protection, this verification link is only valid for <strong>30 minutes</strong>.
+    </p>
+    
+    <!-- Security Notice Card -->
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #94a3b8; border-radius: 10px; padding: 16px 18px; margin: 0 0 8px 0;">
+      <div style="display: flex; align-items: flex-start; gap: 10px;">
+        <div>
+          <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; margin-bottom: 6px;">&#128272;&nbsp; Security Notice</div>
+          <div style="font-size: 13px; color: #64748b; line-height: 1.6;">
+            If you did not request a password reset, you can safely ignore this email. Your current password remains completely safe and unchanged.
+          </div>
+        </div>
       </div>
     </div>
     """
@@ -206,7 +308,7 @@ The IELTS LMS Team
     html = render_base_email(
         badge_label="Security Verification",
         title="Password Reset Request",
-        subtitle="Secure verification link for your IELTS LMS account.",
+        subtitle="Secure verification link for your Visa House account.",
         content_html=content_html,
         action_url=reset_url,
         action_text="Reset Password Now",
@@ -218,23 +320,23 @@ The IELTS LMS Team
 
 def render_login_otp_email(first_name: str, otp_code: str, expires_minutes: int) -> tuple[str, str, str]:
     """Returns (subject, plain_text, html_content)."""
-    subject = "Your IELTS LMS login verification code"
+    subject = "Your Visa House login verification code"
 
     plain = f"""Hi {first_name},
 
-Your IELTS LMS verification code is:
+Your Visa House verification code is:
 
 {otp_code}
 
 This code expires in {expires_minutes} minutes. If you did not try to sign in, ignore this email and contact your administrator.
 
 Best regards,
-The IELTS LMS Team
+The Visa House Team
 """
 
     content_html = f"""
     <p style="margin-top: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Hi {first_name},</p>
-    <p>Use this one-time code to complete your <strong>IELTS LMS</strong> login.</p>
+    <p>Use this one-time code to complete your <strong>Visa House</strong> login.</p>
 
     <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 14px; padding: 24px; margin: 24px 0; text-align: center;">
       <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #b91c2b; margin-bottom: 10px;">
@@ -261,7 +363,7 @@ The IELTS LMS Team
     html = render_base_email(
         badge_label="Login OTP",
         title="Verify Your Login",
-        subtitle="Secure one-time code for your IELTS LMS account.",
+        subtitle="Secure one-time code for your Visa House account.",
         content_html=content_html,
         badge_color="#b91c2b",
     )
@@ -271,11 +373,11 @@ The IELTS LMS Team
 
 def render_register_otp_email(first_name: str, otp_code: str, expires_minutes: int) -> tuple[str, str, str]:
     """Returns (subject, plain_text, html_content)."""
-    subject = "Verify your email address for IELTS LMS"
+    subject = "Verify your email address for Visa House"
 
     plain = f"""Hi {first_name},
 
-Thank you for registering with IELTS LMS!
+Thank you for registering with Visa House!
 
 Your email verification code is:
 
@@ -284,12 +386,12 @@ Your email verification code is:
 This code expires in {expires_minutes} minutes. If you did not create an account, you can safely ignore this email.
 
 Best regards,
-The IELTS LMS Team
+The Visa House Team
 """
 
     content_html = f"""
     <p style="margin-top: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Hi {first_name},</p>
-    <p>Thank you for creating an account with <strong>IELTS LMS</strong>. To complete your registration and activate your student portal, please verify your email address.</p>
+    <p>Thank you for creating an account with <strong>Visa House</strong>. To complete your registration and activate your student portal, please verify your email address.</p>
 
     <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 24px; margin: 24px 0; text-align: center;">
       <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #15803d; margin-bottom: 10px;">
@@ -316,7 +418,7 @@ The IELTS LMS Team
     html = render_base_email(
         badge_label="Email Verification",
         title="Verify Your Email",
-        subtitle="Activate your new IELTS LMS account.",
+        subtitle="Activate your new Visa House account.",
         content_html=content_html,
         badge_color="#15803d",
     )

@@ -162,6 +162,7 @@ def create_instructor(
     )
     _audit(db, actor, "sa_instructor.create", user.id, ip, {"email": email})
     db.commit()
+    account_service.send_account_credentials_email(db, user, temporary_password, role_label="Instructor")
     user = get_instructor_or_404(db, user.id)
     result = _serialize(user)
     result["temporary_password"] = temporary_password
