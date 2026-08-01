@@ -50,7 +50,10 @@ class FinalTestHeartbeatRequest(BaseModel):
 
 
 class PartGradeRequest(BaseModel):
-    criteria: list[dict] = Field(min_length=1)
+    # Empty/partial criteria are allowed here - this endpoint now only ever
+    # saves a draft (see attempt_service.save_part_draft); the whole attempt
+    # is finalized in one shot via the separate submit-grading endpoint.
+    criteria: list[dict] = Field(default_factory=list)
     comment: Optional[str] = Field(default=None, max_length=4000)
 
 

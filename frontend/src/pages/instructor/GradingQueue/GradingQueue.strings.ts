@@ -29,6 +29,7 @@ export const gradingQueueStrings = {
     course: "Course",
     queue: "Queue",
     owner: "Owner",
+    issued: "Issued",
     due: "Due",
     flags: "Flags",
     partsLeft: "Parts left",

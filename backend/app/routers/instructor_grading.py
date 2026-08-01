@@ -80,11 +80,16 @@ def resolve_reevaluation(
 
 
 @router.post("/{attempt_id}/parts/{part_id}")
-def grade_part(
+def save_part_draft(
     attempt_id: int,
     part_id: int,
     payload: PartGradeRequest,
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    return attempt_service.grade_part(db, actor, attempt_id, part_id, payload.criteria, payload.comment)
+    return attempt_service.save_part_draft(db, actor, attempt_id, part_id, payload.criteria, payload.comment)
+
+
+@router.post("/{attempt_id}/submit")
+def submit_grading(attempt_id: int, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    return attempt_service.submit_grading(db, actor, attempt_id)

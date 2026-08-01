@@ -310,8 +310,7 @@ def _bucket(
 def _direct_student_limit(db: Session, user_id: int, platform_default: int) -> int:
     """A direct (B2C) student's monthly ceiling comes from their subscribed
     plan's `ai_evaluation_limit` (set by the Super Admin when authoring the
-    plan), falling back to the platform-wide default when the plan leaves it
-    unset or the student has no active/grace subscription."""
+    plan). Direct students without an active subscription receive 0 quota."""
     from app.services.subscription_service import STATE_ACTIVE, STATE_GRACE, current_user_subscription
 
     subscription, state = current_user_subscription(db, user_id)
@@ -319,7 +318,8 @@ def _direct_student_limit(db: Session, user_id: int, platform_default: int) -> i
         limit = subscription.plan.ai_evaluation_limit
         if limit is not None and limit > 0:
             return limit
-    return platform_default
+        return platform_default
+    return 0
 
 
 def _notify_quota_exhausted(db: Session, user: User, limit: int, period: str) -> None:

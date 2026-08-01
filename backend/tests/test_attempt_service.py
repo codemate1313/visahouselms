@@ -283,11 +283,16 @@ class AttemptServiceTestCase(unittest.TestCase):
 
         parts = sorted(attempt.module.parts, key=lambda p: p.sort_order)
         criteria = [{"criterion": item["criterion"], "marks_awarded": 6} for item in parts[0].rubric]
-        detail = attempt_service.grade_part(self.db, self.instructor, attempt.id, parts[0].id, criteria, "Solid attempt")
-        self.assertEqual(detail["status"], ATTEMPT_GRADING)  # still one part left
+        draft = attempt_service.save_part_draft(self.db, self.instructor, attempt.id, parts[0].id, criteria, "Solid attempt")
+        self.assertEqual(draft["status"], ATTEMPT_GRADING)  # draft only, not published yet
 
         criteria2 = [{"criterion": item["criterion"], "marks_awarded": 6} for item in parts[1].rubric]
-        final = attempt_service.grade_part(self.db, self.instructor, attempt.id, parts[1].id, criteria2, "Good")
+        draft2 = attempt_service.save_part_draft(self.db, self.instructor, attempt.id, parts[1].id, criteria2, "Good")
+        # Every part now has a complete draft, but the attempt only publishes
+        # once submit_grading is called explicitly - drafting can't finalize it.
+        self.assertEqual(draft2["status"], ATTEMPT_GRADING)
+
+        final = attempt_service.submit_grading(self.db, self.instructor, attempt.id)
         self.assertEqual(final["status"], ATTEMPT_GRADED)
         self.assertEqual(Decimal(final["raw_score"]), Decimal("48"))
         self.assertEqual(Decimal(final["max_score"]), Decimal("64"))
@@ -588,7 +593,8 @@ class AttemptServiceTestCase(unittest.TestCase):
         attempt_service.submit_attempt(self.db, attempt)
         for part in sorted(attempt.module.parts, key=lambda item: item.sort_order):
             criteria = [{"criterion": item["criterion"], "marks_awarded": 5} for item in part.rubric]
-            attempt_service.grade_part(self.db, self.instructor, attempt.id, part.id, criteria, "Initial grade")
+            attempt_service.save_part_draft(self.db, self.instructor, attempt.id, part.id, criteria, "Initial grade")
+        attempt_service.submit_grading(self.db, self.instructor, attempt.id)
 
         attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt.id)
         request = grading_service.request_reevaluation(

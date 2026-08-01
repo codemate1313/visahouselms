@@ -481,7 +481,7 @@ export interface AttemptPartGradeView {
   criteria: { criterion: string; max_marks: string; marks_awarded: string; cefr_level: CefrLevel; rationale?: string }[];
   total_marks: string | null;
   comment: string | null;
-  status: "pending" | "graded" | "ai_graded";
+  status: "pending" | "draft" | "graded" | "ai_graded";
 }
 
 export interface ReevaluationRequestView {
@@ -508,6 +508,7 @@ export interface GradingQueueMetadata {
   due_at: string | null;
   claimed_at: string | null;
   completed_at: string | null;
+  created_at?: string | null;
 }
 
 export interface AiEvaluationSuggestion {

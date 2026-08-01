@@ -62,6 +62,19 @@ export function GradingDetail() {
     }
   }
 
+  async function submitFullTest() {
+    setBusy(true);
+    try {
+      const { data } = await apiClient.post<GradingDetailType>(`/instructor/grading/${id}/submit`);
+      setDetail(data);
+      setError(null);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.submitFullTest.errorMessage));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function resolve(resolution: "resolved" | "rejected") {
     setBusy(true);
     try {
@@ -97,9 +110,9 @@ export function GradingDetail() {
 
   const [openPartIds, setOpenPartIds] = useState<Record<number, boolean>>({});
 
-  const isPartOpen = (partId: number, isGraded: boolean) => {
+  const isPartOpen = (partId: number, hasSavedProgress: boolean) => {
     if (openPartIds[partId] !== undefined) return openPartIds[partId];
-    return !isGraded;
+    return !hasSavedProgress;
   };
 
   const handleToggleOpen = (partId: number, open: boolean) => {
@@ -108,7 +121,7 @@ export function GradingDetail() {
 
   const handleGradedNext = (currentPartId: number) => {
     const currentIndex = subjectiveParts.findIndex((p) => p.id === currentPartId);
-    const nextPart = subjectiveParts.slice(currentIndex + 1).find((p) => p.grade?.status !== "graded") || subjectiveParts[currentIndex + 1];
+    const nextPart = subjectiveParts.slice(currentIndex + 1).find((p) => !p.grade) || subjectiveParts[currentIndex + 1];
 
     setOpenPartIds((prev) => {
       const updated = { ...prev, [currentPartId]: false };
@@ -132,6 +145,10 @@ export function GradingDetail() {
   if (!detail) return <p>{strings.loading}</p>;
   const subjectiveParts = detail.parts.filter((part) => !part.auto_marked);
   const allSubjectivePartsGraded = subjectiveParts.length > 0 && subjectiveParts.every((part) => part.grade?.status === "graded");
+  const readyPartsCount = subjectiveParts.filter(
+    (part) => part.grade && part.rubric.every((criterion) => part.grade!.criteria.some((item) => item.criterion === criterion.criterion)),
+  ).length;
+  const allPartsReady = subjectiveParts.length > 0 && readyPartsCount === subjectiveParts.length;
   const claimedByMe = detail.queue.assigned_to_id === user?.id;
   const claimedByOther = detail.queue.assigned_to_id != null && !claimedByMe;
   const hasOpenReevaluation = detail.reevaluation && ["pending", "in_review"].includes(detail.reevaluation.status);
@@ -183,6 +200,24 @@ export function GradingDetail() {
               {strings.completion.backToQueue}
             </LinkButton>
           </div>
+        </section>
+      )}
+      {detail.status === "grading" && subjectiveParts.length > 0 && (
+        <section className="workspace-panel submit-full-test-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>{strings.submitFullTest.title}</h2>
+              <p>{strings.submitFullTest.description}</p>
+            </div>
+            <span className="badge badge-amber">{strings.submitFullTest.readyCount(readyPartsCount, subjectiveParts.length)}</span>
+          </div>
+          {canEdit && (
+            <div className="form-actions">
+              <Button disabled={busy || !allPartsReady} onClick={submitFullTest}>
+                {busy ? strings.submitFullTest.submitting : strings.submitFullTest.action}
+              </Button>
+            </div>
+          )}
         </section>
       )}
       {claimedByOther && (
@@ -245,7 +280,7 @@ export function GradingDetail() {
           canEdit={canEdit}
           aiConfigured={detail.ai_assistance.configured}
           onGraded={setDetail}
-          isOpen={isPartOpen(part.id, part.grade?.status === "graded")}
+          isOpen={isPartOpen(part.id, part.grade != null)}
           onToggleOpen={(open) => handleToggleOpen(part.id, open)}
           onGradedNext={handleGradedNext}
         />

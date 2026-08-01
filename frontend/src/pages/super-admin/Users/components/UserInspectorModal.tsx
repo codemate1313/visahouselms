@@ -5,7 +5,7 @@ import { extractErrorMessage } from "@/api/errors";
 import type { IconName } from "@/components/icons";
 import { Icon } from "@/components/icons";
 import { TableAvatar } from "@/components/TableAvatar";
-import { Button } from "@/components/ui";
+import { Button, SegmentedControl } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import type { DirectoryRole, DirectoryUser, UserLinkedDetails } from "@/api/types";
 
@@ -69,6 +69,25 @@ function formatDate(value: string | null | undefined, options: Intl.DateTimeForm
 
 function formatDateTime(value: string | null | undefined) {
   return formatDate(value, { hour: "2-digit", minute: "2-digit" });
+}
+
+function parseUserAgent(ua: string | null | undefined): { browser: string; os: string } {
+  if (!ua) return { browser: "Browser", os: "Device" };
+  let browser = "Web Browser";
+  let os = "Desktop Device";
+
+  if (ua.includes("Firefox/")) browser = "Firefox";
+  else if (ua.includes("Edg/")) browser = "Edge";
+  else if (ua.includes("Chrome/")) browser = "Chrome";
+  else if (ua.includes("Safari/")) browser = "Safari";
+
+  if (ua.includes("Macintosh") || ua.includes("Mac OS")) os = "macOS";
+  else if (ua.includes("Windows")) os = "Windows";
+  else if (ua.includes("Android")) os = "Android";
+  else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+  else if (ua.includes("Linux")) os = "Linux";
+
+  return { browser, os };
 }
 
 function roleBadgeClass(role: DirectoryUser["role_name"]) {
@@ -337,6 +356,14 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
     }
   }, [activeTab, availableTabs, data]);
 
+  const segmentedOptions = useMemo(() => {
+    return availableTabs.map((tab) => ({
+      value: tab.id,
+      label: tab.label,
+      icon: <Icon name={tab.icon} />,
+    }));
+  }, [availableTabs]);
+
   async function revokeSession(sessionId: number) {
     if (!data || revokingSessionId !== null) return;
 
@@ -385,19 +412,14 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
           </button>
         </header>
 
-        <nav className="user-inspector-tabs" aria-label="User detail sections">
-          {availableTabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              className={activeTab === tab.id ? "is-active" : ""}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <Icon name={tab.icon} />
-              <span>{tab.label}</span>
-            </button>
-          ))}
-        </nav>
+        <div className="user-inspector-tabs-container">
+          <SegmentedControl
+            value={activeTab}
+            onChange={(val) => setActiveTab(val as InspectorTab)}
+            options={segmentedOptions}
+            size="md"
+          />
+        </div>
 
         <div className="user-inspector-body">
           {loading && (
@@ -419,7 +441,11 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
               {activeTab === "overview" && (
                 <div className="user-inspector-section">
                   <div className="user-inspector-role-card">
-                    <span className={`badge ${roleBadgeClass(data.user.role_name)}`}>{roleLabel(data.user.role_name)}</span>
+                    <div>
+                      <span className={`badge ${roleBadgeClass(data.user.role_name)}`}>
+                        {roleLabel(data.user.role_name)}
+                      </span>
+                    </div>
                     <h3>{roleDescription(data.user.role_name)}</h3>
                     <p>
                       {data.user.institute_name
@@ -432,7 +458,9 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                   <div className="user-inspector-field-grid">
                     <div className="user-inspector-field">
                       <label>Role</label>
-                      <span className={`badge ${roleBadgeClass(data.user.role_name)}`}>{data.user.role_name}</span>
+                      <span className={`badge ${roleBadgeClass(data.user.role_name)}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, width: 'fit-content' }}>
+                        {roleLabel(data.user.role_name)}
+                      </span>
                     </div>
                     <div className="user-inspector-field">
                       <label>Status</label>
@@ -658,38 +686,125 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
 
               {activeTab === "security" && (
                 <div className="user-inspector-section">
-                  <h3>Sessions</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <h3>Active & Historic Sessions</h3>
+                    <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>
+                      {data.sessions.filter((s) => s.is_active).length} Active Session(s)
+                    </span>
+                  </div>
+
                   {data.sessions.length === 0 ? (
-                    <p className="user-inspector-muted">No login sessions recorded.</p>
+                    <div style={{ padding: '36px 20px', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0' }}>
+                      <p className="user-inspector-muted" style={{ margin: 0 }}>No login sessions recorded.</p>
+                    </div>
                   ) : (
-                    <div className="user-inspector-list">
-                      {data.sessions.map((session) => (
-                        <article key={session.id} className="user-inspector-list-item is-stacked">
-                          <div>
-                            <strong>{session.ip_address || "Unknown IP"}</strong>
-                            <span>{session.user_agent || "Unknown browser"}</span>
-                            <small>Created {formatDateTime(session.created_at)} · Expires {formatDateTime(session.expires_at)}</small>
-                            {session.revoked_at && <small>Revoked {formatDateTime(session.revoked_at)}</small>}
-                          </div>
-                          <div className="user-inspector-session-actions">
-                            <span className={`badge ${session.is_active ? "badge-green" : "badge-inactive"}`}>
-                              {session.is_active ? "Active" : "Revoked"}
-                            </span>
-                            {session.is_active && (
-                              <Button
-                                size="small"
-                                variant="danger"
-                                loading={revokingSessionId === session.id}
-                                disabled={revokingSessionId !== null}
-                                onClick={() => void revokeSession(session.id)}
-                                leftIcon={<Icon name="revoke" />}
-                              >
-                                Revoke session
-                              </Button>
-                            )}
-                          </div>
-                        </article>
-                      ))}
+                    <div style={{ display: 'grid', gap: 16 }}>
+                      {data.sessions.map((session) => {
+                        const { browser, os } = parseUserAgent(session.user_agent);
+                        return (
+                          <article 
+                            key={session.id} 
+                            style={{
+                              backgroundColor: '#ffffff',
+                              border: session.is_active ? '1px solid #e2e8f0' : '1px solid #f1f5f9',
+                              borderRadius: 16,
+                              padding: '20px 22px',
+                              boxShadow: session.is_active ? '0 4px 14px rgba(15, 23, 42, 0.04)' : 'none',
+                              opacity: session.is_active ? 1 : 0.8,
+                              transition: 'all 0.2s ease',
+                              display: 'grid',
+                              gap: 14
+                            }}
+                          >
+                            {/* Card Header Row */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                                <div style={{
+                                  width: 44,
+                                  height: 44,
+                                  borderRadius: 12,
+                                  backgroundColor: session.is_active ? '#fff1f2' : '#f1f5f9',
+                                  border: session.is_active ? '1px solid #fecdd3' : '1px solid #e2e8f0',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: session.is_active ? '#b91c2b' : '#64748b',
+                                  flexShrink: 0
+                                }}>
+                                  <Icon name="session" />
+                                </div>
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                                    <strong style={{ fontSize: 15, fontWeight: 750, color: '#0f172a' }}>{browser} on {os}</strong>
+                                    <span className={`badge ${session.is_active ? "badge-green" : "badge-inactive"}`}>
+                                      {session.is_active ? "Active" : "Revoked"}
+                                    </span>
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                                    <span style={{ 
+                                      fontSize: 12, 
+                                      fontFamily: 'var(--mono-font, monospace)', 
+                                      fontWeight: 700, 
+                                      backgroundColor: '#f8fafc', 
+                                      color: '#334155', 
+                                      padding: '2px 8px', 
+                                      borderRadius: 6,
+                                      border: '1px solid #e2e8f0'
+                                    }}>
+                                      IP: {session.ip_address || "Unknown"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action Button */}
+                              {session.is_active && (
+                                <Button
+                                  size="small"
+                                  variant="danger"
+                                  loading={revokingSessionId === session.id}
+                                  disabled={revokingSessionId !== null}
+                                  onClick={() => void revokeSession(session.id)}
+                                  leftIcon={<Icon name="revoke" />}
+                                  style={{
+                                    borderRadius: 10,
+                                    padding: '8px 16px',
+                                    fontSize: 13,
+                                    fontWeight: 600,
+                                    boxShadow: '0 2px 8px rgba(185, 28, 43, 0.2)'
+                                  }}
+                                >
+                                  Revoke Session
+                                </Button>
+                              )}
+                            </div>
+
+                            {/* User Agent Monospace Box */}
+                            <div style={{ 
+                              fontSize: 12, 
+                              color: '#64748b', 
+                              backgroundColor: '#f8fafc', 
+                              padding: '10px 14px', 
+                              borderRadius: 10, 
+                              border: '1px solid #f1f5f9',
+                              fontFamily: 'var(--mono-font, monospace)',
+                              wordBreak: 'break-all',
+                              lineHeight: 1.55
+                            }}>
+                              {session.user_agent || "No User Agent string recorded."}
+                            </div>
+
+                            {/* Timestamps Row */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 12, color: '#64748b', flexWrap: 'wrap', paddingTop: 2 }}>
+                              <span>Created: <strong style={{ color: '#0f172a', fontWeight: 600 }}>{formatDateTime(session.created_at)}</strong></span>
+                              <span>Expires: <strong style={{ color: '#0f172a', fontWeight: 600 }}>{formatDateTime(session.expires_at)}</strong></span>
+                              {session.revoked_at && (
+                                <span style={{ color: '#e11d48' }}>Revoked: <strong>{formatDateTime(session.revoked_at)}</strong></span>
+                              )}
+                            </div>
+                          </article>
+                        );
+                      })}
                     </div>
                   )}
 

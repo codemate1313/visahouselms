@@ -38,6 +38,20 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
     }
   });
 
+  const formatDateTime = (val: string | null | undefined) => {
+    if (!val) return "—";
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleString(undefined, {
+      month: "numeric",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   const renderRow = (item: GradingQueueItem) => {
     const claimedByOther =
       item.queue.status === "claimed" &&
@@ -46,6 +60,8 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
     const claimedByMe =
       item.queue.status === "claimed" &&
       item.queue.assigned_to_id === userId;
+
+    const issuedAt = item.submitted_at || item.queue.created_at;
 
     return (
       <tr key={item.id} className={claimedByOther ? "" : "clickable"}>
@@ -62,6 +78,7 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
               ? t.gradingBy(item.queue.assigned_to_name ?? t.anotherInstructor)
               : t.unclaimed}
         </td>
+        <td>{formatDateTime(issuedAt)}</td>
         <td>{item.queue.due_at ? new Date(item.queue.due_at).toLocaleDateString() : "—"}</td>
         <td>{item.flag_count > 0 ? <span className="badge badge-red">{item.flag_count}</span> : "—"}</td>
         <td>{item.parts_to_grade}</td>
@@ -93,6 +110,7 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
             <th>{t.course}</th>
             <th>{t.queue}</th>
             <th>{t.owner}</th>
+            <th>{t.issued}</th>
             <th>{t.due}</th>
             <th>{t.flags}</th>
             <th>{t.partsLeft}</th>
@@ -103,7 +121,7 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
           {today.length > 0 && (
             <>
               <tr className="table-group-header">
-                <td colSpan={8}>Today</td>
+                <td colSpan={9}>Today</td>
               </tr>
               {today.map(renderRow)}
             </>
@@ -111,7 +129,7 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
           {yesterday.length > 0 && (
             <>
               <tr className="table-group-header">
-                <td colSpan={8}>Yesterday</td>
+                <td colSpan={9}>Yesterday</td>
               </tr>
               {yesterday.map(renderRow)}
             </>
@@ -119,7 +137,7 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
           {older.length > 0 && (
             <>
               <tr className="table-group-header">
-                <td colSpan={8}>Older Submissions</td>
+                <td colSpan={9}>Older Submissions</td>
               </tr>
               {older.map(renderRow)}
             </>

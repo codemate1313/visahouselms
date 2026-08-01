@@ -104,6 +104,7 @@ def _entry_out(entry: Optional[GradingQueueEntry]) -> Optional[dict]:
         "due_at": entry.due_at,
         "claimed_at": entry.claimed_at,
         "completed_at": entry.completed_at,
+        "created_at": entry.created_at,
     }
 
 
@@ -166,8 +167,6 @@ def claim(db: Session, actor: User, attempt: TestAttempt) -> dict:
     try:
         if had_reevaluation:
             notification_service.notify_reevaluation_claimed(db, attempt, actor)
-        else:
-            notification_service.notify_grading_claimed(db, attempt, actor)
     except Exception:
         pass
     return _entry_out(entry)
@@ -311,7 +310,7 @@ def list_queue(db: Session, actor: User, status_filter: Optional[str] = None) ->
             "status": attempt.status,
             "submitted_at": attempt.submitted_at,
             "flag_count": len(attempt.flags),
-            "parts_to_grade": sum(1 for grade in attempt.part_grades if grade.status == "pending"),
+            "parts_to_grade": sum(1 for grade in attempt.part_grades if grade.status in ("pending", "draft")),
             "queue": _entry_out(entry),
             "is_reevaluation": reevaluation is not None,
         })

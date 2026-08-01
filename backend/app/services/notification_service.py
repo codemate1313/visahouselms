@@ -303,6 +303,7 @@ def notify_grading_claimed(db: Session, attempt: TestAttempt, actor: User) -> No
         title=f"Review started: {attempt.module.title}",
         message=f"{actor.first_name} {actor.last_name} has started reviewing your submission.",
         link_url=f"/student/attempts/{attempt.id}/result/details",
+        attempt_id=attempt.id,
     )
 
 
@@ -314,6 +315,7 @@ def notify_grading_released(db: Session, attempt: TestAttempt) -> None:
         title=f"Review returned to queue: {attempt.module.title}",
         message="Your submission is waiting for another instructor to continue the review.",
         link_url=f"/student/attempts/{attempt.id}/result/details",
+        attempt_id=attempt.id,
     )
 
 
@@ -327,6 +329,7 @@ def notify_reevaluation_requested(db: Session, attempt: TestAttempt) -> None:
         title="Human review request submitted",
         message="Your request has been sent to the appropriate instructor queue.",
         link_url=f"/student/attempts/{attempt.id}/result/details",
+        attempt_id=attempt.id,
     )
     if attempt.user.institute_id is not None:
         notify_roles(
@@ -357,6 +360,7 @@ def notify_reevaluation_claimed(db: Session, attempt: TestAttempt, actor: User) 
         title=f"Human review in progress: {attempt.module.title}",
         message=f"{actor.first_name} {actor.last_name} is reviewing your request.",
         link_url=f"/student/attempts/{attempt.id}/result/details",
+        attempt_id=attempt.id,
     )
 
 
@@ -368,6 +372,7 @@ def notify_reevaluation_resolved(db: Session, attempt: TestAttempt, resolution: 
         title=f"Human review {resolution}: {attempt.module.title}",
         message="Your instructor has completed the requested review.",
         link_url=f"/student/attempts/{attempt.id}/result/details",
+        attempt_id=attempt.id,
     )
 
 
@@ -473,7 +478,10 @@ def list_user_notifications(db: Session, user: User) -> list[dict]:
     notifications = (
         db.query(StudentNotification)
         .options(joinedload(StudentNotification.attempt).joinedload(TestAttempt.module))
-        .filter(StudentNotification.user_id == user.id)
+        .filter(
+            StudentNotification.user_id == user.id,
+            StudentNotification.kind != GRADING_CLAIMED,
+        )
         # Pinned first (most recently pinned on top), then the usual newest-first feed.
         .order_by(
             StudentNotification.pinned_at.is_(None).asc(),

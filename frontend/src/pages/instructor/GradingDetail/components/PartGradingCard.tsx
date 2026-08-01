@@ -44,7 +44,16 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
   const [saving, setSaving] = useState(false);
   const [requestingAi, setRequestingAi] = useState(false);
   const allScored = part.rubric.every((criterion) => marks[criterion.criterion] !== "");
+  const hasProgress = Object.values(marks).some((value) => value !== "") || comment.trim() !== "";
   const supportsAi = part.section_type === "writing" || part.section_type === "speaking";
+  // Once a part is published (a first-pass "Submit full test", or a direct
+  // AI grade) this card only reopens for editing during an open
+  // reevaluation - that correction path still saves and publishes in one
+  // click, matching the backend's is_correction behavior. Otherwise every
+  // save here is only ever a draft; only "Submit full test" on the page
+  // publishes anything.
+  const isPublished = part.grade?.status === "graded" || part.grade?.status === "ai_graded";
+  const isDraft = part.grade?.status === "draft";
 
   async function requestAiSuggestion() {
     setRequestingAi(true);
@@ -61,14 +70,24 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
     }
   }
 
-  async function submitGrade() {
+  async function saveProgress() {
     setSaving(true);
     try {
-      const criteria = part.rubric.map((criterion) => ({ criterion: criterion.criterion, marks_awarded: Number(marks[criterion.criterion] || 0) }));
+      // Only the fields the instructor has actually scored are sent for a
+      // first-pass draft, so a partially-filled part stays partial server
+      // side too; a published-part correction always sends every criterion
+      // (the button is disabled until allScored covers that case).
+      const criteria = part.rubric
+        .filter((criterion) => isPublished || marks[criterion.criterion] !== "")
+        .map((criterion) => ({ criterion: criterion.criterion, marks_awarded: Number(marks[criterion.criterion] || 0) }));
       const { data } = await apiClient.post<GradingDetailType>(`/instructor/grading/${attemptId}/parts/${part.id}`, { criteria, comment: comment || undefined });
       onGraded(data);
-      showSuccess(t.gradedMessage(part.title), t.savedTitle);
-      onGradedNext?.(part.id);
+      if (isPublished) {
+        showSuccess(t.gradedMessage(part.title), t.savedTitle);
+        onGradedNext?.(part.id);
+      } else {
+        showSuccess(t.draftSavedMessage(part.title), t.savedTitle);
+      }
     } catch (err: unknown) {
       showError(extractErrorMessage(err, t.saveErrorMessage), t.saveErrorTitle);
     } finally {
@@ -93,7 +112,8 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
           <p>{part.skill_focus}</p>
         </div>
         <div className="form-actions">
-          {part.grade?.status === "graded" && <span className="badge badge-green">{t.graded}</span>}
+          {isPublished && <span className="badge badge-green">{t.graded}</span>}
+          {isDraft && <span className="badge badge-amber">{t.draftSaved}</span>}
           {canEdit && supportsAi && (
             <Button variant="secondary" size="sm" disabled={!aiConfigured || requestingAi} onClick={requestAiSuggestion}>
               {requestingAi ? t.generating : t.aiDraft}
@@ -189,9 +209,10 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
       <textarea id={`comment-${part.id}`} rows={3} value={comment} disabled={!canEdit} onChange={(event) => setComment(event.target.value)} />
       {canEdit && (
         <div className="form-actions">
-          <Button onClick={submitGrade} disabled={saving || !allScored}>
-            {saving ? t.saving : t.confirmEvaluation}
+          <Button onClick={saveProgress} disabled={saving || (isPublished ? !allScored : !hasProgress)}>
+            {saving ? t.saving : isPublished ? t.confirmEvaluation : t.saveDraft}
           </Button>
+          {!isPublished && <p className="hint">{t.draftHint}</p>}
         </div>
       )}
     </section>

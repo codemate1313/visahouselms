@@ -22,7 +22,9 @@ from app.models.attempt import (
     ATTEMPT_READY,
     ATTEMPT_SUBMITTED,
     ATTEMPT_FLAG_TYPES,
-    PART_GRADE_PENDING,
+    PART_GRADE_AI_GRADED,
+    PART_GRADE_DRAFT,
+    PART_GRADE_GRADED,
     QUEUE_COMPLETED,
     AttemptAnswer,
     AttemptFlag,
@@ -280,12 +282,19 @@ def _serialize_part(
     *,
     reveal: bool,
     include_questions: bool,
+    include_draft_grades: bool = False,
 ) -> dict:
     answers_by_question = {answer.question_id: answer for answer in attempt.answers}
     grades_by_part = {grade.part_id: grade for grade in attempt.part_grades}
     ordered_questions = _ordered_questions(attempt, part)
     question_fn = _revealed_question if reveal else _redacted_question
     grade = grades_by_part.get(part.id)
+    # A "draft" is an instructor's in-progress scoring - never publish it to
+    # the student, who should see either a real published grade or nothing,
+    # never a partial/mid-edit one. The instructor's own grading view opts
+    # in via include_draft_grades so it can resume an in-progress draft.
+    if grade is not None and grade.status == PART_GRADE_DRAFT and not include_draft_grades:
+        grade = None
     return {
         "id": part.id,
         "section_type": part.section_type,
@@ -339,6 +348,7 @@ def _serialize_parts(
     *,
     hide_content: bool = False,
     question_part_id: Optional[int] = None,
+    include_draft_grades: bool = False,
 ) -> list[dict]:
     parts = sorted(attempt.module.parts, key=lambda item: item.sort_order)
     default_part_id = parts[0].id if parts else None
@@ -355,6 +365,7 @@ def _serialize_parts(
                     or part.id == (question_part_id or default_part_id)
                 )
             ),
+            include_draft_grades=include_draft_grades,
         )
         for part in parts
     ]
@@ -366,6 +377,7 @@ def get_student_view(
     *,
     security_authorized: bool = False,
     question_part_id: Optional[int] = None,
+    include_draft_grades: bool = False,
 ) -> dict:
     from app.services import grading_service
 
@@ -409,6 +421,7 @@ def get_student_view(
             reveal=reveal,
             hide_content=(attempt.security_required and not security_authorized and not reveal),
             question_part_id=question_part_id,
+            include_draft_grades=include_draft_grades,
         ),
     }
 
@@ -1000,7 +1013,7 @@ def get_grading_detail(db: Session, actor: User, attempt_id: int) -> dict:
 
     attempt = get_attempt_for_grading_or_404(db, actor, attempt_id)
     grading_service.ensure_available_to_open(db, actor, attempt)
-    view = get_student_view(db, attempt)
+    view = get_student_view(db, attempt, include_draft_grades=True)
     view["student_name"] = f"{attempt.user.first_name} {attempt.user.last_name}"
     view["student_email"] = attempt.user.email
     view["flags"] = [
@@ -1055,14 +1068,19 @@ def _recompute_score(attempt: TestAttempt) -> None:
 
 def _finalize_if_all_graded(db: Session, attempt: TestAttempt) -> bool:
     """Marks the attempt ATTEMPT_GRADED once every human-graded part carries a
-    grade - human ("graded") or automatic AI ("ai_graded") - recomputing the
-    score/CEFR profile and firing the grade-released notification/email.
-    Shared by human grading (grade_part) and automatic AI grading
-    (ai_evaluation_service.auto_evaluate_submission), so a result looks and
-    behaves the same to the student regardless of who/what produced it."""
+    published grade - human ("graded") or automatic AI ("ai_graded") -
+    recomputing the score/CEFR profile and firing the grade-released
+    notification/email. Shared by human grading (submit_grading) and
+    automatic AI grading (ai_evaluation_service.auto_evaluate_submission), so
+    a result looks and behaves the same to the student regardless of who/what
+    produced it. A part sitting in "draft" doesn't count as published yet -
+    that's the whole point of the draft/submit split, so the attempt can't
+    slip into ATTEMPT_GRADED with some parts only half-reviewed."""
     if attempt.status == ATTEMPT_GRADED:
         return False
-    if not attempt.part_grades or any(g.status == PART_GRADE_PENDING for g in attempt.part_grades):
+    if not attempt.part_grades or any(
+        g.status not in (PART_GRADE_GRADED, PART_GRADE_AI_GRADED) for g in attempt.part_grades
+    ):
         return False
 
     _recompute_score(attempt)
@@ -1090,7 +1108,7 @@ def _finalize_if_all_graded(db: Session, attempt: TestAttempt) -> bool:
     return True
 
 
-def grade_part(
+def save_part_draft(
     db: Session,
     actor: User,
     attempt_id: int,
@@ -1098,6 +1116,22 @@ def grade_part(
     criteria: list[dict],
     comment: Optional[str],
 ) -> dict:
+    """Saves an instructor's in-progress scoring for one part.
+
+    This never publishes a grade by itself - it only writes a "draft" row
+    (partial criteria are fine) so an instructor can work through a
+    multi-part submission across several sessions without any part going
+    live to the student piecemeal. The whole attempt is only published in
+    one shot via submit_grading, once every part has a complete draft.
+
+    The exception is editing a part that is already published - either a
+    correction made during an open reevaluation (attempt already
+    ATTEMPT_GRADED), or overriding an AI-graded part before the rest of the
+    attempt is done. Both are edits to a grade the student can already see,
+    so they keep the old atomic save-and-publish-immediately behavior
+    instead of going through the draft/submit-all flow meant for bringing a
+    not-yet-published part to a first score.
+    """
     from app.services import grading_service
 
     attempt = get_attempt_for_grading_or_404(db, actor, attempt_id)
@@ -1107,6 +1141,11 @@ def grade_part(
     if part is None or part.auto_marked:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This part is not human-graded")
     grading_service.require_or_claim(db, actor, attempt)
+
+    existing_grade = next((g for g in attempt.part_grades if g.part_id == part_id), None)
+    is_correction = attempt.status == ATTEMPT_GRADED or (
+        existing_grade is not None and existing_grade.status in (PART_GRADE_GRADED, PART_GRADE_AI_GRADED)
+    )
 
     rubric_by_criterion = {item["criterion"]: Decimal(str(item["max_marks"])) for item in (part.rubric or [])}
     if not rubric_by_criterion:
@@ -1136,28 +1175,73 @@ def grade_part(
                 "cefr_level": cefr_service.criterion_level(awarded, max_marks),
             }
         )
-    if seen != set(rubric_by_criterion):
+    # First-pass drafts may be partial; a reevaluation correction still has to
+    # cover every criterion since it publishes immediately below.
+    if is_correction and seen != set(rubric_by_criterion):
         missing = set(rubric_by_criterion) - seen
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Missing scores for: {', '.join(missing)}")
 
-    grade = next((g for g in attempt.part_grades if g.part_id == part_id), None)
+    grade = existing_grade
     if grade is None:
         grade = AttemptPartGrade(attempt_id=attempt.id, part_id=part_id)
         db.add(grade)
         attempt.part_grades.append(grade)
     grade.criteria = normalized
-    grade.total_marks = sum((Decimal(item["marks_awarded"]) for item in normalized), Decimal("0"))
+    grade.total_marks = sum((Decimal(item["marks_awarded"]) for item in normalized), Decimal("0")) if normalized else None
     grade.comment = comment
     grade.grader_id = actor.id
-    grade.status = "graded"
-    grade.graded_at = _now()
+    grade.status = PART_GRADE_GRADED if is_correction else PART_GRADE_DRAFT
+    grade.graded_at = _now() if is_correction else None
     db.add(grade)
 
     # Partial-progress visibility: recompute CEFR now even if other parts are
-    # still pending, so the student sees an updating profile as each part is
-    # graded, not just on the final one.
+    # still draft/pending, so the student sees an updating profile once a
+    # part is actually published, not just on the final one. Draft rows are
+    # excluded from this by cefr_service (only "graded"/"ai_graded" count).
     cefr_service.apply_evaluation(attempt)
     db.add(attempt)
+    db.commit()
+
+    if is_correction:
+        attempt = get_attempt_for_grading_or_404(db, actor, attempt_id)
+        _finalize_if_all_graded(db, attempt)
+    return get_grading_detail(db, actor, attempt_id)
+
+
+def submit_grading(db: Session, actor: User, attempt_id: int) -> dict:
+    """Publishes every drafted part grade at once, finishing the first-pass
+    manual evaluation for this attempt in a single action - this is the only
+    way an attempt moves ATTEMPT_GRADING -> ATTEMPT_GRADED, so an instructor
+    can never leave a submission half-graded and have it read as complete."""
+    from app.services import grading_service
+
+    attempt = get_attempt_for_grading_or_404(db, actor, attempt_id)
+    if attempt.status != ATTEMPT_GRADING:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This attempt is not awaiting grading")
+    grading_service.require_or_claim(db, actor, attempt)
+
+    gradable_parts = [p for p in attempt.module.parts if not p.auto_marked]
+    grades_by_part = {g.part_id: g for g in attempt.part_grades}
+    incomplete = []
+    for part in gradable_parts:
+        grade = grades_by_part.get(part.id)
+        rubric_criteria = {item["criterion"] for item in (part.rubric or [])}
+        scored_criteria = {item["criterion"] for item in (grade.criteria or [])} if grade else set()
+        if not rubric_criteria <= scored_criteria:
+            incomplete.append(part.title)
+    if incomplete:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Finish scoring every part before submitting: {', '.join(incomplete)}",
+        )
+
+    now = _now()
+    for grade in attempt.part_grades:
+        if grade.status == PART_GRADE_DRAFT:
+            grade.status = PART_GRADE_GRADED
+            grade.grader_id = actor.id
+            grade.graded_at = now
+            db.add(grade)
     db.commit()
 
     attempt = get_attempt_for_grading_or_404(db, actor, attempt_id)
