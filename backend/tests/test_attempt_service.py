@@ -22,16 +22,18 @@ from app.models.attempt import (
     CourseModule,
     Enrollment,
     GradingQueueEntry,
+    PART_GRADE_AI_GRADED,
     ReevaluationRequest,
     AttemptFlag,
 )
 from app.models.course import COURSE_PUBLISHED, Course
+from app.models.job import Job
 from app.models.institute import Institute
 from app.models.plan import Plan
 from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, SA_INSTRUCTOR, STUDENT, Role
 from app.models.subscription import Subscription
 from app.models.user import User
-from app.services import ai_evaluation_service, attempt_service, grading_service, module_authoring_service, notification_service, student_analysis_service
+from app.services import ai_evaluation_service, attempt_service, grading_service, job_service, module_authoring_service, notification_service, settings_service, student_analysis_service
 from app.services import cefr_service
 
 
@@ -159,6 +161,11 @@ class AttemptServiceTestCase(unittest.TestCase):
         module_authoring_service.set_status(self.db, self.instructor, module.id, "published", "127.0.0.1")
         self.db.expire_all()
         return module_authoring_service.get_module_or_404(self.db, module.id)
+
+    def _enable_ai_evaluation(self) -> None:
+        settings_service.set_setting(self.db, "ai.enabled", "true")
+        settings_service.set_setting(self.db, "ai.provider", "gemini")
+        settings_service.set_setting(self.db, "ai.api_key", "test-key")
 
     def test_active_attempt_receives_browser_narration_text_without_a_file_url(self):
         asset = SimpleNamespace(
@@ -304,6 +311,93 @@ class AttemptServiceTestCase(unittest.TestCase):
             )
         )
 
+    def test_writing_submit_enqueues_ai_auto_grade_when_configured(self):
+        self._enable_ai_evaluation()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "My essay response."})
+
+        result = attempt_service.submit_attempt(self.db, attempt)
+
+        self.assertEqual(result["status"], ATTEMPT_GRADING)
+        self.assertTrue(result["ai_evaluation_pending"])
+        job = self.db.query(Job).filter_by(type="ai_auto_grade").one()
+        self.assertEqual(job.status, "pending")
+        self.assertEqual(job.payload, {"attempt_id": attempt.id})
+
+    def test_recovery_enqueues_ai_auto_grade_for_existing_pending_attempt(self):
+        self._enable_ai_evaluation()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "My essay response."})
+        attempt_service.submit_attempt(self.db, attempt)
+        self.db.query(Job).delete()
+        self.db.commit()
+
+        queued = job_service.recover_missing_ai_auto_grade_jobs(self.db)
+
+        self.assertEqual(queued, 1)
+        self.assertEqual(self.db.query(Job).filter_by(type="ai_auto_grade").count(), 1)
+        self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 0)
+        job = self.db.query(Job).filter_by(type="ai_auto_grade").one()
+        job.status = "done"
+        self.db.add(job)
+        self.db.commit()
+        self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 0)
+
+    def test_student_can_request_human_review_after_ai_grade(self):
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "Review my AI-scored essay."})
+        attempt_service.submit_attempt(self.db, attempt)
+
+        for part in sorted(attempt.module.parts, key=lambda item: item.sort_order):
+            suggestion = {
+                "criteria": [
+                    {
+                        "criterion": item["criterion"],
+                        "max_marks": str(item["max_marks"]),
+                        "marks_awarded": "6",
+                        "cefr_level": "C1",
+                        "rationale": "AI-scored evidence.",
+                    }
+                    for item in part.rubric
+                ],
+                "comment": "AI evaluation comment.",
+            }
+            ai_evaluation_service._apply_ai_grade(self.db, attempt, part, suggestion)
+        self.db.commit()
+        attempt_service._finalize_if_all_graded(self.db, attempt)
+        self.db.refresh(attempt)
+
+        self.assertEqual(attempt.status, ATTEMPT_GRADED)
+        self.assertTrue(all(grade.status == PART_GRADE_AI_GRADED for grade in attempt.part_grades))
+
+        request = grading_service.request_reevaluation(
+            self.db,
+            self.student,
+            attempt,
+            "test",
+        )
+
+        self.assertEqual(request["status"], "pending")
+        queue = self.db.query(GradingQueueEntry).filter_by(attempt_id=attempt.id).one()
+        self.assertEqual(queue.status, "pending")
+        self.assertEqual(queue.routing_reason, "reevaluation")
+
     def test_speaking_requires_every_recording_before_entering_grading_queue(self):
         created = module_authoring_service.create_module(
             self.db,
@@ -428,6 +522,60 @@ class AttemptServiceTestCase(unittest.TestCase):
         grade = next(item for item in attempt.part_grades if item.part_id == part.id)
         self.assertEqual(grade.status, "pending")
         self.assertIsNone(grade.total_marks)
+
+    def test_ai_evaluation_fails_over_to_next_configured_key(self):
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "A developed academic response."})
+        attempt_service.submit_attempt(self.db, attempt)
+        part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+        tried_keys: list[str] = []
+
+        def evaluator(config, payload):
+            tried_keys.append(config["api_key"])
+            if config["api_key"] == "down-key":
+                raise HTTPException(status_code=503, detail="provider unavailable")
+            return {
+                "criteria": [
+                    {"criterion": item["criterion"], "marks_awarded": 6, "rationale": "Evidence in the response."}
+                    for item in payload["rubric"]
+                ],
+                "comment": "Recovered through fallback key.",
+                "confidence": 0.8,
+            }
+
+        suggestion = ai_evaluation_service.request_suggestion(
+            self.db,
+            self.instructor,
+            attempt,
+            part,
+            evaluator=evaluator,
+            configs=[
+                {
+                    "provider": "gemini",
+                    "model": "gemini-2.0-flash",
+                    "monthly_limit": 100,
+                    "api_key": "down-key",
+                },
+                {
+                    "provider": "gemini",
+                    "model": "gemini-2.0-flash",
+                    "monthly_limit": 100,
+                    "api_key": "healthy-key",
+                },
+            ],
+        )
+
+        self.assertEqual(tried_keys, ["down-key", "healthy-key"])
+        self.assertEqual(suggestion["comment"], "Recovered through fallback key.")
+        records = self.db.query(AiEvaluation).order_by(AiEvaluation.id).all()
+        self.assertEqual([item.status for item in records], ["failed", "completed"])
+        self.assertEqual(records[0].error, "provider unavailable")
+        self.assertEqual(self.db.query(AiEvaluationLimit).one().used_count, 1)
 
     def test_student_reevaluation_reopens_completed_queue_and_records_resolution(self):
         module = self._build_writing_module()

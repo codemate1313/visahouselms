@@ -22,11 +22,11 @@ from app.models.institute import Institute
 from app.models.institute_branding import InstituteBranding
 from app.models.payment import Payment
 from app.models.plan import AUDIENCE_INSTITUTES, Plan
-from app.models.role import INSTITUTE_ADMIN, Role
+from app.models.role import DEVELOPER, INSTITUTE_ADMIN, SUPER_ADMIN, Role
 from app.models.subscription import Subscription
 from app.models.user import User
 from app.models.user_session import UserSession
-from app.services import plan_service, subscription_service
+from app.services import notification_service, plan_service, subscription_service
 from app.services.subscription_service import current_subscription
 
 MAX_LOGO_BYTES = 2 * 1024 * 1024
@@ -257,6 +257,15 @@ def create_institute(
     result = _serialize(db, institute)
     result["admin_temp_password"] = temp_password
     result["admin_email"] = admin_email
+    if commit:
+        notification_service.notify_roles(
+            db,
+            {SUPER_ADMIN, DEVELOPER},
+            kind="institute_created",
+            title="Institute created",
+            message=f"{actor.email} created institute {institute.name}.",
+            link_url=f"/super-admin/institutes/{institute.id}",
+        )
     return result
 
 
@@ -472,6 +481,23 @@ def update_institute(
         )
     db.commit()
     db.refresh(institute)
+    notification_service.notify_roles(
+        db,
+        {SUPER_ADMIN, DEVELOPER},
+        kind="institute_reactivated" if active else "institute_suspended",
+        title="Institute reactivated" if active else "Institute suspended",
+        message=f"{actor.email} {'reactivated' if active else 'suspended'} institute {institute.name}.",
+        link_url=f"/super-admin/institutes/{institute.id}",
+    )
+    notification_service.notify_roles(
+        db,
+        {INSTITUTE_ADMIN},
+        kind="institute_reactivated" if active else "institute_suspended",
+        title="Institute access restored" if active else "Institute access suspended",
+        message=f"{institute.name} access has been {'restored' if active else 'suspended'}.",
+        link_url="/institute-portal/dashboard",
+        institute_id=institute.id,
+    )
     return _serialize(db, institute)
 
 

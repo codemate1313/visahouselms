@@ -19,7 +19,7 @@ from app.models.role import (
     Role,
 )
 from app.models.user import User
-from app.services import account_service
+from app.services import account_service, notification_service
 
 
 def _temporary_password() -> str:
@@ -165,6 +165,12 @@ def create_super_admin(
     )
     db.commit()
     db.refresh(user)
+    notification_service.notify_security_event(
+        db,
+        "Super Admin account created",
+        f"{actor.email} created Super Admin {user.email}.",
+        link_url="/super-admin/users/super-admins",
+    )
     return user
 
 
@@ -224,6 +230,12 @@ def update_super_admin(
     )
     db.commit()
     db.refresh(user)
+    notification_service.notify_security_event(
+        db,
+        "Super Admin account deactivated",
+        f"{actor.email} deactivated Super Admin {user.email}.",
+        link_url="/super-admin/users/super-admins",
+    )
     return user
 
 
@@ -260,6 +272,12 @@ def deactivate_super_admin(db: Session, actor: User, account_id: int, ip_address
     _write_audit_log(db, actor, "super_admin.deactivate", user.id, ip_address)
     db.commit()
     db.refresh(user)
+    notification_service.notify_security_event(
+        db,
+        "Super Admin account deactivated",
+        f"{actor.email} deactivated Super Admin {user.email}.",
+        link_url="/super-admin/users/super-admins",
+    )
     return user
 
 
@@ -270,6 +288,12 @@ def reactivate_super_admin(db: Session, actor: User, account_id: int, ip_address
     _write_audit_log(db, actor, "super_admin.reactivate", user.id, ip_address)
     db.commit()
     db.refresh(user)
+    notification_service.notify_security_event(
+        db,
+        "Super Admin account reactivated",
+        f"{actor.email} reactivated Super Admin {user.email}.",
+        link_url="/super-admin/users/super-admins",
+    )
     return user
 
 
@@ -280,9 +304,16 @@ def delete_super_admin(db: Session, actor: User, account_id: int, ip_address: Op
     _assert_owner_not_mutated(actor, user, "deleted")
     _assert_not_last_active_admin(db, role, user)
 
+    deleted_email = user.email
     _write_audit_log(db, actor, "super_admin.delete", user.id, ip_address, {"email": user.email})
     db.delete(user)
     db.commit()
+    notification_service.notify_security_event(
+        db,
+        "Super Admin account deleted",
+        f"{actor.email} deleted Super Admin {deleted_email}.",
+        link_url="/super-admin/users/super-admins",
+    )
 
 
 def set_force_password_reset(
@@ -297,6 +328,12 @@ def set_force_password_reset(
     )
     db.commit()
     db.refresh(user)
+    notification_service.notify_security_event(
+        db,
+        "Super Admin password reset flag changed",
+        f"{actor.email} set force password reset for Super Admin {user.email} to {enabled}.",
+        link_url="/super-admin/users/super-admins",
+    )
     return user
 
 
@@ -311,6 +348,12 @@ def set_managed_force_password_reset(
         db, actor, "developer.force_password_reset", user.id, ip_address, {"enabled": enabled}
     )
     db.commit()
+    notification_service.notify_security_event(
+        db,
+        "Developer password reset flag changed",
+        f"{actor.email} set force password reset for Developer {user.email} to {enabled}.",
+        link_url="/super-admin/users/developers",
+    )
     db.refresh(user)
     return user
 
@@ -329,6 +372,14 @@ def change_password(
     db.add(actor)
     _write_audit_log(db, actor, "super_admin.change_password", actor.id, ip_address)
     db.commit()
+    notification_service.create_notification(
+        db,
+        user_id=actor.id,
+        kind="account_password_changed",
+        title="Password changed",
+        message="Your account password was changed.",
+        link_url="/super-admin/sessions",
+    )
 
 
 def create_developer(
@@ -360,6 +411,12 @@ def create_developer(
     _write_audit_log(db, actor, "developer.create", user.id, ip_address, {"email": email, "verified": verified})
     db.commit()
     db.refresh(user)
+    notification_service.notify_security_event(
+        db,
+        "Developer account created",
+        f"{actor.email} created Developer {user.email}.",
+        link_url="/super-admin/users/developers",
+    )
     return user
 
 
@@ -391,6 +448,13 @@ def update_developer_account(
     _write_audit_log(db, actor, "developer.account_update", user.id, ip_address)
     db.commit()
     db.refresh(user)
+    if verified is not None:
+        notification_service.notify_security_event(
+            db,
+            "Developer verification changed",
+            f"{actor.email} set Developer {user.email} verification to {user.is_developer_verified}.",
+            link_url="/super-admin/users/developers",
+        )
     return user
 
 
@@ -629,6 +693,14 @@ def set_directory_user_active(
     )
     db.commit()
     db.refresh(user)
+    notification_service.create_notification(
+        db,
+        user_id=user.id,
+        kind="account_status_changed",
+        title="Account reactivated" if active else "Account suspended",
+        message="Your account access has been restored." if active else "Your account has been suspended.",
+        link_url="/student/notifications",
+    )
     return {"id": user.id, "email": user.email, "is_active": user.is_active}
 
 
@@ -726,6 +798,14 @@ def reset_direct_student_password(
         {"sessions_revoked": revoked},
     )
     db.commit()
+    notification_service.create_notification(
+        db,
+        user_id=user.id,
+        kind="account_password_reset",
+        title="Password reset by administrator",
+        message="Your password was reset and active sessions were revoked.",
+        link_url="/student/notifications",
+    )
     return temporary_password
 
 

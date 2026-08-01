@@ -153,6 +153,7 @@ def claim(db: Session, actor: User, attempt: TestAttempt) -> dict:
         raise HTTPException(status_code=409, detail="This grading item is already complete")
     entry = _claim_entry(db, entry, actor)
     request = latest_open_reevaluation(db, attempt.id)
+    had_reevaluation = request is not None
     if request:
         request.status = REEVALUATION_IN_REVIEW
         request.assigned_to_id = actor.id
@@ -160,6 +161,15 @@ def claim(db: Session, actor: User, attempt: TestAttempt) -> dict:
     db.add(entry)
     db.commit()
     db.refresh(entry)
+    from app.services import notification_service
+
+    try:
+        if had_reevaluation:
+            notification_service.notify_reevaluation_claimed(db, attempt, actor)
+        else:
+            notification_service.notify_grading_claimed(db, attempt, actor)
+    except Exception:
+        pass
     return _entry_out(entry)
 
 
@@ -178,6 +188,12 @@ def release(db: Session, actor: User, attempt: TestAttempt) -> dict:
     db.add(entry)
     db.commit()
     db.refresh(entry)
+    from app.services import notification_service
+
+    try:
+        notification_service.notify_grading_released(db, attempt)
+    except Exception:
+        pass
     return _entry_out(entry)
 
 
@@ -368,6 +384,12 @@ def request_reevaluation(db: Session, student: User, attempt: TestAttempt, reaso
     db.add(entry)
     db.commit()
     db.refresh(request)
+    from app.services import notification_service
+
+    try:
+        notification_service.notify_reevaluation_requested(db, attempt)
+    except Exception:
+        pass
     return _reevaluation_out(request)
 
 
@@ -392,6 +414,12 @@ def resolve_reevaluation(
     db.add_all([request, entry])
     db.commit()
     db.refresh(request)
+    from app.services import notification_service
+
+    try:
+        notification_service.notify_reevaluation_resolved(db, attempt, request.status)
+    except Exception:
+        pass
     return _reevaluation_out(request)
 
 

@@ -24,14 +24,14 @@ export function ReevaluationForm({ reason, onReasonChange, requesting, onSubmit 
       <textarea
         id="reevaluation-reason"
         rows={4}
-        minLength={20}
+        minLength={1}
         maxLength={2000}
         required
         value={reason}
         onChange={(event) => onReasonChange(event.target.value)}
       />
       <div className="form-actions">
-        <button disabled={requesting || reason.trim().length < 20}>{requesting ? t.submitting : t.submit}</button>
+        <button disabled={requesting || reason.trim().length === 0}>{requesting ? t.submitting : t.submit}</button>
       </div>
     </form>
   );

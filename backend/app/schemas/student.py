@@ -55,7 +55,7 @@ class PartGradeRequest(BaseModel):
 
 
 class ReevaluationCreateRequest(BaseModel):
-    reason: str = Field(min_length=20, max_length=2000)
+    reason: str = Field(min_length=1, max_length=2000)
 
 
 class ReevaluationResolveRequest(BaseModel):

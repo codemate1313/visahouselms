@@ -6,8 +6,21 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.attempt import ATTEMPT_GRADED, AttemptPartGrade, TestAttempt
-from app.models.notification import GRADE_RELEASED, StudentNotification
-from app.models.role import STUDENT
+from app.models.notification import (
+    AI_EVALUATION_FAILED,
+    GRADE_RELEASED,
+    GRADING_CLAIMED,
+    GRADING_QUEUE_ROUTED,
+    GRADING_RELEASED,
+    REEVALUATION_CLAIMED,
+    REEVALUATION_REQUESTED,
+    REEVALUATION_RESOLVED,
+    SUPPORT_TICKET_ASSIGNED,
+    SYSTEM_JOB_FAILED,
+    SYSTEM_SECURITY_EVENT,
+    StudentNotification,
+)
+from app.models.role import DEVELOPER, INST_INSTRUCTOR, INSTITUTE_ADMIN, SA_INSTRUCTOR, STUDENT, SUPER_ADMIN, Role
 from app.models.user import User
 from app.services import fcm_service, smtp_service
 
@@ -72,12 +85,25 @@ def create_notification(
     title: str,
     message: str,
     link_url: Optional[str] = None,
+    attempt_id: Optional[int] = None,
     push: bool = True,
 ) -> StudentNotification:
     """Generic in-app notification creator for producers outside grading/announcements
     (e.g. support tickets). Also attempts a best-effort push to the same user."""
+    if attempt_id is not None:
+        existing = (
+            db.query(StudentNotification)
+            .filter(
+                StudentNotification.attempt_id == attempt_id,
+                StudentNotification.kind == kind,
+            )
+            .first()
+        )
+        if existing is not None:
+            return existing
     notification = StudentNotification(
         user_id=user_id,
+        attempt_id=attempt_id,
         kind=kind,
         title=title,
         message=message,
@@ -90,6 +116,281 @@ def create_notification(
     if push:
         push_to_user(db, user_id, title, message, link_url=link_url)
     return notification
+
+
+def active_users_for_roles(
+    db: Session,
+    role_names: set[str],
+    *,
+    institute_id: Optional[int] = None,
+) -> list[User]:
+    query = (
+        db.query(User)
+        .join(User.role)
+        .filter(
+            User.deleted_at.is_(None),
+            User.is_active.is_(True),
+            Role.name.in_(role_names),
+        )
+    )
+    if institute_id is not None:
+        query = query.filter(User.institute_id == institute_id)
+    return query.all()
+
+
+def notify_users(
+    db: Session,
+    users: list[User],
+    *,
+    kind: str,
+    title: str,
+    message: str,
+    link_url: Optional[str] = None,
+    attempt_id: Optional[int] = None,
+) -> list[StudentNotification]:
+    notifications: list[StudentNotification] = []
+    seen: set[int] = set()
+    for user in users:
+        if user.id in seen:
+            continue
+        seen.add(user.id)
+        notifications.append(
+            create_notification(
+                db,
+                user_id=user.id,
+                kind=kind,
+                title=title,
+                message=message,
+                link_url=link_url,
+                attempt_id=attempt_id,
+            )
+        )
+    return notifications
+
+
+def notify_roles(
+    db: Session,
+    role_names: set[str],
+    *,
+    kind: str,
+    title: str,
+    message: str,
+    link_url: Optional[str] = None,
+    institute_id: Optional[int] = None,
+    attempt_id: Optional[int] = None,
+) -> list[StudentNotification]:
+    return notify_users(
+        db,
+        active_users_for_roles(db, role_names, institute_id=institute_id),
+        kind=kind,
+        title=title,
+        message=message,
+        link_url=link_url,
+        attempt_id=attempt_id,
+    )
+
+
+def _student_name(attempt: TestAttempt) -> str:
+    return f"{attempt.user.first_name} {attempt.user.last_name}".strip() or attempt.user.email
+
+
+def _grading_link_for_role(role_name: str) -> str:
+    if role_name == INST_INSTRUCTOR:
+        return "/institute-instructor/grading"
+    if role_name == SA_INSTRUCTOR:
+        return "/super-admin/instructor/grading"
+    if role_name == INSTITUTE_ADMIN:
+        return "/institute-portal/dashboard"
+    return "/super-admin/grading"
+
+
+def notify_grading_queue_routed(db: Session, attempt: TestAttempt, routing_reason: Optional[str]) -> None:
+    title = f"New submission needs grading: {attempt.module.title}"
+    message = f"{_student_name(attempt)} submitted {attempt.module.title} for instructor review."
+    if attempt.user.institute_id is not None and routing_reason != "sa_fallback":
+        notify_roles(
+            db,
+            {INST_INSTRUCTOR},
+            kind=GRADING_QUEUE_ROUTED,
+            title=title,
+            message=message,
+            link_url="/institute-instructor/grading",
+            institute_id=attempt.user.institute_id,
+        )
+        notify_roles(
+            db,
+            {INSTITUTE_ADMIN},
+            kind=GRADING_QUEUE_ROUTED,
+            title="Institute student submitted a test",
+            message=message,
+            link_url="/institute-portal/dashboard",
+            institute_id=attempt.user.institute_id,
+        )
+        return
+    notify_roles(
+        db,
+        {SA_INSTRUCTOR},
+        kind=GRADING_QUEUE_ROUTED,
+        title=title,
+        message=message,
+        link_url="/super-admin/instructor/grading",
+    )
+    if routing_reason == "sa_fallback":
+        notify_roles(
+            db,
+            {SUPER_ADMIN},
+            kind=GRADING_QUEUE_ROUTED,
+            title="Institute grading routed to SA fallback",
+            message=message,
+            link_url="/super-admin/grading",
+        )
+
+
+def notify_ai_evaluation_failed(db: Session, attempt: TestAttempt) -> None:
+    title = f"AI evaluation failed: {attempt.module.title}"
+    message = f"{_student_name(attempt)}'s result needs manual instructor review because AI evaluation failed."
+    create_notification(
+        db,
+        user_id=attempt.user_id,
+        kind=AI_EVALUATION_FAILED,
+        title="AI evaluation needs manual review",
+        message="Automatic AI evaluation could not complete. Your submission remains in instructor review.",
+        link_url=f"/student/attempts/{attempt.id}/result/details",
+    )
+    if attempt.user.institute_id is not None:
+        notify_roles(
+            db,
+            {INSTITUTE_ADMIN},
+            kind=AI_EVALUATION_FAILED,
+            title=title,
+            message=message,
+            link_url="/institute-portal/dashboard",
+            institute_id=attempt.user.institute_id,
+        )
+        notify_roles(
+            db,
+            {INST_INSTRUCTOR},
+            kind=AI_EVALUATION_FAILED,
+            title=title,
+            message=message,
+            link_url="/institute-instructor/grading",
+            institute_id=attempt.user.institute_id,
+        )
+    else:
+        notify_roles(
+            db,
+            {SA_INSTRUCTOR},
+            kind=AI_EVALUATION_FAILED,
+            title=title,
+            message=message,
+            link_url="/super-admin/instructor/grading",
+        )
+    notify_roles(
+        db,
+        {SUPER_ADMIN, DEVELOPER},
+        kind=AI_EVALUATION_FAILED,
+        title=title,
+        message="Check AI provider configuration and failed ai_evaluations rows.",
+        link_url="/super-admin/dev-settings",
+    )
+
+
+def notify_grading_claimed(db: Session, attempt: TestAttempt, actor: User) -> None:
+    create_notification(
+        db,
+        user_id=attempt.user_id,
+        kind=GRADING_CLAIMED,
+        title=f"Review started: {attempt.module.title}",
+        message=f"{actor.first_name} {actor.last_name} has started reviewing your submission.",
+        link_url=f"/student/attempts/{attempt.id}/result/details",
+    )
+
+
+def notify_grading_released(db: Session, attempt: TestAttempt) -> None:
+    create_notification(
+        db,
+        user_id=attempt.user_id,
+        kind=GRADING_RELEASED,
+        title=f"Review returned to queue: {attempt.module.title}",
+        message="Your submission is waiting for another instructor to continue the review.",
+        link_url=f"/student/attempts/{attempt.id}/result/details",
+    )
+
+
+def notify_reevaluation_requested(db: Session, attempt: TestAttempt) -> None:
+    title = f"Human review requested: {attempt.module.title}"
+    message = f"{_student_name(attempt)} requested instructor review after the result was released."
+    create_notification(
+        db,
+        user_id=attempt.user_id,
+        kind=REEVALUATION_REQUESTED,
+        title="Human review request submitted",
+        message="Your request has been sent to the appropriate instructor queue.",
+        link_url=f"/student/attempts/{attempt.id}/result/details",
+    )
+    if attempt.user.institute_id is not None:
+        notify_roles(
+            db,
+            {INSTITUTE_ADMIN, INST_INSTRUCTOR},
+            kind=REEVALUATION_REQUESTED,
+            title=title,
+            message=message,
+            link_url="/institute-instructor/grading",
+            institute_id=attempt.user.institute_id,
+        )
+    else:
+        notify_roles(
+            db,
+            {SA_INSTRUCTOR},
+            kind=REEVALUATION_REQUESTED,
+            title=title,
+            message=message,
+            link_url="/super-admin/instructor/grading",
+        )
+
+
+def notify_reevaluation_claimed(db: Session, attempt: TestAttempt, actor: User) -> None:
+    create_notification(
+        db,
+        user_id=attempt.user_id,
+        kind=REEVALUATION_CLAIMED,
+        title=f"Human review in progress: {attempt.module.title}",
+        message=f"{actor.first_name} {actor.last_name} is reviewing your request.",
+        link_url=f"/student/attempts/{attempt.id}/result/details",
+    )
+
+
+def notify_reevaluation_resolved(db: Session, attempt: TestAttempt, resolution: str) -> None:
+    create_notification(
+        db,
+        user_id=attempt.user_id,
+        kind=REEVALUATION_RESOLVED,
+        title=f"Human review {resolution}: {attempt.module.title}",
+        message="Your instructor has completed the requested review.",
+        link_url=f"/student/attempts/{attempt.id}/result/details",
+    )
+
+
+def notify_system_job_failed(db: Session, job_type: str, detail: str) -> None:
+    notify_roles(
+        db,
+        {DEVELOPER, SUPER_ADMIN},
+        kind=SYSTEM_JOB_FAILED,
+        title=f"System job failed: {job_type}",
+        message=detail[:500],
+        link_url="/super-admin/logs",
+    )
+
+
+def notify_security_event(db: Session, title: str, message: str, *, link_url: str = "/super-admin/logs") -> None:
+    notify_roles(
+        db,
+        {DEVELOPER, SUPER_ADMIN},
+        kind=SYSTEM_SECURITY_EVENT,
+        title=title,
+        message=message,
+        link_url=link_url,
+    )
 
 
 def create_grade_released_notification(db: Session, attempt: TestAttempt) -> StudentNotification:

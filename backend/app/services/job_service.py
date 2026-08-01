@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.config import BACKEND_DIR
 from app.database import SessionLocal
+from app.models.attempt import ATTEMPT_GRADING, PART_GRADE_PENDING, AiEvaluation, AttemptPartGrade, TestAttempt
 from app.models.crash_log import CrashLog
 from app.models.job import JOB_DONE, JOB_FAILED, JOB_PENDING, JOB_RUNNING, Job
 
@@ -26,6 +27,56 @@ def enqueue(db: Session, job_type: str, payload: Optional[dict] = None) -> Job:
     db.commit()
     db.refresh(job)
     return job
+
+
+def _ai_grade_job_exists(db: Session, attempt_id: int, statuses: Optional[set[str]] = None) -> bool:
+    rows = (
+        db.query(Job)
+        .filter(Job.type == "ai_auto_grade")
+        .all()
+    )
+    if statuses is not None:
+        rows = [row for row in rows if row.status in statuses]
+    return any((row.payload or {}).get("attempt_id") == attempt_id for row in rows)
+
+
+def enqueue_ai_auto_grade(db: Session, attempt_id: int) -> Optional[Job]:
+    if _ai_grade_job_exists(db, attempt_id, {JOB_PENDING, JOB_RUNNING}):
+        return None
+    return enqueue(db, "ai_auto_grade", {"attempt_id": attempt_id})
+
+
+def recover_missing_ai_auto_grade_jobs(db: Session) -> int:
+    """Queue AI grading for already-submitted attempts that are still waiting.
+
+    This covers attempts submitted while AI was disabled, before the worker was
+    running, or before this deployment's enqueue hook existed.
+    """
+    from app.services import ai_evaluation_service
+
+    if not ai_evaluation_service.config_status(db)["configured"]:
+        return 0
+
+    attempt_ids = [
+        attempt_id
+        for (attempt_id,) in (
+            db.query(TestAttempt.id)
+            .join(AttemptPartGrade, AttemptPartGrade.attempt_id == TestAttempt.id)
+            .filter(
+                TestAttempt.status == ATTEMPT_GRADING,
+                AttemptPartGrade.status == PART_GRADE_PENDING,
+            )
+            .distinct()
+            .all()
+        )
+    ]
+    queued = 0
+    for attempt_id in attempt_ids:
+        if _ai_grade_job_exists(db, attempt_id):
+            continue
+        if enqueue_ai_auto_grade(db, attempt_id) is not None:
+            queued += 1
+    return queued
 
 
 def get_job(db: Session, job_id: int) -> Optional[Job]:
@@ -88,9 +139,17 @@ def _auto_grade_attempt(db: Session, payload: Optional[dict]) -> str:
     attempt = db.get(TestAttempt, payload["attempt_id"])
     if attempt is None:
         raise RuntimeError("Attempt no longer exists")
+    failed_before = db.query(AiEvaluation).filter_by(attempt_id=attempt.id, status="failed").count()
     quota_exhausted = ai_evaluation_service.auto_evaluate_submission(db, attempt)
     graded = sum(1 for grade in attempt.part_grades if grade.status == "ai_graded")
     total = sum(1 for part in attempt.module.parts if not part.auto_marked)
+    failed_after = db.query(AiEvaluation).filter_by(attempt_id=attempt.id, status="failed").count()
+    if total > 0 and graded < total and failed_after > failed_before:
+        from app.services import notification_service
+
+        notification_service.notify_ai_evaluation_failed(db, attempt)
+    if total > 0 and graded == 0 and failed_after > failed_before:
+        raise RuntimeError(f"AI evaluator failed for attempt {attempt.id}; see ai_evaluations for details.")
     suffix = " (quota exhausted for the rest)" if quota_exhausted else ""
     return f"AI-graded {graded}/{total} part(s) for attempt {attempt.id}{suffix}."
 
@@ -123,6 +182,7 @@ def _process_one(db: Session) -> bool:
     db.commit()
 
     handler = HANDLERS.get(job.type)
+    failed_detail = None
     try:
         if handler is None:
             raise RuntimeError(f"No handler registered for job type '{job.type}'")
@@ -131,9 +191,17 @@ def _process_one(db: Session) -> bool:
         job.result = result[:60000]
     except Exception:
         job.status = JOB_FAILED
-        job.result = traceback.format_exc()[:60000]
+        failed_detail = traceback.format_exc()[:60000]
+        job.result = failed_detail
     job.finished_at = datetime.now(timezone.utc)
     db.commit()
+    if failed_detail is not None:
+        try:
+            from app.services import notification_service
+
+            notification_service.notify_system_job_failed(db, job.type, failed_detail)
+        except Exception:
+            pass
     return True
 
 
@@ -158,6 +226,12 @@ def _record_worker_fatal(detail: str) -> None:
         try:
             db.add(CrashLog(kind="worker_fatal", detail=detail[:60000]))
             db.commit()
+            try:
+                from app.services import notification_service
+
+                notification_service.notify_system_job_failed(db, "worker_fatal", detail)
+            except Exception:
+                pass
         finally:
             db.close()
     except Exception:
@@ -247,6 +321,11 @@ def start_background_threads() -> None:
     if _worker_thread is not None and _worker_thread.is_alive():
         return
     _recover_stale_running_jobs()
+    db = SessionLocal()
+    try:
+        recover_missing_ai_auto_grade_jobs(db)
+    finally:
+        db.close()
     _stop_event.clear()
     _worker_thread = threading.Thread(target=_worker_loop, name="job-worker", daemon=True)
     _scheduler_thread = threading.Thread(target=_scheduler_loop, name="job-scheduler", daemon=True)

@@ -62,8 +62,26 @@ export function AttemptResult() {
         .get<Attempt>(`/student/attempts/${id}`, { headers: { "X-Skip-Loader": "1" } })
         .then(({ data }) => {
           if (!active) return;
-          setAttempt(data);
-          if (data.status !== "grading") window.clearInterval(timer);
+          if (data.status !== "grading") {
+            window.clearInterval(timer);
+            apiClient
+              .get<StudentResultAnalysis>(`/student/attempts/${id}/analysis`, { headers: { "X-Skip-Loader": "1" } })
+              .then(({ data: analysisData }) => {
+                if (active) {
+                  setAttempt(data);
+                  setAnalysis(analysisData);
+                  setAnalysisError(false);
+                }
+              })
+              .catch(() => {
+                if (active) {
+                  setAttempt(data);
+                  setAnalysisError(true);
+                }
+              });
+          } else {
+            setAttempt(data);
+          }
         })
         .catch(() => {});
       apiClient
@@ -76,6 +94,22 @@ export function AttemptResult() {
           if (exhausted) {
             setQuotaExhaustedModalOpen(true);
             window.clearInterval(timer);
+            Promise.all([
+              apiClient.get<Attempt>(`/student/attempts/${id}`, { headers: { "X-Skip-Loader": "1" } }),
+              apiClient.get<StudentResultAnalysis>(`/student/attempts/${id}/analysis`, { headers: { "X-Skip-Loader": "1" } })
+            ]).then(([{ data: attemptData }, { data: analysisData }]) => {
+              if (active) {
+                setAttempt(attemptData);
+                setAnalysis(analysisData);
+                setAnalysisError(false);
+              }
+            }).catch(() => {
+              apiClient.get<Attempt>(`/student/attempts/${id}`, { headers: { "X-Skip-Loader": "1" } })
+                .then(({ data: attemptData }) => {
+                  if (active) setAttempt(attemptData);
+                })
+                .catch(() => {});
+            });
           }
         })
         .catch(() => {});
@@ -93,7 +127,8 @@ export function AttemptResult() {
   if (!attempt || !metrics) return <p>{strings.loading}</p>;
 
   const hasInstructorReviewablePart = attempt.parts.some((part) => !part.auto_marked);
-  const canRequestReview = ["grading", "graded"].includes(attempt.status) && hasInstructorReviewablePart && !attempt.reevaluation;
+  const hasOpenReevaluation = attempt.reevaluation?.status === "pending" || attempt.reevaluation?.status === "in_review";
+  const canRequestReview = ["grading", "graded"].includes(attempt.status) && hasInstructorReviewablePart && !hasOpenReevaluation;
   const isAiGraded = attempt.parts.some((part) => part.grade?.status === "ai_graded");
   const statusLabels = strings.statusLabels;
   const q = strings.quotaExhaustedModal;
@@ -123,8 +158,19 @@ export function AttemptResult() {
         <div>
           <span className="page-eyebrow">{strings.eyebrow}</span>
           <h1>{attempt.module_title}</h1>
-          <p className="page-subtitle">
-            {statusLabels[attempt.status as keyof typeof statusLabels] ?? attempt.status}
+          <p className="page-subtitle" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {awaitingAiGrading ? (
+              <>
+                <span>AI evaluation in progress...</span>
+                <span className="color-dots-loader" style={{ width: "auto", height: "auto", gap: "4px" }}>
+                  <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
+                  <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
+                  <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
+                </span>
+              </>
+            ) : (
+              statusLabels[attempt.status as keyof typeof statusLabels] ?? attempt.status
+            )}
             {isAiGraded && (
               <Badge tone="info" className="result-ai-graded-badge">
                 {strings.overview.aiGradedBadge}
@@ -157,8 +203,8 @@ export function AttemptResult() {
         <p>{q.body}</p>
       </Modal>
 
-      <PerformanceOverviewPanel attempt={attempt} metrics={metrics} />
-      <AnalysisPanel analysis={analysis} analysisError={analysisError} />
+      <PerformanceOverviewPanel attempt={attempt} metrics={metrics} awaitingAiGrading={awaitingAiGrading} />
+      <AnalysisPanel analysis={analysis} analysisError={analysisError} awaitingAiGrading={awaitingAiGrading} />
 
       {attempt.reevaluation && <ReevaluationStatus reevaluation={attempt.reevaluation} />}
 

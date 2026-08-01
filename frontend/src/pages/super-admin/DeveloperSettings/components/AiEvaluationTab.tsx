@@ -2,17 +2,51 @@ import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
-import { PasswordInput } from "@/components/PasswordInput";
 import { Checkbox, SearchableSelect } from "@/components/ui";
+import { AiKeyPriorityManager, type AiKeyConfig } from "../../components/AiKeyPriorityManager";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
-import { Icon } from "@/components/icons";
+
+type AiProvider = "gemini" | "custom_json";
+
+interface AiEvaluationForm {
+  enabled: boolean;
+  provider: AiProvider;
+  endpoint_url: string;
+  api_key: string;
+  api_keys: AiKeyConfig[];
+  model: string;
+  monthly_limit: number;
+}
+
+function hydrateApiKeys(data: Partial<AiEvaluationForm>): AiKeyConfig[] {
+  if (Array.isArray(data.api_keys) && data.api_keys.length > 0) {
+    return data.api_keys;
+  }
+  if (!data.api_key) {
+    return [];
+  }
+  return [{
+    id: "legacy",
+    label: "Primary API Key",
+    provider: data.provider === "custom_json" ? "custom_json" : "gemini",
+    model: data.model || "gemini-2.0-flash",
+    endpoint_url: data.endpoint_url || "",
+    api_key: data.api_key,
+    enabled: true,
+    priority: 1,
+    last_status: null,
+    last_checked_at: null,
+    info: null,
+  }];
+}
 
 export function AiEvaluationTab() {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<AiEvaluationForm>({
     enabled: false,
     provider: "gemini",
     endpoint_url: "",
     api_key: "",
+    api_keys: [],
     model: "gemini-2.0-flash",
     monthly_limit: 1500,
   });
@@ -27,9 +61,10 @@ export function AiEvaluationTab() {
       setConfigured(data.configured);
       setForm({
         enabled: data.enabled ?? true,
-        provider: data.provider ?? "gemini",
+        provider: data.provider === "custom_json" ? "custom_json" : "gemini",
         endpoint_url: data.endpoint_url ?? "",
         api_key: data.api_key ?? "",
+        api_keys: hydrateApiKeys(data),
         model: data.model ?? "gemini-2.0-flash",
         monthly_limit: data.monthly_limit ?? 1500,
       });
@@ -45,6 +80,7 @@ export function AiEvaluationTab() {
       const payload = {
         ...form,
         endpoint_url: form.provider === "gemini" ? undefined : form.endpoint_url,
+        api_key: form.api_key && !form.api_key.includes("*") ? form.api_key : undefined,
       };
       const { data } = await apiClient.put("/super-admin/dev-settings/ai-evaluation", payload);
       setConfigured(data.configured);
@@ -55,8 +91,6 @@ export function AiEvaluationTab() {
       setBusy(false);
     }
   }
-
-  const isMaskedKey = Boolean(form.api_key && form.api_key.includes("*"));
 
   return (
     <form className="form-card wide collapsible-form-card" onSubmit={save}>
@@ -82,7 +116,7 @@ export function AiEvaluationTab() {
               ]}
               searchable={false}
               value={form.provider}
-              onChange={(value) => setForm({ ...form, provider: String(value) })}
+              onChange={(value) => setForm({ ...form, provider: value === "custom_json" ? "custom_json" : "gemini" })}
             />
           </div>
           <div>
@@ -115,26 +149,14 @@ export function AiEvaluationTab() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-4 mb-1">
-          <label className="m-0 font-bold">{form.provider === "gemini" ? "Google Gemini API Key" : t.apiKeyLabel}</label>
-          {isMaskedKey && (
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">
-              <Icon name="check" /> {t.apiKeyActiveBadge}
-            </span>
-          )}
-        </div>
-        
-        <PasswordInput
-          value={form.api_key}
-          onChange={(event) => setForm({ ...form, api_key: event.target.value })}
-          placeholder="Enter API key (e.g. AQ.Ab8RN6...)"
+        <AiKeyPriorityManager
+          keys={form.api_keys}
+          onChange={(api_keys) => setForm({ ...form, api_keys })}
+          provider={form.provider}
+          model={form.model}
+          endpointUrl={form.endpoint_url}
+          testPath="/super-admin/dev-settings/ai-evaluation/test-key"
         />
-
-        {isMaskedKey && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">
-            🔒 <strong>Security Note:</strong> Your API key is active and encrypted at rest in the database. For security compliance, saved secrets are masked as <code className="bg-gray-100 dark:bg-slate-800 px-1 py-0.5 rounded">********</code> when loaded. To update or replace it, type your new API key.
-          </p>
-        )}
 
         {error && <p className="error-text">{error}</p>}
         {notice && <p className="success-text">{notice}</p>}

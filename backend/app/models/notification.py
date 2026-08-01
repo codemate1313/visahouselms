@@ -12,6 +12,16 @@ ANNOUNCEMENT_PUBLISHED = "announcement_published"
 SUPPORT_TICKET_CREATED = "support_ticket_created"
 SUPPORT_TICKET_UPDATED = "support_ticket_updated"
 AI_QUOTA_EXHAUSTED = "ai_quota_exhausted"
+AI_EVALUATION_FAILED = "ai_evaluation_failed"
+GRADING_QUEUE_ROUTED = "grading_queue_routed"
+GRADING_CLAIMED = "grading_claimed"
+GRADING_RELEASED = "grading_released"
+REEVALUATION_REQUESTED = "reevaluation_requested"
+REEVALUATION_CLAIMED = "reevaluation_claimed"
+REEVALUATION_RESOLVED = "reevaluation_resolved"
+SYSTEM_JOB_FAILED = "system_job_failed"
+SYSTEM_SECURITY_EVENT = "system_security_event"
+SUPPORT_TICKET_ASSIGNED = "support_ticket_assigned"
 
 
 class Announcement(Base):

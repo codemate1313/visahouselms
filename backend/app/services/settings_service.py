@@ -11,6 +11,7 @@ SECRET_KEYS = {
     "fcm.service_account_json",
     "avatar.api_key",
     "ai.api_key",
+    "ai.api_keys",
     "payment_gateways.razorpay_key_secret",
     "payment_gateways.razorpay_webhook_secret",
     "payment_gateways.stripe_secret_key",

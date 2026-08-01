@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import mimetypes
+import time
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -33,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_MONTHLY_LIMIT = 100
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
+MASKED_SECRET = "********"
 
 POOL_EXHAUSTED = "The monthly AI evaluation limit has been reached"
 STUDENT_EXHAUSTED = (
@@ -69,10 +71,13 @@ def config_status(db: Session) -> dict:
     monthly_limit_str = get_setting(db, "ai.monthly_limit")
     monthly_limit = int(monthly_limit_str) if monthly_limit_str else DEFAULT_MONTHLY_LIMIT
 
+    api_keys = _configured_keys(db, mask=True)
+    live_keys = [item for item in _configured_keys(db, mask=False) if item.get("enabled", True)]
+
     if provider == "gemini":
-        configured = bool(enabled and api_key)
+        configured = bool(enabled and (live_keys or api_key))
     elif provider == "custom_json":
-        configured = bool(enabled and endpoint and api_key)
+        configured = bool(enabled and ((endpoint and api_key) or live_keys))
     else:
         configured = False
 
@@ -84,6 +89,8 @@ def config_status(db: Session) -> dict:
         "monthly_limit": monthly_limit,
         "configured": configured,
         "api_key": "********" if api_key else None,
+        "api_keys": api_keys,
+        "api_key_count": len([item for item in api_keys if item.get("enabled", True)]),
     }
 
 
@@ -91,12 +98,184 @@ def _config(db: Session) -> dict:
     status = config_status(db)
     if not status["configured"]:
         raise HTTPException(status_code=503, detail="AI evaluation is not enabled or fully configured")
-    if status["provider"] == "custom_json":
-        parsed = urlparse(status["endpoint_url"] or "")
-        if parsed.scheme not in ("http", "https") or not parsed.netloc:
-            raise HTTPException(status_code=503, detail="AI evaluator endpoint must be an HTTP or HTTPS URL")
     status["api_key"] = get_setting(db, "ai.api_key") or settings.ai_api_key
     return status
+
+
+def _mask_key(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    if value == MASKED_SECRET:
+        return MASKED_SECRET
+    if len(value) <= 8:
+        return MASKED_SECRET
+    return f"{value[:4]}...{value[-4:]}"
+
+
+def _configured_keys(db: Session, *, mask: bool) -> list[dict]:
+    raw = get_setting(db, "ai.api_keys")
+    keys: list[dict] = []
+    if raw:
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                for index, item in enumerate(parsed):
+                    if not isinstance(item, dict):
+                        continue
+                    api_key = str(item.get("api_key") or "").strip()
+                    if not api_key:
+                        continue
+                    keys.append({
+                        "id": str(item.get("id") or f"key-{index + 1}"),
+                        "label": str(item.get("label") or f"API Key {index + 1}"),
+                        "provider": str(item.get("provider") or "gemini"),
+                        "model": str(item.get("model") or ""),
+                        "endpoint_url": str(item.get("endpoint_url") or ""),
+                        "api_key": _mask_key(api_key) if mask else api_key,
+                        "enabled": bool(item.get("enabled", True)),
+                        "priority": int(item.get("priority", index + 1)),
+                        "last_status": item.get("last_status"),
+                        "last_checked_at": item.get("last_checked_at"),
+                        "info": item.get("info"),
+                    })
+        except (TypeError, ValueError, json.JSONDecodeError):
+            logger.warning("Ignoring malformed ai.api_keys setting")
+    return sorted(keys, key=lambda item: item.get("priority") or 9999)
+
+
+def save_configured_keys(db: Session, keys: list[dict]) -> None:
+    from app.services.settings_service import set_setting
+
+    existing_by_id = {item["id"]: item for item in _configured_keys(db, mask=False)}
+    normalized = []
+    for index, item in enumerate(keys):
+        if not isinstance(item, dict):
+            continue
+        key_id = str(item.get("id") or f"key-{int(time.time() * 1000)}-{index}")
+        api_key = str(item.get("api_key") or "").strip()
+        if api_key == MASKED_SECRET or not api_key:
+            api_key = existing_by_id.get(key_id, {}).get("api_key", "")
+        if not api_key:
+            continue
+        normalized.append({
+            "id": key_id,
+            "label": str(item.get("label") or f"API Key {index + 1}").strip()[:80],
+            "provider": str(item.get("provider") or "gemini"),
+            "model": str(item.get("model") or "").strip()[:120],
+            "endpoint_url": str(item.get("endpoint_url") or "").strip()[:500],
+            "api_key": api_key,
+            "enabled": bool(item.get("enabled", True)),
+            "priority": index + 1,
+            "last_status": item.get("last_status"),
+            "last_checked_at": item.get("last_checked_at"),
+            "info": item.get("info"),
+        })
+    set_setting(db, "ai.api_keys", json.dumps(normalized) if normalized else None)
+
+
+def _candidate_configs(db: Session) -> list[dict]:
+    base = _config(db)
+    candidates = []
+    for item in _configured_keys(db, mask=False):
+        if not item.get("enabled", True):
+            continue
+        provider = item.get("provider") or base["provider"]
+        candidates.append({
+            **base,
+            "provider": provider,
+            "model": item.get("model") or base.get("model"),
+            "endpoint_url": item.get("endpoint_url") or base.get("endpoint_url"),
+            "api_key": item["api_key"],
+            "key_id": item.get("id"),
+            "key_label": item.get("label"),
+        })
+    if candidates:
+        return candidates
+    return [{**base, "key_id": "legacy", "key_label": "Primary API Key"}]
+
+
+def test_connection(
+    *,
+    provider: str,
+    api_key: str,
+    model: Optional[str] = None,
+    endpoint_url: Optional[str] = None,
+    evaluator: Optional[Callable[[dict, dict], dict]] = None,
+) -> dict:
+    started = time.monotonic()
+    config = {
+        "provider": provider,
+        "api_key": api_key,
+        "model": model or DEFAULT_GEMINI_MODEL,
+        "endpoint_url": endpoint_url,
+    }
+    payload = {
+        "task": "connection_test",
+        "framework": cefr_service.FRAMEWORK_VERSION,
+        "policy_version": cefr_service.POLICY_VERSION,
+        "skill": "writing",
+        "part": {"title": "Connection test", "skill_focus": "Connectivity"},
+        "rubric": [{"criterion": "Connection", "max_marks": "1"}],
+        "responses": [{"prompt": "Reply with valid JSON.", "text": "This is a connection test."}],
+        "instructions": (
+            "Return JSON ONLY with one criterion named Connection, marks_awarded 1, "
+            "a short comment, and confidence 1."
+        ),
+    }
+    try:
+        raw = (evaluator or _remote_evaluator)(config, payload)
+        elapsed_ms = int((time.monotonic() - started) * 1000)
+        _normalize(raw, type("Part", (), {"rubric": payload["rubric"]})())
+        return {
+            "ok": True,
+            "provider": provider,
+            "model": config["model"],
+            "key_preview": _mask_key(api_key),
+            "latency_ms": elapsed_ms,
+            "message": f"{provider} accepted the key and returned valid evaluator JSON.",
+        }
+    except Exception as exc:
+        elapsed_ms = int((time.monotonic() - started) * 1000)
+        return {
+            "ok": False,
+            "provider": provider,
+            "model": config["model"],
+            "key_preview": _mask_key(api_key),
+            "latency_ms": elapsed_ms,
+            "message": str(getattr(exc, "detail", exc))[:500],
+        }
+
+
+def test_configured_key(
+    db: Session,
+    *,
+    key_id: Optional[str],
+    provider: str,
+    api_key: Optional[str],
+    model: Optional[str] = None,
+    endpoint_url: Optional[str] = None,
+) -> dict:
+    secret = (api_key or "").strip()
+    stored = None
+    if key_id:
+        stored = next((item for item in _configured_keys(db, mask=False) if item.get("id") == key_id), None)
+    if not secret or secret == MASKED_SECRET:
+        secret = (stored or {}).get("api_key") or ""
+    if not secret:
+        return {
+            "ok": False,
+            "provider": provider,
+            "model": model or DEFAULT_GEMINI_MODEL,
+            "key_preview": None,
+            "latency_ms": 0,
+            "message": "Enter or select a saved API key before testing.",
+        }
+    return test_connection(
+        provider=provider or (stored or {}).get("provider") or "gemini",
+        api_key=secret,
+        model=model or (stored or {}).get("model"),
+        endpoint_url=endpoint_url or (stored or {}).get("endpoint_url"),
+    )
 
 
 def _bucket(
@@ -378,6 +557,9 @@ def _remote_evaluator(config: dict, payload: dict) -> dict:
         return _gemini_evaluator(config, payload)
     
     # Custom JSON HTTP endpoint
+    parsed = urlparse(config.get("endpoint_url") or "")
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        raise HTTPException(status_code=503, detail="AI evaluator endpoint must be an HTTP or HTTPS URL")
     response = httpx.post(
         config["endpoint_url"],
         headers={"Authorization": f"Bearer {config['api_key']}", "Content-Type": "application/json"},
@@ -433,42 +615,62 @@ def request_suggestion(
     attempt: TestAttempt,
     part: ExamModulePart,
     evaluator: Optional[Callable[[dict, dict], dict]] = None,
+    configs: Optional[list[dict]] = None,
 ) -> dict:
-    config = _config(db) if evaluator is None else {
+    configs_to_try = configs or (_candidate_configs(db) if evaluator is None else [{
         "provider": "test_evaluator",
         "model": "test-model",
         "monthly_limit": DEFAULT_MONTHLY_LIMIT,
-    }
-    limits = _limit_rows(db, attempt, int(config["monthly_limit"]))
-    record = AiEvaluation(
-        attempt_id=attempt.id,
-        part_id=part.id,
-        requested_by_id=actor.id,
-        provider=config["provider"],
-        model=config.get("model"),
-        status="running",
-    )
-    db.add(record)
-    db.flush()
-    try:
-        raw = (evaluator or _remote_evaluator)(config, _payload(attempt, part))
-        suggestion = _normalize(raw, part)
-        record.status = "completed"
-        record.suggestions = suggestion
-        for limit in limits:
-            limit.used_count += 1
-        db.add_all([record, *limits])
-        db.commit()
-        return {"id": record.id, **suggestion}
-    except HTTPException:
-        db.rollback()
-        raise
-    except Exception as exc:
-        record.status = "failed"
-        record.error = str(exc)[:4000]
+        "api_key": "test",
+    }])
+    if not configs_to_try:
+        raise HTTPException(status_code=503, detail="AI evaluation is not enabled or fully configured")
+
+    limits = _limit_rows(db, attempt, int(configs_to_try[0].get("monthly_limit") or DEFAULT_MONTHLY_LIMIT))
+    payload = _payload(attempt, part)
+    last_error: Optional[Exception] = None
+    failed_records: list[AiEvaluation] = []
+
+    for index, config in enumerate(configs_to_try):
+        record = AiEvaluation(
+            attempt_id=attempt.id,
+            part_id=part.id,
+            requested_by_id=actor.id,
+            provider=config["provider"],
+            model=config.get("model"),
+            status="running",
+        )
         db.add(record)
-        db.commit()
-        raise HTTPException(status_code=502, detail=f"AI evaluator returned an invalid response: {exc}")
+        db.flush()
+        try:
+            raw = (evaluator or _remote_evaluator)(config, payload)
+            suggestion = _normalize(raw, part)
+            record.status = "completed"
+            record.suggestions = suggestion
+            for limit in limits:
+                limit.used_count += 1
+            db.add_all([record, *limits, *failed_records])
+            db.commit()
+            return {"id": record.id, **suggestion}
+        except HTTPException as exc:
+            last_error = exc
+            record.status = "failed"
+            record.error = str(exc.detail)[:4000]
+            db.add(record)
+            failed_records.append(record)
+            if exc.status_code == 429 and index == len(configs_to_try) - 1:
+                db.commit()
+                raise
+        except Exception as exc:
+            last_error = exc
+            record.status = "failed"
+            record.error = str(exc)[:4000]
+            db.add(record)
+            failed_records.append(record)
+
+    db.commit()
+    detail = str(getattr(last_error, "detail", last_error)) if last_error else "All AI evaluators failed"
+    raise HTTPException(status_code=502, detail=f"All configured AI evaluators failed: {detail[:500]}")
 
 
 def _apply_ai_grade(db: Session, attempt: TestAttempt, part: ExamModulePart, suggestion: dict) -> None:

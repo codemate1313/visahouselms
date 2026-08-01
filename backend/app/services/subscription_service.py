@@ -9,7 +9,7 @@ from app.models.audit_log import AuditLog
 from app.models.exam_module import ExamModule, InstituteModule
 from app.models.institute import Institute
 from app.models.plan import AUDIENCE_DIRECT, AUDIENCE_INSTITUTES, Plan
-from app.models.role import INST_INSTRUCTOR, STUDENT, Role
+from app.models.role import DEVELOPER, INSTITUTE_ADMIN, INST_INSTRUCTOR, STUDENT, SUPER_ADMIN, Role
 from app.models.subscription import Subscription
 from app.models.user import User
 from app.services.plan_service import assert_audience, get_plan_or_404
@@ -154,10 +154,11 @@ def suspend_expired_institutes(db: Session) -> int:
     students all carry institute_id, and auth_service refuses a login whose
     institute is inactive). Live sessions are revoked too so access stops at the
     deadline instead of at the next token expiry."""
-    from app.services import account_service
+    from app.services import account_service, notification_service
 
     institutes = db.query(Institute).filter(Institute.is_active.is_(True)).all()
     suspended = 0
+    suspended_institutes: list[Institute] = []
     for institute in institutes:
         subscription, state = current_subscription(db, institute.id)
         if subscription is None or state != STATE_EXPIRED:
@@ -187,9 +188,28 @@ def suspend_expired_institutes(db: Session) -> int:
             )
         )
         suspended += 1
+        suspended_institutes.append(institute)
 
     if suspended:
         db.commit()
+        for institute in suspended_institutes:
+            notification_service.notify_roles(
+                db,
+                {SUPER_ADMIN, DEVELOPER},
+                kind="subscription_expired",
+                title="Institute subscription expired",
+                message=f"{institute.name} was suspended after its subscription and grace period ended.",
+                link_url="/super-admin/subscriptions",
+            )
+            notification_service.notify_roles(
+                db,
+                {INSTITUTE_ADMIN},
+                kind="subscription_expired",
+                title="Subscription expired",
+                message=f"{institute.name} access was suspended after the grace period ended.",
+                link_url="/institute-portal/billing",
+                institute_id=institute.id,
+            )
     return suspended
 
 
@@ -398,6 +418,26 @@ def assign(
     else:
         db.flush()
     db.refresh(subscription)
+    if commit:
+        from app.services import notification_service
+
+        notification_service.notify_roles(
+            db,
+            {SUPER_ADMIN, DEVELOPER},
+            kind="subscription_assigned",
+            title="Institute subscription assigned",
+            message=f"{actor.email} assigned {plan.name} to {institute.name}.",
+            link_url="/super-admin/subscriptions",
+        )
+        notification_service.notify_roles(
+            db,
+            {INSTITUTE_ADMIN},
+            kind="subscription_assigned",
+            title="Subscription assigned",
+            message=f"{institute.name} is now on {plan.name}.",
+            link_url="/institute-portal/billing",
+            institute_id=institute.id,
+        )
     _, state = current_subscription(db, institute_id)
     return _serialize(subscription, state)
 
@@ -446,6 +486,26 @@ def renew(
     else:
         db.flush()
     db.refresh(subscription)
+    if commit:
+        from app.services import notification_service
+
+        notification_service.notify_roles(
+            db,
+            {SUPER_ADMIN, DEVELOPER},
+            kind="subscription_renewed",
+            title="Institute subscription renewed",
+            message=f"{actor.email} renewed {institute.name} on {plan.name}.",
+            link_url="/super-admin/subscriptions",
+        )
+        notification_service.notify_roles(
+            db,
+            {INSTITUTE_ADMIN},
+            kind="subscription_renewed",
+            title="Subscription renewed",
+            message=f"{institute.name} has been renewed on {plan.name}.",
+            link_url="/institute-portal/billing",
+            institute_id=institute.id,
+        )
     _, new_state = current_subscription(db, institute_id)
     return _serialize(subscription, new_state)
 

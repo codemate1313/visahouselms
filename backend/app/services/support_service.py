@@ -19,7 +19,7 @@ from app.models.support_ticket import (
     SUPPORT_STATUSES,
     SupportTicket,
 )
-from app.models.notification import SUPPORT_TICKET_CREATED, SUPPORT_TICKET_UPDATED
+from app.models.notification import SUPPORT_TICKET_ASSIGNED, SUPPORT_TICKET_CREATED, SUPPORT_TICKET_UPDATED
 from app.models.role import INST_INSTRUCTOR, INSTITUTE_ADMIN, STUDENT, SUPER_ADMIN, Role
 from app.models.user import User
 from app.schemas.support import PortalSupportTicketCreate, SupportTicketCreate, SupportTicketUpdate
@@ -139,6 +139,29 @@ def _notify_ticket_updated(db: Session, ticket: SupportTicket, *, status_changed
         f"Update on your support ticket: {ticket.subject}",
         "\n".join(body_lines),
         user_id=ticket.requester_id,
+    )
+
+
+def _notify_ticket_assigned(db: Session, ticket: SupportTicket, previous_assignee_id: Optional[int]) -> None:
+    if ticket.assigned_to_id is None or ticket.assigned_to_id == previous_assignee_id:
+        return
+    assignee = ticket.assigned_to or db.get(User, ticket.assigned_to_id)
+    if assignee is None:
+        return
+    notification_service.create_notification(
+        db,
+        user_id=assignee.id,
+        kind=SUPPORT_TICKET_ASSIGNED,
+        title=f"Support ticket assigned: {ticket.subject}",
+        message=f"{ticket.name} ({ticket.email}) is waiting for a response.",
+        link_url=_ticket_link(ticket.queue),
+    )
+    notification_service.send_notification_email(
+        db,
+        assignee.email,
+        f"Support ticket assigned: {ticket.subject}",
+        f"You have been assigned this support ticket:\n\n{ticket.message}",
+        user_id=assignee.id,
     )
 
 
@@ -355,6 +378,7 @@ def update_ticket(
     data = payload.model_dump(exclude_unset=True)
     previous_status = ticket.status
     previous_admin_note = ticket.admin_note
+    previous_assignee_id = ticket.assigned_to_id
 
     if "status" in data and data["status"] is not None:
         if data["status"] not in SUPPORT_STATUSES:
@@ -381,6 +405,7 @@ def update_ticket(
             status_changed=ticket.status != previous_status,
             note_changed=bool(ticket.admin_note) and ticket.admin_note != previous_admin_note,
         )
+        _notify_ticket_assigned(db, ticket, previous_assignee_id)
     except Exception:
         logger.exception("Failed to send notifications for updated support ticket %s", ticket.id)
     return ticket

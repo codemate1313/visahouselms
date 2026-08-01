@@ -208,6 +208,7 @@ export const router = createBrowserRouter([
           { path: "", element: <Navigate to="panel" replace /> },
           { path: "panel", element: <DeveloperPanel /> },
           { path: "settings", element: <DeveloperSettings /> },
+          { path: "notifications", element: <NotificationsInbox fallbackRoute={`/${developerAccessSlug}/panel`} /> },
           { path: "change-password", element: <ChangePassword apiBase={`/developer/${developerAccessSlug}`} /> },
         ],
       },

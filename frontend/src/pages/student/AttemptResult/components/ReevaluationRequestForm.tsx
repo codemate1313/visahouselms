@@ -26,7 +26,7 @@ export function ReevaluationRequestForm({ reviewReason, onReviewReasonChange, re
       <textarea
         id="result-review-reason"
         rows={4}
-        minLength={20}
+        minLength={1}
         maxLength={2000}
         required
         value={reviewReason}
@@ -34,7 +34,7 @@ export function ReevaluationRequestForm({ reviewReason, onReviewReasonChange, re
         placeholder={t.reasonPlaceholder}
       />
       <div className="form-actions">
-        <button disabled={requesting || reviewReason.trim().length < 20}>{requesting ? t.sending : t.submit}</button>
+        <button disabled={requesting || reviewReason.trim().length === 0}>{requesting ? t.sending : t.submit}</button>
       </div>
     </form>
   );

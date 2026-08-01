@@ -1,9 +1,8 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { PasswordInput } from "@/components/PasswordInput";
 import { RequiredMark } from "@/components/ui";
-import { Icon } from "@/components/icons";
+import { AiKeyPriorityManager, type AiKeyConfig } from "./components/AiKeyPriorityManager";
 import { superAdminAiSettingsStrings as strings } from "./SuperAdminAISettings.strings";
 
 interface AiSettingsData {
@@ -14,6 +13,29 @@ interface AiSettingsData {
   monthly_limit: number;
   configured: boolean;
   api_key: string | null;
+  api_keys: AiKeyConfig[];
+}
+
+function hydrateApiKeys(data: Partial<AiSettingsData>): AiKeyConfig[] {
+  if (Array.isArray(data.api_keys) && data.api_keys.length > 0) {
+    return data.api_keys;
+  }
+  if (!data.api_key) {
+    return [];
+  }
+  return [{
+    id: "legacy",
+    label: "Primary API Key",
+    provider: data.provider === "custom_json" ? "custom_json" : "gemini",
+    model: data.model || "gemini-2.0-flash",
+    endpoint_url: data.endpoint_url || "",
+    api_key: data.api_key,
+    enabled: true,
+    priority: 1,
+    last_status: null,
+    last_checked_at: null,
+    info: null,
+  }];
 }
 
 export function SuperAdminAISettings() {
@@ -25,9 +47,9 @@ export function SuperAdminAISettings() {
     monthly_limit: 1500,
     configured: true,
     api_key: "",
+    api_keys: [],
   });
 
-  const [rawApiKey, setRawApiKey] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -43,8 +65,8 @@ export function SuperAdminAISettings() {
           endpoint_url: data.endpoint_url || "",
           model: data.model || "gemini-2.0-flash",
           monthly_limit: data.monthly_limit || 1500,
+          api_keys: hydrateApiKeys(data),
         });
-        setRawApiKey(data.api_key || "");
         setLoading(false);
       })
       .catch((err: unknown) => {
@@ -67,9 +89,9 @@ export function SuperAdminAISettings() {
       enabled: formData.provider !== "disabled",
       provider: formData.provider,
       model: formData.model || "gemini-2.0-flash",
-      api_key: rawApiKey.trim() ? rawApiKey.trim() : undefined,
       endpoint_url: formData.endpoint_url || undefined,
       monthly_limit: Number(formData.monthly_limit || 1500),
+      api_keys: formData.api_keys,
     };
 
     apiClient
@@ -80,8 +102,8 @@ export function SuperAdminAISettings() {
           endpoint_url: data.endpoint_url || "",
           model: data.model || "gemini-2.0-flash",
           monthly_limit: data.monthly_limit || 1500,
+          api_keys: hydrateApiKeys(data),
         });
-        setRawApiKey(data.api_key || "");
         setSaving(false);
         setNotice("AI settings updated successfully! Changes take effect immediately.");
       })
@@ -94,8 +116,6 @@ export function SuperAdminAISettings() {
   if (loading) {
     return <p className="hint">{strings.loading}</p>;
   }
-
-  const isMaskedKey = Boolean(rawApiKey && rawApiKey.includes("*"));
 
   return (
     <div>
@@ -190,46 +210,6 @@ export function SuperAdminAISettings() {
         {formData.provider !== "disabled" && (
           <div style={{ paddingTop: 16, borderTop: "1px solid rgba(226, 232, 240, 0.4)" }}>
             
-            {/* Gemini Key */}
-            {formData.provider === "gemini" && (
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                  <label htmlFor="gemini-key-input" style={{ margin: 0 }}>
-                    {strings.geminiKeyLabel} <RequiredMark />
-                  </label>
-                  {isMaskedKey && (
-                    <span className="badge badge-green">
-                      <Icon name="check" /> {strings.apiKeyActiveBadge}
-                    </span>
-                  )}
-                </div>
-                <PasswordInput
-                  id="gemini-key-input"
-                  required
-                  placeholder={strings.geminiKeyPlaceholder}
-                  value={rawApiKey}
-                  onChange={(e) => setRawApiKey(e.target.value)}
-                />
-                {isMaskedKey ? (
-                  <p className="hint text-xs" style={{ marginTop: 6 }}>
-                    <Icon name="lock" /> <strong>{strings.securityNoteLabel}</strong> {strings.securityNoteBody}
-                  </p>
-                ) : (
-                  <p className="hint text-xs" style={{ marginTop: 6 }}>
-                    {strings.geminiKeyHelpPrefix}{" "}
-                    <a
-                      href={strings.geminiKeyHelpUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ color: "#2563eb" }}
-                    >
-                      {strings.geminiKeyHelpLinkLabel}
-                    </a>{strings.geminiKeyHelpSuffix}
-                  </p>
-                )}
-              </div>
-            )}
-
             {/* Custom Endpoint URL */}
             {formData.provider === "custom_json" && (
               <div style={{ marginBottom: 20 }}>
@@ -270,6 +250,15 @@ export function SuperAdminAISettings() {
                 />
               </div>
             </div>
+
+            <AiKeyPriorityManager
+              keys={formData.api_keys}
+              onChange={(api_keys) => setFormData({ ...formData, api_keys })}
+              provider={formData.provider}
+              model={formData.model || strings.defaultModel}
+              endpointUrl={formData.endpoint_url || ""}
+              testPath="/super-admin/settings/ai/test-key"
+            />
 
           </div>
         )}

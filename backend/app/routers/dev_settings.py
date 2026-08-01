@@ -7,6 +7,7 @@ from app.dependencies.auth import get_current_user, require_super_admin_or_verif
 from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.schemas.dev import (
+    AiEvaluationKeyTestIn,
     AiEvaluationSettingsIn,
     AvatarSettingsIn,
     BackupSettingsIn,
@@ -141,9 +142,25 @@ def put_ai_evaluation(
 ):
     if payload.monthly_limit < 0:
         raise HTTPException(status_code=400, detail="Monthly AI evaluation limit cannot be negative")
-    set_settings_group(db, "ai", {key: str(value) if isinstance(value, bool) else value for key, value in payload.model_dump().items()})
+    data = payload.model_dump()
+    api_keys = data.pop("api_keys", None)
+    set_settings_group(db, "ai", {key: str(value) if isinstance(value, bool) else value for key, value in data.items()})
+    if api_keys is not None:
+        ai_evaluation_service.save_configured_keys(db, api_keys)
     _audit(db, actor, "dev_settings.update_ai_evaluation", request)
     return ai_evaluation_service.config_status(db)
+
+
+@router.post("/ai-evaluation/test-key")
+def test_ai_evaluation_key(payload: AiEvaluationKeyTestIn, db: Session = Depends(get_db)):
+    return ai_evaluation_service.test_configured_key(
+        db,
+        key_id=payload.key_id,
+        provider=payload.provider,
+        api_key=payload.api_key,
+        model=payload.model,
+        endpoint_url=payload.endpoint_url,
+    )
 
 
 # ---------- Backup / log settings ----------

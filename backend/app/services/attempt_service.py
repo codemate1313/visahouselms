@@ -939,10 +939,12 @@ def submit_attempt(
     db.add(attempt)
     db.flush()
     ai_evaluation_pending = False
+    grading_routing_reason = None
     if needs_grading:
         from app.services import ai_evaluation_service, grading_service
 
-        grading_service.ensure_queue_entry(db, attempt)
+        queue_entry = grading_service.ensure_queue_entry(db, attempt)
+        grading_routing_reason = queue_entry.routing_reason
         # Writing/Speaking parts are auto-evaluated by AI (quota permitting)
         # right after submission so the student gets a real result without
         # waiting on an instructor - see job_service's "ai_auto_grade" handler.
@@ -957,7 +959,18 @@ def submit_attempt(
     if ai_evaluation_pending:
         from app.services import job_service
 
-        job_service.enqueue(db, "ai_auto_grade", {"attempt_id": attempt_id})
+        job_service.enqueue_ai_auto_grade(db, attempt_id)
+    if needs_grading:
+        from app.services import notification_service
+
+        try:
+            notification_service.notify_grading_queue_routed(
+                db,
+                get_attempt_or_404(db, db.get(User, user_id), attempt_id),
+                grading_routing_reason,
+            )
+        except Exception:
+            logger.exception("Failed to notify grading queue routing for attempt %s", attempt_id)
     if completed_now:
         from app.services import achievement_service
 

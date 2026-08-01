@@ -372,8 +372,22 @@ def update_ai_settings(
     if endpoint_url is not None:
         settings_service.set_setting(db, "ai.endpoint_url", str(endpoint_url))
     settings_service.set_setting(db, "ai.monthly_limit", str(monthly_limit))
+    if isinstance(payload.get("api_keys"), list):
+        ai_evaluation_service.save_configured_keys(db, payload["api_keys"])
 
     return ai_evaluation_service.config_status(db)
+
+
+@router.post("/settings/ai/test-key")
+def test_ai_settings_key(payload: dict, db: Session = Depends(get_db)):
+    return ai_evaluation_service.test_configured_key(
+        db,
+        key_id=payload.get("key_id"),
+        provider=str(payload.get("provider") or "gemini"),
+        api_key=str(payload.get("api_key") or ""),
+        model=payload.get("model"),
+        endpoint_url=payload.get("endpoint_url"),
+    )
 
 
 @router.get("/users/{user_id}/linked-details")

@@ -35,8 +35,17 @@ class AiEvaluationSettingsIn(BaseModel):
     provider: str = "custom_json"
     endpoint_url: Optional[str] = None
     api_key: Optional[str] = None
+    api_keys: Optional[list[dict]] = None
     model: Optional[str] = None
     monthly_limit: int = 100
+
+
+class AiEvaluationKeyTestIn(BaseModel):
+    key_id: Optional[str] = None
+    provider: str = "gemini"
+    endpoint_url: Optional[str] = None
+    api_key: Optional[str] = None
+    model: Optional[str] = None
 
 
 class BackupSettingsIn(BaseModel):
@@ -73,4 +82,3 @@ class PaymentGatewaySettingsIn(BaseModel):
     stripe_publishable_key: Optional[str] = None
     stripe_secret_key: Optional[str] = None
     stripe_webhook_secret: Optional[str] = None
-

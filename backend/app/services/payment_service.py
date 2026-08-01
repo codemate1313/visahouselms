@@ -16,8 +16,9 @@ from app.models.coupon import Coupon
 from app.models.institute import Institute
 from app.models.payment import Payment
 from app.models.plan import AUDIENCE_DIRECT, AUDIENCE_INSTITUTES, Plan
+from app.models.role import DEVELOPER, INSTITUTE_ADMIN, SUPER_ADMIN
 from app.models.user import User
-from app.services import coupon_service, institute_service, plan_service, subscription_service
+from app.services import coupon_service, institute_service, notification_service, plan_service, subscription_service
 from app.services.settings_service import get_settings_group
 
 
@@ -105,6 +106,46 @@ def _serialize(payment: Payment) -> dict:
         "created_at": payment.created_at,
         "paid_at": payment.paid_at,
     }
+
+
+def _notify_payment_recorded(db: Session, payment: Payment) -> None:
+    status_label = payment.status.replace("_", " ")
+    title = f"Payment {status_label}"
+    subject = payment.institute.name if payment.institute else payment.institute_name_snapshot
+    buyer = db.get(User, payment.user_id) if payment.user_id is not None else None
+    if not subject and buyer:
+        subject = f"{buyer.first_name} {buyer.last_name}".strip() or buyer.email
+    subject = subject or "Customer"
+    message = f"{subject} payment is {status_label}: {payment.amount_paid} / {payment.final_amount} {payment.currency}."
+    super_admin_link = "/super-admin/payments"
+
+    notification_service.notify_roles(
+        db,
+        {SUPER_ADMIN, DEVELOPER},
+        kind=f"payment_{payment.status}",
+        title=title,
+        message=message,
+        link_url=super_admin_link,
+    )
+    if payment.institute_id is not None:
+        notification_service.notify_roles(
+            db,
+            {INSTITUTE_ADMIN},
+            kind=f"payment_{payment.status}",
+            title=title,
+            message=message,
+            link_url="/institute-portal/billing",
+            institute_id=payment.institute_id,
+        )
+    if payment.user_id is not None:
+        notification_service.create_notification(
+            db,
+            user_id=payment.user_id,
+            kind=f"payment_{payment.status}",
+            title=title,
+            message=message,
+            link_url="/student/purchase-history",
+        )
 
 
 def calculate_gst_and_totals(plan, discount: Decimal = Decimal("0.00")) -> dict:
@@ -215,6 +256,8 @@ def create_b2b_plan_payment(
         db.add(payment)
         _audit(db, actor, "payment.create", payment.id, ip, {"institute_id": institute_id, "plan": plan.name, "result": "failed"})
         db.commit()
+        payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
+        _notify_payment_recorded(db, payment)
         raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="Payment verification failed")
 
     payment.invoice_number = f"INV-{payment.id:06d}"
@@ -255,6 +298,7 @@ def create_b2b_plan_payment(
         raise
 
     payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
+    _notify_payment_recorded(db, payment)
     return _serialize(payment)
 
 
@@ -295,6 +339,7 @@ def add_installment(
     db.commit()
 
     payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
+    _notify_payment_recorded(db, payment)
     return _serialize(payment)
 
 
@@ -348,6 +393,8 @@ def create_user_plan_payment(
         payment.status = STATUS_FAILED
         db.add(payment)
         db.commit()
+        payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
+        _notify_payment_recorded(db, payment)
         raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="Payment verification failed")
 
     payment.status = STATUS_PAID
@@ -368,6 +415,7 @@ def create_user_plan_payment(
         raise
 
     payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
+    _notify_payment_recorded(db, payment)
     return _serialize(payment)
 
 
@@ -737,6 +785,3 @@ def verify_razorpay_payment(
 
     payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
     return _serialize(payment)
-
-
-
