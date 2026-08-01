@@ -76,6 +76,15 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
     }
   }
 
+  const handleAudioPlay = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    const audios = document.querySelectorAll("audio");
+    audios.forEach((audio) => {
+      if (audio !== e.currentTarget) {
+        (audio as HTMLAudioElement).pause();
+      }
+    });
+  };
+
   return (
     <section id={`part-card-${part.id}`} className="workspace-panel grading-part-panel">
       <div className="panel-heading">
@@ -99,7 +108,7 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
         <div key={question.id} className="test-runner-question grading-response">
           <p className="test-runner-prompt">{question.prompt}</p>
           {question.audio_path ? (
-            <audio controls src={`${API_BASE_URL}${question.audio_path}`} />
+            <audio controls src={`${API_BASE_URL}${question.audio_path}`} onPlay={handleAudioPlay} />
           ) : (
             <p className="hint">{question.response?.text || t.noResponse}</p>
           )}
