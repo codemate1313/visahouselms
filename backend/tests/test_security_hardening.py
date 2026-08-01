@@ -144,11 +144,20 @@ class SpeakingUploadValidationTests(unittest.TestCase):
     def test_accepts_supported_container_signature(self) -> None:
         content, extension = asyncio.run(
             read_validated_speaking_answer(
-                _upload("audio/webm", b"\x1a\x45\xdf\xa3" + b"\x00" * 24)
+                _upload("audio/webm", b"\x1a\x45\xdf\xa3" + b"\x00" * 4092)
             )
         )
         self.assertEqual(extension, ".webm")
         self.assertTrue(content.startswith(b"\x1a\x45\xdf\xa3"))
+
+    def test_rejects_header_only_recording(self) -> None:
+        with self.assertRaises(HTTPException) as caught:
+            asyncio.run(
+                read_validated_speaking_answer(
+                    _upload("audio/webm", b"\x1a\x45\xdf\xa3" + b"\x00" * 128)
+                )
+            )
+        self.assertIn("too short", caught.exception.detail)
 
     def test_rejects_declared_audio_with_arbitrary_content(self) -> None:
         with self.assertRaises(HTTPException) as caught:

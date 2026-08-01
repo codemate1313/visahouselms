@@ -8,8 +8,8 @@ import { COMPOSITE_TYPES, SOURCE_SECTIONS } from "../helpers";
 
 interface NewModuleFormProps {
   requestedType: ExamModuleType | null;
-  details: { title: string; description: string; instructions: string };
-  onDetailsChange: (details: { title: string; description: string; instructions: string }) => void;
+  details: { title: string; description: string; instructions: string; duration_minutes: number };
+  onDetailsChange: (details: { title: string; description: string; instructions: string; duration_minutes: number }) => void;
   sourceModules: ExamModule[];
   selectedSources: Record<IeltsSection, string>;
   onSelectedSourcesChange: (sources: Record<IeltsSection, string>) => void;

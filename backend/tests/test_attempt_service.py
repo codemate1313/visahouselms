@@ -5,6 +5,7 @@ from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -302,6 +303,44 @@ class AttemptServiceTestCase(unittest.TestCase):
                 for criterion in part["grade"]["criteria"]
             )
         )
+
+    def test_speaking_requires_every_recording_before_entering_grading_queue(self):
+        created = module_authoring_service.create_module(
+            self.db,
+            self.instructor,
+            {"module_type": "speaking", "title": "Speaking A", "description": None, "instructions": None},
+            "127.0.0.1",
+        )
+        module = module_authoring_service.get_module_or_404(self.db, created["id"])
+        for part in module.parts:
+            self.db.add(
+                ExamModuleQuestion(
+                    part_id=part.id,
+                    **_question("speaking_prompt", f"{part.title} prompt", Decimal("1"), []),
+                    source_type="manual",
+                    source_filename=None,
+                    sort_order=0,
+                    created_by_id=self.instructor.id,
+                )
+            )
+        self.db.commit()
+        self._course_with_module(module.id)
+
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        with self.assertRaises(HTTPException) as context:
+            attempt_service.submit_attempt(self.db, attempt)
+        self.assertEqual(context.exception.status_code, 409)
+        self.assertIn("4 Speaking recordings are missing", context.exception.detail)
+        self.assertEqual(attempt.status, ATTEMPT_IN_PROGRESS)
+        self.assertEqual(self.db.query(GradingQueueEntry).filter_by(attempt_id=attempt.id).count(), 0)
+
+        for part in attempt.module.parts:
+            question = part.questions[0]
+            attempt_service.save_audio_answer(self.db, attempt, question.id, b"recorded-audio" * 400, ".webm")
+        result = attempt_service.submit_attempt(self.db, attempt)
+        self.assertEqual(result["status"], ATTEMPT_GRADING)
+        self.assertEqual(self.db.query(GradingQueueEntry).filter_by(attempt_id=attempt.id).count(), 1)
 
     def test_institute_student_submit_routes_to_active_institute_staff(self):
         module = self._build_writing_module()

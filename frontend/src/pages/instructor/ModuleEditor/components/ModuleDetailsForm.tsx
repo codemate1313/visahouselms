@@ -6,8 +6,8 @@ import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
 interface ModuleDetailsFormProps {
   module: ExamModule;
-  details: { title: string; description: string; instructions: string };
-  onDetailsChange: (details: { title: string; description: string; instructions: string }) => void;
+  details: { title: string; description: string; instructions: string; duration_minutes: number };
+  onDetailsChange: (details: { title: string; description: string; instructions: string; duration_minutes: number }) => void;
   isEditable: boolean;
   busy: boolean;
   onSubmit: (event: FormEvent) => void;
@@ -48,6 +48,18 @@ export function ModuleDetailsForm({ module, details, onDetailsChange, isEditable
           onChange={(event) => onDetailsChange({ ...details, instructions: event.target.value })}
           readOnly={!isEditable}
         />
+        <label htmlFor="module-duration">{t.durationLabel}<RequiredMark /></label>
+        <input
+          id="module-duration"
+          type="number"
+          min={1}
+          max={600}
+          value={details.duration_minutes}
+          onChange={(event) => onDetailsChange({ ...details, duration_minutes: Number(event.target.value) })}
+          required
+          readOnly={!isEditable}
+        />
+        <p className="field-hint">{t.durationHint}</p>
         <div className="form-actions">
           {isEditable && (
             <Button type="submit" disabled={busy}>

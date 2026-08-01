@@ -297,6 +297,8 @@ export interface ExamModulePart {
     maximum_words?: number;
     audio_plays?: number;
     audio_required?: boolean;
+    preparation_seconds?: number;
+    response_seconds?: number;
   };
   rubric: ModuleRubricCriterion[];
   sort_order: number;

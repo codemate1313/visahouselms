@@ -14,6 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.config import settings
+from app.core.uploads import MIN_SPEAKING_AUDIO_BYTES
 from app.models.attempt import (
     ATTEMPT_GRADED,
     ATTEMPT_GRADING,
@@ -108,6 +109,8 @@ def _build_content_snapshot(module: ExamModule, *, randomize: bool) -> dict:
         if randomize:
             questions = questions[:]
             _randomizer.shuffle(questions)
+        if part.question_limit is not None and part.question_limit > 0:
+            questions = questions[:part.question_limit]
         question_ids: list[int] = []
         question_data: dict[str, dict] = {}
         for question in questions:
@@ -184,7 +187,7 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         security_required=is_final,
         started_at=now,
         expires_at=expires_at,
-        content_snapshot=_build_content_snapshot(module, randomize=is_final),
+        content_snapshot=_build_content_snapshot(module, randomize=True),
     )
     db.add(attempt)
     try:
@@ -525,7 +528,7 @@ def _maybe_auto_submit_for_violations(db: Session, attempt: TestAttempt) -> None
         "auto_submit_violation_count": count,
         "auto_submitted_at": _now().isoformat(),
     }
-    submit_attempt(db, attempt)
+    submit_attempt(db, attempt, require_complete_speaking=False)
 
 
 def secure_preflight(
@@ -846,10 +849,45 @@ def _grade_answer(
     return is_correct, (Decimal(source.get("points", question.points)) if is_correct else Decimal("0"))
 
 
-def submit_attempt(db: Session, attempt: TestAttempt) -> dict:
+def _missing_speaking_recordings(attempt: TestAttempt) -> list[str]:
+    answers_by_question = {answer.question_id: answer for answer in attempt.answers}
+    missing: list[str] = []
+    for part in attempt.module.parts:
+        if part.section_type != "speaking":
+            continue
+        for question in _ordered_questions(attempt, part):
+            answer = answers_by_question.get(question.id)
+            audio_path = settings.storage_path / answer.audio_path if answer and answer.audio_path else None
+            if (
+                audio_path is None
+                or not audio_path.is_file()
+                or audio_path.stat().st_size < MIN_SPEAKING_AUDIO_BYTES
+            ):
+                missing.append(f"{part.title}: {question.prompt}")
+    return missing
+
+
+def submit_attempt(
+    db: Session,
+    attempt: TestAttempt,
+    *,
+    require_complete_speaking: bool = True,
+) -> dict:
     if attempt.status != ATTEMPT_IN_PROGRESS:
         # idempotent: a retried submit just returns the current state
         return get_student_view(db, attempt)
+
+    if require_complete_speaking:
+        missing_recordings = _missing_speaking_recordings(attempt)
+        if missing_recordings:
+            count = len(missing_recordings)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    f"{count} Speaking recording{'s are' if count != 1 else ' is'} missing. "
+                    "Complete every Speaking response before submitting the test."
+                ),
+            )
 
     attempt.status = ATTEMPT_SUBMITTED
     attempt.submitted_at = _now()

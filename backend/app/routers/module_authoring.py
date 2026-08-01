@@ -15,6 +15,7 @@ from app.schemas.exam_module import (
     ModuleQuestionBatchCreate,
     ModuleStatusUpdate,
     ModuleUpdate,
+    SpeakingPartTimingUpdate,
     TTSCreate,
 )
 from app.services import (
@@ -105,6 +106,26 @@ def update_module(
         module_id,
         payload.model_dump(),
         set(payload.model_fields_set),
+        _ip(request),
+    )
+
+
+@router.patch("/{module_id}/parts/{part_id}/speaking-timing")
+def update_speaking_part_timing(
+    module_id: int,
+    part_id: int,
+    payload: SpeakingPartTimingUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return module_authoring_service.update_speaking_part_timing(
+        db,
+        actor,
+        module_id,
+        part_id,
+        payload.preparation_seconds,
+        payload.response_seconds,
         _ip(request),
     )
 

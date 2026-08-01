@@ -140,6 +140,7 @@ SPEAKING_ANSWER_AUDIO_TYPES = {
     "audio/wav",
     "audio/x-wav",
 }
+MIN_SPEAKING_AUDIO_BYTES = 4096
 
 
 async def read_validated_speaking_answer(upload: UploadFile) -> tuple[bytes, str]:
@@ -153,6 +154,11 @@ async def read_validated_speaking_answer(upload: UploadFile) -> tuple[bytes, str
     content = await upload.read()
     if not content:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Uploaded recording is empty")
+    if len(content) < MIN_SPEAKING_AUDIO_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Recording is too short or contains no captured audio. Check the microphone and try again",
+        )
     if len(content) > 25 * 1024 * 1024:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Recordings must be 25 MB or smaller")
     signatures = {

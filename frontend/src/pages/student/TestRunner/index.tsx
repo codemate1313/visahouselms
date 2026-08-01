@@ -32,6 +32,14 @@ import { SecurityWatermark } from "./components/SecurityWatermark";
 import { DesktopRequiredNotice } from "./components/DesktopRequiredNotice";
 import { ViolationPolicyModal } from "./components/ViolationPolicyModal";
 import { SpeakingInterviewStage } from "./components/SpeakingInterviewStage";
+import { MicrophoneCheck } from "@/components/speaking/MicrophoneCheck";
+import {
+  cloneSpeakingMicrophoneStream,
+  createSpeakingMediaRecorder,
+  getSpeakingMicrophoneStream,
+  hasVerifiedSpeakingMicrophone,
+  releaseSpeakingMicrophone,
+} from "@/media/speakingMicrophone";
 
 interface ViolationPolicyResponse {
   risk_score: number;
@@ -72,12 +80,16 @@ export function TestRunner() {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const hasSpeakingPart = attempt?.parts.some((part) => part.section_type === "speaking") ?? false;
 
   const [savingIds, setSavingIds] = useState<Set<number>>(new Set());
   const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordingStreamRef = useRef<MediaStream | null>(null);
+  const recordingQuestionIdRef = useRef<number | null>(null);
   const [recordingQuestionId, setRecordingQuestionId] = useState<number | null>(null);
   const [recordingFailedQuestionId, setRecordingFailedQuestionId] = useState<number | null>(null);
+  const [speakingMicrophoneReady, setSpeakingMicrophoneReady] = useState(hasVerifiedSpeakingMicrophone);
   const [fullscreenActive, setFullscreenActive] = useState(() => Boolean(document.fullscreenElement));
   const [securityAuthorized, setSecurityAuthorized] = useState(false);
   const [securityStarting, setSecurityStarting] = useState(false);
@@ -189,6 +201,48 @@ export function TestRunner() {
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [attempt, submit]);
+
+  // Keep the display awake throughout a live Speaking test. Unsupported or
+  // power-restricted browsers simply continue without a wake lock.
+  useEffect(() => {
+    if (attempt?.status !== "in_progress" || !hasSpeakingPart) return;
+    type WakeLockSentinelLike = { release: () => Promise<void>; released?: boolean };
+    type NavigatorWithWakeLock = Navigator & { wakeLock?: { request: (type: "screen") => Promise<WakeLockSentinelLike> } };
+    let sentinel: WakeLockSentinelLike | null = null;
+    let cancelled = false;
+
+    const requestWakeLock = async () => {
+      if (document.visibilityState !== "visible" || sentinel) return;
+      try {
+        const acquired = await (navigator as NavigatorWithWakeLock).wakeLock?.request("screen");
+        if (!acquired) return;
+        if (cancelled) {
+          await acquired.release();
+          return;
+        }
+        sentinel = acquired;
+      } catch {
+        // The assessment stays usable if the device denies a wake lock.
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible" && (!sentinel || sentinel.released)) {
+        sentinel = null;
+        void requestWakeLock();
+      }
+    };
+
+    void requestWakeLock();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      void sentinel?.release();
+      sentinel = null;
+    };
+  }, [attempt?.id, attempt?.status, hasSpeakingPart]);
+
+  useEffect(() => () => releaseSpeakingMicrophone(), []);
 
   const recordFlag = useCallback(
     (flagType: ProctorFlagType, meta?: Record<string, unknown>) => {
@@ -646,22 +700,68 @@ export function TestRunner() {
   }
 
   async function recordSpeakingAnswer(questionId: number): Promise<boolean> {
-    if (recordingQuestionId === questionId) {
-      recorderRef.current?.stop();
+    if (recorderRef.current?.state === "recording") {
+      if (recordingQuestionIdRef.current !== questionId) return false;
+      recorderRef.current.requestData();
+      recorderRef.current.stop();
       return true;
     }
     try {
       setRecordingFailedQuestionId(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+        throw new Error("Audio recording is not supported by this browser");
+      }
+
+      // Final tests already hold a proctoring microphone stream. Clone that
+      // live track so starting a Speaking answer does not request or seize the
+      // physical microphone a second time.
+      const secureStream = cameraStreamRef.current;
+      if (!secureStream?.getAudioTracks().some((track) => track.readyState === "live" && track.enabled)) {
+        await getSpeakingMicrophoneStream();
+      }
+      const stream = cloneSpeakingMicrophoneStream(secureStream);
+      recordingStreamRef.current = stream;
+      const recorder = createSpeakingMediaRecorder(stream);
       const chunks: BlobPart[] = [];
-      recorder.ondataavailable = (event) => chunks.push(event.data);
+      let recorderFailed = false;
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunks.push(event.data);
+      };
+      recorder.onerror = () => {
+        recorderFailed = true;
+        stream.getTracks().forEach((track) => track.stop());
+        if (!isFinalAttempt) {
+          releaseSpeakingMicrophone();
+          setSpeakingMicrophoneReady(false);
+        }
+        recordingStreamRef.current = null;
+        recorderRef.current = null;
+        recordingQuestionIdRef.current = null;
+        setRecordingQuestionId(null);
+        setRecordingFailedQuestionId(questionId);
+        showError(strings.errors.microphoneBlocked, strings.errors.microphoneBlockedTitle);
+      };
       recorder.onstop = async () => {
         stream.getTracks().forEach((track) => track.stop());
+        recordingStreamRef.current = null;
+        recorderRef.current = null;
+        recordingQuestionIdRef.current = null;
         setRecordingQuestionId(null);
-        const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+        if (recorderFailed) return;
+        const contentType = (recorder.mimeType || "audio/webm").split(";")[0];
+        const extension = contentType === "audio/mp4" ? "m4a" : contentType === "audio/ogg" ? "ogg" : "webm";
+        const blob = new Blob(chunks, { type: contentType });
+        if (blob.size < 4096) {
+          if (!isFinalAttempt) {
+            releaseSpeakingMicrophone();
+            setSpeakingMicrophoneReady(false);
+          }
+          setRecordingFailedQuestionId(questionId);
+          showError(strings.errors.emptyRecording, strings.errors.recordingUploadTitle);
+          return;
+        }
         const form = new FormData();
-        form.append("file", blob, "answer.webm");
+        form.append("file", blob, `answer.${extension}`);
         setSavingIds((prev) => new Set(prev).add(questionId));
         try {
           await apiClient.post(`/student/attempts/${id}/answers/${questionId}/audio`, form, { headers: securityHeaders() });
@@ -689,7 +789,8 @@ export function TestRunner() {
         }
       };
       recorderRef.current = recorder;
-      recorder.start();
+      recordingQuestionIdRef.current = questionId;
+      recorder.start(1000);
       setRecordingQuestionId(questionId);
       setAttempt((current) => {
         if (!current) return current;
@@ -707,6 +808,14 @@ export function TestRunner() {
       });
       return true;
     } catch {
+      recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+      recordingStreamRef.current = null;
+      recorderRef.current = null;
+      recordingQuestionIdRef.current = null;
+      if (!isFinalAttempt) {
+        releaseSpeakingMicrophone();
+        setSpeakingMicrophoneReady(false);
+      }
       showError(strings.errors.microphoneBlocked, strings.errors.microphoneBlockedTitle);
       return false;
     }
@@ -845,6 +954,14 @@ export function TestRunner() {
   if (!currentPart) return <div className="test-runner-loading">{strings.loading}</div>;
 
   if (currentPart.section_type === "speaking") {
+    if (!isFinalAttempt && !speakingMicrophoneReady) {
+      return (
+        <MicrophoneCheck
+          testTitle={attempt.module_title}
+          onReady={() => setSpeakingMicrophoneReady(true)}
+        />
+      );
+    }
     const speakingParts = attempt.parts.filter((part) => part.section_type === "speaking");
     const speakingPartNumber = speakingParts.findIndex((part) => part.id === currentPart.id) + 1;
     return (

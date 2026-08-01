@@ -24,6 +24,7 @@ import { ModuleDetailsForm } from "./components/ModuleDetailsForm";
 import { PartSpecPanel } from "./components/PartSpecPanel";
 import { ListeningAudioPanel } from "./components/ListeningAudioPanel";
 import { SpeakingAvatarPanel } from "./components/SpeakingAvatarPanel";
+import { SpeakingTimingPanel } from "./components/SpeakingTimingPanel";
 import { ManualQuestionForm } from "./components/ManualQuestionForm";
 import { BulkImportForm } from "./components/BulkImportForm";
 import { ImportReviewPanel } from "./components/ImportReviewPanel";
@@ -36,7 +37,7 @@ export function ModuleEditor() {
   const requestedType = rawType && MODULE_TYPES.has(rawType as ExamModuleType) ? rawType as ExamModuleType : null;
   const [module, setModule] = useState<ExamModule | null>(null);
   const [selectedPartId, setSelectedPartId] = useState<number | null>(null);
-  const [details, setDetails] = useState({ title: "", description: "", instructions: "" });
+  const [details, setDetails] = useState({ title: "", description: "", instructions: "", duration_minutes: 1 });
   const [sourceModules, setSourceModules] = useState<ExamModule[]>([]);
   const [selectedSources, setSelectedSources] = useState<Record<IeltsSection, string>>({ listening: "", reading: "", writing: "", speaking: "" });
   const [loadingSources, setLoadingSources] = useState(false);
@@ -61,7 +62,7 @@ export function ModuleEditor() {
     try {
       const { data } = await apiClient.get<ExamModule>(`/instructor/modules/${id}`);
       setModule(data);
-      setDetails({ title: data.title, description: data.description ?? "", instructions: data.instructions ?? "" });
+      setDetails({ title: data.title, description: data.description ?? "", instructions: data.instructions ?? "", duration_minutes: data.duration_minutes });
       const selected = data.parts?.find((part) => part.id === (preferredPartId ?? selectedPartId)) ?? data.parts?.[0] ?? null;
       setSelectedPartId(selected?.id ?? null);
       if (selected) setManual(emptyQuestion(selected));
@@ -129,7 +130,7 @@ export function ModuleEditor() {
     event.preventDefault(); if (!module) return;
     setBusy(true); setError(null); setNotice(null);
     try {
-      const { data } = await apiClient.patch<ExamModule>(`/instructor/modules/${module.id}`, { title: details.title, description: details.description || null, instructions: details.instructions || null });
+      const { data } = await apiClient.patch<ExamModule>(`/instructor/modules/${module.id}`, { title: details.title, description: details.description || null, instructions: details.instructions || null, duration_minutes: details.duration_minutes });
       setModule(data); setNotice(strings.details.notices.saved);
     } catch (err: unknown) { setError(extractErrorMessage(err, strings.details.errors.save)); }
     finally { setBusy(false); }
@@ -222,6 +223,23 @@ export function ModuleEditor() {
       setAudioFile(null); await loadModule(selectedPart.id); setNotice(strings.listeningAudio.notices.uploaded(selectedPart.title));
     } catch (err: unknown) { setError(extractErrorMessage(err, strings.listeningAudio.errors.upload)); }
     finally { setBusy(false); }
+  }
+
+  async function saveSpeakingTiming(preparationSeconds: number, responseSeconds: number) {
+    if (!module || !selectedPart) return;
+    setBusy(true); setError(null); setNotice(null);
+    try {
+      const { data } = await apiClient.patch<ExamModule>(
+        `/instructor/modules/${module.id}/parts/${selectedPart.id}/speaking-timing`,
+        { preparation_seconds: preparationSeconds, response_seconds: responseSeconds },
+      );
+      setModule(data);
+      setNotice(strings.speakingTiming.saved(selectedPart.title));
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.speakingTiming.error));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function generateAudio(event: FormEvent) {
@@ -358,13 +376,21 @@ export function ModuleEditor() {
             )}
 
             {selectedPart.section_type === "speaking" && (
-              <SpeakingAvatarPanel
-                part={selectedPart}
-                isEditable={isEditable}
-                avatarGenerating={avatarGenerating}
-                onGenerateAvatar={generateAvatar}
-                onDeleteAudio={deleteAudio}
-              />
+              <>
+                <SpeakingTimingPanel
+                  part={selectedPart}
+                  isEditable={isEditable}
+                  busy={busy}
+                  onSave={saveSpeakingTiming}
+                />
+                <SpeakingAvatarPanel
+                  part={selectedPart}
+                  isEditable={isEditable}
+                  avatarGenerating={avatarGenerating}
+                  onGenerateAvatar={generateAvatar}
+                  onDeleteAudio={deleteAudio}
+                />
+              </>
             )}
 
             {isEditable && manual && (

@@ -65,10 +65,12 @@ export const moduleEditorStrings = {
   },
   details: {
     heading: "Module details",
-    description: "The assessment type and official timing cannot drift from its blueprint.",
+    description: "Set the candidate-facing details and the overall time allowed for this test.",
     titleLabel: "Title",
     descriptionLabel: "Description",
     instructionsLabel: "Candidate instructions",
+    durationLabel: "Overall test time (minutes)",
+    durationHint: "This countdown applies to the complete module, including every part.",
     save: "Save details",
     deleteDraft: "Delete draft",
     working: "Working...",
@@ -86,6 +88,18 @@ export const moduleEditorStrings = {
     deleteConfirm: (title: string) =>
       `Are you sure you want to permanently delete "${title}" and all of its questions and audio? Existing Full/Final Mock copies will not be affected.`,
     deleteConfirmTitle: "Delete Module",
+  },
+  speakingTiming: {
+    eyebrow: "Candidate timing",
+    heading: (partTitle: string) => `Timing for ${partTitle}`,
+    description: "Set how long the candidate prepares and records for each prompt in this Speaking part.",
+    preparationLabel: "Preparation time (seconds)",
+    responseLabel: "Recording time (seconds)",
+    hint: "The recording begins automatically after preparation and stops at the response limit.",
+    save: "Save part timing",
+    saving: "Saving...",
+    saved: (partTitle: string) => `${partTitle} timing saved.`,
+    error: "Failed to save the Speaking part timing.",
   },
   partNav: {
     heading: "Assessment parts",

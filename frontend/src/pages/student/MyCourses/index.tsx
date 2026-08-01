@@ -12,8 +12,17 @@ import { myCoursesStrings as strings } from "./MyCourses.strings";
 import { ModuleTypeIcon } from "./icons";
 import { ModuleFilterBar } from "./components/ModuleFilterBar";
 import { AssignedTestsGrid } from "./components/AssignedTestsGrid";
+import { MicrophoneCheck } from "@/components/speaking/MicrophoneCheck";
+import { releaseSpeakingMicrophone } from "@/media/speakingMicrophone";
 
 const IMMERSIVE_MODULE_TYPES = new Set(["full_mock"]);
+const MICROPHONE_CHECK_MODULE_TYPES = new Set(["speaking", "full_mock", "final_test"]);
+
+interface PendingMicrophoneTest {
+  moduleId: number;
+  moduleType: string;
+  title: string;
+}
 
 export function MyCourses() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -26,6 +35,7 @@ export function MyCourses() {
   const [starting, setStarting] = useState<number | null>(null);
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [search, setSearch] = useState("");
+  const [pendingMicrophoneTest, setPendingMicrophoneTest] = useState<PendingMicrophoneTest | null>(null);
 
   useEffect(() => {
     apiClient
@@ -51,13 +61,19 @@ export function MyCourses() {
     });
   }, [allModules, typeFilter, search]);
 
-  async function startModule(moduleId: number, moduleType: string, isLocked?: boolean) {
+  async function startModule(moduleId: number, moduleType: string, isLocked?: boolean, microphoneVerified = false) {
     if (isLocked) {
       showError(
         "This test module is not included in your active subscription plan. Please upgrade your plan to unlock.",
         "Course Locked"
       );
       navigate("/student/courses");
+      return;
+    }
+
+    if (MICROPHONE_CHECK_MODULE_TYPES.has(moduleType) && !microphoneVerified) {
+      const selected = allModules.find((module) => (module.module_id ?? module.id) === moduleId);
+      setPendingMicrophoneTest({ moduleId, moduleType, title: selected?.title ?? "Speaking test" });
       return;
     }
 
@@ -83,6 +99,7 @@ export function MyCourses() {
         document.exitFullscreen?.().catch(() => {});
       }
       showError(extractErrorMessage(err, strings.errors.startModule), strings.errors.startModuleTitle);
+      releaseSpeakingMicrophone();
     } finally {
       setStarting(null);
     }
@@ -113,6 +130,20 @@ export function MyCourses() {
 
   return (
     <div className="my-courses-page" ref={containerRef}>
+      {pendingMicrophoneTest && (
+        <MicrophoneCheck
+          testTitle={pendingMicrophoneTest.title}
+          onCancel={() => {
+            releaseSpeakingMicrophone();
+            setPendingMicrophoneTest(null);
+          }}
+          onReady={() => {
+            const pending = pendingMicrophoneTest;
+            setPendingMicrophoneTest(null);
+            void startModule(pending.moduleId, pending.moduleType, false, true);
+          }}
+        />
+      )}
       <PageHeader
         eyebrow={strings.eyebrow}
         title={isInstituteStudent ? strings.titles.instituteStudent : strings.titles.directStudent}

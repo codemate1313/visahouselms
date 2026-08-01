@@ -136,18 +136,28 @@ def validation_errors(module: ExamModule) -> list[str]:
                 f"{part.title} requires at least {part.minimum_questions} question"
                 f"{'s' if part.minimum_questions != 1 else ''}; it currently has {count}."
             )
-        if part.question_limit is not None and count != part.question_limit:
+        if part.question_limit is not None and count < part.question_limit:
             errors.append(
-                f"{part.title} must contain exactly {part.question_limit} questions; it currently has {count}."
+                f"{part.title} must contain at least {part.question_limit} questions; it currently has {count}."
             )
         allowed = set((part.answer_constraints or {}).get("allowed_question_types", []))
         invalid = sorted({question.question_type for question in part.questions if allowed and question.question_type not in allowed})
         if invalid:
             errors.append(f"{part.title} contains unsupported question types: {', '.join(invalid)}.")
         if part.max_marks is not None:
-            total = sum((Decimal(question.points) for question in part.questions), Decimal("0"))
-            if total != Decimal(part.max_marks):
-                errors.append(f"{part.title} must total {part.max_marks:g} marks; it currently totals {total:g}.")
+            if part.question_limit is not None and part.question_limit > 0:
+                expected_points = Decimal(part.max_marks) / Decimal(part.question_limit)
+                for q in part.questions:
+                    if Decimal(q.points) != expected_points:
+                        errors.append(
+                            f"Each question in {part.title} must carry exactly {expected_points:g} marks "
+                            f"(total {part.max_marks:g} / limit {part.question_limit}); "
+                            f"question '{q.prompt[:30]}...' has {q.points:g} marks."
+                        )
+            else:
+                total = sum((Decimal(question.points) for question in part.questions), Decimal("0"))
+                if total != Decimal(part.max_marks):
+                    errors.append(f"{part.title} must total {part.max_marks:g} marks; it currently totals {total:g}.")
         if (part.answer_constraints or {}).get("audio_required") and not part.assets:
             errors.append(f"{part.title} requires an MP3 upload or browser-narrated transcript.")
     return errors
@@ -411,10 +421,43 @@ def update_module(
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
     _require_draft(module)
-    for field in ("title", "description", "instructions"):
+    for field in ("title", "description", "instructions", "duration_minutes"):
         if field in fields_set:
             setattr(module, field, data.get(field))
     _audit(db, actor, "exam_module.update", module.id, ip, {"fields": sorted(fields_set)})
+    db.commit()
+    return serialize_module(get_module_or_404(db, module.id), detailed=True)
+
+
+def update_speaking_part_timing(
+    db: Session,
+    actor: User,
+    module_id: int,
+    part_id: int,
+    preparation_seconds: int,
+    response_seconds: int,
+    ip: Optional[str],
+) -> dict:
+    module, part = get_editable_part(db, actor, module_id, part_id)
+    if part.section_type != "speaking":
+        raise HTTPException(status_code=400, detail="Timing can only be configured for Speaking parts")
+
+    constraints = dict(part.answer_constraints or {})
+    constraints["preparation_seconds"] = preparation_seconds
+    constraints["response_seconds"] = response_seconds
+    part.answer_constraints = constraints
+    _audit(
+        db,
+        actor,
+        "exam_module.speaking_timing.update",
+        module.id,
+        ip,
+        {
+            "part_id": part.id,
+            "preparation_seconds": preparation_seconds,
+            "response_seconds": response_seconds,
+        },
+    )
     db.commit()
     return serialize_module(get_module_or_404(db, module.id), detailed=True)
 
@@ -426,8 +469,8 @@ def _validate_question_for_part(part: ExamModulePart, data: dict, current_count:
             status_code=400,
             detail=f"{part.title} accepts only: {', '.join(sorted(allowed))}",
         )
-    if part.question_limit is not None and current_count >= part.question_limit:
-        raise HTTPException(status_code=400, detail=f"{part.title} is limited to {part.question_limit} questions")
+    # Pool size is unrestricted, so we allow uploading more than question_limit questions
+    pass
     max_words = (part.answer_constraints or {}).get("max_answer_words")
     if max_words and any(len(answer.split()) > max_words for answer in data.get("correct_answers", [])):
         raise HTTPException(status_code=400, detail=f"Answers in {part.title} may contain no more than {max_words} words")
@@ -490,9 +533,8 @@ def import_questions(
     _require_owner(module, actor)
     _require_draft(module)
     part = _part_or_404(module, part_id)
-    if part.question_limit is not None and len(part.questions) + len(questions) > part.question_limit:
-        remaining = part.question_limit - len(part.questions)
-        raise HTTPException(status_code=400, detail=f"{part.title} has room for only {remaining} more questions")
+    # Pool size is unrestricted, so we allow importing more than question_limit questions
+    pass
     for offset, question in enumerate(questions):
         _validate_question_for_part(part, question, len(part.questions) + offset)
     records = [

@@ -25,7 +25,7 @@ interface SpeakingInterviewStageProps {
 }
 
 function formatTime(totalSeconds: number): string {
-  const safeSeconds = Math.max(0, totalSeconds);
+  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
   const minutes = Math.floor(safeSeconds / 60);
   const seconds = safeSeconds % 60;
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
@@ -196,7 +196,7 @@ export function SpeakingInterviewStage({
         <div className="speaking-interview-actions">
           {mode === "ready" && (
             <Button leftIcon={<Icon name="play" />} onClick={beginPreparation} size="lg">
-              {recorded ? t.recordAgain : t.startResponse}
+              {t.startResponse}
             </Button>
           )}
           {mode === "preparing" && (
@@ -215,16 +215,11 @@ export function SpeakingInterviewStage({
             </Button>
           )}
           {mode === "complete" && (
-            <>
-              <Button onClick={beginPreparation} size="sm" variant="text">
-                {t.recordAgain}
-              </Button>
-              <Button rightIcon={<Icon name="arrowRight" />} onClick={continueInterview} size="lg">
-                {isLastQuestion
-                  ? isLastTestPart ? t.reviewAndSubmit : t.continueToNextPart
-                  : t.continueToNextQuestion}
-              </Button>
-            </>
+            <Button rightIcon={<Icon name="arrowRight" />} onClick={continueInterview} size="lg">
+              {isLastQuestion
+                ? isLastTestPart ? t.reviewAndSubmit : t.continueToNextPart
+                : t.continueToNextQuestion}
+            </Button>
           )}
         </div>
       </section>

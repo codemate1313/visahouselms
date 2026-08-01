@@ -60,6 +60,7 @@ class ModuleUpdate(BaseModel):
     title: Optional[str] = Field(default=None, min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=2000)
     instructions: Optional[str] = Field(default=None, max_length=20000)
+    duration_minutes: Optional[int] = Field(default=None, ge=1, le=600)
 
     @field_validator("title")
     @classmethod
@@ -70,6 +71,18 @@ class ModuleUpdate(BaseModel):
     @classmethod
     def clean_optional(cls, value: Optional[str]) -> Optional[str]:
         return _optional_text(value)
+
+    @field_validator("duration_minutes")
+    @classmethod
+    def duration_cannot_be_null(cls, value: Optional[int]) -> Optional[int]:
+        if value is None:
+            raise ValueError("duration_minutes cannot be null")
+        return value
+
+
+class SpeakingPartTimingUpdate(BaseModel):
+    preparation_seconds: int = Field(ge=0, le=600)
+    response_seconds: int = Field(ge=5, le=1800)
 
 
 class ModuleStatusUpdate(BaseModel):

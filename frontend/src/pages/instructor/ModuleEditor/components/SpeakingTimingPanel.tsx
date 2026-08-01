@@ -1,0 +1,65 @@
+import { type FormEvent, useEffect, useState } from "react";
+import type { ExamModulePart } from "@/api/types";
+import { Button, RequiredMark } from "@/components/ui";
+import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
+
+interface SpeakingTimingPanelProps {
+  part: ExamModulePart;
+  isEditable: boolean;
+  busy: boolean;
+  onSave: (preparationSeconds: number, responseSeconds: number) => Promise<void>;
+}
+
+export function SpeakingTimingPanel({ part, isEditable, busy, onSave }: SpeakingTimingPanelProps) {
+  const [preparationSeconds, setPreparationSeconds] = useState(part.answer_constraints.preparation_seconds ?? 5);
+  const [responseSeconds, setResponseSeconds] = useState(part.answer_constraints.response_seconds ?? 60);
+  const t = strings.speakingTiming;
+
+  useEffect(() => {
+    setPreparationSeconds(part.answer_constraints.preparation_seconds ?? 5);
+    setResponseSeconds(part.answer_constraints.response_seconds ?? 60);
+  }, [part.id, part.answer_constraints.preparation_seconds, part.answer_constraints.response_seconds]);
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    void onSave(preparationSeconds, responseSeconds);
+  };
+
+  return (
+    <form className="form-card wide speaking-timing-card" onSubmit={submit}>
+      <CollapsiblePanel title={t.heading(part.title)} description={t.description} eyebrow={t.eyebrow}>
+        <div className="speaking-timing-fields">
+          <div>
+            <label htmlFor={`preparation-${part.id}`}>{t.preparationLabel}<RequiredMark /></label>
+            <input
+              id={`preparation-${part.id}`}
+              type="number"
+              min={0}
+              max={600}
+              value={preparationSeconds}
+              onChange={(event) => setPreparationSeconds(Number(event.target.value))}
+              required
+              readOnly={!isEditable}
+            />
+          </div>
+          <div>
+            <label htmlFor={`response-${part.id}`}>{t.responseLabel}<RequiredMark /></label>
+            <input
+              id={`response-${part.id}`}
+              type="number"
+              min={5}
+              max={1800}
+              value={responseSeconds}
+              onChange={(event) => setResponseSeconds(Number(event.target.value))}
+              required
+              readOnly={!isEditable}
+            />
+          </div>
+        </div>
+        <p className="field-hint">{t.hint}</p>
+        {isEditable && <Button type="submit" disabled={busy}>{busy ? t.saving : t.save}</Button>}
+      </CollapsiblePanel>
+    </form>
+  );
+}

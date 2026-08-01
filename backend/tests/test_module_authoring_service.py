@@ -146,6 +146,44 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertEqual((len(blueprints["full_mock"]["parts"]), blueprints["full_mock"]["duration_minutes"]), (15, 154))
         self.assertEqual(len(blueprints["final_test"]["parts"]), 15)
 
+    def test_instructor_can_update_overall_and_speaking_part_timing(self) -> None:
+        created = self._create("speaking")
+        updated = module_authoring_service.update_module(
+            self.db,
+            self.instructor,
+            created["id"],
+            {"duration_minutes": 22},
+            {"duration_minutes"},
+            "127.0.0.1",
+        )
+        self.assertEqual(updated["duration_minutes"], 22)
+
+        first_part = updated["parts"][0]
+        updated = module_authoring_service.update_speaking_part_timing(
+            self.db,
+            self.instructor,
+            created["id"],
+            first_part["id"],
+            preparation_seconds=15,
+            response_seconds=75,
+            ip="127.0.0.1",
+        )
+        constraints = updated["parts"][0]["answer_constraints"]
+        self.assertEqual(constraints["preparation_seconds"], 15)
+        self.assertEqual(constraints["response_seconds"], 75)
+
+        reading = self._create("reading")
+        with self.assertRaises(HTTPException):
+            module_authoring_service.update_speaking_part_timing(
+                self.db,
+                self.instructor,
+                reading["id"],
+                reading["parts"][0]["id"],
+                preparation_seconds=5,
+                response_seconds=60,
+                ip=None,
+            )
+
     def test_questions_are_part_scoped_and_writing_can_publish(self) -> None:
         created = self._create("writing")
         first, second = created["parts"]
