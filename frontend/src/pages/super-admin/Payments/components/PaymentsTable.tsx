@@ -20,6 +20,89 @@ interface PaymentsTableProps {
 
 export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
   const t = strings.table;
+
+  const today: PaymentRow[] = [];
+  const yesterday: PaymentRow[] = [];
+  const older: PaymentRow[] = [];
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+
+  rows.forEach((row) => {
+    if (!row.created_at) {
+      older.push(row);
+      return;
+    }
+    const date = new Date(row.created_at).getTime();
+    if (date >= todayStart) {
+      today.push(row);
+    } else if (date >= yesterdayStart) {
+      yesterday.push(row);
+    } else {
+      older.push(row);
+    }
+  });
+
+  const renderRow = (row: PaymentRow) => (
+    <tr key={row.id}>
+      <td>
+        <strong style={{ fontSize: 13.5, color: "var(--slate-900)" }}>{row.invoice_number ?? "—"}</strong>
+      </td>
+      <td>
+        <span className="badge badge-gray" style={{ fontSize: 11 }}>
+          {row.source.toUpperCase()}
+        </span>
+      </td>
+      <td>
+        <div className="table-item-details">
+          <span className="table-item-title">{row.institute_name ?? t.directStudent}</span>
+          {row.plan_name && (
+            <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--slate-500)" }}>
+              {t.planPrefix} {row.plan_name}
+            </span>
+          )}
+        </div>
+      </td>
+      <td>
+        {row.gateway_reference ? (
+          <div style={{ wordBreak: "break-all", maxWidth: 180, fontSize: 12.5, color: "var(--slate-600)" }}>
+            <span style={{ fontSize: 10, textTransform: "uppercase", background: "var(--slate-100)", padding: "1px 5px", borderRadius: 4, marginRight: 5, color: "var(--slate-600)", fontWeight: 600 }}>
+              {row.gateway || "manual"}
+            </span>
+            {row.gateway_reference}
+          </div>
+        ) : (
+          <span style={{ color: "var(--slate-400)", fontSize: 12.5 }}>—</span>
+        )}
+      </td>
+      <td>
+        <strong style={{ fontSize: 13.5 }}>
+          {formatCurrencyAmount(row.amount_paid, row.currency)}
+        </strong>
+        {Number(row.due_amount) > 0 && (
+          <div className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--sa-sidebar-red)", fontWeight: 600 }}>
+            {t.duePrefix} {formatCurrencyAmount(row.due_amount, row.currency)}
+          </div>
+        )}
+      </td>
+      <td>
+        <span className={`badge ${STATUS_BADGES[row.status] ?? "badge-gray"}`}>{row.status}</span>
+      </td>
+      <td>{new Date(row.created_at).toLocaleDateString("en-GB")}</td>
+      <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>
+        <Link className="action-btn-icon action-edit" to={`/super-admin/payments/${row.id}/invoice`} data-tooltip={t.viewInvoiceTooltip}>
+          <Icon name="billings" />
+        </Link>
+        {Number(row.due_amount) > 0 && (row.status === "partial" || row.status === "pending") && (
+          <button type="button" className="action-btn-icon action-toggle" onClick={() => onOpenDueForm(row)} data-tooltip={t.recordDuePaymentTooltip}>
+            <Icon name="overview" />
+          </button>
+        )}
+      </td>
+    </tr>
+  );
+
   return (
     <DataTableCard>
       <table className="data-table sleek-institutes-table">
@@ -45,67 +128,33 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
               </td>
             </tr>
           )}
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <td>
-                <strong style={{ fontSize: 13.5, color: "var(--slate-900)" }}>{row.invoice_number ?? "—"}</strong>
-              </td>
-              <td>
-                <span className="badge badge-gray" style={{ fontSize: 11 }}>
-                  {row.source.toUpperCase()}
-                </span>
-              </td>
-              <td>
-                <div className="table-item-details">
-                  <span className="table-item-title">{row.institute_name ?? t.directStudent}</span>
-                  {row.plan_name && (
-                    <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--slate-500)" }}>
-                      {t.planPrefix} {row.plan_name}
-                    </span>
-                  )}
-                </div>
-              </td>
-              <td>
-                {row.gateway_reference ? (
-                  <div style={{ wordBreak: "break-all", maxWidth: 180, fontSize: 12.5, color: "var(--slate-600)" }}>
-                    <span style={{ fontSize: 10, textTransform: "uppercase", background: "var(--slate-100)", padding: "1px 5px", borderRadius: 4, marginRight: 5, color: "var(--slate-600)", fontWeight: 600 }}>
-                      {row.gateway || "manual"}
-                    </span>
-                    {row.gateway_reference}
-                  </div>
-                ) : (
-                  <span style={{ color: "var(--slate-400)", fontSize: 12.5 }}>—</span>
-                )}
-              </td>
-              <td>
-                <strong style={{ fontSize: 13.5 }}>
-                  {formatCurrencyAmount(row.amount_paid, row.currency)}
-                </strong>
-                {Number(row.due_amount) > 0 && (
-                  <div className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--sa-sidebar-red)", fontWeight: 600 }}>
-                    {t.duePrefix} {formatCurrencyAmount(row.due_amount, row.currency)}
-                  </div>
-                )}
-              </td>
-              <td>
-                <span className={`badge ${STATUS_BADGES[row.status] ?? "badge-gray"}`}>{row.status}</span>
-              </td>
-              <td>{new Date(row.created_at).toLocaleDateString("en-GB")}</td>
-              <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>
-                <Link className="action-btn-icon action-edit" to={`/super-admin/payments/${row.id}/invoice`} data-tooltip={t.viewInvoiceTooltip}>
-                  <Icon name="billings" />
-                </Link>
-                {Number(row.due_amount) > 0 && (row.status === "partial" || row.status === "pending") && (
-                  <button type="button" className="action-btn-icon action-toggle" onClick={() => onOpenDueForm(row)} data-tooltip={t.recordDuePaymentTooltip}>
-                    <Icon name="overview" />
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
+          {today.length > 0 && (
+            <>
+              <tr className="table-group-header">
+                <td colSpan={8}>Today</td>
+              </tr>
+              {today.map(renderRow)}
+            </>
+          )}
+          {yesterday.length > 0 && (
+            <>
+              <tr className="table-group-header">
+                <td colSpan={8}>Yesterday</td>
+              </tr>
+              {yesterday.map(renderRow)}
+            </>
+          )}
+          {older.length > 0 && (
+            <>
+              <tr className="table-group-header">
+                <td colSpan={8}>Older Payments</td>
+              </tr>
+              {older.map(renderRow)}
+            </>
+          )}
         </tbody>
-
       </table>
     </DataTableCard>
   );
 }
+

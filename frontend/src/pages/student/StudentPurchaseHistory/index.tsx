@@ -323,6 +323,93 @@ export function StudentPurchaseHistory() {
     { value: "grace", label: strings.subStatus.grace },
   ];
 
+  const today: StudentPayment[] = [];
+  const yesterday: StudentPayment[] = [];
+  const older: StudentPayment[] = [];
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+
+  filteredPayments.forEach((p) => {
+    if (!p.created_at) {
+      older.push(p);
+      return;
+    }
+    const date = new Date(p.created_at).getTime();
+    if (date >= todayStart) {
+      today.push(p);
+    } else if (date >= yesterdayStart) {
+      yesterday.push(p);
+    } else {
+      older.push(p);
+    }
+  });
+
+  const renderRow = (p: StudentPayment) => {
+    const isPaid = p.status.toLowerCase() === "paid" || p.status.toLowerCase() === "completed";
+    const invoiceNum = isPaid ? (p.invoice_number || `INV-${String(p.id).padStart(6, "0")}`) : "—";
+
+    const planName = p.plan_name || "Assessment Access Plan";
+    const amountText = formatCurrencyAmount(parseFloat(p.final_amount || "0"), p.currency || "INR");
+    const validityDays = p.validity_days ? `${p.validity_days} Days` : "30 Days";
+
+    return (
+      <tr key={p.id}>
+        <td>
+          {isPaid ? (
+            <span className="invoice-badge">{invoiceNum}</span>
+          ) : (
+            <span style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>—</span>
+          )}
+        </td>
+        <td>
+          <strong>{planName}</strong>
+        </td>
+        <td>{amountText}</td>
+        <td>
+          <span className={`status-chip ${p.status}`}>
+            {strings.status[p.status as keyof typeof strings.status] || p.status}
+          </span>
+        </td>
+        <td>
+          <div>
+            <div className="validity-cell-inline">
+              <span className="validity-days-text">{validityDays}</span>
+              {p.subscription && (
+                <span className={`sub-status-chip ${p.subscription.status}`}>
+                  {strings.subStatus[p.subscription.status as keyof typeof strings.subStatus] ||
+                    p.subscription.status}
+                </span>
+              )}
+            </div>
+            {p.subscription && (
+              <small className="date-range-subtext">
+                {formatDate(p.subscription.starts_at)} – {formatDate(p.subscription.expires_at)}
+              </small>
+            )}
+          </div>
+        </td>
+
+        <td>{formatDate(p.paid_at || p.created_at)}</td>
+        <td>
+          {isPaid ? (
+            <button
+              type="button"
+              className="btn-view-invoice"
+              onClick={() => setSelectedInvoice(p)}
+            >
+              <Icon name="eye" style={{ fontSize: "13px" }} />
+              {strings.table.viewInvoice}
+            </button>
+          ) : (
+            <span style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>—</span>
+          )}
+        </td>
+      </tr>
+    );
+  };
+
   return (
     <div className="purchase-history-container">
       <PageHeader eyebrow={strings.eyebrow} title={strings.title} subtitle={strings.subtitle} />
@@ -430,69 +517,30 @@ export function StudentPurchaseHistory() {
               </tr>
             </thead>
             <tbody>
-              {filteredPayments.map((p) => {
-                const isPaid = p.status.toLowerCase() === "paid" || p.status.toLowerCase() === "completed";
-                const invoiceNum = isPaid ? (p.invoice_number || `INV-${String(p.id).padStart(6, "0")}`) : "—";
-
-                const planName = p.plan_name || "Assessment Access Plan";
-                const amountText = formatCurrencyAmount(parseFloat(p.final_amount || "0"), p.currency || "INR");
-                const validityDays = p.validity_days ? `${p.validity_days} Days` : "30 Days";
-
-                return (
-                  <tr key={p.id}>
-                    <td>
-                      {isPaid ? (
-                        <span className="invoice-badge">{invoiceNum}</span>
-                      ) : (
-                        <span style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>—</span>
-                      )}
-                    </td>
-                    <td>
-                      <strong>{planName}</strong>
-                    </td>
-                    <td>{amountText}</td>
-                    <td>
-                      <span className={`status-chip ${p.status}`}>
-                        {strings.status[p.status as keyof typeof strings.status] || p.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div>
-                        <div className="validity-cell-inline">
-                          <span className="validity-days-text">{validityDays}</span>
-                          {p.subscription && (
-                            <span className={`sub-status-chip ${p.subscription.status}`}>
-                              {strings.subStatus[p.subscription.status as keyof typeof strings.subStatus] ||
-                                p.subscription.status}
-                            </span>
-                          )}
-                        </div>
-                        {p.subscription && (
-                          <small className="date-range-subtext">
-                            {formatDate(p.subscription.starts_at)} – {formatDate(p.subscription.expires_at)}
-                          </small>
-                        )}
-                      </div>
-                    </td>
-
-                    <td>{formatDate(p.paid_at || p.created_at)}</td>
-                    <td>
-                      {isPaid ? (
-                        <button
-                          type="button"
-                          className="btn-view-invoice"
-                          onClick={() => setSelectedInvoice(p)}
-                        >
-                          <Icon name="eye" style={{ fontSize: "13px" }} />
-                          {strings.table.viewInvoice}
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>—</span>
-                      )}
-                    </td>
+              {today.length > 0 && (
+                <>
+                  <tr className="table-group-header">
+                    <td colSpan={7}>Today</td>
                   </tr>
-                );
-              })}
+                  {today.map(renderRow)}
+                </>
+              )}
+              {yesterday.length > 0 && (
+                <>
+                  <tr className="table-group-header">
+                    <td colSpan={7}>Yesterday</td>
+                  </tr>
+                  {yesterday.map(renderRow)}
+                </>
+              )}
+              {older.length > 0 && (
+                <>
+                  <tr className="table-group-header">
+                    <td colSpan={7}>Older Transactions</td>
+                  </tr>
+                  {older.map(renderRow)}
+                </>
+              )}
             </tbody>
 
           </table>

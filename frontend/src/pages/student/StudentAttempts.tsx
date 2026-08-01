@@ -39,6 +39,66 @@ export function StudentAttempts() {
     return attempt.status === selectedStatus;
   });
 
+  const today: AttemptSummary[] = [];
+  const yesterday: AttemptSummary[] = [];
+  const older: AttemptSummary[] = [];
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+
+  filteredAttempts.forEach((attempt) => {
+    if (!attempt.started_at) {
+      older.push(attempt);
+      return;
+    }
+    const date = new Date(attempt.started_at).getTime();
+    if (date >= todayStart) {
+      today.push(attempt);
+    } else if (date >= yesterdayStart) {
+      yesterday.push(attempt);
+    } else {
+      older.push(attempt);
+    }
+  });
+
+  const renderRow = (attempt: AttemptSummary) => (
+    <tr key={attempt.id} className="clickable">
+      <td>{attempt.module_title}</td>
+      <td>
+        <span className={`badge ${STATUS_CLASS[attempt.status] ?? "badge-gray"}`}>
+          {statusLabels[attempt.status as keyof typeof statusLabels] ?? attempt.status}
+        </span>
+      </td>
+      <td>{new Date(attempt.started_at).toLocaleString()}</td>
+      <td>
+        {attempt.raw_score && attempt.max_score
+          ? `${attempt.raw_score} / ${attempt.max_score}`
+          : "—"}
+      </td>
+      <td>{attempt.band_label ?? "—"}</td>
+      <td className="table-actions">
+        {attempt.status === "ready" || attempt.status === "in_progress" ? (
+          <Link
+            to={`/student/attempts/${attempt.id}/take`}
+            aria-label={strings.resumeTest}
+            data-tooltip={strings.resumeTest}
+          >
+            <Icon name="module" />
+          </Link>
+        ) : (
+          <Link
+            to={`/student/attempts/${attempt.id}/result`}
+            aria-label={strings.viewResult}
+            data-tooltip={strings.viewResult}
+          >
+            <Icon name="overview" />
+          </Link>
+        )}
+      </td>
+    </tr>
+  );
+
   return (
     <div>
       <PageHeader eyebrow={strings.eyebrow} title={strings.title} subtitle={strings.subtitle} />
@@ -86,42 +146,30 @@ export function StudentAttempts() {
               </tr>
             </thead>
             <tbody>
-              {filteredAttempts.map((attempt) => (
-                <tr key={attempt.id} className="clickable">
-                  <td>{attempt.module_title}</td>
-                  <td>
-                    <span className={`badge ${STATUS_CLASS[attempt.status] ?? "badge-gray"}`}>
-                      {statusLabels[attempt.status as keyof typeof statusLabels] ?? attempt.status}
-                    </span>
-                  </td>
-                  <td>{new Date(attempt.started_at).toLocaleString()}</td>
-                  <td>
-                    {attempt.raw_score && attempt.max_score
-                      ? `${attempt.raw_score} / ${attempt.max_score}`
-                      : "—"}
-                  </td>
-                  <td>{attempt.band_label ?? "—"}</td>
-                  <td className="table-actions">
-                    {attempt.status === "ready" || attempt.status === "in_progress" ? (
-                      <Link
-                        to={`/student/attempts/${attempt.id}/take`}
-                        aria-label={strings.resumeTest}
-                        data-tooltip={strings.resumeTest}
-                      >
-                        <Icon name="module" />
-                      </Link>
-                    ) : (
-                      <Link
-                        to={`/student/attempts/${attempt.id}/result`}
-                        aria-label={strings.viewResult}
-                        data-tooltip={strings.viewResult}
-                      >
-                        <Icon name="overview" />
-                      </Link>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {today.length > 0 && (
+                <>
+                  <tr className="table-group-header">
+                    <td colSpan={6}>Today</td>
+                  </tr>
+                  {today.map(renderRow)}
+                </>
+              )}
+              {yesterday.length > 0 && (
+                <>
+                  <tr className="table-group-header">
+                    <td colSpan={6}>Yesterday</td>
+                  </tr>
+                  {yesterday.map(renderRow)}
+                </>
+              )}
+              {older.length > 0 && (
+                <>
+                  <tr className="table-group-header">
+                    <td colSpan={6}>Older Attempts</td>
+                  </tr>
+                  {older.map(renderRow)}
+                </>
+              )}
             </tbody>
           </table>
         </div>
