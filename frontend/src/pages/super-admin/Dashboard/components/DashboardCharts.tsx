@@ -45,63 +45,90 @@ export function DashboardCharts({ summary }: DashboardChartsProps) {
     color: STUDENT_TYPE_COLORS[s.type] ?? "var(--series-1)",
   }));
 
+  const hasInstitutesByRevenue = institutesByRevenue.some((d) => d.value > 0);
+  const hasRevenueByMonth = revenueByMonth.some((d) => d.value > 0);
+  const hasPaymentStatus = paymentStatusData.some((d) => d.value > 0);
+  const hasStudentType = studentTypeData.some((d) => d.value > 0);
+  const hasInstituteState = instituteStateData.some((d) => d.value > 0);
+
+  const hasAnyChart =
+    hasInstitutesByRevenue ||
+    hasRevenueByMonth ||
+    hasPaymentStatus ||
+    hasStudentType ||
+    hasInstituteState;
+
+  if (!hasAnyChart) {
+    return null;
+  }
+
   return (
     <>
       <div className="dashboard-charts-grid">
-        <div
-          className="clickable-chart-card-wrapper"
-          onClick={() => setSelectedChart("byInstitute")}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === "Enter" && setSelectedChart("byInstitute")}
-          title="Click to view detailed institute revenue analysis"
-        >
-          <BarChart data={institutesByRevenue} title={t.byInstituteTitle} orientation="vertical" formatValue={formatMoney} ariaLabel={t.byInstituteAriaLabel} emptyMessage={t.revenueEmpty} />
-        </div>
+        {hasInstitutesByRevenue && (
+          <div
+            className="clickable-chart-card-wrapper"
+            onClick={() => setSelectedChart("byInstitute")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setSelectedChart("byInstitute")}
+            title="Click to view detailed institute revenue analysis"
+          >
+            <BarChart data={institutesByRevenue} title={t.byInstituteTitle} orientation="vertical" formatValue={formatMoney} ariaLabel={t.byInstituteAriaLabel} emptyMessage={t.revenueEmpty} />
+          </div>
+        )}
 
-        <div
-          className="clickable-chart-card-wrapper"
-          onClick={() => setSelectedChart("byMonth")}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === "Enter" && setSelectedChart("byMonth")}
-          title="Click to view detailed monthly revenue analysis"
-        >
-          <LineChart data={revenueByMonth} title={t.byMonthTitle} formatValue={formatMoney} ariaLabel={t.byMonthAriaLabel} emptyMessage={t.revenueEmpty} />
-        </div>
+        {hasRevenueByMonth && (
+          <div
+            className="clickable-chart-card-wrapper"
+            onClick={() => setSelectedChart("byMonth")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setSelectedChart("byMonth")}
+            title="Click to view detailed monthly revenue analysis"
+          >
+            <LineChart data={revenueByMonth} title={t.byMonthTitle} formatValue={formatMoney} ariaLabel={t.byMonthAriaLabel} emptyMessage={t.revenueEmpty} />
+          </div>
+        )}
 
-        <div
-          className="clickable-chart-card-wrapper"
-          onClick={() => setSelectedChart("paymentStatus")}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === "Enter" && setSelectedChart("paymentStatus")}
-          title="Click to view detailed payment status analysis"
-        >
-          <DonutChart data={paymentStatusData} title={t.paymentStatusTitle} centerLabel={t.paymentStatusCenterLabel} ariaLabel={t.paymentStatusAriaLabel} emptyMessage={t.paymentStatusEmpty} />
-        </div>
+        {hasPaymentStatus && (
+          <div
+            className="clickable-chart-card-wrapper"
+            onClick={() => setSelectedChart("paymentStatus")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setSelectedChart("paymentStatus")}
+            title="Click to view detailed payment status analysis"
+          >
+            <DonutChart data={paymentStatusData} title={t.paymentStatusTitle} centerLabel={t.paymentStatusCenterLabel} ariaLabel={t.paymentStatusAriaLabel} emptyMessage={t.paymentStatusEmpty} />
+          </div>
+        )}
 
-        <div
-          className="clickable-chart-card-wrapper"
-          onClick={() => setSelectedChart("studentType")}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === "Enter" && setSelectedChart("studentType")}
-          title="Click to view detailed student type analysis"
-        >
-          <DonutChart data={studentTypeData} title={t.studentTypeTitle} centerLabel={t.studentTypeCenterLabel} ariaLabel={t.studentTypeAriaLabel} emptyMessage={t.studentTypeEmpty} />
-        </div>
+        {hasStudentType && (
+          <div
+            className="clickable-chart-card-wrapper"
+            onClick={() => setSelectedChart("studentType")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setSelectedChart("studentType")}
+            title="Click to view detailed student type analysis"
+          >
+            <DonutChart data={studentTypeData} title={t.studentTypeTitle} centerLabel={t.studentTypeCenterLabel} ariaLabel={t.studentTypeAriaLabel} emptyMessage={t.studentTypeEmpty} />
+          </div>
+        )}
 
-        <div
-          className="clickable-chart-card-wrapper"
-          onClick={() => setSelectedChart("instituteState")}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === "Enter" && setSelectedChart("instituteState")}
-          title="Click to view detailed subscription state analysis"
-        >
-          <BarChart data={instituteStateData} title={t.instituteStateTitle} orientation="vertical" legend={instituteStateLegend} ariaLabel={t.instituteStateAriaLabel} emptyMessage={t.instituteStateEmpty} />
-        </div>
+        {hasInstituteState && (
+          <div
+            className="clickable-chart-card-wrapper"
+            onClick={() => setSelectedChart("instituteState")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setSelectedChart("instituteState")}
+            title="Click to view detailed subscription state analysis"
+          >
+            <BarChart data={instituteStateData} title={t.instituteStateTitle} orientation="vertical" legend={instituteStateLegend} ariaLabel={t.instituteStateAriaLabel} emptyMessage={t.instituteStateEmpty} />
+          </div>
+        )}
       </div>
 
       {selectedChart && (

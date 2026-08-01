@@ -49,15 +49,7 @@ export function BarChart({
   const gridMax = maximum < 10 ? Math.max(1, maximum) : Math.ceil(maximum * 1.2);
 
   if (!rows.length || maximum === 0) {
-    return (
-      <div className="chart-card chart-empty" role="status">
-        <div className="chart-title-area">
-          <span className="info-icon-badge"><Icon name="analytics" /></span>
-          <span className="chart-tag-text">{title}</span>
-        </div>
-        <p>{emptyMessage}</p>
-      </div>
-    );
+    return null;
   }
 
   // SVG Geometry: 520 x 240

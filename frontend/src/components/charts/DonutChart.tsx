@@ -48,15 +48,7 @@ export function DonutChart({
   let consumed = 0;
 
   if (!rows.length || total === 0) {
-    return (
-      <div className={`chart-card ${cardVariant === "tinted" ? "tinted-bg" : ""} chart-empty`} role="status">
-        <span className="chart-info-tag">
-          <span className="info-dot"><Icon name="analytics" /></span>
-          <span>{title}</span>
-        </span>
-        <p>{emptyMessage}</p>
-      </div>
-    );
+    return null;
   }
 
   const activeItem = hoveredIndex !== null ? rows[hoveredIndex] : null;

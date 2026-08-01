@@ -22,35 +22,25 @@ export function GlobalLoader() {
 
   return createPortal(
     <div
-      className={`global-3d-loader-backdrop ${isDark ? "is-dark" : "is-light"}`}
-      aria-label={message}
+      className={`global-3d-loader-backdrop minimal-mode ${isDark ? "is-dark" : "is-light"}`}
+      aria-label={message || "Loading..."}
       aria-live="polite"
       aria-atomic="true"
       role="status"
     >
-      <div className="simple-loader-content">
-        <div className="vh-global-loader-box" aria-hidden="true">
-          <div className="vh-loader-orbital-ring" />
-          <div className="vh-loader-badge">
-            <img
-              src={isDark ? "/brand/vh-mark-dark.png" : "/brand/vh-mark-light.png"}
-              alt="Visa House Logo"
-              className="vh-loader-logo-img"
-              onError={(e) => {
-                const target = e.currentTarget;
-                if (target.src !== window.location.origin + "/brand/vh-mark.png") {
-                  target.src = "/brand/vh-mark.png";
-                  return;
-                }
-                target.style.display = "none";
-                const fallback = target.nextElementSibling as HTMLElement;
-                if (fallback) fallback.style.display = "flex";
-              }}
-            />
-            <span className="vh-loader-logo-text" style={{ display: "none" }}>VH</span>
-          </div>
-        </div>
-        <p key={message} className="simple-loader-message">{message}</p>
+      <div className="simple-loader-frame">
+        <div className="simple-spinner-ring" />
+        <img
+          src="/brand/vh-mark-96.png"
+          alt="Visa House Logo"
+          className="simple-loader-logo"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target.src !== window.location.origin + "/brand/vh-mark.png") {
+              target.src = "/brand/vh-mark.png";
+            }
+          }}
+        />
       </div>
     </div>,
     document.body

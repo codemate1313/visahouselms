@@ -46,4 +46,14 @@ export const STAT_ICONS: Record<string, ReactNode> = {
       <path d="M9 12.7L7.2 20l4.8-2.8 4.8 2.8-1.8-7.3" />
     </StatSvg>
   ),
+  ai_left: (
+    <StatSvg>
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+    </StatSvg>
+  ),
+  ai_got: (
+    <StatSvg>
+      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm-1.5 14.5l-4-4 1.41-1.41L10.5 13.67l6.59-6.59L18.5 8.5z" />
+    </StatSvg>
+  ),
 };

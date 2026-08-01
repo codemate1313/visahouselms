@@ -39,6 +39,7 @@ from app.services import (
     subscription_service,
     daily_english_service,
     english_discovery_service,
+    ai_evaluation_service,
 )
 
 router = APIRouter(
@@ -210,6 +211,11 @@ def list_plan_catalog(db: Session = Depends(get_db), user: User = Depends(requir
 @router.get("/my-plan")
 def my_plan(db: Session = Depends(get_db), user: User = Depends(require_student)):
     return subscription_service.my_current_plan_view(db, user)
+
+
+@router.get("/ai-evaluations/history")
+def get_ai_evaluation_history(db: Session = Depends(get_db), user: User = Depends(require_student)):
+    return ai_evaluation_service.get_student_ai_evaluation_history(db, user)
 
 
 from app.core.geo_ip import detect_country_code

@@ -6,6 +6,8 @@ export interface StatCard {
   label: string;
   value: number;
   tone: MetricCardTone;
+  caption?: string;
+  onClick?: () => void;
 }
 
 interface StatCardsGridProps {
@@ -22,6 +24,8 @@ export function StatCardsGrid({ stats }: StatCardsGridProps) {
           label={stat.label}
           value={stat.value}
           tone={stat.tone}
+          caption={stat.caption}
+          onClick={stat.onClick}
         />
       ))}
     </div>

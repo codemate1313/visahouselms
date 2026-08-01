@@ -657,6 +657,9 @@ def my_current_plan_view(db: Session, user: User) -> dict:
         .all()
     )
 
+    from app.services import ai_evaluation_service
+    ai_quota = ai_evaluation_service.get_student_ai_quota_summary(db, user)
+
     if subscription is None or state not in (STATE_ACTIVE, STATE_GRACE):
         return {
             "plan": {
@@ -678,6 +681,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
             "state": state,
             "expires_at": None,
             "access_type": "institute" if user.institute_id is not None else "direct",
+            "ai_evaluations": ai_quota,
         }
 
     plan = subscription.plan
@@ -737,4 +741,5 @@ def my_current_plan_view(db: Session, user: User) -> dict:
         "state": state,
         "expires_at": subscription.expires_at,
         "access_type": "institute" if user.institute_id is not None else "direct",
+        "ai_evaluations": ai_quota,
     }

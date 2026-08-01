@@ -51,7 +51,8 @@ export function MetricCard({
 
   return (
     <div
-      className={`metric-card theme-${normalizedTone}${className ? ` ${className}` : ""}`}
+      className={`metric-card theme-${normalizedTone}${isInteractive ? " is-clickable" : ""}${className ? ` ${className}` : ""}`}
+      style={{ cursor: isInteractive ? "pointer" : "default" }}
       onClick={onClick}
       role={isInteractive ? "button" : undefined}
       tabIndex={isInteractive ? 0 : undefined}

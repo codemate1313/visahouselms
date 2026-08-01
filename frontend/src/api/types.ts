@@ -397,6 +397,36 @@ export interface StudentPlanCatalogItem {
 
 
 
+export interface StudentAiQuotaSummary {
+  ai_evaluations_used: number;
+  ai_evaluations_limit: number;
+  ai_evaluations_left: number;
+  ai_evaluations_got: number;
+  ai_enabled: boolean;
+}
+
+export interface AiEvaluationHistoryItem {
+  id: number;
+  attempt_id: number;
+  module_id: number | null;
+  module_title: string;
+  module_type: string | null;
+  part_id: number;
+  part_title: string;
+  section_type: string | null;
+  status: string;
+  provider: string;
+  model: string | null;
+  created_at: string | null;
+  overall_band: string | null;
+  is_current_month?: boolean;
+}
+
+export interface AiEvaluationHistoryResponse {
+  quota: StudentAiQuotaSummary;
+  history: AiEvaluationHistoryItem[];
+}
+
 export interface StudentCurrentPlan {
   plan: {
     id: number;
@@ -407,6 +437,7 @@ export interface StudentCurrentPlan {
   state: "none" | "active" | "grace" | "expired" | "scheduled";
   expires_at: string | null;
   access_type: "institute" | "direct";
+  ai_evaluations?: StudentAiQuotaSummary;
 }
 
 

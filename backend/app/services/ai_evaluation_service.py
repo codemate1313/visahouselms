@@ -393,6 +393,115 @@ def _limit_rows(db: Session, attempt: TestAttempt, monthly_limit: int) -> list[A
     return [student]
 
 
+def get_student_ai_quota_summary(db: Session, user: User) -> dict:
+    """Returns AI evaluation quota & usage for a student for the current month,
+    along with total AI evaluations completed/received across all time."""
+    status = config_status(db)
+    monthly_limit = status["monthly_limit"]
+    period = _now().strftime("%Y-%m")
+    institute_id = user.institute_id
+
+    if not institute_id:
+        student_limit = _direct_student_limit(db, user.id, monthly_limit)
+        scope = f"direct_student:{user.id}:{period}"
+    else:
+        inst = db.query(Institute).filter(Institute.id == institute_id).first()
+        student_limit = (
+            inst.ai_student_monthly_limit
+            if (inst and inst.ai_student_monthly_limit is not None and inst.ai_student_monthly_limit > 0)
+            else monthly_limit
+        )
+        scope = f"student:{user.id}:{period}"
+
+    row = db.query(AiEvaluationLimit).filter(AiEvaluationLimit.scope_key == scope).first()
+    stored_used = row.used_count if row else 0
+
+    period_start = datetime.strptime(f"{period}-01", "%Y-%m-%d")
+    current_month_count = (
+        db.query(AiEvaluation)
+        .join(TestAttempt, TestAttempt.id == AiEvaluation.attempt_id)
+        .filter(
+            TestAttempt.user_id == user.id,
+            AiEvaluation.status != "failed",
+            AiEvaluation.created_at >= period_start,
+        )
+        .count()
+    )
+    used_count = max(stored_used, current_month_count)
+
+    effective_limit = row.monthly_limit if (row and row.monthly_limit) else student_limit
+    evaluations_left = max(0, effective_limit - used_count)
+
+    total_evaluations_got = (
+        db.query(AiEvaluation)
+        .join(TestAttempt, TestAttempt.id == AiEvaluation.attempt_id)
+        .filter(TestAttempt.user_id == user.id, AiEvaluation.status != "failed")
+        .count()
+    )
+
+    return {
+        "ai_evaluations_used": used_count,
+        "ai_evaluations_limit": effective_limit,
+        "ai_evaluations_left": evaluations_left,
+        "ai_evaluations_got": total_evaluations_got,
+        "ai_enabled": status["configured"],
+    }
+
+
+def get_student_ai_evaluation_history(db: Session, user: User) -> dict:
+    """Returns detailed history of all AI evaluations requested/used by the student,
+    along with their quota summary."""
+    try:
+        quota = get_student_ai_quota_summary(db, user)
+        period = _now().strftime("%Y-%m")
+
+        evaluations = (
+            db.query(AiEvaluation)
+            .join(TestAttempt, TestAttempt.id == AiEvaluation.attempt_id)
+            .filter(TestAttempt.user_id == user.id)
+            .order_by(AiEvaluation.created_at.desc())
+            .all()
+        )
+
+        history = []
+        for ev in evaluations:
+            attempt = getattr(ev, "attempt", None)
+            module = getattr(attempt, "module", None) if attempt else None
+            part = getattr(ev, "part", None)
+            created_at_dt = getattr(ev, "created_at", None)
+            is_current_month = bool(created_at_dt and created_at_dt.strftime("%Y-%m") == period)
+
+            history.append({
+                "id": ev.id,
+                "attempt_id": ev.attempt_id,
+                "module_id": getattr(attempt, "module_id", None) if attempt else None,
+                "module_title": getattr(module, "title", "Unknown Test") if module else "Unknown Test",
+                "module_type": getattr(module, "module_type", None) if module else None,
+                "part_id": ev.part_id,
+                "part_title": getattr(part, "title", f"Part {ev.part_id}") if part else f"Part {ev.part_id}",
+                "section_type": getattr(part, "section_type", None) if part else None,
+                "status": getattr(ev, "status", "completed"),
+                "provider": getattr(ev, "provider", "ai"),
+                "model": getattr(ev, "model", None),
+                "created_at": created_at_dt.isoformat() if created_at_dt else None,
+                "overall_band": str(attempt.overall_band) if (attempt and getattr(attempt, "overall_band", None)) else None,
+                "is_current_month": is_current_month,
+            })
+
+        quota["ai_evaluations_got"] = len(history)
+
+        return {
+            "quota": quota,
+            "history": history,
+        }
+    except Exception as exc:
+        logger.exception("Error fetching AI evaluation history for user %s: %s", getattr(user, "id", None), exc)
+        return {
+            "quota": get_student_ai_quota_summary(db, user),
+            "history": [],
+        }
+
+
 def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
     answers = {answer.question_id: answer for answer in attempt.answers}
     responses = []
