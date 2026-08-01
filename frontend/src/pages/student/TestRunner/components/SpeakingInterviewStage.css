@@ -93,6 +93,19 @@
   line-height: 1.35;
 }
 
+.speaking-interview-prompt .speaking-interview-passage {
+  margin: 16px auto;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  color: #e5e7eb;
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: left;
+  border-left: 3px solid var(--primary, #ef3340);
+  white-space: pre-wrap;
+}
+
 .speaking-interview-prompt p {
   margin: 0;
   color: #aeb6c5;

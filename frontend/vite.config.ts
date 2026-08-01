@@ -11,7 +11,10 @@ const securityHeaders = {
     // :8000, so it needs listing here exactly as connect-src does below.
     "img-src 'self' data: blob: https: http://localhost:8000 http://127.0.0.1:8000 https://cdn.razorpay.com https://*.razorpay.com https://*.stripe.com",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "media-src 'self' blob:",
+    // Speaking avatar prompts and Listening media are served from the dev
+    // backend over plain http on :8000, so it needs listing here exactly as
+    // img-src/connect-src do.
+    "media-src 'self' blob: http://localhost:8000 http://127.0.0.1:8000",
     "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 ws://localhost:* ws://127.0.0.1:* https: https://*.razorpay.com https://*.razorpay.in https://*.stripe.com https://api.stripe.com",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com https://checkout.razorpay.com https://checkout-static.razorpay.com https://cdn.razorpay.com https://api.razorpay.com https://*.razorpay.com https://*.razorpay.in https://js.stripe.com https://*.stripe.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",

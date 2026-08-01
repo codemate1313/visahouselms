@@ -83,11 +83,13 @@ export function TestRunner() {
   const hasSpeakingPart = attempt?.parts.some((part) => part.section_type === "speaking") ?? false;
 
   const [savingIds, setSavingIds] = useState<Set<number>>(new Set());
+  const savingIdsRef = useRef(savingIds);
   const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
   const recordingQuestionIdRef = useRef<number | null>(null);
   const [recordingQuestionId, setRecordingQuestionId] = useState<number | null>(null);
+  const recordingQuestionIdRef = useRef(recordingQuestionId);
   const [recordingFailedQuestionId, setRecordingFailedQuestionId] = useState<number | null>(null);
   const [speakingMicrophoneReady, setSpeakingMicrophoneReady] = useState(hasVerifiedSpeakingMicrophone);
   const [fullscreenActive, setFullscreenActive] = useState(() => Boolean(document.fullscreenElement));
@@ -141,10 +143,31 @@ export function TestRunner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, navigate, securityHeaders]);
 
+  useEffect(() => {
+    savingIdsRef.current = savingIds;
+  }, [savingIds]);
+
+  useEffect(() => {
+    recordingQuestionIdRef.current = recordingQuestionId;
+  }, [recordingQuestionId]);
+
   const submit = useCallback(async () => {
     if (submittedRef.current) return;
     submittedRef.current = true;
     setSubmitting(true);
+
+    // Don't cut off a response the student is still recording or that's
+    // still uploading - flush it first so auto-submit (timer hitting zero)
+    // can't silently drop the last answer.
+    if (recordingQuestionIdRef.current !== null) {
+      recorderRef.current?.stop();
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+    const flushDeadline = Date.now() + 8000;
+    while (savingIdsRef.current.size > 0 && Date.now() < flushDeadline) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+
     try {
       await apiClient.post(`/student/attempts/${id}/submit`, undefined, { headers: securityHeaders() });
       stopSecurityMedia();

@@ -210,7 +210,10 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         )
         if existing is not None:
             return get_student_view(db, get_attempt_or_404(db, user, existing.id))
-        raise
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Could not start a new attempt right now. Please try again.",
+        ) from None
     return get_student_view(db, get_attempt_or_404(db, user, attempt.id))
 
 

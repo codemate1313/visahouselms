@@ -5,6 +5,7 @@ import { SpeakingAvatar } from "@/components/speaking/SpeakingAvatar";
 import { Button } from "@/components/ui";
 import { hasAttemptResponse } from "@/pages/student/attemptMetrics";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
+import { formatTime } from "../helpers";
 import "./SpeakingInterviewStage.css";
 
 type InterviewMode = "ready" | "preparing" | "recording" | "uploading" | "complete";
@@ -22,13 +23,6 @@ interface SpeakingInterviewStageProps {
   recordingFailedQuestionId: number | null;
   onRecord: (questionId: number) => Promise<boolean>;
   onContinuePart: () => void;
-}
-
-function formatTime(totalSeconds: number): string {
-  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
-  const minutes = Math.floor(safeSeconds / 60);
-  const seconds = safeSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 export function SpeakingInterviewStage({
@@ -171,11 +165,11 @@ export function SpeakingInterviewStage({
           />
         </div>
 
-        <div className="speaking-interview-prompt">
-          <span>{t.prompt}</span>
-          <h1>{question.prompt}</h1>
-          {question.instructions && <p>{question.instructions}</p>}
-        </div>
+        {question.passage && (
+          <div className="speaking-interview-prompt">
+            <div className="speaking-interview-passage">{question.passage}</div>
+          </div>
+        )}
 
         <div className={`speaking-interview-timer is-${mode}`}>
           <span>{timerLabel}</span>

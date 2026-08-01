@@ -148,7 +148,9 @@ async def read_validated_speaking_answer(upload: UploadFile) -> tuple[bytes, str
 
     Browser MediaRecorder uses several possible containers, so validate each
     supported type against its own container signature."""
-    content_type = upload.content_type or ""
+    # MediaRecorder's default mimeType includes a codec parameter (e.g.
+    # "audio/webm;codecs=opus"), so compare only the base type.
+    content_type = (upload.content_type or "").split(";", 1)[0].strip()
     if content_type not in SPEAKING_ANSWER_AUDIO_TYPES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Speaking answers must be an audio recording")
     content = await upload.read()
