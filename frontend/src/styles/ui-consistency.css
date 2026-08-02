@@ -371,6 +371,88 @@
   color: #fbbf24;
 }
 
+[data-theme="dark"] :where(.dashboard, .student-layout, .login-page-container, .modal-backdrop, .logout-modal-backdrop, .student-invoice-modal-backdrop, .ui-modal-backdrop) :where(
+  [style*="background: #ffffff"],
+  [style*="background-color: #ffffff"],
+  [style*="background: #fff"],
+  [style*="background-color: #fff"],
+  [style*="background: #fafafa"],
+  [style*="background-color: #fafafa"],
+  [style*="background: #f8fafc"],
+  [style*="background-color: #f8fafc"],
+  [style*="background: #f1f5f9"],
+  [style*="background-color: #f1f5f9"],
+  [style*="background: #f3f4f6"],
+  [style*="background-color: #f3f4f6"]
+) {
+  background: var(--surface-muted) !important;
+  background-color: var(--surface-muted) !important;
+}
+
+[data-theme="dark"] :where(.dashboard, .student-layout, .login-page-container, .modal-backdrop, .logout-modal-backdrop, .student-invoice-modal-backdrop, .ui-modal-backdrop) :where(
+  [style*="background: #eff6ff"],
+  [style*="background-color: #eff6ff"],
+  [style*="background: #dbeafe"],
+  [style*="background-color: #dbeafe"]
+) {
+  background: color-mix(in srgb, var(--info, #60a5fa) 14%, var(--surface)) !important;
+  background-color: color-mix(in srgb, var(--info, #60a5fa) 14%, var(--surface)) !important;
+}
+
+[data-theme="dark"] :where(.dashboard, .student-layout, .login-page-container, .modal-backdrop, .logout-modal-backdrop, .student-invoice-modal-backdrop, .ui-modal-backdrop) :where(
+  [style*="background: #fee2e2"],
+  [style*="background-color: #fee2e2"],
+  [style*="background: #fef2f2"],
+  [style*="background-color: #fef2f2"],
+  [style*="background: #fff1f2"],
+  [style*="background-color: #fff1f2"]
+) {
+  background: color-mix(in srgb, var(--danger) 13%, var(--surface)) !important;
+  background-color: color-mix(in srgb, var(--danger) 13%, var(--surface)) !important;
+}
+
+[data-theme="dark"] :where(.dashboard, .student-layout, .login-page-container, .modal-backdrop, .logout-modal-backdrop, .student-invoice-modal-backdrop, .ui-modal-backdrop) :where(
+  [style*="background: #f0fdf4"],
+  [style*="background-color: #f0fdf4"],
+  [style*="background: #ecfdf5"],
+  [style*="background-color: #ecfdf5"],
+  [style*="background: #dcfce7"],
+  [style*="background-color: #dcfce7"]
+) {
+  background: color-mix(in srgb, var(--success) 13%, var(--surface)) !important;
+  background-color: color-mix(in srgb, var(--success) 13%, var(--surface)) !important;
+}
+
+[data-theme="dark"] :where(.dashboard, .student-layout, .login-page-container, .modal-backdrop, .logout-modal-backdrop, .student-invoice-modal-backdrop, .ui-modal-backdrop) :where(
+  [style*="color: #0f172a"],
+  [style*="color: #111827"],
+  [style*="color: #1e293b"],
+  [style*="color: #334155"]
+) {
+  color: var(--text) !important;
+}
+
+[data-theme="dark"] :where(.dashboard, .student-layout, .login-page-container, .modal-backdrop, .logout-modal-backdrop, .student-invoice-modal-backdrop, .ui-modal-backdrop) :where(
+  [style*="color: #64748b"],
+  [style*="color: #475569"],
+  [style*="color: #94a3b8"]
+) {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] :where(.dashboard, .student-layout, .login-page-container, .modal-backdrop, .logout-modal-backdrop, .student-invoice-modal-backdrop, .ui-modal-backdrop) :where(
+  [style*="border: 1px solid #f1f5f9"],
+  [style*="border: 1px solid #f0f0f0"],
+  [style*="border: 1px solid #e2e8f0"],
+  [style*="border: 1px solid #cbd5e1"],
+  [style*="border-color: #f1f5f9"],
+  [style*="border-color: #f0f0f0"],
+  [style*="border-color: #e2e8f0"],
+  [style*="border-color: #cbd5e1"]
+) {
+  border-color: var(--border) !important;
+}
+
 @media (max-width: 520px) {
   :where(.modal-backdrop, .logout-modal-backdrop, .student-invoice-modal-backdrop, .sab-modal-backdrop, .sat-modal-backdrop) {
     padding: 8px;

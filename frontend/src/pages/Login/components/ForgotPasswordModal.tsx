@@ -88,11 +88,11 @@ export function ForgotPasswordModal({ email, onEmailChange, sent, loading, error
           {sent ? (
             <div style={{ textAlign: "center", animation: 'modalFadeIn 0.4s ease-out' }}>
               <div style={{ 
-                width: 64, height: 64, borderRadius: '50%', backgroundColor: '#dcfce7', 
+                width: 64, height: 64, borderRadius: '50%', backgroundColor: 'color-mix(in srgb, var(--success) 12%, transparent)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px',
-                boxShadow: '0 0 0 8px #f0fdf4'
+                boxShadow: '0 0 0 8px color-mix(in srgb, var(--success) 8%, transparent)'
               }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                   <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
@@ -107,8 +107,8 @@ export function ForgotPasswordModal({ email, onEmailChange, sent, loading, error
                 style={{
                   width: '100%',
                   padding: '14px 20px',
-                  backgroundColor: '#0f172a',
-                  color: '#ffffff',
+                  backgroundColor: 'var(--text)',
+                  color: 'var(--surface)',
                   border: 'none',
                   borderRadius: 12,
                   fontSize: 15,
@@ -126,12 +126,12 @@ export function ForgotPasswordModal({ email, onEmailChange, sent, loading, error
           ) : (
             <>
               <div style={{ 
-                width: 56, height: 56, borderRadius: '12px', backgroundColor: '#fff1f2', 
+                width: 56, height: 56, borderRadius: '12px', backgroundColor: 'color-mix(in srgb, var(--primary) 10%, transparent)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24,
-                border: '1px solid #ffe4e6',
+                border: '1px solid color-mix(in srgb, var(--primary) 20%, transparent)',
                 boxShadow: '0 2px 10px rgba(225, 29, 72, 0.1)'
               }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
@@ -143,7 +143,7 @@ export function ForgotPasswordModal({ email, onEmailChange, sent, loading, error
               <form onSubmit={onSubmit}>
                 <div style={{ marginBottom: 24 }}>
                   <label htmlFor="forgot-email" style={{ display: 'block', fontSize: 12, fontWeight: 700, color: "var(--text-muted)", marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    {t.emailLabel} <span style={{ color: '#e11d48' }}>*</span>
+                    {t.emailLabel} <span style={{ color: 'var(--primary)' }}>*</span>
                   </label>
                   <div style={{ position: 'relative' }}>
                     <div style={{ position: 'absolute', top: 0, bottom: 0, left: 16, display: 'flex', alignItems: 'center', pointerEvents: 'none', color: "var(--text-muted)" }}>
@@ -189,9 +189,9 @@ export function ForgotPasswordModal({ email, onEmailChange, sent, loading, error
                 
                 {error && (
                   <div style={{ 
-                    marginBottom: 24, padding: '12px 16px', backgroundColor: '#fef2f2', 
-                    borderLeft: '4px solid #e11d48', borderRadius: '0 8px 8px 0',
-                    color: '#9f1239', fontSize: 14, display: 'flex', alignItems: 'flex-start', gap: 10
+                    marginBottom: 24, padding: '12px 16px', backgroundColor: 'color-mix(in srgb, var(--danger) 10%, transparent)',
+                    borderLeft: '4px solid var(--danger)', borderRadius: '0 8px 8px 0',
+                    color: 'var(--danger)', fontSize: 14, display: 'flex', alignItems: 'flex-start', gap: 10
                   }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
                       <circle cx="12" cy="12" r="10"></circle>
@@ -208,7 +208,7 @@ export function ForgotPasswordModal({ email, onEmailChange, sent, loading, error
                   style={{
                     width: '100%',
                     padding: '14px 20px',
-                    backgroundColor: '#e11d48',
+                    backgroundColor: 'var(--primary)',
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: 12,

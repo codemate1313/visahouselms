@@ -267,8 +267,8 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
             gridTemplateColumns: "1fr auto",
             gap: "10px",
             padding: "10px 14px",
-            background: "#fafafa",
-            border: "1.5px solid #f0f0f0",
+            background: "var(--surface-muted)",
+            border: "1.5px solid var(--border)",
             borderRadius: "12px",
             marginBottom: "8px",
           }}>
@@ -392,7 +392,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
 
           {/* What's Included */}
           <div style={{
-            border: "1.5px solid #f0f0f0",
+            border: "1.5px solid var(--border)",
             borderRadius: "10px",
             marginBottom: "8px",
             overflow: "hidden",
@@ -403,12 +403,12 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
               alignItems: "center",
               justifyContent: "space-between",
               padding: "7px 12px",
-              background: "#fafafa",
-              borderBottom: plan.modules.length > 0 ? "1px solid #f0f0f0" : "none",
+              background: "var(--surface-muted)",
+              borderBottom: plan.modules.length > 0 ? "1px solid var(--border)" : "none",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <span style={{ color: "var(--text-muted)" }}><IconBox /></span>
-                <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#1e293b" }}>
+                <span style={{ fontSize: "11.5px", fontWeight: 800, color: "var(--text)" }}>
                   What's Included
                 </span>
               </div>
@@ -437,7 +437,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                       justifyContent: "space-between",
                       padding: "6px 10px",
                       background: "var(--surface-muted)",
-                      border: "1px solid #f1f5f9",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
                     }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -449,7 +449,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                           background: color,
                           flexShrink: 0,
                         }} />
-                        <span style={{ fontSize: "11.5px", fontWeight: 600, color: "#1e293b" }}>{mod.title}</span>
+                        <span style={{ fontSize: "11.5px", fontWeight: 600, color: "var(--text)" }}>{mod.title}</span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <span style={{
@@ -491,8 +491,8 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 alignItems: "center",
                 gap: "6px",
                 padding: "6px 10px",
-                background: "#fafafa",
-                border: "1px solid #f0f0f0",
+                background: "var(--surface-muted)",
+                border: "1px solid var(--border)",
                 borderRadius: "8px",
               }}>
                 <span style={{ color: "var(--text-muted)", flexShrink: 0 }}>{b.icon}</span>
@@ -548,9 +548,9 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                     onClick={handleRemoveCoupon}
                     style={{
                       padding: "8px 14px",
-                      background: "#fee2e2",
-                      border: "1px solid #fca5a5",
-                      color: "#991b1b",
+                      background: "color-mix(in srgb, var(--danger) 12%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--danger) 26%, transparent)",
+                      color: "var(--danger)",
                       borderRadius: "9px",
                       fontSize: "11px",
                       fontWeight: 800,

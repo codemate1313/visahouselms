@@ -59,18 +59,7 @@ export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onVi
                     {formatCurrencyAmount(plan.price, plan.currency)}
                   </strong>
                   {plan.is_international_enabled && plan.usd_price && (
-                    <span style={{
-                      fontSize: "11px",
-                      fontWeight: 700,
-                      color: "#1d4ed8",
-                      background: "#eff6ff",
-                      border: "1px solid #bfdbfe",
-                      padding: "1px 6px",
-                      borderRadius: "6px",
-                      display: "inline-block",
-                      marginTop: "2px",
-                      width: "fit-content",
-                    }}>
+                    <span className="ui-chip ui-chip-info" style={{ marginTop: "2px" }}>
                       ${plan.usd_price} USD (Intl)
                     </span>
                   )}

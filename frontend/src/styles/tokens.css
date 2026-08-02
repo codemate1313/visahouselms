@@ -41,6 +41,7 @@
   --danger: #dc2626;
   --danger-hover: #b91c1c;
   --success: #1f7a4d;
+  --info: #2563eb;
   --warning: #9a6a17;
   --warning-soft: rgba(255, 224, 138, 0.34);
 
@@ -285,6 +286,7 @@
   --text: #f3f4f6;
   --text-muted: #9ca3af;
   --border: rgba(255, 255, 255, 0.1);
+  --info: #93c5fd;
   --nav-bg: rgba(24, 27, 34, 0.92);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-bg: rgba(24, 27, 34, 0.85);
