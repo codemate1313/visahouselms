@@ -126,7 +126,7 @@ export const moduleEditorStrings = {
     maximumWords: (count: number) => `Maximum ${count} words`,
     rubricSummary: (count: number) => `Assessment criteria — ${count} × 8 marks`,
     marksRange: (max: number) => `0–${max}`,
-    questionsCount: (count: number, limit?: number | null) => `${count}${limit ? ` / ${limit}` : ""} questions`,
+    questionsCount: (count: number, limit?: number | null) => limit ? `${count} in pool · draws ${limit}` : `${count} questions`,
   },
   listeningAudio: {
     eyebrow: "Required listening media",
@@ -251,7 +251,9 @@ export const moduleEditorStrings = {
   },
   savedQuestions: {
     heading: (partTitle: string) => `Saved content — ${partTitle}`,
-    description: (count: number, limit?: number | null) => `${count}${limit ? ` of ${limit}` : ""} required questions`,
+    description: (count: number, limit?: number | null) => limit
+      ? `${count} questions in the pool. Each attempt draws ${limit} at random.`
+      : `${count} saved questions`,
     emptyTitle: "No content yet",
     emptyDescription: "Add one item manually or upload a PDF/CSV specifically to this part.",
     marksSuffix: (points: number) => `mark${points === 1 ? "" : "s"}`,

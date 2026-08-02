@@ -23,8 +23,7 @@ export function ModulePartNav({ parts, selectedPartId, onChoosePart }: ModulePar
               </small>
             </span>
             <span>
-              {part.questions.length}
-              {part.question_limit ? `/${part.question_limit}` : "+"}
+              {part.question_limit ? `${part.questions.length} pool / ${part.question_limit} draw` : `${part.questions.length}+`}
             </span>
           </button>
         ))}

@@ -138,7 +138,7 @@ def validation_errors(module: ExamModule) -> list[str]:
             )
         if part.question_limit is not None and count < part.question_limit:
             errors.append(
-                f"{part.title} must contain at least {part.question_limit} questions; it currently has {count}."
+                f"{part.title} draws {part.question_limit} questions per attempt; its pool currently has {count}."
             )
         allowed = set((part.answer_constraints or {}).get("allowed_question_types", []))
         invalid = sorted({question.question_type for question in part.questions if allowed and question.question_type not in allowed})
@@ -151,7 +151,7 @@ def validation_errors(module: ExamModule) -> list[str]:
                     if Decimal(q.points) != expected_points:
                         errors.append(
                             f"Each question in {part.title} must carry exactly {expected_points:g} marks "
-                            f"(total {part.max_marks:g} / limit {part.question_limit}); "
+                            f"(total {part.max_marks:g} / {part.question_limit} questions drawn per attempt); "
                             f"question '{q.prompt[:30]}...' has {q.points:g} marks."
                         )
             else:
