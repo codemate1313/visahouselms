@@ -686,71 +686,41 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
 
               {activeTab === "security" && (
                 <div className="user-inspector-section">
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div className="user-inspector-section-heading">
                     <h3>Active & Historic Sessions</h3>
-                    <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>
+                    <span>
                       {data.sessions.filter((s) => s.is_active).length} Active Session(s)
                     </span>
                   </div>
 
                   {data.sessions.length === 0 ? (
-                    <div style={{ padding: '36px 20px', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0' }}>
+                    <div className="user-inspector-empty-card">
                       <p className="user-inspector-muted" style={{ margin: 0 }}>No login sessions recorded.</p>
                     </div>
                   ) : (
-                    <div style={{ display: 'grid', gap: 16 }}>
+                    <div className="user-inspector-session-list">
                       {data.sessions.map((session) => {
                         const { browser, os } = parseUserAgent(session.user_agent);
                         return (
                           <article 
                             key={session.id} 
-                            style={{
-                              backgroundColor: '#ffffff',
-                              border: session.is_active ? '1px solid #e2e8f0' : '1px solid #f1f5f9',
-                              borderRadius: 16,
-                              padding: '20px 22px',
-                              boxShadow: session.is_active ? '0 4px 14px rgba(15, 23, 42, 0.04)' : 'none',
-                              opacity: session.is_active ? 1 : 0.8,
-                              transition: 'all 0.2s ease',
-                              display: 'grid',
-                              gap: 14
-                            }}
+                            className={`user-inspector-session-card ${session.is_active ? "is-active" : "is-revoked"}`}
                           >
                             {/* Card Header Row */}
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                                <div style={{
-                                  width: 44,
-                                  height: 44,
-                                  borderRadius: 12,
-                                  backgroundColor: session.is_active ? '#fff1f2' : '#f1f5f9',
-                                  border: session.is_active ? '1px solid #fecdd3' : '1px solid #e2e8f0',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  color: session.is_active ? '#b91c2b' : '#64748b',
-                                  flexShrink: 0
-                                }}>
+                            <div className="user-inspector-session-header">
+                              <div className="user-inspector-session-main">
+                                <div className="user-inspector-session-icon">
                                   <Icon name="session" />
                                 </div>
                                 <div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                                    <strong style={{ fontSize: 15, fontWeight: 750, color: '#0f172a' }}>{browser} on {os}</strong>
+                                  <div className="user-inspector-session-title-row">
+                                    <strong>{browser} on {os}</strong>
                                     <span className={`badge ${session.is_active ? "badge-green" : "badge-inactive"}`}>
                                       {session.is_active ? "Active" : "Revoked"}
                                     </span>
                                   </div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                                    <span style={{ 
-                                      fontSize: 12, 
-                                      fontFamily: 'var(--mono-font, monospace)', 
-                                      fontWeight: 700, 
-                                      backgroundColor: '#f8fafc', 
-                                      color: '#334155', 
-                                      padding: '2px 8px', 
-                                      borderRadius: 6,
-                                      border: '1px solid #e2e8f0'
-                                    }}>
+                                  <div className="user-inspector-session-meta-row">
+                                    <span className="user-inspector-session-ip">
                                       IP: {session.ip_address || "Unknown"}
                                     </span>
                                   </div>
@@ -766,13 +736,7 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                                   disabled={revokingSessionId !== null}
                                   onClick={() => void revokeSession(session.id)}
                                   leftIcon={<Icon name="revoke" />}
-                                  style={{
-                                    borderRadius: 10,
-                                    padding: '8px 16px',
-                                    fontSize: 13,
-                                    fontWeight: 600,
-                                    boxShadow: '0 2px 8px rgba(185, 28, 43, 0.2)'
-                                  }}
+                                  className="user-inspector-revoke-button"
                                 >
                                   Revoke Session
                                 </Button>
@@ -780,26 +744,16 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                             </div>
 
                             {/* User Agent Monospace Box */}
-                            <div style={{ 
-                              fontSize: 12, 
-                              color: '#64748b', 
-                              backgroundColor: '#f8fafc', 
-                              padding: '10px 14px', 
-                              borderRadius: 10, 
-                              border: '1px solid #f1f5f9',
-                              fontFamily: 'var(--mono-font, monospace)',
-                              wordBreak: 'break-all',
-                              lineHeight: 1.55
-                            }}>
+                            <div className="user-inspector-session-agent">
                               {session.user_agent || "No User Agent string recorded."}
                             </div>
 
                             {/* Timestamps Row */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 12, color: '#64748b', flexWrap: 'wrap', paddingTop: 2 }}>
-                              <span>Created: <strong style={{ color: '#0f172a', fontWeight: 600 }}>{formatDateTime(session.created_at)}</strong></span>
-                              <span>Expires: <strong style={{ color: '#0f172a', fontWeight: 600 }}>{formatDateTime(session.expires_at)}</strong></span>
+                            <div className="user-inspector-session-time-row">
+                              <span>Created: <strong>{formatDateTime(session.created_at)}</strong></span>
+                              <span>Expires: <strong>{formatDateTime(session.expires_at)}</strong></span>
                               {session.revoked_at && (
-                                <span style={{ color: '#e11d48' }}>Revoked: <strong>{formatDateTime(session.revoked_at)}</strong></span>
+                                <span className="is-revoked-at">Revoked: <strong>{formatDateTime(session.revoked_at)}</strong></span>
                               )}
                             </div>
                           </article>
