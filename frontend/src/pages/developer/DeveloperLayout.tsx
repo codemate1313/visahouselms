@@ -33,7 +33,7 @@ export function DeveloperLayout() {
         },
         {
           key: "settings",
-          label: "Developer Settings",
+          label: "Platform Settings",
           icon: "settings",
           to: `/${developerAccessSlug}/settings`,
         },

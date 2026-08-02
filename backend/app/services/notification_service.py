@@ -277,7 +277,7 @@ def notify_ai_evaluation_failed(db: Session, attempt: TestAttempt) -> None:
         kind=AI_EVALUATION_FAILED,
         title=title,
         message="Check AI provider configuration and failed ai_evaluations rows.",
-        link_url="/super-admin/dev-settings",
+        link_url="/super-admin/platform-settings?tab=ai",
     )
 
 

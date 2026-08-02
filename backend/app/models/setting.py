@@ -8,7 +8,7 @@ from app.models.base import Base
 
 
 class Setting(Base):
-    """Phase 1.2 (Developer Settings) owns CRUD/UI for this table. Schema-only
+    """Platform Settings owns CRUD/UI for this table. Schema-only
     stub for now, scoped global (institute_id NULL) or per-institute."""
 
     __tablename__ = "settings"

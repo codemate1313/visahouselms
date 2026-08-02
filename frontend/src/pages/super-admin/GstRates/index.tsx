@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { Button, PageHeader, SearchableSelect } from "@/components/ui";
+import { Button, DataTableCard, Modal, PageHeader, SearchableSelect } from "@/components/ui";
 
 import { Icon } from "@/components/icons";
 import { gstRatesStrings as strings } from "./GstRates.strings";
@@ -135,9 +135,9 @@ export function GstRates() {
       {error && <div className="error-banner mb-4">{error}</div>}
 
       {loading ? (
-        <p style={{ padding: 20, color: "var(--text-muted)" }}>{strings.loading}</p>
+        <p className="ui-loading-copy">{strings.loading}</p>
       ) : (
-        <div className="table-card">
+        <DataTableCard>
           <table className="data-table">
             <thead>
               <tr>
@@ -146,13 +146,13 @@ export function GstRates() {
                 <th>{strings.table.taxType}</th>
                 <th>{strings.table.status}</th>
                 <th>{strings.table.default}</th>
-                <th style={{ textAlign: "right" }}>{strings.table.actions}</th>
+                <th className="table-actions-heading">{strings.table.actions}</th>
               </tr>
             </thead>
             <tbody>
               {rates.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-muted)" }}>
+                  <td colSpan={6} className="ui-empty-row">
                     No GST rates configured. Click <strong>{strings.createBtn}</strong> to add one.
                   </td>
                 </tr>
@@ -160,27 +160,13 @@ export function GstRates() {
                 rates.map((rate) => (
                   <tr key={rate.id}>
                     <td>
-                      <strong style={{ color: "var(--text)", fontSize: "14px" }}>{rate.name}</strong>
+                      <strong className="table-item-title">{rate.name}</strong>
                     </td>
                     <td>
-                      <span style={{ fontSize: "15px", fontWeight: 800, color: "#e11d2e" }}>
-                        {rate.percentage}%
-                      </span>
+                      <span className="ui-tax-percent">{rate.percentage}%</span>
                     </td>
                     <td>
-                      <span
-                        style={{
-                          display: "inline-block",
-                          padding: "3px 10px",
-                          borderRadius: "12px",
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          background: rate.tax_type === "inclusive" ? "#eff6ff" : "#fef2f2",
-                          color: rate.tax_type === "inclusive" ? "#1d4ed8" : "#b91c1c",
-                          border: `1px solid ${rate.tax_type === "inclusive" ? "#bfdbfe" : "#fecaca"}`,
-                          textTransform: "capitalize",
-                        }}
-                      >
+                      <span className={`ui-chip ${rate.tax_type === "inclusive" ? "ui-chip-info" : "ui-chip-danger"}`}>
                         {rate.tax_type === "inclusive" ? "Included in Price" : "Added on Top (Exclusive)"}
                       </span>
                     </td>
@@ -188,51 +174,20 @@ export function GstRates() {
                       <button
                         type="button"
                         onClick={() => handleToggleActive(rate)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          padding: 0,
-                        }}
+                        className="ui-text-action"
                       >
-                        <span
-                          className={`status-chip ${rate.is_active ? "active" : "inactive"}`}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            padding: "4px 10px",
-                            borderRadius: "12px",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            background: rate.is_active ? "#ecfdf5" : "#f1f5f9",
-                            color: rate.is_active ? "#047857" : "#64748b",
-                          }}
-                        >
+                        <span className={`ui-chip ${rate.is_active ? "ui-chip-success" : ""}`}>
                           {rate.is_active ? "● Active" : "○ Inactive"}
                         </span>
                       </button>
                     </td>
                     <td>
                       {rate.is_default && (
-                        <span
-                          style={{
-                            background: "#fef3c7",
-                            color: "#b45309",
-                            fontSize: "10.5px",
-                            fontWeight: 800,
-                            padding: "2px 8px",
-                            borderRadius: "10px",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.05em",
-                          }}
-                        >
-                          Default
-                        </span>
+                        <span className="ui-chip ui-chip-warning">Default</span>
                       )}
                     </td>
-                    <td style={{ textAlign: "right" }}>
-                      <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                    <td className="table-actions">
+                      <div className="ui-consistency-actions">
                         <Button variant="secondary" size="small" onClick={() => openEditModal(rate)}>
                           {strings.editBtn}
                         </Button>
@@ -246,109 +201,88 @@ export function GstRates() {
               )}
             </tbody>
           </table>
-        </div>
+        </DataTableCard>
       )}
 
-      {/* Modal Form */}
-      {showModal && (
-        <div className="modal-backdrop" onClick={() => setShowModal(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ width: 480 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>
-                {editingRate ? strings.modal.editTitle : strings.modal.addTitle}
-              </h3>
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => setShowModal(false)}
-                style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer" }}
-              >
-                &times;
-              </button>
-            </div>
-
-            <form onSubmit={handleSave}>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
-                  {strings.modal.nameLabel} *
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={strings.modal.namePlaceholder}
-                  required
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
-                />
-              </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
-                  {strings.modal.percentageLabel} *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  value={percentage}
-                  onChange={(e) => setPercentage(e.target.value)}
-                  placeholder={strings.modal.percentagePlaceholder}
-                  required
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
-                />
-              </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
-                  {strings.modal.taxTypeLabel} *
-                </label>
-                <SearchableSelect
-                  value={taxType}
-                  onChange={(val) => setTaxType(val as "exclusive" | "inclusive")}
-                  options={[
-                    { value: "exclusive", label: "Exclusive", sublabel: "Tax added on top of base price" },
-                    { value: "inclusive", label: "Inclusive", sublabel: "Tax included inside total price" },
-                  ]}
-                  searchable={false}
-                />
-              </div>
-
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                  />
-                  <span>{strings.modal.isActiveLabel}</span>
-                </label>
-
-                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={isDefault}
-                    onChange={(e) => setIsDefault(e.target.checked)}
-                  />
-                  <span>{strings.modal.isDefaultLabel}</span>
-                </label>
-              </div>
-
-              {modalError && <p className="error-text mb-4">{modalError}</p>}
-
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
-                <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
-                  {strings.modal.cancelBtn}
-                </Button>
-                <Button type="submit" variant="primary" loading={saving}>
-                  {saving ? strings.modal.savingBtn : strings.modal.saveBtn}
-                </Button>
-              </div>
-            </form>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingRate ? strings.modal.editTitle : strings.modal.addTitle}
+        size="sm"
+      >
+        <form onSubmit={handleSave}>
+          <div className="ui-field-stack">
+            <label htmlFor="gst-rate-name">{strings.modal.nameLabel} *</label>
+            <input
+              id="gst-rate-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={strings.modal.namePlaceholder}
+              required
+            />
           </div>
-        </div>
-      )}
+
+          <div className="ui-field-stack">
+            <label htmlFor="gst-rate-percentage">{strings.modal.percentageLabel} *</label>
+            <input
+              id="gst-rate-percentage"
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              value={percentage}
+              onChange={(e) => setPercentage(e.target.value)}
+              placeholder={strings.modal.percentagePlaceholder}
+              required
+            />
+          </div>
+
+          <div className="ui-field-stack">
+            <label>{strings.modal.taxTypeLabel} *</label>
+            <SearchableSelect
+              value={taxType}
+              onChange={(val) => setTaxType(val as "exclusive" | "inclusive")}
+              options={[
+                { value: "exclusive", label: "Exclusive", sublabel: "Tax added on top of base price" },
+                { value: "inclusive", label: "Inclusive", sublabel: "Tax included inside total price" },
+              ]}
+              searchable={false}
+            />
+          </div>
+
+          <div className="ui-checkbox-stack">
+            <label className="ui-checkbox-inline">
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+              />
+              <span>{strings.modal.isActiveLabel}</span>
+            </label>
+
+            <label className="ui-checkbox-inline">
+              <input
+                type="checkbox"
+                checked={isDefault}
+                onChange={(e) => setIsDefault(e.target.checked)}
+              />
+              <span>{strings.modal.isDefaultLabel}</span>
+            </label>
+          </div>
+
+          {modalError && <p className="error-text mb-4">{modalError}</p>}
+
+          <div className="ui-modal-form-actions">
+            <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
+              {strings.modal.cancelBtn}
+            </Button>
+            <Button type="submit" variant="primary" loading={saving}>
+              {saving ? strings.modal.savingBtn : strings.modal.saveBtn}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

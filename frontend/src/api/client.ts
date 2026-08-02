@@ -18,7 +18,8 @@ function getEventMessage(config: InternalAxiosRequestConfig): string {
   if (url.includes("/upload-avatar") || url.includes("/me/avatar")) return "Uploading profile picture...";
   if (url.includes("/change-password") || url.includes("/me/profile")) return "Updating account profile...";
 
-  // Super Admin Developer Settings & Maintenance
+  // Super Admin Platform Settings & Maintenance. Backend route remains
+  // /dev-settings for compatibility.
   if (url.includes("/dev-settings/seed")) return "Populating sample seed data...";
   if (url.includes("/dev-settings/migrate")) return "Running database migration...";
   if (url.includes("/dev-settings/clear-cache")) return "Clearing application cache...";
