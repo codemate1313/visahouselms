@@ -85,7 +85,6 @@ import {
   TrialConfig,
   Users,
 } from "./lazyPages";
-import { SuperAdminAISettings } from "../pages/super-admin/SuperAdminAISettings";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { MonetaryAnalyticsRoute } from "./MonetaryAnalyticsRoute";
 import { BlogsList } from "../pages/public/BlogsList";
@@ -131,7 +130,7 @@ export const router = createBrowserRouter([
           { path: "blogs/new", element: <SuperAdminBlogForm /> },
           { path: "blogs/:id", element: <SuperAdminBlogForm /> },
           { path: "seo-settings", element: <SuperAdminSEOSettings /> },
-          { path: "ai-settings", element: <SuperAdminAISettings /> },
+          { path: "ai-settings", element: <Navigate to="/super-admin/dev-settings?tab=ai" replace /> },
           // Unified cross-role directory. The per-role create/edit forms below
           // remain the place accounts are actually managed.
           { path: "users", element: <Navigate to="/super-admin/users/super-admins" replace /> },

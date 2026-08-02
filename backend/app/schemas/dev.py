@@ -43,6 +43,7 @@ class AiEvaluationSettingsIn(BaseModel):
 class AiEvaluationKeyTestIn(BaseModel):
     key_id: Optional[str] = None
     provider: str = "gemini"
+    preferred_provider: Optional[str] = None
     endpoint_url: Optional[str] = None
     api_key: Optional[str] = None
     model: Optional[str] = None

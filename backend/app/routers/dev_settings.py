@@ -160,6 +160,7 @@ def test_ai_evaluation_key(payload: AiEvaluationKeyTestIn, db: Session = Depends
         api_key=payload.api_key,
         model=payload.model,
         endpoint_url=payload.endpoint_url,
+        preferred_provider=payload.preferred_provider,
     )
 
 

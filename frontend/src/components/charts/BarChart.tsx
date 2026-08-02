@@ -35,7 +35,7 @@ export function BarChart({
   legend,
   formatValue = (value) => value.toLocaleString("en-IN"),
   ariaLabel,
-  emptyMessage = "No data available.",
+  emptyMessage: _emptyMessage = "No data available.",
 }: BarChartProps) {
   const [showTable, setShowTable] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);

@@ -7,7 +7,7 @@ import { PasswordInput } from "@/components/PasswordInput";
 export interface AiKeyConfig {
   id: string;
   label: string;
-  provider: "gemini" | "custom_json";
+  provider: AiDetectedProvider;
   model: string;
   endpoint_url: string;
   api_key: string;
@@ -16,17 +16,37 @@ export interface AiKeyConfig {
   last_status?: "ok" | "failed" | null;
   last_checked_at?: string | null;
   info?: string | null;
+  model_options?: ModelOption[];
 }
 
-type AiProviderSelection = "gemini" | "custom_json" | "disabled";
+type AiProviderSelection = "gemini" | "openai" | "custom_json" | "disabled";
+type AiDetectedProvider = "gemini" | "custom_json" | "openai" | "anthropic" | "unknown";
+
+const providerOptions: Array<{ value: AiDetectedProvider; label: string; supported: boolean }> = [
+  { value: "gemini", label: "Google Gemini", supported: true },
+  { value: "custom_json", label: "Custom JSON", supported: true },
+  { value: "openai", label: "OpenAI", supported: true },
+  { value: "anthropic", label: "Anthropic Claude (detected, unsupported)", supported: false },
+  { value: "unknown", label: "Unknown provider", supported: false },
+];
+
+interface ModelOption {
+  value: string;
+  label: string;
+}
 
 interface TestResult {
   ok: boolean;
   provider: string;
+  provider_label?: string;
+  detected_provider?: string;
   model: string;
+  model_options?: ModelOption[];
   key_preview: string | null;
   latency_ms: number;
+  supported?: boolean;
   message: string;
+  detection_message?: string;
 }
 
 interface AiKeyPriorityManagerProps {
@@ -56,6 +76,54 @@ function newKey(index: number, provider: AiProviderSelection, model: string, end
 
 function reorder(keys: AiKeyConfig[]) {
   return keys.map((key, index) => ({ ...key, priority: index + 1 }));
+}
+
+function isInteractiveDragTarget(target: EventTarget | null) {
+  return target instanceof HTMLElement && Boolean(target.closest("input, textarea, select, button, a"));
+}
+
+function detectProviderFromInput(apiKey: string, endpointUrl: string): AiDetectedProvider | null {
+  const secret = apiKey.trim();
+  const endpoint = endpointUrl.trim();
+
+  if (secret.startsWith("AIza")) return "gemini";
+  if (secret.startsWith("sk-ant-")) return "anthropic";
+  if (secret.startsWith("sk-proj-") || secret.startsWith("sk-")) return "openai";
+  if (endpoint) {
+    try {
+      const host = new URL(endpoint).host.toLowerCase();
+      return host.includes("generativelanguage.googleapis.com") ? "gemini" : "custom_json";
+    } catch {
+      return "custom_json";
+    }
+  }
+  if (secret.length >= 12 && !secret.includes("*")) return "unknown";
+  return null;
+}
+
+function providerInfo(provider: AiDetectedProvider) {
+  return providerOptions.find((option) => option.value === provider) ?? providerOptions[4];
+}
+
+function defaultModelForProvider(provider: AiDetectedProvider, fallback: string) {
+  if (provider === "openai") return "gpt-4o-mini";
+  if (provider === "gemini") return "gemini-2.0-flash";
+  if (provider === "custom_json") return fallback;
+  return "";
+}
+
+function modelMatchesProvider(provider: AiDetectedProvider, model: string) {
+  if (!model) return false;
+  if (provider === "gemini") return model.startsWith("gemini-");
+  if (provider === "openai") {
+    return ["gpt-5", "gpt-4.1", "gpt-4o", "o4", "o3"].some((prefix) => model.startsWith(prefix));
+  }
+  if (provider === "custom_json") return true;
+  return false;
+}
+
+function isMaskedSecret(value: string) {
+  return Boolean(value) && value.split("").every((char) => char === "*");
 }
 
 export function AiKeyPriorityManager({
@@ -99,15 +167,23 @@ export function AiKeyPriorityManager({
     try {
       const { data } = await apiClient.post<TestResult>(testPath, {
         key_id: key.id,
-        provider: key.provider || provider,
+        provider: "auto",
+        preferred_provider: key.provider || provider,
         model: key.model || model,
         endpoint_url: key.endpoint_url || endpointUrl || undefined,
         api_key: key.api_key,
       });
+      const detectedProvider = data.detected_provider || data.provider;
+      const providerPatch = providerOptions.some((option) => option.value === detectedProvider)
+        ? { provider: detectedProvider as AiKeyConfig["provider"] }
+        : {};
       update(index, {
+        ...providerPatch,
+        model: data.model || data.model_options?.[0]?.value || key.model || model,
+        model_options: data.model_options || [],
         last_status: data.ok ? "ok" : "failed",
         last_checked_at: new Date().toISOString(),
-        info: `${data.message}${data.latency_ms ? ` (${data.latency_ms} ms)` : ""}`,
+        info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}${data.detection_message ? ` ${data.detection_message}` : ""}${data.latency_ms ? ` (${data.latency_ms} ms)` : ""}`,
       });
     } catch (err: unknown) {
       const message = extractErrorMessage(err, "Connection test failed.");
@@ -142,7 +218,13 @@ export function AiKeyPriorityManager({
           <article
             key={key.id}
             draggable
-            onDragStart={() => setDragIndex(index)}
+            onDragStart={(event) => {
+              if (isInteractiveDragTarget(event.target)) {
+                event.preventDefault();
+                return;
+              }
+              setDragIndex(index);
+            }}
             onDragOver={(event) => event.preventDefault()}
             onDrop={() => {
               if (dragIndex !== null) move(dragIndex, index);
@@ -183,15 +265,51 @@ export function AiKeyPriorityManager({
                 <label>Provider</label>
                 <select
                   value={key.provider}
-                  onChange={(event) => update(index, { provider: event.target.value as AiKeyConfig["provider"] })}
+                  onChange={(event) => update(index, {
+                    provider: event.target.value as AiKeyConfig["provider"],
+                    model_options: [],
+                    last_status: null,
+                    info: null,
+                  })}
                 >
-                  <option value="gemini">Google Gemini</option>
-                  <option value="custom_json">Custom JSON</option>
+                  {providerOptions.map((option) => (
+                    <option key={option.value} value={option.value} disabled={!option.supported}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
+                {!providerInfo(key.provider).supported && (
+                  <p className="hint" style={{ margin: "6px 0 0" }}>
+                    Detected automatically. This provider is not supported for AI evaluation yet.
+                  </p>
+                )}
               </div>
               <div>
                 <label>Model</label>
-                <input value={key.model || model} onChange={(event) => update(index, { model: event.target.value })} />
+                {key.model_options?.length ? (
+                  <select
+                    value={key.model || key.model_options[0]?.value || model}
+                    onChange={(event) => update(index, { model: event.target.value })}
+                  >
+                    {key.model_options.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    value={key.model || model}
+                    onChange={(event) => update(index, { model: event.target.value })}
+                    placeholder={providerInfo(key.provider).supported ? "Detect & test key to list supported models" : "No supported evaluation models"}
+                    disabled={!providerInfo(key.provider).supported}
+                  />
+                )}
+                {providerInfo(key.provider).supported && !key.model_options?.length && (
+                  <p className="hint" style={{ margin: "6px 0 0" }}>
+                    Use Detect & test to load models available for this key.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -210,9 +328,30 @@ export function AiKeyPriorityManager({
               <label>API key</label>
               <PasswordInput
                 value={key.api_key}
-                onChange={(event) => update(index, { api_key: event.target.value, last_status: null, info: null })}
+                onChange={(event) => {
+                  const detectedProvider = detectProviderFromInput(event.target.value, key.endpoint_url || endpointUrl || "");
+                  update(index, {
+                    api_key: event.target.value,
+                    provider: detectedProvider ?? key.provider,
+                    model: detectedProvider && !modelMatchesProvider(detectedProvider, key.model)
+                      ? defaultModelForProvider(detectedProvider, model)
+                      : key.model,
+                    model_options: [],
+                    last_status: null,
+                    info: detectedProvider && !providerInfo(detectedProvider).supported
+                      ? `Detected ${providerInfo(detectedProvider).label.replace(" (detected, unsupported)", "")}. This evaluator currently supports Google Gemini, OpenAI, and Custom JSON evaluator endpoints.`
+                      : null,
+                  });
+                }}
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
                 placeholder="Paste API key or keep saved masked key"
               />
+              {isMaskedSecret(key.api_key) && (
+                <p className="hint" style={{ margin: "6px 0 0" }}>
+                  Saved key is active and masked after refresh. Detect & test uses the stored secret securely.
+                </p>
+              )}
             </div>
 
             <div className="form-actions" style={{ justifyContent: "space-between" }}>
@@ -221,7 +360,7 @@ export function AiKeyPriorityManager({
               </span>
               <div style={{ display: "flex", gap: 8 }}>
                 <button type="button" className="secondary" onClick={() => void testKey(index)} disabled={testingId === key.id}>
-                  {testingId === key.id ? "Testing..." : "Test key"}
+                  {testingId === key.id ? "Detecting..." : "Detect & test"}
                 </button>
                 <button type="button" className="danger" onClick={() => remove(index)} disabled={rows.length === 1}>
                   <Icon name="trash" /> Remove

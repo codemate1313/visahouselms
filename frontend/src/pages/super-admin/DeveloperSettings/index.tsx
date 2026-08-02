@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { SegmentedControl } from "@/components/ui";
 import { tabLabels, tabOrder } from "./DeveloperSettings.strings";
 import type { Tab } from "./types";
@@ -13,8 +14,18 @@ import { MaintenanceTab } from "./components/MaintenanceTab";
 import { BackupsTab } from "./components/BackupsTab";
 import { SeedTab } from "./components/SeedTab";
 
+function parseTab(value: string | null): Tab {
+  return tabOrder.includes(value as Tab) ? (value as Tab) : "typography";
+}
+
 export function DeveloperSettings() {
-  const [tab, setTab] = useState<Tab>("typography");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [tab, setTabState] = useState<Tab>(() => parseTab(searchParams.get("tab")));
+
+  function setTab(next: Tab) {
+    setTabState(next);
+    setSearchParams(next === "typography" ? {} : { tab: next });
+  }
 
   return (
     <div>

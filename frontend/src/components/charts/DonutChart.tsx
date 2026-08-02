@@ -24,7 +24,7 @@ export function DonutChart({
   title,
   centerLabel = "total",
   ariaLabel,
-  emptyMessage = "No data available.",
+  emptyMessage: _emptyMessage = "No data available.",
   cardVariant = "tinted",
 }: DonutChartProps) {
   const [showTable, setShowTable] = useState(false);

@@ -34,7 +34,28 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_MONTHLY_LIMIT = 100
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
+DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 MASKED_SECRET = "********"
+SUPPORTED_KEY_PROVIDERS = {"gemini", "custom_json", "openai"}
+GEMINI_EVALUATION_MODELS = {
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-pro",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.5-pro",
+    "gemini-flash-latest",
+    "gemini-pro-latest",
+}
+OPENAI_EVALUATION_MODEL_PREFIXES = (
+    "gpt-5",
+    "gpt-4.1",
+    "gpt-4o",
+    "o4",
+    "o3",
+)
 
 POOL_EXHAUSTED = "The monthly AI evaluation limit has been reached"
 STUDENT_EXHAUSTED = (
@@ -74,7 +95,7 @@ def config_status(db: Session) -> dict:
     api_keys = _configured_keys(db, mask=True)
     live_keys = [item for item in _configured_keys(db, mask=False) if item.get("enabled", True)]
 
-    if provider == "gemini":
+    if provider in ("gemini", "openai"):
         configured = bool(enabled and (live_keys or api_key))
     elif provider == "custom_json":
         configured = bool(enabled and ((endpoint and api_key) or live_keys))
@@ -112,6 +133,187 @@ def _mask_key(value: Optional[str]) -> Optional[str]:
     return f"{value[:4]}...{value[-4:]}"
 
 
+def _is_masked_key_input(value: str) -> bool:
+    return value == MASKED_SECRET or "..." in value
+
+
+def _provider_label(provider: str) -> str:
+    return {
+        "gemini": "Google Gemini",
+        "custom_json": "Custom JSON evaluator",
+        "openai": "OpenAI",
+        "anthropic": "Anthropic Claude",
+        "unknown": "Unknown provider",
+    }.get(provider, provider.replace("_", " ").title())
+
+
+def _detect_provider(
+    *,
+    api_key: str,
+    endpoint_url: Optional[str],
+    preferred_provider: Optional[str],
+) -> dict:
+    secret = (api_key or "").strip()
+    endpoint = (endpoint_url or "").strip()
+    preferred = (preferred_provider or "").strip() or None
+    parsed = urlparse(endpoint) if endpoint else None
+    host = (parsed.netloc if parsed else "").lower()
+
+    if preferred == "custom_json" and endpoint:
+        provider = "custom_json"
+        reason = "Using selected Custom JSON evaluator endpoint."
+    elif secret.startswith("AIza"):
+        provider = "gemini"
+        reason = "Detected Google API key format used by Gemini."
+    elif secret.startswith("sk-ant-"):
+        provider = "anthropic"
+        reason = "Detected Anthropic Claude key format."
+    elif secret.startswith(("sk-proj-", "sk-")):
+        provider = "openai"
+        reason = "Detected OpenAI key format."
+    elif endpoint and "generativelanguage.googleapis.com" in host:
+        provider = "gemini"
+        reason = "Detected Google Gemini endpoint."
+    elif endpoint:
+        provider = "custom_json"
+        reason = "Detected a custom HTTP evaluator endpoint."
+    elif preferred in SUPPORTED_KEY_PROVIDERS:
+        provider = preferred
+        reason = f"No provider-specific key prefix was detected; using selected {_provider_label(provider)} provider."
+    else:
+        provider = "unknown"
+        reason = "No supported provider pattern was detected."
+
+    supported = provider in SUPPORTED_KEY_PROVIDERS
+    if not supported:
+        reason = (
+            f"{reason} This evaluator currently supports Google Gemini, OpenAI, and Custom JSON evaluator endpoints."
+        )
+    return {
+        "provider": provider,
+        "provider_label": _provider_label(provider),
+        "supported": supported,
+        "reason": reason,
+    }
+
+
+def _model_label(name: str, display_name: Optional[str] = None) -> str:
+    model = name.removeprefix("models/")
+    return (display_name or model).strip()
+
+
+def _model_option(name: str, display_name: Optional[str] = None) -> dict:
+    model = name.removeprefix("models/")
+    return {"value": model, "label": _model_label(model, display_name)}
+
+
+def _default_model(provider: str) -> str:
+    if provider == "openai":
+        return DEFAULT_OPENAI_MODEL
+    if provider == "gemini":
+        return DEFAULT_GEMINI_MODEL
+    if provider == "custom_json":
+        return ""
+    return ""
+
+
+def _model_matches_provider(provider: str, model: Optional[str]) -> bool:
+    value = (model or "").removeprefix("models/")
+    if not value:
+        return False
+    if provider == "gemini":
+        return value.startswith("gemini-")
+    if provider == "openai":
+        return value.startswith(OPENAI_EVALUATION_MODEL_PREFIXES)
+    if provider == "custom_json":
+        return True
+    return False
+
+
+def _resolve_model_for_provider(provider: str, model: Optional[str]) -> str:
+    value = (model or "").removeprefix("models/")
+    return value if _model_matches_provider(provider, value) else _default_model(provider)
+
+
+def _default_model_options(provider: str, model: Optional[str] = None) -> list[dict]:
+    if provider == "gemini":
+        selected = _resolve_model_for_provider(provider, model)
+        values = [selected, DEFAULT_GEMINI_MODEL, "gemini-flash-latest"]
+        return [_model_option(value) for value in dict.fromkeys(value for value in values if value)]
+    if provider == "openai":
+        selected = _resolve_model_for_provider(provider, model)
+        values = [selected, DEFAULT_OPENAI_MODEL]
+        return [_model_option(value) for value in dict.fromkeys(value for value in values if value)]
+    if provider == "custom_json" and model:
+        return [_model_option(model)]
+    return []
+
+
+def list_evaluation_models(
+    *,
+    provider: str,
+    api_key: str,
+    model: Optional[str] = None,
+    endpoint_url: Optional[str] = None,
+) -> list[dict]:
+    if provider != "gemini":
+        if provider == "openai":
+            try:
+                with httpx.Client(timeout=15.0) as client:
+                    response = client.get(
+                        "https://api.openai.com/v1/models",
+                        headers={"Authorization": f"Bearer {api_key}"},
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+            except Exception as exc:
+                logger.warning("Could not list OpenAI models for AI evaluation: %s", exc)
+                return _default_model_options(provider, model)
+
+            options = []
+            for item in data.get("data", []):
+                model_id = str(item.get("id") or "")
+                if not model_id.startswith(OPENAI_EVALUATION_MODEL_PREFIXES):
+                    continue
+                if any(skip in model_id for skip in ("audio", "realtime", "transcribe", "tts", "image")):
+                    continue
+                options.append(_model_option(model_id))
+            selected = _resolve_model_for_provider(provider, model)
+            if selected and not any(option["value"] == selected for option in options):
+                options.insert(0, _model_option(selected))
+            return options or _default_model_options(provider, model)
+        return _default_model_options(provider, model)
+
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            response = client.get(
+                f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+            )
+            response.raise_for_status()
+            data = response.json()
+    except Exception as exc:
+        logger.warning("Could not list Gemini models for AI evaluation: %s", exc)
+        return _default_model_options(provider, model)
+
+    options = []
+    for item in data.get("models", []):
+        name = str(item.get("name") or "")
+        model_id = name.removeprefix("models/")
+        methods = set(item.get("supportedGenerationMethods") or [])
+        if not model_id or "generateContent" not in methods:
+            continue
+        if model_id not in GEMINI_EVALUATION_MODELS and not (
+            model_id.startswith("gemini-") and ("flash" in model_id or "pro" in model_id)
+        ):
+            continue
+        options.append(_model_option(model_id, item.get("displayName")))
+
+    selected = (model or DEFAULT_GEMINI_MODEL).removeprefix("models/")
+    if selected and not any(option["value"] == selected for option in options):
+        options.insert(0, _model_option(selected))
+    return options or _default_model_options(provider, model)
+
+
 def _configured_keys(db: Session, *, mask: bool) -> list[dict]:
     raw = get_setting(db, "ai.api_keys")
     keys: list[dict] = []
@@ -131,12 +333,13 @@ def _configured_keys(db: Session, *, mask: bool) -> list[dict]:
                         "provider": str(item.get("provider") or "gemini"),
                         "model": str(item.get("model") or ""),
                         "endpoint_url": str(item.get("endpoint_url") or ""),
-                        "api_key": _mask_key(api_key) if mask else api_key,
+                        "api_key": MASKED_SECRET if mask else api_key,
                         "enabled": bool(item.get("enabled", True)),
                         "priority": int(item.get("priority", index + 1)),
                         "last_status": item.get("last_status"),
                         "last_checked_at": item.get("last_checked_at"),
                         "info": item.get("info"),
+                        "model_options": item.get("model_options") if isinstance(item.get("model_options"), list) else [],
                     })
         except (TypeError, ValueError, json.JSONDecodeError):
             logger.warning("Ignoring malformed ai.api_keys setting")
@@ -153,22 +356,32 @@ def save_configured_keys(db: Session, keys: list[dict]) -> None:
             continue
         key_id = str(item.get("id") or f"key-{int(time.time() * 1000)}-{index}")
         api_key = str(item.get("api_key") or "").strip()
-        if api_key == MASKED_SECRET or not api_key:
+        if _is_masked_key_input(api_key) or not api_key:
             api_key = existing_by_id.get(key_id, {}).get("api_key", "")
         if not api_key:
             continue
+        selected_provider = str(item.get("provider") or "gemini")
+        endpoint_url = str(item.get("endpoint_url") or "").strip()[:500]
+        detected = _detect_provider(
+            api_key=api_key,
+            endpoint_url=endpoint_url,
+            preferred_provider=selected_provider,
+        )
+        provider = detected["provider"] if detected["supported"] or detected["provider"] != "unknown" else selected_provider
+        model = _resolve_model_for_provider(provider, str(item.get("model") or "").strip()[:120])
         normalized.append({
             "id": key_id,
             "label": str(item.get("label") or f"API Key {index + 1}").strip()[:80],
-            "provider": str(item.get("provider") or "gemini"),
-            "model": str(item.get("model") or "").strip()[:120],
-            "endpoint_url": str(item.get("endpoint_url") or "").strip()[:500],
+            "provider": provider,
+            "model": model,
+            "endpoint_url": endpoint_url,
             "api_key": api_key,
             "enabled": bool(item.get("enabled", True)),
             "priority": index + 1,
             "last_status": item.get("last_status"),
             "last_checked_at": item.get("last_checked_at"),
             "info": item.get("info"),
+            "model_options": item.get("model_options") if isinstance(item.get("model_options"), list) else [],
         })
     set_setting(db, "ai.api_keys", json.dumps(normalized) if normalized else None)
 
@@ -180,6 +393,8 @@ def _candidate_configs(db: Session) -> list[dict]:
         if not item.get("enabled", True):
             continue
         provider = item.get("provider") or base["provider"]
+        if provider not in SUPPORTED_KEY_PROVIDERS:
+            continue
         candidates.append({
             **base,
             "provider": provider,
@@ -206,7 +421,7 @@ def test_connection(
     config = {
         "provider": provider,
         "api_key": api_key,
-        "model": model or DEFAULT_GEMINI_MODEL,
+        "model": _resolve_model_for_provider(provider, model),
         "endpoint_url": endpoint_url,
     }
     payload = {
@@ -226,22 +441,36 @@ def test_connection(
         raw = (evaluator or _remote_evaluator)(config, payload)
         elapsed_ms = int((time.monotonic() - started) * 1000)
         _normalize(raw, type("Part", (), {"rubric": payload["rubric"]})())
+        model_options = list_evaluation_models(
+            provider=provider,
+            api_key=api_key,
+            model=config["model"],
+            endpoint_url=endpoint_url,
+        )
         return {
             "ok": True,
             "provider": provider,
+            "provider_label": _provider_label(provider),
+            "detected_provider": provider,
             "model": config["model"],
+            "model_options": model_options,
             "key_preview": _mask_key(api_key),
             "latency_ms": elapsed_ms,
-            "message": f"{provider} accepted the key and returned valid evaluator JSON.",
+            "supported": True,
+            "message": f"{_provider_label(provider)} accepted the key and returned valid evaluator JSON.",
         }
     except Exception as exc:
         elapsed_ms = int((time.monotonic() - started) * 1000)
         return {
             "ok": False,
             "provider": provider,
+            "provider_label": _provider_label(provider),
+            "detected_provider": provider,
             "model": config["model"],
+            "model_options": _default_model_options(provider, config["model"]),
             "key_preview": _mask_key(api_key),
             "latency_ms": elapsed_ms,
+            "supported": provider in SUPPORTED_KEY_PROVIDERS,
             "message": str(getattr(exc, "detail", exc))[:500],
         }
 
@@ -254,28 +483,55 @@ def test_configured_key(
     api_key: Optional[str],
     model: Optional[str] = None,
     endpoint_url: Optional[str] = None,
+    preferred_provider: Optional[str] = None,
 ) -> dict:
     secret = (api_key or "").strip()
     stored = None
     if key_id:
         stored = next((item for item in _configured_keys(db, mask=False) if item.get("id") == key_id), None)
-    if not secret or secret == MASKED_SECRET:
+    if not secret or _is_masked_key_input(secret):
         secret = (stored or {}).get("api_key") or ""
     if not secret:
         return {
             "ok": False,
             "provider": provider,
-            "model": model or DEFAULT_GEMINI_MODEL,
+            "provider_label": _provider_label(provider),
+            "detected_provider": provider,
+            "model": _resolve_model_for_provider(provider, model),
+            "model_options": [],
             "key_preview": None,
             "latency_ms": 0,
+            "supported": provider in SUPPORTED_KEY_PROVIDERS,
             "message": "Enter or select a saved API key before testing.",
         }
-    return test_connection(
-        provider=provider or (stored or {}).get("provider") or "gemini",
+    detected = _detect_provider(
         api_key=secret,
-        model=model or (stored or {}).get("model"),
         endpoint_url=endpoint_url or (stored or {}).get("endpoint_url"),
+        preferred_provider=preferred_provider or provider or (stored or {}).get("provider"),
     )
+    if not detected["supported"]:
+        return {
+            "ok": False,
+            "provider": detected["provider"],
+            "provider_label": detected["provider_label"],
+            "detected_provider": detected["provider"],
+            "model": _resolve_model_for_provider(detected["provider"], model or (stored or {}).get("model")),
+            "model_options": [],
+            "key_preview": _mask_key(secret),
+            "latency_ms": 0,
+            "supported": False,
+            "message": detected["reason"],
+        }
+    return test_connection(
+        provider=detected["provider"],
+        api_key=secret,
+        model=_resolve_model_for_provider(detected["provider"], model or (stored or {}).get("model")),
+        endpoint_url=endpoint_url or (stored or {}).get("endpoint_url"),
+    ) | {
+        "detected_provider": detected["provider"],
+        "provider_label": detected["provider_label"],
+        "detection_message": detected["reason"],
+    }
 
 
 def _bucket(
@@ -659,11 +915,138 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
         raise ValueError(f"Gemini API returned unparseable output: {exc}") from exc
 
 
+def _evaluation_prompt(payload: dict) -> str:
+    return (
+        f"Framework: {payload['framework']} ({payload['policy_version']})\n"
+        f"Skill: {payload['skill'].upper()}\n"
+        f"Part Title: {payload['part']['title']}\n"
+        f"Skill Focus: {payload['part']['skill_focus']}\n\n"
+        f"Rubric Criteria:\n"
+        + "\n".join(
+            f"- {item['criterion']}: Max Marks = {item['max_marks']}"
+            for item in payload["rubric"]
+        )
+        + "\n\nInstructions:\n"
+        + payload["instructions"]
+        + "\n\nReturn JSON only with this schema:\n"
+        "{\n"
+        '  "criteria": [\n'
+        '    {"criterion": "string", "marks_awarded": number, "rationale": "string"}\n'
+        "  ],\n"
+        '  "comment": "string",\n'
+        '  "confidence": number\n'
+        "}\n\n"
+    )
+
+
+def _extract_openai_text(data: dict) -> str:
+    output_text = data.get("output_text")
+    if isinstance(output_text, str) and output_text.strip():
+        return output_text
+
+    chunks: list[str] = []
+    for item in data.get("output", []):
+        for content in item.get("content", []):
+            text = content.get("text")
+            if isinstance(text, str):
+                chunks.append(text)
+    return "\n".join(chunks)
+
+
+def _audio_format(mime_type: Optional[str]) -> str:
+    mime = (mime_type or "").lower()
+    if "mpeg" in mime or "mp3" in mime:
+        return "mp3"
+    if "wav" in mime:
+        return "wav"
+    if "m4a" in mime or "mp4" in mime:
+        return "m4a"
+    if "webm" in mime:
+        return "webm"
+    return "mp3"
+
+
+def _openai_evaluator(config: dict, payload: dict) -> dict:
+    api_key = config["api_key"]
+    model = _resolve_model_for_provider("openai", config.get("model"))
+    content = [{"type": "input_text", "text": _evaluation_prompt(payload)}]
+    for resp in payload["responses"]:
+        content.append({"type": "input_text", "text": f"Question Prompt: {resp['prompt']}\n"})
+        if "text" in resp:
+            content.append({"type": "input_text", "text": f"Student Response:\n{resp['text']}\n"})
+        elif "audio_b64" in resp:
+            content.append({
+                "type": "input_audio",
+                "input_audio": {
+                    "data": resp["audio_b64"],
+                    "format": _audio_format(resp.get("mime_type")),
+                },
+            })
+            content.append({"type": "input_text", "text": "Evaluate the attached audio response.\n"})
+
+    schema = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "criteria": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "criterion": {"type": "string"},
+                        "marks_awarded": {"type": "number"},
+                        "rationale": {"type": "string"},
+                    },
+                    "required": ["criterion", "marks_awarded", "rationale"],
+                },
+            },
+            "comment": {"type": "string"},
+            "confidence": {"type": "number"},
+        },
+        "required": ["criteria", "comment", "confidence"],
+    }
+    request = {
+        "model": model,
+        "input": [{"role": "user", "content": content}],
+        "text": {
+            "format": {
+                "type": "json_schema",
+                "name": "ai_evaluation_result",
+                "schema": schema,
+                "strict": False,
+            }
+        },
+    }
+    with httpx.Client(timeout=45.0) as client:
+        response = client.post(
+            "https://api.openai.com/v1/responses",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=request,
+        )
+        if response.status_code == 429:
+            raise HTTPException(
+                status_code=429,
+                detail="OpenAI API rate limit or quota was reached. Trying the next configured evaluator if available.",
+            )
+        response.raise_for_status()
+        data = response.json()
+
+    text = _extract_openai_text(data)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        logger.error("Failed to parse OpenAI response: %s | Raw: %s", exc, data)
+        raise ValueError(f"OpenAI API returned unparseable output: {exc}") from exc
+
+
 def _remote_evaluator(config: dict, payload: dict) -> dict:
     provider = config.get("provider") or "gemini"
     
     if provider == "gemini":
         return _gemini_evaluator(config, payload)
+    if provider == "openai":
+        return _openai_evaluator(config, payload)
     
     # Custom JSON HTTP endpoint
     parsed = urlparse(config.get("endpoint_url") or "")

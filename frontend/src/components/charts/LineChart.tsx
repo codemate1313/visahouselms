@@ -29,7 +29,7 @@ export function LineChart({
   color = "var(--series-1)",
   formatValue = (v) => v.toLocaleString("en-IN"),
   ariaLabel = title,
-  emptyMessage = "No data available.",
+  emptyMessage: _emptyMessage = "No data available.",
 }: LineChartProps) {
   const [showTable, setShowTable] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);

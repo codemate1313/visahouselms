@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from fastapi import HTTPException
 from sqlalchemy import create_engine
@@ -166,6 +167,32 @@ class AttemptServiceTestCase(unittest.TestCase):
         settings_service.set_setting(self.db, "ai.enabled", "true")
         settings_service.set_setting(self.db, "ai.provider", "gemini")
         settings_service.set_setting(self.db, "ai.api_key", "test-key")
+
+    def _subscribe_student_for_ai(self, limit: int = 100) -> None:
+        plan = Plan(
+            name=f"AI Plan {limit}",
+            price=Decimal("100.00"),
+            duration_days=30,
+            student_limit=1,
+            staff_limit=0,
+            test_limit=50,
+            grace_days=7,
+            is_active=True,
+            ai_evaluation_limit=limit,
+        )
+        self.db.add(plan)
+        self.db.flush()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        self.db.add(
+            Subscription(
+                user_id=self.student.id,
+                plan_id=plan.id,
+                starts_at=now - timedelta(days=1),
+                expires_at=now + timedelta(days=29),
+                grace_days=7,
+            )
+        )
+        self.db.commit()
 
     def test_active_attempt_receives_browser_narration_text_without_a_file_url(self):
         asset = SimpleNamespace(
@@ -497,6 +524,7 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(queue.routing_reason, "institute_instructor")
 
     def test_ai_draft_is_normalized_limited_and_never_publishes_a_grade(self):
+        self._subscribe_student_for_ai()
         module = self._build_writing_module()
         self._course_with_module(module.id)
         attempt_out = attempt_service.start_attempt(self.db, self.student, module)
@@ -529,6 +557,7 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertIsNone(grade.total_marks)
 
     def test_ai_evaluation_fails_over_to_next_configured_key(self):
+        self._subscribe_student_for_ai()
         module = self._build_writing_module()
         self._course_with_module(module.id)
         attempt_out = attempt_service.start_attempt(self.db, self.student, module)
@@ -581,6 +610,180 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual([item.status for item in records], ["failed", "completed"])
         self.assertEqual(records[0].error, "provider unavailable")
         self.assertEqual(self.db.query(AiEvaluationLimit).one().used_count, 1)
+
+    def test_ai_key_detection_identifies_supported_and_unsupported_providers(self):
+        gemini = ai_evaluation_service._detect_provider(
+            api_key="AIzaSyExampleGeminiKey",
+            endpoint_url=None,
+            preferred_provider=None,
+        )
+        self.assertEqual(gemini["provider"], "gemini")
+        self.assertTrue(gemini["supported"])
+
+        custom = ai_evaluation_service._detect_provider(
+            api_key="any-agent-key",
+            endpoint_url="https://evaluator.example.com/score",
+            preferred_provider=None,
+        )
+        self.assertEqual(custom["provider"], "custom_json")
+        self.assertTrue(custom["supported"])
+
+        openai = ai_evaluation_service._detect_provider(
+            api_key="sk-proj-example",
+            endpoint_url=None,
+            preferred_provider=None,
+        )
+        self.assertEqual(openai["provider"], "openai")
+        self.assertTrue(openai["supported"])
+
+        openai_with_stale_endpoint = ai_evaluation_service._detect_provider(
+            api_key="sk-proj-example",
+            endpoint_url="https://old-custom.example.com/evaluate",
+            preferred_provider="gemini",
+        )
+        self.assertEqual(openai_with_stale_endpoint["provider"], "openai")
+
+    def test_ai_model_listing_only_returns_generation_capable_evaluation_models(self):
+        class Response:
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return {
+                    "models": [
+                        {
+                            "name": "models/gemini-2.0-flash",
+                            "displayName": "Gemini 2.0 Flash",
+                            "supportedGenerationMethods": ["generateContent"],
+                        },
+                        {
+                            "name": "models/embedding-001",
+                            "displayName": "Embedding",
+                            "supportedGenerationMethods": ["embedContent"],
+                        },
+                    ]
+                }
+
+        class Client:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return None
+
+            def get(self, *args, **kwargs):
+                return Response()
+
+        with patch.object(ai_evaluation_service.httpx, "Client", Client):
+            models = ai_evaluation_service.list_evaluation_models(
+                provider="gemini",
+                api_key="AIzaSyExampleGeminiKey",
+                model="gemini-2.0-flash",
+            )
+
+        self.assertEqual(models, [{"value": "gemini-2.0-flash", "label": "Gemini 2.0 Flash"}])
+
+    def test_openai_model_listing_filters_to_evaluation_models(self):
+        class Response:
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return {
+                    "data": [
+                        {"id": "gpt-4o-mini"},
+                        {"id": "gpt-4o-audio-preview"},
+                        {"id": "text-embedding-3-small"},
+                        {"id": "gpt-5-mini"},
+                    ]
+                }
+
+        class Client:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return None
+
+            def get(self, *args, **kwargs):
+                return Response()
+
+        with patch.object(ai_evaluation_service.httpx, "Client", Client):
+            models = ai_evaluation_service.list_evaluation_models(
+                provider="openai",
+                api_key="sk-proj-example",
+                model="gemini-2.0-flash",
+            )
+
+        self.assertEqual(
+            models,
+            [
+                {"value": "gpt-4o-mini", "label": "gpt-4o-mini"},
+                {"value": "gpt-5-mini", "label": "gpt-5-mini"},
+            ],
+        )
+
+    def test_saved_ai_key_preserves_masked_secret_and_model_options(self):
+        ai_evaluation_service.save_configured_keys(self.db, [{
+            "id": "openai-1",
+            "label": "OpenAI key",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "api_key": "sk-proj-secret",
+            "enabled": True,
+            "priority": 1,
+            "model_options": [
+                {"value": "gpt-4o-mini", "label": "gpt-4o-mini"},
+                {"value": "gpt-5-mini", "label": "gpt-5-mini"},
+            ],
+        }])
+        ai_evaluation_service.save_configured_keys(self.db, [{
+            "id": "openai-1",
+            "label": "OpenAI key",
+            "provider": "openai",
+            "model": "gpt-5-mini",
+            "api_key": "********",
+            "enabled": True,
+            "priority": 1,
+            "model_options": [
+                {"value": "gpt-4o-mini", "label": "gpt-4o-mini"},
+                {"value": "gpt-5-mini", "label": "gpt-5-mini"},
+            ],
+        }])
+
+        masked = ai_evaluation_service._configured_keys(self.db, mask=True)
+        live = ai_evaluation_service._configured_keys(self.db, mask=False)
+
+        self.assertEqual(masked[0]["api_key"], "********")
+        self.assertEqual(live[0]["api_key"], "sk-proj-secret")
+        self.assertEqual(masked[0]["model"], "gpt-5-mini")
+        self.assertEqual(masked[0]["model_options"][1]["value"], "gpt-5-mini")
+
+    def test_saved_ai_key_auto_detects_provider_without_manual_test(self):
+        ai_evaluation_service.save_configured_keys(self.db, [{
+            "id": "auto-openai",
+            "label": "Auto OpenAI",
+            "provider": "gemini",
+            "model": "gemini-2.0-flash",
+            "endpoint_url": "",
+            "api_key": "sk-proj-secret",
+            "enabled": True,
+            "priority": 1,
+        }])
+
+        masked = ai_evaluation_service._configured_keys(self.db, mask=True)
+        live = ai_evaluation_service._configured_keys(self.db, mask=False)
+
+        self.assertEqual(masked[0]["provider"], "openai")
+        self.assertEqual(masked[0]["model"], "gpt-4o-mini")
+        self.assertEqual(masked[0]["api_key"], "********")
+        self.assertEqual(live[0]["api_key"], "sk-proj-secret")
 
     def test_student_reevaluation_reopens_completed_queue_and_records_resolution(self):
         module = self._build_writing_module()

@@ -6,7 +6,7 @@ import { Checkbox, SearchableSelect } from "@/components/ui";
 import { AiKeyPriorityManager, type AiKeyConfig } from "../../components/AiKeyPriorityManager";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 
-type AiProvider = "gemini" | "custom_json";
+type AiProvider = "gemini" | "openai" | "custom_json";
 
 interface AiEvaluationForm {
   enabled: boolean;
@@ -28,7 +28,7 @@ function hydrateApiKeys(data: Partial<AiEvaluationForm>): AiKeyConfig[] {
   return [{
     id: "legacy",
     label: "Primary API Key",
-    provider: data.provider === "custom_json" ? "custom_json" : "gemini",
+    provider: data.provider === "custom_json" || data.provider === "openai" ? data.provider : "gemini",
     model: data.model || "gemini-2.0-flash",
     endpoint_url: data.endpoint_url || "",
     api_key: data.api_key,
@@ -61,7 +61,7 @@ export function AiEvaluationTab() {
       setConfigured(data.configured);
       setForm({
         enabled: data.enabled ?? true,
-        provider: data.provider === "custom_json" ? "custom_json" : "gemini",
+        provider: data.provider === "custom_json" || data.provider === "openai" ? data.provider : "gemini",
         endpoint_url: data.endpoint_url ?? "",
         api_key: data.api_key ?? "",
         api_keys: hydrateApiKeys(data),
@@ -112,11 +112,12 @@ export function AiEvaluationTab() {
               ariaLabel="AI Evaluation Provider"
               options={[
                 { value: "gemini", label: "Google Gemini (Writing + Speaking Audio)" },
+                { value: "openai", label: "OpenAI (Writing + Speaking Audio)" },
                 { value: "custom_json", label: "Custom HTTP JSON Endpoint" },
               ]}
               searchable={false}
               value={form.provider}
-              onChange={(value) => setForm({ ...form, provider: value === "custom_json" ? "custom_json" : "gemini" })}
+              onChange={(value) => setForm({ ...form, provider: value === "custom_json" || value === "openai" ? value : "gemini" })}
             />
           </div>
           <div>

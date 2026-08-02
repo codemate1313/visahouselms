@@ -79,7 +79,6 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: /\/super-admin\/blogs\/.+/, eyebrow: "CMS & CONTENT", title: "Edit Article" },
   { match: "/super-admin/blogs", eyebrow: "CMS & CONTENT", title: "Educational Blogs" },
   { match: "/super-admin/seo-settings", eyebrow: "CMS & CONTENT", title: "SEO & Meta Settings" },
-  { match: "/super-admin/ai-settings", eyebrow: "SYSTEM", title: "AI Evaluation & Scoring" },
   { match: "/super-admin/onboarding/new", eyebrow: "SAAS MANAGEMENT", title: "New Institute Onboarding" },
   { match: /\/super-admin\/onboarding\/\d+/, eyebrow: "SAAS MANAGEMENT", title: "Edit Institute Onboarding" },
   { match: "/super-admin/onboarding", eyebrow: "SAAS MANAGEMENT", title: "Institute Onboarding" },

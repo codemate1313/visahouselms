@@ -387,6 +387,7 @@ def test_ai_settings_key(payload: dict, db: Session = Depends(get_db)):
         api_key=str(payload.get("api_key") or ""),
         model=payload.get("model"),
         endpoint_url=payload.get("endpoint_url"),
+        preferred_provider=payload.get("preferred_provider"),
     )
 
 

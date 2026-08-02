@@ -128,7 +128,6 @@ export function DashboardLayout() {
           icon: "settings",
           children: [
             { key: "system_dev", label: m.systemDev, to: "/super-admin/dev-settings" },
-            { key: "system_ai", label: "AI Settings", to: "/super-admin/ai-settings" },
             { key: "system_logs", label: m.systemLogs, to: "/super-admin/logs" },
             { key: "system_terminal", label: m.systemTerminal, to: "/super-admin/terminal" },
           ],
