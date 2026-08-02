@@ -64,3 +64,12 @@ class ReevaluationCreateRequest(BaseModel):
 class ReevaluationResolveRequest(BaseModel):
     resolution: str = Field(pattern="^(resolved|rejected)$")
     note: str = Field(min_length=10, max_length=4000)
+
+
+class RetakeRequestCreate(BaseModel):
+    reason: str = Field(min_length=1, max_length=2000)
+
+
+class RetakeResolveRequest(BaseModel):
+    resolution: str = Field(pattern="^(approved|rejected)$")
+    note: str = Field(min_length=10, max_length=4000)

@@ -23,7 +23,7 @@ from app.schemas.user import (
     SuperAdminAccountOut,
     SuperAdminAccountUpdate,
 )
-from app.services import account_service, ai_evaluation_service, settings_service, super_admin_service
+from app.services import account_service, super_admin_service
 
 router = APIRouter(
     prefix="/super-admin",
@@ -281,6 +281,10 @@ def _current_user_response(user: User) -> CurrentUser:
         is_owner=user.is_owner,
         is_developer_verified=user.is_developer_verified,
         can_view_monetary_analytics=user.is_owner or user.can_view_monetary_analytics,
+        dob=user.dob,
+        phone_number=user.phone_number,
+        address=user.address,
+        gender=user.gender,
     )
 
 
@@ -292,7 +296,16 @@ def update_my_profile(
     actor: User = Depends(get_current_user),
 ):
     user = account_service.update_profile(
-        db, actor, payload.email, payload.first_name, payload.last_name, _client_ip(request)
+        db,
+        actor,
+        payload.email,
+        payload.first_name,
+        payload.last_name,
+        _client_ip(request),
+        dob=payload.dob,
+        phone_number=payload.phone_number,
+        address=payload.address,
+        gender=payload.gender,
     )
     return _current_user_response(user)
 
@@ -345,50 +358,6 @@ def revoke_my_other_sessions(
         db, actor, current_session.id, _client_ip(request)
     )
     return {"revoked": revoked}
-
-
-@router.get("/settings/ai")
-def get_ai_settings(db: Session = Depends(get_db)):
-    return ai_evaluation_service.config_status(db)
-
-
-@router.put("/settings/ai")
-def update_ai_settings(
-    payload: dict,
-    db: Session = Depends(get_db),
-):
-    enabled = payload.get("enabled", True)
-    provider = payload.get("provider", "gemini")
-    model = payload.get("model", "gemini-1.5-flash")
-    api_key = payload.get("api_key")
-    endpoint_url = payload.get("endpoint_url")
-    monthly_limit = payload.get("monthly_limit", 100)
-
-    settings_service.set_setting(db, "ai.enabled", "true" if enabled else "false")
-    settings_service.set_setting(db, "ai.provider", str(provider))
-    settings_service.set_setting(db, "ai.model", str(model))
-    if api_key and api_key != "********":
-        settings_service.set_setting(db, "ai.api_key", str(api_key))
-    if endpoint_url is not None:
-        settings_service.set_setting(db, "ai.endpoint_url", str(endpoint_url))
-    settings_service.set_setting(db, "ai.monthly_limit", str(monthly_limit))
-    if isinstance(payload.get("api_keys"), list):
-        ai_evaluation_service.save_configured_keys(db, payload["api_keys"])
-
-    return ai_evaluation_service.config_status(db)
-
-
-@router.post("/settings/ai/test-key")
-def test_ai_settings_key(payload: dict, db: Session = Depends(get_db)):
-    return ai_evaluation_service.test_configured_key(
-        db,
-        key_id=payload.get("key_id"),
-        provider=str(payload.get("provider") or "gemini"),
-        api_key=str(payload.get("api_key") or ""),
-        model=payload.get("model"),
-        endpoint_url=payload.get("endpoint_url"),
-        preferred_provider=payload.get("preferred_provider"),
-    )
 
 
 @router.get("/users/{user_id}/linked-details")

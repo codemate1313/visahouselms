@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.attempt import ATTEMPT_GRADED, AttemptPartGrade, TestAttempt
+from app.models.attempt import ATTEMPT_GRADED, AttemptPartGrade, RetakeRequest, TestAttempt
 from app.models.notification import (
     AI_EVALUATION_FAILED,
     GRADE_RELEASED,
@@ -15,6 +15,8 @@ from app.models.notification import (
     REEVALUATION_CLAIMED,
     REEVALUATION_REQUESTED,
     REEVALUATION_RESOLVED,
+    RETAKE_REQUESTED,
+    RETAKE_RESOLVED,
     SUPPORT_TICKET_ASSIGNED,
     SYSTEM_JOB_FAILED,
     SYSTEM_SECURITY_EVENT,
@@ -350,6 +352,45 @@ def notify_reevaluation_resolved(db: Session, attempt: TestAttempt, resolution: 
         kind=REEVALUATION_RESOLVED,
         title=f"Human review {resolution}: {attempt.module.title}",
         message="Your instructor has completed the requested review.",
+        link_url=f"/student/attempts/{attempt.id}/result/details",
+        attempt_id=attempt.id,
+    )
+
+
+def notify_retake_requested(db: Session, request: RetakeRequest) -> None:
+    attempt = request.attempt
+    student_name = f"{request.student.first_name} {request.student.last_name}".strip() or request.student.email
+    create_notification(
+        db,
+        user_id=request.student_id,
+        kind=RETAKE_REQUESTED,
+        title="Retake request submitted",
+        message="Your retake request has been sent to the Super Admin for review.",
+        link_url=f"/student/attempts/{attempt.id}/result/details",
+        attempt_id=attempt.id,
+    )
+    notify_roles(
+        db,
+        {SUPER_ADMIN},
+        kind=RETAKE_REQUESTED,
+        title=f"Retake request: {attempt.module.title}",
+        message=f"{student_name} requested a retake after their attempt.",
+        link_url="/super-admin/retake-requests",
+    )
+
+
+def notify_retake_resolved(db: Session, request: RetakeRequest) -> None:
+    attempt = request.attempt
+    create_notification(
+        db,
+        user_id=request.student_id,
+        kind=RETAKE_RESOLVED,
+        title=f"Retake request {request.status}: {attempt.module.title}",
+        message=(
+            "Your retake has been approved - you can start a new attempt from the module."
+            if request.status == "approved"
+            else "Your retake request was not approved."
+        ),
         link_url=f"/student/attempts/{attempt.id}/result/details",
         attempt_id=attempt.id,
     )

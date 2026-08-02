@@ -453,6 +453,10 @@ def me(user: User = Depends(get_current_user)):
         is_owner=user.is_owner,
         is_developer_verified=user.is_developer_verified,
         can_view_monetary_analytics=user.is_owner or user.can_view_monetary_analytics,
+        dob=user.dob,
+        phone_number=user.phone_number,
+        address=user.address,
+        gender=user.gender,
         institute_permissions=(
             institute_service.normalized_admin_permissions(user.institute.admin_permissions)
             if user.institute and user.role.name == "INSTITUTE_ADMIN"

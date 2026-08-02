@@ -161,7 +161,6 @@ export const developerSettingsStrings = {
     modelLabel: "Model",
     endpointLabel: "Evaluator endpoint",
     endpointPlaceholder: "https://evaluator.example.com/grade",
-    monthlyLimitLabel: "Monthly draft limit",
     apiKeyLabel: "API key",
     apiKeyPlaceholder: "stored encrypted",
     apiKeyActiveBadge: "Saved & Active (Encrypted at Rest)",

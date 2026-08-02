@@ -63,10 +63,6 @@ export function InstituteForm() {
   const [agreementDocument, setAgreementDocument] = useState<AgreementAttachment | null>(null);
   const [paymentProof, setPaymentProof] = useState<AgreementAttachment | null>(null);
 
-  // Allocation & Limits. Seats and validity are the plan's; only the AI cap is
-  // negotiated per institute.
-  const [aiStudentMonthlyLimit, setAiStudentMonthlyLimit] = useState<number | "">(0);
-
   // What the institute is provisioned with. The plan that enforces it is the
   // server's business, so nothing here names or prices one.
   const [allocation, setAllocation] = useState(EMPTY_ALLOCATION);
@@ -109,7 +105,6 @@ export function InstituteForm() {
         setName(data.name ?? "");
         setContactEmail(data.contact_email ?? "");
         setSessionDurationHours(data.session_duration_hours ?? 24);
-        setAiStudentMonthlyLimit(data.ai_student_monthly_limit ?? 0);
         setAgreementReference(data.agreement_reference ?? "");
         setAgreementNotes(data.agreement_notes ?? "");
         setAgreedAmount(data.agreed_amount != null ? Number(data.agreed_amount) : "");
@@ -287,7 +282,6 @@ export function InstituteForm() {
     const payload: Record<string, unknown> = {
       name,
       session_duration_hours: sessionDurationHours,
-      ai_student_monthly_limit: aiStudentMonthlyLimit === "" ? 0 : Number(aiStudentMonthlyLimit),
       student_limit: Number(allocation.student_limit || 0),
       staff_limit: Number(allocation.staff_limit || 0),
       access_duration_days: Number(allocation.access_duration_days || 365),
@@ -425,7 +419,7 @@ export function InstituteForm() {
     { key: "profile", step: 1, label: "Profile & Admin" },
     { key: "agreement", step: 2, label: "Agreement & Quotas" },
     { key: "courses", step: 3, label: `Courses (${selectedModules.size})` },
-    { key: "permissions", step: 4, label: "Access & AI Policy" },
+    { key: "permissions", step: 4, label: "Access Policy" },
     { key: "branding", step: 5, label: "Branding & Preview" },
   ];
 
@@ -675,29 +669,10 @@ export function InstituteForm() {
           </div>
         )}
 
-        {/* TAB 4: Permissions & AI Policy */}
+        {/* TAB 4: Access Policy */}
         {activeTab === "permissions" && (
           <div>
             <SessionPolicyFieldset sessionDurationHours={sessionDurationHours} onSessionDurationHoursChange={setSessionDurationHours} />
-
-            <fieldset className="permission-fieldset" style={{ marginTop: 24 }}>
-              <legend>AI evaluation limit</legend>
-              <p className="hint">
-                How many AI evaluations each of this institute's students may use per month. Set to 0 (or leave empty)
-                to use the global default limit.
-              </p>
-              <label htmlFor="ai-student-monthly-limit-perm">Per-student monthly limit</label>
-              <input
-                id="ai-student-monthly-limit-perm"
-                type="number"
-                min="0"
-                max="100000"
-                value={aiStudentMonthlyLimit}
-                onChange={(event) => setAiStudentMonthlyLimit(event.target.value === "" ? "" : Number(event.target.value))}
-                placeholder="0 (Global default limit)"
-              />
-            </fieldset>
-
           </div>
         )}
 

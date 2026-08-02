@@ -23,7 +23,6 @@ interface InstituteDetails {
   created_at: string;
   subscription_state: string;
   logo_url?: string;
-  ai_student_monthly_limit?: number;
   student_limit?: number;
   staff_limit?: number;
   admin_id?: number;
@@ -364,14 +363,6 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                     <div className="neomorphic-card-widget">
                       <h3>Subscription & Details</h3>
                       
-                      <div className="widget-field-row">
-                        <span className="field-label">AI Student Monthly Cap</span>
-                        <span className="field-value">
-                          {details.ai_student_monthly_limit
-                            ? `${details.ai_student_monthly_limit} evaluations / student / mo`
-                            : "Unlimited evaluations"}
-                        </span>
-                      </div>
                       <div className="widget-field-row">
                         <span className="field-label">Created Date</span>
                         <span className="field-value">

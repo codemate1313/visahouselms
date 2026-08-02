@@ -44,6 +44,10 @@ def _current_user_out(user: User) -> CurrentUser:
         is_owner=user.is_owner,
         is_developer_verified=user.is_developer_verified,
         institute_permissions=institute_admin_service.admin_permissions(user),
+        dob=user.dob,
+        phone_number=user.phone_number,
+        address=user.address,
+        gender=user.gender,
     )
 
 
@@ -74,7 +78,16 @@ def update_my_profile(
 ):
     return _current_user_out(
         account_service.update_profile(
-            db, actor, payload.email, payload.first_name, payload.last_name, _ip(request)
+            db,
+            actor,
+            payload.email,
+            payload.first_name,
+            payload.last_name,
+            _ip(request),
+            dob=payload.dob,
+            phone_number=payload.phone_number,
+            address=payload.address,
+            gender=payload.gender,
         )
     )
 
@@ -160,17 +173,6 @@ def list_members(
         has_devices,
         has_active_sessions,
     )
-
-
-@router.get("/ai-quota", dependencies=[Depends(require_password_change_complete)])
-def ai_quota(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
-    institute_admin_service.require_admin_permission(
-        actor,
-        "view_students",
-        "manage_students",
-        "view_student_activity",
-    )
-    return institute_admin_service.ai_quota_overview(db, actor)
 
 
 @router.get("/member-capacity", dependencies=[Depends(require_password_change_complete)])

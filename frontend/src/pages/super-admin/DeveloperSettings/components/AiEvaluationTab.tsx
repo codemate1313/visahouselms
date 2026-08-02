@@ -15,7 +15,6 @@ interface AiEvaluationForm {
   api_key: string;
   api_keys: AiKeyConfig[];
   model: string;
-  monthly_limit: number;
 }
 
 function hydrateApiKeys(data: Partial<AiEvaluationForm>): AiKeyConfig[] {
@@ -48,7 +47,6 @@ export function AiEvaluationTab() {
     api_key: "",
     api_keys: [],
     model: "gemini-2.0-flash",
-    monthly_limit: 1500,
   });
   const [configured, setConfigured] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +64,6 @@ export function AiEvaluationTab() {
         api_key: data.api_key ?? "",
         api_keys: hydrateApiKeys(data),
         model: data.model ?? "gemini-2.0-flash",
-        monthly_limit: data.monthly_limit ?? 1500,
       });
     });
   }, []);
@@ -139,15 +136,6 @@ export function AiEvaluationTab() {
               />
             </div>
           )}
-          <div>
-            <label>{t.monthlyLimitLabel}</label>
-            <input
-              type="number"
-              min="0"
-              value={form.monthly_limit}
-              onChange={(event) => setForm({ ...form, monthly_limit: Number(event.target.value) })}
-            />
-          </div>
         </div>
 
         <AiKeyPriorityManager

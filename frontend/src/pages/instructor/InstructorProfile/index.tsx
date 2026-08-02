@@ -3,6 +3,7 @@ import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { InstructorAccount } from "@/api/types";
 import { ProfileEditorShell } from "@/components/ProfileEditorShell";
+import { fromDateInputValue, ProfileContactFields, toDateInputValue } from "@/components/ProfileContactFields";
 import { Button, RequiredMark } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { instructorProfileStrings as strings } from "./InstructorProfile.strings";
@@ -40,6 +41,10 @@ export function InstructorProfile() {
         first_name: profile.first_name,
         last_name: profile.last_name,
         bio: profile.bio,
+        dob: profile.dob ?? null,
+        phone_number: profile.phone_number ?? null,
+        address: profile.address ?? null,
+        gender: profile.gender ?? null,
       });
       setProfile(data);
       const { data: freshUser } = await apiClient.get("/auth/me");
@@ -106,6 +111,18 @@ export function InstructorProfile() {
         </div>
         <label htmlFor="instructor-email">{strings.fields.email}<RequiredMark /></label>
         <input id="instructor-email" type="email" value={profile.email} onChange={(event) => update("email", event.target.value)} required />
+
+        <ProfileContactFields
+          idPrefix="instructor"
+          dob={toDateInputValue(profile.dob)}
+          onDobChange={(value) => update("dob", fromDateInputValue(value))}
+          gender={profile.gender ?? ""}
+          onGenderChange={(value) => update("gender", value)}
+          phoneNumber={profile.phone_number ?? ""}
+          onPhoneNumberChange={(value) => update("phone_number", value)}
+          address={profile.address ?? ""}
+          onAddressChange={(value) => update("address", value)}
+        />
 
         <label htmlFor="instructor-title">{strings.fields.title}</label>
         <input id="instructor-title" value={profile.title} readOnly className="readonly-field" />

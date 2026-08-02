@@ -91,6 +91,7 @@ export interface InstructorAccount {
   phone_number?: string | null;
   address?: string | null;
   avatar_path?: string | null;
+  gender?: string | null;
   created_at: string;
 }
 
@@ -500,6 +501,24 @@ export interface ReevaluationRequestView {
   resolved_at: string | null;
 }
 
+export interface RetakeRequestView {
+  id: number;
+  attempt_id: number;
+  student_id: number;
+  student_name: string;
+  student_email: string;
+  module_title: string;
+  module_type: ExamModuleType;
+  reason: string;
+  status: "pending" | "approved" | "rejected";
+  reviewed_by_id: number | null;
+  reviewed_by_name: string | null;
+  review_note: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  consumed_at: string | null;
+}
+
 export interface GradingQueueMetadata {
   id: number;
   status: "pending" | "claimed" | "completed";
@@ -640,6 +659,7 @@ export interface Attempt {
   graded_at: string | null;
   flag_count: number;
   reevaluation: ReevaluationRequestView | null;
+  retake_request: RetakeRequestView | null;
   ai_evaluation_status: "not_started" | "disabled" | "pending" | "completed" | "manual_required";
   parts: AttemptPart[];
 }
@@ -704,6 +724,8 @@ export type StudentNotificationKind =
   | "reevaluation_requested"
   | "reevaluation_claimed"
   | "reevaluation_resolved"
+  | "retake_requested"
+  | "retake_resolved"
   | "system_job_failed"
   | "system_security_event";
 

@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.security import hash_password
 from app.dependencies.limits import enforce_limit
-from app.models.attempt import AiEvaluationLimit, AttemptPartGrade, TestAttempt
+from app.models.attempt import AttemptPartGrade, TestAttempt
 from app.models.audit_log import AuditLog
 from app.models.institute import Institute
 from app.models.role import INST_INSTRUCTOR, STUDENT, SUPER_ADMIN, Role
@@ -210,71 +210,6 @@ def list_members(
     if has_active_sessions is not None:
         rows = [row for row in rows if (row["active_session_count"] > 0) is has_active_sessions]
     return rows
-
-
-def ai_quota_overview(db: Session, actor: User, scoped_institute_id: Optional[int] = None) -> dict:
-    """Read-only view of this month's AI evaluation spend, one row per student.
-    Each student is metered against the institute's per-student cap; there is no
-    shared institute pool to report."""
-    from app.services import ai_evaluation_service  # local: heavy provider deps
-
-    institute_id = _require_institute(actor, scoped_institute_id)
-    institute = db.get(Institute, institute_id)
-    if institute is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Institute not found")
-
-    period = datetime.now(timezone.utc).replace(tzinfo=None).strftime("%Y-%m")
-    rows = {
-        row.user_id: row
-        for row in db.query(AiEvaluationLimit).filter(
-            AiEvaluationLimit.institute_id == institute_id,
-            AiEvaluationLimit.period_key == period,
-            AiEvaluationLimit.user_id.isnot(None),
-        )
-    }
-
-    configured = institute.ai_student_monthly_limit
-    if configured and configured > 0:
-        student_limit, limit_source = configured, "institute"
-    else:
-        student_limit = int(ai_evaluation_service.config_status(db)["monthly_limit"])
-        limit_source = "platform"
-
-    students = (
-        db.query(User)
-        .join(Role, User.role_id == Role.id)
-        .filter(
-            User.institute_id == institute_id,
-            Role.name == STUDENT,
-            User.deleted_at.is_(None),
-        )
-        .order_by(User.first_name, User.last_name)
-        .all()
-    )
-
-    entries = []
-    for student in students:
-        row = rows.get(student.id)
-        used = row.used_count if row else 0
-        entries.append(
-            {
-                "user_id": student.id,
-                "name": f"{student.first_name} {student.last_name}".strip(),
-                "email": student.email,
-                "used": used,
-                "limit": student_limit,
-                "remaining": max(student_limit - used, 0),
-                "exhausted": used >= student_limit,
-            }
-        )
-
-    return {
-        "period": period,
-        "per_student_limit": student_limit,
-        "limit_source": limit_source,
-        "total_used": sum(entry["used"] for entry in entries),
-        "students": entries,
-    }
 
 
 def member_capacity(db: Session, actor: User, scoped_institute_id: Optional[int] = None) -> dict:

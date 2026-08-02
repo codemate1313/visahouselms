@@ -78,6 +78,7 @@ def _serialize(user: User) -> dict:
         "phone_number": user.phone_number,
         "address": user.address,
         "avatar_path": user.avatar_path,
+        "gender": user.gender,
         "created_at": user.created_at,
     }
 
@@ -130,6 +131,7 @@ def create_instructor(
     phone_number: Optional[str] = None,
     address: Optional[str] = None,
     avatar_path: Optional[str] = None,
+    gender: Optional[str] = None,
     ip: Optional[str],
 ) -> dict:
     if db.query(User).filter(User.email == email).first() is not None:
@@ -150,6 +152,7 @@ def create_instructor(
         phone_number=phone_number,
         address=address,
         avatar_path=avatar_path,
+        gender=gender,
     )
     db.add(user)
     db.flush()
@@ -183,6 +186,7 @@ def update_instructor(
     phone_number: Optional[str] = None,
     address: Optional[str] = None,
     avatar_path: Optional[str] = None,
+    gender: Optional[str] = None,
     fields_set: set[str],
     ip: Optional[str],
 ) -> dict:
@@ -203,6 +207,8 @@ def update_instructor(
         user.address = address
     if avatar_path is not None:
         user.avatar_path = avatar_path
+    if gender is not None:
+        user.gender = gender
 
     profile = user.instructor_profile
     if profile is None:

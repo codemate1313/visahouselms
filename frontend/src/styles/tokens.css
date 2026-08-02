@@ -134,24 +134,12 @@
  * following the same selector pattern.
  */
 
-[data-theme="dark"] body,
-[data-theme="dark"] button,
-[data-theme="dark"] input,
-[data-theme="dark"] select,
-[data-theme="dark"] textarea {
+[data-theme="dark"] body {
   background:
     radial-gradient(circle at 86% 10%, rgba(225, 29, 46, 0.1) 0, rgba(225, 29, 46, 0) 26%),
     linear-gradient(135deg, #121216 0%, #0e0e12 46%, #08080b 100%);
   background-attachment: fixed;
   color: #f2f2f5;
-}
-
-/* Inputs/buttons must not inherit the page gradient as their own fill. */
-[data-theme="dark"] button,
-[data-theme="dark"] input,
-[data-theme="dark"] select,
-[data-theme="dark"] textarea {
-  background: transparent;
 }
 
 [data-theme="dark"] input,

@@ -23,7 +23,6 @@ from app.models.attempt import (
     TestAttempt,
 )
 from app.models.exam_module import ExamModulePart
-from app.models.notification import AI_QUOTA_EXHAUSTED
 from app.models.user import User
 from app.services import cefr_service
 from app.services.settings_service import get_setting
@@ -55,25 +54,6 @@ OPENAI_EVALUATION_MODEL_PREFIXES = (
     "gpt-4o",
     "o4",
     "o3",
-)
-
-POOL_EXHAUSTED = "The monthly AI evaluation limit has been reached"
-STUDENT_EXHAUSTED = (
-    "You have used all {limit} of your monthly AI evaluations. "
-    "Ask your institute admin to raise your quota or try again next month."
-)
-DIRECT_STUDENT_EXHAUSTED = (
-    "You have used all {limit} of your monthly AI evaluations. "
-    "Contact the Super Admin for a higher quota, or raise a request from your notifications."
-)
-QUOTA_NOTIFICATION_TITLE = "Your AI evaluation quota is reached"
-QUOTA_NOTIFICATION_MESSAGE = (
-    "You have used all {limit} of your monthly AI evaluations for this account. "
-    "Contact the Super Admin for more, or raise an evaluation request below."
-)
-QUOTA_NOTIFICATION_LINK = (
-    "/student/support?category=ai_evaluation"
-    "&subject=AI+evaluation+quota+reached"
 )
 
 
@@ -578,45 +558,11 @@ def _direct_student_limit(db: Session, user_id: int, platform_default: int) -> i
     return 0
 
 
-def _notify_quota_exhausted(db: Session, user: User, limit: int, period: str) -> None:
-    """Best-effort in-app alert so a direct student learns *why* AI-assisted
-    feedback stopped, without spamming a new one every time an instructor
-    retries within the same exhausted month."""
-    from app.models.notification import StudentNotification
-    from app.services import notification_service
-
-    period_start = datetime.strptime(f"{period}-01", "%Y-%m-%d")
-    already_notified = (
-        db.query(StudentNotification)
-        .filter(
-            StudentNotification.user_id == user.id,
-            StudentNotification.kind == AI_QUOTA_EXHAUSTED,
-            StudentNotification.created_at >= period_start,
-        )
-        .first()
-    )
-    if already_notified is not None:
-        return
-    try:
-        notification_service.create_notification(
-            db,
-            user_id=user.id,
-            kind=AI_QUOTA_EXHAUSTED,
-            title=QUOTA_NOTIFICATION_TITLE,
-            message=QUOTA_NOTIFICATION_MESSAGE.format(limit=limit),
-            link_url=QUOTA_NOTIFICATION_LINK,
-        )
-    except Exception:
-        logger.exception("Failed to send AI quota exhausted notification to user %s", user.id)
-
-
 def _limit_rows(db: Session, attempt: TestAttempt, monthly_limit: int) -> list[AiEvaluationLimit]:
-    """Every student - institute or direct - is metered individually against
-    their own monthly bucket, so no student can eat into anyone else's
-    allowance. An institute student's ceiling comes from their institute's
-    per-student setting; a direct student's comes from their plan's
-    `ai_evaluation_limit` (see `_direct_student_limit`). Both fall back to the
-    platform-wide default when unset."""
+    """Every student - institute or direct - is still metered individually
+    against their own monthly bucket for usage-reporting purposes (the
+    quota dashboards read these rows), but no cap is enforced here - AI
+    evaluation is never blocked for any student or module."""
     period = _now().strftime("%Y-%m")
     institute_id = attempt.user.institute_id
 
@@ -625,12 +571,6 @@ def _limit_rows(db: Session, attempt: TestAttempt, monthly_limit: int) -> list[A
         student = _bucket(
             db, f"direct_student:{attempt.user_id}:{period}", period, student_limit, None, attempt.user_id
         )
-        if student.used_count >= student.monthly_limit:
-            _notify_quota_exhausted(db, attempt.user, student.monthly_limit, period)
-            raise HTTPException(
-                status_code=429,
-                detail=DIRECT_STUDENT_EXHAUSTED.format(limit=student.monthly_limit),
-            )
         return [student]
 
     inst = db.query(Institute).filter(Institute.id == institute_id).first()
@@ -641,11 +581,6 @@ def _limit_rows(db: Session, attempt: TestAttempt, monthly_limit: int) -> list[A
     student = _bucket(
         db, f"student:{attempt.user_id}:{period}", period, student_limit, institute_id, attempt.user_id
     )
-    if student.used_count >= student.monthly_limit:
-        raise HTTPException(
-            status_code=429,
-            detail=STUDENT_EXHAUSTED.format(limit=student.monthly_limit),
-        )
     return [student]
 
 

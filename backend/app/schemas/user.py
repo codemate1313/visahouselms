@@ -21,6 +21,7 @@ class SuperAdminAccountOut(BaseModel):
     phone_number: Optional[str] = None
     address: Optional[str] = None
     avatar_path: Optional[str] = None
+    gender: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -85,6 +86,7 @@ class ProfileUpdateRequest(BaseModel):
     phone_number: Optional[str] = None
     address: Optional[str] = None
     avatar_path: Optional[str] = None
+    gender: Optional[str] = None
 
 
 class SessionOut(BaseModel):

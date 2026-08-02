@@ -10,6 +10,8 @@ import { CefrProfilePanel } from "./components/CefrProfilePanel";
 import { PartReviewSection } from "./components/PartReviewSection";
 import { ReevaluationStatus } from "./components/ReevaluationStatus";
 import { ReevaluationForm } from "./components/ReevaluationForm";
+import { RetakeRequestStatus } from "./components/RetakeRequestStatus";
+import { RetakeRequestForm } from "./components/RetakeRequestForm";
 import { LinkButton, PageHeader } from "@/components/ui";
 
 export function AttemptResultDetails() {
@@ -18,6 +20,8 @@ export function AttemptResultDetails() {
   const [error, setError] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [requesting, setRequesting] = useState(false);
+  const [retakeReason, setRetakeReason] = useState("");
+  const [requestingRetake, setRequestingRetake] = useState(false);
 
   useEffect(() => {
     apiClient
@@ -35,6 +39,11 @@ export function AttemptResultDetails() {
   const metrics = getAttemptMetrics(attempt);
   const hasOpenReevaluation = attempt.reevaluation?.status === "pending" || attempt.reevaluation?.status === "in_review";
   const canRequestReevaluation = reviewable && attempt.parts.some((part) => !part.auto_marked) && !hasOpenReevaluation;
+  const hasOpenOrApprovedRetake =
+    attempt.retake_request?.status === "pending" ||
+    (attempt.retake_request?.status === "approved" && !attempt.retake_request.consumed_at);
+  const canRequestRetake =
+    ["submitted", "grading", "graded", "expired"].includes(attempt.status) && !hasOpenOrApprovedRetake;
   const statusLabels = strings.statusLabels;
 
   async function requestReevaluation(event: FormEvent) {
@@ -50,6 +59,22 @@ export function AttemptResultDetails() {
       setError(extractErrorMessage(err, strings.reevaluation.errors.submit));
     } finally {
       setRequesting(false);
+    }
+  }
+
+  async function requestRetake(event: FormEvent) {
+    event.preventDefault();
+    if (!attempt) return;
+    setRequestingRetake(true);
+    try {
+      const { data } = await apiClient.post(`/student/attempts/${attempt.id}/retake-request`, { reason: retakeReason });
+      setAttempt((current) => current ? { ...current, retake_request: data } : current);
+      setRetakeReason("");
+      setError(null);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.retake.errors.submit));
+    } finally {
+      setRequestingRetake(false);
     }
   }
 
@@ -86,6 +111,17 @@ export function AttemptResultDetails() {
 
       {canRequestReevaluation && (
         <ReevaluationForm reason={reason} onReasonChange={setReason} requesting={requesting} onSubmit={requestReevaluation} />
+      )}
+
+      {attempt.retake_request && <RetakeRequestStatus retakeRequest={attempt.retake_request} />}
+
+      {canRequestRetake && (
+        <RetakeRequestForm
+          reason={retakeReason}
+          onReasonChange={setRetakeReason}
+          requesting={requestingRetake}
+          onSubmit={requestRetake}
+        />
       )}
     </div>
   );

@@ -1,0 +1,122 @@
+import { type ChangeEvent, type FormEvent, useState } from "react";
+import { API_BASE_URL, apiClient } from "@/api/client";
+import { extractErrorMessage } from "@/api/errors";
+import { ProfileEditorShell } from "@/components/ProfileEditorShell";
+import { fromDateInputValue, ProfileContactFields, toDateInputValue } from "@/components/ProfileContactFields";
+import { RequiredMark } from "@/components/ui";
+import { useAuthStore } from "@/store/authStore";
+import { instituteInstructorProfileStrings as strings } from "./InstituteInstructorProfile.strings";
+
+export function InstituteInstructorProfile() {
+  const user = useAuthStore((state) => state.user);
+  const setUser = useAuthStore((state) => state.setUser);
+  const [form, setForm] = useState({
+    email: user?.email ?? "",
+    first_name: user?.first_name ?? "",
+    last_name: user?.last_name ?? "",
+  });
+  const [dob, setDob] = useState(toDateInputValue(user?.dob));
+  const [gender, setGender] = useState(user?.gender ?? "");
+  const [phoneNumber, setPhoneNumber] = useState(user?.phone_number ?? "");
+  const [address, setAddress] = useState(user?.address ?? "");
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [avatarRevision, setAvatarRevision] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const { data } = await apiClient.patch("/institute-instructor/me/profile", {
+        ...form,
+        dob: fromDateInputValue(dob),
+        gender: gender || null,
+        phone_number: phoneNumber || null,
+        address: address || null,
+      });
+      setUser(data);
+      setSuccess(strings.success.profileUpdated);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.errors.updateProfile));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function upload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const { data } = await apiClient.post("/institute-instructor/me/avatar", body);
+      setUser(data);
+      setAvatarRevision(Date.now());
+      setSuccess(strings.success.avatarUpdated);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.errors.uploadAvatar));
+    } finally {
+      setUploading(false);
+      event.target.value = "";
+    }
+  }
+
+  const initials = `${user?.first_name?.[0] ?? ""}${user?.last_name?.[0] ?? ""}`.trim().toUpperCase() || "II";
+  const avatar = user?.avatar_url ? `${API_BASE_URL}${user.avatar_url}?v=${avatarRevision}` : null;
+
+  return (
+    <ProfileEditorShell
+      roleLabel={strings.roleLabel}
+      tone="institute"
+      firstName={form.first_name}
+      lastName={form.last_name}
+      email={form.email}
+      avatarSrc={avatar}
+      initials={initials}
+      uploading={uploading}
+      avatarInputId="institute-instructor-avatar-input"
+      onAvatarChange={upload}
+    >
+      <form className="role-profile-form" onSubmit={submit}>
+        <div className="form-grid">
+          <div>
+            <label htmlFor="institute-instructor-first-name">{strings.firstName}<RequiredMark /></label>
+            <input id="institute-instructor-first-name" value={form.first_name} onChange={(event) => setForm({ ...form, first_name: event.target.value })} required />
+          </div>
+          <div>
+            <label htmlFor="institute-instructor-last-name">{strings.lastName}<RequiredMark /></label>
+            <input id="institute-instructor-last-name" value={form.last_name} onChange={(event) => setForm({ ...form, last_name: event.target.value })} required />
+          </div>
+        </div>
+        <label htmlFor="institute-instructor-email">{strings.emailAddress}<RequiredMark /></label>
+        <input id="institute-instructor-email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
+
+        <ProfileContactFields
+          idPrefix="institute-instructor"
+          dob={dob}
+          onDobChange={setDob}
+          gender={gender}
+          onGenderChange={setGender}
+          phoneNumber={phoneNumber}
+          onPhoneNumberChange={setPhoneNumber}
+          address={address}
+          onAddressChange={setAddress}
+        />
+
+        {error && <p className="error-text">{error}</p>}
+        {success && <p className="success-text">{success}</p>}
+
+        <div className="form-actions">
+          <button type="submit" disabled={saving}>{saving ? strings.saving : strings.save}</button>
+        </div>
+      </form>
+    </ProfileEditorShell>
+  );
+}

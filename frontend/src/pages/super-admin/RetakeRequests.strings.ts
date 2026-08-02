@@ -1,0 +1,41 @@
+export const retakeRequestsStrings = {
+  eyebrow: "Assessment oversight",
+  title: "Retake Requests",
+  subtitle: "Review and decide student requests to retake a test after their one attempt.",
+  loading: "Loading...",
+  loadError: "Failed to load retake requests.",
+  resolveError: "Failed to save your decision.",
+  noteTooShort: "Please add a note of at least 10 characters explaining your decision.",
+  filters: {
+    all: "All statuses",
+    pending: "Pending",
+    approved: "Approved",
+    rejected: "Rejected",
+  },
+  register: {
+    title: "Requests",
+    description: "Every retake request submitted platform-wide, newest first.",
+    recordsSuffix: "requests",
+    empty: "No retake requests match this filter.",
+  },
+  table: {
+    student: "Student",
+    module: "Module",
+    reason: "Reason",
+    status: "Status",
+    reviewedBy: "Reviewed by",
+    requested: "Requested",
+    note: "Admin note",
+    actions: "Actions",
+  },
+  actions: {
+    approve: "Approve",
+    reject: "Reject",
+  },
+  modal: {
+    approveTitle: "Approve retake request",
+    rejectTitle: "Reject retake request",
+    noteLabel: "Note to the student",
+    notePlaceholder: "Explain your decision - the student will see this note.",
+  },
+} as const;

@@ -2,6 +2,7 @@ import { type ChangeEvent, type FormEvent, useState } from "react";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { ProfileEditorShell } from "@/components/ProfileEditorShell";
+import { fromDateInputValue, ProfileContactFields, toDateInputValue } from "@/components/ProfileContactFields";
 import { RequiredMark } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { profileStrings as strings } from "./Profile.strings";
@@ -13,6 +14,10 @@ export function Profile() {
   const [email, setEmail] = useState(user?.email ?? "");
   const [firstName, setFirstName] = useState(user?.first_name ?? "");
   const [lastName, setLastName] = useState(user?.last_name ?? "");
+  const [dob, setDob] = useState(toDateInputValue(user?.dob));
+  const [gender, setGender] = useState(user?.gender ?? "");
+  const [phoneNumber, setPhoneNumber] = useState(user?.phone_number ?? "");
+  const [address, setAddress] = useState(user?.address ?? "");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -29,6 +34,10 @@ export function Profile() {
         email,
         first_name: firstName,
         last_name: lastName,
+        dob: fromDateInputValue(dob),
+        gender: gender || null,
+        phone_number: phoneNumber || null,
+        address: address || null,
       });
       setUser(data);
       setSuccess(strings.notices.saved);
@@ -91,6 +100,18 @@ export function Profile() {
         </div>
         <label htmlFor="super-admin-email">{strings.emailLabel}<RequiredMark /></label>
         <input id="super-admin-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+
+        <ProfileContactFields
+          idPrefix="super-admin"
+          dob={dob}
+          onDobChange={setDob}
+          gender={gender}
+          onGenderChange={setGender}
+          phoneNumber={phoneNumber}
+          onPhoneNumberChange={setPhoneNumber}
+          address={address}
+          onAddressChange={setAddress}
+        />
 
         {error && <p className="error-text">{error}</p>}
         {success && <p className="success-text">{success}</p>}

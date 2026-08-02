@@ -150,31 +150,47 @@ def _ordered_questions(attempt: TestAttempt, part: ExamModulePart) -> list[ExamM
     return sorted(part.questions, key=lambda item: item.sort_order)
 
 
+ALREADY_ATTEMPTED_DETAIL = (
+    "You have already attempted this test. If something went wrong, you can "
+    "raise a Retake Request from your results page."
+)
+
+
 def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
+    from app.services import retake_service
+
     is_final = module.module_type == "final_test"
-    if is_final:
-        prior = db.query(TestAttempt).filter(
-            TestAttempt.user_id == user.id, TestAttempt.module_id == module.id
-        ).first()
-        if prior is not None:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="The Final Test allows only one sitting and has already been attempted",
-            )
-    else:
-        existing = (
-            db.query(TestAttempt)
-            .filter(
-                TestAttempt.user_id == user.id,
-                TestAttempt.module_id == module.id,
-                TestAttempt.status == ATTEMPT_IN_PROGRESS,
-            )
-            .first()
+
+    existing_in_progress = (
+        db.query(TestAttempt)
+        .filter(
+            TestAttempt.user_id == user.id,
+            TestAttempt.module_id == module.id,
+            TestAttempt.status == ATTEMPT_IN_PROGRESS,
         )
-        if existing is not None:
-            if existing.expires_at > _now():
-                return get_student_view(db, get_attempt_or_404(db, user, existing.id))
-            _auto_expire(db, existing)
+        .first()
+    )
+    if existing_in_progress is not None:
+        if existing_in_progress.expires_at > _now():
+            return get_student_view(db, get_attempt_or_404(db, user, existing_in_progress.id))
+        _auto_expire(db, existing_in_progress)
+
+    # Every module type allows exactly one original sitting; an approved,
+    # unconsumed RetakeRequest is the only way to earn another.
+    original_attempt = (
+        db.query(TestAttempt)
+        .filter(
+            TestAttempt.user_id == user.id,
+            TestAttempt.module_id == module.id,
+            TestAttempt.is_retake.is_(False),
+        )
+        .first()
+    )
+    retake_request = None
+    if original_attempt is not None:
+        retake_request = retake_service.get_available_retake(db, user.id, module.id)
+        if retake_request is None:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ALREADY_ATTEMPTED_DETAIL)
 
     if user.institute_id is not None:
         from app.dependencies.limits import enforce_limit
@@ -188,22 +204,22 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         module_id=module.id,
         status=ATTEMPT_READY if is_final else ATTEMPT_IN_PROGRESS,
         is_final=is_final,
+        is_retake=retake_request is not None,
+        retake_request_id=retake_request.id if retake_request is not None else None,
         security_required=is_final,
         started_at=now,
         expires_at=expires_at,
         content_snapshot=_build_content_snapshot(module, randomize=True),
     )
     db.add(attempt)
+    if retake_request is not None:
+        retake_request.consumed_at = now
+        db.add(retake_request)
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
-        if is_final:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="The Final Test allows only one sitting and has already been attempted",
-            ) from None
-        existing = (
+        existing_in_progress = (
             db.query(TestAttempt)
             .filter(
                 TestAttempt.user_id == user.id,
@@ -212,12 +228,9 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
             )
             .first()
         )
-        if existing is not None:
-            return get_student_view(db, get_attempt_or_404(db, user, existing.id))
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Could not start a new attempt right now. Please try again.",
-        ) from None
+        if existing_in_progress is not None:
+            return get_student_view(db, get_attempt_or_404(db, user, existing_in_progress.id))
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ALREADY_ATTEMPTED_DETAIL) from None
     return get_student_view(db, get_attempt_or_404(db, user, attempt.id))
 
 
@@ -430,7 +443,7 @@ def get_student_view(
     question_part_id: Optional[int] = None,
     include_draft_grades: bool = False,
 ) -> dict:
-    from app.services import grading_service
+    from app.services import grading_service, retake_service
 
     if attempt.status == ATTEMPT_IN_PROGRESS and attempt.expires_at <= _now():
         _auto_expire(db, attempt)
@@ -467,6 +480,7 @@ def get_student_view(
         "graded_at": _utc_out(attempt.graded_at),
         "flag_count": len(attempt.flags),
         "reevaluation": grading_service.reevaluation_for_student(db, attempt),
+        "retake_request": retake_service.get_retake_for_student(db, attempt),
         "ai_evaluation_status": _ai_evaluation_status(db, attempt),
         "parts": _serialize_parts(
             attempt,

@@ -63,4 +63,22 @@ export const attemptResultDetailsStrings = {
     submitting: "Submitting...",
     submit: "Submit instructor review request",
   },
+  retake: {
+    eyebrow: "Retake request",
+    heading: "Retake request",
+    reviewerPrefix: "Reviewed by:",
+    resolutionHeading: "Admin note",
+    errors: {
+      submit: "Failed to submit your retake request.",
+    },
+  },
+  retakeForm: {
+    eyebrow: "Couldn't complete this test?",
+    heading: "Raise a Retake Request",
+    description:
+      "Each test can only be attempted once. If something went wrong - a technical issue, an interruption, or anything that stopped you from completing it properly - explain what happened and the Super Admin will review your request.",
+    reasonLabel: "Reason for the retake request",
+    submitting: "Submitting...",
+    submit: "Submit retake request",
+  },
 } as const;

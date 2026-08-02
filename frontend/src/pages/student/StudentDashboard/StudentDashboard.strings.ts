@@ -61,8 +61,6 @@ export const studentDashboardStrings = {
     inProgress: "In progress",
     awaitingGrading: "Awaiting grading",
     graded: "Graded",
-    aiLeft: "AI Evaluations Left",
-    aiGot: "AI Evaluations Got",
   },
   learningPlan: {
     instituteHeading: "Institute assigned tests",

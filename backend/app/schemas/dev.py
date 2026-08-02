@@ -37,7 +37,6 @@ class AiEvaluationSettingsIn(BaseModel):
     api_key: Optional[str] = None
     api_keys: Optional[list[dict]] = None
     model: Optional[str] = None
-    monthly_limit: int = 100
 
 
 class AiEvaluationKeyTestIn(BaseModel):

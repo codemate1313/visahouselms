@@ -23,6 +23,7 @@ from app.schemas.student import (
     PlanSubscribeRequest,
     ProctorFlagRequest,
     ReevaluationCreateRequest,
+    RetakeRequestCreate,
 )
 from app.schemas.user import ChangePasswordRequest, ProfileUpdateRequest, SessionOut
 from app.services import (
@@ -35,6 +36,7 @@ from app.services import (
     notification_service,
     payment_service,
     plan_service,
+    retake_service,
     student_analysis_service,
     subscription_service,
     daily_english_service,
@@ -66,6 +68,10 @@ def _current_user_out(user: User) -> CurrentUser:
         avatar_url=account_service.avatar_url_for(user),
         is_owner=user.is_owner,
         is_developer_verified=user.is_developer_verified,
+        dob=user.dob,
+        phone_number=user.phone_number,
+        address=user.address,
+        gender=user.gender,
     )
 
 
@@ -123,7 +129,18 @@ def update_my_profile(
     db: Session = Depends(get_db),
     user: User = Depends(require_student),
 ):
-    updated = account_service.update_profile(db, user, payload.email, payload.first_name, payload.last_name, _ip(request))
+    updated = account_service.update_profile(
+        db,
+        user,
+        payload.email,
+        payload.first_name,
+        payload.last_name,
+        _ip(request),
+        dob=payload.dob,
+        phone_number=payload.phone_number,
+        address=payload.address,
+        gender=payload.gender,
+    )
     return _current_user_out(updated)
 
 
@@ -443,6 +460,17 @@ def request_reevaluation(
 ):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
     return grading_service.request_reevaluation(db, user, attempt, payload.reason)
+
+
+@router.post("/attempts/{attempt_id}/retake-request", status_code=201)
+def request_retake(
+    attempt_id: int,
+    payload: RetakeRequestCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    return retake_service.request_retake(db, user, attempt, payload.reason)
 
 
 @router.post("/modules/{module_id}/attempts", status_code=201)

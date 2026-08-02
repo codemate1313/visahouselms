@@ -13,7 +13,10 @@ class PlanCreate(BaseModel):
     currency: str = "INR"
     duration_days: int = Field(gt=0)
     student_limit: int = Field(ge=0)
-    test_limit: int = Field(ge=0)
+    # No longer configurable from the plan form: every module allows exactly
+    # one attempt platform-wide, with retakes granted individually via
+    # RetakeRequest approval rather than a per-plan attempt allowance.
+    test_limit: int = Field(default=0, ge=0)
     staff_limit: int = Field(ge=0)
     grace_days: int = Field(default=7, ge=0)
     module_ids: list[int] = Field(default_factory=list)

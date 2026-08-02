@@ -32,13 +32,6 @@ export const attemptResultStrings = {
     viewDetailedReview: "View detailed review",
     aiGradedBadge: "Evaluated by AI",
   },
-  quotaExhaustedModal: {
-    title: "Your AI evaluation quota is reached",
-    body:
-      "You have used all of your monthly AI evaluations for this account. Contact the Super Admin if you'd like more, or raise a request below and an instructor will review your result.",
-    contactSupport: "Contact Super Admin",
-    dismiss: "Got it",
-  },
   analysis: {
     eyebrow: "Personalized coaching",
     heading: "Performance analysis",

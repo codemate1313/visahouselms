@@ -79,6 +79,7 @@ export function Users() {
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   const activeRole: DirectoryRole = (roleSlug && ROLE_BY_SLUG[roleSlug]) || DEFAULT_ROLE;
+  const viewerIsOwner = Boolean(currentUser?.is_owner);
 
   const [data, setData] = useState<DirectoryUserPage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -285,8 +286,13 @@ export function Users() {
     ROLE_ACTIONS[user.role_name]?.base ?? memberActionBase(user);
   const rowDeleteBase = (user: DirectoryUser) =>
     ROLE_ACTIONS[user.role_name]?.base ?? (canDeleteMember(user) ? memberActionBase(user) : null);
-  /** Owner rows are protected; every other row with a writable endpoint can be selected. */
-  const selectableRows = rows.filter((user) => !user.is_owner && Boolean(rowActionBase(user)));
+  /** Owner rows are protected; non-owner viewers also cannot bulk-act on other
+   *  Super Admins. Every other row with a writable endpoint can be selected. */
+  const selectableRows = rows.filter((user) => {
+    if (user.is_owner) return false;
+    if (user.role_name === "SUPER_ADMIN" && !viewerIsOwner) return false;
+    return Boolean(rowActionBase(user));
+  });
 
   function toggleSelect(id: number) {
     setSelectedIds((current) => {
@@ -372,7 +378,7 @@ export function Users() {
   const total = data?.total ?? 0;
   const visibleCount = data?.items.length ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const newRoute = NEW_ROUTE[activeRole];
+  const newRoute = activeRole === "SUPER_ADMIN" && !viewerIsOwner ? undefined : NEW_ROUTE[activeRole];
   const showInstitute = activeRole !== "SUPER_ADMIN" && activeRole !== "SA_INSTRUCTOR";
 
   return (
@@ -555,6 +561,7 @@ export function Users() {
         users={data?.items ?? []}
         loading={loading}
         currentUserId={currentUser?.id}
+        viewerIsOwner={viewerIsOwner}
         showInstitute={showInstitute}
         onToggleActive={handleToggleActive}
         onForceReset={handleForceReset}

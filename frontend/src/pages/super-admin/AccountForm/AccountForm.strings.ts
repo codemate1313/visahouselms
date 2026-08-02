@@ -49,5 +49,6 @@ export const accountFormStrings = {
     load: "Failed to load account.",
     uploadImage: "Failed to upload image.",
     save: "Failed to save account.",
+    ownerOnly: "Only the owner account can create, edit, or manage other Super Admin accounts.",
   },
 } as const;

@@ -2,6 +2,7 @@ import { type ChangeEvent, type FormEvent, useState } from "react";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { ProfileEditorShell } from "@/components/ProfileEditorShell";
+import { fromDateInputValue, ProfileContactFields, toDateInputValue } from "@/components/ProfileContactFields";
 import { RequiredMark } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { instituteProfileStrings as strings } from "./InstituteProfile.strings";
@@ -14,6 +15,10 @@ export function InstituteProfile() {
     first_name: user?.first_name ?? "",
     last_name: user?.last_name ?? "",
   });
+  const [dob, setDob] = useState(toDateInputValue(user?.dob));
+  const [gender, setGender] = useState(user?.gender ?? "");
+  const [phoneNumber, setPhoneNumber] = useState(user?.phone_number ?? "");
+  const [address, setAddress] = useState(user?.address ?? "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [avatarRevision, setAvatarRevision] = useState(0);
@@ -26,7 +31,13 @@ export function InstituteProfile() {
     setError(null);
     setSuccess(null);
     try {
-      const { data } = await apiClient.patch("/institute/me/profile", form);
+      const { data } = await apiClient.patch("/institute/me/profile", {
+        ...form,
+        dob: fromDateInputValue(dob),
+        gender: gender || null,
+        phone_number: phoneNumber || null,
+        address: address || null,
+      });
       setUser(data);
       setSuccess(strings.success.profileUpdated);
     } catch (err: unknown) {
@@ -86,6 +97,18 @@ export function InstituteProfile() {
         </div>
         <label htmlFor="institute-email">{strings.emailAddress}<RequiredMark /></label>
         <input id="institute-email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
+
+        <ProfileContactFields
+          idPrefix="institute-admin"
+          dob={dob}
+          onDobChange={setDob}
+          gender={gender}
+          onGenderChange={setGender}
+          phoneNumber={phoneNumber}
+          onPhoneNumberChange={setPhoneNumber}
+          address={address}
+          onAddressChange={setAddress}
+        />
 
         {error && <p className="error-text">{error}</p>}
         {success && <p className="success-text">{success}</p>}

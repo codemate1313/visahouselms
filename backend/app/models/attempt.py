@@ -89,6 +89,11 @@ REEVALUATION_IN_REVIEW = "in_review"
 REEVALUATION_RESOLVED = "resolved"
 REEVALUATION_REJECTED = "rejected"
 
+RETAKE_PENDING = "pending"
+RETAKE_APPROVED = "approved"
+RETAKE_REJECTED = "rejected"
+RETAKE_STATUSES = (RETAKE_PENDING, RETAKE_APPROVED, RETAKE_REJECTED)
+
 
 class CourseModule(Base):
     """Links a sellable Course to one or more published ExamModules."""
@@ -139,13 +144,16 @@ class Enrollment(Base):
 class TestAttempt(Base):
     __tablename__ = "test_attempts"
     __table_args__ = (
+        # Every module type allows exactly one original sitting per student -
+        # an approved, unconsumed RetakeRequest is the only way to add another
+        # (see attempt_service.start_attempt / retake_service).
         Index(
-            "uq_test_attempt_final_user_module",
+            "uq_test_attempt_original_user_module",
             "user_id",
             "module_id",
             unique=True,
-            sqlite_where=text("is_final = 1"),
-            postgresql_where=text("is_final = true"),
+            sqlite_where=text("is_retake = 0"),
+            postgresql_where=text("is_retake = false"),
         ),
         Index(
             "uq_test_attempt_active_user_module",
@@ -165,6 +173,12 @@ class TestAttempt(Base):
     course_id: Mapped[Optional[int]] = mapped_column(ForeignKey("courses.id"), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=ATTEMPT_IN_PROGRESS, index=True)
     is_final: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # True for the extra sitting granted by an approved RetakeRequest; false
+    # for the one original attempt every student gets on every module.
+    is_retake: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    retake_request_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("retake_requests.id", ondelete="SET NULL"), nullable=True, unique=True
+    )
 
     security_required: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     security_started_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -205,6 +219,7 @@ class TestAttempt(Base):
         back_populates="attempt", cascade="all, delete-orphan"
     )
     security_device: Mapped[Optional["UserDevice"]] = relationship()  # noqa: F821
+    retake_request: Mapped[Optional["RetakeRequest"]] = relationship(foreign_keys=[retake_request_id])
 
 
 class AttemptAnswer(Base):
@@ -352,3 +367,32 @@ class ReevaluationRequest(Base):
     attempt: Mapped[TestAttempt] = relationship()
     student: Mapped["User"] = relationship(foreign_keys=[student_id])  # noqa: F821
     assigned_to: Mapped[Optional["User"]] = relationship(foreign_keys=[assigned_to_id])  # noqa: F821
+
+
+class RetakeRequest(Base):
+    """A student's request to retake a module (any of the 6 module types)
+    after their one guaranteed sitting - e.g. a technical issue prevented
+    them from completing it properly. Super Admin reviews every request
+    platform-wide; an approval grants exactly one extra attempt, consumed the
+    next time the student starts that module (see attempt_service.start_attempt)."""
+
+    __tablename__ = "retake_requests"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    attempt_id: Mapped[int] = mapped_column(
+        ForeignKey("test_attempts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    student_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    reviewed_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default=RETAKE_PENDING, index=True)
+    review_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # Set once the approval has been redeemed for a new attempt, so it can
+    # never be redeemed twice.
+    consumed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    attempt: Mapped[TestAttempt] = relationship(foreign_keys=[attempt_id])
+    student: Mapped["User"] = relationship(foreign_keys=[student_id])  # noqa: F821
+    reviewed_by: Mapped[Optional["User"]] = relationship(foreign_keys=[reviewed_by_id])  # noqa: F821

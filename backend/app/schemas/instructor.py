@@ -21,6 +21,7 @@ class InstructorAccountCreate(BaseModel):
     phone_number: Optional[str] = None
     address: Optional[str] = None
     avatar_path: Optional[str] = None
+    gender: Optional[str] = None
 
     @field_validator("first_name", "last_name", "title")
     @classmethod
@@ -43,6 +44,7 @@ class InstructorAccountUpdate(BaseModel):
     phone_number: Optional[str] = None
     address: Optional[str] = None
     avatar_path: Optional[str] = None
+    gender: Optional[str] = None
 
     @field_validator("first_name", "last_name", "title")
     @classmethod
@@ -68,6 +70,7 @@ class InstructorAccountOut(BaseModel):
     phone_number: Optional[str] = None
     address: Optional[str] = None
     avatar_path: Optional[str] = None
+    gender: Optional[str] = None
     created_at: datetime
 
 

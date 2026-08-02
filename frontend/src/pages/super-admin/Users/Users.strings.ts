@@ -64,6 +64,7 @@ export const usersStrings = {
   empty: "No users match these filters.",
   actions: {
     protected: "Protected",
+    ownerOnly: "Owner only",
     manage: "Manage in institute",
     edit: "Edit",
     deactivate: "Deactivate",

@@ -21,7 +21,6 @@ export interface Onboarding {
   student_limit: number;
   staff_limit: number;
   access_duration_days: number;
-  ai_student_monthly_limit?: number | null;
   course_count: number;
   module_ids: number[];
   branding: { primary_color: string; secondary_color: string; logo_url?: string | null };

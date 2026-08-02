@@ -77,6 +77,12 @@ export function DashboardLayout() {
           to: "/super-admin/grading",
         },
         {
+          key: "retake-requests",
+          label: m.retakeRequests,
+          icon: "restore",
+          to: "/super-admin/retake-requests",
+        },
+        {
           key: "notifications",
           label: m.notifications,
           icon: "notifications",

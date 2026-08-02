@@ -116,6 +116,19 @@ def _assert_owner_not_mutated(actor: User, user: User, action: str) -> None:
         )
 
 
+def _require_owner(actor: User) -> None:
+    """Only the owner account may create, edit, deactivate, reactivate, delete,
+    or force-reset a super admin account. Self-service for a super admin's own
+    account goes through account_service.update_profile / /me/profile instead,
+    so there is no self-carveout here.
+    """
+    if not actor.is_owner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the owner account can manage other super admin accounts",
+        )
+
+
 def create_super_admin(
     db: Session,
     actor: User,
@@ -131,6 +144,7 @@ def create_super_admin(
     can_view_monetary_analytics: bool = False,
 ) -> User:
     role = _super_admin_role(db)
+    _require_owner(actor)
     if can_view_monetary_analytics and not actor.is_owner:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -189,6 +203,7 @@ def update_super_admin(
     can_view_monetary_analytics: Optional[bool] = None,
 ) -> User:
     user = get_super_admin_or_404(db, account_id)
+    _require_owner(actor)
     _assert_owner_not_mutated(actor, user, "changed")
 
     if email is not None and email != user.email:
@@ -263,6 +278,7 @@ def _assert_not_self(actor: User, user: User, action: str) -> None:
 def deactivate_super_admin(db: Session, actor: User, account_id: int, ip_address: Optional[str]) -> User:
     role = _super_admin_role(db)
     user = get_super_admin_or_404(db, account_id)
+    _require_owner(actor)
     _assert_not_self(actor, user, "deactivate")
     _assert_owner_not_mutated(actor, user, "deactivated")
     _assert_not_last_active_admin(db, role, user)
@@ -283,6 +299,7 @@ def deactivate_super_admin(db: Session, actor: User, account_id: int, ip_address
 
 def reactivate_super_admin(db: Session, actor: User, account_id: int, ip_address: Optional[str]) -> User:
     user = get_super_admin_or_404(db, account_id)
+    _require_owner(actor)
     user.is_active = True
     db.add(user)
     _write_audit_log(db, actor, "super_admin.reactivate", user.id, ip_address)
@@ -300,6 +317,7 @@ def reactivate_super_admin(db: Session, actor: User, account_id: int, ip_address
 def delete_super_admin(db: Session, actor: User, account_id: int, ip_address: Optional[str]) -> None:
     role = _super_admin_role(db)
     user = get_super_admin_or_404(db, account_id)
+    _require_owner(actor)
     _assert_not_self(actor, user, "delete")
     _assert_owner_not_mutated(actor, user, "deleted")
     _assert_not_last_active_admin(db, role, user)
@@ -320,6 +338,7 @@ def set_force_password_reset(
     db: Session, actor: User, account_id: int, enabled: bool, ip_address: Optional[str]
 ) -> User:
     user = get_super_admin_or_404(db, account_id)
+    _require_owner(actor)
     _assert_owner_not_mutated(actor, user, "marked for password reset")
     user.force_password_reset = enabled
     db.add(user)

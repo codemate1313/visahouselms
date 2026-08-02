@@ -116,6 +116,14 @@ export function AccountForm() {
 
   if (loading) return <p>{strings.loading}</p>;
 
+  if (!canEditOwnerPermissions) {
+    return (
+      <div className="account-editor-page">
+        <p className="error-text">{strings.errors.ownerOnly}</p>
+      </div>
+    );
+  }
+
   const fullName = `${firstName} ${lastName}`.trim();
   const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase() || "SA";
 

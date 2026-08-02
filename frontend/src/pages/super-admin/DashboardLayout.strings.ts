@@ -13,6 +13,7 @@ export const dashboardLayoutStrings = {
     usersStudents: "Students",
     courseControl: "Course Control",
     gradingOversight: "Grading Oversight",
+    retakeRequests: "Retake Requests",
     notifications: "Notifications",
     supportTickets: "Support Tickets",
     saas: "SaaS",

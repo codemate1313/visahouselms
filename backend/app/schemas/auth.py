@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -82,6 +83,10 @@ class CurrentUser(BaseModel):
     is_owner: bool = False
     is_developer_verified: bool = False
     can_view_monetary_analytics: bool = False
+    dob: Optional[datetime] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    gender: Optional[str] = None
 
 
 class ForgotPasswordRequest(BaseModel):

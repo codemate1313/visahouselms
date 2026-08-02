@@ -33,7 +33,6 @@ export function InstituteOnboarding() {
     setSelectedModules(new Set(record.module_ids || []));
     setForm((current) => ({
       ...current,
-      ai_student_monthly_limit: String(record.ai_student_monthly_limit ?? 0),
       primary_color: record.branding?.primary_color || current.primary_color,
       secondary_color: record.branding?.secondary_color || current.secondary_color,
     }));
@@ -100,7 +99,6 @@ export function InstituteOnboarding() {
         student_limit: Number(form.student_limit),
         staff_limit: Number(form.staff_limit),
         access_duration_days: Number(form.access_duration_days),
-        ai_student_monthly_limit: Number(form.ai_student_monthly_limit || 0),
         module_ids: [...selectedModules],
       });
       setOnboarding(data);

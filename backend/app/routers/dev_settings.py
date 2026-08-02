@@ -140,8 +140,6 @@ def put_ai_evaluation(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    if payload.monthly_limit < 0:
-        raise HTTPException(status_code=400, detail="Monthly AI evaluation limit cannot be negative")
     data = payload.model_dump()
     api_keys = data.pop("api_keys", None)
     set_settings_group(db, "ai", {key: str(value) if isinstance(value, bool) else value for key, value in data.items()})

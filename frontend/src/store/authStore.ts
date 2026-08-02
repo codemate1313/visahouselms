@@ -19,6 +19,10 @@ export interface AuthUser {
   is_owner?: boolean;
   is_developer_verified?: boolean;
   can_view_monetary_analytics?: boolean;
+  dob?: string | null;
+  phone_number?: string | null;
+  address?: string | null;
+  gender?: string | null;
 }
 
 interface AuthState {

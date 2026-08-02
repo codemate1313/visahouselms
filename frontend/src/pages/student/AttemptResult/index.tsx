@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { Attempt, ReevaluationRequestView, StudentNotification, StudentResultAnalysis } from "@/api/types";
@@ -9,18 +9,16 @@ import { PerformanceOverviewPanel } from "./components/PerformanceOverviewPanel"
 import { AnalysisPanel } from "./components/AnalysisPanel";
 import { ReevaluationStatus } from "./components/ReevaluationStatus";
 import { ReevaluationRequestForm } from "./components/ReevaluationRequestForm";
-import { Badge, Button, LinkButton, Modal } from "@/components/ui";
+import { Badge, LinkButton } from "@/components/ui";
 
 // AI auto-grading runs as a background job right after submission (a
 // provider call can take a while), so a freshly submitted human-graded
-// attempt is polled briefly for the result to land - either a real grade or
-// the quota-exhausted notification that fires when it can't run.
+// attempt is polled briefly for the result to land.
 const AI_GRADING_POLL_INTERVAL_MS = 4000;
 const AI_GRADING_POLL_MAX_ATTEMPTS = 15;
 
 export function AttemptResult() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [analysis, setAnalysis] = useState<StudentResultAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +26,6 @@ export function AttemptResult() {
   const [reviewReason, setReviewReason] = useState("");
   const [requestingReview, setRequestingReview] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
-  const [quotaExhaustedModalOpen, setQuotaExhaustedModalOpen] = useState(false);
   const mountedAtRef = useRef(new Date().toISOString());
 
   useEffect(() => {
@@ -89,15 +86,9 @@ export function AttemptResult() {
         .then(({ data }) => {
           if (!active) return;
           const aiStopped = data.some(
-            (item) =>
-              ["ai_quota_exhausted", "ai_evaluation_failed"].includes(item.kind) &&
-              item.created_at >= mountedAtRef.current,
+            (item) => item.kind === "ai_evaluation_failed" && item.created_at >= mountedAtRef.current,
           );
           if (aiStopped) {
-            const exhausted = data.some(
-              (item) => item.kind === "ai_quota_exhausted" && item.created_at >= mountedAtRef.current,
-            );
-            if (exhausted) setQuotaExhaustedModalOpen(true);
             window.clearInterval(timer);
             Promise.all([
               apiClient.get<Attempt>(`/student/attempts/${id}`, { headers: { "X-Skip-Loader": "1" } }),
@@ -136,7 +127,6 @@ export function AttemptResult() {
   const canRequestReview = ["grading", "graded"].includes(attempt.status) && hasInstructorReviewablePart && !hasOpenReevaluation;
   const isAiGraded = attempt.parts.some((part) => part.grade?.status === "ai_graded");
   const statusLabels = strings.statusLabels;
-  const q = strings.quotaExhaustedModal;
 
   async function requestInstructorReview(event: FormEvent) {
     event.preventDefault();
@@ -189,26 +179,6 @@ export function AttemptResult() {
           {strings.allAttempts}
         </LinkButton>
       </div>
-
-      <Modal
-        open={quotaExhaustedModalOpen}
-        onClose={() => setQuotaExhaustedModalOpen(false)}
-        title={q.title}
-        actions={
-          <>
-            <Button variant="secondary" onClick={() => setQuotaExhaustedModalOpen(false)}>
-              {q.dismiss}
-            </Button>
-            <Button
-              onClick={() => navigate("/student/support?category=ai_evaluation&subject=AI+evaluation+quota+reached")}
-            >
-              {q.contactSupport}
-            </Button>
-          </>
-        }
-      >
-        <p>{q.body}</p>
-      </Modal>
 
       <PerformanceOverviewPanel attempt={attempt} metrics={metrics} awaitingAiGrading={awaitingAiGrading} />
       <AnalysisPanel

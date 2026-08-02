@@ -37,6 +37,7 @@ from app.routers import (
     payment_webhooks,
     plans,
 
+    retake_admin,
     revenue,
     seo_router,
     student_portal,
@@ -81,6 +82,7 @@ app.include_router(super_admin.router)
 app.include_router(developer.router)
 app.include_router(dev_settings.router)
 app.include_router(grading_admin.router)
+app.include_router(retake_admin.router)
 app.include_router(backups.router)
 app.include_router(logs.router)
 app.include_router(terminal.router)

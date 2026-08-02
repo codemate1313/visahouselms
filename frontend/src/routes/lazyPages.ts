@@ -12,10 +12,10 @@ export const ContactUs = lazy(() => import("../pages/public/ContactUs").then((mo
 export const Home = lazy(() => import("../pages/public/Home").then((module) => ({ default: module.Home })));
 export const ShowcasePlans = lazy(() => import("../pages/public/Plans").then((module) => ({ default: module.Plans })));
 export const InstituteAnnouncements = lazy(() => import("../pages/institute/InstituteAnnouncements").then((module) => ({ default: module.InstituteAnnouncements })));
-export const InstituteAiQuota = lazy(() => import("../pages/institute/InstituteAiQuota").then((module) => ({ default: module.InstituteAiQuota })));
 export const InstituteBilling = lazy(() => import("../pages/institute/InstituteBilling").then((module) => ({ default: module.InstituteBilling })));
 export const InstituteDashboard = lazy(() => import("../pages/institute/InstituteDashboard").then((module) => ({ default: module.InstituteDashboard })));
 export const InstituteInstructorLayout = lazy(() => import("../pages/institute/InstituteInstructorLayout").then((module) => ({ default: module.InstituteInstructorLayout })));
+export const InstituteInstructorProfile = lazy(() => import("../pages/institute/InstituteInstructorProfile").then((module) => ({ default: module.InstituteInstructorProfile })));
 export const InstituteLayout = lazy(() => import("../pages/institute/InstituteLayout").then((module) => ({ default: module.InstituteLayout })));
 export const InstituteMemberForm = lazy(() => import("../pages/institute/InstituteMemberForm").then((module) => ({ default: module.InstituteMemberForm })));
 export const SuperAdminInstructorForm = lazy(() => import("../pages/institute/InstituteMemberForm").then((module) => ({ default: module.SuperAdminInstructorForm })));
@@ -55,6 +55,7 @@ export const DashboardLayout = lazy(() => import("../pages/super-admin/Dashboard
 export const DemoAccounts = lazy(() => import("../pages/super-admin/DemoAccounts").then((module) => ({ default: module.DemoAccounts })));
 export const DeveloperSettings = lazy(() => import("../pages/super-admin/DeveloperSettings").then((module) => ({ default: module.DeveloperSettings })));
 export const GradingOversight = lazy(() => import("../pages/super-admin/GradingOversight").then((module) => ({ default: module.GradingOversight })));
+export const RetakeRequests = lazy(() => import("../pages/super-admin/RetakeRequests").then((module) => ({ default: module.RetakeRequests })));
 export const GstRates = lazy(() => import("../pages/super-admin/GstRates").then((module) => ({ default: module.GstRates })));
 
 export const InstituteBranding = lazy(() => import("../pages/super-admin/InstituteBranding").then((module) => ({ default: module.InstituteBranding })));

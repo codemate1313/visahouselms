@@ -63,8 +63,6 @@ export function StudentDashboard() {
   const completedTests = testProgress.filter((item) => item.latestAttempt && COMPLETED_STATUSES.has(item.latestAttempt.status)).length;
   const pendingTests = Math.max(assignedModules.length - completedTests, 0);
 
-  const aiEvaluations = myPlan.ai_evaluations;
-
   const statCards: StatCard[] = [
     { key: "available", label: strings.stats.available, value: myPlan.plan?.modules.length ?? 0, tone: "blue" },
     { key: "completed", label: strings.stats.completed, value: completedTests, tone: "green" },
@@ -73,16 +71,6 @@ export function StudentDashboard() {
     { key: "awaiting", label: strings.stats.awaitingGrading, value: pendingGrading, tone: "amber" },
     { key: "graded", label: strings.stats.graded, value: graded, tone: "green" },
   ];
-
-  if (aiEvaluations) {
-    statCards.push({
-      key: "ai_left",
-      label: strings.stats.aiLeft,
-      value: aiEvaluations.ai_evaluations_left,
-      tone: "purple",
-      caption: `Quota: ${aiEvaluations.ai_evaluations_limit} / mo`,
-    });
-  }
 
   return (
     <div className="sd-dashboard" ref={containerRef}>

@@ -106,9 +106,9 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: ["/super-admin/dev-settings", "/super-admin/platform-settings"], eyebrow: "SETTINGS", title: "Platform Settings" },
   { match: "/super-admin/logs", eyebrow: "SETTINGS", title: "System Logs" },
   { match: "/super-admin/terminal", eyebrow: "SETTINGS", title: "CMD Terminal" },
-  { match: ["/super-admin/profile", "/institute-portal/profile", "/instructor-portal/profile", "/student/profile"], eyebrow: "ACCOUNT", title: "My Profile" },
-  { match: ["/super-admin/sessions", "/institute-portal/sessions", "/instructor-portal/sessions", "/student/sessions"], eyebrow: "ACCOUNT", title: "Active Sessions" },
-  { match: ["/super-admin/change-password", "/institute-portal/change-password", "/instructor-portal/change-password", "/student/change-password"], eyebrow: "ACCOUNT", title: "Change Password" },
+  { match: ["/super-admin/profile", "/institute-portal/profile", "/instructor-portal/profile", "/institute-instructor/profile", "/student/profile"], eyebrow: "ACCOUNT", title: "My Profile" },
+  { match: ["/super-admin/sessions", "/institute-portal/sessions", "/instructor-portal/sessions", "/institute-instructor/sessions", "/student/sessions"], eyebrow: "ACCOUNT", title: "Active Sessions" },
+  { match: ["/super-admin/change-password", "/institute-portal/change-password", "/instructor-portal/change-password", "/institute-instructor/change-password", "/student/change-password"], eyebrow: "ACCOUNT", title: "Change Password" },
 ];
 
 function routeMatches(pathname: string, matcher: PageMetaRoute["match"]): boolean {
@@ -168,7 +168,7 @@ function quickLinksForRole(role: string | undefined): QuickLink[] {
   if (role === "SUPER_ADMIN") return commonSettings.map((item) => ({ ...item, path: `/super-admin${item.path}` }));
   if (role === "SA_INSTRUCTOR") return commonSettings.map((item) => ({ ...item, path: `/super-admin/instructor${item.path}` }));
   if (role === "INSTITUTE_ADMIN") return commonSettings.map((item) => ({ ...item, path: `/institute-portal${item.path}` }));
-  if (role === "INST_INSTRUCTOR") return commonSettings.slice(1).map((item) => ({ ...item, path: `/institute-instructor${item.path}` }));
+  if (role === "INST_INSTRUCTOR") return commonSettings.map((item) => ({ ...item, path: `/institute-instructor${item.path}` }));
   return commonSettings.map((item) => ({ ...item, path: `/student${item.path}` }));
 }
 

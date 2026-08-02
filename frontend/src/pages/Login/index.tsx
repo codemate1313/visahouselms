@@ -148,8 +148,8 @@ export function Login({
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (user.role !== selectedRole) {
-      setError(strings.roleMismatchError(roleLabel(user.role), roleLabel(selectedRole)));
-      showError(strings.roleMismatchToast(roleLabel(selectedRole), roleLabel(user.role)), strings.roleMismatchTitle);
+      setError(strings.roleMismatchError);
+      showError(strings.roleMismatchToast, strings.roleMismatchTitle);
       return;
     }
     const destination = destinationFor(user);

@@ -66,6 +66,10 @@ def update_profile(
     first_name: Optional[str],
     last_name: Optional[str],
     ip: Optional[str],
+    dob: Optional[datetime] = None,
+    phone_number: Optional[str] = None,
+    address: Optional[str] = None,
+    gender: Optional[str] = None,
 ) -> User:
     if email is not None and email != actor.email:
         if db.query(User).filter(User.email == email, User.id != actor.id).first() is not None:
@@ -75,6 +79,14 @@ def update_profile(
         actor.first_name = first_name
     if last_name is not None:
         actor.last_name = last_name
+    if dob is not None:
+        actor.dob = dob
+    if phone_number is not None:
+        actor.phone_number = phone_number
+    if address is not None:
+        actor.address = address
+    if gender is not None:
+        actor.gender = gender
 
     db.add(actor)
     _audit(db, actor, "account.update_profile", actor.id, ip)

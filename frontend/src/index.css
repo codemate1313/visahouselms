@@ -6490,6 +6490,33 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.12);
 }
 
+.role-profile-form select,
+.role-profile-form textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  background: var(--surface);
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.02);
+}
+
+.role-profile-form textarea {
+  padding: 12px 16px;
+  min-height: 100px;
+}
+
+.role-profile-form select:focus,
+.role-profile-form textarea:focus {
+  outline: none;
+  border-color: #e11d2e;
+  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.12);
+}
+
 .role-profile-form .form-actions {
   margin-top: 8px;
   padding-top: 20px;
@@ -26083,13 +26110,16 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
   color: var(--primary) !important;
 }
 
-[data-theme="dark"] .role-profile-form input {
+[data-theme="dark"] .role-profile-form input,
+[data-theme="dark"] .role-profile-form select,
+[data-theme="dark"] .role-profile-form textarea {
   color: #f7f7fa !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   background: rgba(255, 255, 255, 0.05) !important;
 }
 
-[data-theme="dark"] .role-profile-form input::placeholder {
+[data-theme="dark"] .role-profile-form input::placeholder,
+[data-theme="dark"] .role-profile-form textarea::placeholder {
   color: rgba(247, 247, 250, 0.42) !important;
 }
 

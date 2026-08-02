@@ -20,6 +20,8 @@ interface UsersTableProps {
   users: DirectoryUser[];
   loading?: boolean;
   currentUserId: number | undefined;
+  /** Whether the signed-in viewer is the application owner. */
+  viewerIsOwner: boolean;
   /** Whether the institute column is meaningful for the active tab. */
   showInstitute: boolean;
   onToggleActive: (user: DirectoryUser) => void;
@@ -97,6 +99,7 @@ export function UsersTable({
   users,
   loading = false,
   currentUserId,
+  viewerIsOwner,
   showInstitute,
   onToggleActive,
   onForceReset,
@@ -130,6 +133,13 @@ export function UsersTable({
   function renderActions(user: DirectoryUser) {
     if (isProtected(user)) {
       return <span className="badge badge-gray">{a.protected}</span>;
+    }
+
+    // Only the owner account may create, edit, deactivate, delete, or reset
+    // a Super Admin account from here (self-service goes through "My
+    // Profile" instead).
+    if (user.role_name === "SUPER_ADMIN" && !viewerIsOwner) {
+      return <span className="badge badge-gray">{a.ownerOnly}</span>;
     }
 
     function renderOverflowMenu(items: Array<ReactElement | false | null>) {
