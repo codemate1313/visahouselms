@@ -2584,11 +2584,23 @@ h1 {
   line-height: 1.45;
 }
 
-.module-readiness ul {
-  max-height: 150px;
+.module-readiness-list {
+  max-height: clamp(180px, 32vh, 360px);
   margin: 0;
-  padding-left: 20px;
+  padding: 0 12px 2px 22px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  overflow-wrap: anywhere;
+}
+
+.module-readiness-list li {
+  padding-right: 4px;
+  text-wrap: pretty;
+}
+
+.module-readiness-list li + li {
+  margin-top: 3px;
 }
 
 .module-readiness.collapsible-panel {
@@ -2609,6 +2621,18 @@ h1 {
 .module-readiness.collapsible-panel .collapsible-panel-inner {
   display: grid;
   gap: 12px;
+  overflow: visible;
+}
+
+.module-readiness .module-status-actions {
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 2px;
+  flex-wrap: wrap;
+}
+
+.module-readiness .module-status-actions .ui-btn {
+  min-width: max-content;
 }
 
 .module-details {
@@ -3320,6 +3344,10 @@ h1 {
   .rubric-grid,
   .module-readiness {
     grid-template-columns: 1fr;
+  }
+
+  .module-readiness-list {
+    max-height: min(240px, 34vh);
   }
 
   .module-readiness.is-ready {

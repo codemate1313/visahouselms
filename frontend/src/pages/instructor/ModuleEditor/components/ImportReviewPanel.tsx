@@ -66,7 +66,7 @@ export function ImportReviewPanel({
       {preview.warnings.length > 0 && (
         <div className="import-warning">
           <strong>{t.warningsHeading}</strong>
-          <ul>
+          <ul className="module-readiness-list">
             {preview.warnings.map((warning, index) => (
               <li key={index}>{warning}</li>
             ))}

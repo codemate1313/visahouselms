@@ -19,7 +19,7 @@ export function ModuleReadinessPanel({ module, busy, onChangeStatus }: ModuleRea
       badge={<span className={`badge ${module.ready_to_publish ? "badge-green" : "badge-amber"}`}>{module.ready_to_publish ? t.ready : t.needsWork}</span>}
     >
       {!module.ready_to_publish && (
-        <ul>
+        <ul className="module-readiness-list">
           {module.validation_errors.map((message) => (
             <li key={message}>{message}</li>
           ))}
