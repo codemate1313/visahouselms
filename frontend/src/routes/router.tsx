@@ -67,7 +67,7 @@ import {
   StudentProfile,
   StudentProgress,
   StudentPurchaseHistory,
-
+  StudentVouchers,
   Subscriptions,
   SupportCenter,
   SupportTickets,
@@ -85,6 +85,8 @@ import {
   TestingLoginSelector,
   TrialConfig,
   Users,
+  Vouchers,
+  PublicVouchersPage,
 } from "./lazyPages";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { MonetaryAnalyticsRoute } from "./MonetaryAnalyticsRoute";
@@ -105,6 +107,7 @@ export const router = createBrowserRouter([
       { path: "/contact", element: <ContactUs /> },
       { path: "/blogs", element: <BlogsList /> },
       { path: "/blogs/:slug", element: <BlogDetail /> },
+      { path: "/vouchers", element: <PublicVouchersPage /> },
     ],
   },
   { path: "/testing-login", element: <TestingLoginSelector /> },
@@ -191,6 +194,7 @@ export const router = createBrowserRouter([
           { path: "coupons", element: <MonetaryAnalyticsRoute><Coupons /></MonetaryAnalyticsRoute> },
           { path: "coupons/new", element: <MonetaryAnalyticsRoute><CouponForm /></MonetaryAnalyticsRoute> },
           { path: "coupons/:id", element: <MonetaryAnalyticsRoute><CouponForm /></MonetaryAnalyticsRoute> },
+          { path: "vouchers", element: <MonetaryAnalyticsRoute><Vouchers /></MonetaryAnalyticsRoute> },
           { path: "payments", element: <MonetaryAnalyticsRoute><Payments /></MonetaryAnalyticsRoute> },
           { path: "payments/:id/invoice", element: <MonetaryAnalyticsRoute><Invoice /></MonetaryAnalyticsRoute> },
           { path: "payment-methods", element: <MonetaryAnalyticsRoute><PaymentMethods /></MonetaryAnalyticsRoute> },
@@ -307,6 +311,7 @@ export const router = createBrowserRouter([
           { path: "notifications", element: <NotificationsInbox fallbackRoute="/student/dashboard" /> },
           { path: "support", element: <SupportCenter /> },
           { path: "profile", element: <StudentProfile /> },
+          { path: "vouchers", element: <StudentVouchers /> },
           { path: "purchase-history", element: <StudentPurchaseHistory /> },
           { path: "sessions", element: <Sessions apiBase="/student" /> },
 

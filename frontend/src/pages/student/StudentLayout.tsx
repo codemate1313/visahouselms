@@ -38,6 +38,7 @@ export function StudentLayout() {
     { key: "my-courses", label: menu.myTests, icon: "module", to: "/student/my-courses" },
     { key: "attempts", label: menu.myTestHistory, icon: "grading", to: "/student/attempts" },
     { key: "progress", label: menu.progress, icon: "analytics", to: "/student/progress" },
+    { key: "vouchers", label: menu.vouchers, icon: "transactions", to: "/student/vouchers" },
   );
   if (!isInstituteStudent) {
     mainItems.push({ key: "purchase-history", label: menu.purchaseHistory, icon: "transactions", to: "/student/purchase-history" });

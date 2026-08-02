@@ -34,6 +34,7 @@ export function DashboardLayout() {
     ...(canViewMoney
       ? [
           { key: "saas_coupons", label: m.saasCoupons, to: "/super-admin/coupons" },
+          { key: "saas_vouchers", label: m.saasVouchers, to: "/super-admin/vouchers" },
           { key: "saas_payments", label: m.saasPayments, to: "/super-admin/payments" },
           { key: "saas_payment_methods", label: m.saasPaymentMethods, to: "/super-admin/payment-methods" },
           { key: "saas_gst_rates", label: m.saasGstRates, to: "/super-admin/gst-rates" },

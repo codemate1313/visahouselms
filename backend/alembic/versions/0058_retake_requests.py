@@ -28,66 +28,110 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.create_table(
-        "retake_requests",
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("attempt_id", sa.Integer, sa.ForeignKey("test_attempts.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("student_id", sa.Integer, sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("reviewed_by_id", sa.Integer, sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
-        sa.Column("reason", sa.Text, nullable=False),
-        sa.Column("status", sa.String(20), nullable=False, server_default="pending"),
-        sa.Column("review_note", sa.Text, nullable=True),
-        sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
-        sa.Column("reviewed_at", sa.DateTime, nullable=True),
-        sa.Column("consumed_at", sa.DateTime, nullable=True),
-    )
-    op.create_index("ix_retake_requests_attempt_id", "retake_requests", ["attempt_id"])
-    op.create_index("ix_retake_requests_student_id", "retake_requests", ["student_id"])
-    op.create_index("ix_retake_requests_status", "retake_requests", ["status"])
-
-    with op.batch_alter_table("test_attempts") as batch_op:
-        batch_op.add_column(sa.Column("is_retake", sa.Boolean(), nullable=False, server_default=sa.false()))
-        batch_op.add_column(sa.Column("retake_request_id", sa.Integer(), nullable=True))
-        batch_op.create_foreign_key(
-            "fk_test_attempts_retake_request_id",
-            "retake_requests",
-            ["retake_request_id"],
-            ["id"],
-            ondelete="SET NULL",
-        )
-
-    op.create_index(
-        "uq_test_attempt_retake_request",
-        "test_attempts",
-        ["retake_request_id"],
-        unique=True,
-    )
-
     bind = op.get_bind()
-    op.drop_index("uq_test_attempt_final_user_module", table_name="test_attempts")
+    inspector = sa.inspect(bind)
+
+    if not inspector.has_table("retake_requests"):
+        op.create_table(
+            "retake_requests",
+            sa.Column("id", sa.Integer, primary_key=True),
+            sa.Column("attempt_id", sa.Integer, sa.ForeignKey("test_attempts.id", ondelete="CASCADE"), nullable=False),
+            sa.Column("student_id", sa.Integer, sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+            sa.Column("reviewed_by_id", sa.Integer, sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+            sa.Column("reason", sa.Text, nullable=False),
+            sa.Column("status", sa.String(20), nullable=False, server_default="pending"),
+            sa.Column("review_note", sa.Text, nullable=True),
+            sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+            sa.Column("reviewed_at", sa.DateTime, nullable=True),
+            sa.Column("consumed_at", sa.DateTime, nullable=True),
+        )
+        try:
+            op.create_index("ix_retake_requests_attempt_id", "retake_requests", ["attempt_id"])
+            op.create_index("ix_retake_requests_student_id", "retake_requests", ["student_id"])
+            op.create_index("ix_retake_requests_status", "retake_requests", ["status"])
+        except Exception:
+            pass
+
+    columns = [c["name"] for c in inspector.get_columns("test_attempts")]
+    if "is_retake" not in columns:
+        with op.batch_alter_table("test_attempts") as batch_op:
+            batch_op.add_column(sa.Column("is_retake", sa.Boolean(), nullable=False, server_default=sa.false()))
+            batch_op.add_column(sa.Column("retake_request_id", sa.Integer(), nullable=True))
+            batch_op.create_foreign_key(
+                "fk_test_attempts_retake_request_id",
+                "retake_requests",
+                ["retake_request_id"],
+                ["id"],
+                ondelete="SET NULL",
+            )
+
+    try:
+        op.create_index(
+            "uq_test_attempt_retake_request",
+            "test_attempts",
+            ["retake_request_id"],
+            unique=True,
+        )
+    except Exception:
+        pass
 
     if bind.dialect.name == "mysql":
-        op.execute("ALTER TABLE test_attempts DROP COLUMN final_attempt_slot")
         op.execute(
-            "ALTER TABLE test_attempts "
-            "ADD COLUMN original_attempt_slot INT "
-            "GENERATED ALWAYS AS (CASE WHEN is_retake = 0 THEN module_id ELSE NULL END) STORED"
-        )
-        op.create_index(
-            "uq_test_attempt_original_user_module",
-            "test_attempts",
-            ["user_id", "original_attempt_slot"],
-            unique=True,
+            "UPDATE test_attempts t1 "
+            "JOIN test_attempts t2 "
+            "  ON t1.user_id = t2.user_id "
+            " AND t1.module_id = t2.module_id "
+            " AND t1.id > t2.id "
+            "SET t1.is_retake = 1"
         )
     else:
-        op.create_index(
-            "uq_test_attempt_original_user_module",
-            "test_attempts",
-            ["user_id", "module_id"],
-            unique=True,
-            sqlite_where=sa.text("is_retake = 0"),
-            postgresql_where=sa.text("is_retake = false"),
+        op.execute(
+            "UPDATE test_attempts SET is_retake = 1 "
+            "WHERE id NOT IN ("
+            "  SELECT min_id FROM ("
+            "    SELECT MIN(id) AS min_id FROM test_attempts GROUP BY user_id, module_id"
+            "  ) AS tmp"
+            ")"
         )
+
+    try:
+        op.drop_index("uq_test_attempt_final_user_module", table_name="test_attempts")
+    except Exception:
+        pass
+
+    if bind.dialect.name == "mysql":
+        if "final_attempt_slot" in columns:
+            try:
+                op.execute("ALTER TABLE test_attempts DROP COLUMN final_attempt_slot")
+            except Exception:
+                pass
+        if "original_attempt_slot" not in columns:
+            op.execute(
+                "ALTER TABLE test_attempts "
+                "ADD COLUMN original_attempt_slot INT "
+                "GENERATED ALWAYS AS (CASE WHEN is_retake = 0 THEN module_id ELSE NULL END) STORED"
+            )
+        try:
+            op.create_index(
+                "uq_test_attempt_original_user_module",
+                "test_attempts",
+                ["user_id", "original_attempt_slot"],
+                unique=True,
+            )
+        except Exception:
+            pass
+    else:
+        try:
+            op.create_index(
+                "uq_test_attempt_original_user_module",
+                "test_attempts",
+                ["user_id", "module_id"],
+                unique=True,
+                sqlite_where=sa.text("is_retake = 0"),
+                postgresql_where=sa.text("is_retake = false"),
+            )
+        except Exception:
+            pass
 
 
 def downgrade() -> None:

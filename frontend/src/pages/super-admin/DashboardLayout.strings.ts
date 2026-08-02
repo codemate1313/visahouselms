@@ -24,6 +24,7 @@ export const dashboardLayoutStrings = {
     saasTrial: "Trial Settings",
     saasDemo: "Demo Accounts",
     saasCoupons: "Coupons",
+    saasVouchers: "Voucher Purchase & Stock",
     saasPayments: "Payments",
     saasPaymentMethods: "Payment Methods",
     saasGstRates: "GST Master",

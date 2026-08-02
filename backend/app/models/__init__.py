@@ -45,6 +45,7 @@ from app.models.user import User
 from app.models.gst_rate import GstRate
 from app.models.user_device import UserDevice
 from app.models.user_session import UserSession
+from app.models.voucher import VoucherType, VoucherOffering, VoucherCode, VoucherPurchase
 
 __all__ = [
     "Base",

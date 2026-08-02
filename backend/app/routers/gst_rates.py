@@ -13,7 +13,7 @@ from app.services import gst_service
 router = APIRouter(
     prefix="/super-admin/gst-rates",
     tags=["gst-rates"],
-    dependencies=[Depends(require_role(SUPER_ADMIN)), Depends(require_monetary_analytics_access)],
+    dependencies=[Depends(require_role(SUPER_ADMIN))],
 )
 
 
@@ -26,7 +26,7 @@ def list_gst_rates(active_only: bool = False, db: Session = Depends(get_db)):
     return gst_service.list_gst_rates(db, active_only)
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=201, dependencies=[Depends(require_monetary_analytics_access)])
 def create_gst_rate(
     payload: GstRateCreate,
     request: Request,
@@ -36,7 +36,7 @@ def create_gst_rate(
     return gst_service.create_gst_rate(db, actor, payload.model_dump(), _client_ip(request))
 
 
-@router.patch("/{rate_id}")
+@router.patch("/{rate_id}", dependencies=[Depends(require_monetary_analytics_access)])
 def update_gst_rate(
     rate_id: int,
     payload: GstRateUpdate,
@@ -57,7 +57,7 @@ def toggle_gst_rate_active(
     return gst_service.toggle_gst_rate_active(db, actor, rate_id, _client_ip(request))
 
 
-@router.delete("/{rate_id}", status_code=204)
+@router.delete("/{rate_id}", status_code=204, dependencies=[Depends(require_monetary_analytics_access)])
 def delete_gst_rate(
     rate_id: int,
     request: Request,

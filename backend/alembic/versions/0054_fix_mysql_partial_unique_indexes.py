@@ -32,8 +32,14 @@ def upgrade() -> None:
     if bind.dialect.name != "mysql":
         return
 
-    op.drop_index("uq_test_attempt_final_user_module", table_name="test_attempts")
-    op.drop_index("uq_test_attempt_active_user_module", table_name="test_attempts")
+    try:
+        op.drop_index("uq_test_attempt_final_user_module", table_name="test_attempts")
+    except Exception:
+        pass
+    try:
+        op.drop_index("uq_test_attempt_active_user_module", table_name="test_attempts")
+    except Exception:
+        pass
 
     op.execute(
         "ALTER TABLE test_attempts "

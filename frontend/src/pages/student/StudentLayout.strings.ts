@@ -14,6 +14,7 @@ export const studentLayoutStrings = {
     supportSection: "SUPPORT",
     support: "Raise a Query",
     myProfile: "My Profile",
+    vouchers: "Exam Vouchers",
     purchaseHistory: "Purchase History",
     activeSessions: "Active Sessions",
 

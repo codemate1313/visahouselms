@@ -1,0 +1,1112 @@
+import { useEffect, useState } from "react";
+import { api } from "@/api/client";
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import { Button, DataTableCard, FilterBar, Modal, SearchInput, SearchableSelect, SegmentedControl, Input, Textarea } from "@/components/ui";
+import { Icon } from "@/components/icons";
+import { vouchersStrings as s } from "./Vouchers.strings";
+import "./Vouchers.css";
+
+interface VoucherType {
+  id: number;
+  name: string;
+  code: string;
+  description?: string;
+  badge_color: string;
+  is_active: boolean;
+  stock: {
+    total: number;
+    available: number;
+    purchased: number;
+    disabled: number;
+  };
+}
+
+interface VoucherOffering {
+  id: number;
+  voucher_type_id: number;
+  voucher_type_name: string;
+  voucher_type_code: string;
+  voucher_type_badge_color: string;
+  title: string;
+  description?: string;
+  price: string;
+  discount_price?: string;
+  validity_days: number;
+  gst_rate_id?: number;
+  gst_percentage: string;
+  is_active: boolean;
+  available_stock: number;
+}
+
+interface VoucherPurchase {
+  id: number;
+  purchase_number: string;
+  buyer_name: string;
+  buyer_email: string;
+  buyer_phone?: string;
+  offering_title: string;
+  voucher_type_name: string;
+  voucher_code: string;
+  raw_code: string;
+  amount: string;
+  gst_amount: string;
+  final_amount: string;
+  gateway: string;
+  gateway_transaction_id?: string;
+  status: string;
+  created_at: string;
+  valid_until?: string;
+}
+
+interface UnusedVoucherCode {
+  id: number;
+  code: string;
+  voucher_type_name: string;
+  voucher_type_badge_color: string;
+  validity_days: number;
+  source_filename: string;
+  created_at: string;
+}
+
+interface GstRate {
+  id: number;
+  name: string;
+  percentage: number;
+}
+
+const COLOR_PRESETS = [
+  "#0284c7", // Sky Blue
+  "#7c3aed", // Royal Purple
+  "#059669", // Emerald Green
+  "#d97706", // Amber
+  "#dc2626", // Red / Crimson
+  "#2563eb", // Deep Blue
+  "#4f46e5", // Indigo
+  "#1e293b", // Slate / Dark
+];
+
+export function Vouchers() {
+  const [activeTab, setActiveTab] = useState<"purchases" | "unused" | "upload" | "offerings" | "types">("purchases");
+  const [types, setTypes] = useState<VoucherType[]>([]);
+  const [offerings, setOfferings] = useState<VoucherOffering[]>([]);
+  const [purchases, setPurchases] = useState<VoucherPurchase[]>([]);
+  const [unusedCodes, setUnusedCodes] = useState<UnusedVoucherCode[]>([]);
+  const [gstRates, setGstRates] = useState<GstRate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  // Modals & Forms State
+  const [showTypeModal, setShowTypeModal] = useState(false);
+  const [editingType, setEditingType] = useState<VoucherType | null>(null);
+  const [typeForm, setTypeForm] = useState({
+    name: "",
+    code: "",
+    description: "",
+    badge_color: "#0284c7",
+    is_active: true,
+  });
+
+  const [showOfferingModal, setShowOfferingModal] = useState(false);
+  const [editingOffering, setEditingOffering] = useState<VoucherOffering | null>(null);
+  const [offeringForm, setOfferingForm] = useState({
+    voucher_type_id: 0,
+    title: "",
+    description: "",
+    price: "",
+    discount_price: "",
+    validity_days: 180,
+    gst_rate_id: "",
+    is_active: true,
+  });
+
+  //  // Upload / Entry States
+  const [uploadTypeId, setUploadTypeId] = useState<number>(0);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<any>(null);
+  
+  // Manual Entry States
+  const [entryMode, setEntryMode] = useState<"file" | "manual">("file");
+  const [manualCodes, setManualCodes] = useState<string>("");
+
+  // Invoice Modal State
+  const [selectedInvoice, setSelectedInvoice] = useState<VoucherPurchase | null>(null);
+
+  useEffect(() => {
+    fetchData();
+  }, [search]);
+
+  async function fetchData() {
+    setLoading(true);
+    try {
+      const [tRes, oRes, pRes, uRes, gRes] = await Promise.all([
+        api.get<VoucherType[]>("/vouchers/admin/types").catch(() => ({ data: [] })),
+        api.get<VoucherOffering[]>("/vouchers/admin/offerings").catch(() => ({ data: [] })),
+        api.get<VoucherPurchase[]>(`/vouchers/admin/purchases${search ? `?search=${encodeURIComponent(search)}` : ""}`).catch(() => ({ data: [] })),
+        api.get<UnusedVoucherCode[]>("/vouchers/admin/codes/unused").catch(() => ({ data: [] })),
+        api.get<GstRate[]>("/super-admin/gst-rates").catch(() => ({ data: [] })),
+      ]);
+      setTypes(Array.isArray(tRes.data) ? tRes.data : []);
+      setOfferings(Array.isArray(oRes.data) ? oRes.data : []);
+      setPurchases(Array.isArray(pRes.data) ? pRes.data : []);
+      setUnusedCodes(Array.isArray(uRes.data) ? uRes.data : []);
+      setGstRates(Array.isArray(gRes.data) ? gRes.data : []);
+
+      if (tRes.data && tRes.data.length > 0 && !uploadTypeId) {
+        setUploadTypeId(tRes.data[0].id);
+        setOfferingForm((prev) => ({ ...prev, voucher_type_id: tRes.data[0].id }));
+      }
+    } catch (err) {
+      console.error("Failed to load voucher data", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Type Modal Handlers
+  function openTypeModal(vt?: VoucherType) {
+    if (vt) {
+      setEditingType(vt);
+      setTypeForm({
+        name: vt.name,
+        code: vt.code,
+        description: vt.description || "",
+        badge_color: vt.badge_color || "#0284c7",
+        is_active: vt.is_active,
+      });
+    } else {
+      setEditingType(null);
+      setTypeForm({
+        name: "",
+        code: "",
+        description: "",
+        badge_color: "#0284c7",
+        is_active: true,
+      });
+    }
+    setShowTypeModal(true);
+  }
+
+
+
+  async function handleSaveType(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      if (editingType) {
+        await api.put(`/vouchers/admin/types/${editingType.id}`, typeForm);
+      } else {
+        await api.post("/vouchers/admin/types", typeForm);
+      }
+      setShowTypeModal(false);
+      setActiveTab("types");
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to save voucher type");
+    }
+  }
+
+  // Offering Modal Handlers
+  function openOfferingModal(vo?: VoucherOffering) {
+    if (vo) {
+      setEditingOffering(vo);
+      setOfferingForm({
+        voucher_type_id: vo.voucher_type_id,
+        title: vo.title,
+        description: vo.description || "",
+        price: vo.price,
+        discount_price: vo.discount_price || "",
+        validity_days: vo.validity_days,
+        gst_rate_id: vo.gst_rate_id ? String(vo.gst_rate_id) : "",
+        is_active: vo.is_active,
+      });
+    } else {
+      setEditingOffering(null);
+      setOfferingForm({
+        voucher_type_id: types.length > 0 ? types[0].id : 0,
+        title: "",
+        description: "",
+        price: "",
+        discount_price: "",
+        validity_days: 180,
+        gst_rate_id: "",
+        is_active: true,
+      });
+    }
+    setShowOfferingModal(true);
+  }
+
+  async function handleSaveOffering(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const payload = {
+        voucher_type_id: Number(offeringForm.voucher_type_id),
+        title: offeringForm.title,
+        description: offeringForm.description || null,
+        price: Number(offeringForm.price),
+        discount_price: offeringForm.discount_price ? Number(offeringForm.discount_price) : null,
+        validity_days: Number(offeringForm.validity_days),
+        gst_rate_id: offeringForm.gst_rate_id ? Number(offeringForm.gst_rate_id) : null,
+        is_active: offeringForm.is_active,
+      };
+
+      if (editingOffering) {
+        await api.put(`/vouchers/admin/offerings/${editingOffering.id}`, payload);
+      } else {
+        await api.post("/vouchers/admin/offerings", payload);
+      }
+      setShowOfferingModal(false);
+      setActiveTab("offerings");
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to save offering");
+    }
+  }
+
+  // Bulk Upload / Manual Entry Handler
+  async function handleBulkUpload(e: React.FormEvent) {
+    e.preventDefault();
+    if (!uploadTypeId) {
+      alert("Please select a voucher type");
+      return;
+    }
+
+    setUploading(true);
+    setUploadResult(null);
+    try {
+      if (entryMode === "file") {
+        if (!uploadFile) {
+          alert("Please select a file to upload");
+          setUploading(false);
+          return;
+        }
+        const formData = new FormData();
+        formData.append("voucher_type_id", String(uploadTypeId));
+        formData.append("file", uploadFile);
+  
+        const res = await api.post("/vouchers/admin/bulk-upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        setUploadResult(res.data);
+      } else {
+        if (!manualCodes.trim()) {
+          alert("Please enter at least one voucher code");
+          setUploading(false);
+          return;
+        }
+        // Split by newline or comma
+        const codes = manualCodes.split(/[\n,]+/).map(c => c.trim()).filter(c => c.length > 0);
+        const res = await api.post("/vouchers/admin/codes/manual", {
+          voucher_type_id: uploadTypeId,
+          codes: codes
+        });
+        setUploadResult(res.data);
+        setManualCodes(""); // Clear after success
+      }
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Code upload/entry failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleDeleteOffering(id: number, title: string) {
+    if (!window.confirm(`Are you sure you want to delete offering "${title}"?`)) return;
+    try {
+      await api.delete(`/vouchers/admin/offerings/${id}`);
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to delete offering");
+    }
+  }
+
+  async function handleDeleteType(id: number, name: string) {
+    if (!window.confirm(`Are you sure you want to delete voucher type "${name}"? This will also remove associated codes and offerings.`)) return;
+    try {
+      await api.delete(`/vouchers/admin/types/${id}`);
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to delete voucher type");
+    }
+  }
+
+  async function handleDeleteCode(id: number, code: string) {
+    if (!window.confirm(`Are you sure you want to delete code "${code}"?`)) return;
+    try {
+      await api.delete(`/vouchers/admin/codes/${id}`);
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to delete code");
+    }
+  }
+
+  // KPI Metrics Calculation
+  const totalAvailableStock = types.reduce((acc, t) => acc + (t.stock?.available || 0), 0);
+  const totalPurchasedCount = purchases.length;
+  const totalRevenue = purchases.reduce((acc, p) => acc + (parseFloat(p.final_amount) || 0), 0);
+
+  // Dropdown Options
+  const typeSelectOptions = types.map((t) => ({
+    value: String(t.id),
+    label: `${t.name} (Available Stock: ${t.stock?.available || 0})`,
+  }));
+
+  const gstSelectOptions = [
+    { value: "", label: "No GST (0%)" },
+    ...gstRates.map((g) => ({
+      value: String(g.id),
+      label: `${g.name} (${g.percentage}%)`,
+    })),
+  ];
+
+  return (
+    <div className="vouchers-page-wrapper">
+      {/* KPI Metric Cards */}
+      <div className="vouchers-metric-row">
+        <MetricCard
+          label="Available Stock"
+          value={totalAvailableStock}
+          valueFormatter={(val) => `${val} Codes`}
+          icon="module"
+          tone="emerald"
+        />
+        <MetricCard
+          label="Purchased Vouchers"
+          value={totalPurchasedCount}
+          valueFormatter={(val) => `${val} Sold`}
+          icon="transactions"
+          tone="blue"
+        />
+        <MetricCard
+          label="Total Voucher Revenue"
+          value={`₹${totalRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          icon="revenue"
+          tone="purple"
+        />
+      </div>
+
+      {/* Section Tabs */}
+      <div>
+          <SegmentedControl
+            value={activeTab}
+            onChange={setActiveTab as (v: string) => void}
+            options={[
+              { value: "purchases", label: s.tabs.purchases, icon: <Icon name="grading" /> },
+              { value: "unused", label: "Unused Codes", icon: <Icon name="module" /> },
+              { value: "upload", label: s.tabs.upload, icon: <Icon name="plus" /> },
+              { value: "offerings", label: s.tabs.offerings, icon: <Icon name="module" /> },
+              { value: "types", label: s.tabs.types, icon: <Icon name="admin" /> },
+            ]}
+          />
+      </div>
+
+      {/* Action Toolbar & Filters */}
+      {(activeTab === "purchases" || activeTab === "types" || activeTab === "offerings") && (
+        <FilterBar
+          resultCount={
+            <>
+              Showing <strong>
+                {activeTab === "purchases"
+                  ? purchases.length
+                  : activeTab === "offerings"
+                  ? offerings.length
+                  : types.length}
+              </strong> records
+            </>
+          }
+        >
+          {activeTab === "purchases" && (
+            <SearchInput
+              placeholder={s.purchases.searchPlaceholder}
+              value={search}
+              onChange={(val) => setSearch(val)}
+              width={320}
+            />
+          )}
+
+          <div style={{ display: "flex", gap: "1rem", marginLeft: "auto" }}>
+            {activeTab === "types" && (
+              <Button variant="primary" size="small" onClick={() => openTypeModal()}>
+                <Icon name="plus" /> {s.types.addType}
+              </Button>
+            )}
+            {activeTab === "offerings" && (
+              <Button variant="primary" size="small" onClick={() => openOfferingModal()}>
+                <Icon name="plus" /> {s.offerings.addOffering}
+              </Button>
+            )}
+          </div>
+        </FilterBar>
+      )}
+
+      {/* TAB 1: STOCK & PURCHASE HISTORY */}
+      {activeTab === "purchases" && (
+        <DataTableCard>
+          {loading ? (
+            <p className="ui-loading-copy">Loading voucher purchases...</p>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{s.purchases.purchaseNo}</th>
+                  <th>{s.purchases.buyer}</th>
+                  <th>{s.purchases.voucherInfo}</th>
+                  <th>{s.purchases.code}</th>
+                  <th>{s.purchases.amount}</th>
+                  <th>{s.purchases.date}</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {purchases.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="ui-empty-row">
+                      {s.purchases.noPurchases}
+                    </td>
+                  </tr>
+                ) : (
+                  purchases.map((p) => (
+                    <tr key={p.id}>
+                      <td>
+                        <strong className="font-mono text-sm">{p.purchase_number}</strong>
+                      </td>
+                      <td>
+                        <div className="font-bold text-slate-900 dark:text-white">{p.buyer_name}</div>
+                        <div className="text-xs text-slate-500">{p.buyer_email}</div>
+                        {p.buyer_phone && <div className="text-xs text-slate-500">{p.buyer_phone}</div>}
+                      </td>
+                      <td>
+                        <span className="voucher-type-badge" style={{ backgroundColor: "#0284c7" }}>
+                          {p.voucher_type_name}
+                        </span>
+                        <div className="text-xs text-slate-500 font-medium mt-1">{p.offering_title}</div>
+                      </td>
+                      <td>
+                        <code className="voucher-code-pill">{p.voucher_code || "N/A"}</code>
+                      </td>
+                      <td>
+                        <strong className="text-slate-900 dark:text-white">
+                          ₹{parseFloat(p.final_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        </strong>
+                        <div className="text-[10px] text-slate-400 uppercase font-bold">{p.gateway}</div>
+                      </td>
+                      <td>
+                        <span className="text-xs text-slate-500">
+                          {new Date(p.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                        </span>
+                      </td>
+                      <td className="text-right">
+                        <Button variant="secondary" size="small" onClick={() => setSelectedInvoice(p)}>
+                          Invoice
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
+        </DataTableCard>
+      )}
+
+      {/* TAB: UNUSED CODES */}
+      {activeTab === "unused" && (
+        <DataTableCard>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Voucher Code</th>
+                <th>Voucher Type</th>
+                <th>Validity & Expiry</th>
+                <th>Source / Filename</th>
+                <th>Date Added</th>
+                <th className="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {unusedCodes.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="ui-empty-row">
+                    No unused codes available.
+                  </td>
+                </tr>
+              ) : (
+                unusedCodes.map((uc) => (
+                  <tr key={uc.id}>
+                    <td>
+                      <code className="voucher-code-pill">{uc.code}</code>
+                    </td>
+                    <td>
+                      <span className="voucher-type-badge" style={{ backgroundColor: uc.voucher_type_badge_color || "#0284c7" }}>
+                        {uc.voucher_type_name}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                          {uc.validity_days || 180} Days
+                        </span>
+                        <span className="text-xs text-slate-500 font-medium">
+                          Exp: {new Date(new Date(uc.created_at).getTime() + (uc.validity_days || 180) * 24 * 60 * 60 * 1000).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {uc.source_filename}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="text-xs text-slate-500">
+                        {new Date(uc.created_at).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      <button
+                        type="button"
+                        title="Delete Voucher Code"
+                        onClick={() => handleDeleteCode(uc.id, uc.code)}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200/80 transition-all duration-200 cursor-pointer"
+                      >
+                        <Icon name="trash" className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </DataTableCard>
+      )}
+
+      {/* TAB 2: BULK CODE UPLOAD / MANUAL ENTRY */}
+      {activeTab === "upload" && (
+        <div className="vouchers-upload-container">
+          <div className="mb-6 text-left">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Import Voucher Codes</h3>
+            <p className="text-sm text-slate-500 mt-1">Add new inventory by uploading a file or entering codes manually.</p>
+          </div>
+
+          <form onSubmit={handleBulkUpload} className="space-y-5">
+            <div className="form-field-group">
+              <label>{s.upload.selectType}</label>
+              <SearchableSelect
+                options={typeSelectOptions}
+                value={String(uploadTypeId)}
+                onChange={(val) => setUploadTypeId(Number(val))}
+                placeholder="Select Voucher Type"
+                searchable={false}
+              />
+            </div>
+
+            <div className="pt-1">
+              <SegmentedControl
+                value={entryMode}
+                onChange={(val) => setEntryMode(val as "file" | "manual")}
+                options={[
+                  { value: "file", label: "File Upload", icon: <Icon name="plus" /> },
+                  { value: "manual", label: "Manual Entry", icon: <Icon name="edit" /> },
+                ]}
+              />
+            </div>
+
+            <div className="pt-2">
+              {entryMode === "file" ? (
+                <div className="upload-drop-area" style={{ position: "relative", overflow: "hidden" }}>
+                  <input
+                    type="file"
+                    accept=".pdf,.xlsx,.xls,.csv,.docx,.txt"
+                    onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", zIndex: 10 }}
+                    required
+                  />
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", pointerEvents: "none" }}>
+                    <div style={{ width: "50px", height: "50px", borderRadius: "16px", backgroundColor: "color-mix(in srgb, var(--primary) 15%, transparent)", color: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--text)" }}>
+                        {uploadFile ? uploadFile.name : "Click or drag & drop file"}
+                      </div>
+                      <div style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                        Supports PDF, Excel, Word, and Text files
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="form-field-group">
+                  <Textarea
+                    placeholder="Paste codes here. Separate with commas or new lines."
+                    value={manualCodes}
+                    onChange={(e) => setManualCodes(e.target.value)}
+                    rows={5}
+                    required
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
+                    Make sure each code is exactly 16 alphanumeric characters. Invalid codes will be skipped.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={uploading || (entryMode === "file" && !uploadFile) || (entryMode === "manual" && !manualCodes)}
+              className="w-full py-3 mt-2"
+            >
+              {uploading ? "Processing..." : entryMode === "file" ? "Import File" : "Import Codes"}
+            </Button>
+          </form>
+
+          {uploadResult && (
+            <div className={`upload-result-banner ${uploadResult.inserted > 0 ? "success" : "error"}`}>
+              <div className="result-title">{uploadResult.message}</div>
+              <div className="result-stats">
+                <span><strong>{uploadResult.total_extracted}</strong> Extracted</span>
+                <span className="dot">•</span>
+                <span><strong>{uploadResult.inserted}</strong> Inserted</span>
+                <span className="dot">•</span>
+                <span><strong>{uploadResult.duplicates_skipped}</strong> Skipped</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 3: OFFERINGS & PRICING (BEAUTIFUL ULTRA-PREMIUM CARDS) */}
+      {activeTab === "offerings" && (
+        <div className="vouchers-grid">
+          {offerings.length === 0 ? (
+            <div className="col-span-full p-10 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700/60 my-4">
+              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 mx-auto flex items-center justify-center text-slate-400 mb-3">
+                <Icon name="plus" />
+              </div>
+              <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">No Voucher Offerings Found</h4>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">Create a pricing offering package to sell voucher codes to students.</p>
+              <Button variant="primary" size="small" onClick={() => openOfferingModal()}>
+                + Create Voucher Offering
+              </Button>
+            </div>
+          ) : (
+            offerings.map((vo) => (
+            <div 
+              key={vo.id} 
+              className="voucher-premium-card"
+              style={{ "--accent-color": vo.voucher_type_badge_color || "#0284c7" } as React.CSSProperties}
+            >
+              {/* Accent Top Color Stripe */}
+              <div className="h-1.5 w-full" style={{ backgroundColor: vo.voucher_type_badge_color || "#0284c7" }} />
+
+              <div className="voucher-card-body">
+                {/* Header Row */}
+                <div className="voucher-card-top-row">
+                  <span className="voucher-type-badge glass-badge max-w-[160px] truncate" title={vo.voucher_type_name}>
+                    {vo.voucher_type_name}
+                  </span>
+                  <div className={`status-indicator ${vo.is_active ? "active" : "inactive"}`}>
+                    <span className="status-dot"></span>
+                    {vo.is_active ? "Active" : "Inactive"}
+                  </div>
+                </div>
+
+                {/* Title & Description */}
+                <div>
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white leading-snug">{vo.title}</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 min-h-[32px] leading-relaxed">
+                    {vo.description || "No description provided for this offering package."}
+                  </p>
+                </div>
+
+                {/* Price Box */}
+                <div className="voucher-price-callout-box">
+                  <div className="voucher-price-amount-row">
+                    <span className="voucher-price-main-text">
+                      ₹{parseFloat(vo.discount_price || vo.price).toLocaleString("en-IN")}
+                    </span>
+                    {vo.discount_price && (
+                      <span className="voucher-price-original-text">₹{parseFloat(vo.price).toLocaleString("en-IN")}</span>
+                    )}
+                  </div>
+                  <div className="voucher-meta-info-row">
+                    <span>Validity: <strong>{vo.validity_days} Days</strong></span>
+                    <span className="meta-dot-divider" />
+                    <span>GST Tax: <strong>{vo.gst_percentage}%</strong></span>
+                  </div>
+                </div>
+
+                {/* Stock Bar */}
+                <div className="voucher-stock-status-box">
+                  <div className="stock-status-label">
+                    <Icon name="module" />
+                    <span>Available Stock:</span>
+                  </div>
+                  <span className={`stock-bubble-badge ${vo.available_stock > 0 ? "in-stock" : "no-stock"}`}>
+                    {vo.available_stock > 0 ? `${vo.available_stock} Available` : "Out of Stock"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card Footer */}
+              <div className="voucher-card-footer">
+                <span className="text-xs font-semibold text-slate-400">Ref: OFF-{vo.id}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <button
+                    type="button"
+                    onClick={() => openOfferingModal(vo)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-200 cursor-pointer"
+                  >
+                    <Icon name="edit" className="w-3.5 h-3.5" /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteOffering(vo.id, vo.title)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-rose-600 dark:text-rose-400 bg-rose-50/60 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200/80 dark:border-rose-800/60 transition-all duration-200 cursor-pointer"
+                  >
+                    <Icon name="trash" className="w-3.5 h-3.5" /> Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+        </div>
+      )}
+
+      {/* TAB 4: VOUCHER MASTER / TYPES (BEAUTIFUL ULTRA-PREMIUM CARDS) */}
+      {activeTab === "types" && (
+        <div className="vouchers-grid">
+          {types.length === 0 ? (
+            <div className="col-span-full p-10 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700/60 my-4">
+              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 mx-auto flex items-center justify-center text-slate-400 mb-3">
+                <Icon name="plus" />
+              </div>
+              <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">No Voucher Types Found</h4>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">Create a master voucher type (e.g. IELTS Academic, PTE) to start uploading codes.</p>
+              <Button variant="primary" size="small" onClick={() => openTypeModal()}>
+                + Add Voucher Type
+              </Button>
+            </div>
+          ) : (
+            types.map((vt) => (
+            <div 
+              key={vt.id} 
+              className="voucher-premium-card"
+              style={{ "--accent-color": vt.badge_color || "#0284c7" } as React.CSSProperties}
+            >
+              {/* Accent Top Color Stripe */}
+              <div className="h-1.5 w-full" style={{ backgroundColor: vt.badge_color || "#0284c7" }} />
+
+              <div className="voucher-card-body">
+                {/* Header Row */}
+                <div className="voucher-card-top-row">
+                  <span className="voucher-type-badge glass-badge max-w-[160px] truncate" title={vt.name}>
+                    {vt.name}
+                  </span>
+                  <div className={`status-indicator ${vt.is_active ? "active" : "inactive"}`}>
+                    <span className="status-dot"></span>
+                    {vt.is_active ? "Active" : "Inactive"}
+                  </div>
+                </div>
+
+                {/* Description */}
+                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[32px] leading-relaxed">
+                  {vt.description || "Master voucher category for managing inventory."}
+                </p>
+
+                {/* Stock Breakdown Grid */}
+                <div className="voucher-type-stock-grid">
+                  <div className="stock-stat-bubble">
+                    <span className="label">Available</span>
+                    <span className="value text-emerald-600">{vt.stock?.available || 0}</span>
+                  </div>
+                  <div className="stock-stat-bubble">
+                    <span className="label">Purchased</span>
+                    <span className="value text-sky-600">{vt.stock?.purchased || 0}</span>
+                  </div>
+                  <div className="stock-stat-bubble">
+                    <span className="label">Total</span>
+                    <span className="value">{vt.stock?.total || 0}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Footer */}
+              <div className="voucher-card-footer">
+                <span className="text-xs font-semibold text-slate-400">Type ID: {vt.id}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <button
+                    type="button"
+                    onClick={() => openTypeModal(vt)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-200 cursor-pointer"
+                  >
+                    <Icon name="edit" className="w-3.5 h-3.5" /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteType(vt.id, vt.name)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-rose-600 dark:text-rose-400 bg-rose-50/60 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200/80 dark:border-rose-800/60 transition-all duration-200 cursor-pointer"
+                  >
+                    <Icon name="trash" className="w-3.5 h-3.5" /> Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+        </div>
+      )}
+
+      {/* CREATE / EDIT TYPE MODAL */}
+      <Modal
+        open={showTypeModal}
+        onClose={() => setShowTypeModal(false)}
+        title={editingType ? s.types.editType : s.types.addType}
+      >
+        <form onSubmit={handleSaveType} style={{ display: "flex", flexDirection: "column", gap: "1rem", paddingTop: "0.25rem" }}>
+          {/* 2-Column Row for Name and Code */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", width: "100%" }}>
+            <div className="form-field-group">
+              <Input
+                label={s.types.typeName}
+                required
+                value={typeForm.name}
+                onChange={(e) => setTypeForm({ ...typeForm, name: e.target.value })}
+                placeholder="e.g. IELTS Academic"
+              />
+            </div>
+
+            <div className="form-field-group">
+              <Input
+                label={s.types.typeCode}
+                required
+                disabled={!!editingType}
+                value={typeForm.code}
+                onChange={(e) => setTypeForm({ ...typeForm, code: e.target.value })}
+                placeholder="e.g. ielts-academic"
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="form-field-group">
+            <Textarea
+              label={s.types.description}
+              value={typeForm.description}
+              onChange={(e) => setTypeForm({ ...typeForm, description: e.target.value })}
+              placeholder="Brief description of this voucher type..."
+              rows={2}
+            />
+          </div>
+
+          {/* Badge Color Box */}
+          <div style={{ backgroundColor: "var(--surface-muted, #f8fafc)", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid var(--border-subtle, #e2e8f0)" }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted, #64748b)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.6rem" }}>
+              {s.types.badgeColor}
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" }}>
+              {COLOR_PRESETS.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setTypeForm({ ...typeForm, badge_color: color })}
+                  style={{
+                    backgroundColor: color,
+                    width: "32px",
+                    height: "32px",
+                    minWidth: "32px",
+                    minHeight: "32px",
+                    borderRadius: "9999px",
+                    border: typeForm.badge_color === color ? "2px solid #0f172a" : "2px solid transparent",
+                    boxShadow: typeForm.badge_color === color ? "0 0 0 3px rgba(2, 132, 199, 0.35)" : "0 1px 3px rgba(0,0,0,0.12)",
+                    cursor: "pointer",
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "transform 0.15s ease",
+                    transform: typeForm.badge_color === color ? "scale(1.1)" : "scale(1)",
+                  }}
+                  title={color}
+                >
+                  {typeForm.badge_color === color && (
+                    <Icon name="check" className="w-4 h-4 text-white" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Footer Actions */}
+          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "0.75rem", marginTop: "0.75rem", paddingTop: "0.85rem", borderTop: "1px solid var(--border-subtle, #e2e8f0)" }}>
+            <Button variant="secondary" type="button" onClick={() => setShowTypeModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              Save Type
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* CREATE / EDIT OFFERING MODAL */}
+      <Modal
+        open={showOfferingModal}
+        onClose={() => setShowOfferingModal(false)}
+        title={editingOffering ? s.offerings.editOffering : s.offerings.addOffering}
+        size="lg"
+      >
+        <form onSubmit={handleSaveOffering} className="space-y-4 pt-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Left Column: Voucher Type, Title & Description */}
+            <div className="space-y-3.5">
+              <div className="form-field-group">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">{s.offerings.selectType}</label>
+                <SearchableSelect
+                  options={typeSelectOptions}
+                  value={String(offeringForm.voucher_type_id)}
+                  onChange={(val) => setOfferingForm({ ...offeringForm, voucher_type_id: Number(val) })}
+                  placeholder="Select Voucher Type"
+                  searchable={false}
+                />
+              </div>
+
+              <Input
+                label={s.offerings.title}
+                required
+                value={offeringForm.title}
+                onChange={(e) => setOfferingForm({ ...offeringForm, title: e.target.value })}
+                placeholder="e.g. IELTS Academic Standard Exam Voucher"
+              />
+
+              <Textarea
+                label="Offering Description"
+                value={offeringForm.description}
+                onChange={(e) => setOfferingForm({ ...offeringForm, description: e.target.value })}
+                placeholder="Package details and redemption instructions..."
+                rows={3}
+              />
+            </div>
+
+            {/* Right Column: Pricing, Validity & GST */}
+            <div className="space-y-3.5">
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label={s.offerings.price}
+                  type="number"
+                  required
+                  value={offeringForm.price}
+                  onChange={(e) => setOfferingForm({ ...offeringForm, price: e.target.value })}
+                />
+
+                <Input
+                  label={s.offerings.discountPrice}
+                  type="number"
+                  value={offeringForm.discount_price}
+                  onChange={(e) => setOfferingForm({ ...offeringForm, discount_price: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label={s.offerings.validityDays}
+                  type="number"
+                  required
+                  value={offeringForm.validity_days}
+                  onChange={(e) => setOfferingForm({ ...offeringForm, validity_days: Number(e.target.value) })}
+                />
+
+                <div className="form-field-group">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">{s.offerings.gstRate}</label>
+                  <SearchableSelect
+                    options={gstSelectOptions}
+                    value={offeringForm.gst_rate_id}
+                    onChange={(val) => setOfferingForm({ ...offeringForm, gst_rate_id: String(val) })}
+                    placeholder="Select GST Rate"
+                    searchable={false}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 mt-5 border-t border-slate-200 dark:border-slate-800" style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "0.75rem", width: "100%" }}>
+            <Button variant="secondary" type="button" onClick={() => setShowOfferingModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              Save Offering
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* TAX INVOICE PREVIEW MODAL */}
+      {selectedInvoice && (
+        <Modal
+          open={!!selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+          title="Voucher Tax Invoice"
+        >
+          <div className="space-y-5 text-sm">
+            <div className="flex justify-between border-b pb-3">
+              <div>
+                <div className="text-xs font-bold text-slate-400 uppercase">Billed To</div>
+                <div className="font-bold text-slate-900 dark:text-white">{selectedInvoice.buyer_name}</div>
+                <div className="text-xs text-slate-500">{selectedInvoice.buyer_email}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs font-bold text-slate-400 uppercase">Invoice Reference</div>
+                <div className="font-mono font-bold text-sky-600">{selectedInvoice.purchase_number}</div>
+                <div className="text-xs text-slate-500">{new Date(selectedInvoice.created_at).toLocaleDateString("en-IN")}</div>
+              </div>
+            </div>
+
+            <div className="invoice-voucher-codebox">
+              <div className="code-label">16-Digit Voucher Code</div>
+              <div className="code-val">{selectedInvoice.voucher_code}</div>
+            </div>
+
+            <div className="space-y-2 text-xs bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Voucher Offering:</span>
+                <strong className="text-slate-900 dark:text-white">{selectedInvoice.voucher_type_name} - {selectedInvoice.offering_title}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Base Amount:</span>
+                <span>₹{selectedInvoice.amount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">GST Tax:</span>
+                <span>₹{selectedInvoice.gst_amount}</span>
+              </div>
+              <div className="flex justify-between text-sm font-bold border-t pt-2 text-slate-900 dark:text-white">
+                <span>Total Amount Paid:</span>
+                <span>₹{selectedInvoice.final_amount}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button variant="primary" onClick={() => window.print()}>
+                Print / Save PDF
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}

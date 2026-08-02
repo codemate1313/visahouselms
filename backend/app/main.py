@@ -47,6 +47,7 @@ from app.routers import (
     terminal,
     testimonials_router,
     trial_config,
+    vouchers,
 )
 
 app = FastAPI(title="IELTS LMS API")
@@ -107,6 +108,7 @@ app.include_router(payment_methods.router)
 app.include_router(gst_rates.router)
 app.include_router(payment_webhooks.router)
 app.include_router(revenue.router)
+app.include_router(vouchers.router)
 
 app.include_router(student_portal.router)
 app.include_router(notifications.router)
