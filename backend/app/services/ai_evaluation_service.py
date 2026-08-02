@@ -1192,16 +1192,17 @@ def auto_evaluate_submission(db: Session, attempt: TestAttempt) -> bool:
     student sees a real result without waiting on an instructor.
 
     Falls back silently to the pre-existing manual grading queue for any part
-    AI can't or won't cover: not configured, quota exhausted, provider error,
-    or no answerable response yet. Returns True if the quota was exhausted
-    for at least one part, so the caller can flag it (surfaced to the student
-    via the notification already sent from `_limit_rows`)."""
+    AI can't or won't cover: module part has AI disabled, provider not
+    configured, quota exhausted, provider error, or no answerable response yet.
+    Returns True if the quota was exhausted for at least one part, so the
+    caller can flag it (surfaced to the student via the notification already
+    sent from `_limit_rows`)."""
     if not config_status(db)["configured"]:
         return False
 
     quota_exhausted = False
     for part in attempt.module.parts:
-        if part.auto_marked:
+        if part.auto_marked or not part.ai_evaluation_enabled:
             continue
         grade = next((g for g in attempt.part_grades if g.part_id == part.id), None)
         if grade is not None and grade.status != PART_GRADE_PENDING:

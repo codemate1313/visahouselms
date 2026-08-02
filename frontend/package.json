@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "theme:audit": "node scripts/theme-audit.mjs",
+    "theme:audit:strict": "node scripts/theme-audit.mjs --strict",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "chromatic": "chromatic",

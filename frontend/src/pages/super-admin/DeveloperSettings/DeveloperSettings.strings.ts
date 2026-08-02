@@ -28,7 +28,7 @@ export const tabLabels: Record<Tab, string> = {
 
 
 export const developerSettingsStrings = {
-  pageTitle: "Developer Settings",
+  pageTitle: "Platform Settings",
   typography: {
     title: "App Typography & Tag Font Weights",
     description: "Customize the global font family and tag-specific font weights across the platform in real time.",
@@ -267,4 +267,3 @@ export const developerSettingsStrings = {
     saveBtn: "Save Gateway Settings",
   },
 };
-

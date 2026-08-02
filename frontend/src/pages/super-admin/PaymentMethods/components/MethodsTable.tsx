@@ -36,7 +36,7 @@ export function MethodsTable({ methods, onToggleActive, onRequestDelete }: Metho
           {methods.map((method) => (
             <tr key={method.id}>
               <td>
-                <strong style={{ fontSize: 14, color: "var(--slate-900)" }}>{method.name}</strong>
+                <strong style={{ fontSize: 14, color: "var(--text)" }}>{method.name}</strong>
               </td>
               <td>
                 <span className={`badge ${method.is_active ? "badge-green" : "badge-inactive"}`}>

@@ -130,7 +130,7 @@ export function InstitutesTable({
                   <span className="table-item-title" style={{ fontSize: 13, fontWeight: 500 }}>
                     {row.contact_email ?? "—"}
                   </span>
-                  <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--slate-400)" }}>
+                  <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
                     {t.slugPrefix} {row.slug}
                   </span>
                 </div>

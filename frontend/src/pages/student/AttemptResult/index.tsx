@@ -44,8 +44,8 @@ export function AttemptResult() {
     return () => { active = false; };
   }, [id]);
 
-  const hasHumanGradedPart = attempt?.parts.some((part) => !part.auto_marked) ?? false;
-  const awaitingAiGrading = attempt?.status === "grading" && hasHumanGradedPart;
+  const awaitingAiGrading = attempt?.ai_evaluation_status === "pending";
+  const aiManualReviewRequired = attempt?.ai_evaluation_status === "manual_required";
 
   useEffect(() => {
     if (!awaitingAiGrading) return;
@@ -88,11 +88,16 @@ export function AttemptResult() {
         .get<StudentNotification[]>("/notifications", { headers: { "X-Skip-Loader": "1" } })
         .then(({ data }) => {
           if (!active) return;
-          const exhausted = data.some(
-            (item) => item.kind === "ai_quota_exhausted" && item.created_at >= mountedAtRef.current,
+          const aiStopped = data.some(
+            (item) =>
+              ["ai_quota_exhausted", "ai_evaluation_failed"].includes(item.kind) &&
+              item.created_at >= mountedAtRef.current,
           );
-          if (exhausted) {
-            setQuotaExhaustedModalOpen(true);
+          if (aiStopped) {
+            const exhausted = data.some(
+              (item) => item.kind === "ai_quota_exhausted" && item.created_at >= mountedAtRef.current,
+            );
+            if (exhausted) setQuotaExhaustedModalOpen(true);
             window.clearInterval(timer);
             Promise.all([
               apiClient.get<Attempt>(`/student/attempts/${id}`, { headers: { "X-Skip-Loader": "1" } }),
@@ -161,13 +166,15 @@ export function AttemptResult() {
           <p className="page-subtitle" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             {awaitingAiGrading ? (
               <>
-                <span>AI evaluation in progress...</span>
+                <span>{strings.aiEvaluation.inProgress}</span>
                 <span className="color-dots-loader" style={{ width: "auto", height: "auto", gap: "4px" }}>
                   <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
                   <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
                   <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
                 </span>
               </>
+            ) : aiManualReviewRequired && attempt.status === "grading" ? (
+              strings.aiEvaluation.manualReview
             ) : (
               statusLabels[attempt.status as keyof typeof statusLabels] ?? attempt.status
             )}
@@ -204,7 +211,12 @@ export function AttemptResult() {
       </Modal>
 
       <PerformanceOverviewPanel attempt={attempt} metrics={metrics} awaitingAiGrading={awaitingAiGrading} />
-      <AnalysisPanel analysis={analysis} analysisError={analysisError} awaitingAiGrading={awaitingAiGrading} />
+      <AnalysisPanel
+        analysis={analysis}
+        analysisError={analysisError}
+        awaitingAiGrading={awaitingAiGrading}
+        manualReviewRequired={aiManualReviewRequired && attempt.status === "grading"}
+      />
 
       {attempt.reevaluation && <ReevaluationStatus reevaluation={attempt.reevaluation} />}
 

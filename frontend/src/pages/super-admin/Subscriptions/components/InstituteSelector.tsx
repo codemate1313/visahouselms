@@ -12,7 +12,7 @@ export function InstituteSelector({ institutes, selected, onSelect }: InstituteS
   return (
     <div className="filter-bar institutes-filter-bar" style={{ marginBottom: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--slate-500)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
           {strings.instituteLabel}
         </span>
         <div style={{ width: 260 }}>

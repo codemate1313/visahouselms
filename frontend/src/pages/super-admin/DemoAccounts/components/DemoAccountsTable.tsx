@@ -43,13 +43,13 @@ export function DemoAccountsTable({ rows }: DemoAccountsTableProps) {
                 </div>
               </td>
               <td>
-                <span style={{ fontSize: 13, fontWeight: 500, color: "var(--slate-700)" }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>
                   {t.coursesTestsSuffix(row.course_limit, row.test_limit)}
                 </span>
               </td>
               <td>{new Date(row.expires_at).toLocaleDateString("en-GB")}</td>
               <td>
-                <strong style={{ fontSize: 13.5, color: (row.days_remaining ?? 0) <= 3 ? "var(--sa-sidebar-red)" : "var(--slate-900)" }}>
+                <strong style={{ fontSize: 13.5, color: (row.days_remaining ?? 0) <= 3 ? "var(--sa-sidebar-red)" : "var(--text)" }}>
                   {row.days_remaining ?? "—"}
                 </strong>
               </td>

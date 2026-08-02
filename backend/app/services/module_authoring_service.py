@@ -207,6 +207,7 @@ def serialize_module(module: ExamModule, detailed: bool = False) -> dict:
                 "max_marks": str(part.max_marks) if part.max_marks is not None else None,
                 "duration_minutes": part.duration_minutes,
                 "auto_marked": part.auto_marked,
+                "ai_evaluation_enabled": part.ai_evaluation_enabled,
                 "answer_constraints": dict(part.answer_constraints or {}),
                 "rubric": list(part.rubric or []),
                 "sort_order": part.sort_order,
@@ -310,6 +311,7 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
                 max_marks=part["max_marks"],
                 duration_minutes=part["duration_minutes"],
                 auto_marked=part["auto_marked"],
+                ai_evaluation_enabled=part["ai_evaluation_enabled"],
                 answer_constraints=part["answer_constraints"],
                 rubric=part["rubric"],
                 sort_order=part["sort_order"],
@@ -333,6 +335,7 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
                         detail=f"{source.title} does not contain {target_part.title}",
                     )
 
+                target_part.ai_evaluation_enabled = source_part.ai_evaluation_enabled
                 randomized_questions = list(source_part.questions)
                 randomizer.shuffle(randomized_questions)
                 for order, question in enumerate(randomized_questions):
@@ -457,6 +460,33 @@ def update_speaking_part_timing(
             "preparation_seconds": preparation_seconds,
             "response_seconds": response_seconds,
         },
+    )
+    db.commit()
+    return serialize_module(get_module_or_404(db, module.id), detailed=True)
+
+
+def update_part_ai_evaluation(
+    db: Session,
+    actor: User,
+    module_id: int,
+    part_id: int,
+    ai_evaluation_enabled: bool,
+    ip: Optional[str],
+) -> dict:
+    module, part = get_editable_part(db, actor, module_id, part_id)
+    if part.auto_marked:
+        raise HTTPException(status_code=400, detail="Answer-key marked parts cannot use AI evaluation")
+    if part.section_type not in {"writing", "speaking"}:
+        raise HTTPException(status_code=400, detail="AI evaluation can only be enabled for Writing or Speaking parts")
+
+    part.ai_evaluation_enabled = ai_evaluation_enabled
+    _audit(
+        db,
+        actor,
+        "exam_module.part_ai_evaluation.update",
+        module.id,
+        ip,
+        {"part_id": part.id, "ai_evaluation_enabled": ai_evaluation_enabled},
     )
     db.commit()
     return serialize_module(get_module_or_404(db, module.id), detailed=True)

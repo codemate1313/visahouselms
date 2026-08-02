@@ -6,9 +6,11 @@
  * primary/secondary colors are set at runtime on `--institute-*` vars by
  * useInstituteBranding.ts and must keep overriding independently of this file.
  *
- * Dark mode is applied via `[data-theme="dark"] .some-class { ... }`
- * selector overrides throughout the stylesheet, not by swapping these
- * variable values — keep that pattern when adding new component CSS.
+ * Dark mode has two layers:
+ * 1. Core tokens below are reassigned under `[data-theme="dark"]`.
+ * 2. Component-level dark rules live beside component CSS when a surface needs
+ *    more than token substitution. Prefer tokens first; add scoped dark rules
+ *    only for component-specific elevation, gradients, or brand treatments.
  */
 
 :root {
@@ -19,12 +21,18 @@
   --app-body-weight: 400;
 
   /* Surfaces & text */
+  --white: #ffffff;
   --bg: #f5f5f7;
   --surface: rgba(255, 255, 255, 0.9);
   --surface-muted: rgba(247, 247, 249, 0.92);
   --text: #111113;
   --text-muted: #6e6e73;
   --border: rgba(210, 210, 216, 0.72);
+  --text-primary: var(--text);
+  --text-secondary: var(--text-muted);
+  --surface-subtle: var(--surface-muted);
+  --border-color: var(--border);
+  --border-subtle: var(--border);
 
   /* Semantic status colors */
   --primary: #e11d2e;
@@ -116,10 +124,9 @@
  * Foundational dark mode
  * ---------------------------------------------------------------------------
  * `data-theme` is written to <html> and <body> by useApplyTheme() from
- * useThemeStore. Per the convention at the top of this file, dark mode is
- * expressed as `[data-theme="dark"] <selector>` overrides rather than by
- * reassigning the :root token values — that keeps the runtime
- * `--institute-*` branding vars free to override independently.
+ * useThemeStore. Core tokens are swapped here, while component-level
+ * exceptions still use `[data-theme="dark"] <selector>` overrides. Runtime
+ * `--institute-*` branding vars remain independent of this system.
  *
  * This block covers the base chrome only (page background, text, shared
  * surfaces). Component-level dark rules belong next to their component CSS,

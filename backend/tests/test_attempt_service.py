@@ -358,9 +358,55 @@ class AttemptServiceTestCase(unittest.TestCase):
 
         self.assertEqual(result["status"], ATTEMPT_GRADING)
         self.assertTrue(result["ai_evaluation_pending"])
+        self.assertEqual(result["ai_evaluation_status"], "pending")
         job = self.db.query(Job).filter_by(type="ai_auto_grade").one()
         self.assertEqual(job.status, "pending")
         self.assertEqual(job.payload, {"attempt_id": attempt.id})
+
+    def test_writing_submit_does_not_enqueue_ai_when_part_toggle_disabled(self):
+        self._enable_ai_evaluation()
+        created = module_authoring_service.create_module(
+            self.db,
+            self.instructor,
+            {"module_type": "writing", "title": "Writing Manual", "description": None, "instructions": None},
+            "127.0.0.1",
+        )
+        module = module_authoring_service.get_module_or_404(self.db, created["id"])
+        for part in module.parts:
+            module_authoring_service.update_part_ai_evaluation(
+                self.db,
+                self.instructor,
+                module.id,
+                part.id,
+                False,
+                None,
+            )
+            self.db.add(
+                ExamModuleQuestion(
+                    part_id=part.id,
+                    **_question("essay", f"{part.part_code} prompt", Decimal(part.max_marks), []),
+                    source_type="manual",
+                    source_filename=None,
+                    sort_order=0,
+                    created_by_id=self.instructor.id,
+                )
+            )
+        self.db.commit()
+        module_authoring_service.set_status(self.db, self.instructor, module.id, "published", "127.0.0.1")
+        self._course_with_module(module.id)
+
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "My essay response."})
+
+        result = attempt_service.submit_attempt(self.db, attempt)
+
+        self.assertEqual(result["status"], ATTEMPT_GRADING)
+        self.assertFalse(result["ai_evaluation_pending"])
+        self.assertEqual(result["ai_evaluation_status"], "disabled")
+        self.assertEqual(self.db.query(Job).filter_by(type="ai_auto_grade").count(), 0)
 
     def test_recovery_enqueues_ai_auto_grade_for_existing_pending_attempt(self):
         self._enable_ai_evaluation()

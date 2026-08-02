@@ -76,5 +76,5 @@ def send_test_email(db: Session, to_address: str) -> None:
         db,
         to_address,
         "IELTS LMS - SMTP test",
-        "This is a test email from your IELTS LMS Developer Settings. SMTP is working.",
+        "This is a test email from your IELTS LMS Platform Settings. SMTP is working.",
     )

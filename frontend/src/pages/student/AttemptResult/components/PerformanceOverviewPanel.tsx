@@ -7,9 +7,10 @@ import { LinkButton } from "@/components/ui";
 interface PerformanceOverviewPanelProps {
   attempt: Attempt;
   metrics: AttemptMetrics;
+  awaitingAiGrading?: boolean;
 }
 
-export function PerformanceOverviewPanel({ attempt, metrics }: PerformanceOverviewPanelProps) {
+export function PerformanceOverviewPanel({ attempt, metrics, awaitingAiGrading }: PerformanceOverviewPanelProps) {
   const t = strings.overview;
   const m = strings.metrics;
   const metricRows = [
@@ -30,7 +31,17 @@ export function PerformanceOverviewPanel({ attempt, metrics }: PerformanceOvervi
         </div>
         <div className="result-overview-score">
           <span>{t.cefrLevel}</span>
-          <strong>{attempt.band_label ?? t.pending}</strong>
+          {awaitingAiGrading ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "4px", height: "34px" }}>
+              <span className="color-dots-loader" style={{ width: "auto", height: "auto", gap: "3px" }}>
+                <span style={{ width: "6px", height: "6px", flex: "0 0 6px" }} />
+                <span style={{ width: "6px", height: "6px", flex: "0 0 6px" }} />
+                <span style={{ width: "6px", height: "6px", flex: "0 0 6px" }} />
+              </span>
+            </div>
+          ) : (
+            <strong>{attempt.band_label ?? t.pending}</strong>
+          )}
         </div>
       </div>
 
@@ -48,7 +59,17 @@ export function PerformanceOverviewPanel({ attempt, metrics }: PerformanceOvervi
         <div className="result-overview-meta">
           <div>
             <span>{t.score}</span>
-            <strong>{attempt.raw_score != null && attempt.max_score != null ? `${attempt.raw_score} / ${attempt.max_score}` : t.pending}</strong>
+            {awaitingAiGrading ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", height: "24px" }}>
+                <span className="color-dots-loader" style={{ width: "auto", height: "auto", gap: "3px" }}>
+                  <span style={{ width: "6px", height: "6px", flex: "0 0 6px" }} />
+                  <span style={{ width: "6px", height: "6px", flex: "0 0 6px" }} />
+                  <span style={{ width: "6px", height: "6px", flex: "0 0 6px" }} />
+                </span>
+              </div>
+            ) : (
+              <strong>{attempt.raw_score != null && attempt.max_score != null ? `${attempt.raw_score} / ${attempt.max_score}` : t.pending}</strong>
+            )}
           </div>
           <div>
             <span>{t.submitted}</span>

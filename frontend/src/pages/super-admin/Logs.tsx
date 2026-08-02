@@ -78,7 +78,7 @@ export function Logs() {
 
     if (colKey === "stack_trace") {
       return (
-        <span className="log-stack-trace-text" title={valStr} style={{ color: "var(--slate-400)", fontSize: 12 }}>
+        <span className="log-stack-trace-text" title={valStr} style={{ color: "var(--text-muted)", fontSize: 12 }}>
           {valStr}
         </span>
       );

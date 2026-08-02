@@ -317,6 +317,7 @@ def _with_defaults(parts: list[dict]) -> list[dict]:
         part.setdefault("max_marks", None)
         part.setdefault("duration_minutes", None)
         part.setdefault("auto_marked", False)
+        part.setdefault("ai_evaluation_enabled", (not part["auto_marked"]) and part["section_type"] in {"writing", "speaking"})
         part.setdefault("answer_constraints", {})
         part.setdefault("rubric", [])
         part["sort_order"] = index

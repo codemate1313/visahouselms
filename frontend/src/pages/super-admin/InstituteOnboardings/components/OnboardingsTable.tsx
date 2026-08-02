@@ -43,7 +43,7 @@ export function OnboardingsTable({ rows, onRequestDelete }: OnboardingsTableProp
                     <div className="table-avatar-tile">{row.name.charAt(0).toUpperCase()}</div>
                     <div className="table-item-details">
                       <span className="table-item-title">{row.name}</span>
-                      <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--slate-400)" }}>
+                      <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
                         {row.contact_email || t.noContactEmail}
                       </span>
                     </div>
@@ -59,7 +59,7 @@ export function OnboardingsTable({ rows, onRequestDelete }: OnboardingsTableProp
                     <span className="table-item-title" style={{ fontSize: 13, fontWeight: 500 }}>
                       {row.payment ? formatCurrencyAmount(row.payment.amount_paid || 0, row.agreement_currency) : t.notRecorded}
                     </span>
-                    <span className="table-item-subtitle" style={{ fontSize: 11.5, color: row.payment?.status === "paid" ? "var(--green-600)" : "var(--slate-400)" }}>
+                    <span className="table-item-subtitle" style={{ fontSize: 11.5, color: row.payment?.status === "paid" ? "var(--green-600)" : "var(--text-muted)" }}>
                       {row.payment?.status || t.pending}
                     </span>
                   </div>

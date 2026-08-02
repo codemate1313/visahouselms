@@ -290,6 +290,7 @@ export interface ExamModulePart {
   max_marks: string | null;
   duration_minutes: number | null;
   auto_marked: boolean;
+  ai_evaluation_enabled: boolean;
   answer_constraints: {
     allowed_question_types?: QuestionType[];
     max_answer_words?: number;
@@ -344,6 +345,7 @@ export interface ModuleBlueprintPart {
   minimum_questions: number;
   max_marks: number | null;
   auto_marked: boolean;
+  ai_evaluation_enabled: boolean;
   answer_constraints: ExamModulePart["answer_constraints"];
   rubric: ModuleRubricCriterion[];
 }
@@ -596,6 +598,7 @@ export interface AttemptPart {
   instructions: string | null;
   duration_minutes: number | null;
   auto_marked: boolean;
+  ai_evaluation_enabled: boolean;
   max_marks: string | null;
   rubric: ModuleRubricCriterion[];
   answer_constraints: {
@@ -637,6 +640,7 @@ export interface Attempt {
   graded_at: string | null;
   flag_count: number;
   reevaluation: ReevaluationRequestView | null;
+  ai_evaluation_status: "not_started" | "disabled" | "pending" | "completed" | "manual_required";
   parts: AttemptPart[];
 }
 
@@ -686,9 +690,26 @@ export interface AttemptSummary {
   cefr_profile: CefrProfile | null;
 }
 
+export type StudentNotificationKind =
+  | "grade_released"
+  | "announcement_published"
+  | "support_ticket_created"
+  | "support_ticket_updated"
+  | "support_ticket_assigned"
+  | "ai_quota_exhausted"
+  | "ai_evaluation_failed"
+  | "grading_queue_routed"
+  | "grading_claimed"
+  | "grading_released"
+  | "reevaluation_requested"
+  | "reevaluation_claimed"
+  | "reevaluation_resolved"
+  | "system_job_failed"
+  | "system_security_event";
+
 export interface StudentNotification {
   id: number;
-  kind: "grade_released" | "announcement_published" | "ai_quota_exhausted" | (string & {});
+  kind: StudentNotificationKind;
   attempt_id: number | null;
   announcement_id: number | null;
   link_url: string | null;

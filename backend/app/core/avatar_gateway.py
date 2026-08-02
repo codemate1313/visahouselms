@@ -4,7 +4,7 @@
 Photo API (https://docs.d-id.com/reference/create-a-talk) to turn a
 presenter image + spoken script into a short MP4 of the presenter reading
 the script. It is inert (raises `AvatarNotConfigured`) until a Super Admin
-pastes a real D-ID API key and presenter image URL into Developer Settings,
+pastes a real D-ID API key and presenter image URL into Platform Settings,
 mirroring how SMTP/FCM/payment-gateway credentials already work in this
 codebase. Nothing else in the codebase changes if a different vendor
 (HeyGen, Synthesia, ...) is swapped in later - only this file would change."""

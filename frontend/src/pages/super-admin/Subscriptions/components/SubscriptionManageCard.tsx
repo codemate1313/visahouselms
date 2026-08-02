@@ -86,7 +86,7 @@ export function SubscriptionManageCard({
       <div className="subscription-card-grid">
         <div className="sub-card-col-left">
           <div className="subscription-head-v2">
-            <span className="table-item-subtitle" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--slate-500)" }}>
+            <span className="table-item-subtitle" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)" }}>
               {selectedInstitute.name}
             </span>
             <h2 className="subscription-plan-title">{current?.plan_name ?? t.noActivePlan}</h2>

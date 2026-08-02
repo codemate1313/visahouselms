@@ -41,7 +41,7 @@ export function OutstandingDuesPanel({ dues }: OutstandingDuesPanelProps) {
                   <span className="table-item-title">{row.institute_name ?? t.directStudent}</span>
                 </td>
                 <td>
-                  <span className="table-item-subtitle" style={{ fontSize: 12.5, color: "var(--slate-500)" }}>
+                  <span className="table-item-subtitle" style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
                     {row.invoice_number ?? t.notAvailable}
                   </span>
                 </td>

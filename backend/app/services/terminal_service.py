@@ -119,7 +119,7 @@ class BackupNowPreset(Preset):
             job = job_service.enqueue(db, "backup", {"kind": "manual"})
         finally:
             db.close()
-        yield f"Backup job #{job.id} enqueued. Track it in Developer Settings > Backups."
+        yield f"Backup job #{job.id} enqueued. Track it in Platform Settings > Backups."
 
 
 def build_presets() -> Dict[str, Preset]:

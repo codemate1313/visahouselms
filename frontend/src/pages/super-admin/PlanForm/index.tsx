@@ -207,11 +207,11 @@ export function PlanForm() {
         <div style={{
           margin: "18px 0 24px",
           padding: "16px 20px",
-          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-          border: "1.5px solid #e2e8f0",
+          background: "linear-gradient(135deg, var(--surface-muted) 0%, var(--surface) 100%)",
+          border: "1.5px solid var(--border)",
           borderRadius: "14px",
         }}>
-          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: 700, fontSize: "14px", color: "#0f172a" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: 700, fontSize: "14px", color: "var(--text)" }}>
             <Checkbox
               checked={Boolean(form.is_international_enabled)}
               onChange={(e) => setForm((prev) => ({ ...prev, is_international_enabled: e.target.checked }))}
@@ -234,10 +234,10 @@ export function PlanForm() {
                   value={form.usd_price}
                   onChange={set("usd_price")}
                   required={form.is_international_enabled}
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--border)" }}
                 />
               </div>
-              <div style={{ display: "flex", alignItems: "center", fontSize: "12px", color: "#64748b", background: "#fff", padding: "10px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+              <div style={{ display: "flex", alignItems: "center", fontSize: "12px", color: "var(--text-muted)", background: "var(--surface)", padding: "10px 14px", borderRadius: "10px", border: "1px solid var(--border)" }}>
                 <span>Students outside India will be presented <strong>${form.usd_price || "0.00"} USD</strong> and paid via <strong>Stripe Payment Gateway</strong>.</span>
               </div>
             </div>

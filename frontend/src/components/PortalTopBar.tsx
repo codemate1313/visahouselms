@@ -103,7 +103,7 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/institutes/new", eyebrow: "SAAS MANAGEMENT", title: "Create Institute" },
   { match: /\/super-admin\/institutes\/\d+/, eyebrow: "SAAS MANAGEMENT", title: "Edit Institute" },
   { match: "/super-admin/institutes", eyebrow: "SAAS MANAGEMENT", title: "Institutes" },
-  { match: "/super-admin/dev-settings", eyebrow: "SETTINGS", title: "Developer Settings" },
+  { match: ["/super-admin/dev-settings", "/super-admin/platform-settings"], eyebrow: "SETTINGS", title: "Platform Settings" },
   { match: "/super-admin/logs", eyebrow: "SETTINGS", title: "System Logs" },
   { match: "/super-admin/terminal", eyebrow: "SETTINGS", title: "CMD Terminal" },
   { match: ["/super-admin/profile", "/institute-portal/profile", "/instructor-portal/profile", "/student/profile"], eyebrow: "ACCOUNT", title: "My Profile" },

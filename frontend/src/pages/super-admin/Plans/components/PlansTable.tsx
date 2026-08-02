@@ -45,17 +45,17 @@ export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onVi
             <tr key={plan.id}>
               <td>
                 <div className="table-item-details">
-                  <span className="table-item-title" style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
+                  <span className="table-item-title" style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
                     {plan.name}
                   </span>
-                  <span className="table-item-subtitle" style={{ fontSize: 12, color: "#64748b" }}>
+                  <span className="table-item-subtitle" style={{ fontSize: 12, color: "var(--text-muted)" }}>
                     {t.target} {plan.audience.replace("_", " ")}
                   </span>
                 </div>
               </td>
               <td>
                 <div className="table-item-details">
-                  <strong style={{ fontSize: 14, color: "#0f172a", whiteSpace: "nowrap" }}>
+                  <strong style={{ fontSize: 14, color: "var(--text)", whiteSpace: "nowrap" }}>
                     {formatCurrencyAmount(plan.price, plan.currency)}
                   </strong>
                   {plan.is_international_enabled && plan.usd_price && (
@@ -74,7 +74,7 @@ export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onVi
                       ${plan.usd_price} USD (Intl)
                     </span>
                   )}
-                  <span style={{ fontSize: 12, color: "#64748b" }}>
+                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
                     {plan.duration_days} {t.daysSuffix}
                   </span>
                 </div>

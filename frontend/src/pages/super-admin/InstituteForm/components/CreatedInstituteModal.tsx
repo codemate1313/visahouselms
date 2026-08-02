@@ -37,7 +37,7 @@ export function CreatedInstituteModal({ created, copied, onCopyPassword, onDone 
           padding: "28px",
           borderRadius: "16px",
           background: "var(--surface, #ffffff)",
-          border: "1px solid var(--border, #cbd5e1)",
+          border: "1px solid var(--border, var(--border))",
           boxShadow: "0 25px 60px rgba(0, 0, 0, 0.3)",
         }}
       >
@@ -53,7 +53,7 @@ export function CreatedInstituteModal({ created, copied, onCopyPassword, onDone 
             padding: 16,
             borderRadius: 12,
             background: "var(--surface-muted, #f8fafc)",
-            border: "1px solid var(--border, #e2e8f0)",
+            border: "1px solid var(--border, var(--border))",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>

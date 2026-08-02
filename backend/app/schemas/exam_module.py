@@ -85,6 +85,10 @@ class SpeakingPartTimingUpdate(BaseModel):
     response_seconds: int = Field(ge=5, le=1800)
 
 
+class PartAiEvaluationUpdate(BaseModel):
+    ai_evaluation_enabled: bool
+
+
 class ModuleStatusUpdate(BaseModel):
     status: str
 

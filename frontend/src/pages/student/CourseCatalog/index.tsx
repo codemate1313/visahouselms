@@ -286,11 +286,11 @@ export function CourseCatalog() {
                 alignItems: "center",
                 gap: "0.5rem",
                 padding: "0.5rem 1rem",
-                background: "#ffffff",
-                border: "1px solid #cbd5e1",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
                 borderRadius: "8px",
                 fontWeight: 600,
-                color: "#334155",
+                color: "var(--text)",
                 textDecoration: "none",
               }}
             >

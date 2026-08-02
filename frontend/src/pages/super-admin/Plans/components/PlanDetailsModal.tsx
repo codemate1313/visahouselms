@@ -133,12 +133,12 @@ export function PlanDetailsModal({ plan, onClose }: PlanDetailsModalProps) {
 
           <div className="plan-dialog-meta">
             <div>
-              <span style={{ color: "#64748b" }}>{t.targetAudience} </span>
-              <strong style={{ textTransform: "capitalize", color: "#0f172a" }}>{plan.audience.replace("_", " ")}</strong>
+              <span style={{ color: "var(--text-muted)" }}>{t.targetAudience} </span>
+              <strong style={{ textTransform: "capitalize", color: "var(--text)" }}>{plan.audience.replace("_", " ")}</strong>
             </div>
             <div>
-              <span style={{ color: "#64748b" }}>{t.publishStatus} </span>
-              <strong style={{ color: "#0f172a" }}>{plan.is_published ? t.published : t.draft}</strong>
+              <span style={{ color: "var(--text-muted)" }}>{t.publishStatus} </span>
+              <strong style={{ color: "var(--text)" }}>{plan.is_published ? t.published : t.draft}</strong>
             </div>
           </div>
         </div>

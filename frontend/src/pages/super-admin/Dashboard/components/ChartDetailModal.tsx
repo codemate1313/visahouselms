@@ -399,7 +399,7 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
                         setFromDate(e.target.value);
                         setActiveFilter("custom");
                       }}
-                      style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border, #cbd5e1)", background: "var(--surface, #ffffff)", fontSize: 12, fontWeight: 600, color: "var(--text, #0f172a)", outline: "none" }}
+                      style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border, var(--border))", background: "var(--surface, #ffffff)", fontSize: 12, fontWeight: 600, color: "var(--text, #0f172a)", outline: "none" }}
                     />
                   </div>
                   <span style={{ color: "var(--text-muted, #94a3b8)", fontSize: 12, fontWeight: 700 }}>&rarr;</span>
@@ -412,7 +412,7 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
                         setToDate(e.target.value);
                         setActiveFilter("custom");
                       }}
-                      style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border, #cbd5e1)", background: "var(--surface, #ffffff)", fontSize: 12, fontWeight: 600, color: "var(--text, #0f172a)", outline: "none" }}
+                      style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border, var(--border))", background: "var(--surface, #ffffff)", fontSize: 12, fontWeight: 600, color: "var(--text, #0f172a)", outline: "none" }}
                     />
                   </div>
                 </div>

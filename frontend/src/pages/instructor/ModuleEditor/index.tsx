@@ -242,6 +242,23 @@ export function ModuleEditor() {
     }
   }
 
+  async function togglePartAiEvaluation(enabled: boolean) {
+    if (!module || !selectedPart) return;
+    setBusy(true); setError(null); setNotice(null);
+    try {
+      const { data } = await apiClient.patch<ExamModule>(
+        `/instructor/modules/${module.id}/parts/${selectedPart.id}/ai-evaluation`,
+        { ai_evaluation_enabled: enabled },
+      );
+      setModule(data);
+      setNotice(strings.partSpec.aiEvaluationSaved(selectedPart.title, enabled));
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.partSpec.aiEvaluationError));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function generateAudio(event: FormEvent) {
     event.preventDefault(); if (!module || !selectedPart) return;
     setBusy(true); setError(null);
@@ -355,7 +372,12 @@ export function ModuleEditor() {
         <ModulePartNav parts={module.parts} selectedPartId={selectedPartId} onChoosePart={choosePart} />
         {selectedPart && (
           <main className="module-part-editor" id="module-part-editor">
-            <PartSpecPanel part={selectedPart} />
+            <PartSpecPanel
+              part={selectedPart}
+              isEditable={isEditable}
+              busy={busy}
+              onToggleAiEvaluation={togglePartAiEvaluation}
+            />
 
             {selectedPart.section_type === "listening" && (
               <ListeningAudioPanel

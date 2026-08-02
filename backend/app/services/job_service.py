@@ -11,6 +11,7 @@ from app.config import BACKEND_DIR
 from app.database import SessionLocal
 from app.models.attempt import ATTEMPT_GRADING, PART_GRADE_PENDING, AiEvaluation, AttemptPartGrade, TestAttempt
 from app.models.crash_log import CrashLog
+from app.models.exam_module import ExamModulePart
 from app.models.job import JOB_DONE, JOB_FAILED, JOB_PENDING, JOB_RUNNING, Job
 
 POLL_INTERVAL_SECONDS = 3
@@ -62,9 +63,11 @@ def recover_missing_ai_auto_grade_jobs(db: Session) -> int:
         for (attempt_id,) in (
             db.query(TestAttempt.id)
             .join(AttemptPartGrade, AttemptPartGrade.attempt_id == TestAttempt.id)
+            .join(ExamModulePart, ExamModulePart.id == AttemptPartGrade.part_id)
             .filter(
                 TestAttempt.status == ATTEMPT_GRADING,
                 AttemptPartGrade.status == PART_GRADE_PENDING,
+                ExamModulePart.ai_evaluation_enabled.is_(True),
             )
             .distinct()
             .all()
@@ -139,10 +142,19 @@ def _auto_grade_attempt(db: Session, payload: Optional[dict]) -> str:
     attempt = db.get(TestAttempt, payload["attempt_id"])
     if attempt is None:
         raise RuntimeError("Attempt no longer exists")
+    eligible_part_ids = {
+        part.id
+        for part in attempt.module.parts
+        if not part.auto_marked and part.ai_evaluation_enabled
+    }
     failed_before = db.query(AiEvaluation).filter_by(attempt_id=attempt.id, status="failed").count()
     quota_exhausted = ai_evaluation_service.auto_evaluate_submission(db, attempt)
-    graded = sum(1 for grade in attempt.part_grades if grade.status == "ai_graded")
-    total = sum(1 for part in attempt.module.parts if not part.auto_marked)
+    graded = sum(
+        1
+        for grade in attempt.part_grades
+        if grade.part_id in eligible_part_ids and grade.status == "ai_graded"
+    )
+    total = len(eligible_part_ids)
     failed_after = db.query(AiEvaluation).filter_by(attempt_id=attempt.id, status="failed").count()
     if total > 0 and graded < total and failed_after > failed_before:
         from app.services import notification_service

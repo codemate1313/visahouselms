@@ -127,7 +127,7 @@ export function DashboardLayout() {
           label: m.system,
           icon: "settings",
           children: [
-            { key: "system_dev", label: m.systemDev, to: "/super-admin/dev-settings" },
+            { key: "system_dev", label: m.systemDev, to: "/super-admin/platform-settings" },
             { key: "system_logs", label: m.systemLogs, to: "/super-admin/logs" },
             { key: "system_terminal", label: m.systemTerminal, to: "/super-admin/terminal" },
           ],

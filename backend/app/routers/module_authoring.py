@@ -15,6 +15,7 @@ from app.schemas.exam_module import (
     ModuleQuestionBatchCreate,
     ModuleStatusUpdate,
     ModuleUpdate,
+    PartAiEvaluationUpdate,
     SpeakingPartTimingUpdate,
     TTSCreate,
 )
@@ -126,6 +127,25 @@ def update_speaking_part_timing(
         part_id,
         payload.preparation_seconds,
         payload.response_seconds,
+        _ip(request),
+    )
+
+
+@router.patch("/{module_id}/parts/{part_id}/ai-evaluation")
+def update_part_ai_evaluation(
+    module_id: int,
+    part_id: int,
+    payload: PartAiEvaluationUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return module_authoring_service.update_part_ai_evaluation(
+        db,
+        actor,
+        module_id,
+        part_id,
+        payload.ai_evaluation_enabled,
         _ip(request),
     )
 

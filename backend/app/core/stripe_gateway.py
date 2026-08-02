@@ -18,7 +18,7 @@ class StripeGateway(PaymentGateway):
     def create_order(self, amount: Decimal, currency: str, meta: dict) -> dict:
         """Create a Stripe PaymentIntent using direct API request (no external package dependency needed)."""
         if not self.secret_key:
-            raise ValueError("Stripe secret key is not configured in Developer Settings.")
+            raise ValueError("Stripe secret key is not configured in Platform Settings.")
 
         # Convert amount to cents (e.g. 59.00 USD -> 5900 cents)
         amount_cents = int(round(amount * 100))

@@ -25,6 +25,7 @@ from app.models.attempt import (
     PART_GRADE_AI_GRADED,
     PART_GRADE_DRAFT,
     PART_GRADE_GRADED,
+    PART_GRADE_PENDING,
     QUEUE_COMPLETED,
     AttemptAnswer,
     AttemptFlag,
@@ -304,6 +305,7 @@ def _serialize_part(
         "instructions": part.instructions,
         "duration_minutes": part.duration_minutes,
         "auto_marked": part.auto_marked,
+        "ai_evaluation_enabled": part.ai_evaluation_enabled,
         "max_marks": str(part.max_marks) if part.max_marks is not None else None,
         "rubric": part.rubric,
         "answer_constraints": dict(part.answer_constraints or {}),
@@ -371,6 +373,55 @@ def _serialize_parts(
     ]
 
 
+def _ai_evaluation_status(db: Session, attempt: TestAttempt) -> str:
+    if attempt.status == ATTEMPT_GRADED:
+        return "completed"
+
+    eligible_part_ids = {
+        part.id
+        for part in attempt.module.parts
+        if not part.auto_marked and part.ai_evaluation_enabled
+    }
+    if not eligible_part_ids:
+        return "disabled"
+    if attempt.status != ATTEMPT_GRADING:
+        return "not_started"
+
+    grades_by_part = {grade.part_id: grade for grade in attempt.part_grades}
+    pending_part_ids = {
+        part_id
+        for part_id in eligible_part_ids
+        if grades_by_part.get(part_id) is None or grades_by_part[part_id].status == PART_GRADE_PENDING
+    }
+    if not pending_part_ids:
+        return "completed"
+
+    from app.models.attempt import AiEvaluation
+    from app.models.job import JOB_PENDING, JOB_RUNNING, Job
+
+    active_jobs = (
+        db.query(Job)
+        .filter(Job.type == "ai_auto_grade", Job.status.in_([JOB_PENDING, JOB_RUNNING]))
+        .all()
+    )
+    if any((job.payload or {}).get("attempt_id") == attempt.id for job in active_jobs):
+        return "pending"
+
+    failed_ai_rows = (
+        db.query(AiEvaluation.id)
+        .filter(
+            AiEvaluation.attempt_id == attempt.id,
+            AiEvaluation.part_id.in_(pending_part_ids),
+            AiEvaluation.status == "failed",
+        )
+        .first()
+    )
+    if failed_ai_rows is not None:
+        return "manual_required"
+
+    return "manual_required"
+
+
 def get_student_view(
     db: Session,
     attempt: TestAttempt,
@@ -416,6 +467,7 @@ def get_student_view(
         "graded_at": _utc_out(attempt.graded_at),
         "flag_count": len(attempt.flags),
         "reevaluation": grading_service.reevaluation_for_student(db, attempt),
+        "ai_evaluation_status": _ai_evaluation_status(db, attempt),
         "parts": _serialize_parts(
             attempt,
             reveal=reveal,
@@ -953,6 +1005,7 @@ def submit_attempt(
     db.flush()
     ai_evaluation_pending = False
     grading_routing_reason = None
+    ai_eligible_parts = [part for part in attempt.module.parts if not part.auto_marked and part.ai_evaluation_enabled]
     if needs_grading:
         from app.services import ai_evaluation_service, grading_service
 
@@ -964,7 +1017,7 @@ def submit_attempt(
         # It runs as a background job rather than inline here because a
         # provider call can take tens of seconds per part, which is too slow
         # to hold this request open for.
-        ai_evaluation_pending = ai_evaluation_service.config_status(db)["configured"]
+        ai_evaluation_pending = bool(ai_eligible_parts) and ai_evaluation_service.config_status(db)["configured"]
     completed_now = attempt.status == ATTEMPT_GRADED
     attempt_id = attempt.id
     user_id = attempt.user_id

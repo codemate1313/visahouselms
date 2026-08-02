@@ -184,6 +184,33 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
                 ip=None,
             )
 
+    def test_instructor_can_toggle_ai_evaluation_for_subjective_parts(self) -> None:
+        writing = self._create("writing")
+        first_part = writing["parts"][0]
+        self.assertTrue(first_part["ai_evaluation_enabled"])
+
+        updated = module_authoring_service.update_part_ai_evaluation(
+            self.db,
+            self.instructor,
+            writing["id"],
+            first_part["id"],
+            False,
+            "127.0.0.1",
+        )
+
+        self.assertFalse(updated["parts"][0]["ai_evaluation_enabled"])
+
+        reading = self._create("reading")
+        with self.assertRaises(HTTPException):
+            module_authoring_service.update_part_ai_evaluation(
+                self.db,
+                self.instructor,
+                reading["id"],
+                reading["parts"][0]["id"],
+                True,
+                None,
+            )
+
     def test_questions_are_part_scoped_and_writing_can_publish(self) -> None:
         created = self._create("writing")
         first, second = created["parts"]

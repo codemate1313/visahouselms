@@ -52,7 +52,7 @@ export function SeedTab() {
         </button>
       </div>
 
-      <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--slate-200)" }}>
+      <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
         <h4 style={{ margin: "0 0 8px", fontSize: "14px", fontWeight: 600 }}>{t.toastSectionTitle}</h4>
         <p className="hint" style={{ marginBottom: 14 }}>
           {t.toastSectionHint}

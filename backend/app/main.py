@@ -67,6 +67,14 @@ app.add_middleware(
 
 app.middleware("http")(add_security_headers)
 
+
+@app.middleware("http")
+async def platform_settings_alias(request: Request, call_next):
+    path = request.scope.get("path", "")
+    if path.startswith("/super-admin/platform-settings"):
+        request.scope["path"] = path.replace("/super-admin/platform-settings", "/super-admin/dev-settings", 1)
+    return await call_next(request)
+
 app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(super_admin.router)

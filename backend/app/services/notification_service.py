@@ -26,6 +26,25 @@ from app.services import fcm_service, smtp_service
 
 logger = logging.getLogger(__name__)
 
+NOTIFICATION_POLICY: dict[str, dict[str, set[str]]] = {
+    "grading_queue_routed": {
+        "institute": {INSTITUTE_ADMIN, INST_INSTRUCTOR},
+        "direct": {SA_INSTRUCTOR},
+        "sa_fallback": {SUPER_ADMIN, SA_INSTRUCTOR},
+    },
+    "ai_evaluation_failed": {
+        "student": {STUDENT},
+        "institute": {INSTITUTE_ADMIN, INST_INSTRUCTOR},
+        "direct": {SA_INSTRUCTOR},
+        "platform": {SUPER_ADMIN, DEVELOPER},
+    },
+    "reevaluation_requested": {
+        "student": {STUDENT},
+        "institute": {INSTITUTE_ADMIN, INST_INSTRUCTOR},
+        "direct": {SA_INSTRUCTOR},
+    },
+}
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
@@ -204,90 +223,57 @@ def _grading_link_for_role(role_name: str) -> str:
     return "/super-admin/grading"
 
 
+def _attempt_audience(event: str, attempt: TestAttempt, routing_reason: Optional[str] = None) -> tuple[set[str], Optional[int]]:
+    policy = NOTIFICATION_POLICY[event]
+    if routing_reason == "sa_fallback":
+        return policy["sa_fallback"], None
+    if attempt.user.institute_id is not None:
+        return policy["institute"], attempt.user.institute_id
+    return policy["direct"], None
+
+
 def notify_grading_queue_routed(db: Session, attempt: TestAttempt, routing_reason: Optional[str]) -> None:
     title = f"New submission needs grading: {attempt.module.title}"
     message = f"{_student_name(attempt)} submitted {attempt.module.title} for instructor review."
-    if attempt.user.institute_id is not None and routing_reason != "sa_fallback":
+    roles, institute_id = _attempt_audience("grading_queue_routed", attempt, routing_reason)
+    for role_name in roles:
         notify_roles(
             db,
-            {INST_INSTRUCTOR},
+            {role_name},
             kind=GRADING_QUEUE_ROUTED,
-            title=title,
+            title="Institute student submitted a test" if role_name == INSTITUTE_ADMIN else title,
             message=message,
-            link_url="/institute-instructor/grading",
-            institute_id=attempt.user.institute_id,
-        )
-        notify_roles(
-            db,
-            {INSTITUTE_ADMIN},
-            kind=GRADING_QUEUE_ROUTED,
-            title="Institute student submitted a test",
-            message=message,
-            link_url="/institute-portal/dashboard",
-            institute_id=attempt.user.institute_id,
-        )
-        return
-    notify_roles(
-        db,
-        {SA_INSTRUCTOR},
-        kind=GRADING_QUEUE_ROUTED,
-        title=title,
-        message=message,
-        link_url="/super-admin/instructor/grading",
-    )
-    if routing_reason == "sa_fallback":
-        notify_roles(
-            db,
-            {SUPER_ADMIN},
-            kind=GRADING_QUEUE_ROUTED,
-            title="Institute grading routed to SA fallback",
-            message=message,
-            link_url="/super-admin/grading",
+            link_url=_grading_link_for_role(role_name),
+            institute_id=institute_id,
         )
 
 
 def notify_ai_evaluation_failed(db: Session, attempt: TestAttempt) -> None:
     title = f"AI evaluation failed: {attempt.module.title}"
     message = f"{_student_name(attempt)}'s result needs manual instructor review because AI evaluation failed."
-    create_notification(
-        db,
-        user_id=attempt.user_id,
-        kind=AI_EVALUATION_FAILED,
-        title="AI evaluation needs manual review",
-        message="Automatic AI evaluation could not complete. Your submission remains in instructor review.",
-        link_url=f"/student/attempts/{attempt.id}/result/details",
-    )
-    if attempt.user.institute_id is not None:
-        notify_roles(
+    if STUDENT in NOTIFICATION_POLICY["ai_evaluation_failed"]["student"]:
+        create_notification(
             db,
-            {INSTITUTE_ADMIN},
+            user_id=attempt.user_id,
             kind=AI_EVALUATION_FAILED,
-            title=title,
-            message=message,
-            link_url="/institute-portal/dashboard",
-            institute_id=attempt.user.institute_id,
+            title="AI evaluation needs manual review",
+            message="Automatic AI evaluation could not complete. Your submission remains in instructor review.",
+            link_url=f"/student/attempts/{attempt.id}/result/details",
         )
+    roles, institute_id = _attempt_audience("ai_evaluation_failed", attempt)
+    for role_name in roles:
         notify_roles(
             db,
-            {INST_INSTRUCTOR},
+            {role_name},
             kind=AI_EVALUATION_FAILED,
             title=title,
             message=message,
-            link_url="/institute-instructor/grading",
-            institute_id=attempt.user.institute_id,
-        )
-    else:
-        notify_roles(
-            db,
-            {SA_INSTRUCTOR},
-            kind=AI_EVALUATION_FAILED,
-            title=title,
-            message=message,
-            link_url="/super-admin/instructor/grading",
+            link_url=_grading_link_for_role(role_name),
+            institute_id=institute_id,
         )
     notify_roles(
         db,
-        {SUPER_ADMIN, DEVELOPER},
+        NOTIFICATION_POLICY["ai_evaluation_failed"]["platform"],
         kind=AI_EVALUATION_FAILED,
         title=title,
         message="Check AI provider configuration and failed ai_evaluations rows.",
@@ -322,33 +308,26 @@ def notify_grading_released(db: Session, attempt: TestAttempt) -> None:
 def notify_reevaluation_requested(db: Session, attempt: TestAttempt) -> None:
     title = f"Human review requested: {attempt.module.title}"
     message = f"{_student_name(attempt)} requested instructor review after the result was released."
-    create_notification(
-        db,
-        user_id=attempt.user_id,
-        kind=REEVALUATION_REQUESTED,
-        title="Human review request submitted",
-        message="Your request has been sent to the appropriate instructor queue.",
-        link_url=f"/student/attempts/{attempt.id}/result/details",
-        attempt_id=attempt.id,
-    )
-    if attempt.user.institute_id is not None:
-        notify_roles(
+    if STUDENT in NOTIFICATION_POLICY["reevaluation_requested"]["student"]:
+        create_notification(
             db,
-            {INSTITUTE_ADMIN, INST_INSTRUCTOR},
+            user_id=attempt.user_id,
             kind=REEVALUATION_REQUESTED,
-            title=title,
-            message=message,
-            link_url="/institute-instructor/grading",
-            institute_id=attempt.user.institute_id,
+            title="Human review request submitted",
+            message="Your request has been sent to the appropriate instructor queue.",
+            link_url=f"/student/attempts/{attempt.id}/result/details",
+            attempt_id=attempt.id,
         )
-    else:
+    roles, institute_id = _attempt_audience("reevaluation_requested", attempt)
+    for role_name in roles:
         notify_roles(
             db,
-            {SA_INSTRUCTOR},
+            {role_name},
             kind=REEVALUATION_REQUESTED,
             title=title,
             message=message,
-            link_url="/super-admin/instructor/grading",
+            link_url=_grading_link_for_role(role_name),
+            institute_id=institute_id,
         )
 
 

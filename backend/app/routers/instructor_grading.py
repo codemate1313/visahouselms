@@ -59,11 +59,18 @@ def request_ai_suggestion(
     actor: User = Depends(get_current_user),
 ):
     attempt = attempt_service.get_attempt_for_grading_or_404(db, actor, attempt_id)
-    part = next((item for item in attempt.module.parts if item.id == part_id and not item.auto_marked), None)
+    part = next(
+        (
+            item
+            for item in attempt.module.parts
+            if item.id == part_id and not item.auto_marked and item.ai_evaluation_enabled
+        ),
+        None,
+    )
     if part is None:
         from fastapi import HTTPException
 
-        raise HTTPException(status_code=404, detail="Human-graded part not found")
+        raise HTTPException(status_code=404, detail="AI-enabled human-graded part not found")
     grading_service.require_or_claim(db, actor, attempt)
     return ai_evaluation_service.request_suggestion(db, actor, attempt, part)
 

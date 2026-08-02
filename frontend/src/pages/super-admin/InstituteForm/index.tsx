@@ -501,8 +501,8 @@ export function InstituteForm() {
                 </button>
 
                 {!isLast && (
-                  <div style={{ display: "flex", alignItems: "center", margin: "0 6px", color: isCompleted ? "var(--primary, #e11d2e)" : "#cbd5e1" }}>
-                    <div style={{ width: 14, height: 2, background: isCompleted ? "var(--primary, #e11d2e)" : "#e2e8f0", borderRadius: 1 }} />
+                  <div style={{ display: "flex", alignItems: "center", margin: "0 6px", color: isCompleted ? "var(--primary, #e11d2e)" : "var(--border)" }}>
+                    <div style={{ width: 14, height: 2, background: isCompleted ? "var(--primary, #e11d2e)" : "var(--border)", borderRadius: 1 }} />
                     <Icon name="arrowRight" />
                   </div>
                 )}
@@ -552,7 +552,7 @@ export function InstituteForm() {
                   <h2 className="form-section-title">Admin Account Credentials</h2>
                   <p className="form-section-subtitle">Super-admin account for managing this institute.</p>
                 </div>
-                <div style={{ padding: 20, borderRadius: 12, background: "var(--surface-muted, #f8fafc)", border: "1px solid var(--border, #e2e8f0)", maxWidth: 600 }}>
+                <div style={{ padding: 20, borderRadius: 12, background: "var(--surface-muted, #f8fafc)", border: "1px solid var(--border, var(--border))", maxWidth: 600 }}>
                   <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted, #64748b)" }}>
                     Admin credentials created during onboarding. To manage or reset user accounts for this institute, visit the <strong>Accounts</strong> sub-page.
                   </p>
@@ -749,7 +749,7 @@ export function InstituteForm() {
         {error && <p className="error-text" style={{ marginTop: 24 }}>{error}</p>}
 
         {/* Form Actions with Next / Previous step controls */}
-        <div className="form-actions" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginTop: 32, paddingTop: 16, borderTop: "1px solid var(--border, #e2e8f0)" }}>
+        <div className="form-actions" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginTop: 32, paddingTop: 16, borderTop: "1px solid var(--border, var(--border))" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {currentTabIndex > 0 && (
               <Button variant="secondary" leftIcon={<Icon name="arrowLeft" />} onClick={handlePrevStep}>

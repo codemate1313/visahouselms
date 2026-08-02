@@ -50,7 +50,7 @@ export function LoginSliderTab() {
                     background: "var(--surface, #ffffff)",
                     padding: 14,
                     borderRadius: 12,
-                    border: "1px solid var(--border, #e2e8f0)",
+                    border: "1px solid var(--border, var(--border))",
                     alignItems: "center",
                     boxShadow: "0 2px 8px rgba(15, 23, 42, 0.03)",
                   }}

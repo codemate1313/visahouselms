@@ -360,7 +360,7 @@ export function StudentPurchaseHistory() {
           {isPaid ? (
             <span className="invoice-badge">{invoiceNum}</span>
           ) : (
-            <span style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>—</span>
+            <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>—</span>
           )}
         </td>
         <td>
@@ -403,7 +403,7 @@ export function StudentPurchaseHistory() {
               {strings.table.viewInvoice}
             </button>
           ) : (
-            <span style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>—</span>
+            <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>—</span>
           )}
         </td>
       </tr>
@@ -495,7 +495,7 @@ export function StudentPurchaseHistory() {
       {loading ? (
         <p>{strings.loading}</p>
       ) : filteredPayments.length === 0 ? (
-        <div className="empty-state" style={{ background: "#ffffff", padding: "2.5rem", borderRadius: "12px", border: "1px solid #e2e8f0", textAlign: "center" }}>
+        <div className="empty-state" style={{ background: "var(--surface)", padding: "2.5rem", borderRadius: "12px", border: "1px solid var(--border)", textAlign: "center" }}>
           <h2>{strings.empty.title}</h2>
           <p>{strings.empty.description}</p>
           <Link to="/student/courses" className="btn-primary" style={{ marginTop: "1rem", display: "inline-block" }}>
@@ -585,7 +585,7 @@ export function StudentPurchaseHistory() {
                   <p>
                     {user?.first_name} {user?.last_name}
                   </p>
-                  <small style={{ color: "#64748b" }}>{user?.email}</small>
+                  <small style={{ color: "var(--text-muted)" }}>{user?.email}</small>
                 </div>
                 <div className="invoice-meta-block">
                   <label>{strings.invoiceModal.paymentDate}</label>
@@ -595,9 +595,9 @@ export function StudentPurchaseHistory() {
                   </span>
                 </div>
                 {selectedInvoice.gateway_reference && (
-                  <div className="invoice-meta-block" style={{ gridColumn: "1 / -1", background: "#f8fafc", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                    <label style={{ fontSize: "11px", fontWeight: 700, color: "#64748b" }}>GATEWAY TRANSACTION & ORDER ID</label>
-                    <p style={{ fontFamily: "monospace", fontSize: "12px", fontWeight: 700, color: "#0f172a", margin: "2px 0 0" }}>
+                  <div className="invoice-meta-block" style={{ gridColumn: "1 / -1", background: "var(--surface-muted)", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                    <label style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)" }}>GATEWAY TRANSACTION & ORDER ID</label>
+                    <p style={{ fontFamily: "monospace", fontSize: "12px", fontWeight: 700, color: "var(--text)", margin: "2px 0 0" }}>
                       {selectedInvoice.gateway_reference}
                     </p>
                   </div>

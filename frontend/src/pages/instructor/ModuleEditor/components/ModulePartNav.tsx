@@ -19,7 +19,7 @@ export function ModulePartNav({ parts, selectedPartId, onChoosePart }: ModulePar
             <span>
               <strong>{part.title}</strong>
               <small>
-                {part.section_type} · {part.auto_marked ? t.autoMarked : t.examinerMarked}
+                {part.section_type} · {part.auto_marked ? t.autoMarked : t.examinerMarked} · {part.ai_evaluation_enabled ? t.aiEnabled : t.manualOnly}
               </small>
             </span>
             <span>

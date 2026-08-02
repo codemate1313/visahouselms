@@ -114,7 +114,7 @@ export function PaymentGatewaysTab() {
   function renderStatusIndicator(status: "success" | "failed" | "not_configured" | "testing") {
     if (status === "testing") {
       return (
-        <span style={{ fontSize: "0.75rem", color: "#64748b", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
           Verifying...
         </span>
       );
@@ -162,15 +162,15 @@ export function PaymentGatewaysTab() {
         display: "inline-flex",
         alignItems: "center",
         gap: "6px",
-        background: "#f1f5f9",
-        color: "#64748b",
+        background: "var(--surface-muted)",
+        color: "var(--text-muted)",
         fontSize: "0.725rem",
         fontWeight: 700,
         padding: "2px 8px",
         borderRadius: "100px",
-        border: "1px solid #e2e8f0",
+        border: "1px solid var(--border)",
       }}>
-        <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#94a3b8" }} />
+        <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--text-muted)" }} />
         Not Configured
       </span>
     );
@@ -196,7 +196,7 @@ export function PaymentGatewaysTab() {
         <div
           style={{
             background: "var(--surface-bg, #ffffff)",
-            border: "1px solid var(--border-color, #e2e8f0)",
+            border: "1px solid var(--border-color, var(--border))",
             borderRadius: "14px",
             padding: "1.25rem 1.5rem",
             marginBottom: "1.5rem",
@@ -262,7 +262,7 @@ export function PaymentGatewaysTab() {
                 placeholder={t.razorpayKeySecretPlaceholder}
               />
               {form.razorpay_key_secret?.includes("*") && (
-                <small style={{ display: "block", marginTop: "0.2rem", fontSize: "0.725rem", color: "#64748b" }}>
+                <small style={{ display: "block", marginTop: "0.2rem", fontSize: "0.725rem", color: "var(--text-muted)" }}>
                   🔒 Secret key is encrypted & active. Masked as <code>********</code> for security.
                 </small>
               )}
@@ -288,7 +288,7 @@ export function PaymentGatewaysTab() {
             style={{
               marginTop: "1rem",
               background: "var(--surface-subtle, #f8fafc)",
-              border: "1px solid var(--border-color, #e2e8f0)",
+              border: "1px solid var(--border-color, var(--border))",
               borderRadius: "10px",
               padding: "0.65rem 0.875rem",
               display: "flex",
@@ -307,7 +307,7 @@ export function PaymentGatewaysTab() {
                 className="btn-secondary"
                 onClick={() => testConnection("razorpay")}
                 disabled={connectionStatus.razorpay === "testing"}
-                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface, #f1f5f9)", border: "1px solid var(--border, #cbd5e1)" }}
+                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface, #f1f5f9)", border: "1px solid var(--border, var(--border))" }}
               >
                 {connectionStatus.razorpay === "testing" ? "Testing..." : "Test Connection"}
               </button>
@@ -327,7 +327,7 @@ export function PaymentGatewaysTab() {
         <div
           style={{
             background: "var(--surface-bg, #ffffff)",
-            border: "1px solid var(--border-color, #e2e8f0)",
+            border: "1px solid var(--border-color, var(--border))",
             borderRadius: "14px",
             padding: "1.25rem 1.5rem",
             marginBottom: "1.5rem",
@@ -413,7 +413,7 @@ export function PaymentGatewaysTab() {
             style={{
               marginTop: "1rem",
               background: "var(--surface-subtle, #f8fafc)",
-              border: "1px solid var(--border-color, #e2e8f0)",
+              border: "1px solid var(--border-color, var(--border))",
               borderRadius: "10px",
               padding: "0.65rem 0.875rem",
               display: "flex",
@@ -432,7 +432,7 @@ export function PaymentGatewaysTab() {
                 className="btn-secondary"
                 onClick={() => testConnection("stripe")}
                 disabled={connectionStatus.stripe === "testing"}
-                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface, #f1f5f9)", border: "1px solid var(--border, #cbd5e1)" }}
+                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface, #f1f5f9)", border: "1px solid var(--border, var(--border))" }}
               >
                 {connectionStatus.stripe === "testing" ? "Testing..." : "Test Connection"}
               </button>

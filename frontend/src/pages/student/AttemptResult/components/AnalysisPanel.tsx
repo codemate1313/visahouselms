@@ -4,9 +4,11 @@ import { attemptResultStrings as strings } from "../AttemptResult.strings";
 interface AnalysisPanelProps {
   analysis: StudentResultAnalysis | null;
   analysisError: boolean;
+  awaitingAiGrading?: boolean;
+  manualReviewRequired?: boolean;
 }
 
-export function AnalysisPanel({ analysis, analysisError }: AnalysisPanelProps) {
+export function AnalysisPanel({ analysis, analysisError, awaitingAiGrading, manualReviewRequired }: AnalysisPanelProps) {
   const t = strings.analysis;
   const analysisSourceLabel = analysis?.generated_by === "configured_ai" ? t.aiEvaluated : t.cefrAnalysis;
   const analysisSourceText = analysis?.generated_by === "configured_ai" ? t.aiSourceText : t.cefrSourceText;
@@ -20,6 +22,23 @@ export function AnalysisPanel({ analysis, analysisError }: AnalysisPanelProps) {
         </div>
         {analysis && <span className={`analysis-source ${analysis.generated_by === "configured_ai" ? "is-ai" : ""}`}>{analysisSourceLabel}</span>}
       </div>
+
+      {awaitingAiGrading && (
+        <div className="banner warning" style={{ display: "flex", alignItems: "center", gap: "12px", maxWidth: "none" }}>
+          <span className="color-dots-loader" style={{ width: "auto", height: "auto", gap: "4px" }}>
+            <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
+            <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
+            <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
+          </span>
+          <span>{t.aiPending}</span>
+        </div>
+      )}
+
+      {manualReviewRequired && (
+        <div className="banner warning" style={{ display: "flex", alignItems: "center", gap: "12px", maxWidth: "none" }}>
+          <span>{t.manualReview}</span>
+        </div>
+      )}
 
       {!analysis && !analysisError && <div className="analysis-loading">{t.analysing}</div>}
       {analysisError && <p className="error-text">{t.unavailable}</p>}

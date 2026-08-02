@@ -47,7 +47,7 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
   const renderRow = (row: PaymentRow) => (
     <tr key={row.id}>
       <td>
-        <strong style={{ fontSize: 13.5, color: "var(--slate-900)" }}>{row.invoice_number ?? "—"}</strong>
+        <strong style={{ fontSize: 13.5, color: "var(--text)" }}>{row.invoice_number ?? "—"}</strong>
       </td>
       <td>
         <span className="badge badge-gray" style={{ fontSize: 11 }}>
@@ -58,7 +58,7 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
         <div className="table-item-details">
           <span className="table-item-title">{row.institute_name ?? t.directStudent}</span>
           {row.plan_name && (
-            <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--slate-500)" }}>
+            <span className="table-item-subtitle" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
               {t.planPrefix} {row.plan_name}
             </span>
           )}
@@ -67,13 +67,13 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
       <td>
         {row.gateway_reference ? (
           <div style={{ wordBreak: "break-all", maxWidth: 180, fontSize: 12.5, color: "var(--slate-600)" }}>
-            <span style={{ fontSize: 10, textTransform: "uppercase", background: "var(--slate-100)", padding: "1px 5px", borderRadius: 4, marginRight: 5, color: "var(--slate-600)", fontWeight: 600 }}>
+            <span style={{ fontSize: 10, textTransform: "uppercase", background: "var(--surface-muted)", padding: "1px 5px", borderRadius: 4, marginRight: 5, color: "var(--slate-600)", fontWeight: 600 }}>
               {row.gateway || "manual"}
             </span>
             {row.gateway_reference}
           </div>
         ) : (
-          <span style={{ color: "var(--slate-400)", fontSize: 12.5 }}>—</span>
+          <span style={{ color: "var(--text-muted)", fontSize: 12.5 }}>—</span>
         )}
       </td>
       <td>

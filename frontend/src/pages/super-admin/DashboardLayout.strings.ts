@@ -33,7 +33,7 @@ export const dashboardLayoutStrings = {
     seoSettings: "SEO & Meta Settings",
     settings: "SETTINGS",
     system: "System",
-    systemDev: "Developer Settings",
+    systemDev: "Platform Settings",
     systemLogs: "Logs",
     systemTerminal: "CMD Terminal",
     myProfile: "My Profile",

@@ -42,7 +42,7 @@ export function CouponsTable({ coupons, onToggleActive, onRequestDelete }: Coupo
           {coupons.map((coupon) => (
             <tr key={coupon.id}>
               <td>
-                <strong style={{ fontSize: 14, color: "var(--slate-900)", letterSpacing: "0.02em" }}>{coupon.code}</strong>
+                <strong style={{ fontSize: 14, color: "var(--text)", letterSpacing: "0.02em" }}>{coupon.code}</strong>
               </td>
               <td>
                 <strong style={{ fontSize: 13.5, color: "var(--sa-sidebar-red)" }}>
@@ -61,7 +61,7 @@ export function CouponsTable({ coupons, onToggleActive, onRequestDelete }: Coupo
                 </span>
               </td>
               <td>
-                <span className="table-item-subtitle" style={{ fontSize: 12, color: "var(--slate-500)" }}>
+                <span className="table-item-subtitle" style={{ fontSize: 12, color: "var(--text-muted)" }}>
                   {coupon.valid_from ? new Date(coupon.valid_from).toLocaleDateString("en-GB") : "—"}
                   {" – "}
                   {coupon.valid_until ? new Date(coupon.valid_until).toLocaleDateString("en-GB") : "—"}

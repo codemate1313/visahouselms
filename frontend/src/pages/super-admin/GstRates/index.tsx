@@ -135,7 +135,7 @@ export function GstRates() {
       {error && <div className="error-banner mb-4">{error}</div>}
 
       {loading ? (
-        <p style={{ padding: 20, color: "#64748b" }}>{strings.loading}</p>
+        <p style={{ padding: 20, color: "var(--text-muted)" }}>{strings.loading}</p>
       ) : (
         <div className="table-card">
           <table className="data-table">
@@ -152,7 +152,7 @@ export function GstRates() {
             <tbody>
               {rates.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "40px 20px", color: "#64748b" }}>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-muted)" }}>
                     No GST rates configured. Click <strong>{strings.createBtn}</strong> to add one.
                   </td>
                 </tr>
@@ -160,7 +160,7 @@ export function GstRates() {
                 rates.map((rate) => (
                   <tr key={rate.id}>
                     <td>
-                      <strong style={{ color: "#0f172a", fontSize: "14px" }}>{rate.name}</strong>
+                      <strong style={{ color: "var(--text)", fontSize: "14px" }}>{rate.name}</strong>
                     </td>
                     <td>
                       <span style={{ fontSize: "15px", fontWeight: 800, color: "#e11d2e" }}>
@@ -278,7 +278,7 @@ export function GstRates() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder={strings.modal.namePlaceholder}
                   required
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #cbd5e1" }}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
                 />
               </div>
 
@@ -295,7 +295,7 @@ export function GstRates() {
                   onChange={(e) => setPercentage(e.target.value)}
                   placeholder={strings.modal.percentagePlaceholder}
                   required
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #cbd5e1" }}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
                 />
               </div>
 

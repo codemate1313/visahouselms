@@ -42,10 +42,10 @@ export function ResetPassword() {
   }
 
   return (
-    <div className="login-page-container" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "var(--slate-50)" }}>
+    <div className="login-page-container" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "var(--surface-muted)" }}>
       <div
         className="login-card-container"
-        style={{ width: "100%", maxWidth: 440, background: "var(--white)", padding: 32, borderRadius: 16, border: "1px solid var(--slate-200)", boxShadow: "0 10px 30px rgba(var(--slate-900-rgb), 0.06)" }}
+        style={{ width: "100%", maxWidth: 440, background: "var(--surface)", padding: 32, borderRadius: 16, border: "1px solid var(--border)", boxShadow: "0 10px 30px rgba(var(--slate-900-rgb), 0.06)" }}
       >
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <div
@@ -64,8 +64,8 @@ export function ResetPassword() {
           >
             {strings.eyebrow}
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--slate-900)", margin: "4px 0" }}>{strings.title}</h1>
-          <p style={{ fontSize: 13.5, color: "var(--slate-500)", margin: 0 }}>{strings.subtitle}</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--text)", margin: "4px 0" }}>{strings.title}</h1>
+          <p style={{ fontSize: 13.5, color: "var(--text-muted)", margin: 0 }}>{strings.subtitle}</p>
         </div>
 
         {success ? (
@@ -75,8 +75,8 @@ export function ResetPassword() {
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--slate-900)", marginBottom: 8 }}>{strings.success.title}</h2>
-            <p style={{ fontSize: 14, color: "var(--slate-500)", marginBottom: 24 }}>{strings.success.description}</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>{strings.success.title}</h2>
+            <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 24 }}>{strings.success.description}</p>
             <Link to="/login" className="concise-submit-btn" style={{ textDecoration: "none", display: "block", textAlign: "center" }}>
               {strings.success.signInLink}
             </Link>
@@ -106,7 +106,7 @@ export function ResetPassword() {
             </button>
 
             <div style={{ textAlign: "center", marginTop: 20 }}>
-              <Link to="/login" style={{ fontSize: 13, color: "var(--slate-500)", textDecoration: "none", fontWeight: 600 }}>
+              <Link to="/login" style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>
                 {strings.returnToSignIn}
               </Link>
             </div>

@@ -130,7 +130,7 @@ export const router = createBrowserRouter([
           { path: "blogs/new", element: <SuperAdminBlogForm /> },
           { path: "blogs/:id", element: <SuperAdminBlogForm /> },
           { path: "seo-settings", element: <SuperAdminSEOSettings /> },
-          { path: "ai-settings", element: <Navigate to="/super-admin/dev-settings?tab=ai" replace /> },
+          { path: "ai-settings", element: <Navigate to="/super-admin/platform-settings?tab=ai" replace /> },
           // Unified cross-role directory. The per-role create/edit forms below
           // remain the place accounts are actually managed.
           { path: "users", element: <Navigate to="/super-admin/users/super-admins" replace /> },
@@ -155,6 +155,7 @@ export const router = createBrowserRouter([
           { path: "sessions", element: <Sessions /> },
           { path: "change-password", element: <ChangePassword /> },
           { path: "dev-settings", element: <DeveloperSettings /> },
+          { path: "platform-settings", element: <DeveloperSettings /> },
           { path: "logs", element: <Logs /> },
           { path: "terminal", element: <Terminal /> },
           { path: "onboarding", element: <Navigate to="/super-admin/institutes" replace /> },

@@ -260,7 +260,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
         </div>
 
         {/* ── Body ── */}
-        <div style={{ padding: "14px 24px 16px", background: "#fff" }}>
+        <div style={{ padding: "14px 24px 16px", background: "var(--surface)" }}>
 
           {/* Price + Validity Row */}
           <div style={{
@@ -277,7 +277,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
               <div style={{
                 fontSize: "9.5px",
                 fontWeight: 700,
-                color: "#94a3b8",
+                color: "var(--text-muted)",
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",
                 marginBottom: "3px",
@@ -293,7 +293,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
               </div>
               <div style={{
                 fontSize: "10.5px",
-                color: "#94a3b8",
+                color: "var(--text-muted)",
                 marginTop: "3px",
                 fontWeight: 500,
               }}>
@@ -321,7 +321,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
               <div style={{
                 fontSize: "9.5px",
                 fontWeight: 700,
-                color: "#94a3b8",
+                color: "var(--text-muted)",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
               }}>Validity</div>
@@ -329,15 +329,15 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
-                background: "#fff",
+                background: "var(--surface)",
                 border: "1.5px solid #e8ecef",
                 borderRadius: "8px",
                 padding: "5px 10px",
               }}>
-                <span style={{ color: "#64748b" }}><IconCalendar /></span>
+                <span style={{ color: "var(--text-muted)" }}><IconCalendar /></span>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "16px", fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>{plan.duration_days}</div>
-                  <div style={{ fontSize: "8.5px", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>days</div>
+                  <div style={{ fontSize: "16px", fontWeight: 900, color: "var(--text)", lineHeight: 1 }}>{plan.duration_days}</div>
+                  <div style={{ fontSize: "8.5px", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>days</div>
                 </div>
               </div>
             </div>
@@ -369,7 +369,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                   </span>
                 )}
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#475569", marginBottom: "2px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", color: "var(--text-muted)", marginBottom: "2px" }}>
                 <span>Base Price:</span>
                 <span>{formatCurrencyAmount(basePrice, currencyCode)}</span>
               </div>
@@ -380,12 +380,12 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 </div>
               )}
               {gst && gst.percentage > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#475569", marginBottom: "4px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", color: "var(--text-muted)", marginBottom: "4px" }}>
                   <span>{gst.name} ({gst.percentage}%):</span>
                   <span>+{formatCurrencyAmount(gstAmount, currencyCode)}</span>
                 </div>
               )}
-              <div style={{ borderTop: "1px dashed #fca5a5", paddingTop: "4px", display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#0f172a" }}>
+              <div style={{ borderTop: "1px dashed #fca5a5", paddingTop: "4px", display: "flex", justifyContent: "space-between", fontWeight: 800, color: "var(--text)" }}>
                 <span>Total Payable:</span>
                 <span>{formatCurrencyAmount(finalTotal, currencyCode)}</span>
               </div>
@@ -409,7 +409,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
               borderBottom: plan.modules.length > 0 ? "1px solid #f0f0f0" : "none",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ color: "#64748b" }}><IconBox /></span>
+                <span style={{ color: "var(--text-muted)" }}><IconBox /></span>
                 <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#1e293b" }}>
                   What's Included
                 </span>
@@ -428,7 +428,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
 
             {/* Module list */}
             {plan.modules.length > 0 ? (
-              <div style={{ padding: "6px 10px", display: "flex", flexDirection: "column", gap: "4px", background: "#fff" }}>
+              <div style={{ padding: "6px 10px", display: "flex", flexDirection: "column", gap: "4px", background: "var(--surface)" }}>
                 {plan.modules.map((mod, idx) => {
                   const color = MODULE_TYPE_COLORS[mod.module_type] ?? "#475569";
                   const label = MODULE_TYPE_LABELS[mod.module_type] ?? mod.module_type;
@@ -438,7 +438,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                       alignItems: "center",
                       justifyContent: "space-between",
                       padding: "6px 10px",
-                      background: "#f8fafc",
+                      background: "var(--surface-muted)",
                       border: "1px solid #f1f5f9",
                       borderRadius: "8px",
                     }}>
@@ -463,14 +463,14 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                           padding: "1px 6px",
                           textTransform: "uppercase",
                         }}>{label}</span>
-                        <span style={{ fontSize: "10.5px", color: "#94a3b8", fontWeight: 600 }}>{mod.duration_minutes}m</span>
+                        <span style={{ fontSize: "10.5px", color: "var(--text-muted)", fontWeight: 600 }}>{mod.duration_minutes}m</span>
                       </div>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div style={{ padding: "8px 12px", fontSize: "11.5px", color: "#64748b", background: "#fff" }}>
+              <div style={{ padding: "8px 12px", fontSize: "11.5px", color: "var(--text-muted)", background: "var(--surface)" }}>
                 {plan.module_count} test module{plan.module_count !== 1 ? "s" : ""} included
               </div>
             )}
@@ -497,10 +497,10 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 border: "1px solid #f0f0f0",
                 borderRadius: "8px",
               }}>
-                <span style={{ color: "#475569", flexShrink: 0 }}>{b.icon}</span>
+                <span style={{ color: "var(--text-muted)", flexShrink: 0 }}>{b.icon}</span>
                 <div>
-                  <div style={{ fontSize: "10px", fontWeight: 700, color: "#334155", lineHeight: 1 }}>{b.label}</div>
-                  <div style={{ fontSize: "8.5px", color: "#94a3b8", marginTop: "2px" }}>{b.sub}</div>
+                  <div style={{ fontSize: "10px", fontWeight: 700, color: "var(--text)", lineHeight: 1 }}>{b.label}</div>
+                  <div style={{ fontSize: "8.5px", color: "var(--text-muted)", marginTop: "2px" }}>{b.sub}</div>
                 </div>
               </div>
             ))}
@@ -532,7 +532,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
                     outline: "none",
-                    color: "#0f172a",
+                    color: "var(--text)",
                     boxSizing: "border-box",
                     background: appliedCoupon ? "#f0fdf4" : "#fafafa",
                     transition: "all 0.15s",
@@ -629,16 +629,16 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
               gap: "7px",
               padding: "7px 11px",
               background: isUSD ? "#eff6ff" : "#f8fafc",
-              border: `1px solid ${isUSD ? "#bfdbfe" : "#e2e8f0"}`,
+              border: `1px solid ${isUSD ? "#bfdbfe" : "var(--border)"}`,
               borderRadius: "9px",
               marginBottom: "10px",
             }}>
-              <span style={{ color: isUSD ? "#2563eb" : "#64748b", flexShrink: 0 }}><IconInfo /></span>
-              <span style={{ fontSize: "11px", color: isUSD ? "#1e40af" : "#475569", fontWeight: 500, lineHeight: 1.3 }}>
+              <span style={{ color: isUSD ? "#2563eb" : "var(--text-muted)", flexShrink: 0 }}><IconInfo /></span>
+              <span style={{ fontSize: "11px", color: isUSD ? "#1e40af" : "var(--text-muted)", fontWeight: 500, lineHeight: 1.3 }}>
                 {isUSD ? (
                   <>Processed globally via <strong style={{ color: "#1e3a8a" }}>Stripe's</strong> secure 256-bit encrypted gateway (Visa, MC, Amex, Apple Pay).</>
                 ) : (
-                  <>Redirects to <strong style={{ color: "#0f172a" }}>Razorpay's</strong> secure payment gateway (UPI, Cards, NetBanking).</>
+                  <>Redirects to <strong style={{ color: "var(--text)" }}>Razorpay's</strong> secure payment gateway (UPI, Cards, NetBanking).</>
                 )}
               </span>
             </div>
@@ -651,17 +651,17 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 style={{
                   flex: "0 0 auto",
                   padding: "10px 18px",
-                  border: "1.5px solid #e2e8f0",
-                  background: "#fff",
+                  border: "1.5px solid var(--border)",
+                  background: "var(--surface)",
                   borderRadius: "9px",
                   fontSize: "13px",
                   fontWeight: 700,
-                  color: "#475569",
+                  color: "var(--text-muted)",
                   cursor: "pointer",
                   transition: "all 0.15s",
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#94a3b8"; e.currentTarget.style.color = "#1e293b"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
               >
                 Cancel
               </button>

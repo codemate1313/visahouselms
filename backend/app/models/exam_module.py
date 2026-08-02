@@ -92,6 +92,7 @@ class ExamModulePart(Base):
     max_marks: Mapped[Optional[Decimal]] = mapped_column(Numeric(7, 2), nullable=True)
     duration_minutes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     auto_marked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    ai_evaluation_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     answer_constraints: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     rubric: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

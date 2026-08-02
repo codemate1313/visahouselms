@@ -34,7 +34,7 @@ export const gradingDetailStrings = {
     graded: "Graded",
     draftSaved: "Draft saved",
     draftHint: "Saved as a draft. Nothing is published to the student until you submit the full test below.",
-    aiDisabledHint: "AI assistance is disabled. A Super Admin can configure the evaluator in Developer Settings.",
+    aiDisabledHint: "AI assistance is disabled. A Super Admin can configure the evaluator in Platform Settings.",
     speakingHint: "Speaking recordings require human listening and are not sent to the text evaluator.",
     noResponse: "No response submitted.",
     aiBannerTitle: "Advisory AI draft",

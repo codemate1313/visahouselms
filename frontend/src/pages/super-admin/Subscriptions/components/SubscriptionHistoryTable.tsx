@@ -59,7 +59,7 @@ export function SubscriptionHistoryTable({ history, onCancel }: SubscriptionHist
                       {strings.cancel}
                     </button>
                   ) : (
-                    <span style={{ fontSize: 12, color: "var(--slate-400)" }}>—</span>
+                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>—</span>
                   )}
                 </td>
               </tr>
