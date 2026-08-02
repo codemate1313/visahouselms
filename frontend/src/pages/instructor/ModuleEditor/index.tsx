@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
@@ -33,6 +33,7 @@ import { SavedQuestionsList } from "./components/SavedQuestionsList";
 export function ModuleEditor() {
   const { id, type: rawType } = useParams();
   const isNew = !id;
+  const location = useLocation();
   const navigate = useNavigate();
   const requestedType = rawType && MODULE_TYPES.has(rawType as ExamModuleType) ? rawType as ExamModuleType : null;
   const [module, setModule] = useState<ExamModule | null>(null);
@@ -98,6 +99,10 @@ export function ModuleEditor() {
   const selectedPart = useMemo(() => module?.parts?.find((part) => part.id === selectedPartId) ?? null, [module, selectedPartId]);
   const detectedTtsSpeakers = useMemo(() => detectConversationSpeakers(tts.conversation), [tts.conversation]);
   const isEditable = module?.status !== "archived";
+  const moduleWorkspacePath = useMemo(() => {
+    if (location.pathname.startsWith("/institute-instructor/modules")) return "/institute-instructor/modules";
+    return "/super-admin/instructor/modules";
+  }, [location.pathname]);
 
   function choosePart(part: ExamModulePart) {
     setSelectedPartId(part.id);
@@ -121,7 +126,7 @@ export function ModuleEditor() {
     setBusy(true); setError(null);
     try {
       const { data } = await apiClient.post<ExamModule>("/instructor/modules", { module_type: requestedType, title: details.title, description: details.description || null, instructions: details.instructions || null, source_module_ids: isComposite ? sourceModuleIds : [] });
-      navigate(`/instructor/modules/${data.id}`, { replace: true });
+      navigate(`${moduleWorkspacePath}/${data.id}`, { replace: true });
     } catch (err: unknown) { setError(extractErrorMessage(err, strings.newModule.errors.create)); }
     finally { setBusy(false); }
   }
@@ -314,7 +319,7 @@ export function ModuleEditor() {
   async function deleteModule() {
     if (!module || !await confirmDelete(strings.details.deleteConfirm(module.title), strings.details.deleteConfirmTitle)) return;
     setBusy(true); setError(null);
-    try { await apiClient.delete(`/instructor/modules/${module.id}`); navigate("/super-admin/instructor/modules"); }
+    try { await apiClient.delete(`/instructor/modules/${module.id}`); navigate(moduleWorkspacePath); }
     catch (err: unknown) { setError(extractErrorMessage(err, strings.details.errors.delete)); }
     finally { setBusy(false); }
   }
@@ -331,20 +336,21 @@ export function ModuleEditor() {
         loadingSources={loadingSources}
         busy={busy}
         error={error}
+        moduleWorkspacePath={moduleWorkspacePath}
         onSubmit={createModule}
       />
     );
   }
 
   if (loading) return <p>{strings.loading}</p>;
-  if (!module) return <div><p className="error-text">{error || strings.notFound}</p><Link to="/super-admin/instructor/modules">{strings.backToModules}</Link></div>;
+  if (!module) return <div><p className="error-text">{error || strings.notFound}</p><Link to={moduleWorkspacePath}>{strings.backToModules}</Link></div>;
 
   return (
     <div className="module-editor-page">
       {/* Sleek Breadcrumb Navigation Bar */}
       <div className="module-editor-breadcrumb-bar">
         <div className="module-editor-breadcrumb-left">
-          <Link to="/super-admin/instructor/modules" className="button secondary module-back-btn">
+          <Link to={moduleWorkspacePath} className="button secondary module-back-btn">
             <Icon name="arrowLeft" />
             All Modules
           </Link>

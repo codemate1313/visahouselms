@@ -16,6 +16,7 @@ interface NewModuleFormProps {
   loadingSources: boolean;
   busy: boolean;
   error: string | null;
+  moduleWorkspacePath: string;
   onSubmit: (event: FormEvent) => void;
 }
 
@@ -29,6 +30,7 @@ export function NewModuleForm({
   loadingSources,
   busy,
   error,
+  moduleWorkspacePath,
   onSubmit,
 }: NewModuleFormProps) {
   const t = strings.newModule;
@@ -38,7 +40,7 @@ export function NewModuleForm({
     return (
       <div className="empty-state">
         <h1>{strings.unknownType.title}</h1>
-        <Link to="/super-admin/instructor/modules">{strings.unknownType.backLink}</Link>
+        <Link to={moduleWorkspacePath}>{strings.unknownType.backLink}</Link>
       </div>
     );
   }
@@ -51,7 +53,7 @@ export function NewModuleForm({
     <div>
       <div className="module-editor-breadcrumb-bar">
         <div className="module-editor-breadcrumb-left">
-          <Link to="/super-admin/instructor/modules" className="button secondary module-back-btn">
+          <Link to={moduleWorkspacePath} className="button secondary module-back-btn">
             <Icon name="arrowLeft" />
             All Modules
           </Link>
@@ -119,7 +121,7 @@ export function NewModuleForm({
                     {!loadingSources && !choices.length && (
                       <small>
                         {t.noCompleted(sectionLabel)}{" "}
-                        <Link to={`/super-admin/instructor/modules/new/${section}`}>{t.createOneFirst}</Link>.
+                        <Link to={`${moduleWorkspacePath}/new/${section}`}>{t.createOneFirst}</Link>.
                       </small>
                     )}
                   </div>
