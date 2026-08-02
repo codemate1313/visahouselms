@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { apiClient } from "@/api/client";
-import { PageHeader, SearchableSelect, SearchInput } from "@/components/ui";
+import { IconButton, PageHeader, SearchableSelect, SearchInput } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { useAuthStore } from "@/store/authStore";
 import { formatCurrencyAmount } from "@/utils/currency";
@@ -553,14 +553,14 @@ export function StudentPurchaseHistory() {
           <div className="student-invoice-modal" onClick={(e) => e.stopPropagation()}>
             <div className="student-invoice-header">
               <h3>{strings.invoiceModal.title}</h3>
-              <button
-                type="button"
-                className="student-invoice-close-btn"
+              <IconButton
+                icon={<Icon name="x" />}
+                label="Close"
                 onClick={() => setSelectedInvoice(null)}
-                title="Close"
-              >
-                &times;
-              </button>
+                showTooltip={false}
+                size="sm"
+                variant="plain"
+              />
             </div>
 
             <div className="student-invoice-body">
@@ -630,19 +630,11 @@ export function StudentPurchaseHistory() {
               </table>
 
               {selectedInvoice.subscription && (
-                <div
-                  style={{
-                    background: "#f0fdf4",
-                    border: "1px solid #bbf7d0",
-                    padding: "0.875rem 1rem",
-                    borderRadius: "8px",
-                    marginBottom: "1.25rem",
-                  }}
-                >
-                  <strong style={{ color: "#166534", display: "block", fontSize: "0.8125rem" }}>
+                <div className="ui-token-panel-success">
+                  <strong>
                     {strings.invoiceModal.subscriptionValidity}
                   </strong>
-                  <span style={{ fontSize: "0.875rem", color: "#15803d" }}>
+                  <span>
                     {strings.invoiceModal.from}: <strong>{formatDate(selectedInvoice.subscription.starts_at)}</strong>
                     &nbsp;|&nbsp;
                     {strings.invoiceModal.to}: <strong>{formatDate(selectedInvoice.subscription.expires_at)}</strong>
@@ -661,7 +653,7 @@ export function StudentPurchaseHistory() {
                   </span>
                 </div>
                 {parseFloat(selectedInvoice.discount_amount || "0") > 0 && (
-                  <div className="invoice-summary-row" style={{ color: "#16a34a" }}>
+                  <div className="invoice-summary-row ui-text-success">
                     <span>{strings.invoiceModal.discount}</span>
                     <span>
                       -

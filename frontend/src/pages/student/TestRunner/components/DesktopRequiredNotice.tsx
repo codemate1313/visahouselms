@@ -51,8 +51,7 @@ export function DesktopRequiredNotice({ onBackToDashboard }: DesktopRequiredNoti
         <h2 style={{
           fontSize: "24px",
           fontWeight: "800",
-          marginBottom: "12px",
-          letterSpacing: "-0.5px"
+          marginBottom: "12px"
         }}>{t.heading}</h2>
 
         <p style={{

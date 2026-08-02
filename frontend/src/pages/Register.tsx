@@ -223,7 +223,7 @@ export function Register() {
       {otpChallengeId && (
         <div className="logout-modal-backdrop otp-login-backdrop" role="presentation">
           <form className="logout-modal-card otp-login-card" onSubmit={handleOtpSubmit}>
-            <div className="logout-modal-icon-badge otp-login-icon" aria-hidden="true">✉️</div>
+            <div className="logout-modal-icon-badge otp-login-icon ui-otp-badge" aria-hidden="true">OTP</div>
             <h2 className="logout-modal-title">{strings.otpTitle}</h2>
             <p className="logout-modal-description">
               {strings.otpDescription}

@@ -97,7 +97,7 @@ export function ForgotPasswordModal({ email, onEmailChange, sent, loading, error
                   <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
               </div>
-              <h2 style={{ margin: '0 0 12px', fontSize: 24, fontWeight: 800, color: "var(--text)", letterSpacing: '-0.02em' }}>Email Sent</h2>
+              <h2 style={{ margin: '0 0 12px', fontSize: 24, fontWeight: 800, color: "var(--text)" }}>Email Sent</h2>
               <p style={{ margin: '0 0 32px', fontSize: 15, color: "var(--text-muted)", lineHeight: 1.6 }}>
                 {t.sentMessage}
               </p>
@@ -137,7 +137,7 @@ export function ForgotPasswordModal({ email, onEmailChange, sent, loading, error
                 </svg>
               </div>
               
-              <h2 style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 800, color: "var(--text)", letterSpacing: '-0.02em' }}>{t.title}</h2>
+              <h2 style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 800, color: "var(--text)" }}>{t.title}</h2>
               <p style={{ margin: '0 0 32px', fontSize: 15, color: "var(--text-muted)", lineHeight: 1.6 }}>{t.description}</p>
               
               <form onSubmit={onSubmit}>

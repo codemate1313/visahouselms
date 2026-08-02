@@ -178,6 +178,42 @@
   font-weight: 800;
 }
 
+.ui-text-success {
+  color: var(--success);
+}
+
+.ui-text-danger {
+  color: var(--danger);
+}
+
+.ui-text-info {
+  color: var(--info, #2563eb);
+}
+
+.ui-text-strong {
+  font-weight: 700;
+}
+
+.ui-token-panel-success {
+  margin-bottom: 1.25rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--success) 28%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  color: var(--success);
+}
+
+.ui-token-panel-success strong {
+  display: block;
+  color: inherit;
+  font-size: 0.8125rem;
+}
+
+.ui-token-panel-success span {
+  color: inherit;
+  font-size: 0.875rem;
+}
+
 .ui-chip {
   display: inline-flex;
   align-items: center;
@@ -229,6 +265,84 @@
   justify-content: flex-end;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.ui-otp-badge {
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+}
+
+.ui-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.ui-secret-status {
+  color: var(--success);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.ui-secret-hint {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--text-muted);
+  font-size: 0.725rem;
+}
+
+.ui-code-info {
+  color: var(--info, #2563eb);
+}
+
+.ui-inline-notice {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.ui-inline-notice-info {
+  border-color: color-mix(in srgb, var(--info, #2563eb) 28%, transparent);
+  background: color-mix(in srgb, var(--info, #2563eb) 10%, transparent);
+  color: var(--info, #2563eb);
+}
+
+.ui-coupon-message {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ui-coupon-message-success {
+  border: 1px solid color-mix(in srgb, var(--success) 28%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  color: var(--success);
+}
+
+.ui-coupon-message-error {
+  justify-content: flex-start;
+  margin-top: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--danger);
+  font-weight: 650;
 }
 
 [data-theme="dark"] :where(.modal-card, .logout-modal-card, .student-invoice-modal, .sab-modal, .sat-modal, .plan-dialog-card, .custom-dialog-card),

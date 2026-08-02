@@ -114,63 +114,30 @@ export function PaymentGatewaysTab() {
   function renderStatusIndicator(status: "success" | "failed" | "not_configured" | "testing") {
     if (status === "testing") {
       return (
-        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+        <span className="ui-chip">
           Verifying...
         </span>
       );
     }
     if (status === "success") {
       return (
-        <span style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          background: "#dcfce7",
-          color: "#15803d",
-          fontSize: "0.725rem",
-          fontWeight: 700,
-          padding: "2px 8px",
-          borderRadius: "100px",
-          border: "1px solid #bbf7d0",
-        }}>
-          <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 8px #22c55e" }} />
+        <span className="ui-chip ui-chip-success">
+          <span className="ui-status-dot" />
           Connected
         </span>
       );
     }
     if (status === "failed") {
       return (
-        <span style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          background: "#fee2e2",
-          color: "#b91c1c",
-          fontSize: "0.725rem",
-          fontWeight: 700,
-          padding: "2px 8px",
-          borderRadius: "100px",
-          border: "1px solid #fecaca",
-        }}>
-          <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#ef4444", boxShadow: "0 0 8px #ef4444" }} />
+        <span className="ui-chip ui-chip-danger">
+          <span className="ui-status-dot" />
           Connection Failed
         </span>
       );
     }
     return (
-      <span style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        background: "var(--surface-muted)",
-        color: "var(--text-muted)",
-        fontSize: "0.725rem",
-        fontWeight: 700,
-        padding: "2px 8px",
-        borderRadius: "100px",
-        border: "1px solid var(--border)",
-      }}>
-        <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--text-muted)" }} />
+      <span className="ui-chip">
+        <span className="ui-status-dot" />
         Not Configured
       </span>
     );
@@ -253,7 +220,7 @@ export function PaymentGatewaysTab() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.2rem" }}>
                 <label style={{ fontWeight: 700, fontSize: "0.8125rem", margin: 0 }}>{t.razorpayKeySecretLabel}</label>
                 {form.razorpay_key_secret?.includes("*") && (
-                  <span style={{ fontSize: "0.7rem", color: "#16a34a", fontWeight: 700 }}>✓ Encrypted & Active</span>
+                  <span className="ui-secret-status">Encrypted & Active</span>
                 )}
               </div>
               <PasswordInput
@@ -262,9 +229,7 @@ export function PaymentGatewaysTab() {
                 placeholder={t.razorpayKeySecretPlaceholder}
               />
               {form.razorpay_key_secret?.includes("*") && (
-                <small style={{ display: "block", marginTop: "0.2rem", fontSize: "0.725rem", color: "var(--text-muted)" }}>
-                  🔒 Secret key is encrypted & active. Masked as <code>********</code> for security.
-                </small>
+                <small className="ui-secret-hint">Secret key is encrypted & active. Masked as <code>********</code> for security.</small>
               )}
             </div>
           </div>
@@ -274,7 +239,7 @@ export function PaymentGatewaysTab() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.2rem" }}>
               <label style={{ fontWeight: 700, fontSize: "0.8125rem", margin: 0 }}>{t.razorpayWebhookSecretLabel}</label>
               {form.razorpay_webhook_secret?.includes("*") && (
-                <span style={{ fontSize: "0.7rem", color: "#16a34a", fontWeight: 700 }}>✓ Encrypted & Active</span>
+                <span className="ui-secret-status">Encrypted & Active</span>
               )}
             </div>
             <PasswordInput
@@ -299,7 +264,7 @@ export function PaymentGatewaysTab() {
             }}
           >
             <span>
-              <strong>Webhook Callback URL:</strong> <code style={{ color: "#0284c7" }}>{razorpayWebhookUrl}</code>
+              <strong>Webhook Callback URL:</strong> <code className="ui-code-info">{razorpayWebhookUrl}</code>
             </span>
             <div style={{ display: "flex", gap: "8px" }}>
               <button
@@ -384,7 +349,7 @@ export function PaymentGatewaysTab() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.2rem" }}>
                 <label style={{ fontWeight: 700, fontSize: "0.8125rem", margin: 0 }}>{t.stripeSecretKeyLabel}</label>
                 {form.stripe_secret_key?.includes("*") && (
-                  <span style={{ fontSize: "0.7rem", color: "#16a34a", fontWeight: 700 }}>✓ Encrypted & Active</span>
+                  <span className="ui-secret-status">Encrypted & Active</span>
                 )}
               </div>
               <PasswordInput
@@ -399,7 +364,7 @@ export function PaymentGatewaysTab() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.2rem" }}>
               <label style={{ fontWeight: 700, fontSize: "0.8125rem", margin: 0 }}>{t.stripeWebhookSecretLabel}</label>
               {form.stripe_webhook_secret?.includes("*") && (
-                <span style={{ fontSize: "0.7rem", color: "#16a34a", fontWeight: 700 }}>✓ Encrypted & Active</span>
+                <span className="ui-secret-status">Encrypted & Active</span>
               )}
             </div>
             <PasswordInput
@@ -424,7 +389,7 @@ export function PaymentGatewaysTab() {
             }}
           >
             <span>
-              <strong>Webhook Callback URL:</strong> <code style={{ color: "#9333ea" }}>{stripeWebhookUrl}</code>
+              <strong>Webhook Callback URL:</strong> <code className="ui-code-info">{stripeWebhookUrl}</code>
             </span>
             <div style={{ display: "flex", gap: "8px" }}>
               <button

@@ -218,7 +218,6 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 fontWeight: 800,
                 margin: 0,
                 color: "#fff",
-                letterSpacing: "-0.02em",
                 lineHeight: 1.1,
                 whiteSpace: "nowrap",
                 overflow: "hidden",
@@ -286,7 +285,6 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 fontSize: "24px",
                 fontWeight: 900,
                 color: "#c8202e",
-                letterSpacing: "-0.03em",
                 lineHeight: 1,
               }}>
                 {formatCurrencyAmount(finalTotal, currencyCode)}
@@ -298,7 +296,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 fontWeight: 500,
               }}>
                 {appliedCoupon && appliedCoupon.discountAmount > 0 ? (
-                  <span style={{ color: "#16a34a", fontWeight: 700 }}>
+                  <span className="ui-text-success ui-text-strong">
                     Discount of {formatCurrencyAmount(appliedCoupon.discountAmount, currencyCode)} applied!
                   </span>
                 ) : gst && gst.percentage > 0 ? (
@@ -346,22 +344,22 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
           {/* GST Tax Breakdown Detail Card */}
           {(gst && gst.percentage > 0 || (appliedCoupon && appliedCoupon.discountAmount > 0)) && (
             <div style={{
-              background: "#fdf2f2",
-              border: "1px solid #fecaca",
+              background: "color-mix(in srgb, var(--danger) 8%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--danger) 24%, transparent)",
               borderRadius: "10px",
               padding: "8px 12px",
               marginBottom: "8px",
               fontSize: "11.5px",
             }}>
-              <div style={{ fontWeight: 800, color: "#991b1b", marginBottom: "4px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontWeight: 800, color: "var(--danger)", marginBottom: "4px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span>Price & Tax Breakdown</span>
                 {gst && gst.percentage > 0 && (
                   <span style={{
                     fontSize: "9.5px",
                     padding: "1px 6px",
                     borderRadius: "8px",
-                    background: gst.tax_type === "inclusive" ? "#dbeafe" : "#fee2e2",
-                    color: gst.tax_type === "inclusive" ? "#1e40af" : "#991b1b",
+                    background: gst.tax_type === "inclusive" ? "color-mix(in srgb, var(--info, #2563eb) 12%, transparent)" : "color-mix(in srgb, var(--danger) 12%, transparent)",
+                    color: gst.tax_type === "inclusive" ? "var(--info, #2563eb)" : "var(--danger)",
                     fontWeight: 700,
                     textTransform: "uppercase",
                   }}>
@@ -374,7 +372,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 <span>{formatCurrencyAmount(basePrice, currencyCode)}</span>
               </div>
               {appliedCoupon && appliedCoupon.discountAmount > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#16a34a", fontWeight: 700, marginBottom: "2px" }}>
+                <div className="ui-text-success" style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, marginBottom: "2px" }}>
                   <span>Coupon Discount ({appliedCoupon.code}):</span>
                   <span>-{formatCurrencyAmount(appliedCoupon.discountAmount, currencyCode)}</span>
                 </div>
@@ -587,56 +585,30 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
 
               {/* Success Badge */}
               {appliedCoupon && (
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginTop: "6px",
-                  padding: "6px 10px",
-                  background: "#ecfdf5",
-                  border: "1px solid #a7f3d0",
-                  borderRadius: "7px",
-                  color: "#065f46",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                }}>
+                <div className="ui-coupon-message ui-coupon-message-success">
                   <span>
-                    ✓ Coupon <strong>{appliedCoupon.code}</strong> Applied! You saved {formatCurrencyAmount(appliedCoupon.discountAmount, currencyCode)}
+                    Coupon <strong>{appliedCoupon.code}</strong> applied. You saved {formatCurrencyAmount(appliedCoupon.discountAmount, currencyCode)}
                   </span>
                 </div>
               )}
 
               {/* Error Message */}
               {couponError && (
-                <div style={{
-                  marginTop: "5px",
-                  fontSize: "11px",
-                  color: "#dc2626",
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}>
-                  <span>⚠️</span> {couponError}
+                <div className="ui-coupon-message ui-coupon-message-error">
+                  {couponError}
                 </div>
               )}
             </div>
 
             {/* Gateway Notice */}
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "7px",
-              padding: "7px 11px",
-              background: isUSD ? "#eff6ff" : "#f8fafc",
-              border: `1px solid ${isUSD ? "#bfdbfe" : "var(--border)"}`,
-              borderRadius: "9px",
-              marginBottom: "10px",
-            }}>
-              <span style={{ color: isUSD ? "#2563eb" : "var(--text-muted)", flexShrink: 0 }}><IconInfo /></span>
-              <span style={{ fontSize: "11px", color: isUSD ? "#1e40af" : "var(--text-muted)", fontWeight: 500, lineHeight: 1.3 }}>
+            <div
+              className={`ui-inline-notice ${isUSD ? "ui-inline-notice-info" : ""}`}
+              style={{ padding: "7px 11px", marginBottom: "10px" }}
+            >
+              <span style={{ flexShrink: 0 }}><IconInfo /></span>
+              <span>
                 {isUSD ? (
-                  <>Processed globally via <strong style={{ color: "#1e3a8a" }}>Stripe's</strong> secure 256-bit encrypted gateway (Visa, MC, Amex, Apple Pay).</>
+                  <>Processed globally via <strong>Stripe's</strong> secure 256-bit encrypted gateway (Visa, MC, Amex, Apple Pay).</>
                 ) : (
                   <>Redirects to <strong style={{ color: "var(--text)" }}>Razorpay's</strong> secure payment gateway (UPI, Cards, NetBanking).</>
                 )}

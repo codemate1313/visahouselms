@@ -408,12 +408,12 @@ export function Invoice() {
                 {Number(payment.discount_amount) > 0 && (
                   <tr>
                     <td>
-                      <div className="invoice-item-name" style={{ color: "#059669" }}>
+                      <div className="invoice-item-name ui-text-success">
                         <span>{strings.table.discount} {payment.coupon_code && `(${payment.coupon_code})`}</span>
-                        <span className="invoice-item-tag" style={{ background: "#ecfdf5", color: "#047857" }}>COUPON</span>
+                        <span className="invoice-item-tag ui-chip ui-chip-success">COUPON</span>
                       </div>
                     </td>
-                    <td style={{ color: "#059669", fontWeight: 600 }}>
+                    <td className="ui-text-success ui-text-strong">
                       - {formatCurrencyAmount(payment.discount_amount, payment.currency)}
                     </td>
                   </tr>
