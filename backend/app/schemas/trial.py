@@ -10,6 +10,10 @@ class TrialConfigUpdate(BaseModel):
     is_enabled: Optional[bool] = None
 
 
+class DemoModuleSelection(BaseModel):
+    module_ids: list[int] = Field(default_factory=list)
+
+
 class DemoAccountCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     admin_email: EmailStr

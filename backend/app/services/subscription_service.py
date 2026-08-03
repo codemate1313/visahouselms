@@ -661,6 +661,11 @@ def my_current_plan_view(db: Session, user: User) -> dict:
     ai_quota = ai_evaluation_service.get_student_ai_quota_summary(db, user)
 
     if subscription is None or state not in (STATE_ACTIVE, STATE_GRACE):
+        from app.services import trial_service
+
+        # Trial Settings decide which modules are free and for how long.
+        demo = trial_service.demo_state(db, user)
+        demo_ids = set(demo["module_ids"]) if demo["state"] == "active" else set()
         return {
             "plan": {
                 "id": 0,
@@ -673,10 +678,9 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                         "title": module.title,
                         "module_type": module.module_type,
                         "duration_minutes": module.duration_minutes,
-                        # Demo modules are free sample tests - the only thing a
-                        # student without a subscription can sit.
-                        "is_locked": not module.is_demo,
-                        "is_demo": module.is_demo,
+                        # Free only while the trial allows it.
+                        "is_locked": module.id not in demo_ids,
+                        "is_demo": module.id in demo_ids,
                     }
                     for module in all_published_modules
                 ],
@@ -685,6 +689,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
             "expires_at": None,
             "access_type": "institute" if user.institute_id is not None else "direct",
             "ai_evaluations": ai_quota,
+            "demo": demo,
         }
 
     plan = subscription.plan

@@ -46,8 +46,12 @@ def has_module_access(db: Session, user: User, module_id: int) -> bool:
     while they have no active subscription, so they can try the engine and get
     a score before buying. Once subscribed, normal plan entitlement applies."""
     if not has_active_subscription(db, user):
-        module = db.get(ExamModule, module_id)
-        if module is not None and module.is_demo:
+        from app.services import trial_service
+
+        # Trial Settings govern the demo: the module must be inside the visible
+        # course cap and the trial must still be active (duration and test
+        # limits not yet spent).
+        if trial_service.can_start_demo_module(db, user, module_id):
             return True
     if user.institute_id is not None:
         subscription, state = current_subscription(db, user.institute_id)

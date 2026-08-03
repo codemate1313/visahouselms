@@ -7,7 +7,7 @@ from app.database import get_db
 from app.dependencies.auth import get_current_user, require_role
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
-from app.schemas.trial import TrialConfigUpdate
+from app.schemas.trial import DemoModuleSelection, TrialConfigUpdate
 from app.services import trial_service
 
 router = APIRouter(
@@ -42,3 +42,19 @@ def update_trial_config(
         payload.is_enabled,
         _client_ip(request),
     )
+
+
+@router.get("/demo-modules")
+def list_demo_modules(db: Session = Depends(get_db)):
+    """Published modules that can be offered as free demos, and which are."""
+    return trial_service.list_demo_module_options(db)
+
+
+@router.put("/demo-modules")
+def set_demo_modules(
+    payload: DemoModuleSelection,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return trial_service.set_demo_modules(db, actor, payload.module_ids, _client_ip(request))

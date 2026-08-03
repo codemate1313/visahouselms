@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Checkbox, RequiredMark } from "@/components/ui";
 import { trialConfigStrings as strings } from "./TrialConfig.strings";
+import { DemoCoursePicker } from "./components/DemoCoursePicker";
 
 export function TrialConfig() {
   const [durationDays, setDurationDays] = useState("14");
@@ -83,6 +84,8 @@ export function TrialConfig() {
           <button type="submit" disabled={saving}>{saving ? strings.saving : strings.save}</button>
         </div>
       </form>
+
+      <DemoCoursePicker courseLimit={Number(courseLimit) || 0} />
     </div>
   );
 }
