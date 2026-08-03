@@ -117,7 +117,8 @@ export function GradingDetail() {
   const [partComments, setPartComments] = useState<Record<number, string>>({});
   // One part visible at a time; the panel's Prev/Next drive the index.
   const [activeIndex, setActiveIndex] = useState(0);
-  const [rubricOpen, setRubricOpen] = useState(true);
+  // Schema section closed by default; the instructor opens it to score.
+  const [rubricOpen, setRubricOpen] = useState(false);
   const [savingPartId, setSavingPartId] = useState<number | null>(null);
 
   // Seed the local scoring state from whatever the server already has whenever
@@ -314,9 +315,9 @@ export function GradingDetail() {
         const saveDisabled = activeIsPublished ? !allScored : !hasProgress;
         const saveLabel = activeIsPublished ? strings.part.confirmEvaluation : strings.part.saveDraft;
         return (
-          <>
-            {/* Only the active part renders - the instructor grades one part
-                at a time, with Prev/Next in the panel on the right. */}
+          <div className="grading-workspace">
+            {/* Only the active part renders on the left; the rubric panel is
+                docked as the right column. */}
             <div className="grading-parts-column is-single">
               <PartGradingCard
                 key={active.id}
@@ -347,7 +348,7 @@ export function GradingDetail() {
               onPrev={() => setActiveIndex(Math.max(0, boundedIndex - 1))}
               onNext={() => setActiveIndex(Math.min(total - 1, boundedIndex + 1))}
             />
-          </>
+          </div>
         );
       })()}
       {/* Submit lives at the bottom: publishing is the last thing an instructor

@@ -615,13 +615,21 @@ html {
 /* Floating page-level rubric panel. Detached from part cards so the CEFR
    criteria are always visible on the right and switch content automatically
    as the instructor scrolls between parts. */
-.grading-parts-column {
-  /* Reserve space for the floating panel on the right so cards do not slide
-     under it. Only above the width at which we would tuck the panel away. */
-  padding-right: 0;
+/* Grading page is a two-column workspace: active part on the left, the
+   rubric panel docked as the right column so it never floats over content. */
+.grading-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
 }
 
-/* One-part-at-a-time view: centre the card in the space left of the panel. */
+@media (min-width: 1120px) {
+  .grading-workspace {
+    grid-template-columns: minmax(0, 1fr) 400px;
+  }
+}
+
 .grading-parts-column.is-single {
   display: flex;
   justify-content: center;
@@ -632,48 +640,18 @@ html {
   max-width: 780px;
 }
 
-@media (min-width: 1120px) {
-  .grading-parts-column {
-    padding-right: 400px;
-  }
-}
-
+/* Docked rubric column: sticky within its cell so it follows scrolling but
+   never covers the response. */
 .rubric-floater {
-  position: fixed;
-  top: 96px;
-  right: 24px;
-  z-index: 40;
   display: flex;
   flex-direction: column;
-  width: 380px;
-  max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 120px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
-  box-shadow: 0 22px 50px rgba(15, 23, 42, 0.18);
   overflow: hidden;
-}
-
-.rubric-floater.is-collapsed {
-  padding: 10px 16px;
-  width: auto;
-  gap: 4px;
-  text-align: left;
-  cursor: pointer;
-  color: var(--primary);
-}
-
-.rubric-floater.is-collapsed strong {
-  display: block;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.rubric-floater.is-collapsed span {
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 600;
+  position: sticky;
+  top: 96px;
+  max-height: calc(100vh - 120px);
 }
 
 .rubric-floater-head {
@@ -820,4 +798,30 @@ html {
   display: grid;
   grid-template-columns: 90px minmax(0, 1fr);
   gap: 8px;
+}
+
+/* Rubric panel in its collapsed state (schema hidden): the panel is still
+   docked with header and footer, but the criteria body is replaced by a
+   subtle 'Show grading criteria' button. */
+.rubric-floater.is-collapsed .rubric-floater-head {
+  border-bottom: 0;
+}
+
+.rubric-floater-expand {
+  margin: 8px 16px 4px;
+  padding: 10px 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+
+.rubric-floater-expand:hover {
+  border-color: var(--primary);
+  border-style: solid;
+  color: var(--primary);
 }

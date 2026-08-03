@@ -59,22 +59,11 @@ export function FloatingRubricPanel({
   const t = strings.part;
   if (!part) return null;
 
-  if (!isOpen) {
-    return (
-      <button
-        type="button"
-        className="rubric-floater is-collapsed"
-        onClick={() => onToggleOpen(true)}
-        aria-label={t.rubricSticky.show}
-      >
-        <strong>{t.rubricSticky.show}</strong>
-        <span>{part.title}</span>
-      </button>
-    );
-  }
-
+  // Panel itself is always visible (docked in the right column). isOpen only
+  // controls the grading schema body, so the instructor can open it when they
+  // want to score and close it when they just want header + Save + nav.
   return (
-    <aside className="rubric-floater" aria-label={t.rubricSticky.title}>
+    <aside className={`rubric-floater${isOpen ? "" : " is-collapsed"}`} aria-label={t.rubricSticky.title}>
       <div className="rubric-floater-head">
         <div>
           <span className="page-eyebrow">{part.title} · {positionLabel}</span>
@@ -84,13 +73,15 @@ export function FloatingRubricPanel({
         <button
           type="button"
           className="rubric-floater-close"
-          onClick={() => onToggleOpen(false)}
-          aria-label={t.rubricSticky.close}
+          onClick={() => onToggleOpen(!isOpen)}
+          aria-expanded={isOpen}
+          aria-label={isOpen ? t.rubricSticky.close : t.rubricSticky.show}
         >
-          ×
+          {isOpen ? "×" : "▾"}
         </button>
       </div>
 
+      {isOpen && (
       <div className="rubric-floater-body">
         <div className="cefr-anchor-scale" aria-label={t.cefrAnchorAriaLabel}>
           {part.cefr_scale.map((anchor) => (
@@ -144,6 +135,17 @@ export function FloatingRubricPanel({
           ))}
         </div>
       </div>
+      )}
+
+      {!isOpen && (
+        <button
+          type="button"
+          className="rubric-floater-expand"
+          onClick={() => onToggleOpen(true)}
+        >
+          {t.rubricSticky.show}
+        </button>
+      )}
 
       <div className="rubric-floater-foot">
         {canEdit && (
