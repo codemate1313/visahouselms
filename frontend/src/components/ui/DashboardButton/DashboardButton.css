@@ -1,5 +1,8 @@
 .dashboard-btn {
-  --dashboard-button-accent: var(--sidebar-active-text, var(--primary));
+  /* The brand colour. Deliberately not --sidebar-active-text: that token is
+     the colour of text drawn on the sidebar's active pill (#ffffff in dark
+     mode), which made primary buttons white-on-white. */
+  --dashboard-button-accent: var(--primary);
   --primary: var(--dashboard-button-accent);
   --primary-hover: color-mix(in srgb, var(--dashboard-button-accent) 86%, #000000);
   --primary-soft: color-mix(in srgb, var(--dashboard-button-accent) 20%, transparent);

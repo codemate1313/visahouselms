@@ -4796,7 +4796,6 @@
 [data-theme="dark"] .collapsible-panel,
 [data-theme="dark"] .test-runner-progress-summary,
 [data-theme="dark"] .test-security-card,
-[data-theme="dark"] .result-metric-list>div,
 [data-theme="dark"] .student-analysis-summary {
   background: rgba(24, 27, 34, 0.96) !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
@@ -5248,11 +5247,18 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 [data-theme="dark"] .test-runner-source-placeholder,
 [data-theme="dark"] .test-security-check,
 [data-theme="dark"] .result-overview-panel,
-[data-theme="dark"] .student-analysis-panel,
-[data-theme="dark"] .result-metric-list>div {
+[data-theme="dark"] .student-analysis-panel {
   background: rgba(24, 27, 34, 0.96) !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28) !important;
+  color: #f7f7fa !important;
+}
+
+/* Rows inside the overview card: no card background or drop shadow of their
+   own, or the middle column reads as a floating card. */
+[data-theme="dark"] .result-metric-list>div {
+  background: transparent !important;
+  box-shadow: none !important;
   color: #f7f7fa !important;
 }
 
@@ -5395,16 +5401,18 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
   color: #6ee7b7 !important;
 }
 
+/* Follows the portal's brand colour like every other primary action; it used
+   to be a hardcoded purple gradient. */
 [data-theme="dark"] .result-overview-meta .ui-link-btn {
-  background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%) !important;
-  border-color: #7c3aed !important;
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
   color: #ffffff !important;
   box-shadow: none !important;
 }
 
 [data-theme="dark"] .result-overview-meta .ui-link-btn:hover {
-  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%) !important;
-  border-color: #8b5cf6 !important;
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
 }
 
 [data-theme="dark"] .student-analysis-panel .banner {
