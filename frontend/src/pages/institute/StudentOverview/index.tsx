@@ -15,12 +15,16 @@ import { StudentCredentialModal } from "./components/StudentCredentialModal";
 
 export function StudentOverview({ instituteId }: { instituteId?: number }) {
   const params = useParams();
-  const id = instituteId === undefined ? params.id : params.studentId;
+  // Super Admins reach this screen from two routes that name the parameter
+  // differently: .../students/:studentId and .../accounts/students/:memberId.
+  const id = instituteId === undefined ? params.id : (params.studentId ?? params.memberId);
   const permissions = useAuthStore((state) => state.user?.institute_permissions);
   const isSuperAdmin = instituteId !== undefined;
   const apiBase = isSuperAdmin ? `/super-admin/institutes/${instituteId}` : "/institute";
+  // Return to whichever list the student was opened from.
+  const cameFromAccounts = params.memberId !== undefined;
   const basePath = isSuperAdmin
-    ? `/super-admin/institutes/${instituteId}/students`
+    ? `/super-admin/institutes/${instituteId}/${cameFromAccounts ? "accounts" : "students"}`
     : "/institute-portal/students";
   const canManage = isSuperAdmin || permissions?.manage_students;
   const canRevokeSessions = isSuperAdmin || permissions?.manage_student_sessions;
