@@ -544,6 +544,38 @@ def disable_voucher_code(db: Session, code_id: int) -> dict:
     return {"message": "Voucher code disabled successfully", "disabled": 1}
 
 
+def toggle_voucher_code(db: Session, code_id: int) -> dict:
+    vc = db.query(VoucherCode).filter(VoucherCode.id == code_id).first()
+    if not vc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Voucher code not found")
+    if vc.status not in ("available", "disabled"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only unused voucher codes can be toggled")
+
+    vc.status = "available" if vc.status == "disabled" else "disabled"
+    db.add(vc)
+    db.commit()
+    return {"message": "Voucher code toggled successfully", "status": vc.status}
+
+
+def update_voucher_code(db: Session, code_id: int, code: str, voucher_type_id: int) -> dict:
+    vc = db.query(VoucherCode).filter(VoucherCode.id == code_id).first()
+    if not vc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Voucher code not found")
+    if vc.status not in ("available", "disabled"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot edit a purchased or expired code")
+
+    # check if new code exists
+    existing = db.query(VoucherCode).filter(VoucherCode.code == code, VoucherCode.id != code_id).first()
+    if existing:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Voucher code already exists")
+
+    vc.code = code
+    vc.voucher_type_id = voucher_type_id
+    db.add(vc)
+    db.commit()
+    return {"message": "Voucher code updated successfully"}
+
+
 def disable_voucher_codes(db: Session, code_ids: List[int]) -> dict:
     unique_ids = sorted({int(code_id) for code_id in code_ids if int(code_id) > 0})
     if not unique_ids:

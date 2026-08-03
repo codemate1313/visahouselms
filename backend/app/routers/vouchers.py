@@ -57,6 +57,11 @@ class VoucherCodeBulkAction(BaseModel):
     code_ids: List[int]
 
 
+class VoucherCodeUpdate(BaseModel):
+    code: str
+    voucher_type_id: int
+
+
 class PublicVoucherPurchaseRequest(BaseModel):
     offering_id: int
     buyer_name: str
@@ -272,6 +277,25 @@ def admin_disable_voucher_code(
     admin: User = Depends(_require_super_admin),
 ):
     return voucher_service.disable_voucher_code(db, code_id)
+
+
+@router.patch("/admin/codes/{code_id}/toggle")
+def admin_toggle_voucher_code(
+    code_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(_require_super_admin),
+):
+    return voucher_service.toggle_voucher_code(db, code_id)
+
+
+@router.put("/admin/codes/{code_id}")
+def admin_update_voucher_code(
+    code_id: int,
+    payload: VoucherCodeUpdate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(_require_super_admin),
+):
+    return voucher_service.update_voucher_code(db, code_id, payload.code, payload.voucher_type_id)
 
 
 @router.post("/admin/codes/disable")

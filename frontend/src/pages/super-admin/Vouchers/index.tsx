@@ -4,6 +4,8 @@ import { confirmDelete } from "@/components/confirmDialog";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Button, DataTableCard, FilterBar, Modal, SearchInput, SearchableSelect, SegmentedControl, Input, Textarea } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { ToggleSwitch } from "@/components/ToggleSwitch";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { useToastStore } from "@/store/toastStore";
 import { vouchersStrings as s } from "./Vouchers.strings";
 import "@/styles/voucher-ui.css";
@@ -72,6 +74,7 @@ interface UnusedVoucherCode {
   validity_days: number;
   source_filename: string;
   created_at: string;
+  voucher_type_id: number;
 }
 
 interface GstRate {
@@ -104,6 +107,9 @@ export function Vouchers() {
   const [search, setSearch] = useState("");
   const [unusedSearch, setUnusedSearch] = useState("");
   const [unusedTypeFilter, setUnusedTypeFilter] = useState("all");
+  const [editingCode, setEditingCode] = useState<UnusedVoucherCode | null>(null);
+  const [codeForm, setCodeForm] = useState({ code: "", voucher_type_id: 0 });
+  const [showCodeModal, setShowCodeModal] = useState(false);
   const [selectedUnusedIds, setSelectedUnusedIds] = useState<Set<number>>(new Set());
 
   // Modals & Forms State
@@ -374,14 +380,33 @@ export function Vouchers() {
     });
   }
 
-  async function handleDisableCode(id: number, code: string) {
-    if (!await confirmDelete(`Disable voucher code "${code}"? It will no longer be sold to students.`, "Disable Voucher Code")) return;
+  // --- Unused Codes Actions ---
+  function openEditCodeModal(code: UnusedVoucherCode) {
+    setEditingCode(code);
+    setCodeForm({ code: code.code, voucher_type_id: code.voucher_type_id });
+    setShowCodeModal(true);
+  }
+
+  async function handleSaveCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingCode) return;
     try {
-      await api.patch(`/vouchers/admin/codes/${id}/disable`);
-      showSuccess("Voucher code disabled.");
+      await api.put(`/vouchers/admin/codes/${editingCode.id}`, codeForm);
+      showSuccess("Voucher code updated successfully");
+      setShowCodeModal(false);
       fetchData();
     } catch (err: any) {
-      showError(err.response?.data?.detail || "Failed to disable voucher code");
+      showError(err.response?.data?.detail || "Failed to update voucher code");
+    }
+  }
+
+  async function handleToggleCode(id: number, code: string) {
+    try {
+      await api.patch(`/vouchers/admin/codes/${id}/toggle`);
+      showSuccess(`Code ${code} status toggled`);
+      fetchData();
+    } catch (err: any) {
+      showError(err.response?.data?.detail || "Failed to toggle code");
     }
   }
 
@@ -707,26 +732,34 @@ export function Vouchers() {
                       </span>
                     </td>
                     <td className="text-right">
-                      <div className="voucher-code-actions">
+                      <div className="voucher-code-actions flex items-center gap-2">
+                        <ToggleSwitch
+                          checked={uc.status === "available"}
+                          onChange={() => handleToggleCode(uc.id, uc.code)}
+                          tooltip={uc.status === "available" ? "Deactivate" : "Activate"}
+                        />
                         <button
                           type="button"
-                          title="Disable Voucher Code"
-                          aria-label={`Disable voucher code ${uc.code}`}
-                          onClick={() => handleDisableCode(uc.id, uc.code)}
-                          disabled={uc.status !== "available"}
-                          className="voucher-code-action-button voucher-code-action-disable"
+                          title="Edit Voucher Code"
+                          aria-label={`Edit voucher code ${uc.code}`}
+                          onClick={() => openEditCodeModal(uc)}
+                          className="action-btn-icon action-edit"
+                          style={{ backgroundColor: 'var(--primary-soft)', color: 'var(--primary)' }}
                         >
-                          <Icon name="revoke" />
+                          <Icon name="edit" />
                         </button>
-                        <button
-                          type="button"
-                          title="Delete Voucher Code"
-                          aria-label={`Delete voucher code ${uc.code}`}
-                          onClick={() => handleDeleteCode(uc.id, uc.code)}
-                          className="voucher-code-action-button voucher-code-action-delete"
-                        >
-                          <Icon name="trash" />
-                        </button>
+                        <RowActionMenu
+                          items={[
+                            <button
+                              key="delete"
+                              type="button"
+                              className="action-menu-item text-red-600"
+                              onClick={() => handleDeleteCode(uc.id, uc.code)}
+                            >
+                              <Icon name="trash" className="w-4 h-4 mr-2" /> Delete Code
+                            </button>
+                          ]}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -1257,6 +1290,60 @@ export function Vouchers() {
           </div>
         </Modal>
       )}
+      {/* Edit Code Modal */}
+      {showCodeModal && (
+        <div className="modal-backdrop">
+          <div className="modal-card modal-sm">
+            <div className="modal-header">
+              <h3>Edit Voucher Code</h3>
+              <button type="button" className="modal-close" onClick={() => setShowCodeModal(false)}>
+                <Icon name="x" />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleSaveCode} className="space-y-4">
+                <div className="form-group">
+                  <label htmlFor="code_code">Voucher Code</label>
+                  <input
+                    id="code_code"
+                    type="text"
+                    required
+                    value={codeForm.code}
+                    onChange={(e) => setCodeForm({ ...codeForm, code: e.target.value.toUpperCase() })}
+                    className="ui-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="code_type">Voucher Type</label>
+                  <select
+                    id="code_type"
+                    required
+                    value={codeForm.voucher_type_id}
+                    onChange={(e) => setCodeForm({ ...codeForm, voucher_type_id: Number(e.target.value) })}
+                    className="ui-input"
+                  >
+                    <option value={0}>Select Type...</option>
+                    {types.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-actions mt-6 flex justify-end gap-3">
+                  <button type="button" className="ui-btn btn-secondary" onClick={() => setShowCodeModal(false)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="ui-btn btn-primary">
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
