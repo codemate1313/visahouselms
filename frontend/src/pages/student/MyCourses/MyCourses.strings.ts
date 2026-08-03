@@ -26,6 +26,16 @@ export const myCoursesStrings = {
   minutesSuffix: (minutes: number) => `${minutes} minutes`,
   starting: "Starting...",
   startTest: "Start test",
+  demo: {
+    chip: "Free demo",
+    chipTooltip: "Free sample test - no subscription needed. Finish it to see your score.",
+    startTest: "Try free demo",
+    heroBadge: "DEMO ACCESS",
+    heroTitle: "Try a free sample test",
+    heroDescription:
+      "Sit a short demo test and get your score instantly. Locked modules become available once you purchase a plan.",
+    browsePlans: "Browse plans",
+  },
   errors: {
     startModule: "Failed to start the test.",
     startModuleTitle: "Could Not Start",

@@ -673,7 +673,10 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                         "title": module.title,
                         "module_type": module.module_type,
                         "duration_minutes": module.duration_minutes,
-                        "is_locked": True,
+                        # Demo modules are free sample tests - the only thing a
+                        # student without a subscription can sit.
+                        "is_locked": not module.is_demo,
+                        "is_demo": module.is_demo,
                     }
                     for module in all_published_modules
                 ],
@@ -715,6 +718,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 "module_type": module.module_type,
                 "duration_minutes": module.duration_minutes,
                 "is_locked": False,
+                "is_demo": module.is_demo,
             })
     else:
         for module in all_published_modules:
@@ -723,7 +727,8 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 "title": module.title,
                 "module_type": module.module_type,
                 "duration_minutes": module.duration_minutes,
-                "is_locked": module.id not in unlocked_ids,
+                "is_locked": module.id not in unlocked_ids and not module.is_demo,
+                "is_demo": module.is_demo,
             })
 
     return {

@@ -30,7 +30,13 @@ def has_module_access(db: Session, user: User, module_id: int) -> bool:
     B2B (their institute's own Plan subscription) or B2C (their own personal
     Plan subscription). A module is accessible if the current subscription's
     plan includes it. Reused by both the plan-catalog entitled flag and the
-    attempt-start check so the two can never drift apart."""
+    attempt-start check so the two can never drift apart.
+
+    Demo modules are the one exception: free sample tests open to every
+    student so they can try the engine and receive a score before buying."""
+    module = db.get(ExamModule, module_id)
+    if module is not None and module.is_demo:
+        return True
     if user.institute_id is not None:
         subscription, state = current_subscription(db, user.institute_id)
         if subscription is None or state not in (STATE_ACTIVE, STATE_GRACE):

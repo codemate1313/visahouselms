@@ -31,6 +31,7 @@ def main() -> None:
     _run("Seeding QA accounts, institute, access, and plan", [PYTHON, "scripts/seed_test_credentials.py"])
     _run("Seeding testing blogs, testimonials, and SEO settings", [PYTHON, "scripts/seed_cms_and_seo.py"])
     _run("Seeding portal inbox notifications", [PYTHON, "scripts/seed_notifications.py"])
+    _run("Seeding demo student and demo sample tests", [PYTHON, "scripts/seed_demo_experience.py"])
 
     print(
         "\nLocal seed complete.\n"
@@ -39,7 +40,8 @@ def main() -> None:
         "SA Instructor: sample.instructor@example.com\n"
         "Institute Admin: qa.institute.admin@example.com\n"
         "Institute Instructor: qa.institute.instructor@example.com\n"
-        "Institute Student: qa.student@example.com"
+        "Institute Student: qa.student@example.com\n"
+        "Demo Student (no subscription): demo.student@example.com"
     )
 
 

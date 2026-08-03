@@ -30,6 +30,9 @@ class ExamModule(Base):
     instructions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft", index=True)
     is_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
+    # Demo modules are free sample tests: any student may sit them (once, like
+    # any module) without a subscription, to preview the platform and get a score.
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
     blueprint_version: Mapped[str] = mapped_column(
         String(80), nullable=False, default="LanguageCert Academic 2025"

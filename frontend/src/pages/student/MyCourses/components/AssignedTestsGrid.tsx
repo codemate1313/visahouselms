@@ -20,6 +20,7 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
         if (!moduleId) return null;
         const isStarting = starting === moduleId;
         const isLocked = Boolean(module.is_locked);
+        const isDemo = Boolean(module.is_demo);
         const moduleTypeClass = `type-${module.module_type || "default"}`;
 
         return (
@@ -52,6 +53,11 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
               <span className="premium-type-chip">
                 {typeLabels[module.module_type as keyof typeof typeLabels] ?? module.module_type}
               </span>
+              {isDemo && !isLocked && (
+                <span className="premium-demo-chip" title={strings.demo.chipTooltip}>
+                  {strings.demo.chip}
+                </span>
+              )}
             </div>
 
             {/* Card Body */}
@@ -90,7 +96,7 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                   onClick={() => onStartModule(moduleId, module.module_type, false)}
                   className="start-test-btn"
                 >
-                  {strings.startTest}
+                  {isDemo ? strings.demo.startTest : strings.startTest}
                 </Button>
               )}
             </div>

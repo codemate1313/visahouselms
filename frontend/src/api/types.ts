@@ -374,6 +374,7 @@ export interface StudentPlanModule {
   duration_minutes: number;
   status?: ExamModuleStatus;
   is_locked?: boolean;
+  is_demo?: boolean;
 }
 
 export interface StudentPlanCatalogItem {

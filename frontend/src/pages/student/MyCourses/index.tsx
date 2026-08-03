@@ -4,7 +4,7 @@ import gsap from "gsap";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { StudentCurrentPlan } from "@/api/types";
-import { PageHeader } from "@/components/ui";
+import { Button, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { useToastStore } from "@/store/toastStore";
 import { useAuthStore } from "@/store/authStore";
@@ -165,15 +165,22 @@ export function MyCourses() {
         </div>
       ) : (
         <div className="my-courses-content-wrapper">
-          {/* Top Hero Membership Card */}
+          {/* Top Hero Membership Card. Without an active subscription this is
+              demo access: free sample tests plus locked previews. */}
           <div className="my-courses-hero-card">
             <div className="my-courses-hero-left">
               <div className="my-courses-hero-badge">
                 <span className="my-courses-hero-dot" />
-                ACTIVE MEMBERSHIP
+                {access.state === "active" || access.state === "grace" ? "ACTIVE MEMBERSHIP" : strings.demo.heroBadge}
               </div>
-              <h2 className="my-courses-hero-title">{access.plan.name}</h2>
-              <p className="my-courses-hero-desc">{access.plan.description || strings.defaultPlanDescription}</p>
+              <h2 className="my-courses-hero-title">
+                {access.state === "active" || access.state === "grace" ? access.plan.name : strings.demo.heroTitle}
+              </h2>
+              <p className="my-courses-hero-desc">
+                {access.state === "active" || access.state === "grace"
+                  ? access.plan.description || strings.defaultPlanDescription
+                  : strings.demo.heroDescription}
+              </p>
             </div>
             <div className="my-courses-hero-right">
               {!isInstituteStudent && access.expires_at && (
@@ -181,6 +188,11 @@ export function MyCourses() {
                   <Icon name="due" />
                   <span>{strings.accessUntil(formatDate(access.expires_at))}</span>
                 </div>
+              )}
+              {!isInstituteStudent && access.state !== "active" && access.state !== "grace" && (
+                <Button variant="primary" onClick={() => navigate("/student/courses")}>
+                  {strings.demo.browsePlans}
+                </Button>
               )}
               <div className="my-courses-count-tag">
                 <Icon name="plan" />

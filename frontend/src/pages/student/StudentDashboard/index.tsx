@@ -11,6 +11,7 @@ import { LearningPlanPanel } from "./components/LearningPlanPanel";
 import { RecentActivityPanel } from "./components/RecentActivityPanel";
 import type { TestProgressItem } from "./types";
 import { DailyEnglishChallenge } from "./components/DailyEnglishChallenge";
+import { ExamNewsPanel } from "./components/ExamNewsPanel";
 
 export function StudentDashboard() {
   const user = useAuthStore((state) => state.user);
@@ -83,6 +84,8 @@ export function StudentDashboard() {
       <DailyEnglishChallenge />
 
       <StatCardsGrid stats={statCards} />
+
+      <ExamNewsPanel />
 
       <div className="sd-grid">
         <LearningPlanPanel

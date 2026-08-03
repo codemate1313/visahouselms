@@ -7420,3 +7420,23 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 }
 
 
+
+/* Free-demo chip on sample test cards (sits beside the type chip). */
+.premium-demo-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--emerald-500) 40%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--emerald-500) 12%, transparent);
+  color: var(--success);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .premium-demo-chip {
+  color: #4ade80;
+}

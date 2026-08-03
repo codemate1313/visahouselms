@@ -31,6 +31,7 @@ from app.services import (
     achievement_service,
     attempt_service,
     avatar_service,
+    exam_news_service,
     coupon_service,
     grading_service,
     notification_service,
@@ -228,6 +229,12 @@ def list_plan_catalog(db: Session = Depends(get_db), user: User = Depends(requir
 @router.get("/my-plan")
 def my_plan(db: Session = Depends(get_db), user: User = Depends(require_student)):
     return subscription_service.my_current_plan_view(db, user)
+
+
+@router.get("/exam-news")
+def exam_news(user: User = Depends(require_student)):
+    """Curated exam & immigration updates for the student dashboard."""
+    return exam_news_service.list_exam_news()
 
 
 @router.get("/ai-evaluations/history")
