@@ -6295,6 +6295,21 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 
 
 /* Premium Segmented Tab Bar */
+.stepper-navigation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 6px 4px;
+}
+
+.stepper-navigation-header::-webkit-scrollbar {
+  display: none;
+}
 
 
 .institute-tab-btn {
