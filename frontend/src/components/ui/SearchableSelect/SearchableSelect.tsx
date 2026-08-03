@@ -1,4 +1,5 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import "./SearchableSelect.css";
 import { Icon } from "@/components/icons";
 import { commonActions } from "@/content/common.strings";
@@ -24,6 +25,14 @@ interface SearchableSelectProps {
   ariaLabel?: string;
 }
 
+interface DropdownRect {
+  top: number;
+  left: number;
+  width: number;
+  alignRight: boolean;
+  openUpward: boolean;
+}
+
 export function SearchableSelect({
   id,
   options,
@@ -39,9 +48,11 @@ export function SearchableSelect({
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [alignRight, setAlignRight] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [dropdownRect, setDropdownRect] = useState<DropdownRect | null>(null);
+
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const generatedId = useId();
@@ -50,19 +61,55 @@ export function SearchableSelect({
   const selectedOption = options.find((opt) => String(opt.value) === String(value));
 
   const filteredOptions = useMemo(
-    () => options.filter(
-      (opt) =>
-        !searchable ||
-        !search ||
-        opt.label.toLowerCase().includes(search.toLowerCase()) ||
-        (opt.sublabel && opt.sublabel.toLowerCase().includes(search.toLowerCase()))
-    ),
+    () =>
+      options.filter(
+        (opt) =>
+          !searchable ||
+          !search ||
+          opt.label.toLowerCase().includes(search.toLowerCase()) ||
+          (opt.sublabel && opt.sublabel.toLowerCase().includes(search.toLowerCase()))
+      ),
     [options, search, searchable],
   );
 
+  /** Compute fixed-position coordinates for the portal dropdown. */
+  const computeRect = useCallback((): DropdownRect | null => {
+    if (!triggerRef.current) return null;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceRight = window.innerWidth - rect.left;
+    const estimatedDropdownHeight = 260; // px — worst-case estimate
+    const openUpward = spaceBelow < estimatedDropdownHeight && rect.top > estimatedDropdownHeight;
+    return {
+      top: openUpward ? rect.top : rect.bottom + 6,
+      left: rect.left,
+      width: rect.width,
+      alignRight: spaceRight < 220,
+      openUpward,
+    };
+  }, []);
+
+  /** Recompute rect on scroll / resize so the portal stays anchored. */
+  useEffect(() => {
+    if (!isOpen) return;
+    function update() {
+      setDropdownRect(computeRect());
+    }
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [isOpen, computeRect]);
+
+  /** Close on outside click — check both the container and the portal dropdown. */
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const inContainer = containerRef.current?.contains(target) ?? false;
+      const inDropdown = dropdownRef.current?.contains(target) ?? false;
+      if (!inContainer && !inDropdown) {
         setIsOpen(false);
       }
     }
@@ -72,11 +119,7 @@ export function SearchableSelect({
 
   useEffect(() => {
     if (isOpen) {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const spaceOnRight = window.innerWidth - rect.right;
-        setAlignRight(spaceOnRight < 220);
-      }
+      setDropdownRect(computeRect());
       if (searchable) {
         setTimeout(() => searchInputRef.current?.focus(), 40);
       }
@@ -87,8 +130,9 @@ export function SearchableSelect({
     } else {
       setSearch("");
       setHighlightedIndex(-1);
+      setDropdownRect(null);
     }
-  }, [filteredOptions, isOpen, searchable, value]);
+  }, [filteredOptions, isOpen, searchable, value, computeRect]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -137,6 +181,119 @@ export function SearchableSelect({
     }
   }
 
+  const dropdownStyle: React.CSSProperties = dropdownRect
+    ? {
+        position: "fixed",
+        top: dropdownRect.openUpward ? undefined : dropdownRect.top,
+        bottom: dropdownRect.openUpward
+          ? window.innerHeight - dropdownRect.top + 6
+          : undefined,
+        left: dropdownRect.alignRight ? undefined : dropdownRect.left,
+        right: dropdownRect.alignRight
+          ? window.innerWidth - (dropdownRect.left + dropdownRect.width)
+          : undefined,
+        minWidth: dropdownRect.width,
+        maxWidth: 340,
+        zIndex: 99999,
+      }
+    : {};
+
+  const dropdownNode = isOpen && dropdownRect ? (
+    <div
+      ref={dropdownRef}
+      id={listboxId}
+      className={`searchable-select-dropdown searchable-select-portal-dropdown${dropdownRect.openUpward ? " opens-upward" : ""}`}
+      role="listbox"
+      style={dropdownStyle}
+      onKeyDown={handleKeyDown}
+    >
+      {searchable && (
+        <div className="select-search-header">
+          <svg
+            className="select-search-icon"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="select-search-input"
+            placeholder={searchPlaceholder}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+          />
+          {search && (
+            <button
+              type="button"
+              className="select-search-clear"
+              onClick={() => setSearch("")}
+              title={commonActions.clearSearch}
+              aria-label={commonActions.clearSearch}
+            >
+              <Icon name="cross" />
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="select-options-list">
+        {filteredOptions.length === 0 ? (
+          <div className="select-empty-message">{emptyMessage}</div>
+        ) : (
+          filteredOptions.map((opt, optionIndex) => {
+            const isSelected = String(opt.value) === String(value);
+            return (
+              <div
+                key={opt.value}
+                id={`${listboxId}-option-${optionIndex}`}
+                className={`select-option-item ${isSelected ? "is-selected" : ""} ${
+                  optionIndex === highlightedIndex ? "is-highlighted" : ""
+                } ${opt.disabled ? "is-disabled" : ""}`}
+                onClick={() => !opt.disabled && handleSelect(opt.value)}
+                onMouseEnter={() => {
+                  if (!opt.disabled) setHighlightedIndex(optionIndex);
+                }}
+                role="option"
+                aria-disabled={opt.disabled || undefined}
+                aria-selected={isSelected}
+              >
+                <div className="option-text-group">
+                  <span className="option-main-label">{opt.label}</span>
+                  {opt.sublabel && <span className="option-sub-label">{opt.sublabel}</span>}
+                </div>
+                {isSelected && (
+                  <svg
+                    className="option-check-icon"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div
       className={`searchable-select-container ${isOpen ? "is-open" : ""} ${disabled ? "is-disabled" : ""} ${className}`}
@@ -174,96 +331,10 @@ export function SearchableSelect({
         </svg>
       </button>
 
-      {isOpen && (
-        <div id={listboxId} className={`searchable-select-dropdown ${alignRight ? "align-right" : ""}`} role="listbox">
-          {searchable && (
-            <div className="select-search-header">
-              <svg
-                className="select-search-icon"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                ref={searchInputRef}
-                type="text"
-                className="select-search-input"
-                placeholder={searchPlaceholder}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-              />
-              {search && (
-                <button
-                  type="button"
-                  className="select-search-clear"
-                  onClick={() => setSearch("")}
-                  title={commonActions.clearSearch}
-                  aria-label={commonActions.clearSearch}
-                >
-                  <Icon name="cross" />
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="select-options-list">
-            {filteredOptions.length === 0 ? (
-              <div className="select-empty-message">{emptyMessage}</div>
-            ) : (
-            filteredOptions.map((opt, optionIndex) => {
-              const isSelected = String(opt.value) === String(value);
-              return (
-                <div
-                  key={opt.value}
-                    id={`${listboxId}-option-${optionIndex}`}
-                    className={`select-option-item ${isSelected ? "is-selected" : ""} ${
-                      optionIndex === highlightedIndex ? "is-highlighted" : ""
-                    } ${
-                      opt.disabled ? "is-disabled" : ""
-                    }`}
-                    onClick={() => !opt.disabled && handleSelect(opt.value)}
-                    onMouseEnter={() => {
-                      if (!opt.disabled) setHighlightedIndex(optionIndex);
-                    }}
-                    role="option"
-                    aria-disabled={opt.disabled || undefined}
-                    aria-selected={isSelected}
-                  >
-                    <div className="option-text-group">
-                      <span className="option-main-label">{opt.label}</span>
-                      {opt.sublabel && <span className="option-sub-label">{opt.sublabel}</span>}
-                    </div>
-                    {isSelected && (
-                      <svg
-                        className="option-check-icon"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
+      {/* Portal the dropdown to document.body so it escapes every overflow/
+          stacking context — no matter how deep inside a scrollable panel it
+          lives, the dropdown always floats above everything. */}
+      {dropdownNode && createPortal(dropdownNode, document.body)}
     </div>
   );
 }

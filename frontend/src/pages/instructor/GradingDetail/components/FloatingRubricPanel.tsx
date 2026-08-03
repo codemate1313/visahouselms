@@ -105,15 +105,32 @@ export function FloatingRubricPanel({
               <div className="sleek-score-combo">
                 <input
                   id={`float-crit-${part.id}-${criterion.criterion}`}
-                  type="number"
-                  min={0}
-                  max={criterion.max_marks}
-                  step={0.5}
+                  type="text"
+                  inputMode="decimal"
                   className="sleek-score-input"
                   placeholder="0.0"
                   value={marks[criterion.criterion] ?? ""}
                   disabled={!canEdit}
-                  onChange={(event) => onMarksChange(criterion.criterion, event.target.value)}
+                  onChange={(event) => {
+                    const val = event.target.value.replace(/,/g, '.');
+                    if (/^\d*\.?\d*$/.test(val)) {
+                      onMarksChange(criterion.criterion, val);
+                    }
+                  }}
+                  onBlur={(event) => {
+                    const val = event.target.value;
+                    if (val) {
+                      const num = parseFloat(val);
+                      if (!isNaN(num)) {
+                        const clamped = Math.min(Math.max(num, 0), criterion.max_marks);
+                        if (clamped.toString() !== val) {
+                          onMarksChange(criterion.criterion, clamped.toString());
+                        }
+                      } else {
+                        onMarksChange(criterion.criterion, "");
+                      }
+                    }
+                  }}
                 />
                 <SearchableSelect
                   ariaLabel={t.markLabel(criterion.max_marks)}

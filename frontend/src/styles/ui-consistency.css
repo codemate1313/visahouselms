@@ -652,10 +652,7 @@ html {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
-  /* Do NOT set overflow:hidden here — it creates a clipping context that
-     traps the SearchableSelect dropdown regardless of its z-index.
-     Rounded corners still render correctly via border-radius alone. */
-  overflow: visible;
+  overflow: hidden;
   position: sticky;
   top: 96px;
   max-height: calc(100vh - 120px);
@@ -693,13 +690,8 @@ html {
 
 .rubric-floater-body {
   padding: 14px 16px;
-  /* Scroll the body contents; overflow-x visible lets dropdowns escape
-     horizontally while overflow-y auto keeps vertical scrolling. */
-  overflow-x: visible;
-  overflow-y: auto;
+  overflow: auto;
   flex: 1;
-  /* Ensure the body itself doesn't form an overflow clip boundary. */
-  position: relative;
 }
 
 .rubric-floater-foot {
@@ -796,10 +788,6 @@ html {
   display: grid;
   grid-template-columns: 90px minmax(0, 1fr);
   gap: 8px;
-  /* Establish a stacking context so the dropdown (z-index 3100) floats
-     above the Save-draft footer (which is a sibling, not a parent). */
-  position: relative;
-  z-index: 10;
 }
 
 /* Rubric panel in its collapsed state (schema hidden): the panel is still
