@@ -1,5 +1,5 @@
 import type { Attempt } from "@/api/types";
-import { attemptResultDetailsStrings as strings } from "../AttemptResultDetails.strings";
+import { attemptResultStrings as strings } from "../AttemptResult.strings";
 import { Badge } from "@/components/ui";
 
 interface RetakeRequestStatusProps {

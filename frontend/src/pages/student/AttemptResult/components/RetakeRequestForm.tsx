@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { RequiredMark } from "@/components/ui";
-import { attemptResultDetailsStrings as strings } from "../AttemptResultDetails.strings";
+import { attemptResultStrings as strings } from "../AttemptResult.strings";
 
 interface RetakeRequestFormProps {
   reason: string;

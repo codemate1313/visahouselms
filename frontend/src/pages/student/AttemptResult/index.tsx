@@ -9,6 +9,8 @@ import { PerformanceOverviewPanel } from "./components/PerformanceOverviewPanel"
 import { AnalysisPanel } from "./components/AnalysisPanel";
 import { ReevaluationStatus } from "@/components/ReevaluationStatus";
 import { ReevaluationRequestForm } from "./components/ReevaluationRequestForm";
+import { RetakeRequestStatus } from "./components/RetakeRequestStatus";
+import { RetakeRequestForm } from "./components/RetakeRequestForm";
 import { Badge, LinkButton } from "@/components/ui";
 
 // AI auto-grading runs as a background job right after submission (a
@@ -26,6 +28,8 @@ export function AttemptResult() {
   const [reviewReason, setReviewReason] = useState("");
   const [requestingReview, setRequestingReview] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [retakeReason, setRetakeReason] = useState("");
+  const [requestingRetake, setRequestingRetake] = useState(false);
   const mountedAtRef = useRef(new Date().toISOString());
 
   useEffect(() => {
@@ -125,6 +129,13 @@ export function AttemptResult() {
   const hasInstructorReviewablePart = attempt.parts.some((part) => !part.auto_marked);
   const hasOpenReevaluation = attempt.reevaluation?.status === "pending" || attempt.reevaluation?.status === "in_review";
   const canRequestReview = ["grading", "graded"].includes(attempt.status) && hasInstructorReviewablePart && !hasOpenReevaluation;
+  
+  const hasOpenOrApprovedRetake =
+    attempt.retake_request?.status === "pending" ||
+    (attempt.retake_request?.status === "approved" && !attempt.retake_request.consumed_at);
+  const canRequestRetake =
+    ["submitted", "grading", "graded", "expired"].includes(attempt.status) && !hasOpenOrApprovedRetake;
+
   const isAiGraded = attempt.parts.some((part) => part.grade?.status === "ai_graded");
   const statusLabels = strings.statusLabels;
 
@@ -144,6 +155,22 @@ export function AttemptResult() {
       setReviewError(extractErrorMessage(err, strings.reevaluationForm.errors.submit));
     } finally {
       setRequestingReview(false);
+    }
+  }
+
+  async function requestRetake(event: FormEvent) {
+    event.preventDefault();
+    if (!attempt) return;
+    setRequestingRetake(true);
+    setReviewError(null);
+    try {
+      const { data } = await apiClient.post(`/student/attempts/${attempt.id}/retake-request`, { reason: retakeReason });
+      setAttempt((current) => current ? { ...current, retake_request: data } : current);
+      setRetakeReason("");
+    } catch (err: unknown) {
+      setReviewError(extractErrorMessage(err, strings.retake.errors.submit));
+    } finally {
+      setRequestingRetake(false);
     }
   }
 
@@ -207,6 +234,17 @@ export function AttemptResult() {
           requesting={requestingReview}
           reviewError={reviewError}
           onSubmit={requestInstructorReview}
+        />
+      )}
+
+      {attempt.retake_request && <RetakeRequestStatus retakeRequest={attempt.retake_request} />}
+
+      {canRequestRetake && (
+        <RetakeRequestForm
+          reason={retakeReason}
+          onReasonChange={setRetakeReason}
+          requesting={requestingRetake}
+          onSubmit={requestRetake}
         />
       )}
     </div>
