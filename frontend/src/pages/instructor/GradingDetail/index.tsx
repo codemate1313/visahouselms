@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import type { GradingDetail as GradingDetailType, GradingQueueItem, GradingQueueMetadata } from "@/api/types";
+import type { AttemptPart, GradingDetail as GradingDetailType, GradingQueueItem, GradingQueueMetadata } from "@/api/types";
 import { Badge, Button, LinkButton, PageHeader } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
+import { useToastStore } from "@/store/toastStore";
 import { gradingDetailStrings as strings } from "./GradingDetail.strings";
 import { PartGradingCard } from "./components/PartGradingCard";
+import { FloatingRubricPanel } from "./components/FloatingRubricPanel";
 
 export function GradingDetail() {
   const { id } = useParams();
@@ -108,38 +110,113 @@ export function GradingDetail() {
     }
   }
 
-  const [openPartIds, setOpenPartIds] = useState<Record<number, boolean>>({});
+  // ---- Scoring state, lifted so one FloatingRubricPanel can drive every part.
+  const showSuccess = useToastStore((state) => state.showSuccess);
+  const showError = useToastStore((state) => state.showError);
+  const [partMarks, setPartMarks] = useState<Record<number, Record<string, string>>>({});
+  const [partComments, setPartComments] = useState<Record<number, string>>({});
+  const [activePartId, setActivePartId] = useState<number | null>(null);
+  const [rubricOpen, setRubricOpen] = useState(true);
+  const [savingPartId, setSavingPartId] = useState<number | null>(null);
 
-  const isPartOpen = (partId: number, hasSavedProgress: boolean) => {
-    if (openPartIds[partId] !== undefined) return openPartIds[partId];
-    return !hasSavedProgress;
-  };
-
-  const handleToggleOpen = (partId: number, open: boolean) => {
-    setOpenPartIds((prev) => ({ ...prev, [partId]: open }));
-  };
-
-  const handleGradedNext = (currentPartId: number) => {
-    const currentIndex = subjectiveParts.findIndex((p) => p.id === currentPartId);
-    const nextPart = subjectiveParts.slice(currentIndex + 1).find((p) => !p.grade) || subjectiveParts[currentIndex + 1];
-
-    setOpenPartIds((prev) => {
-      const updated = { ...prev, [currentPartId]: false };
-      if (nextPart) {
-        updated[nextPart.id] = true;
+  // Seed the local scoring state from whatever the server already has whenever
+  // the attempt loads or reloads.
+  useEffect(() => {
+    if (!detail) return;
+    setPartMarks((current) => {
+      const next = { ...current };
+      for (const part of detail.parts) {
+        if (part.auto_marked) continue;
+        next[part.id] = Object.fromEntries(
+          part.rubric.map((criterion) => [
+            criterion.criterion,
+            current[part.id]?.[criterion.criterion]
+              ?? part.grade?.criteria.find((item) => item.criterion === criterion.criterion)?.marks_awarded
+              ?? "",
+          ]),
+        );
       }
-      return updated;
+      return next;
     });
+    setPartComments((current) => {
+      const next = { ...current };
+      for (const part of detail.parts) {
+        if (part.auto_marked) continue;
+        if (current[part.id] === undefined) next[part.id] = part.grade?.comment ?? "";
+      }
+      return next;
+    });
+  }, [detail]);
 
-    if (nextPart) {
-      setTimeout(() => {
-        const el = document.getElementById(`part-card-${nextPart.id}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 120);
+  const setMarksForPart = useCallback((partId: number, criterion: string, value: string) => {
+    setPartMarks((current) => ({
+      ...current,
+      [partId]: { ...(current[partId] ?? {}), [criterion]: value },
+    }));
+  }, []);
+
+  const applySuggestion = useCallback((partId: number, marks: Record<string, string>, comment: string) => {
+    setPartMarks((current) => ({ ...current, [partId]: { ...(current[partId] ?? {}), ...marks } }));
+    setPartComments((current) => ({ ...current, [partId]: comment }));
+  }, []);
+
+  async function savePart(part: AttemptPart) {
+    setSavingPartId(part.id);
+    const isPublished = part.grade?.status === "graded" || part.grade?.status === "ai_graded";
+    const marks = partMarks[part.id] ?? {};
+    const comment = partComments[part.id] ?? "";
+    try {
+      const criteria = part.rubric
+        .filter((criterion) => isPublished || marks[criterion.criterion] !== "" && marks[criterion.criterion] !== undefined)
+        .map((criterion) => ({ criterion: criterion.criterion, marks_awarded: Number(marks[criterion.criterion] || 0) }));
+      const { data } = await apiClient.post<GradingDetailType>(
+        `/instructor/grading/${id}/parts/${part.id}`,
+        { criteria, comment: comment || undefined },
+      );
+      setDetail(data);
+      const t = strings.part;
+      if (isPublished) {
+        showSuccess(t.gradedMessage(part.title), t.savedTitle);
+      } else {
+        showSuccess(t.draftSavedMessage(part.title), t.savedTitle);
+      }
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, strings.part.saveErrorMessage), strings.part.saveErrorTitle);
+    } finally {
+      setSavingPartId(null);
     }
-  };
+  }
+
+  // Track which part card is most in view so the floating rubric shows that
+  // part's criteria (and only that one).
+  const partCardsRef = useRef<Map<number, HTMLElement>>(new Map());
+  useEffect(() => {
+    if (!detail) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const first = visible[0];
+        if (first) {
+          const partId = Number((first.target as HTMLElement).dataset.partId);
+          if (Number.isFinite(partId)) setActivePartId(partId);
+        }
+      },
+      { rootMargin: "-15% 0px -60% 0px", threshold: [0.1, 0.4, 0.75] },
+    );
+    partCardsRef.current.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [detail]);
+
+  const registerPartCard = useCallback((partId: number, el: HTMLElement | null) => {
+    if (el) {
+      el.dataset.partId = String(partId);
+      partCardsRef.current.set(partId, el);
+    } else {
+      partCardsRef.current.delete(partId);
+    }
+  }, []);
 
   if (error && !detail) return <p className="error-text">{error}</p>;
   if (!detail) return <p>{strings.loading}</p>;
@@ -254,19 +331,46 @@ export function GradingDetail() {
           </ul>
         </section>
       )}
-      {subjectiveParts.map((part) => (
-        <PartGradingCard
-          key={part.id}
-          part={part}
-          attemptId={id!}
-          canEdit={canEdit}
-          aiConfigured={detail.ai_assistance.configured}
-          onGraded={setDetail}
-          isOpen={isPartOpen(part.id, part.grade != null)}
-          onToggleOpen={(open) => handleToggleOpen(part.id, open)}
-          onGradedNext={handleGradedNext}
-        />
-      ))}
+      <div className="grading-parts-column">
+        {subjectiveParts.map((part) => (
+          <div key={part.id} ref={(el) => registerPartCard(part.id, el)}>
+            <PartGradingCard
+              part={part}
+              attemptId={id!}
+              canEdit={canEdit}
+              aiConfigured={detail.ai_assistance.configured}
+              comment={partComments[part.id] ?? ""}
+              onCommentChange={(value) => setPartComments((current) => ({ ...current, [part.id]: value }))}
+              onApplySuggestion={(marks, comment) => applySuggestion(part.id, marks, comment)}
+              onActive={() => setActivePartId(part.id)}
+            />
+          </div>
+        ))}
+      </div>
+      {(() => {
+        const active = subjectiveParts.find((p) => p.id === activePartId) ?? subjectiveParts[0] ?? null;
+        if (!active) return null;
+        const marks = partMarks[active.id] ?? {};
+        const activeIsPublished = active.grade?.status === "graded" || active.grade?.status === "ai_graded";
+        const allScored = active.rubric.every((c) => (marks[c.criterion] ?? "") !== "");
+        const hasProgress = Object.values(marks).some((v) => v !== "") || (partComments[active.id] ?? "").trim() !== "";
+        const saveDisabled = activeIsPublished ? !allScored : !hasProgress;
+        const saveLabel = activeIsPublished ? strings.part.confirmEvaluation : strings.part.saveDraft;
+        return (
+          <FloatingRubricPanel
+            part={active}
+            marks={marks}
+            onMarksChange={(criterion, value) => setMarksForPart(active.id, criterion, value)}
+            canEdit={canEdit}
+            isOpen={rubricOpen}
+            onToggleOpen={setRubricOpen}
+            saving={savingPartId === active.id}
+            onSave={() => savePart(active)}
+            saveDisabled={saveDisabled}
+            saveLabel={saveLabel}
+          />
+        );
+      })()}
       {/* Submit lives at the bottom: publishing is the last thing an instructor
           does, after every part above has a complete draft. */}
       {detail.status === "grading" && subjectiveParts.length > 0 && (

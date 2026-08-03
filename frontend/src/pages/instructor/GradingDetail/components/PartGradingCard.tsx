@@ -1,77 +1,49 @@
 import { useState } from "react";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import type { AiEvaluationSuggestion, AttemptPart, GradingDetail as GradingDetailType } from "@/api/types";
-import { Badge, Button, SearchableSelect } from "@/components/ui";
+import type { AiEvaluationSuggestion, AttemptPart } from "@/api/types";
+import { Badge, Button } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import { gradingDetailStrings as strings } from "../GradingDetail.strings";
-
-function levelForMarks(value: string, maximum: number) {
-  if (value === "" || maximum <= 0) return strings.levels.notScored;
-  const percentage = (Number(value) / maximum) * 100;
-  if (percentage >= 90) return strings.levels.c2;
-  if (percentage >= 75) return strings.levels.c1;
-  if (percentage >= 60) return strings.levels.b2;
-  if (percentage >= 40) return strings.levels.b1;
-  return strings.levels.belowB1;
-}
 
 interface PartGradingCardProps {
   part: AttemptPart;
   attemptId: string;
   canEdit: boolean;
   aiConfigured: boolean;
-  onGraded: (detail: GradingDetailType) => void;
-  isOpen: boolean;
-  onToggleOpen: (open: boolean) => void;
-  onGradedNext?: (currentPartId: number) => void;
+  comment: string;
+  onCommentChange: (value: string) => void;
+  /** Pre-fill the score inputs when the instructor accepts the AI grade or
+   *  requests a fresh AI draft. Lives on the page level so the floating rubric
+   *  picks the new values up. */
+  onApplySuggestion: (marks: Record<string, string>, comment: string) => void;
+  /** Notified when this card scrolls into view so the floating rubric can
+   *  switch to this part's criteria. */
+  onActive: () => void;
 }
 
-export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGraded, isOpen, onToggleOpen, onGradedNext }: PartGradingCardProps) {
+export function PartGradingCard({
+  part, attemptId, canEdit, aiConfigured, comment, onCommentChange, onApplySuggestion, onActive,
+}: PartGradingCardProps) {
   const t = strings.part;
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
-  const [marks, setMarks] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      part.rubric.map((criterion) => [
-        criterion.criterion,
-        part.grade?.criteria.find((item) => item.criterion === criterion.criterion)?.marks_awarded ?? "",
-      ])
-    )
-  );
-  const [comment, setComment] = useState(part.grade?.comment ?? "");
   const [suggestion, setSuggestion] = useState<AiEvaluationSuggestion | null>(null);
-  const [saving, setSaving] = useState(false);
   const [requestingAi, setRequestingAi] = useState(false);
-  const allScored = part.rubric.every((criterion) => marks[criterion.criterion] !== "");
-  const hasProgress = Object.values(marks).some((value) => value !== "") || comment.trim() !== "";
   const supportsAi = part.section_type === "writing" || part.section_type === "speaking";
-  // Once a part is published (a first-pass "Submit full test", or a direct
-  // AI grade) this card only reopens for editing during an open
-  // reevaluation - that correction path still saves and publishes in one
-  // click, matching the backend's is_correction behavior. Otherwise every
-  // save here is only ever a draft; only "Submit full test" on the page
-  // publishes anything.
   const isPublished = part.grade?.status === "graded" || part.grade?.status === "ai_graded";
   const isDraft = part.grade?.status === "draft";
-  // Show the AI's earlier evaluation on the page (not tucked inside a details
-  // element) so the instructor sees what the model produced before touching it
-  // and can accept the values in one click.
   const priorAiGrade = part.grade?.status === "ai_graded" ? part.grade : null;
-
-  function acceptPriorAi() {
-    if (!priorAiGrade) return;
-    setMarks(Object.fromEntries(priorAiGrade.criteria.map((item) => [item.criterion, item.marks_awarded])));
-    setComment(priorAiGrade.comment ?? "");
-  }
 
   async function requestAiSuggestion() {
     setRequestingAi(true);
     try {
       const { data } = await apiClient.post<AiEvaluationSuggestion>(`/instructor/grading/${attemptId}/parts/${part.id}/ai-suggestion`);
       setSuggestion(data);
-      setMarks(Object.fromEntries(data.criteria.map((item) => [item.criterion, item.marks_awarded])));
-      setComment(data.comment);
+      onApplySuggestion(
+        Object.fromEntries(data.criteria.map((item) => [item.criterion, item.marks_awarded])),
+        data.comment,
+      );
       showSuccess(t.aiSuccessMessage, t.aiSuccessTitle);
     } catch (err: unknown) {
       showError(extractErrorMessage(err, t.aiErrorMessage), t.aiErrorTitle);
@@ -80,42 +52,27 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
     }
   }
 
-  async function saveProgress() {
-    setSaving(true);
-    try {
-      // Only the fields the instructor has actually scored are sent for a
-      // first-pass draft, so a partially-filled part stays partial server
-      // side too; a published-part correction always sends every criterion
-      // (the button is disabled until allScored covers that case).
-      const criteria = part.rubric
-        .filter((criterion) => isPublished || marks[criterion.criterion] !== "")
-        .map((criterion) => ({ criterion: criterion.criterion, marks_awarded: Number(marks[criterion.criterion] || 0) }));
-      const { data } = await apiClient.post<GradingDetailType>(`/instructor/grading/${attemptId}/parts/${part.id}`, { criteria, comment: comment || undefined });
-      onGraded(data);
-      if (isPublished) {
-        showSuccess(t.gradedMessage(part.title), t.savedTitle);
-        onGradedNext?.(part.id);
-      } else {
-        showSuccess(t.draftSavedMessage(part.title), t.savedTitle);
-      }
-    } catch (err: unknown) {
-      showError(extractErrorMessage(err, t.saveErrorMessage), t.saveErrorTitle);
-    } finally {
-      setSaving(false);
-    }
+  function acceptPriorAi() {
+    if (!priorAiGrade) return;
+    onApplySuggestion(
+      Object.fromEntries(priorAiGrade.criteria.map((item) => [item.criterion, item.marks_awarded])),
+      priorAiGrade.comment ?? "",
+    );
   }
 
   const handleAudioPlay = (e: React.SyntheticEvent<HTMLAudioElement>) => {
-    const audios = document.querySelectorAll("audio");
-    audios.forEach((audio) => {
-      if (audio !== e.currentTarget) {
-        (audio as HTMLAudioElement).pause();
-      }
+    document.querySelectorAll("audio").forEach((audio) => {
+      if (audio !== e.currentTarget) (audio as HTMLAudioElement).pause();
     });
   };
 
   return (
-    <section id={`part-card-${part.id}`} className="workspace-panel grading-part-panel">
+    <section
+      id={`part-card-${part.id}`}
+      className="workspace-panel grading-part-panel"
+      onFocus={onActive}
+      onMouseEnter={onActive}
+    >
       <div className="panel-heading">
         <div>
           <h2>{part.title}</h2>
@@ -193,93 +150,15 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
         </div>
       )}
 
-      {/* Sticky rubric: stays in view while the instructor scrolls the
-          student's responses, and can be hidden if they want the response
-          area full-width. Content is scoped to this part, so it "changes"
-          automatically as the active card scrolls into view. */}
-      <div className={`rubric-sticky${isOpen ? "" : " is-collapsed"}`} aria-label={t.rubricSticky.title}>
-        <div className="rubric-sticky-head">
-          <div>
-            <strong>{t.rubricSticky.title}</strong>
-            <small>{t.rubricSummary(part.rubric.length)}</small>
-          </div>
-          <button
-            type="button"
-            className="rubric-sticky-toggle"
-            onClick={() => onToggleOpen(!isOpen)}
-            aria-expanded={isOpen}
-          >
-            {isOpen ? t.rubricSticky.close : t.rubricSticky.show}
-          </button>
-        </div>
-        {isOpen && (
-          <div className="rubric-sticky-body">
-            <div className="cefr-anchor-scale" aria-label={t.cefrAnchorAriaLabel}>
-              {part.cefr_scale.map((anchor) => (
-                <div key={anchor.level}>
-                  <strong>{anchor.level}</strong>
-                  <span>{anchor.marks}</span>
-                  <p>{anchor.descriptor}</p>
-                </div>
-              ))}
-            </div>
-            <div className="rubric-grid">
-              {part.rubric.map((criterion) => (
-                <article key={criterion.criterion}>
-                  <div>
-                    <strong>{criterion.criterion}</strong>
-                    <span className="cefr-mark-level">{levelForMarks(marks[criterion.criterion], criterion.max_marks)}</span>
-                  </div>
-                  <p>{criterion.description}</p>
-                  <label htmlFor={`criterion-${part.id}-${criterion.criterion}`}>{t.markLabel(criterion.max_marks)}</label>
-                  <div className="sleek-score-combo">
-                    <input
-                      id={`criterion-${part.id}-${criterion.criterion}`}
-                      type="number"
-                      min={0}
-                      max={criterion.max_marks}
-                      step={0.5}
-                      className="sleek-score-input"
-                      placeholder="0.0"
-                      value={marks[criterion.criterion]}
-                      disabled={!canEdit}
-                      onChange={(event) => setMarks((current) => ({ ...current, [criterion.criterion]: event.target.value }))}
-                    />
-                    <SearchableSelect
-                      ariaLabel={t.markLabel(criterion.max_marks)}
-                      className="sleek-score-select"
-                      options={[
-                        { value: "", label: "Select preset score..." },
-                        ...Array.from({ length: Math.floor(criterion.max_marks * 2) + 1 }, (_, i) => {
-                          const scoreVal = i * 0.5;
-                          return {
-                            value: String(scoreVal),
-                            label: `${scoreVal} / ${criterion.max_marks} marks`,
-                          };
-                        }),
-                      ]}
-                      searchable={false}
-                      value={marks[criterion.criterion]}
-                      disabled={!canEdit}
-                      onChange={(value) => setMarks((current) => ({ ...current, [criterion.criterion]: String(value) }))}
-                    />
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
       <label htmlFor={`comment-${part.id}`}>{t.commentLabel}</label>
-      <textarea id={`comment-${part.id}`} rows={3} value={comment} disabled={!canEdit} onChange={(event) => setComment(event.target.value)} />
-      {canEdit && (
-        <div className="form-actions">
-          <Button onClick={saveProgress} disabled={saving || (isPublished ? !allScored : !hasProgress)}>
-            {saving ? t.saving : isPublished ? t.confirmEvaluation : t.saveDraft}
-          </Button>
-          {!isPublished && <p className="hint">{t.draftHint}</p>}
-        </div>
-      )}
+      <textarea
+        id={`comment-${part.id}`}
+        rows={3}
+        value={comment}
+        disabled={!canEdit}
+        onChange={(event) => onCommentChange(event.target.value)}
+      />
+      {canEdit && <p className="hint">{t.rubricSideHint}</p>}
     </section>
   );
 }

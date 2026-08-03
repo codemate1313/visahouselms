@@ -43,6 +43,7 @@ export const gradingDetailStrings = {
       close: "Hide rubric",
       show: "Show rubric",
     },
+    rubricSideHint: "Score the rubric in the panel on the right, then Save.",
     generating: "Generating...",
     graded: "Graded",
     draftSaved: "Draft saved",
