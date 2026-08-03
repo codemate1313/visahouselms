@@ -92,3 +92,4 @@ export const Vouchers = lazy(() => import("../pages/super-admin/Vouchers").then(
 export const PublicVouchersPage = lazy(() => import("../components/landing/VouchersSection").then((module) => ({ default: module.VouchersSection })));
 export const BlogsList = lazy(() => import("../pages/public/BlogsList").then((module) => ({ default: module.BlogsList })));
 export const BlogDetail = lazy(() => import("../pages/public/BlogDetail").then((module) => ({ default: module.BlogDetail })));
+export const ExamNews = lazy(() => import("../pages/student/ExamNews").then((module) => ({ default: module.ExamNews })));

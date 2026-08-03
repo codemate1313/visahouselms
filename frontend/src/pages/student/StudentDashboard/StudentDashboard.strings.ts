@@ -1,9 +1,4 @@
 export const studentDashboardStrings = {
-  examNews: {
-    eyebrow: "Exam & immigration updates",
-    heading: "Where your English score can take you",
-    loading: "Loading updates...",
-  },
   loadError: "Failed to load your dashboard.",
   loading: "Loading...",
   eyebrow: "Student Dashboard",

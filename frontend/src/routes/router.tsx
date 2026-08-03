@@ -3,6 +3,7 @@ import { LandingLayout } from "../components/landing/LandingLayout";
 import { Login } from "../pages/Login";
 import {
   AboutUs,
+  ExamNews,
   BlogDetail,
   BlogsList,
   AccountForm,
@@ -307,6 +308,7 @@ export const router = createBrowserRouter([
           { path: "attempts/:id/result", element: <AttemptResult /> },
           { path: "attempts/:id/result/details", element: <AttemptResultDetails /> },
           { path: "progress", element: <StudentProgress /> },
+          { path: "news", element: <ExamNews /> },
           { path: "announcements", element: <StudentAnnouncements /> },
           { path: "notifications", element: <NotificationsInbox fallbackRoute="/student/dashboard" /> },
           { path: "support", element: <SupportCenter /> },

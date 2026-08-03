@@ -10,6 +10,7 @@ export const studentLayoutStrings = {
     plansAndUpgrades: "Plans & Upgrades",
     myTests: "My Tests",
     myTestHistory: "My Test History",
+    news: "News",
     progress: "Progress",
     supportSection: "SUPPORT",
     support: "Raise a Query",
