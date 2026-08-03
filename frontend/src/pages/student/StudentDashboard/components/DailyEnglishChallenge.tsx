@@ -45,6 +45,36 @@ interface DailyChallenge {
   activity: ChallengeActivity[];
 }
 
+/**
+ * The animated streak flame. Rendered at full size on the result view and as a
+ * compact button in the facts view, so the fire stays visible while a student
+ * browses discovery facts.
+ */
+function StreakFlame({ sparkCount, label }: { sparkCount: number; label: string }) {
+  return (
+    <span className="daily-completion-fire" aria-label={label}>
+      <span className="daily-fire-halo" />
+      <span className="daily-fire-flame">
+        <i className="daily-fire-outer" />
+        <i className="daily-fire-middle" />
+        <i className="daily-fire-core" />
+      </span>
+      <span className="daily-fire-sparks" aria-hidden="true">
+        {Array.from({ length: sparkCount }, (_, index) => (
+          <i
+            key={index}
+            style={{
+              "--spark-index": index,
+              "--spark-x": `${(index - (sparkCount - 1) / 2) * 8}px`,
+              "--spark-rotate": `${(index - (sparkCount - 1) / 2) * 14}deg`,
+            } as CSSProperties}
+          />
+        ))}
+      </span>
+    </span>
+  );
+}
+
 function PracticeActivity({ activity }: { activity: ChallengeActivity[] }) {
   const t = strings.dailyEnglish;
   return (
@@ -163,8 +193,21 @@ export function DailyEnglishChallenge() {
           {showFacts ? (
             <div className="daily-facts-summary">
               <div className="daily-facts-header">
-                <span className="daily-english-eyebrow">English Discovery</span>
-                <h2>English Fact #{factIndex + 1}</h2>
+                <button
+                  className="daily-fire-button"
+                  onClick={() => setShowFacts(false)}
+                  title={t.fireLabel(challenge.score)}
+                  type="button"
+                >
+                  <StreakFlame label={t.fireLabel(challenge.score)} sparkCount={sparkCount} />
+                  <span className="daily-fire-button-streak">
+                    {challenge.current_streak} {challenge.current_streak === 1 ? t.day : t.days}
+                  </span>
+                </button>
+                <span className="daily-facts-heading-group">
+                  <span className="daily-english-eyebrow">English Discovery</span>
+                  <h2>English Fact #{factIndex + 1}</h2>
+                </span>
               </div>
               <div className="daily-fact-card">
                 <div className="daily-fact-content">
@@ -243,26 +286,7 @@ export function DailyEnglishChallenge() {
             </div>
           ) : (
             <div className="daily-completion-summary">
-              <div className="daily-completion-fire" aria-label={t.fireLabel(challenge.score)}>
-                <span className="daily-fire-halo" />
-                <span className="daily-fire-flame">
-                  <i className="daily-fire-outer" />
-                  <i className="daily-fire-middle" />
-                  <i className="daily-fire-core" />
-                </span>
-                <span className="daily-fire-sparks" aria-hidden="true">
-                  {Array.from({ length: sparkCount }, (_, index) => (
-                    <i
-                      key={index}
-                      style={{
-                        "--spark-index": index,
-                        "--spark-x": `${(index - (sparkCount - 1) / 2) * 8}px`,
-                        "--spark-rotate": `${(index - (sparkCount - 1) / 2) * 14}deg`,
-                      } as CSSProperties}
-                    />
-                  ))}
-                </span>
-              </div>
+              <StreakFlame label={t.fireLabel(challenge.score)} sparkCount={sparkCount} />
               <div className="daily-completion-copy">
                 <span className="daily-english-eyebrow">{t.eyebrow}</span>
                 <h2>{t.completedHeading}</h2>

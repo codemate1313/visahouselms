@@ -179,11 +179,15 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
   overflow: hidden;
 }
 
+/* Result and facts views swap inside the same panel. Reserving the height here
+   keeps the dashboard below from jumping as the student moves between them
+   (and between facts of different lengths). */
 .daily-completion-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(230px, 0.65fr);
   align-items: center;
   gap: 28px;
+  min-height: var(--daily-panel-height, 268px);
 }
 
 .daily-completion-summary {
@@ -365,6 +369,14 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
   .daily-fire-flame,
   .daily-fire-sparks i {
     animation: none;
+  }
+
+  .daily-fire-button {
+    transition: none;
+  }
+
+  .daily-fire-button:hover {
+    transform: none;
   }
 }
 
@@ -554,6 +566,12 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
     grid-template-columns: 1fr;
   }
 
+  /* Stacked layout is naturally taller; the reserved height would only add
+     dead space. */
+  .daily-completion-layout {
+    min-height: 0;
+  }
+
   .daily-completion .daily-activity-area {
     padding: 20px 0 0;
     border-top: 1px solid var(--border);
@@ -597,6 +615,21 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
   .daily-completion-fire {
     width: 70px;
     height: 82px;
+  }
+
+  .daily-fire-button .daily-completion-fire {
+    width: 36px;
+    height: 38px;
+  }
+
+  .daily-facts-header h2 {
+    font-size: 19px;
+  }
+
+  .daily-fact-card,
+  .daily-fact-content,
+  .daily-facts-loading {
+    min-height: 0;
   }
 
   .daily-completion-copy h2 {
@@ -660,6 +693,95 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
   gap: 16px;
   flex: 1;
   max-width: 100%;
+  min-width: 0;
+}
+
+.daily-facts-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.daily-facts-heading-group {
+  display: block;
+  min-width: 0;
+}
+
+.daily-facts-header h2 {
+  margin: 2px 0 0;
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+/* Compact, tappable version of the result-screen flame. */
+.daily-fire-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 200ms ease,
+    border-color 200ms ease;
+}
+
+.daily-fire-button:hover {
+  border-color: var(--primary);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 18%, transparent);
+  transform: translateY(-1px);
+}
+
+.daily-fire-button:active {
+  transform: translateY(0);
+}
+
+.daily-fire-button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Scale the flame down in place; the button keeps a fixed box so the header
+   height never shifts. */
+.daily-fire-button .daily-completion-fire {
+  --fire-scale: 0.42;
+  width: 40px;
+  height: 42px;
+  transform-origin: center bottom;
+}
+
+.daily-fire-button-streak {
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* Facts vary in length; a reserved content box stops the card from resizing
+   as the student pages through them. */
+.daily-fact-card {
+  min-height: 196px;
+  justify-content: space-between;
+}
+
+.daily-fact-content {
+  min-height: 132px;
+}
+
+.daily-fact-text p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.daily-facts-loading {
+  min-height: 132px;
 }
 
 .daily-completion-summary .completion-btn-row {
