@@ -1436,7 +1436,9 @@ body {
   white-space: nowrap !important;
   overflow: visible !important;
   background: var(--surface) !important;
-  border-left: 1px solid var(--border) !important;
+  /* No divider: the actions column is sticky, but a permanent border reads as
+     a stray vertical line whenever the table fits without scrolling. */
+  border-left: 0 !important;
   box-shadow: none;
   z-index: 4;
 }
@@ -1612,7 +1614,6 @@ body {
 [data-theme="dark"] .sleek-users-table.responsive-data-table td.col-actions,
 [data-theme="dark"] .sleek-users-table.responsive-data-table .table-actions-heading.col-actions {
   background: rgba(24, 27, 34, 0.98) !important;
-  border-left-color: rgba(255, 255, 255, 0.12) !important;
   box-shadow: none;
 }
 
