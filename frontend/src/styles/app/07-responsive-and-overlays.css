@@ -1759,13 +1759,13 @@ body {
 
 .institute-members-table .table-actions-heading,
 .institute-members-table td.institute-row-actions {
-  width: 72px !important;
-  min-width: 72px !important;
+  width: 68px !important;
+  min-width: 68px !important;
+  max-width: 68px !important;
   text-align: center !important;
-}
-
-.institute-members-table td.institute-row-actions {
-  overflow: visible !important;
+  padding-left: 4px !important;
+  padding-right: 12px !important;
+  overflow: hidden !important;
 }
 
 .support-ticket-detail-actions {
