@@ -30,7 +30,7 @@ export function PlanForm() {
   const [modules, setModules] = useState<PlanModule[]>([]);
   const [gstRates, setGstRates] = useState<GstOption[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
-  const [features, setFeatures] = useState<string[]>([]);
+  const [features, setFeatures] = useState<string[]>([""]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +66,9 @@ export function PlanForm() {
             usd_price: data.usd_price ? String(data.usd_price) : "",
           });
           setSelected(new Set((data.modules || []).map((module: PlanModule) => module.id)));
-          setFeatures(data.features || []);
+          // Features are required; start with one blank row so plans saved
+          // before this field existed are still editable.
+          setFeatures(data.features?.length ? data.features : [""]);
         }
       })
       .catch(() => setError(strings.errors.load))
@@ -101,7 +103,11 @@ export function PlanForm() {
 
     const cleanedFeatures = features.map((item) => item.trim()).filter(Boolean);
     if (cleanedFeatures.length === 0) {
-      setError("Please add at least one pricing card feature for this plan.");
+      setError(strings.errors.featuresRequired);
+      if (!features.length) setFeatures([""]);
+      const firstFeatureInput = document.querySelector<HTMLInputElement>(".plan-feature-editor input");
+      firstFeatureInput?.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstFeatureInput?.focus({ preventScroll: true });
       return;
     }
 

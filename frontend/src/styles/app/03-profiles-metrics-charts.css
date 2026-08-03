@@ -1853,6 +1853,28 @@ button.danger-text {
   margin-top: 2px;
 }
 
+/* Option rows pair a bold label with a description. Without an explicit block
+   layout the two render inline and read as one run-on string
+   ("Publish on websiteOnly published plans..."). */
+.plan-course-option > span,
+.toggle-row > span,
+.testing-login-option > span,
+.module-part-list > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.plan-course-option > span > small,
+.toggle-row > span > small,
+.testing-login-option > span > small,
+.module-part-list > span > small {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
 @media (max-width: 760px) {
   .tree-course-facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));

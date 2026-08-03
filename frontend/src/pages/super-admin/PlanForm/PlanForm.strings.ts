@@ -43,5 +43,6 @@ export const planFormStrings = {
   errors: {
     load: "Failed to load plan.",
     save: "Failed to save plan.",
+    featuresRequired: "Add at least one pricing card feature before saving this plan.",
   },
 } as const;
