@@ -104,6 +104,29 @@ export function ModuleControlDetail() {
     }
   }
 
+  async function toggleDemo() {
+    if (!module) return;
+    const willEnable = !module.is_demo;
+    const t = strings.demo;
+    const confirmed = await confirmAction(
+      willEnable ? t.onMessage(module.title) : t.offMessage(module.title),
+      {
+        title: willEnable ? t.onTitle : t.offTitle,
+        confirmText: willEnable ? t.onConfirm : t.offConfirm,
+        cancelText: strings.confirm.cancel,
+        variant: willEnable ? "primary" : "warning",
+      }
+    );
+    if (!confirmed) return;
+
+    try {
+      await apiClient.patch(`/super-admin/modules/${id}/demo`, { is_demo: willEnable });
+      await load();
+    } catch (err) {
+      setError(extractErrorMessage(err, strings.errors.demo));
+    }
+  }
+
   async function changeStatus(next: string) {
     if (!module) return;
     const isArchive = next === "archived";
@@ -154,7 +177,7 @@ export function ModuleControlDetail() {
 
       {error && <div className="error-text detail-error-banner">{error}</div>}
 
-      <ActionToolbar module={module} onToggleVisibility={toggleVisibility} onChangeStatus={changeStatus} onRemove={remove} />
+      <ActionToolbar module={module} onToggleVisibility={toggleVisibility} onToggleDemo={toggleDemo} onChangeStatus={changeStatus} onRemove={remove} />
       <OverviewCard module={module} />
       <ModuleAnalytics moduleId={id!} />
       <AssignInstitutePanel module={module} available={available} selected={selected} onSelectedChange={setSelected} busy={busy} onSubmit={assign} />

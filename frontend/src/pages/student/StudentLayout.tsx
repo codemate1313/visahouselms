@@ -6,6 +6,7 @@ import { PortalTopBar } from "@/components/PortalTopBar";
 import { Sidebar, type MenuItem, type MenuSection } from "@/components/Sidebar";
 import { useInstituteBranding } from "@/hooks/useInstituteBranding";
 import { useAuthStore } from "@/store/authStore";
+import { useStudentAccess } from "@/hooks/useStudentAccess";
 import { studentLayoutStrings as strings } from "./StudentLayout.strings";
 
 const COLLAPSE_STORAGE_KEY = "student-lms-sidebar-collapsed";
@@ -16,6 +17,9 @@ export function StudentLayout() {
   );
   const user = useAuthStore((state) => state.user);
   const isInstituteStudent = user?.institute_id != null;
+  // Without a paid plan the portal is demo-only: free sample tests plus a way
+  // to purchase. Everything else is hidden until a subscription is active.
+  const { hasActivePlan } = useStudentAccess();
   const { branding, logoUrl } = useInstituteBranding(isInstituteStudent ? user?.institute_slug : null);
   const roleLabel = isInstituteStudent ? strings.instituteStudent : strings.directStudent;
 
@@ -28,21 +32,24 @@ export function StudentLayout() {
   }
 
   const menu = strings.menu;
-  const mainItems: MenuItem[] = [
-    { key: "dashboard", label: menu.dashboard, icon: "dashboard", to: "/student/dashboard" },
-  ];
+  const mainItems: MenuItem[] = [];
+  if (hasActivePlan) {
+    mainItems.push({ key: "dashboard", label: menu.dashboard, icon: "dashboard", to: "/student/dashboard" });
+  }
   if (!isInstituteStudent) {
     mainItems.push({ key: "catalog", label: menu.plansAndUpgrades, icon: "courses", to: "/student/courses" });
   }
-  mainItems.push(
-    { key: "my-courses", label: menu.myTests, icon: "module", to: "/student/my-courses" },
-    { key: "attempts", label: menu.myTestHistory, icon: "grading", to: "/student/attempts" },
-    { key: "progress", label: menu.progress, icon: "analytics", to: "/student/progress" },
-    { key: "news", label: menu.news, icon: "notifications", to: "/student/news" },
-    { key: "vouchers", label: menu.vouchers, icon: "transactions", to: "/student/vouchers" },
-  );
-  if (!isInstituteStudent) {
-    mainItems.push({ key: "purchase-history", label: menu.purchaseHistory, icon: "transactions", to: "/student/purchase-history" });
+  mainItems.push({ key: "my-courses", label: menu.myTests, icon: "module", to: "/student/my-courses" });
+  if (hasActivePlan) {
+    mainItems.push(
+      { key: "attempts", label: menu.myTestHistory, icon: "grading", to: "/student/attempts" },
+      { key: "progress", label: menu.progress, icon: "analytics", to: "/student/progress" },
+      { key: "news", label: menu.news, icon: "notifications", to: "/student/news" },
+      { key: "vouchers", label: menu.vouchers, icon: "transactions", to: "/student/vouchers" },
+    );
+    if (!isInstituteStudent) {
+      mainItems.push({ key: "purchase-history", label: menu.purchaseHistory, icon: "transactions", to: "/student/purchase-history" });
+    }
   }
 
   const sections: MenuSection[] = [
@@ -50,12 +57,16 @@ export function StudentLayout() {
       title: menu.mainMenu,
       items: mainItems,
     },
-    {
+  ];
+  if (hasActivePlan) {
+    sections.push({
       title: menu.supportSection,
       items: [
         { key: "support", label: menu.support, icon: "help", to: "/student/support" },
       ],
-    },
+    });
+  }
+  sections.push(
     {
       title: menu.settings,
       items: [
@@ -71,8 +82,7 @@ export function StudentLayout() {
         },
       ],
     },
-
-  ];
+  );
 
   return (
     <div className={`dashboard student-portal${isInstituteStudent ? " institute-branded-portal" : " super-admin-portal"}`}>

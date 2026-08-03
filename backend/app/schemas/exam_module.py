@@ -105,6 +105,10 @@ class ModuleVisibilityUpdate(BaseModel):
     is_visible: bool
 
 
+class ModuleDemoUpdate(BaseModel):
+    is_demo: bool
+
+
 class ModuleInstituteAssignment(BaseModel):
     institute_id: int = Field(gt=0)
 

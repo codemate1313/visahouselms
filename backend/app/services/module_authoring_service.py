@@ -176,6 +176,7 @@ def serialize_module(module: ExamModule, detailed: bool = False) -> dict:
         "instructions": module.instructions,
         "status": module.status,
         "is_visible": module.is_visible,
+        "is_demo": module.is_demo,
         "duration_minutes": module.duration_minutes,
         "blueprint_version": module.blueprint_version,
         "source_module_ids": list(module.source_module_ids or []),
@@ -980,6 +981,23 @@ def set_visibility(db: Session, actor: User, module_id: int, visible: bool, ip: 
     module = get_module_or_404(db, module_id)
     module.is_visible = visible
     _audit(db, actor, "exam_module.show" if visible else "exam_module.hide", module.id, ip)
+    db.add(module)
+    db.commit()
+    return serialize_for_super_admin(get_module_or_404(db, module.id))
+
+
+def set_demo(db: Session, actor: User, module_id: int, is_demo: bool, ip: Optional[str]) -> dict:
+    """Demo modules are free sample tests: students without a subscription may
+    sit them to preview the platform. Only published, visible modules qualify -
+    a draft or hidden module would 404 for the student anyway."""
+    module = get_module_or_404(db, module_id)
+    if is_demo and (module.status != "published" or not module.is_visible):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only a published, visible module can be offered as a free demo",
+        )
+    module.is_demo = is_demo
+    _audit(db, actor, "exam_module.demo_on" if is_demo else "exam_module.demo_off", module.id, ip)
     db.add(module)
     db.commit()
     return serialize_for_super_admin(get_module_or_404(db, module.id))

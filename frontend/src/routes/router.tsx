@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { LandingLayout } from "../components/landing/LandingLayout";
+import { RequireActivePlan } from "./RequireActivePlan";
 import { Login } from "../pages/Login";
 import {
   AboutUs,
@@ -301,20 +302,22 @@ export const router = createBrowserRouter([
         path: "/student",
         element: <StudentLayout />,
         children: [
-          { path: "dashboard", element: <StudentDashboard /> },
+          // Demo students (no active plan) only get My Tests, the plan
+          // catalogue and their own account; everything else redirects.
+          { path: "dashboard", element: <RequireActivePlan><StudentDashboard /></RequireActivePlan> },
           { path: "courses", element: <StudentCourseCatalog /> },
           { path: "my-courses", element: <MyCourses /> },
-          { path: "attempts", element: <StudentAttempts /> },
+          { path: "attempts", element: <RequireActivePlan><StudentAttempts /></RequireActivePlan> },
           { path: "attempts/:id/result", element: <AttemptResult /> },
           { path: "attempts/:id/result/details", element: <AttemptResultDetails /> },
-          { path: "progress", element: <StudentProgress /> },
-          { path: "news", element: <ExamNews /> },
-          { path: "announcements", element: <StudentAnnouncements /> },
-          { path: "notifications", element: <NotificationsInbox fallbackRoute="/student/dashboard" /> },
-          { path: "support", element: <SupportCenter /> },
+          { path: "progress", element: <RequireActivePlan><StudentProgress /></RequireActivePlan> },
+          { path: "news", element: <RequireActivePlan><ExamNews /></RequireActivePlan> },
+          { path: "announcements", element: <RequireActivePlan><StudentAnnouncements /></RequireActivePlan> },
+          { path: "notifications", element: <RequireActivePlan><NotificationsInbox fallbackRoute="/student/dashboard" /></RequireActivePlan> },
+          { path: "support", element: <RequireActivePlan><SupportCenter /></RequireActivePlan> },
           { path: "profile", element: <StudentProfile /> },
-          { path: "vouchers", element: <StudentVouchers /> },
-          { path: "purchase-history", element: <StudentPurchaseHistory /> },
+          { path: "vouchers", element: <RequireActivePlan><StudentVouchers /></RequireActivePlan> },
+          { path: "purchase-history", element: <RequireActivePlan><StudentPurchaseHistory /></RequireActivePlan> },
           { path: "sessions", element: <Sessions apiBase="/student" /> },
 
           { path: "change-password", element: <ChangePassword apiBase="/student" /> },

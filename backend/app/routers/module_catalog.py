@@ -8,7 +8,12 @@ from app.dependencies.auth import get_current_user, require_role
 from app.models.exam_module import MODULE_STATUSES, MODULE_TYPES
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
-from app.schemas.exam_module import ModuleInstituteAssignment, ModuleStatusUpdate, ModuleVisibilityUpdate
+from app.schemas.exam_module import (
+    ModuleDemoUpdate,
+    ModuleInstituteAssignment,
+    ModuleStatusUpdate,
+    ModuleVisibilityUpdate,
+)
 from app.services import module_authoring_service
 
 router = APIRouter(
@@ -59,6 +64,11 @@ def set_status(module_id: int, payload: ModuleStatusUpdate, request: Request, db
 @router.patch("/{module_id}/visibility")
 def set_visibility(module_id: int, payload: ModuleVisibilityUpdate, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     return module_authoring_service.set_visibility(db, actor, module_id, payload.is_visible, _ip(request))
+
+
+@router.patch("/{module_id}/demo")
+def set_demo(module_id: int, payload: ModuleDemoUpdate, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    return module_authoring_service.set_demo(db, actor, module_id, payload.is_demo, _ip(request))
 
 
 @router.post("/{module_id}/assignments", status_code=status.HTTP_201_CREATED)

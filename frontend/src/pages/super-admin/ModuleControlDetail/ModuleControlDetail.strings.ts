@@ -5,6 +5,19 @@ export const moduleControlDetailStrings = {
   backToCourseTree: "Back to course tree",
   hideFromSite: "Hide from site",
   showOnSite: "Show on site",
+  markAsDemo: "Offer as free demo",
+  unmarkAsDemo: "Stop free demo",
+  demoBadge: "Free demo",
+  demo: {
+    onTitle: "Offer as free demo?",
+    onMessage: (title: string) =>
+      `Any student without a subscription will be able to sit "${title}" once and see their score.`,
+    onConfirm: "Offer as demo",
+    offTitle: "Stop offering as demo?",
+    offMessage: (title: string) =>
+      `"${title}" will only be available to students whose plan includes it.`,
+    offConfirm: "Stop demo",
+  },
   publishCourse: "Publish Course",
   archive: "Archive",
   deleteCourse: "Delete course",
@@ -63,6 +76,7 @@ export const moduleControlDetailStrings = {
     assign: "Failed to assign course.",
     revoke: "Failed to revoke access.",
     visibility: "Failed to change course visibility.",
+    demo: "Failed to change demo availability.",
     status: "Failed to change course status.",
     delete: "Failed to delete course.",
   },

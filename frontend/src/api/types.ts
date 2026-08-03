@@ -317,6 +317,8 @@ export interface ExamModule {
   instructions: string | null;
   status: ExamModuleStatus;
   is_visible: boolean;
+  /** Free sample test: students without a subscription may sit it. */
+  is_demo?: boolean;
   deleted_at: string | null;
   assignment_count: number;
   duration_minutes: number;

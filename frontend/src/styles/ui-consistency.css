@@ -517,3 +517,11 @@ html {
     min-height: 40px;
   }
 }
+
+/* Module title with an inline status badge (e.g. Free demo). */
+.module-detail-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}

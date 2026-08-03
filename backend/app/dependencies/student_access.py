@@ -25,6 +25,16 @@ def require_student(user: User = Depends(get_current_user)) -> User:
     return user
 
 
+def has_active_subscription(db: Session, user: User) -> bool:
+    """True when the student's institute (B2B) or personal (B2C) subscription is
+    live. Demo access is only granted while this is False."""
+    if user.institute_id is not None:
+        _, state = current_subscription(db, user.institute_id)
+    else:
+        _, state = current_user_subscription(db, user.id)
+    return state in (STATE_ACTIVE, STATE_GRACE)
+
+
 def has_module_access(db: Session, user: User, module_id: int) -> bool:
     """The single place a student's entitlement to a module is resolved -
     B2B (their institute's own Plan subscription) or B2C (their own personal
@@ -32,11 +42,13 @@ def has_module_access(db: Session, user: User, module_id: int) -> bool:
     plan includes it. Reused by both the plan-catalog entitled flag and the
     attempt-start check so the two can never drift apart.
 
-    Demo modules are the one exception: free sample tests open to every
-    student so they can try the engine and receive a score before buying."""
-    module = db.get(ExamModule, module_id)
-    if module is not None and module.is_demo:
-        return True
+    Demo modules are the one exception: free sample tests a student may sit
+    while they have no active subscription, so they can try the engine and get
+    a score before buying. Once subscribed, normal plan entitlement applies."""
+    if not has_active_subscription(db, user):
+        module = db.get(ExamModule, module_id)
+        if module is not None and module.is_demo:
+            return True
     if user.institute_id is not None:
         subscription, state = current_subscription(db, user.institute_id)
         if subscription is None or state not in (STATE_ACTIVE, STATE_GRACE):

@@ -4,11 +4,12 @@ import type { ManagedModule } from "../types";
 interface ActionToolbarProps {
   module: ManagedModule;
   onToggleVisibility: () => void;
+  onToggleDemo: () => void;
   onChangeStatus: (status: string) => void;
   onRemove: () => void;
 }
 
-export function ActionToolbar({ module, onToggleVisibility, onChangeStatus, onRemove }: ActionToolbarProps) {
+export function ActionToolbar({ module, onToggleVisibility, onToggleDemo, onChangeStatus, onRemove }: ActionToolbarProps) {
   return (
     <div className="course-admin-actions-bar">
       <div className="action-buttons-group">
@@ -28,6 +29,21 @@ export function ActionToolbar({ module, onToggleVisibility, onChangeStatus, onRe
           </svg>
           {module.is_visible ? strings.hideFromSite : strings.showOnSite}
         </button>
+
+        {/* Only a published, visible module can be a free demo - the server
+            enforces the same rule. */}
+        {module.status === "published" && module.is_visible && (
+          <button
+            type="button"
+            className={module.is_demo ? "btn-action-primary" : "btn-action-outline"}
+            onClick={onToggleDemo}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            {module.is_demo ? strings.unmarkAsDemo : strings.markAsDemo}
+          </button>
+        )}
 
         {module.status !== "published" && (
           <button type="button" className="btn-action-primary" onClick={() => onChangeStatus("published")}>
