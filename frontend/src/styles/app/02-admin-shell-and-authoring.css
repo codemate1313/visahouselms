@@ -3794,6 +3794,14 @@ button.secondary-button:hover,
   transform: translateY(-1px);
 }
 
+.institute-row-actions a:hover svg,
+.institute-row-actions a:hover *,
+.institute-row-actions button:hover:not(:disabled) svg,
+.institute-row-actions button:hover:not(:disabled) * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
 .institute-row-actions .action-edit:hover {
   background: #2563eb;
   border-color: #2563eb;
