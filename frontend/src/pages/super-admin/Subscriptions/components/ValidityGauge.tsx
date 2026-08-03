@@ -16,12 +16,14 @@ export function ValidityGauge({ daysRemaining, state }: ValidityGaugeProps) {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percent / 100) * circumference;
 
+  // "none" means the institute never had a subscription — not an expiry, so it
+  // must not be coloured or described as a failure.
   const strokeColor =
     state === "active"
       ? "var(--green-600)"
       : state === "grace"
         ? "var(--amber-600)"
-        : state === "scheduled"
+        : state === "scheduled" || state === "none"
           ? "var(--slate-500)"
           : "var(--danger)";
 
@@ -32,7 +34,9 @@ export function ValidityGauge({ daysRemaining, state }: ValidityGaugeProps) {
         ? t.graceDescription
         : state === "scheduled"
           ? t.scheduledDescription
-          : t.expiredDescription;
+          : state === "none"
+            ? t.noneDescription
+            : t.expiredDescription;
 
   return (
     <div className="validity-gauge-card">

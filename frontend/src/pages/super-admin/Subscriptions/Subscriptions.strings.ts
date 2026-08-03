@@ -19,7 +19,8 @@ export const subscriptionsStrings = {
   graceDaysLeft: "Grace days left:",
   daysLeft: "Days left:",
   startsInDays: "Starts in (days):",
-  noAllocation: "Nothing allocated to this institute yet — set its provisions on the institute form.",
+  noAllocation: "Nothing allocated to this institute yet — set its provisions on the institute form before a plan can be assigned.",
+  setProvisions: "Set provisions",
   assigning: "Assigning...",
   assignPlan: "Assign plan",
   renewing: "Renewing...",
@@ -109,6 +110,7 @@ export const subscriptionsStrings = {
     activeDescription: "Plan active with full portal access.",
     graceDescription: "Grace period active. Please renew.",
     expiredDescription: "Subscription expired.",
+    noneDescription: "No plan assigned to this institute yet.",
     scheduledDescription: "Renewed ahead of time - this term starts when the current one ends.",
   },
   history: {

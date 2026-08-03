@@ -5,7 +5,7 @@ import { STATE_BADGES, stateLabel } from "../helpers";
 import type { InstituteRow, StatusResponse, SubscriptionInfo } from "../types";
 import { QuotaPieChart } from "./QuotaPieChart";
 import { ValidityGauge } from "./ValidityGauge";
-import { Badge, Button } from "@/components/ui";
+import { Badge, Button, LinkButton } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { OngoingPlanDialog } from "./OngoingPlanDialog";
 import { PlanRenewalDialog } from "./PlanRenewalDialog";
@@ -131,8 +131,14 @@ export function SubscriptionManageCard({
               >
                 {t.restartPlan}
               </Button>
+            ) : state === "none" && !allocation ? (
+              /* Assigning is impossible until provisions exist, so send the
+                 admin there instead of showing a dead disabled button. */
+              <LinkButton fullWidth to={`/super-admin/institutes/${selectedInstitute.id}`}>
+                {t.setProvisions}
+              </LinkButton>
             ) : state === "none" ? (
-              <Button fullWidth disabled={busy || !allocation} onClick={onAssign}>
+              <Button fullWidth disabled={busy} onClick={onAssign}>
                 {busy ? t.assigning : t.assignPlan}
               </Button>
             ) : hasOngoingPlan && current ? (
