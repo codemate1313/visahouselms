@@ -10,7 +10,18 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
+  align-items: flex-start;
   gap: 16px;
+}
+
+/* The filter is inline-flex, but a stretch-aligned flex column would still
+   pull it across the full width. */
+.exam-news-main > .ui-segmented-control {
+  max-width: 100%;
+}
+
+.exam-news-main > .exam-news-grid {
+  width: 100%;
 }
 
 .exam-news-grid {
