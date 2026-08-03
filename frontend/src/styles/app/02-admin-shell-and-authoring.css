@@ -15,9 +15,6 @@
   overflow-x: hidden;
 }
 
-.announcement-admin-page {
-  padding: 8px 0 28px;
-}
 
 .announcement-admin-page .page-header {
   margin-bottom: 28px;
@@ -37,6 +34,7 @@
 
 /* Platform Notifications Redesign (50-50 Equal Split, Premium Emoji-Free) */
 .announcement-admin-page {
+  padding: 8px 0 28px;
   width: 100%;
 }
 

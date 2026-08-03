@@ -784,17 +784,13 @@ code,
   flex-wrap: nowrap;
 }
 
+
 .responsive-data-table .table-actions,
 .responsive-data-table .institute-row-actions,
 .responsive-data-table .row-actions-inline {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-}
-
-.responsive-data-table .table-actions,
-.responsive-data-table .institute-row-actions,
-.responsive-data-table .row-actions-inline {
   justify-content: flex-end;
   gap: 8px;
 }

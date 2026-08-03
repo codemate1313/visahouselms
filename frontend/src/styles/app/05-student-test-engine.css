@@ -3184,21 +3184,6 @@ th[aria-sort="descending"] .table-sort-button::after {
   font-weight: var(--app-body-weight, 400);
 }
 
-.typography-preview-metrics {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-}
-
-.typography-preview-stat {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  text-align: center;
-}
 
 .typography-preview-stat p {
   margin: 0 0 2px;
@@ -3216,12 +3201,22 @@ th[aria-sort="descending"] .table-sort-button::after {
 }
 
 .typography-preview-metrics {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
 .typography-preview-stat {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  text-align: center;
   min-height: 104px;
   border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: var(--radius-sm);
@@ -3668,12 +3663,10 @@ th[aria-sort="descending"] .table-sort-button::after {
   color: rgba(14, 13, 16, 0.42);
 }
 
+
 .static-auth-modal-wrapper .concise-submit-btn {
   background: linear-gradient(135deg, #e11d2e, #b91323);
   box-shadow: 0 12px 30px -8px rgba(225, 29, 46, 0.4);
-}
-
-.static-auth-modal-wrapper .concise-submit-btn {
   border-radius: var(--radius-lg);
   font-size: 15px;
   font-weight: 600;

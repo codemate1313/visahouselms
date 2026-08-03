@@ -618,13 +618,11 @@
   box-shadow: var(--shadow-sm);
 }
 
+
 .invoice-header {
   display: flex;
   justify-content: space-between;
   gap: 24px;
-}
-
-.invoice-header {
   align-items: flex-start;
   margin-bottom: 22px;
   padding-bottom: 20px;
