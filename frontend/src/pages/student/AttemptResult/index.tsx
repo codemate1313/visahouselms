@@ -130,11 +130,8 @@ export function AttemptResult() {
   const hasOpenReevaluation = attempt.reevaluation?.status === "pending" || attempt.reevaluation?.status === "in_review";
   const canRequestReview = ["grading", "graded"].includes(attempt.status) && hasInstructorReviewablePart && !hasOpenReevaluation;
   
-  const hasOpenOrApprovedRetake =
-    attempt.retake_request?.status === "pending" ||
-    (attempt.retake_request?.status === "approved" && !attempt.retake_request.consumed_at);
   const canRequestRetake =
-    ["submitted", "grading", "graded", "expired"].includes(attempt.status) && !hasOpenOrApprovedRetake;
+    ["submitted", "grading", "graded", "expired"].includes(attempt.status) && !attempt.retake_request;
 
   const isAiGraded = attempt.parts.some((part) => part.grade?.status === "ai_graded");
   const statusLabels = strings.statusLabels;
