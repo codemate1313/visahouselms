@@ -10,7 +10,7 @@ from typing import Callable, Optional
 from urllib.parse import urlparse
 
 import httpx
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -98,7 +98,7 @@ def config_status(db: Session) -> dict:
 def _config(db: Session) -> dict:
     status = config_status(db)
     if not status["configured"]:
-        raise HTTPException(status_code=503, detail="AI evaluation is not enabled or fully configured")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI evaluation is not enabled or fully configured")
     status["api_key"] = get_setting(db, "ai.api_key") or settings.ai_api_key
     return status
 
@@ -737,12 +737,12 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
     if not responses:
         if part.section_type == "speaking":
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No audio recording found for this Speaking part to evaluate",
             )
         else:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No textual response found for this Writing part to evaluate",
             )
 
@@ -834,7 +834,7 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
 
         if res.status_code == 429:
             raise HTTPException(
-                status_code=429,
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Google Gemini API rate limit reached (15 RPM free tier limit). Please wait a moment and try again.",
             )
         
@@ -961,7 +961,7 @@ def _openai_evaluator(config: dict, payload: dict) -> dict:
         )
         if response.status_code == 429:
             raise HTTPException(
-                status_code=429,
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="OpenAI API rate limit or quota was reached. Trying the next configured evaluator if available.",
             )
         response.raise_for_status()
@@ -986,7 +986,7 @@ def _remote_evaluator(config: dict, payload: dict) -> dict:
     # Custom JSON HTTP endpoint
     parsed = urlparse(config.get("endpoint_url") or "")
     if parsed.scheme not in ("http", "https") or not parsed.netloc:
-        raise HTTPException(status_code=503, detail="AI evaluator endpoint must be an HTTP or HTTPS URL")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI evaluator endpoint must be an HTTP or HTTPS URL")
     response = httpx.post(
         config["endpoint_url"],
         headers={"Authorization": f"Bearer {config['api_key']}", "Content-Type": "application/json"},
@@ -1051,7 +1051,7 @@ def request_suggestion(
         "api_key": "test",
     }])
     if not configs_to_try:
-        raise HTTPException(status_code=503, detail="AI evaluation is not enabled or fully configured")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI evaluation is not enabled or fully configured")
 
     limits = _limit_rows(db, attempt, int(configs_to_try[0].get("monthly_limit") or DEFAULT_MONTHLY_LIMIT))
     payload = _payload(attempt, part)
@@ -1097,7 +1097,7 @@ def request_suggestion(
 
     db.commit()
     detail = str(getattr(last_error, "detail", last_error)) if last_error else "All AI evaluators failed"
-    raise HTTPException(status_code=502, detail=f"All configured AI evaluators failed: {detail[:500]}")
+    raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"All configured AI evaluators failed: {detail[:500]}")
 
 
 def _apply_ai_grade(db: Session, attempt: TestAttempt, part: ExamModulePart, suggestion: dict) -> None:

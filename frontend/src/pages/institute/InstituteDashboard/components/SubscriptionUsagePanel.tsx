@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { instituteDashboardStrings as strings } from "../InstituteDashboard.strings";
 import { STATE_CLASS, type DashboardSummary } from "../types";
+import { formatDate } from "@/utils/date";
 
 interface SubscriptionUsagePanelProps {
   subscriptionSummary: NonNullable<DashboardSummary["subscription"]>;
@@ -38,7 +39,7 @@ export function SubscriptionUsagePanel({ subscriptionSummary }: SubscriptionUsag
               </div>
             );
           })}
-          {subscription && <p className="hint">{t.renewsOrExpires(new Date(subscription.expires_at).toLocaleDateString())}</p>}
+          {subscription && <p className="hint">{t.renewsOrExpires(formatDate(subscription.expires_at))}</p>}
         </div>
       ) : (
         <p className="empty-message">{t.noneAssigned}</p>

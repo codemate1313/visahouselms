@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "@/auth/logout";
 import { GsapRouteAnimator } from "@/components/GsapRouteAnimator";
 import { PortalTopBar } from "@/components/PortalTopBar";
-import { Sidebar, type MenuSection } from "@/components/Sidebar";
+import { Sidebar, type MenuItem, type MenuSection } from "@/components/Sidebar";
 import { useAuthStore } from "@/store/authStore";
 import { dashboardLayoutStrings as strings } from "./DashboardLayout.strings";
 
@@ -25,6 +25,16 @@ export function DashboardLayout() {
   }
 
   const m = strings.menu;
+  const moneyMenuItems: MenuItem[] = canViewMoney
+    ? [
+        {
+          key: "vouchers",
+          label: m.vouchers,
+          icon: "transactions",
+          to: "/super-admin/vouchers",
+        },
+      ]
+    : [];
   const saasItems = [
     { key: "saas_institutes", label: m.saasInstitutes, to: "/super-admin/institutes" },
     { key: "saas_plans", label: m.saasPlans, to: "/super-admin/plans" },
@@ -95,6 +105,7 @@ export function DashboardLayout() {
           icon: "help",
           to: "/super-admin/support-tickets",
         },
+        ...moneyMenuItems,
         {
           key: "saas",
           label: m.saas,

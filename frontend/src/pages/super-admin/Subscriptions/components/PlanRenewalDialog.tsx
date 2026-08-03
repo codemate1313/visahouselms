@@ -2,6 +2,7 @@ import { Icon } from "@/components/icons";
 import { Button, Modal } from "@/components/ui";
 import type { InstituteAllocation } from "@/pages/super-admin/InstituteForm/types";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
+import { formatDate } from "@/utils/date";
 
 interface PlanRenewalDialogProps {
   allocation: InstituteAllocation | null;
@@ -30,7 +31,7 @@ export function PlanRenewalDialog({
   const isRestart = mode === "restart";
   const startsOn = isRestart || !nextStartDate
     ? t.today
-    : new Date(nextStartDate).toLocaleDateString("en-GB");
+    : formatDate(nextStartDate);
 
   return (
     <Modal

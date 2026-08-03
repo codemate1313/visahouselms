@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import or_, select
@@ -44,7 +45,7 @@ def get_blog_by_slug(slug: str, db: Session = Depends(get_db)):
     stmt = select(BlogPost).where(BlogPost.slug == slug, BlogPost.is_published == True)
     post = db.scalar(stmt)
     if not post:
-        raise HTTPException(status_code=404, detail="Blog post not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog post not found")
     return post
 
 
@@ -59,7 +60,7 @@ def create_blog_admin(payload: BlogPostCreate, db: Session = Depends(get_db)):
     # Check if slug exists
     existing = db.scalar(select(BlogPost).where(BlogPost.slug == payload.slug))
     if existing:
-        payload.slug = f"{payload.slug}-{int(datetime.utcnow().timestamp())}"
+        payload.slug = f"{payload.slug}-{int(datetime.now(timezone.utc).timestamp())}"
 
     item = BlogPost(**payload.model_dump())
     db.add(item)
@@ -72,7 +73,7 @@ def create_blog_admin(payload: BlogPostCreate, db: Session = Depends(get_db)):
 def update_blog_admin(blog_id: int, payload: BlogPostUpdate, db: Session = Depends(get_db)):
     item = db.get(BlogPost, blog_id)
     if not item:
-        raise HTTPException(status_code=404, detail="Blog post not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog post not found")
 
     update_data = payload.model_dump(exclude_unset=True)
     for key, val in update_data.items():
@@ -87,7 +88,7 @@ def update_blog_admin(blog_id: int, payload: BlogPostUpdate, db: Session = Depen
 def delete_blog_admin(blog_id: int, db: Session = Depends(get_db)):
     item = db.get(BlogPost, blog_id)
     if not item:
-        raise HTTPException(status_code=404, detail="Blog post not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog post not found")
     db.delete(item)
     db.commit()
     return None

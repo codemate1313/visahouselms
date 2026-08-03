@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { confirmDelete } from "@/components/confirmDialog";
 import { Button, DataTableCard, Modal, PageHeader, SearchableSelect } from "@/components/ui";
 
 import { Icon } from "@/components/icons";
@@ -111,7 +112,7 @@ export function GstRates() {
   }
 
   async function handleDelete(rate: GstRateRow) {
-    if (!window.confirm(strings.deleteConfirm)) return;
+    if (!(await confirmDelete(strings.deleteConfirm))) return;
     try {
       await apiClient.delete(`/super-admin/gst-rates/${rate.id}`);
       await loadRates();

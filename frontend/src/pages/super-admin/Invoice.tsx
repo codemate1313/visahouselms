@@ -3,12 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { apiClient } from "@/api/client";
+import { useToastStore } from "@/store/toastStore";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { invoiceStrings as strings } from "./Invoice.strings";
 import "./Invoice.css";
 import { commonActions } from "@/content/common.strings";
 import { Icon } from "@/components/icons";
 import { SearchableSelect } from "@/components/ui";
+import { formatDate } from "@/utils/date";
 
 interface PaymentDetail {
   id: number;
@@ -36,7 +38,7 @@ export function Invoice() {
   const navigate = useNavigate();
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = useToastStore((s) => s.showSuccess);
 
   // Modals state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -57,11 +59,6 @@ export function Invoice() {
       })
       .catch(() => setError(strings.errors.load));
   }, [id]);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -98,10 +95,10 @@ export function Invoice() {
 
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(`Issue Date: ${new Date(payment.created_at).toLocaleDateString("en-GB")}`, 14, 45);
+    doc.text(`Issue Date: ${formatDate(payment.created_at)}`, 14, 45);
     doc.text(`Status: ${payment.status.toUpperCase()}`, 196, 38, { align: "right" });
     if (payment.paid_at) {
-      doc.text(`Paid Date: ${new Date(payment.paid_at).toLocaleDateString("en-GB")}`, 196, 45, { align: "right" });
+      doc.text(`Paid Date: ${formatDate(payment.paid_at)}`, 196, 45, { align: "right" });
     }
 
     // Billed To Box
@@ -322,7 +319,7 @@ export function Invoice() {
                 {payment.invoice_number || `INV-${payment.id}`}
               </div>
               <div className="invoice-date-stamp">
-                {strings.issueDate}: {new Date(payment.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                {strings.issueDate}: {formatDate(payment.created_at)}
               </div>
 
               {/* Status Pill */}
@@ -595,15 +592,6 @@ export function Invoice() {
         </div>
       )}
 
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="invoice-toast">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          <span>{toastMessage}</span>
-        </div>
-      )}
     </div>
   );
 }

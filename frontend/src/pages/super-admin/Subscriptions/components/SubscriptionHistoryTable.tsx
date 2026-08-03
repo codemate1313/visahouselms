@@ -2,6 +2,7 @@ import { DataTableCard } from "@/components/ui";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
 import { STATE_BADGES, stateLabel } from "../helpers";
 import type { SubscriptionInfo } from "../types";
+import { formatDate } from "@/utils/date";
 
 interface SubscriptionHistoryTableProps {
   history: SubscriptionInfo[];
@@ -41,8 +42,8 @@ export function SubscriptionHistoryTable({ history, onCancel }: SubscriptionHist
                 <td className="col-plan">
                   <strong style={{ fontSize: 13.5 }}>{row.plan_name ?? t.defaultPlanName}</strong>
                 </td>
-                <td className="col-starts">{new Date(row.starts_at).toLocaleDateString("en-GB")}</td>
-                <td className="col-expires">{new Date(row.expires_at).toLocaleDateString("en-GB")}</td>
+                <td className="col-starts">{formatDate(row.starts_at)}</td>
+                <td className="col-expires">{formatDate(row.expires_at)}</td>
                 <td className="col-state">
                   <span className={`badge ${STATE_BADGES[row.state] ?? "badge-gray"}`}>{stateLabel(row.state)}</span>
                 </td>

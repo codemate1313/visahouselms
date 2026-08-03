@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import logging
+
 import io
 import re
 import zipfile
 from typing import List, Set
 from fastapi import HTTPException, UploadFile, status
+
+logger = logging.getLogger(__name__)
 
 # Regex for matching exact 16-digit alphanumeric codes (e.g. ABCD1234EFGH5678 or formatted ABCD-1234-EFGH-5678)
 RAW_CODE_REGEX = re.compile(r'\b[A-Za-z0-9]{16}\b')
@@ -101,7 +105,7 @@ def _extract_from_docx(content: bytes) -> List[str]:
         if blocks:
             return blocks
     except Exception:
-        pass
+        logger.exception("Failed to extract text blocks from DOCX voucher import")
 
     # Method B: Direct zipfile extract of word/document.xml
     try:

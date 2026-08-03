@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -26,7 +26,7 @@ def list_demo_accounts(db: Session = Depends(get_db)):
     return demo_service.list_demos(db)
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_demo_account(
     payload: DemoAccountCreate,
     request: Request,

@@ -36,13 +36,13 @@ export function CreatedInstituteModal({ created, copied, onCopyPassword, onDone 
           width: "min(500px, 94vw)",
           padding: "28px",
           borderRadius: "16px",
-          background: "var(--surface, #ffffff)",
+          background: "var(--surface, var(--white))",
           border: "1px solid var(--border, var(--border))",
           boxShadow: "0 25px 60px rgba(0, 0, 0, 0.3)",
         }}
       >
-        <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 6px", color: "var(--text, #0f172a)" }}>{t.heading}</h2>
-        <p style={{ fontSize: 13, color: "var(--text-muted, #64748b)", margin: "0 0 20px", lineHeight: "1.5" }}>{t.description}</p>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 6px", color: "var(--text, var(--slate-900))" }}>{t.heading}</h2>
+        <p style={{ fontSize: 13, color: "var(--text-muted, var(--slate-500))", margin: "0 0 20px", lineHeight: "1.5" }}>{t.description}</p>
 
         <div
           style={{
@@ -57,19 +57,19 @@ export function CreatedInstituteModal({ created, copied, onCopyPassword, onDone 
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-muted, #64748b)" }}>{t.email}</span>
-            <code style={{ fontSize: 13, fontWeight: 600, color: "var(--text, #0f172a)", background: "rgba(0, 0, 0, 0.05)", padding: "4px 10px", borderRadius: 6, fontFamily: "monospace" }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-muted, var(--slate-500))" }}>{t.email}</span>
+            <code style={{ fontSize: 13, fontWeight: 600, color: "var(--text, var(--slate-900))", background: "rgba(0, 0, 0, 0.05)", padding: "4px 10px", borderRadius: 6, fontFamily: "monospace" }}>
               {created.admin_email}
             </code>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-muted, #64748b)" }}>{t.temporaryPassword}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-muted, var(--slate-500))" }}>{t.temporaryPassword}</span>
             <code
               style={{
                 fontSize: 14,
                 fontWeight: 700,
-                color: "var(--primary, #e11d2e)",
+                color: "var(--primary, var(--red-500))",
                 background: "rgba(225, 29, 46, 0.08)",
                 padding: "6px 12px",
                 borderRadius: 6,

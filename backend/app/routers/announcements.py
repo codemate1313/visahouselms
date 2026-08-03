@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -41,7 +41,7 @@ def institute_target_options(db: Session = Depends(get_db), actor: User = Depend
     return announcement_service.get_institute_target_options(db, actor.institute_id or 0)
 
 
-@institute_router.post("", status_code=201)
+@institute_router.post("", status_code=status.HTTP_201_CREATED)
 def create_institute_announcement(
     payload: AnnouncementCreate,
     db: Session = Depends(get_db),
@@ -61,7 +61,7 @@ def platform_target_options(db: Session = Depends(get_db)):
     return announcement_service.get_super_admin_target_options(db)
 
 
-@platform_router.post("", status_code=201)
+@platform_router.post("", status_code=status.HTTP_201_CREATED)
 def create_platform_announcement(
     payload: AnnouncementCreate,
     db: Session = Depends(get_db),

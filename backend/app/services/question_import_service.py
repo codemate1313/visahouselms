@@ -147,7 +147,7 @@ def parse_csv(content: bytes) -> tuple[str, list[dict], list[str]]:
         dialect = csv.excel
     reader = csv.DictReader(io.StringIO(decoded), dialect=dialect)
     if not reader.fieldnames:
-        raise HTTPException(status_code=400, detail="CSV header row is missing")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="CSV header row is missing")
 
     def normalized_row(row: dict) -> dict[str, str]:
         return {
@@ -192,7 +192,7 @@ def parse_csv(content: bytes) -> tuple[str, list[dict], list[str]]:
             break
 
     if not questions:
-        raise HTTPException(status_code=400, detail="No question rows were found in the CSV")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No question rows were found in the CSV")
     return decoded[:MAX_EXTRACTED_TEXT], questions, warnings
 
 
@@ -201,11 +201,11 @@ def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
         reader = PdfReader(io.BytesIO(content))
         pages = [(page.extract_text() or "").strip() for page in reader.pages]
     except Exception as exc:
-        raise HTTPException(status_code=400, detail="PDF text could not be extracted") from exc
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="PDF text could not be extracted") from exc
     text = "\n\n".join(page for page in pages if page)
     if not text:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="No selectable text was found. Scanned PDFs need OCR before import.",
         )
 
@@ -273,7 +273,7 @@ def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
 
     if not questions:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="No numbered questions were detected. Use formats such as '1. Question' and 'A. Choice'.",
         )
     if len(questions) > MAX_IMPORT_QUESTIONS:
@@ -286,17 +286,17 @@ async def preview_upload(upload: UploadFile) -> dict:
     filename = (upload.filename or "questions").strip()
     extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if extension not in {"pdf", "csv"}:
-        raise HTTPException(status_code=400, detail="Question imports must be PDF or CSV files")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Question imports must be PDF or CSV files")
     content = await upload.read()
     if not content:
-        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Uploaded file is empty")
     limit = MAX_PDF_BYTES if extension == "pdf" else MAX_CSV_BYTES
     if len(content) > limit:
-        raise HTTPException(status_code=400, detail=f"{extension.upper()} must be {limit // 1024 // 1024} MB or smaller")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"{extension.upper()} must be {limit // 1024 // 1024} MB or smaller")
     if extension == "pdf" and not content.startswith(b"%PDF-"):
-        raise HTTPException(status_code=400, detail="File is not a valid PDF")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is not a valid PDF")
     if extension == "csv" and b"\x00" in content[:4096]:
-        raise HTTPException(status_code=400, detail="File is not a valid text CSV")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is not a valid text CSV")
 
     source_text, questions, warnings = parse_pdf(content) if extension == "pdf" else parse_csv(content)
     return {

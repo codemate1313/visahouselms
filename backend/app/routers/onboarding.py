@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -26,7 +26,7 @@ def list_onboardings(db: Session = Depends(get_db)):
     return onboarding_service.list_onboardings(db)
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_onboarding(payload: InstituteOnboardingCreate, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     return onboarding_service.create_draft(db, actor, payload.model_dump(), _ip(request))
 
@@ -41,6 +41,6 @@ def publish_onboarding(institute_id: int, request: Request, db: Session = Depend
     return onboarding_service.publish(db, actor, institute_id, _ip(request))
 
 
-@router.delete("/{institute_id}", status_code=204)
+@router.delete("/{institute_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_draft_onboarding(institute_id: int, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     onboarding_service.delete_draft(db, actor, institute_id, _ip(request))

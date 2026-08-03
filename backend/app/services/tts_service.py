@@ -3,7 +3,7 @@ import re
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 
 TTS_VOICES = [
@@ -58,7 +58,7 @@ def parse_conversation(text: str) -> list[ConversationTurn]:
     """Parse `Speaker: words` lines while treating wrapped lines as continuation."""
     conversation = text.strip()
     if not conversation:
-        raise HTTPException(status_code=400, detail="Enter a conversation to generate audio")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Enter a conversation to generate audio")
 
     turns: list[ConversationTurn] = []
     detected_label = False
@@ -93,7 +93,7 @@ def parse_conversation(text: str) -> list[ConversationTurn]:
         ]
     if len(turns) > MAX_CONVERSATION_TURNS:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"A conversation can contain at most {MAX_CONVERSATION_TURNS} speaker turns",
         )
     return turns
@@ -103,7 +103,7 @@ def assign_voices(
     turns: list[ConversationTurn], preferred_voice: str = "en-GB-SoniaNeural"
 ) -> list[dict[str, str]]:
     if preferred_voice not in VOICE_IDS:
-        raise HTTPException(status_code=400, detail="Choose one of the supported English voices")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Choose one of the supported English voices")
 
     speakers: list[tuple[str, str]] = []
     seen: set[str] = set()
@@ -113,7 +113,7 @@ def assign_voices(
             speakers.append((turn.speaker_key, turn.speaker))
     if len(speakers) > len(TTS_VOICES):
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
                 f"Detected {len(speakers)} speakers, but automatic generation currently supports "
                 f"up to {len(TTS_VOICES)} distinct speakers"
@@ -150,7 +150,7 @@ async def _audio_stream(text: str, voice: str, rate: str) -> AsyncIterator[bytes
         import edge_tts
     except ImportError as exc:  # pragma: no cover - deployment configuration guard
         raise HTTPException(
-            status_code=503,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Text-to-speech is not installed on the backend. Install the backend requirements and restart it.",
         ) from exc
 
@@ -167,17 +167,17 @@ async def _synthesize_segment(text: str, voice: str, rate: str) -> bytes:
         raise
     except Exception as exc:
         raise HTTPException(
-            status_code=502,
+            status_code=status.HTTP_502_BAD_GATEWAY,
             detail="The text-to-speech provider could not generate audio. Check the backend internet connection and try again.",
         ) from exc
     if not content:
-        raise HTTPException(status_code=502, detail="The text-to-speech provider returned no audio")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="The text-to-speech provider returned no audio")
     return content
 
 
 async def synthesize_mp3(text: str, voice: str, rate: str = "+0%") -> bytes:
     if voice not in VOICE_IDS:
-        raise HTTPException(status_code=400, detail="Choose one of the supported English voices")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Choose one of the supported English voices")
     return await _synthesize_segment(text, voice, rate)
 
 
@@ -206,5 +206,5 @@ async def synthesize_conversation_mp3(
     segments = await asyncio.gather(*(render(turn) for turn in turns))
     content = b"".join(segments)
     if not content:
-        raise HTTPException(status_code=502, detail="The text-to-speech provider returned no audio")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="The text-to-speech provider returned no audio")
     return content, assignments

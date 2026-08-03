@@ -14,6 +14,7 @@ import { ModuleFilterBar } from "./components/ModuleFilterBar";
 import { AssignedTestsGrid } from "./components/AssignedTestsGrid";
 import { MicrophoneCheck } from "@/components/speaking/MicrophoneCheck";
 import { releaseSpeakingMicrophone } from "@/media/speakingMicrophone";
+import { formatDate } from "@/utils/date";
 
 const IMMERSIVE_MODULE_TYPES = new Set(["full_mock"]);
 const MICROPHONE_CHECK_MODULE_TYPES = new Set(["speaking", "full_mock", "final_test"]);
@@ -178,7 +179,7 @@ export function MyCourses() {
               {!isInstituteStudent && access.expires_at && (
                 <div className="my-courses-validity-tag">
                   <Icon name="due" />
-                  <span>{strings.accessUntil(new Date(access.expires_at).toLocaleDateString())}</span>
+                  <span>{strings.accessUntil(formatDate(access.expires_at))}</span>
                 </div>
               )}
               <div className="my-courses-count-tag">

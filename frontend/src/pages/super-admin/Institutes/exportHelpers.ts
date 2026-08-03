@@ -4,6 +4,7 @@ import * as XLSX from "xlsx";
 import { institutesStrings as strings } from "./Institutes.strings";
 import type { InstituteRow } from "./types";
 import { INSTITUTE_STATUS, INSTITUTE_STATUS_LABELS } from "@/constants";
+import { formatDate } from "@/utils/date";
 
 function statusLabel(row: InstituteRow) {
   return row.onboarding_status === INSTITUTE_STATUS.DRAFT
@@ -70,7 +71,7 @@ export function exportInstitutesExcel(rows: InstituteRow[]) {
       row.subscription_state,
       statusLabel(row),
       row.onboarding_status,
-      new Date(row.created_at).toLocaleDateString(),
+      formatDate(row.created_at),
     ]),
   ];
 

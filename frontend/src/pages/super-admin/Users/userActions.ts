@@ -100,18 +100,8 @@ export function canDeleteMember(user: DirectoryUser): boolean {
 
 /** Edit form for a tenant-scoped member, or null when there is none. */
 export function memberEditPath(user: DirectoryUser): string | null {
-  if (user.role_name === "STUDENT" && !user.institute_id) {
+  if (MANAGED_TENANT_ROLES.includes(user.role_name)) {
     return `/super-admin/users/${user.id}/edit`;
-  }
-  if (!user.institute_id) return null;
-  if (user.role_name === "INSTITUTE_ADMIN") {
-    return `/super-admin/institutes/${user.institute_id}`;
-  }
-  if (user.role_name === "STUDENT") {
-    return `/super-admin/institutes/${user.institute_id}/accounts/students/${user.id}/edit`;
-  }
-  if (user.role_name === "INST_INSTRUCTOR") {
-    return `/super-admin/institutes/${user.institute_id}/accounts/staff/${user.id}/edit`;
   }
   return null;
 }

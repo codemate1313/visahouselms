@@ -71,7 +71,7 @@
 
 .microphone-check-error {
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: rgba(239, 68, 68, 0.1);
   color: #fca5a5;
   font-size: 13px;

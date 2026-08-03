@@ -22,7 +22,7 @@
 .purchase-stat-card {
   background: var(--surface-bg, #ffffff);
   border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 0.875rem 1.125rem;
   display: flex;
   align-items: center;
@@ -40,7 +40,7 @@
 .purchase-stat-icon {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -87,7 +87,7 @@
 .purchase-filters-bar {
   background: var(--surface-bg, #ffffff);
   border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 0.625rem 1rem;
   display: flex;
   flex-wrap: wrap;
@@ -112,7 +112,7 @@
   border: 1px dashed var(--border-color, #cbd5e1);
   color: var(--text-muted, #64748b);
   padding: 0.4rem 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 0.775rem;
   font-weight: 600;
   cursor: pointer;
@@ -178,7 +178,7 @@
   background: #eff6ff;
   color: #1d4ed8;
   padding: 0.25rem 0.55rem;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   border: 1px solid #bfdbfe;
   font-size: 0.8rem;
   display: inline-block;
@@ -255,7 +255,7 @@
   border: 1px solid #dc2626;
   color: #dc2626;
   padding: 0.35rem 0.75rem;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   font-size: 0.775rem;
   font-weight: 700;
   cursor: pointer;
@@ -375,7 +375,7 @@
   margin-bottom: 1.25rem;
   background: #f8fafc;
   padding: 1rem 1.25rem;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px solid #e2e8f0;
 }
 
@@ -419,7 +419,7 @@
   margin-left: auto;
   width: 260px;
   background: #f8fafc;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 0.875rem;
   border: 1px solid #e2e8f0;
 }
@@ -454,7 +454,7 @@
   border: 1px solid #cbd5e1;
   color: #334155;
   padding: 0.45rem 0.875rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -472,7 +472,7 @@
   border: 1px solid #b91c1c;
   color: #ffffff;
   padding: 0.45rem 0.875rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;

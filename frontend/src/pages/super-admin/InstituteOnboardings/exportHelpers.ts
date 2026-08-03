@@ -4,6 +4,7 @@ import * as XLSX from "xlsx";
 import { currencySymbol, formatCurrencyAmount } from "@/utils/currency";
 import { instituteOnboardingsStrings as strings } from "./InstituteOnboardings.strings";
 import type { OnboardingRow } from "./types";
+import { formatDate } from "@/utils/date";
 
 export function exportOnboardingsPDF(rows: OnboardingRow[]) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -70,7 +71,7 @@ export function exportOnboardingsExcel(rows: OnboardingRow[]) {
       row.member_count,
       row.course_count,
       row.onboarding_status,
-      new Date(row.created_at).toLocaleDateString(),
+      formatDate(row.created_at),
     ]),
   ];
 

@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -23,6 +24,8 @@ from app.models.attempt import (
 from app.models.exam_module import ExamModule
 from app.models.role import INST_INSTRUCTOR, SA_INSTRUCTOR, Role
 from app.models.user import User
+
+logger = logging.getLogger(__name__)
 
 OPEN_REEVALUATION_STATUSES = (REEVALUATION_PENDING, REEVALUATION_IN_REVIEW)
 GRADING_CLAIM_TTL = timedelta(minutes=5)
@@ -148,10 +151,10 @@ def _expire_stale_claims(db: Session) -> None:
 
 def claim(db: Session, actor: User, attempt: TestAttempt) -> dict:
     if not can_grade_attempt(db, actor, attempt):
-        raise HTTPException(status_code=404, detail="Submission not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
     entry = ensure_queue_entry(db, attempt)
     if entry.status == QUEUE_COMPLETED and not latest_open_reevaluation(db, attempt.id):
-        raise HTTPException(status_code=409, detail="This grading item is already complete")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This grading item is already complete")
     entry = _claim_entry(db, entry, actor)
     request = latest_open_reevaluation(db, attempt.id)
     had_reevaluation = request is not None
@@ -168,14 +171,14 @@ def claim(db: Session, actor: User, attempt: TestAttempt) -> dict:
         if had_reevaluation:
             notification_service.notify_reevaluation_claimed(db, attempt, actor)
     except Exception:
-        pass
+        logger.exception("Failed to send reevaluation-claimed notification for attempt %s", attempt.id)
     return _entry_out(entry)
 
 
 def release(db: Session, actor: User, attempt: TestAttempt) -> dict:
     entry = ensure_queue_entry(db, attempt)
     if entry.assigned_to_id != actor.id:
-        raise HTTPException(status_code=409, detail="You have not claimed this submission")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="You have not claimed this submission")
     entry.status = QUEUE_PENDING
     entry.assigned_to_id = None
     entry.claimed_at = None
@@ -192,14 +195,14 @@ def release(db: Session, actor: User, attempt: TestAttempt) -> dict:
     try:
         notification_service.notify_grading_released(db, attempt)
     except Exception:
-        pass
+        logger.exception("Failed to send grading-released notification for attempt %s", attempt.id)
     return _entry_out(entry)
 
 
 def require_or_claim(db: Session, actor: User, attempt: TestAttempt) -> GradingQueueEntry:
     entry = ensure_queue_entry(db, attempt)
     if entry.status == QUEUE_COMPLETED and not latest_open_reevaluation(db, attempt.id):
-        raise HTTPException(status_code=409, detail="Completed grading is read-only unless a reevaluation is open")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Completed grading is read-only unless a reevaluation is open")
     return _claim_entry(db, entry, actor)
 
 
@@ -365,11 +368,11 @@ def reevaluation_for_student(db: Session, attempt: TestAttempt) -> Optional[dict
 
 def request_reevaluation(db: Session, student: User, attempt: TestAttempt, reason: str) -> dict:
     if attempt.user_id != student.id:
-        raise HTTPException(status_code=404, detail="Attempt not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attempt not found")
     if attempt.status not in (ATTEMPT_GRADING, ATTEMPT_GRADED) or not attempt.part_grades:
-        raise HTTPException(status_code=409, detail="Only submitted instructor-reviewable results can be sent for review")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only submitted instructor-reviewable results can be sent for review")
     if latest_open_reevaluation(db, attempt.id):
-        raise HTTPException(status_code=409, detail="A reevaluation request is already open for this result")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A reevaluation request is already open for this result")
     request = ReevaluationRequest(attempt_id=attempt.id, student_id=student.id, reason=reason.strip())
     db.add(request)
     entry = ensure_queue_entry(db, attempt, routing_reason="reevaluation")
@@ -388,7 +391,7 @@ def request_reevaluation(db: Session, student: User, attempt: TestAttempt, reaso
     try:
         notification_service.notify_reevaluation_requested(db, attempt)
     except Exception:
-        pass
+        logger.exception("Failed to send reevaluation-requested notification for attempt %s", attempt.id)
     return _reevaluation_out(request)
 
 
@@ -401,7 +404,7 @@ def resolve_reevaluation(
 ) -> dict:
     request = latest_open_reevaluation(db, attempt.id)
     if request is None:
-        raise HTTPException(status_code=404, detail="No open reevaluation request was found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No open reevaluation request was found")
     entry = require_or_claim(db, actor, attempt)
     request.status = REEVALUATION_RESOLVED if resolution == "resolved" else REEVALUATION_REJECTED
     request.resolution_note = note.strip()
@@ -418,7 +421,7 @@ def resolve_reevaluation(
     try:
         notification_service.notify_reevaluation_resolved(db, attempt, request.status)
     except Exception:
-        pass
+        logger.exception("Failed to send reevaluation-resolved notification for attempt %s", attempt.id)
     return _reevaluation_out(request)
 
 

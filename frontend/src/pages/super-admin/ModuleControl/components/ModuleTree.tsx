@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Icon } from "@/components/icons";
+import { LinkButton } from "@/components/ui";
 import type { ExamModule } from "@/api/types";
 import { moduleControlStrings as strings } from "../ModuleControl.strings";
 import { formatDate, getModuleTypeBadge } from "../helpers";
@@ -48,13 +49,9 @@ export function ModuleTree({ instructors }: ModuleTreeProps) {
                     <p className="course-card-desc">{module.description || strings.noDescriptionSuffix(module.module_label)}</p>
                   </div>
 
-                  <Link className="course-manage-btn" to={`/super-admin/modules/${module.id}`}>
+                  <LinkButton className="course-manage-btn" to={`/super-admin/modules/${module.id}`} size="md" rightIcon={<Icon name="arrowRight" />}>
                     {strings.manage}
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                      <polyline points="12 5 19 12 12 19" />
-                    </svg>
-                  </Link>
+                  </LinkButton>
                 </div>
 
                 <div className="tree-course-facts-grid">

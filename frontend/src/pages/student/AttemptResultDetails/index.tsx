@@ -8,7 +8,7 @@ import { attemptResultDetailsStrings as strings } from "./AttemptResultDetails.s
 import { ResultDetailStats } from "./components/ResultDetailStats";
 import { CefrProfilePanel } from "./components/CefrProfilePanel";
 import { PartReviewSection } from "./components/PartReviewSection";
-import { ReevaluationStatus } from "./components/ReevaluationStatus";
+import { ReevaluationStatus } from "@/components/ReevaluationStatus";
 import { ReevaluationForm } from "./components/ReevaluationForm";
 import { RetakeRequestStatus } from "./components/RetakeRequestStatus";
 import { RetakeRequestForm } from "./components/RetakeRequestForm";
@@ -107,7 +107,17 @@ export function AttemptResultDetails() {
 
       {!graded && attempt.status !== "expired" && <p className="hint">{strings.scoreUpdateHint}</p>}
 
-      {attempt.reevaluation && <ReevaluationStatus reevaluation={attempt.reevaluation} />}
+      {attempt.reevaluation && (
+        <ReevaluationStatus
+          reevaluation={attempt.reevaluation}
+          strings={{
+            eyebrow: strings.reevaluation.resultReviewEyebrow,
+            heading: strings.reevaluation.requestHeading,
+            reviewerPrefix: strings.reevaluation.reviewerPrefix,
+            resolutionHeading: strings.reevaluation.resolutionHeading,
+          }}
+        />
+      )}
 
       {canRequestReevaluation && (
         <ReevaluationForm reason={reason} onReasonChange={setReason} requesting={requesting} onSubmit={requestReevaluation} />

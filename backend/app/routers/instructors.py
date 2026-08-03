@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -43,7 +43,7 @@ def get_instructor(instructor_id: int, db: Session = Depends(get_db)):
     )
 
 
-@router.post("", response_model=InstructorAccountCreated, status_code=201)
+@router.post("", response_model=InstructorAccountCreated, status_code=status.HTTP_201_CREATED)
 def create_instructor(
     payload: InstructorAccountCreate,
     request: Request,
@@ -109,7 +109,7 @@ def reset_instructor_password(
     }
 
 
-@router.delete("/{instructor_id}", status_code=204)
+@router.delete("/{instructor_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_instructor(
     instructor_id: int,
     request: Request,

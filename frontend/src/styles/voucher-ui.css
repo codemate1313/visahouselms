@@ -113,9 +113,9 @@
 .voucher-ui-scope .max-w-\[160px\] { max-width: 160px; }
 .voucher-ui-scope .min-h-\[32px\] { min-height: 32px; }
 
-.voucher-ui-scope .rounded-lg { border-radius: 8px; }
-.voucher-ui-scope .rounded-xl { border-radius: 10px; }
-.voucher-ui-scope .rounded-2xl { border-radius: 12px; }
+.voucher-ui-scope .rounded-lg { border-radius: var(--radius-sm); }
+.voucher-ui-scope .rounded-xl { border-radius: var(--radius-md); }
+.voucher-ui-scope .rounded-2xl { border-radius: var(--radius-lg); }
 .voucher-ui-scope .rounded-3xl { border-radius: 16px; }
 .voucher-ui-scope .rounded-full { border-radius: 9999px; }
 .voucher-ui-scope .border { border: 1px solid var(--border); }
@@ -142,14 +142,14 @@
 .voucher-ui-scope .bg-white { background: var(--surface); }
 .voucher-ui-scope .bg-slate-50 { background: var(--surface-muted); }
 .voucher-ui-scope .bg-slate-100 { background: color-mix(in srgb, var(--surface-muted) 82%, var(--border)); }
-.voucher-ui-scope .bg-slate-700 { background: #334155; }
+.voucher-ui-scope .bg-slate-700 { background: var(--slate-700); }
 .voucher-ui-scope .bg-slate-700\/80 { background: rgba(51, 65, 85, 0.8); }
 .voucher-ui-scope .bg-slate-800 { background: #1e293b; }
 .voucher-ui-scope .bg-slate-800\/40 { background: rgba(30, 41, 59, 0.4); }
 .voucher-ui-scope .bg-slate-800\/60 { background: rgba(30, 41, 59, 0.6); }
 .voucher-ui-scope .bg-slate-800\/70 { background: rgba(30, 41, 59, 0.7); }
 .voucher-ui-scope .bg-slate-800\/80 { background: rgba(30, 41, 59, 0.8); }
-.voucher-ui-scope .bg-slate-900 { background: #0f172a; }
+.voucher-ui-scope .bg-slate-900 { background: var(--slate-900); }
 .voucher-ui-scope .bg-slate-950\/80 { background: rgba(2, 6, 23, 0.8); }
 .voucher-ui-scope .bg-slate-950\/90 { background: rgba(2, 6, 23, 0.9); }
 .voucher-ui-scope .bg-sky-50 { background: rgba(240, 249, 255, 0.96); }
@@ -165,7 +165,7 @@
 .voucher-ui-scope .bg-rose-100 { background: #ffe4e6; }
 .voucher-ui-scope .bg-rose-900\/60 { background: rgba(136, 19, 55, 0.6); }
 .voucher-ui-scope .bg-rose-950\/40 { background: rgba(76, 5, 25, 0.4); }
-.voucher-ui-scope .bg-gradient-to-r { background-image: linear-gradient(to right, #0ea5e9, #2563eb); }
+.voucher-ui-scope .bg-gradient-to-r { background-image: linear-gradient(to right, #0ea5e9, var(--info)); }
 
 .voucher-ui-scope .text-left { text-align: left; }
 .voucher-ui-scope .text-center { text-align: center; }
@@ -202,21 +202,21 @@
   overflow: hidden;
 }
 
-.voucher-ui-scope .text-white { color: #ffffff; }
-.voucher-ui-scope .text-slate-200 { color: #e2e8f0; }
-.voucher-ui-scope .text-slate-300 { color: #cbd5e1; }
-.voucher-ui-scope .text-slate-400 { color: #94a3b8; }
-.voucher-ui-scope .text-slate-500 { color: #64748b; }
-.voucher-ui-scope .text-slate-700 { color: #334155; }
+.voucher-ui-scope .text-white { color: var(--white); }
+.voucher-ui-scope .text-slate-200 { color: var(--slate-200); }
+.voucher-ui-scope .text-slate-300 { color: var(--slate-300); }
+.voucher-ui-scope .text-slate-400 { color: var(--slate-400); }
+.voucher-ui-scope .text-slate-500 { color: var(--slate-500); }
+.voucher-ui-scope .text-slate-700 { color: var(--slate-700); }
 .voucher-ui-scope .text-slate-800 { color: #1e293b; }
-.voucher-ui-scope .text-slate-900 { color: #0f172a; }
+.voucher-ui-scope .text-slate-900 { color: var(--slate-900); }
 .voucher-ui-scope .text-sky-300 { color: #7dd3fc; }
 .voucher-ui-scope .text-sky-400 { color: #38bdf8; }
 .voucher-ui-scope .text-sky-600 { color: #0284c7; }
 .voucher-ui-scope .text-emerald-400 { color: #34d399; }
 .voucher-ui-scope .text-emerald-600 { color: #059669; }
 .voucher-ui-scope .text-rose-400 { color: #fb7185; }
-.voucher-ui-scope .text-rose-600 { color: #e11d48; }
+.voucher-ui-scope .text-rose-600 { color: var(--rose-600); }
 
 .voucher-ui-scope .shadow-sm { box-shadow: var(--shadow-sm); }
 .voucher-ui-scope .shadow-md { box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14); }
@@ -234,9 +234,9 @@
 .voucher-ui-scope .transition-colors { transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease; }
 .voucher-ui-scope .duration-200 { transition-duration: 0.2s; }
 
-.voucher-ui-scope .placeholder-slate-500::placeholder { color: #64748b; }
-.voucher-ui-scope .hover\:text-white:hover { color: #ffffff; }
-.voucher-ui-scope .hover\:text-rose-600:hover { color: #e11d48; }
+.voucher-ui-scope .placeholder-slate-500::placeholder { color: var(--slate-500); }
+.voucher-ui-scope .hover\:text-white:hover { color: var(--white); }
+.voucher-ui-scope .hover\:text-rose-600:hover { color: var(--rose-600); }
 .voucher-ui-scope .hover\:bg-rose-50:hover { background: rgba(255, 241, 242, 0.9); }
 .voucher-ui-scope .hover\:bg-rose-100:hover { background: #ffe4e6; }
 .voucher-ui-scope .hover\:bg-slate-50:hover { background: var(--surface-muted); }
@@ -249,7 +249,7 @@
 .voucher-ui-scope .focus\:outline-none:focus { outline: none; }
 .voucher-ui-scope .focus\:ring-2:focus { box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.28); }
 
-.dark .voucher-ui-scope .dark\:bg-slate-700 { background: #334155; }
+.dark .voucher-ui-scope .dark\:bg-slate-700 { background: var(--slate-700); }
 .dark .voucher-ui-scope .dark\:bg-slate-800 { background: #1e293b; }
 .dark .voucher-ui-scope .dark\:bg-slate-800\/40 { background: rgba(30, 41, 59, 0.4); }
 .dark .voucher-ui-scope .dark\:bg-slate-800\/60 { background: rgba(30, 41, 59, 0.6); }
@@ -262,10 +262,10 @@
 .dark .voucher-ui-scope .dark\:border-slate-700\/60 { border-color: rgba(100, 116, 139, 0.6); }
 .dark .voucher-ui-scope .dark\:border-slate-800 { border-color: rgba(71, 85, 105, 0.62); }
 .dark .voucher-ui-scope .dark\:border-rose-800\/60 { border-color: rgba(159, 18, 57, 0.6); }
-.dark .voucher-ui-scope .dark\:text-white { color: #ffffff; }
-.dark .voucher-ui-scope .dark\:text-slate-200 { color: #e2e8f0; }
-.dark .voucher-ui-scope .dark\:text-slate-300 { color: #cbd5e1; }
-.dark .voucher-ui-scope .dark\:text-slate-400 { color: #94a3b8; }
+.dark .voucher-ui-scope .dark\:text-white { color: var(--white); }
+.dark .voucher-ui-scope .dark\:text-slate-200 { color: var(--slate-200); }
+.dark .voucher-ui-scope .dark\:text-slate-300 { color: var(--slate-300); }
+.dark .voucher-ui-scope .dark\:text-slate-400 { color: var(--slate-400); }
 .dark .voucher-ui-scope .dark\:text-sky-400 { color: #38bdf8; }
 .dark .voucher-ui-scope .dark\:text-rose-400 { color: #fb7185; }
 .dark .voucher-ui-scope .dark\:hover\:bg-rose-900\/60:hover { background: rgba(136, 19, 55, 0.6); }

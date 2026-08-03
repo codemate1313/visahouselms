@@ -68,7 +68,7 @@ def update_testimonial_admin(
 ):
     item = db.get(Testimonial, testimonial_id)
     if not item:
-        raise HTTPException(status_code=404, detail="Testimonial not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Testimonial not found")
 
     update_data = payload.model_dump(exclude_unset=True)
     for key, val in update_data.items():
@@ -83,7 +83,7 @@ def update_testimonial_admin(
 def delete_testimonial_admin(testimonial_id: int, db: Session = Depends(get_db)):
     item = db.get(Testimonial, testimonial_id)
     if not item:
-        raise HTTPException(status_code=404, detail="Testimonial not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Testimonial not found")
     db.delete(item)
     db.commit()
     return None

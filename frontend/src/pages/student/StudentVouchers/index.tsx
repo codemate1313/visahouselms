@@ -4,6 +4,8 @@ import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { Button, Modal, Badge } from "@/components/ui";
 import "@/styles/voucher-ui.css";
+import { formatDate } from "@/utils/date";
+import { formatCurrencyAmount } from "@/utils/currency";
 
 interface VoucherOffering {
   id: number;
@@ -229,8 +231,8 @@ export function StudentVouchers() {
                           </div>
 
                           <div className="text-xs space-y-1 text-slate-500 dark:text-slate-400 pt-1">
-                            <div><strong>Valid Until:</strong> {v.valid_until ? new Date(v.valid_until).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "N/A"}</div>
-                            <div><strong>Amount Paid:</strong> ₹{parseFloat(v.final_amount).toLocaleString("en-IN")}</div>
+                            <div><strong>Valid Until:</strong> {v.valid_until ? formatDate(v.valid_until) : "N/A"}</div>
+                            <div><strong>Amount Paid:</strong> {formatCurrencyAmount(v.final_amount)}</div>
                           </div>
                         </div>
 
@@ -272,10 +274,10 @@ export function StudentVouchers() {
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                       <div className="flex items-baseline gap-2">
                         <span className="text-2xl font-black text-slate-900 dark:text-white">
-                          ₹{parseFloat(vo.discount_price || vo.price).toLocaleString("en-IN")}
+                          {formatCurrencyAmount(vo.discount_price || vo.price)}
                         </span>
                         {vo.discount_price && (
-                          <span className="text-xs text-slate-400 line-through">₹{parseFloat(vo.price).toLocaleString("en-IN")}</span>
+                          <span className="text-xs text-slate-400 line-through">{formatCurrencyAmount(vo.price)}</span>
                         )}
                       </div>
                       <div className="text-xs font-medium text-slate-400 mt-1">
@@ -311,7 +313,7 @@ export function StudentVouchers() {
           <div className="space-y-4 text-xs">
             <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl space-y-1">
               <div><strong>Billed To:</strong> {selectedInvoice.buyer_name} ({selectedInvoice.buyer_email})</div>
-              <div><strong>Date:</strong> {new Date(selectedInvoice.created_at).toLocaleDateString("en-IN")}</div>
+              <div><strong>Date:</strong> {formatDate(selectedInvoice.created_at)}</div>
               <div><strong>Gateway:</strong> {selectedInvoice.gateway.toUpperCase()}</div>
             </div>
 
@@ -326,7 +328,7 @@ export function StudentVouchers() {
             </div>
             <div className="flex justify-between py-1 text-sm font-bold">
               <span>Total Paid:</span>
-              <span>₹{selectedInvoice.final_amount}</span>
+              <span>{formatCurrencyAmount(selectedInvoice.final_amount)}</span>
             </div>
 
             <div className="flex justify-end pt-2">

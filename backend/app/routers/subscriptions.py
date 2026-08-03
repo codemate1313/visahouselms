@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -26,7 +26,7 @@ def get_subscription_status(institute_id: int, db: Session = Depends(get_db)):
     return subscription_service.subscription_status(db, institute_id)
 
 
-@router.post("/institutes/{institute_id}/subscription", status_code=201)
+@router.post("/institutes/{institute_id}/subscription", status_code=status.HTTP_201_CREATED)
 def assign_subscription(
     institute_id: int,
     payload: AssignSubscriptionRequest,
@@ -39,7 +39,7 @@ def assign_subscription(
     )
 
 
-@router.post("/institutes/{institute_id}/subscription/renew", status_code=201)
+@router.post("/institutes/{institute_id}/subscription/renew", status_code=status.HTTP_201_CREATED)
 def renew_subscription(
     institute_id: int,
     payload: RenewSubscriptionRequest,

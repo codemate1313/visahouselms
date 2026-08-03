@@ -4,6 +4,7 @@ import * as XLSX from "xlsx";
 import { currencySymbol, formatCurrencyAmount } from "@/utils/currency";
 import { paymentsStrings as strings } from "./Payments.strings";
 import type { PaymentRow } from "./types";
+import { formatDate } from "@/utils/date";
 
 export function exportPaymentsPDF(rows: PaymentRow[]) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -29,7 +30,7 @@ export function exportPaymentsPDF(rows: PaymentRow[]) {
       formatCurrencyAmount(r.amount_paid, r.currency),
       formatCurrencyAmount(r.due_amount, r.currency),
       r.status.toUpperCase(),
-      new Date(r.created_at).toLocaleDateString("en-GB"),
+      formatDate(r.created_at),
     ]),
     styles: { fontSize: 9, cellPadding: 4, textColor: [15, 23, 42] },
     headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: "bold" },
@@ -55,7 +56,7 @@ export function exportPaymentsExcel(rows: PaymentRow[]) {
       r.amount_paid,
       r.due_amount,
       r.status,
-      new Date(r.created_at).toLocaleDateString("en-GB"),
+      formatDate(r.created_at),
     ]),
   ];
 

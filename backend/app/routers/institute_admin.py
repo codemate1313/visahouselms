@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, status, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -51,7 +51,7 @@ def _current_user_out(user: User) -> CurrentUser:
     )
 
 
-@router.post("/me/change-password", status_code=204)
+@router.post("/me/change-password", status_code=status.HTTP_204_NO_CONTENT)
 def change_my_password(
     payload: ChangePasswordRequest,
     request: Request,
@@ -111,7 +111,7 @@ def list_my_sessions(
     return account_service.list_sessions(db, actor, current_session.id)
 
 
-@router.delete("/me/sessions/{session_id}", status_code=204, dependencies=[Depends(require_password_change_complete)])
+@router.delete("/me/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_password_change_complete)])
 def revoke_my_session(
     session_id: int,
     request: Request,
@@ -188,7 +188,7 @@ def member_capacity(db: Session = Depends(get_db), actor: User = Depends(get_cur
     return institute_admin_service.member_capacity(db, actor)
 
 
-@router.post("/members", status_code=201, dependencies=[Depends(require_password_change_complete)])
+@router.post("/members", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_password_change_complete)])
 def create_member(
     payload: InstituteMemberCreate,
     request: Request,
@@ -211,7 +211,7 @@ def create_member(
     )
 
 
-@router.post("/students/import", status_code=201, dependencies=[Depends(require_password_change_complete)])
+@router.post("/students/import", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_password_change_complete)])
 async def import_students(
     request: Request,
     file: UploadFile = File(...),
@@ -221,7 +221,7 @@ async def import_students(
     institute_admin_service.require_admin_permission(actor, "manage_students")
     content = await file.read(MAX_STUDENT_IMPORT_BYTES + 1)
     if len(content) > MAX_STUDENT_IMPORT_BYTES:
-        raise HTTPException(status_code=413, detail="Student import files cannot exceed 3 MB")
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Student import files cannot exceed 3 MB")
     return institute_admin_service.import_students(
         db,
         actor,
@@ -345,7 +345,7 @@ def reset_member_password(
     }
 
 
-@router.delete("/members/{member_id}", status_code=204, dependencies=[Depends(require_password_change_complete)])
+@router.delete("/members/{member_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_password_change_complete)])
 def delete_member(
     member_id: int,
     request: Request,

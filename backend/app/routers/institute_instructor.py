@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Request, status, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -81,7 +81,7 @@ async def upload_my_avatar(
     return _current_user_out(await account_service.save_avatar(db, actor, file, _ip(request)))
 
 
-@router.post("/me/change-password", status_code=204)
+@router.post("/me/change-password", status_code=status.HTTP_204_NO_CONTENT)
 def change_password(
     payload: ChangePasswordRequest,
     request: Request,
@@ -103,7 +103,7 @@ def list_sessions(
     return account_service.list_sessions(db, actor, current_session.id)
 
 
-@router.delete("/me/sessions/{session_id}", status_code=204)
+@router.delete("/me/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 def revoke_session(
     session_id: int,
     request: Request,

@@ -1,6 +1,7 @@
 import { DataTableCard } from "@/components/ui";
 import { demoAccountsStrings as strings } from "../DemoAccounts.strings";
 import type { DemoRow } from "../types";
+import { formatDate } from "@/utils/date";
 
 const STATE_BADGES: Record<string, string> = {
   active: "badge-green",
@@ -47,7 +48,7 @@ export function DemoAccountsTable({ rows }: DemoAccountsTableProps) {
                   {t.coursesTestsSuffix(row.course_limit, row.test_limit)}
                 </span>
               </td>
-              <td>{new Date(row.expires_at).toLocaleDateString("en-GB")}</td>
+              <td>{formatDate(row.expires_at)}</td>
               <td>
                 <strong style={{ fontSize: 13.5, color: (row.days_remaining ?? 0) <= 3 ? "var(--sa-sidebar-red)" : "var(--text)" }}>
                   {row.days_remaining ?? "—"}

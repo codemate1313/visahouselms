@@ -11,12 +11,13 @@ interface InstituteAccessTableProps {
 
 export function InstituteAccessTable({ assignments, onRevoke }: InstituteAccessTableProps) {
   const t = strings.accessTable;
+  const activeAssignments = assignments.filter((a) => a.is_active);
   return (
     <CollapsiblePanel
       className="detail-card access-table-panel"
       title={t.title}
       description={t.description}
-      badge={<span className="count-chip">{assignments.length}</span>}
+      badge={<span className="count-chip">{activeAssignments.length}</span>}
     >
       <div className="table-responsive-wrapper">
         <table className="data-table sleek-access-table">
@@ -29,14 +30,14 @@ export function InstituteAccessTable({ assignments, onRevoke }: InstituteAccessT
             </tr>
           </thead>
           <tbody>
-            {!assignments.length ? (
+            {!activeAssignments.length ? (
               <tr>
                 <td colSpan={4} className="empty-cell">
                   {t.empty}
                 </td>
               </tr>
             ) : (
-              assignments.map((assignment) => (
+              activeAssignments.map((assignment) => (
                 <tr key={assignment.id}>
                   <td>
                     <strong>{assignment.institute_name}</strong>

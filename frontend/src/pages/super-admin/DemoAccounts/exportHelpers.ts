@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { demoAccountsStrings as strings } from "./DemoAccounts.strings";
 import type { DemoRow } from "./types";
+import { formatDate } from "@/utils/date";
 
 export function exportDemoAccountsPDF(rows: DemoRow[]) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -23,7 +24,7 @@ export function exportDemoAccountsPDF(rows: DemoRow[]) {
       i + 1,
       row.institute_name,
       strings.table.coursesTestsSuffix(row.course_limit, row.test_limit),
-      new Date(row.expires_at).toLocaleDateString("en-GB"),
+      formatDate(row.expires_at),
       row.days_remaining ?? "—",
       row.state.toUpperCase(),
     ]),
@@ -44,7 +45,7 @@ export function exportDemoAccountsExcel(rows: DemoRow[]) {
       row.course_limit,
       row.test_limit,
       row.duration_days,
-      new Date(row.expires_at).toLocaleDateString("en-GB"),
+      formatDate(row.expires_at),
       row.days_remaining ?? 0,
       row.state,
     ]),

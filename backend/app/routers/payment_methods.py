@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -26,7 +26,7 @@ def list_methods(active_only: bool = False, db: Session = Depends(get_db)):
     return payment_method_service.list_methods(db, active_only)
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_method(
     payload: PaymentMethodCreate,
     request: Request,
@@ -56,7 +56,7 @@ def reactivate_method(
     return payment_method_service.set_method_active(db, actor, method_id, True, _client_ip(request))
 
 
-@router.delete("/{method_id}", status_code=204)
+@router.delete("/{method_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_method(
     method_id: int,
     request: Request,

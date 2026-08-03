@@ -4,6 +4,7 @@ import { DataTableCard } from "@/components/ui";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { paymentsStrings as strings } from "../Payments.strings";
 import type { PaymentRow } from "../types";
+import { formatDate } from "@/utils/date";
 
 const STATUS_BADGES: Record<string, string> = {
   paid: "badge-green",
@@ -89,7 +90,7 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
       <td>
         <span className={`badge ${STATUS_BADGES[row.status] ?? "badge-gray"}`}>{row.status}</span>
       </td>
-      <td>{new Date(row.created_at).toLocaleDateString("en-GB")}</td>
+      <td>{formatDate(row.created_at)}</td>
       <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>
         <Link className="action-btn-icon action-edit" to={`/super-admin/payments/${row.id}/invoice`} data-tooltip={t.viewInvoiceTooltip}>
           <Icon name="billings" />

@@ -29,7 +29,7 @@ export function InstitutePlanBanner({ publicTheme, onClose, onGoToCourses }: Ins
     maxWidth: "440px",
     borderRadius: "20px",
     padding: "40px 36px 32px",
-    background: dark ? "#18181f" : "#ffffff",
+    background: dark ? "#18181f" : "var(--white)",
     border: dark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(14,13,16,0.08)",
     boxShadow: dark
       ? "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)"
@@ -73,8 +73,8 @@ export function InstitutePlanBanner({ publicTheme, onClose, onGoToCourses }: Ins
     borderRadius: "12px",
     border: "none",
     cursor: "pointer",
-    background: "linear-gradient(135deg, #e11d2e, #ef4444)",
-    color: "#ffffff",
+    background: "linear-gradient(135deg, var(--red-500), var(--red-600-alt))",
+    color: "var(--white)",
     fontSize: "15px",
     fontWeight: 600,
     letterSpacing: "0.01em",

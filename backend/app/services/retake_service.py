@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -6,6 +7,8 @@ from sqlalchemy.orm import Session
 
 from app.models.attempt import RETAKE_APPROVED, RETAKE_PENDING, RETAKE_REJECTED, RetakeRequest, TestAttempt
 from app.models.user import User
+
+logger = logging.getLogger(__name__)
 
 
 def _now() -> datetime:
@@ -90,7 +93,7 @@ def request_retake(db: Session, student: User, attempt: TestAttempt, reason: str
     try:
         notification_service.notify_retake_requested(db, request)
     except Exception:
-        pass
+        logger.exception("Failed to send retake-requested notification for request %s", request.id)
     return _retake_out(request)
 
 
@@ -114,7 +117,7 @@ def resolve_retake(db: Session, actor: User, request_id: int, resolution: str, n
     try:
         notification_service.notify_retake_resolved(db, request)
     except Exception:
-        pass
+        logger.exception("Failed to send retake-resolved notification for request %s", request.id)
     return _retake_out(request)
 
 

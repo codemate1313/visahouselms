@@ -510,10 +510,10 @@ def _rows_from_upload(content: bytes, filename: str) -> list[dict]:
         try:
             text = content.decode("utf-8-sig")
         except UnicodeDecodeError as exc:
-            raise HTTPException(status_code=400, detail="CSV files must use UTF-8 encoding") from exc
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="CSV files must use UTF-8 encoding") from exc
         reader = csv.DictReader(io.StringIO(text))
         if not reader.fieldnames:
-            raise HTTPException(status_code=400, detail="The CSV file has no header row")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The CSV file has no header row")
         return [
             {_normalize_header(key): value for key, value in row.items() if key is not None}
             for row in reader
@@ -533,8 +533,8 @@ def _rows_from_upload(content: bytes, filename: str) -> list[dict]:
             workbook.close()
             return rows
         except (BadZipFile, InvalidFileException, StopIteration, ValueError, OSError) as exc:
-            raise HTTPException(status_code=400, detail="Unable to read the Excel workbook") from exc
-    raise HTTPException(status_code=400, detail="Upload a .csv or .xlsx file")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unable to read the Excel workbook") from exc
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Upload a .csv or .xlsx file")
 
 
 def _value(row: dict, *keys: str) -> str:
@@ -579,7 +579,7 @@ def _available_student_slots(db: Session, institute_id: int) -> int:
     subscription = subscription_service.subscription_status(db, institute_id)
     if subscription["state"] not in ("active", "grace") or not subscription["limits"]:
         raise HTTPException(
-            status_code=402,
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail="This institute has no active subscription. Purchase or renew a plan to add students.",
         )
     return max(0, subscription["limits"]["students"] - subscription["usage"]["students"])
@@ -599,13 +599,13 @@ def import_students(
     institute = db.get(Institute, institute_id)
     rows = _rows_from_upload(content, filename)
     if not rows:
-        raise HTTPException(status_code=400, detail="The import file contains no student rows")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The import file contains no student rows")
     if len(rows) > MAX_IMPORT_ROWS:
-        raise HTTPException(status_code=400, detail=f"A single import can contain at most {MAX_IMPORT_ROWS} rows")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"A single import can contain at most {MAX_IMPORT_ROWS} rows")
 
     role = db.query(Role).filter(Role.name == STUDENT).first()
     if role is None:
-        raise HTTPException(status_code=500, detail="STUDENT role is not seeded")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="STUDENT role is not seeded")
 
     available = _available_student_slots(db, institute_id)
     seen: set[str] = set()
@@ -695,7 +695,7 @@ def student_overview(
 ) -> dict:
     student = get_member_or_404(db, actor, student_id, scoped_institute_id)
     if student.role.name != STUDENT:
-        raise HTTPException(status_code=404, detail="Student not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
 
     now = datetime.now(timezone.utc)
     active_sessions = (

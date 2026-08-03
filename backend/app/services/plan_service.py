@@ -234,7 +234,7 @@ def build_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> Plan:
 
     modules = _resolve_modules(db, data.get("module_ids") or [])
     if data.get("is_published") and not modules:
-        raise HTTPException(status_code=400, detail="Add at least one course before publishing the plan")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Add at least one course before publishing the plan")
     plan = Plan(
         name=data["name"],
         description=data.get("description"),
@@ -342,7 +342,7 @@ def update_plan(db: Session, actor: User, plan_id: int, data: dict, ip: Optional
     if "module_ids" in data and data["module_ids"] is not None:
         plan.modules = _resolve_modules(db, data["module_ids"])
     if plan.is_published and not plan.modules:
-        raise HTTPException(status_code=400, detail="Add at least one course before publishing the plan")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Add at least one course before publishing the plan")
 
     db.add(plan)
     _audit(db, actor, "plan.update", plan.id, ip)

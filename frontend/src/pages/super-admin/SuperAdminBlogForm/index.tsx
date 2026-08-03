@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { apiClient } from "@/api/client";
 import "./SuperAdminBlogForm.css";
 import { blogFormDefaults } from "./SuperAdminBlogForm.strings";
 import { slugify } from "./helpers";
@@ -19,9 +20,9 @@ export function SuperAdminBlogForm() {
   useEffect(() => {
     if (!isEdit || !id) return;
     setLoading(true);
-    fetch("/api/v1/super-admin/blogs")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: BlogRecord[]) => {
+    apiClient
+      .get<BlogRecord[]>("/super-admin/blogs")
+      .then(({ data }) => {
         const item = data.find((b) => String(b.id) === String(id));
         if (item) {
           setFormData(item);
@@ -49,19 +50,16 @@ export function SuperAdminBlogForm() {
     e.preventDefault();
     setLoading(true);
 
-    const url = isEdit ? `/api/v1/super-admin/blogs/${id}` : "/api/v1/super-admin/blogs";
-    const method = isEdit ? "PUT" : "POST";
+    const request = isEdit
+      ? apiClient.put(`/super-admin/blogs/${id}`, formData)
+      : apiClient.post("/super-admin/blogs", formData);
 
-    fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    }).then((res) => {
-      setLoading(false);
-      if (res.ok) {
+    request
+      .then(() => {
+        setLoading(false);
         navigate("/super-admin/blogs");
-      }
-    });
+      })
+      .catch(() => setLoading(false));
   }
 
   return (

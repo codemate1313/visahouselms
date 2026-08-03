@@ -13,8 +13,8 @@ export function DesktopRequiredNotice({ onBackToDashboard }: DesktopRequiredNoti
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      background: "var(--background, #0f172a)",
-      color: "var(--text, #ffffff)",
+      background: "var(--background, var(--slate-900))",
+      color: "var(--text, var(--white))",
       padding: "24px",
       textAlign: "center",
       fontFamily: "'Inter', system-ui, sans-serif"
@@ -35,7 +35,7 @@ export function DesktopRequiredNotice({ onBackToDashboard }: DesktopRequiredNoti
           width: "80px",
           height: "80px",
           borderRadius: "50%",
-          background: "color-mix(in srgb, var(--primary, #e11d2e) 15%, transparent)",
+          background: "color-mix(in srgb, var(--primary, var(--red-500)) 15%, transparent)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -57,7 +57,7 @@ export function DesktopRequiredNotice({ onBackToDashboard }: DesktopRequiredNoti
         <p style={{
           fontSize: "15px",
           lineHeight: "1.6",
-          color: "var(--text-secondary, #94a3b8)",
+          color: "var(--text-secondary, var(--slate-400))",
           marginBottom: "32px"
         }}>
           {t.description}
@@ -69,8 +69,8 @@ export function DesktopRequiredNotice({ onBackToDashboard }: DesktopRequiredNoti
             width: "100%",
             padding: "14px 28px",
             borderRadius: "12px",
-            background: "var(--primary, #e11d2e)",
-            color: "#ffffff",
+            background: "var(--primary, var(--red-500))",
+            color: "var(--white)",
             fontSize: "15px",
             fontWeight: "600",
             border: "none",

@@ -1,5 +1,6 @@
 import { blogDetailStrings as strings } from "../BlogDetail.strings";
 import type { BlogPostDetail } from "../types";
+import { formatDate } from "@/utils/date";
 
 interface BlogHeaderProps {
   post: BlogPostDetail;
@@ -23,7 +24,7 @@ export function BlogHeader({ post }: BlogHeaderProps) {
         <span className="meta-dot">•</span>
         <div className="meta-item">
           <span className="meta-label">{strings.meta.publishedLabel}</span>
-          <span className="meta-value">{new Date(post.created_at).toLocaleDateString()}</span>
+          <span className="meta-value">{formatDate(post.created_at)}</span>
         </div>
       </div>
     </div>

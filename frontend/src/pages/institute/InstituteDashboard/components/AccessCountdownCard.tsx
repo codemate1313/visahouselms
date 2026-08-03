@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { instituteDashboardStrings as strings } from "../InstituteDashboard.strings";
 import type { AccessWindow } from "../types";
 import { DashboardButton } from "@/components/ui";
+import { formatDate } from "@/utils/date";
 
 interface AccessCountdownCardProps {
   access: AccessWindow;
@@ -38,11 +39,7 @@ export function AccessCountdownCard({ access, canSeeBilling }: AccessCountdownCa
   const days = Math.floor(secondsLeft / 86400);
   const hours = Math.floor((secondsLeft % 86400) / 3600);
   const minutes = Math.floor((secondsLeft % 3600) / 60);
-  const deadline = new Date(access.access_ends_at).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  const deadline = formatDate(access.access_ends_at);
 
   return (
     <div className={`access-countdown-card is-${tone}`} role="alert">

@@ -5,6 +5,7 @@ import { RowActionMenu } from "@/components/RowActionMenu";
 import { Checkbox } from "@/components/ui";
 import type { InstituteMember } from "../types";
 import { instituteMembersStrings as strings } from "../InstituteMembers.strings";
+import { formatDate } from "@/utils/date";
 
 interface MembersTableProps {
   label: string;
@@ -180,7 +181,7 @@ export function MembersTable({
                   {member.deleted_at ? "Deleted" : member.is_active ? "Active" : "Inactive"}
                 </span>
               </td>
-              <td data-label={t.created}>{new Date(member.created_at).toLocaleDateString()}</td>
+              <td data-label={t.created}>{formatDate(member.created_at)}</td>
               <td className="table-actions institute-row-actions" data-label={t.actions}>
                 {(canManage || (member.role === "STUDENT" && canViewActivity)) && (
                   <RowActionMenu

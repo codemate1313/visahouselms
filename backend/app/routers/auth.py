@@ -396,7 +396,7 @@ def verify_otp(payload: VerifyOtpRequest, request: Request, response: Response, 
     return TokenResponse(access_token=access_token)
 
 
-@router.post("/register", response_model=TokenResponse, status_code=201)
+@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 def register(payload: RegisterRequest, request: Request, response: Response, db: Session = Depends(get_db)):
     client_ip = request.client.host if request.client else "unknown"
     enforce_rate_limit(
@@ -430,7 +430,7 @@ def refresh(payload: RefreshRequest, request: Request, response: Response, db: S
     return TokenResponse(access_token=access_token)
 
 
-@router.post("/logout", status_code=204)
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(payload: LogoutRequest, request: Request, response: Response, db: Session = Depends(get_db)):
     token = payload.refresh_token or request.cookies.get(settings.refresh_cookie_name)
     if token:
@@ -465,7 +465,7 @@ def me(user: User = Depends(get_current_user)):
     )
 
 
-@router.post("/forgot-password", status_code=202)
+@router.post("/forgot-password", status_code=status.HTTP_202_ACCEPTED)
 def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):
     # Capped per address as well as per IP so the endpoint cannot be used to
     # flood one mailbox from rotating clients.
@@ -485,7 +485,7 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Sessio
     return {"message": "If an active account exists for this email, a password reset link has been sent."}
 
 
-@router.post("/reset-password", status_code=200)
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
 def reset_password(payload: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)):
     enforce_rate_limit(
         f"reset-ip:{_rate_limit_ip(request)}",

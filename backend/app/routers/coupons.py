@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -31,7 +31,7 @@ def list_coupons(
     return coupon_service.list_coupons(db, search, scope, is_active)
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_coupon(
     payload: CouponCreate,
     request: Request,
@@ -77,7 +77,7 @@ def reactivate_coupon(
     return coupon_service.set_coupon_active(db, actor, coupon_id, True, _client_ip(request))
 
 
-@router.delete("/{coupon_id}", status_code=204)
+@router.delete("/{coupon_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_coupon(
     coupon_id: int,
     request: Request,

@@ -173,7 +173,7 @@ def read_notification(
     return notification_service.mark_notification_read(db, user, notification_id)
 
 
-@router.post("/me/change-password", status_code=204)
+@router.post("/me/change-password", status_code=status.HTTP_204_NO_CONTENT)
 def change_my_password(
     payload: ChangePasswordRequest,
     request: Request,
@@ -195,7 +195,7 @@ def list_my_sessions(
     return account_service.list_sessions(db, user, current_session.id)
 
 
-@router.delete("/me/sessions/{session_id}", status_code=204)
+@router.delete("/me/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 def revoke_my_session(
     session_id: int, request: Request, db: Session = Depends(get_db), user: User = Depends(require_student)
 ):
@@ -317,7 +317,7 @@ def validate_plan_coupon(
     }
 
 
-@router.post("/plans/{plan_id}/create-order", status_code=201)
+@router.post("/plans/{plan_id}/create-order", status_code=status.HTTP_201_CREATED)
 def create_plan_order(
     plan_id: int,
     payload: CreateOrderRequest,
@@ -370,7 +370,7 @@ def verify_razorpay_payment(
 
 
 
-@router.post("/plans/{plan_id}/subscribe", status_code=201)
+@router.post("/plans/{plan_id}/subscribe", status_code=status.HTTP_201_CREATED)
 def subscribe_to_plan(
     plan_id: int,
     payload: PlanSubscribeRequest,
@@ -451,7 +451,7 @@ def get_attempt_analysis(attempt_id: int, db: Session = Depends(get_db), user: U
     return student_analysis_service.result_analysis(db, attempt)
 
 
-@router.post("/attempts/{attempt_id}/reevaluation", status_code=201)
+@router.post("/attempts/{attempt_id}/reevaluation", status_code=status.HTTP_201_CREATED)
 def request_reevaluation(
     attempt_id: int,
     payload: ReevaluationCreateRequest,
@@ -462,7 +462,7 @@ def request_reevaluation(
     return grading_service.request_reevaluation(db, user, attempt, payload.reason)
 
 
-@router.post("/attempts/{attempt_id}/retake-request", status_code=201)
+@router.post("/attempts/{attempt_id}/retake-request", status_code=status.HTTP_201_CREATED)
 def request_retake(
     attempt_id: int,
     payload: RetakeRequestCreate,
@@ -473,7 +473,7 @@ def request_retake(
     return retake_service.request_retake(db, user, attempt, payload.reason)
 
 
-@router.post("/modules/{module_id}/attempts", status_code=201)
+@router.post("/modules/{module_id}/attempts", status_code=status.HTTP_201_CREATED)
 def start_attempt(
     module_id: int,
     db: Session = Depends(get_db),
@@ -545,7 +545,7 @@ def save_answer(
     return attempt_service.save_answer(db, attempt, question_id, payload.response, payload.revision)
 
 
-@router.post("/attempts/{attempt_id}/answers/{question_id}/audio", status_code=201)
+@router.post("/attempts/{attempt_id}/answers/{question_id}/audio", status_code=status.HTTP_201_CREATED)
 async def save_audio_answer(
     attempt_id: int,
     question_id: int,
@@ -562,7 +562,7 @@ async def save_audio_answer(
     return attempt_service.save_audio_answer(db, attempt, question_id, content, extension)
 
 
-@router.post("/attempts/{attempt_id}/flags", status_code=201)
+@router.post("/attempts/{attempt_id}/flags", status_code=status.HTTP_201_CREATED)
 def record_flag(
     attempt_id: int,
     payload: ProctorFlagRequest,

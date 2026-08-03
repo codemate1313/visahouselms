@@ -53,6 +53,10 @@ class VoucherManualCodeCreate(BaseModel):
     codes: List[str]
 
 
+class VoucherCodeBulkAction(BaseModel):
+    code_ids: List[int]
+
+
 class PublicVoucherPurchaseRequest(BaseModel):
     offering_id: int
     buyer_name: str
@@ -235,11 +239,11 @@ def admin_manual_upload_voucher_codes(
 ):
     """Manually add 16-digit voucher codes."""
     if not payload.codes:
-        raise HTTPException(status_code=400, detail="No codes provided")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No codes provided")
     
     clean_codes = [c.strip() for c in payload.codes if c.strip()]
     if not clean_codes:
-        raise HTTPException(status_code=400, detail="No valid codes provided")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No valid codes provided")
 
     result = voucher_service.add_bulk_voucher_codes(
         db=db,
@@ -259,6 +263,24 @@ def admin_get_unused_codes(
 ):
     """List all unused voucher codes."""
     return voucher_service.list_unused_codes(db, voucher_type_id=voucher_type_id)
+
+
+@router.patch("/admin/codes/{code_id}/disable")
+def admin_disable_voucher_code(
+    code_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(_require_super_admin),
+):
+    return voucher_service.disable_voucher_code(db, code_id)
+
+
+@router.post("/admin/codes/disable")
+def admin_disable_voucher_codes(
+    payload: VoucherCodeBulkAction,
+    db: Session = Depends(get_db),
+    admin: User = Depends(_require_super_admin),
+):
+    return voucher_service.disable_voucher_codes(db, payload.code_ids)
 
 
 @router.get("/admin/purchases")

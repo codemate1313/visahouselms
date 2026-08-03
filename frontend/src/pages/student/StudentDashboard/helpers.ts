@@ -1,5 +1,6 @@
 import type { AttemptSummary, ExamModuleType } from "@/api/types";
 import { studentDashboardStrings as strings } from "./StudentDashboard.strings";
+import { formatDate } from "@/utils/date";
 
 export const COMPLETED_STATUSES = new Set(["submitted", "grading", "graded"]);
 
@@ -30,7 +31,7 @@ export function attemptTime(attempt: AttemptSummary) {
 export function formatAttemptDate(attempt: AttemptSummary) {
   const value = attempt.submitted_at ?? attempt.started_at;
   if (!value) return strings.notStarted;
-  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return formatDate(value);
 }
 
 export function progressForStatus(status?: string) {

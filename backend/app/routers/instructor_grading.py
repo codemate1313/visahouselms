@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -70,7 +70,7 @@ def request_ai_suggestion(
     if part is None:
         from fastapi import HTTPException
 
-        raise HTTPException(status_code=404, detail="AI-enabled human-graded part not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="AI-enabled human-graded part not found")
     grading_service.require_or_claim(db, actor, attempt)
     return ai_evaluation_service.request_suggestion(db, actor, attempt, part)
 

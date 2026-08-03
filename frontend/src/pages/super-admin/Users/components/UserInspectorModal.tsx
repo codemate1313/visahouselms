@@ -8,6 +8,7 @@ import { TableAvatar } from "@/components/TableAvatar";
 import { Button, SegmentedControl } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import type { DirectoryRole, DirectoryUser, UserLinkedDetails } from "@/api/types";
+import { formatCurrencyAmount } from "@/utils/currency";
 
 interface UserInspectorModalProps {
   userId: number;
@@ -277,6 +278,62 @@ function auditExplanation(log: AuditLogEntry) {
     };
   }
 
+  if (log.action === "subscription.subscribe") {
+    return {
+      label,
+      summary: `${actor} purchased a subscription${name ? ` to plan “${name}”` : ""}.`,
+      impact: "A new paid plan subscription was activated for this account.",
+    };
+  }
+
+  if (log.action === "subscription.cancel") {
+    return {
+      label,
+      summary: `${actor} cancelled their subscription${name ? ` to plan “${name}”` : ""}.`,
+      impact: "The subscription was set to expire at the end of the billing period.",
+    };
+  }
+
+  if (log.action === "subscription.assign") {
+    return {
+      label,
+      summary: `${actor} was assigned a subscription${name ? ` to plan “${name}”` : ""}.`,
+      impact: "A plan subscription was assigned directly by an admin or instructor.",
+    };
+  }
+
+  if (log.action === "account.update_profile") {
+    return {
+      label,
+      summary: `${actor} updated profile details.`,
+      impact: "Account details (such as name or phone number) were updated.",
+    };
+  }
+
+  if (log.action === "account.update_avatar") {
+    return {
+      label,
+      summary: `${actor} updated profile avatar.`,
+      impact: "The profile image was uploaded and changed.",
+    };
+  }
+
+  if (log.action === "terminal.command") {
+    return {
+      label,
+      summary: `${actor} executed command in the admin terminal.`,
+      impact: "An administrative shell command was run.",
+    };
+  }
+
+  if (log.action === "terminal.open") {
+    return {
+      label,
+      summary: `${actor} opened the admin terminal.`,
+      impact: "An administrative terminal session was started.",
+    };
+  }
+
   if (verb === "create") {
     return {
       label,
@@ -303,7 +360,7 @@ function auditExplanation(log: AuditLogEntry) {
 
   return {
     label,
-    summary: `${actor} performed ${log.action} on ${entity}.`,
+    summary: `${actor} completed the action "${label.toLowerCase()}" on ${entity}.`,
     impact: "Review the recorded fields below for the exact metadata saved with this event.",
   };
 }
@@ -649,7 +706,7 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                         <tbody>
                           {data.payments.map((payment) => (
                             <tr key={payment.id}>
-                              <td>₹{payment.final_amount.toFixed(2)}</td>
+                              <td>{formatCurrencyAmount(payment.final_amount)}</td>
                               <td>{payment.gateway.toUpperCase()}</td>
                               <td>
                                 <span className={`badge ${payment.status === "paid" ? "badge-green" : payment.status === "pending" ? "badge-amber" : "badge-inactive"}`}>

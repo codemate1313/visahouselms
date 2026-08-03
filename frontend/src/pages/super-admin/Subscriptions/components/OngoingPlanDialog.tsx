@@ -1,6 +1,7 @@
 import { Icon } from "@/components/icons";
 import { Modal } from "@/components/ui";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
+import { formatDate } from "@/utils/date";
 
 interface OngoingPlanDialogProps {
   busy: boolean;
@@ -24,7 +25,7 @@ export function OngoingPlanDialog({
   planName,
 }: OngoingPlanDialogProps) {
   const t = strings.ongoingPlanDialog;
-  const expiryDate = new Date(expiresAt).toLocaleDateString("en-GB");
+  const expiryDate = formatDate(expiresAt);
 
   function choose(action: () => void) {
     onClose();

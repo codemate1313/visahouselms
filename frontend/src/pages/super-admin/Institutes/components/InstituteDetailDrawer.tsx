@@ -7,6 +7,7 @@ import { SearchableSelect } from "@/components/ui/SearchableSelect/SearchableSel
 import { SearchInput } from "@/components/ui";
 import { LineChart, type LineChartDatum } from "@/components/charts/LineChart";
 import "./InstituteDetailDrawer.css";
+import { formatDate } from "@/utils/date";
 
 interface InstituteDetailDrawerProps {
   instituteId: number | null;
@@ -366,11 +367,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                       <div className="widget-field-row">
                         <span className="field-label">Created Date</span>
                         <span className="field-value">
-                          {new Date(details.created_at).toLocaleDateString(undefined, {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
+                          {formatDate(details.created_at)}
                         </span>
                       </div>
                       <div className="widget-field-row">

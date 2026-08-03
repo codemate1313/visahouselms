@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { SearchableSelect } from "@/components/ui";
+import { Button, SearchInput, SearchableSelect } from "@/components/ui";
 import { moduleControlStrings as strings } from "../ModuleControl.strings";
 import { ALL_STATUSES_LABEL, EXAM_MODULE_STATUS_OPTIONS } from "@/constants";
 
@@ -14,9 +14,7 @@ interface ModuleFilterBarProps {
 export function ModuleFilterBar({ search, onSearchChange, status, onStatusChange, onSubmit }: ModuleFilterBarProps) {
   return (
     <form className="filter-bar course-filter-bar" onSubmit={onSubmit}>
-      <div className="search-input-wrapper">
-        <input placeholder={strings.searchPlaceholder} value={search} onChange={(event) => onSearchChange(event.target.value)} />
-      </div>
+      <SearchInput className="course-filter-search" placeholder={strings.searchPlaceholder} value={search} onChange={onSearchChange} fullWidth />
       <SearchableSelect
         options={[
           ...EXAM_MODULE_STATUS_OPTIONS,
@@ -27,9 +25,9 @@ export function ModuleFilterBar({ search, onSearchChange, status, onStatusChange
         searchable={false}
         className="status-filter-select"
       />
-      <button type="submit" className="filter-search-btn">
+      <Button type="submit" className="filter-search-btn" size="md">
         {strings.search}
-      </button>
+      </Button>
     </form>
   );
 }

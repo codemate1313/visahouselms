@@ -14,6 +14,7 @@ import {
   type InstitutePlanEditValues,
 } from "./PlanEditDialog";
 import type { AgreementAttachment } from "@/pages/super-admin/InstituteForm/components/AgreementAttachments";
+import { formatDate } from "@/utils/date";
 
 interface SubscriptionManageCardProps {
   status: StatusResponse;
@@ -96,10 +97,10 @@ export function SubscriptionManageCard({
           {current && state !== "none" && (
             <div className="subscription-dates-box">
               <p>
-                <span>{t.starts}</span> <strong>{new Date(current.starts_at).toLocaleDateString("en-GB")}</strong>
+                <span>{t.starts}</span> <strong>{formatDate(current.starts_at)}</strong>
               </p>
               <p>
-                <span>{t.expires}</span> <strong>{new Date(current.expires_at).toLocaleDateString("en-GB")}</strong>
+                <span>{t.expires}</span> <strong>{formatDate(current.expires_at)}</strong>
               </p>
               {current.days_remaining != null && (
                 <p>

@@ -1,4 +1,5 @@
 import type { DetailValueType } from "./types";
+import { formatDate } from "@/utils/date";
 
 export const SUBSCRIPTION_STATE_COLORS: Record<string, string> = {
   active: "#10b981",
@@ -41,7 +42,7 @@ export function formatDetailValue(
     const date = new Date(String(value));
     return Number.isNaN(date.getTime())
       ? String(value)
-      : date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+      : formatDate(date);
   }
   return String(value);
 }

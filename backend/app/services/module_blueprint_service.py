@@ -6,7 +6,7 @@ explicit assessment part and publish validation can enforce the specification.
 """
 from copy import deepcopy
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from app.models.exam_module import MODULE_TYPES
 
@@ -326,7 +326,7 @@ def _with_defaults(parts: list[dict]) -> list[dict]:
 
 def get_blueprint(module_type: str) -> dict:
     if module_type not in MODULE_TYPES:
-        raise HTTPException(status_code=400, detail="Unknown assessment module type")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown assessment module type")
     if module_type in SECTION_BLUEPRINTS:
         blueprint = deepcopy(SECTION_BLUEPRINTS[module_type])
         blueprint["module_type"] = module_type

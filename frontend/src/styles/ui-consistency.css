@@ -463,3 +463,57 @@
     max-height: calc(100dvh - 16px);
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Device compatibility (loaded after index.css so these win cascade) */
+/* ------------------------------------------------------------------ */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Wide data tables: on small screens, let them scroll sideways instead
+   of clipping columns behind overflow-x: hidden wrappers. */
+@media (max-width: 960px) {
+  .table-wrap,
+  .table-scroll,
+  .table-wrapper,
+  .table-card-block {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sleek-users-table,
+  .sleek-institutes-table,
+  .sleek-onboardings-table,
+  .sleek-logs-table,
+  .sleek-accounts-table,
+  .sleek-plans-table,
+  .sleek-access-table,
+  .comparison-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* iOS zooms the whole page when focusing an input whose font-size is
+   below 16px. Keep fields at 16px on touch-width screens. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Comfortable tap targets on touch devices for the primary controls. */
+@media (pointer: coarse) {
+  .table-actions button,
+  .action-btn-icon,
+  .row-actions-inline button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+}

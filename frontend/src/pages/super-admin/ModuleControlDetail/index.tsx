@@ -10,6 +10,7 @@ import { ActionToolbar } from "./components/ActionToolbar";
 import { OverviewCard } from "./components/OverviewCard";
 import { AssignInstitutePanel } from "./components/AssignInstitutePanel";
 import { InstituteAccessTable } from "./components/InstituteAccessTable";
+import { ModuleAnalytics } from "./components/ModuleAnalytics";
 
 export function ModuleControlDetail() {
   const { id } = useParams();
@@ -65,6 +66,16 @@ export function ModuleControlDetail() {
 
     try {
       await apiClient.delete(`/super-admin/modules/${id}/assignments/${instituteId}`);
+      setModule((current) =>
+        current
+          ? {
+              ...current,
+              assignments: current.assignments.map((assignment) =>
+                assignment.institute_id === instituteId ? { ...assignment, is_active: false } : assignment
+              ),
+            }
+          : current
+      );
       await load();
     } catch (err) {
       setError(extractErrorMessage(err, strings.errors.revoke));
@@ -145,6 +156,7 @@ export function ModuleControlDetail() {
 
       <ActionToolbar module={module} onToggleVisibility={toggleVisibility} onChangeStatus={changeStatus} onRemove={remove} />
       <OverviewCard module={module} />
+      <ModuleAnalytics moduleId={id!} />
       <AssignInstitutePanel module={module} available={available} selected={selected} onSelectedChange={setSelected} busy={busy} onSubmit={assign} />
       <InstituteAccessTable assignments={module.assignments} onRevoke={revoke} />
     </div>

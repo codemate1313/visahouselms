@@ -90,5 +90,5 @@ export const StudentPurchaseHistory = lazy(() => import("../pages/student/Studen
 export const StudentVouchers = lazy(() => import("../pages/student/StudentVouchers").then((module) => ({ default: module.StudentVouchers })));
 export const Vouchers = lazy(() => import("../pages/super-admin/Vouchers").then((module) => ({ default: module.Vouchers })));
 export const PublicVouchersPage = lazy(() => import("../components/landing/VouchersSection").then((module) => ({ default: module.VouchersSection })));
-
-
+export const BlogsList = lazy(() => import("../pages/public/BlogsList").then((module) => ({ default: module.BlogsList })));
+export const BlogDetail = lazy(() => import("../pages/public/BlogDetail").then((module) => ({ default: module.BlogDetail })));

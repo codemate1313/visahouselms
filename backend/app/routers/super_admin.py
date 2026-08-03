@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
-from sqlalchemy import or_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -97,22 +97,22 @@ def reactivate_directory_user(
 
 
 @router.get("/users/{user_id}", response_model=DirectoryUserOut)
-def get_direct_student_user(user_id: int, db: Session = Depends(get_db)):
+def get_directory_user(user_id: int, db: Session = Depends(get_db)):
     return super_admin_service.serialize_directory_user(
-        super_admin_service.get_direct_student_or_404(db, user_id),
+        super_admin_service.get_directory_user_or_404(db, user_id),
         None,
     )
 
 
 @router.patch("/users/{user_id}", response_model=DirectoryUserOut)
-def update_direct_student_user(
+def update_directory_user(
     user_id: int,
     payload: ProfileUpdateRequest,
     request: Request,
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    user = super_admin_service.update_direct_student(
+    user = super_admin_service.update_directory_user(
         db,
         actor,
         user_id,
@@ -142,7 +142,7 @@ def reset_direct_student_password(
     }
 
 
-@router.delete("/users/{user_id}", status_code=204)
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_direct_student_user(
     user_id: int,
     request: Request,
@@ -162,7 +162,7 @@ def get_account(account_id: int, db: Session = Depends(get_db)):
     return super_admin_service.get_super_admin_or_404(db, account_id)
 
 
-@router.post("/accounts", response_model=SuperAdminAccountOut, status_code=201)
+@router.post("/accounts", response_model=SuperAdminAccountOut, status_code=status.HTTP_201_CREATED)
 def create_account(
     payload: SuperAdminAccountCreate,
     request: Request,
@@ -229,7 +229,7 @@ def reactivate_account(
     return super_admin_service.reactivate_super_admin(db, actor, account_id, _client_ip(request))
 
 
-@router.delete("/accounts/{account_id}", status_code=204)
+@router.delete("/accounts/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_account(
     account_id: int,
     request: Request,
@@ -252,7 +252,7 @@ def force_password_reset(
     )
 
 
-@router.post("/me/change-password", status_code=204)
+@router.post("/me/change-password", status_code=status.HTTP_204_NO_CONTENT)
 def change_my_password(
     payload: ChangePasswordRequest,
     request: Request,
@@ -337,7 +337,7 @@ def list_my_sessions(
     return account_service.list_sessions(db, actor, current_session.id)
 
 
-@router.delete("/me/sessions/{session_id}", status_code=204)
+@router.delete("/me/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 def revoke_my_session(
     session_id: int,
     request: Request,
@@ -462,7 +462,12 @@ def get_user_linked_details(
 
     audit_logs = (
         db.query(AuditLog)
-        .filter(or_(AuditLog.user_id == user_id, AuditLog.entity_id == user_id))
+        .filter(
+            or_(
+                AuditLog.user_id == user_id,
+                and_(AuditLog.entity_type == "user", AuditLog.entity_id == user_id),
+            )
+        )
         .order_by(AuditLog.created_at.desc())
         .limit(20)
         .all()

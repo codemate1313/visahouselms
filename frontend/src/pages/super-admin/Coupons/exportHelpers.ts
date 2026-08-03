@@ -5,6 +5,7 @@ import { formatCurrencyAmount } from "@/utils/currency";
 import { couponsStrings as strings } from "./Coupons.strings";
 import type { CouponRow } from "./types";
 import { ACTIVATION_STATUS_LABELS } from "@/constants";
+import { formatDate } from "@/utils/date";
 
 export function exportCouponsPDF(coupons: CouponRow[]) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -27,7 +28,7 @@ export function exportCouponsPDF(coupons: CouponRow[]) {
       c.discount_type === "percent" ? `${c.value}%` : formatCurrencyAmount(c.value),
       c.scope,
       `${c.usage_count}${c.usage_limit ? ` / ${c.usage_limit}` : ""}`,
-      `${c.valid_from ? new Date(c.valid_from).toLocaleDateString("en-GB") : "—"} to ${c.valid_until ? new Date(c.valid_until).toLocaleDateString("en-GB") : "—"}`,
+      `${c.valid_from ? formatDate(c.valid_from) : "—"} to ${c.valid_until ? formatDate(c.valid_until) : "—"}`,
       c.is_active ? ACTIVATION_STATUS_LABELS.active : ACTIVATION_STATUS_LABELS.inactive,
     ]),
     styles: { fontSize: 9, cellPadding: 4, textColor: [15, 23, 42] },
@@ -49,8 +50,8 @@ export function exportCouponsExcel(coupons: CouponRow[]) {
       c.scope,
       c.usage_count,
       c.usage_limit ?? strings.excel.unlimited,
-      c.valid_from ? new Date(c.valid_from).toLocaleDateString("en-GB") : "",
-      c.valid_until ? new Date(c.valid_until).toLocaleDateString("en-GB") : "",
+      c.valid_from ? formatDate(c.valid_from) : "",
+      c.valid_until ? formatDate(c.valid_until) : "",
       c.is_active ? ACTIVATION_STATUS_LABELS.active : ACTIVATION_STATUS_LABELS.inactive,
     ]),
   ];

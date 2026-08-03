@@ -495,8 +495,8 @@ export function InstituteForm() {
                 </button>
 
                 {!isLast && (
-                  <div style={{ display: "flex", alignItems: "center", margin: "0 6px", color: isCompleted ? "var(--primary, #e11d2e)" : "var(--border)" }}>
-                    <div style={{ width: 14, height: 2, background: isCompleted ? "var(--primary, #e11d2e)" : "var(--border)", borderRadius: 1 }} />
+                  <div style={{ display: "flex", alignItems: "center", margin: "0 6px", color: isCompleted ? "var(--primary, var(--red-500))" : "var(--border)" }}>
+                    <div style={{ width: 14, height: 2, background: isCompleted ? "var(--primary, var(--red-500))" : "var(--border)", borderRadius: 1 }} />
                     <Icon name="arrowRight" />
                   </div>
                 )}
@@ -547,7 +547,7 @@ export function InstituteForm() {
                   <p className="form-section-subtitle">Super-admin account for managing this institute.</p>
                 </div>
                 <div style={{ padding: 20, borderRadius: 12, background: "var(--surface-muted, #f8fafc)", border: "1px solid var(--border, var(--border))", maxWidth: 600 }}>
-                  <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted, #64748b)" }}>
+                  <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted, var(--slate-500))" }}>
                     Admin credentials created during onboarding. To manage or reset user accounts for this institute, visit the <strong>Accounts</strong> sub-page.
                   </p>
                   <LinkButton variant="secondary" to={`/super-admin/institutes/${id}/accounts`} style={{ marginTop: 12 }}>
@@ -646,7 +646,7 @@ export function InstituteForm() {
                     style={{
                       padding: "14px 16px",
                       borderRadius: 12,
-                      border: isSelected ? "2px solid var(--primary, #e11d2e)" : "1px solid var(--border, rgba(226, 232, 240, 0.9))",
+                      border: isSelected ? "2px solid var(--primary, var(--red-500))" : "1px solid var(--border, rgba(226, 232, 240, 0.9))",
                       background: isSelected ? "rgba(225, 29, 46, 0.04)" : "var(--surface)",
                       cursor: "pointer",
                       transition: "all 0.2s ease",
@@ -658,7 +658,7 @@ export function InstituteForm() {
                     <input type="checkbox" checked={isSelected} readOnly style={{ marginTop: 3, cursor: "pointer" }} />
                     <div>
                       <strong style={{ fontSize: 13.5, display: "block", color: "var(--text)" }}>{module.title}</strong>
-                      <span style={{ fontSize: 11.5, color: "var(--text-muted, #64748b)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                      <span style={{ fontSize: 11.5, color: "var(--text-muted, var(--slate-500))", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                         {module.module_type} &middot; {module.duration_minutes} min
                       </span>
                     </div>

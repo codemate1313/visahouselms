@@ -5,6 +5,7 @@ import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { PageHeader } from "@/components/ui";
 import { gradingOversightStrings as strings } from "./GradingOversight.strings";
+import { formatDate } from "@/utils/date";
 
 const STATUS_CLASS: Record<string, string> = { pending: "badge-amber", in_review: "badge-blue", resolved: "badge-green", rejected: "badge-red" };
 
@@ -65,7 +66,7 @@ export function GradingOversight() {
                       <span className={`badge ${STATUS_CLASS[request.status] ?? "badge-gray"}`}>{request.status.replace("_", " ")}</span>
                     </td>
                     <td>{request.assigned_to_name ?? "—"}</td>
-                    <td>{new Date(request.created_at).toLocaleDateString()}</td>
+                    <td>{formatDate(request.created_at)}</td>
                     <td>{request.resolution_note ?? "—"}</td>
                   </tr>
                 ))

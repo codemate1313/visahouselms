@@ -6,6 +6,7 @@ import { formatCurrencyAmount } from "@/utils/currency";
 import { couponsStrings as strings } from "../Coupons.strings";
 import type { CouponRow } from "../types";
 import { ACTIVATION_STATUS_LABELS } from "@/constants";
+import { formatDate } from "@/utils/date";
 
 interface CouponsTableProps {
   coupons: CouponRow[];
@@ -62,9 +63,9 @@ export function CouponsTable({ coupons, onToggleActive, onRequestDelete }: Coupo
               </td>
               <td>
                 <span className="table-item-subtitle" style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                  {coupon.valid_from ? new Date(coupon.valid_from).toLocaleDateString("en-GB") : "—"}
+                  {coupon.valid_from ? formatDate(coupon.valid_from) : "—"}
                   {" – "}
-                  {coupon.valid_until ? new Date(coupon.valid_until).toLocaleDateString("en-GB") : "—"}
+                  {coupon.valid_until ? formatDate(coupon.valid_until) : "—"}
                 </span>
               </td>
               <td>

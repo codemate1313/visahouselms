@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -36,6 +36,11 @@ def get_module(module_id: int, db: Session = Depends(get_db)):
     return module_authoring_service.serialize_for_super_admin(module_authoring_service.get_module_or_404(db, module_id))
 
 
+@router.get("/{module_id}/analytics")
+def get_module_analytics(module_id: int, db: Session = Depends(get_db)):
+    return module_authoring_service.analytics_for_super_admin(db, module_id)
+
+
 @router.post("/{module_id}/status")
 def set_status(module_id: int, payload: ModuleStatusUpdate, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     module = module_authoring_service.get_module_or_404(db, module_id)
@@ -43,7 +48,7 @@ def set_status(module_id: int, payload: ModuleStatusUpdate, request: Request, db
         errors = module_authoring_service.validation_errors(module)
         if errors:
             from fastapi import HTTPException
-            raise HTTPException(status_code=400, detail={"message": "Course is not ready to publish", "errors": errors})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"message": "Course is not ready to publish", "errors": errors})
         module.published_at = module_authoring_service._now()
     module.status = payload.status
     db.add(module)
@@ -56,16 +61,16 @@ def set_visibility(module_id: int, payload: ModuleVisibilityUpdate, request: Req
     return module_authoring_service.set_visibility(db, actor, module_id, payload.is_visible, _ip(request))
 
 
-@router.post("/{module_id}/assignments", status_code=201)
+@router.post("/{module_id}/assignments", status_code=status.HTTP_201_CREATED)
 def assign(module_id: int, payload: ModuleInstituteAssignment, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     return module_authoring_service.assign_to_institute(db, actor, module_id, payload.institute_id, _ip(request))
 
 
-@router.delete("/{module_id}/assignments/{institute_id}", status_code=204)
+@router.delete("/{module_id}/assignments/{institute_id}", status_code=status.HTTP_204_NO_CONTENT)
 def unassign(module_id: int, institute_id: int, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     module_authoring_service.unassign_from_institute(db, actor, module_id, institute_id, _ip(request))
 
 
-@router.delete("/{module_id}", status_code=204)
+@router.delete("/{module_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove(module_id: int, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     module_authoring_service.remove_by_super_admin(db, actor, module_id, _ip(request))

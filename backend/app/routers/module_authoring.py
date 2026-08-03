@@ -68,7 +68,7 @@ def list_modules(
     return module_authoring_service.list_modules(db, actor, search, module_type, status_filter)
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_module(
     payload: ModuleCreate,
     request: Request,
@@ -89,7 +89,7 @@ def get_module(
         # Instructor content remains private to its author at this phase.
         from fastapi import HTTPException
 
-        raise HTTPException(status_code=403, detail="This module belongs to another instructor")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This module belongs to another instructor")
     return module_authoring_service.serialize_module(module, detailed=True)
 
 
@@ -161,7 +161,7 @@ def set_module_status(
     return module_authoring_service.set_status(db, actor, module_id, payload.status, _ip(request))
 
 
-@router.delete("/{module_id}", status_code=204)
+@router.delete("/{module_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_module(
     module_id: int,
     request: Request,
@@ -171,7 +171,7 @@ def delete_module(
     module_authoring_service.delete_module(db, actor, module_id, _ip(request))
 
 
-@router.post("/{module_id}/parts/{part_id}/questions", status_code=201)
+@router.post("/{module_id}/parts/{part_id}/questions", status_code=status.HTTP_201_CREATED)
 def add_question(
     module_id: int,
     part_id: int,
@@ -200,7 +200,7 @@ def update_question(
     )
 
 
-@router.delete("/{module_id}/parts/{part_id}/questions/{question_id}", status_code=204)
+@router.delete("/{module_id}/parts/{part_id}/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_question(
     module_id: int,
     part_id: int,
@@ -226,7 +226,7 @@ async def preview_import(
     return await question_import_service.preview_upload(file)
 
 
-@router.post("/{module_id}/parts/{part_id}/import", status_code=201)
+@router.post("/{module_id}/parts/{part_id}/import", status_code=status.HTTP_201_CREATED)
 def commit_import(
     module_id: int,
     part_id: int,
@@ -247,7 +247,7 @@ def commit_import(
     )
 
 
-@router.post("/{module_id}/parts/{part_id}/audio", status_code=201)
+@router.post("/{module_id}/parts/{part_id}/audio", status_code=status.HTTP_201_CREATED)
 async def upload_audio(
     module_id: int,
     part_id: int,
@@ -275,7 +275,7 @@ async def upload_audio(
     )
 
 
-@router.post("/{module_id}/parts/{part_id}/tts", status_code=201)
+@router.post("/{module_id}/parts/{part_id}/tts", status_code=status.HTTP_201_CREATED)
 def save_browser_narration(
     module_id: int,
     part_id: int,
@@ -288,7 +288,7 @@ def save_browser_narration(
     if part.section_type != "listening":
         from fastapi import HTTPException
 
-        raise HTTPException(status_code=400, detail="Text-to-speech is available only for Listening parts")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Text-to-speech is available only for Listening parts")
     return module_authoring_service.add_tts_text_asset(
         db,
         actor,
@@ -302,7 +302,7 @@ def save_browser_narration(
     )
 
 
-@router.post("/{module_id}/parts/{part_id}/avatar", status_code=202)
+@router.post("/{module_id}/parts/{part_id}/avatar", status_code=status.HTTP_202_ACCEPTED)
 def generate_avatar(
     module_id: int,
     part_id: int,
@@ -337,7 +337,7 @@ def avatar_job_status(job_id: int, db: Session = Depends(get_db), actor: User = 
     }
 
 
-@router.delete("/{module_id}/assets/{asset_id}", status_code=204)
+@router.delete("/{module_id}/assets/{asset_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_audio(
     module_id: int,
     asset_id: int,

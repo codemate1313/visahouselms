@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -33,7 +33,7 @@ def list_accounts(db: Session = Depends(get_db)):
     return super_admin_service.list_developer_managed_accounts(db)
 
 
-@router.post("/me/change-password", status_code=204)
+@router.post("/me/change-password", status_code=status.HTTP_204_NO_CONTENT)
 def change_my_password(
     payload: ChangePasswordRequest,
     request: Request,
@@ -48,7 +48,7 @@ def change_my_password(
     )
 
 
-@router.post("/super-admins", response_model=SuperAdminAccountOut, status_code=201)
+@router.post("/super-admins", response_model=SuperAdminAccountOut, status_code=status.HTTP_201_CREATED)
 def create_super_admin(
     payload: SuperAdminAccountCreate,
     request: Request,
@@ -71,7 +71,7 @@ def create_super_admin(
     )
 
 
-@router.post("/developers", response_model=SuperAdminAccountOut, status_code=201)
+@router.post("/developers", response_model=SuperAdminAccountOut, status_code=status.HTTP_201_CREATED)
 def create_developer(
     payload: DeveloperAccountCreate,
     request: Request,

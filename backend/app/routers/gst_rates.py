@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -26,7 +26,7 @@ def list_gst_rates(active_only: bool = False, db: Session = Depends(get_db)):
     return gst_service.list_gst_rates(db, active_only)
 
 
-@router.post("", status_code=201, dependencies=[Depends(require_monetary_analytics_access)])
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_monetary_analytics_access)])
 def create_gst_rate(
     payload: GstRateCreate,
     request: Request,
@@ -57,7 +57,7 @@ def toggle_gst_rate_active(
     return gst_service.toggle_gst_rate_active(db, actor, rate_id, _client_ip(request))
 
 
-@router.delete("/{rate_id}", status_code=204, dependencies=[Depends(require_monetary_analytics_access)])
+@router.delete("/{rate_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_monetary_analytics_access)])
 def delete_gst_rate(
     rate_id: int,
     request: Request,

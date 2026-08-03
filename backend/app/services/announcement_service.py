@@ -1,3 +1,4 @@
+import logging
 import json
 from datetime import datetime, timezone
 from typing import Optional
@@ -11,6 +12,8 @@ from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, SA_INSTRUCTOR, STU
 from app.models.user import User
 from app.schemas.announcement import AnnouncementCreate
 from app.services import notification_service
+
+logger = logging.getLogger(__name__)
 
 STAFF_ROLES = (SUPER_ADMIN, SA_INSTRUCTOR, INSTITUTE_ADMIN, INST_INSTRUCTOR)
 ALL_NOTIFICATION_ROLES = (*STAFF_ROLES, STUDENT)
@@ -35,7 +38,7 @@ def _parse_ids(val: Optional[str]) -> list[int]:
         if isinstance(data, list):
             return [int(x) for x in data if str(x).isdigit() or isinstance(x, int)]
     except Exception:
-        pass
+        logger.warning("Malformed announcement audience setting; ignoring", exc_info=True)
     return []
 
 

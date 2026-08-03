@@ -391,7 +391,7 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
               {(chartKey === "byMonth" || chartKey === "byInstitute") && (
                 <div className="chart-custom-date-picker" style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--surface-muted, #f8fafc)", padding: "4px 10px", borderRadius: 12, border: "1px solid var(--border-subtle, rgba(203,213,225,0.8))" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted, #64748b)" }}>From:</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted, var(--slate-500))" }}>From:</span>
                     <input
                       type="month"
                       value={fromDate}
@@ -399,12 +399,12 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
                         setFromDate(e.target.value);
                         setActiveFilter("custom");
                       }}
-                      style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border, var(--border))", background: "var(--surface, #ffffff)", fontSize: 12, fontWeight: 600, color: "var(--text, #0f172a)", outline: "none" }}
+                      style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border, var(--border))", background: "var(--surface, var(--white))", fontSize: 12, fontWeight: 600, color: "var(--text, var(--slate-900))", outline: "none" }}
                     />
                   </div>
-                  <span style={{ color: "var(--text-muted, #94a3b8)", fontSize: 12, fontWeight: 700 }}>&rarr;</span>
+                  <span style={{ color: "var(--text-muted, var(--slate-400))", fontSize: 12, fontWeight: 700 }}>&rarr;</span>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted, #64748b)" }}>To:</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted, var(--slate-500))" }}>To:</span>
                     <input
                       type="month"
                       value={toDate}
@@ -412,7 +412,7 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
                         setToDate(e.target.value);
                         setActiveFilter("custom");
                       }}
-                      style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border, var(--border))", background: "var(--surface, #ffffff)", fontSize: 12, fontWeight: 600, color: "var(--text, #0f172a)", outline: "none" }}
+                      style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border, var(--border))", background: "var(--surface, var(--white))", fontSize: 12, fontWeight: 600, color: "var(--text, var(--slate-900))", outline: "none" }}
                     />
                   </div>
                 </div>

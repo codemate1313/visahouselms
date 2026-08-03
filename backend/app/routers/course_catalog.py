@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -50,7 +50,7 @@ def set_course_visibility(course_id: int, payload: CourseVisibilityUpdate, reque
     return course_service.set_visibility(db, actor, course_id, payload.is_visible, _ip(request))
 
 
-@router.delete("/{course_id}", status_code=204)
+@router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_course(course_id: int, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     course_service.remove_course_by_super_admin(db, actor, course_id, _ip(request))
 
@@ -60,7 +60,7 @@ def list_assignments(course_id: int, db: Session = Depends(get_db)):
     return course_service.list_assignments(db, course_id)
 
 
-@router.post("/{course_id}/assignments", status_code=201)
+@router.post("/{course_id}/assignments", status_code=status.HTTP_201_CREATED)
 def assign_course(
     course_id: int,
     payload: CourseAssignmentRequest,
@@ -73,7 +73,7 @@ def assign_course(
     )
 
 
-@router.delete("/{course_id}/assignments/{institute_id}", status_code=204)
+@router.delete("/{course_id}/assignments/{institute_id}", status_code=status.HTTP_204_NO_CONTENT)
 def unassign_course(
     course_id: int,
     institute_id: int,

@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { API_BASE_URL } from "@/api/client";
+import { apiClient } from "@/api/client";
 import { RequiredMark } from "@/components/ui";
 import { seoSettingsStrings as strings } from "./SuperAdminSEOSettings.strings";
 import { Icon } from "@/components/icons";
@@ -12,9 +12,9 @@ export function SuperAdminSEOSettings() {
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/super-admin/seo-settings`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
+    apiClient
+      .get("/super-admin/seo-settings")
+      .then(({ data }) => {
         if (data) setFormData(data);
         setLoading(false);
       })
@@ -26,21 +26,18 @@ export function SuperAdminSEOSettings() {
     setSaving(true);
     setSavedSuccess(false);
 
-    fetch(`${API_BASE_URL}/super-admin/seo-settings`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    }).then((res) => {
-      setSaving(false);
-      if (res.ok) {
+    apiClient
+      .put("/super-admin/seo-settings", formData)
+      .then(() => {
+        setSaving(false);
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 3000);
-      }
-    });
+      })
+      .catch(() => setSaving(false));
   };
 
   if (loading) {
-    return <p className="hint">Loading SEO settings...</p>;
+    return <p className="hint">{strings.loading}</p>;
   }
 
   return (

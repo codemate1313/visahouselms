@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "@/api/client";
 import { confirmDelete } from "@/components/confirmDialog";
 import { MetricCard } from "@/components/dashboard/MetricCard";
@@ -8,6 +8,8 @@ import { useToastStore } from "@/store/toastStore";
 import { vouchersStrings as s } from "./Vouchers.strings";
 import "@/styles/voucher-ui.css";
 import "./Vouchers.css";
+import { formatDate } from "@/utils/date";
+import { formatCurrencyAmount } from "@/utils/currency";
 
 interface VoucherType {
   id: number;
@@ -64,6 +66,7 @@ interface VoucherPurchase {
 interface UnusedVoucherCode {
   id: number;
   code: string;
+  status: "available" | "disabled";
   voucher_type_name: string;
   voucher_type_badge_color: string;
   validity_days: number;
@@ -99,6 +102,9 @@ export function Vouchers() {
   const [gstRates, setGstRates] = useState<GstRate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [unusedSearch, setUnusedSearch] = useState("");
+  const [unusedTypeFilter, setUnusedTypeFilter] = useState("all");
+  const [selectedUnusedIds, setSelectedUnusedIds] = useState<Set<number>>(new Set());
 
   // Modals & Forms State
   const [showTypeModal, setShowTypeModal] = useState(false);
@@ -152,6 +158,7 @@ export function Vouchers() {
       setPurchases(Array.isArray(pRes.data) ? pRes.data : []);
       setUnusedCodes(Array.isArray(uRes.data) ? uRes.data : []);
       setGstRates(Array.isArray(gRes.data) ? gRes.data : []);
+      setSelectedUnusedIds(new Set());
 
       if (tRes.data && tRes.data.length > 0 && !uploadTypeId) {
         setUploadTypeId(tRes.data[0].id);
@@ -341,14 +348,64 @@ export function Vouchers() {
     }
   }
 
+  function toggleUnusedCodeSelection(id: number, checked: boolean) {
+    setSelectedUnusedIds((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  }
+
+  function toggleAllVisibleUnusedCodes(checked: boolean) {
+    setSelectedUnusedIds((current) => {
+      const next = new Set(current);
+      filteredUnusedIds.forEach((id) => {
+        if (checked) {
+          next.add(id);
+        } else {
+          next.delete(id);
+        }
+      });
+      return next;
+    });
+  }
+
+  async function handleDisableCode(id: number, code: string) {
+    if (!await confirmDelete(`Disable voucher code "${code}"? It will no longer be sold to students.`, "Disable Voucher Code")) return;
+    try {
+      await api.patch(`/vouchers/admin/codes/${id}/disable`);
+      showSuccess("Voucher code disabled.");
+      fetchData();
+    } catch (err: any) {
+      showError(err.response?.data?.detail || "Failed to disable voucher code");
+    }
+  }
+
   async function handleDeleteCode(id: number, code: string) {
-    if (!await confirmDelete(`Delete code "${code}"?`, "Delete Voucher Code")) return;
+    if (!await confirmDelete(`Permanently delete voucher code "${code}"? This cannot be undone.`, "Delete Voucher Code")) return;
     try {
       await api.delete(`/vouchers/admin/codes/${id}`);
       showSuccess("Voucher code deleted.");
       fetchData();
     } catch (err: any) {
-      showError(err.response?.data?.detail || "Failed to delete code");
+      showError(err.response?.data?.detail || "Failed to delete voucher code");
+    }
+  }
+
+  async function handleDisableSelectedCodes() {
+    const codeIds = filteredUnusedIds.filter((id) => selectedUnusedIds.has(id));
+    if (codeIds.length === 0) return;
+    if (!await confirmDelete(`Disable ${codeIds.length} selected voucher code${codeIds.length === 1 ? "" : "s"}? They will no longer be sold to students.`, "Disable Selected Voucher Codes")) return;
+    try {
+      const res = await api.post("/vouchers/admin/codes/disable", { code_ids: codeIds });
+      showSuccess(res.data?.message || "Selected voucher codes disabled.");
+      fetchData();
+    } catch (err: any) {
+      showError(err.response?.data?.detail || "Failed to disable selected voucher codes");
     }
   }
 
@@ -370,6 +427,29 @@ export function Vouchers() {
       label: `${g.name} (${g.percentage}%)`,
     })),
   ];
+  const unusedTypeOptions = [
+    { value: "all", label: "All voucher types" },
+    ...types.map((t) => ({ value: t.name, label: t.name })),
+  ];
+  const filteredUnusedCodes = useMemo(() => {
+    const query = unusedSearch.trim().toLowerCase();
+    return unusedCodes.filter((code) => {
+      const matchesType = unusedTypeFilter === "all" || code.voucher_type_name === unusedTypeFilter;
+      const matchesSearch =
+        !query ||
+        code.code.toLowerCase().includes(query) ||
+        code.voucher_type_name.toLowerCase().includes(query) ||
+        (code.source_filename || "").toLowerCase().includes(query);
+      return matchesType && matchesSearch;
+    });
+  }, [unusedCodes, unusedSearch, unusedTypeFilter]);
+  const filteredUnusedIds = useMemo(
+    () => filteredUnusedCodes.filter((code) => code.status === "available").map((code) => code.id),
+    [filteredUnusedCodes]
+  );
+  const allVisibleUnusedSelected =
+    filteredUnusedIds.length > 0 && filteredUnusedIds.every((id) => selectedUnusedIds.has(id));
+  const selectedVisibleUnusedCount = filteredUnusedIds.filter((id) => selectedUnusedIds.has(id)).length;
 
   return (
     <div className="vouchers-page-wrapper voucher-ui-scope">
@@ -391,7 +471,7 @@ export function Vouchers() {
         />
         <MetricCard
           label="Total Voucher Revenue"
-          value={`₹${totalRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          value={formatCurrencyAmount(totalRevenue)}
           icon="revenue"
           tone="purple"
         />
@@ -413,13 +493,15 @@ export function Vouchers() {
       </div>
 
       {/* Action Toolbar & Filters */}
-      {(activeTab === "purchases" || activeTab === "types" || activeTab === "offerings") && (
+      {(activeTab === "purchases" || activeTab === "unused" || activeTab === "types" || activeTab === "offerings") && (
         <FilterBar
           resultCount={
             <>
               Showing <strong>
                 {activeTab === "purchases"
                   ? purchases.length
+                  : activeTab === "unused"
+                  ? filteredUnusedCodes.length
                   : activeTab === "offerings"
                   ? offerings.length
                   : types.length}
@@ -434,6 +516,31 @@ export function Vouchers() {
               onChange={(val) => setSearch(val)}
               width={320}
             />
+          )}
+          {activeTab === "unused" && (
+            <>
+              <SearchInput
+                placeholder="Search code, type, or filename"
+                value={unusedSearch}
+                onChange={setUnusedSearch}
+                width={360}
+              />
+              <SearchableSelect
+                options={unusedTypeOptions}
+                value={unusedTypeFilter}
+                onChange={(val) => setUnusedTypeFilter(String(val))}
+                placeholder="All voucher types"
+                searchable={false}
+              />
+              <Button
+                variant="danger"
+                size="small"
+                disabled={selectedVisibleUnusedCount === 0}
+                onClick={handleDisableSelectedCodes}
+              >
+                <Icon name="revoke" /> Disable selected ({selectedVisibleUnusedCount})
+              </Button>
+            </>
           )}
 
           <div style={{ display: "flex", gap: "1rem", marginLeft: "auto" }}>
@@ -498,13 +605,13 @@ export function Vouchers() {
                       </td>
                       <td>
                         <strong className="text-slate-900 dark:text-white">
-                          ₹{parseFloat(p.final_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          {formatCurrencyAmount(p.final_amount)}
                         </strong>
                         <div className="text-[10px] text-slate-400 uppercase font-bold">{p.gateway}</div>
                       </td>
                       <td>
                         <span className="text-xs text-slate-500">
-                          {new Date(p.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                          {formatDate(p.created_at)}
                         </span>
                       </td>
                       <td className="text-right">
@@ -527,8 +634,19 @@ export function Vouchers() {
           <table className="data-table">
             <thead>
               <tr>
+                <th className="voucher-select-col">
+                  <input
+                    type="checkbox"
+                    className="voucher-code-checkbox"
+                    aria-label="Select all visible unused voucher codes"
+                    checked={allVisibleUnusedSelected}
+                    disabled={filteredUnusedIds.length === 0}
+                    onChange={(event) => toggleAllVisibleUnusedCodes(event.target.checked)}
+                  />
+                </th>
                 <th>Voucher Code</th>
                 <th>Voucher Type</th>
+                <th>Status</th>
                 <th>Validity & Expiry</th>
                 <th>Source / Filename</th>
                 <th>Date Added</th>
@@ -536,15 +654,25 @@ export function Vouchers() {
               </tr>
             </thead>
             <tbody>
-              {unusedCodes.length === 0 ? (
+              {filteredUnusedCodes.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="ui-empty-row">
-                    No unused codes available.
+                  <td colSpan={8} className="ui-empty-row">
+                    {unusedCodes.length === 0 ? "No unused codes available." : "No unused codes match the current filters."}
                   </td>
                 </tr>
               ) : (
-                unusedCodes.map((uc) => (
+                filteredUnusedCodes.map((uc) => (
                   <tr key={uc.id}>
+                    <td className="voucher-select-col">
+                      <input
+                        type="checkbox"
+                        className="voucher-code-checkbox"
+                        aria-label={`Select voucher code ${uc.code}`}
+                        checked={selectedUnusedIds.has(uc.id)}
+                        disabled={uc.status !== "available"}
+                        onChange={(event) => toggleUnusedCodeSelection(uc.id, event.target.checked)}
+                      />
+                    </td>
                     <td>
                       <code className="voucher-code-pill">{uc.code}</code>
                     </td>
@@ -554,16 +682,17 @@ export function Vouchers() {
                       </span>
                     </td>
                     <td>
+                      <span className={`voucher-code-status ${uc.status === "disabled" ? "is-disabled" : "is-available"}`}>
+                        {uc.status === "disabled" ? "Disabled" : "Available"}
+                      </span>
+                    </td>
+                    <td>
                       <div className="flex flex-col gap-0.5">
                         <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
                           {uc.validity_days || 180} Days
                         </span>
                         <span className="text-xs text-slate-500 font-medium">
-                          Exp: {new Date(new Date(uc.created_at).getTime() + (uc.validity_days || 180) * 24 * 60 * 60 * 1000).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                          Exp: {formatDate(new Date(uc.created_at).getTime() + (uc.validity_days || 180) * 24 * 60 * 60 * 1000)}
                         </span>
                       </div>
                     </td>
@@ -574,22 +703,31 @@ export function Vouchers() {
                     </td>
                     <td>
                       <span className="text-xs text-slate-500">
-                        {new Date(uc.created_at).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {formatDate(uc.created_at)}
                       </span>
                     </td>
                     <td className="text-right">
-                      <button
-                        type="button"
-                        title="Delete Voucher Code"
-                        onClick={() => handleDeleteCode(uc.id, uc.code)}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200/80 transition-all duration-200 cursor-pointer"
-                      >
-                        <Icon name="trash" className="w-4 h-4" />
-                      </button>
+                      <div className="voucher-code-actions">
+                        <button
+                          type="button"
+                          title="Disable Voucher Code"
+                          aria-label={`Disable voucher code ${uc.code}`}
+                          onClick={() => handleDisableCode(uc.id, uc.code)}
+                          disabled={uc.status !== "available"}
+                          className="voucher-code-action-button voucher-code-action-disable"
+                        >
+                          <Icon name="revoke" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Delete Voucher Code"
+                          aria-label={`Delete voucher code ${uc.code}`}
+                          onClick={() => handleDeleteCode(uc.id, uc.code)}
+                          className="voucher-code-action-button voucher-code-action-delete"
+                        >
+                          <Icon name="trash" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -747,10 +885,10 @@ export function Vouchers() {
                 <div className="voucher-price-callout-box">
                   <div className="voucher-price-amount-row">
                     <span className="voucher-price-main-text">
-                      ₹{parseFloat(vo.discount_price || vo.price).toLocaleString("en-IN")}
+                      {formatCurrencyAmount(vo.discount_price || vo.price)}
                     </span>
                     {vo.discount_price && (
-                      <span className="voucher-price-original-text">₹{parseFloat(vo.price).toLocaleString("en-IN")}</span>
+                      <span className="voucher-price-original-text">{formatCurrencyAmount(vo.price)}</span>
                     )}
                   </div>
                   <div className="voucher-meta-info-row">
@@ -925,8 +1063,8 @@ export function Vouchers() {
           </div>
 
           {/* Badge Color Box */}
-          <div style={{ backgroundColor: "var(--surface-muted, #f8fafc)", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid var(--border-subtle, #e2e8f0)" }}>
-            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted, #64748b)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.6rem" }}>
+          <div style={{ backgroundColor: "var(--surface-muted, #f8fafc)", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid var(--border-subtle, var(--slate-200))" }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted, var(--slate-500))", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.6rem" }}>
               {s.types.badgeColor}
             </label>
             <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" }}>
@@ -942,7 +1080,7 @@ export function Vouchers() {
                     minWidth: "32px",
                     minHeight: "32px",
                     borderRadius: "9999px",
-                    border: typeForm.badge_color === color ? "2px solid #0f172a" : "2px solid transparent",
+                    border: typeForm.badge_color === color ? "2px solid var(--slate-900)" : "2px solid transparent",
                     boxShadow: typeForm.badge_color === color ? "0 0 0 3px rgba(2, 132, 199, 0.35)" : "0 1px 3px rgba(0,0,0,0.12)",
                     cursor: "pointer",
                     position: "relative",
@@ -963,7 +1101,7 @@ export function Vouchers() {
           </div>
 
           {/* Footer Actions */}
-          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "0.75rem", marginTop: "0.75rem", paddingTop: "0.85rem", borderTop: "1px solid var(--border-subtle, #e2e8f0)" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "0.75rem", marginTop: "0.75rem", paddingTop: "0.85rem", borderTop: "1px solid var(--border-subtle, var(--slate-200))" }}>
             <Button variant="secondary" type="button" onClick={() => setShowTypeModal(false)}>
               Cancel
             </Button>
@@ -1083,7 +1221,7 @@ export function Vouchers() {
               <div className="text-right">
                 <div className="text-xs font-bold text-slate-400 uppercase">Invoice Reference</div>
                 <div className="font-mono font-bold text-sky-600">{selectedInvoice.purchase_number}</div>
-                <div className="text-xs text-slate-500">{new Date(selectedInvoice.created_at).toLocaleDateString("en-IN")}</div>
+                <div className="text-xs text-slate-500">{formatDate(selectedInvoice.created_at)}</div>
               </div>
             </div>
 
@@ -1099,15 +1237,15 @@ export function Vouchers() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Base Amount:</span>
-                <span>₹{selectedInvoice.amount}</span>
+                <span>{formatCurrencyAmount(selectedInvoice.amount)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">GST Tax:</span>
-                <span>₹{selectedInvoice.gst_amount}</span>
+                <span>{formatCurrencyAmount(selectedInvoice.gst_amount)}</span>
               </div>
               <div className="flex justify-between text-sm font-bold border-t pt-2 text-slate-900 dark:text-white">
                 <span>Total Amount Paid:</span>
-                <span>₹{selectedInvoice.final_amount}</span>
+                <span>{formatCurrencyAmount(selectedInvoice.final_amount)}</span>
               </div>
             </div>
 

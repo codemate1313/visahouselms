@@ -194,7 +194,7 @@
   gap: 14px;
   background: #ffffff;
   padding: 20px 24px;
-  border-radius: 18px;
+  border-radius: var(--radius);
   border: 1px solid #e2e8f0;
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
   transition: all 0.2s ease;
@@ -478,7 +478,7 @@
   font-weight: 750;
   background: #f1f5f9;
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   color: #0f172a;
   border: 1px solid #e2e8f0;
 }
@@ -545,7 +545,7 @@
   color: #64748b;
   background: #f1f5f9;
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   border: 1px solid #e2e8f0;
 }
 
@@ -903,7 +903,7 @@ tr.is-drag-over {
   color: #94a3b8;
   cursor: grab;
   padding: 4px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
   user-select: none;
 }

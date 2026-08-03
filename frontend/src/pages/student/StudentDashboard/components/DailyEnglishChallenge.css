@@ -102,7 +102,7 @@ button.daily-answer-option {
   gap: 10px;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   background: var(--surface);
   color: var(--text);
   text-align: left;
@@ -421,7 +421,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
   aspect-ratio: 4 / 3;
   overflow: hidden;
   place-items: center;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   background: var(--primary-soft);
   color: var(--primary);
   font-size: 36px;
@@ -696,7 +696,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 .daily-fact-icon-wrapper {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--primary, #b91c2b);
   color: #ffffff;
   display: flex;
@@ -771,7 +771,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 .daily-fact-image-link {
   width: 92px;
   height: 92px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--surface, #ffffff);
   border: 1px solid rgba(0, 0, 0, 0.08);

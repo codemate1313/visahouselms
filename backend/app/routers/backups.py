@@ -82,7 +82,7 @@ def restore_backup(
     return {"restored": True, "message": message}
 
 
-@router.delete("/{backup_id}", status_code=204)
+@router.delete("/{backup_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_backup(
     backup_id: int,
     request: Request,

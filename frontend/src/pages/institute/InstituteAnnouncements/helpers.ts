@@ -1,5 +1,7 @@
+import { formatDateTime } from "@/utils/date";
+
 export function formatDate(value: string | null) {
-  return value ? new Date(value).toLocaleString() : "Draft";
+  return formatDateTime(value, "Draft");
 }
 
 export function normalizeSearch(value: string) {

@@ -3,6 +3,7 @@ import type { AttemptMetrics } from "@/pages/student/attemptMetrics";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
 import { RADIAL_COLORS, ResultRadial } from "./ResultRadial";
 import { LinkButton } from "@/components/ui";
+import { formatDate } from "@/utils/date";
 
 interface PerformanceOverviewPanelProps {
   attempt: Attempt;
@@ -73,7 +74,7 @@ export function PerformanceOverviewPanel({ attempt, metrics, awaitingAiGrading }
           </div>
           <div>
             <span>{t.submitted}</span>
-            <strong>{attempt.submitted_at ? new Date(attempt.submitted_at).toLocaleDateString() : "-"}</strong>
+            <strong>{attempt.submitted_at ? formatDate(attempt.submitted_at) : "-"}</strong>
           </div>
           <LinkButton to={`/student/attempts/${attempt.id}/result/details`}>
             {t.viewDetailedReview}

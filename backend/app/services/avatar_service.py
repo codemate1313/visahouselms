@@ -144,7 +144,7 @@ async def get_or_create_prompt_audio(text: str, voice: str) -> tuple[str, List[D
                 meta = json.load(f)
             return audio_url, meta.get("visemes", []), meta.get("duration", 3.0)
         except Exception:
-            pass
+            logger.exception("Failed to load cached viseme metadata")
 
     # Synthesize audio using edge-tts via tts_service
     mp3_bytes = await tts_service.synthesize_mp3(clean_text, voice=voice)

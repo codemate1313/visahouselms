@@ -7,7 +7,7 @@ import { getAttemptMetrics } from "@/pages/student/attemptMetrics";
 import { attemptResultStrings as strings } from "./AttemptResult.strings";
 import { PerformanceOverviewPanel } from "./components/PerformanceOverviewPanel";
 import { AnalysisPanel } from "./components/AnalysisPanel";
-import { ReevaluationStatus } from "./components/ReevaluationStatus";
+import { ReevaluationStatus } from "@/components/ReevaluationStatus";
 import { ReevaluationRequestForm } from "./components/ReevaluationRequestForm";
 import { Badge, LinkButton } from "@/components/ui";
 
@@ -188,7 +188,17 @@ export function AttemptResult() {
         manualReviewRequired={aiManualReviewRequired && attempt.status === "grading"}
       />
 
-      {attempt.reevaluation && <ReevaluationStatus reevaluation={attempt.reevaluation} />}
+      {attempt.reevaluation && (
+        <ReevaluationStatus
+          reevaluation={attempt.reevaluation}
+          strings={{
+            eyebrow: strings.reevaluation.eyebrow,
+            heading: strings.reevaluation.requestSentHeading,
+            reviewerPrefix: strings.reevaluation.reviewerPrefix,
+            resolutionHeading: strings.reevaluation.resolutionHeading,
+          }}
+        />
+      )}
 
       {canRequestReview && (
         <ReevaluationRequestForm

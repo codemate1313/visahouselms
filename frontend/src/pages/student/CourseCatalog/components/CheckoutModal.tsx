@@ -194,7 +194,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
       >
         {/* ── Header ── */}
         <div style={{
-          background: "linear-gradient(145deg, #a31c28 0%, #c8202e 55%, #dc2626 100%)",
+          background: "linear-gradient(145deg, #a31c28 0%, #c8202e 55%, var(--danger) 100%)",
           padding: "14px 24px 12px",
           flexShrink: 0,
         }}>
@@ -217,7 +217,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 fontSize: "20px",
                 fontWeight: 800,
                 margin: 0,
-                color: "#fff",
+                color: "var(--white)",
                 lineHeight: 1.1,
                 whiteSpace: "nowrap",
                 overflow: "hidden",
@@ -244,7 +244,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 width: "28px",
                 height: "28px",
                 borderRadius: "50%",
-                color: "#fff",
+                color: "var(--white)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -358,8 +358,8 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                     fontSize: "9.5px",
                     padding: "1px 6px",
                     borderRadius: "8px",
-                    background: gst.tax_type === "inclusive" ? "color-mix(in srgb, var(--info, #2563eb) 12%, transparent)" : "color-mix(in srgb, var(--danger) 12%, transparent)",
-                    color: gst.tax_type === "inclusive" ? "var(--info, #2563eb)" : "var(--danger)",
+                    background: gst.tax_type === "inclusive" ? "color-mix(in srgb, var(--info) 12%, transparent)" : "color-mix(in srgb, var(--danger) 12%, transparent)",
+                    color: gst.tax_type === "inclusive" ? "var(--info)" : "var(--danger)",
                     fontWeight: 700,
                     textTransform: "uppercase",
                   }}>
@@ -414,7 +414,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
               </div>
               <span style={{
                 background: "#c8202e",
-                color: "#fff",
+                color: "var(--white)",
                 fontSize: "9.5px",
                 fontWeight: 800,
                 borderRadius: "20px",
@@ -567,9 +567,9 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                     disabled={!couponCode.trim() || validatingCoupon}
                     style={{
                       padding: "8px 16px",
-                      background: couponCode.trim() ? "#c8202e" : "#e2e8f0",
+                      background: couponCode.trim() ? "#c8202e" : "var(--slate-200)",
                       border: "none",
-                      color: couponCode.trim() ? "#fff" : "#94a3b8",
+                      color: couponCode.trim() ? "var(--white)" : "var(--slate-400)",
                       borderRadius: "9px",
                       fontSize: "11px",
                       fontWeight: 800,

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Dict, List, Optional, Tuple
@@ -11,6 +13,8 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.user import User
 from app.models.voucher import VoucherType, VoucherOffering, VoucherCode, VoucherPurchase
 from app.services import smtp_service
+
+logger = logging.getLogger(__name__)
 
 
 def _now() -> datetime:
@@ -291,16 +295,21 @@ def add_bulk_voucher_codes(db: Session, voucher_type_id: int, codes: List[str], 
 
 
 def list_unused_codes(db: Session, voucher_type_id: Optional[int] = None) -> List[dict]:
-    query = db.query(VoucherCode).options(joinedload(VoucherCode.voucher_type)).filter(VoucherCode.status == "available")
+    query = (
+        db.query(VoucherCode)
+        .options(joinedload(VoucherCode.voucher_type))
+        .filter(VoucherCode.status.in_(("available", "disabled")))
+    )
     if voucher_type_id:
         query = query.filter(VoucherCode.voucher_type_id == voucher_type_id)
     
-    codes = query.order_by(VoucherCode.created_at.desc()).all()
+    codes = query.order_by(VoucherCode.status.asc(), VoucherCode.created_at.desc()).all()
     result = []
     for c in codes:
         result.append({
             "id": c.id,
             "code": c.code,
+            "status": c.status,
             "voucher_type_name": c.voucher_type.name if c.voucher_type else "",
             "voucher_type_badge_color": c.voucher_type.badge_color if c.voucher_type else "#0284c7",
             "validity_days": 180,
@@ -394,7 +403,7 @@ def process_voucher_purchase(db: Session, offering_id: int, buyer_name: str, buy
             purchase_number=purchase.purchase_number,
         )
     except Exception:
-        pass
+        logger.exception("Failed to send voucher purchase email for purchase %s", purchase.purchase_number)
 
     return {
         "purchase_id": purchase.id,
@@ -496,7 +505,7 @@ def list_admin_purchases(db: Session, search: Optional[str] = None) -> List[dict
 def delete_voucher_type(db: Session, type_id: int) -> dict:
     vt = db.query(VoucherType).filter(VoucherType.id == type_id).first()
     if not vt:
-        raise HTTPException(status_code=404, detail="Voucher type not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Voucher type not found")
     db.query(VoucherCode).filter(VoucherCode.voucher_type_id == type_id).delete(synchronize_session=False)
     db.query(VoucherOffering).filter(VoucherOffering.voucher_type_id == type_id).delete(synchronize_session=False)
     db.delete(vt)
@@ -507,7 +516,7 @@ def delete_voucher_type(db: Session, type_id: int) -> dict:
 def delete_voucher_offering(db: Session, offering_id: int) -> dict:
     vo = db.query(VoucherOffering).filter(VoucherOffering.id == offering_id).first()
     if not vo:
-        raise HTTPException(status_code=404, detail="Voucher offering not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Voucher offering not found")
     db.delete(vo)
     db.commit()
     return {"message": "Voucher offering deleted successfully"}
@@ -516,7 +525,47 @@ def delete_voucher_offering(db: Session, offering_id: int) -> dict:
 def delete_voucher_code(db: Session, code_id: int) -> dict:
     vc = db.query(VoucherCode).filter(VoucherCode.id == code_id).first()
     if not vc:
-        raise HTTPException(status_code=404, detail="Voucher code not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Voucher code not found")
     db.delete(vc)
     db.commit()
     return {"message": "Voucher code deleted successfully"}
+
+
+def disable_voucher_code(db: Session, code_id: int) -> dict:
+    vc = db.query(VoucherCode).filter(VoucherCode.id == code_id).first()
+    if not vc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Voucher code not found")
+    if vc.status != "available":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only unused available voucher codes can be disabled")
+
+    vc.status = "disabled"
+    db.add(vc)
+    db.commit()
+    return {"message": "Voucher code disabled successfully", "disabled": 1}
+
+
+def disable_voucher_codes(db: Session, code_ids: List[int]) -> dict:
+    unique_ids = sorted({int(code_id) for code_id in code_ids if int(code_id) > 0})
+    if not unique_ids:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No voucher codes selected")
+
+    codes = db.query(VoucherCode).filter(VoucherCode.id.in_(unique_ids)).all()
+    found_ids = {code.id for code in codes}
+    missing = len(unique_ids) - len(found_ids)
+    disabled = 0
+    skipped = missing
+
+    for code in codes:
+        if code.status == "available":
+            code.status = "disabled"
+            db.add(code)
+            disabled += 1
+        else:
+            skipped += 1
+
+    db.commit()
+    return {
+        "message": f"Disabled {disabled} voucher code{'s' if disabled != 1 else ''}.",
+        "disabled": disabled,
+        "skipped": skipped,
+    }

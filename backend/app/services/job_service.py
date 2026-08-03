@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import sys
 import threading
@@ -13,6 +14,8 @@ from app.models.attempt import ATTEMPT_GRADING, PART_GRADE_PENDING, AiEvaluation
 from app.models.crash_log import CrashLog
 from app.models.exam_module import ExamModulePart
 from app.models.job import JOB_DONE, JOB_FAILED, JOB_PENDING, JOB_RUNNING, Job
+
+logger = logging.getLogger(__name__)
 
 POLL_INTERVAL_SECONDS = 3
 SCHEDULER_INTERVAL_SECONDS = 60
@@ -213,7 +216,7 @@ def _process_one(db: Session) -> bool:
 
             notification_service.notify_system_job_failed(db, job.type, failed_detail)
         except Exception:
-            pass
+            logger.exception("Failed to send job-failed notification for job %s", job.id)
     return True
 
 
@@ -243,7 +246,7 @@ def _record_worker_fatal(detail: str) -> None:
 
                 notification_service.notify_system_job_failed(db, "worker_fatal", detail)
             except Exception:
-                pass
+                logger.exception("Failed to send worker-fatal notification")
         finally:
             db.close()
     except Exception:

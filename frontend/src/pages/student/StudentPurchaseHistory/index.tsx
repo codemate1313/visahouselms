@@ -9,6 +9,7 @@ import { useAuthStore } from "@/store/authStore";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { studentPurchaseHistoryStrings as strings } from "./StudentPurchaseHistory.strings";
 import "./StudentPurchaseHistory.css";
+import { formatDate as formatDateShared } from "@/utils/date";
 
 interface StudentPayment {
   id: number;
@@ -70,15 +71,6 @@ export function StudentPurchaseHistory() {
     } finally {
       setLoading(false);
     }
-  }
-
-  function formatDate(iso: string | null | undefined): string {
-    if (!iso) return "N/A";
-    return new Date(iso).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
   }
 
   function formatPdfCurrency(amount: string | number | null | undefined, currency?: string | null): string {
@@ -146,7 +138,7 @@ export function StudentPurchaseHistory() {
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 116, 139);
-    doc.text(`Issue Date: ${formatDate(p.created_at)}`, 14, 46);
+    doc.text(`Issue Date: ${formatDateShared(p.created_at)}`, 14, 46);
     doc.text(`Gateway: ${(p.gateway || "Manual").toUpperCase()}`, 14, 51);
     if (p.gateway_reference) {
       doc.setFontSize(7.5);
@@ -162,7 +154,7 @@ export function StudentPurchaseHistory() {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 116, 139);
     if (p.paid_at) {
-      doc.text(`Paid On: ${formatDate(p.paid_at)}`, 196, 46, { align: "right" });
+      doc.text(`Paid On: ${formatDateShared(p.paid_at)}`, 196, 46, { align: "right" });
     }
 
     // 3. Billed To Container Box
@@ -236,7 +228,7 @@ export function StudentPurchaseHistory() {
       doc.setFont("helvetica", "normal");
       doc.setTextColor(21, 128, 61);
       doc.text(
-        `Valid From: ${formatDate(p.subscription.starts_at)}   to   ${formatDate(p.subscription.expires_at)}`,
+        `Valid From: ${formatDateShared(p.subscription.starts_at)}   to   ${formatDateShared(p.subscription.expires_at)}`,
         20,
         finalY + 14
       );
@@ -385,13 +377,13 @@ export function StudentPurchaseHistory() {
             </div>
             {p.subscription && (
               <small className="date-range-subtext">
-                {formatDate(p.subscription.starts_at)} – {formatDate(p.subscription.expires_at)}
+                {formatDateShared(p.subscription.starts_at)} – {formatDateShared(p.subscription.expires_at)}
               </small>
             )}
           </div>
         </td>
 
-        <td>{formatDate(p.paid_at || p.created_at)}</td>
+        <td>{formatDateShared(p.paid_at || p.created_at)}</td>
         <td>
           {isPaid ? (
             <button
@@ -589,7 +581,7 @@ export function StudentPurchaseHistory() {
                 </div>
                 <div className="invoice-meta-block">
                   <label>{strings.invoiceModal.paymentDate}</label>
-                  <p>{formatDate(selectedInvoice.paid_at || selectedInvoice.created_at)}</p>
+                  <p>{formatDateShared(selectedInvoice.paid_at || selectedInvoice.created_at)}</p>
                   <span className={`status-chip ${selectedInvoice.status}`} style={{ marginTop: "0.25rem" }}>
                     {strings.status[selectedInvoice.status as keyof typeof strings.status] || selectedInvoice.status}
                   </span>
@@ -635,9 +627,9 @@ export function StudentPurchaseHistory() {
                     {strings.invoiceModal.subscriptionValidity}
                   </strong>
                   <span>
-                    {strings.invoiceModal.from}: <strong>{formatDate(selectedInvoice.subscription.starts_at)}</strong>
+                    {strings.invoiceModal.from}: <strong>{formatDateShared(selectedInvoice.subscription.starts_at)}</strong>
                     &nbsp;|&nbsp;
-                    {strings.invoiceModal.to}: <strong>{formatDate(selectedInvoice.subscription.expires_at)}</strong>
+                    {strings.invoiceModal.to}: <strong>{formatDateShared(selectedInvoice.subscription.expires_at)}</strong>
                   </span>
                 </div>
               )}

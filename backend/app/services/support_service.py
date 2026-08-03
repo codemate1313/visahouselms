@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import HTTPException, status
@@ -384,7 +384,7 @@ def update_ticket(
         if data["status"] not in SUPPORT_STATUSES:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid support ticket status")
         ticket.status = data["status"]
-        ticket.resolved_at = datetime.utcnow() if ticket.status in {SUPPORT_STATUS_RESOLVED, SUPPORT_STATUS_CLOSED} else None
+        ticket.resolved_at = datetime.now(timezone.utc) if ticket.status in {SUPPORT_STATUS_RESOLVED, SUPPORT_STATUS_CLOSED} else None
     if "priority" in data and data["priority"] is not None:
         if data["priority"] not in SUPPORT_PRIORITIES:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid support ticket priority")
@@ -428,7 +428,7 @@ def forward_ticket_to_super_admin(
         institute_id=institute_admin.institute_id,
     )
     ticket.queue = SUPPORT_QUEUE_SUPER_ADMIN
-    ticket.escalated_at = datetime.utcnow()
+    ticket.escalated_at = datetime.now(timezone.utc)
     ticket.escalated_by_id = institute_admin.id
     if ticket.status == SUPPORT_STATUS_NEW:
         ticket.status = SUPPORT_STATUS_OPEN

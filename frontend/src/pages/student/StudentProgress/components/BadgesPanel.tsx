@@ -2,6 +2,7 @@ import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { Icon, type IconName } from "@/components/icons";
 import type { StudentBadge } from "@/api/types";
 import { studentProgressStrings as strings } from "../StudentProgress.strings";
+import { formatDate } from "@/utils/date";
 
 const BADGE_ICONS: Record<string, IconName> = {
   flag: "grading",
@@ -41,7 +42,7 @@ export function BadgesPanel({ badges, earnedCount }: BadgesPanelProps) {
               <span>{badge.earned ? t.earned : t.locked}</span>
               <h3>{badge.name}</h3>
               <p>{badge.description}</p>
-              {badge.awarded_at && <time>{new Date(badge.awarded_at).toLocaleDateString()}</time>}
+              {badge.awarded_at && <time>{formatDate(badge.awarded_at)}</time>}
             </div>
           </article>
         ))}

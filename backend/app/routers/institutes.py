@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, status, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -32,7 +32,7 @@ def list_institutes(status: Optional[str] = None, db: Session = Depends(get_db))
     return institute_service.list_institutes(db, status=status)
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_institute(
     payload: InstituteCreate,
     request: Request,
@@ -122,7 +122,7 @@ def institute_member_capacity(
     return institute_admin_service.member_capacity(db, actor, scoped_institute_id=institute_id)
 
 
-@router.post("/{institute_id}/members", status_code=201)
+@router.post("/{institute_id}/members", status_code=status.HTTP_201_CREATED)
 def create_institute_student(
     institute_id: int,
     payload: InstituteMemberCreate,
@@ -131,7 +131,7 @@ def create_institute_student(
     actor: User = Depends(get_current_user),
 ):
     if payload.role not in (STUDENT, "INST_INSTRUCTOR"):
-        raise HTTPException(status_code=400, detail="Role must be STUDENT or INST_INSTRUCTOR")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Role must be STUDENT or INST_INSTRUCTOR")
     institute_service.get_institute_or_404(db, institute_id)
     return institute_admin_service.create_member(
         db,
@@ -147,7 +147,7 @@ def create_institute_student(
     )
 
 
-@router.post("/{institute_id}/students/import", status_code=201)
+@router.post("/{institute_id}/students/import", status_code=status.HTTP_201_CREATED)
 async def import_institute_students(
     institute_id: int,
     request: Request,
@@ -158,7 +158,7 @@ async def import_institute_students(
     institute_service.get_institute_or_404(db, institute_id)
     content = await file.read(MAX_STUDENT_IMPORT_BYTES + 1)
     if len(content) > MAX_STUDENT_IMPORT_BYTES:
-        raise HTTPException(status_code=413, detail="Student import files cannot exceed 3 MB")
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Student import files cannot exceed 3 MB")
     return institute_admin_service.import_students(
         db,
         actor,
@@ -297,7 +297,7 @@ def reactivate_institute_admin(
     )
 
 
-@router.delete("/{institute_id}/admins/{admin_id}", status_code=204)
+@router.delete("/{institute_id}/admins/{admin_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_institute_admin(
     institute_id: int,
     admin_id: int,
@@ -323,7 +323,7 @@ def revoke_institute_student_sessions(
     }
 
 
-@router.delete("/{institute_id}/members/{member_id}", status_code=204)
+@router.delete("/{institute_id}/members/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_institute_member(
     institute_id: int,
     member_id: int,
@@ -356,7 +356,7 @@ def reactivate_institute(
     return institute_service.set_institute_active(db, actor, institute_id, True, _client_ip(request))
 
 
-@router.delete("/{institute_id}", status_code=204)
+@router.delete("/{institute_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_institute(
     institute_id: int,
     request: Request,
@@ -434,7 +434,7 @@ def download_agreement_attachment(
     )
 
 
-@router.delete("/{institute_id}/documents/{kind}", status_code=204)
+@router.delete("/{institute_id}/documents/{kind}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_agreement_attachment(
     institute_id: int,
     kind: str,

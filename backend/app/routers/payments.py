@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -35,7 +35,7 @@ def list_payments(
     return payment_service.list_payments(db, institute_id, status, date_from, date_to, search)
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def record_payment(
     payload: RecordPaymentRequest,
     request: Request,

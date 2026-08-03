@@ -39,9 +39,9 @@ def _audit(
 def _course_or_404(db: Session, course_id: int, editable: bool = False) -> Course:
     course = db.get(Course, course_id)
     if course is None:
-        raise HTTPException(status_code=404, detail="Course not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
     if editable and course.status == COURSE_ARCHIVED:
-        raise HTTPException(status_code=400, detail="Archived courses cannot receive new assessment content")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Archived courses cannot receive new assessment content")
     return course
 
 
@@ -126,7 +126,7 @@ def list_banks(
 def get_bank_or_404(db: Session, bank_id: int) -> QuestionBank:
     bank = _bank_query(db).filter(QuestionBank.id == bank_id).first()
     if bank is None:
-        raise HTTPException(status_code=404, detail="Question bank not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Question bank not found")
     return bank
 
 
@@ -152,7 +152,7 @@ def update_bank(
     _require_owner(actor, bank.created_by_id)
     if "course_id" in fields_set and data.get("course_id") != bank.course_id:
         if bank.questions:
-            raise HTTPException(status_code=400, detail="A non-empty question bank cannot be moved to another course")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A non-empty question bank cannot be moved to another course")
         _course_or_404(db, data["course_id"], editable=True)
     for field in ("course_id", "title", "description", "section"):
         if field in fields_set:
@@ -173,7 +173,7 @@ def delete_bank(db: Session, actor: User, bank_id: int, ip: Optional[str]) -> No
         .first()
     )
     if linked:
-        raise HTTPException(status_code=400, detail="Remove this bank's questions from tests before deleting it")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Remove this bank's questions from tests before deleting it")
     _audit(db, actor, "question_bank.delete", "question_bank", bank.id, ip, {"title": bank.title})
     db.delete(bank)
     db.commit()
@@ -252,7 +252,7 @@ def import_questions(
 def _question_or_404(db: Session, bank_id: int, question_id: int) -> Question:
     question = db.query(Question).filter(Question.id == question_id, Question.bank_id == bank_id).first()
     if question is None:
-        raise HTTPException(status_code=404, detail="Question not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Question not found")
     return question
 
 
@@ -264,7 +264,7 @@ def _ensure_question_not_live(db: Session, question_id: int) -> None:
         .first()
     )
     if live:
-        raise HTTPException(status_code=400, detail="Questions in published tests cannot be changed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Questions in published tests cannot be changed")
 
 
 def update_question(
@@ -294,7 +294,7 @@ def delete_question(db: Session, actor: User, bank_id: int, question_id: int, ip
     _require_owner(actor, bank.created_by_id)
     question = _question_or_404(db, bank_id, question_id)
     if db.query(AssessmentQuestion).filter(AssessmentQuestion.question_id == question.id).first():
-        raise HTTPException(status_code=400, detail="Remove this question from all tests before deleting it")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Remove this question from all tests before deleting it")
     _audit(db, actor, "question.delete", "question", question.id, ip, {"bank_id": bank.id})
     db.delete(question)
     db.commit()
@@ -385,7 +385,7 @@ def list_assessments(
 def get_assessment_or_404(db: Session, assessment_id: int) -> Assessment:
     assessment = _assessment_query(db).filter(Assessment.id == assessment_id).first()
     if assessment is None:
-        raise HTTPException(status_code=404, detail="Test not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test not found")
     return assessment
 
 
@@ -403,9 +403,9 @@ def update_assessment(db: Session, actor: User, assessment_id: int, data: dict, 
     assessment = get_assessment_or_404(db, assessment_id)
     _require_owner(actor, assessment.created_by_id)
     if assessment.status != "draft":
-        raise HTTPException(status_code=400, detail="Only draft tests can be edited")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only draft tests can be edited")
     if data["course_id"] != assessment.course_id and assessment.question_links:
-        raise HTTPException(status_code=400, detail="Remove all test questions before changing its course")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Remove all test questions before changing its course")
     _course_or_404(db, data["course_id"], editable=True)
     for field in ("course_id", "title", "description", "assessment_type", "duration_minutes", "instructions"):
         setattr(assessment, field, data.get(field))
@@ -421,7 +421,7 @@ def set_assessment_questions(
     assessment = get_assessment_or_404(db, assessment_id)
     _require_owner(actor, assessment.created_by_id)
     if assessment.status != "draft":
-        raise HTTPException(status_code=400, detail="Only draft tests can be assembled")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only draft tests can be assembled")
     questions = []
     if question_ids:
         questions = (
@@ -433,7 +433,7 @@ def set_assessment_questions(
         by_id = {question.id: question for question in questions}
         missing = [question_id for question_id in question_ids if question_id not in by_id]
         if missing:
-            raise HTTPException(status_code=400, detail="Every selected question must belong to the test course")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Every selected question must belong to the test course")
         questions = [by_id[question_id] for question_id in question_ids]
     db.query(AssessmentQuestion).filter(AssessmentQuestion.assessment_id == assessment.id).delete()
     db.flush()
@@ -453,7 +453,7 @@ def set_assessment_status(
     _require_owner(actor, assessment.created_by_id)
     if new_status == "published":
         if not assessment.question_links:
-            raise HTTPException(status_code=400, detail="Add at least one question before publishing")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Add at least one question before publishing")
         assessment.status = "published"
         assessment.published_at = _now()
     elif new_status == "draft":
@@ -471,7 +471,7 @@ def delete_assessment(db: Session, actor: User, assessment_id: int, ip: Optional
     assessment = get_assessment_or_404(db, assessment_id)
     _require_owner(actor, assessment.created_by_id)
     if assessment.status != "draft":
-        raise HTTPException(status_code=400, detail="Only draft tests can be deleted; archive published tests")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only draft tests can be deleted; archive published tests")
     _audit(db, actor, "assessment.delete", "assessment", assessment.id, ip, {"title": assessment.title})
     db.delete(assessment)
     db.commit()

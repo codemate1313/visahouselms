@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -69,7 +69,7 @@ def list_available_modules(
     return plan_service.list_available_modules_for_plans(db, search, module_type)
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_plan(
     payload: PlanCreate,
     request: Request,
@@ -115,7 +115,7 @@ def reactivate_plan(
     return plan_service.set_plan_active(db, actor, plan_id, True, _client_ip(request))
 
 
-@router.delete("/{plan_id}", status_code=204)
+@router.delete("/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_plan(
     plan_id: int,
     request: Request,

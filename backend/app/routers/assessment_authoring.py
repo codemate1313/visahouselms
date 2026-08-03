@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, status, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -51,7 +51,7 @@ def list_question_banks(
     )
 
 
-@router.post("/question-banks", status_code=201)
+@router.post("/question-banks", status_code=status.HTTP_201_CREATED)
 def create_question_bank(
     payload: QuestionBankCreate,
     request: Request,
@@ -81,7 +81,7 @@ def update_question_bank(
     )
 
 
-@router.delete("/question-banks/{bank_id}", status_code=204)
+@router.delete("/question-banks/{bank_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_question_bank(
     bank_id: int,
     request: Request,
@@ -91,7 +91,7 @@ def delete_question_bank(
     assessment_service.delete_bank(db, actor, bank_id, _ip(request))
 
 
-@router.post("/question-banks/{bank_id}/questions", status_code=201)
+@router.post("/question-banks/{bank_id}/questions", status_code=status.HTTP_201_CREATED)
 def create_question(
     bank_id: int,
     payload: QuestionCreate,
@@ -116,7 +116,7 @@ def update_question(
     )
 
 
-@router.delete("/question-banks/{bank_id}/questions/{question_id}", status_code=204)
+@router.delete("/question-banks/{bank_id}/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_question(
     bank_id: int,
     question_id: int,
@@ -136,11 +136,11 @@ async def preview_question_import(
 ):
     bank = assessment_service.get_bank_or_404(db, bank_id)
     if bank.created_by_id != actor.id:
-        raise HTTPException(status_code=403, detail="Only the bank owner can import questions")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the bank owner can import questions")
     return await question_import_service.preview_upload(file)
 
 
-@router.post("/question-banks/{bank_id}/import", status_code=201)
+@router.post("/question-banks/{bank_id}/import", status_code=status.HTTP_201_CREATED)
 def commit_question_import(
     bank_id: int,
     payload: QuestionBatchCreate,
@@ -182,7 +182,7 @@ def list_tests(
     )
 
 
-@router.post("/tests", status_code=201)
+@router.post("/tests", status_code=status.HTTP_201_CREATED)
 def create_test(
     payload: AssessmentCreate,
     request: Request,
@@ -238,7 +238,7 @@ def set_test_status(
     )
 
 
-@router.delete("/tests/{assessment_id}", status_code=204)
+@router.delete("/tests/{assessment_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_test(
     assessment_id: int,
     request: Request,

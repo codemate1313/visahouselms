@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { superAdminBlogsStrings as strings } from "../SuperAdminBlogs.strings";
 import type { BlogAdminItem } from "../types";
 import { StatusToggleIcon } from "./StatusToggleIcon";
+import { formatDate } from "@/utils/date";
 
 interface BlogGridViewProps {
   items: BlogAdminItem[];
@@ -71,7 +72,7 @@ export function BlogGridView({ items, onToggleActive, onDelete }: BlogGridViewPr
             <span className={`sab-status-pill ${item.is_published ? "published" : "draft"}`}>
               <span className="dot"></span> {item.is_published ? strings.publishedLabel : strings.draftLabel}
             </span>
-            <span className="sab-card-date">{new Date(item.created_at).toLocaleDateString()}</span>
+            <span className="sab-card-date">{formatDate(item.created_at)}</span>
           </div>
         </div>
       ))}

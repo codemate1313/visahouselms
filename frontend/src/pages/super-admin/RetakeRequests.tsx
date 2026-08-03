@@ -6,6 +6,7 @@ import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { PageHeader, SearchableSelect } from "@/components/ui";
 import { retakeRequestsStrings as strings } from "./RetakeRequests.strings";
+import { formatDate } from "@/utils/date";
 
 const STATUS_CLASS: Record<string, string> = {
   pending: "badge-amber",
@@ -139,7 +140,7 @@ export function RetakeRequests() {
                       <span className={`badge ${STATUS_CLASS[request.status] ?? "badge-gray"}`}>{request.status}</span>
                     </td>
                     <td>{request.reviewed_by_name ?? "—"}</td>
-                    <td>{new Date(request.created_at).toLocaleDateString()}</td>
+                    <td>{formatDate(request.created_at)}</td>
                     <td>{request.review_note ?? "—"}</td>
                     <td>
                       {request.status === "pending" ? (

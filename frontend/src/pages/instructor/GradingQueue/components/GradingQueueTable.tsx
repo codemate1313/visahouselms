@@ -3,6 +3,7 @@ import type { GradingQueueItem } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { useAuthStore } from "@/store/authStore";
 import { gradingQueueStrings as strings } from "../GradingQueue.strings";
+import { formatDate } from "@/utils/date";
 
 const STATUS_CLASS: Record<string, string> = { pending: "badge-amber", claimed: "badge-blue", completed: "badge-green" };
 
@@ -79,7 +80,7 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
               : t.unclaimed}
         </td>
         <td>{formatDateTime(issuedAt)}</td>
-        <td>{item.queue.due_at ? new Date(item.queue.due_at).toLocaleDateString() : "—"}</td>
+        <td>{item.queue.due_at ? formatDate(item.queue.due_at) : "—"}</td>
         <td>{item.flag_count > 0 ? <span className="badge badge-red">{item.flag_count}</span> : "—"}</td>
         <td>{item.parts_to_grade}</td>
         <td className="table-actions">

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Optional
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.exam_module import ExamModule, InstituteModule
@@ -22,7 +22,7 @@ def _now() -> datetime:
 def _admin(db: Session, institute_id: int) -> User:
     user = db.query(User).filter(User.institute_id == institute_id).join(User.role).filter_by(name=INSTITUTE_ADMIN).first()
     if user is None:
-        raise HTTPException(status_code=500, detail="Institute admin is missing")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Institute admin is missing")
     return user
 
 
@@ -77,10 +77,10 @@ def create_draft(db: Session, actor: User, data: dict, ip: Optional[str]) -> dic
     received = Decimal(str(data["amount_received"]))
     agreed = Decimal(str(data["agreed_amount"]))
     if received > agreed:
-        raise HTTPException(status_code=400, detail="Amount received cannot exceed the agreed amount")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Amount received cannot exceed the agreed amount")
     modules = db.query(ExamModule).filter(ExamModule.id.in_(data.get("module_ids") or []), ExamModule.deleted_at.is_(None)).all()
     if len(modules) != len(set(data.get("module_ids") or [])) or any(module.status != "published" for module in modules):
-        raise HTTPException(status_code=400, detail="Every selected course must be published")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Every selected course must be published")
 
     created = institute_service.create_institute(
         db, actor, data["name"], data.get("contact_email"), data["admin_email"],
@@ -132,10 +132,10 @@ def publish(db: Session, actor: User, institute_id: int, ip: Optional[str]) -> d
         return _serialize(db, institute)
     payment = db.query(Payment).filter(Payment.institute_id == institute.id).order_by(Payment.id.desc()).first()
     if payment is None or payment.amount_paid <= 0:
-        raise HTTPException(status_code=400, detail="Record the physical payment before publishing")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Record the physical payment before publishing")
     module_links = db.query(InstituteModule).filter(InstituteModule.institute_id == institute.id, InstituteModule.is_active.is_(True)).all()
     if not module_links:
-        raise HTTPException(status_code=400, detail="Assign at least one course before publishing")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assign at least one course before publishing")
     plan = Plan(
         name=f"Agreement {institute.slug} {institute.id}", description="Internal negotiated institute agreement",
         price=institute.agreed_amount or 0, currency=institute.agreement_currency,
@@ -170,5 +170,5 @@ def publish(db: Session, actor: User, institute_id: int, ip: Optional[str]) -> d
 def delete_draft(db: Session, actor: User, institute_id: int, ip: Optional[str]) -> None:
     institute = institute_service.get_institute_or_404(db, institute_id)
     if institute.onboarding_status != "draft":
-        raise HTTPException(status_code=400, detail="Only draft onboardings can be deleted")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only draft onboardings can be deleted")
     institute_service.delete_institute(db, actor, institute_id, ip)

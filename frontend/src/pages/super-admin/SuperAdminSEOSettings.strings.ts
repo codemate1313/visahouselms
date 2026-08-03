@@ -1,4 +1,5 @@
 export const seoSettingsStrings = {
+  loading: "Loading SEO settings...",
   defaults: {
     site_name: "Visa House",
     default_title: "Visa House | Computer-Delivered Exam Platform & AI Feedback",

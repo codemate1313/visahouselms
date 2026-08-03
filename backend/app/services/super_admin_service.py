@@ -795,6 +795,50 @@ def update_direct_student(
     return user
 
 
+def update_directory_user(
+    db: Session,
+    actor: User,
+    user_id: int,
+    email: Optional[str],
+    first_name: Optional[str],
+    last_name: Optional[str],
+    ip_address: Optional[str] = None,
+    dob: Optional[datetime] = None,
+    phone_number: Optional[str] = None,
+    address: Optional[str] = None,
+    avatar_path: Optional[str] = None,
+) -> User:
+    user = get_directory_user_or_404(db, user_id)
+    role_name = user.role.name if user.role else ""
+    if role_name in (SUPER_ADMIN, SA_INSTRUCTOR):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Use the role-specific editor for this account",
+        )
+    if email is not None and email != user.email:
+        if db.query(User).filter(func.lower(User.email) == email.lower(), User.id != user.id).first() is not None:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+        user.email = email
+    if first_name is not None:
+        user.first_name = first_name
+    if last_name is not None:
+        user.last_name = last_name
+    if dob is not None:
+        user.dob = dob
+    if phone_number is not None:
+        user.phone_number = phone_number
+    if address is not None:
+        user.address = address
+    if avatar_path is not None:
+        user.avatar_path = avatar_path
+
+    db.add(user)
+    _write_audit_log(db, actor, "directory_user.update", user.id, ip_address, {"role": role_name})
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def reset_direct_student_password(
     db: Session,
     actor: User,

@@ -3,6 +3,8 @@ import { LandingLayout } from "../components/landing/LandingLayout";
 import { Login } from "../pages/Login";
 import {
   AboutUs,
+  BlogDetail,
+  BlogsList,
   AccountForm,
   AttemptResult,
   AttemptResultDetails,
@@ -90,8 +92,6 @@ import {
 } from "./lazyPages";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { MonetaryAnalyticsRoute } from "./MonetaryAnalyticsRoute";
-import { BlogsList } from "../pages/public/BlogsList";
-import { BlogDetail } from "../pages/public/BlogDetail";
 
 const developerAccessSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
 

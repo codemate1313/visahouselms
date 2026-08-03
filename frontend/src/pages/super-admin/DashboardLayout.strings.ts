@@ -16,6 +16,7 @@ export const dashboardLayoutStrings = {
     retakeRequests: "Retake Requests",
     notifications: "Notifications",
     supportTickets: "Support Tickets",
+    vouchers: "Vouchers",
     saas: "SaaS",
     saasInstitutes: "Institutes",
     saasOnboarding: "Institute Onboarding",

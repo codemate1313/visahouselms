@@ -2,15 +2,26 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import type { DirectoryUser } from "@/api/types";
+import type { DirectoryRole, DirectoryUser } from "@/api/types";
 import { MemberFormFields } from "@/pages/institute/InstituteMemberForm/components/MemberFormFields";
 import { usersStrings as strings } from "./Users.strings";
 
-const basePath = "/super-admin/users/students";
+const ROLE_LABELS: Partial<Record<DirectoryRole, string>> = {
+  INSTITUTE_ADMIN: "institute admin",
+  INST_INSTRUCTOR: "institute staff",
+  STUDENT: "student",
+};
+
+const ROLE_SLUGS: Partial<Record<DirectoryRole, string>> = {
+  INSTITUTE_ADMIN: "institute-admins",
+  INST_INSTRUCTOR: "institute-staff",
+  STUDENT: "students",
+};
 
 export function DirectStudentForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [user, setUser] = useState<DirectoryUser | null>(null);
   const [form, setForm] = useState({
     email: "",
     first_name: "",
@@ -26,6 +37,7 @@ export function DirectStudentForm() {
     apiClient
       .get<DirectoryUser>(`/super-admin/users/${id}`)
       .then(({ data }) => {
+        setUser(data);
         setForm({
           email: data.email,
           first_name: data.first_name,
@@ -34,9 +46,12 @@ export function DirectStudentForm() {
           address: data.address ?? "",
         });
       })
-      .catch((err: unknown) => setError(extractErrorMessage(err, "Failed to load direct student.")))
+      .catch((err: unknown) => setError(extractErrorMessage(err, "Failed to load user.")))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const roleLabel = user?.role_name ? ROLE_LABELS[user.role_name] ?? "user" : "user";
+  const basePath = `/super-admin/users/${user?.role_name ? ROLE_SLUGS[user.role_name] ?? "students" : "students"}`;
 
   function set(field: keyof typeof form) {
     return (event: ChangeEvent<HTMLInputElement>) => {
@@ -56,7 +71,7 @@ export function DirectStudentForm() {
       });
       navigate(basePath);
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Failed to save direct student."));
+      setError(extractErrorMessage(err, `Failed to save ${roleLabel}.`));
     } finally {
       setSaving(false);
     }
@@ -67,7 +82,7 @@ export function DirectStudentForm() {
   return (
     <MemberFormFields
       isNew={false}
-      label="direct student"
+      label={roleLabel}
       form={form}
       saving={saving}
       error={error}

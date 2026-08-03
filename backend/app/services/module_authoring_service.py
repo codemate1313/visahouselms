@@ -5,12 +5,13 @@ import secrets
 from typing import Optional
 from uuid import uuid4
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.config import settings
 from app.models.audit_log import AuditLog
+from app.models.attempt import ATTEMPT_GRADED, ATTEMPT_GRADING, ATTEMPT_SUBMITTED, TestAttempt
 from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion, InstituteModule
 from app.models.institute import Institute
 from app.models.plan import Plan
@@ -55,19 +56,19 @@ def _module_query(db: Session):
 def get_module_or_404(db: Session, module_id: int) -> ExamModule:
     module = _module_query(db).filter(ExamModule.id == module_id, ExamModule.deleted_at.is_(None)).first()
     if module is None:
-        raise HTTPException(status_code=404, detail="Assessment module not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment module not found")
     return module
 
 
 def _require_owner(module: ExamModule, actor: User) -> None:
     if module.created_by_id != actor.id:
-        raise HTTPException(status_code=403, detail="Only this module's creator can change it")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only this module's creator can change it")
 
 
 def _require_draft(module: ExamModule) -> None:
     if module.status == "archived":
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Archived courses cannot be edited. Restore the course first.",
         )
 
@@ -75,7 +76,7 @@ def _require_draft(module: ExamModule) -> None:
 def _part_or_404(module: ExamModule, part_id: int) -> ExamModulePart:
     part = next((item for item in module.parts if item.id == part_id), None)
     if part is None:
-        raise HTTPException(status_code=404, detail="Assessment part was not found in this module")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment part was not found in this module")
     return part
 
 
@@ -243,7 +244,7 @@ def _composite_sources(
 ) -> dict[str, ExamModule]:
     if len(source_module_ids) != 4 or len(set(source_module_ids)) != 4:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Choose exactly one completed Listening, Reading, Writing, and Speaking module",
         )
     sources = (
@@ -256,21 +257,21 @@ def _composite_sources(
     )
     if len(sources) != 4:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Every selected source must be a module created by you",
         )
     by_type = {source.module_type: source for source in sources}
     required = {"listening", "reading", "writing", "speaking"}
     if set(by_type) != required:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Select one source from each skill: Listening, Reading, Writing, and Speaking",
         )
     for source in sources:
         errors = validation_errors(source)
         if source.status == "archived" or errors:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail={
                     "message": f"{source.title} is not a completed source module",
                     "errors": errors or ["Archived modules cannot be used"],
@@ -287,7 +288,7 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
     composite = module_type in {"full_mock", "final_test"}
     sources = _composite_sources(db, actor, source_module_ids) if composite else {}
     if not composite and source_module_ids:
-        raise HTTPException(status_code=400, detail="Source modules are only valid for composite tests")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Source modules are only valid for composite tests")
     module = ExamModule(
         **payload,
         duration_minutes=blueprint["duration_minutes"],
@@ -331,7 +332,7 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
                 )
                 if source_part is None:
                     raise HTTPException(
-                        status_code=400,
+                        status_code=status.HTTP_400_BAD_REQUEST,
                         detail=f"{source.title} does not contain {target_part.title}",
                     )
 
@@ -368,7 +369,7 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
                         source_path = settings.storage_path / asset.file_path
                         if not source_path.is_file():
                             raise HTTPException(
-                                status_code=400,
+                                status_code=status.HTTP_400_BAD_REQUEST,
                                 detail=f"Audio file for {source_part.title} is missing from storage",
                             )
                         suffix = Path(asset.file_path).suffix or ".bin"
@@ -443,7 +444,7 @@ def update_speaking_part_timing(
 ) -> dict:
     module, part = get_editable_part(db, actor, module_id, part_id)
     if part.section_type != "speaking":
-        raise HTTPException(status_code=400, detail="Timing can only be configured for Speaking parts")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Timing can only be configured for Speaking parts")
 
     constraints = dict(part.answer_constraints or {})
     constraints["preparation_seconds"] = preparation_seconds
@@ -475,9 +476,9 @@ def update_part_ai_evaluation(
 ) -> dict:
     module, part = get_editable_part(db, actor, module_id, part_id)
     if part.auto_marked:
-        raise HTTPException(status_code=400, detail="Answer-key marked parts cannot use AI evaluation")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Answer-key marked parts cannot use AI evaluation")
     if part.section_type not in {"writing", "speaking"}:
-        raise HTTPException(status_code=400, detail="AI evaluation can only be enabled for Writing or Speaking parts")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="AI evaluation can only be enabled for Writing or Speaking parts")
 
     part.ai_evaluation_enabled = ai_evaluation_enabled
     _audit(
@@ -496,14 +497,14 @@ def _validate_question_for_part(part: ExamModulePart, data: dict, current_count:
     allowed = set((part.answer_constraints or {}).get("allowed_question_types", []))
     if allowed and data["question_type"] not in allowed:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"{part.title} accepts only: {', '.join(sorted(allowed))}",
         )
     # Pool size is unrestricted, so we allow uploading more than question_limit questions
     pass
     max_words = (part.answer_constraints or {}).get("max_answer_words")
     if max_words and any(len(answer.split()) > max_words for answer in data.get("correct_answers", [])):
-        raise HTTPException(status_code=400, detail=f"Answers in {part.title} may contain no more than {max_words} words")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Answers in {part.title} may contain no more than {max_words} words")
 
 
 def _new_question(
@@ -583,7 +584,7 @@ def import_questions(
 def _question_or_404(part: ExamModulePart, question_id: int) -> ExamModuleQuestion:
     question = next((item for item in part.questions if item.id == question_id), None)
     if question is None:
-        raise HTTPException(status_code=404, detail="Question was not found in this module part")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Question was not found in this module part")
     return question
 
 
@@ -643,7 +644,7 @@ def add_audio_asset(
     _require_draft(module)
     part = _part_or_404(module, part_id)
     if part.section_type != "listening":
-        raise HTTPException(status_code=400, detail="Audio can only be attached to a Listening part")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Audio can only be attached to a Listening part")
 
     relative = Path("exam-modules") / str(module.id) / f"{uuid4().hex}.mp3"
     destination = settings.storage_path / relative
@@ -693,11 +694,11 @@ def add_tts_text_asset(
     _require_draft(module)
     part = _part_or_404(module, part_id)
     if part.section_type != "listening":
-        raise HTTPException(status_code=400, detail="Browser narration can only be attached to a Listening part")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Browser narration can only be attached to a Listening part")
 
     clean_transcript = "\n".join(line.strip() for line in transcript.splitlines() if line.strip())
     if not clean_transcript:
-        raise HTTPException(status_code=400, detail="A listening transcript is required")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A listening transcript is required")
 
     virtual_path = Path("tts-text") / str(module.id) / f"{uuid4().hex}.txt"
     asset = ExamModuleAsset(
@@ -755,7 +756,7 @@ def add_avatar_asset(
     _require_owner(module, actor)
     part = _part_or_404(module, part_id)
     if part.section_type != "speaking":
-        raise HTTPException(status_code=400, detail="Avatar video can only be attached to a Speaking part")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Avatar video can only be attached to a Speaking part")
 
     relative = Path("exam-modules") / str(module.id) / f"{uuid4().hex}.mp4"
     destination = settings.storage_path / relative
@@ -800,7 +801,7 @@ def delete_asset(db: Session, actor: User, module_id: int, asset_id: int, ip: Op
     _require_draft(module)
     asset = next((item for item in module.assets if item.id == asset_id), None)
     if asset is None:
-        raise HTTPException(status_code=404, detail="Audio asset not found in this module")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio asset not found in this module")
     path = settings.storage_path / asset.file_path
     _audit(db, actor, "exam_module.audio.delete", module.id, ip, {"asset_id": asset.id})
     db.delete(asset)
@@ -816,7 +817,7 @@ def set_status(
     if new_status == "published":
         errors = validation_errors(module)
         if errors:
-            raise HTTPException(status_code=400, detail={"message": "Module is not ready to publish", "errors": errors})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"message": "Module is not ready to publish", "errors": errors})
         module.published_at = _now()
     elif new_status == "draft":
         module.published_at = None
@@ -830,7 +831,7 @@ def delete_module(db: Session, actor: User, module_id: int, ip: Optional[str]) -
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
     if module.status != "draft":
-        raise HTTPException(status_code=400, detail="Only draft modules can be deleted")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only draft modules can be deleted")
     paths = [settings.storage_path / asset.file_path for asset in module.assets]
     _audit(
         db,
@@ -863,6 +864,99 @@ def serialize_for_super_admin(module: ExamModule) -> dict:
         for item in sorted(module.institute_assignments, key=lambda row: row.institute.name.lower())
     ]
     return result
+
+
+def analytics_for_super_admin(db: Session, module_id: int) -> dict:
+    get_module_or_404(db, module_id)
+    attempts = (
+        db.query(TestAttempt)
+        .options(joinedload(TestAttempt.user).joinedload(User.institute))
+        .filter(TestAttempt.module_id == module_id)
+        .all()
+    )
+
+    scored_percentages: list[float] = []
+    cefr_distribution: dict[str, int] = {}
+    score_distribution = {
+        "Under 50%": 0,
+        "50% - 70%": 0,
+        "70% - 85%": 0,
+        "85% or Above": 0,
+    }
+    institute_performance: dict[int | None, dict] = {}
+    completed_statuses = {ATTEMPT_SUBMITTED, ATTEMPT_GRADING, ATTEMPT_GRADED}
+    completed_attempts = 0
+
+    for attempt in attempts:
+        institute = attempt.user.institute if attempt.user else None
+        institute_id = institute.id if institute else None
+        institute_name = institute.name if institute else "Independent / Direct"
+        institute_row = institute_performance.setdefault(
+            institute_id,
+            {
+                "institute_id": institute_id,
+                "institute_name": institute_name,
+                "total_attempts": 0,
+                "completed_attempts": 0,
+                "scores": [],
+                "cefr_distribution": {},
+                "score_distribution": {
+                    "Under 50%": 0,
+                    "50% - 70%": 0,
+                    "70% - 85%": 0,
+                    "85% or Above": 0,
+                },
+            },
+        )
+        institute_row["total_attempts"] += 1
+
+        is_completed = attempt.status in completed_statuses or (
+            attempt.raw_score is not None and attempt.max_score is not None
+        )
+        if not is_completed:
+            continue
+
+        completed_attempts += 1
+        institute_row["completed_attempts"] += 1
+
+        if attempt.raw_score is not None and attempt.max_score is not None and attempt.max_score > 0:
+            pct = (float(attempt.raw_score) / float(attempt.max_score)) * 100
+            scored_percentages.append(pct)
+            institute_row["scores"].append(pct)
+            if pct < 50:
+                score_distribution["Under 50%"] += 1
+                institute_row["score_distribution"]["Under 50%"] += 1
+            elif pct < 70:
+                score_distribution["50% - 70%"] += 1
+                institute_row["score_distribution"]["50% - 70%"] += 1
+            elif pct < 85:
+                score_distribution["70% - 85%"] += 1
+                institute_row["score_distribution"]["70% - 85%"] += 1
+            else:
+                score_distribution["85% or Above"] += 1
+                institute_row["score_distribution"]["85% or Above"] += 1
+
+        if attempt.cefr_level:
+            cefr = attempt.cefr_level.upper()
+            cefr_distribution[cefr] = cefr_distribution.get(cefr, 0) + 1
+            institute_row["cefr_distribution"][cefr] = institute_row["cefr_distribution"].get(cefr, 0) + 1
+
+    leaderboard = []
+    for row in institute_performance.values():
+        scores = row.pop("scores")
+        average = sum(scores) / len(scores) if scores else 0.0
+        leaderboard.append({**row, "average_score_pct": round(average, 1)})
+    leaderboard.sort(key=lambda item: (item["average_score_pct"], item["completed_attempts"], item["total_attempts"]), reverse=True)
+
+    average_score = sum(scored_percentages) / len(scored_percentages) if scored_percentages else 0.0
+    return {
+        "total_attempts": len(attempts),
+        "completed_attempts": completed_attempts,
+        "average_score_pct": round(average_score, 1),
+        "cefr_distribution": cefr_distribution,
+        "score_distribution": score_distribution,
+        "institute_performance": leaderboard,
+    }
 
 
 def list_all_modules(
@@ -912,12 +1006,12 @@ def assign_to_institute(
 ) -> dict:
     module = get_module_or_404(db, module_id)
     if module.status != "published":
-        raise HTTPException(status_code=400, detail="Only published courses can be assigned")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only published courses can be assigned")
     institute = db.get(Institute, institute_id)
     if institute is None:
-        raise HTTPException(status_code=404, detail="Institute not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Institute not found")
     if not institute.is_active and not allow_inactive:
-        raise HTTPException(status_code=400, detail="Draft or suspended institutes cannot receive live access")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Draft or suspended institutes cannot receive live access")
     assignment = db.query(InstituteModule).filter(
         InstituteModule.institute_id == institute_id, InstituteModule.module_id == module_id
     ).first()
@@ -925,7 +1019,7 @@ def assign_to_institute(
         assignment = InstituteModule(institute_id=institute_id, module_id=module_id, assigned_by_id=actor.id, is_active=True)
         db.add(assignment)
     elif assignment.is_active:
-        raise HTTPException(status_code=409, detail="Course is already assigned to this institute")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Course is already assigned to this institute")
     else:
         assignment.is_active = True
         assignment.assigned_by_id = actor.id
@@ -945,7 +1039,7 @@ def unassign_from_institute(db: Session, actor: User, module_id: int, institute_
         InstituteModule.is_active.is_(True),
     ).first()
     if assignment is None:
-        raise HTTPException(status_code=404, detail="Active course assignment not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Active course assignment not found")
     assignment.is_active = False
     db.add(assignment)
     _audit(db, actor, "exam_module.unassign", module_id, ip, {"institute_id": institute_id})

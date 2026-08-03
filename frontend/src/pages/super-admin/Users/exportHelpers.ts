@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import type { DirectoryRole, DirectoryUser } from "@/api/types";
 import { usersStrings as strings } from "./Users.strings";
+import { formatDate } from "@/utils/date";
 
 /**
  * Exports the rows currently on screen. The institute column is included only
@@ -35,7 +36,7 @@ export function exportUsersPDF(users: DirectoryUser[], role: DirectoryRole, show
     startY: 24,
     head: [head],
     body: users.map((user, index) => {
-      const created = new Date(user.created_at).toLocaleDateString("en-GB");
+      const created = formatDate(user.created_at);
       const name = `${user.first_name} ${user.last_name}`;
       return showInstitute
         ? [index + 1, name, user.email, user.institute_name ?? "—", statusLabel(user), created]
@@ -54,11 +55,11 @@ export function exportUsersExcel(users: DirectoryUser[], role: DirectoryRole, sh
     : ["#", "First Name", "Last Name", "Email", "Status", "Password Reset", "Password Changed", "Created"];
 
   const rows: (string | number)[][] = users.map((user, index) => {
-    const created = new Date(user.created_at).toLocaleDateString("en-GB");
+    const created = formatDate(user.created_at);
     const reset = user.force_password_reset ? "Yes" : "No";
     const changedAt = user.password_changed_at ?? user.last_password_change?.at ?? null;
     const changed = changedAt
-      ? new Date(changedAt).toLocaleDateString("en-GB")
+      ? formatDate(changedAt)
       : strings.passwordTrail.never;
     return showInstitute
       ? [index + 1, user.first_name, user.last_name, user.email, user.institute_name ?? "—", statusLabel(user), reset, changed, created]

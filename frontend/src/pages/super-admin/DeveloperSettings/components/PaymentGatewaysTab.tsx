@@ -162,7 +162,7 @@ export function PaymentGatewaysTab() {
         {/* Razorpay Section Card */}
         <div
           style={{
-            background: "var(--surface-bg, #ffffff)",
+            background: "var(--surface-bg, var(--white))",
             border: "1px solid var(--border-color, var(--border))",
             borderRadius: "14px",
             padding: "1.25rem 1.5rem",
@@ -189,12 +189,12 @@ export function PaymentGatewaysTab() {
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                  <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary, #0f172a)" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary, var(--slate-900))" }}>
                     {t.razorpayTitle}
                   </h3>
                   {renderStatusIndicator(connectionStatus.razorpay)}
                 </div>
-                <small style={{ color: "var(--text-muted, #64748b)" }}>{t.razorpayDesc}</small>
+                <small style={{ color: "var(--text-muted, var(--slate-500))" }}>{t.razorpayDesc}</small>
               </div>
             </div>
 
@@ -272,7 +272,7 @@ export function PaymentGatewaysTab() {
                 className="btn-secondary"
                 onClick={() => testConnection("razorpay")}
                 disabled={connectionStatus.razorpay === "testing"}
-                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface, #f1f5f9)", border: "1px solid var(--border, var(--border))" }}
+                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface, var(--slate-100))", border: "1px solid var(--border, var(--border))" }}
               >
                 {connectionStatus.razorpay === "testing" ? "Testing..." : "Test Connection"}
               </button>
@@ -291,7 +291,7 @@ export function PaymentGatewaysTab() {
         {/* Stripe Section Card */}
         <div
           style={{
-            background: "var(--surface-bg, #ffffff)",
+            background: "var(--surface-bg, var(--white))",
             border: "1px solid var(--border-color, var(--border))",
             borderRadius: "14px",
             padding: "1.25rem 1.5rem",
@@ -318,12 +318,12 @@ export function PaymentGatewaysTab() {
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                  <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary, #0f172a)" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary, var(--slate-900))" }}>
                     {t.stripeTitle}
                   </h3>
                   {renderStatusIndicator(connectionStatus.stripe)}
                 </div>
-                <small style={{ color: "var(--text-muted, #64748b)" }}>{t.stripeDesc}</small>
+                <small style={{ color: "var(--text-muted, var(--slate-500))" }}>{t.stripeDesc}</small>
               </div>
             </div>
 
@@ -397,7 +397,7 @@ export function PaymentGatewaysTab() {
                 className="btn-secondary"
                 onClick={() => testConnection("stripe")}
                 disabled={connectionStatus.stripe === "testing"}
-                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface, #f1f5f9)", border: "1px solid var(--border, var(--border))" }}
+                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface, var(--slate-100))", border: "1px solid var(--border, var(--border))" }}
               >
                 {connectionStatus.stripe === "testing" ? "Testing..." : "Test Connection"}
               </button>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/client";
 import { useToastStore } from "@/store/toastStore";
 import "@/styles/voucher-ui.css";
+import { formatDate } from "@/utils/date";
 
 interface VoucherOffering {
   id: number;
@@ -287,7 +288,7 @@ export function VouchersSection() {
 
             <div className="text-xs text-slate-400 space-y-1 text-left bg-slate-800/40 p-4 rounded-xl">
               <div><strong>Purchase Ref:</strong> {purchaseSuccess.purchase_number}</div>
-              <div><strong>Valid Until:</strong> {new Date(purchaseSuccess.valid_until).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</div>
+              <div><strong>Valid Until:</strong> {formatDate(purchaseSuccess.valid_until)}</div>
               <div><strong>Amount Paid:</strong> ₹{parseFloat(purchaseSuccess.final_amount).toLocaleString("en-IN")}</div>
             </div>
 
