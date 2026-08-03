@@ -30,6 +30,19 @@ export const gradingDetailStrings = {
   },
   part: {
     aiDraft: "AI rubric draft",
+    priorAiTitle: "This part was AI-graded earlier",
+    priorAiSubtitle:
+      "Values below are the model's evaluation. Review each mark against the rubric, override anything you disagree with, then confirm.",
+    priorAiMarksHeading: "AI marks",
+    priorAiCommentHeading: "AI comment",
+    priorAiAccept: "Use these values",
+    priorAiChip: "AI graded",
+    rubricSticky: {
+      title: "CEFR criteria",
+      subtitle: "Follows the part you are grading.",
+      close: "Hide rubric",
+      show: "Show rubric",
+    },
     generating: "Generating...",
     graded: "Graded",
     draftSaved: "Draft saved",

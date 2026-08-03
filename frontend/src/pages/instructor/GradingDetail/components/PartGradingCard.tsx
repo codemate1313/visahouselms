@@ -54,6 +54,16 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
   // publishes anything.
   const isPublished = part.grade?.status === "graded" || part.grade?.status === "ai_graded";
   const isDraft = part.grade?.status === "draft";
+  // Show the AI's earlier evaluation on the page (not tucked inside a details
+  // element) so the instructor sees what the model produced before touching it
+  // and can accept the values in one click.
+  const priorAiGrade = part.grade?.status === "ai_graded" ? part.grade : null;
+
+  function acceptPriorAi() {
+    if (!priorAiGrade) return;
+    setMarks(Object.fromEntries(priorAiGrade.criteria.map((item) => [item.criterion, item.marks_awarded])));
+    setComment(priorAiGrade.comment ?? "");
+  }
 
   async function requestAiSuggestion() {
     setRequestingAi(true);
@@ -112,7 +122,8 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
           <p>{part.skill_focus}</p>
         </div>
         <div className="form-actions">
-          {isPublished && <Badge tone="green">{t.graded}</Badge>}
+          {priorAiGrade && <Badge tone="info">{t.priorAiChip}</Badge>}
+          {isPublished && !priorAiGrade && <Badge tone="green">{t.graded}</Badge>}
           {isDraft && <Badge tone="amber">{t.draftSaved}</Badge>}
           {canEdit && supportsAi && (
             <Button variant="secondary" size="sm" disabled={!aiConfigured || requestingAi} onClick={requestAiSuggestion}>
@@ -123,6 +134,39 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
       </div>
       {canEdit && supportsAi && !aiConfigured && <p className="hint">{t.aiDisabledHint}</p>}
       {!supportsAi && <p className="hint">{t.speakingHint}</p>}
+
+      {priorAiGrade && (
+        <div className="ai-review-banner is-prior">
+          <div>
+            <strong>{t.priorAiTitle}</strong>
+            <p>{t.priorAiSubtitle}</p>
+          </div>
+          <div className="ai-review-grid">
+            <div>
+              <span className="ai-review-heading">{t.priorAiMarksHeading}</span>
+              <ul>
+                {priorAiGrade.criteria.map((item) => (
+                  <li key={item.criterion}>
+                    <strong>{item.criterion}</strong>
+                    <span>{item.marks_awarded} / {item.max_marks}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {priorAiGrade.comment && (
+              <div>
+                <span className="ai-review-heading">{t.priorAiCommentHeading}</span>
+                <p>{priorAiGrade.comment}</p>
+              </div>
+            )}
+          </div>
+          {canEdit && (
+            <div className="form-actions">
+              <Button size="sm" variant="secondary" onClick={acceptPriorAi}>{t.priorAiAccept}</Button>
+            </div>
+          )}
+        </div>
+      )}
 
       {part.questions.map((question) => (
         <div key={question.id} className="test-runner-question grading-response">
@@ -149,62 +193,83 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
         </div>
       )}
 
-      <details className="rubric-details" open={isOpen} onToggle={(e) => onToggleOpen(e.currentTarget.open)}>
-        <summary>{t.rubricSummary(part.rubric.length)}</summary>
-        <div className="cefr-anchor-scale" aria-label={t.cefrAnchorAriaLabel}>
-          {part.cefr_scale.map((anchor) => (
-            <div key={anchor.level}>
-              <strong>{anchor.level}</strong>
-              <span>{anchor.marks}</span>
-              <p>{anchor.descriptor}</p>
+      {/* Sticky rubric: stays in view while the instructor scrolls the
+          student's responses, and can be hidden if they want the response
+          area full-width. Content is scoped to this part, so it "changes"
+          automatically as the active card scrolls into view. */}
+      <div className={`rubric-sticky${isOpen ? "" : " is-collapsed"}`} aria-label={t.rubricSticky.title}>
+        <div className="rubric-sticky-head">
+          <div>
+            <strong>{t.rubricSticky.title}</strong>
+            <small>{t.rubricSummary(part.rubric.length)}</small>
+          </div>
+          <button
+            type="button"
+            className="rubric-sticky-toggle"
+            onClick={() => onToggleOpen(!isOpen)}
+            aria-expanded={isOpen}
+          >
+            {isOpen ? t.rubricSticky.close : t.rubricSticky.show}
+          </button>
+        </div>
+        {isOpen && (
+          <div className="rubric-sticky-body">
+            <div className="cefr-anchor-scale" aria-label={t.cefrAnchorAriaLabel}>
+              {part.cefr_scale.map((anchor) => (
+                <div key={anchor.level}>
+                  <strong>{anchor.level}</strong>
+                  <span>{anchor.marks}</span>
+                  <p>{anchor.descriptor}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="rubric-grid">
-          {part.rubric.map((criterion) => (
-            <article key={criterion.criterion}>
-              <div>
-                <strong>{criterion.criterion}</strong>
-                <span className="cefr-mark-level">{levelForMarks(marks[criterion.criterion], criterion.max_marks)}</span>
-              </div>
-              <p>{criterion.description}</p>
-              <label htmlFor={`criterion-${part.id}-${criterion.criterion}`}>{t.markLabel(criterion.max_marks)}</label>
-              <div className="sleek-score-combo">
-                <input
-                  id={`criterion-${part.id}-${criterion.criterion}`}
-                  type="number"
-                  min={0}
-                  max={criterion.max_marks}
-                  step={0.5}
-                  className="sleek-score-input"
-                  placeholder="0.0"
-                  value={marks[criterion.criterion]}
-                  disabled={!canEdit}
-                  onChange={(event) => setMarks((current) => ({ ...current, [criterion.criterion]: event.target.value }))}
-                />
-                <SearchableSelect
-                  ariaLabel={t.markLabel(criterion.max_marks)}
-                  className="sleek-score-select"
-                  options={[
-                    { value: "", label: "Select preset score..." },
-                    ...Array.from({ length: Math.floor(criterion.max_marks * 2) + 1 }, (_, i) => {
-                      const scoreVal = i * 0.5;
-                      return {
-                        value: String(scoreVal),
-                        label: `${scoreVal} / ${criterion.max_marks} marks`,
-                      };
-                    }),
-                  ]}
-                  searchable={false}
-                  value={marks[criterion.criterion]}
-                  disabled={!canEdit}
-                  onChange={(value) => setMarks((current) => ({ ...current, [criterion.criterion]: String(value) }))}
-                />
-              </div>
-            </article>
-          ))}
-        </div>
-      </details>
+            <div className="rubric-grid">
+              {part.rubric.map((criterion) => (
+                <article key={criterion.criterion}>
+                  <div>
+                    <strong>{criterion.criterion}</strong>
+                    <span className="cefr-mark-level">{levelForMarks(marks[criterion.criterion], criterion.max_marks)}</span>
+                  </div>
+                  <p>{criterion.description}</p>
+                  <label htmlFor={`criterion-${part.id}-${criterion.criterion}`}>{t.markLabel(criterion.max_marks)}</label>
+                  <div className="sleek-score-combo">
+                    <input
+                      id={`criterion-${part.id}-${criterion.criterion}`}
+                      type="number"
+                      min={0}
+                      max={criterion.max_marks}
+                      step={0.5}
+                      className="sleek-score-input"
+                      placeholder="0.0"
+                      value={marks[criterion.criterion]}
+                      disabled={!canEdit}
+                      onChange={(event) => setMarks((current) => ({ ...current, [criterion.criterion]: event.target.value }))}
+                    />
+                    <SearchableSelect
+                      ariaLabel={t.markLabel(criterion.max_marks)}
+                      className="sleek-score-select"
+                      options={[
+                        { value: "", label: "Select preset score..." },
+                        ...Array.from({ length: Math.floor(criterion.max_marks * 2) + 1 }, (_, i) => {
+                          const scoreVal = i * 0.5;
+                          return {
+                            value: String(scoreVal),
+                            label: `${scoreVal} / ${criterion.max_marks} marks`,
+                          };
+                        }),
+                      ]}
+                      searchable={false}
+                      value={marks[criterion.criterion]}
+                      disabled={!canEdit}
+                      onChange={(value) => setMarks((current) => ({ ...current, [criterion.criterion]: String(value) }))}
+                    />
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
       <label htmlFor={`comment-${part.id}`}>{t.commentLabel}</label>
       <textarea id={`comment-${part.id}`} rows={3} value={comment} disabled={!canEdit} onChange={(event) => setComment(event.target.value)} />
       {canEdit && (

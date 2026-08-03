@@ -202,24 +202,6 @@ export function GradingDetail() {
           </div>
         </section>
       )}
-      {detail.status === "grading" && subjectiveParts.length > 0 && (
-        <section className="workspace-panel submit-full-test-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>{strings.submitFullTest.title}</h2>
-              <p>{strings.submitFullTest.description}</p>
-            </div>
-            <Badge tone="amber">{strings.submitFullTest.readyCount(readyPartsCount, subjectiveParts.length)}</Badge>
-          </div>
-          {canEdit && (
-            <div className="form-actions">
-              <Button disabled={busy || !allPartsReady} onClick={submitFullTest}>
-                {busy ? strings.submitFullTest.submitting : strings.submitFullTest.action}
-              </Button>
-            </div>
-          )}
-        </section>
-      )}
       {claimedByOther && (
         <div className="banner">
           <strong>{strings.readOnly.title}</strong> {strings.readOnly.claimedBy(detail.queue.assigned_to_name ?? "")}
@@ -285,6 +267,26 @@ export function GradingDetail() {
           onGradedNext={handleGradedNext}
         />
       ))}
+      {/* Submit lives at the bottom: publishing is the last thing an instructor
+          does, after every part above has a complete draft. */}
+      {detail.status === "grading" && subjectiveParts.length > 0 && (
+        <section className="workspace-panel submit-full-test-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>{strings.submitFullTest.title}</h2>
+              <p>{strings.submitFullTest.description}</p>
+            </div>
+            <Badge tone="amber">{strings.submitFullTest.readyCount(readyPartsCount, subjectiveParts.length)}</Badge>
+          </div>
+          {canEdit && (
+            <div className="form-actions">
+              <Button disabled={busy || !allPartsReady} onClick={submitFullTest}>
+                {busy ? strings.submitFullTest.submitting : strings.submitFullTest.action}
+              </Button>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }
