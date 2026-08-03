@@ -2790,32 +2790,10 @@ td:hover,
   min-width: 1100px;
 }
 
-.sleek-institutes-table .col-institute {
-  width: 24%;
-}
-
-.sleek-institutes-table .col-contact {
-  width: auto;
-}
-
-.sleek-institutes-table .col-subscription {
-  width: 140px;
-  text-align: center;
-}
-
-.sleek-institutes-table .col-status {
-  width: 140px;
-  text-align: center;
-  padding-right: 14px;
-}
-
-.sleek-institutes-table .col-subscription .badge,
-.sleek-institutes-table .col-status .badge {
-  min-width: 100px;
-  justify-content: center;
-}
-
-.institutes-directory-table .col-checkbox {
+.super-admin-portal .sleek-institutes-table th.col-checkbox,
+.super-admin-portal .sleek-institutes-table td.col-checkbox,
+.sleek-institutes-table th.col-checkbox,
+.sleek-institutes-table td.col-checkbox {
   width: 36px !important;
   min-width: 36px !important;
   max-width: 36px !important;
@@ -2824,23 +2802,38 @@ td:hover,
   text-align: center !important;
 }
 
-.institutes-directory-table .col-institute {
+.super-admin-portal .sleek-institutes-table th.col-institute,
+.super-admin-portal .sleek-institutes-table td.col-institute,
+.sleek-institutes-table th.col-institute,
+.sleek-institutes-table td.col-institute {
   width: 22% !important;
+  min-width: 170px !important;
   padding-left: 6px !important;
 }
 
-.institutes-directory-table .col-contact {
+.super-admin-portal .sleek-institutes-table th.col-contact,
+.super-admin-portal .sleek-institutes-table td.col-contact,
+.sleek-institutes-table th.col-contact,
+.sleek-institutes-table td.col-contact {
   width: auto !important;
 }
 
-.institutes-directory-table .col-subscription,
-.institutes-directory-table .col-status {
+.super-admin-portal .sleek-institutes-table th.col-subscription,
+.super-admin-portal .sleek-institutes-table td.col-subscription,
+.super-admin-portal .sleek-institutes-table th.col-status,
+.super-admin-portal .sleek-institutes-table td.col-status,
+.sleek-institutes-table th.col-subscription,
+.sleek-institutes-table td.col-subscription,
+.sleek-institutes-table th.col-status,
+.sleek-institutes-table td.col-status {
   width: 140px !important;
-  text-align: center;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  text-align: center !important;
 }
 
-.institutes-directory-table .col-subscription .badge,
-.institutes-directory-table .col-status .badge {
+.sleek-institutes-table .col-subscription .badge,
+.sleek-institutes-table .col-status .badge {
   min-width: 100px;
   justify-content: center;
 }
