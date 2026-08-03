@@ -94,6 +94,7 @@ export function Users() {
   >(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [resettingPasswordUserId, setResettingPasswordUserId] = useState<number | null>(null);
   const [studentFilter, setStudentFilter] = useState<"all" | "direct" | "institutes">("all");
   const [selectedInstituteId, setSelectedInstituteId] = useState<string>("");
   const [institutes, setInstitutes] = useState<{ id: number; name: string }[]>([]);
@@ -238,6 +239,9 @@ export function Users() {
   }
 
   async function handleResetPassword(user: DirectoryUser) {
+    // Guard against duplicate calls while a reset is already in flight.
+    if (resettingPasswordUserId !== null) return;
+
     const confirmed = await confirmAction(strings.confirm.resetPassword(user.email), {
       title: strings.confirm.resetPasswordTitle,
       confirmText: "Reset Password",
@@ -248,6 +252,7 @@ export function Users() {
     const path = passwordResetPath(user);
     if (!path) return;
 
+    setResettingPasswordUserId(user.id);
     setError(null);
     try {
       const { data: result } = await apiClient.post<{ temporary_password?: string }>(path);
@@ -260,6 +265,8 @@ export function Users() {
       await loadUsers();
     } catch (err: unknown) {
       setError(extractErrorMessage(err, strings.errors.resetPassword));
+    } finally {
+      setResettingPasswordUserId(null);
     }
   }
 

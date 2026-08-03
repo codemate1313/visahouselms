@@ -666,24 +666,27 @@ def my_current_plan_view(db: Session, user: User) -> dict:
         # Trial Settings decide which modules are free and for how long.
         demo = trial_service.demo_state(db, user)
         demo_ids = set(demo["module_ids"]) if demo["state"] == "active" else set()
+        modules_payload = [
+            {
+                "module_id": module.id,
+                "title": module.title,
+                "module_type": module.module_type,
+                "duration_minutes": module.duration_minutes,
+                # Free only while the trial allows it.
+                "is_locked": module.id not in demo_ids,
+                "is_demo": module.id in demo_ids,
+            }
+            for module in all_published_modules
+        ]
+        modules_payload.sort(key=lambda m: (m["is_locked"], m["title"]))
+
         return {
             "plan": {
                 "id": 0,
                 "name": "Available Practice & Mock Tests",
                 "description": "Upgrade your plan subscription to unlock access to locked test modules.",
                 "courses": [],
-                "modules": [
-                    {
-                        "module_id": module.id,
-                        "title": module.title,
-                        "module_type": module.module_type,
-                        "duration_minutes": module.duration_minutes,
-                        # Free only while the trial allows it.
-                        "is_locked": module.id not in demo_ids,
-                        "is_demo": module.id in demo_ids,
-                    }
-                    for module in all_published_modules
-                ],
+                "modules": modules_payload,
             },
             "state": state,
             "expires_at": None,
@@ -737,6 +740,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 "is_locked": module.id not in unlocked_ids,
                 "is_demo": False,
             })
+        modules_list.sort(key=lambda m: (m["is_locked"], m["title"]))
 
     return {
         "plan": {

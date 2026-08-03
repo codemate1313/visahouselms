@@ -49,7 +49,6 @@ from app.models.voucher import VoucherType, VoucherOffering, VoucherCode, Vouche
 __all__ = [
     "Base",
     "GstRate",
-
     "Role",
     "User",
     "UserDevice",
@@ -84,7 +83,6 @@ __all__ = [
     "InstituteBranding",
     "InstructorProfile",
     "TrialConfig",
-    "DemoAccount",
     "DailyEnglishChallenge",
     "Coupon",
     "CouponRedemption",

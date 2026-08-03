@@ -444,6 +444,16 @@ export interface StudentCurrentPlan {
   expires_at: string | null;
   access_type: "institute" | "direct";
   ai_evaluations?: StudentAiQuotaSummary;
+  demo?: {
+    state: "active" | "locked";
+    is_enabled: boolean;
+    days_remaining: number | null;
+    duration_days: number;
+    test_limit: number;
+    tests_taken: number;
+    course_limit: number;
+    locked_reason: string | null;
+  };
 }
 
 

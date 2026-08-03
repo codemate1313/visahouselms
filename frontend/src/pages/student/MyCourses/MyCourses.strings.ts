@@ -35,6 +35,10 @@ export const myCoursesStrings = {
     heroDescription:
       "Sit a short demo test and get your score instantly. Locked modules become available once you purchase a plan.",
     browsePlans: "Browse plans",
+    trialDaysLeft: (days: number) =>
+      days === 1 ? "1 day left in your trial" : `${days} days left in your trial`,
+    trialExpired: "Your trial period has ended",
+    trialLastDay: "Today is the last day of your trial",
   },
   errors: {
     startModule: "Failed to start the test.",

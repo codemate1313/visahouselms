@@ -318,6 +318,93 @@ The Visa House Security Team
     return subject, plain, html
 
 
+def render_password_reset_by_admin_email(
+    first_name: str,
+    email: str,
+    new_password: str,
+    login_url: str,
+) -> tuple[str, str, str]:
+    """Returns (subject, plain_text, html_content).
+
+    Sent when an administrator resets a user's password.
+    Informs them of their new password and provides a direct login link.
+    """
+    subject = "Your Visa House Password Has Been Reset"
+
+    plain = f"""Hi {first_name},
+
+Your Visa House account password has been reset by an administrator.
+
+Please find your new login credentials below:
+
+  Email:        {email}
+  New Password: {new_password}
+
+To log in to your account, visit the link below:
+{login_url}
+
+IMPORTANT: For your security, any previous active sessions have been signed out. You will be prompted to update your password upon logging in.
+
+Best regards,
+The Visa House Team
+"""
+
+    content_html = f"""
+    <p style="margin-top: 0; font-size: 15px; color: #334155; line-height: 1.6;">
+      Dear <strong style="color: #0f172a;">{first_name}</strong>,
+    </p>
+    <p style="font-size: 15px; color: #334155; line-height: 1.7; margin: 0 0 20px 0;">
+      Your <strong style="color: #b91c2b;">Visa House</strong> account password has been updated by an administrator.
+    </p>
+    <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin: 0 0 20px 0;">
+      Please use your new password below to log in:
+    </p>
+
+    <!-- Credentials Card -->
+    <div style="background: linear-gradient(135deg, #fafafa 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; margin: 8px 0 24px 0;">
+      <div style="display: flex; align-items: center; margin-bottom: 18px;">
+        <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #b91c2b; background-color: #fef2f2; padding: 4px 10px; border-radius: 20px; display: inline-block;">
+          &#128274;&nbsp; Updated Credentials
+        </div>
+      </div>
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: separate; border-spacing: 0 10px; font-size: 14px;">
+        <tr>
+          <td style="width: 110px; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; padding: 10px 12px 10px 0;">Email</td>
+          <td style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-weight: 600; color: #1e40af; font-size: 14px;">{email}</td>
+        </tr>
+        <tr>
+          <td style="width: 110px; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; padding: 10px 12px 10px 0;">New Password</td>
+          <td style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-weight: 700; color: #0f172a; font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace; letter-spacing: 0.06em; font-size: 15px;">{new_password}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Security Notice -->
+    <div style="background-color: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #f59e0b; border-radius: 10px; padding: 16px 18px; margin: 0 0 8px 0;">
+      <div style="display: flex; align-items: flex-start; gap: 10px;">
+        <div>
+          <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 5px;">&#9888;&nbsp; Account Security Notice</div>
+          <div style="font-size: 13px; color: #78350f; line-height: 1.6;">
+            All previous active sessions have been revoked for your security. You will be prompted to set your own password upon your next login.
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+
+    html = render_base_email(
+        badge_label="Password Updated",
+        title="Your Password Has Been Reset",
+        subtitle="An administrator has generated a new password for your account.",
+        content_html=content_html,
+        action_url=login_url,
+        action_text="Log In to Portal",
+        badge_color="#b91c2b",
+    )
+
+    return subject, plain, html
+
+
 def render_login_otp_email(first_name: str, otp_code: str, expires_minutes: int) -> tuple[str, str, str]:
     """Returns (subject, plain_text, html_content)."""
     subject = "Your Visa House login verification code"

@@ -4,18 +4,14 @@ export const trialConfigStrings = {
     "Governs the free trial for students who sign up directly (not through an institute). Whichever limit is hit first locks the rest of the trial.",
   trialEnabled: "Trial enabled",
   durationLabel: "Trial duration (days)",
-  courseLimitLabel: "Courses visible",
   testLimitLabel: "Tests allowed",
   demo: {
     heading: "Demo courses",
     description:
-      "Tick the published courses a student may sit for free before subscribing. The first N ticked courses are offered, where N is \"Courses visible\" above.",
+      "Tick the published courses a student may sit for free before subscribing.",
     empty: "No published courses available yet.",
-    offered: (count: number, limit: number) =>
-      count <= limit
-        ? `${count} of ${limit} allowed course${limit === 1 ? "" : "s"} offered`
-        : `${count} ticked, but only the first ${limit} will be offered`,
-    beyondLimit: "Beyond the visible limit",
+    offered: (count: number) =>
+      `${count} course${count === 1 ? "" : "s"} selected as demo`,
     save: "Save demo courses",
     saving: "Saving...",
     saved: "Demo courses updated.",

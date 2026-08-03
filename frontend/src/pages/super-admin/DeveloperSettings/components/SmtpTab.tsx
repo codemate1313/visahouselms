@@ -4,15 +4,17 @@ import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { PasswordInput } from "@/components/PasswordInput";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { useToastStore } from "@/store/toastStore";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 
 export function SmtpTab() {
+  const showSuccess = useToastStore((state) => state.showSuccess);
+  const showError = useToastStore((state) => state.showError);
   const [form, setForm] = useState({
     host: "", port: "", username: "", password: "", encryption: "tls", from_address: "",
   });
   const [testTo, setTestTo] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const t = strings.smtp;
 
@@ -32,24 +34,28 @@ export function SmtpTab() {
 
   async function save(event: FormEvent) {
     event.preventDefault();
-    setError(null); setNotice(null); setBusy(true);
+    setError(null); setBusy(true);
     try {
       await apiClient.put("/super-admin/dev-settings/smtp", form);
-      setNotice(t.savedNotice);
+      showSuccess(t.savedNotice);
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, t.saveError));
+      const errMsg = extractErrorMessage(err, t.saveError);
+      setError(errMsg);
+      showError(errMsg);
     } finally {
       setBusy(false);
     }
   }
 
   async function sendTest() {
-    setError(null); setNotice(null); setBusy(true);
+    setError(null); setBusy(true);
     try {
       await apiClient.post("/super-admin/dev-settings/smtp/test", { to_address: testTo });
-      setNotice(t.testSentNotice(testTo));
+      showSuccess(t.testSentNotice(testTo));
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, t.testError));
+      const errMsg = extractErrorMessage(err, t.testError);
+      setError(errMsg);
+      showError(errMsg);
     } finally {
       setBusy(false);
     }
@@ -92,7 +98,6 @@ export function SmtpTab() {
         </div>
 
         {error && <p className="error-text">{error}</p>}
-        {notice && <p className="success-text">{notice}</p>}
 
         <div className="form-actions">
           <button type="submit" disabled={busy}>{t.saveLabel}</button>

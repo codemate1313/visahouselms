@@ -80,13 +80,10 @@ def update_config(
 
 
 def demo_modules(db: Session) -> list:
-    """The published modules offered as free demos, capped by the configured
-    'courses visible' limit. Ordering is stable (oldest first) so a student does
-    not see the set change under them when a new demo module is flagged."""
+    """The published modules offered as free demos."""
     from app.models.exam_module import ExamModule
 
-    config = get_config(db)
-    rows = (
+    return (
         db.query(ExamModule)
         .filter(
             ExamModule.is_demo.is_(True),
@@ -97,7 +94,6 @@ def demo_modules(db: Session) -> list:
         .order_by(ExamModule.created_at.asc(), ExamModule.id.asc())
         .all()
     )
-    return rows[: config.course_limit] if config.course_limit > 0 else []
 
 
 def demo_tests_taken(db: Session, user: User) -> int:
@@ -193,7 +189,7 @@ def set_demo_modules(db: Session, actor: User, module_ids: list, ip: Optional[st
 
     db.add(
         AuditLog(
-            actor_user_id=actor.id,
+            user_id=actor.id,
             action="trial_config.demo_modules",
             entity_type="exam_module",
             entity_id=None,

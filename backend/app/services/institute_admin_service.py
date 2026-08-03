@@ -425,14 +425,22 @@ def reset_member_password(
     db.add(user)
     _audit(db, actor, "institute_member.reset_password", user.id, ip, {"sessions_revoked": revoked})
     db.commit()
-    notification_service.create_notification(
-        db,
-        user_id=user.id,
-        kind="account_password_reset",
-        title="Password reset by administrator",
-        message="Your password was reset and active sessions were revoked.",
-        link_url="/notifications",
-    )
+
+    try:
+        from app.config import settings
+        from app.services import email_template_service, smtp_service
+
+        login_url = f"{settings.frontend_url.rstrip('/')}/login"
+        first_name = user.first_name or "Member"
+        subject, plain, html = email_template_service.render_password_reset_by_admin_email(
+            first_name=first_name,
+            email=user.email,
+            new_password=temporary_password,
+            login_url=login_url,
+        )
+        smtp_service.send_email(db, user.email, subject, plain, html)
+    except Exception:
+        pass
     notification_service.notify_roles(
         db,
         {INSTITUTE_ADMIN},

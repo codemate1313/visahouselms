@@ -55,10 +55,19 @@ export function MyCourses() {
 
   const visibleModules = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return allModules.filter((m) => {
+    const filtered = allModules.filter((m) => {
       if (typeFilter !== "ALL" && m.module_type !== typeFilter) return false;
       if (q && !m.title.toLowerCase().includes(q)) return false;
       return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      const aLocked = Boolean(a.is_locked);
+      const bLocked = Boolean(b.is_locked);
+      if (aLocked !== bLocked) {
+        return aLocked ? 1 : -1;
+      }
+      return 0;
     });
   }, [allModules, typeFilter, search]);
 
@@ -189,6 +198,37 @@ export function MyCourses() {
                   <span>{strings.accessUntil(formatDate(access.expires_at))}</span>
                 </div>
               )}
+              {/* Trial days remaining pill — only for direct demo-access students */}
+              {!isInstituteStudent &&
+                access.state !== "active" &&
+                access.state !== "grace" &&
+                access.demo != null &&
+                access.demo.is_enabled && (
+                  <div
+                    className={[
+                      "my-courses-trial-badge",
+                      access.demo.days_remaining === 0
+                        ? "trial-expired"
+                        : access.demo.days_remaining != null && access.demo.days_remaining <= 3
+                          ? "trial-urgent"
+                          : "trial-ok",
+                    ].join(" ")}
+                    title={
+                      access.demo.days_remaining != null && access.demo.days_remaining > 0
+                        ? `Trial started ${access.demo.duration_days}-day period`
+                        : undefined
+                    }
+                  >
+                    <Icon name="due" />
+                    <span>
+                      {access.demo.days_remaining === 0
+                        ? strings.demo.trialExpired
+                        : access.demo.days_remaining === 1
+                          ? strings.demo.trialLastDay
+                          : strings.demo.trialDaysLeft(access.demo.days_remaining ?? 0)}
+                    </span>
+                  </div>
+                )}
               {!isInstituteStudent && access.state !== "active" && access.state !== "grace" && (
                 <Button variant="primary" onClick={() => navigate("/student/courses")}>
                   {strings.demo.browsePlans}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Badge, Checkbox } from "@/components/ui";
+import { useToastStore } from "@/store/toastStore";
 import { trialConfigStrings as strings } from "../TrialConfig.strings";
 
 interface DemoModuleOption {
@@ -22,14 +23,15 @@ interface DemoModulesResponse {
  * subscribe. The server offers only the first `course_limit` of them, so the
  * ones past that cap are marked here rather than silently ignored.
  */
-export function DemoCoursePicker({ courseLimit }: { courseLimit: number }) {
+export function DemoCoursePicker() {
   const t = strings.demo;
+  const showSuccess = useToastStore((state) => state.showSuccess);
+  const showError = useToastStore((state) => state.showError);
   const [modules, setModules] = useState<DemoModuleOption[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     apiClient
@@ -38,7 +40,10 @@ export function DemoCoursePicker({ courseLimit }: { courseLimit: number }) {
         setModules(data.modules);
         setSelected(new Set(data.modules.filter((m) => m.is_demo).map((m) => m.id)));
       })
-      .catch((err: unknown) => setError(extractErrorMessage(err, t.error)))
+      .catch((err: unknown) => {
+        const errMsg = extractErrorMessage(err, t.error);
+        setError(errMsg);
+      })
       .finally(() => setLoading(false));
   }, [t.error]);
 
@@ -53,7 +58,6 @@ export function DemoCoursePicker({ courseLimit }: { courseLimit: number }) {
 
   async function save() {
     setError(null);
-    setNotice(null);
     setSaving(true);
     try {
       const { data } = await apiClient.put<DemoModulesResponse>(
@@ -62,18 +66,17 @@ export function DemoCoursePicker({ courseLimit }: { courseLimit: number }) {
       );
       setModules(data.modules);
       setSelected(new Set(data.modules.filter((m) => m.is_demo).map((m) => m.id)));
-      setNotice(t.saved);
+      showSuccess(t.saved);
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, t.error));
+      const errMsg = extractErrorMessage(err, t.error);
+      setError(errMsg);
+      showError(errMsg);
     } finally {
       setSaving(false);
     }
   }
 
   if (loading) return <p className="hint">{strings.loading}</p>;
-
-  // Offered set mirrors the server: stable order, capped by the limit.
-  const offeredIds = modules.filter((m) => selected.has(m.id)).slice(0, Math.max(0, courseLimit)).map((m) => m.id);
 
   return (
     <section className="form-card wide" style={{ marginTop: 18 }}>
@@ -84,11 +87,10 @@ export function DemoCoursePicker({ courseLimit }: { courseLimit: number }) {
         <p className="empty-message">{t.empty}</p>
       ) : (
         <>
-          <p className="hint">{t.offered(selected.size, Math.max(0, courseLimit))}</p>
+          <p className="hint">{t.offered(selected.size)}</p>
           <div className="demo-course-list">
             {modules.map((module) => {
               const isSelected = selected.has(module.id);
-              const beyondLimit = isSelected && !offeredIds.includes(module.id);
               return (
                 <label className="plan-course-option" key={module.id}>
                   <Checkbox checked={isSelected} onChange={() => toggle(module.id)} />
@@ -98,7 +100,6 @@ export function DemoCoursePicker({ courseLimit }: { courseLimit: number }) {
                       {module.module_type.replaceAll("_", " ")} · {module.duration_minutes} minutes
                     </small>
                   </span>
-                  {beyondLimit && <Badge tone="amber">{t.beyondLimit}</Badge>}
                 </label>
               );
             })}
@@ -107,7 +108,6 @@ export function DemoCoursePicker({ courseLimit }: { courseLimit: number }) {
       )}
 
       {error && <p className="error-text">{error}</p>}
-      {notice && <p className="success-text">{notice}</p>}
 
       <div className="form-actions">
         <button type="button" disabled={saving || !modules.length} onClick={save}>

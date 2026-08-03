@@ -50,6 +50,7 @@ export function InstituteMembers({ role, instituteId }: Props) {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [resettingId, setResettingId] = useState<number | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const selectableMembers = members.filter((member) => !member.deleted_at);
 
@@ -101,18 +102,24 @@ export function InstituteMembers({ role, instituteId }: Props) {
   }
 
   async function resetPassword(member: InstituteMember) {
+    // Guard against duplicate calls while a reset is already in flight.
+    if (resettingId !== null) return;
+
     const confirmed = await confirmAction(strings.confirm.resetPassword(member.email), {
       title: strings.confirm.resetPasswordTitle,
       confirmText: strings.confirm.resetPasswordConfirm,
       variant: "warning",
     });
     if (!confirmed) return;
+    setResettingId(member.id);
     try {
       const { data } = await apiClient.post(`${apiBase}/members/${member.id}/reset-password`);
       setCredential({ name: `${member.first_name} ${member.last_name}`, password: data.temporary_password });
       await load();
     } catch (err: unknown) {
       setError(extractErrorMessage(err, strings.errors.resetPassword));
+    } finally {
+      setResettingId(null);
     }
   }
 

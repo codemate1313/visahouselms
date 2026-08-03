@@ -861,14 +861,23 @@ def reset_direct_student_password(
         {"sessions_revoked": revoked},
     )
     db.commit()
-    notification_service.create_notification(
-        db,
-        user_id=user.id,
-        kind="account_password_reset",
-        title="Password reset by administrator",
-        message="Your password was reset and active sessions were revoked.",
-        link_url="/student/notifications",
-    )
+
+    try:
+        from app.config import settings
+        from app.services import email_template_service, smtp_service
+
+        login_url = f"{settings.frontend_url.rstrip('/')}/login"
+        first_name = user.first_name or "Student"
+        subject, plain, html = email_template_service.render_password_reset_by_admin_email(
+            first_name=first_name,
+            email=user.email,
+            new_password=temporary_password,
+            login_url=login_url,
+        )
+        smtp_service.send_email(db, user.email, subject, plain, html)
+    except Exception:
+        pass
+
     return temporary_password
 
 
