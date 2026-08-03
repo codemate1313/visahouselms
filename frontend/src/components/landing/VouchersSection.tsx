@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/client";
+import { useToastStore } from "@/store/toastStore";
+import "@/styles/voucher-ui.css";
 
 interface VoucherOffering {
   id: number;
@@ -27,6 +29,8 @@ interface PurchaseSuccess {
 }
 
 export function VouchersSection() {
+  const showError = useToastStore((state) => state.showError);
+  const showSuccess = useToastStore((state) => state.showSuccess);
   const [offerings, setOfferings] = useState<VoucherOffering[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,20 +45,21 @@ export function VouchersSection() {
   const [purchaseSuccess, setPurchaseSuccess] = useState<PurchaseSuccess | null>(null);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    fetchOfferings();
-  }, []);
-
-  async function fetchOfferings() {
+  const fetchOfferings = useCallback(async () => {
     try {
       const res = await api.get<VoucherOffering[]>("/vouchers/public/offerings");
       setOfferings(res.data || []);
     } catch (err) {
       console.error("Failed to load public vouchers", err);
+      showError("Failed to load official exam vouchers.");
     } finally {
       setLoading(false);
     }
-  }
+  }, [showError]);
+
+  useEffect(() => {
+    fetchOfferings();
+  }, [fetchOfferings]);
 
   async function handlePurchaseSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -73,16 +78,20 @@ export function VouchersSection() {
       setPurchaseSuccess(res.data);
       setSelectedOffering(null);
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Voucher purchase failed. Please try again.");
+      showError(err.response?.data?.detail || "Voucher purchase failed. Please try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   function handleCopyCode(code: string) {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    navigator.clipboard.writeText(code)
+      .then(() => {
+        setCopied(true);
+        showSuccess("Voucher code copied.");
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => showError("Could not copy voucher code."));
   }
 
   if (loading) {
@@ -98,7 +107,7 @@ export function VouchersSection() {
   }
 
   return (
-    <section className="py-20 bg-slate-900 text-white relative overflow-hidden" id="vouchers-section">
+    <section className="voucher-ui-scope py-20 bg-slate-900 text-white relative overflow-hidden" id="vouchers-section">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">

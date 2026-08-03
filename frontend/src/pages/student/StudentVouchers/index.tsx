@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/client";
 import { useAuthStore } from "@/store/authStore";
+import { useToastStore } from "@/store/toastStore";
 import { Button, Modal, Badge } from "@/components/ui";
+import "@/styles/voucher-ui.css";
 
 interface VoucherOffering {
   id: number;
@@ -38,6 +40,8 @@ interface StudentVoucher {
 
 export function StudentVouchers() {
   const user = useAuthStore((state) => state.user);
+  const showSuccess = useToastStore((state) => state.showSuccess);
+  const showError = useToastStore((state) => state.showError);
   const [activeTab, setActiveTab] = useState<"browse" | "my_vouchers">("my_vouchers");
   const [offerings, setOfferings] = useState<VoucherOffering[]>([]);
   const [myVouchers, setMyVouchers] = useState<StudentVoucher[]>([]);
@@ -53,11 +57,7 @@ export function StudentVouchers() {
   // Selected Invoice Modal
   const [selectedInvoice, setSelectedInvoice] = useState<StudentVoucher | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [oRes, vRes] = await Promise.all([
@@ -73,19 +73,28 @@ export function StudentVouchers() {
       }
     } catch (err) {
       console.error("Failed to load student vouchers", err);
+      showError("Failed to load vouchers.");
     } finally {
       setLoading(false);
     }
-  }
+  }, [showError]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   function toggleReveal(id: number) {
     setRevealedIds((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
   function handleCopy(id: number, code: string) {
-    navigator.clipboard.writeText(code);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    navigator.clipboard.writeText(code)
+      .then(() => {
+        setCopiedId(id);
+        showSuccess("Voucher code copied.");
+        setTimeout(() => setCopiedId(null), 2000);
+      })
+      .catch(() => showError("Could not copy voucher code."));
   }
 
   async function handleBuyNow(offering: VoucherOffering) {
@@ -100,11 +109,11 @@ export function StudentVouchers() {
         buyer_phone: user.phone_number || null,
         gateway: "demo",
       });
-      alert(`Voucher purchased successfully. Your 16-digit code is: ${res.data.voucher_code}`);
+      showSuccess(`Voucher purchased successfully. Code: ${res.data.voucher_code}`);
       fetchData();
       setActiveTab("my_vouchers");
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Purchase failed. Please try again.");
+      showError(err.response?.data?.detail || "Purchase failed. Please try again.");
     } finally {
       setPurchasing(false);
     }
@@ -120,7 +129,7 @@ export function StudentVouchers() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="voucher-ui-scope p-6 max-w-7xl mx-auto space-y-6">
       {/* Header Banner */}
       <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-2 max-w-2xl">

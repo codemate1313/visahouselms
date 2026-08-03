@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/client";
+import { confirmDelete } from "@/components/confirmDialog";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Button, DataTableCard, FilterBar, Modal, SearchInput, SearchableSelect, SegmentedControl, Input, Textarea } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { useToastStore } from "@/store/toastStore";
 import { vouchersStrings as s } from "./Vouchers.strings";
+import "@/styles/voucher-ui.css";
 import "./Vouchers.css";
 
 interface VoucherType {
@@ -86,6 +89,8 @@ const COLOR_PRESETS = [
 ];
 
 export function Vouchers() {
+  const showSuccess = useToastStore((state) => state.showSuccess);
+  const showError = useToastStore((state) => state.showError);
   const [activeTab, setActiveTab] = useState<"purchases" | "unused" | "upload" | "offerings" | "types">("purchases");
   const [types, setTypes] = useState<VoucherType[]>([]);
   const [offerings, setOfferings] = useState<VoucherOffering[]>([]);
@@ -132,11 +137,7 @@ export function Vouchers() {
   // Invoice Modal State
   const [selectedInvoice, setSelectedInvoice] = useState<VoucherPurchase | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, [search]);
-
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [tRes, oRes, pRes, uRes, gRes] = await Promise.all([
@@ -158,10 +159,15 @@ export function Vouchers() {
       }
     } catch (err) {
       console.error("Failed to load voucher data", err);
+      showError("Failed to load voucher data.");
     } finally {
       setLoading(false);
     }
-  }
+  }, [search, showError, uploadTypeId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Type Modal Handlers
   function openTypeModal(vt?: VoucherType) {
@@ -199,9 +205,10 @@ export function Vouchers() {
       }
       setShowTypeModal(false);
       setActiveTab("types");
+      showSuccess(editingType ? "Voucher type updated." : "Voucher type created.");
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Failed to save voucher type");
+      showError(err.response?.data?.detail || "Failed to save voucher type");
     }
   }
 
@@ -256,9 +263,10 @@ export function Vouchers() {
       }
       setShowOfferingModal(false);
       setActiveTab("offerings");
+      showSuccess(editingOffering ? "Voucher offering updated." : "Voucher offering created.");
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Failed to save offering");
+      showError(err.response?.data?.detail || "Failed to save offering");
     }
   }
 
@@ -266,7 +274,7 @@ export function Vouchers() {
   async function handleBulkUpload(e: React.FormEvent) {
     e.preventDefault();
     if (!uploadTypeId) {
-      alert("Please select a voucher type");
+      showError("Please select a voucher type");
       return;
     }
 
@@ -275,7 +283,7 @@ export function Vouchers() {
     try {
       if (entryMode === "file") {
         if (!uploadFile) {
-          alert("Please select a file to upload");
+          showError("Please select a file to upload");
           setUploading(false);
           return;
         }
@@ -289,7 +297,7 @@ export function Vouchers() {
         setUploadResult(res.data);
       } else {
         if (!manualCodes.trim()) {
-          alert("Please enter at least one voucher code");
+          showError("Please enter at least one voucher code");
           setUploading(false);
           return;
         }
@@ -302,41 +310,45 @@ export function Vouchers() {
         setUploadResult(res.data);
         setManualCodes(""); // Clear after success
       }
+      showSuccess("Voucher codes processed.");
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Code upload/entry failed");
+      showError(err.response?.data?.detail || "Code upload/entry failed");
     } finally {
       setUploading(false);
     }
   }
 
   async function handleDeleteOffering(id: number, title: string) {
-    if (!window.confirm(`Are you sure you want to delete offering "${title}"?`)) return;
+    if (!await confirmDelete(`Delete offering "${title}"?`, "Delete Voucher Offering")) return;
     try {
       await api.delete(`/vouchers/admin/offerings/${id}`);
+      showSuccess("Voucher offering deleted.");
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Failed to delete offering");
+      showError(err.response?.data?.detail || "Failed to delete offering");
     }
   }
 
   async function handleDeleteType(id: number, name: string) {
-    if (!window.confirm(`Are you sure you want to delete voucher type "${name}"? This will also remove associated codes and offerings.`)) return;
+    if (!await confirmDelete(`Delete voucher type "${name}"? This will also remove associated codes and offerings.`, "Delete Voucher Type")) return;
     try {
       await api.delete(`/vouchers/admin/types/${id}`);
+      showSuccess("Voucher type deleted.");
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Failed to delete voucher type");
+      showError(err.response?.data?.detail || "Failed to delete voucher type");
     }
   }
 
   async function handleDeleteCode(id: number, code: string) {
-    if (!window.confirm(`Are you sure you want to delete code "${code}"?`)) return;
+    if (!await confirmDelete(`Delete code "${code}"?`, "Delete Voucher Code")) return;
     try {
       await api.delete(`/vouchers/admin/codes/${id}`);
+      showSuccess("Voucher code deleted.");
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Failed to delete code");
+      showError(err.response?.data?.detail || "Failed to delete code");
     }
   }
 
@@ -360,7 +372,7 @@ export function Vouchers() {
   ];
 
   return (
-    <div className="vouchers-page-wrapper">
+    <div className="vouchers-page-wrapper voucher-ui-scope">
       {/* KPI Metric Cards */}
       <div className="vouchers-metric-row">
         <MetricCard
@@ -526,7 +538,7 @@ export function Vouchers() {
             <tbody>
               {unusedCodes.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="ui-empty-row">
+                  <td colSpan={6} className="ui-empty-row">
                     No unused codes available.
                   </td>
                 </tr>
