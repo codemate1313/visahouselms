@@ -638,6 +638,10 @@ html {
 .grading-parts-column.is-single > * {
   width: 100%;
   max-width: 780px;
+  position: sticky;
+  top: 96px;
+  max-height: calc(100vh - 120px);
+  overflow: auto;
 }
 
 /* Docked rubric column: sticky within its cell so it follows scrolling but
