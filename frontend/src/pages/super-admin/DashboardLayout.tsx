@@ -40,7 +40,6 @@ export function DashboardLayout() {
     { key: "saas_plans", label: m.saasPlans, to: "/super-admin/plans" },
     { key: "saas_subscriptions", label: m.saasSubscriptions, to: "/super-admin/subscriptions" },
     { key: "saas_trial", label: m.saasTrial, to: "/super-admin/trial-config" },
-    { key: "saas_demo", label: m.saasDemo, to: "/super-admin/demo-accounts" },
     ...(canViewMoney
       ? [
           { key: "saas_coupons", label: m.saasCoupons, to: "/super-admin/coupons" },

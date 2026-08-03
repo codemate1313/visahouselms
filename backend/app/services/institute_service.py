@@ -17,7 +17,6 @@ from app.core.uploads import read_validated_image
 from app.services import account_service
 from app.models.audit_log import AuditLog
 from app.models.base import Base
-from app.models.demo_account import DemoAccount
 from app.models.exam_module import InstituteModule
 from app.models.institute import Institute
 from app.models.institute_branding import InstituteBranding
@@ -785,7 +784,6 @@ def delete_institute(db: Session, actor: User, institute_id: int, ip: Optional[s
         "institute_modules",
         "institute_courses",
         "settings",
-        "demo_accounts",
         "institute_branding",
     ):
         table = tables[table_name]

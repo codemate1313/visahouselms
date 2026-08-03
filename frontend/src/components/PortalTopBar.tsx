@@ -88,7 +88,6 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/plans", eyebrow: "SAAS MANAGEMENT", title: "Subscription Plans" },
   { match: "/super-admin/subscriptions", eyebrow: "SAAS MANAGEMENT", title: "Access Agreements" },
   { match: "/super-admin/trial-config", eyebrow: "SAAS MANAGEMENT", title: "Trial Settings" },
-  { match: "/super-admin/demo-accounts", eyebrow: "SAAS MANAGEMENT", title: "Demo Accounts" },
   { match: "/super-admin/coupons/new", eyebrow: "SAAS MANAGEMENT", title: "Create Discount Coupon" },
   { match: /\/super-admin\/coupons\/\d+/, eyebrow: "SAAS MANAGEMENT", title: "Edit Discount Coupon" },
   { match: "/super-admin/coupons", eyebrow: "SAAS MANAGEMENT", title: "Coupons" },

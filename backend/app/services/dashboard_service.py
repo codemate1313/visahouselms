@@ -17,7 +17,7 @@ from app.models.payment_method import PaymentMethod
 from app.models.role import SA_INSTRUCTOR, STUDENT, Role
 from app.models.user import User
 from app.models.user_session import UserSession
-from app.services import demo_service, payment_service, plan_service, revenue_service, subscription_service, super_admin_service
+from app.services import payment_service, plan_service, revenue_service, subscription_service, super_admin_service
 
 SUBSCRIPTION_STATES = (
     subscription_service.STATE_ACTIVE,
@@ -382,35 +382,7 @@ def _transactions_detail(db: Session) -> dict:
     )
 
 
-def _demos_detail(db: Session) -> dict:
-    items = []
-    for demo in demo_service.list_demos(db):
-        if demo["state"] != demo_service.STATE_ACTIVE:
-            continue
-        items.append(
-            _item(
-                item_id=str(demo["id"]),
-                title=demo["institute_name"] or f"Demo #{demo['id']}",
-                subtitle=f"Created for {demo['duration_days']} days",
-                status_label="Active",
-                status_tone="blue",
-                value=demo["days_remaining"],
-                value_label="Days remaining",
-                value_type="number",
-                metadata=[
-                    _meta("Course limit", demo["course_limit"], "number"),
-                    _meta("Test limit", demo["test_limit"], "number"),
-                    _meta("Expires", _iso(demo["expires_at"]), "date"),
-                ],
-            )
-        )
-    return _detail(
-        "demos",
-        "Active Demos",
-        "Demo institutes that can currently access the platform.",
-        "There are no active demo accounts.",
-        items,
-    )
+
 
 
 def _instructors_detail(db: Session) -> dict:
@@ -644,7 +616,6 @@ def get_metric_detail(db: Session, metric: str, actor: User | None = None) -> di
         "revenue": _revenue_detail,
         "dues": _dues_detail,
         "transactions": _transactions_detail,
-        "demos": _demos_detail,
         "instructors": _instructors_detail,
         "modules": _modules_detail,
     }
@@ -664,9 +635,6 @@ def get_summary(db: Session, actor: User | None = None) -> dict:
     for institute in institutes:
         _, state = subscription_service.current_subscription(db, institute.id)
         subscription_breakdown[state] += 1
-
-    demos = demo_service.list_demos(db)
-    demo_active_count = sum(1 for d in demos if d["state"] == demo_service.STATE_ACTIVE)
 
     coupons_active = db.query(Coupon).filter(Coupon.is_active.is_(True)).count()
     super_admin_accounts = len(super_admin_service.list_super_admins(db))
@@ -745,7 +713,6 @@ def get_summary(db: Session, actor: User | None = None) -> dict:
             "students_online": students_online or 0,
             "students_giving_tests": students_giving_tests or 0,
             "subscriptions_active": subscription_breakdown[subscription_service.STATE_ACTIVE],
-            "demo_accounts_active": demo_active_count,
             "coupons_active": coupons_active,
             # Drives the "publish a plan" warning - a platform with no live plan
             # shows an empty public pricing page.

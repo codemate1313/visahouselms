@@ -16,7 +16,6 @@ from app.routers import (
     blogs_router,
     coupons,
     dashboard,
-    demo_accounts,
     dev_settings,
     developer,
     gst_rates,
@@ -98,7 +97,6 @@ app.include_router(instructors.router)
 app.include_router(instructor_portal.router)
 app.include_router(instructor_grading.router)
 app.include_router(trial_config.router)
-app.include_router(demo_accounts.router)
 app.include_router(coupons.router)
 app.include_router(module_authoring.router)
 app.include_router(module_catalog.router)

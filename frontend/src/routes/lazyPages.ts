@@ -52,7 +52,6 @@ export const CouponForm = lazy(() => import("../pages/super-admin/CouponForm").t
 export const Coupons = lazy(() => import("../pages/super-admin/Coupons").then((module) => ({ default: module.Coupons })));
 export const Dashboard = lazy(() => import("../pages/super-admin/Dashboard").then((module) => ({ default: module.Dashboard })));
 export const DashboardLayout = lazy(() => import("../pages/super-admin/DashboardLayout").then((module) => ({ default: module.DashboardLayout })));
-export const DemoAccounts = lazy(() => import("../pages/super-admin/DemoAccounts").then((module) => ({ default: module.DemoAccounts })));
 export const DeveloperSettings = lazy(() => import("../pages/super-admin/DeveloperSettings").then((module) => ({ default: module.DeveloperSettings })));
 export const GradingOversight = lazy(() => import("../pages/super-admin/GradingOversight").then((module) => ({ default: module.GradingOversight })));
 export const RetakeRequests = lazy(() => import("../pages/super-admin/RetakeRequests").then((module) => ({ default: module.RetakeRequests })));

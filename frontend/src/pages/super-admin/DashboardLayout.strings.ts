@@ -23,7 +23,6 @@ export const dashboardLayoutStrings = {
     saasPlans: "Subscription Plans",
     saasSubscriptions: "Access Agreements",
     saasTrial: "Trial Settings",
-    saasDemo: "Demo Accounts",
     saasCoupons: "Coupons",
     saasVouchers: "Voucher Purchase & Stock",
     saasPayments: "Payments",
