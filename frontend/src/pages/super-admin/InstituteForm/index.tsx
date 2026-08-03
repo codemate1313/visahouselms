@@ -425,8 +425,7 @@ export function InstituteForm() {
 
   return (
     <div className="institute-form-shell">
-      {/* Header Stepper Navigation with Lines & Arrows */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 24, overflowX: "auto" }}>
+      <div className="stepper-navigation-header">
         <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "nowrap" }}>
           {stepsDef.map((tab, idx) => {
             const isActive = activeTab === tab.key;

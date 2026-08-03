@@ -179,15 +179,15 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
   overflow: hidden;
 }
 
-/* Result and facts views swap inside the same panel. Reserving the height here
-   keeps the dashboard below from jumping as the student moves between them
-   (and between facts of different lengths). */
+/* Result and facts views swap inside the same panel. The facts view is the
+   taller of the two, so its height is reserved for both — otherwise the whole
+   dashboard below shifts every time the student switches. */
 .daily-completion-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(230px, 0.65fr);
   align-items: center;
   gap: 28px;
-  min-height: var(--daily-panel-height, 268px);
+  min-height: var(--daily-panel-height, 372px);
 }
 
 .daily-completion-summary {
@@ -694,6 +694,13 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
   flex: 1;
   max-width: 100%;
   min-width: 0;
+  /* Fill the reserved panel height so the card grows instead of leaving a
+     gap under it. */
+  align-self: stretch;
+}
+
+.daily-facts-summary .daily-fact-card {
+  flex: 1;
 }
 
 .daily-facts-header {

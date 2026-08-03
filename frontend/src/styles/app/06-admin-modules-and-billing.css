@@ -1480,11 +1480,7 @@
   min-width: 0;
 }
 
-.super-admin-portal .metric-card-label {
-  min-width: 0;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
+/* Wrapping behaviour now lives on the base .metric-card-label rule. */
 
 .super-admin-portal .metric-card-footer-row {
   flex-wrap: wrap;

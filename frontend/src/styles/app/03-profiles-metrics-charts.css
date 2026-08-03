@@ -1931,12 +1931,16 @@ button.danger-text {
 }
 
 .metric-card-label {
+  min-width: 0;
   font-size: 11.5px;
   font-weight: 700;
   color: #64748b;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  white-space: nowrap;
+  /* Long labels ("AWAITING GRADING") must wrap rather than run under the
+     icon bubble on narrow cards. */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .metric-card-icon-bubble {
