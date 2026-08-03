@@ -133,6 +133,7 @@ export function Vouchers() {
     discount_price: "",
     validity_days: 180,
     gst_rate_id: "",
+    image_url: null as string | null,
     is_active: true,
   });
 
@@ -237,6 +238,7 @@ export function Vouchers() {
         discount_price: vo.discount_price || "",
         validity_days: vo.validity_days,
         gst_rate_id: vo.gst_rate_id ? String(vo.gst_rate_id) : "",
+        image_url: vo.image_url || null,
         is_active: vo.is_active,
       });
     } else {
@@ -249,6 +251,7 @@ export function Vouchers() {
         discount_price: "",
         validity_days: 180,
         gst_rate_id: "",
+        image_url: null,
         is_active: true,
       });
     }
@@ -266,6 +269,7 @@ export function Vouchers() {
         discount_price: offeringForm.discount_price ? Number(offeringForm.discount_price) : null,
         validity_days: Number(offeringForm.validity_days),
         gst_rate_id: offeringForm.gst_rate_id ? Number(offeringForm.gst_rate_id) : null,
+        image_url: offeringForm.image_url,
         is_active: offeringForm.is_active,
       };
 
@@ -280,6 +284,27 @@ export function Vouchers() {
       fetchData();
     } catch (err: any) {
       showError(err.response?.data?.detail || "Failed to save offering");
+    }
+  }
+
+  async function handleOfferingImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await api.post("/vouchers/admin/offerings/upload-image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setOfferingForm({ ...offeringForm, image_url: res.data.url });
+      showSuccess("Image uploaded successfully.");
+    } catch (err: any) {
+      showError(err.response?.data?.detail || "Failed to upload image");
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -732,7 +757,7 @@ export function Vouchers() {
                       </span>
                     </td>
                     <td className="text-right">
-                      <div className="voucher-code-actions flex items-center gap-2">
+                      <div className="voucher-code-actions flex items-center gap-3">
                         <ToggleSwitch
                           checked={uc.status === "available"}
                           onChange={() => handleToggleCode(uc.id, uc.code)}
@@ -1221,6 +1246,34 @@ export function Vouchers() {
                     placeholder="Select GST Rate"
                     searchable={false}
                   />
+                </div>
+              </div>
+
+              {/* Image Upload */}
+              <div className="form-field-group">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Offering Image (Optional)</label>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="w-16 h-16 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                    {offeringForm.image_url ? (
+                      <img src={offeringForm.image_url} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-2xl text-slate-400">🖼️</span>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="offering-image-upload" className="btn btn-secondary text-sm px-3 py-1.5 cursor-pointer">
+                      {uploading ? "Uploading..." : "Upload Image"}
+                    </label>
+                    <input
+                      id="offering-image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleOfferingImageUpload}
+                      disabled={uploading}
+                      hidden
+                    />
+                    <p className="text-xs text-slate-500 mt-1.5">Recommended: 800x600px (JPG/PNG)</p>
+                  </div>
                 </div>
               </div>
             </div>

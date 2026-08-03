@@ -230,6 +230,21 @@
     </sc-if>
   </section>
 
+  <section id="vouchers" style="width: 100%; margin: 0 auto; padding: 0; background: var(--bg);">
+    <iframe id="vouchers-iframe" src="/vouchers?minimal=true" style="width: 100%; border: none; overflow: hidden; min-height: 800px; display: block; background: var(--bg);" scrolling="no"></iframe>
+  </section>
+  <script>
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'vh-vouchers-height') {
+        var iframe = document.getElementById('vouchers-iframe');
+        if (iframe) iframe.style.height = event.data.height + 'px';
+      }
+      if (event.data && event.data.type === 'vh-vouchers-wheel') {
+        window.scrollBy({ top: event.data.deltaY, left: event.data.deltaX || 0 });
+      }
+    });
+  </script>
+
   <section class="vh-reveal" style="max-width: 1000px; margin: 0 auto; padding: 40px 32px 96px;">
     <div style="text-align: center; margin-bottom: 40px;">
       <span style="display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 6px 12px; border-radius: 100px; background: var(--acWash); color: var(--ac); border: 1px solid var(--acLine);">FAQ</span>
@@ -544,6 +559,13 @@ class Component extends DCLogic {
     if (!this._root) return;
     const dark = this.isDark();
     try { window.parent.postMessage({ type: "vh-theme", theme: dark ? "dark" : "light" }, window.location.origin); } catch {}
+    // Also push the theme into the nested vouchers iframe: it's a separate
+    // document/JS runtime (a real navigation, not srcdoc) with its own theme
+    // store, so it never sees this page's toggle unless told explicitly.
+    const vIframe = document.getElementById("vouchers-iframe");
+    if (vIframe && vIframe.contentWindow) {
+      try { vIframe.contentWindow.postMessage({ type: "vh-theme-sync", theme: dark ? "dark" : "light" }, "*"); } catch {}
+    }
     const set = (k, v) => this._root.style.setProperty(k, v);
     set("--ac", "#e11d2e");
     set("--ac2", "#ef4444");

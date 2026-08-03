@@ -36,6 +36,7 @@ class VoucherOfferingCreate(BaseModel):
     description: Optional[str] = None
     discount_price: Optional[Decimal] = None
     gst_rate_id: Optional[int] = None
+    image_url: Optional[str] = None
 
 
 class VoucherOfferingUpdate(BaseModel):
@@ -45,6 +46,7 @@ class VoucherOfferingUpdate(BaseModel):
     description: Optional[str] = None
     discount_price: Optional[Decimal] = None
     gst_rate_id: Optional[int] = None
+    image_url: Optional[str] = None
     is_active: bool = True
 
 
@@ -183,6 +185,7 @@ def admin_create_voucher_offering(
         description=payload.description,
         discount_price=payload.discount_price,
         gst_rate_id=payload.gst_rate_id,
+        image_url=payload.image_url,
     )
 
 
@@ -202,8 +205,34 @@ def admin_update_voucher_offering(
         description=payload.description,
         discount_price=payload.discount_price,
         gst_rate_id=payload.gst_rate_id,
+        image_url=payload.image_url,
         is_active=payload.is_active,
     )
+
+@router.post("/admin/offerings/upload-image")
+async def admin_upload_voucher_image(
+    file: UploadFile = File(...),
+    admin: User = Depends(_require_super_admin),
+):
+    import uuid
+    from app.config import settings
+    ext = ".jpg"
+    if file.filename:
+        ext = f".{file.filename.split('.')[-1].lower()}"
+    
+    images_dir = settings.storage_path / "vouchers"
+    images_dir.mkdir(parents=True, exist_ok=True)
+    
+    filename = f"offering_{uuid.uuid4().hex}{ext}"
+    relative_path = f"vouchers/{filename}"
+    
+    content = await file.read()
+    (settings.storage_path / relative_path).write_bytes(content)
+    
+    return {
+        "image_path": relative_path,
+        "url": f"/storage/{relative_path}",
+    }
 
 
 @router.post("/admin/bulk-upload")

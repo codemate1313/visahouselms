@@ -22,6 +22,45 @@
 .voucher-ui-scope .overflow-hidden { overflow: hidden; }
 .voucher-ui-scope .cursor-pointer { cursor: pointer; }
 
+/* Keep the checkbox column narrow */
+.voucher-ui-scope .data-table .voucher-select-col {
+  width: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  padding-left: 16px !important;
+  padding-right: 8px !important;
+}
+
+/* Ensure voucher action buttons are perfectly square and appropriately sized */
+.voucher-ui-scope .voucher-code-actions .action-btn-icon {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+}
+
+/* Neutral default for the 3-dots menu button, matching standard designs */
+.voucher-ui-scope .voucher-code-actions .action-menu-trigger {
+  background-color: var(--surface-muted, #f1f5f9) !important;
+  color: var(--slate-600, #475569) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+}
+.voucher-ui-scope .voucher-code-actions .action-menu-trigger:hover {
+  background-color: var(--slate-200, #e2e8f0) !important;
+  color: var(--slate-800, #1e293b) !important;
+}
+
+/* Set icon sizes relative to the 32px buttons */
+.voucher-ui-scope .voucher-code-actions .action-btn-icon svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
 .voucher-ui-scope .flex-col { flex-direction: column; }
 .voucher-ui-scope .flex-row { flex-direction: row; }
 .voucher-ui-scope .items-start { align-items: flex-start; }
@@ -249,28 +288,28 @@
 .voucher-ui-scope .focus\:outline-none:focus { outline: none; }
 .voucher-ui-scope .focus\:ring-2:focus { box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.28); }
 
-.dark .voucher-ui-scope .dark\:bg-slate-700 { background: var(--slate-700); }
-.dark .voucher-ui-scope .dark\:bg-slate-800 { background: #1e293b; }
-.dark .voucher-ui-scope .dark\:bg-slate-800\/40 { background: rgba(30, 41, 59, 0.4); }
-.dark .voucher-ui-scope .dark\:bg-slate-800\/60 { background: rgba(30, 41, 59, 0.6); }
-.dark .voucher-ui-scope .dark\:bg-slate-800\/70 { background: rgba(30, 41, 59, 0.7); }
-.dark .voucher-ui-scope .dark\:bg-slate-900 { background: #111827; }
-.dark .voucher-ui-scope .dark\:bg-rose-900\/60 { background: rgba(136, 19, 55, 0.6); }
-.dark .voucher-ui-scope .dark\:bg-rose-950\/40 { background: rgba(76, 5, 25, 0.4); }
-.dark .voucher-ui-scope .dark\:bg-sky-950\/40 { background: rgba(8, 47, 73, 0.4); }
-.dark .voucher-ui-scope .dark\:border-slate-700 { border-color: rgba(100, 116, 139, 0.55); }
-.dark .voucher-ui-scope .dark\:border-slate-700\/60 { border-color: rgba(100, 116, 139, 0.6); }
-.dark .voucher-ui-scope .dark\:border-slate-800 { border-color: rgba(71, 85, 105, 0.62); }
-.dark .voucher-ui-scope .dark\:border-rose-800\/60 { border-color: rgba(159, 18, 57, 0.6); }
-.dark .voucher-ui-scope .dark\:text-white { color: var(--white); }
-.dark .voucher-ui-scope .dark\:text-slate-200 { color: var(--slate-200); }
-.dark .voucher-ui-scope .dark\:text-slate-300 { color: var(--slate-300); }
-.dark .voucher-ui-scope .dark\:text-slate-400 { color: var(--slate-400); }
-.dark .voucher-ui-scope .dark\:text-sky-400 { color: #38bdf8; }
-.dark .voucher-ui-scope .dark\:text-rose-400 { color: #fb7185; }
-.dark .voucher-ui-scope .dark\:hover\:bg-rose-900\/60:hover { background: rgba(136, 19, 55, 0.6); }
-.dark .voucher-ui-scope .dark\:hover\:bg-rose-950\/40:hover { background: rgba(76, 5, 25, 0.4); }
-.dark .voucher-ui-scope .dark\:hover\:bg-slate-700\/80:hover { background: rgba(51, 65, 85, 0.8); }
+[data-theme="dark"] .voucher-ui-scope .dark\:bg-slate-700 { background: var(--slate-700); }
+[data-theme="dark"] .voucher-ui-scope .dark\:bg-slate-800 { background: #1e293b; }
+[data-theme="dark"] .voucher-ui-scope .dark\:bg-slate-800\/40 { background: rgba(30, 41, 59, 0.4); }
+[data-theme="dark"] .voucher-ui-scope .dark\:bg-slate-800\/60 { background: rgba(30, 41, 59, 0.6); }
+[data-theme="dark"] .voucher-ui-scope .dark\:bg-slate-800\/70 { background: rgba(30, 41, 59, 0.7); }
+[data-theme="dark"] .voucher-ui-scope .dark\:bg-slate-900 { background: #111827; }
+[data-theme="dark"] .voucher-ui-scope .dark\:bg-rose-900\/60 { background: rgba(136, 19, 55, 0.6); }
+[data-theme="dark"] .voucher-ui-scope .dark\:bg-rose-950\/40 { background: rgba(76, 5, 25, 0.4); }
+[data-theme="dark"] .voucher-ui-scope .dark\:bg-sky-950\/40 { background: rgba(8, 47, 73, 0.4); }
+[data-theme="dark"] .voucher-ui-scope .dark\:border-slate-700 { border-color: rgba(100, 116, 139, 0.55); }
+[data-theme="dark"] .voucher-ui-scope .dark\:border-slate-700\/60 { border-color: rgba(100, 116, 139, 0.6); }
+[data-theme="dark"] .voucher-ui-scope .dark\:border-slate-800 { border-color: rgba(71, 85, 105, 0.62); }
+[data-theme="dark"] .voucher-ui-scope .dark\:border-rose-800\/60 { border-color: rgba(159, 18, 57, 0.6); }
+[data-theme="dark"] .voucher-ui-scope .dark\:text-white { color: var(--white); }
+[data-theme="dark"] .voucher-ui-scope .dark\:text-slate-200 { color: var(--slate-200); }
+[data-theme="dark"] .voucher-ui-scope .dark\:text-slate-300 { color: var(--slate-300); }
+[data-theme="dark"] .voucher-ui-scope .dark\:text-slate-400 { color: var(--slate-400); }
+[data-theme="dark"] .voucher-ui-scope .dark\:text-sky-400 { color: #38bdf8; }
+[data-theme="dark"] .voucher-ui-scope .dark\:text-rose-400 { color: #fb7185; }
+[data-theme="dark"] .voucher-ui-scope .dark\:hover\:bg-rose-900\/60:hover { background: rgba(136, 19, 55, 0.6); }
+[data-theme="dark"] .voucher-ui-scope .dark\:hover\:bg-rose-950\/40:hover { background: rgba(76, 5, 25, 0.4); }
+[data-theme="dark"] .voucher-ui-scope .dark\:hover\:bg-slate-700\/80:hover { background: rgba(51, 65, 85, 0.8); }
 
 @media (min-width: 640px) {
   .voucher-ui-scope .sm\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
@@ -301,3 +340,56 @@
     font-size: 1.75rem;
   }
 }
+
+/* Public voucher showcase (landing/plans pages) — themed off the same
+   --bg/--text/--primary tokens as the rest of the app, so it follows the
+   light/dark toggle instead of a fixed dark-navy palette. */
+.voucher-ui-scope .vh-pub-shell { background: var(--bg); color: var(--text); }
+.voucher-ui-scope .vh-pub-badge { background: var(--primary-soft); border-color: rgba(225, 29, 46, 0.28); color: var(--primary); }
+.voucher-ui-scope .vh-pub-muted { color: var(--text-muted); }
+.voucher-ui-scope .vh-pub-accent-text { color: var(--primary); }
+.voucher-ui-scope .vh-pub-card { background: var(--surface); border-color: var(--border); }
+.voucher-ui-scope .vh-pub-card:hover { border-color: var(--primary); }
+.voucher-ui-scope .vh-pub-title-hover { color: var(--text); }
+.voucher-ui-scope .group:hover .vh-pub-title-hover { color: var(--primary); }
+.voucher-ui-scope .vh-pub-chip { background: var(--primary-soft); border-color: rgba(225, 29, 46, 0.24); color: var(--primary); }
+.voucher-ui-scope .vh-pub-divider { border-color: var(--border); }
+.voucher-ui-scope .vh-pub-cta { background: var(--primary); color: var(--white); }
+.voucher-ui-scope .vh-pub-cta:hover { background: var(--primary-hover); }
+.voucher-ui-scope .vh-pub-modal-backdrop { background: rgba(10, 10, 15, 0.72); }
+.voucher-ui-scope .vh-pub-modal-card { background: var(--surface); border-color: var(--border); color: var(--text); }
+.voucher-ui-scope .vh-pub-modal-card-accent { border-color: rgba(225, 29, 46, 0.35); }
+.voucher-ui-scope .vh-pub-summary-card { background: var(--surface-muted); border-color: var(--border); }
+.voucher-ui-scope .vh-pub-detail-box { background: var(--surface-muted); }
+.voucher-ui-scope .vh-pub-input { background: var(--surface-muted); border-color: var(--border); color: var(--text); }
+.voucher-ui-scope .vh-pub-input::placeholder { color: var(--text-muted); }
+.voucher-ui-scope .vh-pub-input:focus { outline: none; box-shadow: var(--focus-ring); border-color: var(--primary); }
+.voucher-ui-scope .vh-pub-label { color: var(--text-muted); }
+.voucher-ui-scope .vh-pub-close-btn { color: var(--text-muted); }
+.voucher-ui-scope .vh-pub-close-btn:hover { color: var(--text); }
+.voucher-ui-scope .vh-pub-code-box { background: var(--surface-muted); border-color: rgba(225, 29, 46, 0.4); }
+.voucher-ui-scope .vh-pub-copy-btn { background: var(--primary-soft); color: var(--primary); }
+.voucher-ui-scope .vh-pub-copy-btn:hover { background: rgba(225, 29, 46, 0.22); }
+.voucher-ui-scope .vh-pub-done-btn { background: var(--surface-muted); color: var(--text); border-color: var(--border); }
+.voucher-ui-scope .vh-pub-done-btn:hover { background: var(--border); }
+
+[data-theme="dark"] .voucher-ui-scope .vh-pub-shell { background: #0a0a0f; }
+[data-theme="dark"] .voucher-ui-scope .vh-pub-card,
+[data-theme="dark"] .voucher-ui-scope .vh-pub-modal-card,
+[data-theme="dark"] .voucher-ui-scope .vh-pub-summary-card,
+[data-theme="dark"] .voucher-ui-scope .vh-pub-detail-box,
+[data-theme="dark"] .voucher-ui-scope .vh-pub-code-box {
+  background: rgba(22, 22, 27, 0.9);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+[data-theme="dark"] .voucher-ui-scope .vh-pub-input {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f2f2f5;
+}
+[data-theme="dark"] .voucher-ui-scope .vh-pub-done-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f2f2f5;
+}
+[data-theme="dark"] .voucher-ui-scope .vh-pub-done-btn:hover { background: rgba(255, 255, 255, 0.1); }

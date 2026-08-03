@@ -33,7 +33,6 @@ export function ExecutiveMetricGrid({ summary, growth, onOpen }: ExecutiveMetric
       <MetricCard icon="revenue" onClick={() => onOpen("revenue")} label={t.revenue} value={Number(revenue.total_revenue)} valueFormatter={formatMoney} badge={growth.rev} tone="green" />
       <MetricCard icon="due" onClick={() => onOpen("dues")} label={t.dues} value={Number(revenue.total_due)} valueFormatter={formatMoney} valueClassName="due-text" badge={b.pending} tone="amber" />
       <MetricCard icon="transactions" onClick={() => onOpen("transactions")} label={t.transactions} value={revenue.transaction_count} badge={b.settled} tone="slate" />
-      <MetricCard icon="demo" onClick={() => onOpen("demos")} label={t.demos} value={counts.demo_accounts_active} badge={b.demo} tone="blue" />
       <MetricCard icon="instructors" onClick={() => onOpen("instructors")} label={t.instructors} value={counts.sa_instructor_accounts} badge={b.verified} tone="green" />
       <MetricCard icon="module" onClick={() => onOpen("modules")} label={t.modules} value={counts.modules_published} badge={b.published} tone="purple" />
     </div>

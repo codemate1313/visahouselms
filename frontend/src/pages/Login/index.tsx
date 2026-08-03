@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import gsap from "gsap";
 import axios from "axios";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -385,7 +386,7 @@ export function Login({
         />
       )}
 
-      {otpChallengeId && (
+      {otpChallengeId && typeof document !== "undefined" && createPortal(
         <div className="logout-modal-backdrop otp-login-backdrop" role="presentation">
           <form className="logout-modal-card otp-login-card" onSubmit={handleOtpSubmit}>
             <div className="logout-modal-icon-badge otp-login-icon" aria-hidden="true">2FA</div>
@@ -420,7 +421,8 @@ export function Login({
               </button>
             </div>
           </form>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

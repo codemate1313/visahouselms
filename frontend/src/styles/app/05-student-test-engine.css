@@ -3154,14 +3154,15 @@ th[aria-sort="descending"] .table-sort-button::after {
   flex-direction: column;
   gap: 14px;
   margin: 0;
-  border: 1px solid rgba(168, 28, 28, 0.2);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(255, 241, 242, 0.88), rgba(255, 255, 255, 0.94) 42%), #ffffff;
-  padding: 16px;
+  border: 1px solid rgba(225, 29, 72, 0.2);
+  border-radius: var(--radius-lg, 16px);
+  background: var(--surface, #ffffff);
+  padding: 18px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
 }
 
 .typography-preview-copy span {
-  color: #dc2626;
+  color: #e11d48;
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -3170,7 +3171,7 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .typography-preview-copy h2 {
   margin: 4px 0 4px;
-  color: #0f172a;
+  color: var(--text, #0f172a);
   font-size: 20px;
   line-height: 1.2;
   font-weight: var(--app-heading-weight, 600);
@@ -3180,59 +3181,39 @@ th[aria-sort="descending"] .table-sort-button::after {
   margin: 0;
   font-size: 13px;
   line-height: 1.45;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   font-weight: var(--app-body-weight, 400);
 }
 
+.typography-preview-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.typography-preview-stat {
+  flex: 1;
+  background: rgba(248, 250, 252, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: var(--radius-sm, 12px);
+  padding: 14px 12px;
+  text-align: center;
+}
 
 .typography-preview-stat p {
-  margin: 0 0 2px;
-  font-size: 11px;
+  margin: 0 0 8px;
+  font-size: 11.5px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .typography-preview-stat strong {
-  font-size: 16px;
-  font-weight: var(--app-stat-weight, 600);
-  color: #0f172a;
-}
-
-.typography-preview-metrics {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.typography-preview-stat {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  text-align: center;
-  min-height: 104px;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.85);
-  padding: 15px;
-}
-
-.typography-preview-stat p {
-  margin: 0 0 12px;
-  font-size: 12px;
-}
-
-.typography-preview-stat strong {
   display: block;
-  color: #111827;
-  font-size: 34px;
+  color: var(--text, #0f172a);
+  font-size: 30px;
   line-height: 1;
   font-weight: var(--app-stat-weight, 600);
 }
@@ -3245,6 +3226,109 @@ th[aria-sort="descending"] .table-sort-button::after {
   .typography-preview-metrics {
     grid-template-columns: 1fr;
   }
+}
+
+/* Dark Mode Overrides for Typography Tab & Live Preview (Same surface as typography-slider-row) */
+[data-theme="dark"] .typography-font-select-wrap,
+[data-theme="dark"] .typography-weight-card-row,
+[data-theme="dark"] .typography-preview {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+[data-theme="dark"] .typography-card-label {
+  color: var(--text, #f7f7fa) !important;
+}
+
+[data-theme="dark"] .typography-card-helper {
+  color: var(--text-muted, #9ea2b0) !important;
+}
+
+[data-theme="dark"] .typography-stepper-box {
+  background: var(--surface-muted, rgba(255, 255, 255, 0.05)) !important;
+  border-color: var(--border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+[data-theme="dark"] .typography-stepper-btn {
+  background: var(--surface, #181b22) !important;
+  color: var(--text, #f3f4f6) !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .typography-stepper-btn:hover:not(:disabled) {
+  background: var(--primary, #e11d2e) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .typography-number-input {
+  color: var(--text, #f3f4f6) !important;
+}
+
+[data-theme="dark"] .typography-unit-label {
+  color: var(--text-muted, #9ea2b0) !important;
+}
+
+[data-theme="dark"] .typography-weight-tile {
+  background: var(--surface-muted, rgba(255, 255, 255, 0.04)) !important;
+  border-color: var(--border, rgba(255, 255, 255, 0.08)) !important;
+}
+
+[data-theme="dark"] .typography-weight-tile:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(225, 29, 46, 0.5) !important;
+}
+
+[data-theme="dark"] .typography-weight-tile.is-selected {
+  background: color-mix(in srgb, var(--primary, #e11d2e) 18%, transparent) !important;
+  border-color: var(--primary, #e11d2e) !important;
+  box-shadow: 0 0 0 1px var(--primary, #e11d2e), 0 4px 16px rgba(225, 29, 46, 0.25) !important;
+}
+
+[data-theme="dark"] .typography-tile-sample {
+  color: var(--text, #f3f4f6) !important;
+}
+
+[data-theme="dark"] .typography-weight-tile.is-selected .typography-tile-sample {
+  color: #ef4444 !important;
+}
+
+[data-theme="dark"] .typography-tile-val {
+  color: var(--text-muted, #9ea2b0) !important;
+}
+
+[data-theme="dark"] .typography-weight-tile.is-selected .typography-tile-val {
+  color: #f87171 !important;
+}
+
+[data-theme="dark"] .typography-tile-title {
+  color: var(--text-muted, #d1d5db) !important;
+}
+
+[data-theme="dark"] .typography-preview-copy span {
+  color: var(--primary, #e11d2e) !important;
+}
+
+[data-theme="dark"] .typography-preview-copy h2 {
+  color: var(--text, #f7f7fa) !important;
+}
+
+[data-theme="dark"] .typography-preview-copy p {
+  color: var(--text-muted, #9ea2b0) !important;
+}
+
+[data-theme="dark"] .typography-preview-stat {
+  background: var(--surface-muted, rgba(255, 255, 255, 0.05)) !important;
+  border-color: var(--border, rgba(255, 255, 255, 0.1)) !important;
+  color: var(--text, #f3f4f6) !important;
+}
+
+[data-theme="dark"] .typography-preview-stat p {
+  color: var(--text-muted, #9ea2b0) !important;
+}
+
+[data-theme="dark"] .typography-preview-stat strong {
+  color: var(--text, #f3f4f6) !important;
 }
 
 /* Login Modal Overlay (Heavy Backdrop Blur & Dark Tint) */

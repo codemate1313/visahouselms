@@ -34,6 +34,7 @@ class VoucherOffering(Base):
     discount_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2), nullable=True)
     validity_days: Mapped[int] = mapped_column(Integer, nullable=False, default=180)
     gst_rate_id: Mapped[Optional[int]] = mapped_column(ForeignKey("gst_rates.id", ondelete="SET NULL"), nullable=True)
+    image_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 

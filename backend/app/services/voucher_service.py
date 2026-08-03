@@ -189,12 +189,13 @@ def list_voucher_offerings(db: Session, include_inactive: bool = False) -> List[
             "gst_percentage": str(vo.gst_rate.percentage) if vo.gst_rate else "0.00",
             "is_active": vo.is_active,
             "created_at": vo.created_at,
+            "image_url": vo.image_url,
             "available_stock": stock["available"],
         })
     return result
 
 
-def create_voucher_offering(db: Session, voucher_type_id: int, title: str, price: Decimal, validity_days: int, description: Optional[str] = None, discount_price: Optional[Decimal] = None, gst_rate_id: Optional[int] = None) -> VoucherOffering:
+def create_voucher_offering(db: Session, voucher_type_id: int, title: str, price: Decimal, validity_days: int, description: Optional[str] = None, discount_price: Optional[Decimal] = None, gst_rate_id: Optional[int] = None, image_url: Optional[str] = None) -> VoucherOffering:
     vt = db.query(VoucherType).filter(VoucherType.id == voucher_type_id).first()
     if not vt:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Voucher type not found")
@@ -207,6 +208,7 @@ def create_voucher_offering(db: Session, voucher_type_id: int, title: str, price
         discount_price=discount_price,
         validity_days=validity_days,
         gst_rate_id=gst_rate_id,
+        image_url=image_url,
         is_active=True,
     )
     db.add(vo)
@@ -215,7 +217,7 @@ def create_voucher_offering(db: Session, voucher_type_id: int, title: str, price
     return vo
 
 
-def update_voucher_offering(db: Session, offering_id: int, title: str, price: Decimal, validity_days: int, description: Optional[str] = None, discount_price: Optional[Decimal] = None, gst_rate_id: Optional[int] = None, is_active: bool = True) -> VoucherOffering:
+def update_voucher_offering(db: Session, offering_id: int, title: str, price: Decimal, validity_days: int, description: Optional[str] = None, discount_price: Optional[Decimal] = None, gst_rate_id: Optional[int] = None, image_url: Optional[str] = None, is_active: bool = True) -> VoucherOffering:
     vo = db.query(VoucherOffering).filter(VoucherOffering.id == offering_id).first()
     if not vo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Voucher offering not found")
@@ -226,6 +228,8 @@ def update_voucher_offering(db: Session, offering_id: int, title: str, price: De
     vo.discount_price = discount_price
     vo.validity_days = validity_days
     vo.gst_rate_id = gst_rate_id
+    if image_url is not None:
+        vo.image_url = image_url
     vo.is_active = is_active
 
     db.commit()

@@ -200,7 +200,10 @@
 [data-theme="dark"] .test-card,
 [data-theme="dark"] .modal-content,
 [data-theme="dark"] .custom-dialog-box,
-[data-theme="dark"] .portal-user-dropdown {
+[data-theme="dark"] .portal-user-dropdown,
+[data-theme="dark"] .typography-preview,
+[data-theme="dark"] .typography-weight-card-row,
+[data-theme="dark"] .typography-font-select-wrap {
   background: rgba(22, 22, 27, 0.88) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.42) !important;

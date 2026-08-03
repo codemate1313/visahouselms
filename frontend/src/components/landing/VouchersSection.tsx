@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/client";
 import { useToastStore } from "@/store/toastStore";
+import { useThemeStore } from "@/store/themeStore";
 import "@/styles/voucher-ui.css";
 import { formatDate } from "@/utils/date";
 
@@ -17,6 +18,7 @@ interface VoucherOffering {
   gst_percentage: string;
   is_active: boolean;
   available_stock: number;
+  image_url?: string;
 }
 
 interface PurchaseSuccess {
@@ -61,6 +63,61 @@ export function VouchersSection() {
   useEffect(() => {
     fetchOfferings();
   }, [fetchOfferings]);
+
+  // Handle iframe height resizing for landing page integration
+  useEffect(() => {
+    if (window.parent === window) return; // Not in iframe
+    
+    const sendHeight = () => {
+      // Use offsetHeight of the main section instead of body to avoid margin issues
+      const section = document.getElementById("vouchers-section");
+      if (section) {
+        window.parent.postMessage({ type: "vh-vouchers-height", height: section.offsetHeight }, "*");
+      }
+    };
+
+    // Send initially
+    const timer = setTimeout(sendHeight, 100);
+    
+    // Setup observer
+    const observer = new ResizeObserver(sendHeight);
+    const section = document.getElementById("vouchers-section");
+    if (section) observer.observe(section);
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [offerings, loading]);
+
+  // Forward wheel scrolling to the embedding page: this section is rendered
+  // inside a same-height iframe with its own document, so a wheel event over
+  // it is captured there instead of bubbling across the frame boundary to
+  // scroll the page that embeds it.
+  useEffect(() => {
+    if (window.parent === window) return; // Not in iframe
+
+    function handleWheel(e: WheelEvent) {
+      e.preventDefault();
+      window.parent.postMessage({ type: "vh-vouchers-wheel", deltaY: e.deltaY, deltaX: e.deltaX }, "*");
+    }
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, []);
+
+  // This route is embedded in an iframe with its own theme store instance, so
+  // it never observes the embedding DC page's theme toggle on its own — the
+  // DC page forwards the change here explicitly (see Plans.dc.html's applyTheme).
+  useEffect(() => {
+    function handleThemeSync(e: MessageEvent) {
+      if (e.data?.type === "vh-theme-sync" && (e.data.theme === "light" || e.data.theme === "dark")) {
+        useThemeStore.getState().setTheme(e.data.theme);
+      }
+    }
+    window.addEventListener("message", handleThemeSync);
+    return () => window.removeEventListener("message", handleThemeSync);
+  }, []);
 
   async function handlePurchaseSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -108,17 +165,17 @@ export function VouchersSection() {
   }
 
   return (
-    <section className="voucher-ui-scope py-20 bg-slate-900 text-white relative overflow-hidden" id="vouchers-section">
+    <section className="voucher-ui-scope py-20 vh-pub-shell relative overflow-hidden" id="vouchers-section">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full vh-pub-badge border text-xs font-bold uppercase tracking-wider">
             <span>Official Exam Vouchers</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
             Book Your Exam Seats With Discounted Vouchers
           </h2>
-          <p className="text-slate-400 text-base">
+          <p className="vh-pub-muted text-base">
             Get instant delivery of 16-digit official exam voucher codes for IELTS, PTE, and more directly on your screen and email.
           </p>
         </div>
@@ -128,54 +185,63 @@ export function VouchersSection() {
           {offerings.map((vo) => (
             <div
               key={vo.id}
-              className="bg-slate-800/80 backdrop-blur-xl rounded-3xl border border-slate-700/60 p-7 flex flex-col justify-between hover:border-sky-500/50 hover:shadow-2xl hover:shadow-sky-500/10 transition-all group"
+              className="vh-pub-card backdrop-blur-xl rounded-3xl border flex flex-col transition-all group overflow-hidden"
             >
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
+              {vo.image_url && (
+                <div className="w-full h-48 bg-slate-900 border-b border-slate-700/60 overflow-hidden shrink-0">
+                  <img
+                    src={vo.image_url}
+                    alt={vo.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+              )}
+              
+              <div className="p-7 flex flex-col justify-between flex-grow">
+                <div className="flex justify-between items-center" style={{ minHeight: '28px' }}>
                   <span
                     className="px-3.5 py-1 text-xs font-bold text-white rounded-full uppercase tracking-wider"
                     style={{ backgroundColor: vo.voucher_type_badge_color }}
                   >
                     {vo.voucher_type_name}
                   </span>
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    Instant Email Code
-                  </span>
                 </div>
 
-                <h3 className="text-xl font-extrabold text-white group-hover:text-sky-400 transition-colors">
+                <h3 className="text-xl font-extrabold vh-pub-title-hover transition-colors line-clamp-2" style={{ minHeight: '56px' }}>
                   {vo.title}
                 </h3>
-                {vo.description && (
-                  <p className="text-slate-400 text-xs line-clamp-2 leading-relaxed">{vo.description}</p>
-                )}
+                
+                <div style={{ minHeight: '40px' }}>
+                  {vo.description && (
+                    <p className="vh-pub-muted text-xs line-clamp-2 leading-relaxed">{vo.description}</p>
+                  )}
+                </div>
 
-                <div className="pt-3 border-t border-slate-700/50">
+                <div className="pt-3 border-t vh-pub-divider mt-auto">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-black text-white">
+                    <span className="text-3xl font-black">
                       ₹{parseFloat(vo.discount_price || vo.price).toLocaleString("en-IN")}
                     </span>
                     {vo.discount_price && (
-                      <span className="text-sm text-slate-500 line-through">
+                      <span className="text-sm vh-pub-muted line-through">
                         ₹{parseFloat(vo.price).toLocaleString("en-IN")}
                       </span>
                     )}
                   </div>
-                  <div className="text-xs font-medium text-slate-400 mt-1 flex items-center gap-3">
+                  <div className="text-xs font-medium vh-pub-muted mt-1 flex items-center gap-3">
                     <span>Validity: {vo.validity_days} Days</span>
-                    <span>•</span>
-                    <span>16-Digit Code</span>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-8 pt-4">
+              <div className="p-7 pt-0 mt-auto">
                 <button
+                  type="button"
                   onClick={() => setSelectedOffering(vo)}
                   disabled={vo.available_stock <= 0}
-                  className="w-full py-3.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 disabled:opacity-50 text-white font-bold rounded-2xl text-sm transition-all shadow-lg shadow-sky-500/25 flex items-center justify-center gap-2"
+                  className="w-full vh-pub-cta font-bold py-3 px-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {vo.available_stock > 0 ? "Buy Voucher Now" : "Out of Stock"}
+                  {vo.available_stock > 0 ? "Buy Voucher Code" : "Out of Stock"}
                 </button>
               </div>
             </div>
@@ -185,28 +251,31 @@ export function VouchersSection() {
 
       {/* CHECKOUT MODAL */}
       {selectedOffering && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 rounded-3xl border border-slate-800 p-8 max-w-md w-full shadow-2xl space-y-6">
-            <div className="flex justify-between items-start">
+        <div className="fixed inset-0 vh-pub-modal-backdrop backdrop-blur-md flex items-center justify-center p-4 sm:p-6 z-50">
+          <div className="vh-pub-modal-card relative rounded-3xl border p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 m-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start gap-4">
               <div>
-                <span className="text-xs font-bold text-sky-400 uppercase tracking-wider">{selectedOffering.voucher_type_name}</span>
-                <h3 className="text-xl font-bold text-white mt-1">Complete Voucher Purchase</h3>
+                <span className="text-xs font-bold vh-pub-accent-text uppercase tracking-wider">{selectedOffering.voucher_type_name}</span>
+                <h3 className="text-xl font-bold mt-1">Complete Voucher Purchase</h3>
               </div>
               <button
                 onClick={() => setSelectedOffering(null)}
-                className="text-slate-400 hover:text-white p-1 text-lg"
+                className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors mt-0"
+                aria-label="Close"
               >
-                ✕
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
-            <div className="p-4 bg-slate-800/60 rounded-2xl border border-slate-700/60 flex justify-between items-center">
+            <div className="p-4 vh-pub-summary-card rounded-2xl border flex justify-between items-center">
               <div>
-                <div className="font-semibold text-white text-sm">{selectedOffering.title}</div>
-                <div className="text-xs text-slate-400">Validity: {selectedOffering.validity_days} Days</div>
+                <div className="font-semibold text-sm">{selectedOffering.title}</div>
+                <div className="text-xs vh-pub-muted">Validity: {selectedOffering.validity_days} Days</div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-black text-white">
+                <div className="text-lg font-black">
                   ₹{parseFloat(selectedOffering.discount_price || selectedOffering.price).toLocaleString("en-IN")}
                 </div>
               </div>
@@ -214,44 +283,44 @@ export function VouchersSection() {
 
             <form onSubmit={handlePurchaseSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Full Name *</label>
+                <label className="block text-xs font-semibold vh-pub-label mb-1.5">Full Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="Enter your full name"
                   value={buyerName}
                   onChange={(e) => setBuyerName(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-4 py-3 vh-pub-input border rounded-xl text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Email Address (Voucher code sent here) *</label>
+                <label className="block text-xs font-semibold vh-pub-label mb-1.5">Email Address (Voucher code sent here) *</label>
                 <input
                   type="email"
                   required
                   placeholder="your.email@example.com"
                   value={buyerEmail}
                   onChange={(e) => setBuyerEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-4 py-3 vh-pub-input border rounded-xl text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Phone Number (Optional)</label>
+                <label className="block text-xs font-semibold vh-pub-label mb-1.5">Phone Number (Optional)</label>
                 <input
                   type="tel"
                   placeholder="+91 9876543210"
                   value={buyerPhone}
                   onChange={(e) => setBuyerPhone(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-4 py-3 vh-pub-input border rounded-xl text-sm"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3.5 bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-sky-500/30 mt-2"
+                className="w-full py-3.5 vh-pub-cta disabled:opacity-50 font-bold rounded-xl text-sm transition-all shadow-lg mt-2"
               >
                 {submitting ? "Processing Purchase..." : `Pay ₹${parseFloat(selectedOffering.discount_price || selectedOffering.price).toLocaleString("en-IN")} & Get Code`}
               </button>
@@ -262,31 +331,31 @@ export function VouchersSection() {
 
       {/* SUCCESS MODAL WITH 16-DIGIT CODE */}
       {purchaseSuccess && (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 rounded-3xl border border-sky-500/30 p-8 max-w-lg w-full shadow-2xl text-center space-y-6">
+        <div className="fixed inset-0 vh-pub-modal-backdrop backdrop-blur-md flex items-center justify-center p-4 sm:p-6 z-50">
+          <div className="vh-pub-modal-card vh-pub-modal-card-accent relative rounded-3xl border p-6 sm:p-8 max-w-lg w-full shadow-2xl text-center space-y-6 m-4 max-h-[90vh] overflow-y-auto">
             <div>
-              <h3 className="text-2xl font-black text-white">Voucher Purchased Successfully</h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <h3 className="text-2xl font-black">Voucher Purchased Successfully</h3>
+              <p className="text-xs vh-pub-muted mt-1">
                 A confirmation email with code details has been sent to <strong>{purchaseSuccess.buyer_email}</strong>.
               </p>
             </div>
 
-            <div className="p-6 bg-slate-800/80 border-2 border-dashed border-sky-500/50 rounded-2xl space-y-3">
-              <div className="text-xs font-bold text-sky-400 uppercase tracking-widest">
+            <div className="p-6 vh-pub-code-box border-2 border-dashed rounded-2xl space-y-3">
+              <div className="text-xs font-bold vh-pub-accent-text uppercase tracking-widest">
                 16-Digit Voucher Code ({purchaseSuccess.voucher_type})
               </div>
-              <div className="text-2xl sm:text-3xl font-black font-mono text-white tracking-widest break-all">
+              <div className="text-2xl sm:text-3xl font-black font-mono tracking-widest break-all">
                 {purchaseSuccess.voucher_code}
               </div>
               <button
                 onClick={() => handleCopyCode(purchaseSuccess.voucher_code)}
-                className="px-4 py-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-semibold text-xs rounded-xl transition-all flex items-center gap-2 mx-auto"
+                className="px-4 py-2 vh-pub-copy-btn font-semibold text-xs rounded-xl transition-all flex items-center gap-2 mx-auto"
               >
                 <span>{copied ? "Copied to Clipboard" : "Copy Code"}</span>
               </button>
             </div>
 
-            <div className="text-xs text-slate-400 space-y-1 text-left bg-slate-800/40 p-4 rounded-xl">
+            <div className="text-xs vh-pub-muted vh-pub-detail-box space-y-1 text-left p-4 rounded-xl">
               <div><strong>Purchase Ref:</strong> {purchaseSuccess.purchase_number}</div>
               <div><strong>Valid Until:</strong> {formatDate(purchaseSuccess.valid_until)}</div>
               <div><strong>Amount Paid:</strong> ₹{parseFloat(purchaseSuccess.final_amount).toLocaleString("en-IN")}</div>
@@ -294,7 +363,7 @@ export function VouchersSection() {
 
             <button
               onClick={() => setPurchaseSuccess(null)}
-              className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm rounded-xl transition-all"
+              className="w-full py-3 vh-pub-done-btn border font-bold text-sm rounded-xl transition-all"
             >
               Done / Close
             </button>
