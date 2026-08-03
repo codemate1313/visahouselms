@@ -19,13 +19,14 @@ interface FloatingRubricPanelProps {
   marks: Record<string, string>;
   onMarksChange: (criterion: string, value: string) => void;
   canEdit: boolean;
+  /** Controls only the CEFR anchor descriptor block. The rest of the panel
+   *  is always visible so the instructor can score. */
   isOpen: boolean;
   onToggleOpen: (open: boolean) => void;
   saving: boolean;
   onSave: () => void;
   saveDisabled: boolean;
   saveLabel: string;
-  /** Position label like "1 / 3", plus prev/next drivers. */
   positionLabel: string;
   canPrev: boolean;
   canNext: boolean;
@@ -34,10 +35,9 @@ interface FloatingRubricPanelProps {
 }
 
 /**
- * One page-level rubric panel that floats on the right and always shows the
- * scoring inputs for whichever part card the instructor is looking at. Detaches
- * the rubric from the individual cards so it never scrolls out of reach, and
- * ensures only one copy of the CEFR criteria ever exists on screen.
+ * Docked rubric panel: header, per-criterion scoring inputs, Save and Prev/Next
+ * are always visible. Only the CEFR anchor reference block is collapsible - the
+ * instructor opens it when they want to remind themselves what each band means.
  */
 export function FloatingRubricPanel({
   part,
@@ -59,39 +59,39 @@ export function FloatingRubricPanel({
   const t = strings.part;
   if (!part) return null;
 
-  // Panel itself is always visible (docked in the right column). isOpen only
-  // controls the grading schema body, so the instructor can open it when they
-  // want to score and close it when they just want header + Save + nav.
   return (
-    <aside className={`rubric-floater${isOpen ? "" : " is-collapsed"}`} aria-label={t.rubricSticky.title}>
+    <aside className="rubric-floater" aria-label={t.rubricSticky.title}>
       <div className="rubric-floater-head">
         <div>
           <span className="page-eyebrow">{part.title} · {positionLabel}</span>
           <strong>{t.rubricSticky.title}</strong>
           <small>{t.rubricSummary(part.rubric.length)}</small>
         </div>
-        <button
-          type="button"
-          className="rubric-floater-close"
-          onClick={() => onToggleOpen(!isOpen)}
-          aria-expanded={isOpen}
-          aria-label={isOpen ? t.rubricSticky.close : t.rubricSticky.show}
-        >
-          {isOpen ? "×" : "▾"}
-        </button>
       </div>
 
-      {isOpen && (
       <div className="rubric-floater-body">
-        <div className="cefr-anchor-scale" aria-label={t.cefrAnchorAriaLabel}>
-          {part.cefr_scale.map((anchor) => (
-            <div key={anchor.level}>
-              <strong>{anchor.level}</strong>
-              <span>{anchor.marks}</span>
-              <p>{anchor.descriptor}</p>
-            </div>
-          ))}
-        </div>
+        {/* CEFR anchor descriptors are reference material - collapsed by
+            default so they do not dominate the panel. */}
+        <button
+          type="button"
+          className="rubric-anchor-toggle"
+          onClick={() => onToggleOpen(!isOpen)}
+          aria-expanded={isOpen}
+        >
+          <span>{t.rubricAnchorToggle.title}</span>
+          <span className="rubric-anchor-toggle-chevron">{isOpen ? "▴" : "▾"}</span>
+        </button>
+        {isOpen && (
+          <div className="cefr-anchor-scale" aria-label={t.cefrAnchorAriaLabel}>
+            {part.cefr_scale.map((anchor) => (
+              <div key={anchor.level}>
+                <strong>{anchor.level}</strong>
+                <span>{anchor.marks}</span>
+                <p>{anchor.descriptor}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="rubric-grid">
           {part.rubric.map((criterion) => (
@@ -135,17 +135,6 @@ export function FloatingRubricPanel({
           ))}
         </div>
       </div>
-      )}
-
-      {!isOpen && (
-        <button
-          type="button"
-          className="rubric-floater-expand"
-          onClick={() => onToggleOpen(true)}
-        >
-          {t.rubricSticky.show}
-        </button>
-      )}
 
       <div className="rubric-floater-foot">
         {canEdit && (

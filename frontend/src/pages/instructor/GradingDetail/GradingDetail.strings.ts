@@ -48,6 +48,9 @@ export const gradingDetailStrings = {
       prev: "Back",
       next: "Next question",
     },
+    rubricAnchorToggle: {
+      title: "CEFR band descriptors",
+    },
     generating: "Generating...",
     graded: "Graded",
     draftSaved: "Draft saved",
