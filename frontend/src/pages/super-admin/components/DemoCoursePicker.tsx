@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { Badge, Checkbox } from "@/components/ui";
+import { Checkbox } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import { trialConfigStrings as strings } from "../TrialConfig.strings";
 
