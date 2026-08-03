@@ -29,6 +29,7 @@ import { ManualQuestionForm } from "./components/ManualQuestionForm";
 import { BulkImportForm } from "./components/BulkImportForm";
 import { ImportReviewPanel } from "./components/ImportReviewPanel";
 import { SavedQuestionsList } from "./components/SavedQuestionsList";
+import { Badge } from "@/components/ui";
 
 export function ModuleEditor() {
   const { id, type: rawType } = useParams();
@@ -363,9 +364,9 @@ export function ModuleEditor() {
         </div>
 
         <div className="module-editor-breadcrumb-right">
-          <span className={`badge ${module.status === "published" ? "badge-green" : module.status === "archived" ? "badge-gray" : "badge-amber"}`}>
+          <Badge tone={module.status === "published" ? "green" : module.status === "archived" ? "gray" : "amber"}>
             {module.status}
-          </span>
+          </Badge>
         </div>
       </div>
       {error && <p className="error-text notice-line">{error}</p>}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { SearchInput, SegmentedControl } from "@/components/ui";
+import { Badge, SearchInput, SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 
@@ -53,15 +53,15 @@ export function Logs() {
   function renderLevelBadge(levelStr: string) {
     const norm = levelStr.toUpperCase();
     if (norm === "ERROR" || norm === "CRITICAL") {
-      return <span className="badge badge-red">{levelStr}</span>;
+      return <Badge tone="red">{levelStr}</Badge>;
     }
     if (norm === "WARN" || norm === "WARNING") {
-      return <span className="badge badge-amber">{levelStr}</span>;
+      return <Badge tone="amber">{levelStr}</Badge>;
     }
     if (norm === "INFO") {
-      return <span className="badge badge-blue">{levelStr}</span>;
+      return <Badge tone="blue">{levelStr}</Badge>;
     }
-    return <span className="badge badge-gray">{levelStr}</span>;
+    return <Badge tone="gray">{levelStr}</Badge>;
   }
 
   function renderCellValue(column: string, rawVal: unknown) {
@@ -73,7 +73,7 @@ export function Logs() {
     }
 
     if (colKey === "method" && valStr) {
-      return <span className="badge badge-gray" style={{ fontFamily: "monospace", fontSize: 11 }}>{valStr}</span>;
+      return <Badge tone="gray" style={{ fontFamily: "monospace", fontSize: 11 }}>{valStr}</Badge>;
     }
 
     if (colKey === "stack_trace") {

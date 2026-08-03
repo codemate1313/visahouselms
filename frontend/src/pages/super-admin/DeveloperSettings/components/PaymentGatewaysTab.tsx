@@ -3,7 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { PasswordInput } from "@/components/PasswordInput";
-import { Checkbox } from "@/components/ui";
+import { Badge, Checkbox } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 
@@ -154,9 +154,9 @@ export function PaymentGatewaysTab() {
         title={t.title}
         description={t.description}
         badge={
-          <span className={`badge ${isAnyConfigured ? "badge-green" : "badge-gray"}`}>
+          <Badge tone={isAnyConfigured ? "green" : "gray"}>
             {isAnyConfigured ? "Active Gateways" : "Not Configured"}
-          </span>
+          </Badge>
         }
       >
         {/* Razorpay Section Card */}

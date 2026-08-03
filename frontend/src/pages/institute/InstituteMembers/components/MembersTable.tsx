@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
-import { Checkbox } from "@/components/ui";
+import { Badge, Checkbox } from "@/components/ui";
 import type { InstituteMember } from "../types";
 import { instituteMembersStrings as strings } from "../InstituteMembers.strings";
 import { formatDate } from "@/utils/date";
@@ -161,7 +161,7 @@ export function MembersTable({
                   <strong>
                     {member.first_name} {member.last_name}
                   </strong>
-                  {member.force_password_reset && <span className="badge badge-amber">{t.passwordResetBadge}</span>}
+                  {member.force_password_reset && <Badge tone="amber">{t.passwordResetBadge}</Badge>}
                 </div>
               </td>
               <td data-label={t.email}>{member.email}</td>
@@ -175,11 +175,10 @@ export function MembersTable({
               </td>
               <td data-label={t.contact}>{member.phone_number ?? "-"}</td>
               <td data-label={t.status}>
-                <span
-                  className={`badge ${member.deleted_at ? "badge-gray" : member.is_active ? "badge-green" : "badge-inactive"}`}
+                <Badge tone={member.deleted_at ? "gray" : member.is_active ? "green" : "inactive"}
                 >
                   {member.deleted_at ? "Deleted" : member.is_active ? "Active" : "Inactive"}
-                </span>
+                </Badge>
               </td>
               <td data-label={t.created}>{formatDate(member.created_at)}</td>
               <td className="table-actions institute-row-actions" data-label={t.actions}>

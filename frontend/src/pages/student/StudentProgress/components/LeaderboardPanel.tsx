@@ -1,6 +1,6 @@
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import type { StudentLeaderboard } from "@/api/types";
-import { SegmentedControl } from "@/components/ui";
+import { Badge, SegmentedControl } from "@/components/ui";
 import { studentProgressStrings as strings } from "../StudentProgress.strings";
 
 interface LeaderboardPanelProps {
@@ -168,7 +168,7 @@ export function LeaderboardPanel({ leaderboard, scope, onScopeChange }: Leaderbo
                     <td>{entry.attempts_count}</td>
                     <td>{entry.average_percentage}%</td>
                     <td>
-                      <span className="badge badge-gray">{entry.best_cefr_level ?? "-"}</span>
+                      <Badge tone="gray">{entry.best_cefr_level ?? "-"}</Badge>
                     </td>
                   </tr>
                 ))}
@@ -202,9 +202,9 @@ export function LeaderboardPanel({ leaderboard, scope, onScopeChange }: Leaderbo
                 </div>
                 <div className="user-rank-cell cefr">
                   <span>Best CEFR</span>
-                  <span className="badge badge-gray">
+                  <Badge tone="gray">
                     {leaderboard.current_student.best_cefr_level ?? "-"}
-                  </span>
+                  </Badge>
                 </div>
               </div>
             </div>

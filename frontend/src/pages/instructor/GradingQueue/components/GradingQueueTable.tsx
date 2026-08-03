@@ -4,6 +4,7 @@ import { Icon } from "@/components/icons";
 import { useAuthStore } from "@/store/authStore";
 import { gradingQueueStrings as strings } from "../GradingQueue.strings";
 import { formatDate } from "@/utils/date";
+import { Badge } from "@/components/ui";
 
 const STATUS_CLASS: Record<string, string> = { pending: "badge-amber", claimed: "badge-blue", completed: "badge-green" };
 
@@ -69,9 +70,9 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
         <td>{item.student_name}</td>
         <td>
           {item.module_title}
-          {item.is_reevaluation && <span className="badge badge-red">{t.reevaluationBadge}</span>}
+          {item.is_reevaluation && <Badge tone="red">{t.reevaluationBadge}</Badge>}
         </td>
-        <td><span className={`badge ${STATUS_CLASS[item.queue.status] ?? "badge-gray"}`}>{item.queue.status}</span></td>
+        <td><Badge tone={STATUS_CLASS[item.queue.status] ?? "gray"}>{item.queue.status}</Badge></td>
         <td>
           {claimedByMe
             ? t.youAreGrading
@@ -81,7 +82,7 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
         </td>
         <td>{formatDateTime(issuedAt)}</td>
         <td>{item.queue.due_at ? formatDate(item.queue.due_at) : "—"}</td>
-        <td>{item.flag_count > 0 ? <span className="badge badge-red">{item.flag_count}</span> : "—"}</td>
+        <td>{item.flag_count > 0 ? <Badge tone="red">{item.flag_count}</Badge> : "—"}</td>
         <td>{item.parts_to_grade}</td>
         <td className="table-actions">
           {claimedByOther ? (

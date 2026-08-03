@@ -2,6 +2,7 @@ import { MetricCard } from "@/components/dashboard/MetricCard";
 import { instituteBillingStrings as strings } from "../InstituteBilling.strings";
 import { STATE_CLASS, type SubscriptionStatus } from "../types";
 import { formatDate } from "@/utils/date";
+import { Badge } from "@/components/ui";
 
 interface SubscriptionSummaryProps {
   subscription: SubscriptionStatus;
@@ -13,7 +14,7 @@ export function SubscriptionSummary({ subscription }: SubscriptionSummaryProps) 
     <>
       <div className="banner">
         <strong>{subscription.subscription?.plan_name ?? strings.noActivePlan}</strong>{" "}
-        <span className={`badge ${STATE_CLASS[subscription.state] ?? "badge-gray"}`}>{subscription.state}</span>
+        <Badge tone={STATE_CLASS[subscription.state] ?? "gray"}>{subscription.state}</Badge>
         {subscription.subscription && ` ${strings.validUntil(formatDate(subscription.subscription.expires_at))}`}
       </div>
 

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { TableAvatar } from "@/components/TableAvatar";
-import { Checkbox, DataTableCard } from "@/components/ui";
+import { Badge, Checkbox, DataTableCard } from "@/components/ui";
 import type { DirectoryUser } from "@/api/types";
 import { usersStrings as strings } from "../Users.strings";
 import {
@@ -132,14 +132,14 @@ export function UsersTable({
 
   function renderActions(user: DirectoryUser) {
     if (isProtected(user)) {
-      return <span className="badge badge-gray">{a.protected}</span>;
+      return <Badge tone="gray">{a.protected}</Badge>;
     }
 
     // Only the owner account may create, edit, deactivate, delete, or reset
     // a Super Admin account from here (self-service goes through "My
     // Profile" instead).
     if (user.role_name === "SUPER_ADMIN" && !viewerIsOwner) {
-      return <span className="badge badge-gray">{a.ownerOnly}</span>;
+      return <Badge tone="gray">{a.ownerOnly}</Badge>;
     }
 
     function renderOverflowMenu(items: Array<ReactElement | false | null>) {
@@ -304,19 +304,19 @@ export function UsersTable({
                       </strong>
                       <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
                         {currentUserId === user.id && (
-                          <span className="badge badge-gray" style={{ fontSize: 10 }}>
+                          <Badge tone="gray" style={{ fontSize: 10 }}>
                             {b.you}
-                          </span>
+                          </Badge>
                         )}
                         {user.is_owner && (
-                          <span className="badge badge-red" style={{ fontSize: 10 }}>
+                          <Badge tone="red" style={{ fontSize: 10 }}>
                             {b.owner}
-                          </span>
+                          </Badge>
                         )}
                         {user.force_password_reset && (
-                          <span className="badge badge-amber" style={{ fontSize: 10 }}>
+                          <Badge tone="amber" style={{ fontSize: 10 }}>
                             {b.passwordReset}
-                          </span>
+                          </Badge>
                         )}
                       </div>
                     </div>
@@ -335,9 +335,9 @@ export function UsersTable({
                   </td>
                 )}
                 <td className="col-status">
-                  <span className={`badge ${user.is_active ? "badge-green" : "badge-inactive"}`}>
+                  <Badge tone={user.is_active ? "green" : "inactive"}>
                     {user.is_active ? b.active : b.inactive}
-                  </span>
+                  </Badge>
                 </td>
                 <td className="col-password">{renderPasswordChanged(user)}</td>
                 <td className="col-created">{formatCompactDate(user.created_at)}</td>

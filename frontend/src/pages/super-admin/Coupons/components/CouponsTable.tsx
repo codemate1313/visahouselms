@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
-import { DataTableCard } from "@/components/ui";
+import { Badge, DataTableCard } from "@/components/ui";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { couponsStrings as strings } from "../Coupons.strings";
 import type { CouponRow } from "../types";
@@ -51,9 +51,9 @@ export function CouponsTable({ coupons, onToggleActive, onRequestDelete }: Coupo
                 </strong>
               </td>
               <td>
-                <span className="badge badge-gray" style={{ textTransform: "uppercase", fontSize: 11 }}>
+                <Badge tone="gray" style={{ textTransform: "uppercase", fontSize: 11 }}>
                   {coupon.scope}
-                </span>
+                </Badge>
               </td>
               <td>
                 <span style={{ fontSize: 13, fontWeight: 500 }}>
@@ -69,9 +69,9 @@ export function CouponsTable({ coupons, onToggleActive, onRequestDelete }: Coupo
                 </span>
               </td>
               <td>
-                <span className={`badge ${coupon.is_active ? "badge-green" : "badge-inactive"}`}>
+                <Badge tone={coupon.is_active ? "green" : "inactive"}>
                   {coupon.is_active ? ACTIVATION_STATUS_LABELS.active : ACTIVATION_STATUS_LABELS.inactive}
-                </span>
+                </Badge>
               </td>
               <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>
                 <RowActionMenu

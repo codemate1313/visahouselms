@@ -1,5 +1,6 @@
 import type { DeviceRecord } from "../types";
 import { studentOverviewStrings as strings } from "../StudentOverview.strings";
+import { Badge } from "@/components/ui";
 
 function dateTime(value: string | null) {
   return value ? new Date(value).toLocaleString() : "-";
@@ -51,9 +52,9 @@ export function DeviceHistorySection({ devices }: DeviceHistorySectionProps) {
                   <td>{device.login_count}</td>
                   <td>{device.last_ip_address ?? "-"}</td>
                   <td>
-                    <span className={`badge ${device.is_active ? "badge-green" : "badge-gray"}`}>
+                    <Badge tone={device.is_active ? "green" : "gray"}>
                       {device.is_active ? activeLabel : t.signedOut}
-                    </span>
+                    </Badge>
                   </td>
                 </tr>
               ))

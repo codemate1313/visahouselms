@@ -1,4 +1,5 @@
 import type { Attempt } from "@/api/types";
+import { Badge } from "@/components/ui";
 
 export interface ReevaluationStatusStrings {
   eyebrow: string;
@@ -20,9 +21,9 @@ export function ReevaluationStatus({ reevaluation, strings: t }: ReevaluationSta
           <span className="page-eyebrow">{t.eyebrow}</span>
           <h2>{t.heading}</h2>
         </div>
-        <span className={`badge ${reevaluation.status === "resolved" ? "badge-green" : reevaluation.status === "rejected" ? "badge-red" : "badge-amber"}`}>
+        <Badge tone={reevaluation.status === "resolved" ? "green" : reevaluation.status === "rejected" ? "red" : "amber"}>
           {reevaluation.status.replace("_", " ")}
-        </span>
+        </Badge>
       </div>
       <p>{reevaluation.reason}</p>
       {reevaluation.assigned_to_name && (

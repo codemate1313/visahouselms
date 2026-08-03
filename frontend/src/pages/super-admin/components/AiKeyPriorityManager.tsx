@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
 import { PasswordInput } from "@/components/PasswordInput";
+import { Badge } from "@/components/ui";
 
 export interface AiKeyConfig {
   id: string;
@@ -355,9 +356,9 @@ export function AiKeyPriorityManager({
             </div>
 
             <div className="form-actions" style={{ justifyContent: "space-between" }}>
-              <span className={`badge ${key.last_status === "ok" ? "badge-green" : key.last_status === "failed" ? "badge-red" : "badge-gray"}`}>
+              <Badge tone={key.last_status === "ok" ? "green" : key.last_status === "failed" ? "red" : "gray"}>
                 {key.last_status === "ok" ? "Connected" : key.last_status === "failed" ? "Failed" : "Not tested"}
-              </span>
+              </Badge>
               <div style={{ display: "flex", gap: 8 }}>
                 <button type="button" className="secondary" onClick={() => void testKey(index)} disabled={testingId === key.id}>
                   {testingId === key.id ? "Detecting..." : "Detect & test"}

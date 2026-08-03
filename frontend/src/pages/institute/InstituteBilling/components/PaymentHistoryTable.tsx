@@ -2,6 +2,7 @@ import { formatCurrencyAmount } from "@/utils/currency";
 import { instituteBillingStrings as strings } from "../InstituteBilling.strings";
 import type { Payment } from "../types";
 import { formatDate } from "@/utils/date";
+import { Badge } from "@/components/ui";
 
 interface PaymentHistoryTableProps {
   payments: Payment[];
@@ -35,7 +36,7 @@ export function PaymentHistoryTable({ payments }: PaymentHistoryTableProps) {
                 <td>{payment.plan_name ?? "-"}</td>
                 <td>{formatCurrencyAmount(payment.final_amount, payment.currency)}</td>
                 <td>
-                  <span className={`badge ${payment.status === "paid" ? "badge-green" : "badge-amber"}`}>{payment.status}</span>
+                  <Badge tone={payment.status === "paid" ? "green" : "amber"}>{payment.status}</Badge>
                 </td>
                 <td>{formatDate(payment.created_at)}</td>
               </tr>

@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
+import { Badge } from "@/components/ui";
 
 export function FcmTab() {
   const [configured, setConfigured] = useState(false);
@@ -75,7 +76,7 @@ export function FcmTab() {
         className="form-card-collapsible"
         title={t.title}
         description={t.description}
-        badge={<span className={`badge ${configured ? "badge-green" : "badge-gray"}`}>{configured ? t.readyBadge : t.missingBadge}</span>}
+        badge={<Badge tone={configured ? "green" : "gray"}>{configured ? t.readyBadge : t.missingBadge}</Badge>}
       >
         <p className={configured ? "success-text" : "hint"}>{configured ? t.configuredHint : t.notConfiguredHint}</p>
 

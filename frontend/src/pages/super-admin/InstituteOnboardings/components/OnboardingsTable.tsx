@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
-import { DataTableCard } from "@/components/ui";
+import { Badge, DataTableCard } from "@/components/ui";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { instituteOnboardingsStrings as strings } from "../InstituteOnboardings.strings";
 import type { OnboardingRow } from "../types";
@@ -77,14 +77,14 @@ export function OnboardingsTable({ rows, onRequestDelete }: OnboardingsTableProp
                   </div>
                 </td>
                 <td className="col-courses">
-                  <span className="badge badge-gray" style={{ fontWeight: 600 }}>
+                  <Badge tone="gray" style={{ fontWeight: 600 }}>
                     {row.course_count}
-                  </span>
+                  </Badge>
                 </td>
                 <td className="col-status">
-                  <span className={`badge ${row.onboarding_status === "published" ? "badge-green" : "badge-amber"}`}>
+                  <Badge tone={row.onboarding_status === "published" ? "green" : "amber"}>
                     {row.onboarding_status === "published" ? strings.statusFilter.published : strings.statusFilter.draft}
-                  </span>
+                  </Badge>
                 </td>
                 <td className="table-actions col-actions" style={{ paddingRight: 16 }}>
                   <Link

@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
-import { Checkbox, SearchableSelect } from "@/components/ui";
+import { Badge, Checkbox, SearchableSelect } from "@/components/ui";
 import { AiKeyPriorityManager, type AiKeyConfig } from "../../components/AiKeyPriorityManager";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 
@@ -95,7 +95,7 @@ export function AiEvaluationTab() {
         className="form-card-collapsible"
         title={t.title}
         description="Configure Google Gemini 1.5/2.0 Flash or Custom Evaluator for automatic Writing & Speaking scoring."
-        badge={<span className={`badge ${configured ? "badge-green" : "badge-gray"}`}>{configured ? t.readyBadge : t.notConfiguredBadge}</span>}
+        badge={<Badge tone={configured ? "green" : "gray"}>{configured ? t.readyBadge : t.notConfiguredBadge}</Badge>}
       >
         <label className="toggle-row">
           <Checkbox checked={form.enabled} onChange={(event) => setForm({ ...form, enabled: event.target.checked })} />

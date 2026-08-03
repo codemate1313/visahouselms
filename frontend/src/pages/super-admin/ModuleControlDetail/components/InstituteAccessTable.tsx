@@ -3,6 +3,7 @@ import { Icon } from "@/components/icons";
 import { moduleControlDetailStrings as strings } from "../ModuleControlDetail.strings";
 import { formatDate } from "../helpers";
 import type { Assignment } from "../types";
+import { Badge } from "@/components/ui";
 
 interface InstituteAccessTableProps {
   assignments: Assignment[];
@@ -44,9 +45,9 @@ export function InstituteAccessTable({ assignments, onRevoke }: InstituteAccessT
                   </td>
                   <td>{formatDate(assignment.assigned_at)}</td>
                   <td>
-                    <span className={`badge ${assignment.is_active ? "badge-green" : "badge-gray"}`}>
+                    <Badge tone={assignment.is_active ? "green" : "gray"}>
                       {assignment.is_active ? t.active : t.revoked}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="table-actions">
                     {assignment.is_active && (

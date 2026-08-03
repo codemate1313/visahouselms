@@ -3,7 +3,7 @@ import { Icon } from "@/components/icons";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { plansStrings as strings } from "../Plans.strings";
 import type { PlanRow } from "../types";
-import { LinkButton } from "@/components/ui";
+import { Badge, LinkButton } from "@/components/ui";
 import { CATALOGUE_STATUS_LABELS } from "@/constants";
 
 interface PlanDetailsModalProps {
@@ -24,13 +24,13 @@ export function PlanDetailsModal({ plan, onClose }: PlanDetailsModalProps) {
             <div>
               <div className="plan-dialog-title-row">
                 <h2 className="plan-dialog-title">{plan.name}</h2>
-                <span className={`badge ${!plan.is_active ? "badge-inactive" : plan.is_published ? "badge-green" : "badge-amber"}`}>
+                <Badge tone={!plan.is_active ? "inactive" : plan.is_published ? "green" : "amber"}>
                   {!plan.is_active
                     ? CATALOGUE_STATUS_LABELS.inactive
                     : plan.is_published
                       ? CATALOGUE_STATUS_LABELS.active
                       : CATALOGUE_STATUS_LABELS.draft}
-                </span>
+                </Badge>
               </div>
               <span className="plan-dialog-price">
                 {formatCurrencyAmount(plan.price, plan.currency)}

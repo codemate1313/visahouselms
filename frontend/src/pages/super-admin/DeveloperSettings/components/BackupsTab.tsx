@@ -8,6 +8,7 @@ import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 import { formatBytes } from "../helpers";
 import type { BackupRow } from "../types";
+import { Badge } from "@/components/ui";
 
 export function BackupsTab() {
   const [rows, setRows] = useState<BackupRow[]>([]);
@@ -154,7 +155,7 @@ export function BackupsTab() {
                   <td>{formatBytes(row.size_bytes)}</td>
                   <td>{row.kind}</td>
                   <td>
-                    <span className={`badge ${row.status === "done" ? "badge-green" : "badge-amber"}`}>{row.status}</span>
+                    <Badge tone={row.status === "done" ? "green" : "amber"}>{row.status}</Badge>
                   </td>
                   <td>{new Date(row.created_at).toLocaleString()}</td>
                   <td className="table-actions">

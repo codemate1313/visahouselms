@@ -270,9 +270,11 @@ iframe {
 }
 
 .data-table-card > .data-table,
-.data-table-card > .responsive-data-table {
+.data-table-card > .responsive-data-table,
+.table-wrap > .data-table,
+.table-wrap > .responsive-data-table {
   margin: 0;
-  /* Card already provides border/shadow/radius — strip inner table's duplicate */
+  /* Card/wrap already provides border/shadow/radius — strip inner table's duplicate to remove the extra vertical line */
   border: none !important;
   box-shadow: none !important;
   border-radius: 0 !important;

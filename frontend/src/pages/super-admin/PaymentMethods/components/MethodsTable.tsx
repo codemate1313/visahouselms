@@ -1,6 +1,6 @@
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
-import { DataTableCard } from "@/components/ui";
+import { Badge, DataTableCard } from "@/components/ui";
 import { paymentMethodsStrings as strings } from "../PaymentMethods.strings";
 import type { MethodRow } from "../types";
 import { ACTIVATION_STATUS_LABELS } from "@/constants";
@@ -39,9 +39,9 @@ export function MethodsTable({ methods, onToggleActive, onRequestDelete }: Metho
                 <strong style={{ fontSize: 14, color: "var(--text)" }}>{method.name}</strong>
               </td>
               <td>
-                <span className={`badge ${method.is_active ? "badge-green" : "badge-inactive"}`}>
+                <Badge tone={method.is_active ? "green" : "inactive"}>
                   {method.is_active ? ACTIVATION_STATUS_LABELS.active : ACTIVATION_STATUS_LABELS.inactive}
-                </span>
+                </Badge>
               </td>
               <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>
                 <RowActionMenu

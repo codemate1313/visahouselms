@@ -2,7 +2,7 @@ import { useState } from "react";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { AiEvaluationSuggestion, AttemptPart, GradingDetail as GradingDetailType } from "@/api/types";
-import { Button, SearchableSelect } from "@/components/ui";
+import { Badge, Button, SearchableSelect } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import { gradingDetailStrings as strings } from "../GradingDetail.strings";
 
@@ -112,8 +112,8 @@ export function PartGradingCard({ part, attemptId, canEdit, aiConfigured, onGrad
           <p>{part.skill_focus}</p>
         </div>
         <div className="form-actions">
-          {isPublished && <span className="badge badge-green">{t.graded}</span>}
-          {isDraft && <span className="badge badge-amber">{t.draftSaved}</span>}
+          {isPublished && <Badge tone="green">{t.graded}</Badge>}
+          {isDraft && <Badge tone="amber">{t.draftSaved}</Badge>}
           {canEdit && supportsAi && (
             <Button variant="secondary" size="sm" disabled={!aiConfigured || requestingAi} onClick={requestAiSuggestion}>
               {requestingAi ? t.generating : t.aiDraft}

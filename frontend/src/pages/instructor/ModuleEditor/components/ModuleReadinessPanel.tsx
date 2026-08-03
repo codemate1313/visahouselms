@@ -1,5 +1,5 @@
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
-import { Button } from "@/components/ui";
+import { Badge, Button } from "@/components/ui";
 import type { ExamModule } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
@@ -16,7 +16,7 @@ export function ModuleReadinessPanel({ module, busy, onChangeStatus }: ModuleRea
       className={`module-readiness ${module.ready_to_publish ? "is-ready" : "needs-work"}`}
       title={module.ready_to_publish ? t.readyTitle : t.notReadyTitle}
       description={module.ready_to_publish ? t.readyDescription : t.notReadyDescription}
-      badge={<span className={`badge ${module.ready_to_publish ? "badge-green" : "badge-amber"}`}>{module.ready_to_publish ? t.ready : t.needsWork}</span>}
+      badge={<Badge tone={module.ready_to_publish ? "green" : "amber"}>{module.ready_to_publish ? t.ready : t.needsWork}</Badge>}
     >
       {!module.ready_to_publish && (
         <ul className="module-readiness-list">

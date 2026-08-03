@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { GradingDetail as GradingDetailType, GradingQueueItem, GradingQueueMetadata } from "@/api/types";
-import { Button, LinkButton, PageHeader } from "@/components/ui";
+import { Badge, Button, LinkButton, PageHeader } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { gradingDetailStrings as strings } from "./GradingDetail.strings";
 import { PartGradingCard } from "./components/PartGradingCard";
@@ -209,7 +209,7 @@ export function GradingDetail() {
               <h2>{strings.submitFullTest.title}</h2>
               <p>{strings.submitFullTest.description}</p>
             </div>
-            <span className="badge badge-amber">{strings.submitFullTest.readyCount(readyPartsCount, subjectiveParts.length)}</span>
+            <Badge tone="amber">{strings.submitFullTest.readyCount(readyPartsCount, subjectiveParts.length)}</Badge>
           </div>
           {canEdit && (
             <div className="form-actions">
@@ -229,7 +229,7 @@ export function GradingDetail() {
         <section className="workspace-panel reevaluation-review">
           <div className="panel-heading">
             <div>
-              <span className="badge badge-red">{strings.reevaluation.badge}</span>
+              <Badge tone="red">{strings.reevaluation.badge}</Badge>
               <h2>{strings.reevaluation.title}</h2>
             </div>
           </div>

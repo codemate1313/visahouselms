@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { instructorDashboardStrings as strings } from "../InstructorDashboard.strings";
 import { Icon } from "@/components/icons";
+import { Badge } from "@/components/ui";
 
 interface ModuleAuthoringPanelProps {
   skillModuleCount: number;
@@ -23,7 +24,7 @@ export function ModuleAuthoringPanel({
           <h2>{t.title}</h2>
           <p>{t.description}</p>
         </div>
-        <span className="badge badge-green">{t.badge}</span>
+        <Badge tone="green">{t.badge}</Badge>
       </div>
       <div className="authoring-actions">
         <div>

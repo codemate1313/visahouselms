@@ -4,6 +4,7 @@ import { Icon } from "@/components/icons";
 import { revenueDashboardStrings as strings } from "../RevenueDashboard.strings";
 import { formatCurrency } from "../helpers";
 import type { DueRow } from "../types";
+import { Badge } from "@/components/ui";
 
 interface OutstandingDuesPanelProps {
   dues: DueRow[];
@@ -48,9 +49,9 @@ export function OutstandingDuesPanel({ dues }: OutstandingDuesPanelProps) {
                 <td>{formatCurrency(row.final_amount)}</td>
                 <td>{formatCurrency(row.amount_paid)}</td>
                 <td>
-                  <span className="badge badge-red" style={{ fontWeight: 700 }}>
+                  <Badge tone="red" style={{ fontWeight: 700 }}>
                     {formatCurrency(row.due_amount)}
-                  </span>
+                  </Badge>
                 </td>
                 <td className="table-actions" style={{ justifyContent: "center" }}>
                   <Link className="action-btn-icon action-edit" to={`/super-admin/payments/${row.id}/invoice`} data-tooltip={t.viewInvoice}>

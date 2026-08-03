@@ -1,4 +1,4 @@
-import { DataTableCard } from "@/components/ui";
+import { Badge, DataTableCard } from "@/components/ui";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
 import { STATE_BADGES, stateLabel } from "../helpers";
 import type { SubscriptionInfo } from "../types";
@@ -45,7 +45,7 @@ export function SubscriptionHistoryTable({ history, onCancel }: SubscriptionHist
                 <td className="col-starts">{formatDate(row.starts_at)}</td>
                 <td className="col-expires">{formatDate(row.expires_at)}</td>
                 <td className="col-state">
-                  <span className={`badge ${STATE_BADGES[row.state] ?? "badge-gray"}`}>{stateLabel(row.state)}</span>
+                  <Badge tone={STATE_BADGES[row.state] ?? "gray"}>{stateLabel(row.state)}</Badge>
                 </td>
                 <td className="table-actions col-actions">
                   {/* Anything not yet over can be called off - including a term

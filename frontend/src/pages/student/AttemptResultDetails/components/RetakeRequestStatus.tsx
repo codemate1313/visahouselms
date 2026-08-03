@@ -1,5 +1,6 @@
 import type { Attempt } from "@/api/types";
 import { attemptResultDetailsStrings as strings } from "../AttemptResultDetails.strings";
+import { Badge } from "@/components/ui";
 
 interface RetakeRequestStatusProps {
   retakeRequest: NonNullable<Attempt["retake_request"]>;
@@ -14,17 +15,14 @@ export function RetakeRequestStatus({ retakeRequest }: RetakeRequestStatusProps)
           <span className="page-eyebrow">{t.eyebrow}</span>
           <h2>{t.heading}</h2>
         </div>
-        <span
-          className={`badge ${
-            retakeRequest.status === "approved"
-              ? "badge-green"
+        <Badge tone={retakeRequest.status === "approved"
+              ? "green"
               : retakeRequest.status === "rejected"
-                ? "badge-red"
-                : "badge-amber"
-          }`}
+                ? "red"
+                : "amber"}
         >
           {retakeRequest.status}
-        </span>
+        </Badge>
       </div>
       <p>{retakeRequest.reason}</p>
       {retakeRequest.reviewed_by_name && (

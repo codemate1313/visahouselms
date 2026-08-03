@@ -3,7 +3,7 @@ import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { TableAvatar } from "@/components/TableAvatar";
-import { Checkbox, DataTableCard } from "@/components/ui";
+import { Badge, Checkbox, DataTableCard } from "@/components/ui";
 import { institutesStrings as strings } from "../Institutes.strings";
 import type { InstituteRow, SortKey } from "../types";
 import {
@@ -136,18 +136,18 @@ export function InstitutesTable({
                 </div>
               </td>
               <td className="col-subscription" data-label={t.subscription}>
-                <span className={`badge ${SUBSCRIPTION_STATE_BADGES[row.subscription_state] ?? "badge-gray"}`}>
+                <Badge tone={SUBSCRIPTION_STATE_BADGES[row.subscription_state] ?? "gray"}>
                   {SUBSCRIPTION_STATUS_LABELS[row.subscription_state as SubscriptionStatus] ?? row.subscription_state}
-                </span>
+                </Badge>
               </td>
               <td className="col-status" data-label={t.status}>
-                <span className={`badge ${row.is_active ? "badge-green" : "badge-gray"}`}>
+                <Badge tone={row.is_active ? "green" : "gray"}>
                   {row.onboarding_status === INSTITUTE_STATUS.DRAFT
                     ? INSTITUTE_STATUS_LABELS.draft
                     : row.is_active
                       ? INSTITUTE_STATUS_LABELS.active
                       : INSTITUTE_STATUS_LABELS.suspended}
-                </span>
+                </Badge>
               </td>
               <td className="table-actions institute-row-actions col-actions" data-label={t.actions}>
                 <RowActionMenu

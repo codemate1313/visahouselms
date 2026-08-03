@@ -1,5 +1,6 @@
 import { moduleControlDetailStrings as strings } from "../ModuleControlDetail.strings";
 import type { ManagedModule } from "../types";
+import { Badge } from "@/components/ui";
 
 interface OverviewCardProps {
   module: ManagedModule;
@@ -11,10 +12,10 @@ export function OverviewCard({ module }: OverviewCardProps) {
     <div className="detail-card course-overview-card">
       <div className="overview-left">
         <div className="course-status-pills">
-          <span className={`badge ${module.status === "published" ? "badge-green" : module.status === "draft" ? "badge-amber" : "badge-gray"}`}>
+          <Badge tone={module.status === "published" ? "green" : module.status === "draft" ? "amber" : "gray"}>
             {module.status.charAt(0).toUpperCase() + module.status.slice(1)}
-          </span>
-          {!module.is_visible && <span className="badge badge-gray">{strings.hidden}</span>}
+          </Badge>
+          {!module.is_visible && <Badge tone="gray">{strings.hidden}</Badge>}
         </div>
 
         <h2 className="overview-course-type">{module.module_label}</h2>

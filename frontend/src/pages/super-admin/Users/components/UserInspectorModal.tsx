@@ -5,7 +5,7 @@ import { extractErrorMessage } from "@/api/errors";
 import type { IconName } from "@/components/icons";
 import { Icon } from "@/components/icons";
 import { TableAvatar } from "@/components/TableAvatar";
-import { Button, SegmentedControl } from "@/components/ui";
+import { Badge, Button, SegmentedControl } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import type { DirectoryRole, DirectoryUser, UserLinkedDetails } from "@/api/types";
 import { formatCurrencyAmount } from "@/utils/currency";
@@ -521,9 +521,9 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                     </div>
                     <div className="user-inspector-field">
                       <label>Status</label>
-                      <span className={`badge ${data.user.is_active ? "badge-green" : "badge-inactive"}`}>
+                      <Badge tone={data.user.is_active ? "green" : "inactive"}>
                         {data.user.is_active ? "Active" : "Inactive"}
-                      </span>
+                      </Badge>
                     </div>
                     <div className="user-inspector-field">
                       <label>Phone</label>
@@ -622,9 +622,9 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                             <strong>{enrollment.course_title}</strong>
                             <span>Granted {formatDate(enrollment.granted_at)} via {enrollment.source}</span>
                           </div>
-                          <span className={`badge ${enrollment.is_active ? "badge-green" : "badge-inactive"}`}>
+                          <Badge tone={enrollment.is_active ? "green" : "inactive"}>
                             {enrollment.is_active ? "Active" : "Expired"}
-                          </span>
+                          </Badge>
                         </article>
                       ))}
                     </div>
@@ -653,9 +653,9 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                             <tr key={attempt.id}>
                               <td>
                                 <strong>{attempt.module_title}</strong>
-                                {attempt.is_final && <span className="badge badge-red">Final</span>}
+                                {attempt.is_final && <Badge tone="red">Final</Badge>}
                               </td>
-                              <td><span className="badge badge-gray">{attempt.status}</span></td>
+                              <td><Badge tone="gray">{attempt.status}</Badge></td>
                               <td>{attemptScore(attempt)}</td>
                               <td>{formatDate(attempt.started_at)}</td>
                             </tr>
@@ -709,9 +709,9 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                               <td>{formatCurrencyAmount(payment.final_amount)}</td>
                               <td>{payment.gateway.toUpperCase()}</td>
                               <td>
-                                <span className={`badge ${payment.status === "paid" ? "badge-green" : payment.status === "pending" ? "badge-amber" : "badge-inactive"}`}>
+                                <Badge tone={payment.status === "paid" ? "green" : payment.status === "pending" ? "amber" : "inactive"}>
                                   {payment.status}
-                                </span>
+                                </Badge>
                               </td>
                               <td>{formatDate(payment.created_at)}</td>
                             </tr>
@@ -772,9 +772,9 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                                 <div>
                                   <div className="user-inspector-session-title-row">
                                     <strong>{browser} on {os}</strong>
-                                    <span className={`badge ${session.is_active ? "badge-green" : "badge-inactive"}`}>
+                                    <Badge tone={session.is_active ? "green" : "inactive"}>
                                       {session.is_active ? "Active" : "Revoked"}
-                                    </span>
+                                    </Badge>
                                   </div>
                                   <div className="user-inspector-session-meta-row">
                                     <span className="user-inspector-session-ip">

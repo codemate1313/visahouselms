@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { instituteMembersStrings as strings } from "../InstituteMembers.strings";
-import { LinkButton } from "@/components/ui";
+import { Badge, LinkButton } from "@/components/ui";
 
 const SUPER_ADMIN_CONTACT_EMAIL = "support@ieltslmspro.com";
 
@@ -33,7 +33,7 @@ export function MembersFeatureLocked({ canViewBilling }: MembersFeatureLockedPro
                 <td>locked@example.com</td>
                 <td>-</td>
                 <td>
-                  <span className="badge badge-gray">Locked</span>
+                  <Badge tone="gray">Locked</Badge>
                 </td>
                 <td>-</td>
                 <td />
@@ -45,7 +45,7 @@ export function MembersFeatureLocked({ canViewBilling }: MembersFeatureLockedPro
                 <td>contact-admin@example.com</td>
                 <td>-</td>
                 <td>
-                  <span className="badge badge-gray">Locked</span>
+                  <Badge tone="gray">Locked</Badge>
                 </td>
                 <td>-</td>
                 <td />

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { instituteDashboardStrings as strings } from "../InstituteDashboard.strings";
 import { STATE_CLASS, type DashboardSummary } from "../types";
 import { formatDate } from "@/utils/date";
+import { Badge } from "@/components/ui";
 
 interface SubscriptionUsagePanelProps {
   subscriptionSummary: NonNullable<DashboardSummary["subscription"]>;
@@ -19,9 +20,9 @@ export function SubscriptionUsagePanel({ subscriptionSummary }: SubscriptionUsag
           <h2>{t.heading}</h2>
           <p>{subscription?.plan_name ?? t.noActivePlan}</p>
         </div>
-        <span className={`badge ${STATE_CLASS[subscriptionSummary.state] ?? "badge-gray"}`}>
+        <Badge tone={STATE_CLASS[subscriptionSummary.state] ?? "gray"}>
           {subscriptionSummary.state}
-        </span>
+        </Badge>
       </div>
       {limits ? (
         <div className="usage-list">

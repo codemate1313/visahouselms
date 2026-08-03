@@ -4,7 +4,7 @@ import { apiClient } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { SegmentedControl } from "@/components/ui/SegmentedControl/SegmentedControl";
 import { SearchableSelect } from "@/components/ui/SearchableSelect/SearchableSelect";
-import { SearchInput } from "@/components/ui";
+import { Badge, SearchInput } from "@/components/ui";
 import { LineChart, type LineChartDatum } from "@/components/charts/LineChart";
 import "./InstituteDetailDrawer.css";
 import { formatDate } from "@/utils/date";
@@ -424,9 +424,9 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                                 {s.active_session_count} active
                               </span>
                             )}
-                            <span className={`badge ${s.is_active ? "badge-green" : "badge-gray"}`}>
+                            <Badge tone={s.is_active ? "green" : "gray"}>
                               {s.is_active ? "Active" : "Inactive"}
-                            </span>
+                            </Badge>
                           </div>
                         </div>
                       ))
@@ -472,9 +472,9 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                                 {i.active_session_count} active
                               </span>
                             )}
-                            <span className={`badge ${i.is_active ? "badge-green" : "badge-gray"}`}>
+                            <Badge tone={i.is_active ? "green" : "gray"}>
                               {i.is_active ? "Active" : "Inactive"}
-                            </span>
+                            </Badge>
                           </div>
                         </div>
                       ))

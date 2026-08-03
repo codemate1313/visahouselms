@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { Announcement } from "@/api/types";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
-import { PageHeader } from "@/components/ui";
+import { Badge, PageHeader } from "@/components/ui";
 import { studentAnnouncementsStrings as strings } from "./StudentAnnouncements.strings";
 
 function formatDate(value: string | null) {
@@ -43,7 +43,7 @@ export function StudentAnnouncements() {
           {announcements.map((item) => (
             <article key={item.id}>
               <div>
-                <span className="badge badge-green">{item.institute_id == null ? strings.platform : strings.institute}</span>
+                <Badge tone="green">{item.institute_id == null ? strings.platform : strings.institute}</Badge>
                 <h3>{item.title}</h3>
                 <p>{item.message}</p>
                 <small>{formatDate(item.published_at)}</small>

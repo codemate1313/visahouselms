@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import type { AttemptSummary } from "@/api/types";
 import { Icon } from "@/components/icons";
-import { PageHeader, SearchableSelect } from "@/components/ui";
+import { Badge, PageHeader, SearchableSelect } from "@/components/ui";
 import { studentAttemptsStrings as strings } from "./StudentAttempts.strings";
 
 const STATUS_CLASS: Record<string, string> = {
@@ -66,9 +66,9 @@ export function StudentAttempts() {
     <tr key={attempt.id} className="clickable">
       <td>{attempt.module_title}</td>
       <td>
-        <span className={`badge ${STATUS_CLASS[attempt.status] ?? "badge-gray"}`}>
+        <Badge tone={STATUS_CLASS[attempt.status] ?? "gray"}>
           {statusLabels[attempt.status as keyof typeof statusLabels] ?? attempt.status}
-        </span>
+        </Badge>
       </td>
       <td>{new Date(attempt.started_at).toLocaleString()}</td>
       <td>

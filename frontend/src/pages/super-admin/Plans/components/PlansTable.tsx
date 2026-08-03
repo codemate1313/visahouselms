@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
-import { DataTableCard } from "@/components/ui";
+import { Badge, DataTableCard } from "@/components/ui";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { plansStrings as strings } from "../Plans.strings";
 import type { PlanRow } from "../types";
@@ -75,13 +75,13 @@ export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onVi
                 </span>
               </td>
               <td>
-                <span className={`badge ${!plan.is_active ? "badge-inactive" : plan.is_published ? "badge-green" : "badge-amber"}`}>
+                <Badge tone={!plan.is_active ? "inactive" : plan.is_published ? "green" : "amber"}>
                   {!plan.is_active
                     ? CATALOGUE_STATUS_LABELS.inactive
                     : plan.is_published
                       ? CATALOGUE_STATUS_LABELS.active
                       : CATALOGUE_STATUS_LABELS.draft}
-                </span>
+                </Badge>
               </td>
               <td className="table-actions institute-row-actions">
                 <RowActionMenu

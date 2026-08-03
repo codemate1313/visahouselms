@@ -4,7 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import type { RetakeRequestView } from "@/api/types";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { PageHeader, SearchableSelect } from "@/components/ui";
+import { Badge, PageHeader, SearchableSelect } from "@/components/ui";
 import { retakeRequestsStrings as strings } from "./RetakeRequests.strings";
 import { formatDate } from "@/utils/date";
 
@@ -104,7 +104,7 @@ export function RetakeRequests() {
         className="workspace-panel"
         title={strings.register.title}
         description={strings.register.description}
-        badge={<span className="badge badge-gray">{requests.length} {strings.register.recordsSuffix}</span>}
+        badge={<Badge tone="gray">{requests.length} {strings.register.recordsSuffix}</Badge>}
       >
         <div className="table-wrap">
           <table className="data-table">
@@ -137,7 +137,7 @@ export function RetakeRequests() {
                     <td>{request.module_title}</td>
                     <td className="grading-reason-cell">{request.reason}</td>
                     <td>
-                      <span className={`badge ${STATUS_CLASS[request.status] ?? "badge-gray"}`}>{request.status}</span>
+                      <Badge tone={STATUS_CLASS[request.status] ?? "gray"}>{request.status}</Badge>
                     </td>
                     <td>{request.reviewed_by_name ?? "—"}</td>
                     <td>{formatDate(request.created_at)}</td>

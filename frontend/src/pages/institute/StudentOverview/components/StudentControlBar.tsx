@@ -1,6 +1,7 @@
 import { Icon } from "@/components/icons";
 import type { InstituteMember } from "../types";
 import { studentOverviewStrings as strings } from "../StudentOverview.strings";
+import { Badge } from "@/components/ui";
 
 interface StudentControlBarProps {
   student: InstituteMember;
@@ -28,9 +29,9 @@ export function StudentControlBar({
   return (
     <section className="student-control-bar">
       <div>
-        <span className={`badge ${student.deleted_at ? "badge-gray" : student.is_active ? "badge-green" : "badge-inactive"}`}>
+        <Badge tone={student.deleted_at ? "gray" : student.is_active ? "green" : "inactive"}>
           {student.deleted_at ? t.deleted : student.is_active ? t.active : t.inactive}
-        </span>
+        </Badge>
         <span>{student.phone_number ?? t.noPhoneNumber}</span>
       </div>
       {!student.deleted_at && (

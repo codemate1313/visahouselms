@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
-import { DataTableCard } from "@/components/ui";
+import { Badge, DataTableCard } from "@/components/ui";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { paymentsStrings as strings } from "../Payments.strings";
 import type { PaymentRow } from "../types";
@@ -51,9 +51,9 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
         <strong style={{ fontSize: 13.5, color: "var(--text)" }}>{row.invoice_number ?? "—"}</strong>
       </td>
       <td>
-        <span className="badge badge-gray" style={{ fontSize: 11 }}>
+        <Badge tone="gray" style={{ fontSize: 11 }}>
           {row.source.toUpperCase()}
-        </span>
+        </Badge>
       </td>
       <td>
         <div className="table-item-details">
@@ -88,7 +88,7 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
         )}
       </td>
       <td>
-        <span className={`badge ${STATUS_BADGES[row.status] ?? "badge-gray"}`}>{row.status}</span>
+        <Badge tone={STATUS_BADGES[row.status] ?? "gray"}>{row.status}</Badge>
       </td>
       <td>{formatDate(row.created_at)}</td>
       <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>

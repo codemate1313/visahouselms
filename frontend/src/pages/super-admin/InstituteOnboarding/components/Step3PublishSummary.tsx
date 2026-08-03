@@ -3,7 +3,7 @@ import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.strings";
 import type { Onboarding } from "../types";
-import { Button, LinkButton } from "@/components/ui";
+import { Badge, Button, LinkButton } from "@/components/ui";
 
 interface Step3PublishSummaryProps {
   onboarding: Onboarding;
@@ -25,10 +25,10 @@ export function Step3PublishSummary({ onboarding, busy, onPublish }: Step3Publis
       className="form-card wide publish-summary-card"
       title={heroTitle}
       description={`${agreementAmount} ${t.agreementSuffix} · ${onboarding.payment?.status || "pending"} ${t.paymentSuffix} · ${onboarding.access_duration_days} days ${t.validitySuffix}`}
-      badge={<span className={`badge ${isPublished ? "badge-green" : "badge-amber"}`}>{statusLabel}</span>}
+      badge={<Badge tone={isPublished ? "green" : "amber"}>{statusLabel}</Badge>}
     >
       <div className="publish-hero-header">
-        <span className={`badge ${isPublished ? "badge-green" : "badge-amber"}`}>{statusLabel}</span>
+        <Badge tone={isPublished ? "green" : "amber"}>{statusLabel}</Badge>
         <h2 className="publish-hero-title">{heroTitle}</h2>
         <p className="publish-hero-subtitle">
           <strong>{agreementAmount}</strong>{" "}

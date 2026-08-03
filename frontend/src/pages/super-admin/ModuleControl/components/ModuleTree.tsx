@@ -1,5 +1,5 @@
 import { Icon } from "@/components/icons";
-import { LinkButton } from "@/components/ui";
+import { Badge, LinkButton } from "@/components/ui";
 import type { ExamModule } from "@/api/types";
 import { moduleControlStrings as strings } from "../ModuleControl.strings";
 import { formatDate, getModuleTypeBadge } from "../helpers";
@@ -39,10 +39,10 @@ export function ModuleTree({ instructors }: ModuleTreeProps) {
                 <div className="tree-course-head">
                   <div className="course-head-content">
                     <div className="course-status-pills">
-                      <span className={`badge ${module.status === "published" ? "badge-green" : module.status === "draft" ? "badge-amber" : "badge-gray"}`}>
+                      <Badge tone={module.status === "published" ? "green" : module.status === "draft" ? "amber" : "gray"}>
                         {module.status.charAt(0).toUpperCase() + module.status.slice(1)}
-                      </span>
-                      {!module.is_visible && <span className="badge badge-gray">{strings.hidden}</span>}
+                      </Badge>
+                      {!module.is_visible && <Badge tone="gray">{strings.hidden}</Badge>}
                     </div>
 
                     <h2 className="course-card-title">{module.title}</h2>
