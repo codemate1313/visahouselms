@@ -36,11 +36,13 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   tone?: BadgeTone;
 }
 
-export function Badge({ tone = "neutral", className = "", children, ...rest }: BadgeProps) {
+export function Badge({ tone = "neutral", className = "", children, title, ...rest }: BadgeProps) {
   const classes = ["badge", TONE_CLASS[tone] ?? TONE_CLASS.neutral, className].filter(Boolean).join(" ");
+  // The label needs its own element: text-overflow does nothing on the flex
+  // container itself, so a long badge would be cut mid-word in a narrow cell.
   return (
-    <span className={classes} {...rest}>
-      {children}
+    <span className={classes} title={title ?? (typeof children === "string" ? children : undefined)} {...rest}>
+      <span className="badge-label">{children}</span>
     </span>
   );
 }

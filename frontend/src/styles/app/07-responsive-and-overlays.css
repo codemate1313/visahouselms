@@ -770,6 +770,19 @@ code,
   text-overflow: ellipsis;
 }
 
+/* Action cells host hover tooltips and the row menu, which are positioned
+   outside the cell box — clipping them hides the tooltip behind the header. */
+.responsive-data-table th.col-actions,
+.responsive-data-table td.col-actions,
+.responsive-data-table th.table-actions-heading,
+.responsive-data-table td.table-actions,
+.responsive-data-table td.institute-row-actions,
+.data-table th.table-actions-heading,
+.data-table td.table-actions,
+.data-table td.institute-row-actions {
+  overflow: visible;
+}
+
 .responsive-data-table td > *,
 .responsive-data-table th > * {
   max-width: 100%;
@@ -1756,7 +1769,9 @@ body {
   text-align: center !important;
   padding-left: 4px !important;
   padding-right: 12px !important;
-  overflow: hidden !important;
+  /* Must stay visible: hidden clipped hover tooltips and the row menu to the
+     68px cell box. */
+  overflow: visible !important;
 }
 
 .support-ticket-detail-actions {

@@ -3841,12 +3841,19 @@ button.secondary-button:hover,
   text-transform: capitalize;
   line-height: 1;
   flex-shrink: 0;
-  /* Never spill out of a narrow cell: shrink and ellipsize instead of being
-     clipped mid-word by the column's overflow. */
+  /* Never spill out of a narrow cell. */
   max-width: 100%;
   min-width: 0;
   overflow: hidden;
+}
+
+/* Ellipsis lives on the label, not the flex container, or the text is simply
+   cut off mid-word. */
+.badge-label {
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .badge::before {
