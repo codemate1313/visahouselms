@@ -172,18 +172,18 @@ export function RetakeRequests() {
           <div style={{ marginTop: 12 }}>
             <label style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>{strings.modal.noteLabel}</label>
             <textarea
+              className="premium-textarea"
               rows={4}
               minLength={10}
               maxLength={4000}
               value={note}
               onChange={(event) => setNote(event.target.value)}
               placeholder={strings.modal.notePlaceholder}
-              style={{ width: "100%" }}
             />
           </div>
         }
         confirmText={resolvingAction === "approved" ? strings.actions.approve : strings.actions.reject}
-        variant={resolvingAction === "approved" ? "primary" : "danger"}
+        variant={resolvingAction === "approved" ? "success" : "danger"}
         loading={saving}
         onConfirm={confirmResolve}
         onClose={closeResolve}

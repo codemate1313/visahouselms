@@ -1,4 +1,4 @@
-export type ConfirmVariant = "danger" | "warning" | "primary";
+export type ConfirmVariant = "danger" | "warning" | "primary" | "success";
 
 export interface ConfirmRequest {
   title: string;

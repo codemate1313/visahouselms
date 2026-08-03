@@ -52,22 +52,27 @@ export function ConfirmModal({
 
   return createPortal(
     <div
-      className="logout-modal-backdrop"
+      className="premium-modal-backdrop"
       onClick={() => { if (!loading) onClose(); }}
       role="presentation"
     >
       <div
-        className="logout-modal-card"
+        className="premium-modal-card"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
       >
-        <div className={`confirm-modal-icon is-${variant}`}>
+        <div className={`premium-modal-icon is-${variant}`}>
           {variant === "danger" ? (
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" />
+            </svg>
+          ) : variant === "success" ? (
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
           ) : (
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -77,12 +82,12 @@ export function ConfirmModal({
             </svg>
           )}
         </div>
-        <h2 id={titleId} className="logout-modal-title">{title}</h2>
-        <div id={descriptionId} className="logout-modal-description">{message}</div>
-        <div className="logout-modal-actions">
+        <h2 id={titleId} className="premium-modal-title">{title}</h2>
+        <div id={descriptionId} className="premium-modal-description">{message}</div>
+        <div className="premium-modal-actions">
           <button
             type="button"
-            className="logout-modal-btn cancel-btn"
+            className="premium-modal-btn cancel-btn"
             onClick={onClose}
             disabled={loading}
             ref={cancelButtonRef}
@@ -91,7 +96,7 @@ export function ConfirmModal({
           </button>
           <button
             type="button"
-            className={`logout-modal-btn confirm-btn btn-${variant}`}
+            className={`premium-modal-btn confirm-btn btn-${variant}`}
             onClick={onConfirm}
             disabled={loading}
           >
