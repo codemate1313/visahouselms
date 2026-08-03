@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
@@ -115,7 +115,8 @@ export function GradingDetail() {
   const showError = useToastStore((state) => state.showError);
   const [partMarks, setPartMarks] = useState<Record<number, Record<string, string>>>({});
   const [partComments, setPartComments] = useState<Record<number, string>>({});
-  const [activePartId, setActivePartId] = useState<number | null>(null);
+  // One part visible at a time; the panel's Prev/Next drive the index.
+  const [activeIndex, setActiveIndex] = useState(0);
   const [rubricOpen, setRubricOpen] = useState(true);
   const [savingPartId, setSavingPartId] = useState<number | null>(null);
 
@@ -187,36 +188,6 @@ export function GradingDetail() {
     }
   }
 
-  // Track which part card is most in view so the floating rubric shows that
-  // part's criteria (and only that one).
-  const partCardsRef = useRef<Map<number, HTMLElement>>(new Map());
-  useEffect(() => {
-    if (!detail) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        const first = visible[0];
-        if (first) {
-          const partId = Number((first.target as HTMLElement).dataset.partId);
-          if (Number.isFinite(partId)) setActivePartId(partId);
-        }
-      },
-      { rootMargin: "-15% 0px -60% 0px", threshold: [0.1, 0.4, 0.75] },
-    );
-    partCardsRef.current.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [detail]);
-
-  const registerPartCard = useCallback((partId: number, el: HTMLElement | null) => {
-    if (el) {
-      el.dataset.partId = String(partId);
-      partCardsRef.current.set(partId, el);
-    } else {
-      partCardsRef.current.delete(partId);
-    }
-  }, []);
 
   if (error && !detail) return <p className="error-text">{error}</p>;
   if (!detail) return <p>{strings.loading}</p>;
@@ -331,25 +302,11 @@ export function GradingDetail() {
           </ul>
         </section>
       )}
-      <div className="grading-parts-column">
-        {subjectiveParts.map((part) => (
-          <div key={part.id} ref={(el) => registerPartCard(part.id, el)}>
-            <PartGradingCard
-              part={part}
-              attemptId={id!}
-              canEdit={canEdit}
-              aiConfigured={detail.ai_assistance.configured}
-              comment={partComments[part.id] ?? ""}
-              onCommentChange={(value) => setPartComments((current) => ({ ...current, [part.id]: value }))}
-              onApplySuggestion={(marks, comment) => applySuggestion(part.id, marks, comment)}
-              onActive={() => setActivePartId(part.id)}
-            />
-          </div>
-        ))}
-      </div>
       {(() => {
-        const active = subjectiveParts.find((p) => p.id === activePartId) ?? subjectiveParts[0] ?? null;
-        if (!active) return null;
+        const total = subjectiveParts.length;
+        if (!total) return null;
+        const boundedIndex = Math.min(Math.max(0, activeIndex), total - 1);
+        const active = subjectiveParts[boundedIndex];
         const marks = partMarks[active.id] ?? {};
         const activeIsPublished = active.grade?.status === "graded" || active.grade?.status === "ai_graded";
         const allScored = active.rubric.every((c) => (marks[c.criterion] ?? "") !== "");
@@ -357,18 +314,40 @@ export function GradingDetail() {
         const saveDisabled = activeIsPublished ? !allScored : !hasProgress;
         const saveLabel = activeIsPublished ? strings.part.confirmEvaluation : strings.part.saveDraft;
         return (
-          <FloatingRubricPanel
-            part={active}
-            marks={marks}
-            onMarksChange={(criterion, value) => setMarksForPart(active.id, criterion, value)}
-            canEdit={canEdit}
-            isOpen={rubricOpen}
-            onToggleOpen={setRubricOpen}
-            saving={savingPartId === active.id}
-            onSave={() => savePart(active)}
-            saveDisabled={saveDisabled}
-            saveLabel={saveLabel}
-          />
+          <>
+            {/* Only the active part renders - the instructor grades one part
+                at a time, with Prev/Next in the panel on the right. */}
+            <div className="grading-parts-column is-single">
+              <PartGradingCard
+                key={active.id}
+                part={active}
+                attemptId={id!}
+                canEdit={canEdit}
+                aiConfigured={detail.ai_assistance.configured}
+                comment={partComments[active.id] ?? ""}
+                onCommentChange={(value) => setPartComments((current) => ({ ...current, [active.id]: value }))}
+                onApplySuggestion={(m, c) => applySuggestion(active.id, m, c)}
+                onActive={() => {}}
+              />
+            </div>
+            <FloatingRubricPanel
+              part={active}
+              marks={marks}
+              onMarksChange={(criterion, value) => setMarksForPart(active.id, criterion, value)}
+              canEdit={canEdit}
+              isOpen={rubricOpen}
+              onToggleOpen={setRubricOpen}
+              saving={savingPartId === active.id}
+              onSave={() => savePart(active)}
+              saveDisabled={saveDisabled}
+              saveLabel={saveLabel}
+              positionLabel={`${boundedIndex + 1} / ${total}`}
+              canPrev={boundedIndex > 0}
+              canNext={boundedIndex < total - 1}
+              onPrev={() => setActiveIndex(Math.max(0, boundedIndex - 1))}
+              onNext={() => setActiveIndex(Math.min(total - 1, boundedIndex + 1))}
+            />
+          </>
         );
       })()}
       {/* Submit lives at the bottom: publishing is the last thing an instructor

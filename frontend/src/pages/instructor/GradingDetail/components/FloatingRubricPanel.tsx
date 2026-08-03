@@ -14,8 +14,7 @@ function levelForMarks(value: string, maximum: number) {
 }
 
 interface FloatingRubricPanelProps {
-  /** The part whose rubric and scoring are visible; changes as the instructor
-   *  scrolls between part cards. */
+  /** The part whose rubric and scoring are visible. */
   part: AttemptPart | null;
   marks: Record<string, string>;
   onMarksChange: (criterion: string, value: string) => void;
@@ -26,6 +25,12 @@ interface FloatingRubricPanelProps {
   onSave: () => void;
   saveDisabled: boolean;
   saveLabel: string;
+  /** Position label like "1 / 3", plus prev/next drivers. */
+  positionLabel: string;
+  canPrev: boolean;
+  canNext: boolean;
+  onPrev: () => void;
+  onNext: () => void;
 }
 
 /**
@@ -45,6 +50,11 @@ export function FloatingRubricPanel({
   onSave,
   saveDisabled,
   saveLabel,
+  positionLabel,
+  canPrev,
+  canNext,
+  onPrev,
+  onNext,
 }: FloatingRubricPanelProps) {
   const t = strings.part;
   if (!part) return null;
@@ -67,7 +77,7 @@ export function FloatingRubricPanel({
     <aside className="rubric-floater" aria-label={t.rubricSticky.title}>
       <div className="rubric-floater-head">
         <div>
-          <span className="page-eyebrow">{part.title}</span>
+          <span className="page-eyebrow">{part.title} · {positionLabel}</span>
           <strong>{t.rubricSticky.title}</strong>
           <small>{t.rubricSummary(part.rubric.length)}</small>
         </div>
@@ -135,13 +145,22 @@ export function FloatingRubricPanel({
         </div>
       </div>
 
-      {canEdit && (
-        <div className="rubric-floater-foot">
+      <div className="rubric-floater-foot">
+        {canEdit && (
           <Button onClick={onSave} disabled={saveDisabled || saving} fullWidth>
             {saving ? t.saving : saveLabel}
           </Button>
+        )}
+        <div className="rubric-floater-nav">
+          <Button variant="secondary" size="sm" disabled={!canPrev} onClick={onPrev}>
+            {t.rubricNav.prev}
+          </Button>
+          <span className="rubric-floater-position" aria-live="polite">{positionLabel}</span>
+          <Button variant="secondary" size="sm" disabled={!canNext} onClick={onNext}>
+            {t.rubricNav.next}
+          </Button>
         </div>
-      )}
+      </div>
     </aside>
   );
 }

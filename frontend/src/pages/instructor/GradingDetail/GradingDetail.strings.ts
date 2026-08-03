@@ -44,6 +44,10 @@ export const gradingDetailStrings = {
       show: "Show rubric",
     },
     rubricSideHint: "Score the rubric in the panel on the right, then Save.",
+    rubricNav: {
+      prev: "Back",
+      next: "Next question",
+    },
     generating: "Generating...",
     graded: "Graded",
     draftSaved: "Draft saved",
