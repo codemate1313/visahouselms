@@ -737,3 +737,50 @@ html {
 .submit-full-test-panel {
   margin-top: 24px;
 }
+
+/* Rubric floater is only ~380px wide, so the two-column grid squashes text
+   and the "Not scored" chip lands on top of the criterion title. Stack. */
+.rubric-floater .rubric-grid {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.rubric-floater .rubric-grid article {
+  padding: 14px;
+}
+
+.rubric-floater .rubric-grid article > div {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+/* Chip on its own line if it can't sit inline. */
+.rubric-floater .cefr-mark-level {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+/* CEFR anchors: 5 tiny columns are unreadable in a narrow panel. Two per row
+   with wrapping, and keep the numeric marks a step under the level letter. */
+.rubric-floater .cefr-anchor-scale {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.rubric-floater .cefr-anchor-scale > div {
+  padding: 8px 10px;
+}
+
+.rubric-floater .cefr-anchor-scale p {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* The score input + preset select are still full width, but pin the input to
+   a comfortable 90px so the select isn't crammed. */
+.rubric-floater .sleek-score-combo {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 8px;
+}
