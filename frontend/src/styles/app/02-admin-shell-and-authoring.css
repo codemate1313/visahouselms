@@ -3,7 +3,7 @@
   display: flex;
   min-height: 100vh;
   min-height: 100dvh;
-  background: linear-gradient(90deg, rgba(225, 29, 46, 0.06) 0, rgba(245, 245, 247, 0.98) 220px, #f5f5f7 100%);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 6%, transparent) 0, rgba(245, 245, 247, 0.98) 220px, #f5f5f7 100%);
 }
 
 
@@ -2031,7 +2031,7 @@ input[type="checkbox"] {
   width: 16px;
   height: 16px;
   min-height: 0;
-  accent-color: var(--primary, #e11d2e);
+  accent-color: var(--primary, var(--primary));
   cursor: pointer;
 }
 
@@ -2306,7 +2306,7 @@ button.danger:hover:not(:disabled) {
 
 .collapsible-panel.is-open .collapsible-panel-chevron {
   color: var(--primary);
-  border-color: rgba(225, 29, 46, 0.26);
+  border-color: color-mix(in srgb, var(--primary) 26%, transparent);
   transform: rotate(180deg);
 }
 

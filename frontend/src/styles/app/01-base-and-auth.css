@@ -20,7 +20,7 @@ textarea {
   font-weight: var(--app-body-weight, 400);
   letter-spacing: 0;
   background:
-    radial-gradient(circle at 86% 10%, rgba(225, 29, 46, 0.08) 0, rgba(225, 29, 46, 0) 26%),
+    radial-gradient(circle at 86% 10%, color-mix(in srgb, var(--primary) 8%, transparent) 0, color-mix(in srgb, var(--primary) 0%, transparent) 26%),
     var(--app-bg-gradient);
   background-attachment: fixed;
   color: var(--text);
@@ -46,7 +46,7 @@ body::before {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(90deg, rgba(225, 29, 46, 0.035), transparent 34%, rgba(17, 17, 19, 0.035));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 4%, transparent), transparent 34%, rgba(17, 17, 19, 0.035));
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.22), transparent 70%);
 }
 
@@ -59,7 +59,7 @@ h1 {
 }
 
 ::selection {
-  background: rgba(225, 29, 46, 0.18);
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
   color: var(--text);
 }
 
@@ -72,7 +72,7 @@ h1 {
   place-items: center;
   padding: 28px;
   background:
-    radial-gradient(circle at 84% 18%, rgba(225, 29, 46, 0.12), transparent 30%),
+    radial-gradient(circle at 84% 18%, color-mix(in srgb, var(--primary) 12%, transparent), transparent 30%),
     var(--app-bg-gradient);
 }
 
@@ -104,7 +104,7 @@ h1 {
   height: 9px;
   border-radius: 999px;
   background: var(--primary);
-  box-shadow: 0 0 0 8px rgba(225, 29, 46, 0.1);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 .testing-login-panel h1 {
@@ -146,12 +146,12 @@ h1 {
 
 .testing-login-card:hover {
   transform: translateY(-3px);
-  border-color: rgba(225, 29, 46, 0.34);
+  border-color: color-mix(in srgb, var(--primary) 34%, transparent);
   box-shadow: 0 22px 44px rgba(17, 17, 19, 0.1);
 }
 
 .testing-login-card-primary {
-  background: linear-gradient(145deg, rgba(225, 29, 46, 0.12), rgba(255, 255, 255, 0.78));
+  background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 12%, transparent), rgba(255, 255, 255, 0.78));
 }
 
 .testing-login-icon {
@@ -161,7 +161,7 @@ h1 {
   height: 54px;
   color: var(--primary);
   border-radius: var(--radius);
-  background: rgba(225, 29, 46, 0.1);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 .testing-login-icon svg {
@@ -471,14 +471,14 @@ h1 {
   display: inline-block;
   padding: 5px 12px;
   border-radius: 20px;
-  background: linear-gradient(180deg, #e11d2e 0%, #b91323 100%);
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary-hover) 100%);
   color: #ffffff;
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 0.08em;
   margin-bottom: 12px;
   text-transform: uppercase;
-  box-shadow: 0 4px 14px rgba(225, 29, 46, 0.3);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
 .hero-slide-title {
@@ -524,7 +524,7 @@ h1 {
 
 .slider-dot.active {
   width: 24px;
-  background: var(--color-primary, #e11d2e);
+  background: var(--color-primary, var(--primary));
   border-radius: 4px;
 }
 
@@ -584,11 +584,11 @@ h1 {
 .login-concise-page .concise-submit-btn {
   border: 0;
   border-radius: var(--radius);
-  background: linear-gradient(180deg, #e11d2e 0%, #b91323 100%);
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary-hover) 100%);
   color: #ffffff;
   box-shadow:
-    0 14px 28px rgba(225, 29, 46, 0.22),
-    0 5px 10px rgba(185, 19, 35, 0.14),
+    0 14px 28px color-mix(in srgb, var(--primary) 22%, transparent),
+    0 5px 10px color-mix(in srgb, var(--primary-hover) 14%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.32);
   transition:
     transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -597,20 +597,20 @@ h1 {
 }
 
 .login-concise-page .concise-submit-btn:hover:not(:disabled) {
-  background: linear-gradient(180deg, #ef233c 0%, #b91323 100%);
+  background: linear-gradient(180deg, #ef233c 0%, var(--primary-hover) 100%);
   transform: translateY(-2px);
   filter: saturate(1.04);
   box-shadow:
-    0 18px 36px rgba(225, 29, 46, 0.28),
-    0 7px 14px rgba(185, 19, 35, 0.18),
+    0 18px 36px color-mix(in srgb, var(--primary) 28%, transparent),
+    0 7px 14px color-mix(in srgb, var(--primary-hover) 18%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.36);
 }
 
 .login-concise-page .concise-submit-btn:active:not(:disabled) {
   transform: translateY(0);
   box-shadow:
-    0 8px 18px rgba(225, 29, 46, 0.2),
-    inset 0 2px 6px rgba(185, 19, 35, 0.18);
+    0 8px 18px color-mix(in srgb, var(--primary) 20%, transparent),
+    inset 0 2px 6px color-mix(in srgb, var(--primary-hover) 18%, transparent);
 }
 
 .below-password-row {
@@ -788,8 +788,8 @@ h1 {
 
 .google-login-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: rgba(225, 29, 46, 0.55);
-  background: rgba(225, 29, 46, 0.08);
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
 }
 
 .google-login-btn:disabled {
@@ -818,7 +818,7 @@ h1 {
   width: 54px;
   height: 54px;
   color: #ffffff;
-  background: linear-gradient(180deg, #e11d2e 0%, #b91323 100%);
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary-hover) 100%);
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -851,8 +851,8 @@ h1 {
 }
 
 .otp-code-input:focus {
-  border-color: #e11d2e;
-  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.18);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
 .otp-error-box {

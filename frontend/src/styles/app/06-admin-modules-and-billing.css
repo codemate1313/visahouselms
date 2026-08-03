@@ -1401,7 +1401,7 @@
    * value via its own `--sa-sidebar-red`; remapping `--primary` here is what
    * makes every shared primitive (Button, LinkButton, SearchInput focus ring,
    * SearchableSelect, Checkbox, …) resolve to the same red as the sidebar
-   * instead of the global `--primary: #e11d2e`.
+   * instead of the global `--primary: var(--primary)`.
    *
    * Scoped to the portal wrapper on purpose: landing pages render under
    * LandingLayout, outside this class, so they keep the global brand red.
@@ -1837,10 +1837,10 @@
   display: inline-flex !important;
   align-items: center !important;
   flex: 0 0 auto !important;
-  background: rgba(225, 29, 46, 0.08) !important;
-  border: 1px solid rgba(225, 29, 46, 0.18) !important;
+  background: color-mix(in srgb, var(--primary) 8%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent) !important;
   padding: 2px 10px !important;
-  color: #e11d2e !important;
+  color: var(--primary) !important;
   font-size: 11.5px !important;
   font-weight: 600 !important;
   border-radius: 9999px !important;
@@ -1851,13 +1851,13 @@
 }
 
 .portal-app-count-badge:hover {
-  background: rgba(225, 29, 46, 0.14) !important;
-  border-color: rgba(225, 29, 46, 0.28) !important;
+  background: color-mix(in srgb, var(--primary) 14%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary) 28%, transparent) !important;
 }
 
 [data-theme="dark"] .portal-app-count-badge {
-  background: rgba(225, 29, 46, 0.16) !important;
-  border-color: rgba(225, 29, 46, 0.3) !important;
+  background: color-mix(in srgb, var(--primary) 16%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent) !important;
   color: #ff5263 !important;
 }
 
@@ -2114,12 +2114,12 @@
 }
 
 .portal-user-dropdown-item.is-logout svg {
-  color: var(--primary) !important;
+  color: #e11d2e !important;
   margin-top: 0 !important;
 }
 
 .portal-user-dropdown-item.is-logout strong {
-  color: var(--primary) !important;
+  color: #e11d2e !important;
   font-size: 15px !important;
   font-weight: 700 !important;
 }
@@ -2338,18 +2338,18 @@
 }
 
 .student-notification-item.is-unread {
-  background: color-mix(in srgb, var(--primary, #e11d2e) 6%, transparent) !important;
+  background: color-mix(in srgb, var(--primary, var(--primary)) 6%, transparent) !important;
 }
 
 .student-notification-item.is-unread:hover {
-  background: color-mix(in srgb, var(--primary, #e11d2e) 12%, transparent) !important;
+  background: color-mix(in srgb, var(--primary, var(--primary)) 12%, transparent) !important;
 }
 
 .student-notification-item-icon {
   width: 22px !important;
   height: 22px !important;
   flex: 0 0 22px !important;
-  color: var(--primary, #e11d2e) !important;
+  color: var(--primary, var(--primary)) !important;
   margin-top: 2px !important;
 }
 
@@ -2545,12 +2545,12 @@
 }
 
 .audience-checkbox-card:focus-visible {
-  border-color: var(--primary, #e11d2e);
+  border-color: var(--primary, var(--primary));
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
 .audience-checkbox-card.selected {
-  border-color: var(--primary, #e11d2e);
+  border-color: var(--primary, var(--primary));
   background: color-mix(in srgb, var(--primary) 7%, #ffffff);
   box-shadow: 0 14px 32px color-mix(in srgb, var(--primary) 13%, transparent);
 }
@@ -2575,8 +2575,8 @@
 }
 
 .audience-checkbox-card.selected .audience-card-checkbox-custom {
-  background: var(--primary, #e11d2e);
-  border-color: var(--primary, #e11d2e);
+  background: var(--primary, var(--primary));
+  border-color: var(--primary, var(--primary));
 }
 
 .audience-card-body {
@@ -2653,8 +2653,8 @@
 
 .target-search-input:focus {
   outline: none;
-  border-color: var(--primary, #e11d2e);
-  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.12);
+  border-color: var(--primary, var(--primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
 .chip-select-list {
@@ -2726,7 +2726,7 @@
 }
 
 .chip-option:hover {
-  border-color: rgba(225, 29, 46, 0.35);
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
   background: var(--surface);
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
   transform: none;
@@ -2734,21 +2734,21 @@
 
 .chip-option.active {
   color: #172033;
-  border-color: var(--primary, #e11d2e);
+  border-color: var(--primary, var(--primary));
   background: var(--surface);
-  box-shadow: 0 8px 18px rgba(225, 29, 46, 0.12);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
 .chip-option.active>span {
   color: #ffffff;
-  border-color: var(--primary, #e11d2e);
-  background: var(--primary, #e11d2e);
+  border-color: var(--primary, var(--primary));
+  background: var(--primary, var(--primary));
 }
 
 .chip-option:focus-visible {
   outline: none;
-  border-color: var(--primary, #e11d2e);
-  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.13);
+  border-color: var(--primary, var(--primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 13%, transparent);
 }
 
 .custom-target-select-container .help-text {
@@ -2778,15 +2778,15 @@
 
 .datetime-picker-input:focus {
   outline: none;
-  border-color: var(--primary, #e11d2e);
-  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.12);
+  border-color: var(--primary, var(--primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
 .badge-purple,
 .badge-scheduled {
-  color: var(--primary, #e11d2e);
-  border: 1px solid rgba(225, 29, 46, 0.25);
-  background: rgba(225, 29, 46, 0.1);
+  color: var(--primary, var(--primary));
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 /* ==========================================================================
@@ -3556,8 +3556,8 @@
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: #e11d2e;
-  background: rgba(225, 29, 46, 0.08);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
   padding: 4px 12px;
   border-radius: 16px;
   margin-bottom: 8px;
@@ -3567,8 +3567,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #e11d2e;
-  box-shadow: 0 0 8px rgba(225, 29, 46, 0.6);
+  background: var(--primary);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 60%, transparent);
 }
 
 .my-courses-hero-title {
@@ -3631,8 +3631,8 @@
   border-radius: var(--radius-md);
   font-size: 11px;
   font-weight: 800;
-  background: rgba(225, 29, 46, 0.1);
-  color: #e11d2e;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
   transition: all 0.2s ease;
 }
 
@@ -3681,15 +3681,15 @@
 
 .type-reading .premium-card-ambient-aura { background: #10b981; }
 .type-speaking .premium-card-ambient-aura { background: #f59e0b; }
-.type-writing .premium-card-ambient-aura { background: #e11d2e; }
+.type-writing .premium-card-ambient-aura { background: var(--primary); }
 .type-listening .premium-card-ambient-aura { background: #3b82f6; }
 .type-full_mock .premium-card-ambient-aura { background: #a855f7; }
-.type-final_test .premium-card-ambient-aura { background: #e11d2e; }
+.type-final_test .premium-card-ambient-aura { background: var(--primary); }
 
 .premium-test-card:hover {
   transform: translateY(-6px) scale(1.01);
-  border-color: rgba(225, 29, 46, 0.35);
-  box-shadow: 0 20px 45px -12px rgba(225, 29, 46, 0.14), 0 8px 24px -6px rgba(16, 24, 40, 0.04);
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  box-shadow: 0 20px 45px -12px color-mix(in srgb, var(--primary) 14%, transparent), 0 8px 24px -6px rgba(16, 24, 40, 0.04);
 }
 
 .premium-test-card:hover .premium-card-ambient-aura {
@@ -3720,10 +3720,10 @@
 
 .type-reading .premium-icon-box { background: #ecfdf5; color: #059669; }
 .type-speaking .premium-icon-box { background: #fffbe6; color: #d97706; }
-.type-writing .premium-icon-box { background: #fff1f2; color: #e11d2e; }
+.type-writing .premium-icon-box { background: #fff1f2; color: var(--primary); }
 .type-listening .premium-icon-box { background: #eff6ff; color: #2563eb; }
 .type-full_mock .premium-icon-box { background: #f3e8ff; color: #7e22ce; }
-.type-final_test .premium-icon-box { background: #ffe4e6; color: #e11d2e; }
+.type-final_test .premium-icon-box { background: #ffe4e6; color: var(--primary); }
 .type-default .premium-icon-box { background: #f1f5f9; color: #475467; }
 
 .premium-test-card:hover .premium-icon-box {
@@ -3840,10 +3840,10 @@
   width: 58px;
   height: 58px;
   border-radius: 50%;
-  background: rgba(225, 29, 46, 0.12);
-  border: 2px solid rgba(225, 29, 46, 0.3);
-  color: #e11d2e;
-  box-shadow: 0 4px 18px rgba(225, 29, 46, 0.18);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 2px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  color: var(--primary);
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--primary) 18%, transparent);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -3854,10 +3854,10 @@
 
 .premium-lock-overlay:hover .premium-lock-orb {
   transform: scale(1.1);
-  background: #e11d2e;
+  background: var(--primary);
   color: #ffffff;
-  border-color: #e11d2e;
-  box-shadow: 0 10px 28px rgba(225, 29, 46, 0.35);
+  border-color: var(--primary);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--primary) 35%, transparent);
 }
 
 .premium-lock-title {
@@ -4163,8 +4163,8 @@
 [data-theme="dark"] .institute-row-actions .action-delete:hover:not(:disabled),
 [data-theme="dark"] .action-btn-icon.action-delete:hover:not(:disabled),
 [data-theme="dark"] .action-btn-icon.danger:hover:not(:disabled) {
-  background: var(--primary) !important;
-  border-color: var(--primary) !important;
+  background: #e11d2e !important;
+  border-color: #e11d2e !important;
   color: #ffffff !important;
   box-shadow: 0 4px 10px rgba(225, 29, 46, 0.2) !important;
 }
@@ -4538,7 +4538,7 @@
 [data-theme="dark"] .password-input-wrap input:not([type="checkbox"]):not([type="radio"]):focus {
   background: rgba(255, 255, 255, 0.08) !important;
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.16) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent) !important;
   outline: none !important;
 }
 
@@ -4961,7 +4961,7 @@ html[data-theme="dark"] body .dashboard select:focus,
 html[data-theme="dark"] body .dashboard [contenteditable="true"]:focus {
   background: rgba(255, 255, 255, 0.08) !important;
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.16) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent) !important;
 }
 
 html[data-theme="dark"] body .dashboard button:disabled,
@@ -5045,7 +5045,7 @@ html[data-theme="dark"] body .dashboard .searchable-select-trigger {
 
 html[data-theme="dark"] body .dashboard .searchable-select-container.is-open .searchable-select-trigger {
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.16) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent) !important;
 }
 
 html[data-theme="dark"] body .dashboard .selected-value-label,
@@ -5141,7 +5141,7 @@ html[data-theme="dark"] body .dashboard .chip-option>span {
 }
 
 html[data-theme="dark"] body .dashboard .permission-option-icon {
-  background: rgba(225, 29, 46, 0.16) !important;
+  background: color-mix(in srgb, var(--primary) 16%, transparent) !important;
   color: var(--primary) !important;
   box-shadow: none !important;
 }
@@ -5156,14 +5156,14 @@ html[data-theme="dark"] body .dashboard .permission-option:hover,
 html[data-theme="dark"] body .dashboard .plan-course-option:hover,
 html[data-theme="dark"] body .dashboard .test-runner-option:hover {
   background: #252a35 !important;
-  border-color: rgba(225, 29, 46, 0.5) !important;
+  border-color: color-mix(in srgb, var(--primary) 50%, transparent) !important;
 }
 
 html[data-theme="dark"] body .dashboard .chip-option.active,
 html[data-theme="dark"] body .dashboard .permission-option:has(input:checked),
 html[data-theme="dark"] body .dashboard .plan-course-option:has(input:checked),
 html[data-theme="dark"] body .dashboard .test-runner-option:has(input:checked) {
-  background: rgba(225, 29, 46, 0.12) !important;
+  background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
   border-color: var(--primary) !important;
 }
 
@@ -5310,7 +5310,7 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 }
 
 [data-theme="dark"] .test-security-alert {
-  background: rgba(225, 29, 46, 0.1) !important;
+  background: color-mix(in srgb, var(--primary) 10%, transparent) !important;
   border-left-color: var(--test-accent, var(--primary)) !important;
   color: #ff8a95 !important;
   -webkit-text-fill-color: #ff8a95 !important;
@@ -5346,8 +5346,8 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 }
 
 [data-theme="dark"] .test-runner-part-tab:hover:not(:disabled) {
-  background: rgba(225, 29, 46, 0.08) !important;
-  border-color: rgba(225, 29, 46, 0.36) !important;
+  background: color-mix(in srgb, var(--primary) 8%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary) 36%, transparent) !important;
   color: #ffffff !important;
 }
 
@@ -5358,8 +5358,8 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 }
 
 [data-theme="dark"] .test-runner-timer {
-  background: rgba(225, 29, 46, 0.12) !important;
-  border-color: rgba(225, 29, 46, 0.26) !important;
+  background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary) 26%, transparent) !important;
 }
 
 [data-theme="dark"] .test-runner-timer span {
@@ -5371,7 +5371,7 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 }
 
 [data-theme="dark"] .test-runner-instructions {
-  background: rgba(225, 29, 46, 0.08) !important;
+  background: color-mix(in srgb, var(--primary) 8%, transparent) !important;
   border-left-color: var(--test-accent, var(--primary)) !important;
 }
 
@@ -6188,10 +6188,10 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   top: 13px !important;
   left: 16px !important;
   z-index: 99998 !important;
-  color: #e11d2e !important;
-  border: 1.5px solid rgba(225, 29, 46, 0.25) !important;
+  color: var(--primary) !important;
+  border: 1.5px solid color-mix(in srgb, var(--primary) 25%, transparent) !important;
   background: var(--surface, #ffffff) !important;
-  box-shadow: 0 4px 14px rgba(225, 29, 46, 0.12) !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 12%, transparent) !important;
   width: 44px !important;
   height: 44px !important;
   min-width: 44px !important;
@@ -6207,7 +6207,7 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   border-color: var(--border, rgba(255, 255, 255, 0.08));
   color: var(--text-primary, #f8fafc);
   background: #1a1e26 !important;
-  border-color: rgba(225, 29, 46, 0.4) !important;
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent) !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
 }
 
@@ -6330,9 +6330,9 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 }
 
 .institute-tab-btn.is-active {
-  background: linear-gradient(135deg, #e11d2e 0%, #c41726 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #c41726 100%);
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(225, 29, 46, 0.35);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 35%, transparent);
   transform: translateY(-0.5px);
 }
 
@@ -6413,8 +6413,8 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 .institute-form-card textarea:focus,
 .institute-form-card select:focus {
   outline: none;
-  border-color: var(--primary, #e11d2e);
-  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.12);
+  border-color: var(--primary, var(--primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
 /* Section Header & Subtitles */
@@ -6814,8 +6814,8 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 }
 
 .plan-feature-remove:hover {
-  color: var(--primary);
-  border-color: var(--primary);
+  color: #e11d2e;
+  border-color: #e11d2e;
 }
 
 .plan-feature-add {
@@ -7100,19 +7100,19 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 
 
 .catalog-plan-btn {
-  background: #e11d2e !important;
+  background: var(--primary) !important;
   color: #ffffff !important;
   border: 1px solid transparent !important;
   font-weight: 700 !important;
-  box-shadow: 0 4px 14px rgba(225, 29, 46, 0.25) !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 25%, transparent) !important;
   transition: all 0.2s ease !important;
 }
 
 .catalog-plan-btn:hover {
   background: #ffffff !important;
-  color: #e11d2e !important;
-  border-color: #e11d2e !important;
-  box-shadow: 0 6px 18px rgba(225, 29, 46, 0.15) !important;
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 15%, transparent) !important;
 }
 
 
@@ -7160,19 +7160,19 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 
 .uui-pricing-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(225, 29, 46, 0.35);
-  box-shadow: 0 20px 40px -12px rgba(225, 29, 46, 0.12), 0 8px 20px -6px rgba(16, 24, 40, 0.04);
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  box-shadow: 0 20px 40px -12px color-mix(in srgb, var(--primary) 12%, transparent), 0 8px 20px -6px rgba(16, 24, 40, 0.04);
 }
 
 .uui-pricing-card.is-featured {
-  border: 2px solid rgba(225, 29, 46, 0.4);
-  box-shadow: 0 12px 32px -8px rgba(225, 29, 46, 0.14);
+  border: 2px solid color-mix(in srgb, var(--primary) 40%, transparent);
+  box-shadow: 0 12px 32px -8px color-mix(in srgb, var(--primary) 14%, transparent);
 }
 
 .uui-pricing-card.is-purchased {
-  border: 2px solid rgba(225, 29, 46, 0.45);
+  border: 2px solid color-mix(in srgb, var(--primary) 45%, transparent);
   background: var(--surface, #ffffff);
-  box-shadow: 0 12px 32px -8px rgba(225, 29, 46, 0.14);
+  box-shadow: 0 12px 32px -8px color-mix(in srgb, var(--primary) 14%, transparent);
 }
 
 /* Card Header */
@@ -7200,8 +7200,8 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 .uui-popular-badge {
   display: inline-flex;
   align-items: center;
-  background: rgba(225, 29, 46, 0.1);
-  color: #e11d2e;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
   font-size: 12px;
   font-weight: 700;
   padding: 4px 12px;
@@ -7212,9 +7212,9 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(225, 29, 46, 0.12);
-  color: #e11d2e;
-  border: 1px solid rgba(225, 29, 46, 0.3);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -7229,8 +7229,8 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: rgba(225, 29, 46, 0.25);
-  color: #e11d2e;
+  background: color-mix(in srgb, var(--primary) 25%, transparent);
+  color: var(--primary);
   font-size: 11px;
 }
 
@@ -7284,22 +7284,22 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 }
 
 .uui-btn-primary {
-  background: #e11d2e !important;
+  background: var(--primary) !important;
   color: #ffffff !important;
   border: none !important;
   font-size: 15px !important;
   font-weight: 700 !important;
   padding: 12px 20px !important;
   border-radius: 12px !important;
-  box-shadow: 0 4px 14px rgba(225, 29, 46, 0.25) !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 25%, transparent) !important;
   transition: all 0.2s ease !important;
 }
 
 .uui-btn-primary:hover {
   background: #ffffff !important;
-  color: #e11d2e !important;
-  border: 1px solid #e11d2e !important;
-  box-shadow: 0 6px 18px rgba(225, 29, 46, 0.15) !important;
+  color: var(--primary) !important;
+  border: 1px solid var(--primary) !important;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 15%, transparent) !important;
 }
 
 .uui-active-badge {
@@ -7308,9 +7308,9 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   justify-content: center;
   gap: 8px;
   padding: 10px 14px;
-  background: rgba(225, 29, 46, 0.1);
-  color: #e11d2e;
-  border: 1px solid rgba(225, 29, 46, 0.25);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
   border-radius: var(--radius-lg);
   font-size: 13px;
   font-weight: 700;
@@ -7324,8 +7324,8 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: rgba(225, 29, 46, 0.2);
-  color: #e11d2e;
+  background: color-mix(in srgb, var(--primary) 20%, transparent);
+  color: var(--primary);
   font-size: 11px;
 }
 
@@ -7369,7 +7369,7 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 }
 
 .uui-feature-check {
-  color: #e11d2e;
+  color: var(--primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7378,7 +7378,7 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 }
 
 .is-purchased .uui-feature-check {
-  color: #e11d2e;
+  color: var(--primary);
 }
 
 .uui-feature-text {
