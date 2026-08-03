@@ -1,14 +1,14 @@
 import type { Attempt, AttemptQuestion } from "@/api/types";
-import { Badge } from "@/components/ui";
+import { Badge, type BadgeTone } from "@/components/ui";
 import { formatAttemptAnswer, hasAttemptResponse } from "@/pages/student/attemptMetrics";
 import { attemptResultDetailsStrings as strings } from "../AttemptResultDetails.strings";
 
-function questionOutcome(question: AttemptQuestion): { label: string; badge: string } {
+function questionOutcome(question: AttemptQuestion): { label: string; badge: BadgeTone } {
   const t = strings.outcome;
-  if (!hasAttemptResponse(question)) return { label: t.unanswered, badge: "badge-gray" };
-  if (question.is_correct === true) return { label: t.correct, badge: "badge-green" };
-  if (question.is_correct === false) return { label: t.incorrect, badge: "badge-red" };
-  return { label: t.pendingReview, badge: "badge-amber" };
+  if (!hasAttemptResponse(question)) return { label: t.unanswered, badge: "gray" };
+  if (question.is_correct === true) return { label: t.correct, badge: "green" };
+  if (question.is_correct === false) return { label: t.incorrect, badge: "red" };
+  return { label: t.pendingReview, badge: "amber" };
 }
 
 interface PartReviewSectionProps {
@@ -64,7 +64,7 @@ export function PartReviewSection({ part }: PartReviewSectionProps) {
                     <td>{formatAttemptAnswer(question)}</td>
                     <td>{question.correct_answers?.join(", ") ?? "-"}</td>
                     <td>
-                      <span className={`badge ${outcome.badge}`}>{outcome.label}</span>
+                      <Badge tone={outcome.badge}>{outcome.label}</Badge>
                     </td>
                   </tr>
                 );

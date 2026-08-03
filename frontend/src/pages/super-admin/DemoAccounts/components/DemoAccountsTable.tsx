@@ -1,12 +1,12 @@
-import { DataTableCard } from "@/components/ui";
+import { Badge, DataTableCard, type BadgeTone } from "@/components/ui";
 import { demoAccountsStrings as strings } from "../DemoAccounts.strings";
 import type { DemoRow } from "../types";
 import { formatDate } from "@/utils/date";
 
-const STATE_BADGES: Record<string, string> = {
-  active: "badge-green",
-  expired: "badge-red",
-  converted: "badge-amber",
+const STATE_BADGES: Record<string, BadgeTone> = {
+  active: "green",
+  expired: "red",
+  converted: "amber",
 };
 
 interface DemoAccountsTableProps {
@@ -55,7 +55,7 @@ export function DemoAccountsTable({ rows }: DemoAccountsTableProps) {
                 </strong>
               </td>
               <td>
-                <span className={`badge ${STATE_BADGES[row.state]}`}>{row.state}</span>
+                <Badge tone={STATE_BADGES[row.state]}>{row.state}</Badge>
               </td>
             </tr>
           ))}

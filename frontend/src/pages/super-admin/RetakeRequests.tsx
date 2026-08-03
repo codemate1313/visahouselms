@@ -7,11 +7,12 @@ import { ConfirmModal } from "@/components/ConfirmModal";
 import { Badge, PageHeader, SearchableSelect } from "@/components/ui";
 import { retakeRequestsStrings as strings } from "./RetakeRequests.strings";
 import { formatDate } from "@/utils/date";
+import type { BadgeTone } from "@/components/ui";
 
-const STATUS_CLASS: Record<string, string> = {
-  pending: "badge-amber",
-  approved: "badge-green",
-  rejected: "badge-red",
+const STATUS_CLASS: Record<string, BadgeTone> = {
+  pending: "amber",
+  approved: "green",
+  rejected: "red",
 };
 
 export function RetakeRequests() {

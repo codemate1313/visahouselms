@@ -1,5 +1,6 @@
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
 import { STATE_BADGES, stateLabel } from "../helpers";
+import { Badge } from "@/components/ui";
 
 interface ValidityGaugeProps {
   daysRemaining: number | null;
@@ -48,9 +49,9 @@ export function ValidityGauge({ daysRemaining, state }: ValidityGaugeProps) {
           </div>
         </div>
         <div className="gauge-info-text">
-          <span className={`badge ${STATE_BADGES[state]}`} style={{ width: "max-content", marginBottom: 6 }}>
+          <Badge tone={STATE_BADGES[state]} style={{ width: "max-content", marginBottom: 6 }}>
             {stateLabel(state)}
-          </span>
+          </Badge>
           <p className="gauge-desc">{description}</p>
         </div>
       </div>

@@ -5,13 +5,14 @@ import { formatCurrencyAmount } from "@/utils/currency";
 import { paymentsStrings as strings } from "../Payments.strings";
 import type { PaymentRow } from "../types";
 import { formatDate } from "@/utils/date";
+import type { BadgeTone } from "@/components/ui";
 
-const STATUS_BADGES: Record<string, string> = {
-  paid: "badge-green",
-  partial: "badge-amber",
-  pending: "badge-amber",
-  failed: "badge-red",
-  refunded: "badge-gray",
+const STATUS_BADGES: Record<string, BadgeTone> = {
+  paid: "green",
+  partial: "amber",
+  pending: "amber",
+  failed: "red",
+  refunded: "gray",
 };
 
 interface PaymentsTableProps {

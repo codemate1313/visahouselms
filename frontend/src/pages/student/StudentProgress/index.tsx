@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { StudentBadge, StudentLeaderboard } from "@/api/types";
-import { Badge, PageHeader } from "@/components/ui";
+import { PageHeader } from "@/components/ui";
 import { studentProgressStrings as strings } from "./StudentProgress.strings";
 import { ProgressStatTiles } from "./components/ProgressStatTiles";
 import { BadgesPanel } from "./components/BadgesPanel";

@@ -2,6 +2,7 @@ import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import type { Announcement } from "@/api/types";
 import { formatDate } from "../helpers";
 import { instituteAnnouncementsStrings as strings } from "../InstituteAnnouncements.strings";
+import { Badge } from "@/components/ui";
 
 interface AnnouncementHistoryPanelProps {
   announcements: Announcement[];
@@ -26,7 +27,7 @@ export function AnnouncementHistoryPanel({ announcements }: AnnouncementHistoryP
         {announcements.map((item) => (
           <article key={item.id}>
             <div>
-              <span className={`badge ${item.status === "published" ? "badge-green" : item.status === "scheduled" ? "badge-purple" : "badge-gray"}`}>{item.status}</span>
+              <Badge tone={item.status === "published" ? "green" : item.status === "scheduled" ? "blue" : "gray"}>{item.status}</Badge>
               <h3>{item.title}</h3>
               <p>{item.message}</p>
               <small>

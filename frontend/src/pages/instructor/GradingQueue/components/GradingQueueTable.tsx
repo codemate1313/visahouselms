@@ -5,8 +5,9 @@ import { useAuthStore } from "@/store/authStore";
 import { gradingQueueStrings as strings } from "../GradingQueue.strings";
 import { formatDate } from "@/utils/date";
 import { Badge } from "@/components/ui";
+import type { BadgeTone } from "@/components/ui";
 
-const STATUS_CLASS: Record<string, string> = { pending: "badge-amber", claimed: "badge-blue", completed: "badge-green" };
+const STATUS_CLASS: Record<string, BadgeTone> = { pending: "amber", claimed: "blue", completed: "green" };
 
 interface GradingQueueTableProps {
   items: GradingQueueItem[];
@@ -86,13 +87,13 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
         <td>{item.parts_to_grade}</td>
         <td className="table-actions">
           {claimedByOther ? (
-            <span
-              className="badge badge-blue"
+            <Badge
+              tone="blue"
               data-tooltip={t.evaluatingBy(item.queue.assigned_to_name ?? t.anotherInstructor)}
             >
               <Icon name="lock" />
               {t.gradingNow}
-            </span>
+            </Badge>
           ) : (
             <Link to={`${gradingBase}/${item.id}`} aria-label={t.gradeSubmission} data-tooltip={t.gradeSubmission}>
               <Icon name="grading" />

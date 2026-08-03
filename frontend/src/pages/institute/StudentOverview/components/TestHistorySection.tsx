@@ -1,5 +1,6 @@
 import type { AttemptRecord } from "../types";
 import { studentOverviewStrings as strings } from "../StudentOverview.strings";
+import { Badge } from "@/components/ui";
 
 function dateTime(value: string | null) {
   return value ? new Date(value).toLocaleString() : "-";
@@ -46,7 +47,7 @@ export function TestHistorySection({ attempts }: TestHistorySectionProps) {
                   </td>
                   <td>{dateTime(attempt.started_at)}</td>
                   <td>
-                    <span className="badge">{attempt.status.replaceAll("_", " ")}</span>
+                    <Badge>{attempt.status.replaceAll("_", " ")}</Badge>
                   </td>
                   <td>{attempt.raw_score !== null ? `${attempt.raw_score} / ${attempt.max_score ?? "-"}` : t.pending}</td>
                   <td>

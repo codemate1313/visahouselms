@@ -3841,6 +3841,12 @@ button.secondary-button:hover,
   text-transform: capitalize;
   line-height: 1;
   flex-shrink: 0;
+  /* Never spill out of a narrow cell: shrink and ellipsize instead of being
+     clipped mid-word by the column's overflow. */
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .badge::before {

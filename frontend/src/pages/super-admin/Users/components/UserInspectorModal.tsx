@@ -5,7 +5,7 @@ import { extractErrorMessage } from "@/api/errors";
 import type { IconName } from "@/components/icons";
 import { Icon } from "@/components/icons";
 import { TableAvatar } from "@/components/TableAvatar";
-import { Badge, Button, SegmentedControl } from "@/components/ui";
+import { Badge, Button, SegmentedControl, type BadgeTone } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import type { DirectoryRole, DirectoryUser, UserLinkedDetails } from "@/api/types";
 import { formatCurrencyAmount } from "@/utils/currency";
@@ -91,11 +91,11 @@ function parseUserAgent(ua: string | null | undefined): { browser: string; os: s
   return { browser, os };
 }
 
-function roleBadgeClass(role: DirectoryUser["role_name"]) {
-  if (role === "SUPER_ADMIN") return "badge-red";
-  if (role === "SA_INSTRUCTOR" || role === "INST_INSTRUCTOR") return "badge-amber";
-  if (role === "INSTITUTE_ADMIN") return "badge-green";
-  return "badge-gray";
+function roleBadgeTone(role: DirectoryUser["role_name"]): BadgeTone {
+  if (role === "SUPER_ADMIN") return "red";
+  if (role === "SA_INSTRUCTOR" || role === "INST_INSTRUCTOR") return "amber";
+  if (role === "INSTITUTE_ADMIN") return "green";
+  return "gray";
 }
 
 function roleLabel(role: DirectoryRole) {
@@ -124,11 +124,11 @@ function attemptScore(attempt: UserLinkedDetails["attempts"][number]) {
 }
 
 function subscriptionState(subscription: UserLinkedDetails["subscriptions"][number]) {
-  if (subscription.cancelled_at) return { label: "Cancelled", className: "badge-inactive" };
+  if (subscription.cancelled_at) return { label: "Cancelled", tone: "inactive" as BadgeTone };
   if (subscription.expires_at && new Date(subscription.expires_at).getTime() < Date.now()) {
-    return { label: "Expired", className: "badge-gray" };
+    return { label: "Expired", tone: "gray" as BadgeTone };
   }
-  return { label: "Active", className: "badge-green" };
+  return { label: "Active", tone: "green" as BadgeTone };
 }
 
 type AuditLogEntry = UserLinkedDetails["audit_logs"][number];
@@ -499,9 +499,9 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                 <div className="user-inspector-section">
                   <div className="user-inspector-role-card">
                     <div>
-                      <span className={`badge ${roleBadgeClass(data.user.role_name)}`}>
+                      <Badge tone={roleBadgeTone(data.user.role_name)}>
                         {roleLabel(data.user.role_name)}
-                      </span>
+                      </Badge>
                     </div>
                     <h3>{roleDescription(data.user.role_name)}</h3>
                     <p>
@@ -515,9 +515,9 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                   <div className="user-inspector-field-grid">
                     <div className="user-inspector-field">
                       <label>Role</label>
-                      <span className={`badge ${roleBadgeClass(data.user.role_name)}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, width: 'fit-content' }}>
+                      <Badge tone={roleBadgeTone(data.user.role_name)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, width: 'fit-content' }}>
                         {roleLabel(data.user.role_name)}
-                      </span>
+                      </Badge>
                     </div>
                     <div className="user-inspector-field">
                       <label>Status</label>
@@ -682,7 +682,7 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                               <strong>{subscription.plan_title}</strong>
                               <span>{formatDate(subscription.starts_at)} to {formatDate(subscription.expires_at)}</span>
                             </div>
-                            <span className={`badge ${state.className}`}>{state.label}</span>
+                            <Badge tone={state.tone}>{state.label}</Badge>
                           </article>
                         );
                       })}

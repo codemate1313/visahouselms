@@ -5,7 +5,7 @@ import { STATE_BADGES, stateLabel } from "../helpers";
 import type { InstituteRow, StatusResponse, SubscriptionInfo } from "../types";
 import { QuotaPieChart } from "./QuotaPieChart";
 import { ValidityGauge } from "./ValidityGauge";
-import { Button } from "@/components/ui";
+import { Badge, Button } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { OngoingPlanDialog } from "./OngoingPlanDialog";
 import { PlanRenewalDialog } from "./PlanRenewalDialog";
@@ -91,7 +91,7 @@ export function SubscriptionManageCard({
               {selectedInstitute.name}
             </span>
             <h2 className="subscription-plan-title">{current?.plan_name ?? t.noActivePlan}</h2>
-            <span className={`badge ${STATE_BADGES[state]}`}>{stateLabel(state)}</span>
+            <Badge tone={STATE_BADGES[state]}>{stateLabel(state)}</Badge>
           </div>
 
           {current && state !== "none" && (

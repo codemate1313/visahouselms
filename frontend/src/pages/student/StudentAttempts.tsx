@@ -5,14 +5,15 @@ import type { AttemptSummary } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { Badge, PageHeader, SearchableSelect } from "@/components/ui";
 import { studentAttemptsStrings as strings } from "./StudentAttempts.strings";
+import type { BadgeTone } from "@/components/ui";
 
-const STATUS_CLASS: Record<string, string> = {
-  ready: "badge-blue",
-  in_progress: "badge-amber",
-  submitted: "badge-gray",
-  grading: "badge-amber",
-  graded: "badge-green",
-  expired: "badge-red",
+const STATUS_CLASS: Record<string, BadgeTone> = {
+  ready: "blue",
+  in_progress: "amber",
+  submitted: "gray",
+  grading: "amber",
+  graded: "green",
+  expired: "red",
 };
 
 export function StudentAttempts() {

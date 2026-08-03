@@ -6,8 +6,9 @@ import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Badge, PageHeader } from "@/components/ui";
 import { gradingOversightStrings as strings } from "./GradingOversight.strings";
 import { formatDate } from "@/utils/date";
+import type { BadgeTone } from "@/components/ui";
 
-const STATUS_CLASS: Record<string, string> = { pending: "badge-amber", in_review: "badge-blue", resolved: "badge-green", rejected: "badge-red" };
+const STATUS_CLASS: Record<string, BadgeTone> = { pending: "amber", in_review: "blue", resolved: "green", rejected: "red" };
 
 export function GradingOversight() {
   const [overview, setOverview] = useState<GradingAdminOverview | null>(null);

@@ -1434,9 +1434,6 @@ body {
 .super-admin-portal .sleek-users-table.responsive-data-table th.col-actions,
 .super-admin-portal .sleek-users-table.responsive-data-table td.col-actions,
 .super-admin-portal .sleek-users-table.responsive-data-table .table-actions-heading.col-actions {
-  /* Not sticky: pinning required an opaque background whose edge showed as a
-     stray vertical line, and it clipped short of the card's rounded corner.
-     The column scrolls with the table like every other one. */
   position: static !important;
   width: 124px !important;
   min-width: 124px !important;
@@ -1445,7 +1442,6 @@ body {
   padding-right: 12px !important;
   white-space: nowrap !important;
   overflow: visible !important;
-  background: transparent !important;
   border-left: 0 !important;
   box-shadow: none;
 }
@@ -1610,13 +1606,6 @@ body {
   background: #181b22;
   border-color: rgba(255, 255, 255, 0.14);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
-}
-
-[data-theme="dark"] .sleek-users-table.responsive-data-table th.col-actions,
-[data-theme="dark"] .sleek-users-table.responsive-data-table td.col-actions,
-[data-theme="dark"] .sleek-users-table.responsive-data-table .table-actions-heading.col-actions {
-  background: transparent !important;
-  box-shadow: none;
 }
 
 [data-theme="dark"] .sleek-users-table.responsive-data-table .action-neutral,

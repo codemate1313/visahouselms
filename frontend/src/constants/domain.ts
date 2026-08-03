@@ -14,6 +14,7 @@
  */
 
 import { toOptions } from "./options";
+import type { BadgeTone } from "@/components/ui";
 
 /* ------------------------------------------------------------------------ */
 /* Exam module lifecycle                                                     */
@@ -136,13 +137,13 @@ export const SUBSCRIPTION_STATUS_LABELS: Readonly<Record<SubscriptionStatus, str
 /** Badge class per state, including the two states that are not filterable
  *  (an institute with none, and a cancelled term). One map, because a state
  *  that reads green on one screen and grey on the next is a bug. */
-export const SUBSCRIPTION_STATE_BADGES: Readonly<Record<string, string>> = {
-  [SUBSCRIPTION_STATUS.ACTIVE]: "badge-green",
-  [SUBSCRIPTION_STATUS.GRACE]: "badge-amber",
-  [SUBSCRIPTION_STATUS.EXPIRED]: "badge-red",
-  [SUBSCRIPTION_STATUS.SCHEDULED]: "badge-blue",
-  cancelled: "badge-gray",
-  none: "badge-gray",
+export const SUBSCRIPTION_STATE_BADGES: Readonly<Record<string, BadgeTone>> = {
+  [SUBSCRIPTION_STATUS.ACTIVE]: "green",
+  [SUBSCRIPTION_STATUS.GRACE]: "amber",
+  [SUBSCRIPTION_STATUS.EXPIRED]: "red",
+  [SUBSCRIPTION_STATUS.SCHEDULED]: "blue",
+  cancelled: "gray",
+  none: "gray",
 };
 
 export const ALL_SUBSCRIPTIONS_LABEL = "All subscriptions";
