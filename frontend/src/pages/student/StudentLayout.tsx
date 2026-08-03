@@ -39,10 +39,13 @@ export function StudentLayout() {
   if (!isInstituteStudent) {
     mainItems.push({ key: "catalog", label: menu.plansAndUpgrades, icon: "courses", to: "/student/courses" });
   }
-  mainItems.push({ key: "my-courses", label: menu.myTests, icon: "module", to: "/student/my-courses" });
+  mainItems.push(
+    { key: "my-courses", label: menu.myTests, icon: "module", to: "/student/my-courses" },
+    // Demo students take tests and must be able to read their results.
+    { key: "attempts", label: menu.myTestHistory, icon: "grading", to: "/student/attempts" },
+  );
   if (hasActivePlan) {
     mainItems.push(
-      { key: "attempts", label: menu.myTestHistory, icon: "grading", to: "/student/attempts" },
       { key: "progress", label: menu.progress, icon: "analytics", to: "/student/progress" },
       { key: "news", label: menu.news, icon: "notifications", to: "/student/news" },
       { key: "vouchers", label: menu.vouchers, icon: "transactions", to: "/student/vouchers" },

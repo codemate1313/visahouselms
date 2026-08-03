@@ -307,7 +307,8 @@ export const router = createBrowserRouter([
           { path: "dashboard", element: <RequireActivePlan><StudentDashboard /></RequireActivePlan> },
           { path: "courses", element: <StudentCourseCatalog /> },
           { path: "my-courses", element: <MyCourses /> },
-          { path: "attempts", element: <RequireActivePlan><StudentAttempts /></RequireActivePlan> },
+          // A demo student must be able to see the score they just earned.
+          { path: "attempts", element: <StudentAttempts /> },
           { path: "attempts/:id/result", element: <AttemptResult /> },
           { path: "attempts/:id/result/details", element: <AttemptResultDetails /> },
           { path: "progress", element: <RequireActivePlan><StudentProgress /></RequireActivePlan> },
