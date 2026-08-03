@@ -2816,14 +2816,17 @@ td:hover,
 }
 
 .institutes-directory-table .col-checkbox {
-  width: 56px !important;
-  min-width: 56px !important;
-  max-width: 56px !important;
-  text-align: center;
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  padding-left: 14px !important;
+  padding-right: 0 !important;
+  text-align: center !important;
 }
 
 .institutes-directory-table .col-institute {
   width: 22% !important;
+  padding-left: 6px !important;
 }
 
 .institutes-directory-table .col-contact {
