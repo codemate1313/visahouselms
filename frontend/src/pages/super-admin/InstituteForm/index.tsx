@@ -80,6 +80,10 @@ export function InstituteForm() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
 
+  // Plans & package selections
+  const [plans, setPlans] = useState<any[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+
   // Page State
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew);
@@ -92,9 +96,11 @@ export function InstituteForm() {
     Promise.all([
       apiClient.get<ModuleOption[]>("/super-admin/plans/available-modules"),
       apiClient.get<Method[]>("/super-admin/payment-methods", { params: { active_only: true } }),
-    ]).then(([moduleRes, methodRes]) => {
+      apiClient.get<any[]>("/super-admin/plans", { params: { audience: "institutes" } }),
+    ]).then(([moduleRes, methodRes, plansRes]) => {
       setModules(moduleRes.data);
       setMethods(methodRes.data);
+      setPlans(plansRes.data);
     });
 
     if (isNew) return;
@@ -565,6 +571,46 @@ export function InstituteForm() {
               <h2 className="form-section-title">Commercial Agreement</h2>
               <p className="form-section-subtitle">Contract references, financial transaction amounts, and payment tracking.</p>
             </div>
+
+            <div style={{ marginBottom: 24, display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 20, alignItems: "center", background: "var(--surface-muted)", padding: "16px 20px", borderRadius: 12, border: "1px solid var(--border)" }}>
+              <div>
+                <label htmlFor="package_select" style={{ fontWeight: 700, margin: 0, display: "block" }}>Select Package / Plan</label>
+                <span className="hint" style={{ fontSize: 12, display: "block", marginTop: 2, color: "var(--text-muted)" }}>Optionally choose a plan to auto-fill limits and pricing. You can still modify fields manually afterwards.</span>
+              </div>
+              <div>
+                <SearchableSelect
+                  options={[
+                    { value: "", label: "Custom / No Package" },
+                    ...plans.map((p) => ({
+                      value: String(p.id),
+                      label: `${p.name} (${p.student_limit} students, ${p.staff_limit} instructors) - ${p.price} ${p.currency}`
+                    }))
+                  ]}
+                  placeholder="Choose an institute plan..."
+                  value={selectedPlanId}
+                  onChange={(val) => {
+                    const idStr = String(val);
+                    setSelectedPlanId(idStr);
+                    if (idStr) {
+                      const found = plans.find((p) => String(p.id) === idStr);
+                      if (found) {
+                        setAgreedAmount(found.price != null ? Number(found.price) : "");
+                        setCurrency(found.currency ?? "INR");
+                        setAllocation({
+                          student_limit: String(found.student_limit ?? 50),
+                          staff_limit: String(found.staff_limit ?? 0),
+                          access_duration_days: String(found.duration_days ?? 365),
+                          grace_days: String(found.grace_days ?? 7),
+                        });
+                      }
+                    }
+                  }}
+                  searchable={true}
+                  className="form-dropdown-select"
+                />
+              </div>
+            </div>
+
             <div className="form-grid-3col">
               <div>
                 <label htmlFor="agreement_reference">Agreement Reference<RequiredMark /></label>

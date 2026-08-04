@@ -193,7 +193,7 @@
     <sc-if value="{{ hasPlans }}">
       <div class="{{ planGridClass }}">
         <sc-for list="{{ planCards }}" as="p" hint-placeholder-count="3">
-          <div class="vh-plan-card" style="background: {{ p.cardBg }}; color: {{ p.cardInk }}; border-color: {{ p.cardBorder }}; box-shadow: {{ p.cardShadow }};">
+          <div class="vh-plan-card" style="background: {{ p.cardBg }}; color: {{ p.cardInk }}; border-color: {{ p.cardBorder }}; box-shadow: {{ p.cardShadow }}; cursor: pointer;" onClick="{{ p.select }}">
             <sc-if value="{{ p.popular }}">
               <div class="vh-plan-badge">Most popular</div>
             </sc-if>
@@ -363,6 +363,7 @@ class Component extends DCLogic {
     billing: this.getInitialBilling(),
     faqOpen: -1,
     mobileMenuOpen: false,
+    selectedPlanId: null,
   };
 
   // Whichever catalogue is switched on leads; with both on, students first.
@@ -396,7 +397,7 @@ class Component extends DCLogic {
     const billing = plans.some((p) => p.billing_period === this.state.billing)
       ? this.state.billing
       : plans.some((p) => p.billing_period === "monthly") ? "monthly" : "annual";
-    this.setState({ audience, billing });
+    this.setState({ audience, billing, selectedPlanId: null });
   }
 
   getInitialTheme() {
@@ -590,8 +591,9 @@ class Component extends DCLogic {
     this.setState({ theme: next }, () => this.applyTheme());
   };
 
-  setMonthly = () => this.setState({ billing: "monthly" });
-  setAnnual = () => this.setState({ billing: "annual" });
+  setMonthly = () => this.setState({ billing: "monthly", selectedPlanId: null });
+  setAnnual = () => this.setState({ billing: "annual", selectedPlanId: null });
+  selectPlan = (planId) => this.setState({ selectedPlanId: planId });
 
   // Single-open accordion, matching animate-ui's default type="single" collapsible behaviour
   toggleFaq = (i) => this.setState((s) => ({ faqOpen: s.faqOpen === i ? -1 : i }));
@@ -623,13 +625,15 @@ class Component extends DCLogic {
   // is decided after approval, so this is a hint, not a commitment.
   applyForInstitute = (planId) => {
     this.closeMobileMenu();
-    const href = planId ? "/institute-signup?plan=" + planId : "/institute-signup";
-    try { window.parent.postMessage({ type: "vh-navigate", href: href }, window.location.origin); } catch {}
+    const href = planId ? "/contact?plan=" + planId : "/contact";
+    try { window.parent.postMessage({ type: "vh-navigate", href: href }, "*"); } catch {}
   };
 
   planCard(plan) {
     const dark = this.isDark();
-    const featured = Boolean(plan.is_popular);
+    const featured = this.state.selectedPlanId !== null
+      ? this.state.selectedPlanId === plan.id
+      : Boolean(plan.is_popular);
     const forInstitutes = plan.audience === "institutes";
     return {
       popular: featured,
@@ -640,6 +644,7 @@ class Component extends DCLogic {
       hasDescription: Boolean(plan.description),
       ctaLabel: forInstitutes ? "Apply for this plan" : "Choose " + plan.name,
       choose: forInstitutes ? () => this.applyForInstitute(plan.id) : () => this.choosePlan(plan.id),
+      select: () => this.selectPlan(plan.id),
       cardBg: featured ? "linear-gradient(155deg, var(--ac), var(--ac2))" : "var(--card)",
       cardInk: featured ? "#fff" : "var(--ink)",
       cardBorder: featured ? "transparent" : "var(--line)",
@@ -746,7 +751,7 @@ class Component extends DCLogic {
           { label: "Platform Admin", url: "/super-admin/login" }
         ]},
         { title: "Partnerships", links: [
-          { label: "Request Demo", url: "/dc-pages/Contact.dc.html" },
+          { label: "Request for Institute", url: "/institute-signup" },
           { label: "For Institutes", url: "/dc-pages/Landing.dc.html" },
           { label: "Resources", url: "/dc-pages/Blogs.dc.html" },
           { label: "Blog", url: "/dc-pages/Blogs.dc.html" }

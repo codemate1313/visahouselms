@@ -159,16 +159,26 @@ def submit(db: Session, data: dict, ip: Optional[str]) -> dict:
     db.add(row)
     db.flush()
     _audit(db, None, "institute_signup.submit", row.id, ip, {"institute": row.institute_name})
-
-    notification_service.notify_roles(
-        db,
-        {SUPER_ADMIN, DEVELOPER},
-        kind="institute_signup_request",
-        title="New institute application",
-        message=f"{row.institute_name} applied for an institute account.",
-        link_url="/super-admin/institute-signups",
-    )
+    # Committed before anything else is attempted. Everything below is a
+    # courtesy - telling staff, telling the applicant - and none of it is worth
+    # losing an application over. `create_notification` commits internally too,
+    # which would otherwise entangle its failures with this insert.
     db.commit()
+
+    try:
+        notification_service.notify_roles(
+            db,
+            {SUPER_ADMIN, DEVELOPER},
+            kind="institute_signup_request",
+            title="New institute application",
+            message=f"{row.institute_name} applied for an institute account.",
+            link_url="/super-admin/institute-signups",
+        )
+    except Exception as exc:  # noqa: BLE001 - the application is already safe
+        import logging
+
+        db.rollback()
+        logging.getLogger(__name__).warning("Institute signup notification failed: %s", exc)
 
     from app.services import email_template_service
 

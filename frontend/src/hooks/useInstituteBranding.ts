@@ -54,21 +54,31 @@ function writeCachedBranding(slug: string, branding: InstituteBrandingTheme) {
 
 function applyBrandingVariables(branding: InstituteBrandingTheme) {
   const root = document.documentElement;
-  root.style.setProperty("--institute-primary", branding.primary_color);
-  root.style.setProperty("--institute-secondary", branding.secondary_color);
-  root.style.setProperty("--institute-on-primary", readableForeground(branding.primary_color));
-  root.style.setProperty("--institute-on-secondary", readableForeground(branding.secondary_color));
+  let primary = branding.primary_color;
+  let secondary = branding.secondary_color;
+
+  if (primary === "#4f46e5") {
+    primary = "#e11d2e";
+  }
+  if (secondary === "#1e2130" || secondary === "#0ea5e9") {
+    secondary = "#b91323";
+  }
+
+  root.style.setProperty("--institute-primary", primary);
+  root.style.setProperty("--institute-secondary", secondary);
+  root.style.setProperty("--institute-on-primary", readableForeground(primary));
+  root.style.setProperty("--institute-on-secondary", readableForeground(secondary));
   root.style.setProperty("--app-font-family", fontStack(branding.font_family));
   root.style.setProperty("--app-heading-weight", String(branding.heading_font_weight));
   root.style.setProperty("--app-body-weight", String(branding.body_font_weight));
 }
 
-function clearBrandingVariables() {
+function applyDefaultBrandingVariables() {
   const root = document.documentElement;
-  root.style.removeProperty("--institute-primary");
-  root.style.removeProperty("--institute-secondary");
-  root.style.removeProperty("--institute-on-primary");
-  root.style.removeProperty("--institute-on-secondary");
+  root.style.setProperty("--institute-primary", "#e11d2e");
+  root.style.setProperty("--institute-secondary", "#b91323");
+  root.style.setProperty("--institute-on-primary", "#ffffff");
+  root.style.setProperty("--institute-on-secondary", "#ffffff");
   root.style.removeProperty("--app-font-family");
   root.style.removeProperty("--app-heading-weight");
   root.style.removeProperty("--app-body-weight");
@@ -86,14 +96,14 @@ export function useInstituteBranding(slug: string | null | undefined) {
     }
     if (!slug) {
       setBranding(null);
-      clearBrandingVariables();
+      applyDefaultBrandingVariables();
     }
   }, [slug]);
 
   useEffect(() => {
     if (!slug) {
       setBranding(null);
-      clearBrandingVariables();
+      applyDefaultBrandingVariables();
       return;
     }
 
@@ -106,7 +116,10 @@ export function useInstituteBranding(slug: string | null | undefined) {
       writeCachedBranding(slug, data);
       applyBrandingVariables(data);
     }).catch(() => {
-      if (active) setBranding(null);
+      if (active) {
+        setBranding(null);
+        applyDefaultBrandingVariables();
+      }
     });
 
     return () => {

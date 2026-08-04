@@ -116,13 +116,65 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
             }
             frameRef.current?.contentWindow?.postMessage(
               { type: "vh-support-ticket-result", requestId, ok: true, payload },
-              window.location.origin
+              "*"
             );
           })
           .catch((error: Error) => {
             frameRef.current?.contentWindow?.postMessage(
               { type: "vh-support-ticket-result", requestId, ok: false, error: error.message },
-              window.location.origin
+              "*"
+            );
+          });
+      }
+      if (event.data?.type === "vh-institute-signup") {
+        const requestId = event.data.requestId;
+        const payload = event.data.payload ?? {};
+
+        fetch(`${API_BASE_URL}/institute-signup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            institute_name: payload.institute_name,
+            contact_email: payload.email,
+            contact_phone: payload.phone || null,
+            city: payload.city || null,
+            country: payload.country || null,
+            website: payload.website || null,
+            admin_first_name: payload.admin_first_name,
+            admin_last_name: payload.admin_last_name,
+            admin_email: payload.admin_email,
+            expected_students: payload.expected_students ? Number(payload.expected_students) : null,
+            message: payload.message || null,
+            interested_plan_id: payload.interested_plan_id || null,
+          }),
+        })
+          .then(async (response) => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              // The server's own words are far more use than a generic failure:
+              // "you already have an account" and "we already have your
+              // application" are both things the applicant can act on. FastAPI
+              // returns validation errors as a list, so those are flattened
+              // rather than stringified into "[object Object]".
+              const detail = Array.isArray(data.detail)
+                ? data.detail.map((item: { msg?: string }) => item?.msg).filter(Boolean).join(". ")
+                : data.detail;
+              throw new Error(detail || "Unable to submit application.");
+            }
+            frameRef.current?.contentWindow?.postMessage(
+              { type: "vh-institute-signup-result", requestId, ok: true },
+              "*"
+            );
+          })
+          .catch((error: Error) => {
+            frameRef.current?.contentWindow?.postMessage(
+              {
+                type: "vh-institute-signup-result",
+                requestId,
+                ok: false,
+                error: error.message || "Unable to submit application.",
+              },
+              "*"
             );
           });
       }

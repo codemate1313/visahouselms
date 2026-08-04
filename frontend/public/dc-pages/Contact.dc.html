@@ -54,6 +54,28 @@
   .footer-social-icons .icon-content a[data-social="github"] .filled, .footer-social-icons .icon-content a[data-social="github"] ~ .tooltip { background-color: #24262a; }
   .footer-social-icons .icon-content a[data-social="instagram"] .filled, .footer-social-icons .icon-content a[data-social="instagram"] ~ .tooltip { background: linear-gradient(45deg, #405de6, #5b51db, #b33ab4, #c135b4, #e1306c, #fd1f1f); }
   .footer-social-icons .icon-content a[data-social="youtube"] .filled, .footer-social-icons .icon-content a[data-social="youtube"] ~ .tooltip { background-color: #ff0000; }
+
+  /* Chrome paints autofilled fields with its own light background, which on the
+     dark theme leaves a single field glaring white next to its neighbours. The
+     huge inset shadow is the only reliable way to repaint it. */
+  .vh-apply-form input:-webkit-autofill,
+  .vh-apply-form input:-webkit-autofill:hover,
+  .vh-apply-form input:-webkit-autofill:focus,
+  .vh-apply-form textarea:-webkit-autofill {
+    -webkit-text-fill-color: var(--ink);
+    -webkit-box-shadow: 0 0 0 1000px var(--chip) inset;
+    box-shadow: 0 0 0 1000px var(--chip) inset;
+    caret-color: var(--ink);
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  /* Status banner reads against whatever theme is on, rather than assuming a
+     light page. */
+  .vh-form-status { display: none; margin-top: 18px; font-size: 14px; line-height: 1.5; padding: 12px 14px; border-radius: 12px; border: 1px solid transparent; }
+  .vh-form-status.is-error { color: #fca5a5; border-color: rgba(248,113,113,0.35); background: rgba(248,113,113,0.12); }
+  .vh-form-status.is-ok { color: #86efac; border-color: rgba(134,239,172,0.35); background: rgba(134,239,172,0.12); }
+  .vh-theme-light .vh-form-status.is-error { color: #991b1b; border-color: rgba(153,27,27,0.22); background: rgba(254,226,226,0.72); }
+  .vh-theme-light .vh-form-status.is-ok { color: #166534; border-color: rgba(22,101,52,0.22); background: rgba(220,252,231,0.72); }
 </style>
 </helmet>
 <div ref="{{ rootRef }}" style="background: var(--bg); color: var(--ink); min-height: 100vh; overflow-x: hidden; position: relative; transition: background .35s ease, color .35s ease;">
@@ -127,36 +149,120 @@
   </section>
 
   <section class="vh-reveal" style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 96px; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px;">
-    <div style="background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 22px; padding: 40px;">
-      <h2 style="font-size: 28px; font-weight: 600; letter-spacing: -0.8px; margin-bottom: 6px;">Request a partner demo</h2>
-      <p style="font-size: 14.5px; color: var(--ink2); margin-bottom: 26px;">Institute name, size and a good time &mdash; we take it from there.</p>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-        <div style="grid-column: span 1;">
-          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Your name</label>
-          <input ref="{{ nameRef }}" type="text" placeholder="Priya Nair" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
-        </div><div style="grid-column: span 1;">
-          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Work email</label>
-          <input ref="{{ emailRef }}" type="email" placeholder="priya@institute.com" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
-        </div><div style="grid-column: span 2;">
-          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Institute name</label>
-          <input ref="{{ instituteRef }}" type="text" placeholder="Meridian Institute" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
-        </div><div style="grid-column: span 1;">
-          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Approx. students</label>
-          <input ref="{{ studentsRef }}" type="text" placeholder="150" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
-        </div><div style="grid-column: span 1;">
-          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Country</label>
-          <input ref="{{ countryRef }}" type="text" placeholder="India" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
-        </div>
-        <div style="grid-column: span 2;">
-          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">What are you trying to solve?</label>
-          <textarea ref="{{ messageRef }}" rows="4" placeholder="Tell us about your batches, current tools, and what you would like to demo." style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none; resize: vertical;"></textarea>
+    <div class="vh-apply-form" style="background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 22px; padding: 40px;">
+      <!-- Form Toggle -->
+      <div style="display: flex; justify-content: center; margin-bottom: 24px;">
+        <div style="position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; padding: 4px; background: var(--chip); border: 1px solid var(--line); border-radius: 100px; overflow: hidden;">
+          <span aria-hidden="true" style="position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 2); border-radius: 100px; background: var(--ink); transform: translateX({{ formTogglePillX }}); transition: transform .38s cubic-bezier(.2,.7,.2,1); box-shadow: 0 10px 24px -14px var(--ink);"></span>
+          <button type="button" onClick="{{ setFormTypePartner }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 100px; border: none; background: transparent; color: {{ partnerTabColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">Become a Partner</button>
+          <button type="button" onClick="{{ setFormTypeQuery }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 100px; border: none; background: transparent; color: {{ queryTabColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">Contact Us</button>
         </div>
       </div>
-      <div ref="{{ formStatusRef }}" aria-live="polite" style="display: none; margin-top: 18px; font-size: 14px; line-height: 1.5; padding: 12px 14px; border-radius: 12px;"></div>
-      <button type="button" onClick="{{ submitDemoRequest }}" style="font-family: inherit; margin-top: 24px; font-size: 15px; font-weight: 600; padding: 14px 28px; border-radius: 100px; border: none; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; cursor: pointer; box-shadow: 0 12px 32px -8px var(--ac); display: inline-flex; align-items: center; gap: 8px;">
-        {{ submitLabel }}
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
-      </button>
+
+      <sc-if value="{{ isPartner }}">
+        <h2 style="font-size: 28px; font-weight: 600; letter-spacing: -0.8px; margin-bottom: 6px;">Become a Partner</h2>
+        <p style="font-size: 14.5px; color: var(--ink2); margin-bottom: 12px;">Tell us about your centre to apply for an institute account.</p>
+        <sc-if value="{{ interestedPlanName }}">
+          <div style="display: inline-block; font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 8px; background: var(--acWash); color: var(--ac); margin-bottom: 26px;">Interested in: {{ interestedPlanName }} Plan</div>
+        </sc-if>
+        <sc-if value="{{ !interestedPlanName }}">
+          <div style="margin-bottom: 26px;"></div>
+        </sc-if>
+        
+        <h3 style="font-size: 16px; font-weight: 600; margin: 20px 0 12px; border-bottom: 1px solid var(--line); padding-bottom: 6px;">About your institute</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+          <div style="grid-column: span 2;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Institute name *</label>
+            <input ref="{{ partnerInstNameRef }}" type="text" placeholder="Meridian Institute" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+          <div style="grid-column: span 1;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Institute contact email *</label>
+            <input ref="{{ partnerContactEmailRef }}" type="email" placeholder="info@meridian.com" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+          <div style="grid-column: span 1;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Phone</label>
+            <input ref="{{ partnerPhoneRef }}" type="text" placeholder="+91 99999 99999" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+          <div style="grid-column: span 1;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">City</label>
+            <input ref="{{ partnerCityRef }}" type="text" placeholder="Bangalore" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+          <div style="grid-column: span 1;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Country</label>
+            <input ref="{{ partnerCountryRef }}" type="text" placeholder="India" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Website</label>
+            <input ref="{{ partnerWebsiteRef }}" type="text" placeholder="https://meridian.com" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+        </div>
+
+        <h3 style="font-size: 16px; font-weight: 600; margin: 20px 0 12px; border-bottom: 1px solid var(--line); padding-bottom: 6px;">Who will run it</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+          <div style="grid-column: span 1;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">First name *</label>
+            <input ref="{{ partnerAdminFirstRef }}" type="text" placeholder="Priya" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+          <div style="grid-column: span 1;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Last name *</label>
+            <input ref="{{ partnerAdminLastRef }}" type="text" placeholder="Nair" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Admin login email *</label>
+            <input ref="{{ partnerAdminEmailRef }}" type="email" placeholder="priya@meridian.com" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+        </div>
+
+        <h3 style="font-size: 16px; font-weight: 600; margin: 20px 0 12px; border-bottom: 1px solid var(--line); padding-bottom: 6px;">Anything else</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+          <div style="grid-column: span 2;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Approx. students</label>
+            <input ref="{{ partnerStudentsRef }}" type="text" placeholder="150" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Tell us about your centre</label>
+            <textarea ref="{{ partnerMessageRef }}" rows="4" placeholder="How long you've been running, what exams you prepare students for, etc." style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none; resize: vertical;"></textarea>
+          </div>
+        </div>
+
+        <div ref="{{ formStatusRef }}" class="vh-form-status" aria-live="polite" role="status"></div>
+
+        <button type="button" onClick="{{ submitDemoRequest }}" style="font-family: inherit; margin-top: 24px; font-size: 15px; font-weight: 600; padding: 14px 28px; border-radius: 100px; border: none; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; cursor: pointer; box-shadow: 0 12px 32px -8px var(--ac); display: inline-flex; align-items: center; gap: 8px;">
+          {{ submitLabel }}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </button>
+      </sc-if>
+
+      <sc-if value="{{ isQuery }}">
+        <h2 style="font-size: 28px; font-weight: 600; letter-spacing: -0.8px; margin-bottom: 6px;">Contact Us</h2>
+        <p style="font-size: 14.5px; color: var(--ink2); margin-bottom: 26px;">Have questions about pricing, features, or support? Send us a message.</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+          <div style="grid-column: span 1;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Your name *</label>
+            <input ref="{{ queryNameRef }}" type="text" placeholder="Priya Nair" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+          <div style="grid-column: span 1;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Email address *</label>
+            <input ref="{{ queryEmailRef }}" type="email" placeholder="priya@example.com" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Subject *</label>
+            <input ref="{{ querySubjectRef }}" type="text" placeholder="Question about student limits / Custom branding" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none;">
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.3px;">Message *</label>
+            <textarea ref="{{ queryMessageRef }}" rows="6" placeholder="How can we help you?" style="font-family: inherit; width: 100%; font-size: 14.5px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); outline: none; resize: vertical;"></textarea>
+          </div>
+        </div>
+
+        <div ref="{{ formStatusRef }}" class="vh-form-status" aria-live="polite" role="status"></div>
+
+        <button type="button" onClick="{{ submitQueryRequest }}" style="font-family: inherit; margin-top: 24px; font-size: 15px; font-weight: 600; padding: 14px 28px; border-radius: 100px; border: none; background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; cursor: pointer; box-shadow: 0 12px 32px -8px var(--ac); display: inline-flex; align-items: center; gap: 8px;">
+          {{ querySubmitLabel }}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </button>
+      </sc-if>
     </div>
 
     <div style="display: flex; flex-direction: column; gap: 16px;">
@@ -266,7 +372,13 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
 class Component extends DCLogic {
-  state = { theme: this.getInitialTheme(), mobileMenuOpen: false, submittingDemo: false };
+  state = {
+    theme: this.getInitialTheme(),
+    mobileMenuOpen: false,
+    submittingDemo: false,
+    submittingQuery: false,
+    formType: "partner"
+  };
 
   getInitialTheme() {
     try {
@@ -288,13 +400,34 @@ class Component extends DCLogic {
   line3Ref = (el) => { this._line3 = el; };
   drawerRef = (el) => { this._drawer = el; };
   scrimRef = (el) => { this._scrim = el; };
-  nameRef = (el) => { this._name = el; };
-  emailRef = (el) => { this._email = el; };
-  instituteRef = (el) => { this._institute = el; };
-  studentsRef = (el) => { this._students = el; };
-  countryRef = (el) => { this._country = el; };
-  messageRef = (el) => { this._message = el; };
+
+  partnerInstNameRef = (el) => { this._partnerInstName = el; };
+  partnerContactEmailRef = (el) => { this._partnerContactEmail = el; };
+  partnerPhoneRef = (el) => { this._partnerPhone = el; };
+  partnerCityRef = (el) => { this._partnerCity = el; };
+  partnerCountryRef = (el) => { this._partnerCountry = el; };
+  partnerWebsiteRef = (el) => { this._partnerWebsite = el; };
+  partnerAdminFirstRef = (el) => { this._partnerAdminFirst = el; };
+  partnerAdminLastRef = (el) => { this._partnerAdminLast = el; };
+  partnerAdminEmailRef = (el) => { this._partnerAdminEmail = el; };
+  partnerStudentsRef = (el) => { this._partnerStudents = el; };
+  partnerMessageRef = (el) => { this._partnerMessage = el; };
+
+  queryNameRef = (el) => { this._queryName = el; };
+  queryEmailRef = (el) => { this._queryEmail = el; };
+  querySubjectRef = (el) => { this._querySubject = el; };
+  queryMessageRef = (el) => { this._queryMessage = el; };
+
   formStatusRef = (el) => { this._formStatus = el; };
+
+  setFormTypePartner = () => {
+    this.setState({ formType: "partner" });
+    if (this._formStatus) this._formStatus.style.display = "none";
+  };
+  setFormTypeQuery = () => {
+    this.setState({ formType: "query" });
+    if (this._formStatus) this._formStatus.style.display = "none";
+  };
 
   setMobileMenu = (open) => {
     const drawer = this._drawer;
@@ -381,7 +514,7 @@ class Component extends DCLogic {
   // bridge (see StaticDcPage) rather than navigating this frame.
   goLogin = () => {
     this.closeMobileMenu();
-    try { window.parent.postMessage({ type: "vh-auth", mode: "login" }, window.location.origin); } catch {}
+    try { window.parent.postMessage({ type: "vh-auth", mode: "login" }, "*"); } catch {}
   };
 
   componentDidMount() {
@@ -414,32 +547,101 @@ class Component extends DCLogic {
     return (el?.value || "").trim();
   }
 
+  getInterestedPlanId() {
+    try {
+      const search = window.__vhData?.search || "";
+      const params = new URLSearchParams(search);
+      const plan = Number(params.get("plan"));
+      return Number.isFinite(plan) && plan > 0 ? plan : null;
+    } catch {
+      return null;
+    }
+  }
+
+  getInterestedPlanName() {
+    const planId = this.getInterestedPlanId();
+    if (!planId) return null;
+    const names = {
+      1: "Lite",
+      2: "Standard",
+      3: "Premium",
+      4: "Elite"
+    };
+    return names[planId] || "Selected";
+  }
+
   setFormStatus(message, tone = "info") {
     if (!this._formStatus) return;
-    const isError = tone === "error";
+    this._formStatus.className = "vh-form-status " + (tone === "error" ? "is-error" : "is-ok");
     this._formStatus.style.display = "block";
-    this._formStatus.style.color = isError ? "#991b1b" : "#166534";
-    this._formStatus.style.border = isError ? "1px solid rgba(153,27,27,0.22)" : "1px solid rgba(22,101,52,0.22)";
-    this._formStatus.style.background = isError ? "rgba(254,226,226,0.72)" : "rgba(220,252,231,0.72)";
     this._formStatus.textContent = message;
   }
 
   submitDemoRequest = () => {
     if (this.state.submittingDemo) return;
-    const name = this.getValue(this._name);
-    const email = this.getValue(this._email);
-    const institute = this.getValue(this._institute);
-    const students = this.getValue(this._students);
-    const country = this.getValue(this._country);
-    const message = this.getValue(this._message);
-    if (!name || !email || !institute || !message) {
-      this.setFormStatus("Please add your name, work email, institute name, and message.", "error");
+    const instName = this.getValue(this._partnerInstName);
+    const email = this.getValue(this._partnerContactEmail);
+    const phone = this.getValue(this._partnerPhone);
+    const city = this.getValue(this._partnerCity);
+    const country = this.getValue(this._partnerCountry);
+    const website = this.getValue(this._partnerWebsite);
+    const first = this.getValue(this._partnerAdminFirst);
+    const last = this.getValue(this._partnerAdminLast);
+    const adminEmail = this.getValue(this._partnerAdminEmail);
+    const students = this.getValue(this._partnerStudents);
+    const message = this.getValue(this._partnerMessage);
+    const interestedPlanId = this.getInterestedPlanId();
+
+    if (!instName || !email || !first || !last || !adminEmail) {
+      this.setFormStatus("Please fill in all required fields marked with *.", "error");
       return;
     }
+
     const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     this._pendingRequestId = requestId;
     this.setState({ submittingDemo: true });
-    this.setFormStatus("Sending your enquiry...");
+    this.setFormStatus("Submitting your application...");
+    try {
+      window.parent.postMessage({
+        type: "vh-institute-signup",
+        requestId,
+        payload: {
+          institute_name: instName,
+          email: email,
+          phone: phone,
+          city: city,
+          country: country,
+          website: website,
+          admin_first_name: first,
+          admin_last_name: last,
+          admin_email: adminEmail,
+          expected_students: students,
+          message: message,
+          interested_plan_id: interestedPlanId,
+        },
+      }, "*");
+    } catch {
+      this.setState({ submittingDemo: false });
+      this.setFormStatus("We could not submit your application. Please email partners@visahouse.io.", "error");
+    }
+  };
+
+  submitQueryRequest = () => {
+    if (this.state.submittingQuery) return;
+    const name = this.getValue(this._queryName);
+    const email = this.getValue(this._queryEmail);
+    const subject = this.getValue(this._querySubject);
+    const message = this.getValue(this._queryMessage);
+
+    if (!name || !email || !subject || !message) {
+      this.setFormStatus("Please fill in all fields.", "error");
+      return;
+    }
+
+    const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    this._pendingRequestId = requestId;
+    this.setState({ submittingQuery: true });
+    this.setFormStatus("Sending your message...");
     try {
       window.parent.postMessage({
         type: "vh-support-ticket",
@@ -447,33 +649,45 @@ class Component extends DCLogic {
         payload: {
           name,
           email,
-          institute_name: institute,
-          subject: `Partner demo request - ${institute}`,
-          category: "demo",
-          message: [
-            message,
-            students ? `Approx. students: ${students}` : "",
-            country ? `Country: ${country}` : "",
-          ].filter(Boolean).join("\n\n"),
+          subject,
+          message,
+          category: "general"
         },
-      }, window.location.origin);
+      }, "*");
     } catch {
-      this.setState({ submittingDemo: false });
-      this.setFormStatus("We could not send this enquiry. Please email partners@visahouse.io.", "error");
+      this.setState({ submittingQuery: false });
+      this.setFormStatus("We could not submit your message. Please email partners@visahouse.io.", "error");
     }
   };
 
   _onSupportResult = (event) => {
-    if (event.data?.type !== "vh-support-ticket-result" || event.data.requestId !== this._pendingRequestId) return;
-    this.setState({ submittingDemo: false });
-    if (event.data.ok) {
-      this.setFormStatus("Thanks. Your enquiry has been received and is now with our support team.");
-      [this._name, this._email, this._institute, this._students, this._country, this._message].forEach((el) => {
-        if (el) el.value = "";
-      });
-      return;
+    if (event.data?.type === "vh-institute-signup-result" && event.data.requestId === this._pendingRequestId) {
+      this.setState({ submittingDemo: false });
+      if (event.data.ok) {
+        this.setFormStatus("Thanks - your application has been received. We review applications by hand, usually within two working days.");
+        [
+          this._partnerInstName, this._partnerContactEmail, this._partnerPhone,
+          this._partnerCity, this._partnerCountry, this._partnerWebsite,
+          this._partnerAdminFirst, this._partnerAdminLast, this._partnerAdminEmail,
+          this._partnerStudents, this._partnerMessage
+        ].forEach((el) => {
+          if (el) el.value = "";
+        });
+        return;
+      }
+      this.setFormStatus(event.data.error || "We could not submit your application. Please email partners@visahouse.io.", "error");
     }
-    this.setFormStatus(event.data.error || "We could not send this enquiry. Please email partners@visahouse.io.", "error");
+    if (event.data?.type === "vh-support-ticket-result" && event.data.requestId === this._pendingRequestId) {
+      this.setState({ submittingQuery: false });
+      if (event.data.ok) {
+        this.setFormStatus("Thanks. Your enquiry has been received.");
+        [this._queryName, this._queryEmail, this._querySubject, this._queryMessage].forEach((el) => {
+          if (el) el.value = "";
+        });
+        return;
+      }
+      this.setFormStatus(event.data.error || "We could not submit your enquiry. Please email partners@visahouse.io.", "error");
+    }
   };
 
   observeReveal() {
@@ -494,7 +708,9 @@ class Component extends DCLogic {
   applyTheme() {
     if (!this._root) return;
     const dark = this.isDark();
-    try { window.parent.postMessage({ type: "vh-theme", theme: dark ? "dark" : "light" }, window.location.origin); } catch {}
+    try { window.parent.postMessage({ type: "vh-theme", theme: dark ? "dark" : "light" }, "*"); } catch {}
+    this._root.classList.toggle("vh-theme-dark", dark);
+    this._root.classList.toggle("vh-theme-light", !dark);
     const set = (k, v) => this._root.style.setProperty(k, v);
     set("--ac", "#e11d2e");
     set("--ac2", "#ef4444");
@@ -525,6 +741,8 @@ class Component extends DCLogic {
       light: svg([{ tag: "circle", attrs: { cx: 12, cy: 12, r: 4.2 } }, { tag: "path", attrs: { d: "M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" } }], 17),
       dark: svg([{ tag: "path", attrs: { d: "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" } }], 17),
     };
+    const isPartner = this.state.formType === "partner";
+    const isQuery = this.state.formType === "query";
     return {
       rootRef: this.rootRef,
       logoSrc: this.state.theme === "dark" ? "/brand/vh-mark-dark.png" : "/brand/vh-mark-light.png",
@@ -535,21 +753,45 @@ class Component extends DCLogic {
       line3Ref: this.line3Ref,
       drawerRef: this.drawerRef,
       scrimRef: this.scrimRef,
-      nameRef: this.nameRef,
-      emailRef: this.emailRef,
-      instituteRef: this.instituteRef,
-      studentsRef: this.studentsRef,
-      countryRef: this.countryRef,
-      messageRef: this.messageRef,
+
+      partnerInstNameRef: this.partnerInstNameRef,
+      partnerContactEmailRef: this.partnerContactEmailRef,
+      partnerPhoneRef: this.partnerPhoneRef,
+      partnerCityRef: this.partnerCityRef,
+      partnerCountryRef: this.partnerCountryRef,
+      partnerWebsiteRef: this.partnerWebsiteRef,
+      partnerAdminFirstRef: this.partnerAdminFirstRef,
+      partnerAdminLastRef: this.partnerAdminLastRef,
+      partnerAdminEmailRef: this.partnerAdminEmailRef,
+      partnerStudentsRef: this.partnerStudentsRef,
+      partnerMessageRef: this.partnerMessageRef,
+
+      queryNameRef: this.queryNameRef,
+      queryEmailRef: this.queryEmailRef,
+      querySubjectRef: this.querySubjectRef,
+      queryMessageRef: this.queryMessageRef,
+
       formStatusRef: this.formStatusRef,
       submitDemoRequest: this.submitDemoRequest,
-      submitLabel: this.state.submittingDemo ? "Sending..." : "Request demo",
+      submitQueryRequest: this.submitQueryRequest,
+      submitLabel: this.state.submittingDemo ? "Submitting..." : "Apply now",
+      querySubmitLabel: this.state.submittingQuery ? "Sending..." : "Submit query",
       mobileMenuExpanded: this.state.mobileMenuOpen ? "true" : "false",
       closeMobileMenu: this.closeMobileMenu,
       goLogin: this.goLogin,
       themeLabel: this.state.theme[0].toUpperCase() + this.state.theme.slice(1),
       themeIcon: themeIcons[this.state.theme],
       year: new Date().getFullYear(),
+      formType: this.state.formType,
+      isPartner,
+      isQuery,
+      interestedPlanName: this.getInterestedPlanName(),
+      formTogglePillX: isQuery ? "calc(100% + 4px)" : "0px",
+      partnerTabColor: isQuery ? "var(--ink2)" : "var(--bg)",
+      queryTabColor: isQuery ? "var(--bg)" : "var(--ink2)",
+      setFormTypePartner: this.setFormTypePartner,
+      setFormTypeQuery: this.setFormTypeQuery,
+
       navItems: [
         { label: "Home", href: "/", className: "vh-nav-link", mobileClassName: "vh-drawer-link vh-drawer-item" },
         { label: "About", href: "/about", className: "vh-nav-link", mobileClassName: "vh-drawer-link vh-drawer-item" },
@@ -571,7 +813,7 @@ class Component extends DCLogic {
           { label: "Platform Admin", url: "/super-admin/login" }
         ]},
         { title: "Partnerships", links: [
-          { label: "Request Demo", url: "/dc-pages/Contact.dc.html" },
+          { label: "Request for Institute", url: "/institute-signup" },
           { label: "For Institutes", url: "/dc-pages/Landing.dc.html" },
           { label: "Resources", url: "/dc-pages/Blogs.dc.html" },
           { label: "Blog", url: "/dc-pages/Blogs.dc.html" }

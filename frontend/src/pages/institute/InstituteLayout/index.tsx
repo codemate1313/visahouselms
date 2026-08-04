@@ -5,6 +5,7 @@ import { GsapRouteAnimator } from "@/components/GsapRouteAnimator";
 import { PortalTopBar } from "@/components/PortalTopBar";
 import { Sidebar, type MenuItem, type MenuSection } from "@/components/Sidebar";
 import { useInstituteBranding } from "@/hooks/useInstituteBranding";
+import { useInstituteSetup } from "@/hooks/useInstituteSetup";
 import { useAuthStore } from "@/store/authStore";
 import { instituteLayoutStrings as strings } from "./InstituteLayout.strings";
 
@@ -16,6 +17,7 @@ export function InstituteLayout() {
   );
   const user = useAuthStore((state) => state.user);
   const { branding, logoUrl } = useInstituteBranding(user?.institute_slug);
+  const { loading: setupLoading, needsSetup } = useInstituteSetup();
   const permissions = user?.institute_permissions ?? {};
   const canSeeStudents = Boolean(
     permissions.view_students
@@ -32,19 +34,25 @@ export function InstituteLayout() {
     await logoutAndRedirectHome();
   }
 
+  if (setupLoading) return null;
+
   const m = strings.menu;
-  const instituteItems: MenuItem[] = [
-    { key: "dashboard", label: m.dashboard, icon: "dashboard", to: "/institute-portal/dashboard" },
-  ];
-  if (canSeeStudents) {
-    instituteItems.push({ key: "students", label: m.students, icon: "user", to: "/institute-portal/students" });
-    instituteItems.push({ key: "announcements", label: m.announcements, icon: "notifications", to: "/institute-portal/announcements" });
-  }
-  if (permissions.manage_staff) {
-    instituteItems.push({ key: "staff", label: m.instructors, icon: "instructors", to: "/institute-portal/staff" });
-  }
-  if (permissions.view_billing) {
-    instituteItems.push({ key: "billing", label: m.subscription, icon: "subscription", to: "/institute-portal/billing" });
+  const instituteItems: MenuItem[] = [];
+
+  if (needsSetup) {
+    instituteItems.push({ key: "setup", label: m.subscription, icon: "subscription", to: "/institute-portal/setup" });
+  } else {
+    instituteItems.push({ key: "dashboard", label: m.dashboard, icon: "dashboard", to: "/institute-portal/dashboard" });
+    if (canSeeStudents) {
+      instituteItems.push({ key: "students", label: m.students, icon: "user", to: "/institute-portal/students" });
+      instituteItems.push({ key: "announcements", label: m.announcements, icon: "notifications", to: "/institute-portal/announcements" });
+    }
+    if (permissions.manage_staff) {
+      instituteItems.push({ key: "staff", label: m.instructors, icon: "instructors", to: "/institute-portal/staff" });
+    }
+    if (permissions.view_billing) {
+      instituteItems.push({ key: "billing", label: m.subscription, icon: "subscription", to: "/institute-portal/billing" });
+    }
   }
 
   const sections: MenuSection[] = [
@@ -52,29 +60,34 @@ export function InstituteLayout() {
       title: m.institute,
       items: instituteItems,
     },
-    {
-      title: m.supportSection,
-      items: [
-        { key: "support-tickets", label: m.supportTickets, icon: "notifications", to: "/institute-portal/support-tickets" },
-        { key: "support", label: m.support, icon: "help", to: "/institute-portal/support" },
-      ],
-    },
-    {
-      title: m.settings,
-      items: [
-        {
-          key: "account",
-          label: "Account",
-          icon: "user",
-          children: [
-            { key: "profile", label: m.myProfile, to: "/institute-portal/profile" },
-            { key: "sessions", label: m.activeSessions, to: "/institute-portal/sessions" },
-            { key: "change-password", label: m.changePassword, to: "/institute-portal/change-password" },
-          ],
-        },
-      ],
-    },
   ];
+
+  if (!needsSetup) {
+    sections.push(
+      {
+        title: m.supportSection,
+        items: [
+          { key: "support-tickets", label: m.supportTickets, icon: "notifications", to: "/institute-portal/support-tickets" },
+          { key: "support", label: m.support, icon: "help", to: "/institute-portal/support" },
+        ],
+      },
+      {
+        title: m.settings,
+        items: [
+          {
+            key: "account",
+            label: "Account",
+            icon: "user",
+            children: [
+              { key: "profile", label: m.myProfile, to: "/institute-portal/profile" },
+              { key: "sessions", label: m.activeSessions, to: "/institute-portal/sessions" },
+              { key: "change-password", label: m.changePassword, to: "/institute-portal/change-password" },
+            ],
+          },
+        ],
+      },
+    );
+  }
 
   return (
     <div className="dashboard institute-portal institute-branded-portal">
