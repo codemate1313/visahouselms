@@ -78,6 +78,8 @@ export interface Summary {
     demo_accounts_active: number;
     coupons_active: number;
     plans_live: number;
+    /** Public institute applications waiting on a Super Admin decision. */
+    institute_signups_pending: number;
     super_admin_accounts: number;
     sa_instructor_accounts: number;
     modules_total: number;

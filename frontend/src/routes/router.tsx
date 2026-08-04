@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { LandingLayout } from "../components/landing/LandingLayout";
 import { RequireActivePlan } from "./RequireActivePlan";
+import { RequireInstituteSetup } from "./RequireInstituteSetup";
 import { Login } from "../pages/Login";
 import {
   AboutUs,
@@ -60,6 +61,9 @@ import {
   RetakeRequests,
   RevenueDashboard,
   Sessions,
+  InstituteSetup,
+  InstituteSignup,
+  SuperAdminInstituteSignups,
   ShowcasePlans,
   StudentAnnouncements,
   StudentAttempts,
@@ -105,6 +109,9 @@ export const router = createBrowserRouter([
       { path: "/register", element: <Home /> },
       { path: "/about", element: <AboutUs /> },
       { path: "/plans", element: <ShowcasePlans /> },
+      // A public application, not a sign-up: it creates a queued request and
+      // nothing else until a Super Admin approves it.
+      { path: "/institute-signup", element: <InstituteSignup /> },
       { path: "/contact", element: <ContactUs /> },
       { path: "/blogs", element: <BlogsList /> },
       { path: "/blogs/:slug", element: <BlogDetail /> },
@@ -175,6 +182,8 @@ export const router = createBrowserRouter([
           { path: "institute-plans", element: <Navigate to="/super-admin/institutes" replace /> },
           { path: "institute-plans/new", element: <Navigate to="/super-admin/institutes" replace /> },
           { path: "institute-plans/:id", element: <Navigate to="/super-admin/institutes" replace /> },
+          // Public applications waiting on a human decision.
+          { path: "institute-signups", element: <SuperAdminInstituteSignups /> },
           { path: "subscriptions", element: <Subscriptions /> },
           { path: "institutes", element: <Institutes /> },
           { path: "institutes/new", element: <InstituteForm /> },
@@ -251,9 +260,16 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "/institute-portal",
-        element: <InstituteLayout />,
+        // A newly approved institute has no term yet, so the whole portal is
+        // held behind the setup wizard until one is paid for.
+        element: (
+          <RequireInstituteSetup>
+            <InstituteLayout />
+          </RequireInstituteSetup>
+        ),
         children: [
           { index: true, element: <Navigate to="dashboard" replace /> },
+          { path: "setup", element: <InstituteSetup /> },
           { path: "dashboard", element: <InstituteDashboard /> },
           { path: "students", element: <InstituteMembers role="STUDENT" /> },
           { path: "students/new", element: <InstituteMemberForm role="STUDENT" /> },

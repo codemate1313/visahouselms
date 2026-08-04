@@ -6,7 +6,7 @@ import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { useToastStore } from "@/store/toastStore";
 import { confirmExport } from "@/utils/confirmExport";
-import { directStudentCatalogue as catalogue, plansStrings as strings } from "./Plans.strings";
+import { planAudienceTabs, planCatalogues, plansStrings as strings, type PlanAudience } from "./Plans.strings";
 import type { PlanRow, PlanVisibility } from "./types";
 import { exportPlansExcel, exportPlansPDF } from "./exportHelpers";
 import { PlanVisibilityBar } from "./components/PlanVisibilityBar";
@@ -17,9 +17,10 @@ import { PlanDetailsModal } from "./components/PlanDetailsModal";
 export type { PlanRow } from "./types";
 
 export function Plans() {
-  // Direct-student plans are the only catalogue. An institute's plan is part of
-  // its own access agreement and is authored on the institute form, so it is
-  // never listed or reused here.
+  // Two catalogues share this screen. Bespoke institute agreements are marked
+  // internal and are filtered out server-side, so the institutes tab only ever
+  // shows the standard tiers - editing one here cannot touch a negotiated deal.
+  const [audience, setAudience] = useState<PlanAudience>("direct_students");
   const [plans, setPlans] = useState<PlanRow[]>([]);
   // Null until the flags arrive, so the switch never flashes a state the Super
   // Admin did not set.
@@ -40,7 +41,7 @@ export function Plans() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await apiClient.get<PlanRow[]>("/super-admin/plans", { params: { audience: "direct_students" } });
+      const { data } = await apiClient.get<PlanRow[]>("/super-admin/plans", { params: { audience } });
       setPlans(data);
       setLoadError(null);
     } catch {
@@ -48,7 +49,7 @@ export function Plans() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [audience]);
 
   useEffect(() => {
     load();
@@ -73,11 +74,11 @@ export function Plans() {
   async function changeVisibility(visible: boolean) {
     const previous = visibility;
     if (!previous) return;
-    setVisibility({ ...previous, direct_students: visible });
+    setVisibility({ ...previous, [audience]: visible });
     setVisibilitySaving(true);
     try {
       const { data } = await apiClient.put<PlanVisibility>("/super-admin/plans/display-settings", {
-        direct_students: visible,
+        [audience]: visible,
       });
       setVisibility(data);
     } catch (err: unknown) {
@@ -152,16 +153,44 @@ export function Plans() {
     exportPlansExcel(filteredPlans);
   }
 
+  const catalogue = planCatalogues[audience];
+
+  function switchAudience(next: PlanAudience) {
+    if (next === audience) return;
+    setAudience(next);
+    // Filters describe the list that is going away, so they reset with it.
+    setSearch("");
+    setStatusFilter("");
+  }
+
   return (
     <div>
       {loadError && <p className="error-text">{loadError}</p>}
 
+      <div className="plan-audience-tabs" role="tablist">
+        {planAudienceTabs.map((tab) => (
+          <button
+            type="button"
+            key={tab.value}
+            role="tab"
+            aria-selected={tab.value === audience}
+            className={`plan-audience-tab${tab.value === audience ? " is-active" : ""}`}
+            onClick={() => switchAudience(tab.value)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <PlanVisibilityBar
-        visible={Boolean(visibility?.direct_students)}
+        catalogue={catalogue}
+        visible={Boolean(visibility?.[audience])}
         loaded={visibility !== null}
         onChange={changeVisibility}
         saving={visibilitySaving}
       />
+
+      {audience === "institutes" && <p className="hint plan-audience-note">{strings.editingNote}</p>}
 
       <PlansFilterBar
         search={search}
@@ -171,7 +200,7 @@ export function Plans() {
         onExportPdf={handleExportPdf}
         onExportExcel={handleExportExcel}
         resultCount={filteredPlans.length}
-        newPlanPath={`${catalogue.basePath}/new`}
+        newPlanPath={`${catalogue.basePath}/new?audience=${audience}`}
         newPlanLabel={catalogue.newPlan}
       />
 

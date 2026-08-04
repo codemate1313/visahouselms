@@ -7487,3 +7487,426 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 [data-theme="dark"] .premium-demo-chip {
   color: #4ade80;
 }
+
+/* ---------------------------------------------------------------------------
+   Institute self-service renewal
+   Sits on the billing page between the plan summary and payment history. Reads
+   as a quote first (plan, amount, new term) and a checkout second, so an admin
+   knows exactly what they are buying before the gateway opens.
+   --------------------------------------------------------------------------- */
+.renew-plan-card {
+  margin-top: 18px;
+}
+
+.renew-plan-eyebrow {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.renew-plan-title {
+  margin: 4px 0 4px;
+  font-size: 18px;
+}
+
+.renew-plan-description {
+  margin-top: 0;
+}
+
+.renew-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 14px 0 6px;
+}
+
+.renew-plan-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+}
+
+.renew-plan-fact-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.renew-plan-fact-value {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.renew-plan-fact-value.is-amount {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.renew-plan-term-note {
+  margin: 0 0 12px;
+}
+
+.renew-plan-breakdown {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  background: var(--surface);
+  font-size: 13px;
+}
+
+.renew-plan-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  color: var(--text-muted);
+}
+
+.renew-plan-breakdown-row.is-total {
+  margin-top: 4px;
+  padding-top: 7px;
+  border-top: 1px dashed var(--border);
+  font-weight: 800;
+  color: var(--text);
+}
+
+.renew-plan-coupon {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 14px 0 10px;
+  max-width: 280px;
+}
+
+.renew-plan-gateway-note {
+  margin: 0 0 4px;
+}
+
+/* Plan chooser inside the renewal card. Options are buttons rather than radios
+   so the whole tile is the hit target; selection is carried on aria-pressed. */
+.renew-group-heading {
+  margin: 18px 0 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.renew-option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.renew-option {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 13px 15px;
+  text-align: left;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.renew-option:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+}
+
+.renew-option.is-selected {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  box-shadow: 0 0 0 1px var(--primary) inset;
+}
+
+.renew-option.is-unavailable,
+.renew-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.renew-option-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.renew-option-name {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.renew-option-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 19px;
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.renew-option-price small {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.renew-option-seats {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.renew-option-description {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* Catalogue switch on the Plans screen. Direct-student plans and institute
+   tiers are separate catalogues that happen to share a table, so the tabs are
+   the only thing telling you which one you are editing. */
+.plan-audience-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+  width: fit-content;
+}
+
+.plan-audience-tab {
+  padding: 7px 18px;
+  border: none;
+  border-radius: calc(var(--radius-lg) - 4px);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.plan-audience-tab:hover {
+  color: var(--text);
+}
+
+.plan-audience-tab.is-active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.12));
+}
+
+.plan-audience-note {
+  margin: 0 0 12px;
+}
+
+/* ---------------------------------------------------------------------------
+   Institute self-signup: the public application form, the Super Admin review
+   queue, and the first-run setup wizard.
+   --------------------------------------------------------------------------- */
+.institute-signup-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 20px 64px;
+}
+
+.institute-signup-header {
+  margin-bottom: 20px;
+}
+
+.institute-signup-eyebrow {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.institute-signup-header h1 {
+  margin: 6px 0 8px;
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.institute-signup-header p {
+  margin: 0 0 6px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  max-width: 62ch;
+}
+
+.institute-signup-section {
+  margin: 22px 0 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.institute-signup-section:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.institute-signup-done h1 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+/* Review queue */
+.signup-request-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.signup-request-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.signup-request-head h3 {
+  margin: 0 0 2px;
+  font-size: 17px;
+}
+
+.signup-request-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px 18px;
+  margin: 0 0 12px;
+}
+
+.signup-request-facts dt {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.signup-request-facts dd {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.signup-field-label {
+  display: block;
+  margin: 10px 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.signup-request-message {
+  margin: 0 0 8px;
+  padding: 10px 13px;
+  border-left: 3px solid var(--border);
+  border-radius: 0 var(--radius-md, 8px) var(--radius-md, 8px) 0;
+  background: var(--surface-muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.signup-approved-card {
+  margin-bottom: 16px;
+  border-color: color-mix(in srgb, var(--success, #16a34a) 40%, var(--border));
+}
+
+/* Shown once and never stored, so it is set apart from the copy around it. */
+.signup-temp-password {
+  display: inline-block;
+  padding: 7px 13px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.signup-reject-body p {
+  margin: 0 0 10px;
+  line-height: 1.55;
+}
+
+/* First-run wizard */
+.institute-setup {
+  max-width: 900px;
+}
+
+.setup-step {
+  margin-bottom: 22px;
+}
+
+.setup-step-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.setup-step-number {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--white, #fff);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.setup-step-head h2 {
+  margin: 0 0 3px;
+  font-size: 17px;
+}
+
+.setup-step-head .hint {
+  margin: 0;
+  max-width: 68ch;
+}
+
+.setup-logo-preview {
+  display: block;
+  max-width: 96px;
+  max-height: 96px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-muted);
+}

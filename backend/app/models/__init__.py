@@ -24,6 +24,7 @@ from app.models.error_log import ErrorLog
 from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion, InstituteModule
 from app.models.institute import Institute
 from app.models.institute_branding import InstituteBranding
+from app.models.institute_signup import InstituteSignupRequest
 from app.models.instructor_profile import InstructorProfile
 from app.models.job import Job
 from app.models.notification import Announcement, StudentNotification
@@ -54,6 +55,7 @@ __all__ = [
     "UserDevice",
     "UserSession",
     "Institute",
+    "InstituteSignupRequest",
     "Setting",
     "AuditLog",
     "ApiLog",

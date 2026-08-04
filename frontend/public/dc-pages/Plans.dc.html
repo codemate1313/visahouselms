@@ -617,11 +617,14 @@ class Component extends DCLogic {
     return plans.filter((p) => p.billing_period === this.state.billing || p.billing_period === "custom");
   }
 
-  // Institute plans are granted through an access agreement rather than bought
-  // on the spot, so their card points at sales instead of the register overlay.
-  contactSales = () => {
+  // An institute cannot buy a tier on the spot the way a student can - it has
+  // to be approved first - so the card opens the application form and carries
+  // the tier along as the one they were looking at. Which tier they end up on
+  // is decided after approval, so this is a hint, not a commitment.
+  applyForInstitute = (planId) => {
     this.closeMobileMenu();
-    try { window.parent.postMessage({ type: "vh-navigate", href: "/contact" }, window.location.origin); } catch {}
+    const href = planId ? "/institute-signup?plan=" + planId : "/institute-signup";
+    try { window.parent.postMessage({ type: "vh-navigate", href: href }, window.location.origin); } catch {}
   };
 
   planCard(plan) {
@@ -635,8 +638,8 @@ class Component extends DCLogic {
       period: plan.period_label,
       description: plan.description || "",
       hasDescription: Boolean(plan.description),
-      ctaLabel: forInstitutes ? "Talk to sales" : "Choose " + plan.name,
-      choose: forInstitutes ? this.contactSales : () => this.choosePlan(plan.id),
+      ctaLabel: forInstitutes ? "Apply for this plan" : "Choose " + plan.name,
+      choose: forInstitutes ? () => this.applyForInstitute(plan.id) : () => this.choosePlan(plan.id),
       cardBg: featured ? "linear-gradient(155deg, var(--ac), var(--ac2))" : "var(--card)",
       cardInk: featured ? "#fff" : "var(--ink)",
       cardBorder: featured ? "transparent" : "var(--line)",

@@ -22,7 +22,9 @@ export function SubscriptionSummary({ subscription }: SubscriptionSummaryProps) 
         <div className="metric-grid">
           <MetricCard label={t.students} value={`${subscription.usage.students} / ${subscription.limits.students}`} tone="blue" icon="user" />
           <MetricCard label={t.instructors} value={`${subscription.usage.staff} / ${subscription.limits.staff}`} tone="green" icon="instructors" />
-          <MetricCard label={t.tests} value={subscription.limits.tests === null ? t.unlimited : `${subscription.usage.tests} / ${subscription.limits.tests}`} tone="purple" icon="grading" />
+          {/* Seats are capped, sittings are not - so this reports how many
+              tests have been taken rather than how many are left. */}
+          <MetricCard label={t.testsTaken} value={subscription.usage.tests} caption={t.testsUnmetered} tone="purple" icon="grading" />
         </div>
       )}
     </>

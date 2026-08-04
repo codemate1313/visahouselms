@@ -8,6 +8,7 @@ import type { MetricDetail, MetricKey, Summary } from "./types";
 import { ExecutiveMetricGrid } from "./components/ExecutiveMetricGrid";
 import { DashboardCharts } from "./components/DashboardCharts";
 import { MetricDetailModal } from "./components/MetricDetailModal";
+import { PendingSignupsAlert } from "./components/PendingSignupsAlert";
 import { NoLivePlanAlert } from "./components/NoLivePlanAlert";
 
 export function Dashboard() {
@@ -83,6 +84,9 @@ export function Dashboard() {
         subtitle={strings.subtitle}
       />
 
+      {summary.counts.institute_signups_pending > 0 && (
+        <PendingSignupsAlert count={summary.counts.institute_signups_pending} />
+      )}
       {summary.counts.plans_live === 0 && <NoLivePlanAlert />}
       <ExecutiveMetricGrid summary={summary} growth={growth} onOpen={openMetric} />
       {summary.permissions.can_view_monetary_analytics && summary.revenue && <DashboardCharts summary={summary} />}

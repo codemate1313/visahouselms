@@ -9,6 +9,14 @@ export const dashboardStrings = {
     body: "Visitors on the Plans page see nothing to buy until at least one plan is active and published.",
     cta: "Create a plan",
   },
+  pendingSignups: {
+    title: (count: number) =>
+      count === 1
+        ? "1 institute is waiting to be reviewed"
+        : `${count} institutes are waiting to be reviewed`,
+    body: "Applications from the public site sit here until someone approves or declines them. Nothing is created until you do.",
+    cta: "Review applications",
+  },
   metricTitles: {
     institutes: "Total Institutes",
     students: "Students Enrolled",

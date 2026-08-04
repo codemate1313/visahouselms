@@ -6,6 +6,7 @@ import { instituteBillingStrings as strings } from "./InstituteBilling.strings";
 import type { Payment, SubscriptionStatus } from "./types";
 import { SubscriptionSummary } from "./components/SubscriptionSummary";
 import { PaymentHistoryTable } from "./components/PaymentHistoryTable";
+import { RenewPlanCard } from "./components/RenewPlanCard";
 
 export function InstituteBilling() {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -34,6 +35,8 @@ export function InstituteBilling() {
 
       {subscription && <SubscriptionSummary subscription={subscription} />}
       {error && <p className="error-text">{error}</p>}
+
+      <RenewPlanCard onRenewed={load} />
 
       <PaymentHistoryTable payments={payments} />
     </div>

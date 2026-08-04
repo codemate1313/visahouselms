@@ -1,8 +1,14 @@
 /**
- * Plans sold to students buying access directly from the website - the only
- * catalogue there is. An institute's plan belongs to its own access agreement
- * and is authored on the institute form, so it is never listed or reused here.
+ * Two catalogues, one screen. Direct-student plans are sold from the public
+ * pricing page; institute tiers are the standard ladder an institute can renew
+ * onto itself from its billing page.
+ *
+ * Bespoke institute agreements are still authored on the institute form and are
+ * marked internal, which keeps them out of this catalogue - editing a tier here
+ * must never rewrite somebody's negotiated deal.
  */
+export type PlanAudience = "direct_students" | "institutes";
+
 export const directStudentCatalogue = {
   basePath: "/super-admin/plans",
   newPlan: "New Plan",
@@ -13,7 +19,29 @@ export const directStudentCatalogue = {
   hiddenHint: "Direct student plans are hidden from the public pricing page.",
 } as const;
 
+export const instituteCatalogue = {
+  basePath: "/super-admin/plans",
+  newPlan: "New Tier",
+  exportLabel: "institute plans",
+  empty: "No institute tiers yet - run scripts/seed_institute_plans.py or create one.",
+  audienceLabel: "institutes",
+  visibilityHint: "Institute tiers are listed on the public pricing page.",
+  hiddenHint: "Institute tiers are hidden from the public pricing page.",
+} as const;
+
+export const planCatalogues: Record<PlanAudience, typeof directStudentCatalogue> = {
+  direct_students: directStudentCatalogue,
+  institutes: instituteCatalogue,
+};
+
+export const planAudienceTabs = [
+  { value: "direct_students" as const, label: "Direct students" },
+  { value: "institutes" as const, label: "Institutes" },
+];
+
 export const plansStrings = {
+  editingNote:
+    "Editing a tier applies to future terms only - institutes already subscribed keep the price and seats their term was cut with.",
   searchPlaceholder: "Search plan name or description...",
   visibility: {
     label: "Show on website",

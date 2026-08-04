@@ -1,7 +1,9 @@
 import { ToggleSwitch } from "@/components/ToggleSwitch";
-import { directStudentCatalogue as catalogue, plansStrings as strings } from "../Plans.strings";
+import { directStudentCatalogue, plansStrings as strings } from "../Plans.strings";
 
 interface PlanVisibilityBarProps {
+  /** Copy for whichever catalogue is on screen - the wording differs. */
+  catalogue: typeof directStudentCatalogue;
   visible: boolean;
   /** False until the stored flag arrives, so the switch never flashes a state
    *  the Super Admin did not set. */
@@ -10,7 +12,7 @@ interface PlanVisibilityBarProps {
   saving: boolean;
 }
 
-export function PlanVisibilityBar({ visible, loaded, onChange, saving }: PlanVisibilityBarProps) {
+export function PlanVisibilityBar({ catalogue, visible, loaded, onChange, saving }: PlanVisibilityBarProps) {
   return (
     <div className="plan-audience-bar">
       <div className="plan-visibility-control">

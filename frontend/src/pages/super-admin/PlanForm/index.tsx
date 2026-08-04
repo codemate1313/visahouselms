@@ -1,10 +1,10 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Checkbox, PageHeader, RequiredMark, SearchableSelect } from "@/components/ui";
 
-import { directStudentCatalogue as catalogue, planFormStrings as strings } from "./PlanForm.strings";
+import { planFormCatalogues, planFormStrings as strings, type PlanAudience } from "./PlanForm.strings";
 import { PlanCoursePicker, type PlanModule } from "./components/PlanCoursePicker";
 import { PlanFeatureEditor } from "./components/PlanFeatureEditor";
 
@@ -26,6 +26,13 @@ export function PlanForm() {
   const { id } = useParams();
   const isNew = id === "new" || !id;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // New plans take their catalogue from the tab that launched the form; an
+  // existing plan keeps its own, which is read back with the rest of the row.
+  const [audience, setAudience] = useState<PlanAudience>(
+    searchParams.get("audience") === "institutes" ? "institutes" : "direct_students",
+  );
+  const catalogue = planFormCatalogues[audience];
   const [form, setForm] = useState(EMPTY);
   const [modules, setModules] = useState<PlanModule[]>([]);
   const [gstRates, setGstRates] = useState<GstOption[]>([]);
@@ -65,6 +72,7 @@ export function PlanForm() {
             is_international_enabled: Boolean(data.is_international_enabled),
             usd_price: data.usd_price ? String(data.usd_price) : "",
           });
+          if (data.audience === "institutes") setAudience("institutes");
           setSelected(new Set((data.modules || []).map((module: PlanModule) => module.id)));
           // Features are required; start with one blank row so plans saved
           // before this field existed are still editable.
@@ -124,7 +132,7 @@ export function PlanForm() {
       gst_rate_id: form.gst_rate_id ? Number(form.gst_rate_id) : null,
       is_international_enabled: form.is_international_enabled,
       usd_price: form.is_international_enabled && form.usd_price ? Number(form.usd_price) : null,
-      audience: "direct_students",
+      audience,
       is_published: form.is_published,
       module_ids: [...selected],
       features: cleanedFeatures,

@@ -9,11 +9,14 @@ from app.models.role import INSTITUTE_ADMIN
 from app.models.user import User
 from app.models.user_session import UserSession
 from app.schemas.auth import CurrentUser
+from app.schemas.institute import BrandingUpdate
 from app.schemas.institute_admin import InstituteMemberCreate, InstituteMemberUpdate
+from app.schemas.payment import InstituteRenewalOrderRequest, InstituteRenewalVerifyRequest
 from app.schemas.user import ChangePasswordRequest, ProfileUpdateRequest, SessionOut
 from app.services import (
     account_service,
     institute_admin_service,
+    institute_service,
     payment_service,
     subscription_service,
 )
@@ -369,3 +372,83 @@ def subscription_status(db: Session = Depends(get_db), actor: User = Depends(get
 def list_payments(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     institute_admin_service.require_admin_permission(actor, "view_billing")
     return payment_service.list_payments(db, institute_id=actor.institute_id)
+
+
+@router.get("/renewal-options", dependencies=[Depends(require_password_change_complete)])
+def renewal_options(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    """Plans this institute may buy its next term on - ones it has held before,
+    then the published tiers - each priced with its own tax breakdown."""
+    institute_admin_service.require_admin_permission(actor, "view_billing")
+    return payment_service.institute_renewal_options(db, actor.institute_id)
+
+
+@router.post("/subscription/renew-order", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_password_change_complete)])
+def create_renewal_order(
+    payload: InstituteRenewalOrderRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    institute_admin_service.require_admin_permission(actor, "view_billing")
+    return payment_service.create_institute_renewal_order(
+        db, actor, actor.institute_id, payload.plan_id, payload.coupon_code, _ip(request)
+    )
+
+
+@router.post("/payments/{payment_id}/verify-renewal", dependencies=[Depends(require_password_change_complete)])
+def verify_renewal_payment(
+    payment_id: int,
+    payload: InstituteRenewalVerifyRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    institute_admin_service.require_admin_permission(actor, "view_billing")
+    return payment_service.verify_institute_renewal_payment(
+        db,
+        actor,
+        actor.institute_id,
+        payment_id,
+        payload.razorpay_payment_id,
+        payload.razorpay_order_id,
+        payload.razorpay_signature,
+        _ip(request),
+    )
+
+
+# Branding is the institute's own identity, so its admin edits it directly
+# rather than filing a request. Scoped to their own institute by construction:
+# the id comes from the session, never the request.
+@router.get("/branding", dependencies=[Depends(require_password_change_complete)])
+def get_my_branding(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    return institute_service.get_branding(db, actor.institute_id)
+
+
+@router.put("/branding", dependencies=[Depends(require_password_change_complete)])
+def update_my_branding(
+    payload: BrandingUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return institute_service.update_branding(
+        db,
+        actor,
+        actor.institute_id,
+        payload.primary_color,
+        payload.secondary_color,
+        _ip(request),
+        payload.font_family,
+        payload.heading_font_weight,
+        payload.body_font_weight,
+    )
+
+
+@router.post("/branding/logo", dependencies=[Depends(require_password_change_complete)])
+async def upload_my_logo(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return await institute_service.save_logo(db, actor, actor.institute_id, file, _ip(request))

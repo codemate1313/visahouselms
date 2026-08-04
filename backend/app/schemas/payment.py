@@ -41,3 +41,18 @@ class AddInstallmentRequest(BaseModel):
 
 class PaymentMethodCreate(BaseModel):
     name: str = Field(min_length=1, max_length=50)
+
+
+class InstituteRenewalOrderRequest(BaseModel):
+    """Self-service renewal. `plan_id` defaults to the plan currently in force;
+    any other value must be one the institute has held before or a published
+    tier, which the service re-checks server-side."""
+
+    plan_id: Optional[int] = None
+    coupon_code: Optional[str] = None
+
+
+class InstituteRenewalVerifyRequest(BaseModel):
+    razorpay_payment_id: str
+    razorpay_order_id: str
+    razorpay_signature: str

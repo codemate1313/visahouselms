@@ -82,8 +82,10 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/onboarding/new", eyebrow: "SAAS MANAGEMENT", title: "New Institute Onboarding" },
   { match: /\/super-admin\/onboarding\/\d+/, eyebrow: "SAAS MANAGEMENT", title: "Edit Institute Onboarding" },
   { match: "/super-admin/onboarding", eyebrow: "SAAS MANAGEMENT", title: "Institute Onboarding" },
-  { match: "/super-admin/plans/new", eyebrow: "SAAS MANAGEMENT", title: "Create Direct Student Plan" },
-  { match: /\/super-admin\/plans\/\d+/, eyebrow: "SAAS MANAGEMENT", title: "Edit Direct Student Plan" },
+  // The form itself titles the specific catalogue; the bar stays neutral so it
+  // does not contradict an institute tier being edited.
+  { match: "/super-admin/plans/new", eyebrow: "SAAS MANAGEMENT", title: "Create Plan" },
+  { match: /\/super-admin\/plans\/\d+/, eyebrow: "SAAS MANAGEMENT", title: "Edit Plan" },
   // One screen lists both catalogues, switched by the audience control on it.
   { match: "/super-admin/plans", eyebrow: "SAAS MANAGEMENT", title: "Subscription Plans" },
   { match: "/super-admin/subscriptions", eyebrow: "SAAS MANAGEMENT", title: "Access Agreements" },
@@ -231,18 +233,19 @@ function getBreadcrumbs(pathname: string, eyebrow: string, title: string): Bread
   }
 
 
-  // Direct Student Plans sub-routes
+  // Plans sub-routes. Both catalogues live under the same path, so the crumb
+  // points back at the screen rather than naming one of them.
   if (pathname === "/super-admin/plans/new") {
     return [
       { label: eyebrow },
-      { label: "Direct Student Plans", path: "/super-admin/plans" },
+      { label: "Subscription Plans", path: "/super-admin/plans" },
       { label: "New Plan" }
     ];
   }
   if (/\b\/plans\/\d+\b/.test(pathname)) {
     return [
       { label: eyebrow },
-      { label: "Direct Student Plans", path: "/super-admin/plans" },
+      { label: "Subscription Plans", path: "/super-admin/plans" },
       { label: "Edit Plan" }
     ];
   }

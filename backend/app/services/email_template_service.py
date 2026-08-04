@@ -511,3 +511,95 @@ The Visa House Team
     )
 
     return subject, plain, html
+
+
+def render_institute_application_received_email(
+    first_name: str,
+    institute_name: str,
+) -> tuple[str, str, str]:
+    """Acknowledges a public institute application so the applicant knows the
+    form went somewhere. Deliberately promises review, not approval."""
+    subject = "We've received your Visa House institute application"
+    body_lines = (
+        f"Thanks for applying to run {institute_name} on Visa House. Your application is "
+        "with our team now."
+    )
+    plain = f"""Hi {first_name},
+
+{body_lines}
+
+We review applications by hand, usually within two working days. If it is approved
+you will receive a second email with login details for your institute admin account,
+and you can choose a plan from there.
+
+There is nothing you need to do in the meantime.
+
+- The Visa House team
+"""
+    html = render_base_email(
+        badge_label="APPLICATION RECEIVED",
+        title="Thanks for applying",
+        subtitle=institute_name,
+        content_html=f"""
+          <p style="margin:0 0 16px 0; font-size:15px; line-height:1.6;">Hi {first_name},</p>
+          <p style="margin:0 0 16px 0; font-size:15px; line-height:1.6;">{body_lines}</p>
+          <p style="margin:0 0 16px 0; font-size:15px; line-height:1.6;">
+            We review applications by hand, usually within two working days. If it is approved
+            you will receive a second email with login details for your institute admin account,
+            and you can choose a plan from there.
+          </p>
+          <p style="margin:0; font-size:15px; line-height:1.6; color:#475569;">
+            There is nothing you need to do in the meantime.
+          </p>
+        """,
+    )
+    return subject, plain, html
+
+
+def render_institute_application_rejected_email(
+    first_name: str,
+    institute_name: str,
+    reason: str,
+) -> tuple[str, str, str]:
+    """Declines an application, carrying the reviewer's own words.
+
+    The reason is shown verbatim rather than softened - an applicant who is
+    told why can fix it and reapply, which a generic decline never allows.
+    """
+    subject = "About your Visa House institute application"
+    plain = f"""Hi {first_name},
+
+Thank you for your interest in running {institute_name} on Visa House.
+
+We are not able to approve your application at this time.
+
+Reason given by our team:
+{reason}
+
+If you believe this was a mistake, or your circumstances change, you are welcome to
+reply to this email or apply again.
+
+- The Visa House team
+"""
+    html = render_base_email(
+        badge_label="APPLICATION UPDATE",
+        title="We couldn't approve this application",
+        subtitle=institute_name,
+        badge_color="#475569",
+        content_html=f"""
+          <p style="margin:0 0 16px 0; font-size:15px; line-height:1.6;">Hi {first_name},</p>
+          <p style="margin:0 0 16px 0; font-size:15px; line-height:1.6;">
+            Thank you for your interest in running {institute_name} on Visa House.
+            We are not able to approve your application at this time.
+          </p>
+          <div style="margin:0 0 20px 0; padding:14px 16px; background-color:#f8fafc; border-left:3px solid #94a3b8; border-radius:6px;">
+            <div style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b; margin-bottom:6px;">Reason given by our team</div>
+            <div style="font-size:14px; line-height:1.6; color:#0f172a;">{reason}</div>
+          </div>
+          <p style="margin:0; font-size:15px; line-height:1.6; color:#475569;">
+            If you believe this was a mistake, or your circumstances change, you are welcome to
+            reply to this email or apply again.
+          </p>
+        """,
+    )
+    return subject, plain, html

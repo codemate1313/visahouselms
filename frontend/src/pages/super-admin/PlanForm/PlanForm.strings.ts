@@ -1,5 +1,7 @@
-/** Wording for the only catalogue there is. An institute's plan belongs to its
- *  own access agreement and is authored on the institute form, never here. */
+/** One form, two catalogues. A bespoke institute agreement is still authored on
+ *  the institute form and marked internal, so it never reaches this screen. */
+export type PlanAudience = "direct_students" | "institutes";
+
 export const directStudentCatalogue = {
   basePath: "/super-admin/plans",
   createTitle: "Create Direct Student Plan",
@@ -8,6 +10,22 @@ export const directStudentCatalogue = {
   publishLabel: "Publish on website",
   publishHint: "Only published plans are visible to direct students.",
 } as const;
+
+export const instituteCatalogue = {
+  basePath: "/super-admin/plans",
+  createTitle: "Create Institute Tier",
+  editTitle: "Edit Institute Tier",
+  subtitle:
+    "A standard tier institutes can subscribe to and renew themselves. Changes apply to future terms only - anyone already subscribed keeps the price and seats their term was cut with.",
+  publishLabel: "Offer to institutes",
+  publishHint:
+    "Only published tiers appear as renewal options on an institute's billing page and on the public pricing page.",
+} as const;
+
+export const planFormCatalogues: Record<PlanAudience, typeof directStudentCatalogue> = {
+  direct_students: directStudentCatalogue,
+  institutes: instituteCatalogue,
+};
 
 export const planFormStrings = {
   loading: "Loading...",

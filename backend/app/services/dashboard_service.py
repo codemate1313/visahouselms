@@ -17,7 +17,7 @@ from app.models.payment_method import PaymentMethod
 from app.models.role import SA_INSTRUCTOR, STUDENT, Role
 from app.models.user import User
 from app.models.user_session import UserSession
-from app.services import payment_service, plan_service, revenue_service, subscription_service, super_admin_service
+from app.services import institute_signup_service, payment_service, plan_service, revenue_service, subscription_service, super_admin_service
 
 SUBSCRIPTION_STATES = (
     subscription_service.STATE_ACTIVE,
@@ -717,6 +717,9 @@ def get_summary(db: Session, actor: User | None = None) -> dict:
             # Drives the "publish a plan" warning - a platform with no live plan
             # shows an empty public pricing page.
             "plans_live": plan_service.live_plan_query(db).count(),
+            # Institutes waiting on a human decision. Drives the review prompt
+            # on the dashboard, which is the only place these surface.
+            "institute_signups_pending": institute_signup_service.pending_count(db),
             "super_admin_accounts": super_admin_accounts,
             "sa_instructor_accounts": sa_instructor_accounts,
             "modules_total": db.query(ExamModule).filter(ExamModule.deleted_at.is_(None)).count(),

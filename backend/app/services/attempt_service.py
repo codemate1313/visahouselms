@@ -192,11 +192,6 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         if retake_request is None:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ALREADY_ATTEMPTED_DETAIL)
 
-    if user.institute_id is not None:
-        from app.dependencies.limits import enforce_limit
-
-        enforce_limit(db, user.institute_id, "tests")
-
     now = _now()
     expires_at = now + timedelta(minutes=module.duration_minutes + EXPIRY_BUFFER_MINUTES)
     attempt = TestAttempt(

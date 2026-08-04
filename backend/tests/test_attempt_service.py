@@ -521,8 +521,9 @@ class AttemptServiceTestCase(unittest.TestCase):
         institute = Institute(name="Staffed Academy", slug="staffed-academy", is_active=True)
         self.db.add_all([institute_role, institute])
         self.db.flush()
-        # start_attempt runs enforce_limit, so the institute needs a live
-        # subscription before a student attached to it can begin an attempt.
+        # Module entitlement is resolved from the institute's subscription, so
+        # a student attached to it needs a live plan before starting an attempt.
+        # Sittings themselves are not metered - only access is checked.
         plan = Plan(
             name="Staffed Academy Plan",
             price=Decimal("1000.00"),

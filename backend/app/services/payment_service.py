@@ -1,6 +1,6 @@
 import hashlib
 import hmac
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import List, Optional
 import requests
@@ -17,6 +17,7 @@ from app.models.institute import Institute
 from app.models.payment import Payment
 from app.models.plan import AUDIENCE_DIRECT, AUDIENCE_INSTITUTES, Plan
 from app.models.role import DEVELOPER, INSTITUTE_ADMIN, SUPER_ADMIN
+from app.models.subscription import Subscription
 from app.models.user import User
 from app.services import coupon_service, institute_service, notification_service, plan_service, subscription_service
 from app.services.settings_service import get_settings_group
@@ -785,3 +786,419 @@ def verify_razorpay_payment(
 
     payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
     return _serialize(payment)
+
+
+# ---------------------------------------------------------------------------
+# Institute self-service renewal and first activation
+#
+# An institute admin buying their own term. The choice is deliberately bounded:
+# a plan they have held before (so renewing is always one click) or one from the
+# published institute catalogue (so outgrowing a tier, or starting on one, does
+# not need a support ticket). Anything bespoke - a negotiated agreement, an
+# off-catalogue rate - stays with the Super Admin, which is why an internal plan
+# is only ever offered back to the institute that already holds it.
+#
+# The same code path covers a brand-new institute approved from a public
+# application: it simply has no current term, so the catalogue is all it is
+# offered and the purchase assigns a first subscription instead of extending one.
+# ---------------------------------------------------------------------------
+
+
+def _renewable_subscription(db: Session, institute_id: int):
+    """The term being bought after, or `(None, state, None)` for an institute
+    that has never had one. Callers must handle the no-subscription case: that
+    is activation, not an error."""
+    subscription, state = subscription_service.current_subscription(db, institute_id)
+    if subscription is None or subscription.plan is None:
+        return None, state, None
+    return subscription, state, subscription.plan
+
+
+def _held_plan_ids(db: Session, institute_id: int) -> List[int]:
+    """Every plan this institute has ever been subscribed to, newest term first.
+
+    Held plans are offered back even when they have been unpublished, because an
+    institute renewing what it already pays for should never be told its own
+    plan no longer exists. Deactivated plans are the exception - those are
+    surfaced as unavailable rather than silently dropped.
+    """
+    rows = (
+        db.query(Subscription.plan_id)
+        .filter(Subscription.institute_id == institute_id)
+        .order_by(Subscription.starts_at.desc())
+        .all()
+    )
+    ordered: List[int] = []
+    for (plan_id,) in rows:
+        if plan_id is not None and plan_id not in ordered:
+            ordered.append(plan_id)
+    return ordered
+
+
+def _catalogue_plan_ids(db: Session) -> List[int]:
+    """Published institute tiers any institute may move onto."""
+    return [
+        plan_id
+        for (plan_id,) in db.query(Plan.id)
+        .filter(
+            Plan.audience == AUDIENCE_INSTITUTES,
+            Plan.is_active.is_(True),
+            Plan.is_published.is_(True),
+            Plan.is_internal.is_(False),
+        )
+        .order_by(Plan.price)
+        .all()
+    ]
+
+
+def _renewal_option(plan: Plan, start: datetime, current_plan_id: int, held: bool, razorpay_enabled: bool) -> dict:
+    totals = calculate_gst_and_totals(plan)
+    final_amount = totals["final_amount"]
+    return {
+        "plan_id": plan.id,
+        "plan_name": plan.name,
+        "description": plan.description,
+        "currency": plan.currency or "INR",
+        "duration_days": plan.duration_days,
+        "grace_days": plan.grace_days,
+        "student_limit": plan.student_limit,
+        "staff_limit": plan.staff_limit,
+        "features": list(plan.features or []),
+        "is_current": plan.id == current_plan_id,
+        "held_before": held,
+        "is_available": plan.is_active,
+        "new_starts_at": start,
+        "new_expires_at": start + timedelta(days=plan.duration_days),
+        "base_amount": float(plan.price),
+        "subtotal_amount": float(totals["subtotal_amount"]),
+        "gst_percentage": float(totals["gst_percentage"]),
+        "gst_tax_type": totals["gst_tax_type"],
+        "gst_amount": float(totals["gst_amount"]),
+        "final_amount": float(final_amount),
+        # A zero-priced plan (internal, QA, comped) still renews - it just does
+        # not go anywhere near a gateway. The card reads as "extend" rather than
+        # "pay" so nobody is shown a 0.00 checkout button.
+        "requires_payment": final_amount > 0,
+        "online_payment_available": razorpay_enabled and final_amount > 0,
+    }
+
+
+def institute_renewal_options(db: Session, institute_id: int) -> dict:
+    """Everything the plan panel needs to price a choice before anyone pays.
+
+    Plans the institute has held come first (the running one at the very top),
+    then the published tiers it could move onto. Every option carries its own
+    tax breakdown and term dates, so changing the selection in the UI never
+    needs another round trip.
+
+    An institute with no term yet - one just approved from a public application
+    - gets the catalogue and `is_activation`, which is what turns the same panel
+    into a first-purchase screen.
+    """
+    subscription, state, current_plan = _renewable_subscription(db, institute_id)
+    # A first purchase starts today; a renewal starts when the running term ends,
+    # so renewing early never costs unused days.
+    start = max(_now(), subscription.expires_at) if subscription is not None else _now()
+    current_plan_id = current_plan.id if current_plan is not None else 0
+    razorpay_enabled = get_public_payment_config(db)["razorpay_enabled"]
+
+    held_ids = _held_plan_ids(db, institute_id)
+    ordered_ids = held_ids + [pid for pid in _catalogue_plan_ids(db) if pid not in held_ids]
+    plans = {plan.id: plan for plan in db.query(Plan).filter(Plan.id.in_(ordered_ids)).all()} if ordered_ids else {}
+
+    options = [
+        _renewal_option(plans[pid], start, current_plan_id, pid in held_ids, razorpay_enabled)
+        for pid in ordered_ids
+        if pid in plans
+    ]
+    # The running plan leads regardless of price or when it was last held.
+    options.sort(key=lambda option: (not option["is_current"], not option["held_before"], option["final_amount"]))
+
+    return {
+        "state": state,
+        "is_activation": subscription is None,
+        "current_plan_id": current_plan.id if current_plan is not None else None,
+        "current_plan_name": current_plan.name if current_plan is not None else None,
+        "current_expires_at": subscription.expires_at if subscription is not None else None,
+        "new_starts_at": start,
+        "options": options,
+    }
+
+
+def _resolve_renewal_plan(db: Session, institute_id: int, plan_id: Optional[int]) -> Plan:
+    """Confirms the institute is allowed onto the plan it asked for.
+
+    The allowed set is the same one the options endpoint renders, recomputed
+    here rather than trusted from the request - otherwise a hand-rolled call
+    could put an institute on any plan in the system at a price of its choosing.
+    """
+    _subscription, _state, current_plan = _renewable_subscription(db, institute_id)
+
+    if plan_id is None:
+        if current_plan is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Choose a plan to continue",
+            )
+        if not current_plan.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This plan is no longer offered - choose another below or contact support",
+            )
+        return current_plan
+
+    if current_plan is not None and plan_id == current_plan.id and current_plan.is_active:
+        return current_plan
+
+    if plan_id not in set(_held_plan_ids(db, institute_id)) | set(_catalogue_plan_ids(db)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="That plan is not available to your institute - contact support to change plans",
+        )
+
+    plan = db.get(Plan, plan_id)
+    if plan is None or not plan.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This plan is no longer offered - choose another or contact support",
+        )
+    return plan
+
+
+def _book_institute_term(
+    db: Session, actor: User, institute_id: int, plan_id: int, ip: Optional[str], *, commit: bool
+) -> dict:
+    """Extends the running term, or grants the first one.
+
+    An institute that has never had a subscription is being activated, not
+    renewed, so `assign` is what applies - `renew` refuses outright when there
+    is nothing to renew.
+    """
+    subscription, _state, _plan = _renewable_subscription(db, institute_id)
+    if subscription is None:
+        return subscription_service.assign(db, actor, institute_id, plan_id, None, ip, commit=commit)
+    return subscription_service.renew(db, actor, institute_id, plan_id, ip, commit=commit)
+
+
+def create_institute_renewal_order(
+    db: Session,
+    actor: User,
+    institute_id: int,
+    plan_id: Optional[int] = None,
+    coupon_code: Optional[str] = None,
+    ip: Optional[str] = None,
+) -> dict:
+    """Opens a Razorpay order for the institute's next term.
+
+    `plan_id` defaults to the plan currently in force; anything else must be one
+    the institute has held before or a published tier, which `_resolve_renewal_plan`
+    re-checks against the database rather than trusting the request.
+
+    When no gateway is configured the flow degrades to the manual path that
+    Super Admin already uses, so a renewal is still recorded and the term still
+    extends - it is just booked as a manual payment rather than a card one.
+    """
+    plan = _resolve_renewal_plan(db, institute_id, plan_id)
+    institute = institute_service.get_institute_or_404(db, institute_id)
+
+    # Nothing to charge: internal, QA and comped plans price at zero, so the
+    # term is simply extended and no payment row is written at all. Booking a
+    # ₹0 invoice would only pollute billing history and revenue reporting.
+    if calculate_gst_and_totals(plan)["final_amount"] <= 0:
+        subscription = _book_institute_term(db, actor, institute_id, plan.id, ip, commit=True)
+        return {"online_payment": False, "requires_payment": False, "subscription": subscription}
+
+    gw_settings = get_settings_group(db, "payment_gateways", mask_secrets=False)
+    razorpay_enabled = gw_settings.get("razorpay_enabled") == "true"
+    key_id = gw_settings.get("razorpay_key_id")
+    key_secret = gw_settings.get("razorpay_key_secret")
+
+    if not razorpay_enabled or not key_id or not key_secret:
+        payment = create_b2b_plan_payment(
+            db,
+            actor,
+            institute_id,
+            plan.id,
+            coupon_code,
+            gateway_reference=f"institute-self-service:{actor.email}",
+            ip=ip,
+            renew_if_current=True,
+        )
+        return {"online_payment": False, "payment": payment}
+
+    coupon_email = institute.contact_email or f"institute-{institute_id}@internal.local"
+    discount, coupon = coupon_service.validate_and_price(
+        db, coupon_code, plan.price, "plan", plan.id, coupon_email
+    )
+    totals = calculate_gst_and_totals(plan, discount)
+    final_amount = totals["final_amount"]
+    if final_amount <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Renewal amount must be greater than zero")
+
+    payment = Payment(
+        source="b2b",
+        institute_id=institute_id,
+        plan_id=plan.id,
+        amount=plan.price,
+        discount_amount=discount,
+        subtotal_amount=totals["subtotal_amount"],
+        gst_rate_id=totals["gst_rate_id"],
+        gst_percentage=totals["gst_percentage"],
+        gst_tax_type=totals["gst_tax_type"],
+        gst_amount=totals["gst_amount"],
+        final_amount=final_amount,
+        amount_paid=Decimal("0.00"),
+        currency=plan.currency or "INR",
+        coupon_id=coupon.id if coupon else None,
+        gateway="razorpay",
+        status=STATUS_PENDING,
+    )
+    db.add(payment)
+    db.flush()
+
+    amount_paise = int((final_amount * 100).quantize(Decimal("1")))
+    try:
+        res = requests.post(
+            "https://api.razorpay.com/v1/orders",
+            auth=(key_id, key_secret),
+            json={
+                "amount": amount_paise,
+                "currency": (plan.currency or "INR").upper(),
+                "receipt": f"rcpt_{payment.id}",
+                "notes": {
+                    "plan_id": str(plan.id),
+                    "institute_id": str(institute_id),
+                    "payment_id": str(payment.id),
+                    "purpose": "institute_renewal",
+                },
+            },
+            timeout=10,
+        )
+        if res.status_code != 200:
+            err_msg = res.json().get("error", {}).get("description", "Razorpay order creation failed")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Razorpay error: {err_msg}")
+        order_data = res.json()
+        payment.gateway_reference = order_data["id"]
+        db.add(payment)
+        _audit(
+            db, actor, "payment.renewal_order", payment.id, ip,
+            {"institute_id": institute_id, "plan": plan.name, "amount": str(final_amount)},
+        )
+        db.commit()
+    except requests.RequestException as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"Failed to connect to Razorpay: {exc}")
+
+    return {
+        "online_payment": True,
+        "gateway": "razorpay",
+        "order_id": order_data["id"],
+        "key_id": key_id,
+        "amount": amount_paise,
+        "currency": (plan.currency or "INR").upper(),
+        "plan_name": plan.name,
+        "payment_id": payment.id,
+    }
+
+
+def verify_institute_renewal_payment(
+    db: Session,
+    actor: User,
+    institute_id: int,
+    payment_id: int,
+    razorpay_payment_id: str,
+    razorpay_order_id: str,
+    razorpay_signature: str,
+    ip: Optional[str] = None,
+) -> dict:
+    """Confirms the gateway signature, then books the renewal.
+
+    The signature check is the gate - only once it passes does the payment go to
+    paid, get an invoice number, redeem its coupon and extend the term. The new
+    term is stamped onto the payment's subscription_id so billing history,
+    revenue reporting and Super Admin's subscription view all show the same
+    renewal.
+    """
+    payment = get_payment_or_404(db, payment_id)
+    if payment.institute_id != institute_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Payment does not belong to your institute")
+    if payment.status == STATUS_PAID:
+        return _serialize(payment)
+
+    key_secret = get_settings_group(db, "payment_gateways", mask_secrets=False).get("razorpay_key_secret")
+    if not key_secret:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Razorpay secret key not configured")
+
+    expected_signature = hmac.new(
+        key_secret.encode("utf-8"),
+        f"{razorpay_order_id}|{razorpay_payment_id}".encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(expected_signature, razorpay_signature):
+        payment.status = STATUS_FAILED
+        db.add(payment)
+        _audit(db, actor, "payment.renewal_failed", payment.id, ip, {"institute_id": institute_id})
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid payment signature from Razorpay")
+
+    payment.status = STATUS_PAID
+    payment.paid_at = _now()
+    payment.amount_paid = payment.final_amount
+    payment.gateway_reference = f"Order: {razorpay_order_id} | Payment: {razorpay_payment_id}"
+    payment.invoice_number = f"INV-{payment.id:06d}"
+    db.add(payment)
+
+    try:
+        if payment.coupon_id:
+            coupon = db.query(Coupon).filter(Coupon.id == payment.coupon_id).first()
+            if coupon:
+                institute = institute_service.get_institute_or_404(db, institute_id)
+                coupon_email = institute.contact_email or f"institute-{institute_id}@internal.local"
+                coupon_service.redeem(db, coupon, coupon_email, payment_id=payment.id)
+
+        subscription = _book_institute_term(
+            db, actor, institute_id, payment.plan_id, ip, commit=False
+        )
+        payment.subscription_id = subscription["id"]
+        db.add(payment)
+        _audit(
+            db, actor, "payment.renewal_paid", payment.id, ip,
+            {"institute_id": institute_id, "subscription_id": subscription["id"]},
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
+    _notify_payment_recorded(db, payment)
+    _notify_renewal(db, payment)
+    return _serialize(payment)
+
+
+def _notify_renewal(db: Session, payment: Payment) -> None:
+    """Renewal-specific notice on top of the generic payment one, so staff see
+    the term moved rather than just that money came in."""
+    try:
+        institute_name = payment.institute.name if payment.institute else "An institute"
+        plan_name = payment.plan.name if payment.plan else "their plan"
+        notification_service.notify_roles(
+            db,
+            {SUPER_ADMIN, DEVELOPER},
+            kind="subscription_renewed",
+            title="Institute renewed online",
+            message=f"{institute_name} paid for another term of {plan_name}.",
+            link_url="/super-admin/subscriptions",
+        )
+        notification_service.notify_roles(
+            db,
+            {INSTITUTE_ADMIN},
+            kind="subscription_renewed",
+            title="Subscription renewed",
+            message=f"Payment received - {plan_name} has been extended.",
+            link_url="/institute-portal/billing",
+            institute_id=payment.institute_id,
+        )
+        db.commit()
+    except Exception:
+        db.rollback()

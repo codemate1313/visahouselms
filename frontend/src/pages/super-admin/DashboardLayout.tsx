@@ -37,6 +37,7 @@ export function DashboardLayout() {
     : [];
   const saasItems = [
     { key: "saas_institutes", label: m.saasInstitutes, to: "/super-admin/institutes" },
+    { key: "saas_institute_signups", label: m.saasInstituteSignups, to: "/super-admin/institute-signups" },
     { key: "saas_plans", label: m.saasPlans, to: "/super-admin/plans" },
     { key: "saas_subscriptions", label: m.saasSubscriptions, to: "/super-admin/subscriptions" },
     { key: "saas_trial", label: m.saasTrial, to: "/super-admin/trial-config" },

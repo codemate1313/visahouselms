@@ -1,8 +1,13 @@
 """Automatic SaaS limit enforcement (roadmap 2.1/2.6) - THE single place where
 plan limits are checked. Every future endpoint that adds a tenant-scoped
-resource (institute students/staff in Phase 4, tests in Phase 3) must call
-enforce_limit() before creating the row; nothing else should re-implement
-these checks.
+resource must call enforce_limit() before creating the row; nothing else should
+re-implement these checks.
+
+Seats are capped, sittings are not. A plan limits how many students and staff an
+institute may have; what those people then do with the tests they have been
+given is theirs. Metering attempts on top of seats charged twice for the same
+thing and left students locked out of material their institute already owned, so
+test attempts are counted for reporting but never enforced.
 """
 
 from typing import Callable, Dict
@@ -46,22 +51,11 @@ def _count_staff(db: Session, institute_id: int) -> int:
     return _count_users_with_roles(db, institute_id, [INST_INSTRUCTOR])
 
 
-def _count_tests(db: Session, institute_id: int) -> int:
-    from app.models.attempt import TestAttempt
-
-    return (
-        db.query(TestAttempt)
-        .join(User, TestAttempt.user_id == User.id)
-        .filter(User.institute_id == institute_id)
-        .count()
-    )
-
-
-# resource name -> (counter, plan limit attribute)
+# resource name -> (counter, plan limit attribute). Test attempts are
+# deliberately absent: they are reported on, never capped.
 RESOURCE_REGISTRY: Dict[str, tuple] = {
     "students": (_count_students, "student_limit"),
     "staff": (_count_staff, "staff_limit"),
-    "tests": (_count_tests, "test_limit"),
 }
 
 
@@ -95,9 +89,6 @@ def enforce_limit(db: Session, institute_id: int, resource: str) -> None:
                 "Purchase or renew a plan to continue."
             ),
         )
-
-    if resource == "tests" and subscription.plan.is_internal:
-        return
 
     counter, limit_attr = RESOURCE_REGISTRY[resource]
     limit = getattr(subscription.plan, limit_attr)

@@ -23,6 +23,7 @@ from app.routers import (
     institutes,
     institute_admin,
     institute_instructor,
+    institute_signups,
     instructor_grading,
     instructor_portal,
     instructors,
@@ -101,6 +102,8 @@ app.include_router(coupons.router)
 app.include_router(module_authoring.router)
 app.include_router(module_catalog.router)
 app.include_router(onboarding.router)
+app.include_router(institute_signups.router)
+app.include_router(institute_signups.public_router)
 app.include_router(payments.router)
 app.include_router(payment_methods.router)
 app.include_router(gst_rates.router)

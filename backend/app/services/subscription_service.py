@@ -348,7 +348,10 @@ def subscription_status(db: Session, institute_id: int) -> dict:
         limits = {
             "students": subscription.plan.student_limit,
             "staff": subscription.plan.staff_limit,
-            "tests": None if subscription.plan.is_internal else subscription.plan.test_limit,
+            # Sittings are not metered - a student may take every test their
+            # institute has been given, as many times as the module allows.
+            # NULL reads as "unlimited" everywhere this is rendered.
+            "tests": None,
             # Courses are allocated from a shared catalogue rather than capped,
             # so the "limit" is how many there are to give.
             "courses": _publishable_course_count(db),
