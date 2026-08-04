@@ -409,13 +409,7 @@ def assign(
     db.flush()
     _reactivate_if_expiry_suspended(db, institute)
     _audit(db, actor, "subscription.assign", subscription.id, ip, {"institute_id": institute_id, "plan": plan.name})
-    # A paid plan landing on a demo institute ends the demo: its own expiry
-    # would otherwise still suspend an institute that is now a customer.
-    # Local import - demo_service reaches back into institute_service, which
-    # imports this module.
-    from app.services import demo_service
-
-    demo_service.mark_converted_if_demo(db, actor, institute_id, ip)
+    # (demo_service was removed in a previous commit)
     if commit:
         db.commit()
     else:

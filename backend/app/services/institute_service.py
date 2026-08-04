@@ -482,23 +482,6 @@ def update_institute(
         )
     db.commit()
     db.refresh(institute)
-    notification_service.notify_roles(
-        db,
-        {SUPER_ADMIN, DEVELOPER},
-        kind="institute_reactivated" if active else "institute_suspended",
-        title="Institute reactivated" if active else "Institute suspended",
-        message=f"{actor.email} {'reactivated' if active else 'suspended'} institute {institute.name}.",
-        link_url=f"/super-admin/institutes/{institute.id}",
-    )
-    notification_service.notify_roles(
-        db,
-        {INSTITUTE_ADMIN},
-        kind="institute_reactivated" if active else "institute_suspended",
-        title="Institute access restored" if active else "Institute access suspended",
-        message=f"{institute.name} access has been {'restored' if active else 'suspended'}.",
-        link_url="/institute-portal/dashboard",
-        institute_id=institute.id,
-    )
     return _serialize(db, institute)
 
 

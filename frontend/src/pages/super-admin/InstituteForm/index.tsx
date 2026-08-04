@@ -167,8 +167,8 @@ export function InstituteForm() {
         setError("Institute Name is required.");
         return false;
       }
-      if (isNew && (!adminEmail.trim() || !adminFirstName.trim())) {
-        setError("Admin email and first name are required to create an institute.");
+      if (isNew && (!adminEmail.trim() || !adminFirstName.trim() || !adminLastName.trim())) {
+        setError("Admin email, first name, and last name are required to create an institute.");
         return false;
       }
     }
