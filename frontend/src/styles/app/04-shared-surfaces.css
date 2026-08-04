@@ -1350,6 +1350,31 @@
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
+  max-width: 220px;
+  opacity: 1;
+  transition: max-width 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 200ms ease 90ms;
+}
+
+.huge-sidebar.is-collapsed .sidebar-brand-text {
+  max-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: max-width 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 120ms ease;
+}
+
+/* Someone who has asked for less motion gets the old instant swap, which is
+   the honest reading of the preference here - the animation is decoration. */
+@media (prefers-reduced-motion: reduce) {
+  .huge-sidebar,
+  .sidebar-item-label,
+  .sidebar-brand-text,
+  .sidebar-section-title,
+  .sidebar-section-header,
+  .sidebar-brand-container {
+    transition: none;
+  }
 }
 
 .sidebar-brand-title {
@@ -1457,6 +1482,14 @@
 .huge-sidebar.is-collapsed .sidebar-section-title {
   font-size: 9px;
   letter-spacing: 0;
+}
+
+.sidebar-section-title,
+.sidebar-section-header,
+.sidebar-brand-container {
+  transition: font-size 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    letter-spacing 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sidebar-menu-list {
@@ -1693,14 +1726,34 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* Width and margin carry the layout, opacity carries the eye. Opacity runs
+     shorter and leads, so the text is gone before the rail finishes closing
+     rather than lingering as a squashed sliver. */
+  max-width: 220px;
+  opacity: 1;
+  /* Opening: width leads, text fades in over the back half so it arrives with
+     the rail rather than after it. */
+  transition: max-width 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    margin-left 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 200ms ease 90ms;
 }
 
 .huge-sidebar.is-collapsed .sidebar-item-label {
-  display: none;
+  max-width: 0;
+  margin-left: 0;
+  opacity: 0;
+  pointer-events: none;
+  /* Closing: text goes first, with no delay, so nothing is left to squash. */
+  transition: max-width 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    margin-left 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 120ms ease;
 }
 
 /* Accordion Arrow */
 .sidebar-accordion-arrow {
+  max-width: 14px;
+  opacity: 1;
+  transition: max-width 300ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms ease 90ms;
   width: 14px;
   height: 14px;
   margin-left: auto;
@@ -1714,7 +1767,11 @@
 }
 
 .huge-sidebar.is-collapsed .sidebar-accordion-arrow {
-  display: none;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: max-width 300ms cubic-bezier(0.16, 1, 0.3, 1), opacity 120ms ease;
 }
 
 /* Sub-menu Dropdown List & Tree Line */
@@ -2083,7 +2140,13 @@
 }
 
 .huge-sidebar.is-collapsed .sidebar-badge {
-  display: none;
+  max-width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: max-width 300ms cubic-bezier(0.16, 1, 0.3, 1), padding 300ms ease, opacity 120ms ease;
 }
 
 /* Red Accent (e.g. Logout) */

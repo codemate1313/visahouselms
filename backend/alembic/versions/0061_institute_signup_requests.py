@@ -1,7 +1,7 @@
 """institute self-signup applications from the public site
 
 Revision ID: 0061
-Revises: 0060
+Revises: b3f2b1c4e908
 Create Date: 2026-08-04
 
 An application is not an institute. Anyone can submit one, so it lives in its

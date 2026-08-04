@@ -169,7 +169,7 @@ export function SpeakingAvatar({
         audioRef.current.play()
           .then(() => setIsPlaying(true))
           .catch((err) => {
-            console.log("Speaking autoplay failed or blocked:", err);
+            // Autoplay refusal is expected until the user interacts; nothing to report.
             setIsPlaying(false);
           });
       }

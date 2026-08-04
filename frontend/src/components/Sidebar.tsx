@@ -245,14 +245,12 @@ export function Sidebar({
             <img src={brandLogoUrl} alt={`${brandTitle} logo`} className="sidebar-brand-logo-image" />
           </div>
         )}
-        {!isCollapsed && (
-          <div className="sidebar-brand-text">
-            <h1 className="sidebar-brand-title">{brandTitle}</h1>
-            {brandSubtitle && (
-              <span className="sidebar-brand-subtitle">{brandSubtitle}</span>
-            )}
-          </div>
-        )}
+        {/* Kept mounted so it can collapse with the rail. Unmounting made the
+            name disappear a frame before the sidebar started moving. */}
+        <div className="sidebar-brand-text" aria-hidden={isCollapsed}>
+          <h1 className="sidebar-brand-title">{brandTitle}</h1>
+          {brandSubtitle && <span className="sidebar-brand-subtitle">{brandSubtitle}</span>}
+        </div>
         {onToggleCollapse && !isMobileScreen && (
           <button
             type="button"

@@ -10,9 +10,9 @@ export const DeveloperLayout = lazy(() => import("../pages/developer/DeveloperLa
 export const AboutUs = lazy(() => import("../pages/public/AboutUs").then((module) => ({ default: module.AboutUs })));
 export const ContactUs = lazy(() => import("../pages/public/ContactUs").then((module) => ({ default: module.ContactUs })));
 export const Home = lazy(() => import("../pages/public/Home").then((module) => ({ default: module.Home })));
+export const InstituteBrandingPage = lazy(() => import("../pages/institute/InstituteBrandingPage").then((module) => ({ default: module.InstituteBrandingPage })));
 export const InstituteSetup = lazy(() => import("../pages/institute/InstituteSetup").then((module) => ({ default: module.InstituteSetup })));
 export const SuperAdminInstituteSignups = lazy(() => import("../pages/super-admin/InstituteSignups").then((module) => ({ default: module.InstituteSignups })));
-export const InstituteSignup = lazy(() => import("../pages/public/InstituteSignup").then((module) => ({ default: module.InstituteSignup })));
 export const ShowcasePlans = lazy(() => import("../pages/public/Plans").then((module) => ({ default: module.Plans })));
 export const InstituteAnnouncements = lazy(() => import("../pages/institute/InstituteAnnouncements").then((module) => ({ default: module.InstituteAnnouncements })));
 export const InstituteBilling = lazy(() => import("../pages/institute/InstituteBilling").then((module) => ({ default: module.InstituteBilling })));

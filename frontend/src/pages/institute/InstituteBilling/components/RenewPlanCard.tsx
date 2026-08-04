@@ -73,7 +73,12 @@ export function RenewPlanCard({ onRenewed }: RenewPlanCardProps) {
   function finish(planName: string) {
     setBusy(null);
     setCouponCode("");
-    showSuccess(t.success(planName), t.successTitle);
+    // Nothing was renewed if this was the institute's first term.
+    const activating = Boolean(data?.is_activation);
+    showSuccess(
+      activating ? t.activationSuccess(planName) : t.success(planName),
+      activating ? t.activationSuccessTitle : t.successTitle,
+    );
     onRenewed();
   }
 
@@ -113,7 +118,8 @@ export function RenewPlanCard({ onRenewed }: RenewPlanCardProps) {
       orderId: order.order_id,
       amount: order.amount ?? 0,
       currency: order.currency || selected.currency,
-      description: `${selected.plan_name} renewal`,
+      // Printed on the Razorpay sheet and the receipt.
+      description: `${selected.plan_name} ${data.is_activation ? "subscription" : "renewal"}`,
       prefillName: `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim(),
       prefillEmail: user?.email ?? "",
       onSuccess: async (response) => {
@@ -283,8 +289,12 @@ export function RenewPlanCard({ onRenewed }: RenewPlanCardProps) {
                   : !selected.requires_payment
                     ? t.extend
                     : selected.online_payment_available
-                      ? t.pay(formatCurrencyAmount(selected.final_amount, selected.currency))
-                      : t.payManual}
+                      ? (data.is_activation ? t.payActivation : t.pay)(
+                          formatCurrencyAmount(selected.final_amount, selected.currency),
+                        )
+                      : data.is_activation
+                        ? t.payManualActivation
+                        : t.payManual}
             </Button>
           </div>
         </>

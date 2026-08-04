@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { LandingLayout } from "../components/landing/LandingLayout";
 import { RequireActivePlan } from "./RequireActivePlan";
 import { RequireInstituteSetup } from "./RequireInstituteSetup";
+import { InstituteSignupRedirect } from "./InstituteSignupRedirect";
 import { Login } from "../pages/Login";
 import {
   AboutUs,
@@ -61,8 +62,8 @@ import {
   RetakeRequests,
   RevenueDashboard,
   Sessions,
+  InstituteBrandingPage,
   InstituteSetup,
-  InstituteSignup,
   SuperAdminInstituteSignups,
   ShowcasePlans,
   StudentAnnouncements,
@@ -105,13 +106,19 @@ export const router = createBrowserRouter([
     element: <LandingLayout />,
     children: [
       { path: "/", element: <Home /> },
+      // The lander's own auth: these render the landing page with the login or
+      // register overlay on top, so a visitor signing in never loses the page
+      // they were reading. The standalone `<Login />` page is for portal
+      // entrances only (Super Admin, Developer), which are not part of the
+      // marketing site.
       { path: "/login", element: <Home /> },
       { path: "/register", element: <Home /> },
       { path: "/about", element: <AboutUs /> },
       { path: "/plans", element: <ShowcasePlans /> },
-      // A public application, not a sign-up: it creates a queued request and
-      // nothing else until a Super Admin approves it.
-      { path: "/institute-signup", element: <InstituteSignup /> },
+      // One application form, and it lives on the contact page in the lander's
+      // own design language. This path is kept because every footer links to
+      // it, and it carries the chosen tier through.
+      { path: "/institute-signup", element: <InstituteSignupRedirect /> },
       { path: "/contact", element: <ContactUs /> },
       { path: "/blogs", element: <BlogsList /> },
       { path: "/blogs/:slug", element: <BlogDetail /> },
@@ -279,6 +286,9 @@ export const router = createBrowserRouter([
           { path: "staff/new", element: <InstituteMemberForm role="INST_INSTRUCTOR" /> },
           { path: "staff/:id", element: <InstituteMemberForm role="INST_INSTRUCTOR" /> },
           { path: "billing", element: <InstituteBilling /> },
+          // Behind the setup guard like everything else, so it is only reachable
+          // once a plan has been paid for.
+          { path: "branding", element: <InstituteBrandingPage /> },
           { path: "announcements", element: <InstituteAnnouncements /> },
           { path: "notifications", element: <NotificationsInbox fallbackRoute="/institute-portal/dashboard" /> },
           { path: "support", element: <SupportCenter /> },

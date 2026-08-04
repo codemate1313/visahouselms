@@ -7,7 +7,6 @@ export const instituteBillingStrings = {
   stats: {
     students: "Students",
     instructors: "Instructors",
-    tests: "Tests",
     testsTaken: "Tests taken",
     testsUnmetered: "No cap - students may sit every test assigned to them",
     unlimited: "Unlimited",
@@ -65,22 +64,26 @@ export const instituteBillingStrings = {
     couponPlaceholder: "ENTER CODE",
     pay: (amount: string) => `Pay ${amount} & renew`,
     payManual: "Record renewal",
+    // Nothing is being renewed on a first purchase - there is no prior term.
+    payActivation: (amount: string) => `Pay ${amount} & activate`,
+    payManualActivation: "Activate subscription",
     paying: "Opening payment...",
     verifying: "Confirming payment...",
     offlineNotice:
-      "Online payment is not configured yet. Renewing here books the term immediately and records the invoice for reconciliation.",
+      "Online payment is not configured yet. Continuing here books the term immediately and records the invoice for reconciliation.",
     gatewayNotice: "Secure checkout via Razorpay - UPI, cards and net banking.",
     success: (plan: string) => `${plan} renewed. Your new term is active.`,
     successTitle: "Subscription renewed",
+    activationSuccess: (plan: string) => `${plan} is active. Your portal is ready.`,
+    activationSuccessTitle: "Subscription active",
     switchNotice: (plan: string) =>
       `You are moving to ${plan}. Your current term runs to its end date first - nothing is cut short.`,
-    unavailable: "Renewal is unavailable right now.",
     blocked:
       "The Razorpay payment window could not be opened. Open this page in a regular (non-Incognito) window, disable ad-blockers, and try again.",
   },
   errors: {
     load: "Failed to load subscription details.",
-    renew: "Renewal failed. No payment was taken.",
+    renew: "Payment failed. Nothing was charged.",
     verify: "Payment verification failed. If money was deducted, contact support with your order ID.",
   },
 } as const;

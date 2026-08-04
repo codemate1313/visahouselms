@@ -421,9 +421,14 @@ export function PortalTopBar({
   const itemCount = usePageTitleStore((state) => state.itemCount);
   const currentPath = location.pathname.replace(/\/+$/, "");
   const portalHomePath = fallbackRoute.replace(/\/+$/, "");
-  const showBackButton =
-    currentPath !== portalHomePath &&
-    !/^\/student\/attempts\/[^/]+\/take$/.test(currentPath);
+  // An institute held in setup has nowhere to go back to - every other portal
+  // route redirects straight back here - so walking history only pops entries
+  // from before it was signed in. Treated as a home path, like the portal roots
+  // and the test engine.
+  const isTerminalPath =
+    currentPath === "/institute-portal/setup" ||
+    /^\/student\/attempts\/[^/]+\/take$/.test(currentPath);
+  const showBackButton = currentPath !== portalHomePath && !isTerminalPath;
 
   return (
     <header className="portal-app-bar">

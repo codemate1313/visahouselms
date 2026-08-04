@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="./responsive.css">
 <script src="./support.js"></script>
+<script src="./footer-parallax.js" defer></script>
+<script>
+  // The framed page is loaded via srcdoc, so its own `location.origin` reads
+  // "null" and any postMessage targeted at it is silently dropped. The parent
+  // injects its real origin for exactly this reason; support.js has always
+  // resolved it this way.
+  window.vhParentOrigin = function () {
+    var configured = window.__vhParentOrigin;
+    if (typeof configured === "string" && configured) return configured;
+    var origin = window.location && window.location.origin;
+    return origin && origin !== "null" ? origin : "*";
+  };
+</script>
 </head>
 <body>
 <x-dc>
@@ -54,6 +67,81 @@
   .footer-social-icons .icon-content a[data-social="github"] .filled, .footer-social-icons .icon-content a[data-social="github"] ~ .tooltip { background-color: #24262a; }
   .footer-social-icons .icon-content a[data-social="instagram"] .filled, .footer-social-icons .icon-content a[data-social="instagram"] ~ .tooltip { background: linear-gradient(45deg, #405de6, #5b51db, #b33ab4, #c135b4, #e1306c, #fd1f1f); }
   .footer-social-icons .icon-content a[data-social="youtube"] .filled, .footer-social-icons .icon-content a[data-social="youtube"] ~ .tooltip { background-color: #ff0000; }
+
+  /* Dotted world map behind the footer. Generated from continent outlines
+     rather than traced from an image - see scripts/gen_world_dots.py. It is
+     decoration only: aria-hidden by construction (a background), non-blocking
+     for clicks, and pinned so it does not drift as the footer grows. */
+  .vh-footer {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .vh-footer::before {
+    content: "";
+    position: absolute;
+    /* Wider than the footer on purpose: the map spans the full width, and the
+       vertical overhang is the room the parallax drifts through. The footer
+       clips it, so the overhang is never seen at rest. */
+    inset: -22% 0;
+    z-index: -1;
+    background-image: url("./world-dots.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% auto;
+    opacity: 0.16;
+    pointer-events: none;
+    /* Both the drift and the hover scale live in one transform so neither can
+       clobber the other. footer-parallax.js only writes --vh-map-shift. */
+    transform: translate3d(0, var(--vh-map-shift, 0px), 0) scale(var(--vh-map-scale, 1));
+    transform-origin: center;
+    will-change: transform;
+    transition: transform 220ms linear, opacity 400ms ease;
+  }
+
+  .vh-footer:hover {
+    --vh-map-scale: 1.025;
+  }
+
+  .vh-footer:hover::before {
+    opacity: 0.22;
+    transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), opacity 400ms ease;
+  }
+
+  /* The dots are a fixed red, so the two themes need different weights to sit
+     at the same visual level. */
+  .vh-theme-light .vh-footer::before {
+    opacity: 0.1;
+  }
+
+  .vh-theme-light .vh-footer:hover::before {
+    opacity: 0.15;
+  }
+
+  /* A tall stacked footer would make a height-derived map absurdly wide, so the
+     narrow layout fits the whole map inside the box instead. */
+  @media (max-width: 720px) {
+    .vh-footer::before {
+      inset: 0;
+      background-size: contain;
+      opacity: 0.12;
+      transform: none;
+    }
+
+    .vh-theme-light .vh-footer:hover::before,
+    .vh-footer:hover::before {
+      transform: scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vh-footer::before,
+    .vh-footer:hover::before {
+      transition: none;
+      transform: none;
+    }
+  }
 </style>
 </helmet>
 <div ref="{{ rootRef }}" style="background: var(--bg); color: var(--ink); min-height: 100vh; overflow-x: hidden; position: relative; transition: background .35s ease, color .35s ease;">
@@ -80,8 +168,8 @@
       </nav>
       <div style="display: flex; align-items: center; gap: 10px;">
         <button type="button" onClick="{{ cycleTheme }}" title="Theme: {{ themeLabel }}" style="font-family: inherit; width: 40px; height: 40px; border-radius: 100px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; display: grid; place-items: center; transition: transform .2s, background .2s;" style-hover="{transform: 'scale(1.08)', background: 'var(--chipHi)'}" style-active="{transform: 'scale(0.94)'}">{{ themeIcon }}</button>
-        <button type="button" class="vh-desktop-auth" style="font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 100px; border: none; background: var(--ac); color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .2s, box-shadow .2s;" style-hover="{transform: 'translateY(-2px)', boxShadow: '0 12px 28px -12px rgba(225, 29, 46, 0.4)'}" style-active="{transform: 'translateY(0)'}">
-          Sign in
+        <button type="button" class="vh-desktop-auth" onClick="{{ goLogin }}" style="font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 100px; border: none; background: var(--ac); color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .2s, box-shadow .2s;" style-hover="{transform: 'translateY(-2px)', boxShadow: '0 12px 28px -12px rgba(225, 29, 46, 0.4)'}" style-active="{transform: 'translateY(0)'}">
+          {{ authLabel }}
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
         </button>
         <button type="button" class="vh-mobile-toggle" onClick="{{ toggleMobileMenu }}" aria-label="Toggle Navigation" aria-controls="vh-mobile-nav" aria-expanded="{{ mobileMenuExpanded }}">
@@ -107,7 +195,7 @@
         </nav>
         <hr class="vh-drawer-divider vh-drawer-item" />
         <div class="vh-drawer-cta vh-drawer-item">
-          <button type="button" class="vh-drawer-btn vh-drawer-btn-solid" onClick="{{ goLogin }}">Sign in</button>
+          <button type="button" class="vh-drawer-btn vh-drawer-btn-solid" onClick="{{ goLogin }}">{{ authLabel }}</button>
         </div>
         <p class="vh-drawer-foot vh-drawer-item">IELTS mock tests, band analytics &amp; AI feedback.</p>
       </div>
@@ -201,13 +289,13 @@
         <p style="font-size: 17px; line-height: 1.55; opacity: 0.92;">Book a walkthrough with our partnerships team &mdash; see the platform, the pricing and a live student cohort.</p>
       </div>
       <div style="position: relative; display: flex; gap: 14px; flex-wrap: wrap;">
-        <button type="button" style="font-family: inherit; font-size: 15px; font-weight: 700; padding: 16px 28px; border-radius: 100px; border: none; background: #fff; color: var(--ac); cursor: pointer;">Sign in to portal &rarr;</button>
+        <button type="button" onClick="{{ goLogin }}" style="font-family: inherit; font-size: 15px; font-weight: 700; padding: 16px 28px; border-radius: 100px; border: none; background: #fff; color: var(--ac); cursor: pointer;">{{ authCtaLabel }}</button>
         <a href="/contact" style="font-size: 15px; font-weight: 600; padding: 16px 26px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.55); color: #fff;">Talk to sales</a>
       </div>
     </div>
   </section>
 
-<footer style="border-top: 1px solid var(--line); padding: 56px 32px 32px;">
+<footer class="vh-footer" style="border-top: 1px solid var(--line); padding: 56px 32px 32px;">
     <div style="max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 40px;">
       <div>
         <div style="display: flex; align-items: center; gap: 11px; margin-bottom: 16px;">
@@ -377,9 +465,25 @@ class Component extends DCLogic {
 
   // These pages render inside an iframe, so auth must go through the parent
   // bridge (see StaticDcPage) rather than navigating this frame.
+  // Signed in already? The nav offers the dashboard instead of a sign-in that
+  // would only bounce them straight back here. A visitor who deliberately
+  // browsed to the marketing site is not lost, so nothing redirects on its own.
+  isSignedIn() {
+    return Boolean(window.__vhData?.auth?.signedIn);
+  }
+
+  authLabel() {
+    return window.__vhData?.auth?.label || "Sign in";
+  }
+
+  authCtaLabel() {
+    return this.isSignedIn() ? window.__vhData.auth.label + " \u2192" : "Sign in to portal \u2192";
+  }
+
   goLogin = () => {
     this.closeMobileMenu();
-    try { window.parent.postMessage({ type: "vh-auth", mode: "login" }, window.location.origin); } catch {}
+    const mode = this.isSignedIn() ? "dashboard" : "login";
+    try { window.parent.postMessage({ type: "vh-auth", mode: mode }, window.vhParentOrigin()); } catch {}
   };
 
   componentDidMount() {
@@ -424,7 +528,7 @@ class Component extends DCLogic {
   applyTheme() {
     if (!this._root) return;
     const dark = this.isDark();
-    try { window.parent.postMessage({ type: "vh-theme", theme: dark ? "dark" : "light" }, window.location.origin); } catch {}
+    try { window.parent.postMessage({ type: "vh-theme", theme: dark ? "dark" : "light" }, window.vhParentOrigin()); } catch {}
     const set = (k, v) => this._root.style.setProperty(k, v);
     set("--ac", "#e11d2e");
     set("--ac2", "#ef4444");
@@ -468,6 +572,8 @@ class Component extends DCLogic {
       mobileMenuExpanded: this.state.mobileMenuOpen ? "true" : "false",
       closeMobileMenu: this.closeMobileMenu,
       goLogin: this.goLogin,
+      authLabel: this.authLabel(),
+      authCtaLabel: this.authCtaLabel(),
       themeLabel: this.state.theme[0].toUpperCase() + this.state.theme.slice(1),
       themeIcon: themeIcons[this.state.theme],
       year: new Date().getFullYear(),

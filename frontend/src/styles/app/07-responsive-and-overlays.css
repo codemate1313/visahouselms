@@ -1040,6 +1040,10 @@ body {
   flex: 0 0 var(--sidebar-width);
   width: var(--sidebar-width);
   max-width: calc(100vw - 24px);
+  transition: flex-basis 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    width 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    margin 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dashboard > .huge-sidebar.is-collapsed {
@@ -1054,6 +1058,15 @@ body {
   min-width: 0 !important;
   overflow-x: hidden !important;
   contain: inline-size;
+  transition: width 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    max-width 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard > .huge-sidebar,
+  .dashboard > .dashboard-content {
+    transition: none;
+  }
 }
 
 .dashboard:has(> .huge-sidebar.is-collapsed) > .dashboard-content {
@@ -2748,8 +2761,8 @@ body {
   [style*="background-color: rgb(248, 250, 252)"],
   [style*="background: rgb(241, 245, 249)"],
   [style*="background-color: rgb(241, 245, 249)"],
-  [style*="background: var(--slate-50)"],
-  [style*="background-color: var(--slate-50)"],
+  [style*="background: var(--surface-muted)"],
+  [style*="background-color: var(--surface-muted)"],
   [style*="background: var(--slate-100)"],
   [style*="background-color: var(--slate-100)"]
 ) {
@@ -2838,7 +2851,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 48px;
-  background: var(--bg-card);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   gap: 16px;
@@ -2938,7 +2951,7 @@ body {
 }
 
 .analytics-empty-chart-card {
-  background: var(--bg-card);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 32px;
@@ -3012,7 +3025,7 @@ body {
 }
 
 .sleek-leaderboard-table .score-positive {
-  color: var(--green);
+  color: var(--success);
 }
 
 .rank-badge {

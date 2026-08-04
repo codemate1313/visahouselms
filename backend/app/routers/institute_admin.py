@@ -419,8 +419,21 @@ def verify_renewal_payment(
 # Branding is the institute's own identity, so its admin edits it directly
 # rather than filing a request. Scoped to their own institute by construction:
 # the id comes from the session, never the request.
+#
+# Gated on a live subscription: an institute with no plan has no students to
+# show a logo to, and its admin is meant to be choosing a tier rather than
+# picking colours. The route guard hides these screens; this is what actually
+# enforces it.
+def _require_live_subscription(db: Session, actor: User) -> None:
+    _subscription, state = subscription_service.current_subscription(db, actor.institute_id)
+    if state not in (subscription_service.STATE_ACTIVE, subscription_service.STATE_GRACE):
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="Choose a plan before customising your institute's branding",
+        )
 @router.get("/branding", dependencies=[Depends(require_password_change_complete)])
 def get_my_branding(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    _require_live_subscription(db, actor)
     return institute_service.get_branding(db, actor.institute_id)
 
 
@@ -431,6 +444,7 @@ def update_my_branding(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
+    _require_live_subscription(db, actor)
     return institute_service.update_branding(
         db,
         actor,
@@ -451,4 +465,5 @@ async def upload_my_logo(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
+    _require_live_subscription(db, actor)
     return await institute_service.save_logo(db, actor, actor.institute_id, file, _ip(request))

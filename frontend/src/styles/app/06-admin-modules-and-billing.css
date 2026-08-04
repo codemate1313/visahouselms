@@ -3189,7 +3189,7 @@
   font-family: var(--app-font-family);
   color: var(--slate-900);
   overflow-x: hidden;
-  background: var(--slate-50);
+  background: var(--surface-muted);
   min-height: 100vh;
   min-height: 100dvh;
 }
@@ -3235,7 +3235,7 @@
   color: var(--slate-500);
   display: flex;
   gap: 16px;
-  background: var(--slate-50);
+  background: var(--surface-muted);
   padding: 10px 16px;
   border-radius: 100px;
 }
@@ -3449,9 +3449,9 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  color: var(--ink2);
+  color: var(--text-muted);
   background-color: transparent;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
   transition: all 0.3s ease-in-out;
 }
 
@@ -6693,7 +6693,7 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 .podium-name {
   font-size: 14px;
   font-weight: 700;
-  color: var(--text-main);
+  color: var(--text);
   max-width: 130px;
   white-space: nowrap;
   overflow: hidden;
@@ -6754,7 +6754,7 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 
 .user-rank-cell strong {
   font-size: 14px;
-  color: var(--text-main);
+  color: var(--text);
 }
 
 .user-rank-cell.rank strong {
@@ -6779,14 +6779,14 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 
 .podium-avatar.empty {
   border: 3px dashed var(--border) !important;
-  background: color-mix(in srgb, var(--text-main) 4%, transparent) !important;
+  background: color-mix(in srgb, var(--text) 4%, transparent) !important;
   color: var(--text-muted) !important;
   opacity: 0.65;
   box-shadow: none !important;
 }
 
 .podium-col.empty-pedestal .podium-pedestal {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--text-main) 6%, transparent) 0%, color-mix(in srgb, var(--text-main) 2%, transparent) 100%) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--text) 6%, transparent) 0%, color-mix(in srgb, var(--text) 2%, transparent) 100%) !important;
   border: 1px dashed var(--border) !important;
   border-radius: 12px 12px 0 0 !important;
   box-shadow: none !important;
@@ -6822,7 +6822,7 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 .dashboard-plan-alert-text strong {
   font-size: 14.5px;
   font-weight: 700;
-  color: var(--text-main);
+  color: var(--text);
 }
 
 .dashboard-plan-alert-text span {
@@ -6871,9 +6871,14 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   transition: color 160ms ease, border-color 160ms ease;
 }
 
-.plan-feature-remove:hover {
-  color: #e11d2e;
-  border-color: #e11d2e;
+/* The global `button:hover` paints every button with the primary colour, so a
+   rule that only changes the text leaves red on red. These two hold their own
+   background in the hover state. */
+.plan-feature-remove:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+  box-shadow: none;
 }
 
 .plan-feature-add {
@@ -6882,7 +6887,7 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   border-radius: var(--radius-sm);
   border: 1px dashed var(--border);
   background: transparent;
-  color: var(--text-main);
+  color: var(--text);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -6891,6 +6896,8 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 .plan-feature-add:hover:not(:disabled) {
   border-color: var(--primary);
   color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+  box-shadow: none;
 }
 
 .plan-feature-add:disabled {
@@ -7616,6 +7623,7 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   gap: 6px;
   padding: 13px 15px;
   text-align: left;
+  box-shadow: none;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -7624,8 +7632,24 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 
+/* The global `button:hover` paints every button with the primary colour, which
+   on a card this size floods it red and leaves the text unreadable. These
+   options are surfaces, not buttons, so they hold their own background in every
+   state and signal selection with the border instead. */
 .renew-option:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  background: var(--surface-muted);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.renew-option.is-selected:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  border-color: var(--primary);
+}
+
+.renew-option:active:not(:disabled) {
+  transform: none;
 }
 
 .renew-option.is-selected {
@@ -7705,8 +7729,16 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   transition: background 0.15s, color 0.15s;
 }
 
-.plan-audience-tab:hover {
+/* Same trap as the plan cards: the global `button:hover` would flood these with
+   the primary colour. A tab is a surface, so it keeps its own. */
+.plan-audience-tab:hover:not(:disabled) {
   color: var(--text);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.plan-audience-tab.is-active:hover:not(:disabled) {
+  color: var(--primary);
 }
 
 .plan-audience-tab.is-active {
@@ -7867,46 +7899,92 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   max-width: 900px;
 }
 
-.setup-step {
-  margin-bottom: 22px;
+
+/* What the institute gets once its term is live - shown under the plan picker
+   on the setup screen, so the purchase has a visible point to it. */
+.setup-next-steps {
+  margin-top: 18px;
 }
 
-.setup-step-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 14px;
+.setup-next-steps h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
 }
 
-.setup-step-number {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--primary);
-  color: var(--white, #fff);
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.setup-step-head h2 {
-  margin: 0 0 3px;
-  font-size: 17px;
-}
-
-.setup-step-head .hint {
+.setup-next-steps ul {
   margin: 0;
-  max-width: 68ch;
+  padding-left: 18px;
+  color: var(--text-muted);
+  font-size: 13.5px;
+  line-height: 1.7;
 }
 
-.setup-logo-preview {
-  display: block;
-  max-width: 96px;
-  max-height: 96px;
-  margin-bottom: 8px;
+/* ---------------------------------------------------------------------------
+   Institute branding, edited by the institute's own admin.
+   --------------------------------------------------------------------------- */
+.branding-colour-input {
+  width: 100%;
+  height: 42px;
+  padding: 4px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md, 8px);
   background: var(--surface-muted);
+  cursor: pointer;
+}
+
+.branding-logo-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 6px;
+}
+
+.branding-logo-preview {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-muted);
+  flex-shrink: 0;
+}
+
+/* Hex values are hard to judge, so the choices are shown doing their job. */
+.branding-preview {
+  margin: 18px 0 4px;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: #fff;
+}
+
+.branding-preview-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.branding-preview strong {
+  display: block;
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.branding-preview p {
+  margin: 6px 0 14px;
+  font-size: 13.5px;
+  opacity: 0.85;
+}
+
+.branding-preview-button {
+  display: inline-block;
+  padding: 9px 18px;
+  border-radius: 100px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
 }

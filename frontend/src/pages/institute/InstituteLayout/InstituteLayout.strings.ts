@@ -9,6 +9,7 @@ export const instituteLayoutStrings = {
     students: "Students",
     announcements: "Announcements",
     instructors: "Instructors",
+    branding: "Branding",
     subscription: "Subscription",
     supportSection: "SUPPORT",
     support: "Raise a Query",

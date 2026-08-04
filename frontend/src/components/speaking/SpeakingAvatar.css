@@ -1,3 +1,25 @@
+/* The avatar is drawn from rgba() triplets rather than flat colours, so every
+   value it needs has to exist as a bare "r, g, b" channel list. None of these
+   were ever defined - `rgba(var(--slate-900-rgb), 0.92)` is invalid CSS, so the
+   browser dropped the whole declaration and the component rendered with no
+   gradient, border or shadow at all.
+
+   Scoped here rather than added to tokens.css: this is the only consumer, and
+   the shade names are specific to this artwork. */
+.speaking-avatar-only-wrapper,
+.speaking-avatar-card {
+  --white-rgb: 255, 255, 255;
+  --black-rgb: 0, 0, 0;
+  --slate-900-rgb: 15, 23, 42;
+  --primary-rgb: 225, 29, 46;      /* matches --primary #e11d2e */
+  --sky-400: #38bdf8;
+  --sky-400-rgb: 56, 189, 248;
+  --green-500: #22c55e;
+  --shade-1e1b4b: #1e1b4b;
+  --shade-1e1b4b-rgb: 30, 27, 75;
+  --shade-6366f1-rgb: 99, 102, 241;
+}
+
 .speaking-avatar-only-wrapper {
   display: flex;
   flex-direction: column;

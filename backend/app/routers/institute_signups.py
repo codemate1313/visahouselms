@@ -48,9 +48,7 @@ def count_pending(db: Session = Depends(get_db)):
 
 @router.get("/{request_id}")
 def get_application(request_id: int, db: Session = Depends(get_db)):
-    from app.services.institute_signup_service import _serialize
-
-    return _serialize(institute_signup_service.get_or_404(db, request_id))
+    return institute_signup_service.get_request(db, request_id)
 
 
 @router.post("/{request_id}/approve")

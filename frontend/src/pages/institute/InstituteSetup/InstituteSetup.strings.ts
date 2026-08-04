@@ -1,36 +1,19 @@
 export const instituteSetupStrings = {
   eyebrow: "Welcome",
-  title: (institute: string) => `Let's get ${institute} running`,
+  title: "Choose a plan to get started",
   subtitle:
-    "Your admin account is live. Two things left: make the portal look like yours, and choose the plan you want to run on. Students and staff can be added once your first term is paid for.",
+    "Your admin account is live. Pick the tier that fits your centre and your portal opens as soon as payment clears - then you can add students and staff, and make the place look like yours.",
 
-  steps: {
-    branding: {
-      number: "1",
-      title: "Make it yours",
-      description: "Your students see these colours and this logo. You can change them any time from your profile.",
-      primary: "Primary colour",
-      secondary: "Secondary colour",
-      logo: "Logo",
-      logoHint: "PNG or JPG, up to 2 MB. Square works best.",
-      logoButton: "Upload logo",
-      uploading: "Uploading...",
-      save: "Save branding",
-      saving: "Saving...",
-      saved: "Branding saved.",
-      skip: "You can skip this and come back to it later.",
-    },
-    plan: {
-      number: "2",
-      title: "Choose your plan",
-      description:
-        "Pick the tier that fits your centre. Your term starts the moment payment clears, and the portal opens up straight after.",
-      none: "No plans are available to choose from right now. Please contact support.",
-    },
+  plan: {
+    none: "No plans are available to choose from right now. Please contact support.",
   },
 
-  errors: {
-    branding: "Could not save branding.",
-    logo: "Could not upload the logo.",
+  afterPayment: {
+    heading: "Once you're set up",
+    items: [
+      "Add students and instructors, up to your plan's seats",
+      "Assign courses and mock tests",
+      "Set your own colours and logo from Branding",
+    ],
   },
 } as const;

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useLoaderStore } from "@/store/loaderStore";
 import { useAuthStore } from "@/store/authStore";
+import { useThemeStore } from "@/store/themeStore";
+import { useLoaderStore } from "@/store/loaderStore";
 import { destinationFor } from "@/pages/Login/helpers";
 import { API_BASE_URL } from "@/api/client";
 import { AuthOverlay } from "./components/AuthOverlay";
@@ -15,17 +16,6 @@ interface StaticDcPageProps {
   bootstrap?: unknown;
   /** Holds the loading screen until `bootstrap` has been fetched. */
   bootstrapPending?: boolean;
-}
-
-function getInitialPublicTheme(): PublicTheme {
-  try {
-    const saved = window.localStorage.getItem("vh-theme");
-    if (saved === "light" || saved === "dark") return saved;
-  } catch {
-    // Ignore storage access issues and fall back to the system theme.
-  }
-
-  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 function buildPublicPageHtml(html: string, fileName: string, bootstrap: unknown) {
@@ -55,15 +45,36 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
   const location = useLocation();
   const navigate = useNavigate();
   const frameRef = useRef<HTMLIFrameElement>(null);
-  const [authMode, setAuthMode] = useState<AuthMode | null>(null);
   const [showInstituteBanner, setShowInstituteBanner] = useState(false);
-  const [publicTheme, setPublicTheme] = useState<PublicTheme>(() => getInitialPublicTheme());
-  const [pageHtml, setPageHtml] = useState(() => buildLoadingHtml(getInitialPublicTheme(), title));
+  const publicTheme = useThemeStore((state) => state.theme) as PublicTheme;
+  const [pageHtml, setPageHtml] = useState(() => buildLoadingHtml(useThemeStore.getState().theme as PublicTheme, title));
+  const [authMode, setAuthMode] = useState<AuthMode | null>(null);
   const user = useAuthStore((state) => state.user);
   const isLoading = useLoaderStore((state) => state.isLoading);
+
+  // A signed-in visitor browsing the marketing site is not lost - they came
+  // here on purpose. Rather than bounce them to their dashboard, the nav offers
+  // it as a destination and leaves the choice with them.
+  const authState = useMemo(
+    () =>
+      user
+        ? { signedIn: true, label: "Go to dashboard", href: destinationFor(user) ?? "/" }
+        : { signedIn: false, label: "Sign in", href: "/login" },
+    [user],
+  );
   const pageBackground = publicTheme === "dark" ? "#0a0a0f" : "#f7f5f2";
 
   useEffect(() => {
+    const isAuthPath = location.pathname === "/login" || location.pathname === "/register";
+    // Already signed in and asking to sign in: the overlay cannot be dismissed
+    // by an authenticated user, so opening it would trap them. This is the only
+    // place a signed-in visitor is redirected - browsing the rest of the site
+    // leaves them exactly where they are.
+    if (isAuthPath && user) {
+      setAuthMode(null);
+      navigate(authState.href, { replace: true });
+      return;
+    }
     if (location.pathname === "/login") {
       setAuthMode("login");
     } else if (location.pathname === "/register") {
@@ -71,7 +82,27 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
     } else {
       setAuthMode(null);
     }
-  }, [location.pathname]);
+  }, [authState.href, location.pathname, navigate, user]);
+
+  const handleAuthClose = useCallback(() => {
+    if (user) return;
+    navigate("/", { replace: true });
+  }, [navigate, user]);
+
+  useEffect(() => {
+    if (!authMode) return undefined;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !isLoading && !user) handleAuthClose();
+    }
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [authMode, handleAuthClose, isLoading, user]);
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
@@ -82,17 +113,23 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
       if (!isTrustedPublicPage) return;
       if (event.data?.type === "vh-auth") {
         if (!user) {
-          // Unauthenticated: open register or login overlay
+          // Unauthenticated: send them to the one login/register screen
           const mode = event.data.mode === "login" ? "login" : "register";
           navigate(mode === "login" ? "/login" : "/register", {
             state: { planId: event.data.planId ?? null },
           });
+        } else if (event.data.mode === "dashboard") {
+          // The nav button, which reads "Go to dashboard" once signed in.
+          navigate(authState.href);
         } else if (user.role === "STUDENT" && user.institute_id != null) {
           // Institute student: show explanation banner — they cannot buy plans
           setShowInstituteBanner(true);
         } else if (user.role === "STUDENT") {
           // Direct student: go straight to the purchase catalog
           navigate("/student/courses");
+        } else {
+          // Everyone else already has somewhere to be.
+          navigate(authState.href);
         }
       }
       if (event.data?.type === "vh-navigate" && event.data.href) {
@@ -100,7 +137,12 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
       }
       if (event.data?.type === "vh-theme") {
         const theme = event.data.theme === "dark" ? "dark" : "light";
-        setPublicTheme(theme);
+        // The app writes `data-theme` on <html>, and a great many rules key off
+        // it - the segmented control, inputs, headings. Leaving it behind meant
+        // the login overlay could be light while everything the app styled
+        // inside it stayed dark: white text on a white card, a black role bar.
+        // The store is the single source now, so the two cannot disagree.
+        useThemeStore.getState().setTheme(theme);
       }
       if (event.data?.type === "vh-support-ticket") {
         const requestId = event.data.requestId;
@@ -182,7 +224,7 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [navigate]);
+  }, [authState, navigate, user]);
 
   useEffect(() => {
     let cancelled = false;
@@ -197,7 +239,7 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
         return response.text();
       })
       .then((html) => {
-        if (!cancelled) setPageHtml(buildPublicPageHtml(html, fileName, bootstrap));
+        if (!cancelled) setPageHtml(buildPublicPageHtml(html, fileName, { ...(bootstrap as object ?? {}), auth: authState }));
       })
       .catch(() => {
         if (cancelled) return;
@@ -217,50 +259,7 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
     return () => {
       cancelled = true;
     };
-  }, [bootstrap, bootstrapPending, fileName, publicTheme, src, title]);
-
-  useEffect(() => {
-    function handleSystemThemeChange() {
-      try {
-        if (window.localStorage.getItem("vh-theme")) return;
-      } catch {
-        // Continue with system theme fallback.
-      }
-      setPublicTheme(getInitialPublicTheme());
-    }
-
-    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
-    media?.addEventListener?.("change", handleSystemThemeChange);
-    return () => media?.removeEventListener?.("change", handleSystemThemeChange);
-  }, []);
-
-  const handleClose = useCallback(() => {
-    if (user) return;
-    navigate("/", { replace: true });
-  }, [navigate, user]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get("noredirect") === "1") return;
-    if (!user || (!authMode && location.pathname !== "/")) return;
-    const destination = destinationFor(user);
-    if (destination) navigate(destination, { replace: true });
-  }, [authMode, location.pathname, location.search, navigate, user]);
-
-  useEffect(() => {
-    if (!authMode) return undefined;
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !isLoading && !user) handleClose();
-    }
-
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [authMode, handleClose, isLoading, user]);
+  }, [authState, bootstrap, bootstrapPending, fileName, publicTheme, src, title]);
 
   return (
     <div style={{ minHeight: "100vh", background: pageBackground }}>
@@ -283,7 +282,7 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
         <AuthOverlay
           authMode={authMode}
           publicTheme={publicTheme}
-          onClose={handleClose}
+          onClose={handleAuthClose}
           onModeChange={setAuthMode}
           closeDisabled={Boolean(user) || isLoading}
         />

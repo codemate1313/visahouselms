@@ -3504,6 +3504,44 @@ th[aria-sort="descending"] .table-sort-button::after {
   }
 }
 
+/* The auth modal picks its own light or dark from the public site's theme,
+   independently of whatever theme the app itself is in. Anything inside it that
+   reaches for an app token - `var(--text)` on the Google button, for one -
+   would otherwise resolve against the wrong theme and vanish: white text on a
+   white card whenever the two disagreed.
+
+   Redeclaring the tokens on the modal makes it a self-contained theme scope, so
+   every child resolves against the modal it is actually sitting in. */
+.static-auth-modal-light {
+  color-scheme: light;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-muted: rgba(247, 247, 249, 0.92);
+  --text: #111113;
+  --text-muted: #6e6e73;
+  --border: rgba(210, 210, 216, 0.72);
+}
+
+.static-auth-modal-dark {
+  color-scheme: dark;
+  --surface: #181b22;
+  --surface-muted: #212530;
+  --text: #f3f4f6;
+  --text-muted: #9ca3af;
+  --border: rgba(255, 255, 255, 0.1);
+}
+
+/* The Google button is the one control that inherits its colour rather than
+   being given one, so it needs the border and background to match too. */
+.static-auth-modal-light .google-login-btn {
+  background: rgba(14, 13, 16, 0.04);
+  border-color: rgba(14, 13, 16, 0.12);
+  color: #0e0d10;
+}
+
+.static-auth-modal-light .google-login-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
 .static-auth-modal-light .login-ref-card {
   background: rgba(255, 255, 255, 0.94);
   border-color: rgba(14, 13, 16, 0.1) !important;
@@ -3744,7 +3782,7 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .static-auth-modal-light .form-group input::placeholder,
 .static-auth-modal-light .password-input-wrap input::placeholder {
-  color: rgba(14, 13, 16, 0.42);
+  color: rgba(14, 13, 16, 0.62);
 }
 
 

@@ -53,6 +53,10 @@ export function InstituteLayout() {
     if (permissions.view_billing) {
       instituteItems.push({ key: "billing", label: m.subscription, icon: "subscription", to: "/institute-portal/billing" });
     }
+    // Every institute admin can brand their own institute - it is their own
+    // identity, not a privileged operation, so it sits outside the permission
+    // checks. It only appears once a plan is live, alongside the rest.
+    instituteItems.push({ key: "branding", label: m.branding, icon: "building", to: "/institute-portal/branding" });
   }
 
   const sections: MenuSection[] = [

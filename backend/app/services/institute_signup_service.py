@@ -215,6 +215,12 @@ def pending_count(db: Session) -> int:
     )
 
 
+def get_request(db: Session, request_id: int) -> dict:
+    """One application, serialized. The public read - routers have no business
+    reaching past the service boundary for `_serialize`."""
+    return _serialize(get_or_404(db, request_id))
+
+
 def get_or_404(db: Session, request_id: int) -> InstituteSignupRequest:
     row = _query(db).filter(InstituteSignupRequest.id == request_id).first()
     if row is None:
