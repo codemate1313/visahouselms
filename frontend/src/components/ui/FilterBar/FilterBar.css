@@ -10,6 +10,14 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
+  /* Wrapped rows pack to the top.
+   *
+   * `align-content` defaults to stretch, so the moment this bar is taller than
+   * its contents - which it is whenever it sits in a stretched column, i.e. on
+   * every narrow screen where the filters wrap - the spare height is handed out
+   * *between* the rows. That is the acre of empty space between a status
+   * dropdown and the button under it. */
+  align-content: flex-start;
 }
 
 /* Pushes the tally, and only the tally, to the trailing edge. */

@@ -10,6 +10,32 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Taps land immediately.
+ *
+ * Without `touch-action: manipulation` a browser has to wait out the
+ * double-tap-to-zoom window before it can be sure a tap was a tap, which is
+ * the ~300ms of dead air that makes every control on a phone feel broken
+ * rather than slow. Scrolling and pinch-zoom are unaffected; only the
+ * double-tap gesture is given up, and only on things you are meant to press.
+ *
+ * The tap highlight goes with it - the grey flash it paints has nothing to do
+ * with this app's own pressed states and only muddies them. */
+a,
+button,
+select,
+summary,
+label[for],
+[role="button"],
+[role="tab"],
+[role="option"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="submit"],
+input[type="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body,
 button,
 input,
@@ -214,7 +240,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f8fafc;
+  background-color: var(--bg);
   background-image: radial-gradient(rgba(148, 163, 184, 0.2) 1.2px, transparent 1.2px);
   background-size: 28px 28px;
   overflow: hidden;
@@ -570,7 +596,7 @@ h1 {
 .form-main-title {
   font-size: 24px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
   margin: 0 0 4px;
   letter-spacing: 0.02em;
 }
@@ -634,9 +660,9 @@ h1 {
   width: 100%;
   padding: 11px 14px;
   border-radius: var(--radius-md);
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   font-size: 13.5px;
-  color: #0f172a;
+  color: var(--text);
   transition: all 180ms ease;
 }
 
@@ -722,12 +748,12 @@ h1 {
 .toggle-switch-text {
   font-size: 13px;
   font-weight: 500;
-  color: #475569;
+  color: var(--text-muted);
   transition: color 180ms ease;
 }
 
 .toggle-switch-container:hover .toggle-switch-text {
-  color: #0f172a;
+  color: var(--text);
 }
 
 .concise-error-box {

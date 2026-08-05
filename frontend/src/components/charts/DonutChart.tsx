@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from "react";
+import { chartHoverProps } from "./hoverProps";
 import { AnimatedCounter } from "../AnimatedCounter";
 import { Icon } from "../icons";
 import { ChartViewToggle } from "./ChartViewToggle";
@@ -131,8 +132,10 @@ export function DonutChart({
                     strokeLinecap="round"
                     strokeDasharray={`${currentLength} ${circumference - currentLength}`}
                     strokeDashoffset={offset}
-                    onMouseEnter={() => setHoveredIndex(index)}
-                    onMouseLeave={() => setHoveredIndex(null)}
+                    {...chartHoverProps(
+                      () => setHoveredIndex(index),
+                      () => setHoveredIndex(null),
+                    )}
                     onFocus={() => setHoveredIndex(index)}
                     onBlur={() => setHoveredIndex(null)}
                     tabIndex={0}
@@ -170,8 +173,10 @@ export function DonutChart({
                 <div
                   className={`donut-legend-row ${hoveredIndex === idx ? "row-active" : ""}`}
                   key={item.label}
-                  onMouseEnter={() => setHoveredIndex(idx)}
-                  onMouseLeave={() => setHoveredIndex(null)}
+                  {...chartHoverProps(
+                    () => setHoveredIndex(idx),
+                    () => setHoveredIndex(null),
+                  )}
                   onFocus={() => setHoveredIndex(idx)}
                   onBlur={() => setHoveredIndex(null)}
                   tabIndex={0}

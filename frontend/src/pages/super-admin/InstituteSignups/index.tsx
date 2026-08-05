@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { Badge, Button, Textarea } from "@/components/ui";
+import { Badge, Button, SegmentedControl, Textarea } from "@/components/ui";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useToastStore } from "@/store/toastStore";
 import { formatDate } from "@/utils/date";
@@ -94,19 +94,13 @@ export function InstituteSignups() {
     <div>
       {loadError && <p className="error-text">{loadError}</p>}
 
-      <div className="plan-audience-tabs" role="tablist">
-        {strings.tabs.map((tab) => (
-          <button
-            type="button"
-            key={tab.value}
-            role="tab"
-            aria-selected={tab.value === status}
-            className={`plan-audience-tab${tab.value === status ? " is-active" : ""}`}
-            onClick={() => setStatus(tab.value)}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="plan-audience-tabs">
+        <SegmentedControl<SignupStatus>
+          ariaLabel="Application status"
+          options={strings.tabs.map((tab) => ({ value: tab.value, label: tab.label }))}
+          value={status}
+          onChange={setStatus}
+        />
       </div>
 
       {approved && (

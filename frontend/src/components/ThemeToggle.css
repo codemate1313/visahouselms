@@ -3,8 +3,8 @@
    inside the portal top bar does not shift the chrome. */
 
 .theme-toggle {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.07);
   background: #ececee;

@@ -298,7 +298,7 @@
   padding: 30px;
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.96);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
   box-shadow: 0 28px 80px rgba(15, 23, 42, 0.3);
   text-align: center;
 }
@@ -3218,7 +3218,7 @@ th[aria-sort="descending"] .table-sort-button::after {
   font-weight: var(--app-stat-weight, 600);
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .typography-preview {
     grid-template-columns: 1fr;
   }

@@ -130,6 +130,18 @@
   opacity: 1;
 }
 
+/* A device that cannot hover cannot reveal this.
+ *
+ * The pin was invisible until its row was hovered, which on a phone or tablet
+ * is never - the button was still there and still tappable, but nothing told
+ * you so, which made pinning unreachable in practice. Where hover does not
+ * exist, the pin is simply always shown. */
+@media (hover: none) {
+  .pin-list-pin {
+    opacity: 1;
+  }
+}
+
 .pin-list-pin:hover:not(:disabled) {
   background: var(--surface-muted) !important;
   border-color: var(--border) !important;

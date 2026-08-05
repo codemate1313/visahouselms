@@ -358,7 +358,7 @@ code,
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .dashboard-content,
 .student-dashboard-content {
     width: 100%;
@@ -566,7 +566,7 @@ code,
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .responsive-data-table th + th,
 .responsive-data-table td + td,
 .data-table th + th,
@@ -967,7 +967,7 @@ code,
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .responsive-data-table th,
   .responsive-data-table td {
     overflow: visible;
@@ -1299,7 +1299,7 @@ body {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .responsive-data-table .row-actions-inline,
   .responsive-data-table .table-actions,
   .responsive-data-table .institute-row-actions {
@@ -1332,7 +1332,7 @@ body {
 }
 
 /* ---------- Desktop table action cell correction ---------- */
-@media (min-width: 761px) {
+@media (min-width: 769px) {
   .responsive-data-table td.table-actions,
   .responsive-data-table td.institute-row-actions,
   .super-admin-portal .responsive-data-table td.table-actions,
@@ -1646,7 +1646,7 @@ body {
   border-color: rgba(255, 255, 255, 0.14);
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .sleek-users-table.responsive-data-table th.col-actions,
   .sleek-users-table.responsive-data-table td.col-actions,
   .sleek-users-table.responsive-data-table .table-actions-heading.col-actions,
@@ -1711,7 +1711,7 @@ body {
   white-space: nowrap !important;
 }
 
-@media (max-width: 1100px) and (min-width: 761px) {
+@media (max-width: 1100px) and (min-width: 769px) {
   .subscription-history-table.responsive-data-table col.col-plan {
     width: 23%;
   }
@@ -1742,7 +1742,7 @@ body {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .subscription-history-table.responsive-data-table .col-plan,
   .subscription-history-table.responsive-data-table .col-starts,
   .subscription-history-table.responsive-data-table .col-expires,
@@ -1800,7 +1800,7 @@ body {
   font-weight: 700;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .institute-members-table .table-actions-heading,
   .institute-members-table td.institute-row-actions {
     width: 100% !important;

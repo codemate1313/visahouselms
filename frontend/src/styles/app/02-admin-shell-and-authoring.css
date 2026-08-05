@@ -73,7 +73,7 @@
 .pn-card-title {
   font-size: 18px !important;
   font-weight: 700 !important;
-  color: #0f172a !important;
+  color: var(--text) !important;
   margin: 0 0 4px !important;
 }
 
@@ -87,8 +87,8 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background: #f1f5f9 !important;
-  color: #0f172a !important;
+  background: var(--surface-muted) !important;
+  color: var(--text) !important;
   border-radius: 20px !important;
   padding: 3px 10px !important;
   font-size: 12px !important;
@@ -504,7 +504,7 @@
 .announcement-publisher-panel.workspace-panel,
 .announcement-history-panel.workspace-panel {
   padding: clamp(20px, 2.2vw, 34px);
-  background: rgba(255, 255, 255, 0.82);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
   border: 1px solid rgba(226, 232, 240, 0.76);
   border-radius: 28px;
   box-shadow: 0 18px 46px rgba(15, 23, 42, 0.07);
@@ -527,7 +527,7 @@
 
 .announcement-admin-page .collapsible-panel-toggle:hover:not(:disabled),
 .announcement-admin-page .collapsible-panel-toggle:focus-visible {
-  background: rgba(255, 255, 255, 0.94);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
   border-color: color-mix(in srgb, var(--primary) 28%, rgba(226, 232, 240, 0.84));
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent);
 }
@@ -551,7 +551,7 @@
   flex-basis: 34px;
   color: var(--primary);
   border-color: color-mix(in srgb, var(--primary) 24%, #ffffff);
-  background: rgba(255, 255, 255, 0.9);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
 }
 
 .announcement-publisher-panel form {
@@ -571,7 +571,7 @@
   width: 100%;
   min-width: 0;
   color: #101828;
-  background: rgba(255, 255, 255, 0.92);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
   border: 1px solid rgba(208, 213, 221, 0.86);
   border-radius: 16px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -640,7 +640,7 @@
 .announcement-history-list article {
   min-width: 0;
   padding: 18px;
-  background: rgba(255, 255, 255, 0.72);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
   border: 1px solid rgba(226, 232, 240, 0.82);
   border-radius: var(--radius);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
@@ -1803,7 +1803,7 @@
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
 
   .module-type-grid,
   .module-list-grid,
@@ -2021,7 +2021,7 @@ input:not([type="radio"]):not([type="checkbox"]) {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 14px;
-  background: rgba(255, 255, 255, 0.76);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
   color: var(--text);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -2078,7 +2078,7 @@ select {
 
 select:hover {
   border-color: #94a3b8;
-  background-color: #f8fafc;
+  background-color: var(--surface-muted);
 }
 
 input:focus {
@@ -3426,7 +3426,7 @@ td:hover,
 .plan-dialog-title {
   font-size: 18px !important;
   font-weight: 750 !important;
-  color: #0f172a !important;
+  color: var(--text) !important;
   margin: 0 !important;
 }
 
@@ -3590,7 +3590,7 @@ td:hover,
   justify-content: flex-end !important;
   gap: 10px !important;
   padding: 16px 24px !important;
-  background: #f8fafc !important;
+  background: var(--surface-muted) !important;
   border-top: 1px solid #e2e8f0 !important;
 }
 
@@ -4076,6 +4076,9 @@ textarea:focus {
 .filter-bar {
   display: flex;
   align-items: center;
+  /* See FilterBar.css: without this, a bar taller than its contents spreads its
+     wrapped rows apart instead of stacking them. */
+  align-content: flex-start;
   gap: 16px;
   margin-bottom: 24px;
   padding: 16px 20px;

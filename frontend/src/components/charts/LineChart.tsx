@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { chartHoverProps } from "./hoverProps";
 import { Icon } from "../icons";
 import { ChartViewToggle } from "./ChartViewToggle";
 import "./LineChart.css";
@@ -200,8 +201,10 @@ export function LineChart({
               return (
                 <g
                   key={i}
-                  onMouseEnter={() => setHoveredIndex(originalIndex)}
-                  onMouseLeave={() => setHoveredIndex(null)}
+                  {...chartHoverProps(
+                    () => setHoveredIndex(originalIndex),
+                    () => setHoveredIndex(null),
+                  )}
                   style={{ cursor: "pointer" }}
                 >
                   <circle

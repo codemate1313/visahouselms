@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { SegmentedControl } from "@/components/ui";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { useToastStore } from "@/store/toastStore";
 import { confirmExport } from "@/utils/confirmExport";
@@ -167,19 +168,13 @@ export function Plans() {
     <div>
       {loadError && <p className="error-text">{loadError}</p>}
 
-      <div className="plan-audience-tabs" role="tablist">
-        {planAudienceTabs.map((tab) => (
-          <button
-            type="button"
-            key={tab.value}
-            role="tab"
-            aria-selected={tab.value === audience}
-            className={`plan-audience-tab${tab.value === audience ? " is-active" : ""}`}
-            onClick={() => switchAudience(tab.value)}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="plan-audience-tabs">
+        <SegmentedControl<PlanAudience>
+          ariaLabel="Plan audience"
+          options={planAudienceTabs.map((tab) => ({ value: tab.value, label: tab.label }))}
+          value={audience}
+          onChange={switchAudience}
+        />
       </div>
 
       <PlanVisibilityBar

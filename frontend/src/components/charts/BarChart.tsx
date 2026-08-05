@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { chartHoverProps } from "./hoverProps";
 import { Icon } from "../icons";
 import { ChartViewToggle } from "./ChartViewToggle";
 
@@ -170,8 +171,10 @@ export function BarChart({
               return (
                 <g
                   key={i}
-                  onMouseEnter={() => setHoveredIndex(i)}
-                  onMouseLeave={() => setHoveredIndex(null)}
+                  {...chartHoverProps(
+                    () => setHoveredIndex(i),
+                    () => setHoveredIndex(null),
+                  )}
                   style={{ cursor: "pointer" }}
                 >
                   <rect

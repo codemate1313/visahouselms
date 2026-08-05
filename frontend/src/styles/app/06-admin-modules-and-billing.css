@@ -270,7 +270,7 @@
 }
 
 .clear-search-btn:hover {
-  color: #0f172a !important;
+  color: var(--text) !important;
   background: #e2e8f0 !important;
   box-shadow: none !important;
 }
@@ -375,8 +375,8 @@
 }
 
 .secondary-done-btn:hover {
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--surface-muted);
+  color: var(--text);
   border-color: #94a3b8;
 }
 
@@ -1701,16 +1701,32 @@
     flex-direction: column;
   }
 
+  /* Once the bar is a column, every flex length that was written for a row is
+   * pointing the wrong way: `flex: 0 0 170px` on a select stops meaning "170px
+   * wide" and starts meaning "170px tall", and a leftover `flex-grow: 1` on the
+   * search input stretches it down the card instead of across it. That is the
+   * empty acre between the filters and the button below them.
+   *
+   * So the children are pinned to their own height here, and `select` is listed
+   * explicitly - it was the one control missing from this rule, and the one
+   * carrying the largest flex-basis. */
+  .super-admin-portal .filter-bar > *,
+  .super-admin-portal .course-filter-bar > * {
+    flex: 0 0 auto !important;
+  }
+
   .super-admin-portal .filter-bar input,
+  .super-admin-portal .filter-bar select,
   .super-admin-portal .filter-bar button:not(.export-btn),
   .super-admin-portal .filter-bar .searchable-select-container,
   .super-admin-portal .course-filter-bar input,
+  .super-admin-portal .course-filter-bar select,
   .super-admin-portal .course-filter-bar button:not(.export-btn),
   .super-admin-portal .course-filter-bar .searchable-select-container {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
-    flex-basis: auto !important;
+    flex: 0 0 auto !important;
   }
 
   .super-admin-portal .form-grid {
@@ -1858,17 +1874,29 @@
 }
 
 /* Portal Top Bar Breadcrumbs */
+/* The trail has to be able to lose, not spill.
+ *
+ * A flex row defaults to nowrap with no overflow handling, so a deep trail like
+ * "Course Management / Course Control / Module Detail" simply kept drawing past
+ * the end of the title group and straight underneath the theme toggle and bell.
+ * Clipping it here means the overflow is contained rather than painted over the
+ * controls; the mobile rule below then decides what to keep. */
 .portal-breadcrumb-nav {
   margin-bottom: 2px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .portal-breadcrumb-list {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 5px;
   list-style: none;
   margin: 0;
   padding: 0;
+  min-width: 0;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -1879,7 +1907,30 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  min-width: 0;
+  white-space: nowrap;
   color: var(--text-muted, #64748b);
+}
+
+/* The ancestors are the first thing to go, not the last.
+ *
+ * Truncating from the right would eat the current page - the one crumb that
+ * says where you actually are - and leave the parent sections that the sidebar
+ * already shows. On a phone the trail is reduced to the page itself, and its
+ * leading separator goes with the ancestors that justified it. */
+@media (max-width: 768px) {
+  .portal-breadcrumb-item:not(:last-child) {
+    display: none;
+  }
+
+  .portal-breadcrumb-item:last-child .portal-breadcrumb-separator {
+    display: none;
+  }
+
+  .portal-breadcrumb-item:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .portal-breadcrumb-item.is-active {
@@ -1945,7 +1996,7 @@
   align-items: center !important;
   gap: 10px !important;
   min-width: 0 !important;
-  padding: 5px 14px 5px 6px !important;
+  padding: 4px 14px 4px 4px !important;
   background: var(--surface) !important;
   border: 1px solid var(--border) !important;
   border-radius: 40px !important;
@@ -1964,8 +2015,8 @@
 }
 
 .portal-user-avatar {
-  width: 36px !important;
-  height: 36px !important;
+  width: 32px !important;
+  height: 32px !important;
   flex: 0 0 auto !important;
   object-fit: cover !important;
   border-radius: 50% !important;
@@ -2133,16 +2184,18 @@
   z-index: 1200;
   display: inline-flex;
   align-items: center;
-  min-height: 48px;
+  /* Matches the button it wraps. A taller shell set the row height and left the
+     bell looking lifted against its neighbours. */
+  min-height: 40px;
   margin: 0;
   pointer-events: none;
 }
 
 .student-notification-bell {
   position: relative;
-  width: 42px !important;
-  height: 42px !important;
-  min-width: 42px !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
   display: grid;
   place-items: center;
   padding: 0;
@@ -2156,12 +2209,18 @@
   cursor: pointer;
 }
 
+/* The glow is centred, not dropped.
+ *
+ * At `0 8px 20px` the halo sat entirely below the button, which reads as the
+ * bell floating above its own shadow - next to a flat theme toggle of the exact
+ * same 40px box it looked both larger and lifted. A tight, near-symmetric glow
+ * keeps the visual mass on the same baseline as its neighbours. */
 .student-notification-bell.has-unread,
 .student-notification-bell[aria-expanded="true"] {
   color: #ffffff !important;
   background: var(--primary) !important;
   border-color: var(--primary) !important;
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 30%, transparent) !important;
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--primary) 28%, transparent) !important;
 }
 
 .student-notification-bell:hover,
@@ -2169,7 +2228,7 @@
   color: #ffffff !important;
   background: var(--primary-hover, var(--primary)) !important;
   border-color: var(--primary-hover, var(--primary)) !important;
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--primary) 35%, transparent) !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 32%, transparent) !important;
   transform: translateY(-1px);
 }
 
@@ -2448,9 +2507,19 @@
     padding: 18px 18px 30px;
   }
 
-  .student-notification-shell {
+  /* Scoped to the student dashboard - not the portal top bar. When this rule
+     was unscoped it pushed the bell up inside .portal-app-actions because
+     margin-bottom added space below the shell that the flex row's
+     align-items: center used to vertically offset the button. */
+  .student-dashboard-content .student-notification-shell {
     min-height: 48px;
     margin-bottom: 12px;
+  }
+
+  /* Inside the portal top bar the bell must stay on the same baseline as the
+     theme toggle and avatar chip - no extra margin. */
+  .portal-app-bar .student-notification-shell {
+    margin-bottom: 0;
   }
 }
 
@@ -2459,7 +2528,7 @@
     padding: 14px 12px 24px;
   }
 
-  .student-notification-shell {
+  .student-dashboard-content .student-notification-shell {
     min-height: 46px;
     margin-bottom: 10px;
   }
@@ -2535,7 +2604,7 @@
 
 .audience-checkbox-card:hover {
   border-color: color-mix(in srgb, var(--primary) 32%, #dbe3ee);
-  background: rgba(255, 255, 255, 0.96);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.075);
   transform: translateY(-1px);
 }
@@ -2561,7 +2630,7 @@
   color: #ffffff;
   border: 2px solid #d0d5dd;
   border-radius: 9px;
-  background: rgba(255, 255, 255, 0.88);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   transition: background 160ms ease, border-color 160ms ease;
 }
 
@@ -3269,7 +3338,7 @@
   transform: translateY(-6px) scale(1.02);
   box-shadow: 0 20px 48px -12px rgba(15, 23, 42, 0.08), inset 0 2px 6px rgba(255, 255, 255, 0.9);
   border-color: rgba(255, 255, 255, 1);
-  background: rgba(255, 255, 255, 0.9);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
 }
 
 .sd-test-card-top {
@@ -3759,7 +3828,7 @@
 .type-listening .premium-icon-box { background: #eff6ff; color: #2563eb; }
 .type-full_mock .premium-icon-box { background: #f3e8ff; color: #7e22ce; }
 .type-final_test .premium-icon-box { background: #ffe4e6; color: var(--primary); }
-.type-default .premium-icon-box { background: #f1f5f9; color: #475467; }
+.type-default .premium-icon-box { background: var(--surface-muted); color: #475467; }
 
 .premium-test-card:hover .premium-icon-box {
   transform: scale(1.08) rotate(-3deg);
@@ -3854,7 +3923,7 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.78);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
   backdrop-filter: blur(1px);
   -webkit-backdrop-filter: blur(1px);
   border-radius: 22px;
@@ -3903,7 +3972,7 @@
 
 
 .start-test-btn:hover:not(:disabled) {
-  background: #ffffff !important;
+  background: var(--surface) !important;
   color: var(--primary) !important;
   border-color: var(--primary) !important;
   box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 18%, transparent) !important;
@@ -5965,6 +6034,25 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
     gap: 12px !important;
   }
 
+  /* Flipping a row to a column also flips what every flex length means.
+   *
+   * `flex: 1` on a search input stops meaning "take the leftover width" and
+   * starts meaning "take the leftover height"; `flex: 0 0 170px` on a status
+   * select stops being a width and becomes a 170px-tall box. In a card that is
+   * taller than its filters - any table screen with few rows - that is exactly
+   * the empty gap that opens between the controls and the button beneath them.
+   *
+   * Children keep their own height here. Widths are handled separately below,
+   * on the cross axis, where `align-items: stretch` already does the work. */
+  .dashboard-content .flex-row > *,
+  .dashboard-content .row > *,
+  .dashboard-content .filter-bar > *,
+  .dashboard-content .course-filter-bar > *,
+  .dashboard-content .page-header-actions > *,
+  .dashboard-content .form-actions > * {
+    flex: 0 0 auto !important;
+  }
+
   .dashboard-content .flex-row>button,
   .dashboard-content .row>button,
   .dashboard-content .form-actions>button,
@@ -6124,38 +6212,45 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
     gap: 10px !important;
   }
 
-  /* Profile avatar chip visual layout on mobile */
-  @media (max-width: 580px) {
-    .portal-user-text {
-      display: none !important;
-    }
+  /* Profile avatar chip on mobile.
 
-    .portal-user-chip {
-      padding: 0 !important;
-      border: none !important;
-      background: transparent !important;
-      box-shadow: none !important;
-      border-radius: 50% !important;
-      width: 40px !important;
-      height: 40px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      min-width: auto !important;
-    }
+     These used to sit behind their own `@media (max-width: 580px)` nested in
+     this 768px block. The outer block already forces the chip to a 40px square,
+     so between 581px and 768px the chip was 40px wide with its name and role
+     still rendered inside it - the text spilled out and was clipped by the
+     140px cap on .portal-app-actions. One threshold now: the chip collapses to
+     a bare avatar wherever it is forced to 40px. */
 
-    .portal-user-avatar {
-      width: 40px !important;
-      height: 40px !important;
-      border-radius: 50% !important;
-      border: 1.5px solid var(--border, rgba(0, 0, 0, 0.1)) !important;
-      object-fit: cover !important;
-    }
-
-    .portal-user-chevron {
-      display: none !important;
-    }
+  .portal-user-text {
+    display: none !important;
   }
+
+  .portal-user-chip {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: auto !important;
+  }
+
+  .portal-user-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    border: 1.5px solid var(--border, rgba(0, 0, 0, 0.1)) !important;
+    object-fit: cover !important;
+  }
+
+  .portal-user-chevron {
+    display: none !important;
+  }
+
 
   /* Force all avatar/profile images to fit circular frame without distortion */
   img[class*="avatar"],
@@ -7467,7 +7562,7 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   border-radius: 18px !important;
   overflow: hidden !important;
   border: none !important;
-  background: #fff !important;
+  background: var(--surface) !important;
   box-shadow: 0 32px 80px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -7704,47 +7799,17 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 }
 
 /* Catalogue switch on the Plans screen. Direct-student plans and institute
-   tiers are separate catalogues that happen to share a table, so the tabs are
-   the only thing telling you which one you are editing. */
+   tiers are separate catalogues that happen to share a table, so this control
+   is the only thing telling you which one you are editing.
+ *
+ * The buttons themselves are now a shared SegmentedControl, which brings the
+ * small-screen dropdown with it. All that is left here is the spacing, and the
+ * full-width block matters: the collapse logic measures the control against
+ * this parent, so it has to describe the real room available. */
 .plan-audience-tabs {
-  display: flex;
-  gap: 4px;
+  display: block;
+  width: 100%;
   margin-bottom: 12px;
-  padding: 4px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-muted);
-  width: fit-content;
-}
-
-.plan-audience-tab {
-  padding: 7px 18px;
-  border: none;
-  border-radius: calc(var(--radius-lg) - 4px);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-/* Same trap as the plan cards: the global `button:hover` would flood these with
-   the primary colour. A tab is a surface, so it keeps its own. */
-.plan-audience-tab:hover:not(:disabled) {
-  color: var(--text);
-  background: var(--surface);
-  box-shadow: none;
-}
-
-.plan-audience-tab.is-active:hover:not(:disabled) {
-  color: var(--primary);
-}
-
-.plan-audience-tab.is-active {
-  background: var(--primary);
-  color: var(--white, #ffffff);
-  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.12));
 }
 
 .plan-audience-note {

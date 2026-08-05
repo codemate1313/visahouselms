@@ -122,7 +122,7 @@
   margin: 0 0 16px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.68);
+  background: color-mix(in srgb, var(--surface) 68%, transparent);
   border: 1px solid currentColor;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -133,9 +133,9 @@
 .import-review,
 .question-list-section {
   padding: 22px;
-  border: 1px solid rgba(225, 225, 230, 0.88);
+  border: 1px solid var(--border);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.88);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   box-shadow: 0 14px 36px rgba(17, 17, 19, 0.052);
   backdrop-filter: blur(16px) saturate(130%);
   -webkit-backdrop-filter: blur(16px) saturate(130%);
@@ -1133,9 +1133,16 @@
 
 
 @media (max-width: 820px) {
-  .dashboard {
-    display: block;
-  }
+  /* `.dashboard { display: block }` used to live here, and it collapsed the
+     flex layout for everything under 820px. But the desktop block at
+     min-width: 769px also sets `height: 100dvh; overflow: hidden` on the same
+     element - so between 769 and 820 the sidebar became a full-width, full-
+     height block and pushed the content out of a clipped container. Nothing
+     rendered.
+
+     Below 769px the mobile block sets display:block itself, together with the
+     height:auto and overflow-y:visible that make it work, so this rule was only
+     ever reaching the range where it did damage. */
 
   
 
@@ -1149,10 +1156,6 @@
 
   
 
-  .dashboard-content {
-    width: 100%;
-    padding: 76px 22px 30px;
-  }
 
   .table-wrap {
     overflow-x: hidden;
@@ -1186,6 +1189,17 @@
     max-height: calc(100vh - 28px);
     max-height: calc(100dvh - 28px);
     overflow-y: auto;
+  }
+}
+
+/* Top clearance for the stacked mobile header. This travelled with the
+   display:block rule in the 820px block, so removing that would have cost
+   621-768px its padding - the 620px block still sets 72px below that. Only
+   top and bottom: the mobile block owns the horizontal padding. */
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding-top: 76px;
+    padding-bottom: 30px;
   }
 }
 
@@ -1297,6 +1311,36 @@
 .huge-sidebar.is-collapsed {
   width: var(--sidebar-collapsed-width);
   padding: 22px 12px 16px;
+  overflow: hidden;
+}
+
+.huge-sidebar.is-collapsed .sidebar-nav-scroll {
+  margin-right: 0;
+  padding-right: 0;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.huge-sidebar.is-collapsed .sidebar-nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* When collapsed, hidden children (label, badge, accordion arrow) must leave
+   the flex flow entirely.  max-width: 0 alone keeps them as flex items whose
+   invisible width still shifts justify-content: center differently per row
+   (accordion rows have an arrow, some rows have badges).  position: absolute
+   removes them from the flex line so the icon-wrap is the ONLY flex child and
+   justify-content: center places every icon in the same column. */
+.huge-sidebar.is-collapsed .sidebar-item-label,
+.huge-sidebar.is-collapsed .sidebar-badge,
+.huge-sidebar.is-collapsed .sidebar-accordion-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
 }
 
 /* 1. Mac Window Control Dots */
@@ -1315,6 +1359,7 @@
 .huge-sidebar.is-collapsed .sidebar-brand-container {
   justify-content: center;
   padding: 0;
+  gap: 0;
 }
 
 .sidebar-brand-logo-box {
@@ -1357,9 +1402,13 @@
 }
 
 .huge-sidebar.is-collapsed .sidebar-brand-text {
+  position: absolute;
   max-width: 0;
+  width: 0;
+  height: 0;
   opacity: 0;
   pointer-events: none;
+  overflow: hidden;
   transition: max-width 300ms cubic-bezier(0.16, 1, 0.3, 1),
     opacity 120ms ease;
 }
@@ -1479,9 +1528,33 @@
   text-transform: uppercase;
 }
 
+/* A 68px rail cannot hold "CMS & CONTENT" on one line. Shrinking the heading to
+   9px only made it wrap to two lines, so the gap above each group differed from
+   the gap above the next and the icon column lost its rhythm. Collapsed, the
+   grouping is carried by a divider instead. */
 .huge-sidebar.is-collapsed .sidebar-section-title {
-  font-size: 9px;
-  letter-spacing: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.huge-sidebar.is-collapsed .sidebar-section-header {
+  height: 1px;
+  margin: 10px 12px 12px;
+  border-top: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+}
+
+/* The first group needs no divider - there is nothing above it to separate.
+   `:first-child` would not match: the sliding active-indicator div is rendered
+   before the sections, so the adjacent-sibling selector is what actually picks
+   out the first one. */
+.huge-sidebar.is-collapsed .apple-sidebar-active-indicator + .sidebar-section .sidebar-section-header {
+  border-top: 0;
+  height: 0;
+  margin: 0 0 4px;
 }
 
 .sidebar-section-title,
@@ -1753,12 +1826,14 @@
 .sidebar-accordion-arrow {
   max-width: 14px;
   opacity: 1;
-  transition: max-width 300ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms ease 90ms;
   width: 14px;
   height: 14px;
   margin-left: auto;
   color: var(--sidebar-text-muted);
-  transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), color 200ms ease;
+  /* One declaration, not two: a second `transition` further down replaced the
+     first outright, so the collapse animation never ran. */
+  transition: max-width 300ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms ease 90ms,
+    transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), color 200ms ease;
   flex-shrink: 0;
 }
 
@@ -1766,12 +1841,31 @@
   transform: rotate(180deg);
 }
 
+/* `margin-left: auto` has to go, not just the width.
+ *
+ * An auto margin consumes the row's free space before `justify-content` ever
+ * gets to act, so a zero-width arrow still dragged the icon hard against the
+ * left edge - which is why only the rows with a chevron sat out of line. */
 .huge-sidebar.is-collapsed .sidebar-accordion-arrow {
   max-width: 0;
+  margin-left: 0;
   opacity: 0;
   overflow: hidden;
   pointer-events: none;
   transition: max-width 300ms cubic-bezier(0.16, 1, 0.3, 1), opacity 120ms ease;
+}
+
+/* The "opens in a new tab" hint on the Visit Website row. It trails the label
+   when expanded and disappears entirely when collapsed - a 68px rail has room
+   for one glyph, and it should be the one that names the destination. */
+.sidebar-item-external-icon {
+  margin-left: auto;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.huge-sidebar.is-collapsed .sidebar-item-external-icon {
+  display: none;
 }
 
 /* Sub-menu Dropdown List & Tree Line */
@@ -2141,6 +2235,7 @@
 
 .huge-sidebar.is-collapsed .sidebar-badge {
   max-width: 0;
+  margin-left: 0;
   padding-left: 0;
   padding-right: 0;
   opacity: 0;
