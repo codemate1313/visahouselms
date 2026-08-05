@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.gst_rate import GstRate
+from app.models.plan import Plan
 from app.models.user import User
 
 
@@ -65,6 +66,21 @@ def toggle_gst_rate_active(db: Session, actor: User, rate_id: int, ip: Optional[
 
 def delete_gst_rate(db: Session, actor: User, rate_id: int, ip: Optional[str] = None) -> None:
     rate = get_gst_rate_or_404(db, rate_id)
+    # `plans.gst_rate_id` is ON DELETE SET NULL, so without this check the
+    # delete succeeds and quietly drops every plan on this rate to zero GST.
+    # Silently repricing the catalogue is a worse outcome than a refusal, and
+    # every comparable delete here already refuses - plans while subscriptions
+    # exist, coupons while payments reference them, courses on four separate
+    # dependants. This was the one that did not.
+    in_use = db.query(Plan).filter(Plan.gst_rate_id == rate.id).count()
+    if in_use:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"This GST rate is applied to {in_use} plan(s). "
+                "Move them to another rate before deleting it."
+            ),
+        )
     db.delete(rate)
     db.commit()
 

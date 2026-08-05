@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
+import { extractErrorMessage } from "@/api/errors";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { useToastStore } from "@/store/toastStore";
 import "./SuperAdminBlogs.css";
 import { superAdminBlogsStrings as strings } from "./SuperAdminBlogs.strings";
 import type { BlogAdminItem, BlogStatusFilter, BlogViewMode } from "./types";
@@ -10,6 +12,10 @@ import { BlogGridView } from "./components/BlogGridView";
 import { BlogTableView } from "./components/BlogTableView";
 
 export function SuperAdminBlogs() {
+  // This screen has no error banner, so a failed write had nowhere to go
+  // and simply looked like it had worked. A toast is the smallest thing
+  // that makes a rejection visible here.
+  const showError = useToastStore((state) => state.showError);
   const [items, setItems] = useState<BlogAdminItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -37,7 +43,7 @@ export function SuperAdminBlogs() {
     if (!(await confirmDelete(strings.deleteConfirm(title), strings.deleteConfirmTitle))) return;
     apiClient.delete(`/super-admin/blogs/${id}`).then(() => {
       fetchItems();
-    });
+    }).catch((err: unknown) => showError(extractErrorMessage(err, "Could not update this blog post.")));
   };
 
   const handleToggleActive = async (item: BlogAdminItem) => {
@@ -51,7 +57,7 @@ export function SuperAdminBlogs() {
     const updated = { is_published: !item.is_published };
     apiClient.put(`/super-admin/blogs/${item.id}`, updated).then(() => {
       fetchItems();
-    });
+    }).catch((err: unknown) => showError(extractErrorMessage(err, "Could not update this blog post.")));
   };
 
   const filteredItems = items.filter((item) => {

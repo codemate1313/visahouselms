@@ -244,3 +244,40 @@ def set_initial_password(db: Session, actor: User, new_password: str, ip: Option
     db.add(actor)
     _audit(db, actor, "account.set_initial_password", actor.id, ip)
     db.commit()
+
+
+def soft_delete_user(db: Session, user: User) -> None:
+    """Retire an account without destroying it, and release its email address.
+
+    Deleting the row is the obvious implementation and the wrong one here. A
+    user is referenced by attempts, answers, grading, payments, subscriptions
+    and every audit and API log row they ever produced; four of those foreign
+    keys declare no `ondelete`, so with `PRAGMA foreign_keys=ON` the database
+    simply refuses. Working around that means destroying the history those
+    tables exist to hold - a student's attempts, an admin's audit trail - which
+    is a high price for a delete button.
+
+    So the row stays and is marked retired. Everything that pointed at it still
+    resolves, reports and revenue still add up, and an accidental delete is a
+    field edit away from being undone.
+
+    Two things do change. Sessions are removed outright rather than revoked,
+    because a retired account must not be able to refresh a token, and a revoked
+    session row has no further value. And the email is released: it is the
+    login identifier and carries a unique index, so leaving it in place would
+    make the address permanently unusable. The original is recorded in the
+    caller's audit entry, which is written before this runs.
+
+    Idempotent - calling it on an already-retired account does nothing, so a
+    double-submitted delete cannot mangle the stored address.
+    """
+    if user.deleted_at is not None:
+        return
+
+    user.deleted_at = datetime.now(timezone.utc)
+    user.is_active = False
+    # Reserved TLD (RFC 2606): can never collide with a real address, and is
+    # obvious in the database as something that was released rather than typed.
+    user.email = f"deleted+{user.id}@deleted.invalid"
+    db.query(UserSession).filter(UserSession.user_id == user.id).delete()
+    db.add(user)

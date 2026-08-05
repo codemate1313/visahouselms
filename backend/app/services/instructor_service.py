@@ -8,13 +8,10 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.security import hash_password
-from app.models.api_log import ApiLog
 from app.models.audit_log import AuditLog
-from app.models.error_log import ErrorLog
 from app.models.instructor_profile import InstructorProfile
 from app.models.role import SA_INSTRUCTOR, Role
 from app.models.user import User
-from app.models.user_session import UserSession
 from app.services import account_service
 
 
@@ -84,11 +81,21 @@ def _serialize(user: User) -> dict:
 
 
 def _base_query(db: Session):
+    """Every read of an instructor goes through here, listings and lookups alike.
+
+    That is why the retired filter lives at this level rather than on the list
+    endpoint: a deleted account must not be findable by id either, or it stays
+    editable through a URL that a browser tab still remembers.
+    """
     role = _instructor_role(db)
     return (
         db.query(User)
         .options(joinedload(User.instructor_profile))
-        .filter(User.role_id == role.id, User.institute_id.is_(None))
+        .filter(
+            User.role_id == role.id,
+            User.institute_id.is_(None),
+            User.deleted_at.is_(None),
+        )
     )
 
 
@@ -269,26 +276,21 @@ def delete_instructor(db: Session, actor: User, instructor_id: int, ip: Optional
     user = get_instructor_or_404(db, instructor_id)
     # Authored content is durable business history and Phase 3.2+ records use
     # the instructor as their owner. Preserve that attribution permanently.
-    from app.models.course import Course
-    from app.models.exam_module import ExamModule
-
-    if (
-        db.query(Course).filter(Course.created_by_id == user.id).count() > 0
-        or db.query(ExamModule).filter(ExamModule.created_by_id == user.id).count() > 0
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This instructor owns assessment content and cannot be deleted; deactivate the account instead",
-        )
     _audit(db, actor, "sa_instructor.delete", user.id, ip, {"email": user.email})
 
-    # Preserve historical logs but detach their actor reference. Live sessions
-    # and the role-specific profile have no value after account deletion.
-    db.query(ApiLog).filter(ApiLog.user_id == user.id).update({"user_id": None})
-    db.query(AuditLog).filter(AuditLog.user_id == user.id).update({"user_id": None})
-    db.query(ErrorLog).filter(ErrorLog.user_id == user.id).update({"user_id": None})
-    db.query(UserSession).filter(UserSession.user_id == user.id).delete()
-    db.delete(user)
+    # Two things this used to do are now wrong, both for the same reason.
+    #
+    # It refused to delete an instructor who had authored courses or modules,
+    # telling the caller to deactivate instead. That guard existed because
+    # removing the row would leave `created_by_id` pointing at nothing. Retiring
+    # keeps the row, so the authorship still resolves and the objection is gone
+    # - and "deactivate instead" is now a description of what this does anyway.
+    #
+    # It also nulled the actor reference on this account's API, audit and error
+    # log rows. That was damage control for the same delete: the logs would
+    # otherwise have blocked it. Doing it now would erase the record of what
+    # this instructor did, which is the opposite of the point.
+    account_service.soft_delete_user(db, user)
     db.commit()
 
 

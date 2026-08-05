@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import IntegrityError
 
 from app.config import settings
 from app.middleware.request_logging import RequestLoggingMiddleware, _extract_user_id
@@ -125,6 +126,51 @@ app.include_router(blogs_router.public_router)
 app.include_router(blogs_router.admin_router)
 app.include_router(seo_router.public_router)
 app.include_router(seo_router.admin_router)
+
+
+@app.exception_handler(IntegrityError)
+async def integrity_error_handler(request: Request, exc: IntegrityError):
+    """A constraint violation is the caller's problem, not a crash.
+
+    Every unique index and foreign key in the schema can be tripped by a request
+    that was valid when it was checked and stale by the time it was written -
+    two admins claiming one email, a row deleted while its parent was being
+    edited. Pre-checks narrow that window but cannot close it, so the violation
+    has to have a defined answer. Without this handler it fell through to the
+    500 below, which tells the caller nothing and reads as an outage.
+
+    The driver's message is deliberately not forwarded: it names tables and
+    constraints, which is internal detail. It is recorded instead, so the
+    specific constraint is still recoverable from the error log.
+    """
+    from app.database import SessionLocal
+    from app.services.log_service import record_error
+
+    db = SessionLocal()
+    try:
+        record_error(
+            db,
+            message=f"IntegrityError: {exc.orig if exc.orig is not None else exc}",
+            stack_trace=traceback.format_exc(),
+            path=request.url.path,
+            method=request.method,
+            user_id=_extract_user_id(request),
+            ip_address=request.client.host if request.client else None,
+        )
+    except Exception:
+        pass
+    finally:
+        db.close()
+
+    return JSONResponse(
+        status_code=409,
+        content={
+            "detail": (
+                "That change conflicts with existing data. It may already exist, "
+                "or something still depends on it."
+            )
+        },
+    )
 
 
 @app.exception_handler(Exception)

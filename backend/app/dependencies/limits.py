@@ -98,6 +98,12 @@ def enforce_limit(db: Session, institute_id: int, resource: str) -> None:
             status_code=HTTP_402_PAYMENT_REQUIRED,
             detail=(
                 f"Plan limit reached: {count}/{limit} {resource}. "
-                "Upgrade the plan to add more."
+                # A seat is held by the account, not by its activity, so
+                # deactivating does not return one. Saying so here matters:
+                # elsewhere the API recommends deactivating instead of
+                # deleting, and an admin at their cap who follows that advice
+                # would otherwise try it and be left no better off.
+                "Deactivating an account does not free its seat - delete it, "
+                "or upgrade the plan to add more."
             ),
         )

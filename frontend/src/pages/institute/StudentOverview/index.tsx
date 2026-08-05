@@ -64,7 +64,16 @@ export function StudentOverview({ instituteId }: { instituteId?: number }) {
       variant: "warning",
     });
     if (!confirmed) return;
-    await apiClient.post(`${apiBase}/students/${id}/revoke-sessions`);
+    // The page already has an error banner; these three actions simply never
+    // fed it, so a rejected request left the view unchanged and silent - which
+    // reads as "nothing happened" rather than "that failed".
+    try {
+      await apiClient.post(`${apiBase}/students/${id}/revoke-sessions`);
+      setError(null);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.errors.revokeSessions));
+      return;
+    }
     await load();
   }
 
@@ -75,14 +84,26 @@ export function StudentOverview({ instituteId }: { instituteId?: number }) {
       variant: "warning",
     });
     if (!confirmed) return;
-    const response = await apiClient.post(`${apiBase}/members/${id}/reset-password`);
-    setTemporaryPassword(response.data.temporary_password);
+    try {
+      const response = await apiClient.post(`${apiBase}/members/${id}/reset-password`);
+      setTemporaryPassword(response.data.temporary_password);
+      setError(null);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.errors.resetPassword));
+      return;
+    }
     await load();
   }
 
   async function archive() {
     if (!await confirmDelete(strings.confirm.deleteStudent, strings.confirm.deleteStudentTitle)) return;
-    await apiClient.delete(`${apiBase}/members/${id}`);
+    try {
+      await apiClient.delete(`${apiBase}/members/${id}`);
+      setError(null);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.errors.deleteStudent));
+      return;
+    }
     await load();
   }
 

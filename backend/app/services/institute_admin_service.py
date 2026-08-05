@@ -97,13 +97,23 @@ def _audit(
     )
 
 
-def _member_query(db: Session, institute_id: int):
-    return (
+def _member_query(db: Session, institute_id: int, *, include_deleted: bool = False):
+    """Backs the roster and every by-id lookup.
+
+    Retired members are excluded by default, so a deleted account is neither
+    listed nor reachable through a link a browser tab still remembers. The
+    exception is the roster's own "Deleted" filter, which exists precisely to
+    show them - hence the opt-out rather than a filter hard-wired in here.
+    """
+    query = (
         db.query(User)
         .options(joinedload(User.role))
         .join(Role, User.role_id == Role.id)
         .filter(User.institute_id == institute_id, Role.name.in_(MANAGED_ROLES))
     )
+    if not include_deleted:
+        query = query.filter(User.deleted_at.is_(None))
+    return query
 
 
 def serialize_member(user: User, metrics: Optional[dict] = None) -> dict:
@@ -177,7 +187,7 @@ def list_members(
     scoped_institute_id: Optional[int] = None,
 ) -> list[dict]:
     institute_id = _require_institute(actor, scoped_institute_id)
-    query = _member_query(db, institute_id)
+    query = _member_query(db, institute_id, include_deleted=status_filter == "deleted")
     if role_name is not None:
         if role_name not in MANAGED_ROLES:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid member role")
@@ -464,7 +474,6 @@ def delete_member(
     deleted_email = user.email
     deleted_role = user.role.name if user.role else None
     deleted_institute_id = user.institute_id
-    account_service.revoke_all_sessions(db, user.id)
     _audit(
         db,
         actor,
@@ -473,7 +482,10 @@ def delete_member(
         ip,
         {"email": deleted_email, "role": deleted_role},
     )
-    db.delete(user)
+    # Retires the row rather than removing it; see soft_delete_user. The audit
+    # entry above is written first, so the real address is preserved before the
+    # account's own copy is released.
+    account_service.soft_delete_user(db, user)
     db.commit()
     notification_service.notify_roles(
         db,

@@ -20,7 +20,13 @@ def _now() -> datetime:
 
 
 def _admin(db: Session, institute_id: int) -> User:
-    user = db.query(User).filter(User.institute_id == institute_id).join(User.role).filter_by(name=INSTITUTE_ADMIN).first()
+    user = (
+        db.query(User)
+        .filter(User.institute_id == institute_id, User.deleted_at.is_(None))
+        .join(User.role)
+        .filter_by(name=INSTITUTE_ADMIN)
+        .first()
+    )
     if user is None:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Institute admin is missing")
     return user

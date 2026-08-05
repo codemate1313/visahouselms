@@ -1,7 +1,9 @@
 import { type DragEvent, type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
+import { extractErrorMessage } from "@/api/errors";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { useToastStore } from "@/store/toastStore";
 import "./SuperAdminTestimonials.css";
 import { superAdminTestimonialsStrings as strings } from "./SuperAdminTestimonials.strings";
 import type { TestimonialAdminItem, TestimonialStatusFilter, TestimonialViewMode } from "./types";
@@ -11,6 +13,10 @@ import { TestimonialTableView } from "./components/TestimonialTableView";
 import { TestimonialFormModal } from "./components/TestimonialFormModal";
 
 export function SuperAdminTestimonials() {
+  // This screen has no error banner, so a failed write had nowhere to go
+  // and simply looked like it had worked. A toast is the smallest thing
+  // that makes a rejection visible here.
+  const showError = useToastStore((state) => state.showError);
   const [items, setItems] = useState<TestimonialAdminItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -101,6 +107,12 @@ export function SuperAdminTestimonials() {
         setEditingItem(null);
         fetchItems();
       })
+      // Without this the save just stopped: the spinner cleared via `finally`,
+      // the modal stayed open with the work still in it, and nothing said why.
+      // The modal is deliberately left open so the entered content survives.
+      .catch((err: unknown) =>
+        showError(extractErrorMessage(err, "Could not save this testimonial.")),
+      )
       .finally(() => setSaving(false));
   };
 
@@ -110,7 +122,7 @@ export function SuperAdminTestimonials() {
     if (!(await confirmDelete(strings.deleteConfirm(name), strings.deleteConfirmTitle))) return;
     apiClient.delete(`/super-admin/testimonials/${id}`).then(() => {
       fetchItems();
-    });
+    }).catch((err: unknown) => showError(extractErrorMessage(err, "Could not update this testimonial.")));
   };
 
   const handleToggleActive = async (item: TestimonialAdminItem) => {
@@ -123,7 +135,7 @@ export function SuperAdminTestimonials() {
     if (!confirmed) return;
     apiClient.put(`/super-admin/testimonials/${item.id}`, { is_active: !item.is_active }).then(() => {
       fetchItems();
-    });
+    }).catch((err: unknown) => showError(extractErrorMessage(err, "Could not update this testimonial.")));
   };
 
   const handleAdd = () => {

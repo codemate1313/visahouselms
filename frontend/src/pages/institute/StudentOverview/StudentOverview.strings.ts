@@ -68,6 +68,9 @@ export const studentOverviewStrings = {
   },
   errors: {
     load: "Failed to load the student record.",
+    revokeSessions: "Could not sign this student out of their devices.",
+    resetPassword: "Could not reset this student's password.",
+    deleteStudent: "Could not delete this student.",
   },
   backToStudents: "Back to students",
   loading: "Loading...",

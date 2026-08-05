@@ -14,7 +14,7 @@ class UserSession(Base):
     __tablename__ = "user_sessions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     device_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("user_devices.id", ondelete="SET NULL"), nullable=True, index=True
     )

@@ -77,7 +77,13 @@ def _write_audit_log(
 
 def list_super_admins(db: Session) -> List[User]:
     role = _super_admin_role(db)
-    return db.query(User).filter(User.role_id == role.id).order_by(User.created_at).all()
+    # Retired accounts are kept for their audit trail, not for this list.
+    return (
+        db.query(User)
+        .filter(User.role_id == role.id, User.deleted_at.is_(None))
+        .order_by(User.created_at)
+        .all()
+    )
 
 
 def list_developer_managed_accounts(db: Session) -> List[User]:
@@ -85,7 +91,10 @@ def list_developer_managed_accounts(db: Session) -> List[User]:
     developer_role = _role_or_500(db, DEVELOPER)
     return (
         db.query(User)
-        .filter(User.role_id.in_([super_role.id, developer_role.id]))
+        .filter(
+            User.role_id.in_([super_role.id, developer_role.id]),
+            User.deleted_at.is_(None),
+        )
         .order_by(User.role_id, User.created_at)
         .all()
     )
@@ -93,7 +102,13 @@ def list_developer_managed_accounts(db: Session) -> List[User]:
 
 def get_super_admin_or_404(db: Session, account_id: int) -> User:
     role = _super_admin_role(db)
-    user = db.query(User).filter(User.id == account_id, User.role_id == role.id).first()
+    # Also excluded by id, not just from the list: a retired account reachable
+    # through a stale URL is still an editable account.
+    user = (
+        db.query(User)
+        .filter(User.id == account_id, User.role_id == role.id, User.deleted_at.is_(None))
+        .first()
+    )
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
     return user
@@ -102,7 +117,15 @@ def get_super_admin_or_404(db: Session, account_id: int) -> User:
 def get_developer_managed_account_or_404(db: Session, account_id: int) -> User:
     super_role = _role_or_500(db, SUPER_ADMIN)
     developer_role = _role_or_500(db, DEVELOPER)
-    user = db.query(User).filter(User.id == account_id, User.role_id.in_([super_role.id, developer_role.id])).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.id == account_id,
+            User.role_id.in_([super_role.id, developer_role.id]),
+            User.deleted_at.is_(None),
+        )
+        .first()
+    )
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
     return user
@@ -324,7 +347,9 @@ def delete_super_admin(db: Session, actor: User, account_id: int, ip_address: Op
 
     deleted_email = user.email
     _write_audit_log(db, actor, "super_admin.delete", user.id, ip_address, {"email": user.email})
-    db.delete(user)
+    # Audit first, then retire: this account's own audit trail is the record of
+    # what it did, and destroying the row would take that with it.
+    account_service.soft_delete_user(db, user)
     db.commit()
     notification_service.notify_security_event(
         db,
@@ -889,7 +914,6 @@ def delete_direct_student(
 ) -> None:
     user = get_direct_student_or_404(db, user_id)
     deleted_email = user.email
-    account_service.revoke_all_sessions(db, user.id)
     _write_audit_log(
         db,
         actor,
@@ -898,5 +922,8 @@ def delete_direct_student(
         ip_address,
         {"email": deleted_email},
     )
-    db.delete(user)
+    # A direct student has paid for something. Removing the row would orphan
+    # those payments and the attempts they bought, so the account is retired
+    # and the financial history stays attached to it.
+    account_service.soft_delete_user(db, user)
     db.commit()

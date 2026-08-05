@@ -114,7 +114,14 @@ def get_institute_or_404(db: Session, institute_id: int) -> Institute:
 def _serialize(db: Session, institute: Institute) -> dict:
     _, sub_state = current_subscription(db, institute.id)
     branding = db.query(InstituteBranding).filter(InstituteBranding.institute_id == institute.id).first()
-    admin = db.query(User).filter(User.institute_id == institute.id).join(User.role).filter_by(name=INSTITUTE_ADMIN).first()
+    # The institute's contact admin. A retired one is not a contact.
+    admin = (
+        db.query(User)
+        .filter(User.institute_id == institute.id, User.deleted_at.is_(None))
+        .join(User.role)
+        .filter_by(name=INSTITUTE_ADMIN)
+        .first()
+    )
     modules = (
         db.query(InstituteModule)
         .filter(InstituteModule.institute_id == institute.id, InstituteModule.is_active.is_(True))
@@ -621,17 +628,20 @@ def delete_admin(
             detail="Cannot delete the last active institute admin",
         )
 
-    admin.is_active = False
-    admin.deleted_at = datetime.now(timezone.utc)
-    revoked = _revoke_sessions(db, admin.id)
-    db.add(admin)
+    # This path already retired the account rather than deleting it - it is the
+    # behaviour the other four were changed to match. It is routed through the
+    # shared helper anyway so there is one definition of "retired": the audit
+    # entry below is built first, because the helper releases the email address
+    # and the log needs the real one.
+    admin_email = admin.email
+    account_service.soft_delete_user(db, admin)
     db.add(
         AuditLog(
             user_id=actor.id,
             action="institute_admin.archive",
             entity_type="user",
             entity_id=admin.id,
-            details={"institute_id": institute_id, "email": admin.email, "sessions_revoked": revoked},
+            details={"institute_id": institute_id, "email": admin_email},
             ip_address=ip,
         )
     )
