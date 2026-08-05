@@ -72,3 +72,5 @@ export { PageHeader } from "./PageHeader";
 export type { PageHeaderProps } from "./PageHeader";
 
 export { RequiredMark } from "./RequiredMark";
+export { RecordCards } from "./RecordCards";
+export type { RecordCardsProps, RecordField } from "./RecordCards";

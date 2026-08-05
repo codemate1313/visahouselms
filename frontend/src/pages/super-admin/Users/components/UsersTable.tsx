@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { TableAvatar } from "@/components/TableAvatar";
-import { Badge, Checkbox, DataTableCard } from "@/components/ui";
+import { Badge, Checkbox, DataTableCard, RecordCards } from "@/components/ui";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import type { DirectoryUser } from "@/api/types";
 import { usersStrings as strings } from "../Users.strings";
 import {
@@ -124,6 +125,7 @@ export function UsersTable({
     }
     onInspectUser?.(user);
   };
+  const isMobile = useIsMobile();
   const selectable = selectableRows.length > 0;
   const t = strings.columns;
   const b = strings.badges;
@@ -240,6 +242,90 @@ export function UsersTable({
       <span className="password-chip" data-tooltip={by ? `Changed ${date} ${by}` : `Changed ${date}`}>
         {formatDaysAgo(changedAt)}
       </span>
+    );
+  }
+
+  /* On a phone the table is not restyled into cards, it is replaced by them -
+     see RecordCards for why. Both branches read the same render helpers, so
+     there is one definition of what a status badge or an action menu is. */
+  if (isMobile) {
+    if (loading) {
+      return (
+        <div className="record-cards">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <article className="record-card" key={i}>
+              <div className="skeleton-element skeleton-text-title" />
+              <div className="skeleton-element skeleton-text-email" />
+              <div className="skeleton-element skeleton-badge" />
+            </article>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <RecordCards<DirectoryUser>
+        rows={users}
+        getKey={(user) => `${user.role_name}-${user.id}`}
+        empty={strings.empty}
+        onRowClick={onInspectUser}
+        renderSelect={
+          selectable
+            ? (user) => (
+                <Checkbox
+                  aria-label={`Select ${user.first_name} ${user.last_name}`}
+                  checked={selectedIds.has(user.id)}
+                  disabled={user.is_owner}
+                  onChange={() => onToggleSelect(user.id)}
+                />
+              )
+            : undefined
+        }
+        renderLead={(user) => (
+          <>
+            <TableAvatar
+              src={user.avatar_path ? (user.avatar_path.startsWith("/") ? user.avatar_path : user.avatar_path.startsWith("storage/") ? `/${user.avatar_path}` : `/storage/${user.avatar_path}`) : null}
+              name={`${user.first_name} ${user.last_name}`.trim() || user.email || "Super Admin"}
+              seed={`${user.role_name}-${user.id}-${user.email}`}
+            />
+            <span className="record-card-name">
+              {user.first_name} {user.last_name}
+              <span className="record-card-tags">
+                {currentUserId === user.id && <Badge tone="gray">{b.you}</Badge>}
+                {user.is_owner && <Badge tone="red">{b.owner}</Badge>}
+                {user.force_password_reset && <Badge tone="amber">{b.passwordReset}</Badge>}
+              </span>
+            </span>
+          </>
+        )}
+        fields={[
+          { label: t.email, render: (user) => user.email },
+          ...(showInstitute
+            ? [
+                {
+                  label: t.institute,
+                  render: (user: DirectoryUser) =>
+                    user.institute_id ? (
+                      <Link to={`/super-admin/institutes/${user.institute_id}`}>{user.institute_name}</Link>
+                    ) : (
+                      <span className="text-muted">{strings.platformScope}</span>
+                    ),
+                },
+              ]
+            : []),
+          {
+            label: t.status,
+            render: (user) => (
+              <Badge tone={user.is_active ? "green" : "inactive"}>
+                {user.is_active ? b.active : b.inactive}
+              </Badge>
+            ),
+          },
+          { label: t.passwordChanged, render: renderPasswordChanged },
+          { label: t.created, render: (user) => formatCompactDate(user.created_at) },
+        ]}
+        renderActions={renderActions}
+      />
     );
   }
 

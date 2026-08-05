@@ -1,0 +1,179 @@
+/*
+ * Mobile record cards.
+ *
+ * Its own namespace on purpose - nothing here shares a class with `.data-table`,
+ * `.responsive-data-table` or the `.sleek-*` tables, so none of the desktop
+ * column widths, row heights or alignment overrides can reach it. Every size in
+ * this file is content-driven; there are no fixed widths to leak.
+ */
+
+.record-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.record-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  /* Content decides the height. Nothing pins it. */
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+
+[data-theme="dark"] .record-card {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+}
+
+.record-card.is-clickable {
+  cursor: pointer;
+}
+
+.record-card.is-clickable:active {
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+/* --- Head ---------------------------------------------------------------- */
+
+.record-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.record-card-select {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+/* The lead holds an avatar and a name; the name must be free to shrink and
+   wrap rather than push the card wider than the screen. */
+.record-card-lead {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+/* --- Fields -------------------------------------------------------------- */
+
+.record-card-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  min-width: 0;
+}
+
+/* Label left, value right, and the value keeps whatever room it needs. The
+   label is capped so a long field name cannot starve the value. */
+.record-card-field {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.record-card-field.is-stacked {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+
+.record-card-field dt {
+  min-width: 0;
+  max-width: 40%;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.record-card-field.is-stacked dt {
+  max-width: 100%;
+}
+
+.record-card-field dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.45;
+  text-align: right;
+  /* An email or a token has no spaces to break at; without this it would push
+     the card wider than the viewport. */
+  overflow-wrap: anywhere;
+}
+
+.record-card-field.is-stacked dd {
+  text-align: left;
+}
+
+/* Anything interactive dropped into a value keeps to its own size. */
+.record-card-field dd > * {
+  max-width: 100%;
+}
+
+/* --- Actions ------------------------------------------------------------- */
+
+.record-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.record-cards-empty {
+  padding: 28px 16px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Name and its badges in the card head. Wraps rather than widening the card. */
+.record-card-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.record-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.record-card-tags:empty {
+  display: none;
+}
+
+/* The action row is a footer here, not a right-aligned table cell, so the
+   inline helpers that assume a narrow column are told to relax. */
+.record-card-actions .row-actions-inline {
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+}
