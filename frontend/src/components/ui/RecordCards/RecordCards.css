@@ -13,6 +13,11 @@
   gap: 12px;
   width: 100%;
   min-width: 0;
+  /* The list owns its width and nothing inside may negotiate for more. Every
+     bug this component exists to end came from a child widening its container
+     until the row ran off the screen. */
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .record-card {
@@ -81,12 +86,21 @@
   min-width: 0;
 }
 
-/* Label left, value right, and the value keeps whatever room it needs. The
-   label is capped so a long field name cannot starve the value. */
+/* A definite label column, not an intrinsic one.
+ *
+ * This was `minmax(0, auto) minmax(0, 1fr)`, which lets the browser resolve the
+ * label track from content. When the value is something long and unbreakable
+ * like an email, the value's demand wins, the label track is squeezed down to
+ * its minimum - one character, because `overflow-wrap: anywhere` allows a break
+ * anywhere - and the value overflows the card anyway. That is the "E M A I L"
+ * spelled down the page.
+ *
+ * A fixed first track removes the negotiation entirely: the label gets its
+ * width, the value gets the rest and wraps inside it. */
 .record-card-field {
   display: grid;
-  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
-  align-items: start;
+  grid-template-columns: minmax(0, 104px) minmax(0, 1fr);
+  align-items: baseline;
   gap: 12px;
   min-width: 0;
 }
@@ -98,18 +112,18 @@
 
 .record-card-field dt {
   min-width: 0;
-  max-width: 40%;
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.07em;
   line-height: 1.5;
   text-transform: uppercase;
-  overflow-wrap: anywhere;
-}
-
-.record-card-field.is-stacked dt {
-  max-width: 100%;
+  /* `break-word`, not `anywhere`: a two-word label like "PASSWORD CHANGED"
+     wraps at its space, but neither affects the track's intrinsic minimum, so
+     the column can never be squeezed to a single letter again. */
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
 }
 
 .record-card-field dd {
@@ -118,14 +132,12 @@
   color: var(--text);
   font-size: 13.5px;
   line-height: 1.45;
-  text-align: right;
+  /* Left, not right: a right-aligned value that wraps over three lines reads
+     as ragged noise, and long values here wrap by design. */
+  text-align: left;
   /* An email or a token has no spaces to break at; without this it would push
      the card wider than the viewport. */
   overflow-wrap: anywhere;
-}
-
-.record-card-field.is-stacked dd {
-  text-align: left;
 }
 
 /* Anything interactive dropped into a value keeps to its own size. */
@@ -176,4 +188,14 @@
   justify-content: flex-start;
   width: 100%;
   min-width: 0;
+}
+
+/* Last in the file so it actually wins over the base grid above.
+   Below this width a 104px label column costs more than it earns, so the label
+   sits on its own line and the value gets the full card. */
+@media (max-width: 380px) {
+  .record-card-field {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
 }
