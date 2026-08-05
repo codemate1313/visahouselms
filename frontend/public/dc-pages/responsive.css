@@ -45,6 +45,14 @@ textarea {
   transition: background 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
 }
 
+/* Pinned so no positional rule can squeeze the glyph again. The markup asks for
+   24px; the button is 40px, so this leaves an even 8px ring around it. */
+.vh-mobile-toggle svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+
 .vh-mobile-toggle:hover {
   background: var(--chipHi);
   border-color: var(--acLine);
@@ -308,8 +316,21 @@ textarea {
     gap: 8px !important;
   }
 
-  .vh-header-bar > div:last-child > button:last-child {
+  /* Target the sign-in button by name, not by position.
+   *
+   * This was written as `> button:last-child` for the auth CTA, but the last
+   * button in that group is the hamburger - the CTA sits before it. With
+   * `box-sizing: border-box` the 40x40 toggle lost 30px of its width to this
+   * padding, leaving a 10px box to draw a 24px icon in, which is why the
+   * hamburger shrank below 760px while the theme toggle beside it did not. */
+  .vh-header-bar .vh-desktop-auth {
     padding: 9px 15px !important;
+  }
+
+  /* The toggle is a fixed 40x40 target; nothing may pad it inwards. */
+  .vh-header-bar .vh-mobile-toggle {
+    padding: 0 !important;
+    flex: 0 0 auto;
   }
 
   /* .vh-nav hidden at 1024px, rules below are mostly obsolete but kept for safety */
@@ -478,12 +499,20 @@ textarea {
     font-size: 15px !important;
   }
 
-  .vh-header-bar > div:last-child > button:first-child {
+  /* Same correction as at 760px, and the two controls are sized together.
+   *
+   * `button:first-child` is the theme toggle and `button:last-child` is the
+   * hamburger, so this pair used to shrink the theme toggle to 36px and pad the
+   * hamburger's icon down to nothing - leaving two mismatched circles side by
+   * side. Both stay 36px here; only the auth CTA takes the smaller type. */
+  .vh-header-bar > div:last-child > button:first-child,
+  .vh-header-bar .vh-mobile-toggle {
     width: 36px !important;
     height: 36px !important;
+    padding: 0 !important;
   }
 
-  .vh-header-bar > div:last-child > button:last-child {
+  .vh-header-bar .vh-desktop-auth {
     font-size: 13px !important;
     padding: 8px 13px !important;
   }
