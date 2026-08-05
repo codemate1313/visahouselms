@@ -710,6 +710,30 @@ code,
    *
    * `.empty-cell` was already special-cased out of this; the general case was
    * not. One column, left-aligned, so the value simply fills the row. */
+  /* Desktop column widths must not survive into the card layout.
+   *
+   * These tables are built to scroll sideways on a desktop, so they carry hard
+   * pixel widths - `.sleek-users-table` alone is `min-width: 980px` with a
+   * min-width on every column - and all of it is written as base rules with no
+   * media query. Stacked into cards on a phone that made each card 980px wide
+   * inside a pane that clips overflow, so every value was sliced off mid-word.
+   *
+   * The repeated class is deliberate, not a typo: the rules being overridden
+   * are `!important` at up to four classes deep
+   * (`.super-admin-portal .sleek-users-table.responsive-data-table td.col-actions`),
+   * so equal importance means specificity decides. `ResponsiveTableCards` adds
+   * `responsive-data-table` to every table on the page, which makes it the one
+   * hook that reaches all of them. */
+  .responsive-data-table.responsive-data-table.responsive-data-table.responsive-data-table.responsive-data-table,
+  .responsive-data-table.responsive-data-table.responsive-data-table.responsive-data-table.responsive-data-table th,
+  .responsive-data-table.responsive-data-table.responsive-data-table.responsive-data-table.responsive-data-table td {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    /* Long unbroken values - an email, a token - would otherwise force the card
+       wider than the screen all over again. */
+    overflow-wrap: anywhere;
+  }
+
   .responsive-data-table td:not([data-label]),
 .data-table td:not([data-label]),
 .chart-data-table td:not([data-label]),
@@ -1195,6 +1219,15 @@ body {
     max-width: 100vw !important;
     padding-left: clamp(12px, 4vw, 18px) !important;
     padding-right: clamp(12px, 4vw, 18px) !important;
+    /* The document scrolls on a phone, not this pane.
+     *
+     * The base rule sets `overflow-x: hidden`, and CSS then computes the other
+     * axis to `auto` rather than leaving it visible - so this pane quietly
+     * became its own vertical scrollport, competing with the page for the
+     * gesture. `.dashboard` above still clips the horizontal axis, so nothing
+     * escapes sideways. */
+    overflow: visible !important;
+    contain: none !important;
   }
 }
 
