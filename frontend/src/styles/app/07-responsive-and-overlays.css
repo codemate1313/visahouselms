@@ -409,6 +409,11 @@ code,
   .support-ticket-table tr {
     display: grid;
     width: 100%;
+    /* Same reason as the block further down: desktop row heights must not
+       survive into the stacked card layout and clip it. */
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     padding: 12px;
     border: 1px solid var(--border, rgba(15, 23, 42, 0.1));
     border-radius: var(--radius-lg);
@@ -625,6 +630,17 @@ code,
 .sat-table tr {
     display: grid;
     width: 100%;
+    /* A card is as tall as what is in it.
+     *
+     * Several tables pin their rows to a fixed height for desktop alignment -
+     * `.sleek-users-table tbody tr` at 64px, `.sleek-plans-table tr` at 56px -
+     * and those are base rules, so they still applied once the row became a
+     * stacked card holding seven label/value pairs. The card kept its 64px and
+     * everything below the first field was cut off, which is why those cards
+     * showed one label and the top edge of a badge. */
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     gap: 0;
     padding: 12px 14px;
     border: 1px solid var(--border, rgba(148, 163, 184, 0.22));
