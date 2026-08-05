@@ -727,8 +727,15 @@ code,
   .responsive-data-table.responsive-data-table.responsive-data-table.responsive-data-table.responsive-data-table,
   .responsive-data-table.responsive-data-table.responsive-data-table.responsive-data-table.responsive-data-table th,
   .responsive-data-table.responsive-data-table.responsive-data-table.responsive-data-table.responsive-data-table td {
+    /* `width` too, not just the min/max pair: the per-column rules set
+       `width: 23% !important` and friends at three classes deep, so each
+       stacked cell kept a different desktop column width and right-aligned its
+       value inside that narrow box - which is what was clipping the values. */
+    width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     /* Long unbroken values - an email, a token - would otherwise force the card
        wider than the screen all over again. */
     overflow-wrap: anywhere;
