@@ -683,6 +683,27 @@ code,
     content: none;
   }
 
+  /* A cell with no label needs the whole card, not the value column.
+   *
+   * These cells are a two-column grid: the `::before` label, then the value.
+   * When a table ships no `data-label`, `content: none` above removes the label
+   * box - but the grid columns stay, so the value drops into the *first* track,
+   * `minmax(92px, 34%)`, and gets crammed into 92px and right-aligned. On a
+   * table like SA Users that is every cell at once, which is why those cards
+   * showed a sliver of a badge and nothing legible.
+   *
+   * `.empty-cell` was already special-cased out of this; the general case was
+   * not. One column, left-aligned, so the value simply fills the row. */
+  .responsive-data-table td:not([data-label]),
+.data-table td:not([data-label]),
+.chart-data-table td:not([data-label]),
+.dev-data-table td:not([data-label]),
+.sab-table td:not([data-label]),
+.sat-table td:not([data-label]) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    text-align: left !important;
+  }
+
   .responsive-data-table td.empty-cell,
 .data-table td.empty-cell,
 .chart-data-table td.empty-cell,

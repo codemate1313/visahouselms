@@ -291,7 +291,7 @@ export function UsersTable({
                     />
                   </td>
                 )}
-                <td className="col-name">
+                <td className="col-name" data-label={t.name}>
                   <div className="table-item-cell">
                     <TableAvatar
                       src={user.avatar_path ? (user.avatar_path.startsWith('/') ? user.avatar_path : user.avatar_path.startsWith('storage/') ? `/${user.avatar_path}` : `/storage/${user.avatar_path}`) : null}
@@ -322,9 +322,9 @@ export function UsersTable({
                     </div>
                   </div>
                 </td>
-                <td className="col-email">{user.email}</td>
+                <td className="col-email" data-label={t.email}>{user.email}</td>
                 {showInstitute && (
-                  <td className="col-institute">
+                  <td className="col-institute" data-label={t.institute}>
                     {user.institute_id ? (
                       <Link to={`/super-admin/institutes/${user.institute_id}`}>
                         {user.institute_name}
@@ -334,14 +334,14 @@ export function UsersTable({
                     )}
                   </td>
                 )}
-                <td className="col-status">
+                <td className="col-status" data-label={t.status}>
                   <Badge tone={user.is_active ? "green" : "inactive"}>
                     {user.is_active ? b.active : b.inactive}
                   </Badge>
                 </td>
-                <td className="col-password">{renderPasswordChanged(user)}</td>
-                <td className="col-created">{formatCompactDate(user.created_at)}</td>
-                <td className="table-actions institute-row-actions account-row-actions col-actions">
+                <td className="col-password" data-label={t.passwordChanged}>{renderPasswordChanged(user)}</td>
+                <td className="col-created" data-label={t.created}>{formatCompactDate(user.created_at)}</td>
+                <td className="table-actions institute-row-actions account-row-actions col-actions" data-label={t.actions}>
                   {renderActions(user)}
                 </td>
               </tr>
