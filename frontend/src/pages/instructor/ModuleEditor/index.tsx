@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { lockBodyScroll } from "@/utils/scrollLock";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
@@ -87,14 +88,8 @@ export function ModuleEditor() {
   }, [isNew, requestedType]);
 
   useEffect(() => {
-    if (editingQuestionId) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    if (!editingQuestionId) return;
+    return lockBodyScroll();
   }, [editingQuestionId]);
 
   const selectedPart = useMemo(() => module?.parts?.find((part) => part.id === selectedPartId) ?? null, [module, selectedPartId]);

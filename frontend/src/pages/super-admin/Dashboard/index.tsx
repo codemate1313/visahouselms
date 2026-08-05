@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { lockBodyScroll } from "@/utils/scrollLock";
 import { apiClient } from "@/api/client";
 import { useDashboardRangeStore } from "@/store/dashboardRangeStore";
 import { useAuthStore } from "@/store/authStore";
@@ -32,14 +33,13 @@ export function Dashboard() {
   useEffect(() => {
     if (!selectedMetric) return;
 
-    const previousOverflow = document.body.style.overflow;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setSelectedMetric(null);
     };
-    document.body.style.overflow = "hidden";
+    const releaseScroll = lockBodyScroll();
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      releaseScroll();
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [selectedMetric]);

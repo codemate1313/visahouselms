@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from "react";
+import { lockBodyScroll } from "@/utils/scrollLock";
 import { createPortal } from "react-dom";
 import { Icon } from "@/components/icons";
 import { IconButton } from "../IconButton";
@@ -36,8 +37,7 @@ export function Modal({
   useEffect(() => {
     if (!open) return;
     const previousFocus = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const releaseScroll = lockBodyScroll();
     cardRef.current?.focus();
 
     function handleEscape(event: globalThis.KeyboardEvent) {
@@ -47,7 +47,7 @@ export function Modal({
     document.addEventListener("keydown", handleEscape);
     return () => {
       document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = previousOverflow;
+      releaseScroll();
       previousFocus?.focus();
     };
   }, [open]);

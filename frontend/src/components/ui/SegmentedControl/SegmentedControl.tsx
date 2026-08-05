@@ -386,15 +386,24 @@ export function SegmentedControl<T extends string>({
       )}
 
       {/* Never shown and never focusable - it exists only to hold the control's
-          natural width so the overflow test has a stable thing to measure. */}
+          natural width so the overflow test has a stable thing to measure.
+       *
+       * The clip box around it is load-bearing. This probe is deliberately
+       * wider than its container, and an absolutely positioned element still
+       * counts toward an ancestor's scrollable area - so on its own it handed a
+       * horizontal scrollbar to every panel with `overflow-x: auto`. Sealing it
+       * inside a zero-sized `overflow: hidden` box keeps the width measurable
+       * without letting it push anything around. */}
       {!neverCollapse && (
-        <div ref={measureRef} className={`${classes} ui-segmented-measure`} aria-hidden="true">
-          {options.map((option) => (
-            <span className="ui-segmented-option" key={option.value}>
-              {option.icon && <span className="ui-segmented-icon">{option.icon}</span>}
-              <span className="ui-segmented-label">{option.label}</span>
-            </span>
-          ))}
+        <div className="ui-segmented-measure-clip" aria-hidden="true">
+          <div ref={measureRef} className={`${classes} ui-segmented-measure`}>
+            {options.map((option) => (
+              <span className="ui-segmented-option" key={option.value}>
+                {option.icon && <span className="ui-segmented-icon">{option.icon}</span>}
+                <span className="ui-segmented-label">{option.label}</span>
+              </span>
+            ))}
+          </div>
         </div>
       )}
 

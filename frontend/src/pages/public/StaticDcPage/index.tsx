@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lockBodyScroll } from "@/utils/scrollLock";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
@@ -96,10 +97,10 @@ export function StaticDcPage({ fileName, title, bootstrap, bootstrapPending = fa
       if (event.key === "Escape" && !isLoading && !user) handleAuthClose();
     }
 
-    document.body.style.overflow = "hidden";
+    const releaseScroll = lockBodyScroll();
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = "";
+      releaseScroll();
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [authMode, handleAuthClose, isLoading, user]);

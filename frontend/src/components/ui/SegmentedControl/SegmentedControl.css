@@ -232,17 +232,30 @@
  * never reports horizontal overflow - it just gets taller. This copy is forced
  * onto a single line and sized to its content, so its scrollWidth is the true
  * width the control wants, which is what the collapse decision compares. */
-.ui-segmented-measure {
-  position: absolute !important;
+/* Takes no space and leaks no overflow.
+ *
+ * The probe inside is wider than the control by design, and overflow from an
+ * absolutely positioned child still counts toward an ancestor's scroll area -
+ * which handed a stray horizontal scrollbar to every `overflow-x: auto` panel
+ * a segmented control sat in. Clipped here, it measures without escaping. */
+.ui-segmented-measure-clip {
+  position: absolute;
   top: 0;
   left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ui-segmented-measure {
+  position: static !important;
   width: max-content !important;
   max-width: none !important;
   flex-wrap: nowrap !important;
   white-space: nowrap;
   visibility: hidden;
   pointer-events: none;
-  z-index: -1;
   box-shadow: none !important;
 }
 
@@ -320,7 +333,13 @@
 .ui-segmented-menu {
   --ui-segment-accent: var(--primary, var(--sidebar-active-text, #b91c2b));
   position: fixed;
-  z-index: 4000;
+  /* Above everything, because it has to be.
+   *
+   * These controls sit inside drawers and modals - the user inspector's own
+   * backdrop is z-index 3000000 - so a menu on any sane value simply opened
+   * behind the thing that owns it and read as a dead button. This tops the
+   * highest value in the codebase (9999999) by one step. */
+  z-index: 10000000;
   display: flex;
   flex-direction: column;
   gap: 2px;

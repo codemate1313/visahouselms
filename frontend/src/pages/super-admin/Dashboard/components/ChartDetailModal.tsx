@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { lockBodyScroll } from "@/utils/scrollLock";
 import { createPortal } from "react-dom";
 import { BarChart } from "@/components/charts/BarChart";
 import { DonutChart } from "@/components/charts/DonutChart";
@@ -143,14 +144,13 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
   const stateLabels = strings.subscriptionStateLabels;
 
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
-    document.body.style.overflow = "hidden";
+    const releaseScroll = lockBodyScroll();
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      releaseScroll();
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [onClose]);

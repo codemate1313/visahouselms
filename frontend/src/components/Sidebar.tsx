@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lockBodyScroll } from "@/utils/scrollLock";
 import { createPortal } from "react-dom";
 import { NavLink, useLocation } from "react-router-dom";
 import { Icon, type IconName } from "./icons";
@@ -116,16 +117,12 @@ export function Sidebar({
     setIsOpenOnMobile(false);
   }, [location.pathname]);
 
-  // Handle document body scrolling block when mobile drawer is open
+  // Hold the body still behind the mobile drawer. Releasing through the shared
+  // counter matters here: this used to clear `overflow` outright, which quietly
+  // unlocked any modal open at the same time.
   useEffect(() => {
-    if (isMobileScreen && isOpenOnMobile) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    if (!isMobileScreen || !isOpenOnMobile) return;
+    return lockBodyScroll();
   }, [isMobileScreen, isOpenOnMobile]);
 
   // Automatically expand parent accordions when current active key belongs to a child
