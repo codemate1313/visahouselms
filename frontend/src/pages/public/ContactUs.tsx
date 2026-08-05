@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { StaticDcPage } from "./StaticDcPage";
 import { contactUsStrings as strings } from "./ContactUs.strings";
 import type { LandingPlan, LandingPlansPayload } from "./Plans.types";
+import { useContactSettings } from "./useContactSettings";
 
 export function ContactUs() {
   const location = useLocation();
@@ -11,6 +12,7 @@ export function ContactUs() {
   // whatever the database assigned - so the catalogue is handed over rather
   // than guessed at inside the framed page.
   const [institutePlans, setInstitutePlans] = useState<LandingPlan[]>([]);
+  const contactSettings = useContactSettings();
 
   useEffect(() => {
     let cancelled = false;
@@ -28,8 +30,8 @@ export function ContactUs() {
   }, []);
 
   const bootstrap = useMemo(
-    () => ({ search: location.search, institutePlans }),
-    [location.search, institutePlans],
+    () => ({ search: location.search, institutePlans, contactSettings }),
+    [location.search, institutePlans, contactSettings],
   );
 
   return <StaticDcPage fileName={strings.fileName} title={strings.title} bootstrap={bootstrap} />;

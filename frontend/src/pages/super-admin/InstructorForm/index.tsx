@@ -12,7 +12,7 @@ import { extractTemporaryPassword } from "./helpers";
 import { CreatedInstructorView } from "./components/CreatedInstructorView";
 import { AvatarUploadField } from "./components/AvatarUploadField";
 
-export function InstructorForm() {
+export function InstructorForm({ basePath = "/super-admin" }: { basePath?: string }) {
   const { id } = useParams();
   const isNew = !id;
   const navigate = useNavigate();
@@ -120,7 +120,7 @@ export function InstructorForm() {
       } else {
         await apiClient.patch(`/super-admin/instructors/${id}`, payload);
         originalRef.current = payload;
-        navigate("/super-admin/instructors");
+        navigate(`${basePath}/instructors`);
       }
     } catch (err: unknown) {
       setError(extractErrorMessage(err, strings.errors.save));
@@ -142,7 +142,7 @@ export function InstructorForm() {
 
   if (loading) return <p>{strings.loading}</p>;
   if (created) {
-    return <CreatedInstructorView created={created} copied={copied} error={error} onCopyPassword={copyPassword} onDone={() => navigate("/super-admin/instructors")} />;
+    return <CreatedInstructorView created={created} copied={copied} error={error} onCopyPassword={copyPassword} onDone={() => navigate(`${basePath}/instructors`)} />;
   }
 
   return (
@@ -202,7 +202,7 @@ export function InstructorForm() {
           <button type="submit" disabled={saving || uploadingAvatar}>
             {saving ? strings.saving : isNew ? strings.createInstructor : strings.saveChanges}
           </button>
-          <button type="button" onClick={() => navigate("/super-admin/instructors")}>
+          <button type="button" onClick={() => navigate(`${basePath}/instructors`)}>
             {strings.cancel}
           </button>
         </div>

@@ -13,7 +13,11 @@ import { InstitutesFilterBar } from "./components/InstitutesFilterBar";
 import { InstitutesTable } from "./components/InstitutesTable";
 import { InstituteDetailDrawer } from "./components/InstituteDetailDrawer";
 
-export function Institutes() {
+interface InstitutesProps {
+  basePath?: string;
+}
+
+export function Institutes({ basePath = "/super-admin" }: InstitutesProps) {
   const [rows, setRows] = useState<InstituteRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -223,6 +227,7 @@ export function Institutes() {
         onExportPdf={handleExportPdf}
         onExportExcel={handleExportExcel}
         resultCount={filteredRows.length}
+        basePath={basePath}
       />
 
       {selectedRows.length > 0 && (
@@ -264,6 +269,7 @@ export function Institutes() {
           onToggleSelect={toggleSelect}
           onToggleSelectAll={toggleSelectAll}
           onRowClick={setSelectedDrawerId}
+          basePath={basePath}
         />
       )}
 

@@ -38,7 +38,11 @@ type TabKey = "profile" | "agreement" | "courses" | "permissions" | "branding";
 
 const TAB_KEYS: TabKey[] = ["profile", "agreement", "courses", "permissions", "branding"];
 
-export function InstituteForm() {
+interface InstituteFormProps {
+  basePath?: string;
+}
+
+export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps) {
   const { id } = useParams();
   const isNew = id === "new" || id === undefined;
   const navigate = useNavigate();
@@ -396,7 +400,7 @@ export function InstituteForm() {
         // Saving is done with the institute, whichever step it was pressed
         // from - the steps are there to reach a field, not to be walked.
         showSuccess(strings.wizard.savedToast);
-        navigate("/super-admin/institutes");
+        navigate(`${basePath}/institutes`);
       }
     } catch (err: unknown) {
       setError(extractErrorMessage(err, strings.errors.save));
@@ -560,7 +564,7 @@ export function InstituteForm() {
         </div>
 
         {!isNew && (
-          <LinkButton to={`/super-admin/institutes/${id}/accounts`} style={{ flexShrink: 0 }}>
+          <LinkButton to={`${basePath}/institutes/${id}/accounts`} style={{ flexShrink: 0 }}>
             {strings.accounts}
           </LinkButton>
         )}
@@ -604,7 +608,7 @@ export function InstituteForm() {
                   <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted, var(--slate-500))" }}>
                     Admin credentials created during onboarding. To manage or reset user accounts for this institute, visit the <strong>Accounts</strong> sub-page.
                   </p>
-                  <LinkButton variant="secondary" to={`/super-admin/institutes/${id}/accounts`} style={{ marginTop: 12 }}>
+                  <LinkButton variant="secondary" to={`${basePath}/institutes/${id}/accounts`} style={{ marginTop: 12 }}>
                     {strings.wizard.manageAccounts}
                   </LinkButton>
                 </div>
@@ -825,7 +829,7 @@ export function InstituteForm() {
                 {strings.wizard.previousStep}
               </Button>
             )}
-            <Button variant="secondary" onClick={() => navigate("/super-admin/institutes")}>
+            <Button variant="secondary" onClick={() => navigate(`${basePath}/institutes`)}>
               {strings.cancel}
             </Button>
           </div>
@@ -877,7 +881,7 @@ export function InstituteForm() {
           created={created}
           copied={copied}
           onCopyPassword={copyPassword}
-          onDone={() => navigate("/super-admin/institutes")}
+          onDone={() => navigate(`${basePath}/institutes`)}
         />
       )}
     </div>

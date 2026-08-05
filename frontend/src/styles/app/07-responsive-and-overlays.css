@@ -199,8 +199,9 @@
 }
 
 /* ---------- Global horizontal overflow guard ---------- */
-html,
-body,
+/* Only clip #root — setting overflow-x on html/body silently converts
+   overflow-y to `auto`, which turns body into its own scroll container
+   and breaks page-level scrolling on mobile. */
 #root {
   max-width: 100%;
   overflow-x: hidden;
@@ -1213,6 +1214,14 @@ body {
 }
 
 @media (max-width: 768px) {
+  /* Ensure the document itself scrolls freely on mobile. The overflow-x
+     guard on html/body is intentionally removed (see global rule above);
+     this rule makes that explicit so no inherited style re-introduces it. */
+  html,
+  body {
+    overflow: visible !important;
+  }
+
   .dashboard {
     display: block;
     height: auto;

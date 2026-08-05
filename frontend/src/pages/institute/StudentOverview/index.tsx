@@ -13,7 +13,7 @@ import { DeviceHistorySection } from "./components/DeviceHistorySection";
 import { TestHistorySection } from "./components/TestHistorySection";
 import { StudentCredentialModal } from "./components/StudentCredentialModal";
 
-export function StudentOverview({ instituteId }: { instituteId?: number }) {
+export function StudentOverview({ instituteId, portalBasePath = "/super-admin" }: { instituteId?: number; portalBasePath?: string }) {
   const params = useParams();
   // Super Admins reach this screen from two routes that name the parameter
   // differently: .../students/:studentId and .../accounts/students/:memberId.
@@ -24,7 +24,7 @@ export function StudentOverview({ instituteId }: { instituteId?: number }) {
   // Return to whichever list the student was opened from.
   const cameFromAccounts = params.memberId !== undefined;
   const basePath = isSuperAdmin
-    ? `/super-admin/institutes/${instituteId}/${cameFromAccounts ? "accounts" : "students"}`
+    ? `${portalBasePath}/institutes/${instituteId}/${cameFromAccounts ? "accounts" : "students"}`
     : "/institute-portal/students";
   const canManage = isSuperAdmin || permissions?.manage_students;
   const canRevokeSessions = isSuperAdmin || permissions?.manage_student_sessions;
@@ -154,4 +154,11 @@ export function StudentOverview({ instituteId }: { instituteId?: number }) {
 export function SuperAdminStudentOverview() {
   const { id } = useParams();
   return <StudentOverview instituteId={Number(id)} />;
+}
+
+const developerAccessSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+
+export function DeveloperStudentOverview() {
+  const { id } = useParams();
+  return <StudentOverview instituteId={Number(id)} portalBasePath={`/${developerAccessSlug}`} />;
 }

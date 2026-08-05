@@ -18,7 +18,7 @@ LOGGED_HEADERS = ("user-agent", "referer", "origin", "content-type", "accept-lan
 SKIP_PREFIXES = ("/storage/",)
 
 
-def _extract_user_id(request: Request) -> Optional[int]:
+def _decode_access_token(request: Request) -> Optional[dict]:
     auth_header = request.headers.get("authorization", "")
     if not auth_header.lower().startswith("bearer "):
         return None
@@ -29,10 +29,26 @@ def _extract_user_id(request: Request) -> Optional[int]:
         return None
     if payload.get("type") != TOKEN_TYPE_ACCESS:
         return None
+    return payload
+
+
+def _extract_user_id(request: Request) -> Optional[int]:
+    payload = _decode_access_token(request)
+    if payload is None:
+        return None
     try:
         return int(payload["sub"])
     except (KeyError, TypeError, ValueError):
         return None
+
+
+def is_developer_request(request: Request) -> bool:
+    """The developer portal must leave no trace anywhere another role can see -
+    telemetry (request/API/error logs) is platform-wide and readable from the
+    Super Admin Logs screen, so developer-authenticated calls are excluded at
+    the source rather than filtered out downstream."""
+    payload = _decode_access_token(request)
+    return bool(payload) and payload.get("role") == "DEVELOPER"
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -42,6 +58,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         latency_ms = int((time.perf_counter() - start) * 1000)
 
         if request.method == "OPTIONS" or request.url.path.startswith(SKIP_PREFIXES):
+            return response
+
+        if is_developer_request(request):
             return response
 
         user_id = _extract_user_id(request)

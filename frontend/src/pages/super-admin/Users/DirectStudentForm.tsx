@@ -18,7 +18,7 @@ const ROLE_SLUGS: Partial<Record<DirectoryRole, string>> = {
   STUDENT: "students",
 };
 
-export function DirectStudentForm() {
+export function DirectStudentForm({ portalBasePath = "/super-admin" }: { portalBasePath?: string }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState<DirectoryUser | null>(null);
@@ -51,7 +51,7 @@ export function DirectStudentForm() {
   }, [id]);
 
   const roleLabel = user?.role_name ? ROLE_LABELS[user.role_name] ?? "user" : "user";
-  const basePath = `/super-admin/users/${user?.role_name ? ROLE_SLUGS[user.role_name] ?? "students" : "students"}`;
+  const basePath = `${portalBasePath}/users/${user?.role_name ? ROLE_SLUGS[user.role_name] ?? "students" : "students"}`;
 
   function set(field: keyof typeof form) {
     return (event: ChangeEvent<HTMLInputElement>) => {

@@ -8,13 +8,14 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import IntegrityError
 
 from app.config import settings
-from app.middleware.request_logging import RequestLoggingMiddleware, _extract_user_id
+from app.middleware.request_logging import RequestLoggingMiddleware, _extract_user_id, is_developer_request
 from app.middleware.security_headers import add_security_headers
 from app.routers import (
     announcements,
     auth,
     backups,
     blogs_router,
+    contact_settings_router,
     coupons,
     dashboard,
     dev_settings,
@@ -126,6 +127,8 @@ app.include_router(blogs_router.public_router)
 app.include_router(blogs_router.admin_router)
 app.include_router(seo_router.public_router)
 app.include_router(seo_router.admin_router)
+app.include_router(contact_settings_router.public_router)
+app.include_router(contact_settings_router.admin_router)
 
 
 @app.exception_handler(IntegrityError)
@@ -146,21 +149,22 @@ async def integrity_error_handler(request: Request, exc: IntegrityError):
     from app.database import SessionLocal
     from app.services.log_service import record_error
 
-    db = SessionLocal()
-    try:
-        record_error(
-            db,
-            message=f"IntegrityError: {exc.orig if exc.orig is not None else exc}",
-            stack_trace=traceback.format_exc(),
-            path=request.url.path,
-            method=request.method,
-            user_id=_extract_user_id(request),
-            ip_address=request.client.host if request.client else None,
-        )
-    except Exception:
-        pass
-    finally:
-        db.close()
+    if not is_developer_request(request):
+        db = SessionLocal()
+        try:
+            record_error(
+                db,
+                message=f"IntegrityError: {exc.orig if exc.orig is not None else exc}",
+                stack_trace=traceback.format_exc(),
+                path=request.url.path,
+                method=request.method,
+                user_id=_extract_user_id(request),
+                ip_address=request.client.host if request.client else None,
+            )
+        except Exception:
+            pass
+        finally:
+            db.close()
 
     return JSONResponse(
         status_code=409,
@@ -180,15 +184,16 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
     db = SessionLocal()
     try:
-        record_error(
-            db,
-            message=f"{type(exc).__name__}: {exc}",
-            stack_trace=traceback.format_exc(),
-            path=request.url.path,
-            method=request.method,
-            user_id=_extract_user_id(request),
-            ip_address=request.client.host if request.client else None,
-        )
+        if not is_developer_request(request):
+            record_error(
+                db,
+                message=f"{type(exc).__name__}: {exc}",
+                stack_trace=traceback.format_exc(),
+                path=request.url.path,
+                method=request.method,
+                user_id=_extract_user_id(request),
+                ip_address=request.client.host if request.client else None,
+            )
     except Exception:
         pass  # error logging must never mask the original failure
     finally:

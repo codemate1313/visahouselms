@@ -25,6 +25,7 @@ interface InstitutesTableProps {
   onToggleSelect: (id: number) => void;
   onToggleSelectAll: () => void;
   onRowClick: (id: number) => void;
+  basePath?: string;
 }
 
 export function InstitutesTable({
@@ -38,6 +39,7 @@ export function InstitutesTable({
   onToggleSelect,
   onToggleSelectAll,
   onRowClick,
+  basePath = "/super-admin",
 }: InstitutesTableProps) {
   const t = strings.table;
   const hasRows = rows.length > 0;
@@ -156,15 +158,15 @@ export function InstitutesTable({
                       <Icon name={row.is_active ? "toggleOff" : "toggleOn"} />
                       <span>{row.is_active ? t.suspendInstitute : t.reactivateInstitute}</span>
                     </button>,
-                    <Link key="edit" to={`/super-admin/institutes/${row.id}`}>
+                    <Link key="edit" to={`${basePath}/institutes/${row.id}`}>
                       <Icon name="edit" />
                       <span>{t.editInstitute}</span>
                     </Link>,
-                    <Link key="students" to={`/super-admin/institutes/${row.id}/students`}>
+                    <Link key="students" to={`${basePath}/institutes/${row.id}/students`}>
                       <Icon name="user" />
                       <span>{t.manageStudents}</span>
                     </Link>,
-                    <Link key="branding" to={`/super-admin/institutes/${row.id}/branding`}>
+                    <Link key="branding" to={`${basePath}/institutes/${row.id}/branding`}>
                       <Icon name="settings" />
                       <span>{t.branding}</span>
                     </Link>,

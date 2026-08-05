@@ -35,6 +35,7 @@ interface UsersTableProps {
   onToggleSelect: (id: number) => void;
   onToggleSelectAll: () => void;
   onInspectUser?: (user: DirectoryUser) => void;
+  basePath?: string;
 }
 
 function SkeletonRow({ showInstitute, selectable }: { showInstitute: boolean; selectable: boolean }) {
@@ -111,6 +112,7 @@ export function UsersTable({
   onToggleSelect,
   onToggleSelectAll,
   onInspectUser,
+  basePath = "/super-admin",
 }: UsersTableProps) {
   const handleRowClick = (e: React.MouseEvent, user: DirectoryUser) => {
     const target = e.target as HTMLElement;
@@ -156,8 +158,8 @@ export function UsersTable({
       // Tenant-scoped role. Students and institute instructors are managed in
       // place; the rest just link out to their institute's accounts screen.
       const managed = memberActionBase(user);
-      const editPath = memberEditPath(user);
-      const link = editPath ?? tenantManageLink(user);
+      const editPath = memberEditPath(user, basePath);
+      const link = editPath ?? tenantManageLink(user, basePath);
       const resetPath = passwordResetPath(user);
       if (!managed && !link && !resetPath) return <span className="text-muted">—</span>;
       const overflowMenu = renderOverflowMenu([
@@ -198,7 +200,7 @@ export function UsersTable({
 
     return (
       <div className="row-actions-inline users-row-actions">
-        <Link className="action-btn-icon action-neutral" to={actions.editPath(user)} data-tooltip={a.edit}>
+        <Link className="action-btn-icon action-neutral" to={actions.editPath(user, basePath)} data-tooltip={a.edit}>
           <Icon name="edit" />
         </Link>
         {renderOverflowMenu([
@@ -306,7 +308,7 @@ export function UsersTable({
                   label: t.institute,
                   render: (user: DirectoryUser) =>
                     user.institute_id ? (
-                      <Link to={`/super-admin/institutes/${user.institute_id}`}>{user.institute_name}</Link>
+                      <Link to={`${basePath}/institutes/${user.institute_id}`}>{user.institute_name}</Link>
                     ) : (
                       <span className="text-muted">{strings.platformScope}</span>
                     ),
@@ -412,7 +414,7 @@ export function UsersTable({
                 {showInstitute && (
                   <td className="col-institute" data-label={t.institute}>
                     {user.institute_id ? (
-                      <Link to={`/super-admin/institutes/${user.institute_id}`}>
+                      <Link to={`${basePath}/institutes/${user.institute_id}`}>
                         {user.institute_name}
                       </Link>
                     ) : (

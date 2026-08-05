@@ -13,6 +13,7 @@ interface InstitutesFilterBarProps {
   onExportPdf: () => void;
   onExportExcel: () => void;
   resultCount: number;
+  basePath?: string;
 }
 
 export function InstitutesFilterBar({
@@ -25,6 +26,7 @@ export function InstitutesFilterBar({
   onExportPdf,
   onExportExcel,
   resultCount,
+  basePath = "/super-admin",
 }: InstitutesFilterBarProps) {
   const r = strings.resultCount;
   return (
@@ -60,7 +62,7 @@ export function InstitutesFilterBar({
         excelLabel={strings.exportExcel}
       />
 
-      <LinkButton to="/super-admin/onboarding/new" leftIcon={<Icon name="plus" />}>
+      <LinkButton to={`${basePath}/institutes/new`} leftIcon={<Icon name="plus" />}>
         {strings.onboardInstitute}
       </LinkButton>
 

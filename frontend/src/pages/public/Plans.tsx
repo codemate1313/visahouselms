@@ -3,10 +3,12 @@ import { apiClient } from "@/api/client";
 import { StaticDcPage } from "./StaticDcPage";
 import { plansStrings as strings } from "./Plans.strings";
 import type { LandingPlansPayload } from "./Plans.types";
+import { useContactSettings } from "./useContactSettings";
 
 export function Plans() {
   const [payload, setPayload] = useState<LandingPlansPayload | null>(null);
   const [failed, setFailed] = useState(false);
+  const contactSettings = useContactSettings();
 
   useEffect(() => {
     let cancelled = false;
@@ -35,8 +37,9 @@ export function Plans() {
       showStudentPlans: payload?.show_direct ?? false,
       showInstitutePlans: payload?.show_institutes ?? false,
       plansFailed: failed,
+      contactSettings,
     }),
-    [failed, payload]
+    [failed, payload, contactSettings]
   );
 
   return (

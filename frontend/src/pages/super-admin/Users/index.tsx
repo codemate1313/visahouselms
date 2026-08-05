@@ -38,16 +38,16 @@ export const SLUG_BY_ROLE = Object.fromEntries(
 ) as Record<DirectoryRole, string>;
 
 /** Roles that have a dedicated create screen; the rest are created per institute. */
-const NEW_ROUTE: Partial<Record<DirectoryRole, string>> = {
-  SUPER_ADMIN: "/super-admin/accounts/new",
-  SA_INSTRUCTOR: "/super-admin/instructors/new",
+const NEW_ROUTE: Partial<Record<DirectoryRole, (basePath: string) => string>> = {
+  SUPER_ADMIN: (basePath) => `${basePath}/accounts/new`,
+  SA_INSTRUCTOR: (basePath) => `${basePath}/instructors/new`,
 };
 
 /** Roles created inside an institute: the directory picks one, then hands off
  *  to that institute's own create form. */
-const TENANT_NEW_PATH: Partial<Record<DirectoryRole, (instituteId: string) => string>> = {
-  STUDENT: (id) => `/super-admin/institutes/${id}/accounts/students/new`,
-  INST_INSTRUCTOR: (id) => `/super-admin/institutes/${id}/accounts/staff/new`,
+const TENANT_NEW_PATH: Partial<Record<DirectoryRole, (instituteId: string, basePath: string) => string>> = {
+  STUDENT: (id, basePath) => `${basePath}/institutes/${id}/accounts/students/new`,
+  INST_INSTRUCTOR: (id, basePath) => `${basePath}/institutes/${id}/accounts/staff/new`,
 };
 
 interface CreateActionButtonProps {
@@ -72,7 +72,11 @@ function CreateActionButton({ label, to, onClick }: CreateActionButtonProps) {
   );
 }
 
-export function Users() {
+interface UsersProps {
+  basePath?: string;
+}
+
+export function Users({ basePath = "/super-admin" }: UsersProps) {
   const { role: roleSlug } = useParams();
   const navigate = useNavigate();
   const currentUser = useAuthStore((state) => state.user);
@@ -385,7 +389,8 @@ export function Users() {
   const total = data?.total ?? 0;
   const visibleCount = data?.items.length ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const newRoute = activeRole === "SUPER_ADMIN" && !viewerIsOwner ? undefined : NEW_ROUTE[activeRole];
+  const newRoute =
+    activeRole === "SUPER_ADMIN" && !viewerIsOwner ? undefined : NEW_ROUTE[activeRole]?.(basePath);
   const showInstitute = activeRole !== "SUPER_ADMIN" && activeRole !== "SA_INSTRUCTOR";
 
   return (
@@ -393,7 +398,7 @@ export function Users() {
       <SegmentedControl
         ariaLabel="User directory role"
         className="user-directory-tabs"
-        onChange={(role) => navigate(`/super-admin/users/${SLUG_BY_ROLE[role]}`)}
+        onChange={(role) => navigate(`${basePath}/users/${SLUG_BY_ROLE[role]}`)}
         options={DIRECTORY_ROLES.map((role) => {
           const count = data?.role_counts?.[role];
           return {
@@ -579,6 +584,7 @@ export function Users() {
         onToggleSelect={toggleSelect}
         onToggleSelectAll={toggleSelectAll}
         onInspectUser={(user) => setInspectingUserId(user.id)}
+        basePath={basePath}
       />
 
       {totalPages > 1 && (
@@ -629,7 +635,7 @@ export function Users() {
         variant="primary"
         onConfirm={() => {
           const buildPath = TENANT_NEW_PATH[activeRole];
-          if (newStudentInstituteId && buildPath) navigate(buildPath(newStudentInstituteId));
+          if (newStudentInstituteId && buildPath) navigate(buildPath(newStudentInstituteId, basePath));
         }}
         onClose={() => {
           setShowInstituteModal(false);

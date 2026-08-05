@@ -5,8 +5,8 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_user, require_role
-from app.models.role import STUDENT, SUPER_ADMIN
+from app.dependencies.auth import get_current_user, require_super_admin_or_verified_developer
+from app.models.role import STUDENT
 from app.models.user import User
 from app.schemas.institute import BrandingUpdate, InstituteCreate, InstituteUpdate
 from app.schemas.institute_admin import InstituteMemberCreate, InstituteMemberUpdate
@@ -15,7 +15,7 @@ from app.services import institute_admin_service, institute_service
 router = APIRouter(
     prefix="/super-admin/institutes",
     tags=["institutes"],
-    dependencies=[Depends(require_role(SUPER_ADMIN))],
+    dependencies=[Depends(require_super_admin_or_verified_developer)],
 )
 
 # public router: no auth - a logged-out themed login page needs this in Phase 4/5

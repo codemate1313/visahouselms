@@ -5,6 +5,7 @@ import { tabLabels, tabOrder } from "./DeveloperSettings.strings";
 import type { Tab } from "./types";
 import { TypographyTab } from "./components/TypographyTab";
 import { LoginSliderTab } from "./components/LoginSliderTab";
+import { ContactSocialTab } from "./components/ContactSocialTab";
 import { SmtpTab } from "./components/SmtpTab";
 import { FcmTab } from "./components/FcmTab";
 import { AvatarTab } from "./components/AvatarTab";
@@ -38,6 +39,7 @@ export function DeveloperSettings() {
       />
       {tab === "typography" && <TypographyTab />}
       {tab === "slider" && <LoginSliderTab />}
+      {tab === "contact" && <ContactSocialTab />}
       {tab === "smtp" && <SmtpTab />}
       {tab === "fcm" && <FcmTab />}
       {tab === "avatar" && <AvatarTab />}

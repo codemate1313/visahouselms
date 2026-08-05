@@ -4,10 +4,12 @@ import { apiClient } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { SegmentedControl } from "@/components/ui/SegmentedControl/SegmentedControl";
 import { SearchableSelect } from "@/components/ui/SearchableSelect/SearchableSelect";
-import { Badge, SearchInput } from "@/components/ui";
+import { Badge, ExportButtons, SearchInput } from "@/components/ui";
 import { LineChart, type LineChartDatum } from "@/components/charts/LineChart";
 import "./InstituteDetailDrawer.css";
 import { formatDate } from "@/utils/date";
+import { confirmExport } from "@/utils/confirmExport";
+import { exportMembersExcel, exportMembersPDF } from "./memberExportHelpers";
 
 interface InstituteDetailDrawerProps {
   instituteId: number | null;
@@ -150,6 +152,26 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
       s.last_name.toLowerCase().includes(studentSearch.toLowerCase()) ||
       s.email.toLowerCase().includes(studentSearch.toLowerCase())
   );
+
+  async function handleExportStudentsPdf() {
+    if (!await confirmExport("pdf", "students")) return;
+    exportMembersPDF(filteredStudents, details?.name ?? "Institute", "Students");
+  }
+
+  async function handleExportStudentsExcel() {
+    if (!await confirmExport("excel", "students")) return;
+    exportMembersExcel(filteredStudents, details?.name ?? "Institute", "Students");
+  }
+
+  async function handleExportInstructorsPdf() {
+    if (!await confirmExport("pdf", "instructors")) return;
+    exportMembersPDF(filteredInstructors, details?.name ?? "Institute", "Instructors");
+  }
+
+  async function handleExportInstructorsExcel() {
+    if (!await confirmExport("excel", "instructors")) return;
+    exportMembersExcel(filteredInstructors, details?.name ?? "Institute", "Instructors");
+  }
 
   const filteredInstructors = instructors.filter(
     (i) =>
@@ -397,6 +419,12 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                       placeholder="Search students by name or email..."
                       fullWidth
                     />
+                    <ExportButtons
+                      onExportPdf={() => void handleExportStudentsPdf()}
+                      onExportExcel={() => void handleExportStudentsExcel()}
+                      pdfLabel="Export Students PDF"
+                      excelLabel="Export Students Excel"
+                    />
                   </div>
 
                   <div className="drawer-list-items">
@@ -444,6 +472,12 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                       onChange={setInstructorSearch}
                       placeholder="Search instructors by name or email..."
                       fullWidth
+                    />
+                    <ExportButtons
+                      onExportPdf={() => void handleExportInstructorsPdf()}
+                      onExportExcel={() => void handleExportInstructorsExcel()}
+                      pdfLabel="Export Instructors PDF"
+                      excelLabel="Export Instructors Excel"
                     />
                   </div>
 

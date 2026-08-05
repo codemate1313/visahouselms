@@ -19,9 +19,10 @@ export type { InstituteMember, MemberCapacity } from "./types";
 interface Props {
   role?: InstituteMember["role"];
   instituteId?: number;
+  portalBasePath?: string;
 }
 
-export function InstituteMembers({ role, instituteId }: Props) {
+export function InstituteMembers({ role, instituteId, portalBasePath = "/super-admin" }: Props) {
   const isStudent = role === "STUDENT";
   const isAllAccounts = role === undefined;
   const permissions = useAuthStore((state) => state.user?.institute_permissions);
@@ -29,7 +30,7 @@ export function InstituteMembers({ role, instituteId }: Props) {
   const label = isAllAccounts ? "Accounts" : isStudent ? "Students" : "Instructors";
   const apiBase = isSuperAdmin ? `/super-admin/institutes/${instituteId}` : "/institute";
   const basePath = isSuperAdmin
-    ? `/super-admin/institutes/${instituteId}/accounts`
+    ? `${portalBasePath}/institutes/${instituteId}/accounts`
     : isStudent ? "/institute-portal/students" : "/institute-portal/staff";
   const [capacity, setCapacity] = useState<MemberCapacity | null>(null);
   const canAddStudents = Boolean(capacity?.can_add.students);
@@ -314,4 +315,16 @@ export function SuperAdminInstituteStudents() {
 export function SuperAdminInstituteAccounts() {
   const { id } = useParams();
   return <InstituteMembers instituteId={Number(id)} />;
+}
+
+const developerAccessSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+
+export function DeveloperInstituteStudents() {
+  const { id } = useParams();
+  return <InstituteMembers role="STUDENT" instituteId={Number(id)} portalBasePath={`/${developerAccessSlug}`} />;
+}
+
+export function DeveloperInstituteAccounts() {
+  const { id } = useParams();
+  return <InstituteMembers instituteId={Number(id)} portalBasePath={`/${developerAccessSlug}`} />;
 }

@@ -32,6 +32,18 @@ export function DeveloperLayout() {
           to: `/${developerAccessSlug}/panel`,
         },
         {
+          key: "institutes",
+          label: "Institutes",
+          icon: "building",
+          to: `/${developerAccessSlug}/institutes`,
+        },
+        {
+          key: "users",
+          label: "Users",
+          icon: "user",
+          to: `/${developerAccessSlug}/users`,
+        },
+        {
           key: "settings",
           label: "Platform Settings",
           icon: "settings",

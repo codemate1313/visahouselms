@@ -14,7 +14,7 @@ import { PersonalDetailsPanel } from "./components/PersonalDetailsPanel";
 import { SecurityPanel } from "./components/SecurityPanel";
 import { ContactInfoPanel } from "./components/ContactInfoPanel";
 
-export function AccountForm() {
+export function AccountForm({ basePath = "/super-admin" }: { basePath?: string }) {
   const { id } = useParams();
   const isNew = id === "new" || id === undefined;
   const navigate = useNavigate();
@@ -128,7 +128,7 @@ export function AccountForm() {
         await apiClient.patch(`/super-admin/accounts/${id}`, payload);
         originalRef.current = payload;
       }
-      navigate("/super-admin/accounts");
+      navigate(`${basePath}/accounts`);
     } catch (err: unknown) {
       setError(extractErrorMessage(err, strings.errors.save));
     } finally {
@@ -226,7 +226,7 @@ export function AccountForm() {
             >
               {saving ? strings.saving : strings.saveAccount}
             </button>
-            <button type="button" onClick={() => navigate("/super-admin/accounts")}>
+            <button type="button" onClick={() => navigate(`${basePath}/accounts`)}>
               {strings.cancel}
             </button>
           </div>

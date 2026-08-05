@@ -12,7 +12,7 @@ interface RoleActions {
   /** Base path for deactivate/reactivate/delete. */
   base: string;
   /** Route to the role's edit form. */
-  editPath: (user: DirectoryUser) => string;
+  editPath: (user: DirectoryUser, basePath?: string) => string;
   /** Whether the role supports toggling force_password_reset in place. */
   supportsForceReset: boolean;
   /** Whether the role supports issuing a new temporary password. */
@@ -22,13 +22,13 @@ interface RoleActions {
 export const ROLE_ACTIONS: Partial<Record<DirectoryRole, RoleActions>> = {
   SUPER_ADMIN: {
     base: "/super-admin/accounts",
-    editPath: (user) => `/super-admin/accounts/${user.id}`,
+    editPath: (user, basePath = "/super-admin") => `${basePath}/accounts/${user.id}`,
     supportsForceReset: true,
     supportsPasswordReset: false,
   },
   SA_INSTRUCTOR: {
     base: "/super-admin/instructors",
-    editPath: (user) => `/super-admin/instructors/${user.id}`,
+    editPath: (user, basePath = "/super-admin") => `${basePath}/instructors/${user.id}`,
     supportsForceReset: false,
     supportsPasswordReset: true,
   },
@@ -58,12 +58,12 @@ export function passwordResetPath(user: DirectoryUser): string | null {
 }
 
 /** Read-only destination for tenant-scoped roles, or null when unresolvable. */
-export function tenantManageLink(user: DirectoryUser): string | null {
+export function tenantManageLink(user: DirectoryUser, basePath = "/super-admin"): string | null {
   if (!user.institute_id) return null;
   if (user.role_name === "STUDENT") {
-    return `/super-admin/institutes/${user.institute_id}/accounts/students/${user.id}`;
+    return `${basePath}/institutes/${user.institute_id}/accounts/students/${user.id}`;
   }
-  return `/super-admin/institutes/${user.institute_id}/accounts`;
+  return `${basePath}/institutes/${user.institute_id}/accounts`;
 }
 
 export function isProtected(user: DirectoryUser): boolean {
@@ -99,9 +99,9 @@ export function canDeleteMember(user: DirectoryUser): boolean {
 }
 
 /** Edit form for a tenant-scoped member, or null when there is none. */
-export function memberEditPath(user: DirectoryUser): string | null {
+export function memberEditPath(user: DirectoryUser, basePath = "/super-admin"): string | null {
   if (MANAGED_TENANT_ROLES.includes(user.role_name)) {
-    return `/super-admin/users/${user.id}/edit`;
+    return `${basePath}/users/${user.id}/edit`;
   }
   return null;
 }

@@ -155,3 +155,15 @@ export function SuperAdminInstructorForm() {
   const { id } = useParams();
   return <InstituteMemberForm role="INST_INSTRUCTOR" instituteId={Number(id)} returnPath={`/super-admin/institutes/${id}/accounts`} />;
 }
+
+const developerAccessSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+
+export function DeveloperStudentForm() {
+  const { id } = useParams();
+  return <InstituteMemberForm role="STUDENT" instituteId={Number(id)} returnPath={`/${developerAccessSlug}/institutes/${id}/accounts`} />;
+}
+
+export function DeveloperInstructorForm() {
+  const { id } = useParams();
+  return <InstituteMemberForm role="INST_INSTRUCTOR" instituteId={Number(id)} returnPath={`/${developerAccessSlug}/institutes/${id}/accounts`} />;
+}
