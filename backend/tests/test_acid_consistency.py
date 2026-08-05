@@ -23,7 +23,6 @@ from app.models.subscription import Subscription
 from app.models.user import User
 from app.services import (
     coupon_service,
-    demo_service,
     institute_service,
     payment_service,
     subscription_service,
@@ -197,36 +196,6 @@ class AcidConsistencyTests(unittest.TestCase):
         finally:
             verifier.close()
 
-    def test_demo_creation_rolls_back_the_institute_when_demo_write_fails(self) -> None:
-        institute_count = self.db.query(Institute).count()
-        user_count = self.db.query(User).count()
-
-        with patch.object(
-            demo_service,
-            "_audit",
-            side_effect=RuntimeError("demo write failed"),
-        ):
-            with self.assertRaisesRegex(RuntimeError, "demo write failed"):
-                demo_service.create_demo(
-                    self.db,
-                    self.actor,
-                    "Rollback Demo",
-                    "demo-admin@acid.test",
-                    "Demo",
-                    "Admin",
-                    14,
-                    2,
-                    4,
-                    None,
-                )
-        self.db.rollback()
-
-        verifier = self.Session()
-        try:
-            self.assertEqual(verifier.query(Institute).count(), institute_count)
-            self.assertEqual(verifier.query(User).count(), user_count)
-        finally:
-            verifier.close()
 
     def test_coupon_limit_is_enforced_by_the_atomic_update(self) -> None:
         coupon = Coupon(

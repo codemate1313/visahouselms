@@ -22,7 +22,16 @@ export const instituteCatalogue = {
     "Only published tiers appear as renewal options on an institute's billing page and on the public pricing page.",
 } as const;
 
-export const planFormCatalogues: Record<PlanAudience, typeof directStudentCatalogue> = {
+export interface PlanCatalogueStrings {
+  basePath: string;
+  createTitle: string;
+  editTitle: string;
+  subtitle: string;
+  publishLabel: string;
+  publishHint: string;
+}
+
+export const planFormCatalogues: Record<PlanAudience, PlanCatalogueStrings> = {
   direct_students: directStudentCatalogue,
   institutes: instituteCatalogue,
 };

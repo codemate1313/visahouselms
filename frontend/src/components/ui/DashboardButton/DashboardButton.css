@@ -3,7 +3,6 @@
      the colour of text drawn on the sidebar's active pill (#ffffff in dark
      mode), which made primary buttons white-on-white. */
   --dashboard-button-accent: var(--primary);
-  --primary: var(--dashboard-button-accent);
   --primary-hover: color-mix(in srgb, var(--dashboard-button-accent) 86%, #000000);
   --primary-soft: color-mix(in srgb, var(--dashboard-button-accent) 20%, transparent);
   border-radius: 14px;

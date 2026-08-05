@@ -1,9 +1,9 @@
 import { ToggleSwitch } from "@/components/ToggleSwitch";
-import { directStudentCatalogue, plansStrings as strings } from "../Plans.strings";
+import { type PlanCatalogueStrings, plansStrings as strings } from "../Plans.strings";
 
 interface PlanVisibilityBarProps {
   /** Copy for whichever catalogue is on screen - the wording differs. */
-  catalogue: typeof directStudentCatalogue;
+  catalogue: PlanCatalogueStrings;
   visible: boolean;
   /** False until the stored flag arrives, so the switch never flashes a state
    *  the Super Admin did not set. */

@@ -168,7 +168,7 @@ export function SpeakingAvatar({
         audioRef.current.currentTime = 0;
         audioRef.current.play()
           .then(() => setIsPlaying(true))
-          .catch((err) => {
+          .catch(() => {
             // Autoplay refusal is expected until the user interacts; nothing to report.
             setIsPlaying(false);
           });

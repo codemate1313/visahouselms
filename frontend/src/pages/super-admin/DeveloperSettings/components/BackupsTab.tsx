@@ -1,14 +1,22 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { confirmDelete } from "@/components/confirmDialog";
 import { Icon } from "@/components/icons";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { noChangesMessage } from "@/content/common.strings";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 import { formatBytes } from "../helpers";
 import type { BackupRow } from "../types";
 import { Badge } from "@/components/ui";
+
+interface BackupSettingsPayload {
+  schedule: string;
+  retention: string;
+}
 
 export function BackupsTab() {
   const [rows, setRows] = useState<BackupRow[]>([]);
@@ -17,22 +25,44 @@ export function BackupsTab() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const showInfo = useToastStore((state) => state.showInfo);
+  const originalRef = useRef<BackupSettingsPayload | null>(null);
+  // Kept in sync with the schedule/retention state so the settings fetch
+  // below can compute the post-load snapshot without depending on a stale
+  // closure over `schedule`/`retention` (load() has an empty dep array).
+  const scheduleRef = useRef(schedule);
+  const retentionRef = useRef(retention);
+  useEffect(() => {
+    scheduleRef.current = schedule;
+  }, [schedule]);
+  useEffect(() => {
+    retentionRef.current = retention;
+  }, [retention]);
   const t = strings.backups;
 
   const load = useCallback(() => {
     apiClient.get("/super-admin/backups").then(({ data }) => setRows(data));
     apiClient.get("/super-admin/dev-settings/backup").then(({ data }) => {
+      const nextSchedule = data.schedule || scheduleRef.current;
+      const nextRetention = data.retention || retentionRef.current;
       if (data.schedule) setSchedule(data.schedule);
       if (data.retention) setRetention(data.retention);
+      originalRef.current = { schedule: nextSchedule, retention: nextRetention };
     });
   }, []);
 
   useEffect(load, [load]);
 
   async function saveSettings() {
+    const payload: BackupSettingsPayload = { schedule, retention };
+    if (originalRef.current && isEqual(originalRef.current, payload)) {
+      showInfo(noChangesMessage);
+      return;
+    }
     setError(null); setNotice(null); setBusy(true);
     try {
-      await apiClient.put("/super-admin/dev-settings/backup", { schedule, retention });
+      await apiClient.put("/super-admin/dev-settings/backup", payload);
+      originalRef.current = payload;
       setNotice(t.savedNotice);
     } catch (err: unknown) {
       setError(extractErrorMessage(err, t.saveError));

@@ -1,9 +1,21 @@
-import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { noChangesMessage } from "@/content/common.strings";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 import { Badge } from "@/components/ui";
+
+interface FcmPayload {
+  project_id: string | null;
+  service_account_json: string | null;
+  web_api_key: string | null;
+  web_app_id: string | null;
+  web_messaging_sender_id: string | null;
+  web_vapid_key: string | null;
+}
 
 export function FcmTab() {
   const [configured, setConfigured] = useState(false);
@@ -18,6 +30,13 @@ export function FcmTab() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const showInfo = useToastStore((state) => state.showInfo);
+  // service_account_json is write-only (the server never returns it, even
+  // masked), so saJson always starts blank on load. That naturally makes the
+  // "no changes" snapshot store `null` for it - matching what an untouched
+  // textarea sends - while any pasted-in value still correctly counts as a
+  // real change.
+  const originalRef = useRef<FcmPayload | null>(null);
   const t = strings.fcm;
 
   const load = useCallback(() => {
@@ -29,6 +48,14 @@ export function FcmTab() {
       setWebAppId(data.web_app_id ?? "");
       setWebMessagingSenderId(data.web_messaging_sender_id ?? "");
       setWebVapidKey(data.web_vapid_key ?? "");
+      originalRef.current = {
+        project_id: data.project_id || null,
+        service_account_json: null,
+        web_api_key: data.web_api_key || null,
+        web_app_id: data.web_app_id || null,
+        web_messaging_sender_id: data.web_messaging_sender_id || null,
+        web_vapid_key: data.web_vapid_key || null,
+      };
     });
   }, []);
 
@@ -36,16 +63,21 @@ export function FcmTab() {
 
   async function save(event: FormEvent) {
     event.preventDefault();
+    const payload: FcmPayload = {
+      project_id: projectId || null,
+      service_account_json: saJson || null,
+      web_api_key: webApiKey || null,
+      web_app_id: webAppId || null,
+      web_messaging_sender_id: webMessagingSenderId || null,
+      web_vapid_key: webVapidKey || null,
+    };
+    if (originalRef.current && isEqual(originalRef.current, payload)) {
+      showInfo(noChangesMessage);
+      return;
+    }
     setError(null); setNotice(null); setBusy(true);
     try {
-      await apiClient.put("/super-admin/dev-settings/fcm", {
-        project_id: projectId || null,
-        service_account_json: saJson || null,
-        web_api_key: webApiKey || null,
-        web_app_id: webAppId || null,
-        web_messaging_sender_id: webMessagingSenderId || null,
-        web_vapid_key: webVapidKey || null,
-      });
+      await apiClient.put("/super-admin/dev-settings/fcm", payload);
       setNotice(t.savedNotice);
       setSaJson("");
       load();

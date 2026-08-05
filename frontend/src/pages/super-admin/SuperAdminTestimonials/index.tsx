@@ -1,9 +1,11 @@
-import { type DragEvent, type FormEvent, useEffect, useState } from "react";
+import { type DragEvent, type FormEvent, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
+import { noChangesMessage } from "@/content/common.strings";
 import "./SuperAdminTestimonials.css";
 import { superAdminTestimonialsStrings as strings } from "./SuperAdminTestimonials.strings";
 import type { TestimonialAdminItem, TestimonialStatusFilter, TestimonialViewMode } from "./types";
@@ -26,6 +28,12 @@ export function SuperAdminTestimonials() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
+  const showInfo = useToastStore((state) => state.showInfo);
+
+  // Pristine copy of the testimonial being edited, captured the moment the
+  // modal opens for editing - before any field onChange can replace
+  // editingItem with edited values. Null in create mode (nothing to diff).
+  const originalItemRef = useRef<Partial<TestimonialAdminItem> | null>(null);
 
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -96,8 +104,14 @@ export function SuperAdminTestimonials() {
     e.preventDefault();
     if (!editingItem?.student_name || !editingItem?.quote) return;
 
-    setSaving(true);
     const isEdit = Boolean(editingItem.id);
+
+    if (isEdit && originalItemRef.current && isEqual(originalItemRef.current, editingItem)) {
+      showInfo(noChangesMessage);
+      return;
+    }
+
+    setSaving(true);
     const url = isEdit ? `/super-admin/testimonials/${editingItem.id}` : "/super-admin/testimonials";
     const promise = isEdit ? apiClient.put(url, editingItem) : apiClient.post(url, editingItem);
 
@@ -139,6 +153,7 @@ export function SuperAdminTestimonials() {
   };
 
   const handleAdd = () => {
+    originalItemRef.current = null;
     setEditingItem({
       student_name: "",
       ...strings.newTestimonialDefaults,
@@ -150,6 +165,10 @@ export function SuperAdminTestimonials() {
   };
 
   const handleEdit = (item: TestimonialAdminItem) => {
+    // Capture the pristine copy before setEditingItem ever runs, so the very
+    // first field onChange (which replaces editingItem wholesale) can't take
+    // the original down with it.
+    originalItemRef.current = { ...item };
     setEditingItem(item);
     setIsModalOpen(true);
   };

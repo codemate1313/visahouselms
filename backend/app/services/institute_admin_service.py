@@ -18,7 +18,7 @@ from app.dependencies.limits import enforce_limit
 from app.models.attempt import AttemptPartGrade, TestAttempt
 from app.models.audit_log import AuditLog
 from app.models.institute import Institute
-from app.models.role import INST_INSTRUCTOR, STUDENT, SUPER_ADMIN, Role
+from app.models.role import INST_INSTRUCTOR, INSTITUTE_ADMIN, STUDENT, SUPER_ADMIN, Role
 from app.models.user import User
 from app.models.user_device import UserDevice
 from app.models.user_session import UserSession

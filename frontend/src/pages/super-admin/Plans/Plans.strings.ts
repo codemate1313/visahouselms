@@ -23,13 +23,23 @@ export const instituteCatalogue = {
   basePath: "/super-admin/plans",
   newPlan: "New Tier",
   exportLabel: "institute plans",
-  empty: "No institute tiers yet - run scripts/seed_institute_plans.py or create one.",
+  empty: "No institute plans yet",
   audienceLabel: "institutes",
-  visibilityHint: "Institute tiers are listed on the public pricing page.",
-  hiddenHint: "Institute tiers are hidden from the public pricing page.",
+  visibilityHint: "Institute plans are listed on the public pricing page.",
+  hiddenHint: "Institute plans are hidden from the public pricing page.",
 } as const;
 
-export const planCatalogues: Record<PlanAudience, typeof directStudentCatalogue> = {
+export interface PlanCatalogueStrings {
+  basePath: string;
+  newPlan: string;
+  exportLabel: string;
+  empty: string;
+  audienceLabel: string;
+  visibilityHint: string;
+  hiddenHint: string;
+}
+
+export const planCatalogues: Record<PlanAudience, PlanCatalogueStrings> = {
   direct_students: directStudentCatalogue,
   institutes: instituteCatalogue,
 };

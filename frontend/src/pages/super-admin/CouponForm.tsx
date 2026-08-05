@@ -1,8 +1,11 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
+import { noChangesMessage } from "@/content/common.strings";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import type { PlanRow } from "./Plans";
 import { couponFormStrings as strings } from "./CouponForm.strings";
 
@@ -27,6 +30,8 @@ export function CouponForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const showInfo = useToastStore((state) => state.showInfo);
+  const originalRef = useRef<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     apiClient.get<PlanRow[]>("/super-admin/plans").then(({ data }) => setPlans(data));
@@ -37,7 +42,7 @@ export function CouponForm() {
     apiClient
       .get(`/super-admin/coupons/${id}`)
       .then(({ data }) => {
-        setForm({
+        const loadedForm = {
           code: data.code ?? "",
           discount_type: data.discount_type ?? "percent",
           value: String(data.value ?? ""),
@@ -46,7 +51,18 @@ export function CouponForm() {
           usage_limit: data.usage_limit ? String(data.usage_limit) : "",
           valid_from: data.valid_from ? data.valid_from.slice(0, 10) : "",
           valid_until: data.valid_until ? data.valid_until.slice(0, 10) : "",
-        });
+        };
+        setForm(loadedForm);
+        originalRef.current = {
+          code: loadedForm.code,
+          discount_type: loadedForm.discount_type,
+          value: Number(loadedForm.value),
+          scope: loadedForm.scope,
+          scope_plan_id: loadedForm.scope === "plan" && loadedForm.scope_plan_id ? Number(loadedForm.scope_plan_id) : null,
+          usage_limit: loadedForm.usage_limit ? Number(loadedForm.usage_limit) : null,
+          valid_from: loadedForm.valid_from ? `${loadedForm.valid_from}T00:00:00` : null,
+          valid_until: loadedForm.valid_until ? `${loadedForm.valid_until}T23:59:59` : null,
+        };
       })
       .catch(() => setError(strings.errors.load))
       .finally(() => setLoading(false));
@@ -60,7 +76,6 @@ export function CouponForm() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    setSaving(true);
     const payload = {
       code: form.code,
       discount_type: form.discount_type,
@@ -71,11 +86,17 @@ export function CouponForm() {
       valid_from: form.valid_from ? `${form.valid_from}T00:00:00` : null,
       valid_until: form.valid_until ? `${form.valid_until}T23:59:59` : null,
     };
+    if (originalRef.current && isEqual(originalRef.current, payload)) {
+      showInfo(noChangesMessage);
+      return;
+    }
+    setSaving(true);
     try {
       if (isNew) {
         await apiClient.post("/super-admin/coupons", payload);
       } else {
         await apiClient.patch(`/super-admin/coupons/${id}`, payload);
+        originalRef.current = payload;
       }
       navigate("/super-admin/coupons");
     } catch (err: unknown) {

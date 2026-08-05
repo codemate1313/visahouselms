@@ -4,12 +4,16 @@ import { extractErrorMessage } from "@/api/errors";
 import { ProfileEditorShell } from "@/components/ProfileEditorShell";
 import { fromDateInputValue, ProfileContactFields, toDateInputValue } from "@/components/ProfileContactFields";
 import { RequiredMark } from "@/components/ui";
+import { noChangesMessage } from "@/content/common.strings";
 import { useAuthStore } from "@/store/authStore";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import { studentProfileStrings as strings } from "./StudentProfile.strings";
 
 export function StudentProfile() {
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
+  const showInfo = useToastStore((state) => state.showInfo);
   const [email, setEmail] = useState(user?.email ?? "");
   const [firstName, setFirstName] = useState(user?.first_name ?? "");
   const [lastName, setLastName] = useState(user?.last_name ?? "");
@@ -27,6 +31,30 @@ export function StudentProfile() {
     event.preventDefault();
     setError(null);
     setSuccess(null);
+
+    const original = {
+      email: user?.email ?? "",
+      first_name: user?.first_name ?? "",
+      last_name: user?.last_name ?? "",
+      dob: toDateInputValue(user?.dob),
+      gender: user?.gender || null,
+      phone_number: user?.phone_number || null,
+      address: user?.address || null,
+    };
+    const next = {
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      dob,
+      gender: gender || null,
+      phone_number: phoneNumber || null,
+      address: address || null,
+    };
+    if (isEqual(original, next)) {
+      showInfo(noChangesMessage);
+      return;
+    }
+
     setSaving(true);
     try {
       const { data } = await apiClient.patch("/student/me/profile", {

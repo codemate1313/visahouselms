@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Button, PageHeader } from "@/components/ui";
+import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import { instituteBrandingStrings as strings } from "./InstituteBranding.strings";
 
 interface Branding {
@@ -26,6 +28,7 @@ interface Branding {
 export function InstituteBrandingPage() {
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
+  const showInfo = useToastStore((state) => state.showInfo);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [branding, setBranding] = useState<Branding | null>(null);
@@ -33,11 +36,14 @@ export function InstituteBrandingPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  const originalRef = useRef<Branding | null>(null);
+
   useEffect(() => {
     apiClient
       .get<Branding>("/institute/branding")
       .then(({ data }) => {
         setBranding(data);
+        originalRef.current = data;
         setLoadError(null);
       })
       .catch((err: unknown) => setLoadError(extractErrorMessage(err, strings.errors.load)));
@@ -49,16 +55,34 @@ export function InstituteBrandingPage() {
 
   async function save() {
     if (!branding) return;
+    const payload = {
+      primary_color: branding.primary_color,
+      secondary_color: branding.secondary_color,
+      font_family: branding.font_family,
+      heading_font_weight: branding.heading_font_weight,
+      body_font_weight: branding.body_font_weight,
+    };
+    if (
+      originalRef.current &&
+      isEqual(
+        {
+          primary_color: originalRef.current.primary_color,
+          secondary_color: originalRef.current.secondary_color,
+          font_family: originalRef.current.font_family,
+          heading_font_weight: originalRef.current.heading_font_weight,
+          body_font_weight: originalRef.current.body_font_weight,
+        },
+        payload
+      )
+    ) {
+      showInfo(noChangesMessage);
+      return;
+    }
     setSaving(true);
     try {
-      const { data } = await apiClient.put<Branding>("/institute/branding", {
-        primary_color: branding.primary_color,
-        secondary_color: branding.secondary_color,
-        font_family: branding.font_family,
-        heading_font_weight: branding.heading_font_weight,
-        body_font_weight: branding.body_font_weight,
-      });
+      const { data } = await apiClient.put<Branding>("/institute/branding", payload);
       setBranding(data);
+      originalRef.current = data;
       showSuccess(strings.saved);
     } catch (err: unknown) {
       showError(extractErrorMessage(err, strings.errors.save));

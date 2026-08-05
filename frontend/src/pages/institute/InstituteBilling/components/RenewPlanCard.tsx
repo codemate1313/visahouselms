@@ -119,7 +119,7 @@ export function RenewPlanCard({ onRenewed }: RenewPlanCardProps) {
       amount: order.amount ?? 0,
       currency: order.currency || selected.currency,
       // Printed on the Razorpay sheet and the receipt.
-      description: `${selected.plan_name} ${data.is_activation ? "subscription" : "renewal"}`,
+      description: `${selected.plan_name} ${data?.is_activation ? "subscription" : "renewal"}`,
       prefillName: `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim(),
       prefillEmail: user?.email ?? "",
       onSuccess: async (response) => {

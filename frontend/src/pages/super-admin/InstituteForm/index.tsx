@@ -1,10 +1,12 @@
-import { type ChangeEvent, type FormEvent, type KeyboardEvent, useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, type FormEvent, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Button, LinkButton, RequiredMark, SearchableSelect } from "@/components/ui";
 import { BrandingPreview } from "@/pages/super-admin/InstituteBranding/components/BrandingPreview";
+import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import { instituteFormStrings as strings } from "./InstituteForm.strings";
 import { EMPTY_ALLOCATION, allocationSummaryLine, type CreatedInstitute } from "./types";
 import { CreatedInstituteModal } from "./components/CreatedInstituteModal";
@@ -91,6 +93,8 @@ export function InstituteForm() {
   const [created, setCreated] = useState<CreatedInstitute | null>(null);
   const [copied, setCopied] = useState(false);
   const showSuccess = useToastStore((state) => state.showSuccess);
+  const showInfo = useToastStore((state) => state.showInfo);
+  const originalRef = useRef<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -132,6 +136,25 @@ export function InstituteForm() {
           setSecondaryColor(data.branding.secondary_color ?? "#17191d");
           if (data.branding.logo_url) setExistingLogoUrl(data.branding.logo_url);
         }
+        originalRef.current = {
+          name: data.name ?? "",
+          contact_email: ((data.contact_email as string) ?? "").trim() || null,
+          session_duration_hours: data.session_duration_hours ?? 24,
+          student_limit: Number(data.student_limit ?? 50),
+          staff_limit: Number(data.staff_limit ?? 0),
+          access_duration_days: Number(data.access_duration_days ?? 365),
+          grace_days: Number(data.grace_days ?? 0),
+          module_ids: [...new Set((data.module_ids as number[]) ?? [])].sort((a, b) => a - b),
+          agreement_reference: ((data.agreement_reference as string) ?? "").trim(),
+          agreement_notes: ((data.agreement_notes as string) ?? "").trim() || null,
+          agreed_amount: Number(data.agreed_amount ?? 0),
+          amount_received: Number(data.amount_received ?? 0),
+          currency: ((data.agreement_currency as string) ?? "INR").trim(),
+          payment_method_id: data.payment_method_id ? Number(data.payment_method_id) : 0,
+          payment_reference: ((data.payment_reference as string) ?? "").trim() || null,
+          primary_color: data.branding?.primary_color || "#e53935",
+          secondary_color: data.branding?.secondary_color || "#17191d",
+        };
       })
       .catch(() => setError(strings.errors.load))
       .finally(() => setLoading(false));
@@ -281,6 +304,32 @@ export function InstituteForm() {
     if (!validateStep("courses")) {
       setActiveTab("courses");
       return;
+    }
+
+    if (!isNew && originalRef.current && !logoFile && !agreementDocumentFile && !paymentProofFile) {
+      const current = {
+        name,
+        contact_email: contactEmail.trim() || null,
+        session_duration_hours: sessionDurationHours,
+        student_limit: Number(allocation.student_limit || 0),
+        staff_limit: Number(allocation.staff_limit || 0),
+        access_duration_days: Number(allocation.access_duration_days || 365),
+        grace_days: Number(allocation.grace_days || 0),
+        module_ids: [...selectedModules].sort((a, b) => a - b),
+        agreement_reference: agreementReference.trim(),
+        agreement_notes: agreementNotes.trim() || null,
+        agreed_amount: Number(agreedAmount),
+        amount_received: Number(amountReceived),
+        currency: currency.trim(),
+        payment_method_id: Number(paymentMethodId),
+        payment_reference: paymentReference.trim() || null,
+        primary_color: primaryColor || null,
+        secondary_color: secondaryColor || null,
+      };
+      if (isEqual(originalRef.current, current)) {
+        showInfo(noChangesMessage);
+        return;
+      }
     }
 
     setSaving(true);

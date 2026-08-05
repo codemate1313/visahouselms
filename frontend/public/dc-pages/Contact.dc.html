@@ -241,9 +241,9 @@
       <!-- Form Toggle -->
       <div style="display: flex; justify-content: center; margin-bottom: 24px;">
         <div style="position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; padding: 4px; background: var(--chip); border: 1px solid var(--line); border-radius: 100px; overflow: hidden;">
-          <span aria-hidden="true" style="position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 2); border-radius: 100px; background: var(--ink); transform: translateX({{ formTogglePillX }}); transition: transform .38s cubic-bezier(.2,.7,.2,1); box-shadow: 0 10px 24px -14px var(--ink);"></span>
-          <button type="button" onClick="{{ setFormTypePartner }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 100px; border: none; background: transparent; color: {{ partnerTabColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">Become a Partner</button>
+          <span aria-hidden="true" style="position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 2); border-radius: 100px; background: var(--ac); transform: translateX({{ formTogglePillX }}); transition: transform .38s cubic-bezier(.2,.7,.2,1); box-shadow: 0 10px 24px -14px var(--ac);"></span>
           <button type="button" onClick="{{ setFormTypeQuery }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 100px; border: none; background: transparent; color: {{ queryTabColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">Contact Us</button>
+          <button type="button" onClick="{{ setFormTypePartner }}" style="position: relative; z-index: 1; font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 100px; border: none; background: transparent; color: {{ partnerTabColor }}; cursor: pointer; transition: color .25s, transform .2s;" style-hover="{transform: 'translateY(-1px)'}">Become a Partner</button>
         </div>
       </div>
 
@@ -460,12 +460,21 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
 class Component extends DCLogic {
+  getInitialFormType() {
+    try {
+      const search = window.__vhData?.search || "";
+      const params = new URLSearchParams(search);
+      if (params.get("plan") || params.get("form") === "partner") return "partner";
+    } catch {}
+    return "query";
+  }
+
   state = {
     theme: this.getInitialTheme(),
     mobileMenuOpen: false,
     submittingDemo: false,
     submittingQuery: false,
-    formType: "partner"
+    formType: this.getInitialFormType()
   };
 
   getInitialTheme() {
@@ -906,9 +915,9 @@ class Component extends DCLogic {
       isPartner,
       isQuery,
       interestedPlanName: this.getInterestedPlanName(),
-      formTogglePillX: isQuery ? "calc(100% + 4px)" : "0px",
-      partnerTabColor: isQuery ? "var(--ink2)" : "var(--bg)",
-      queryTabColor: isQuery ? "var(--bg)" : "var(--ink2)",
+      formTogglePillX: isPartner ? "100%" : "0px",
+      partnerTabColor: isPartner ? "#ffffff" : "var(--ink2)",
+      queryTabColor: isQuery ? "#ffffff" : "var(--ink2)",
       setFormTypePartner: this.setFormTypePartner,
       setFormTypeQuery: this.setFormTypeQuery,
 

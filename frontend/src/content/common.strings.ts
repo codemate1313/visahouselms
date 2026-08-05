@@ -39,6 +39,8 @@ export const dialogDefaults = {
   infoTitle: "Notice",
 } as const;
 
+export const noChangesMessage = "No changes to save.";
+
 export const passwordRuleLabels = {
   minLength: "At least 8 characters",
   uppercase: "An uppercase letter",

@@ -1,35 +1,56 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { PasswordInput } from "@/components/PasswordInput";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { noChangesMessage } from "@/content/common.strings";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 
+interface AvatarForm {
+  provider: string;
+  api_key: string;
+  presenter_image_url: string;
+  voice_id: string;
+}
+
 export function AvatarTab() {
-  const [form, setForm] = useState({ provider: "d_id", api_key: "", presenter_image_url: "", voice_id: "" });
+  const [form, setForm] = useState<AvatarForm>({ provider: "d_id", api_key: "", presenter_image_url: "", voice_id: "" });
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const showInfo = useToastStore((state) => state.showInfo);
+  const originalRef = useRef<AvatarForm | null>(null);
   const t = strings.avatar;
 
   useEffect(() => {
     apiClient.get("/super-admin/dev-settings/avatar").then(({ data }) => {
-      setForm((prev) => ({
-        ...prev,
-        provider: data.provider ?? "d_id",
-        api_key: data.api_key ?? "",
-        presenter_image_url: data.presenter_image_url ?? "",
-        voice_id: data.voice_id ?? "",
-      }));
+      setForm((prev) => {
+        const next: AvatarForm = {
+          ...prev,
+          provider: data.provider ?? "d_id",
+          api_key: data.api_key ?? "",
+          presenter_image_url: data.presenter_image_url ?? "",
+          voice_id: data.voice_id ?? "",
+        };
+        originalRef.current = next;
+        return next;
+      });
     });
   }, []);
 
   async function save(event: FormEvent) {
     event.preventDefault();
+    if (originalRef.current && isEqual(originalRef.current, form)) {
+      showInfo(noChangesMessage);
+      return;
+    }
     setError(null); setNotice(null); setBusy(true);
     try {
       await apiClient.put("/super-admin/dev-settings/avatar", form);
+      originalRef.current = form;
       setNotice(t.savedNotice);
     } catch (err: unknown) {
       setError(extractErrorMessage(err, t.saveError));

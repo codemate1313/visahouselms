@@ -1,42 +1,72 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { PasswordInput } from "@/components/PasswordInput";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
+
+interface SmtpForm {
+  host: string;
+  port: string;
+  username: string;
+  password: string;
+  encryption: string;
+  from_address: string;
+}
 
 export function SmtpTab() {
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
-  const [form, setForm] = useState({
+  const showInfo = useToastStore((state) => state.showInfo);
+  // Note on `password`: the server always returns the fixed placeholder
+  // "********" for a configured password (never the real value) and treats
+  // an incoming "********" as "leave unchanged" (see backend
+  // settings_service.SECRET_PLACEHOLDER / set_settings_group). That
+  // placeholder round-trips identically between load and submit whenever the
+  // user doesn't touch the field, so comparing the whole form as-is already
+  // reports "no changes" correctly with no field exclusion needed; typing a
+  // real new password differs from the placeholder and is still detected.
+  const [form, setForm] = useState<SmtpForm>({
     host: "", port: "", username: "", password: "", encryption: "tls", from_address: "",
   });
   const [testTo, setTestTo] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const originalRef = useRef<SmtpForm | null>(null);
   const t = strings.smtp;
 
   useEffect(() => {
     apiClient.get("/super-admin/dev-settings/smtp").then(({ data }) => {
-      setForm((prev) => ({
-        ...prev,
-        host: data.host ?? "",
-        port: data.port ?? "",
-        username: data.username ?? "",
-        password: data.password ?? "",
-        encryption: data.encryption ?? "tls",
-        from_address: data.from_address ?? "",
-      }));
+      setForm((prev) => {
+        const next: SmtpForm = {
+          ...prev,
+          host: data.host ?? "",
+          port: data.port ?? "",
+          username: data.username ?? "",
+          password: data.password ?? "",
+          encryption: data.encryption ?? "tls",
+          from_address: data.from_address ?? "",
+        };
+        originalRef.current = next;
+        return next;
+      });
     });
   }, []);
 
   async function save(event: FormEvent) {
     event.preventDefault();
+    if (originalRef.current && isEqual(originalRef.current, form)) {
+      showInfo(noChangesMessage);
+      return;
+    }
     setError(null); setBusy(true);
     try {
       await apiClient.put("/super-admin/dev-settings/smtp", form);
+      originalRef.current = form;
       showSuccess(t.savedNotice);
     } catch (err: unknown) {
       const errMsg = extractErrorMessage(err, t.saveError);

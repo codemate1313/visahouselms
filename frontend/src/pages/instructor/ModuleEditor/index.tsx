@@ -5,6 +5,9 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
 import { confirmDelete } from "@/components/confirmDialog";
+import { noChangesMessage } from "@/content/common.strings";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import type {
   ExamModule,
   ExamModuleAsset,
@@ -57,6 +60,7 @@ export function ModuleEditor() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const showInfo = useToastStore((state) => state.showInfo);
 
   async function loadModule(preferredPartId?: number) {
     if (!id) return;
@@ -129,9 +133,12 @@ export function ModuleEditor() {
 
   async function saveDetails(event: FormEvent) {
     event.preventDefault(); if (!module) return;
+    const payload = { title: details.title, description: details.description || null, instructions: details.instructions || null, duration_minutes: details.duration_minutes };
+    const original = { title: module.title, description: module.description || null, instructions: module.instructions || null, duration_minutes: module.duration_minutes };
+    if (isEqual(original, payload)) { showInfo(noChangesMessage); return; }
     setBusy(true); setError(null); setNotice(null);
     try {
-      const { data } = await apiClient.patch<ExamModule>(`/instructor/modules/${module.id}`, { title: details.title, description: details.description || null, instructions: details.instructions || null, duration_minutes: details.duration_minutes });
+      const { data } = await apiClient.patch<ExamModule>(`/instructor/modules/${module.id}`, payload);
       setModule(data); setNotice(strings.details.notices.saved);
     } catch (err: unknown) { setError(extractErrorMessage(err, strings.details.errors.save)); }
     finally { setBusy(false); }

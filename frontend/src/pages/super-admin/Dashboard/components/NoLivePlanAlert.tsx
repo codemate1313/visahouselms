@@ -12,7 +12,7 @@ export function NoLivePlanAlert() {
         <strong>{t.title}</strong>
         <span>{t.body}</span>
       </div>
-      <DashboardButton to="/super-admin/plans/new" size="lg">
+      <DashboardButton to="/super-admin/plans" size="lg">
         {t.cta}
       </DashboardButton>
     </div>

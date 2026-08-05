@@ -1,14 +1,38 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Badge, Checkbox } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { noChangesMessage } from "@/content/common.strings";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 
+interface PaymentGatewaysForm {
+  razorpay_enabled: boolean;
+  razorpay_key_id: string;
+  razorpay_key_secret: string;
+  razorpay_webhook_secret: string;
+  stripe_enabled: boolean;
+  stripe_publishable_key: string;
+  stripe_secret_key: string;
+  stripe_webhook_secret: string;
+}
+
 export function PaymentGatewaysTab() {
-  const [form, setForm] = useState({
+  // Note on secret fields (razorpay_key_secret, razorpay_webhook_secret,
+  // stripe_secret_key, stripe_webhook_secret): the server always returns the
+  // fixed placeholder "********" for a configured secret (never the real
+  // value) and treats an incoming "********" as "leave unchanged" - see
+  // backend `settings_service.SECRET_PLACEHOLDER` / `set_settings_group`.
+  // Because that placeholder round-trips identically between load and
+  // submit whenever the user doesn't touch the field, a plain whole-form
+  // diff already reports "no changes" correctly with no special-casing
+  // needed; a real edit (a fresh key that doesn't equal the placeholder)
+  // still differs from the snapshot and is detected as a change.
+  const [form, setForm] = useState<PaymentGatewaysForm>({
     razorpay_enabled: false,
     razorpay_key_id: "",
     razorpay_key_secret: "",
@@ -18,6 +42,8 @@ export function PaymentGatewaysTab() {
     stripe_secret_key: "",
     stripe_webhook_secret: "",
   });
+  const showInfo = useToastStore((state) => state.showInfo);
+  const originalRef = useRef<PaymentGatewaysForm | null>(null);
 
   const [connectionStatus, setConnectionStatus] = useState<{
     razorpay: "success" | "failed" | "not_configured" | "testing";
@@ -44,7 +70,7 @@ export function PaymentGatewaysTab() {
   async function loadSettings() {
     try {
       const { data } = await apiClient.get<Record<string, string | null>>("/super-admin/dev-settings/payment-gateways");
-      setForm({
+      const nextForm: PaymentGatewaysForm = {
         razorpay_enabled: data.razorpay_enabled === "true",
         razorpay_key_id: data.razorpay_key_id ?? "",
         razorpay_key_secret: data.razorpay_key_secret ?? "",
@@ -53,7 +79,9 @@ export function PaymentGatewaysTab() {
         stripe_publishable_key: data.stripe_publishable_key ?? "",
         stripe_secret_key: data.stripe_secret_key ?? "",
         stripe_webhook_secret: data.stripe_webhook_secret ?? "",
-      });
+      };
+      setForm(nextForm);
+      originalRef.current = nextForm;
       // Fetch stored connection status
       checkConnectionStatus();
     } catch {
@@ -91,11 +119,16 @@ export function PaymentGatewaysTab() {
 
   async function save(event: FormEvent) {
     event.preventDefault();
+    if (originalRef.current && isEqual(originalRef.current, form)) {
+      showInfo(noChangesMessage);
+      return;
+    }
     setError(null);
     setNotice(null);
     setBusy(true);
     try {
       await apiClient.put("/super-admin/dev-settings/payment-gateways", form);
+      originalRef.current = form;
       setNotice(t.saveSuccess);
       await checkConnectionStatus();
     } catch (err: unknown) {

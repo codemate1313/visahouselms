@@ -1163,6 +1163,14 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)) !important;
 }
 
+/* Change Password is a single narrow field stack - stretching it to the
+   full content width (like the .dashboard-content override above does for
+   every .form-card) leaves it looking sparse, so it gets its own width cap. */
+.dashboard-content .change-password-page .form-card {
+  max-width: 40% !important;
+  min-width: min(420px, 100%);
+}
+
 .dashboard-content .audience-checkbox-card {
   flex-wrap: wrap !important;
   white-space: normal !important;

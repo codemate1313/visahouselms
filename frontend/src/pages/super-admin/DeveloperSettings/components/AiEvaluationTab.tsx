@@ -1,8 +1,11 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { Badge, Checkbox, SearchableSelect } from "@/components/ui";
+import { noChangesMessage } from "@/content/common.strings";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import { AiKeyPriorityManager, type AiKeyConfig } from "../../components/AiKeyPriorityManager";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 
@@ -39,6 +42,19 @@ function hydrateApiKeys(data: Partial<AiEvaluationForm>): AiKeyConfig[] {
   }];
 }
 
+// Builds the exact payload shape sent to the API. api_key is write-only server
+// side (masked back as a string containing "*" once configured), so an
+// untouched masked/empty value is normalized to `undefined` here - matching
+// how the server treats "no change" - which keeps the before/after diff
+// accurate instead of flagging a masked placeholder as a real edit.
+function buildPayload(f: AiEvaluationForm) {
+  return {
+    ...f,
+    endpoint_url: f.provider === "gemini" ? undefined : f.endpoint_url,
+    api_key: f.api_key && !f.api_key.includes("*") ? f.api_key : undefined,
+  };
+}
+
 export function AiEvaluationTab() {
   const [form, setForm] = useState<AiEvaluationForm>({
     enabled: false,
@@ -52,35 +68,40 @@ export function AiEvaluationTab() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const showInfo = useToastStore((state) => state.showInfo);
+  const originalRef = useRef<ReturnType<typeof buildPayload> | null>(null);
   const t = strings.ai;
 
   useEffect(() => {
     apiClient.get("/super-admin/dev-settings/ai-evaluation").then(({ data }) => {
       setConfigured(data.configured);
-      setForm({
+      const nextForm: AiEvaluationForm = {
         enabled: data.enabled ?? true,
         provider: data.provider === "custom_json" || data.provider === "openai" ? data.provider : "gemini",
         endpoint_url: data.endpoint_url ?? "",
         api_key: data.api_key ?? "",
         api_keys: hydrateApiKeys(data),
         model: data.model ?? "gemini-2.0-flash",
-      });
+      };
+      setForm(nextForm);
+      originalRef.current = buildPayload(nextForm);
     });
   }, []);
 
   async function save(event: FormEvent) {
     event.preventDefault();
+    const payload = buildPayload(form);
+    if (originalRef.current && isEqual(originalRef.current, payload)) {
+      showInfo(noChangesMessage);
+      return;
+    }
     setBusy(true);
     setError(null);
     setNotice(null);
     try {
-      const payload = {
-        ...form,
-        endpoint_url: form.provider === "gemini" ? undefined : form.endpoint_url,
-        api_key: form.api_key && !form.api_key.includes("*") ? form.api_key : undefined,
-      };
       const { data } = await apiClient.put("/super-admin/dev-settings/ai-evaluation", payload);
       setConfigured(data.configured);
+      originalRef.current = payload;
       setNotice("AI settings updated successfully!");
     } catch (err: unknown) {
       setError(extractErrorMessage(err, t.saveError));

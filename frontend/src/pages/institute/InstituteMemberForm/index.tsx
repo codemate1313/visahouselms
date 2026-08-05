@@ -1,7 +1,10 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { noChangesMessage } from "@/content/common.strings";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import type { InstituteMember, MemberCapacity } from "../InstituteMembers";
 import { instituteMemberFormStrings as strings } from "./InstituteMemberForm.strings";
 import { CapacityLockedView } from "./components/CapacityLockedView";
@@ -31,6 +34,8 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [capacity, setCapacity] = useState<MemberCapacity | null>(null);
   const [createdPassword, setCreatedPassword] = useState<string | null>(null);
+  const showInfo = useToastStore((state) => state.showInfo);
+  const originalRef = useRef<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     if (!isNew) return;
@@ -55,6 +60,14 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
           phone_number: data.phone_number ?? "",
           address: data.address ?? "",
         });
+        originalRef.current = {
+          email: data.email,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          role,
+          phone_number: data.phone_number || null,
+          address: data.address || null,
+        };
       })
       .catch((err: unknown) => setError(extractErrorMessage(err, strings.errors.load(label))))
       .finally(() => setLoading(false));
@@ -66,15 +79,20 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    const payload = { ...form, role, phone_number: form.phone_number || null, address: form.address || null };
+    if (originalRef.current && isEqual(originalRef.current, payload)) {
+      showInfo(noChangesMessage);
+      return;
+    }
     setSaving(true);
     setError(null);
-    const payload = { ...form, role, phone_number: form.phone_number || null, address: form.address || null };
     try {
       if (isNew) {
         const { data } = await apiClient.post(`${apiBase}/members`, payload);
         setCreatedPassword(data.temporary_password);
       } else {
         await apiClient.patch(`${apiBase}/members/${id}`, payload);
+        originalRef.current = payload;
         navigate(basePath);
       }
     } catch (err: unknown) {

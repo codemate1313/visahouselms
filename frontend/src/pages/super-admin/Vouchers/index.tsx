@@ -41,6 +41,7 @@ interface VoucherOffering {
   validity_days: number;
   gst_rate_id?: number;
   gst_percentage: string;
+  image_url?: string | null;
   is_active: boolean;
   available_stock: number;
 }

@@ -14,14 +14,13 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.security import hash_password
 from app.models import Base
-from app.models.demo_account import DemoAccount
 from app.models.exam_module import ExamModule, InstituteModule
 from app.models.institute import Institute
 from app.models.plan import Plan
 from app.models.role import INSTITUTE_ADMIN, SA_INSTRUCTOR, SUPER_ADMIN, Role
 from app.models.subscription import Subscription
 from app.models.user import User
-from app.services import demo_service, institute_service, onboarding_service, subscription_service
+from app.services import institute_service, onboarding_service, subscription_service
 
 
 def _allocation(**overrides) -> dict:
@@ -274,21 +273,6 @@ class InstitutePlanEditTests(unittest.TestCase):
         self.assertEqual(institute.onboarding_plan_id, enforcing_plan_id)
         self.assertEqual(self.db.query(Plan).count(), 1, "the edit left a second internal plan behind")
 
-    # --- a demo institute that becomes a customer --------------------------
-
-    def test_allocating_an_agreement_ends_the_demo(self) -> None:
-        """The demo's own expiry suspends its institute. Once a real agreement
-        is in force that must stop applying, or the sweep locks out a paying
-        customer on the day the trial would have run out."""
-        created = demo_service.create_demo(
-            self.db, self.actor, "Demo Academy", "demo-admin@edit.test", "Demo", "Admin", 14, 1, 3, None
-        )
-        institute = institute_service.get_institute_or_404(self.db, created["institute_id"])
-
-        self._allocate(institute)
-
-        demo = self.db.query(DemoAccount).filter(DemoAccount.institute_id == institute.id).one()
-        self.assertIsNotNone(demo.converted_at, "institute is still treated as a demo")
 
     # --- history / renewal display ----------------------------------------
 

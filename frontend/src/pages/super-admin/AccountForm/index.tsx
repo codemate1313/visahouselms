@@ -1,10 +1,13 @@
-import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
+import { noChangesMessage } from "@/content/common.strings";
 import { useAuthStore } from "@/store/authStore";
+import { useToastStore } from "@/store/toastStore";
 import { evaluatePassword } from "@/utils/passwordStrength";
+import { isEqual } from "@/utils/isEqual";
 import { accountFormStrings as strings } from "./AccountForm.strings";
 import { AvatarPanel } from "./components/AvatarPanel";
 import { PersonalDetailsPanel } from "./components/PersonalDetailsPanel";
@@ -33,23 +36,38 @@ export function AccountForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const showInfo = useToastStore((state) => state.showInfo);
+  const originalRef = useRef<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     if (isNew) return;
     apiClient
       .get(`/super-admin/accounts/${id}`)
       .then(({ data }) => {
+        const loadedDob = data.dob ? data.dob.split("T")[0] : "";
+        const loadedAvatarPath = data.avatar_path ?? "";
+        const loadedCanViewMonetaryAnalytics = Boolean(data.can_view_monetary_analytics ?? false);
         setEmail(data.email ?? "");
         setFirstName(data.first_name ?? "");
         setLastName(data.last_name ?? "");
-        setDob(data.dob ? data.dob.split("T")[0] : "");
+        setDob(loadedDob);
         setPhoneNumber(data.phone_number ?? "");
         setAddress(data.address ?? "");
         if (data.avatar_path) {
           setAvatarPath(data.avatar_path);
           setAvatarPreview(`/storage/${data.avatar_path}`);
         }
-        setCanViewMonetaryAnalytics(Boolean(data.can_view_monetary_analytics ?? false));
+        setCanViewMonetaryAnalytics(loadedCanViewMonetaryAnalytics);
+        originalRef.current = {
+          email: data.email ?? "",
+          first_name: data.first_name ?? "",
+          last_name: data.last_name ?? "",
+          dob: loadedDob ? new Date(loadedDob).toISOString() : null,
+          phone_number: (data.phone_number ?? "") || null,
+          address: (data.address ?? "") || null,
+          avatar_path: loadedAvatarPath || null,
+          can_view_monetary_analytics: loadedCanViewMonetaryAnalytics,
+        };
       })
       .catch(() => setError(strings.errors.load))
       .finally(() => setLoading(false));
@@ -87,24 +105,28 @@ export function AccountForm() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    const payload = {
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      dob: dob ? new Date(dob).toISOString() : null,
+      phone_number: phoneNumber || null,
+      address: address || null,
+      avatar_path: avatarPath || null,
+      can_view_monetary_analytics: canViewMonetaryAnalytics,
+      ...(isNew ? { password } : {}),
+    };
+    if (originalRef.current && isEqual(originalRef.current, payload)) {
+      showInfo(noChangesMessage);
+      return;
+    }
     setSaving(true);
     try {
-      const payload = {
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        dob: dob ? new Date(dob).toISOString() : null,
-        phone_number: phoneNumber || null,
-        address: address || null,
-        avatar_path: avatarPath || null,
-        can_view_monetary_analytics: canViewMonetaryAnalytics,
-        ...(isNew ? { password } : {}),
-      };
-
       if (isNew) {
         await apiClient.post("/super-admin/accounts", payload);
       } else {
         await apiClient.patch(`/super-admin/accounts/${id}`, payload);
+        originalRef.current = payload;
       }
       navigate("/super-admin/accounts");
     } catch (err: unknown) {

@@ -8,7 +8,6 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.security import hash_password
 from app.models import Base
-from app.models.demo_account import DemoAccount
 from app.models.exam_module import ExamModule
 from app.models.institute import Institute
 from app.models.payment import Payment
@@ -125,13 +124,6 @@ class DashboardServiceTests(unittest.TestCase):
                     status="partial",
                     invoice_number="INV-TEST-001",
                 ),
-                DemoAccount(
-                    institute_id=self.institute.id,
-                    duration_days=14,
-                    course_limit=2,
-                    test_limit=3,
-                    expires_at=now + timedelta(days=14),
-                ),
                 ExamModule(
                     module_type="reading",
                     title="Published Reading Course",
@@ -156,7 +148,6 @@ class DashboardServiceTests(unittest.TestCase):
             "revenue": "Balance Due Academy",
             "dues": "Balance Due Academy",
             "transactions": "Balance Due Academy",
-            "demos": "Balance Due Academy",
             "instructors": "Course Author",
             "modules": "Published Reading Course",
         }

@@ -1,9 +1,12 @@
-import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { InstructorAccount, InstructorAccountCreated } from "@/api/types";
 import { RequiredMark } from "@/components/ui";
+import { noChangesMessage } from "@/content/common.strings";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 import { instructorFormStrings as strings } from "./InstructorForm.strings";
 import { extractTemporaryPassword } from "./helpers";
 import { CreatedInstructorView } from "./components/CreatedInstructorView";
@@ -29,23 +32,39 @@ export function InstructorForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const showInfo = useToastStore((state) => state.showInfo);
+  const originalRef = useRef<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     if (isNew) return;
     apiClient.get<InstructorAccount>(`/super-admin/instructors/${id}`)
       .then(({ data }) => {
+        const loadedTitle = data.title ?? "IELTS Instructor";
+        const loadedDob = data.dob ? data.dob.split("T")[0] : "";
+        const loadedAvatarPath = data.avatar_path ?? "";
         setEmail(data.email ?? "");
         setFirstName(data.first_name ?? "");
         setLastName(data.last_name ?? "");
-        setTitle(data.title ?? "IELTS Instructor");
+        setTitle(loadedTitle);
         setBio(data.bio ?? "");
-        setDob(data.dob ? data.dob.split("T")[0] : "");
+        setDob(loadedDob);
         setPhoneNumber(data.phone_number ?? "");
         setAddress(data.address ?? "");
         if (data.avatar_path) {
           setAvatarPath(data.avatar_path);
           setAvatarPreview(`/storage/${data.avatar_path}`);
         }
+        originalRef.current = {
+          email: data.email ?? "",
+          first_name: data.first_name ?? "",
+          last_name: data.last_name ?? "",
+          title: loadedTitle,
+          bio: (data.bio ?? "") || null,
+          dob: loadedDob ? new Date(loadedDob).toISOString() : null,
+          phone_number: (data.phone_number ?? "") || null,
+          address: (data.address ?? "") || null,
+          avatar_path: loadedAvatarPath || null,
+        };
       })
       .catch(() => setError(strings.errors.load))
       .finally(() => setLoading(false));
@@ -75,8 +94,6 @@ export function InstructorForm() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setSaving(true);
-    setError(null);
     const payload = {
       email,
       first_name: firstName,
@@ -88,6 +105,12 @@ export function InstructorForm() {
       address: address || null,
       avatar_path: avatarPath || null,
     };
+    if (originalRef.current && isEqual(originalRef.current, payload)) {
+      showInfo(noChangesMessage);
+      return;
+    }
+    setSaving(true);
+    setError(null);
 
     try {
       if (isNew) {
@@ -96,6 +119,7 @@ export function InstructorForm() {
         setCopied(false);
       } else {
         await apiClient.patch(`/super-admin/instructors/${id}`, payload);
+        originalRef.current = payload;
         navigate("/super-admin/instructors");
       }
     } catch (err: unknown) {

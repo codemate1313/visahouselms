@@ -1,8 +1,11 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Checkbox, PageHeader, RequiredMark, SearchableSelect } from "@/components/ui";
+import { noChangesMessage } from "@/content/common.strings";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
 
 import { planFormCatalogues, planFormStrings as strings, type PlanAudience } from "./PlanForm.strings";
 import { PlanCoursePicker, type PlanModule } from "./components/PlanCoursePicker";
@@ -41,6 +44,8 @@ export function PlanForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const showInfo = useToastStore((state) => state.showInfo);
+  const originalRef = useRef<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -58,7 +63,7 @@ export function PlanForm() {
           }
         } else {
           const data = responses[2].data;
-          setForm({
+          const loadedForm = {
             name: data.name || "",
             description: data.description || "",
             price: data.price || "",
@@ -71,12 +76,33 @@ export function PlanForm() {
             gst_rate_id: data.gst_rate_id ? String(data.gst_rate_id) : "",
             is_international_enabled: Boolean(data.is_international_enabled),
             usd_price: data.usd_price ? String(data.usd_price) : "",
-          });
+          };
+          setForm(loadedForm);
+          const loadedAudience: PlanAudience = data.audience === "institutes" ? "institutes" : audience;
           if (data.audience === "institutes") setAudience("institutes");
-          setSelected(new Set((data.modules || []).map((module: PlanModule) => module.id)));
+          const loadedSelected = new Set<number>((data.modules || []).map((module: PlanModule) => module.id));
+          setSelected(loadedSelected);
           // Features are required; start with one blank row so plans saved
           // before this field existed are still editable.
-          setFeatures(data.features?.length ? data.features : [""]);
+          const loadedFeatures = data.features?.length ? data.features : [""];
+          setFeatures(loadedFeatures);
+          originalRef.current = {
+            name: loadedForm.name,
+            description: loadedForm.description || null,
+            price: Number(loadedForm.price),
+            currency: loadedForm.currency,
+            duration_days: Number(loadedForm.duration_days),
+            student_limit: Number(loadedForm.student_limit),
+            staff_limit: Number(loadedForm.staff_limit),
+            grace_days: Number(loadedForm.grace_days),
+            gst_rate_id: loadedForm.gst_rate_id ? Number(loadedForm.gst_rate_id) : null,
+            is_international_enabled: loadedForm.is_international_enabled,
+            usd_price: loadedForm.is_international_enabled && loadedForm.usd_price ? Number(loadedForm.usd_price) : null,
+            audience: loadedAudience,
+            is_published: loadedForm.is_published,
+            module_ids: [...loadedSelected],
+            features: loadedFeatures.map((item: string) => item.trim()).filter(Boolean),
+          };
         }
       })
       .catch(() => setError(strings.errors.load))
@@ -119,7 +145,6 @@ export function PlanForm() {
       return;
     }
 
-    setSaving(true);
     const payload = {
       name: form.name,
       description: form.description || null,
@@ -137,9 +162,17 @@ export function PlanForm() {
       module_ids: [...selected],
       features: cleanedFeatures,
     };
+    if (originalRef.current && isEqual(originalRef.current, payload)) {
+      showInfo(noChangesMessage);
+      return;
+    }
+    setSaving(true);
     try {
       if (isNew) await apiClient.post("/super-admin/plans", payload);
-      else await apiClient.patch(`/super-admin/plans/${id}`, payload);
+      else {
+        await apiClient.patch(`/super-admin/plans/${id}`, payload);
+        originalRef.current = payload;
+      }
       navigate(catalogue.basePath);
     } catch (err) {
       setError(extractErrorMessage(err, strings.errors.save));

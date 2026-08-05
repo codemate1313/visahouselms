@@ -10,6 +10,9 @@ import {
   AgreementAttachments,
   type AgreementAttachment,
 } from "@/pages/super-admin/InstituteForm/components/AgreementAttachments";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
+import { noChangesMessage } from "@/content/common.strings";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
 import "./PlanEditDialog.css";
 
@@ -65,6 +68,25 @@ function toForm(values: InstitutePlanEditValues): EditForm {
   };
 }
 
+/** Normalizes a set of plan edit values into the exact shape/formatting used
+ *  for the save payload, so the pristine `initialValues` and the live
+ *  form/selectedModules can be compared like-for-like. Module ids are sorted
+ *  since they're semantically a set - toggling one off and back on shouldn't
+ *  register as a change just because it moved to the end of the list. */
+function toComparable(values: InstitutePlanEditValues): Record<string, unknown> {
+  return {
+    agreement_reference: values.agreement_reference.trim(),
+    agreement_notes: values.agreement_notes.trim(),
+    agreed_amount: values.agreed_amount,
+    currency: values.currency.trim().toUpperCase(),
+    student_limit: values.student_limit,
+    staff_limit: values.staff_limit,
+    access_duration_days: values.access_duration_days,
+    grace_days: values.grace_days,
+    module_ids: [...values.module_ids].sort((a, b) => a - b),
+  };
+}
+
 export function PlanEditDialog({
   agreementDocument,
   busy,
@@ -88,6 +110,7 @@ export function PlanEditDialog({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [agreementDocumentFile, setAgreementDocumentFile] = useState<File | null>(null);
   const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
+  const showInfo = useToastStore((state) => state.showInfo);
 
   useEffect(() => {
     if (!open) return;
@@ -130,23 +153,35 @@ export function PlanEditDialog({
     event.preventDefault();
     setLoadError(null);
     setSaveError(null);
-    const saved = await onSave(
-      {
-        agreement_reference: form.agreement_reference.trim(),
-        agreement_notes: form.agreement_notes.trim(),
-        agreed_amount: form.agreed_amount,
-        currency: form.currency.trim().toUpperCase(),
-        student_limit: Number(form.student_limit),
-        staff_limit: Number(form.staff_limit),
-        access_duration_days: Number(form.access_duration_days),
-        grace_days: Number(form.grace_days),
-        module_ids: [...selectedModules],
-      },
-      {
-        agreementDocument: agreementDocumentFile,
-        paymentProof: paymentProofFile,
-      },
-    );
+
+    const values: InstitutePlanEditValues = {
+      agreement_reference: form.agreement_reference.trim(),
+      agreement_notes: form.agreement_notes.trim(),
+      agreed_amount: form.agreed_amount,
+      currency: form.currency.trim().toUpperCase(),
+      student_limit: Number(form.student_limit),
+      staff_limit: Number(form.staff_limit),
+      access_duration_days: Number(form.access_duration_days),
+      grace_days: Number(form.grace_days),
+      module_ids: [...selectedModules],
+    };
+
+    // Attachments are immediate-effect uploads, not part of the reviewable
+    // field diff - a new file always warrants the save, even if no other
+    // field changed.
+    const noFieldChanges = !agreementDocumentFile
+      && !paymentProofFile
+      && isEqual(toComparable(initialValues), toComparable(values));
+
+    if (noFieldChanges) {
+      showInfo(noChangesMessage);
+      return;
+    }
+
+    const saved = await onSave(values, {
+      agreementDocument: agreementDocumentFile,
+      paymentProof: paymentProofFile,
+    });
     if (saved) onClose();
     else setSaveError(t.errors.save);
   }

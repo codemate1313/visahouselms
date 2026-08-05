@@ -1,6 +1,9 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
+import { useToastStore } from "@/store/toastStore";
+import { isEqual } from "@/utils/isEqual";
+import { noChangesMessage } from "@/content/common.strings";
 import "./SuperAdminBlogForm.css";
 import { blogFormDefaults } from "./SuperAdminBlogForm.strings";
 import { slugify } from "./helpers";
@@ -16,6 +19,11 @@ export function SuperAdminBlogForm() {
 
   const [formData, setFormData] = useState<BlogFormData>(blogFormDefaults);
   const [loading, setLoading] = useState(false);
+  const showInfo = useToastStore((state) => state.showInfo);
+
+  // Pristine, payload-shaped snapshot of the blog post as loaded, used only
+  // in edit mode to skip the PUT when nothing actually changed.
+  const pristineRef = useRef<BlogFormData | null>(null);
 
   useEffect(() => {
     if (!isEdit || !id) return;
@@ -26,6 +34,7 @@ export function SuperAdminBlogForm() {
         const item = data.find((b) => String(b.id) === String(id));
         if (item) {
           setFormData(item);
+          pristineRef.current = { ...item };
         }
         setLoading(false);
       })
@@ -48,6 +57,12 @@ export function SuperAdminBlogForm() {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+
+    if (isEdit && pristineRef.current && isEqual(pristineRef.current, formData)) {
+      showInfo(noChangesMessage);
+      return;
+    }
+
     setLoading(true);
 
     const request = isEdit
