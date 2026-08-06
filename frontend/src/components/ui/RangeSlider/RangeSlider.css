@@ -92,7 +92,6 @@
 .vh-range-balloon {
   position: absolute;
   top: 0;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -105,6 +104,29 @@
   color: #ffffff;
   pointer-events: none;
   z-index: 3;
+  /* Hidden until the slider is hovered or focused, then it inflates upward from
+     the handle. Grown from its own tail (bottom centre) so it reads as a
+     balloon rising rather than a box fading in. The overshoot easing gives the
+     little pop. */
+  transform-origin: bottom center;
+  transform: translateX(-50%) translateY(10px) scale(0.4);
+  opacity: 0;
+  transition: opacity 160ms ease, transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Shown on hover, on keyboard focus, and throughout a drag (the input keeps
+   focus while dragging, so focus-within covers touch as well as mouse). */
+.vh-range:hover .vh-range-balloon,
+.vh-range:focus-within .vh-range-balloon {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vh-range-balloon {
+    transition: opacity 120ms ease;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
 }
 
 /* The little tail under the balloon. */
