@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { SuperAdminAccount } from "@/api/types";
 import { Button, Card, Checkbox, Input, RequiredMark, SearchableSelect } from "@/components/ui";
+import { startImpersonation } from "@/utils/impersonate";
 import "./DeveloperPanel.css";
 
 const developerSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
@@ -68,7 +69,6 @@ export function DeveloperPanel() {
   }
 
   async function toggleForceReset(account: SuperAdminAccount) {
-    if (account.is_owner) return;
     setError(null);
     try {
       await apiClient.post(`${developerApiBase}/accounts/${account.id}/force-password-reset`, {
@@ -77,6 +77,15 @@ export function DeveloperPanel() {
       await loadAccounts();
     } catch (err: unknown) {
       setError(extractErrorMessage(err, "Failed to update password reset state."));
+    }
+  }
+
+  async function viewAs(account: SuperAdminAccount) {
+    setError(null);
+    try {
+      await startImpersonation(account.id);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Could not start view-as."));
     }
   }
 
@@ -92,7 +101,7 @@ export function DeveloperPanel() {
             </svg>
             Account Authority
           </h2>
-          <p className="muted-text">Owner accounts are immutable from this layer. Only verified developer accounts can open this panel.</p>
+          <p className="muted-text">The developer layer sits above every account, the owner included: require a password reset, or view any account read-only. Only verified developer accounts can open this panel.</p>
           
           {loading ? (
             <p>Loading accounts...</p>
@@ -101,6 +110,7 @@ export function DeveloperPanel() {
               <table className="dev-data-table">
                 <thead>
                   <tr>
+                    <th>ID</th>
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
@@ -111,6 +121,9 @@ export function DeveloperPanel() {
                 <tbody>
                   {[...grouped.owners, ...grouped.developers, ...grouped.superAdmins].map((account) => (
                     <tr key={account.id}>
+                      <td style={{ fontVariantNumeric: "tabular-nums", color: "var(--text-muted)", fontWeight: 700 }}>
+                        #{account.id}
+                      </td>
                       <td>
                         <strong style={{ display: "block", marginBottom: "4px" }}>
                           {account.first_name} {account.last_name}
@@ -130,9 +143,7 @@ export function DeveloperPanel() {
                         </span>
                       </td>
                       <td>
-                        {account.is_owner ? (
-                          <span className="dev-badge dev-badge-locked">Locked</span>
-                        ) : (
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
                           <Button
                             size="sm"
                             className={account.force_password_reset ? "dev-btn-reset-active" : "dev-btn-reset"}
@@ -140,7 +151,10 @@ export function DeveloperPanel() {
                           >
                             {account.force_password_reset ? "Clear reset" : "Require reset"}
                           </Button>
-                        )}
+                          <Button size="sm" variant="secondary" onClick={() => void viewAs(account)}>
+                            View
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}

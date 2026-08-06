@@ -3,10 +3,9 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Badge, Button, Input, PageHeader } from "@/components/ui";
 import { confirmAction } from "@/components/confirmDialog";
-import { useAuthStore } from "@/store/authStore";
-import { useImpersonationStore } from "@/store/impersonationStore";
 import { useToastStore } from "@/store/toastStore";
 import { formatDate } from "@/utils/date";
+import { startImpersonation } from "@/utils/impersonate";
 import "./DeveloperOps.css";
 
 const slug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
@@ -56,8 +55,6 @@ export function DeveloperOps() {
   const [enroll, setEnroll] = useState<{ secret: string; otpauth_url: string } | null>(null);
   const [confirmCode, setConfirmCode] = useState("");
   const [toolUserId, setToolUserId] = useState("");
-
-  const beginImpersonation = useImpersonationStore((s) => s.begin);
 
   const load = useCallback(async () => {
     try {
@@ -159,27 +156,7 @@ export function DeveloperOps() {
     );
     if (!ok) return;
     try {
-      const { data } = await apiClient.post<{ access_token: string; target: { id: number; name: string; email: string; role: string | null } }>(
-        `${base}/impersonate/${id}`,
-      );
-      const auth = useAuthStore.getState();
-      const originalToken = auth.accessToken;
-      const originalUser = auth.user;
-      if (!originalToken || !originalUser) throw new Error("No active session.");
-      beginImpersonation({ target: data.target, originalToken, originalUser });
-      // Apply the read-only token, presenting as the target so the app routes
-      // and renders as them. The original session is preserved for exit.
-      const [firstName, ...rest] = data.target.name.split(" ");
-      auth.setSession(data.access_token, {
-        ...originalUser,
-        id: data.target.id,
-        email: data.target.email,
-        role: data.target.role ?? originalUser.role,
-        first_name: firstName || data.target.name,
-        last_name: rest.join(" "),
-        is_owner: false,
-      });
-      window.location.assign("/");
+      await startImpersonation(id);
     } catch (err: unknown) {
       showError(extractErrorMessage(err, "Could not start impersonation."));
     }

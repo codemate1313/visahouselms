@@ -18,7 +18,6 @@ from sqlalchemy.orm import Session
 
 from app.core.security import TOKEN_TYPE_ACCESS, _create_token
 from app.models.audit_log import AuditLog
-from app.models.role import DEVELOPER, SUPER_ADMIN
 from app.models.user import User
 
 # Deliberately short: impersonation is for a look, not a shift.
@@ -37,10 +36,10 @@ def start(db: Session, actor: User, user_id: int, ip: Optional[str]) -> dict:
     target = _target(db, user_id)
     if target.id == actor.id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You are already yourself.")
-    if target.role and target.role.name in (SUPER_ADMIN, DEVELOPER):
-        # Debugging tenant issues does not need reaching into another admin
-        # account; keeping those off-limits avoids the obvious escalation.
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin accounts cannot be impersonated.")
+    # The developer layer sits above every other role, so it may view any
+    # account - Super Admins and the owner included. The only bar is yourself.
+    # The session stays strictly read-only regardless of whose it is, so viewing
+    # an admin cannot become acting as one.
 
     token = _create_token(
         target.id,

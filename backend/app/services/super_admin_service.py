@@ -385,7 +385,10 @@ def set_managed_force_password_reset(
     db: Session, actor: User, account_id: int, enabled: bool, ip_address: Optional[str]
 ) -> User:
     user = get_developer_managed_account_or_404(db, account_id)
-    _assert_owner_not_mutated(actor, user, "marked for password reset")
+    # The developer layer sits above the owner, so it may require a reset on any
+    # managed account, the owner included - this is only reachable from the
+    # developer panel. Marking a login for reset is reversible and does not lock
+    # anyone out, so there is no last-admin concern here.
     user.force_password_reset = enabled
     db.add(user)
     _write_audit_log(
