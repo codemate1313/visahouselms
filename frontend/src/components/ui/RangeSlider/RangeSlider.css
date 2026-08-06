@@ -1,0 +1,159 @@
+/*
+ * Balloon range slider. One design, driven by --primary so it themes with the
+ * rest of the app. The native input draws the track and thumb; the balloon is a
+ * separate element the component positions.
+ */
+
+.vh-range {
+  --vh-range-accent: var(--primary, #5b28e0);
+  --vh-range-fill: 50%;
+  position: relative;
+  width: 100%;
+  padding-top: 58px; /* room for the balloon above the track */
+}
+
+/* --- Track + thumb ------------------------------------------------------- */
+
+.vh-range-input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 30px; /* tall hit area; the visible line is drawn by the track rule */
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.vh-range-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* A thin line, filled up to the value in the accent colour. */
+.vh-range-input::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--vh-range-accent) 0%,
+    var(--vh-range-accent) var(--vh-range-fill),
+    color-mix(in srgb, var(--vh-range-accent) 18%, transparent) var(--vh-range-fill),
+    color-mix(in srgb, var(--vh-range-accent) 18%, transparent) 100%
+  );
+}
+
+.vh-range-input::-moz-range-track {
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--vh-range-accent) 18%, transparent);
+}
+
+.vh-range-input::-moz-range-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--vh-range-accent);
+}
+
+/* Large white handle with a thin accent ring, as in the reference. */
+.vh-range-input::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 30px;
+  height: 30px;
+  margin-top: -13.5px; /* centre the 30px thumb on the 3px track */
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--vh-range-accent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--vh-range-accent) 30%, transparent);
+  cursor: pointer;
+  transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.vh-range-input::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--vh-range-accent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--vh-range-accent) 30%, transparent);
+  cursor: pointer;
+}
+
+.vh-range-input:active::-webkit-slider-thumb {
+  transform: scale(1.08);
+}
+
+.vh-range-input:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--vh-range-accent) 22%, transparent);
+}
+
+/* --- Balloon ------------------------------------------------------------- */
+
+.vh-range-balloon {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  height: 46px;
+  padding: 0 10px;
+  /* Rounded on three corners, pointed at the bottom-centre: a balloon/pin. */
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: var(--vh-range-accent);
+  color: #ffffff;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* The little tail under the balloon. */
+.vh-range-balloon::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--vh-range-accent);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.vh-range-balloon-value {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* --- Scale --------------------------------------------------------------- */
+
+.vh-range-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 2px;
+  margin-top: 12px;
+  color: var(--text-muted, #94a3b8);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.vh-range-scale span {
+  min-width: 18px;
+  text-align: center;
+}
+
+.vh-range-scale span:first-child {
+  text-align: left;
+}
+
+.vh-range-scale span:last-child {
+  text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vh-range-input::-webkit-slider-thumb {
+    transition: none;
+  }
+}

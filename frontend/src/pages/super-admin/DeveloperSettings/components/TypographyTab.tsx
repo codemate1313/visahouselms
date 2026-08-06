@@ -1,5 +1,5 @@
-import type { CSSProperties } from "react";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { RangeSlider } from "@/components/ui";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { FONT_FAMILY_OPTIONS, useFontStore } from "@/store/fontStore";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
@@ -30,8 +30,6 @@ interface WeightSliderProps {
 }
 
 function WeightSlider({ label, helper, value, min, max, onChange }: WeightSliderProps) {
-  const percent = ((Number(value) - min) / (max - min)) * 100;
-
   return (
     <div className="typography-slider-row">
       <div className="typography-slider-header">
@@ -41,29 +39,15 @@ function WeightSlider({ label, helper, value, min, max, onChange }: WeightSlider
         </div>
         <output aria-live="polite">{weightLabel(value)}</output>
       </div>
-      <div className="typography-range-wrap">
-        <input
-          aria-label={label}
-          className="typography-range"
-          type="range"
-          min={min}
-          max={max}
-          step={10}
-          value={value}
-          style={{ "--range-progress": `${percent}%` } as CSSProperties}
-          onChange={(event) => onChange(event.target.value)}
-        />
-        <div className="typography-range-ticks" aria-hidden="true">
-          {scaleValues(min, max).map((tick) => (
-            <span key={tick} />
-          ))}
-        </div>
-      </div>
-      <div className="typography-range-scale">
-        {scaleValues(min, max).map((tick) => (
-          <span key={tick}>{tick}</span>
-        ))}
-      </div>
+      <RangeSlider
+        ariaLabel={label}
+        value={Number(value)}
+        min={min}
+        max={max}
+        step={10}
+        scale={scaleValues(min, max)}
+        onChange={(next) => onChange(String(next))}
+      />
       <p className="typography-selected-value">
         Selecting <strong>{value}</strong> for {label.toLowerCase()}.
       </p>

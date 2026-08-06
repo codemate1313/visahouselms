@@ -74,3 +74,5 @@ export type { PageHeaderProps } from "./PageHeader";
 export { RequiredMark } from "./RequiredMark";
 export { RecordCards } from "./RecordCards";
 export type { RecordCardsProps, RecordField } from "./RecordCards";
+export { RangeSlider } from "./RangeSlider";
+export type { RangeSliderProps } from "./RangeSlider";
