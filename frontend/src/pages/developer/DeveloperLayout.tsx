@@ -52,6 +52,29 @@ export function DeveloperLayout() {
       ],
     },
     {
+      title: "Oversight",
+      items: [
+        {
+          key: "analytics",
+          label: "Analytics",
+          icon: "analytics",
+          to: `/${developerAccessSlug}/analytics`,
+        },
+        {
+          key: "all-users",
+          label: "All Users",
+          icon: "user",
+          to: `/${developerAccessSlug}/all-users`,
+        },
+        {
+          key: "site-control",
+          label: "Site Control",
+          icon: "settings",
+          to: `/${developerAccessSlug}/site-control`,
+        },
+      ],
+    },
+    {
       title: "Account",
       items: [
         {

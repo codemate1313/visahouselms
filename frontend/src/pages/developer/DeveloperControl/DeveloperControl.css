@@ -1,0 +1,60 @@
+.developer-control {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.site-state-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.site-state-card.is-closed {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+}
+
+.site-state-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.site-state-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: #16a34a;
+  box-shadow: 0 0 0 4px color-mix(in srgb, #16a34a 20%, transparent);
+}
+
+.site-state-dot.is-closed {
+  background: var(--primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.site-state-title {
+  display: block;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.site-state-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.site-state-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.site-state-actions {
+  display: flex;
+  justify-content: flex-start;
+}

@@ -37,6 +37,7 @@ from app.routers import (
     payment_methods,
     payments,
     payment_webhooks,
+    platform_router,
     plans,
 
     retake_admin,
@@ -79,7 +80,59 @@ async def platform_settings_alias(request: Request, call_next):
         request.scope["path"] = path.replace("/super-admin/platform-settings", "/super-admin/dev-settings", 1)
     return await call_next(request)
 
+
+# Paths that must answer even while the site is closed, or the developer could
+# not sign in to reopen it: the auth endpoints, the developer panel itself, the
+# maintenance state the frontend polls to render its notice, and static assets.
+_MAINTENANCE_EXEMPT_PREFIXES = (
+    "/auth",
+    "/developer",
+    "/storage",
+    "/docs",
+    "/openapi.json",
+    "/health",
+    "/platform/status",
+)
+
+
+@app.middleware("http")
+async def maintenance_gate(request: Request, call_next):
+    """Turn ordinary traffic away while the site is closed for maintenance.
+
+    The developer role is let through everywhere - it is who closes and reopens
+    the site - and so is the owner, checked from the access token without a
+    database read on the hot path. Exempt prefixes cover the routes needed to
+    get back in and to render the notice. Everything else gets a 503.
+    """
+    from app.core.maintenance import is_enabled, get_message
+    from app.middleware.request_logging import is_developer_request
+    from app.database import SessionLocal
+
+    path = request.scope.get("path", "")
+    method = request.method
+
+    if method in ("OPTIONS", "HEAD") or any(path.startswith(p) for p in _MAINTENANCE_EXEMPT_PREFIXES):
+        return await call_next(request)
+
+    db = SessionLocal()
+    try:
+        if not is_enabled(db):
+            return await call_next(request)
+        # Developer requests are always allowed; that is the way back in.
+        if is_developer_request(request):
+            return await call_next(request)
+        message = get_message(db) or "The platform is temporarily unavailable for maintenance."
+    finally:
+        db.close()
+
+    return JSONResponse(
+        status_code=503,
+        content={"detail": message, "maintenance": True},
+        headers={"Retry-After": "3600"},
+    )
+
 app.include_router(auth.router)
+app.include_router(platform_router.router)
 app.include_router(dashboard.router)
 app.include_router(super_admin.router)
 app.include_router(developer.router)

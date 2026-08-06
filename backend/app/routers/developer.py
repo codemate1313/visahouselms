@@ -1,6 +1,7 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Query, Request, status
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -15,7 +16,18 @@ from app.schemas.user import (
     SuperAdminAccountCreate,
     SuperAdminAccountOut,
 )
-from app.services import account_service, super_admin_service
+from app.services import (
+    account_service,
+    developer_analytics_service,
+    developer_directory_service,
+    maintenance_admin_service,
+    super_admin_service,
+)
+
+
+class MaintenanceUpdate(BaseModel):
+    enabled: bool
+    message: Optional[str] = Field(default=None, max_length=280)
 
 router = APIRouter(
     prefix=f"/developer/{settings.developer_access_slug}",
@@ -120,4 +132,76 @@ def force_password_reset(
 ):
     return super_admin_service.set_managed_force_password_reset(
         db, actor, account_id, payload.enabled, _client_ip(request)
+    )
+
+
+# ---- Platform analytics -------------------------------------------------
+
+@router.get("/analytics/overview")
+def analytics_overview(
+    traffic_days: int = Query(default=30, ge=1, le=365),
+    db: Session = Depends(get_db),
+):
+    """Money, people and traffic across every tenant, in one payload."""
+    return developer_analytics_service.overview(db, traffic_days=traffic_days)
+
+
+# ---- User directory -----------------------------------------------------
+
+@router.get("/users")
+def list_users(
+    search: Optional[str] = None,
+    role: Optional[str] = None,
+    active: Optional[bool] = None,
+    limit: int = Query(default=100, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+):
+    """Every account on the platform, across all institutes."""
+    return developer_directory_service.list_users(db, search, role, active, limit, offset)
+
+
+@router.post("/users/{user_id}/revoke")
+def revoke_user_access(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Deactivate an account and end its sessions. Audited."""
+    return developer_directory_service.revoke_access(db, actor, user_id, _client_ip(request))
+
+
+@router.post("/users/{user_id}/restore")
+def restore_user_access(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Lift a revoke. Audited."""
+    return developer_directory_service.restore_access(db, actor, user_id, _client_ip(request))
+
+
+# ---- Maintenance kill switch --------------------------------------------
+
+@router.get("/maintenance")
+def get_maintenance(db: Session = Depends(get_db)):
+    return maintenance_admin_service.get_state(db)
+
+
+@router.put("/maintenance")
+def set_maintenance(
+    payload: MaintenanceUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Open or close the whole platform. Audited with the actor and state.
+
+    The developer role stays exempt from the gate this flips, so closing the
+    site never locks the person who closed it out of reopening it.
+    """
+    return maintenance_admin_service.set_state(
+        db, actor, payload.enabled, payload.message, _client_ip(request)
     )

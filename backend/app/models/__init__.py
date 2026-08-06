@@ -1,4 +1,5 @@
 from app.models.api_log import ApiLog
+from app.models.traffic_event import TrafficEvent
 from app.models.achievement import Badge, LeaderboardSnapshot, StudentBadge
 from app.models.assessment import Assessment, AssessmentQuestion, Question, QuestionBank
 from app.models.attempt import (
@@ -60,6 +61,7 @@ __all__ = [
     "Setting",
     "AuditLog",
     "ApiLog",
+    "TrafficEvent",
     "Badge",
     "StudentBadge",
     "LeaderboardSnapshot",
