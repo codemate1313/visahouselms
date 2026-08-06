@@ -12,8 +12,8 @@ unique-visitor count, event_type to split views from clicks.
 from alembic import op
 import sqlalchemy as sa
 
-revision = "0063"
-down_revision = "0062"
+revision = "0064"
+down_revision = "0063"
 branch_labels = None
 depends_on = None
 

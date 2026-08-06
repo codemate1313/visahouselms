@@ -72,10 +72,8 @@ def upgrade() -> None:
             # Dropping first is a no-op on SQLite (the constraint is unnamed and
             # the table is being recreated regardless) but is required on
             # Postgres, where the old constraint would otherwise survive.
-            try:
+            if bind.dialect.name != "sqlite":
                 batch.drop_constraint(constraint, type_="foreignkey")
-            except Exception:
-                pass
             batch.alter_column("user_id", existing_type=sa.Integer(), nullable=nullable)
             batch.create_foreign_key(
                 constraint,
@@ -94,8 +92,6 @@ def downgrade() -> None:
         if table not in present:
             continue
         with op.batch_alter_table(table) as batch:
-            try:
+            if bind.dialect.name != "sqlite":
                 batch.drop_constraint(constraint, type_="foreignkey")
-            except Exception:
-                pass
             batch.create_foreign_key(constraint, "users", ["user_id"], ["id"])
