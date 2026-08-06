@@ -1,12 +1,15 @@
 """Curated exam & immigration updates shown on the student News page.
 
-The feed is intentionally a curated, code-reviewed list rather than a live
-scrape: entries are evergreen facts about which English tests each destination
-accepts, so they stay correct without a background fetcher. Edit this list (or
-replace it with a DB table + admin CRUD later) to publish new items — the
-endpoint and the News page will pick them up unchanged.
+The feed is dynamically populated from a Google News search RSS feed, cached for
+1 hour, and merged with a set of high-quality evergreen curated posts to ensure
+a rich, up-to-date daily updates feed.
 """
 
+import xml.etree.ElementTree as ET
+import urllib.request
+import re
+import time
+from datetime import datetime
 from typing import List
 
 EXAM_NEWS: List[dict] = [
@@ -132,7 +135,137 @@ EXAM_NEWS: List[dict] = [
     },
 ]
 
+# Simple 1-hour cache for the final news feed
+_NEWS_CACHE = None
+_NEWS_CACHE_TIME = 0
+_CACHE_DURATION = 3600  # 1 hour
+
+
+def fetch_real_time_news() -> List[dict]:
+    """Fetch recent exam & immigration news from Google News RSS feed."""
+    url = "https://news.google.com/rss/search?q=IELTS+OR+PTE+OR+TOEFL+OR+immigration&hl=en-US&gl=US&ceid=US:en"
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            xml_data = response.read()
+
+        root = ET.fromstring(xml_data)
+        items = []
+        for i, item in enumerate(root.findall(".//item")[:20]):
+            title_raw = item.find("title").text or ""
+            link = item.find("link").text or ""
+            pub_date_raw = item.find("pubDate").text or ""
+            description = item.find("description").text or ""
+
+            # Extract source name
+            source_elem = item.find("source")
+            source_name = source_elem.text if source_elem is not None else ""
+
+            title = title_raw
+            if " - " in title_raw:
+                parts = title_raw.rsplit(" - ", 1)
+                title = parts[0]
+                if not source_name:
+                    source_name = parts[1]
+
+            published_at = ""
+            try:
+                date_str = pub_date_raw
+                if "," in date_str:
+                    date_str = date_str.split(",", 1)[1].strip()
+                dt = datetime.strptime(" ".join(date_str.split()[:4]), "%d %b %Y %H:%M:%S")
+                published_at = dt.strftime("%Y-%m-%d")
+            except Exception:
+                published_at = datetime.utcnow().strftime("%Y-%m-%d")
+
+            summary = re.sub("<[^<]+?>", "", description).strip()
+            if not summary or len(summary) < 5:
+                summary = f"Latest updates on English test requirements and immigration changes from {source_name}."
+
+            country = "General"
+            flag = "🌍"
+            title_lower = title.lower()
+            summary_lower = summary.lower()
+
+            countries = [
+                ("Canada", "🇨🇦", ["canada", "ircc", "express entry", "celpip"]),
+                ("Australia", "🇦🇺", ["australia", "skilled visa", "home affairs"]),
+                ("United Kingdom", "🇬🇧", ["uk", "united kingdom", "selt", "gov.uk", "london"]),
+                ("United States", "🇺🇸", ["usa", "united states", "america", "toefl"]),
+                ("New Zealand", "🇳🇿", ["new zealand", "nz"]),
+                ("Germany", "🇩🇪", ["germany", "german", "daad"]),
+                ("Ireland", "🇮🇪", ["ireland", "irish"]),
+            ]
+            for c_name, c_flag, keywords in countries:
+                if any(k in title_lower or k in summary_lower for k in keywords):
+                    country = c_name
+                    flag = c_flag
+                    break
+
+            category = "exam"
+            if any(k in title_lower or k in summary_lower for k in ["visa", "student visa", "study visa"]):
+                category = "visa"
+            elif any(
+                k in title_lower or k in summary_lower
+                for k in ["immigration", "pr ", "permanent resid", "express entry", "points", "migrate"]
+            ):
+                category = "immigration"
+            elif any(k in title_lower or k in summary_lower for k in ["university", "college", "admission", "study", "student"]):
+                category = "study"
+
+            tests = []
+            if "ielts" in title_lower or "ielts" in summary_lower:
+                tests.append("IELTS")
+            if "pte" in title_lower or "pte" in summary_lower:
+                tests.append("PTE")
+            if "toefl" in title_lower or "toefl" in summary_lower:
+                tests.append("TOEFL")
+            if "celpip" in title_lower or "celpip" in summary_lower:
+                tests.append("CELPIP")
+            if not tests:
+                tests = ["IELTS", "PTE"]
+
+            items.append(
+                {
+                    "id": 1000 + i,
+                    "country": country,
+                    "flag": flag,
+                    "category": category,
+                    "title": title,
+                    "summary": summary,
+                    "published_at": published_at,
+                    "source_name": source_name or "News",
+                    "source_url": link,
+                    "tests": tests,
+                }
+            )
+        return items
+    except Exception:
+        # Silently fail and return empty list on network or parse issues to allow curated fallback
+        return []
+
 
 def list_exam_news() -> List[dict]:
-    """Newest first, so the News page and its sidebar agree on ordering."""
-    return sorted(EXAM_NEWS, key=lambda item: item["published_at"], reverse=True)
+    """Merged feed (real time + curated) sorted newest first, cached for 1 hour."""
+    global _NEWS_CACHE, _NEWS_CACHE_TIME
+    now = time.time()
+    if _NEWS_CACHE is None or (now - _NEWS_CACHE_TIME) > _CACHE_DURATION:
+        real_time = fetch_real_time_news()
+        seen = {item["title"].lower().strip() for item in real_time}
+        merged = list(real_time)
+        for curated in EXAM_NEWS:
+            if curated["title"].lower().strip() not in seen:
+                merged.append(curated)
+        _NEWS_CACHE = sorted(merged, key=lambda item: item["published_at"], reverse=True)
+        _NEWS_CACHE_TIME = now
+    return _NEWS_CACHE
+
+
+def clear_news_cache() -> None:
+    """Clear memory cache (primarily for unit tests)."""
+    global _NEWS_CACHE, _NEWS_CACHE_TIME
+    _NEWS_CACHE = None
+    _NEWS_CACHE_TIME = 0
