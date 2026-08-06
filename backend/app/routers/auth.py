@@ -37,6 +37,7 @@ from app.schemas.auth import (
     VerifyOtpRequest,
 )
 from app.services import account_service, auth_service, email_template_service, institute_service, smtp_service
+from app.models.role import DEVELOPER
 from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -152,6 +153,24 @@ def _frontend_redirect(path: str, params: dict[str, str]) -> RedirectResponse:
 
 def _google_redirect_uri(request: Request) -> str:
     return settings.google_redirect_uri or str(request.url_for("google_callback"))
+
+
+def _skips_login_otp(user: User) -> bool:
+    """The developer account signs in on its password alone.
+
+    Every other role gets a one-time code by email, and that is the only mail
+    the login flow sends - so "no email for the developer login" and "no second
+    factor for the developer login" are the same request. The account is
+    typically a shared or unattended one whose mailbox may not be monitored, or
+    may not exist, in which case the emailed code cannot arrive at all and the
+    503 from a failed send locks the account out entirely.
+
+    This is a real reduction in protection for a privileged role: the password
+    becomes the only thing guarding it, so it should be long, unique, and not
+    shared. Everything else about the sign-in is unchanged - rate limiting, the
+    active-account check, session issuing and the audit trail all still apply.
+    """
+    return user.role is not None and user.role.name == DEVELOPER
 
 
 def _otp_challenge_for(
@@ -321,6 +340,38 @@ def google_callback(
     )
 
 
+def _issue_session_now(
+    db: Session,
+    user: User,
+    request: Request,
+    response: Response,
+    payload: Union[LoginRequest, GoogleOtpRequest],
+    auth_method: str,
+) -> TokenResponse:
+    """Complete a sign-in without the OTP round trip.
+
+    Same tail as `verify_otp` once the code has checked out - the difference is
+    only that there was no code. Session issuing, the device record and the
+    refresh cookie are identical, so a developer session is indistinguishable
+    from any other after this point.
+    """
+    access_token, refresh_token = auth_service.issue_login_session(
+        db,
+        user,
+        request.headers.get("user-agent"),
+        _client_ip(request),
+        payload.device_id,
+        payload.device_name,
+        auth_method,
+    )
+    set_refresh_cookie(
+        response,
+        refresh_token,
+        persistent=bool(getattr(payload, "remember_me", True)),
+    )
+    return TokenResponse(access_token=access_token)
+
+
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
     _limit_login_attempt(request, payload.email)
@@ -332,6 +383,10 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
         _client_ip(request),
     )
     payload.device_id = device_identifier
+    if _skips_login_otp(user):
+        # The password has already been verified by authenticate_login_user, so
+        # this returns a session rather than an OTP challenge - and sends nothing.
+        return _issue_session_now(db, user, request, response, payload, "password")
     return _otp_challenge_for(db, user, payload, "password")
 
 
