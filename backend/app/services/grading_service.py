@@ -4,7 +4,7 @@ from typing import Optional
 
 from fastapi import HTTPException, status
 from sqlalchemy import or_, update
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.attempt import (
     ATTEMPT_GRADED,
@@ -49,14 +49,22 @@ def _institute_has_active_instructor(db: Session, institute_id: int) -> bool:
     )
 
 
-def can_grade_attempt(db: Session, actor: User, attempt: TestAttempt) -> bool:
+def can_grade_attempt(db: Session, actor: User, attempt: TestAttempt, *, _active_cache: Optional[dict] = None) -> bool:
     if actor.role.name == INST_INSTRUCTOR:
         return actor.institute_id is not None and attempt.user.institute_id == actor.institute_id
     if actor.role.name != SA_INSTRUCTOR:
         return False
-    return attempt.user.institute_id is None or not _institute_has_active_instructor(
-        db, attempt.user.institute_id
-    )
+    institute_id = attempt.user.institute_id
+    if institute_id is None:
+        return True
+    # Optional per-request memo so a queue of many attempts from a handful of
+    # institutes does not re-run the same institute check for each row.
+    if _active_cache is not None and institute_id in _active_cache:
+        return not _active_cache[institute_id]
+    has_instructor = _institute_has_active_instructor(db, institute_id)
+    if _active_cache is not None:
+        _active_cache[institute_id] = has_instructor
+    return not has_instructor
 
 
 def ensure_queue_entry(
@@ -291,10 +299,23 @@ def list_queue(db: Session, actor: User, status_filter: Optional[str] = None) ->
         _attempt_query(db)
         .join(ExamModule, TestAttempt.module_id == ExamModule.id)
         .join(User, TestAttempt.user_id == User.id)
+        # Eager-load what the permission filter and the row builder below read,
+        # so the queue does not lazy-load `attempt.user` and `attempt.part_grades`
+        # once per attempt (the N+1 this list used to issue).
+        .options(joinedload(TestAttempt.user), selectinload(TestAttempt.part_grades))
     )
     if actor.role.name == INST_INSTRUCTOR:
         query = query.filter(User.institute_id == actor.institute_id)
-    attempts = [attempt for attempt in query.order_by(TestAttempt.submitted_at.asc()).all() if can_grade_attempt(db, actor, attempt)]
+    # Memoise the "does this institute still have an active instructor" check for
+    # the life of this request: the SA-instructor branch of can_grade_attempt
+    # otherwise queries it once per attempt, and a queue is mostly the same few
+    # institutes repeated.
+    institute_active_cache: dict[Optional[int], bool] = {}
+    attempts = [
+        attempt
+        for attempt in query.order_by(TestAttempt.submitted_at.asc()).all()
+        if can_grade_attempt(db, actor, attempt, _active_cache=institute_active_cache)
+    ]
     rows = []
     for attempt in attempts:
         if not attempt.part_grades:
