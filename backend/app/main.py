@@ -1,6 +1,6 @@
 import traceback
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
@@ -53,7 +53,11 @@ from app.routers import (
     vouchers,
 )
 
-app = FastAPI(title="IELTS LMS API")
+from app.dependencies.actor import track_developer_action
+
+# Global: tag every request with whether the developer made it, before any
+# handler runs, so the notification layer can stay silent for developer actions.
+app = FastAPI(title="IELTS LMS API", dependencies=[Depends(track_developer_action)])
 
 settings.storage_path.mkdir(parents=True, exist_ok=True)
 app.mount("/storage", StaticFiles(directory=str(settings.storage_path)), name="storage")

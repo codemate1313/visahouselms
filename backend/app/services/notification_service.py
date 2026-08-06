@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
+from app.core import actor_context
 from app.models.attempt import ATTEMPT_GRADED, AttemptPartGrade, RetakeRequest, TestAttempt
 from app.models.notification import (
     AI_EVALUATION_FAILED,
@@ -111,6 +112,22 @@ def create_notification(
 ) -> StudentNotification:
     """Generic in-app notification creator for producers outside grading/announcements
     (e.g. support tickets). Also attempts a best-effort push to the same user."""
+    # A developer's actions notify no one. This is the single choke point every
+    # in-app notification passes through - notify_roles and notify_users both
+    # land here, as do the direct callers - so guarding it once keeps the
+    # developer layer invisible without threading the actor through every caller.
+    # A transient, unsaved row is returned so callers that collect the result
+    # keep working; nothing is persisted and no push is sent.
+    if actor_context.is_developer_action():
+        return StudentNotification(
+            user_id=user_id,
+            attempt_id=attempt_id,
+            kind=kind,
+            title=title,
+            message=message,
+            link_url=link_url,
+            created_at=_now(),
+        )
     if attempt_id is not None:
         existing = (
             db.query(StudentNotification)
