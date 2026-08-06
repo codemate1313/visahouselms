@@ -23,11 +23,17 @@ from app.services import settings_service
 
 MAINTENANCE_KEY = "platform.maintenance_mode"
 MAINTENANCE_MESSAGE_KEY = "platform.maintenance_message"
+# Read-only mode is a lighter switch: the site stays fully viewable, but any
+# state-changing request from a non-developer is refused. Good for a migration
+# window where you want people to be able to look but not touch.
+READ_ONLY_KEY = "platform.read_only_mode"
 
 _CACHE_TTL_SECONDS = 10.0
 _lock = threading.Lock()
 _cached_value: Optional[bool] = None
 _cached_at: float = 0.0
+_ro_cached_value: Optional[bool] = None
+_ro_cached_at: float = 0.0
 
 
 def _read_flag(db: Session) -> bool:
@@ -51,6 +57,29 @@ def is_enabled(db: Session) -> bool:
         _cached_value = value
         _cached_at = now
     return value
+
+
+def is_read_only(db: Session) -> bool:
+    """Whether the platform is in read-only mode. Its own short cache, separate
+    from the maintenance flag."""
+    global _ro_cached_value, _ro_cached_at
+    now = time.monotonic()
+    with _lock:
+        if _ro_cached_value is not None and (now - _ro_cached_at) < _CACHE_TTL_SECONDS:
+            return _ro_cached_value
+    value = (settings_service.get_setting(db, READ_ONLY_KEY) or "").lower() == "on"
+    with _lock:
+        _ro_cached_value = value
+        _ro_cached_at = now
+    return value
+
+
+def set_read_only(db: Session, enabled: bool) -> None:
+    settings_service.set_setting(db, READ_ONLY_KEY, "on" if enabled else "off")
+    global _ro_cached_value, _ro_cached_at
+    with _lock:
+        _ro_cached_value = None
+        _ro_cached_at = 0.0
 
 
 def get_message(db: Session) -> Optional[str]:

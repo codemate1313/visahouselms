@@ -36,7 +36,7 @@ from app.schemas.auth import (
     TokenResponse,
     VerifyOtpRequest,
 )
-from app.services import account_service, auth_service, email_template_service, institute_service, smtp_service
+from app.services import account_service, auth_service, email_template_service, institute_service, smtp_service, totp_service
 from app.models.role import DEVELOPER
 from app.models.user import User
 
@@ -384,6 +384,21 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
     )
     payload.device_id = device_identifier
     if _skips_login_otp(user):
+        # Developer login: no emailed code. If the account has an authenticator
+        # enrolled, that is the second factor - the password is verified, but a
+        # valid TOTP code is still required before a session is issued. This is
+        # isolated to the developer branch, so no other login is affected.
+        if totp_service.is_enabled(user):
+            if not payload.totp_code:
+                return TokenResponse(
+                    totp_required=True,
+                    message="Enter the code from your authenticator app.",
+                )
+            if not totp_service.verify(user, payload.totp_code):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="That authenticator code is not valid.",
+                )
         # The password has already been verified by authenticate_login_user, so
         # this returns a session rather than an OTP challenge - and sends nothing.
         return _issue_session_now(db, user, request, response, payload, "password")

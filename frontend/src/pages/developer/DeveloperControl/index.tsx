@@ -11,6 +11,7 @@ interface MaintenanceState {
   maintenance: boolean;
   message: string | null;
   password_set: boolean;
+  read_only?: boolean;
 }
 
 /**
@@ -109,6 +110,38 @@ export function DeveloperControl() {
     }
   }
 
+  async function toggleReadOnly(enabled: boolean) {
+    setBusy(true);
+    try {
+      const { data } = await apiClient.put<MaintenanceState>(`/developer/${developerSlug}/read-only`, { enabled });
+      setState((current) => ({ ...(current as MaintenanceState), ...data }));
+      showSuccess(enabled ? "Read-only mode is on." : "Read-only mode is off.");
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, "Could not change read-only mode."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resetPassword() {
+    const ok = await confirmAction(
+      "Clear the shutdown password? You'll need to set a new one before the site can be closed again. Owner only.",
+      { title: "Reset shutdown password", confirmText: "Clear it", variant: "danger" },
+    );
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const { data } = await apiClient.delete<MaintenanceState>(`/developer/${developerSlug}/maintenance/password`);
+      setState((current) => ({ ...(current as MaintenanceState), ...data }));
+      setShowPasswordForm(true);
+      showSuccess("Shutdown password cleared. Set a new one below.");
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, "Could not reset the shutdown password."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!state) return <p>Loading…</p>;
 
   return (
@@ -187,6 +220,29 @@ export function DeveloperControl() {
         )}
       </section>
 
+      <section className="form-card wide site-state-card">
+        <div className="site-state-head">
+          <span className={`site-state-dot${state.read_only ? " is-closed" : ""}`} aria-hidden="true" />
+          <div>
+            <strong className="site-state-title">Read-only mode {state.read_only ? "is on" : "is off"}</strong>
+            <p className="hint">
+              A lighter switch than shutdown: the site stays viewable, but no one except you can change anything.
+            </p>
+          </div>
+        </div>
+        <div className="site-state-actions">
+          {state.read_only ? (
+            <Button type="button" variant="primary" loading={busy} disabled={busy} onClick={() => toggleReadOnly(false)}>
+              Turn read-only off
+            </Button>
+          ) : (
+            <Button type="button" variant="secondary" loading={busy} disabled={busy} onClick={() => toggleReadOnly(true)}>
+              Turn read-only on
+            </Button>
+          )}
+        </div>
+      </section>
+
       <section className="form-card wide site-password-card">
         <div className="site-password-head">
           <div>
@@ -198,9 +254,14 @@ export function DeveloperControl() {
             </p>
           </div>
           {state.password_set && !showPasswordForm && (
-            <Button type="button" variant="secondary" onClick={() => setShowPasswordForm(true)}>
-              Change
-            </Button>
+            <div className="ops-inline">
+              <Button type="button" variant="secondary" onClick={() => setShowPasswordForm(true)}>
+                Change
+              </Button>
+              <Button type="button" variant="text" disabled={busy} onClick={resetPassword}>
+                Forgot it?
+              </Button>
+            </div>
           )}
         </div>
 

@@ -12,6 +12,9 @@ class LoginRequest(BaseModel):
     device_id: Optional[str] = Field(default=None, min_length=16, max_length=200)
     device_name: Optional[str] = Field(default=None, max_length=120)
     remember_me: bool = True
+    # Authenticator code, supplied on the second step of a developer login when
+    # TOTP 2FA is enabled. Ignored for every other account.
+    totp_code: Optional[str] = Field(default=None, max_length=10)
 
 
 class GoogleOtpRequest(BaseModel):
@@ -67,6 +70,8 @@ class TokenResponse(BaseModel):
     otp_challenge_id: Optional[str] = None
     otp_delivery: Optional[str] = None
     message: Optional[str] = None
+    # Set when a developer login needs the authenticator code as a second step.
+    totp_required: bool = False
 
 
 class CurrentUser(BaseModel):

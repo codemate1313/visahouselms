@@ -9,6 +9,7 @@ export const AllSessions = lazy(() => import("../pages/super-admin/AllSessions")
 export const DeveloperPanel = lazy(() => import("../pages/developer/DeveloperPanel").then((module) => ({ default: module.DeveloperPanel })));
 export const DeveloperLayout = lazy(() => import("../pages/developer/DeveloperLayout").then((module) => ({ default: module.DeveloperLayout })));
 export const DeveloperAnalytics = lazy(() => import("../pages/developer/DeveloperAnalytics").then((module) => ({ default: module.DeveloperAnalytics })));
+export const DeveloperOps = lazy(() => import("../pages/developer/DeveloperOps").then((m) => ({ default: m.DeveloperOps })));
 export const DeveloperControl = lazy(() => import("../pages/developer/DeveloperControl").then((module) => ({ default: module.DeveloperControl })));
 export const AboutUs = lazy(() => import("../pages/public/AboutUs").then((module) => ({ default: module.AboutUs })));
 export const ContactUs = lazy(() => import("../pages/public/ContactUs").then((module) => ({ default: module.ContactUs })));

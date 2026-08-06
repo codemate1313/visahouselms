@@ -25,6 +25,7 @@ interface LoginStartResponse {
   otp_challenge_id?: string | null;
   otp_delivery?: "email" | string | null;
   message?: string | null;
+  totp_required?: boolean;
 }
 
 export function Login({
@@ -77,6 +78,8 @@ export function Login({
   const [rememberMe, setRememberMe] = useState(true);
   const [otpChallengeId, setOtpChallengeId] = useState<string | null>(null);
   const [otpCode, setOtpCode] = useState("");
+  const [totpRequired, setTotpRequired] = useState(false);
+  const [totpCode, setTotpCode] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
 
@@ -184,12 +187,22 @@ export function Login({
         email: email.trim().toLowerCase(),
         password,
         remember_me: rememberMe,
+        // Included on the second step of a developer login with authenticator 2FA.
+        totp_code: totpRequired ? totpCode.trim() : undefined,
         ...getDeviceIdentity(),
       });
+      if (tokens.totp_required) {
+        // Password accepted; the developer account needs its authenticator code.
+        setTotpRequired(true);
+        setError(null);
+        return;
+      }
       if (tokens.otp_required) {
         openOtpDialog(tokens);
         return;
       }
+      setTotpRequired(false);
+      setTotpCode("");
       await completeLogin(tokens.access_token);
     } catch (requestError: unknown) {
       const msg = authErrorMessage(requestError);
@@ -308,6 +321,23 @@ export function Login({
                 </a>
               </div>
             </div>
+
+            {totpRequired && (
+              <div className="form-group">
+                <label htmlFor="totp-code">Authenticator code</label>
+                <input
+                  id="totp-code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="6-digit code"
+                  autoFocus
+                />
+                <small className="hint">Enter the current code from your authenticator app.</small>
+              </div>
+            )}
 
             <div className="remember-row">
               <label className="toggle-switch-container">

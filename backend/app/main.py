@@ -106,7 +106,7 @@ async def maintenance_gate(request: Request, call_next):
     database read on the hot path. Exempt prefixes cover the routes needed to
     get back in and to render the notice. Everything else gets a 503.
     """
-    from app.core.maintenance import is_enabled, get_message
+    from app.core.maintenance import is_enabled, is_read_only, get_message
     from app.middleware.request_logging import is_developer_request
     from app.database import SessionLocal
 
@@ -116,22 +116,44 @@ async def maintenance_gate(request: Request, call_next):
     if method in ("OPTIONS", "HEAD") or any(path.startswith(p) for p in _MAINTENANCE_EXEMPT_PREFIXES):
         return await call_next(request)
 
+    # An impersonated session is read-only: it may look at anything and change
+    # nothing. Enforced here, before any handler, on the method rather than the
+    # route, so no write endpoint can be reached while impersonating.
+    from app.middleware.request_logging import is_impersonation_request
+
+    if method not in ("GET", "HEAD", "OPTIONS") and is_impersonation_request(request):
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "You are viewing as another user. Exit impersonation to make changes.", "impersonation": True},
+        )
+
     db = SessionLocal()
     try:
-        if not is_enabled(db):
-            return await call_next(request)
-        # Developer requests are always allowed; that is the way back in.
-        if is_developer_request(request):
-            return await call_next(request)
-        message = get_message(db) or "The platform is temporarily unavailable for maintenance."
+        developer = is_developer_request(request)
+        if is_enabled(db):
+            # Developer requests are always allowed; that is the way back in.
+            if developer:
+                return await call_next(request)
+            message = get_message(db) or "The platform is temporarily unavailable for maintenance."
+            return JSONResponse(
+                status_code=503,
+                content={"detail": message, "maintenance": True},
+                headers={"Retry-After": "3600"},
+            )
+        # Read-only mode: the site is viewable, but non-developers cannot change
+        # anything. Safe methods pass; writes are refused with a clear 423.
+        if is_read_only(db) and method not in ("GET", "HEAD", "OPTIONS") and not developer:
+            return JSONResponse(
+                status_code=423,
+                content={
+                    "detail": "The platform is in read-only mode for maintenance. Changes are paused; please try again shortly.",
+                    "read_only": True,
+                },
+            )
     finally:
         db.close()
 
-    return JSONResponse(
-        status_code=503,
-        content={"detail": message, "maintenance": True},
-        headers={"Retry-After": "3600"},
-    )
+    return await call_next(request)
 
 app.include_router(auth.router)
 app.include_router(platform_router.router)

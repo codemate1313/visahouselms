@@ -79,6 +79,49 @@ def set_kill_password(
     return get_state(db)
 
 
+def reset_kill_password(db: Session, actor: User, ip: Optional[str]) -> dict:
+    """Owner-only recovery for a forgotten shutdown password.
+
+    Clears the stored hash so a fresh password can be set from scratch, without
+    a database edit. Restricted to the owner because it removes the very control
+    that guards closing the site.
+    """
+    if not actor.is_owner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the owner account can reset the shutdown password.",
+        )
+    settings_service.set_setting(db, KILL_PASSWORD_KEY, None)
+    db.add(
+        AuditLog(
+            user_id=actor.id,
+            action="platform.maintenance_password_reset",
+            entity_type="platform",
+            entity_id=None,
+            details=None,
+            ip_address=ip,
+        )
+    )
+    db.commit()
+    return get_state(db)
+
+
+def set_read_only(db: Session, actor: User, enabled: bool, ip: Optional[str]) -> dict:
+    maintenance.set_read_only(db, enabled)
+    db.add(
+        AuditLog(
+            user_id=actor.id,
+            action="platform.read_only_enabled" if enabled else "platform.read_only_disabled",
+            entity_type="platform",
+            entity_id=None,
+            details=None,
+            ip_address=ip,
+        )
+    )
+    db.commit()
+    return get_state(db)
+
+
 def set_state(
     db: Session,
     actor: User,

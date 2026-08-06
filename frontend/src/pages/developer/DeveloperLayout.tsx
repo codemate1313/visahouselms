@@ -61,6 +61,12 @@ export function DeveloperLayout() {
           to: `/${developerAccessSlug}/analytics`,
         },
         {
+          key: "operations",
+          label: "Operations",
+          icon: "activity",
+          to: `/${developerAccessSlug}/operations`,
+        },
+        {
           key: "site-control",
           label: "Site Control",
           icon: "settings",

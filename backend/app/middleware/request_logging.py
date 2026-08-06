@@ -42,6 +42,15 @@ def _extract_user_id(request: Request) -> Optional[int]:
         return None
 
 
+def is_impersonation_request(request: Request) -> bool:
+    """True when the caller is impersonating someone (token carries `imp`).
+
+    Used by the request gate to refuse writes: an impersonated session may look
+    at anything and change nothing."""
+    payload = _decode_access_token(request)
+    return bool(payload) and payload.get("imp") is not None
+
+
 def is_developer_request(request: Request) -> bool:
     """The developer portal must leave no trace anywhere another role can see -
     telemetry (request/API/error logs) is platform-wide and readable from the

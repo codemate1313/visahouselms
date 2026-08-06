@@ -20,8 +20,12 @@ from app.services import (
     account_service,
     developer_analytics_service,
     developer_directory_service,
+    developer_ops_service,
+    gdpr_service,
+    impersonation_service,
     maintenance_admin_service,
     super_admin_service,
+    totp_service,
 )
 
 
@@ -37,10 +41,37 @@ class KillPasswordUpdate(BaseModel):
     # Required only when a password already exists.
     current_password: Optional[str] = Field(default=None, max_length=200)
 
+
+class ReadOnlyUpdate(BaseModel):
+    enabled: bool
+
+
+class AllowlistUpdate(BaseModel):
+    ips: List[str] = Field(default_factory=list)
+
+
+class TotpConfirm(BaseModel):
+    code: str = Field(min_length=6, max_length=10)
+
+
+def _enforce_ip_allowlist(request: Request, db: Session = Depends(get_db)) -> None:
+    """When an allowlist is set, the developer panel answers only from listed
+    IPs. An empty list means unrestricted, so this is opt-in and cannot lock a
+    developer out by default. Loopback is always allowed."""
+    request_ip = request.client.host if request.client else None
+    if not developer_ops_service.ip_is_allowed(db, request_ip):
+        from fastapi import HTTPException, status as http_status
+
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="This location is not permitted to access the developer panel.",
+        )
+
+
 router = APIRouter(
     prefix=f"/developer/{settings.developer_access_slug}",
     tags=["developer"],
-    dependencies=[Depends(require_verified_developer)],
+    dependencies=[Depends(require_verified_developer), Depends(_enforce_ip_allowlist)],
 )
 
 
@@ -217,3 +248,137 @@ def set_maintenance_password(
     return maintenance_admin_service.set_kill_password(
         db, actor, payload.new_password, payload.current_password, _client_ip(request)
     )
+
+
+@router.delete("/maintenance/password")
+def reset_maintenance_password(
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Owner-only recovery: clear a forgotten shutdown password so a new one can
+    be set, without touching the database by hand."""
+    return maintenance_admin_service.reset_kill_password(db, actor, _client_ip(request))
+
+
+@router.put("/read-only")
+def set_read_only(
+    payload: ReadOnlyUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """A lighter switch than shutdown: viewable, but non-developers cannot write."""
+    return maintenance_admin_service.set_read_only(db, actor, payload.enabled, _client_ip(request))
+
+
+# ---- Operations: health, audit, jobs, config ----------------------------
+
+@router.get("/ops/health")
+def ops_health(db: Session = Depends(get_db)):
+    return developer_ops_service.health(db)
+
+
+@router.get("/ops/audit")
+def ops_audit(
+    action: Optional[str] = None,
+    limit: int = Query(default=100, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+):
+    return developer_ops_service.audit_trail(db, action=action, limit=limit, offset=offset)
+
+
+@router.get("/ops/config-history")
+def ops_config_history(db: Session = Depends(get_db)):
+    return developer_ops_service.config_history(db)
+
+
+@router.get("/ops/jobs")
+def ops_jobs(status: Optional[str] = None, db: Session = Depends(get_db)):
+    return developer_ops_service.jobs(db, status=status)
+
+
+# ---- IP allowlist -------------------------------------------------------
+
+@router.get("/ops/ip-allowlist")
+def get_ip_allowlist(db: Session = Depends(get_db)):
+    return {"ips": developer_ops_service.get_ip_allowlist(db)}
+
+
+@router.put("/ops/ip-allowlist")
+def set_ip_allowlist(
+    payload: AllowlistUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return {"ips": developer_ops_service.set_ip_allowlist(db, actor, payload.ips, _client_ip(request))}
+
+
+# ---- TOTP 2FA (authenticator) -------------------------------------------
+
+@router.get("/2fa/status")
+def totp_status(actor: User = Depends(get_current_user)):
+    return {"enabled": totp_service.is_enabled(actor)}
+
+
+@router.post("/2fa/enroll")
+def totp_enroll(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    """Generate a new secret and the otpauth URL to scan. Not active until confirmed."""
+    return totp_service.begin_enrolment(db, actor)
+
+
+@router.post("/2fa/confirm", status_code=status.HTTP_204_NO_CONTENT)
+def totp_confirm(payload: TotpConfirm, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    totp_service.confirm_enrolment(db, actor, payload.code)
+
+
+@router.post("/2fa/disable", status_code=status.HTTP_204_NO_CONTENT)
+def totp_disable(payload: TotpConfirm, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    totp_service.disable(db, actor, payload.code)
+
+
+# ---- Impersonation ------------------------------------------------------
+
+@router.post("/impersonate/{user_id}")
+def impersonate(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Mint a short-lived, read-only token to view the platform as this user."""
+    return impersonation_service.start(db, actor, user_id, _client_ip(request))
+
+
+@router.post("/impersonate/{user_id}/stop", status_code=status.HTTP_204_NO_CONTENT)
+def impersonate_stop(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    impersonation_service.audit_stop(db, actor, user_id, _client_ip(request))
+
+
+# ---- Per-user data (GDPR) ----------------------------------------------
+
+@router.get("/users/{user_id}/export")
+def export_user_data(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return gdpr_service.export_user(db, actor, user_id, _client_ip(request))
+
+
+@router.post("/users/{user_id}/erase")
+def erase_user_data(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return gdpr_service.erase_user(db, actor, user_id, _client_ip(request))

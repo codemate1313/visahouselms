@@ -1,6 +1,6 @@
 import jwt
 from datetime import datetime, timezone
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -14,6 +14,7 @@ bearer_scheme = HTTPBearer()
 
 
 def get_current_user(
+    request: Request = None,  # type: ignore[assignment]
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> User:
@@ -37,6 +38,16 @@ def get_current_user(
     user = db.get(User, int(user_id))
     if user is None or not user.is_active:
         raise unauthorized
+
+    # Impersonation tokens carry an `imp` claim and no session. They are
+    # short-lived and read-only, so they skip the session lookup but are flagged
+    # on the request for the write-guard, which refuses every state change while
+    # one is in play.
+    if payload.get("imp") is not None:
+        if request is not None:
+            request.state.impersonated = True
+            request.state.impersonator_id = payload.get("imp")
+        return user
 
     session_key = payload.get("sid")
     if session_key is None:

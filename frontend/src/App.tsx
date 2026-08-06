@@ -10,6 +10,7 @@ import { ResponsiveTableCards } from "./components/ResponsiveTableCards";
 import { SessionHeartbeat } from "./components/SessionHeartbeat";
 import { useApplyTheme } from "./hooks/useApplyTheme";
 
+import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { MaintenanceNotice } from "./components/MaintenanceNotice";
 import { router } from "./routes/router";
 import { useAuthStore } from "./store/authStore";
@@ -64,6 +65,7 @@ function App() {
       <GsapInteractionLayer />
       <ResponsiveTableCards />
       <SessionHeartbeat />
+      <ImpersonationBanner />
       <MaintenanceNotice />
       {initialized && (
         <Suspense fallback={null}>
