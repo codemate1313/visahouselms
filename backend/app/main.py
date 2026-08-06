@@ -1,6 +1,6 @@
 import traceback
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import IntegrityError
 
 from app.config import settings
+from app.middleware.developer_action import DeveloperActionMiddleware
 from app.middleware.request_logging import RequestLoggingMiddleware, _extract_user_id, is_developer_request
 from app.middleware.security_headers import add_security_headers
 from app.routers import (
@@ -53,15 +54,12 @@ from app.routers import (
     vouchers,
 )
 
-from app.dependencies.actor import track_developer_action
-
-# Global: tag every request with whether the developer made it, before any
-# handler runs, so the notification layer can stay silent for developer actions.
-app = FastAPI(title="IELTS LMS API", dependencies=[Depends(track_developer_action)])
+app = FastAPI(title="IELTS LMS API")
 
 settings.storage_path.mkdir(parents=True, exist_ok=True)
 app.mount("/storage", StaticFiles(directory=str(settings.storage_path)), name="storage")
 
+app.add_middleware(DeveloperActionMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_host_list)
 app.add_middleware(
