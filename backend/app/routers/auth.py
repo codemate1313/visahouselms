@@ -388,13 +388,13 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
         # enrolled, that is the second factor - the password is verified, but a
         # valid TOTP code is still required before a session is issued. This is
         # isolated to the developer branch, so no other login is affected.
-        if totp_service.is_enabled(user):
+        if totp_service.is_enabled(db, user):
             if not payload.totp_code:
                 return TokenResponse(
                     totp_required=True,
                     message="Enter the code from your authenticator app.",
                 )
-            if not totp_service.verify(user, payload.totp_code):
+            if not totp_service.verify(db, user, payload.totp_code):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="That authenticator code is not valid.",

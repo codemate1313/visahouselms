@@ -22,7 +22,7 @@ from app.schemas.user import (
     SuperAdminAccountOut,
     SuperAdminAccountUpdate,
 )
-from app.services import account_service, admin_session_service, super_admin_service
+from app.services import account_service, admin_session_service, audit_visibility, super_admin_service
 
 router = APIRouter(
     prefix="/super-admin",
@@ -487,12 +487,16 @@ def get_user_linked_details(
         for p in payments
     ]
 
+    # A Super Admin viewing a user's activity must not see the developer's hand
+    # in it - "revoked by developer", "erased by developer" and so on. The
+    # developer layer is invisible to this tier.
     audit_logs = (
-        db.query(AuditLog)
-        .filter(
-            or_(
-                AuditLog.user_id == user_id,
-                and_(AuditLog.entity_type == "user", AuditLog.entity_id == user_id),
+        audit_visibility.hide_developer(
+            db.query(AuditLog).filter(
+                or_(
+                    AuditLog.user_id == user_id,
+                    and_(AuditLog.entity_type == "user", AuditLog.entity_id == user_id),
+                )
             )
         )
         .order_by(AuditLog.created_at.desc())

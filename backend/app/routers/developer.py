@@ -319,8 +319,8 @@ def set_ip_allowlist(
 # ---- TOTP 2FA (authenticator) -------------------------------------------
 
 @router.get("/2fa/status")
-def totp_status(actor: User = Depends(get_current_user)):
-    return {"enabled": totp_service.is_enabled(actor)}
+def totp_status(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    return {"enabled": totp_service.is_enabled(db, actor)}
 
 
 @router.post("/2fa/enroll")

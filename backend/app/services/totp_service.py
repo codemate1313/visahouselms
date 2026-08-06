@@ -5,10 +5,12 @@ restores a second factor without email: the account scans a QR into an
 authenticator app once, and every developer login then asks for the rolling
 6-digit code.
 
-The secret is stored encrypted via the settings encryption the rest of the app
-uses, never returned after enrolment, and only ever verified. Enrolment is a two
-step handshake - generate, then confirm with a live code - so a secret is never
-switched on until the app that holds it has proven it works.
+The secret and the enabled flag are kept in the settings table, keyed by user
+id - deliberately *not* on the users table. Adding columns to `users` means a
+migration, and a model that declares columns the database has not got yet breaks
+every query that loads a user, login included. Storing here needs no schema
+change and cannot take login down. The secret is stored encrypted; it is never
+returned after enrolment, only verified.
 """
 from typing import Optional
 
@@ -17,8 +19,17 @@ from sqlalchemy.orm import Session
 
 from app.core.crypto import decrypt_value, encrypt_value
 from app.models.user import User
+from app.services import settings_service
 
 ISSUER = "Visa House LMS"
+
+
+def _secret_key(user_id: int) -> str:
+    return f"user_totp.{user_id}.secret"
+
+
+def _enabled_key(user_id: int) -> str:
+    return f"user_totp.{user_id}.enabled"
 
 
 def _require_lib():
@@ -32,8 +43,8 @@ def _require_lib():
     return pyotp
 
 
-def is_enabled(user: User) -> bool:
-    return bool(getattr(user, "totp_enabled", False))
+def is_enabled(db: Session, user: User) -> bool:
+    return (settings_service.get_setting(db, _enabled_key(user.id)) or "").lower() == "on"
 
 
 def begin_enrolment(db: Session, user: User) -> dict:
@@ -44,17 +55,15 @@ def begin_enrolment(db: Session, user: User) -> dict:
     """
     pyotp = _require_lib()
     secret = pyotp.random_base32()
-    user.totp_secret = encrypt_value(secret)
-    user.totp_enabled = False
-    db.add(user)
-    db.commit()
+    settings_service.set_setting(db, _secret_key(user.id), encrypt_value(secret))
+    settings_service.set_setting(db, _enabled_key(user.id), "off")
 
     uri = pyotp.totp.TOTP(secret).provisioning_uri(name=user.email, issuer_name=ISSUER)
     return {"secret": secret, "otpauth_url": uri}
 
 
-def _current_secret(user: User) -> Optional[str]:
-    stored = getattr(user, "totp_secret", None)
+def _current_secret(db: Session, user: User) -> Optional[str]:
+    stored = settings_service.get_setting(db, _secret_key(user.id))
     if not stored:
         return None
     try:
@@ -63,11 +72,11 @@ def _current_secret(user: User) -> Optional[str]:
         return None
 
 
-def verify(user: User, code: str) -> bool:
+def verify(db: Session, user: User, code: str) -> bool:
     """Check a code against the stored secret, with a one-step window so a code
     that ticks over mid-request is not rejected."""
     pyotp = _require_lib()
-    secret = _current_secret(user)
+    secret = _current_secret(db, user)
     if not secret or not code:
         return False
     return pyotp.totp.TOTP(secret).verify(code.strip(), valid_window=1)
@@ -75,19 +84,15 @@ def verify(user: User, code: str) -> bool:
 
 def confirm_enrolment(db: Session, user: User, code: str) -> None:
     """Activate 2FA once a live code proves the authenticator is set up."""
-    if not verify(user, code):
+    if not verify(db, user, code):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="That code is not valid. Try again.")
-    user.totp_enabled = True
-    db.add(user)
-    db.commit()
+    settings_service.set_setting(db, _enabled_key(user.id), "on")
 
 
 def disable(db: Session, user: User, code: str) -> None:
     """Turn 2FA off. Requires a current code, so a walk-up to an unlocked screen
     cannot silently remove the factor."""
-    if not verify(user, code):
+    if not verify(db, user, code):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="That code is not valid.")
-    user.totp_enabled = False
-    user.totp_secret = None
-    db.add(user)
-    db.commit()
+    settings_service.set_setting(db, _enabled_key(user.id), "off")
+    settings_service.set_setting(db, _secret_key(user.id), None)
