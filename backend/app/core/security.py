@@ -24,6 +24,30 @@ def verify_password(plain_password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(plain_password.encode("utf-8"), password_hash.encode("utf-8"))
 
 
+# The strongest hashing this stack ships with is bcrypt; there is no argon2
+# dependency. For a secret that guards shutting the whole platform down, the
+# work factor is raised well above the login default (12) so an offline guess
+# against the stored hash is far more expensive. bcrypt caps the input at 72
+# bytes, so the secret is pre-hashed to a fixed-size digest first - otherwise a
+# long passphrase would be silently truncated.
+_STRONG_SECRET_ROUNDS = 14
+
+
+def hash_strong_secret(plain: str) -> str:
+    digest = hashlib.sha256(plain.encode("utf-8")).digest()
+    return bcrypt.hashpw(digest, bcrypt.gensalt(rounds=_STRONG_SECRET_ROUNDS)).decode("utf-8")
+
+
+def verify_strong_secret(plain: str, hashed: str) -> bool:
+    if not hashed:
+        return False
+    digest = hashlib.sha256(plain.encode("utf-8")).digest()
+    try:
+        return bcrypt.checkpw(digest, hashed.encode("utf-8"))
+    except ValueError:
+        return False
+
+
 def _create_token(
     subject: int,
     role: str,

@@ -85,5 +85,27 @@ def overview(db: Session, traffic_days: int = 30) -> dict:
             "total_institutes": total_institutes,
             "active_subscriptions": active_subscriptions,
         },
-        "traffic": traffic_service.summary(db, days=traffic_days),
+        # Traffic is the one part that depends on a table added by a later
+        # migration. If that migration has not been run yet, the query raises
+        # and would take the whole analytics page down with it - so it is
+        # isolated: money and people always render, and traffic degrades to an
+        # empty-but-valid shape until the migration lands.
+        "traffic": _safe_traffic(db, traffic_days),
     }
+
+
+def _safe_traffic(db: Session, days: int) -> dict:
+    try:
+        return traffic_service.summary(db, days=days)
+    except Exception:
+        db.rollback()
+        return {
+            "window_days": days,
+            "total_views": 0,
+            "total_clicks": 0,
+            "unique_visitors": 0,
+            "views_per_day": [],
+            "top_pages": [],
+            "top_clicks": [],
+            "unavailable": True,
+        }

@@ -61,12 +61,6 @@ export function DeveloperLayout() {
           to: `/${developerAccessSlug}/analytics`,
         },
         {
-          key: "all-users",
-          label: "All Users",
-          icon: "user",
-          to: `/${developerAccessSlug}/all-users`,
-        },
-        {
           key: "site-control",
           label: "Site Control",
           icon: "settings",

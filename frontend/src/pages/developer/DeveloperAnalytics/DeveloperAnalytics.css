@@ -104,3 +104,20 @@
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }
+
+.dev-traffic-warning {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, #f59e0b 40%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, #f59e0b 8%, var(--surface));
+  color: var(--text);
+  font-size: 13px;
+}
+
+.dev-traffic-warning code {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  font-size: 12.5px;
+}

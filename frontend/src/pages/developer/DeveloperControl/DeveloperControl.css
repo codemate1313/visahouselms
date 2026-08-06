@@ -54,7 +54,33 @@
   color: var(--text);
 }
 
+.site-password-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.site-password-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.site-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .site-state-actions {
   display: flex;
+  align-items: center;
   justify-content: flex-start;
+  gap: 10px;
+}
+
+.site-no-password {
+  margin: 0;
+  color: color-mix(in srgb, #f59e0b 80%, var(--text-muted));
 }

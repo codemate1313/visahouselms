@@ -8,7 +8,6 @@ export const TestingLoginSelector = lazy(() => import("../pages/TestingLoginSele
 export const DeveloperPanel = lazy(() => import("../pages/developer/DeveloperPanel").then((module) => ({ default: module.DeveloperPanel })));
 export const DeveloperLayout = lazy(() => import("../pages/developer/DeveloperLayout").then((module) => ({ default: module.DeveloperLayout })));
 export const DeveloperAnalytics = lazy(() => import("../pages/developer/DeveloperAnalytics").then((module) => ({ default: module.DeveloperAnalytics })));
-export const DeveloperUsers = lazy(() => import("../pages/developer/DeveloperUsers").then((module) => ({ default: module.DeveloperUsers })));
 export const DeveloperControl = lazy(() => import("../pages/developer/DeveloperControl").then((module) => ({ default: module.DeveloperControl })));
 export const AboutUs = lazy(() => import("../pages/public/AboutUs").then((module) => ({ default: module.AboutUs })));
 export const ContactUs = lazy(() => import("../pages/public/ContactUs").then((module) => ({ default: module.ContactUs })));

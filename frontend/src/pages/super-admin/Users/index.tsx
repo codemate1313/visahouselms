@@ -76,6 +76,8 @@ interface UsersProps {
   basePath?: string;
 }
 
+const developerSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+
 export function Users({ basePath = "/super-admin" }: UsersProps) {
   const { role: roleSlug } = useParams();
   const navigate = useNavigate();
@@ -84,6 +86,11 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
 
   const activeRole: DirectoryRole = (roleSlug && ROLE_BY_SLUG[roleSlug]) || DEFAULT_ROLE;
   const viewerIsOwner = Boolean(currentUser?.is_owner);
+  // This screen is reused by the developer portal under its own slug. There, the
+  // elevated revoke/restore controls apply to accounts the Super Admin cannot
+  // touch. The check is the base path, not the role, so it holds even before
+  // the user object has loaded.
+  const isDeveloperPortal = basePath.includes(developerSlug);
 
   const [data, setData] = useState<DirectoryUserPage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -223,6 +230,38 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
     } catch (err: unknown) {
       patchUser(user.id, { is_active: user.is_active });
       setError(extractErrorMessage(err, strings.errors.toggleActive(action)));
+    }
+  }
+
+  // Elevated developer controls: revoke/restore accounts the Super Admin
+  // directory refuses to touch (other Super Admins, the owner). These call the
+  // developer endpoints, which are audited and act above the Super Admin layer.
+  async function handleDeveloperRevoke(user: DirectoryUser) {
+    const confirmed = await confirmAction(
+      `Revoke access for ${user.email}? They will be signed out of every device and cannot log in until restored.${
+        user.is_owner ? " This is the OWNER account - it will be locked out until you restore it." : ""
+      }`,
+      { title: "Revoke access", confirmText: "Revoke access", variant: "danger" },
+    );
+    if (!confirmed) return;
+    setError(null);
+    patchUser(user.id, { is_active: false });
+    try {
+      await apiClient.post(`/developer/${developerSlug}/users/${user.id}/revoke`);
+    } catch (err: unknown) {
+      patchUser(user.id, { is_active: true });
+      setError(extractErrorMessage(err, "Could not revoke this account."));
+    }
+  }
+
+  async function handleDeveloperRestore(user: DirectoryUser) {
+    setError(null);
+    patchUser(user.id, { is_active: true });
+    try {
+      await apiClient.post(`/developer/${developerSlug}/users/${user.id}/restore`);
+    } catch (err: unknown) {
+      patchUser(user.id, { is_active: false });
+      setError(extractErrorMessage(err, "Could not restore this account."));
     }
   }
 
@@ -585,6 +624,9 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
         onToggleSelectAll={toggleSelectAll}
         onInspectUser={(user) => setInspectingUserId(user.id)}
         basePath={basePath}
+        developerActions={isDeveloperPortal}
+        onDeveloperRevoke={handleDeveloperRevoke}
+        onDeveloperRestore={handleDeveloperRestore}
       />
 
       {totalPages > 1 && (

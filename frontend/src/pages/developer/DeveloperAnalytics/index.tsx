@@ -37,6 +37,7 @@ interface Overview {
     views_per_day: { day: string; views: number }[];
     top_pages: { path: string; views: number }[];
     top_clicks: { label: string; clicks: number }[];
+    unavailable?: boolean;
   };
 }
 
@@ -101,6 +102,13 @@ export function DeveloperAnalytics() {
           <span className="dev-metric-sub">{data.platform.active_subscriptions} active subscriptions</span>
         </article>
       </section>
+
+      {data.traffic.unavailable && (
+        <p className="dev-traffic-warning">
+          Traffic tracking isn&rsquo;t active yet. Run the database migration
+          (<code>alembic upgrade head</code>) to start collecting page views.
+        </p>
+      )}
 
       <section className="dev-traffic-grid">
         <article className="dev-metric is-compact">

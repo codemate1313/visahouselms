@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { TableAvatar } from "@/components/TableAvatar";
-import { Badge, Checkbox, DataTableCard, RecordCards } from "@/components/ui";
+import { Badge, Button, Checkbox, DataTableCard, RecordCards } from "@/components/ui";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import type { DirectoryUser } from "@/api/types";
 import { usersStrings as strings } from "../Users.strings";
@@ -36,6 +36,14 @@ interface UsersTableProps {
   onToggleSelectAll: () => void;
   onInspectUser?: (user: DirectoryUser) => void;
   basePath?: string;
+  /**
+   * Developer context. Turns the "Protected" / "Owner Only" badges - the
+   * accounts the Super Admin directory refuses to touch - into working
+   * Revoke / Restore buttons, because the developer layer sits above them.
+   */
+  developerActions?: boolean;
+  onDeveloperRevoke?: (user: DirectoryUser) => void;
+  onDeveloperRestore?: (user: DirectoryUser) => void;
 }
 
 function SkeletonRow({ showInstitute, selectable }: { showInstitute: boolean; selectable: boolean }) {
@@ -113,6 +121,9 @@ export function UsersTable({
   onToggleSelectAll,
   onInspectUser,
   basePath = "/super-admin",
+  developerActions = false,
+  onDeveloperRevoke,
+  onDeveloperRestore,
 }: UsersTableProps) {
   const handleRowClick = (e: React.MouseEvent, user: DirectoryUser) => {
     const target = e.target as HTMLElement;
@@ -134,16 +145,36 @@ export function UsersTable({
   const a = strings.actions;
   const p = strings.passwordTrail;
 
+  // In the developer portal, the accounts the Super Admin cannot touch - the
+  // owner and other Super Admins - get Revoke / Restore instead of a badge. The
+  // buttons call the elevated developer endpoints; the developer's own row
+  // still shows a badge, because you cannot revoke yourself.
+  function renderElevatedControl(user: DirectoryUser) {
+    if (user.id === currentUserId) {
+      return <Badge tone="gray">{a.protected}</Badge>;
+    }
+    return user.is_active ? (
+      <Button type="button" variant="danger" size="sm" onClick={() => onDeveloperRevoke?.(user)}>
+        Revoke
+      </Button>
+    ) : (
+      <Button type="button" variant="primary" size="sm" onClick={() => onDeveloperRestore?.(user)}>
+        Restore
+      </Button>
+    );
+  }
+
   function renderActions(user: DirectoryUser) {
     if (isProtected(user)) {
-      return <Badge tone="gray">{a.protected}</Badge>;
+      return developerActions ? renderElevatedControl(user) : <Badge tone="gray">{a.protected}</Badge>;
     }
 
     // Only the owner account may create, edit, deactivate, delete, or reset
     // a Super Admin account from here (self-service goes through "My
-    // Profile" instead).
+    // Profile" instead) - unless this is the developer layer, which sits above
+    // Super Admins and can act on them directly.
     if (user.role_name === "SUPER_ADMIN" && !viewerIsOwner) {
-      return <Badge tone="gray">{a.ownerOnly}</Badge>;
+      return developerActions ? renderElevatedControl(user) : <Badge tone="gray">{a.ownerOnly}</Badge>;
     }
 
     function renderOverflowMenu(items: Array<ReactElement | false | null>) {

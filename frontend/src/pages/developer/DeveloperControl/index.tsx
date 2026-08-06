@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { confirmAction } from "@/components/confirmDialog";
-import { Button, PageHeader, Textarea } from "@/components/ui";
+import { Button, Input, PageHeader, Textarea } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import "./DeveloperControl.css";
 
@@ -11,14 +10,16 @@ const developerSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-
 interface MaintenanceState {
   maintenance: boolean;
   message: string | null;
+  password_set: boolean;
 }
 
 /**
- * The maintenance kill switch.
+ * The maintenance kill switch, gated by a dedicated shutdown password.
  *
  * Closing the site turns away every role except the developer, so this screen
- * stays reachable to turn it back on - the switch cannot lock out the person
- * holding it. Both directions are confirmed and audited server-side.
+ * stays reachable to reopen it. The password is a second secret beyond the
+ * login - closing the whole platform should not be one careless click - and it
+ * is stored server-side only as a high-cost bcrypt hash.
  */
 export function DeveloperControl() {
   const showSuccess = useToastStore((state) => state.showSuccess);
@@ -28,34 +29,81 @@ export function DeveloperControl() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // Close flow.
+  const [closePassword, setClosePassword] = useState("");
+
+  // Password set/change flow.
+  const [newPassword, setNewPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+
   useEffect(() => {
     apiClient
       .get<MaintenanceState>(`/developer/${developerSlug}/maintenance`)
       .then(({ data }) => {
         setState(data);
         setMessage(data.message ?? "");
+        // With no password yet, the site cannot be closed - lead with setting one.
+        setShowPasswordForm(!data.password_set);
       })
       .catch((err: unknown) => showError(extractErrorMessage(err, "Could not load site state.")));
   }, [showError]);
 
-  async function apply(enabled: boolean) {
-    if (enabled) {
-      const ok = await confirmAction(
-        "Close the entire platform? Every institute, instructor and student will be locked out until you reopen it. You will still have access.",
-        { title: "Close the site", confirmText: "Close the site", variant: "danger" },
-      );
-      if (!ok) return;
+  async function savePassword() {
+    if (newPassword.trim().length < 8) {
+      showError("The shutdown password must be at least 8 characters.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data } = await apiClient.put<MaintenanceState>(`/developer/${developerSlug}/maintenance/password`, {
+        new_password: newPassword.trim(),
+        current_password: currentPassword.trim() || undefined,
+      });
+      setState(data);
+      setNewPassword("");
+      setCurrentPassword("");
+      setShowPasswordForm(false);
+      showSuccess("Shutdown password saved.");
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, "Could not save the shutdown password."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function close() {
+    if (!closePassword.trim()) {
+      showError("Enter the shutdown password to close the site.");
+      return;
     }
     setBusy(true);
     try {
       const { data } = await apiClient.put<MaintenanceState>(`/developer/${developerSlug}/maintenance`, {
-        enabled,
-        message: enabled ? message.trim() || null : null,
+        enabled: true,
+        message: message.trim() || null,
+        password: closePassword.trim(),
       });
       setState(data);
-      showSuccess(enabled ? "The site is now closed for maintenance." : "The site is open again.");
+      setClosePassword("");
+      showSuccess("The site is now closed for maintenance.");
     } catch (err: unknown) {
-      showError(extractErrorMessage(err, "Could not change site state."));
+      showError(extractErrorMessage(err, "Could not close the site."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reopen() {
+    setBusy(true);
+    try {
+      const { data } = await apiClient.put<MaintenanceState>(`/developer/${developerSlug}/maintenance`, {
+        enabled: false,
+      });
+      setState(data);
+      showSuccess("The site is open again.");
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, "Could not reopen the site."));
     } finally {
       setBusy(false);
     }
@@ -68,7 +116,7 @@ export function DeveloperControl() {
       <PageHeader
         eyebrow="Platform"
         title="Site control"
-        subtitle="Open or close the entire platform. Closing it turns everyone away except you."
+        subtitle="Open or close the entire platform. Closing it turns everyone away except you, and requires the shutdown password."
       />
 
       <section className={`form-card wide site-state-card${state.maintenance ? " is-closed" : " is-open"}`}>
@@ -86,31 +134,113 @@ export function DeveloperControl() {
           </div>
         </div>
 
-        {!state.maintenance && (
-          <div className="site-state-field">
-            <label htmlFor="maintenance-message">Notice shown to visitors (optional)</label>
-            <Textarea
-              id="maintenance-message"
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              maxLength={280}
-              rows={3}
-              placeholder="We're carrying out scheduled maintenance and will be back shortly."
-            />
-          </div>
-        )}
-
-        <div className="site-state-actions">
-          {state.maintenance ? (
-            <Button type="button" variant="primary" loading={busy} disabled={busy} onClick={() => apply(false)}>
+        {state.maintenance ? (
+          <div className="site-state-actions">
+            <Button type="button" variant="primary" loading={busy} disabled={busy} onClick={reopen}>
               Reopen the site
             </Button>
-          ) : (
-            <Button type="button" variant="danger" loading={busy} disabled={busy} onClick={() => apply(true)}>
-              Close the site
+          </div>
+        ) : (
+          <>
+            <div className="site-state-field">
+              <label htmlFor="maintenance-message">Notice shown to visitors (optional)</label>
+              <Textarea
+                id="maintenance-message"
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                maxLength={280}
+                rows={3}
+                placeholder="We're carrying out scheduled maintenance and will be back shortly."
+              />
+            </div>
+
+            {state.password_set ? (
+              <div className="site-state-field">
+                <label htmlFor="close-password">Shutdown password</label>
+                <Input
+                  id="close-password"
+                  type="password"
+                  value={closePassword}
+                  onChange={(event) => setClosePassword(event.target.value)}
+                  placeholder="Required to close the site"
+                  autoComplete="off"
+                />
+              </div>
+            ) : (
+              <p className="hint site-no-password">
+                Set a shutdown password below before the site can be closed.
+              </p>
+            )}
+
+            <div className="site-state-actions">
+              <Button
+                type="button"
+                variant="danger"
+                loading={busy}
+                disabled={busy || !state.password_set}
+                onClick={close}
+              >
+                Close the site
+              </Button>
+            </div>
+          </>
+        )}
+      </section>
+
+      <section className="form-card wide site-password-card">
+        <div className="site-password-head">
+          <div>
+            <strong className="site-state-title">Shutdown password</strong>
+            <p className="hint">
+              {state.password_set
+                ? "A shutdown password is set. Closing the site requires it."
+                : "No shutdown password yet. Set one to enable the kill switch."}
+            </p>
+          </div>
+          {state.password_set && !showPasswordForm && (
+            <Button type="button" variant="secondary" onClick={() => setShowPasswordForm(true)}>
+              Change
             </Button>
           )}
         </div>
+
+        {showPasswordForm && (
+          <div className="site-password-form">
+            {state.password_set && (
+              <div className="site-state-field">
+                <label htmlFor="current-password">Current password</label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+            )}
+            <div className="site-state-field">
+              <label htmlFor="new-password">New password</label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                placeholder="At least 8 characters"
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="site-state-actions">
+              <Button type="button" variant="primary" loading={busy} disabled={busy} onClick={savePassword}>
+                Save password
+              </Button>
+              {state.password_set && (
+                <Button type="button" variant="text" disabled={busy} onClick={() => setShowPasswordForm(false)}>
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );

@@ -28,6 +28,14 @@ from app.services import (
 class MaintenanceUpdate(BaseModel):
     enabled: bool
     message: Optional[str] = Field(default=None, max_length=280)
+    # Required when enabling; verified against the stored shutdown-password hash.
+    password: Optional[str] = Field(default=None, max_length=200)
+
+
+class KillPasswordUpdate(BaseModel):
+    new_password: str = Field(min_length=8, max_length=200)
+    # Required only when a password already exists.
+    current_password: Optional[str] = Field(default=None, max_length=200)
 
 router = APIRouter(
     prefix=f"/developer/{settings.developer_access_slug}",
@@ -146,20 +154,10 @@ def analytics_overview(
     return developer_analytics_service.overview(db, traffic_days=traffic_days)
 
 
-# ---- User directory -----------------------------------------------------
-
-@router.get("/users")
-def list_users(
-    search: Optional[str] = None,
-    role: Optional[str] = None,
-    active: Optional[bool] = None,
-    limit: int = Query(default=100, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
-    db: Session = Depends(get_db),
-):
-    """Every account on the platform, across all institutes."""
-    return developer_directory_service.list_users(db, search, role, active, limit, offset)
-
+# ---- Elevated access control -------------------------------------------
+# The listing lives on the shared Users screen; only the elevated revoke and
+# restore are here, because they act on accounts (Super Admins, the owner) that
+# the Super Admin's own directory refuses to touch.
 
 @router.post("/users/{user_id}/revoke")
 def revoke_user_access(
@@ -199,9 +197,23 @@ def set_maintenance(
 ):
     """Open or close the whole platform. Audited with the actor and state.
 
-    The developer role stays exempt from the gate this flips, so closing the
-    site never locks the person who closed it out of reopening it.
+    Closing requires the shutdown password; reopening does not. The developer
+    role stays exempt from the gate this flips, so closing the site never locks
+    the person who closed it out of reopening it.
     """
     return maintenance_admin_service.set_state(
-        db, actor, payload.enabled, payload.message, _client_ip(request)
+        db, actor, payload.enabled, payload.message, payload.password, _client_ip(request)
+    )
+
+
+@router.put("/maintenance/password")
+def set_maintenance_password(
+    payload: KillPasswordUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Set or change the shutdown password. Stored only as a high-cost hash."""
+    return maintenance_admin_service.set_kill_password(
+        db, actor, payload.new_password, payload.current_password, _client_ip(request)
     )
