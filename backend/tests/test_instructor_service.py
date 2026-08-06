@@ -100,7 +100,7 @@ class InstructorServiceTests(unittest.TestCase):
             self.db, self.actor, instructor_id, "127.0.0.1"
         )
         role = self.db.query(Role).filter(Role.name == SA_INSTRUCTOR).one()
-        self.assertEqual(self.db.query(User).filter(User.role_id == role.id).count(), 0)
+        self.assertEqual(self.db.query(User).filter(User.role_id == role.id, User.deleted_at.is_(None)).count(), 0)
 
     def test_dashboard_exposes_stable_phase_3_contract(self) -> None:
         created = self._create()

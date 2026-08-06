@@ -383,7 +383,9 @@ def set_member_active(
     ip: Optional[str],
     scoped_institute_id: Optional[int] = None,
 ) -> dict:
-    user = get_member_or_404(db, actor, member_id, scoped_institute_id)
+    user = _member_query(db, _require_institute(actor, scoped_institute_id), include_deleted=True).filter(User.id == member_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
     if user.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Archived members cannot be reactivated")
     user.is_active = active

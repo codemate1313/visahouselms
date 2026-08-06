@@ -322,7 +322,7 @@ class InstituteAdminServiceTests(unittest.TestCase):
         self.assertTrue(active["is_active"])
 
         institute_admin_service.delete_member(self.db, self.actor, member_id, None)
-        archived = institute_admin_service.get_member_or_404(self.db, self.actor, member_id)
+        archived = self.db.get(User, member_id)
         self.assertFalse(archived.is_active)
         self.assertIsNotNone(archived.deleted_at)
         with self.assertRaises(HTTPException) as raised:

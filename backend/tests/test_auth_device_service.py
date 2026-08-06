@@ -67,12 +67,12 @@ class StudentDeviceLoginTests(unittest.TestCase):
 
         with self.assertRaises(HTTPException):
             get_current_user(
-                HTTPAuthorizationCredentials(scheme="Bearer", credentials=first_access),
-                self.db,
+                credentials=HTTPAuthorizationCredentials(scheme="Bearer", credentials=first_access),
+                db=self.db,
             )
         current = get_current_user(
-            HTTPAuthorizationCredentials(scheme="Bearer", credentials=replacement_access),
-            self.db,
+            credentials=HTTPAuthorizationCredentials(scheme="Bearer", credentials=replacement_access),
+            db=self.db,
         )
         self.assertEqual(current.id, self.student.id)
 
