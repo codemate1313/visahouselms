@@ -5,7 +5,7 @@ import { Badge, SearchInput, SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 
-type LogType = "api" | "error" | "crash" | "request";
+type LogType = "error" | "crash" | "request";
 
 interface LogResponse {
   items: Record<string, unknown>[];
@@ -14,7 +14,7 @@ interface LogResponse {
   page_size: number;
 }
 
-const LOG_TYPES: LogType[] = ["api", "error", "crash", "request"];
+const LOG_TYPES: LogType[] = ["request", "error", "crash"];
 
 export function Logs() {
   const [type, setType] = useState<LogType>("error");

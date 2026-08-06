@@ -8,7 +8,6 @@ from starlette.requests import Request
 
 from app.core.security import TOKEN_TYPE_ACCESS, decode_token
 from app.database import SessionLocal
-from app.models.api_log import ApiLog
 from app.models.request_log import RequestLog
 
 # request headers worth keeping in the fat log (never auth/cookies)
@@ -90,16 +89,11 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         # database down) surfaces to the caller as a 500.
         db = SessionLocal()
         try:
-            db.add(
-                ApiLog(
-                    method=request.method,
-                    path=request.url.path,
-                    status_code=response.status_code,
-                    latency_ms=latency_ms,
-                    user_id=user_id,
-                    ip_address=ip_address,
-                )
-            )
+            # One row per request, not two. RequestLog is a strict superset of
+            # the old ApiLog (same fields plus user-agent, bytes and headers), so
+            # writing both meant two inserts and a commit on the hot path of
+            # every call for no extra information. The Logs UI reads request logs;
+            # api_logs is retained for its history but no longer written to.
             db.add(
                 RequestLog(
                     method=request.method,

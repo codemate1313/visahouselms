@@ -5,11 +5,12 @@ import secrets
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
+from dataclasses import dataclass
 from typing import List, Optional
 
 from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import delete, or_, select, update
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.config import settings
 from app.core.security import hash_password
@@ -111,29 +112,106 @@ def get_institute_or_404(db: Session, institute_id: int) -> Institute:
     return institute
 
 
-def _serialize(db: Session, institute: Institute) -> dict:
-    _, sub_state = current_subscription(db, institute.id)
-    branding = db.query(InstituteBranding).filter(InstituteBranding.institute_id == institute.id).first()
-    # The institute's contact admin. A retired one is not a contact.
-    admin = (
+@dataclass
+class _ListPrefetch:
+    """Per-institute lookups for a list, each built with one query. Keyed by
+    institute id (or plan id, for plans)."""
+    subscription: dict
+    branding: dict
+    admin: dict
+    module_ids: dict
+    payment: dict
+    plans: dict
+
+
+def _build_list_prefetch(db: Session, institutes: List[Institute]) -> _ListPrefetch:
+    ids = [inst.id for inst in institutes]
+    if not ids:
+        return _ListPrefetch({}, {}, {}, {}, {}, {})
+
+    subscription = subscription_service.current_subscription_map(db, ids)
+
+    branding = {
+        row.institute_id: row
+        for row in db.query(InstituteBranding).filter(InstituteBranding.institute_id.in_(ids)).all()
+    }
+
+    # First (any) active institute admin per institute.
+    admin: dict = {}
+    admin_rows = (
         db.query(User)
-        .filter(User.institute_id == institute.id, User.deleted_at.is_(None))
+        .filter(User.institute_id.in_(ids), User.deleted_at.is_(None))
         .join(User.role)
         .filter_by(name=INSTITUTE_ADMIN)
-        .first()
-    )
-    modules = (
-        db.query(InstituteModule)
-        .filter(InstituteModule.institute_id == institute.id, InstituteModule.is_active.is_(True))
         .all()
     )
-    payment = (
-        db.query(Payment)
-        .filter(Payment.institute_id == institute.id)
-        .order_by(Payment.id.desc())
-        .first()
-    )
-    plan = db.get(Plan, institute.onboarding_plan_id) if institute.onboarding_plan_id else None
+    for user in admin_rows:
+        admin.setdefault(user.institute_id, user)
+
+    module_ids: dict = {}
+    for link in (
+        db.query(InstituteModule)
+        .filter(InstituteModule.institute_id.in_(ids), InstituteModule.is_active.is_(True))
+        .all()
+    ):
+        module_ids.setdefault(link.institute_id, []).append(link.module_id)
+
+    # Latest payment per institute: ordered newest-first, keep the first seen.
+    payment: dict = {}
+    for pay in (
+        db.query(Payment).filter(Payment.institute_id.in_(ids)).order_by(Payment.id.desc()).all()
+    ):
+        payment.setdefault(pay.institute_id, pay)
+
+    plan_ids = {inst.onboarding_plan_id for inst in institutes if inst.onboarding_plan_id}
+    plans = {
+        plan.id: plan
+        for plan in (
+            db.query(Plan).options(selectinload(Plan.modules)).filter(Plan.id.in_(plan_ids)).all()
+            if plan_ids
+            else []
+        )
+    }
+
+    return _ListPrefetch(subscription, branding, admin, module_ids, payment, plans)
+
+
+def _serialize(db: Session, institute: Institute, prefetch: Optional["_ListPrefetch"] = None) -> dict:
+    # In a list, every per-institute lookup below is served from maps built with
+    # one query each (see list_institutes) instead of a query per row - the N+1
+    # this function used to issue. Called on its own (a single institute), it
+    # falls back to the direct queries, so single-fetch behaviour is unchanged.
+    if prefetch is not None:
+        _, sub_state = prefetch.subscription.get(institute.id, (None, "none"))
+        branding = prefetch.branding.get(institute.id)
+        admin = prefetch.admin.get(institute.id)
+        module_ids = prefetch.module_ids.get(institute.id, [])
+        payment = prefetch.payment.get(institute.id)
+        plan = prefetch.plans.get(institute.onboarding_plan_id) if institute.onboarding_plan_id else None
+    else:
+        _, sub_state = current_subscription(db, institute.id)
+        branding = db.query(InstituteBranding).filter(InstituteBranding.institute_id == institute.id).first()
+        # The institute's contact admin. A retired one is not a contact.
+        admin = (
+            db.query(User)
+            .filter(User.institute_id == institute.id, User.deleted_at.is_(None))
+            .join(User.role)
+            .filter_by(name=INSTITUTE_ADMIN)
+            .first()
+        )
+        modules = (
+            db.query(InstituteModule)
+            .filter(InstituteModule.institute_id == institute.id, InstituteModule.is_active.is_(True))
+            .all()
+        )
+        module_ids = [link.module_id for link in modules]
+        payment = (
+            db.query(Payment)
+            .filter(Payment.institute_id == institute.id)
+            .order_by(Payment.id.desc())
+            .first()
+        )
+        plan = db.get(Plan, institute.onboarding_plan_id) if institute.onboarding_plan_id else None
     return {
         "id": institute.id,
         "name": institute.name,
@@ -174,7 +252,7 @@ def _serialize(db: Session, institute: Institute) -> dict:
             "grace_days": plan.grace_days,
             "module_count": len(plan.modules),
         } if plan else None),
-        "module_ids": [link.module_id for link in modules],
+        "module_ids": module_ids,
         "branding": {
             "primary_color": branding.primary_color if branding else "#e53935",
             "secondary_color": branding.secondary_color if branding else "#17191d",
@@ -193,7 +271,9 @@ def list_institutes(db: Session, status: Optional[str] = None) -> List[dict]:
         query = query.filter(Institute.is_active.is_(True))
     elif status == "suspended":
         query = query.filter(Institute.is_active.is_(False))
-    return [_serialize(db, i) for i in query.all()]
+    institutes = query.all()
+    prefetch = _build_list_prefetch(db, institutes)
+    return [_serialize(db, i, prefetch) for i in institutes]
 
 
 def get_institute(db: Session, institute_id: int) -> dict:

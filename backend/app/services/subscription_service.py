@@ -96,6 +96,30 @@ def current_subscription(db: Session, institute_id: int) -> Tuple[Optional[Subsc
     return _pick_current(rows, _now())
 
 
+def current_subscription_map(
+    db: Session, institute_ids: List[int]
+) -> dict[int, Tuple[Optional[Subscription], str]]:
+    """`current_subscription` for many institutes in one query.
+
+    Lets a list endpoint resolve every institute's subscription state without a
+    query per row. The picking is the same pure-Python `_pick_current`; only the
+    fetch is batched.
+    """
+    if not institute_ids:
+        return {}
+    now = _now()
+    rows = (
+        db.query(Subscription)
+        .options(joinedload(Subscription.plan))
+        .filter(Subscription.institute_id.in_(institute_ids), Subscription.cancelled_at.is_(None))
+        .all()
+    )
+    grouped: dict[int, List[Subscription]] = {}
+    for row in rows:
+        grouped.setdefault(row.institute_id, []).append(row)
+    return {iid: _pick_current(grouped.get(iid, []), now) for iid in institute_ids}
+
+
 def current_user_subscription(db: Session, user_id: int) -> Tuple[Optional[Subscription], str]:
     """Personal (B2C direct-student) mirror of current_subscription - the
     governing subscription owned by this user (not an institute)."""
