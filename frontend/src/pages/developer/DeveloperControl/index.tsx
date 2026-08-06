@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Button, Input, PageHeader, Textarea } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
+import { confirmAction } from "@/components/confirmDialog";
 import "./DeveloperControl.css";
 
 const developerSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";

@@ -63,7 +63,7 @@ export function DeveloperLayout() {
         {
           key: "operations",
           label: "Operations",
-          icon: "activity",
+          icon: "terminal",
           to: `/${developerAccessSlug}/operations`,
         },
         {
