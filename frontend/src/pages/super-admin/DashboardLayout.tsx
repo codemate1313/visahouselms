@@ -156,6 +156,7 @@ export function DashboardLayout() {
           children: [
             { key: "profile", label: m.myProfile, to: "/super-admin/profile" },
             { key: "sessions", label: m.activeSessions, to: "/super-admin/sessions" },
+            { key: "all_sessions", label: m.allSessions, to: "/super-admin/all-sessions" },
             { key: "change_password", label: m.changePassword, to: "/super-admin/change-password" },
           ],
         },

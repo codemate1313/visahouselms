@@ -41,6 +41,7 @@ export const dashboardLayoutStrings = {
     systemTerminal: "CMD Terminal",
     myProfile: "My Profile",
     activeSessions: "Active Sessions",
+    allSessions: "All Sessions",
     changePassword: "Change Password",
   },
 } as const;

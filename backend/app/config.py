@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     allowed_hosts: str = ""
     storage_dir: str = "../storage"
+    # Path to a MaxMind GeoLite2-City .mmdb, used to resolve a session's IP to a
+    # city. Optional: when unset or missing, session location shows as unknown
+    # and nothing breaks. Download the free DB from MaxMind and point this here.
+    geoip_db_path: str = "../data/GeoLite2-City.mmdb"
     settings_encryption_key: Optional[str] = None
     registration_rate_limit: int = 5
     registration_rate_window_seconds: int = 3600

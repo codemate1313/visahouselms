@@ -22,7 +22,7 @@ from app.schemas.user import (
     SuperAdminAccountOut,
     SuperAdminAccountUpdate,
 )
-from app.services import account_service, super_admin_service
+from app.services import account_service, admin_session_service, super_admin_service
 
 router = APIRouter(
     prefix="/super-admin",
@@ -33,6 +33,34 @@ router = APIRouter(
 
 def _client_ip(request: Request) -> Optional[str]:
     return request.client.host if request.client else None
+
+
+# ---- Platform-wide session oversight ------------------------------------
+
+@router.get("/sessions")
+def list_all_sessions(
+    search: Optional[str] = None,
+    role: Optional[str] = None,
+    institute_id: Optional[int] = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+):
+    """Every active session across every tenant, with an approximate location."""
+    return admin_session_service.list_sessions(
+        db, search=search, role=role, institute_id=institute_id, limit=limit, offset=offset
+    )
+
+
+@router.delete("/sessions/{session_id}", status_code=status.HTTP_200_OK)
+def revoke_any_session(
+    session_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Sign out any one session on the platform. Audited."""
+    return admin_session_service.revoke_session(db, actor, session_id, _client_ip(request))
 
 
 def _serialize_linked_session(session: UserSession) -> dict:

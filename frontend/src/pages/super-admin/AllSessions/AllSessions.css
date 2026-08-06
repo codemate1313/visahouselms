@@ -1,0 +1,76 @@
+.all-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.all-sessions-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 12px;
+}
+
+.all-sessions-filters select {
+  height: 40px;
+  padding: 0 34px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.all-sessions-count {
+  margin-left: auto;
+}
+
+.all-sessions-user {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.all-sessions-user strong {
+  color: var(--text);
+}
+
+.all-sessions-user span {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.all-sessions-location {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.all-sessions-location span {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.all-sessions-location small {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.all-sessions-location a {
+  font-size: 12.5px;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .all-sessions-count {
+    margin-left: 0;
+  }
+}
