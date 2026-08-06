@@ -323,6 +323,11 @@ export function UsersTable({
             />
             <span className="record-card-name">
               {user.first_name} {user.last_name}
+              {developerActions && (
+                <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginLeft: 6, fontWeight: 500 }}>
+                  #{user.id}
+                </span>
+              )}
               <span className="record-card-tags">
                 {currentUserId === user.id && <Badge tone="gray">{b.you}</Badge>}
                 {user.is_owner && <Badge tone="red">{b.owner}</Badge>}
@@ -420,6 +425,11 @@ export function UsersTable({
                     <div>
                       <strong className="table-item-title" style={{ fontSize: 13.5 }}>
                         {user.first_name} {user.last_name}
+                        {developerActions && (
+                          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginLeft: 6, fontWeight: 500 }}>
+                            #{user.id}
+                          </span>
+                        )}
                       </strong>
                       <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
                         {currentUserId === user.id && (

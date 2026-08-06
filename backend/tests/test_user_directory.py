@@ -319,6 +319,45 @@ class UserDirectoryTestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 404)
 
+    def test_search_by_id_and_search_by_id_only(self):
+        student = self.db.query(User).filter(User.email == "student0@example.com").one()
+        headers = self._headers(self.admin)
+        
+        # Test regular search matching email or name works
+        resp = self.client.get(
+            "/super-admin/users",
+            params={"q": "student0@example.com"},
+            headers=headers
+        ).json()
+        self.assertEqual(resp["total"], 1)
+        self.assertEqual(resp["items"][0]["email"], "student0@example.com")
+        
+        # Test regular search matching ID works
+        resp = self.client.get(
+            "/super-admin/users",
+            params={"q": str(student.id)},
+            headers=headers
+        ).json()
+        self.assertEqual(resp["total"], 1)
+        self.assertEqual(resp["items"][0]["id"], student.id)
+        
+        # Test search by ID only matches ID
+        resp = self.client.get(
+            "/super-admin/users",
+            params={"q": str(student.id), "search_by_id_only": True},
+            headers=headers
+        ).json()
+        self.assertEqual(resp["total"], 1)
+        self.assertEqual(resp["items"][0]["id"], student.id)
+        
+        # Test search by ID only does not match name/email
+        resp = self.client.get(
+            "/super-admin/users",
+            params={"q": "student0@example.com", "search_by_id_only": True},
+            headers=headers
+        ).json()
+        self.assertEqual(resp["total"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

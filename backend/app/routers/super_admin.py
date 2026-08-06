@@ -84,6 +84,7 @@ def list_directory_users(
     direct: Optional[bool] = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1, le=200),
+    search_by_id_only: Optional[bool] = Query(default=None),
     db: Session = Depends(get_db),
 ):
     """Cross-institute directory backing the tabbed Users screen. Every role is
@@ -98,6 +99,7 @@ def list_directory_users(
         direct=direct,
         page=page,
         page_size=page_size,
+        search_by_id_only=search_by_id_only,
     )
 
 

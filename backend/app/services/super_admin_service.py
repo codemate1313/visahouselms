@@ -530,6 +530,7 @@ def _apply_directory_filters(
     status_filter: Optional[str],
     institute_id: Optional[int],
     direct: Optional[bool] = None,
+    search_by_id_only: Optional[bool] = None,
 ):
     if role:
         query = query.filter(Role.name == role)
@@ -544,14 +545,23 @@ def _apply_directory_filters(
     elif status_filter == "inactive":
         query = query.filter(User.is_active.is_(False))
     if search:
-        term = f"%{search.strip()}%"
-        query = query.filter(
-            or_(
+        search_stripped = search.strip()
+        if search_by_id_only:
+            if search_stripped.isdigit():
+                query = query.filter(User.id == int(search_stripped))
+            else:
+                # Return empty list if query is not numeric when searching by ID only
+                query = query.filter(User.id == -1)
+        else:
+            term = f"%{search_stripped}%"
+            conditions = [
                 User.email.ilike(term),
                 User.first_name.ilike(term),
                 User.last_name.ilike(term),
-            )
-        )
+            ]
+            if search_stripped.isdigit():
+                conditions.append(User.id == int(search_stripped))
+            query = query.filter(or_(*conditions))
     return query
 
 
@@ -669,6 +679,7 @@ def list_directory_users(
     direct: Optional[bool] = None,
     page: int = 1,
     page_size: int = 25,
+    search_by_id_only: Optional[bool] = None,
 ) -> dict:
     """Paginated cross-institute user listing for the Super Admin directory.
 
@@ -684,7 +695,7 @@ def list_directory_users(
     page_size = max(1, min(page_size, MAX_PAGE_SIZE))
 
     query = _apply_directory_filters(
-        _directory_base_query(db), role, search, status_filter, institute_id, direct
+        _directory_base_query(db), role, search, status_filter, institute_id, direct, search_by_id_only
     )
     total = query.order_by(None).count()
     users = (

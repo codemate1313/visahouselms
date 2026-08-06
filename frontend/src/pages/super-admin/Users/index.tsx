@@ -148,6 +148,7 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
         status: statusFilter || undefined,
         page,
         page_size: PAGE_SIZE,
+        search_by_id_only: isDeveloperPortal ? true : undefined,
       };
 
       if (activeRole === "STUDENT") {
@@ -455,7 +456,7 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
             setSearch(value);
             setPage(1);
           }}
-          placeholder={strings.searchPlaceholder}
+          placeholder={isDeveloperPortal ? "Search ID..." : strings.searchPlaceholder}
           width={280}
         />
 
