@@ -40,7 +40,6 @@ def upgrade() -> None:
                 "office_address",
                 sa.Text(),
                 nullable=False,
-                server_default="4th Floor, Prestige Meridian,\nMG Road, Bangalore 560001",
             ),
             sa.Column("updated_at", sa.DateTime(), server_default=sa.func.now()),
         )

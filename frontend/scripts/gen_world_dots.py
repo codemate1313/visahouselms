@@ -2,7 +2,7 @@
 
 Run from `frontend/`:  python3 scripts/gen_world_dots.py
 
-Builds public/dc-pages/world-dots.svg from coarse continent outlines.
+Builds public/images/world-dots.svg from coarse continent outlines.
 
 Nothing is traced from an image: each landmass is a hand-written polygon in
 lon/lat, a dot grid is sampled against them with a point-in-polygon test, and
@@ -85,7 +85,7 @@ svg = (
     f'<style>circle{{r:{R};fill:#e11d2e}}</style>{circles}</svg>'
 )
 
-open("public/dc-pages/world-dots.svg", "w").write(svg)
+open("public/images/world-dots.svg", "w").write(svg)
 print(f"{len(dots)} dots, viewBox 0 0 {W} {H}, {len(svg)} bytes")
 for k in sorted(counts, key=lambda k: -counts[k]):
     print(f"  {k:18} {counts[k]}")

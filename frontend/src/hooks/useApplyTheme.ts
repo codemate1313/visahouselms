@@ -25,7 +25,7 @@ export function useApplyTheme() {
     // The favicon is deliberately not touched here — the tab icon stays the same
     // in both themes. See the <link rel="icon"> comment in index.html.
 
-    // Legacy/non-React listeners (and the iframed dc-pages bridge) key off this.
+    // Legacy/non-React listeners key off this.
     window.dispatchEvent(new CustomEvent<Theme>(THEME_CHANGE_EVENT, { detail: theme }));
   }, [theme]);
 

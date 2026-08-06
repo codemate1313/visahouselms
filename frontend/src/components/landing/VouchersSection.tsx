@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/client";
 import { useToastStore } from "@/store/toastStore";
-import { useThemeStore } from "@/store/themeStore";
 import "@/styles/voucher-ui.css";
 import { formatDate } from "@/utils/date";
 
@@ -64,61 +63,6 @@ export function VouchersSection() {
     fetchOfferings();
   }, [fetchOfferings]);
 
-  // Handle iframe height resizing for landing page integration
-  useEffect(() => {
-    if (window.parent === window) return; // Not in iframe
-    
-    const sendHeight = () => {
-      // Use offsetHeight of the main section instead of body to avoid margin issues
-      const section = document.getElementById("vouchers-section");
-      if (section) {
-        window.parent.postMessage({ type: "vh-vouchers-height", height: section.offsetHeight }, "*");
-      }
-    };
-
-    // Send initially
-    const timer = setTimeout(sendHeight, 100);
-    
-    // Setup observer
-    const observer = new ResizeObserver(sendHeight);
-    const section = document.getElementById("vouchers-section");
-    if (section) observer.observe(section);
-
-    return () => {
-      clearTimeout(timer);
-      observer.disconnect();
-    };
-  }, [offerings, loading]);
-
-  // Forward wheel scrolling to the embedding page: this section is rendered
-  // inside a same-height iframe with its own document, so a wheel event over
-  // it is captured there instead of bubbling across the frame boundary to
-  // scroll the page that embeds it.
-  useEffect(() => {
-    if (window.parent === window) return; // Not in iframe
-
-    function handleWheel(e: WheelEvent) {
-      e.preventDefault();
-      window.parent.postMessage({ type: "vh-vouchers-wheel", deltaY: e.deltaY, deltaX: e.deltaX }, "*");
-    }
-
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    return () => window.removeEventListener("wheel", handleWheel);
-  }, []);
-
-  // This route is embedded in an iframe with its own theme store instance, so
-  // it never observes the embedding DC page's theme toggle on its own — the
-  // DC page forwards the change here explicitly (see Plans.dc.html's applyTheme).
-  useEffect(() => {
-    function handleThemeSync(e: MessageEvent) {
-      if (e.data?.type === "vh-theme-sync" && (e.data.theme === "light" || e.data.theme === "dark")) {
-        useThemeStore.getState().setTheme(e.data.theme);
-      }
-    }
-    window.addEventListener("message", handleThemeSync);
-    return () => window.removeEventListener("message", handleThemeSync);
-  }, []);
-
   async function handlePurchaseSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedOffering || !buyerName || !buyerEmail) return;
@@ -169,9 +113,7 @@ export function VouchersSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full vh-pub-badge border text-xs font-bold uppercase tracking-wider">
-            <span>Official Exam Vouchers</span>
-          </div>
+
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
             Book Your Exam Seats With Discounted Vouchers
           </h2>

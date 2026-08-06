@@ -23,9 +23,9 @@ export interface PublicContactSettings {
 
 /** Shared by every public marketing page — the footer's social icons (and, on
  * /contact, the info cards) are all served from the same admin-editable
- * settings, so each `.dc.html` page reads the same `contactSettings` bootstrap
- * key. See `frontend/public/dc-pages/support.js`'s `VH_SOCIAL_ICONS` for how
- * `social_links` becomes rendered icons. */
+ * settings, so each page fetches the same `contactSettings` here rather than
+ * duplicating the request. `social_links` is rendered by `PublicFooter` via
+ * `components/icons.tsx`'s `<Icon name="social...">`. */
 export function useContactSettings(): PublicContactSettings | null {
   const [contactSettings, setContactSettings] = useState<PublicContactSettings | null>(null);
 

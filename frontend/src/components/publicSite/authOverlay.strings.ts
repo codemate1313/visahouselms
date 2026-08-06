@@ -1,4 +1,4 @@
-export const staticDcPageStrings = {
+export const authOverlayStrings = {
   authOverlay: {
     closeAriaLabel: "Close dialog",
     closeTitle: "Close",

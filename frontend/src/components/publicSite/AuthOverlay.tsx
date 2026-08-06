@@ -1,8 +1,8 @@
 import { type MouseEvent } from "react";
 import { Login } from "@/pages/Login";
 import { Register } from "@/pages/Register";
-import { staticDcPageStrings as strings } from "../StaticDcPage.strings";
-import type { AuthMode, PublicTheme } from "../types";
+import { authOverlayStrings as strings } from "./authOverlay.strings";
+import type { AuthMode, PublicTheme } from "./authOverlayTypes";
 
 interface AuthOverlayProps {
   authMode: AuthMode;

@@ -2,11 +2,6 @@ import { create } from "zustand";
 
 export type Theme = "light" | "dark";
 
-/**
- * Shared with the public marketing pages in `public/dc-pages/*.dc.html`, which
- * read and write this same key so the app and the iframed showcase pages agree
- * on a theme. Do not rename it without updating those files.
- */
 export const THEME_STORAGE_KEY = "vh-theme";
 
 /** Fired after every applied theme change, for non-React listeners. */

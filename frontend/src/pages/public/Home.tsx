@@ -1,23 +1,385 @@
-import { useEffect, useState } from "react";
-import { StaticDcPage } from "./StaticDcPage";
-import { homeStrings as strings } from "./Home.strings";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import gsap from "gsap";
+import { PublicHeader } from "@/components/publicSite/PublicHeader";
+import { PublicFooter } from "@/components/publicSite/PublicFooter";
+import { PublicOrbBackground } from "@/components/publicSite/PublicOrbBackground";
+import { PublicCtaBanner } from "@/components/publicSite/PublicCtaBanner";
+import { AuthOverlay } from "@/components/publicSite/AuthOverlay";
+import { InstitutePlanBanner } from "@/components/publicSite/InstitutePlanBanner";
+import { usePublicAuthOverlay } from "@/components/publicSite/usePublicAuthOverlay";
+import { usePublicAuthAction } from "@/components/publicSite/usePublicAuthAction";
+import { useRevealOnScroll } from "@/components/publicSite/useRevealOnScroll";
+import { useThemeStore } from "@/store/themeStore";
+import { useSEO } from "@/hooks/useSEO";
 import { API_BASE_URL } from "@/api/client";
-import type { PublicContactSettings } from "./useContactSettings";
+import { useContactSettings } from "./useContactSettings";
+import { HERO_SLIDES, MODULE_CARDS, STEP_CARDS, type TestimonialCard } from "./Home.data";
+import { ModuleIcon, ModulePreview, StepIcon } from "./Home.previews";
+import type { BlogListItem } from "./blogTypes";
+import "@/styles/public/chrome.css";
+import "@/styles/public/home.css";
+
+const HERO_INTERVAL_MS = 4000;
+
+interface RawTestimonial {
+  quote?: string;
+  student_name?: string;
+  student_role?: string;
+  target_score?: string;
+  avatar_url?: string;
+}
+
+function formatBlogDate(createdAt: string) {
+  const date = createdAt ? new Date(createdAt) : new Date();
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function mapTestimonials(raw: RawTestimonial[]): TestimonialCard[] {
+  return raw.map((t) => ({
+    quote: t.quote || "",
+    name: t.student_name || "Student",
+    role: t.student_role || "Academic Candidate",
+    score: t.target_score || "Band 8.0",
+    init: (t.student_name || "S")
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase(),
+    avatar: t.avatar_url || "",
+    grad: "linear-gradient(135deg, #e11d2e, #7c5cff)",
+  }));
+}
 
 export function Home() {
-  const [bootstrap, setBootstrap] = useState<{ testimonials?: unknown[]; blogs?: unknown[]; contactSettings?: PublicContactSettings } | null>(null);
-  const [pending, setPending] = useState(true);
+  useSEO({});
+  const contactSettings = useContactSettings();
+  const theme = useThemeStore((state) => state.theme);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  useRevealOnScroll(rootRef);
+
+  const { authMode, setAuthMode, handleClose, user, isLoading } = usePublicAuthOverlay();
+  const { handleAuth, showInstituteBanner, closeInstituteBanner, goToMyCourses } = usePublicAuthAction();
+
+  const [heroIndex, setHeroIndex] = useState(0);
+  const heroImageRef = useRef<HTMLImageElement | null>(null);
+  const heroTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [testimonials, setTestimonials] = useState<TestimonialCard[]>([]);
+  const testimonialsRef = useRef<HTMLDivElement | null>(null);
+  const [blogPreviews, setBlogPreviews] = useState<BlogListItem[]>([]);
 
   useEffect(() => {
-    Promise.all([
-      fetch(`${API_BASE_URL}/testimonials`).then((res) => (res.ok ? res.json() : [])).catch(() => []),
-      fetch(`${API_BASE_URL}/blogs`).then((res) => (res.ok ? res.json() : [])).catch(() => []),
-      fetch(`${API_BASE_URL}/contact-settings`).then((res) => (res.ok ? res.json() : null)).catch(() => null),
-    ]).then(([testimonials, blogs, contactSettings]) => {
-      setBootstrap({ testimonials, blogs, contactSettings });
-      setPending(false);
-    });
+    heroTimerRef.current = setInterval(() => {
+      setHeroIndex((i) => (i + 1) % HERO_SLIDES.length);
+    }, HERO_INTERVAL_MS);
+    return () => {
+      if (heroTimerRef.current) clearInterval(heroTimerRef.current);
+    };
   }, []);
 
-  return <StaticDcPage fileName={strings.fileName} title={strings.title} bootstrap={bootstrap} bootstrapPending={pending} />;
+  useEffect(() => {
+    if (!heroImageRef.current) return;
+    gsap.fromTo(heroImageRef.current, { opacity: 0, scale: 0.94, rotateY: 4 }, { opacity: 1, scale: 1, rotateY: 0, duration: 0.65, ease: "power3.out" });
+  }, [heroIndex]);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/testimonials`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setTestimonials(Array.isArray(data) ? mapTestimonials(data) : []))
+      .catch(() => setTestimonials([]));
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/blogs`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setBlogPreviews(Array.isArray(data) ? data.slice(0, 3) : []))
+      .catch(() => setBlogPreviews([]));
+  }, []);
+
+  function selectHero(index: number) {
+    if (heroTimerRef.current) clearInterval(heroTimerRef.current);
+    setHeroIndex(index);
+    heroTimerRef.current = setInterval(() => {
+      setHeroIndex((i) => (i + 1) % HERO_SLIDES.length);
+    }, HERO_INTERVAL_MS);
+  }
+
+  const activeSlide = HERO_SLIDES[heroIndex];
+  const loopedTestimonials = [...testimonials, ...testimonials];
+
+  return (
+    <div className="vh-public" ref={rootRef}>
+      <PublicOrbBackground />
+      <div className="vh-page-content">
+        <PublicHeader />
+
+        <section id="top" className="vh-hero-section">
+          <div className="vh-hero-slide-container">
+            <div className="vh-hero-slide-left">
+              <h1 className="vh-hero-title">
+                {activeSlide.heading}
+                <span className="vh-hero-title-accent">{activeSlide.highlight}</span>
+              </h1>
+              <p className="vh-hero-desc">{activeSlide.desc}</p>
+              <div className="vh-hero-actions">
+                <button type="button" className="vh-hero-cta-solid" onClick={() => handleAuth(activeSlide.ctaLink === "/login" ? "login" : "register")}>
+                  {activeSlide.ctaText}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14" />
+                    <path d="m13 6 6 6-6 6" />
+                  </svg>
+                </button>
+                {activeSlide.altLink.startsWith("#") ? (
+                  <a href={activeSlide.altLink} className="vh-hero-cta-alt">
+                    {activeSlide.altText}
+                  </a>
+                ) : (
+                  <Link to={activeSlide.altLink} className="vh-hero-cta-alt">
+                    {activeSlide.altText}
+                  </Link>
+                )}
+              </div>
+              <div className="vh-hero-stats">
+                {activeSlide.stats.map((stat) => (
+                  <div className="vh-hero-stat-group" key={stat.label}>
+                    <div className="vh-hero-stat-value">{stat.value}</div>
+                    <div className="vh-hero-stat-label">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="vh-hero-slide-right">
+              <div className="vh-hero-slide-glow" aria-hidden="true" />
+              <div className="vh-hero-slide-frame">
+                <img ref={heroImageRef} key={heroIndex} src={activeSlide.image} alt={activeSlide.heading} />
+              </div>
+            </div>
+          </div>
+
+          <div className="vh-hero-dots">
+            <div className="vh-hero-dots-inner">
+              {HERO_SLIDES.map((slide, i) => (
+                <button
+                  key={slide.heading}
+                  type="button"
+                  className={`vh-dot${i === heroIndex ? " vh-dot-active" : ""}`}
+                  aria-label={`Show slide ${i + 1}`}
+                  onClick={() => selectHero(i)}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="modules" className="vh-modules-section vh-reveal">
+          <div className="vh-section-intro">
+            <h2>
+              Designed for realistic <span className="vh-accent">IELTS success</span>
+            </h2>
+            <p>Whether preparing independently or managing an entire institute batch, Visa House delivers complete, exam-accurate coverage.</p>
+          </div>
+          <div className="vh-modules-grid">
+            {MODULE_CARDS.map((m) => (
+              <div className="vh-module-card vh-reveal" key={m.num}>
+                <div className="vh-module-card-head">
+                  <div className="vh-module-card-head-left">
+                    <div style={{ color: m.g1, display: "grid", placeItems: "center" }}>
+                      <ModuleIcon kind={m.kind} />
+                    </div>
+                    <div>
+                      <div className="vh-module-eyebrow">Module {m.num}</div>
+                      <h3>{m.title}</h3>
+                    </div>
+                  </div>
+                </div>
+                <div className="vh-module-preview" style={{ background: `linear-gradient(135deg, ${m.wash1}, ${m.wash2})` }}>
+                  <ModulePreview kind={m.kind} color={m.g1} />
+                </div>
+                <p>{m.desc}</p>
+                <div className="vh-module-card-foot">
+                  <div className="vh-module-status">
+                    <span className="vh-module-status-dot" style={{ background: m.g1 }} />
+                    {m.status}
+                  </div>
+                  <span className="vh-module-try" style={{ color: m.g1 }}>
+                    Try module <span>→</span>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="steps" className="vh-steps-section vh-reveal">
+          <div className="vh-steps-intro">
+            <h2>From first mock to target band in three steps</h2>
+          </div>
+          <div className="vh-steps-grid">
+            {STEP_CARDS.map((s, i) => (
+              <div className="vh-flip vh-reveal" key={s.num}>
+                <div className="vh-flip-inner">
+                  <div className="vh-face vh-step-face-front">
+                    <div className="vh-step-face-front-top">
+                      <div className="vh-step-num-badge">{s.num}</div>
+                      <div style={{ opacity: 0.75 }}>
+                        <StepIcon index={i} />
+                      </div>
+                    </div>
+                    <div>
+                      <h3>{s.title}</h3>
+                      <p>{s.desc}</p>
+                    </div>
+                    <div className="vh-step-hover-hint">
+                      Hover for details
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 12a9 9 0 1 1-6.2-8.55" />
+                        <path d="m17 3 4 4-4 4" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="vh-face vh-back vh-step-face-back">
+                    <div className="vh-step-back-eyebrow">Step {s.num} · what you get</div>
+                    {s.points.map((point) => (
+                      <div className="vh-step-point" key={point}>
+                        <span className="vh-step-point-badge">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
+                        </span>
+                        <span>{point}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="vh-testimonials-section vh-reveal">
+          <div className="vh-testimonials-header-wrap">
+            <div>
+              <span className="vh-testimonials-eyebrow">Student success stories</span>
+              <h2>Trusted by 10,000+ IELTS aspirants</h2>
+              <p>Read real experiences from candidates who achieved their target band scores using Visa House LMS.</p>
+            </div>
+            <div className="vh-testimonial-controls">
+              <button type="button" className="vh-slider-nav-btn" aria-label="Previous testimonial" onClick={() => testimonialsRef.current?.scrollBy({ left: -384, behavior: "smooth" })}>
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 22 6 12 16 2" />
+                </svg>
+              </button>
+              <button type="button" className="vh-slider-nav-btn" aria-label="Next testimonial" onClick={() => testimonialsRef.current?.scrollBy({ left: 384, behavior: "smooth" })}>
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 22 18 12 8 2" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          {testimonials.length > 0 ? (
+            <div className="vh-testimonial-slider-wrapper" ref={testimonialsRef}>
+              <div className="vh-testimonial-slider-track">
+                {loopedTestimonials.map((t, i) => (
+                  <div className="vh-testimonial-card" key={i}>
+                    <div>
+                      <div className="vh-testimonial-header">
+                        <div className="vh-testimonial-avatar" style={{ background: t.grad }}>
+                          <span>{t.init}</span>
+                          {t.avatar && (
+                            <img
+                              src={t.avatar}
+                              alt={t.name}
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                          )}
+                        </div>
+                        <div className="vh-testimonial-author-info">
+                          <strong>{t.name}</strong>
+                          <span>{t.role}</span>
+                          <div className="vh-testimonial-score-badge">{t.score}</div>
+                        </div>
+                      </div>
+                      <p className="vh-testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
+                    </div>
+                    <div className="vh-testimonial-stars">★★★★★</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="vh-blog-empty">No student stories yet — check back soon.</div>
+          )}
+        </section>
+
+        <section className="vh-blog-preview-section vh-reveal">
+          <div className="vh-blog-preview-head">
+            <div>
+              <span className="vh-testimonials-eyebrow">Latest from our blog</span>
+              <h2>Insights &amp; strategies from IELTS examiners</h2>
+            </div>
+            <Link to="/blogs" className="vh-blog-preview-view-all">
+              View all blog posts
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+          {blogPreviews.length > 0 ? (
+            <div className="vh-blog-preview-grid">
+              {blogPreviews.map((post) => (
+                <Link to={`/blogs/${post.slug}`} className="vh-blog-preview-card" key={post.id}>
+                  <div className="vh-blog-preview-image">
+                    <img
+                      src={post.featured_image_url || "/images/blog/writing.jpg"}
+                      alt={post.title}
+                      onError={(e) => {
+                        e.currentTarget.src = "/images/blog/writing.jpg";
+                      }}
+                    />
+                    <span className="vh-blog-preview-tag">{post.category || "General"}</span>
+                  </div>
+                  <div className="vh-blog-preview-body">
+                    <div>
+                      <h3>{post.title}</h3>
+                      <p>{post.summary}</p>
+                    </div>
+                    <div className="vh-blog-preview-meta">
+                      <span>
+                        {post.author_name || "Editorial Team"} · {formatBlogDate(post.created_at)}
+                      </span>
+                      <span>{post.read_time_minutes || 5} min read</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="vh-blog-empty">No blog posts yet — check back soon.</div>
+          )}
+        </section>
+
+        <div id="plans">
+          <PublicCtaBanner
+            heading="Ready to elevate your IELTS preparation?"
+            body="Create your student account now, or explore subscription plans built for students and institutes."
+            primary={{ label: "Sign up for free →", onClick: () => handleAuth("register") }}
+            secondary={{ label: "See pricing", href: "/plans" }}
+          />
+        </div>
+
+        <PublicFooter socialLinks={contactSettings?.social_links} />
+      </div>
+
+      {authMode && (
+        <AuthOverlay authMode={authMode} publicTheme={theme} onClose={handleClose} onModeChange={setAuthMode} closeDisabled={Boolean(user) || isLoading} />
+      )}
+
+      {showInstituteBanner && <InstitutePlanBanner publicTheme={theme} onClose={closeInstituteBanner} onGoToCourses={goToMyCourses} />}
+    </div>
+  );
 }

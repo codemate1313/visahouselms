@@ -27,8 +27,8 @@ export function ThemeToggle({ className, withLabel = false }: ThemeToggleProps) 
         {/* Both icons stay mounted so they can cross-fade/rotate between states. */}
         <svg
           className="theme-toggle-sun"
-          width="17"
-          height="17"
+          width="22"
+          height="22"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -41,8 +41,8 @@ export function ThemeToggle({ className, withLabel = false }: ThemeToggleProps) 
         </svg>
         <svg
           className="theme-toggle-moon"
-          width="16"
-          height="16"
+          width="22"
+          height="22"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

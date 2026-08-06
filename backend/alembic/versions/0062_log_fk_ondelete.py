@@ -56,6 +56,7 @@ def _existing_tables(bind) -> set:
 def upgrade() -> None:
     bind = op.get_bind()
     present = _existing_tables(bind)
+    inspector = sa.inspect(bind)
 
     for table, constraint, ondelete in TARGETS:
         if table not in present:
@@ -68,12 +69,13 @@ def upgrade() -> None:
         # tables are already nullable, which is what SET NULL requires.
         nullable = table != "user_sessions"
 
+        existing_fks = inspector.get_foreign_keys(table) if bind.dialect.name != "sqlite" else []
+        user_fk = next((fk for fk in existing_fks if fk.get("constrained_columns") == ["user_id"]), None)
+        fk_to_drop = user_fk.get("name") if user_fk else None
+
         with op.batch_alter_table(table) as batch:
-            # Dropping first is a no-op on SQLite (the constraint is unnamed and
-            # the table is being recreated regardless) but is required on
-            # Postgres, where the old constraint would otherwise survive.
-            if bind.dialect.name != "sqlite":
-                batch.drop_constraint(constraint, type_="foreignkey")
+            if bind.dialect.name != "sqlite" and fk_to_drop:
+                batch.drop_constraint(fk_to_drop, type_="foreignkey")
             batch.alter_column("user_id", existing_type=sa.Integer(), nullable=nullable)
             batch.create_foreign_key(
                 constraint,

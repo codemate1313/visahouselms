@@ -1,4 +1,4 @@
-import type { PublicTheme } from "../types";
+import type { PublicTheme } from "./authOverlayTypes";
 
 interface InstitutePlanBannerProps {
   publicTheme: PublicTheme;

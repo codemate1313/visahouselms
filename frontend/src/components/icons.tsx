@@ -110,9 +110,9 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <circle cx="8" cy="12" r="4" fill="#ffffff" stroke="none" />
     </g>
   ),
-  // Solid brand logos for the social-links editor; identical path data to the
-  // static footer SVGs in frontend/public/dc-pages/*.dc.html so the admin
-  // picker and the public footer render the same glyph.
+  // Solid brand logos for the social-links editor; also used directly by
+  // `components/publicSite/PublicFooter.tsx` so the admin picker and the
+  // public footer render the same glyph.
   socialLinkedin: (
     <path
       fill="currentColor"
