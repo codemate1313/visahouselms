@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { useImpersonationStore } from "@/store/impersonationStore";
 import "./ImpersonationBanner.css";
@@ -11,6 +12,15 @@ import "./ImpersonationBanner.css";
 export function ImpersonationBanner() {
   const { active, target, originalToken, originalUser, end } = useImpersonationStore();
   const setSession = useAuthStore((s) => s.setSession);
+
+  // The banner is fixed at the top, so the page has to be pushed down or it
+  // sits under the banner. A class on <html> that reserves the banner's height
+  // works across every layout, including the full-height portal shells.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("has-impersonation-banner", active);
+    return () => root.classList.remove("has-impersonation-banner");
+  }, [active]);
 
   if (!active || !target) return null;
 

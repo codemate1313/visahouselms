@@ -1,4 +1,5 @@
 import { apiClient } from "@/api/client";
+import { destinationFor } from "@/pages/Login/helpers";
 import { useAuthStore } from "@/store/authStore";
 import { useImpersonationStore } from "@/store/impersonationStore";
 
@@ -26,14 +27,18 @@ export async function startImpersonation(userId: number | string): Promise<void>
   useImpersonationStore.getState().begin({ target: data.target, originalToken, originalUser });
 
   const [firstName, ...rest] = data.target.name.split(" ");
+  const role = data.target.role ?? originalUser.role;
   auth.setSession(data.access_token, {
     ...originalUser,
     id: data.target.id,
     email: data.target.email,
-    role: data.target.role ?? originalUser.role,
+    role,
     first_name: firstName || data.target.name,
     last_name: rest.join(" "),
+    force_password_reset: false,
     is_owner: false,
   });
-  window.location.assign("/");
+  // Land on the target's own home, not the marketing lander that "/" resolves to.
+  const home = destinationFor({ role, force_password_reset: false }) ?? "/";
+  window.location.assign(home);
 }
