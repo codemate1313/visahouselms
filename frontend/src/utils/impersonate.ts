@@ -24,11 +24,9 @@ export async function startImpersonation(userId: number | string): Promise<void>
   const originalUser = auth.user;
   if (!originalToken || !originalUser) throw new Error("No active session.");
 
-  useImpersonationStore.getState().begin({ target: data.target, originalToken, originalUser });
-
   const [firstName, ...rest] = data.target.name.split(" ");
   const role = data.target.role ?? originalUser.role;
-  auth.setSession(data.access_token, {
+  const impersonatedUser = {
     ...originalUser,
     id: data.target.id,
     email: data.target.email,
@@ -37,7 +35,17 @@ export async function startImpersonation(userId: number | string): Promise<void>
     last_name: rest.join(" "),
     force_password_reset: false,
     is_owner: false,
+  };
+
+  useImpersonationStore.getState().begin({
+    target: data.target,
+    originalToken,
+    originalUser,
+    impersonatedToken: data.access_token,
+    impersonatedUser,
   });
+
+  auth.setSession(data.access_token, impersonatedUser);
   // Land on the target's own home, not the marketing lander that "/" resolves to.
   const home = destinationFor({ role, force_password_reset: false }) ?? "/";
   window.location.assign(home);

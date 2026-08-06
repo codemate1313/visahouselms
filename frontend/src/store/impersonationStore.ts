@@ -20,10 +20,14 @@ interface ImpersonationState {
   target: ImpersonationTarget | null;
   originalToken: string | null;
   originalUser: AuthUser | null;
+  impersonatedToken: string | null;
+  impersonatedUser: AuthUser | null;
   begin: (payload: {
     target: ImpersonationTarget;
     originalToken: string;
     originalUser: AuthUser;
+    impersonatedToken: string;
+    impersonatedUser: AuthUser;
   }) => void;
   end: () => void;
 }
@@ -49,6 +53,8 @@ function persist(state: ImpersonationState) {
           target: state.target,
           originalToken: state.originalToken,
           originalUser: state.originalUser,
+          impersonatedToken: state.impersonatedToken,
+          impersonatedUser: state.impersonatedUser,
         }),
       );
     } else {
@@ -66,12 +72,21 @@ export const useImpersonationStore = create<ImpersonationState>((set, get) => ({
   target: saved.target ?? null,
   originalToken: saved.originalToken ?? null,
   originalUser: saved.originalUser ?? null,
-  begin: ({ target, originalToken, originalUser }) => {
-    set({ active: true, target, originalToken, originalUser });
+  impersonatedToken: saved.impersonatedToken ?? null,
+  impersonatedUser: saved.impersonatedUser ?? null,
+  begin: ({ target, originalToken, originalUser, impersonatedToken, impersonatedUser }) => {
+    set({ active: true, target, originalToken, originalUser, impersonatedToken, impersonatedUser });
     persist(get());
   },
   end: () => {
-    set({ active: false, target: null, originalToken: null, originalUser: null });
+    set({
+      active: false,
+      target: null,
+      originalToken: null,
+      originalUser: null,
+      impersonatedToken: null,
+      impersonatedUser: null,
+    });
     persist(get());
   },
 }));

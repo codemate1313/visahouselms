@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "../store/authStore";
 import { useLoaderStore } from "../store/loaderStore";
+import { useImpersonationStore } from "../store/impersonationStore";
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 const baseURL = API_BASE_URL;
@@ -110,6 +111,10 @@ function isAuthEntryRequest(url = ""): boolean {
 async function refreshAccessToken(): Promise<string> {
   const { setAccessToken, clear } = useAuthStore.getState();
 
+  if (useImpersonationStore.getState().active) {
+    throw new Error("Impersonated session expired.");
+  }
+
   try {
     const { data } = await refreshClient.post("/auth/refresh", {});
     setAccessToken(data.access_token);
@@ -122,6 +127,19 @@ async function refreshAccessToken(): Promise<string> {
 
 export async function initializeSession(): Promise<void> {
   if (useAuthStore.getState().initialized) return;
+
+  const impersonation = useImpersonationStore.getState();
+  if (impersonation.active && impersonation.impersonatedToken && impersonation.impersonatedUser) {
+    try {
+      const { data: user } = await refreshClient.get("/auth/me", {
+        headers: { Authorization: `Bearer ${impersonation.impersonatedToken}` },
+      });
+      useAuthStore.getState().setSession(impersonation.impersonatedToken, user);
+      return;
+    } catch {
+      impersonation.end();
+    }
+  }
 
   try {
     const accessToken = await refreshAccessToken();
@@ -169,6 +187,9 @@ apiClient.interceptors.response.use(
         originalRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
         return apiClient(originalRequest);
       } catch {
+        if (useImpersonationStore.getState().active) {
+          useImpersonationStore.getState().end();
+        }
         window.location.href = "/";
         return Promise.reject(error);
       }
