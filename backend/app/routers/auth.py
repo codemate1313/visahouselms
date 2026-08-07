@@ -320,6 +320,8 @@ def google_callback(
             role = "STUDENT"
         else:
             user = auth_service.get_otp_login_user(db, google_email, _client_ip(request))
+            if role and user.role_name != role:
+                return _frontend_redirect(return_path, {"role": role, "google_error": "No active LMS account matches this Google email"})
     except HTTPException:
         return _frontend_redirect(return_path, {"role": role, "google_error": "No active LMS account matches this Google email"})
 
@@ -382,6 +384,11 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
         payload.password,
         _client_ip(request),
     )
+    if payload.role and user.role_name != payload.role:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+        )
     payload.device_id = device_identifier
     if _skips_login_otp(user):
         # Developer login: no emailed code. If the account has an authenticator
@@ -410,6 +417,11 @@ def google_request_otp(payload: GoogleOtpRequest, request: Request, response: Re
     _limit_login_attempt(request, payload.email)
     device_identifier = _device_identifier(request, response, payload.device_id)
     user = auth_service.get_otp_login_user(db, payload.email, _client_ip(request))
+    if payload.role and user.role_name != payload.role:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+        )
     payload.device_id = device_identifier
     return _otp_challenge_for(db, user, payload, "google_otp")
 

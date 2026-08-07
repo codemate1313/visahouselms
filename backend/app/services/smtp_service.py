@@ -42,9 +42,15 @@ def send_email(db: Session, to_address: str, subject: str, body: str, html_body:
     from_address = _require(db, "smtp.from_address")
 
     message = EmailMessage()
-    message["From"] = from_address
+    if "<" not in from_address and "@" in from_address:
+        message["From"] = f"Visa House <{from_address}>"
+    else:
+        message["From"] = from_address
     message["To"] = to_address
     message["Subject"] = subject
+    # Optimize headers for transactional deliverability (helps prevent moving to spam)
+    message["Auto-Submitted"] = "auto-generated"
+    message["MIME-Version"] = "1.0"
     message.set_content(body)
     if html_body:
         message.add_alternative(html_body, subtype="html")
