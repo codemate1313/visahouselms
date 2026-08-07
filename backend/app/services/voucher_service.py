@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Dict, List, Optional, Tuple
 
+import requests
 from fastapi import HTTPException, status
 from sqlalchemy import func, or_, and_
 from sqlalchemy.orm import Session, joinedload
@@ -242,15 +245,20 @@ def update_voucher_offering(db: Session, offering_id: int, title: str, price: De
 # ==========================================
 
 def get_stock_summary_for_type(db: Session, voucher_type_id: int) -> dict:
-    available = db.query(func.count(VoucherCode.id)).filter(VoucherCode.voucher_type_id == voucher_type_id, VoucherCode.status == "available").scalar() or 0
-    purchased = db.query(func.count(VoucherCode.id)).filter(VoucherCode.voucher_type_id == voucher_type_id, VoucherCode.status == "purchased").scalar() or 0
-    disabled = db.query(func.count(VoucherCode.id)).filter(VoucherCode.voucher_type_id == voucher_type_id, VoucherCode.status == "disabled").scalar() or 0
-    total = available + purchased + disabled
+    base = db.query(func.count(VoucherCode.id)).filter(VoucherCode.voucher_type_id == voucher_type_id)
+    available = base.filter(VoucherCode.status == "available").scalar() or 0
+    purchased = base.filter(VoucherCode.status == "purchased").scalar() or 0
+    disabled = base.filter(VoucherCode.status == "disabled").scalar() or 0
+    # Reserved = held for an in-flight checkout, not yet paid. Counted separately
+    # so the bucket adds up and a held code is not mistaken for sellable stock.
+    reserved = base.filter(VoucherCode.status == "reserved").scalar() or 0
+    total = available + purchased + disabled + reserved
     return {
         "total": total,
         "available": available,
         "purchased": purchased,
         "disabled": disabled,
+        "reserved": reserved,
     }
 
 
@@ -332,39 +340,108 @@ def _generate_purchase_number(db: Session) -> str:
     return f"VCH-{now_year}-{(count + 1):05d}"
 
 
-def process_voucher_purchase(db: Session, offering_id: int, buyer_name: str, buyer_email: str, buyer_phone: Optional[str] = None, student_user_id: Optional[int] = None, gateway: str = "demo", gateway_transaction_id: Optional[str] = None) -> dict:
-    offering = db.query(VoucherOffering).options(
-        joinedload(VoucherOffering.voucher_type),
-        joinedload(VoucherOffering.gst_rate),
-    ).filter(VoucherOffering.id == offering_id).first()
+# A reserved code is held for a pending purchase for this long; after it, the
+# reservation is released so an abandoned checkout does not lock a code away
+# forever.
+_RESERVATION_MINUTES = 30
 
+
+def _razorpay_credentials(db: Session) -> Tuple[Optional[str], Optional[str]]:
+    """(key_id, key_secret) if Razorpay is enabled and configured, else (None, None)."""
+    from app.services.settings_service import get_settings_group
+
+    gw = get_settings_group(db, "payment_gateways", mask_secrets=False)
+    if gw.get("razorpay_enabled") != "true":
+        return None, None
+    return gw.get("razorpay_key_id"), gw.get("razorpay_key_secret")
+
+
+def _release_stale_reservations(db: Session, voucher_type_id: int) -> None:
+    """Return codes reserved by pending purchases that were never paid to the
+    available pool, and fail those purchases. Runs before a new reservation so a
+    burst of abandoned checkouts cannot exhaust the stock."""
+    cutoff = _now() - timedelta(minutes=_RESERVATION_MINUTES)
+    stale = (
+        db.query(VoucherCode)
+        .join(VoucherPurchase, VoucherCode.purchase_id == VoucherPurchase.id)
+        .filter(
+            VoucherCode.voucher_type_id == voucher_type_id,
+            VoucherCode.status == "reserved",
+            VoucherPurchase.status == "pending",
+            VoucherPurchase.created_at < cutoff,
+        )
+        .all()
+    )
+    for code in stale:
+        purchase = db.get(VoucherPurchase, code.purchase_id) if code.purchase_id else None
+        code.status = "available"
+        code.purchase_id = None
+        if purchase is not None:
+            purchase.status = "failed"
+            purchase.voucher_code_id = None
+    if stale:
+        db.commit()
+
+
+def create_voucher_order(
+    db: Session,
+    offering_id: int,
+    buyer_name: str,
+    buyer_email: str,
+    buyer_phone: Optional[str] = None,
+    student_user_id: Optional[int] = None,
+) -> dict:
+    """Step 1 of a purchase: reserve a code and open a payment order.
+
+    A code is taken out of the available pool and marked `reserved` *before* the
+    buyer pays, so the platform never takes money for a voucher it cannot
+    deliver. The code is not handed over here - that happens only after the
+    payment is verified. If the gateway is not configured, nothing is reserved
+    and no sale is possible: a voucher is never given away without payment.
+    """
+    offering = (
+        db.query(VoucherOffering)
+        .options(joinedload(VoucherOffering.voucher_type), joinedload(VoucherOffering.gst_rate))
+        .filter(VoucherOffering.id == offering_id)
+        .first()
+    )
     if not offering or not offering.is_active:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Voucher offering is not available")
 
-    # Select next available code (with lock or immediate status update)
-    code_row = db.query(VoucherCode).filter(
+    _release_stale_reservations(db, offering.voucher_type_id)
+
+    key_id, key_secret = _razorpay_credentials(db)
+    if not key_id or not key_secret:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Online payment is not available right now. Please try again later.",
+        )
+
+    # Reserve the next available code. On Postgres this takes a row lock and
+    # skips already-locked rows so two buyers never grab the same code; on
+    # SQLite writes serialize, so the status flip is atomic either way.
+    code_query = db.query(VoucherCode).filter(
         VoucherCode.voucher_type_id == offering.voucher_type_id,
         VoucherCode.status == "available",
-    ).order_by(VoucherCode.id.asc()).first()
-
+    ).order_by(VoucherCode.id.asc())
+    if db.bind is not None and db.bind.dialect.name != "sqlite":
+        code_query = code_query.with_for_update(skip_locked=True)
+    code_row = code_query.first()
     if not code_row:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Currently out of stock for {offering.voucher_type.name} vouchers. Please contact support or try again later.",
+            detail=f"Currently out of stock for {offering.voucher_type.name} vouchers. Please try again later.",
         )
 
-    # Tax & Amount calculations
     price = offering.discount_price if offering.discount_price is not None else offering.price
     gst_percentage = offering.gst_rate.percentage if offering.gst_rate else Decimal("0.00")
-    gst_amount = (price * (gst_percentage / Decimal("100"))).round(2)
+    gst_amount = round(price * (gst_percentage / Decimal("100")), 2)
     final_amount = price + gst_amount
 
-    valid_until = _now() + timedelta(days=offering.validity_days)
-    purchase_no = _generate_purchase_number(db)
-
     purchase = VoucherPurchase(
-        purchase_number=purchase_no,
+        purchase_number=_generate_purchase_number(db),
         voucher_offering_id=offering.id,
+        voucher_code_id=code_row.id,
         student_id=student_user_id,
         buyer_name=buyer_name.strip(),
         buyer_email=buyer_email.strip().lower(),
@@ -375,53 +452,169 @@ def process_voucher_purchase(db: Session, offering_id: int, buyer_name: str, buy
         gst_amount=gst_amount,
         final_amount=final_amount,
         currency="INR",
-        gateway=gateway,
-        gateway_transaction_id=gateway_transaction_id or f"TXN-{_now().strftime('%Y%m%d%H%M%S')}",
-        status="completed",
-        valid_until=valid_until,
+        gateway="razorpay",
+        status="pending",
+        valid_until=_now() + timedelta(days=offering.validity_days),
     )
     db.add(purchase)
-    db.flush()  # Generate purchase.id
+    db.flush()
 
-    # Mark code as purchased
-    code_row.status = "purchased"
-    code_row.purchased_at = _now()
+    code_row.status = "reserved"
     code_row.purchase_id = purchase.id
-
-    purchase.voucher_code_id = code_row.id
+    db.add(code_row)
     db.commit()
-    db.refresh(purchase)
+
+    amount_paise = int(final_amount * 100)
+    try:
+        res = requests.post(
+            "https://api.razorpay.com/v1/orders",
+            auth=(key_id, key_secret),
+            json={
+                "amount": amount_paise,
+                "currency": "INR",
+                "receipt": f"vch_{purchase.id}",
+                "notes": {"voucher_purchase_id": str(purchase.id), "offering_id": str(offering.id)},
+            },
+            timeout=10,
+        )
+        if res.status_code != 200:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not start the payment. Please try again.")
+        order = res.json()
+    except requests.RequestException:
+        # Could not reach the gateway: release the reservation so the code is not
+        # stuck, and fail the purchase.
+        code_row.status = "available"
+        code_row.purchase_id = None
+        purchase.status = "failed"
+        purchase.voucher_code_id = None
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Payment service is unreachable. Please try again.")
+
+    purchase.gateway_transaction_id = order["id"]
+    db.add(purchase)
+    db.commit()
+
+    return {
+        "online_payment": True,
+        "gateway": "razorpay",
+        "purchase_id": purchase.id,
+        "order_id": order["id"],
+        "key_id": key_id,
+        "amount": amount_paise,
+        "currency": "INR",
+        "offering_title": offering.title,
+        "voucher_type": offering.voucher_type.name,
+        "buyer_name": purchase.buyer_name,
+        "buyer_email": purchase.buyer_email,
+    }
+
+
+def _complete_purchase(db: Session, purchase: VoucherPurchase) -> dict:
+    """Hand the reserved code over once payment is verified: flip it to sold,
+    stamp the purchase, and email the buyer. Idempotent - a second call on an
+    already-completed purchase just returns it."""
+    code_row = db.get(VoucherCode, purchase.voucher_code_id) if purchase.voucher_code_id else None
+    if code_row is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The reserved code is no longer available. Support has been notified.")
+
+    offering = (
+        db.query(VoucherOffering)
+        .options(joinedload(VoucherOffering.voucher_type))
+        .filter(VoucherOffering.id == purchase.voucher_offering_id)
+        .first()
+    )
+
+    # Only flip the code and email on the first completion. A repeat call (a
+    # double-verify, or re-serializing an already-completed purchase) returns the
+    # same data without sending a second code email or re-stamping the code.
+    already_done = purchase.status == "completed" and code_row.status == "purchased"
+    if not already_done:
+        code_row.status = "purchased"
+        code_row.purchased_at = _now()
+        purchase.status = "completed"
+        db.add_all([code_row, purchase])
+        db.commit()
+        db.refresh(purchase)
 
     formatted_code = format_voucher_code(code_row.code)
-
-    # Dispatch email notification silently (suppress exception if SMTP fails in local dev)
-    try:
-        smtp_service.send_voucher_purchase_email(
-            db=db,
-            to_email=purchase.buyer_email,
-            buyer_name=purchase.buyer_name,
-            voucher_name=offering.voucher_type.name,
-            code_16_digit=formatted_code,
-            valid_until_str=valid_until.strftime("%d %b %Y"),
-            amount_str=f"₹{final_amount:,.2f}",
-            purchase_number=purchase.purchase_number,
-        )
-    except Exception:
-        logger.exception("Failed to send voucher purchase email for purchase %s", purchase.purchase_number)
+    if not already_done:
+        try:
+            smtp_service.send_voucher_purchase_email(
+                db=db,
+                to_email=purchase.buyer_email,
+                buyer_name=purchase.buyer_name,
+                voucher_name=offering.voucher_type.name if offering else "Exam voucher",
+                code_16_digit=formatted_code,
+                valid_until_str=purchase.valid_until.strftime("%d %b %Y") if purchase.valid_until else "",
+                amount_str=f"₹{purchase.final_amount:,.2f}",
+                purchase_number=purchase.purchase_number,
+            )
+        except Exception:
+            logger.exception("Failed to send voucher purchase email for purchase %s", purchase.purchase_number)
 
     return {
         "purchase_id": purchase.id,
         "purchase_number": purchase.purchase_number,
         "buyer_name": purchase.buyer_name,
         "buyer_email": purchase.buyer_email,
-        "voucher_type": offering.voucher_type.name,
-        "offering_title": offering.title,
+        "voucher_type": offering.voucher_type.name if offering else None,
+        "offering_title": offering.title if offering else None,
         "voucher_code": formatted_code,
         "raw_code": code_row.code,
         "valid_until": purchase.valid_until,
         "final_amount": str(purchase.final_amount),
         "status": purchase.status,
     }
+
+
+def verify_voucher_payment(
+    db: Session,
+    purchase_id: int,
+    razorpay_payment_id: str,
+    razorpay_order_id: str,
+    razorpay_signature: str,
+) -> dict:
+    """Step 2: verify the gateway's signed receipt, then release the code.
+
+    The signature is checked against the stored secret - a forged or replayed
+    callback cannot unlock a code. Only on a valid signature is the code handed
+    over; an invalid one fails the purchase and returns the reserved code to the
+    pool so it can be sold to someone else.
+    """
+    purchase = db.get(VoucherPurchase, purchase_id)
+    if purchase is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Purchase not found")
+    if purchase.status == "completed":
+        return _complete_purchase(db, purchase)  # idempotent no-op re-serialize
+    if purchase.status != "pending":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This purchase can no longer be completed.")
+
+    from app.services.settings_service import get_settings_group
+
+    key_secret = get_settings_group(db, "payment_gateways", mask_secrets=False).get("razorpay_key_secret")
+    if not key_secret:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Razorpay is not configured")
+
+    expected = hmac.new(
+        key_secret.encode("utf-8"),
+        f"{razorpay_order_id}|{razorpay_payment_id}".encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    if not hmac.compare_digest(expected, razorpay_signature or ""):
+        # Reject and release the reserved code.
+        code_row = db.get(VoucherCode, purchase.voucher_code_id) if purchase.voucher_code_id else None
+        if code_row is not None and code_row.status == "reserved":
+            code_row.status = "available"
+            code_row.purchase_id = None
+        purchase.status = "failed"
+        purchase.voucher_code_id = None
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Payment could not be verified.")
+
+    purchase.gateway_transaction_id = f"Order: {razorpay_order_id} | Payment: {razorpay_payment_id}"
+    db.add(purchase)
+    return _complete_purchase(db, purchase)
 
 
 def get_student_purchased_vouchers(db: Session, student_id: int, student_email: Optional[str] = None) -> List[dict]:

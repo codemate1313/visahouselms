@@ -3,6 +3,7 @@ import { api } from "@/api/client";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { Button, Modal, Badge } from "@/components/ui";
+import { loadRazorpayScript, openRazorpayCheckout } from "@/utils/razorpay";
 import "@/styles/voucher-ui.css";
 import { formatDate } from "@/utils/date";
 import { formatCurrencyAmount } from "@/utils/currency";
@@ -104,19 +105,53 @@ export function StudentVouchers() {
     setPurchasing(true);
     try {
       const buyerName = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email;
-      const res = await api.post("/vouchers/public/purchase", {
+
+      if (!(await loadRazorpayScript())) {
+        showError("Could not load the payment window. Please try again.");
+        setPurchasing(false);
+        return;
+      }
+
+      // Step 1: reserve a code and open a payment order tied to this student.
+      const { data: order } = await api.post("/vouchers/student/order", {
         offering_id: offering.id,
         buyer_name: buyerName,
         buyer_email: user.email,
         buyer_phone: user.phone_number || null,
-        gateway: "demo",
       });
-      showSuccess(`Voucher purchased successfully. Code: ${res.data.voucher_code}`);
-      fetchData();
-      setActiveTab("my_vouchers");
+
+      openRazorpayCheckout({
+        keyId: order.key_id,
+        orderId: order.order_id,
+        amount: order.amount,
+        currency: order.currency,
+        description: order.offering_title,
+        prefillName: buyerName,
+        prefillEmail: user.email,
+        onSuccess: async (response) => {
+          try {
+            // Step 2: verify the receipt, then the code is released.
+            const { data } = await api.post("/vouchers/student/verify", {
+              purchase_id: order.purchase_id,
+              ...response,
+            });
+            showSuccess(`Payment confirmed. Your voucher code: ${data.voucher_code}`);
+            fetchData();
+            setActiveTab("my_vouchers");
+          } catch (err: any) {
+            showError(err.response?.data?.detail || "We could not confirm your payment. If you were charged, contact support.");
+          } finally {
+            setPurchasing(false);
+          }
+        },
+        onDismiss: () => setPurchasing(false),
+        onFailure: (message) => {
+          showError(message);
+          setPurchasing(false);
+        },
+      });
     } catch (err: any) {
-      showError(err.response?.data?.detail || "Purchase failed. Please try again.");
-    } finally {
+      showError(err.response?.data?.detail || "Could not start the purchase. Please try again.");
       setPurchasing(false);
     }
   }
@@ -133,34 +168,30 @@ export function StudentVouchers() {
   return (
     <div className="voucher-ui-scope p-6 max-w-7xl mx-auto space-y-6">
       {/* Header Banner */}
-      <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div className="voucher-header-banner p-8 rounded-3xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-2 max-w-2xl">
-          <span className="px-3 py-1 bg-sky-500/20 text-sky-300 border border-sky-400/30 text-xs font-bold rounded-full uppercase tracking-wider">
+          <span className="voucher-header-badge px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider">
             Exam Voucher Portal
           </span>
           <h1 className="text-3xl font-extrabold tracking-tight">Buy & Manage Test Vouchers</h1>
-          <p className="text-slate-300 text-sm">
+          <p className="voucher-header-desc text-sm">
             Purchase 16-digit official exam voucher codes for IELTS, PTE, and more with instant activation.
           </p>
         </div>
 
-        <div className="flex bg-slate-800 p-1.5 rounded-2xl border border-slate-700">
+        <div className="voucher-tab-container flex p-1.5 rounded-2xl">
           <button
             onClick={() => setActiveTab("my_vouchers")}
-            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all ${
-              activeTab === "my_vouchers"
-                ? "bg-sky-500 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
+            className={`voucher-tab-btn px-5 py-2.5 rounded-xl font-bold text-xs transition-all ${
+              activeTab === "my_vouchers" ? "active" : ""
             }`}
           >
             My Purchased Vouchers ({myVouchers.length})
           </button>
           <button
             onClick={() => setActiveTab("browse")}
-            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all ${
-              activeTab === "browse"
-                ? "bg-sky-500 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
+            className={`voucher-tab-btn px-5 py-2.5 rounded-xl font-bold text-xs transition-all ${
+              activeTab === "browse" ? "active" : ""
             }`}
           >
             Browse Vouchers

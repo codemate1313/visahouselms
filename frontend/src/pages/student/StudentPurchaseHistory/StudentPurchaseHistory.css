@@ -20,8 +20,8 @@
 }
 
 .purchase-stat-card {
-  background: var(--surface-bg, #ffffff);
-  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 0.875rem 1.125rem;
   display: flex;
@@ -79,14 +79,14 @@
   margin: 0.15rem 0 0 0;
   font-size: 1.15rem;
   font-weight: 800;
-  color: var(--text-primary, #0f172a);
+  color: var(--text);
   letter-spacing: -0.02em;
 }
 
 /* Concise Filter Toolbar Bar */
 .purchase-filters-bar {
-  background: var(--surface-bg, #ffffff);
-  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 0.625rem 1rem;
   display: flex;
@@ -109,8 +109,8 @@
 
 .btn-clear-filters {
   background: transparent;
-  border: 1px dashed var(--border-color, #cbd5e1);
-  color: var(--text-muted, #64748b);
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
   padding: 0.4rem 0.75rem;
   border-radius: var(--radius-sm);
   font-size: 0.775rem;
@@ -131,8 +131,8 @@
 
 /* Main High-Density Table Card */
 .purchase-history-card {
-  background: var(--surface-bg, #ffffff);
-  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.03);
   overflow: hidden;
@@ -147,11 +147,11 @@
 }
 
 .purchase-history-table th {
-  background: var(--surface-subtle, #f8fafc);
-  color: var(--text-muted, #475569);
+  background: var(--surface-muted);
+  color: var(--text-muted);
   font-weight: 700;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  border-bottom: 1px solid var(--border);
   text-transform: uppercase;
   font-size: 0.7rem;
   letter-spacing: 0.06em;
@@ -159,8 +159,8 @@
 
 .purchase-history-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-subtle, #f1f5f9);
-  color: var(--text-primary, #0f172a);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
   vertical-align: middle;
 }
 
@@ -175,11 +175,11 @@
 .invoice-badge {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 700;
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--surface-muted);
+  color: var(--info);
   padding: 0.25rem 0.55rem;
   border-radius: var(--radius-xs);
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--border);
   font-size: 0.8rem;
   display: inline-block;
   letter-spacing: 0.02em;
@@ -219,7 +219,7 @@
 .validity-days-text {
   font-weight: 600;
   font-size: 0.85rem;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .sub-status-chip {
@@ -286,7 +286,7 @@
 }
 
 .student-invoice-modal {
-  background: #ffffff;
+  background: var(--surface);
   width: 100%;
   max-width: 680px;
   max-height: 90vh;
@@ -295,7 +295,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .student-invoice-header {
@@ -337,7 +337,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--border);
   padding-bottom: 1rem;
   margin-bottom: 1.25rem;
 }
@@ -373,10 +373,10 @@
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
   margin-bottom: 1.25rem;
-  background: #f8fafc;
+  background: var(--surface-muted);
   padding: 1rem 1.25rem;
   border-radius: var(--radius-md);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
 }
 
 .invoice-meta-block label {
@@ -391,7 +391,7 @@
 .invoice-meta-block p {
   margin: 0;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .invoice-table {
@@ -403,25 +403,25 @@
 .invoice-table th {
   text-align: left;
   padding: 0.65rem 0.875rem;
-  background: #f1f5f9;
+  background: var(--surface-muted);
   font-size: 0.725rem;
   text-transform: uppercase;
-  color: #475569;
+  color: var(--text-muted);
   font-weight: 700;
 }
 
 .invoice-table td {
   padding: 0.75rem 0.875rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .invoice-summary-box {
   margin-left: auto;
   width: 260px;
-  background: #f8fafc;
+  background: var(--surface-muted);
   border-radius: var(--radius-sm);
   padding: 0.875rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
 }
 
 .invoice-summary-row {
@@ -432,18 +432,18 @@
 }
 
 .invoice-summary-row.total {
-  border-top: 2px solid #cbd5e1;
+  border-top: 2px solid var(--border);
   padding-top: 0.4rem;
   font-weight: 800;
   font-size: 1rem;
-  color: #0f172a;
+  color: var(--text);
   margin-bottom: 0;
 }
 
 .student-invoice-footer {
   padding: 0.875rem 1.5rem;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
+  background: var(--surface-muted);
+  border-top: 1px solid var(--border);
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
@@ -506,4 +506,27 @@
   .student-invoice-footer {
     display: none !important;
   }
+}
+
+[data-theme="dark"] .btn-view-invoice {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #f87171;
+}
+
+[data-theme="dark"] .btn-view-invoice:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 3px 10px rgba(220, 38, 38, 0.35);
+}
+
+[data-theme="dark"] .btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
 }

@@ -3,6 +3,19 @@ import { api } from "@/api/client";
 import { useToastStore } from "@/store/toastStore";
 import "@/styles/voucher-ui.css";
 import { formatDate } from "@/utils/date";
+import { loadRazorpayScript, openRazorpayCheckout } from "@/utils/razorpay";
+
+interface VoucherOrder {
+  online_payment: boolean;
+  purchase_id: number;
+  order_id: string;
+  key_id: string;
+  amount: number;
+  currency: string;
+  offering_title: string;
+  buyer_name: string;
+  buyer_email: string;
+}
 
 interface VoucherOffering {
   id: number;
@@ -69,19 +82,55 @@ export function VouchersSection() {
 
     setSubmitting(true);
     try {
-      const res = await api.post<PurchaseSuccess>("/vouchers/public/purchase", {
+      // Load the checkout script first; without it there is no way to pay, so
+      // there is no point reserving a code.
+      if (!(await loadRazorpayScript())) {
+        showError("Could not load the payment window. Please try again.");
+        setSubmitting(false);
+        return;
+      }
+
+      // Step 1: reserve a code and open a real payment order. No code is issued
+      // until the payment is verified below.
+      const { data: order } = await api.post<VoucherOrder>("/vouchers/public/order", {
         offering_id: selectedOffering.id,
         buyer_name: buyerName,
         buyer_email: buyerEmail,
         buyer_phone: buyerPhone || null,
-        gateway: "demo",
       });
 
-      setPurchaseSuccess(res.data);
-      setSelectedOffering(null);
+      openRazorpayCheckout({
+        keyId: order.key_id,
+        orderId: order.order_id,
+        amount: order.amount,
+        currency: order.currency,
+        description: order.offering_title,
+        prefillName: buyerName,
+        prefillEmail: buyerEmail,
+        onSuccess: async (response) => {
+          // Step 2: the backend verifies the signed receipt and only then
+          // returns the code.
+          try {
+            const { data } = await api.post<PurchaseSuccess>("/vouchers/public/verify", {
+              purchase_id: order.purchase_id,
+              ...response,
+            });
+            setPurchaseSuccess(data);
+            setSelectedOffering(null);
+          } catch (err: any) {
+            showError(err.response?.data?.detail || "We could not confirm your payment. If you were charged, contact support with your purchase reference.");
+          } finally {
+            setSubmitting(false);
+          }
+        },
+        onDismiss: () => setSubmitting(false),
+        onFailure: (message) => {
+          showError(message);
+          setSubmitting(false);
+        },
+      });
     } catch (err: any) {
-      showError(err.response?.data?.detail || "Voucher purchase failed. Please try again.");
-    } finally {
+      showError(err.response?.data?.detail || "Could not start the purchase. Please try again.");
       setSubmitting(false);
     }
   }

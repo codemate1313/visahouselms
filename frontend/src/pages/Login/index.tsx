@@ -78,6 +78,29 @@ export function Login({
   const [rememberMe, setRememberMe] = useState(true);
   const [otpChallengeId, setOtpChallengeId] = useState<string | null>(null);
   const [otpCode, setOtpCode] = useState("");
+  const [otpValues, setOtpValues] = useState<string[]>(Array(6).fill(""));
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    setOtpCode(otpValues.join(""));
+  }, [otpValues]);
+
+  useEffect(() => {
+    if (otpChallengeId) {
+      setOtpValues(Array(6).fill(""));
+      document.body.classList.add("has-otp-overlay");
+      // Focus first input box
+      setTimeout(() => {
+        otpRefs.current[0]?.focus();
+      }, 50);
+    } else {
+      document.body.classList.remove("has-otp-overlay");
+    }
+    return () => {
+      document.body.classList.remove("has-otp-overlay");
+    };
+  }, [otpChallengeId]);
+
   const [totpRequired, setTotpRequired] = useState(false);
   const [totpCode, setTotpCode] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
@@ -231,6 +254,50 @@ export function Login({
     });
     window.location.href = `${API_BASE_URL}/auth/google/login?${params.toString()}`;
   }
+
+  const handleOtpChange = (value: string, index: number) => {
+    const cleanValue = value.replace(/\D/g, "");
+    if (!cleanValue) {
+      const newValues = [...otpValues];
+      newValues[index] = "";
+      setOtpValues(newValues);
+      return;
+    }
+
+    const newValues = [...otpValues];
+    const val = cleanValue.substring(cleanValue.length - 1);
+    newValues[index] = val;
+    setOtpValues(newValues);
+
+    if (index < 5 && val) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === "Backspace") {
+      if (!otpValues[index] && index > 0) {
+        const newValues = [...otpValues];
+        newValues[index - 1] = "";
+        setOtpValues(newValues);
+        otpRefs.current[index - 1]?.focus();
+      } else {
+        const newValues = [...otpValues];
+        newValues[index] = "";
+        setOtpValues(newValues);
+      }
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData("text").replace(/\D/g, "").substring(0, 6);
+    if (pasteData.length === 6) {
+      const newValues = pasteData.split("");
+      setOtpValues(newValues);
+      otpRefs.current[5]?.focus();
+    }
+  };
 
   async function handleOtpSubmit(event: FormEvent) {
     event.preventDefault();
@@ -424,18 +491,25 @@ export function Login({
             <p className="logout-modal-description">
               {strings.otpDescription}
             </p>
-            <label className="otp-code-label" htmlFor="login-otp-code">{strings.otpLabel}</label>
-            <input
-              id="login-otp-code"
-              className="otp-code-input"
-              value={otpCode}
-              onChange={(event) => setOtpCode(event.target.value)}
-              placeholder={strings.otpPlaceholder}
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              autoFocus
-              required
-            />
+            <label className="otp-code-label">{strings.otpLabel}</label>
+            <div className="otp-inputs-container">
+              {otpValues.map((val, idx) => (
+                <input
+                  key={idx}
+                  ref={(el) => { otpRefs.current[idx] = el; }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={val}
+                  onChange={(e) => handleOtpChange(e.target.value, idx)}
+                  onKeyDown={(e) => handleOtpKeyDown(e, idx)}
+                  onPaste={handleOtpPaste}
+                  className="otp-box-input"
+                  autoComplete="one-time-code"
+                  required
+                />
+              ))}
+            </div>
             {otpError && <div className="concise-error-box otp-error-box">{otpError}</div>}
             <div className="logout-modal-actions">
               <button

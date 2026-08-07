@@ -64,12 +64,18 @@ class VoucherCodeUpdate(BaseModel):
     voucher_type_id: int
 
 
-class PublicVoucherPurchaseRequest(BaseModel):
+class VoucherOrderRequest(BaseModel):
     offering_id: int
     buyer_name: str
     buyer_email: str
     buyer_phone: Optional[str] = None
-    gateway: Optional[str] = "demo"
+
+
+class VoucherVerifyRequest(BaseModel):
+    purchase_id: int
+    razorpay_payment_id: str
+    razorpay_order_id: str
+    razorpay_signature: str
 
 
 # ==========================================
@@ -82,20 +88,62 @@ def get_public_voucher_offerings(db: Session = Depends(get_db)):
     return voucher_service.list_voucher_offerings(db, include_inactive=False)
 
 
-@router.post("/public/purchase")
-def purchase_voucher_public(req: PublicVoucherPurchaseRequest, db: Session = Depends(get_db)):
-    """Process instant payment and assign 16-digit voucher code."""
+@router.post("/public/order")
+def create_voucher_order_public(req: VoucherOrderRequest, db: Session = Depends(get_db)):
+    """Step 1: reserve a code and open a payment order. No code is issued yet."""
     if not req.buyer_name or not req.buyer_email:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name and Email are required")
-
-    return voucher_service.process_voucher_purchase(
+    return voucher_service.create_voucher_order(
         db=db,
         offering_id=req.offering_id,
         buyer_name=req.buyer_name,
         buyer_email=req.buyer_email,
         buyer_phone=req.buyer_phone,
         student_user_id=None,
-        gateway=req.gateway or "demo",
+    )
+
+
+@router.post("/public/verify")
+def verify_voucher_public(req: VoucherVerifyRequest, db: Session = Depends(get_db)):
+    """Step 2: verify the payment receipt, then release the code to the buyer."""
+    return voucher_service.verify_voucher_payment(
+        db=db,
+        purchase_id=req.purchase_id,
+        razorpay_payment_id=req.razorpay_payment_id,
+        razorpay_order_id=req.razorpay_order_id,
+        razorpay_signature=req.razorpay_signature,
+    )
+
+
+@router.post("/student/order")
+def create_voucher_order_student(
+    req: VoucherOrderRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Same as the public order, but ties the purchase to the signed-in student."""
+    return voucher_service.create_voucher_order(
+        db=db,
+        offering_id=req.offering_id,
+        buyer_name=req.buyer_name or f"{current_user.first_name} {current_user.last_name}".strip(),
+        buyer_email=req.buyer_email or current_user.email,
+        buyer_phone=req.buyer_phone,
+        student_user_id=current_user.id,
+    )
+
+
+@router.post("/student/verify")
+def verify_voucher_student(
+    req: VoucherVerifyRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return voucher_service.verify_voucher_payment(
+        db=db,
+        purchase_id=req.purchase_id,
+        razorpay_payment_id=req.razorpay_payment_id,
+        razorpay_order_id=req.razorpay_order_id,
+        razorpay_signature=req.razorpay_signature,
     )
 
 

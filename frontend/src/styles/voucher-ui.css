@@ -393,3 +393,80 @@
   color: #f2f2f5;
 }
 [data-theme="dark"] .voucher-ui-scope .vh-pub-done-btn:hover { background: rgba(255, 255, 255, 0.1); }
+
+/* Voucher Portal Segmented Tab Buttons (prevents raw button selector pollution) */
+.voucher-ui-scope .voucher-tab-btn {
+  background: transparent !important;
+  color: #94a3b8 !important; /* slate-400 */
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  padding: 10px 20px !important;
+  transition: all 0.2s ease !important;
+}
+
+.voucher-ui-scope .voucher-tab-btn:hover {
+  color: #ffffff !important;
+  background: transparent !important;
+}
+
+.voucher-ui-scope .voucher-tab-btn.active {
+  background: var(--primary) !important; /* matches Visa House red primary brand color */
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px var(--primary-soft) !important;
+}
+
+/* Themeable Header Banner & Segmented Tabs */
+.voucher-ui-scope .voucher-header-banner {
+  background: var(--slate-900, #0f172a);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+  transition: background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.voucher-ui-scope .voucher-header-desc {
+  color: var(--slate-300, #cbd5e1);
+}
+
+.voucher-ui-scope .voucher-header-badge {
+  background: rgba(14, 165, 233, 0.2); /* bg-sky-500/20 */
+  color: #7dd3fc; /* text-sky-300 */
+  border: 1px solid rgba(56, 189, 248, 0.3); /* border-sky-400/30 */
+}
+
+.voucher-ui-scope .voucher-tab-container {
+  background: #1e293b; /* bg-slate-800 */
+  border: 1px solid rgba(100, 116, 139, 0.5); /* border-slate-700 */
+}
+
+/* LIGHT THEME OVERRIDES */
+[data-theme="light"] .voucher-ui-scope .voucher-header-banner {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .voucher-ui-scope .voucher-header-desc {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .voucher-ui-scope .voucher-header-badge {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+[data-theme="light"] .voucher-ui-scope .voucher-tab-container {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+}
+
+[data-theme="light"] .voucher-ui-scope .voucher-tab-btn {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="light"] .voucher-ui-scope .voucher-tab-btn:hover {
+  color: var(--text) !important;
+}

@@ -248,11 +248,40 @@ def fetch_real_time_news() -> List[dict]:
         return []
 
 
+import threading
+
+_NEWS_LOCK = threading.Lock()
+_UPDATE_THREAD_ACTIVE = False
+_TESTING = False
+
+def _bg_update_news():
+    global _NEWS_CACHE, _NEWS_CACHE_TIME, _UPDATE_THREAD_ACTIVE
+    try:
+        real_time = fetch_real_time_news()
+        if real_time:
+            seen = {item["title"].lower().strip() for item in real_time}
+            merged = list(real_time)
+            for curated in EXAM_NEWS:
+                if curated["title"].lower().strip() not in seen:
+                    merged.append(curated)
+            sorted_news = sorted(merged, key=lambda item: item["published_at"], reverse=True)
+            with _NEWS_LOCK:
+                _NEWS_CACHE = sorted_news
+                _NEWS_CACHE_TIME = time.time()
+    except Exception:
+        pass
+    finally:
+        with _NEWS_LOCK:
+            _UPDATE_THREAD_ACTIVE = False
+
+
 def list_exam_news() -> List[dict]:
-    """Merged feed (real time + curated) sorted newest first, cached for 1 hour."""
-    global _NEWS_CACHE, _NEWS_CACHE_TIME
+    """Merged feed (real time + curated) sorted newest first, updated asynchronously in background."""
+    global _NEWS_CACHE, _NEWS_CACHE_TIME, _UPDATE_THREAD_ACTIVE, _TESTING
     now = time.time()
-    if _NEWS_CACHE is None or (now - _NEWS_CACHE_TIME) > _CACHE_DURATION:
+
+    if _TESTING:
+        # Run synchronously for unit tests
         real_time = fetch_real_time_news()
         seen = {item["title"].lower().strip() for item in real_time}
         merged = list(real_time)
@@ -261,11 +290,36 @@ def list_exam_news() -> List[dict]:
                 merged.append(curated)
         _NEWS_CACHE = sorted(merged, key=lambda item: item["published_at"], reverse=True)
         _NEWS_CACHE_TIME = now
-    return _NEWS_CACHE
+        return _NEWS_CACHE
+
+    # 1. If cache is completely empty, initialize it with static EXAM_NEWS instantly
+    if _NEWS_CACHE is None:
+        with _NEWS_LOCK:
+            _NEWS_CACHE = sorted(EXAM_NEWS, key=lambda item: item["published_at"], reverse=True)
+            # Mark it as almost expired so it triggers background fetch immediately
+            _NEWS_CACHE_TIME = now - _CACHE_DURATION + 60
+
+    # 2. Check if cache needs updating and update thread is not already running
+    if (now - _NEWS_CACHE_TIME) > _CACHE_DURATION:
+        should_start_thread = False
+        with _NEWS_LOCK:
+            if not _UPDATE_THREAD_ACTIVE:
+                _UPDATE_THREAD_ACTIVE = True
+                should_start_thread = True
+
+        if should_start_thread:
+            t = threading.Thread(target=_bg_update_news, daemon=True)
+            t.start()
+
+    # 3. Return whatever is in cache (either populated curated fallback or last successful fetch)
+    with _NEWS_LOCK:
+        return list(_NEWS_CACHE)
 
 
 def clear_news_cache() -> None:
     """Clear memory cache (primarily for unit tests)."""
-    global _NEWS_CACHE, _NEWS_CACHE_TIME
-    _NEWS_CACHE = None
-    _NEWS_CACHE_TIME = 0
+    global _NEWS_CACHE, _NEWS_CACHE_TIME, _UPDATE_THREAD_ACTIVE
+    with _NEWS_LOCK:
+        _NEWS_CACHE = None
+        _NEWS_CACHE_TIME = 0
+        _UPDATE_THREAD_ACTIVE = False

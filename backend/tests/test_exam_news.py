@@ -22,8 +22,10 @@ MOCK_XML = """<?xml version="1.0" encoding="utf-8"?>
 class ExamNewsServiceTests(unittest.TestCase):
     def setUp(self) -> None:
         exam_news_service.clear_news_cache()
+        exam_news_service._TESTING = True
 
     def tearDown(self) -> None:
+        exam_news_service._TESTING = False
         exam_news_service.clear_news_cache()
 
     @patch("urllib.request.urlopen")

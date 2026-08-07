@@ -881,6 +881,44 @@ h1 {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
+.otp-inputs-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.otp-box-input {
+  width: 44px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.34));
+  background: var(--surface-muted, rgba(15, 23, 42, 0.72));
+  color: var(--text, #f8fafc);
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+
+.otp-box-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+  transform: scale(1.05);
+}
+
+body.has-otp-overlay #root {
+  filter: blur(12px);
+  pointer-events: none;
+  transition: filter 0.25s ease;
+}
+
+.otp-login-backdrop {
+  background: rgba(10, 11, 15, 0.65) !important;
+}
+
 .otp-error-box {
   width: 100%;
   margin-bottom: 14px;
