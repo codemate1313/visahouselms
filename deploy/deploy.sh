@@ -17,7 +17,7 @@ git pull
 # 2. Update Backend Python environment
 echo "🐍 Updating backend packages..."
 cd backend
-source .venv/bin/activate
+source venv/bin/activate 2>/dev/null || source .venv/bin/activate 2>/dev/null || true
 pip install -r requirements.txt
 
 # 3. Run migrations
