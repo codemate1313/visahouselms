@@ -226,51 +226,52 @@ export function Home() {
           </div>
           <div className="vh-steps-grid">
             {STEP_CARDS.map((s, i) => (
-              <div
-                className={`vh-flip vh-reveal ${flippedStepCards[s.num] ? "is-flipped" : ""}`}
-                key={s.num}
-                onClick={() => toggleStepCardFlip(s.num)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    toggleStepCardFlip(s.num);
-                  }
-                }}
-              >
-                <div className="vh-flip-inner">
-                  <div className="vh-face vh-step-face-front">
-                    <div className="vh-step-face-front-top">
-                      <div className="vh-step-num-badge">{s.num}</div>
-                      <div style={{ opacity: 0.75 }}>
-                        <StepIcon index={i} />
+              <div className="vh-reveal" key={s.num}>
+                <div
+                  className={`vh-flip ${flippedStepCards[s.num] ? "is-flipped" : ""}`}
+                  onClick={() => toggleStepCardFlip(s.num)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggleStepCardFlip(s.num);
+                    }
+                  }}
+                >
+                  <div className="vh-flip-inner">
+                    <div className="vh-face vh-step-face-front">
+                      <div className="vh-step-face-front-top">
+                        <div className="vh-step-num-badge">{s.num}</div>
+                        <div style={{ opacity: 0.75 }}>
+                          <StepIcon index={i} />
+                        </div>
+                      </div>
+                      <div>
+                        <h3>{s.title}</h3>
+                        <p>{s.desc}</p>
+                      </div>
+                      <div className="vh-step-hover-hint">
+                        Click / hover for details
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 12a9 9 0 1 1-6.2-8.55" />
+                          <path d="m17 3 4 4-4 4" />
+                        </svg>
                       </div>
                     </div>
-                    <div>
-                      <h3>{s.title}</h3>
-                      <p>{s.desc}</p>
+                    <div className="vh-face vh-back vh-step-face-back">
+                      <div className="vh-step-back-eyebrow">Step {s.num} · what you get</div>
+                      {s.points.map((point) => (
+                        <div className="vh-step-point" key={point}>
+                          <span className="vh-step-point-badge">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 6 9 17l-5-5" />
+                            </svg>
+                          </span>
+                          <span>{point}</span>
+                        </div>
+                      ))}
                     </div>
-                    <div className="vh-step-hover-hint">
-                      Click / hover for details
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 12a9 9 0 1 1-6.2-8.55" />
-                        <path d="m17 3 4 4-4 4" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="vh-face vh-back vh-step-face-back">
-                    <div className="vh-step-back-eyebrow">Step {s.num} · what you get</div>
-                    {s.points.map((point) => (
-                      <div className="vh-step-point" key={point}>
-                        <span className="vh-step-point-badge">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20 6 9 17l-5-5" />
-                          </svg>
-                        </span>
-                        <span>{point}</span>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </div>
