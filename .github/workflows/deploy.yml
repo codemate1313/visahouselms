@@ -21,6 +21,7 @@ jobs:
             cd /var/www/visahouse
 
             # 1. Pull the latest commits from GitHub
+            git config --global --add safe.directory /var/www/visahouse
             git fetch origin main
             git reset --hard origin/main
 
@@ -37,7 +38,10 @@ jobs:
             npm run build
             cd ..
 
-            # 4. Restart backend services
+            # 4. Reset file permissions for service user
+            chown -R www-data:www-data /var/www/visahouse
+
+            # 5. Restart backend services
             systemctl restart visahouse-backend
 
             echo "✨ Deployment successful!"
