@@ -45,7 +45,6 @@ export const PUBLIC_FOOTER_COLUMNS: PublicFooterColumn[] = [
       { label: "Student Portal", url: "/login?role=STUDENT" },
       { label: "Institute Portal", url: "/login?role=INSTITUTE_ADMIN" },
       { label: "Instructor Portal", url: "/login?role=INST_INSTRUCTOR" },
-      { label: "Platform Admin", url: "/super-admin/login" },
     ],
   },
   {
@@ -54,7 +53,6 @@ export const PUBLIC_FOOTER_COLUMNS: PublicFooterColumn[] = [
       { label: "Request for Institute", url: "/institute-signup" },
       { label: "For Institutes", url: "/" },
       { label: "Resources", url: "/blogs" },
-      { label: "Blog", url: "/blogs" },
     ],
   },
 ];

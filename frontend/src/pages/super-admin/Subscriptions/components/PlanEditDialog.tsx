@@ -59,7 +59,7 @@ function toForm(values: InstitutePlanEditValues): EditForm {
   return {
     agreement_reference: values.agreement_reference,
     agreement_notes: values.agreement_notes,
-    agreed_amount: values.agreed_amount,
+    agreed_amount: values.agreed_amount ? String(Number(values.agreed_amount)) : "",
     currency: values.currency,
     student_limit: String(values.student_limit),
     staff_limit: String(values.staff_limit),

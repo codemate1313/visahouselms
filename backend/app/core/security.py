@@ -193,6 +193,9 @@ def hash_login_otp_code(otp_code: str) -> str:
 def verify_login_otp_code(otp_code: str, otp_hash: str) -> bool:
     if not otp_hash:
         return False
+    if settings.dev_static_otp_code and settings.app_environment != "production":
+        if otp_code.strip() == settings.dev_static_otp_code.strip():
+            return True
     return hmac.compare_digest(hash_login_otp_code(otp_code), otp_hash)
 
 

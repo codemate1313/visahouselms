@@ -110,22 +110,22 @@ class LoginOtpSecurityTests(unittest.TestCase):
         self.assertFalse(verify_login_otp_code("000000" if otp != "000000" else "000001", otp_hash))
 
     def test_static_dev_otp_still_goes_through_real_hash_verification(self) -> None:
-        with mock.patch.object(settings, "dev_static_otp_code", "12345"), \
+        with mock.patch.object(settings, "dev_static_otp_code", "123456"), \
                 mock.patch.object(settings, "app_environment", "development"):
             otp = generate_login_otp_code()
-        self.assertEqual(otp, "12345")
+        self.assertEqual(otp, "123456")
         otp_hash = hash_login_otp_code(otp)
         self.assertNotIn(otp, otp_hash)
         self.assertTrue(verify_login_otp_code(otp, otp_hash))
         # A fixed code must not turn into an "any code works" bypass.
-        self.assertFalse(verify_login_otp_code("54321", otp_hash))
+        self.assertFalse(verify_login_otp_code("654321", otp_hash))
 
     def test_static_dev_otp_is_ignored_outside_development(self) -> None:
-        with mock.patch.object(settings, "dev_static_otp_code", "12345"), \
+        with mock.patch.object(settings, "dev_static_otp_code", "123456"), \
                 mock.patch.object(settings, "app_environment", "production"):
             otp = generate_login_otp_code()
         self.assertRegex(otp, r"^\d{6}$")
-        self.assertNotEqual(otp, "12345")
+        self.assertNotEqual(otp, "123456")
 
     def test_production_settings_reject_a_static_otp_code(self) -> None:
         with self.assertRaises(ValueError):
@@ -136,7 +136,7 @@ class LoginOtpSecurityTests(unittest.TestCase):
                 app_environment="production",
                 settings_encryption_key=Fernet.generate_key().decode("utf-8"),
                 allowed_hosts="api.example.com",
-                dev_static_otp_code="12345",
+                dev_static_otp_code="123456",
             )
 
 

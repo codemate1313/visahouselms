@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, ScrollRestoration } from "react-router-dom";
 import { consumeLogoutRedirect } from "../../auth/logoutRedirect";
 
 export function LandingLayout() {
@@ -9,5 +9,15 @@ export function LandingLayout() {
     consumeLogoutRedirect();
   }, [location.pathname]);
 
-  return <Outlet />;
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  return (
+    <>
+      <ScrollRestoration />
+      <Outlet />
+    </>
+  );
 }
+

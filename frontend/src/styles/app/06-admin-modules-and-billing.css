@@ -7033,6 +7033,10 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 }
 
 .plan-feature-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   margin-top: 10px;
   padding: 8px 14px;
   border-radius: var(--radius-sm);
@@ -7042,6 +7046,11 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.plan-feature-add svg {
+  flex-shrink: 0;
+  display: block;
 }
 
 .plan-feature-add:hover:not(:disabled) {

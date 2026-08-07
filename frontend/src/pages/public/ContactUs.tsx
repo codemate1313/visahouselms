@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { apiClient, API_BASE_URL } from "@/api/client";
 import { PublicHeader } from "@/components/publicSite/PublicHeader";
@@ -39,7 +39,8 @@ const EMPTY_QUERY_FORM = { name: "", email: "", subject: "", message: "" };
 
 function getInitialFormType(search: string): FormType {
   const params = new URLSearchParams(search);
-  if (params.get("plan") || params.get("form") === "partner") return "partner";
+  const form = params.get("form") || params.get("type") || params.get("tab");
+  if (params.get("plan") || form === "partner" || form === "institute") return "partner";
   return "query";
 }
 
@@ -66,10 +67,29 @@ export function ContactUs() {
   const contactSettings = useContactSettings();
   const goAuth = () => navigate(user ? destinationFor(user) ?? "/" : "/login");
   const rootRef = useMemo(() => ({ current: null as HTMLDivElement | null }), []);
+  const formSectionRef = useRef<HTMLElement | null>(null);
   useRevealOnScroll(rootRef);
 
   const [institutePlans, setInstitutePlans] = useState<LandingPlan[]>([]);
   const [formType, setFormType] = useState<FormType>(() => getInitialFormType(location.search));
+
+  useEffect(() => {
+    setFormType(getInitialFormType(location.search));
+  }, [location.search]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const form = params.get("form") || params.get("type") || params.get("tab");
+    if (params.get("plan") || form === "partner" || form === "institute") {
+      const timer = setTimeout(() => {
+        if (formSectionRef.current) {
+          const y = formSectionRef.current.getBoundingClientRect().top + window.scrollY - 100;
+          window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+        }
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [location.search]);
 
   const [partner, setPartner] = useState(EMPTY_PARTNER_FORM);
   const [partnerStatus, setPartnerStatus] = useState<FormStatus | null>(null);
@@ -189,7 +209,7 @@ export function ContactUs() {
           <p>Fill in the form, or use the direct channels below. We reply within one working day.</p>
         </section>
 
-        <section className="vh-contact-grid vh-reveal">
+        <section className="vh-contact-grid vh-reveal" ref={formSectionRef}>
           <div className="vh-apply-form">
             <div className="vh-form-toggle-row">
               <div className="vh-form-toggle">

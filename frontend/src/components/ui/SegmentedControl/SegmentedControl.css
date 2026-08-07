@@ -33,15 +33,9 @@
   left: 0;
   z-index: 1;
   border-radius: 9999px !important;
-  /* The active pill is frosted accent glass: the accent at partial opacity over
-     the blur, so the track shows through, with a light top edge for the sheen. */
-  border: 1px solid color-mix(in srgb, var(--ui-segment-accent) 40%, rgba(255, 255, 255, 0.5)) !important;
-  background: color-mix(in srgb, var(--ui-segment-accent) 82%, transparent) !important;
-  -webkit-backdrop-filter: blur(8px) saturate(140%);
-  backdrop-filter: blur(8px) saturate(140%);
-  box-shadow:
-    0 2px 10px color-mix(in srgb, var(--ui-segment-accent) 22%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid var(--ui-segment-accent) !important;
+  background: var(--ui-segment-accent) !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--ui-segment-accent) 30%, transparent) !important;
   transition:
     transform 380ms cubic-bezier(0.2, 0.8, 0.2, 1),
     width 380ms cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -51,11 +45,9 @@
 }
 
 [data-theme="dark"] .ui-segmented-slider {
-  border-color: color-mix(in srgb, var(--ui-segment-accent) 55%, rgba(255, 255, 255, 0.15)) !important;
-  background: color-mix(in srgb, var(--ui-segment-accent) 78%, transparent) !important;
-  box-shadow:
-    0 2px 12px color-mix(in srgb, var(--ui-segment-accent) 40%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  border-color: var(--ui-segment-accent) !important;
+  background: var(--ui-segment-accent) !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--ui-segment-accent) 40%, transparent) !important;
 }
 
 .ui-segmented-control--sm .ui-segmented-slider {

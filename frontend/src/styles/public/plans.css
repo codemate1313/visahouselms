@@ -248,14 +248,15 @@
   backdrop-filter: blur(12px);
   border: 1px solid var(--line);
   border-radius: 16px;
-  transition: border-color 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease;
 }
 .vh-acc-item:hover {
-  border-color: var(--acLine);
+  border-color: var(--line);
+  transform: none !important;
+  box-shadow: none !important;
 }
 .vh-acc-item.vh-acc-open {
   border-color: var(--acLine);
-  box-shadow: 0 20px 44px -28px var(--ac);
+  box-shadow: none;
 }
 .vh-acc-trigger {
   width: 100%;
@@ -273,6 +274,20 @@
   justify-content: space-between;
   gap: 20px;
   text-align: left;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.vh-acc-trigger:hover,
+.vh-acc-trigger:active,
+.vh-acc-trigger:focus {
+  background: transparent !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.vh-acc-trigger:hover .vh-acc-icon,
+.vh-acc-trigger:active .vh-acc-icon {
+  color: var(--ac);
 }
 .vh-acc-trigger:focus-visible {
   outline: 2px solid var(--ac);
@@ -284,7 +299,7 @@
   width: 18px;
   height: 18px;
   color: var(--ac);
-  transition: transform var(--acc-dur) var(--acc-spring);
+  transition: color 0.25s ease, transform var(--acc-dur) var(--acc-spring);
 }
 .vh-acc-icon::before,
 .vh-acc-icon::after {

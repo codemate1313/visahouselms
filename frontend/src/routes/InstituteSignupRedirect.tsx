@@ -7,9 +7,15 @@ import { Navigate, useLocation } from "react-router-dom";
  * There was briefly a second form here. Two implementations of one application
  * meant a visitor saw different fields depending on which link they followed,
  * so this path now forwards rather than duplicating - preserving `?plan=` so
- * the tier they were looking at survives the hop.
+ * the tier they were looking at survives the hop and setting `form=partner`.
  */
 export function InstituteSignupRedirect() {
   const { search } = useLocation();
-  return <Navigate replace to={`/contact${search}`} />;
+  const params = new URLSearchParams(search);
+  if (!params.has("form") && !params.has("plan")) {
+    params.set("form", "partner");
+  }
+  const searchStr = params.toString();
+  return <Navigate replace to={`/contact${searchStr ? `?${searchStr}` : ""}`} />;
 }
+

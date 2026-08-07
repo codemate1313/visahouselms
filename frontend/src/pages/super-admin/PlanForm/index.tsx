@@ -66,7 +66,7 @@ export function PlanForm() {
           const loadedForm = {
             name: data.name || "",
             description: data.description || "",
-            price: data.price || "",
+            price: data.price ? String(Number(data.price)) : "",
             currency: data.currency || "INR",
             duration_days: String(data.duration_days),
             student_limit: String(data.student_limit),
@@ -75,7 +75,7 @@ export function PlanForm() {
             is_published: Boolean(data.is_published),
             gst_rate_id: data.gst_rate_id ? String(data.gst_rate_id) : "",
             is_international_enabled: Boolean(data.is_international_enabled),
-            usd_price: data.usd_price ? String(data.usd_price) : "",
+            usd_price: data.usd_price ? String(Number(data.usd_price)) : "",
           };
           setForm(loadedForm);
           const loadedAudience: PlanAudience = data.audience === "institutes" ? "institutes" : audience;

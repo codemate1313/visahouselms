@@ -4092,8 +4092,8 @@ textarea:focus {
   width: 100%;
 }
 
-.filter-bar input[type="text"]:not(.ui-search-input input),
-.filter-bar input:not([type="date"]):not([type="checkbox"]):not([type="radio"]):not(.ui-search-input input) {
+.filter-bar input[type="text"]:not(.ui-search-input input):not(.select-search-input),
+.filter-bar input:not([type="date"]):not([type="checkbox"]):not([type="radio"]):not(.ui-search-input input):not(.select-search-input) {
   flex: 1;
   min-width: 240px;
   height: 44px;
@@ -4114,9 +4114,10 @@ textarea:focus {
 }
 
 .filter-bar .ui-search-input input,
-.ui-search-input input {
+.ui-search-input input,
+.filter-bar .select-search-input,
+.select-search-input {
   background-image: none !important;
-  padding-left: 36px !important;
 }
 
 .filter-bar input[type="text"]::placeholder,
