@@ -17,6 +17,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            set -e
             echo "🚀 Starting automatic deployment on VPS..."
             cd /var/www/visahouse
 
