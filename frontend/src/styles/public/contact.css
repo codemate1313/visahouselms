@@ -32,6 +32,7 @@
 .vh-form-toggle-row {
   display: flex;
   justify-content: center;
+  width: 100%;
   margin-bottom: 24px;
 }
 .vh-form-toggle {

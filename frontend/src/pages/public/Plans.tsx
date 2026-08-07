@@ -15,6 +15,7 @@ import { destinationFor } from "@/pages/Login/helpers";
 import { useSEO } from "@/hooks/useSEO";
 import { useContactSettings } from "./useContactSettings";
 import type { LandingPlan, LandingPlansPayload } from "./Plans.types";
+import { SegmentedControl } from "@/components/ui";
 import "@/styles/public/chrome.css";
 import "@/styles/public/plans.css";
 
@@ -217,29 +218,31 @@ export function Plans() {
         <section className="vh-plans-section vh-reveal">
           {showAudienceToggle && (
             <div className="vh-pill-toggle-row">
-              <div className="vh-pill-toggle">
-                <span className={`vh-pill-toggle-indicator${audience === "institutes" ? " vh-pill-toggle-indicator-right" : ""}`} aria-hidden="true" />
-                <button type="button" className={`vh-pill-toggle-btn${audience !== "institutes" ? " vh-pill-toggle-btn-active" : ""}`} onClick={() => selectAudience("students")}>
-                  For Students
-                </button>
-                <button type="button" className={`vh-pill-toggle-btn${audience === "institutes" ? " vh-pill-toggle-btn-active" : ""}`} onClick={() => selectAudience("institutes")}>
-                  For Institutes
-                </button>
-              </div>
+              <SegmentedControl<AudienceType>
+                ariaLabel="Target audience"
+                value={audience}
+                onChange={(val) => selectAudience(val)}
+                neverCollapse
+                options={[
+                  { label: "For Students", value: "students" },
+                  { label: "For Institutes", value: "institutes" },
+                ]}
+              />
             </div>
           )}
 
           {showBillingToggle && (
             <div className="vh-pill-toggle-row vh-pill-toggle-row-billing">
-              <div className="vh-pill-toggle vh-pill-toggle-billing">
-                <span className={`vh-pill-toggle-indicator${billing === "annual" ? " vh-pill-toggle-indicator-right" : ""}`} aria-hidden="true" />
-                <button type="button" className={`vh-pill-toggle-btn${billing !== "annual" ? " vh-pill-toggle-btn-active" : ""}`} onClick={setMonthly}>
-                  Monthly
-                </button>
-                <button type="button" className={`vh-pill-toggle-btn${billing === "annual" ? " vh-pill-toggle-btn-active" : ""}`} onClick={setAnnual}>
-                  Annual
-                </button>
-              </div>
+              <SegmentedControl<BillingCycle>
+                ariaLabel="Billing cycle"
+                value={billing}
+                onChange={(val) => (val === "annual" ? setAnnual() : setMonthly())}
+                neverCollapse
+                options={[
+                  { label: "Monthly", value: "monthly" },
+                  { label: "Annual", value: "annual" },
+                ]}
+              />
             </div>
           )}
 

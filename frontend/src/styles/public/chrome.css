@@ -244,8 +244,8 @@
 }
 .vh-nav-link {
   position: relative;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 17px;
+  font-weight: 600;
   color: var(--ink2);
   padding-bottom: 6px;
   transition: color 0.25s ease;

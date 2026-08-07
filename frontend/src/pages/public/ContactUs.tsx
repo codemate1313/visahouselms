@@ -11,6 +11,8 @@ import { destinationFor } from "@/pages/Login/helpers";
 import { useSEO } from "@/hooks/useSEO";
 import { useContactSettings } from "./useContactSettings";
 import type { LandingPlan, LandingPlansPayload } from "./Plans.types";
+import { SegmentedControl } from "@/components/ui";
+import { useToastStore } from "@/store/toastStore";
 import "@/styles/public/chrome.css";
 import "@/styles/public/contact.css";
 
@@ -126,7 +128,9 @@ export function ContactUs() {
     if (submittingDemo) return;
     const { instName, email, phone, city, country, website, first, last, adminEmail, students, message } = partner;
     if (!instName.trim() || !email.trim() || !phone.trim() || !first.trim() || !last.trim() || !adminEmail.trim()) {
-      setPartnerStatus({ message: "Please fill in all required fields marked with *.", tone: "error" });
+      const msg = "Please fill in all required fields marked with *.";
+      setPartnerStatus({ message: msg, tone: "error" });
+      useToastStore.getState().showError(msg);
       return;
     }
 
@@ -156,10 +160,14 @@ export function ContactUs() {
         const detail = Array.isArray(data.detail) ? data.detail.map((item: { msg?: string }) => item?.msg).filter(Boolean).join(". ") : data.detail;
         throw new Error(detail || "Unable to submit application.");
       }
-      setPartnerStatus({ message: "Thanks — your application has been received. We review applications by hand, usually within two working days.", tone: "ok" });
+      const successMsg = "Thanks — your application has been received. We review applications by hand, usually within two working days.";
+      setPartnerStatus({ message: successMsg, tone: "ok" });
+      useToastStore.getState().showSuccess(successMsg);
       setPartner(EMPTY_PARTNER_FORM);
     } catch (error) {
-      setPartnerStatus({ message: error instanceof Error ? error.message : "We could not submit your application. Please email partners@visahouse.io.", tone: "error" });
+      const errorMsg = error instanceof Error ? error.message : "We could not submit your application. Please email partners@visahouse.io.";
+      setPartnerStatus({ message: errorMsg, tone: "error" });
+      useToastStore.getState().showError(errorMsg);
     } finally {
       setSubmittingDemo(false);
     }
@@ -169,7 +177,9 @@ export function ContactUs() {
     if (submittingQuery) return;
     const { name, email, subject, message } = query;
     if (!name.trim() || !email.trim() || !subject.trim() || !message.trim()) {
-      setQueryStatus({ message: "Please fill in all fields.", tone: "error" });
+      const msg = "Please fill in all fields.";
+      setQueryStatus({ message: msg, tone: "error" });
+      useToastStore.getState().showError(msg);
       return;
     }
 
@@ -183,10 +193,14 @@ export function ContactUs() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.detail || "Unable to submit enquiry.");
-      setQueryStatus({ message: "Thanks. Your enquiry has been received.", tone: "ok" });
+      const successMsg = "Thanks. Your enquiry has been received.";
+      setQueryStatus({ message: successMsg, tone: "ok" });
+      useToastStore.getState().showSuccess(successMsg);
       setQuery(EMPTY_QUERY_FORM);
     } catch (error) {
-      setQueryStatus({ message: error instanceof Error ? error.message : "We could not submit your enquiry. Please email partners@visahouse.io.", tone: "error" });
+      const errorMsg = error instanceof Error ? error.message : "We could not submit your enquiry. Please email partners@visahouse.io.";
+      setQueryStatus({ message: errorMsg, tone: "error" });
+      useToastStore.getState().showError(errorMsg);
     } finally {
       setSubmittingQuery(false);
     }
@@ -212,15 +226,17 @@ export function ContactUs() {
         <section className="vh-contact-grid vh-reveal" ref={formSectionRef}>
           <div className="vh-apply-form">
             <div className="vh-form-toggle-row">
-              <div className="vh-form-toggle">
-                <span className={`vh-form-toggle-pill${formType === "partner" ? " vh-form-toggle-pill-right" : ""}`} aria-hidden="true" />
-                <button type="button" className={`vh-form-toggle-btn${formType === "query" ? " vh-form-toggle-btn-active" : ""}`} onClick={() => switchForm("query")}>
-                  Contact Us
-                </button>
-                <button type="button" className={`vh-form-toggle-btn${formType === "partner" ? " vh-form-toggle-btn-active" : ""}`} onClick={() => switchForm("partner")}>
-                  Become a Partner
-                </button>
-              </div>
+              <SegmentedControl<FormType>
+                ariaLabel="Contact mode"
+                value={formType}
+                onChange={(val) => switchForm(val)}
+                fullWidth
+                neverCollapse
+                options={[
+                  { label: "Contact Us", value: "query" },
+                  { label: "Become a Partner", value: "partner" },
+                ]}
+              />
             </div>
 
             {formType === "partner" ? (
@@ -291,8 +307,8 @@ export function ContactUs() {
                   </div>
                 </div>
 
-                {partnerStatus && (
-                  <div className={`vh-form-status vh-form-status-visible ${partnerStatus.tone === "error" ? "is-error" : "is-ok"}`} aria-live="polite" role="status">
+                {partnerStatus && partnerStatus.tone === "ok" && (
+                  <div className="vh-form-status vh-form-status-visible is-ok" aria-live="polite" role="status">
                     {partnerStatus.message}
                   </div>
                 )}
@@ -334,8 +350,8 @@ export function ContactUs() {
                   </div>
                 </div>
 
-                {queryStatus && (
-                  <div className={`vh-form-status vh-form-status-visible ${queryStatus.tone === "error" ? "is-error" : "is-ok"}`} aria-live="polite" role="status">
+                {queryStatus && queryStatus.tone === "ok" && (
+                  <div className="vh-form-status vh-form-status-visible is-ok" aria-live="polite" role="status">
                     {queryStatus.message}
                   </div>
                 )}
