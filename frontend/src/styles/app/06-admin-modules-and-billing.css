@@ -4718,7 +4718,15 @@
 [data-theme="dark"] .pn-textarea::placeholder,
 [data-theme="dark"] .ui-search-input input::placeholder,
 [data-theme="dark"] .password-input-wrap input::placeholder {
-  color: rgba(242, 242, 245, 0.32) !important;
+  color: rgba(242, 242, 245, 0.26) !important;
+  opacity: 1 !important;
+}
+
+/* Light mode: keep the notification form (and peer search/input) placeholders
+   as a faint hint too, so they never read like filled-in values. */
+.pn-input::placeholder,
+.pn-textarea::placeholder {
+  color: rgba(17, 17, 19, 0.34) !important;
   opacity: 1 !important;
 }
 

@@ -159,12 +159,12 @@ input::placeholder,
 textarea::placeholder,
 select::placeholder {
   color: var(--text-muted, #6e6e73);
-  opacity: 0.55;
+  opacity: 0.42;
 }
 
 [data-theme="dark"] input::placeholder,
 [data-theme="dark"] textarea::placeholder {
-  color: rgba(242, 242, 245, 0.32);
+  color: rgba(242, 242, 245, 0.26);
   opacity: 1;
 }
 
