@@ -1769,12 +1769,19 @@
   color: var(--institute-on-primary, #ffffff) !important;
 }
 
-.huge-sidebar.is-collapsed .sidebar-brand-logo-box+.sidebar-collapse-btn {
+.huge-sidebar.is-collapsed .sidebar-collapse-btn {
   position: absolute;
-  right: -2px;
-  bottom: -10px;
-  width: 24px;
-  height: 24px;
+  top: 50%;
+  left: 50%;
+  transform: translate(6px, 6px);
+  width: 22px;
+  height: 22px;
+  z-index: 10;
+}
+
+.huge-sidebar.is-collapsed .sidebar-collapse-btn .collapse-chevron {
+  width: 12px;
+  height: 12px;
 }
 
 .sidebar-item-icon-wrap {
