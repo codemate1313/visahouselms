@@ -23,7 +23,7 @@ export function PublicFooter({ socialLinks = [] }: { socialLinks?: PublicSocialL
         <div>
           <div className="vh-footer-brand-row">
             <img src={dark ? "/brand/vh-mark-dark.png" : "/brand/vh-mark-light.png"} alt="Visa House" width={34} height={34} />
-            <span>Visa House LMS</span>
+            <span>Visa House</span>
           </div>
           <ul className="footer-social-icons">
             {socialLinks.map((social) => (
