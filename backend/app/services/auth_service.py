@@ -362,8 +362,21 @@ def register(
 def request_password_reset(db: Session, email: str) -> None:
     normalized_email = email.strip().lower()
     user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
-    if user is None or not user.is_active or user.is_owner:
-        return
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account found with this email address."
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This account has been deactivated."
+        )
+    if user.is_owner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Application owner accounts cannot be reset via public form."
+        )
 
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(minutes=30)
