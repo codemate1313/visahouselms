@@ -21,6 +21,7 @@ import "@/styles/public/chrome.css";
 import "@/styles/public/home.css";
 
 const HERO_INTERVAL_MS = 4000;
+const TESTIMONIAL_CARD_STEP = 384;
 
 interface RawTestimonial {
   quote?: string;
@@ -68,6 +69,8 @@ export function Home() {
 
   const [testimonials, setTestimonials] = useState<TestimonialCard[]>([]);
   const testimonialsRef = useRef<HTMLDivElement | null>(null);
+  const testimonialCardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const testimonialSetWidthRef = useRef(0);
   const [blogPreviews, setBlogPreviews] = useState<BlogListItem[]>([]);
   const [flippedStepCards, setFlippedStepCards] = useState<Record<string, boolean>>({});
 
@@ -100,6 +103,52 @@ export function Home() {
   }, []);
 
   useEffect(() => {
+    const el = testimonialsRef.current;
+    if (!el || testimonials.length === 0) return;
+
+    function anchorToMiddleSet() {
+      const firstCard = testimonialCardRefs.current[0];
+      const secondSetCard = testimonialCardRefs.current[testimonials.length];
+      if (!el || !firstCard || !secondSetCard) return;
+      const setWidth = secondSetCard.offsetLeft - firstCard.offsetLeft;
+      if (setWidth <= 0) return;
+      testimonialSetWidthRef.current = setWidth;
+      el.scrollLeft = setWidth;
+    }
+
+    anchorToMiddleSet();
+    window.addEventListener("resize", anchorToMiddleSet);
+    return () => window.removeEventListener("resize", anchorToMiddleSet);
+  }, [testimonials]);
+
+  useEffect(() => {
+    const el = testimonialsRef.current;
+    if (!el || testimonials.length === 0) return;
+
+    let settleTimer: ReturnType<typeof setTimeout>;
+    function handleScroll() {
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(() => {
+        const current = testimonialsRef.current;
+        const setWidth = testimonialSetWidthRef.current;
+        if (!current || !setWidth) return;
+        const maxScroll = current.scrollWidth - current.clientWidth;
+        if (current.scrollLeft >= maxScroll - 1 && maxScroll - setWidth >= 0) {
+          current.scrollLeft = maxScroll - setWidth;
+        } else if (current.scrollLeft <= 1 && setWidth <= maxScroll) {
+          current.scrollLeft = Math.min(setWidth, maxScroll);
+        }
+      }, 120);
+    }
+
+    el.addEventListener("scroll", handleScroll);
+    return () => {
+      el.removeEventListener("scroll", handleScroll);
+      clearTimeout(settleTimer);
+    };
+  }, [testimonials]);
+
+  useEffect(() => {
     fetch(`${API_BASE_URL}/blogs`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setBlogPreviews(Array.isArray(data) ? data.slice(0, 3) : []))
@@ -114,8 +163,16 @@ export function Home() {
     }, HERO_INTERVAL_MS);
   }
 
+  function scrollTestimonials(direction: 1 | -1) {
+    const el = testimonialsRef.current;
+    if (!el || testimonials.length === 0) return;
+    const setWidth = testimonialSetWidthRef.current;
+    const step = setWidth ? setWidth / testimonials.length : TESTIMONIAL_CARD_STEP;
+    el.scrollBy({ left: direction * step, behavior: "smooth" });
+  }
+
   const activeSlide = HERO_SLIDES[heroIndex];
-  const loopedTestimonials = [...testimonials, ...testimonials];
+  const loopedTestimonials = testimonials.length ? [...testimonials, ...testimonials, ...testimonials] : [];
 
   return (
     <div className="vh-public" ref={rootRef}>
@@ -287,12 +344,12 @@ export function Home() {
               <p>Read real experiences from candidates who achieved their target band scores using Visa House LMS.</p>
             </div>
             <div className="vh-testimonial-controls">
-              <button type="button" className="vh-slider-nav-btn" aria-label="Previous testimonial" onClick={() => testimonialsRef.current?.scrollBy({ left: -384, behavior: "smooth" })}>
+              <button type="button" className="vh-slider-nav-btn" aria-label="Previous testimonial" onClick={() => scrollTestimonials(-1)}>
                 <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M16 22 6 12 16 2" />
                 </svg>
               </button>
-              <button type="button" className="vh-slider-nav-btn" aria-label="Next testimonial" onClick={() => testimonialsRef.current?.scrollBy({ left: 384, behavior: "smooth" })}>
+              <button type="button" className="vh-slider-nav-btn" aria-label="Next testimonial" onClick={() => scrollTestimonials(1)}>
                 <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M8 22 18 12 8 2" />
                 </svg>
@@ -303,7 +360,13 @@ export function Home() {
             <div className="vh-testimonial-slider-wrapper" ref={testimonialsRef}>
               <div className="vh-testimonial-slider-track">
                 {loopedTestimonials.map((t, i) => (
-                  <div className="vh-testimonial-card" key={i}>
+                  <div
+                    className="vh-testimonial-card"
+                    key={i}
+                    ref={(node) => {
+                      testimonialCardRefs.current[i] = node;
+                    }}
+                  >
                     <div>
                       <div className="vh-testimonial-header">
                         <div className="vh-testimonial-avatar" style={{ background: t.grad }}>

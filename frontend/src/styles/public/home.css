@@ -694,15 +694,6 @@
   display: flex;
   gap: 24px;
   width: max-content;
-  will-change: transform;
-  animation: testimonial-marquee 35s linear infinite;
-}
-.vh-testimonial-slider-wrapper:hover .vh-testimonial-slider-track {
-  animation-play-state: paused;
-}
-@keyframes testimonial-marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(calc(-50% - 12px)); }
 }
 .vh-testimonial-card {
   flex: 0 0 360px;
@@ -808,11 +799,6 @@
   .vh-testimonial-card {
     width: calc(100vw - 48px);
     flex-basis: calc(100vw - 48px);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .vh-testimonial-slider-track {
-    animation: none;
   }
 }
 
