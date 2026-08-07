@@ -9,6 +9,7 @@ from app.core.password_policy import validate_password_strength
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    role: Optional[str] = Field(default=None, max_length=80)
     device_id: Optional[str] = Field(default=None, min_length=16, max_length=200)
     device_name: Optional[str] = Field(default=None, max_length=120)
     remember_me: bool = True
@@ -20,6 +21,7 @@ class LoginRequest(BaseModel):
 
 class GoogleOtpRequest(BaseModel):
     email: EmailStr
+    role: Optional[str] = Field(default=None, max_length=80)
     device_id: Optional[str] = Field(default=None, min_length=16, max_length=200)
     device_name: Optional[str] = Field(default=None, max_length=120)
     remember_me: bool = True

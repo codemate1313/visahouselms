@@ -319,14 +319,13 @@ def google_callback(
             )
             role = "STUDENT"
         else:
-            user = auth_service.get_otp_login_user(db, google_email, _client_ip(request))
-            if role and user.role_name != role:
-                return _frontend_redirect(return_path, {"role": role, "google_error": "No active LMS account matches this Google email"})
+            user = auth_service.get_otp_login_user(db, google_email, _client_ip(request), role=role)
     except HTTPException:
         return _frontend_redirect(return_path, {"role": role, "google_error": "No active LMS account matches this Google email"})
 
     payload = GoogleOtpRequest(
         email=google_email,
+        role=role,
         device_id=state_claims.get("device_identifier"),
         device_name=state_claims.get("device_name"),
         remember_me=bool(state_claims.get("remember_me", True)),
@@ -383,6 +382,7 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
         payload.email,
         payload.password,
         _client_ip(request),
+        role=payload.role,
     )
     if payload.role and user.role_name != payload.role:
         raise HTTPException(
@@ -416,12 +416,7 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
 def google_request_otp(payload: GoogleOtpRequest, request: Request, response: Response, db: Session = Depends(get_db)):
     _limit_login_attempt(request, payload.email)
     device_identifier = _device_identifier(request, response, payload.device_id)
-    user = auth_service.get_otp_login_user(db, payload.email, _client_ip(request))
-    if payload.role and user.role_name != payload.role:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
+    user = auth_service.get_otp_login_user(db, payload.email, _client_ip(request), role=payload.role)
     payload.device_id = device_identifier
     return _otp_challenge_for(db, user, payload, "google_otp")
 

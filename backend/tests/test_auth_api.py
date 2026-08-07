@@ -261,6 +261,39 @@ class AuthApiTestCase(unittest.TestCase):
 
         self.assertEqual(statuses[-1], 429)
 
+    def test_login_fails_without_otp_when_role_mismatches(self):
+        self._make_user("student_user@example.com", STUDENT)
+
+        # Correct email and password, but wrong role passed
+        res = self.client.post(
+            "/auth/login",
+            json={
+                "email": "student_user@example.com",
+                "password": PASSWORD,
+                "role": INSTITUTE_ADMIN,
+            },
+        )
+        self.assertEqual(res.status_code, 401)
+        data = res.json()
+        self.assertEqual(data.get("detail"), "Invalid email or password")
+        self.assertNotIn("otp_required", data)
+
+    def test_login_succeeds_with_otp_challenge_when_role_matches(self):
+        self._make_user("student_user2@example.com", STUDENT)
+
+        res = self.client.post(
+            "/auth/login",
+            json={
+                "email": "student_user2@example.com",
+                "password": PASSWORD,
+                "role": STUDENT,
+            },
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data.get("otp_required"))
+        self.assertIsNotNone(data.get("otp_challenge_id"))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -209,6 +209,7 @@ export function Login({
       const { data: tokens } = await apiClient.post<LoginStartResponse>("/auth/login", {
         email: email.trim().toLowerCase(),
         password,
+        role: selectedRole,
         remember_me: rememberMe,
         role: selectedRole,
         // Included on the second step of a developer login with authenticator 2FA.
