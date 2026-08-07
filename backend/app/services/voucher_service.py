@@ -66,6 +66,7 @@ def seed_sample_voucher_data(db: Session):
         {"type_code": "ielts-academic", "title": "IELTS Academic Standard Exam Voucher", "price": Decimal("15500.00"), "discount_price": Decimal("14200.00"), "validity": 180, "desc": "Includes official practice test + instant 16-digit redemption code."},
         {"type_code": "pte-academic", "title": "PTE Academic Saver Pass", "price": Decimal("17000.00"), "discount_price": Decimal("15900.00"), "validity": 180, "desc": "Official Pearson PTE voucher code valid for all test centers across India."},
         {"type_code": "toefl-ibt", "title": "TOEFL iBT Standard Registration", "price": Decimal("16900.00"), "discount_price": Decimal("14999.00"), "validity": 365, "desc": "ETS official 1-year registration code with free scoring support."},
+        {"type_code": "gre-general", "title": "GRE General Test Registration Voucher", "price": Decimal("22500.00"), "discount_price": Decimal("20500.00"), "validity": 180, "desc": "ETS official GRE General Test registration voucher valid for all centers."},
     ]
 
     for od in offerings_data:

@@ -175,8 +175,8 @@ export function InstructorForm({ basePath = "/super-admin" }: { basePath?: strin
           </div>
 
           <div>
-            <label htmlFor="phone">{strings.phone}</label>
-            <input id="phone" type="tel" placeholder={strings.phonePlaceholder} value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+            <label htmlFor="phone">{strings.phone}<RequiredMark /></label>
+            <input id="phone" type="tel" placeholder={strings.phonePlaceholder} value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required />
           </div>
         </div>
 

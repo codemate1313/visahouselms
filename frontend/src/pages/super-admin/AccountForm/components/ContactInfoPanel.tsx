@@ -1,4 +1,5 @@
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { RequiredMark } from "@/components/ui";
 import { accountFormStrings as strings } from "../AccountForm.strings";
 
 interface ContactInfoPanelProps {
@@ -21,8 +22,8 @@ export function ContactInfoPanel({ dob, onDobChange, phoneNumber, onPhoneNumberC
         </div>
 
         <div>
-          <label htmlFor="phone">{t.phone}</label>
-          <input id="phone" type="tel" placeholder={t.phonePlaceholder} value={phoneNumber} onChange={(event) => onPhoneNumberChange(event.target.value)} />
+          <label htmlFor="phone">{t.phone}<RequiredMark /></label>
+          <input id="phone" type="tel" placeholder={t.phonePlaceholder} value={phoneNumber} onChange={(event) => onPhoneNumberChange(event.target.value)} required />
         </div>
 
         <div className="field-wide">

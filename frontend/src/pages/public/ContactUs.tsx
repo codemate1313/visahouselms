@@ -125,7 +125,7 @@ export function ContactUs() {
   async function submitDemoRequest() {
     if (submittingDemo) return;
     const { instName, email, phone, city, country, website, first, last, adminEmail, students, message } = partner;
-    if (!instName.trim() || !email.trim() || !first.trim() || !last.trim() || !adminEmail.trim()) {
+    if (!instName.trim() || !email.trim() || !phone.trim() || !first.trim() || !last.trim() || !adminEmail.trim()) {
       setPartnerStatus({ message: "Please fill in all required fields marked with *.", tone: "error" });
       return;
     }
@@ -139,7 +139,7 @@ export function ContactUs() {
         body: JSON.stringify({
           institute_name: instName.trim(),
           contact_email: email.trim(),
-          contact_phone: phone.trim() || null,
+          contact_phone: phone.trim(),
           city: city.trim() || null,
           country: country.trim() || null,
           website: website.trim() || null,
@@ -240,8 +240,8 @@ export function ContactUs() {
                     <input className="vh-form-input" type="email" placeholder="info@meridian.com" value={partner.email} onChange={(e) => updatePartner("email", e.target.value)} />
                   </div>
                   <div>
-                    <label className="vh-form-label">Phone</label>
-                    <input className="vh-form-input" type="text" placeholder="+91 99999 99999" value={partner.phone} onChange={(e) => updatePartner("phone", e.target.value)} />
+                    <label className="vh-form-label">Phone *</label>
+                    <input className="vh-form-input" type="tel" required placeholder="+91 99999 99999" value={partner.phone} onChange={(e) => updatePartner("phone", e.target.value)} />
                   </div>
                   <div>
                     <label className="vh-form-label">City</label>

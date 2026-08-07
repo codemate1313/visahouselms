@@ -91,8 +91,8 @@ def get_public_voucher_offerings(db: Session = Depends(get_db)):
 @router.post("/public/order")
 def create_voucher_order_public(req: VoucherOrderRequest, db: Session = Depends(get_db)):
     """Step 1: reserve a code and open a payment order. No code is issued yet."""
-    if not req.buyer_name or not req.buyer_email:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name and Email are required")
+    if not req.buyer_name or not req.buyer_email or not req.buyer_phone:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name, Email, and Phone are required")
     return voucher_service.create_voucher_order(
         db=db,
         offering_id=req.offering_id,

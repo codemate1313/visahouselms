@@ -18,12 +18,12 @@ class InstructorAccountCreate(BaseModel):
     title: str = Field(default="IELTS Instructor", max_length=120)
     bio: Optional[str] = Field(default=None, max_length=3000)
     dob: Optional[datetime] = None
-    phone_number: Optional[str] = None
+    phone_number: str
     address: Optional[str] = None
     avatar_path: Optional[str] = None
     gender: Optional[str] = None
 
-    @field_validator("first_name", "last_name", "title")
+    @field_validator("first_name", "last_name", "title", "phone_number")
     @classmethod
     def non_blank(cls, value: str, info) -> str:
         return _clean_text(value, info.field_name.replace("_", " ").title())
@@ -41,7 +41,7 @@ class InstructorAccountUpdate(BaseModel):
     title: Optional[str] = Field(default=None, max_length=120)
     bio: Optional[str] = Field(default=None, max_length=3000)
     dob: Optional[datetime] = None
-    phone_number: Optional[str] = None
+    phone_number: str
     address: Optional[str] = None
     avatar_path: Optional[str] = None
     gender: Optional[str] = None
@@ -50,6 +50,11 @@ class InstructorAccountUpdate(BaseModel):
     @classmethod
     def non_blank(cls, value: Optional[str], info) -> Optional[str]:
         return _clean_text(value, info.field_name.replace("_", " ").title()) if value is not None else None
+
+    @field_validator("phone_number")
+    @classmethod
+    def non_blank_phone(cls, value: str) -> str:
+        return _clean_text(value, "Phone Number")
 
     @field_validator("bio")
     @classmethod

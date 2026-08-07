@@ -58,6 +58,17 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* No spinner up/down arrows on numeric inputs anywhere in the app. */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .module-part-list,
 .sidebar-nav-scroll,
 .modal-body,

@@ -1292,58 +1292,63 @@ export function Vouchers() {
       </Modal>
 
       {/* TAX INVOICE PREVIEW MODAL */}
-      {selectedInvoice && (
-        <Modal
-          open={!!selectedInvoice}
-          onClose={() => setSelectedInvoice(null)}
-          title="Voucher Tax Invoice"
-        >
-          <div className="space-y-5 text-sm">
-            <div className="flex justify-between border-b pb-3">
-              <div>
-                <div className="text-xs font-bold text-slate-400 uppercase">Billed To</div>
-                <div className="font-bold text-slate-900 dark:text-white">{selectedInvoice.buyer_name}</div>
-                <div className="text-xs text-slate-500">{selectedInvoice.buyer_email}</div>
+      <Modal
+        open={!!selectedInvoice}
+        onClose={() => setSelectedInvoice(null)}
+        title="Voucher Tax Invoice"
+      >
+        {selectedInvoice && (
+          <div className="voucher-invoice-modal">
+            <div className="voucher-invoice-print-header">
+              <h2>VISA HOUSE</h2>
+              <p>Official Exam Voucher Purchase Receipt</p>
+            </div>
+            <div className="voucher-invoice-card">
+              <div className="voucher-invoice-row">
+                <span className="voucher-invoice-label">Billed To:</span>
+                <span className="voucher-invoice-value">{selectedInvoice.buyer_name} ({selectedInvoice.buyer_email})</span>
               </div>
-              <div className="text-right">
-                <div className="text-xs font-bold text-slate-400 uppercase">Invoice Reference</div>
-                <div className="font-mono font-bold text-sky-600">{selectedInvoice.purchase_number}</div>
-                <div className="text-xs text-slate-500">{formatDate(selectedInvoice.created_at)}</div>
+              <div className="voucher-invoice-row">
+                <span className="voucher-invoice-label">Date:</span>
+                <span className="voucher-invoice-value">{formatDate(selectedInvoice.created_at)}</span>
+              </div>
+              <div className="voucher-invoice-row">
+                <span className="voucher-invoice-label">Gateway:</span>
+                <span className="voucher-invoice-value">{selectedInvoice.gateway ? selectedInvoice.gateway.toUpperCase() : "N/A"}</span>
               </div>
             </div>
 
-            <div className="invoice-voucher-codebox">
-              <div className="code-label">16-Digit Voucher Code</div>
-              <div className="code-val">{selectedInvoice.voucher_code}</div>
+            <div className="voucher-invoice-code-box">
+              <div className="voucher-invoice-code-title">Voucher Code</div>
+              <div className="voucher-invoice-code-text">{selectedInvoice.voucher_code}</div>
             </div>
 
-            <div className="space-y-2 text-xs bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Voucher Offering:</span>
-                <strong className="text-slate-900 dark:text-white">{selectedInvoice.voucher_type_name} - {selectedInvoice.offering_title}</strong>
+            <div className="voucher-invoice-summary">
+              <div className="voucher-invoice-row">
+                <span className="voucher-invoice-label">Voucher Type:</span>
+                <span className="voucher-invoice-value">{selectedInvoice.voucher_type_name}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Base Amount:</span>
-                <span>{formatCurrencyAmount(selectedInvoice.amount)}</span>
+              <div className="voucher-invoice-row">
+                <span className="voucher-invoice-label">Invoice Number:</span>
+                <span className="voucher-invoice-value">{selectedInvoice.purchase_number}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">GST Tax:</span>
-                <span>{formatCurrencyAmount(selectedInvoice.gst_amount)}</span>
-              </div>
-              <div className="flex justify-between text-sm font-bold border-t pt-2 text-slate-900 dark:text-white">
-                <span>Total Amount Paid:</span>
+              <div className="voucher-invoice-total-row">
+                <span>Total Paid:</span>
                 <span>{formatCurrencyAmount(selectedInvoice.final_amount)}</span>
               </div>
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="voucher-invoice-actions">
+              <Button variant="secondary" onClick={() => setSelectedInvoice(null)}>
+                Close
+              </Button>
               <Button variant="primary" onClick={() => window.print()}>
-                Print / Save PDF
+                Print / Save Invoice
               </Button>
             </div>
           </div>
-        </Modal>
-      )}
+        )}
+      </Modal>
       {/* Edit Code Modal */}
       {showCodeModal && (
         <div className="modal-backdrop">

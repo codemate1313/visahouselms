@@ -10,7 +10,7 @@ class InstituteMemberCreate(BaseModel):
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
     role: str
-    phone_number: Optional[str] = Field(default=None, max_length=50)
+    phone_number: str = Field(max_length=50)
     address: Optional[str] = Field(default=None, max_length=255)
 
     @field_validator("role")
@@ -20,7 +20,7 @@ class InstituteMemberCreate(BaseModel):
             raise ValueError("Role must be INST_INSTRUCTOR or STUDENT")
         return value
 
-    @field_validator("first_name", "last_name")
+    @field_validator("first_name", "last_name", "phone_number")
     @classmethod
     def strip_required_text(cls, value: str) -> str:
         value = value.strip()
@@ -33,7 +33,7 @@ class InstituteMemberUpdate(BaseModel):
     email: Optional[EmailStr] = None
     first_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
-    phone_number: Optional[str] = Field(default=None, max_length=50)
+    phone_number: str = Field(max_length=50)
     address: Optional[str] = Field(default=None, max_length=255)
 
     @field_validator("first_name", "last_name")
@@ -41,6 +41,14 @@ class InstituteMemberUpdate(BaseModel):
     def strip_optional_text(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
             return None
+        value = value.strip()
+        if not value:
+            raise ValueError("Value cannot be blank")
+        return value
+
+    @field_validator("phone_number")
+    @classmethod
+    def strip_required_phone(cls, value: str) -> str:
         value = value.strip()
         if not value:
             raise ValueError("Value cannot be blank")

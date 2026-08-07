@@ -142,7 +142,7 @@ VisaHouse LMS Team
   <div class="container">
     <div class="header">
       <h1>Exam Voucher Code</h1>
-      <p>VisaHouse LMS Verified Test Voucher</p>
+      <p>Visa House Verified Test Voucher</p>
     </div>
     <div class="content">
       <p>Hello <strong>{buyer_name}</strong>,</p>

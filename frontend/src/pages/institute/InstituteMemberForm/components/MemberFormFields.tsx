@@ -24,7 +24,7 @@ export function MemberFormFields({ isNew, label, form, saving, error, onFieldCha
           <div><label htmlFor="last_name">{f.lastName}<RequiredMark /></label><input id="last_name" value={form.last_name} onChange={onFieldChange("last_name")} required /></div>
         </div>
         <label htmlFor="email">{f.email}<RequiredMark /></label><input id="email" type="email" value={form.email} onChange={onFieldChange("email")} required />
-        <label htmlFor="phone_number">{f.phoneNumber}</label><input id="phone_number" value={form.phone_number} onChange={onFieldChange("phone_number")} />
+        <label htmlFor="phone_number">{f.phoneNumber}<RequiredMark /></label><input id="phone_number" value={form.phone_number} onChange={onFieldChange("phone_number")} required />
         <label htmlFor="address">{f.address}</label><input id="address" value={form.address} onChange={onFieldChange("address")} />
         {error && <p className="error-text">{error}</p>}
         <div className="form-actions">

@@ -78,7 +78,7 @@ export function VouchersSection() {
 
   async function handlePurchaseSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedOffering || !buyerName || !buyerEmail) return;
+    if (!selectedOffering || !buyerName || !buyerEmail || !buyerPhone) return;
 
     setSubmitting(true);
     try {
@@ -96,7 +96,7 @@ export function VouchersSection() {
         offering_id: selectedOffering.id,
         buyer_name: buyerName,
         buyer_email: buyerEmail,
-        buyer_phone: buyerPhone || null,
+        buyer_phone: buyerPhone,
       });
 
       openRazorpayCheckout({
@@ -298,9 +298,10 @@ export function VouchersSection() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold vh-pub-label mb-1.5">Phone Number (Optional)</label>
+                <label className="block text-xs font-semibold vh-pub-label mb-1.5">Phone Number *</label>
                 <input
                   type="tel"
+                  required
                   placeholder="+91 9876543210"
                   value={buyerPhone}
                   onChange={(e) => setBuyerPhone(e.target.value)}

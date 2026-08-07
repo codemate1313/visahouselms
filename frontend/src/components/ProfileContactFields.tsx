@@ -1,3 +1,5 @@
+import { RequiredMark } from "@/components/ui";
+
 interface ProfileContactFieldsProps {
   idPrefix: string;
   dob: string;
@@ -58,13 +60,14 @@ export function ProfileContactFields({
         </div>
       </div>
 
-      <label htmlFor={`${idPrefix}-phone`}>Phone Number</label>
+      <label htmlFor={`${idPrefix}-phone`}>Phone Number<RequiredMark /></label>
       <input
         id={`${idPrefix}-phone`}
         type="tel"
         placeholder="+1 (555) 000-0000"
         value={phoneNumber}
         onChange={(event) => onPhoneNumberChange(event.target.value)}
+        required
       />
 
       <label htmlFor={`${idPrefix}-address`}>Address</label>

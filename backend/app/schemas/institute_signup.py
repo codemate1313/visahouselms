@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class InstituteSignupCreate(BaseModel):
@@ -9,7 +9,7 @@ class InstituteSignupCreate(BaseModel):
 
     institute_name: str = Field(min_length=2, max_length=255)
     contact_email: EmailStr
-    contact_phone: Optional[str] = Field(default=None, max_length=40)
+    contact_phone: str = Field(max_length=40)
     city: Optional[str] = Field(default=None, max_length=120)
     country: Optional[str] = Field(default=None, max_length=120)
     website: Optional[str] = Field(default=None, max_length=255)
@@ -22,6 +22,14 @@ class InstituteSignupCreate(BaseModel):
     message: Optional[str] = Field(default=None, max_length=2000)
     # Which tier they were looking at. Context for the reviewer, never binding.
     interested_plan_id: Optional[int] = None
+
+    @field_validator("contact_phone")
+    @classmethod
+    def check_contact_phone(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Contact phone cannot be blank")
+        return value
 
 
 class InstituteSignupReject(BaseModel):

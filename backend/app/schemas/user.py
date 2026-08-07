@@ -6,6 +6,13 @@ from pydantic import BaseModel, EmailStr, field_validator
 from app.core.password_policy import validate_password_strength
 
 
+def _clean_required_phone(value: str) -> str:
+    value = value.strip()
+    if not value:
+        raise ValueError("Phone number cannot be blank")
+    return value
+
+
 class SuperAdminAccountOut(BaseModel):
     id: int
     email: str
@@ -28,6 +35,11 @@ class SuperAdminAccountOut(BaseModel):
 
 
 class SuperAdminAccountCreate(BaseModel):
+    # phone_number stays optional here: this schema is shared with the
+    # Developer Panel's "Create Controlled Account" flow
+    # (routers/developer.py), which has no phone field in its UI at all.
+    # The regular Super Admin AccountForm enforces entry with a `required`
+    # input and always sends the field.
     email: EmailStr
     password: str
     first_name: str
@@ -51,10 +63,15 @@ class SuperAdminAccountUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     dob: Optional[datetime] = None
-    phone_number: Optional[str] = None
+    phone_number: str
     address: Optional[str] = None
     avatar_path: Optional[str] = None
     can_view_monetary_analytics: Optional[bool] = None
+
+    @field_validator("phone_number")
+    @classmethod
+    def check_phone_number(cls, value: str) -> str:
+        return _clean_required_phone(value)
 
 
 class DeveloperAccountCreate(BaseModel):
@@ -83,10 +100,15 @@ class ProfileUpdateRequest(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     dob: Optional[datetime] = None
-    phone_number: Optional[str] = None
+    phone_number: str
     address: Optional[str] = None
     avatar_path: Optional[str] = None
     gender: Optional[str] = None
+
+    @field_validator("phone_number")
+    @classmethod
+    def check_phone_number(cls, value: str) -> str:
+        return _clean_required_phone(value)
 
 
 class SessionOut(BaseModel):
