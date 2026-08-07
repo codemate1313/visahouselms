@@ -4718,7 +4718,7 @@
 [data-theme="dark"] .pn-textarea::placeholder,
 [data-theme="dark"] .ui-search-input input::placeholder,
 [data-theme="dark"] .password-input-wrap input::placeholder {
-  color: rgba(242, 242, 245, 0.44) !important;
+  color: rgba(242, 242, 245, 0.32) !important;
   opacity: 1 !important;
 }
 

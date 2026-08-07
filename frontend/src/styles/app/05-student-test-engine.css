@@ -3782,7 +3782,7 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .static-auth-modal-light .form-group input::placeholder,
 .static-auth-modal-light .password-input-wrap input::placeholder {
-  color: rgba(14, 13, 16, 0.62);
+  color: rgba(14, 13, 16, 0.42);
 }
 
 
