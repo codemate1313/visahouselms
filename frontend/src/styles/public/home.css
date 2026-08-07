@@ -399,6 +399,7 @@
   position: relative;
   height: 280px;
   perspective: 1400px;
+  cursor: pointer;
 }
 .vh-flip-inner {
   position: relative;
@@ -407,7 +408,8 @@
   transform-style: preserve-3d;
   transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.vh-flip:hover .vh-flip-inner {
+.vh-flip:hover .vh-flip-inner,
+.vh-flip.is-flipped .vh-flip-inner {
   transform: rotateY(180deg);
 }
 .vh-face {
@@ -527,25 +529,29 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .vh-flip {
-    perspective: none;
-    height: auto;
+    perspective: 1200px;
+    height: 265px;
   }
   .vh-flip-inner {
-    height: auto;
-    transform: none;
-    transform-style: flat;
-    transition: none;
-  }
-  .vh-flip .vh-face:not(.vh-back) {
-    position: static;
-  }
-  .vh-flip .vh-back {
-    display: none;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   .vh-flip .vh-face {
-    padding: 20px;
+    position: absolute;
+    inset: 0;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    padding: 22px;
     border-radius: 18px;
-    gap: 16px;
+  }
+  .vh-flip .vh-back {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transform: rotateY(180deg);
   }
   .vh-step-face-front h3 {
     font-size: 20px;
@@ -562,7 +568,10 @@
     font-size: 13px;
   }
   .vh-step-hover-hint {
-    display: none;
+    display: flex;
+    gap: 5px;
+    font-size: 11.5px;
+    margin-top: 6px;
   }
 }
 @media (max-width: 520px) {
@@ -571,14 +580,19 @@
     padding-left: 14px;
     padding-right: 14px;
   }
+  .vh-flip {
+    height: 255px;
+  }
   .vh-flip .vh-face {
     padding: 18px;
-    gap: 14px;
   }
   .vh-step-face-front h3 {
     font-size: 18.5px;
   }
   .vh-step-face-front p {
+    font-size: 13px;
+  }
+  .vh-step-point span:last-child {
     font-size: 13px;
   }
 }

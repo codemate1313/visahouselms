@@ -69,6 +69,14 @@ export function Home() {
   const [testimonials, setTestimonials] = useState<TestimonialCard[]>([]);
   const testimonialsRef = useRef<HTMLDivElement | null>(null);
   const [blogPreviews, setBlogPreviews] = useState<BlogListItem[]>([]);
+  const [flippedStepCards, setFlippedStepCards] = useState<Record<string, boolean>>({});
+
+  function toggleStepCardFlip(num: string) {
+    setFlippedStepCards((prev) => ({
+      ...prev,
+      [num]: !prev[num],
+    }));
+  }
 
   useEffect(() => {
     heroTimerRef.current = setInterval(() => {
@@ -218,7 +226,19 @@ export function Home() {
           </div>
           <div className="vh-steps-grid">
             {STEP_CARDS.map((s, i) => (
-              <div className="vh-flip vh-reveal" key={s.num}>
+              <div
+                className={`vh-flip vh-reveal ${flippedStepCards[s.num] ? "is-flipped" : ""}`}
+                key={s.num}
+                onClick={() => toggleStepCardFlip(s.num)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggleStepCardFlip(s.num);
+                  }
+                }}
+              >
                 <div className="vh-flip-inner">
                   <div className="vh-face vh-step-face-front">
                     <div className="vh-step-face-front-top">
@@ -232,7 +252,7 @@ export function Home() {
                       <p>{s.desc}</p>
                     </div>
                     <div className="vh-step-hover-hint">
-                      Hover for details
+                      Click / hover for details
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 12a9 9 0 1 1-6.2-8.55" />
                         <path d="m17 3 4 4-4 4" />
