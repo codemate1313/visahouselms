@@ -8,6 +8,7 @@ a rich, up-to-date daily updates feed.
 import xml.etree.ElementTree as ET
 import urllib.request
 import re
+import html
 import time
 from datetime import datetime
 from typing import List
@@ -182,6 +183,8 @@ def fetch_real_time_news() -> List[dict]:
                 published_at = datetime.utcnow().strftime("%Y-%m-%d")
 
             summary = re.sub("<[^<]+?>", "", description).strip()
+            summary = html.unescape(summary).replace("\xa0", " ")
+            summary = re.sub(r"\s+", " ", summary).strip()
             if not summary or len(summary) < 5:
                 summary = f"Latest updates on English test requirements and immigration changes from {source_name}."
 
@@ -296,8 +299,8 @@ def list_exam_news() -> List[dict]:
     if _NEWS_CACHE is None:
         with _NEWS_LOCK:
             _NEWS_CACHE = sorted(EXAM_NEWS, key=lambda item: item["published_at"], reverse=True)
-            # Mark it as almost expired so it triggers background fetch immediately
-            _NEWS_CACHE_TIME = now - _CACHE_DURATION + 60
+            # Mark it as expired so it triggers background fetch immediately
+            _NEWS_CACHE_TIME = 0
 
     # 2. Check if cache needs updating and update thread is not already running
     if (now - _NEWS_CACHE_TIME) > _CACHE_DURATION:

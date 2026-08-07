@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/client";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
-import { Button, Modal, Badge } from "@/components/ui";
+import { Button, Modal, Badge, SegmentedControl } from "@/components/ui";
 import { loadRazorpayScript, openRazorpayCheckout } from "@/utils/razorpay";
 import "@/styles/voucher-ui.css";
 import { formatDate } from "@/utils/date";
@@ -131,11 +131,11 @@ export function StudentVouchers() {
         onSuccess: async (response) => {
           try {
             // Step 2: verify the receipt, then the code is released.
-            const { data } = await api.post("/vouchers/student/verify", {
+            await api.post("/vouchers/student/verify", {
               purchase_id: order.purchase_id,
               ...response,
             });
-            showSuccess(`Payment confirmed. Your voucher code: ${data.voucher_code}`);
+            showSuccess("Payment confirmed. Voucher purchased successfully.");
             fetchData();
             setActiveTab("my_vouchers");
           } catch (err: any) {
@@ -179,23 +179,16 @@ export function StudentVouchers() {
           </p>
         </div>
 
-        <div className="voucher-tab-container flex p-1.5 rounded-2xl">
-          <button
-            onClick={() => setActiveTab("my_vouchers")}
-            className={`voucher-tab-btn px-5 py-2.5 rounded-xl font-bold text-xs transition-all ${
-              activeTab === "my_vouchers" ? "active" : ""
-            }`}
-          >
-            My Purchased Vouchers ({myVouchers.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("browse")}
-            className={`voucher-tab-btn px-5 py-2.5 rounded-xl font-bold text-xs transition-all ${
-              activeTab === "browse" ? "active" : ""
-            }`}
-          >
-            Browse Vouchers
-          </button>
+        <div className="shrink-0">
+          <SegmentedControl
+            neverCollapse={true}
+            options={[
+              { value: "browse", label: "Browse Vouchers" },
+              { value: "my_vouchers", label: `My Purchased Vouchers (${myVouchers.length})` },
+            ]}
+            value={activeTab}
+            onChange={(val) => setActiveTab(val as "browse" | "my_vouchers")}
+          />
         </div>
       </div>
 
@@ -341,28 +334,50 @@ export function StudentVouchers() {
         title="Voucher Tax Invoice"
       >
         {selectedInvoice && (
-          <div className="space-y-4 text-xs">
-            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl space-y-1">
-              <div><strong>Billed To:</strong> {selectedInvoice.buyer_name} ({selectedInvoice.buyer_email})</div>
-              <div><strong>Date:</strong> {formatDate(selectedInvoice.created_at)}</div>
-              <div><strong>Gateway:</strong> {selectedInvoice.gateway.toUpperCase()}</div>
+          <div className="voucher-invoice-modal">
+            <div className="voucher-invoice-print-header">
+              <h2>VISA HOUSE</h2>
+              <p>Official Exam Voucher Purchase Receipt</p>
+            </div>
+            <div className="voucher-invoice-card">
+              <div className="voucher-invoice-row">
+                <span className="voucher-invoice-label">Billed To:</span>
+                <span className="voucher-invoice-value">{selectedInvoice.buyer_name} ({selectedInvoice.buyer_email})</span>
+              </div>
+              <div className="voucher-invoice-row">
+                <span className="voucher-invoice-label">Date:</span>
+                <span className="voucher-invoice-value">{formatDate(selectedInvoice.created_at)}</span>
+              </div>
+              <div className="voucher-invoice-row">
+                <span className="voucher-invoice-label">Gateway:</span>
+                <span className="voucher-invoice-value">{selectedInvoice.gateway.toUpperCase()}</span>
+              </div>
             </div>
 
-            <div className="p-4 bg-sky-50 dark:bg-sky-950/40 rounded-xl text-center">
-              <div className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase">Voucher Code</div>
-              <div className="text-xl font-black font-mono text-slate-900 dark:text-white mt-0.5">{selectedInvoice.voucher_code}</div>
+            <div className="voucher-invoice-code-box">
+              <div className="voucher-invoice-code-title">Voucher Code</div>
+              <div className="voucher-invoice-code-text">{selectedInvoice.voucher_code}</div>
             </div>
 
-            <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
-              <span className="text-slate-500">Voucher Type:</span>
-              <span className="font-bold">{selectedInvoice.voucher_type_name}</span>
-            </div>
-            <div className="flex justify-between py-1 text-sm font-bold">
-              <span>Total Paid:</span>
-              <span>{formatCurrencyAmount(selectedInvoice.final_amount)}</span>
+            <div className="voucher-invoice-summary">
+              <div className="voucher-invoice-row">
+                <span className="voucher-invoice-label">Voucher Type:</span>
+                <span className="voucher-invoice-value">{selectedInvoice.voucher_type_name}</span>
+              </div>
+              <div className="voucher-invoice-row">
+                <span className="voucher-invoice-label">Invoice Number:</span>
+                <span className="voucher-invoice-value">{selectedInvoice.purchase_number}</span>
+              </div>
+              <div className="voucher-invoice-total-row">
+                <span>Total Paid:</span>
+                <span>{formatCurrencyAmount(selectedInvoice.final_amount)}</span>
+              </div>
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="voucher-invoice-actions">
+              <Button variant="secondary" onClick={() => setSelectedInvoice(null)}>
+                Close
+              </Button>
               <Button variant="primary" onClick={() => window.print()}>
                 Print / Save Invoice
               </Button>

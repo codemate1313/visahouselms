@@ -3468,6 +3468,62 @@
   }
 }
 
+/* Phone layout, following the project's 768px cutover: the oversized desktop
+   header type and spacing are scaled down with clamp() so the dashboard reads
+   cleanly on a narrow screen instead of overflowing or wasting a screenful on
+   the title. The grids above already collapse to one column by here. */
+@media (max-width: 768px) {
+  .sd-dashboard {
+    min-height: 0;
+  }
+
+  .sd-dashboard .page-header {
+    margin-bottom: 22px;
+  }
+
+  .sd-dashboard h1 {
+    font-size: clamp(24px, 6.5vw, 34px);
+    line-height: 1.15;
+  }
+
+  .sd-dashboard .page-subtitle {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .sd-grid {
+    gap: 18px;
+  }
+
+  /* The stats pill wraps rather than pushing itself wider than the card. */
+  .sd-progress-summary {
+    flex-wrap: wrap;
+    gap: 6px 16px;
+  }
+
+  /* Single-column test cards on a phone; the auto-fill min of 280px would
+     otherwise force a sliver of a second column on mid-size phones. */
+  .sd-test-list {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .sd-test-card {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sd-dashboard .page-header {
+    margin-bottom: 18px;
+  }
+
+  .sd-test-card {
+    padding: 16px;
+  }
+}
+
 /* ==========================================================================
    Social Icons Hover Effect (Footer)
    ========================================================================== */
