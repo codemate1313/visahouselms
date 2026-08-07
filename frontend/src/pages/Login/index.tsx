@@ -211,7 +211,6 @@ export function Login({
         password,
         role: selectedRole,
         remember_me: rememberMe,
-        role: selectedRole,
         // Included on the second step of a developer login with authenticator 2FA.
         totp_code: totpRequired ? totpCode.trim() : undefined,
         ...getDeviceIdentity(),

@@ -218,9 +218,9 @@ export function Plans() {
         <section className="vh-plans-section vh-reveal">
           {showAudienceToggle && (
             <div className="vh-pill-toggle-row">
-              <SegmentedControl<AudienceType>
+              <SegmentedControl<Audience>
                 ariaLabel="Target audience"
-                value={audience}
+                value={audience || "students"}
                 onChange={(val) => selectAudience(val)}
                 neverCollapse
                 options={[
@@ -233,7 +233,7 @@ export function Plans() {
 
           {showBillingToggle && (
             <div className="vh-pill-toggle-row vh-pill-toggle-row-billing">
-              <SegmentedControl<BillingCycle>
+              <SegmentedControl<Billing>
                 ariaLabel="Billing cycle"
                 value={billing}
                 onChange={(val) => (val === "annual" ? setAnnual() : setMonthly())}
