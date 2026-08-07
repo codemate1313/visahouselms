@@ -1,0 +1,21 @@
+[Unit]
+Description=Visa House LMS FastAPI Backend Service
+After=network.target mysql.service
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/var/www/visahouse/backend
+Environment="PATH=/var/www/visahouse/backend/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/var/www/visahouse/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
+
+Restart=always
+RestartSec=5
+
+# Logging configuration
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=visahouse-backend
+
+[Install]
+WantedBy=multi-user.target

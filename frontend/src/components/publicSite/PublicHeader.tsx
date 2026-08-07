@@ -61,7 +61,7 @@ export function PublicHeader() {
       <div className="vh-header-bar">
         <Link to="/" className="vh-brand">
           <img src={dark ? "/brand/vh-mark-dark.png" : "/brand/vh-mark-light.png"} alt="Visa House" width={38} height={38} />
-          <span>Visa House</span>
+          <span>Visa House LMS</span>
         </Link>
 
         <nav className="vh-nav">

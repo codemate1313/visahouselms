@@ -1,0 +1,43 @@
+name: Continuous Deployment to Hostinger VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute remote SSH commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            echo "🚀 Starting automatic deployment on VPS..."
+            cd /var/www/visahouse
+
+            # 1. Pull the latest commits from GitHub
+            git fetch origin main
+            git reset --hard origin/main
+
+            # 2. Update backend virtual environment & run migrations
+            cd backend
+            source .venv/bin/activate
+            pip install -r requirements.txt
+            alembic upgrade head
+            cd ..
+
+            # 3. Re-install packages and rebuild frontend
+            cd frontend
+            npm install
+            npm run build
+            cd ..
+
+            # 4. Restart backend services
+            systemctl restart visahouse-backend
+
+            echo "✨ Deployment successful!"
