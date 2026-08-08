@@ -4,7 +4,7 @@ import { RequiredMark, SearchableSelect } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import type { ExamModule, ExamModuleType, IeltsSection } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
-import { COMPOSITE_TYPES, SOURCE_SECTIONS } from "../helpers";
+import { COMPOSITE_TYPES, SOURCE_SECTIONS, MODULE_TYPE_META } from "../helpers";
 
 interface NewModuleFormProps {
   requestedType: ExamModuleType | null;
@@ -20,8 +20,7 @@ interface NewModuleFormProps {
   onSubmit: (event: FormEvent) => void;
 }
 
-import { MODULE_TYPE_META } from "../helpers";
-
+}
 export function NewModuleForm({
   requestedType,
   details,

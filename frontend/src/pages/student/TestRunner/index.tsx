@@ -20,7 +20,8 @@ import {
   storedClientId,
   type SecurityMediaState,
 } from "./helpers";
-import { SecurityCheckPage } from "./components/SecurityCheckPage";
+import "@/styles/app/pre-exam-onboarding.css";
+import { PreExamOnboarding } from "./components/PreExamOnboarding";
 import { TestRunnerHeader } from "./components/TestRunnerHeader";
 import { PartsNav } from "./components/PartsNav";
 import { SourcePane } from "./components/SourcePane";
@@ -97,7 +98,7 @@ export function TestRunner() {
   const [securityError, setSecurityError] = useState<string | null>(null);
   const [mediaState, setMediaState] = useState<SecurityMediaState>(EMPTY_MEDIA_STATE);
   const [concurrentTab, setConcurrentTab] = useState(false);
-  const [rulesAccepted, setRulesAccepted] = useState(false);
+  const [rulesAccepted] = useState(true);
   const [violationNotice, setViolationNotice] = useState<ViolationNotice | null>(null);
   const [watermarkTime, setWatermarkTime] = useState(() => new Date());
   const submittedRef = useRef(false);
@@ -433,7 +434,11 @@ export function TestRunner() {
   }
 
   async function startSecureSession() {
-    if (!attempt?.is_final || securityStarting) return;
+    if (securityStarting) return;
+    if (!attempt?.is_final) {
+      setSecurityAuthorized(true);
+      return;
+    }
     if (!rulesAccepted) {
       setSecurityError(strings.security.consentRequired);
       return;
@@ -933,16 +938,6 @@ export function TestRunner() {
   if (error) return <p className="error-text">{error}</p>;
   if (!attempt) return <div className="test-runner-loading">{strings.loading}</div>;
 
-  const strictSecurityActive = mediaState.camera
-    && mediaState.microphone
-    && mediaState.screen
-    && mediaState.fullscreen
-    && mediaState.displaySurface === "monitor"
-    && !concurrentTab;
-  const mediaPermissionsReady = mediaState.camera
-    && mediaState.microphone
-    && mediaState.screen
-    && mediaState.displaySurface === "monitor";
   const brandedTestClass = isInstituteStudent ? " institute-branded-test" : "";
   const brandInitials = branding?.institute_name
     ? branding.institute_name.split(/\s+/).map((word) => word[0]).join("").slice(0, 2).toUpperCase()
@@ -961,25 +956,20 @@ export function TestRunner() {
     />
   ) : null;
 
-  if (attempt.is_final && (attempt.status === "ready" || !securityAuthorized || !strictSecurityActive)) {
+  if (attempt.status === "ready" || !securityAuthorized) {
     return (
       <>
-        <SecurityCheckPage
+        <PreExamOnboarding
           attempt={attempt}
-          brandedTestClass={brandedTestClass}
+          secondsLeft={secondsLeft}
           brandMark={brandMark}
           testContext={testContext}
-          secondsLeft={secondsLeft}
-          mediaState={mediaState}
-          cameraPreviewRef={cameraPreviewRef}
-          concurrentTab={concurrentTab}
           securityError={securityError}
           securityStarting={securityStarting}
-          mediaPermissionsReady={mediaPermissionsReady}
-          fullscreenActive={fullscreenActive}
-          rulesAccepted={rulesAccepted}
-          onRulesAcceptedChange={setRulesAccepted}
+          concurrentTab={concurrentTab}
+          mediaState={mediaState}
           onStartSecureSession={startSecureSession}
+          onCancel={() => navigate(-1)}
         />
         {violationModal}
       </>
