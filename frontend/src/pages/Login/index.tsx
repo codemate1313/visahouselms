@@ -149,8 +149,14 @@ export function Login({
     const option = ALL_ROLE_OPTIONS.find((item) => item.role === role);
     if (!option) return;
     setError(null);
+
+    if (!allowedRoles.includes(role)) {
+      navigate(option.basePath);
+      return;
+    }
+
     setSelectedRole(role);
-    window.history.replaceState(window.history.state, "", option.basePath);
+    navigate(option.basePath, { replace: true });
   }
 
   function handleSwitchPortalMode(targetRole: string) {
@@ -329,6 +335,7 @@ export function Login({
     : isSuperAdminPortal
     ? ALL_ROLE_OPTIONS.filter((item) => item.role === "SUPER_ADMIN" || item.role === "SA_INSTRUCTOR")
     : ALL_ROLE_OPTIONS.filter((item) => item.role === "INSTITUTE_ADMIN" || item.role === "INST_INSTRUCTOR" || item.role === "STUDENT");
+  const scopedRoleOptions = activeRoleOptions.filter((item) => allowedRoles.includes(item.role));
 
   return (
     <div className="login-concise-page" ref={containerRef}>
@@ -356,7 +363,7 @@ export function Login({
             <p className="form-sub-title">{subtitle}</p>
           </div>
 
-          <RoleTabs options={activeRoleOptions} selectedRole={selectedRole} onSelect={changePortal} />
+          <RoleTabs options={scopedRoleOptions} selectedRole={selectedRole} onSelect={changePortal} />
 
           <form onSubmit={handleSubmit} className="concise-form">
             <div className="form-group">

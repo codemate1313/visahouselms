@@ -485,14 +485,14 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
   return (
     <div className="institute-form-shell">
       <div className="stepper-navigation-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "nowrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "nowrap", flexShrink: 0 }}>
           {stepsDef.map((tab, idx) => {
             const isActive = activeTab === tab.key;
             const isCompleted = currentTabIndex > idx;
             const isLast = idx === stepsDef.length - 1;
 
             return (
-              <div key={tab.key} style={{ display: "flex", alignItems: "center" }}>
+              <div key={tab.key} style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
                 <button
                   type="button"
                   className={`institute-tab-btn ${isActive ? "is-active" : ""}`}
@@ -553,7 +553,7 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
                 </button>
 
                 {!isLast && (
-                  <div style={{ display: "flex", alignItems: "center", margin: "0 6px", color: isCompleted ? "var(--primary, var(--red-500))" : "var(--border)" }}>
+                  <div style={{ display: "flex", alignItems: "center", margin: "0 6px", color: isCompleted ? "var(--primary, var(--red-500))" : "var(--border)", flexShrink: 0 }}>
                     <div style={{ width: 14, height: 2, background: isCompleted ? "var(--primary, var(--red-500))" : "var(--border)", borderRadius: 1 }} />
                     <Icon name="arrowRight" />
                   </div>

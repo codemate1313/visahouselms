@@ -498,6 +498,27 @@ html {
   }
 }
 
+/* Base styling for icon-only action buttons (prevents falling back to solid primary/red buttons) */
+.action-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 8px;
+  background: var(--surface-muted, #f8fafc);
+  color: var(--text-muted, #64748b);
+  border: 1px solid var(--border, #e2e8f0);
+  box-shadow: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn-icon:hover:not(:disabled) {
+  background: var(--primary-soft, rgba(225, 29, 46, 0.08));
+  color: var(--primary, #e11d2e);
+  border-color: color-mix(in srgb, var(--primary, #e11d2e) 30%, var(--border, #e2e8f0));
+}
+
 /* iOS zooms the whole page when focusing an input whose font-size is
    below 16px. Keep fields at 16px on touch-width screens. */
 @media (max-width: 768px) {
