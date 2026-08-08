@@ -2333,11 +2333,12 @@
 }
 
 .huge-sidebar.is-collapsed .sidebar-menu-item.accordion-item:hover .sidebar-flyout-popover,
-.huge-sidebar.is-collapsed .sidebar-menu-item.accordion-item:focus-within .sidebar-flyout-popover {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateX(0);
+.huge-sidebar.is-collapsed .sidebar-menu-item.accordion-item:focus-within .sidebar-flyout-popover,
+.sidebar-flyout-popover.is-click-open {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: translateX(0) !important;
 }
 
 .sidebar-flyout-header {
