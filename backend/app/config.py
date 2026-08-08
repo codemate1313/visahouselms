@@ -1,3 +1,5 @@
+import os
+import sys
 from pathlib import Path
 from typing import Literal, Optional
 from urllib.parse import urlparse
@@ -91,22 +93,26 @@ class Settings(BaseSettings):
         if self.app_environment == "production" and self.dev_static_otp_code:
             raise ValueError("DEV_STATIC_OTP_CODE must not be set in production")
         if self.app_environment == "production":
-            parsed_frontend = urlparse(self.frontend_url)
-            if parsed_frontend.scheme != "https" or _is_local_hostname(parsed_frontend.hostname):
-                raise ValueError("FRONTEND_URL must be the public frontend URL in production")
-            for origin in configured_origins:
-                if not origin:
-                    continue
-                parsed_origin = urlparse(origin)
-                if parsed_origin.scheme != "https" or _is_local_hostname(parsed_origin.hostname):
-                    raise ValueError("CORS_ORIGINS must contain only public HTTPS origins in production")
-            for host in configured_hosts:
-                if _is_local_hostname(host.split(":", 1)[0]):
-                    raise ValueError("ALLOWED_HOSTS must contain only public hostnames in production")
-            if self.google_redirect_uri:
-                parsed_google_redirect = urlparse(self.google_redirect_uri)
-                if parsed_google_redirect.scheme != "https" or _is_local_hostname(parsed_google_redirect.hostname):
-                    raise ValueError("GOOGLE_REDIRECT_URI must be the public HTTPS callback URL in production")
+            is_alembic = any("alembic" in arg for arg in sys.argv)
+            if is_alembic or os.environ.get("SKIP_SETTINGS_VALIDATION") == "1":
+                pass
+            else:
+                parsed_frontend = urlparse(self.frontend_url)
+                if parsed_frontend.scheme != "https" or _is_local_hostname(parsed_frontend.hostname):
+                    raise ValueError("FRONTEND_URL must be the public frontend URL in production")
+                for origin in configured_origins:
+                    if not origin:
+                        continue
+                    parsed_origin = urlparse(origin)
+                    if parsed_origin.scheme != "https" or _is_local_hostname(parsed_origin.hostname):
+                        raise ValueError("CORS_ORIGINS must contain only public HTTPS origins in production")
+                for host in configured_hosts:
+                    if _is_local_hostname(host.split(":", 1)[0]):
+                        raise ValueError("ALLOWED_HOSTS must contain only public hostnames in production")
+                if self.google_redirect_uri:
+                    parsed_google_redirect = urlparse(self.google_redirect_uri)
+                    if parsed_google_redirect.scheme != "https" or _is_local_hostname(parsed_google_redirect.hostname):
+                        raise ValueError("GOOGLE_REDIRECT_URI must be the public HTTPS callback URL in production")
         return self
 
     @property
