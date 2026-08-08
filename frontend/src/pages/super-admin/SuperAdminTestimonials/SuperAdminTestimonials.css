@@ -962,7 +962,7 @@ tr.is-drag-over {
 [data-theme="dark"] .sat-search-input::placeholder,
 [data-theme="dark"] .sat-input::placeholder,
 [data-theme="dark"] .sat-textarea::placeholder {
-  color: rgba(255, 255, 255, 0.55) !important;
+  color: #64748b !important;
   opacity: 1 !important;
 }
 

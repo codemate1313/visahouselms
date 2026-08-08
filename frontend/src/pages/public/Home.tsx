@@ -128,26 +128,25 @@ export function Home() {
     const el = testimonialsRef.current;
     if (!el || testimonials.length === 0) return;
 
-    let settleTimer: ReturnType<typeof setTimeout>;
     function handleScroll() {
-      clearTimeout(settleTimer);
-      settleTimer = setTimeout(() => {
-        const current = testimonialsRef.current;
-        const setWidth = testimonialSetWidthRef.current;
-        if (!current || !setWidth) return;
-        const maxScroll = current.scrollWidth - current.clientWidth;
-        if (current.scrollLeft >= maxScroll - 1 && maxScroll - setWidth >= 0) {
-          current.scrollLeft = maxScroll - setWidth;
-        } else if (current.scrollLeft <= 1 && setWidth <= maxScroll) {
-          current.scrollLeft = Math.min(setWidth, maxScroll);
-        }
-      }, 120);
+      const current = testimonialsRef.current;
+      const setWidth = testimonialSetWidthRef.current;
+      if (!current || !setWidth) return;
+
+      // Real-time silent rebalancing:
+      // When scrolled past Set 2, instantly shift back by 1 set width without visual jump.
+      if (current.scrollLeft >= setWidth * 2) {
+        current.scrollLeft -= setWidth;
+      }
+      // When scrolled before Set 1, instantly shift forward by 1 set width.
+      else if (current.scrollLeft < setWidth) {
+        current.scrollLeft += setWidth;
+      }
     }
 
-    el.addEventListener("scroll", handleScroll);
+    el.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       el.removeEventListener("scroll", handleScroll);
-      clearTimeout(settleTimer);
     };
   }, [testimonials]);
 
@@ -197,7 +196,9 @@ export function Home() {
   }
 
   const activeSlide = HERO_SLIDES[heroIndex];
-  const loopedTestimonials = testimonials.length ? [...testimonials, ...testimonials, ...testimonials] : [];
+  const loopedTestimonials = testimonials.length
+    ? [...testimonials, ...testimonials, ...testimonials, ...testimonials]
+    : [];
 
   return (
     <div className="vh-public" ref={rootRef}>
