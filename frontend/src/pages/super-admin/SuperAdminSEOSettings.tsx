@@ -84,6 +84,7 @@ export function SuperAdminSEOSettings() {
                 required
                 value={formData.site_name}
                 onChange={(e) => setFormData({ ...formData, site_name: e.target.value })}
+                placeholder="e.g. Visa House"
               />
             </div>
 
@@ -97,6 +98,7 @@ export function SuperAdminSEOSettings() {
                 value={formData.title_template}
                 onChange={(e) => setFormData({ ...formData, title_template: e.target.value })}
                 style={{ fontFamily: "monospace" }}
+                placeholder="e.g. %s | Visa House"
               />
               <span className="hint" style={{ display: "block", marginTop: 4, fontSize: 11.5 }}>
                 {strings.fields.titleTemplateHint}
@@ -113,6 +115,7 @@ export function SuperAdminSEOSettings() {
               required
               value={formData.default_title}
               onChange={(e) => setFormData({ ...formData, default_title: e.target.value })}
+              placeholder="e.g. Visa House | Computer-Delivered Exam Platform & AI Feedback"
             />
           </div>
 
@@ -125,6 +128,7 @@ export function SuperAdminSEOSettings() {
               rows={3}
               value={formData.default_meta_description}
               onChange={(e) => setFormData({ ...formData, default_meta_description: e.target.value })}
+              placeholder="e.g. Experience authentic computer-delivered IELTS environments with AI Speaking & Writing scoring."
             />
           </div>
 
@@ -134,6 +138,7 @@ export function SuperAdminSEOSettings() {
               rows={2}
               value={formData.default_meta_keywords}
               onChange={(e) => setFormData({ ...formData, default_meta_keywords: e.target.value })}
+              placeholder="e.g. Visa House, IELTS Practice, AI IELTS Evaluation, Computer Delivered IELTS"
             />
           </div>
         </div>
@@ -161,6 +166,7 @@ export function SuperAdminSEOSettings() {
                 type="text"
                 value={formData.default_og_image || ""}
                 onChange={(e) => setFormData({ ...formData, default_og_image: e.target.value })}
+                placeholder="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80"
               />
             </div>
 
@@ -170,6 +176,7 @@ export function SuperAdminSEOSettings() {
                 type="text"
                 value={formData.twitter_handle || ""}
                 onChange={(e) => setFormData({ ...formData, twitter_handle: e.target.value })}
+                placeholder="@visahouse"
               />
             </div>
           </div>
