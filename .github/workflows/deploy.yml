@@ -75,6 +75,12 @@ jobs:
 
             # 5. Restart backend and block deployment if DB-backed health fails
             systemctl restart visahouse-backend
+            if ! systemctl is-active --quiet visahouse-backend; then
+              echo "❌ Backend service failed immediately after restart."
+              systemctl status visahouse-backend --no-pager || true
+              journalctl -u visahouse-backend -n 120 --no-pager || true
+              exit 1
+            fi
             for attempt in $(seq 1 30); do
               if curl -fsS -H "Host: thecodemate.tech" http://127.0.0.1:8000/health/db >/dev/null; then
                 echo "✅ Backend and database are healthy."
@@ -82,6 +88,7 @@ jobs:
               fi
               if [ "$attempt" = "30" ]; then
                 echo "❌ Backend health check failed. Recent service logs:"
+                systemctl status visahouse-backend --no-pager || true
                 journalctl -u visahouse-backend -n 120 --no-pager || true
                 exit 1
               fi

@@ -9,7 +9,7 @@ Group=www-data
 WorkingDirectory=/var/www/visahouse/backend
 Environment="PATH=/var/www/visahouse/backend/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 EnvironmentFile=-/var/www/visahouse/backend/.env
-ExecStart=/var/www/visahouse/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2 --proxy-headers --forwarded-allow-ips 127.0.0.1
+ExecStart=/var/www/visahouse/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1
 TimeoutStopSec=30
 KillSignal=SIGINT
 
