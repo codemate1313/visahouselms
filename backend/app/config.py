@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     otp_rate_window_seconds: int = 900
     password_reset_rate_limit: int = 5
     password_reset_rate_window_seconds: int = 3600
+    db_pool_recycle_seconds: int = 1800
+    db_pool_size: int = 10
+    db_max_overflow: int = 20
+    db_pool_timeout_seconds: int = 30
 
     ai_enabled: bool = True
     ai_provider: str = "gemini"

@@ -8,6 +8,7 @@ from cryptography.fernet import Fernet
 from starlette.datastructures import Headers
 
 from app.config import Settings, settings
+from app.database import create_database_engine
 from app.middleware.security_headers import CONTENT_SECURITY_POLICY
 from app.core.rate_limit import enforce_rate_limit, reset_rate_limits
 from app.core.security import (
@@ -158,6 +159,23 @@ class ProductionConfigurationTests(unittest.TestCase):
             jwt_secret_key="test-secret",
         )
         self.assertEqual(configured.allowed_host_list, ["*"])
+
+    def test_mysql_engine_recycles_connections_before_idle_timeout(self) -> None:
+        engine = create_database_engine(
+            "mysql+pymysql://user:password@localhost/visahouse",
+            pool_recycle_seconds=900,
+            pool_size=5,
+            max_overflow=7,
+            pool_timeout_seconds=11,
+        )
+        try:
+            self.assertTrue(engine.pool._pre_ping)
+            self.assertEqual(engine.pool._recycle, 900)
+            self.assertEqual(engine.pool.size(), 5)
+            self.assertEqual(engine.pool._max_overflow, 7)
+            self.assertEqual(engine.pool._timeout, 11)
+        finally:
+            engine.dispose()
 
 
 class SecurityHeadersTests(unittest.TestCase):

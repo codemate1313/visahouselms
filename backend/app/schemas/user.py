@@ -34,6 +34,14 @@ class SuperAdminAccountOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class DeveloperManagedAccountCreated(SuperAdminAccountOut):
+    temporary_password: str
+
+
+class DeveloperManagedPasswordResetOut(BaseModel):
+    temporary_password: str
+
+
 class SuperAdminAccountCreate(BaseModel):
     # phone_number stays optional at the API boundary for backward
     # compatibility. The Super Admin AccountForm enforces entry and always

@@ -17,7 +17,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            set -e
+            set -Eeuo pipefail
             trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
 
             echo "🚀 Starting automatic deployment on VPS..."
@@ -37,32 +37,53 @@ jobs:
 
             cd /var/www/visahouse
 
-            # 1. Pull the latest commits from GitHub
+            # 1. Pull the latest commits from GitHub without deploying a divergent tree
             git config --global --add safe.directory /var/www/visahouse
-            git fetch origin main
-            git reset --hard origin/main
+            git fetch --prune origin main
+            git checkout main
+            git pull --ff-only origin main
 
             # 2. Update backend virtual environment & run migrations
             cd backend
-            if [ ! -d "venv" ] && [ ! -d ".venv" ]; then
+            if [ ! -d ".venv" ]; then
               echo "⚠️ Virtual environment not found. Creating one..."
-              python3 -m venv venv
+              python3 -m venv .venv
             fi
-            source venv/bin/activate 2>/dev/null || source .venv/bin/activate 2>/dev/null || true
-            pip install -r requirements.txt
-            alembic upgrade head
+            source .venv/bin/activate
+            python -m pip install --upgrade pip
+            python -m pip install -r requirements.txt
+            python -m alembic upgrade head
             cd ..
 
             # 3. Re-install packages and rebuild frontend
             cd frontend
-            npm install
+            npm ci
             npm run build
             cd ..
 
-            # 4. Reset file permissions for service user
-            chown -R www-data:www-data /var/www/visahouse
+            # 4. Install the service definition and reset writable permissions
+            cp deploy/visahouse-backend.service /etc/systemd/system/visahouse-backend.service
+            systemctl daemon-reload
+            mkdir -p /var/www/visahouse/storage /var/www/visahouse/data
+            chown -R ubuntu:www-data /var/www/visahouse
+            chmod -R g+rwX /var/www/visahouse/storage /var/www/visahouse/data
 
-            # 5. Restart backend services
+            # 5. Restart backend and block deployment if DB-backed health fails
             systemctl restart visahouse-backend
+            for attempt in $(seq 1 30); do
+              if curl -fsS http://127.0.0.1:8000/health/db >/dev/null; then
+                echo "✅ Backend and database are healthy."
+                break
+              fi
+              if [ "$attempt" = "30" ]; then
+                echo "❌ Backend health check failed. Recent service logs:"
+                journalctl -u visahouse-backend -n 120 --no-pager || true
+                exit 1
+              fi
+              sleep 2
+            done
+
+            nginx -t
+            systemctl reload nginx
 
             echo "✨ Deployment successful!"

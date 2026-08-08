@@ -120,6 +120,12 @@ class AuthApiTestCase(unittest.TestCase):
         response = self.client.get("/super-admin/institutes", headers=self._auth_header(student))
         self.assertEqual(response.status_code, 403)
 
+    def test_database_health_endpoint_checks_db_round_trip(self):
+        with mock.patch("app.database.SessionLocal", self.Session):
+            response = self.client.get("/health/db")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok", "database": "ok"})
+
     def test_access_token_is_rejected_after_its_session_is_revoked(self):
         student = self._make_user("student3@example.com", STUDENT)
         headers = self._auth_header(student)

@@ -53,6 +53,118 @@
   line-height: 1.5;
 }
 
+.developer-create-form {
+  display: grid;
+  gap: 18px;
+}
+
+.developer-segmented-control {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  gap: 4px;
+  width: min(100%, 320px);
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+}
+
+.developer-segmented-control button {
+  min-height: 40px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.developer-segmented-control button.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 8px 22px rgba(225, 29, 46, 0.18);
+}
+
+.developer-create-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 16px 18px;
+}
+
+.developer-create-grid label {
+  display: grid;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.developer-create-grid input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.developer-create-grid input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.12);
+  outline: none;
+}
+
+.developer-create-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.developer-credential-panel {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 560px);
+  padding: 14px 16px;
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  border-radius: var(--radius);
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--text);
+}
+
+.developer-credential-panel strong {
+  font-size: 0.9rem;
+}
+
+.developer-credential-panel dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.developer-credential-panel dl > div {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.developer-credential-panel dt {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.developer-credential-panel dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 /* Elegant Dev-themed Table */
 .dev-table-wrap {
   border-radius: var(--radius-lg);
@@ -172,6 +284,16 @@
 
 [data-theme="dark"] .developer-card .muted-text {
   color: #a5adbb;
+}
+
+@media (max-width: 720px) {
+  .developer-create-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .developer-segmented-control {
+    width: 100%;
+  }
 }
 
 /* Dev Actions Buttons */

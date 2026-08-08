@@ -1,14 +1,16 @@
 import unittest
+from types import SimpleNamespace
 
 from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 from app.models import Base
 from app.models.role import DEVELOPER, SUPER_ADMIN, Role
 from app.models.user import User
 from app.routers import developer as developer_router
+from app.schemas.user import DeveloperAccountCreate, SuperAdminAccountCreate
 from app.services import super_admin_service
 
 
@@ -56,6 +58,9 @@ class SuperAdminMonetaryPermissionTests(unittest.TestCase):
         self.db.close()
         self.engine.dispose()
 
+    def _request(self):
+        return SimpleNamespace(client=SimpleNamespace(host="127.0.0.1"))
+
     def test_owner_can_create_super_admin_without_monetary_analytics(self) -> None:
         created = super_admin_service.create_super_admin(
             self.db,
@@ -98,23 +103,60 @@ class SuperAdminMonetaryPermissionTests(unittest.TestCase):
 
         self.assertTrue(updated.can_view_monetary_analytics)
 
-    def test_developer_route_refuses_super_admin_creation(self) -> None:
-        user_count = self.db.query(User).count()
+    def test_developer_route_can_create_super_admin_owner(self) -> None:
+        response = developer_router.create_super_admin(
+            payload=SuperAdminAccountCreate(
+                email="owner-created@example.com",
+                password="OwnerCreated!1",
+                first_name="Created",
+                last_name="Owner",
+                can_view_monetary_analytics=True,
+            ),
+            request=self._request(),
+            db=self.db,
+            actor=self.developer,
+        )
 
-        with self.assertRaises(HTTPException) as context:
-            developer_router.create_super_admin(actor=self.developer)
+        self.assertEqual(response["email"], "owner-created@example.com")
+        self.assertEqual(response["temporary_password"], "OwnerCreated!1")
+        created = self.db.query(User).filter(User.email == "owner-created@example.com").one()
+        self.assertTrue(created.is_owner)
+        self.assertTrue(created.can_view_monetary_analytics)
+        self.assertTrue(verify_password("OwnerCreated!1", created.password_hash))
 
-        self.assertEqual(context.exception.status_code, 403)
-        self.assertEqual(self.db.query(User).count(), user_count)
+    def test_developer_route_can_create_verified_developer(self) -> None:
+        response = developer_router.create_developer(
+            payload=DeveloperAccountCreate(
+                email="created-dev@example.com",
+                password="CreatedDev!1",
+                first_name="Created",
+                last_name="Developer",
+                is_developer_verified=True,
+            ),
+            request=self._request(),
+            db=self.db,
+            actor=self.developer,
+        )
 
-    def test_developer_route_refuses_developer_creation(self) -> None:
-        user_count = self.db.query(User).count()
+        self.assertEqual(response["email"], "created-dev@example.com")
+        self.assertEqual(response["temporary_password"], "CreatedDev!1")
+        created = self.db.query(User).filter(User.email == "created-dev@example.com").one()
+        self.assertTrue(created.is_developer_verified)
+        self.assertTrue(verify_password("CreatedDev!1", created.password_hash))
 
-        with self.assertRaises(HTTPException) as context:
-            developer_router.create_developer(actor=self.developer)
+    def test_developer_route_can_reset_managed_account_password(self) -> None:
+        response = developer_router.reset_password(
+            account_id=self.owner.id,
+            request=self._request(),
+            db=self.db,
+            actor=self.developer,
+        )
 
-        self.assertEqual(context.exception.status_code, 403)
-        self.assertEqual(self.db.query(User).count(), user_count)
+        self.assertIn("temporary_password", response)
+        self.assertTrue(response["temporary_password"])
+        self.db.refresh(self.owner)
+        self.assertTrue(self.owner.force_password_reset)
+        self.assertTrue(verify_password(response["temporary_password"], self.owner.password_hash))
 
     def test_non_owner_cannot_create_developer_account(self) -> None:
         with self.assertRaises(HTTPException) as context:

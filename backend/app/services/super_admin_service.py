@@ -214,6 +214,76 @@ def create_super_admin(
     return user
 
 
+def _require_verified_developer(db: Session, actor: User) -> None:
+    developer_role = _role_or_500(db, DEVELOPER)
+    if actor.role_id != developer_role.id or not actor.is_developer_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a verified developer can create elevated accounts from this panel",
+        )
+
+
+def create_developer_managed_super_admin(
+    db: Session,
+    actor: User,
+    email: str,
+    password: str,
+    first_name: str,
+    last_name: str,
+    ip_address: Optional[str],
+    *,
+    is_owner: bool = True,
+    dob: Optional[datetime] = None,
+    phone_number: Optional[str] = None,
+    address: Optional[str] = None,
+    avatar_path: Optional[str] = None,
+    can_view_monetary_analytics: bool = False,
+) -> User:
+    _require_verified_developer(db, actor)
+    role = _super_admin_role(db)
+    if db.query(User).filter(User.email == email).first() is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+
+    user = User(
+        email=email,
+        password_hash=hash_password(password),
+        role_id=role.id,
+        institute_id=None,
+        first_name=first_name,
+        last_name=last_name,
+        is_active=True,
+        is_owner=is_owner,
+        dob=dob,
+        phone_number=phone_number,
+        address=address,
+        avatar_path=avatar_path,
+        can_view_monetary_analytics=can_view_monetary_analytics,
+    )
+    db.add(user)
+    db.flush()
+    _write_audit_log(
+        db,
+        actor,
+        "developer.super_admin_owner_create" if is_owner else "developer.super_admin_create",
+        user.id,
+        ip_address,
+        {
+            "email": email,
+            "is_owner": user.is_owner,
+            "can_view_monetary_analytics": user.can_view_monetary_analytics,
+        },
+    )
+    db.commit()
+    db.refresh(user)
+    notification_service.notify_security_event(
+        db,
+        "Super Admin Owner account created" if is_owner else "Super Admin account created",
+        f"{actor.email} created {'Owner ' if is_owner else ''}Super Admin {user.email}.",
+        link_url="/super-admin/users/super-admins",
+    )
+    return user
+
+
 def update_super_admin(
     db: Session,
     actor: User,
@@ -408,6 +478,42 @@ def set_managed_force_password_reset(
     return user
 
 
+def reset_developer_managed_password(
+    db: Session,
+    actor: User,
+    account_id: int,
+    ip_address: Optional[str],
+) -> str:
+    _require_verified_developer(db, actor)
+    user = get_developer_managed_account_or_404(db, account_id)
+    temporary_password = _temporary_password()
+    user.password_hash = hash_password(temporary_password)
+    user.force_password_reset = True
+    user.password_changed_at = None
+    revoked = account_service.revoke_all_sessions(db, user.id)
+    db.add(user)
+    _write_audit_log(
+        db,
+        actor,
+        "developer.password_reset",
+        user.id,
+        ip_address,
+        {
+            "email": user.email,
+            "role": user.role_name,
+            "sessions_revoked": revoked,
+        },
+    )
+    db.commit()
+    notification_service.notify_security_event(
+        db,
+        "Developer reset account password",
+        f"{actor.email} reset the password for {user.email}.",
+        link_url="/super-admin/logs",
+    )
+    return temporary_password
+
+
 def change_password(
     db: Session, actor: User, current_password: Optional[str], new_password: str, ip_address: Optional[str]
 ) -> None:
@@ -460,6 +566,45 @@ def create_developer(
     db.add(user)
     db.flush()
     _write_audit_log(db, actor, "developer.create", user.id, ip_address, {"email": email, "verified": verified})
+    db.commit()
+    db.refresh(user)
+    notification_service.notify_security_event(
+        db,
+        "Developer account created",
+        f"{actor.email} created Developer {user.email}.",
+        link_url="/super-admin/users/developers",
+    )
+    return user
+
+
+def create_developer_managed_developer(
+    db: Session,
+    actor: User,
+    email: str,
+    password: str,
+    first_name: str,
+    last_name: str,
+    ip_address: Optional[str],
+    verified: bool = True,
+) -> User:
+    _require_verified_developer(db, actor)
+    role = _role_or_500(db, DEVELOPER)
+    if db.query(User).filter(User.email == email).first() is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+
+    user = User(
+        email=email,
+        password_hash=hash_password(password),
+        role_id=role.id,
+        institute_id=None,
+        first_name=first_name,
+        last_name=last_name,
+        is_active=True,
+        is_developer_verified=verified,
+    )
+    db.add(user)
+    db.flush()
+    _write_audit_log(db, actor, "developer.developer_create", user.id, ip_address, {"email": email, "verified": verified})
     db.commit()
     db.refresh(user)
     notification_service.notify_security_event(

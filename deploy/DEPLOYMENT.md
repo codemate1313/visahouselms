@@ -94,6 +94,7 @@ sudo apt install -y git python3-pip python3-venv nginx mysql-server certbot pyth
    * *Set `FRONTEND_URL`, `CORS_ORIGINS`, `ALLOWED_HOSTS`, and `GOOGLE_REDIRECT_URI` to your public HTTPS domain only; production startup rejects localhost, 127.0.0.1, 0.0.0.0, and plain HTTP origins.*
    * *Generate a real `SETTINGS_ENCRYPTION_KEY` using the instructions inside the template file.*
    * *Optional for Active Sessions locations: download MaxMind GeoLite2-City.mmdb to `/var/www/visahouse/data/GeoLite2-City.mmdb`; otherwise session location stays `Unknown`.*
+   * *Keep `DB_POOL_RECYCLE_SECONDS` lower than the MySQL `wait_timeout` value. The template default of `1800` seconds avoids stale pooled connections on typical VPS MySQL installs.*
 
 4. Run the database migrations to set up tables:
    ```bash
@@ -114,6 +115,7 @@ sudo systemctl start visahouse-backend
 Verify it running:
 ```bash
 sudo systemctl status visahouse-backend
+curl -fsS http://127.0.0.1:8000/health/db
 ```
 
 ---
@@ -162,6 +164,12 @@ sudo systemctl status visahouse-backend
 ---
 
 ## Step 9: Post-Deploy Verification
-1. Access `https://yourdomain.com` in your browser.
-2. Sign in or sign up.
-3. Test a speaking record section to verify file uploads work and persist under `/var/www/visahouse/storage`.
+1. Check backend and database health from the server:
+   ```bash
+   curl -fsS http://127.0.0.1:8000/health
+   curl -fsS http://127.0.0.1:8000/health/db
+   sudo journalctl -u visahouse-backend -n 80 --no-pager
+   ```
+2. Access `https://yourdomain.com` in your browser.
+3. Sign in or sign up.
+4. Test a speaking record section to verify file uploads work and persist under `/var/www/visahouse/storage`.

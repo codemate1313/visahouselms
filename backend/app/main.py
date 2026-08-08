@@ -299,3 +299,22 @@ def on_shutdown() -> None:
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/health/db")
+def database_health():
+    from sqlalchemy import text
+
+    from app.database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "ok"}
+    except Exception:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "error", "database": "unavailable"},
+        )
+    finally:
+        db.close()

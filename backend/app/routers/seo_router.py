@@ -1,10 +1,11 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import require_role
-from app.models.role import SUPER_ADMIN
+from app.dependencies.auth import require_super_admin_or_verified_developer
 from app.models.seo_settings import SEOSetting
 from app.schemas.seo_settings import SEOSettingResponse, SEOSettingUpdate
 
@@ -12,23 +13,35 @@ public_router = APIRouter(prefix="/seo-settings", tags=["seo-settings"])
 admin_router = APIRouter(
     prefix="/super-admin/seo-settings",
     tags=["admin-seo-settings"],
-    dependencies=[Depends(require_role(SUPER_ADMIN))],
+    dependencies=[Depends(require_super_admin_or_verified_developer)],
 )
 
 
+DEFAULT_SEO_SETTINGS = {
+    "site_name": "IELTS LMS Pro",
+    "default_title": "IELTS LMS Pro | Computer-Delivered Exam Platform & AI Feedback",
+    "title_template": "%s | IELTS LMS Pro",
+    "default_meta_description": "Experience authentic computer-delivered IELTS environments with AI Speaking & Writing scoring.",
+    "default_meta_keywords": "IELTS LMS, IELTS Practice, AI IELTS Evaluation, Computer Delivered IELTS",
+    "default_og_image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
+    "twitter_handle": "@ieltslmspro",
+    "robots_txt": "User-agent: *\nAllow: /",
+    "custom_head_tags": None,
+}
+
+
+def _default_seo_response() -> dict:
+    return {"id": 0, "updated_at": None, **DEFAULT_SEO_SETTINGS}
+
+
+def _get_seo_settings(db: Session) -> Optional[SEOSetting]:
+    return db.scalar(select(SEOSetting).limit(1))
+
+
 def _get_or_create_seo_settings(db: Session) -> SEOSetting:
-    setting = db.scalar(select(SEOSetting).limit(1))
-    if not setting:
-        setting = SEOSetting(
-            site_name="IELTS LMS Pro",
-            default_title="IELTS LMS Pro | Computer-Delivered Exam Platform & AI Feedback",
-            title_template="%s | IELTS LMS Pro",
-            default_meta_description="Experience authentic computer-delivered IELTS environments with AI Speaking & Writing scoring.",
-            default_meta_keywords="IELTS LMS, IELTS Practice, AI IELTS Evaluation, Computer Delivered IELTS",
-            default_og_image="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
-            twitter_handle="@ieltslmspro",
-            robots_txt="User-agent: *\nAllow: /",
-        )
+    setting = _get_seo_settings(db)
+    if setting is None:
+        setting = SEOSetting(**DEFAULT_SEO_SETTINGS)
         db.add(setting)
         db.commit()
         db.refresh(setting)
@@ -37,7 +50,7 @@ def _get_or_create_seo_settings(db: Session) -> SEOSetting:
 
 @public_router.get("", response_model=SEOSettingResponse)
 def get_public_seo_settings(db: Session = Depends(get_db)):
-    return _get_or_create_seo_settings(db)
+    return _get_seo_settings(db) or _default_seo_response()
 
 
 @admin_router.get("", response_model=SEOSettingResponse)

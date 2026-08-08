@@ -109,19 +109,17 @@ def seed_cms_and_seo():
             },
         ]
 
-        seeded_t, updated_t = 0, 0
+        seeded_t, skipped_t = 0, 0
         for item in testimonials_data:
             existing = db.scalar(
                 select(Testimonial).where(Testimonial.student_name == item["student_name"])
             )
             if existing:
-                for k, v in item.items():
-                    setattr(existing, k, v)
-                updated_t += 1
+                skipped_t += 1
             else:
                 db.add(Testimonial(**item))
                 seeded_t += 1
-        print(f"--> Testimonials processed: {seeded_t} created, {updated_t} updated.")
+        print(f"--> Testimonials processed: {seeded_t} created, {skipped_t} left unchanged.")
 
         # 3. Upsert Educational Blog Posts
         blogs_data = [
@@ -304,19 +302,17 @@ Writing Task 1 tests your ability to select and report main features, make compa
             },
         ]
 
-        seeded_b, updated_b = 0, 0
+        seeded_b, skipped_b = 0, 0
         for b_item in blogs_data:
             existing = db.scalar(
                 select(BlogPost).where(BlogPost.slug == b_item["slug"])
             )
             if existing:
-                for k, v in b_item.items():
-                    setattr(existing, k, v)
-                updated_b += 1
+                skipped_b += 1
             else:
                 db.add(BlogPost(**b_item))
                 seeded_b += 1
-        print(f"--> Blog posts processed: {seeded_b} created, {updated_b} updated.")
+        print(f"--> Blog posts processed: {seeded_b} created, {skipped_b} left unchanged.")
 
         db.commit()
         print("--> CMS and SEO Seeding completed successfully.")

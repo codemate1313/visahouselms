@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -23,9 +25,28 @@ admin_router = APIRouter(
     dependencies=[Depends(require_super_admin_or_verified_developer)],
 )
 
+DEFAULT_CONTACT_INFO = {
+    "email": "partners@visahouse.io",
+    "email_note": "Replies within 1 working day",
+    "phone": "+91 80 4700 8100",
+    "phone_note": "Mon-Fri · 10am to 7pm IST",
+    "support_url": "support.visahouse.io",
+    "support_note": "Existing partners only",
+    "office_name": "Visa House Learning Pvt. Ltd.",
+    "office_address": "4th Floor, Prestige Meridian,\nMG Road, Bangalore 560001",
+}
+
+
+def _default_contact_response() -> dict:
+    return {"id": 0, "updated_at": None, **DEFAULT_CONTACT_INFO}
+
+
+def _get_contact_info(db: Session) -> Optional[ContactSettings]:
+    return db.scalar(select(ContactSettings).limit(1))
+
 
 def _get_or_create_contact_info(db: Session) -> ContactSettings:
-    info = db.scalar(select(ContactSettings).limit(1))
+    info = _get_contact_info(db)
     if not info:
         info = ContactSettings()
         db.add(info)
@@ -65,7 +86,7 @@ def _audit(db: Session, actor: User, action: str, request: Request, entity_id=No
 
 @public_router.get("", response_model=ContactSettingsPublic)
 def get_public_contact_settings(db: Session = Depends(get_db)):
-    contact = _get_or_create_contact_info(db)
+    contact = _get_contact_info(db) or _default_contact_response()
     links = db.scalars(
         select(SocialLink).where(SocialLink.is_enabled.is_(True)).order_by(SocialLink.id)
     ).all()

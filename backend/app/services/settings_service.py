@@ -2,7 +2,7 @@ from typing import Dict, Optional
 
 from sqlalchemy.orm import Session
 
-from app.core.crypto import decrypt_value, encrypt_value
+from app.core.crypto import SettingsDecryptionError, decrypt_value, encrypt_value
 from app.models.setting import Setting
 
 # Keys whose values are Fernet-encrypted at rest and never returned by the API.
@@ -55,9 +55,21 @@ def get_settings_group(db: Session, prefix: str, mask_secrets: bool = True) -> D
     for row in rows:
         short_key = row.key[len(prefix) + 1 :]
         if row.key in SECRET_KEYS and mask_secrets:
-            result[short_key] = SECRET_PLACEHOLDER if row.value else None
+            if not row.value:
+                result[short_key] = None
+            elif row.is_encrypted:
+                try:
+                    decrypt_value(row.value)
+                    result[short_key] = SECRET_PLACEHOLDER
+                except SettingsDecryptionError:
+                    result[short_key] = None
+            else:
+                result[short_key] = SECRET_PLACEHOLDER
         elif row.is_encrypted:
-            result[short_key] = decrypt_value(row.value) if row.value else None
+            try:
+                result[short_key] = decrypt_value(row.value) if row.value else None
+            except SettingsDecryptionError:
+                result[short_key] = None
         else:
             result[short_key] = row.value
     return result
