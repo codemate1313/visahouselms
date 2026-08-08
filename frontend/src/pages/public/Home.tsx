@@ -22,7 +22,6 @@ import "@/styles/public/home.css";
 
 const HERO_INTERVAL_MS = 4000;
 const TESTIMONIAL_CARD_STEP = 384;
-const TESTIMONIAL_AUTOPLAY_MS = 3500;
 
 interface RawTestimonial {
   quote?: string;
@@ -72,7 +71,6 @@ export function Home() {
   const testimonialsRef = useRef<HTMLDivElement | null>(null);
   const testimonialCardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const testimonialSetWidthRef = useRef(0);
-  const testimonialTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [isTestimonialHovered, setIsTestimonialHovered] = useState(false);
   const [blogPreviews, setBlogPreviews] = useState<BlogListItem[]>([]);
   const [flippedStepCards, setFlippedStepCards] = useState<Record<string, boolean>>({});
@@ -150,24 +148,34 @@ export function Home() {
     };
   }, [testimonials]);
 
-  // Auto-play loop for testimonials
+  // Continuous smooth auto-slide ticker for testimonials
+  const animFrameRef = useRef<number | null>(null);
+
   useEffect(() => {
-    if (testimonials.length === 0 || isTestimonialHovered) {
-      if (testimonialTimerRef.current) {
-        clearInterval(testimonialTimerRef.current);
-        testimonialTimerRef.current = null;
+    const el = testimonialsRef.current;
+    if (!el || testimonials.length === 0 || isTestimonialHovered) {
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = null;
       }
       return;
     }
 
-    testimonialTimerRef.current = setInterval(() => {
-      scrollTestimonials(1);
-    }, TESTIMONIAL_AUTOPLAY_MS);
+    const SPEED = 0.75; // pixels per frame for a smooth continuous glide
+
+    function step() {
+      if (testimonialsRef.current && !isTestimonialHovered) {
+        testimonialsRef.current.scrollLeft += SPEED;
+      }
+      animFrameRef.current = requestAnimationFrame(step);
+    }
+
+    animFrameRef.current = requestAnimationFrame(step);
 
     return () => {
-      if (testimonialTimerRef.current) {
-        clearInterval(testimonialTimerRef.current);
-        testimonialTimerRef.current = null;
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = null;
       }
     };
   }, [testimonials, isTestimonialHovered]);

@@ -699,15 +699,14 @@ export function Vouchers() {
                 <th>Voucher Type</th>
                 <th>Status</th>
                 <th>Validity & Expiry</th>
-                <th>Source / Filename</th>
-                <th>Date Added</th>
+                <th>Source & Date Added</th>
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredUnusedCodes.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="ui-empty-row">
+                  <td colSpan={7} className="ui-empty-row">
                     {unusedCodes.length === 0 ? "No unused codes available." : "No unused codes match the current filters."}
                   </td>
                 </tr>
@@ -748,14 +747,14 @@ export function Vouchers() {
                       </div>
                     </td>
                     <td>
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {uc.source_filename}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="text-xs text-slate-500">
-                        {formatDate(uc.created_at)}
-                      </span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          {uc.source_filename}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {formatDate(uc.created_at)}
+                        </span>
+                      </div>
                     </td>
                     <td className="text-right">
                       <div className="voucher-code-actions flex items-center gap-3">
