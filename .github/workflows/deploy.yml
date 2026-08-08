@@ -16,6 +16,8 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          timeout: 2m
+          command_timeout: 30m
           script: |
             set -Eeuo pipefail
             trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
