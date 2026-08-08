@@ -19,8 +19,6 @@ interface NewModuleFormProps {
   moduleWorkspacePath: string;
   onSubmit: (event: FormEvent) => void;
 }
-
-}
 export function NewModuleForm({
   requestedType,
   details,
