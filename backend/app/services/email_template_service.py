@@ -99,7 +99,7 @@ def render_base_email(
               <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: #475569;">
                 Visa House Platform &bull; Official Account Notification
               </p>
-              <p style="margin: 0; font-size: 11.5px; color: #94a3b8; line-height: 1.5;">
+              <p style="margin: 0; font-size: 11.5px; color: #64748b; line-height: 1.5;">
                 If you have questions or need assistance, visit your student portal or contact our support team.
               </p>
             </td>
@@ -217,7 +217,7 @@ The Visa House Team
     </p>
 
     <!-- Credentials Card -->
-    <div style="background: linear-gradient(135deg, #fafafa 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; margin: 8px 0 24px 0;">
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; margin: 8px 0 24px 0;">
       <div style="display: flex; align-items: center; margin-bottom: 18px;">
         <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #b91c2b; background-color: #fef2f2; padding: 4px 10px; border-radius: 20px; display: inline-block;">
           &#128274;&nbsp; Login Credentials
@@ -225,11 +225,11 @@ The Visa House Team
       </div>
       <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: separate; border-spacing: 0 10px; font-size: 14px;">
         <tr>
-          <td style="width: 110px; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; padding: 10px 12px 10px 0;">Email</td>
+          <td style="width: 110px; color: #475569; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; padding: 10px 12px 10px 0;">Email</td>
           <td style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-weight: 600; color: #1e40af; font-size: 14px;">{email}</td>
         </tr>
         <tr>
-          <td style="width: 110px; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; padding: 10px 12px 10px 0;">Password</td>
+          <td style="width: 110px; color: #475569; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; padding: 10px 12px 10px 0;">Password</td>
           <td style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-weight: 700; color: #0f172a; font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace; letter-spacing: 0.06em; font-size: 15px;">{temporary_password}</td>
         </tr>
       </table>
@@ -361,7 +361,7 @@ The Visa House Team
     </p>
 
     <!-- Credentials Card -->
-    <div style="background: linear-gradient(135deg, #fafafa 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; margin: 8px 0 24px 0;">
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; margin: 8px 0 24px 0;">
       <div style="display: flex; align-items: center; margin-bottom: 18px;">
         <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #b91c2b; background-color: #fef2f2; padding: 4px 10px; border-radius: 20px; display: inline-block;">
           &#128274;&nbsp; Updated Credentials
@@ -369,11 +369,11 @@ The Visa House Team
       </div>
       <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: separate; border-spacing: 0 10px; font-size: 14px;">
         <tr>
-          <td style="width: 110px; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; padding: 10px 12px 10px 0;">Email</td>
+          <td style="width: 110px; color: #475569; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; padding: 10px 12px 10px 0;">Email</td>
           <td style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-weight: 600; color: #1e40af; font-size: 14px;">{email}</td>
         </tr>
         <tr>
-          <td style="width: 110px; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; padding: 10px 12px 10px 0;">New Password</td>
+          <td style="width: 110px; color: #475569; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; padding: 10px 12px 10px 0;">New Password</td>
           <td style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-weight: 700; color: #0f172a; font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace; letter-spacing: 0.06em; font-size: 15px;">{new_password}</td>
         </tr>
       </table>
