@@ -8,6 +8,7 @@ from app.config import settings
 from app.database import get_db
 from app.dependencies.auth import get_current_user, require_verified_developer
 from app.models.user import User
+from app.models.role import ALL_ROLES
 from app.schemas.user import (
     ChangePasswordRequest,
     DeveloperAccountCreate,
@@ -54,6 +55,10 @@ class AllowlistUpdate(BaseModel):
 
 class TotpConfirm(BaseModel):
     code: str = Field(min_length=6, max_length=10)
+
+
+class DeveloperRoleUpdate(BaseModel):
+    role_name: str = Field(pattern=f"^({'|'.join(ALL_ROLES)})$")
 
 
 def _enforce_ip_allowlist(request: Request, db: Session = Depends(get_db)) -> None:
@@ -239,6 +244,29 @@ def restore_user_access(
 ):
     """Lift a revoke. Audited."""
     return developer_directory_service.restore_access(db, actor, user_id, _client_ip(request))
+
+
+@router.patch("/users/{user_id}/role", response_model=SuperAdminAccountOut)
+def change_user_role(
+    user_id: int,
+    payload: DeveloperRoleUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Change any live account's role from the developer layer. Audited."""
+    return developer_directory_service.change_role(db, actor, user_id, payload.role_name, _client_ip(request))
+
+
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user_account(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Move any live account to Deleted Users without destroying history."""
+    developer_directory_service.delete_account(db, actor, user_id, _client_ip(request))
 
 
 # ---- Maintenance kill switch --------------------------------------------

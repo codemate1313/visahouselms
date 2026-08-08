@@ -11,12 +11,11 @@ using it stays.
 """
 from typing import Optional
 
-from typing import Optional
-
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.audit_log import AuditLog
+from app.models.role import ALL_ROLES, DEVELOPER, SUPER_ADMIN, Role
 from app.models.user import User
 from app.services import account_service
 
@@ -80,3 +79,81 @@ def restore_access(db: Session, actor: User, user_id: int, ip: Optional[str]) ->
     _audit(db, actor, "developer.access_restored", user.id, ip, {"email": user.email})
     db.commit()
     return {"id": user.id, "is_active": user.is_active}
+
+
+def change_role(db: Session, actor: User, user_id: int, role_name: str, ip: Optional[str]) -> User:
+    """Change any live account's role from the developer layer.
+
+    This is intentionally above the normal Super Admin permission model, but it
+    still refuses to demote the current developer session. The account is signed
+    out after the change so a bearer token minted under the old role cannot keep
+    operating with stale permissions.
+    """
+    if role_name not in ALL_ROLES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown role")
+
+    user = _get_or_404(db, user_id)
+    if user.id == actor.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot change your own role")
+
+    role = db.query(Role).filter(Role.name == role_name).first()
+    if role is None:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{role_name} role is not seeded")
+
+    previous_role = user.role.name if user.role else None
+    if previous_role == role_name:
+        return user
+
+    user.role_id = role.id
+    user.role = role
+    if role_name != SUPER_ADMIN:
+        user.is_owner = False
+        user.can_view_monetary_analytics = False
+    if role_name != DEVELOPER:
+        user.is_developer_verified = False
+    else:
+        user.is_developer_verified = True
+
+    sessions_ended = account_service.revoke_all_sessions(db, user.id)
+    db.add(user)
+    _audit(
+        db,
+        actor,
+        "developer.role_changed",
+        user.id,
+        ip,
+        {
+            "email": user.email,
+            "from": previous_role,
+            "to": role_name,
+            "sessions_ended": sessions_ended,
+        },
+    )
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def delete_account(db: Session, actor: User, user_id: int, ip: Optional[str]) -> dict:
+    """Soft-delete any live account from the developer layer.
+
+    The row is preserved and moved into the deleted segment via deleted_at; no
+    linked attempts, payments, logs, tickets, or history are physically removed.
+    """
+    user = _get_or_404(db, user_id)
+    if user.id == actor.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot delete your own account")
+
+    deleted_email = user.email
+    previous_role = user.role.name if user.role else None
+    _audit(
+        db,
+        actor,
+        "developer.account_deleted",
+        user.id,
+        ip,
+        {"email": deleted_email, "role": previous_role},
+    )
+    account_service.soft_delete_user(db, user)
+    db.commit()
+    return {"id": user.id, "deleted": True}

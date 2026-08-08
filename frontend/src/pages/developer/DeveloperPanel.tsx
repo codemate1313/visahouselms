@@ -10,6 +10,14 @@ import "./DeveloperPanel.css";
 const developerSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
 const developerApiBase = `/developer/${developerSlug}`;
 type ElevatedAccountType = "developer" | "super_admin_owner";
+const ROLE_OPTIONS = [
+  { value: "SUPER_ADMIN", label: "Super Admin" },
+  { value: "SA_INSTRUCTOR", label: "SA Instructor" },
+  { value: "INSTITUTE_ADMIN", label: "Institute Admin" },
+  { value: "INST_INSTRUCTOR", label: "Institute Instructor" },
+  { value: "STUDENT", label: "Student" },
+  { value: "DEVELOPER", label: "Developer" },
+] as const;
 
 interface ElevatedAccountForm {
   accountType: ElevatedAccountType;
@@ -50,6 +58,8 @@ export function DeveloperPanel() {
   const [form, setForm] = useState<ElevatedAccountForm>(emptyForm);
   const [credentialNotice, setCredentialNotice] = useState<CredentialNotice | null>(null);
   const [resettingAccountId, setResettingAccountId] = useState<number | null>(null);
+  const [changingRoleAccountId, setChangingRoleAccountId] = useState<number | null>(null);
+  const [deletingAccountId, setDeletingAccountId] = useState<number | null>(null);
 
   async function loadAccounts() {
     setLoading(true);
@@ -72,6 +82,7 @@ export function DeveloperPanel() {
     owners: accounts.filter((account) => account.is_owner),
     superAdmins: accounts.filter((account) => account.role_name === "SUPER_ADMIN" && !account.is_owner),
     developers: accounts.filter((account) => account.role_name === "DEVELOPER"),
+    others: accounts.filter((account) => account.role_name !== "SUPER_ADMIN" && account.role_name !== "DEVELOPER"),
   }), [accounts]);
 
   async function toggleForceReset(account: SuperAdminAccount) {
@@ -159,6 +170,49 @@ export function DeveloperPanel() {
       setError(extractErrorMessage(err, "Failed to reset account password."));
     } finally {
       setResettingAccountId(null);
+    }
+  }
+
+  async function changeRole(account: SuperAdminAccount, roleName: string) {
+    if ((account.role_name ?? "SUPER_ADMIN") === roleName) return;
+    const confirmed = window.confirm(
+      `Change ${account.email} to ${roleName}? They will be signed out and must sign in again with the new role.`
+    );
+    if (!confirmed) return;
+
+    setError(null);
+    setCreateNotice(null);
+    setCredentialNotice(null);
+    setChangingRoleAccountId(account.id);
+    try {
+      await apiClient.patch(`${developerApiBase}/users/${account.id}/role`, {
+        role_name: roleName,
+      });
+      await loadAccounts();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to change account role."));
+    } finally {
+      setChangingRoleAccountId(null);
+    }
+  }
+
+  async function deleteAccount(account: SuperAdminAccount) {
+    const confirmed = window.confirm(
+      `Move ${account.email} to Deleted Users? Account data, history, payments, attempts, and audit records will be preserved.`
+    );
+    if (!confirmed) return;
+
+    setError(null);
+    setCreateNotice(null);
+    setCredentialNotice(null);
+    setDeletingAccountId(account.id);
+    try {
+      await apiClient.delete(`${developerApiBase}/users/${account.id}`);
+      await loadAccounts();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to delete account."));
+    } finally {
+      setDeletingAccountId(null);
     }
   }
 
@@ -265,7 +319,7 @@ export function DeveloperPanel() {
             </svg>
             Account Authority
           </h2>
-          <p className="muted-text">The developer layer can inspect elevated accounts, create audited elevated accounts, require password resets, and open read-only view-as sessions.</p>
+          <p className="muted-text">The developer layer can inspect elevated accounts, create audited elevated accounts, change roles, require password resets, move accounts to Deleted Users, and open read-only view-as sessions.</p>
           
           {loading ? (
             <p>Loading accounts...</p>
@@ -283,7 +337,7 @@ export function DeveloperPanel() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[...grouped.owners, ...grouped.developers, ...grouped.superAdmins].map((account) => (
+                  {[...grouped.owners, ...grouped.developers, ...grouped.superAdmins, ...grouped.others].map((account) => (
                     <tr key={account.id}>
                       <td style={{ fontVariantNumeric: "tabular-nums", color: "var(--text-muted)", fontWeight: 700 }}>
                         #{account.id}
@@ -299,7 +353,18 @@ export function DeveloperPanel() {
                       </td>
                       <td>{account.email}</td>
                       <td style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>
-                        {account.role_name ?? "SUPER_ADMIN"}
+                        <select
+                          value={account.role_name ?? "SUPER_ADMIN"}
+                          disabled={changingRoleAccountId === account.id || deletingAccountId === account.id}
+                          onChange={(event) => void changeRole(account, event.target.value)}
+                          aria-label={`Change role for ${account.email}`}
+                        >
+                          {ROLE_OPTIONS.map((role) => (
+                            <option key={role.value} value={role.value}>
+                              {role.label}
+                            </option>
+                          ))}
+                        </select>
                       </td>
                       <td>
                         <span className={`dev-badge ${account.is_active ? "dev-badge-active" : "dev-badge-inactive"}`}>
@@ -325,6 +390,14 @@ export function DeveloperPanel() {
                           </Button>
                           <Button size="sm" variant="secondary" onClick={() => void viewAs(account)}>
                             View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            disabled={deletingAccountId === account.id}
+                            onClick={() => void deleteAccount(account)}
+                          >
+                            {deletingAccountId === account.id ? "Deleting..." : "Delete"}
                           </Button>
                         </div>
                       </td>

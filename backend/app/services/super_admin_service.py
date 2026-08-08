@@ -87,15 +87,17 @@ def list_super_admins(db: Session) -> List[User]:
 
 
 def list_developer_managed_accounts(db: Session) -> List[User]:
-    super_role = _role_or_500(db, SUPER_ADMIN)
-    developer_role = _role_or_500(db, DEVELOPER)
+    """All live accounts visible to the developer authority panel.
+
+    The name is kept for route compatibility, but the developer layer now owns
+    platform-wide emergency controls - role changes and soft deletion - so this
+    must not be limited to elevated roles.
+    """
     return (
         db.query(User)
-        .filter(
-            User.role_id.in_([super_role.id, developer_role.id]),
-            User.deleted_at.is_(None),
-        )
-        .order_by(User.role_id, User.created_at)
+        .join(Role, User.role_id == Role.id)
+        .filter(User.deleted_at.is_(None))
+        .order_by(Role.name, User.created_at, User.id)
         .all()
     )
 
@@ -115,15 +117,9 @@ def get_super_admin_or_404(db: Session, account_id: int) -> User:
 
 
 def get_developer_managed_account_or_404(db: Session, account_id: int) -> User:
-    super_role = _role_or_500(db, SUPER_ADMIN)
-    developer_role = _role_or_500(db, DEVELOPER)
     user = (
         db.query(User)
-        .filter(
-            User.id == account_id,
-            User.role_id.in_([super_role.id, developer_role.id]),
-            User.deleted_at.is_(None),
-        )
+        .filter(User.id == account_id, User.deleted_at.is_(None))
         .first()
     )
     if user is None:

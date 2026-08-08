@@ -752,7 +752,7 @@ def verify_razorpay_payment(
         hashlib.sha256
     ).hexdigest()
 
-    if expected_signature != razorpay_signature:
+    if not hmac.compare_digest(expected_signature, razorpay_signature or ""):
         payment.status = STATUS_FAILED
         db.add(payment)
         db.commit()

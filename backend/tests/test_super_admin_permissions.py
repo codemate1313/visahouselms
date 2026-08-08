@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 from fastapi import HTTPException
@@ -7,11 +8,12 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.security import hash_password, verify_password
 from app.models import Base
-from app.models.role import DEVELOPER, SUPER_ADMIN, Role
+from app.models.role import DEVELOPER, INSTITUTE_ADMIN, SA_INSTRUCTOR, SUPER_ADMIN, Role
+from app.models.user_session import UserSession
 from app.models.user import User
 from app.routers import developer as developer_router
 from app.schemas.user import DeveloperAccountCreate, SuperAdminAccountCreate
-from app.services import super_admin_service
+from app.services import developer_directory_service, super_admin_service
 
 
 class SuperAdminMonetaryPermissionTests(unittest.TestCase):
@@ -20,7 +22,7 @@ class SuperAdminMonetaryPermissionTests(unittest.TestCase):
         Base.metadata.create_all(self.engine)
         self.db = sessionmaker(bind=self.engine)()
 
-        roles = [Role(name=name) for name in (SUPER_ADMIN, DEVELOPER)]
+        roles = [Role(name=name) for name in (SUPER_ADMIN, DEVELOPER, SA_INSTRUCTOR, INSTITUTE_ADMIN)]
         self.db.add_all(roles)
         self.db.flush()
         by_name = {role.name: role for role in roles}
@@ -157,6 +159,48 @@ class SuperAdminMonetaryPermissionTests(unittest.TestCase):
         self.db.refresh(self.owner)
         self.assertTrue(self.owner.force_password_reset)
         self.assertTrue(verify_password(response["temporary_password"], self.owner.password_hash))
+
+    def test_developer_can_change_any_account_role_and_revoke_sessions(self) -> None:
+        self.db.add(
+            UserSession(
+                user_id=self.admin.id,
+                refresh_token_hash="hash",
+                user_agent="test",
+                ip_address="127.0.0.1",
+                created_at=datetime.now(timezone.utc),
+                expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+            )
+        )
+        self.db.commit()
+
+        updated = developer_directory_service.change_role(
+            self.db,
+            self.developer,
+            self.admin.id,
+            SA_INSTRUCTOR,
+            "127.0.0.1",
+        )
+
+        self.assertEqual(updated.role_name, SA_INSTRUCTOR)
+        self.assertFalse(updated.is_owner)
+        self.assertFalse(updated.is_developer_verified)
+        session = self.db.query(UserSession).filter(UserSession.user_id == self.admin.id).one()
+        self.assertIsNotNone(session.revoked_at)
+
+    def test_developer_delete_soft_deletes_account_without_removing_row(self) -> None:
+        result = developer_directory_service.delete_account(
+            self.db,
+            self.developer,
+            self.admin.id,
+            "127.0.0.1",
+        )
+
+        self.assertTrue(result["deleted"])
+        archived = self.db.get(User, self.admin.id)
+        self.assertIsNotNone(archived)
+        self.assertIsNotNone(archived.deleted_at)
+        self.assertFalse(archived.is_active)
+        self.assertEqual(archived.email, f"deleted+{self.admin.id}@deleted.invalid")
 
     def test_non_owner_cannot_create_developer_account(self) -> None:
         with self.assertRaises(HTTPException) as context:
