@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { lockBodyScroll } from "@/utils/scrollLock";
 import { createPortal } from "react-dom";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Icon, type IconName } from "./icons";
 
 export interface SubMenuItem {
@@ -92,6 +92,7 @@ export function Sidebar({
   onToggleCollapse,
 }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Determine the SINGLE active item key
   const activeKey = getActiveItemKey(sections, location.pathname);
@@ -210,14 +211,18 @@ export function Sidebar({
     };
   }, [activeKey, location.pathname, expandedKeys, isCollapsed]);
 
-  const toggleAccordion = (key: string) => {
+  const toggleAccordion = (item: MenuItem) => {
     if (isCollapsed) {
-      setActiveFlyoutKey((prev) => (prev === key ? null : key));
+      const defaultTo = item.to || (item.children && item.children[0]?.to);
+      if (defaultTo) {
+        navigate(defaultTo);
+      }
+      setActiveFlyoutKey((prev) => (prev === item.key ? null : item.key));
       return;
     }
     setExpandedKeys((prev) => ({
       ...prev,
-      [key]: !prev[key],
+      [item.key]: !prev[item.key],
     }));
   };
 
@@ -326,7 +331,7 @@ export function Sidebar({
                         className={`sidebar-item-btn ${
                           isParentActive && (isCollapsed || !isExpanded) ? "is-active" : ""
                         }`}
-                        onClick={() => toggleAccordion(item.key)}
+                        onClick={() => toggleAccordion(item)}
                         title={isCollapsed ? item.label : undefined}
                       >
                         <div className="sidebar-item-icon-wrap">
