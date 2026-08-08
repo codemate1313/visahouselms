@@ -99,6 +99,55 @@ class DirectoryUserManagementTests(unittest.TestCase):
             super_admin_service.set_directory_user_active(self.db, self.actor, 99999, False)
         self.assertEqual(raised.exception.status_code, 404)
 
+    def test_delete_moves_direct_student_to_deleted_directory_segment(self) -> None:
+        now = datetime.utcnow()
+        self.db.add(
+            UserSession(
+                user_id=self.direct_student.id,
+                refresh_token_hash="direct-student-session",
+                user_agent="Chrome",
+                ip_address="127.0.0.1",
+                created_at=now,
+                expires_at=now + timedelta(days=1),
+            )
+        )
+        self.db.commit()
+
+        original_id = self.direct_student.id
+        original_email = self.direct_student.email
+        super_admin_service.delete_direct_student(self.db, self.actor, original_id)
+
+        archived = self.db.get(User, original_id)
+        self.assertIsNotNone(archived)
+        self.assertIsNotNone(archived.deleted_at)
+        self.assertFalse(archived.is_active)
+        self.assertNotEqual(archived.email, original_email)
+        self.assertEqual(
+            self.db.query(UserSession).filter(UserSession.user_id == original_id).count(),
+            0,
+        )
+
+        live_page = super_admin_service.list_directory_users(self.db, role=STUDENT)
+        self.assertNotIn(original_id, [row["id"] for row in live_page["items"]])
+
+        deleted_page = super_admin_service.list_directory_users(
+            self.db,
+            role=STUDENT,
+            status_filter="deleted",
+        )
+        self.assertEqual([row["id"] for row in deleted_page["items"]], [original_id])
+        self.assertIsNotNone(deleted_page["items"][0]["deleted_at"])
+
+    def test_linked_details_can_inspect_deleted_user_history(self) -> None:
+        user_id = self.direct_student.id
+        super_admin_service.delete_direct_student(self.db, self.actor, user_id)
+
+        details = get_user_linked_details(user_id, self.db)
+
+        self.assertEqual(details["user"]["id"], user_id)
+        self.assertIsNotNone(details["user"]["deleted_at"])
+        self.assertEqual(details["audit_logs"][0]["action"], "student.direct.delete")
+
     def test_linked_details_supports_directory_visible_non_student_users(self) -> None:
         now = datetime.utcnow()
         self.db.add(

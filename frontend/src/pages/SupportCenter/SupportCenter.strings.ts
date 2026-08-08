@@ -27,11 +27,21 @@ export const supportCenterStrings = {
   history: {
     title: "My tickets",
     description: "Tickets raised from this account.",
+    openDetail: "Open ticket details",
     emptyTitle: "No support tickets yet",
     emptyDescription: "New tickets will appear here after they are submitted.",
     loading: "Loading your tickets...",
     refresh: "Refresh",
     ticketNumber: (id: number) => `Ticket #${id}`,
+  },
+  detail: {
+    title: "Ticket details",
+    close: "Close details",
+    originalQuery: "Your query",
+    supportResponse: "Support response",
+    noResponse: "Support has not posted a response yet.",
+    resolvedOn: "Resolved",
+    updatedOn: "Last updated",
   },
   status: {
     new: "New",

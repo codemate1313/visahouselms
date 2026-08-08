@@ -59,7 +59,7 @@ sudo apt install -y git python3-pip python3-venv nginx mysql-server certbot pyth
 2. Create the database and user:
    ```sql
    CREATE DATABASE ielts_lms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   CREATE USER 'ielts_user'@'localhost' IDENTIFIED BY 'SetAGoodStrongPassword123!';
+   CREATE USER 'ielts_user'@'localhost' IDENTIFIED BY 'REPLACE_WITH_STRONG_MYSQL_PASSWORD';
    GRANT ALL PRIVILEGES ON ielts_lms.* TO 'ielts_user'@'localhost';
    FLUSH PRIVILEGES;
    EXIT;
@@ -91,7 +91,9 @@ sudo apt install -y git python3-pip python3-venv nginx mysql-server certbot pyth
    nano .env
    ```
    * *Ensure you change `DATABASE_URL` to point to the MySQL user/password created in Step 4.*
+   * *Set `FRONTEND_URL`, `CORS_ORIGINS`, `ALLOWED_HOSTS`, and `GOOGLE_REDIRECT_URI` to your public HTTPS domain only; production startup rejects localhost, 127.0.0.1, 0.0.0.0, and plain HTTP origins.*
    * *Generate a real `SETTINGS_ENCRYPTION_KEY` using the instructions inside the template file.*
+   * *Optional for Active Sessions locations: download MaxMind GeoLite2-City.mmdb to `/var/www/visahouse/data/GeoLite2-City.mmdb`; otherwise session location stays `Unknown`.*
 
 4. Run the database migrations to set up tables:
    ```bash
@@ -121,13 +123,14 @@ sudo systemctl status visahouse-backend
    ```bash
    cd ../frontend
    ```
-2. Set up your environment (if you need to customize api endpoint, though default configuration proxies requests correctly):
+2. Set up the production API origin. For single-domain Nginx deployment, keep the same-origin default:
    ```bash
    echo "VITE_API_BASE_URL=/api" > .env.production
    ```
+   Use a full public HTTPS backend URL only if the API is hosted on a separate domain.
 3. Install packages and compile static files:
    ```bash
-   npm install
+   npm ci
    npm run build
    ```
    *This outputs compile bundles to `frontend/dist/`.*

@@ -57,6 +57,7 @@ class ProductionConfigurationTests(unittest.TestCase):
             jwt_secret_key="test-secret",
             app_environment="production",
             settings_encryption_key=Fernet.generate_key().decode("utf-8"),
+            frontend_url="https://app.example.com",
             cors_origins="https://app.example.com",
             allowed_hosts="api.example.com",
         )
@@ -80,7 +81,74 @@ class ProductionConfigurationTests(unittest.TestCase):
                 jwt_secret_key="test-secret",
                 app_environment="production",
                 settings_encryption_key=Fernet.generate_key().decode("utf-8"),
+                frontend_url="https://app.example.com",
                 cors_origins="https://app.example.com",
+            )
+
+    def test_production_rejects_local_frontend_url(self) -> None:
+        with self.assertRaises(ValueError):
+            Settings(
+                _env_file=None,
+                database_url="sqlite://",
+                jwt_secret_key="test-secret",
+                app_environment="production",
+                settings_encryption_key=Fernet.generate_key().decode("utf-8"),
+                frontend_url="http://localhost:5173",
+                cors_origins="https://app.example.com",
+                allowed_hosts="api.example.com",
+            )
+
+    def test_production_rejects_local_cors_origin(self) -> None:
+        with self.assertRaises(ValueError):
+            Settings(
+                _env_file=None,
+                database_url="sqlite://",
+                jwt_secret_key="test-secret",
+                app_environment="production",
+                settings_encryption_key=Fernet.generate_key().decode("utf-8"),
+                frontend_url="https://app.example.com",
+                cors_origins="http://localhost:5173",
+                allowed_hosts="api.example.com",
+            )
+
+    def test_production_rejects_plain_http_cors_origin(self) -> None:
+        with self.assertRaises(ValueError):
+            Settings(
+                _env_file=None,
+                database_url="sqlite://",
+                jwt_secret_key="test-secret",
+                app_environment="production",
+                settings_encryption_key=Fernet.generate_key().decode("utf-8"),
+                frontend_url="https://app.example.com",
+                cors_origins="http://app.example.com",
+                allowed_hosts="api.example.com",
+            )
+
+    def test_production_rejects_local_allowed_hosts(self) -> None:
+        with self.assertRaises(ValueError):
+            Settings(
+                _env_file=None,
+                database_url="sqlite://",
+                jwt_secret_key="test-secret",
+                app_environment="production",
+                settings_encryption_key=Fernet.generate_key().decode("utf-8"),
+                frontend_url="https://app.example.com",
+                cors_origins="https://app.example.com",
+                allowed_hosts="api.example.com,localhost",
+            )
+
+    def test_production_rejects_local_google_redirect_uri(self) -> None:
+        with self.assertRaises(ValueError):
+            Settings(
+                _env_file=None,
+                database_url="sqlite://",
+                jwt_secret_key="test-secret",
+                app_environment="production",
+                settings_encryption_key=Fernet.generate_key().decode("utf-8"),
+                frontend_url="https://app.example.com",
+                cors_origins="https://app.example.com",
+                allowed_hosts="api.example.com",
+                google_redirect_uri="http://localhost:8000/auth/google/callback",
             )
 
     def test_development_allows_temporary_demo_hosts(self) -> None:
@@ -135,6 +203,7 @@ class LoginOtpSecurityTests(unittest.TestCase):
                 jwt_secret_key="test-secret",
                 app_environment="production",
                 settings_encryption_key=Fernet.generate_key().decode("utf-8"),
+                frontend_url="https://app.example.com",
                 allowed_hosts="api.example.com",
                 dev_static_otp_code="123456",
             )

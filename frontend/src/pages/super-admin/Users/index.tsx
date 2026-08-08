@@ -340,7 +340,7 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
   /** Owner rows are protected; non-owner viewers also cannot bulk-act on other
    *  Super Admins. Every other row with a writable endpoint can be selected. */
   const selectableRows = rows.filter((user) => {
-    if (user.is_owner) return false;
+    if (user.deleted_at || user.is_owner) return false;
     if (user.role_name === "SUPER_ADMIN" && !viewerIsOwner) return false;
     return Boolean(rowActionBase(user));
   });
@@ -398,8 +398,8 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
     const deletableRows = selectedRows.filter((user) => Boolean(rowDeleteBase(user)));
     if (deletableRows.length === 0) return;
     const confirmed = await confirmAction(
-      `Permanently delete ${deletableRows.length} selected account(s)? This cannot be undone.`,
-      { title: strings.confirm.deleteTitle, confirmText: "Delete", variant: "danger" }
+      `Move ${deletableRows.length} selected account(s) to Deleted Users? Account data, history, payments, and attempts will be preserved.`,
+      { title: strings.confirm.deleteTitle, confirmText: "Move to Deleted Users", variant: "danger" }
     );
     if (!confirmed) return;
 
@@ -465,6 +465,7 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
             { value: "", label: strings.statusFilter.allStatuses },
             { value: "active", label: strings.statusFilter.active },
             { value: "inactive", label: strings.statusFilter.inactive },
+            { value: "deleted", label: strings.statusFilter.deleted },
           ]}
           value={statusFilter}
           onChange={(value) => {
@@ -650,7 +651,7 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
         isOpen={Boolean(deletingUser)}
         title={strings.confirm.deleteTitle}
         message={deletingUser ? strings.confirm.delete(deletingUser.email) : ""}
-        confirmText="Delete"
+        confirmText="Move to Deleted Users"
         loading={deleteLoading}
         onConfirm={handleConfirmDelete}
         onClose={() => setDeletingUser(null)}

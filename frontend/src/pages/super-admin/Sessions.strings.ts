@@ -5,10 +5,12 @@ export const sessionsStrings = {
   table: {
     device: "Device",
     ipAddress: "IP Address",
+    location: "Approx Location",
     signedIn: "Signed in",
     expires: "Expires",
     actions: "Actions",
   },
+  unknownLocation: "Unknown",
   thisSession: "this session",
   unknownDevice: "Unknown device",
   revokeSession: "Revoke session",

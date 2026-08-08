@@ -357,8 +357,7 @@ def register(
     # Send HTML Welcome Email
     try:
         from app.services import email_template_service, smtp_service
-        frontend_url = settings.frontend_url or "http://localhost:5173"
-        login_url = f"{frontend_url}/login"
+        login_url = f"{settings.frontend_url.rstrip('/')}/login"
         subject, plain, html = email_template_service.render_welcome_email(user.first_name, login_url)
         smtp_service.send_email(db, user.email, subject, plain, html_body=html)
     except Exception as exc:
@@ -402,8 +401,7 @@ def request_password_reset(db: Session, email: str) -> None:
 
     try:
         from app.services import email_template_service, smtp_service
-        frontend_url = settings.frontend_url or "http://localhost:5173"
-        reset_url = f"{frontend_url}/reset-password?token={reset_token}"
+        reset_url = f"{settings.frontend_url.rstrip('/')}/reset-password?token={reset_token}"
         subject, plain, html = email_template_service.render_forgot_password_email(
             user.first_name or "Student", reset_url
         )

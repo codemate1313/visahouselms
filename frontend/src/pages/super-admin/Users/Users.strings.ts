@@ -6,6 +6,7 @@ export const usersStrings = {
     allStatuses: "All statuses",
     active: "Active",
     inactive: "Inactive",
+    deleted: "Deleted users",
   },
   columns: {
     name: "NAME",
@@ -42,6 +43,7 @@ export const usersStrings = {
     active: "Active",
     inactive: "Inactive",
     passwordReset: "Password reset pending",
+    deleted: "Deleted",
   },
   passwordTrail: {
     never: "Never",
@@ -79,7 +81,7 @@ export const usersStrings = {
     toggle: (active: boolean, name: string) =>
       `Are you sure you want to ${active ? "deactivate" : "activate"} ${name}?`,
     deleteTitle: "Delete user",
-    delete: (name: string) => `Permanently delete ${name}? This cannot be undone.`,
+    delete: (name: string) => `Move ${name} to Deleted Users? Their account data, history, payments, and attempts will be preserved.`,
     resetPasswordTitle: "Issue temporary password",
     resetPassword: (email: string) =>
       `Issue a new temporary password for ${email}? Their current password stops working immediately.`,
@@ -102,6 +104,6 @@ export const usersStrings = {
     forceReset: "Failed to update the password reset requirement.",
     resetPassword: "Failed to issue a temporary password.",
     missingPassword: "The server did not return a temporary password.",
-    delete: "Failed to delete this account.",
+    delete: "Failed to move this account to Deleted Users.",
   },
 } as const;

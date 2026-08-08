@@ -2,7 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const securityHeaders = {
+const localDevSecurityHeaders = {
   'Content-Security-Policy': [
     "default-src 'self'",
     "base-uri 'self'",
@@ -26,6 +26,24 @@ const securityHeaders = {
   'X-Frame-Options': 'SAMEORIGIN',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': 'camera=(self), microphone=(self), display-capture=(self), fullscreen=(self)',
+}
+
+const productionPreviewSecurityHeaders = {
+  ...localDevSecurityHeaders,
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "img-src 'self' data: blob: https: https://cdn.razorpay.com https://*.razorpay.com https://*.stripe.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "media-src 'self' blob: https:",
+    "connect-src 'self' https: https://*.razorpay.com https://*.razorpay.in https://*.stripe.com https://api.stripe.com",
+    "script-src 'self' https://checkout.razorpay.com https://checkout-static.razorpay.com https://cdn.razorpay.com https://api.razorpay.com https://*.razorpay.com https://*.razorpay.in https://js.stripe.com https://*.stripe.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "frame-src 'self' https://checkout.razorpay.com https://checkout-static.razorpay.com https://api.razorpay.com https://*.razorpay.com https://*.razorpay.in https://js.stripe.com https://hooks.stripe.com https://*.stripe.com",
+    "form-action 'self'",
+    "upgrade-insecure-requests",
+  ].join('; '),
 }
 
 
@@ -56,9 +74,9 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
-    headers: securityHeaders,
+    headers: localDevSecurityHeaders,
   },
   preview: {
-    headers: securityHeaders,
+    headers: productionPreviewSecurityHeaders,
   },
 })

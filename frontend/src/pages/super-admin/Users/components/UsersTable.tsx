@@ -165,6 +165,10 @@ export function UsersTable({
   }
 
   function renderActions(user: DirectoryUser) {
+    if (user.deleted_at) {
+      return <Badge tone="gray">{strings.badges.deleted}</Badge>;
+    }
+
     if (isProtected(user)) {
       return developerActions ? renderElevatedControl(user) : <Badge tone="gray">{a.protected}</Badge>;
     }
@@ -331,7 +335,8 @@ export function UsersTable({
               <span className="record-card-tags">
                 {currentUserId === user.id && <Badge tone="gray">{b.you}</Badge>}
                 {user.is_owner && <Badge tone="red">{b.owner}</Badge>}
-                {user.force_password_reset && <Badge tone="amber">{b.passwordReset}</Badge>}
+                {user.deleted_at && <Badge tone="gray">{b.deleted}</Badge>}
+                {!user.deleted_at && user.force_password_reset && <Badge tone="amber">{b.passwordReset}</Badge>}
               </span>
             </span>
           </>
@@ -354,8 +359,8 @@ export function UsersTable({
           {
             label: t.status,
             render: (user) => (
-              <Badge tone={user.is_active ? "green" : "inactive"}>
-                {user.is_active ? b.active : b.inactive}
+              <Badge tone={user.deleted_at ? "gray" : user.is_active ? "green" : "inactive"}>
+                {user.deleted_at ? b.deleted : user.is_active ? b.active : b.inactive}
               </Badge>
             ),
           },
@@ -442,7 +447,12 @@ export function UsersTable({
                             {b.owner}
                           </Badge>
                         )}
-                        {user.force_password_reset && (
+                        {user.deleted_at && (
+                          <Badge tone="gray" style={{ fontSize: 10 }}>
+                            {b.deleted}
+                          </Badge>
+                        )}
+                        {!user.deleted_at && user.force_password_reset && (
                           <Badge tone="amber" style={{ fontSize: 10 }}>
                             {b.passwordReset}
                           </Badge>
@@ -464,8 +474,8 @@ export function UsersTable({
                   </td>
                 )}
                 <td className="col-status" data-label={t.status}>
-                  <Badge tone={user.is_active ? "green" : "inactive"}>
-                    {user.is_active ? b.active : b.inactive}
+                  <Badge tone={user.deleted_at ? "gray" : user.is_active ? "green" : "inactive"}>
+                    {user.deleted_at ? b.deleted : user.is_active ? b.active : b.inactive}
                   </Badge>
                 </td>
                 <td className="col-password" data-label={t.passwordChanged}>{renderPasswordChanged(user)}</td>

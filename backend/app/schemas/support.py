@@ -81,6 +81,7 @@ class PortalSupportTicketResponse(BaseModel):
     category: str
     status: str
     priority: str
+    admin_note: Optional[str] = None
     queue: str
     escalated_at: Optional[datetime] = None
     created_at: datetime

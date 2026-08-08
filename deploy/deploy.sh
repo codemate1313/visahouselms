@@ -10,25 +10,32 @@ set -e
 
 echo "🚀 Starting deployment..."
 
-# 1. Pull latest code from GitHub
+# 1. Pull latest code from GitHub without creating an implicit merge commit
 echo "📥 Pulling latest commits from Git..."
-git pull
+git pull --ff-only
 
 # 2. Update Backend Python environment
 echo "🐍 Updating backend packages..."
 cd backend
-source venv/bin/activate 2>/dev/null || source .venv/bin/activate 2>/dev/null || true
-pip install -r requirements.txt
+if [ ! -d .venv ]; then
+  python3 -m venv .venv
+fi
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 
 # 3. Run migrations
 echo "🗄️ Running database migrations..."
-alembic upgrade head
+python -m alembic upgrade head
 cd ..
 
 # 4. Rebuild Frontend static files
 echo "⚛️ Building Vite/React frontend..."
 cd frontend
-npm install
+if [ ! -f .env.production ]; then
+  printf "VITE_API_BASE_URL=/api\n" > .env.production
+fi
+npm ci
 npm run build
 cd ..
 

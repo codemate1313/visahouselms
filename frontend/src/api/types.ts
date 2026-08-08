@@ -71,6 +71,7 @@ export interface PortalSupportTicket {
   category: string;
   status: SupportTicketStatus;
   priority: SupportTicketPriority;
+  admin_note: string | null;
   queue: SupportTicketQueue;
   escalated_at: string | null;
   created_at: string;
@@ -881,6 +882,7 @@ export interface DirectoryUser {
   phone_number?: string | null;
   address?: string | null;
   created_at: string;
+  deleted_at: string | null;
   /** Null while the account is still on the password it was created with. */
   password_changed_at: string | null;
   last_password_change: LastPasswordChange | null;

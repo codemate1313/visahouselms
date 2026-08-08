@@ -35,11 +35,9 @@ class SuperAdminAccountOut(BaseModel):
 
 
 class SuperAdminAccountCreate(BaseModel):
-    # phone_number stays optional here: this schema is shared with the
-    # Developer Panel's "Create Controlled Account" flow
-    # (routers/developer.py), which has no phone field in its UI at all.
-    # The regular Super Admin AccountForm enforces entry with a `required`
-    # input and always sends the field.
+    # phone_number stays optional at the API boundary for backward
+    # compatibility. The Super Admin AccountForm enforces entry and always
+    # sends the field.
     email: EmailStr
     password: str
     first_name: str
@@ -111,10 +109,20 @@ class ProfileUpdateRequest(BaseModel):
         return _clean_required_phone(value)
 
 
+class SessionLocationOut(BaseModel):
+    label: str
+    city: Optional[str] = None
+    country: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    resolved: bool = False
+
+
 class SessionOut(BaseModel):
     id: int
     user_agent: Optional[str]
     ip_address: Optional[str]
+    location: SessionLocationOut
     created_at: datetime
     expires_at: datetime
     is_current: bool = False
@@ -180,6 +188,7 @@ class DirectoryUserOut(BaseModel):
     phone_number: Optional[str] = None
     address: Optional[str] = None
     created_at: datetime
+    deleted_at: Optional[datetime] = None
     # null means the account is still on the password it was created with
     password_changed_at: Optional[datetime] = None
     last_password_change: Optional[LastPasswordChangeOut] = None

@@ -16,6 +16,7 @@ function fileStem(role: DirectoryRole): string {
 }
 
 function statusLabel(user: DirectoryUser): string {
+  if (user.deleted_at) return strings.statusFilter.deleted;
   return user.is_active ? strings.statusFilter.active : strings.statusFilter.inactive;
 }
 

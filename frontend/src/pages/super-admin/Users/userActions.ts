@@ -67,7 +67,7 @@ export function tenantManageLink(user: DirectoryUser, basePath = "/super-admin")
 }
 
 export function isProtected(user: DirectoryUser): boolean {
-  return user.is_owner;
+  return Boolean(user.deleted_at) || user.is_owner;
 }
 
 /** Roles the Super Admin manages directly from the directory, wherever they
@@ -85,7 +85,7 @@ const MANAGED_TENANT_ROLES: DirectoryRole[] = ["INSTITUTE_ADMIN", "INST_INSTRUCT
  * only suspension, since there is no institute to re-home them into.
  */
 export function memberActionBase(user: DirectoryUser): string | null {
-  if (user.is_owner || !MANAGED_TENANT_ROLES.includes(user.role_name)) return null;
+  if (user.deleted_at || user.is_owner || !MANAGED_TENANT_ROLES.includes(user.role_name)) return null;
   if (user.role_name === "INSTITUTE_ADMIN" && user.institute_id) {
     return `/super-admin/institutes/${user.institute_id}/admins`;
   }
@@ -95,11 +95,12 @@ export function memberActionBase(user: DirectoryUser): string | null {
 
 /** Whether a tenant/direct row can be archived from the directory. */
 export function canDeleteMember(user: DirectoryUser): boolean {
-  return Boolean(memberActionBase(user));
+  return !user.deleted_at && Boolean(memberActionBase(user));
 }
 
 /** Edit form for a tenant-scoped member, or null when there is none. */
 export function memberEditPath(user: DirectoryUser, basePath = "/super-admin"): string | null {
+  if (user.deleted_at) return null;
   if (MANAGED_TENANT_ROLES.includes(user.role_name)) {
     return `${basePath}/users/${user.id}/edit`;
   }

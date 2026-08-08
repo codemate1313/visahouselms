@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -10,10 +10,8 @@ from app.dependencies.auth import get_current_user, require_verified_developer
 from app.models.user import User
 from app.schemas.user import (
     ChangePasswordRequest,
-    DeveloperAccountCreate,
     DeveloperAccountUpdate,
     ForceResetRequest,
-    SuperAdminAccountCreate,
     SuperAdminAccountOut,
 )
 from app.services import (
@@ -79,9 +77,11 @@ def _client_ip(request: Request) -> Optional[str]:
     return request.client.host if request.client else None
 
 
-@router.get("/accounts", response_model=List[SuperAdminAccountOut])
-def list_accounts(db: Session = Depends(get_db)):
-    return super_admin_service.list_developer_managed_accounts(db)
+def _deny_privileged_account_creation() -> None:
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Developer access cannot create owner, Super Admin, or Developer accounts.",
+    )
 
 
 @router.post("/me/change-password", status_code=status.HTTP_204_NO_CONTENT)
@@ -99,46 +99,23 @@ def change_my_password(
     )
 
 
-@router.post("/super-admins", response_model=SuperAdminAccountOut, status_code=status.HTTP_201_CREATED)
+@router.get("/accounts", response_model=List[SuperAdminAccountOut])
+def list_accounts(db: Session = Depends(get_db)):
+    return super_admin_service.list_developer_managed_accounts(db)
+
+
+@router.post("/super-admins", status_code=status.HTTP_403_FORBIDDEN)
 def create_super_admin(
-    payload: SuperAdminAccountCreate,
-    request: Request,
-    db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    return super_admin_service.create_super_admin(
-        db,
-        actor,
-        payload.email,
-        payload.password,
-        payload.first_name,
-        payload.last_name,
-        _client_ip(request),
-        dob=payload.dob,
-        phone_number=payload.phone_number,
-        address=payload.address,
-        avatar_path=payload.avatar_path,
-        can_view_monetary_analytics=False,
-    )
+    _deny_privileged_account_creation()
 
 
-@router.post("/developers", response_model=SuperAdminAccountOut, status_code=status.HTTP_201_CREATED)
+@router.post("/developers", status_code=status.HTTP_403_FORBIDDEN)
 def create_developer(
-    payload: DeveloperAccountCreate,
-    request: Request,
-    db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    return super_admin_service.create_developer(
-        db,
-        actor,
-        payload.email,
-        payload.password,
-        payload.first_name,
-        payload.last_name,
-        _client_ip(request),
-        verified=payload.is_developer_verified,
-    )
+    _deny_privileged_account_creation()
 
 
 @router.patch("/accounts/{account_id}", response_model=SuperAdminAccountOut)

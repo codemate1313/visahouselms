@@ -3745,6 +3745,21 @@ button.secondary-button:hover,
   width: 100%;
 }
 
+.sessions-table .session-location-resolved,
+.sessions-table .session-location-muted {
+  display: inline-flex;
+  align-items: center;
+  max-width: 220px;
+  color: var(--text);
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.sessions-table .session-location-muted {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
 .institute-row-actions {
   gap: 6px !important;
   flex-wrap: nowrap;
@@ -4380,4 +4395,3 @@ textarea:focus {
 .subscription-actions select {
   width: 280px;
 }
-

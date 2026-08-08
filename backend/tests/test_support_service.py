@@ -84,7 +84,7 @@ class SupportServiceTests(unittest.TestCase):
         self.assertEqual(ticket.email, "partner@example.com")
         self.assertEqual(ticket.institute_name, "Meridian Institute")
 
-    def test_portal_user_can_create_and_list_own_tickets(self) -> None:
+    def test_portal_user_can_create_and_list_own_tickets_with_support_response(self) -> None:
         created = support_service.create_portal_ticket(
             self.db,
             PortalSupportTicketCreate(
@@ -94,13 +94,19 @@ class SupportServiceTests(unittest.TestCase):
             ),
             self.admin,
         )
+        support_service.update_ticket(
+            self.db,
+            created.id,
+            SupportTicketUpdate(status=SUPPORT_STATUS_RESOLVED, admin_note="Please refresh and try again."),
+        )
 
         tickets = support_service.list_portal_tickets(self.db, self.admin)
 
         self.assertEqual(created.source, "portal_super_admin")
         self.assertEqual(len(tickets), 1)
         self.assertEqual(tickets[0]["subject"], "Unable to open my test")
-        self.assertNotIn("admin_note", tickets[0])
+        self.assertEqual(tickets[0]["status"], SUPPORT_STATUS_RESOLVED)
+        self.assertEqual(tickets[0]["admin_note"], "Please refresh and try again.")
 
     def test_portal_history_does_not_include_public_enquiries(self) -> None:
         self._create_ticket(email=self.admin.email)

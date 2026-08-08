@@ -11,6 +11,7 @@ from app.core.uploads import read_compressed_profile_image
 from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.models.user_session import UserSession
+from app.services import geoip_service
 
 def _audit(db: Session, actor: User, action: str, entity_id: int, ip: Optional[str], details: Optional[dict] = None) -> None:
     db.add(
@@ -42,8 +43,7 @@ def send_account_credentials_email(
     try:
         from app.services import email_template_service, smtp_service
 
-        frontend_url = settings.frontend_url or "http://localhost:5173"
-        login_url = f"{frontend_url}/login"
+        login_url = f"{settings.frontend_url.rstrip('/')}/login"
         subject, plain, html = email_template_service.render_account_credentials_email(
             user.first_name, user.email, temporary_password, login_url, role_label=role_label
         )
@@ -155,6 +155,7 @@ def list_sessions(db: Session, actor: User, current_session_id: Optional[int]) -
             "id": s.id,
             "user_agent": s.user_agent,
             "ip_address": s.ip_address,
+            "location": geoip_service.locate(s.ip_address),
             "created_at": s.created_at,
             "expires_at": s.expires_at,
             "is_current": s.id == current_session_id,

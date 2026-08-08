@@ -9,6 +9,14 @@ interface SessionInfo {
   id: number;
   user_agent: string | null;
   ip_address: string | null;
+  location: {
+    label: string;
+    city: string | null;
+    country: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    resolved: boolean;
+  };
   created_at: string;
   expires_at: string;
   is_current: boolean;
@@ -22,6 +30,11 @@ function describeAgent(userAgent: string | null): string {
   if (userAgent.includes("Chrome")) return "Chrome";
   if (userAgent.includes("Safari")) return "Safari";
   return userAgent.slice(0, 40);
+}
+
+function sessionLocation(session: SessionInfo): string {
+  const label = session.location?.label?.trim();
+  return label && label !== "Unknown" ? label : strings.unknownLocation;
 }
 
 interface SessionsProps {
@@ -93,6 +106,7 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
             <tr>
               <th>{strings.table.device}</th>
               <th>{strings.table.ipAddress}</th>
+              <th>{strings.table.location}</th>
               <th>{strings.table.signedIn}</th>
               <th>{strings.table.expires}</th>
               <th className="table-actions-heading">{strings.table.actions}</th>
@@ -106,6 +120,11 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
                   {session.is_current && <Badge tone="green">{strings.thisSession}</Badge>}
                 </td>
                 <td>{session.ip_address ?? "—"}</td>
+                <td>
+                  <span className={session.location?.resolved ? "session-location-resolved" : "session-location-muted"}>
+                    {sessionLocation(session)}
+                  </span>
+                </td>
                 <td>{new Date(session.created_at).toLocaleString()}</td>
                 <td>{new Date(session.expires_at).toLocaleString()}</td>
                 <td className="table-actions">

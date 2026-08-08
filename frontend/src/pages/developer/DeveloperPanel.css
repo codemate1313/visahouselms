@@ -150,43 +150,6 @@
   border: 1px solid rgba(107, 114, 128, 0.15);
 }
 
-/* Inputs and Forms */
-.dev-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.dev-form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.dev-form-group label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: 0.01em;
-}
-
-.dev-select,
-.dev-select-control .searchable-select-trigger {
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background-color: var(--surface);
-  color: var(--text);
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.dev-select-control {
-  max-width: none;
-}
-
 [data-theme="dark"] .developer-portal-container {
   color: #f3f4f6;
 }
@@ -203,38 +166,12 @@
   color: #f3f4f6;
 }
 
-[data-theme="dark"] .dev-select,
-[data-theme="dark"] .dev-select-control .searchable-select-trigger {
-  background-color: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.14);
-  color: #f7f7fa;
-}
-
-[data-theme="dark"] .dev-form-group label,
-[data-theme="dark"] .developer-card h2,
-[data-theme="dark"] .dev-checkbox-container {
+[data-theme="dark"] .developer-card h2 {
   color: #f7f7fa;
 }
 
 [data-theme="dark"] .developer-card .muted-text {
   color: #a5adbb;
-}
-
-.dev-select:focus,
-.dev-select-control.is-open .searchable-select-trigger {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-soft);
-}
-
-.dev-checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  user-select: none;
-  font-size: 0.875rem;
-  color: var(--text);
-  margin-top: 4px;
 }
 
 /* Dev Actions Buttons */
@@ -261,28 +198,4 @@
   background: #10b981 !important;
   color: #ffffff !important;
   border-color: #10b981 !important;
-}
-
-.dev-submit-btn {
-  background: linear-gradient(135deg, var(--rose-600), var(--primary)) !important;
-  color: #ffffff !important;
-  border: none !important;
-  font-weight: 600 !important;
-  padding: 12px 20px !important;
-  border-radius: var(--radius-sm) !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  cursor: pointer;
-  box-shadow: 0 4px 12px var(--primary-soft) !important;
-}
-
-.dev-submit-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(225, 29, 46, 0.25) !important;
-  filter: brightness(1.05);
-}
-
-.dev-submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  box-shadow: none !important;
 }

@@ -139,7 +139,10 @@ def _assert_owner_not_mutated(actor: User, user: User, action: str) -> None:
         )
 
 
-def _require_owner(actor: User) -> None:
+def _require_owner(
+    actor: User,
+    detail: str = "Only the owner account can manage other super admin accounts",
+) -> None:
     """Only the owner account may create, edit, deactivate, reactivate, delete,
     or force-reset a super admin account. Self-service for a super admin's own
     account goes through account_service.update_profile / /me/profile instead,
@@ -148,7 +151,7 @@ def _require_owner(actor: User) -> None:
     if not actor.is_owner:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the owner account can manage other super admin accounts",
+            detail=detail,
         )
 
 
@@ -439,6 +442,7 @@ def create_developer(
     ip_address: Optional[str],
     verified: bool = True,
 ) -> User:
+    _require_owner(actor, detail="Only the owner account can create developer accounts")
     role = _role_or_500(db, DEVELOPER)
     if db.query(User).filter(User.email == email).first() is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
@@ -514,13 +518,21 @@ DIRECTORY_ROLES = [SUPER_ADMIN, SA_INSTRUCTOR, INSTITUTE_ADMIN, INST_INSTRUCTOR,
 MAX_PAGE_SIZE = 200
 
 
-def _directory_base_query(db: Session):
-    """Live (non soft-deleted) users in a directory-visible role."""
-    return (
+def _directory_base_query(db: Session, *, include_deleted: bool = False):
+    """Directory-visible users.
+
+    Normal views stay on live accounts. The explicit Deleted status opts into
+    retired rows so the UI can show the preservation segment without letting
+    archived accounts leak back into operational lists.
+    """
+    query = (
         db.query(User)
         .join(Role, User.role_id == Role.id)
-        .filter(User.deleted_at.is_(None), Role.name.in_(DIRECTORY_ROLES))
+        .filter(Role.name.in_(DIRECTORY_ROLES))
     )
+    if not include_deleted:
+        query = query.filter(User.deleted_at.is_(None))
+    return query
 
 
 def _apply_directory_filters(
@@ -541,9 +553,11 @@ def _apply_directory_filters(
     if institute_id is not None:
         query = query.filter(User.institute_id == institute_id)
     if status_filter == "active":
-        query = query.filter(User.is_active.is_(True))
+        query = query.filter(User.is_active.is_(True), User.deleted_at.is_(None))
     elif status_filter == "inactive":
-        query = query.filter(User.is_active.is_(False))
+        query = query.filter(User.is_active.is_(False), User.deleted_at.is_(None))
+    elif status_filter == "deleted":
+        query = query.filter(User.deleted_at.is_not(None))
     if search:
         search_stripped = search.strip()
         if search_by_id_only:
@@ -665,6 +679,7 @@ def serialize_directory_user(user: User, last_password_change: Optional[dict] = 
         "phone_number": user.phone_number,
         "address": user.address,
         "created_at": user.created_at,
+        "deleted_at": user.deleted_at,
         "password_changed_at": user.password_changed_at,
         "last_password_change": last_password_change,
     }
@@ -695,7 +710,13 @@ def list_directory_users(
     page_size = max(1, min(page_size, MAX_PAGE_SIZE))
 
     query = _apply_directory_filters(
-        _directory_base_query(db), role, search, status_filter, institute_id, direct, search_by_id_only
+        _directory_base_query(db, include_deleted=status_filter == "deleted"),
+        role,
+        search,
+        status_filter,
+        institute_id,
+        direct,
+        search_by_id_only,
     )
     total = query.order_by(None).count()
     users = (
@@ -786,18 +807,16 @@ def get_direct_student_or_404(db: Session, user_id: int) -> User:
     return user
 
 
-def get_directory_user_or_404(db: Session, user_id: int) -> User:
-    user = (
+def get_directory_user_or_404(db: Session, user_id: int, *, include_deleted: bool = False) -> User:
+    query = (
         db.query(User)
         .join(Role)
         .options(joinedload(User.role), joinedload(User.institute))
-        .filter(
-            User.id == user_id,
-            User.deleted_at.is_(None),
-            Role.name.in_(DIRECTORY_ROLES),
-        )
-        .first()
+        .filter(User.id == user_id, Role.name.in_(DIRECTORY_ROLES))
     )
+    if not include_deleted:
+        query = query.filter(User.deleted_at.is_(None))
+    user = query.first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user

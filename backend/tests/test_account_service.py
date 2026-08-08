@@ -3,13 +3,22 @@ import io
 import os
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 from fastapi import HTTPException, UploadFile
 from PIL import Image
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from starlette.datastructures import Headers
 
 from app.config import settings
 from app.core.uploads import read_compressed_profile_image
+from app.core.security import hash_password
+from app.models import Base
+from app.models.role import SUPER_ADMIN, Role
+from app.models.user import User
+from app.models.user_session import UserSession
 from app.services import account_service
 
 
@@ -71,6 +80,60 @@ class ProfileImageCompressionTests(unittest.TestCase):
         self.assertTrue(stored_path.is_file())
         with Image.open(stored_path) as stored:
             self.assertLessEqual(max(stored.size), 1600)
+
+
+class AccountSessionLocationTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(self.engine)
+        self.db = sessionmaker(bind=self.engine)()
+
+        role = Role(name=SUPER_ADMIN)
+        self.db.add(role)
+        self.db.flush()
+        self.actor = User(
+            email="session-owner@example.test",
+            password_hash=hash_password("SessionPassword!1"),
+            role_id=role.id,
+            first_name="Session",
+            last_name="Owner",
+            is_active=True,
+        )
+        self.db.add(self.actor)
+        self.db.flush()
+
+        now = datetime.now(timezone.utc)
+        self.session = UserSession(
+            user_id=self.actor.id,
+            refresh_token_hash="refresh-hash",
+            user_agent="Mozilla/5.0 Chrome",
+            ip_address="8.8.8.8",
+            created_at=now,
+            expires_at=now + timedelta(days=1),
+        )
+        self.db.add(self.session)
+        self.db.commit()
+
+    def tearDown(self) -> None:
+        self.db.close()
+        self.engine.dispose()
+
+    def test_list_sessions_includes_approximate_location(self) -> None:
+        location = {
+            "label": "Mountain View, United States",
+            "city": "Mountain View",
+            "country": "United States",
+            "latitude": 37.386,
+            "longitude": -122.0838,
+            "resolved": True,
+        }
+
+        with patch("app.services.geoip_service.locate", return_value=location) as locate:
+            sessions = account_service.list_sessions(self.db, self.actor, self.session.id)
+
+        locate.assert_called_once_with("8.8.8.8")
+        self.assertEqual(sessions[0]["location"], location)
+        self.assertTrue(sessions[0]["is_current"])
 
 
 if __name__ == "__main__":

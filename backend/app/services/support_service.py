@@ -258,6 +258,7 @@ def list_portal_tickets(db: Session, user: User) -> list[dict]:
             "category": ticket.category,
             "status": ticket.status,
             "priority": ticket.priority,
+            "admin_note": ticket.admin_note,
             "queue": ticket.queue,
             "escalated_at": ticket.escalated_at,
             "created_at": ticket.created_at,

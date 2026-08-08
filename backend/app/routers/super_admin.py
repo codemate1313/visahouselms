@@ -79,7 +79,7 @@ def _serialize_linked_session(session: UserSession) -> dict:
 def list_directory_users(
     role: Optional[str] = Query(default=None, max_length=40),
     q: Optional[str] = Query(default=None, max_length=200),
-    status: Optional[str] = Query(default=None, pattern="^(active|inactive)$"),
+    status: Optional[str] = Query(default=None, pattern="^(active|inactive|deleted)$"),
     institute_id: Optional[int] = Query(default=None, ge=1),
     direct: Optional[bool] = Query(default=None),
     page: int = Query(default=1, ge=1),
@@ -398,7 +398,7 @@ def get_user_linked_details(
     from app.models.payment import Payment
     from app.models.subscription import Subscription
 
-    user = super_admin_service.get_directory_user_or_404(db, user_id)
+    user = super_admin_service.get_directory_user_or_404(db, user_id, include_deleted=True)
     serialized_user = super_admin_service.serialize_directory_user(user, None)
 
     sessions = (
