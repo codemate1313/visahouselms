@@ -72,7 +72,7 @@ sudo cp deploy/visahouse-backend.service /etc/systemd/system/visahouse-backend.s
 sudo systemctl daemon-reload
 
 echo "🔐 Fixing app permissions..."
-sudo mkdir -p "$APP_DIR/storage" "$APP_DIR/data"
+sudo mkdir -p "$APP_DIR/storage" "$APP_DIR/data" "$APP_DIR/backend/storage"
 sudo chown -R www-data:www-data "$APP_DIR/storage" "$APP_DIR/data" "$APP_DIR/backend/storage"
 sudo chmod -R g+rwX "$APP_DIR/storage" "$APP_DIR/data" "$APP_DIR/backend/storage"
 

@@ -69,7 +69,7 @@ jobs:
             # 4. Install the service definition and reset writable permissions
             cp deploy/visahouse-backend.service /etc/systemd/system/visahouse-backend.service
             systemctl daemon-reload
-            mkdir -p /var/www/visahouse/storage /var/www/visahouse/data
+            mkdir -p /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
             chown -R www-data:www-data /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
             chmod -R g+rwX /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
 
