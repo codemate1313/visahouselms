@@ -4,7 +4,7 @@ Wants=network-online.target
 After=network-online.target mysql.service
 
 [Service]
-User=ubuntu
+User=www-data
 Group=www-data
 WorkingDirectory=/var/www/visahouse/backend
 Environment="PATH=/var/www/visahouse/backend/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"

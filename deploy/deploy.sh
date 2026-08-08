@@ -10,11 +10,12 @@ set -Eeuo pipefail
 
 APP_DIR="/var/www/visahouse"
 BACKEND_HEALTH_URL="http://127.0.0.1:8000/health/db"
+BACKEND_HEALTH_HOST="${BACKEND_HEALTH_HOST:-thecodemate.tech}"
 
 wait_for_backend() {
   echo "🩺 Waiting for backend database health..."
   for attempt in $(seq 1 30); do
-    if curl -fsS "$BACKEND_HEALTH_URL" >/dev/null; then
+    if curl -fsS -H "Host: $BACKEND_HEALTH_HOST" "$BACKEND_HEALTH_URL" >/dev/null; then
       echo "✅ Backend and database are healthy."
       return 0
     fi
@@ -30,7 +31,15 @@ echo "🚀 Starting deployment..."
 
 # 1. Pull latest code from GitHub without creating an implicit merge commit
 echo "📥 Pulling latest commits from Git..."
-git pull --ff-only
+git config --global --add safe.directory "$APP_DIR"
+git fetch --prune origin main
+git checkout main
+if [ -n "$(git status --porcelain)" ]; then
+  echo "⚠️ Local checkout has uncommitted changes. Stashing before deployment reset..."
+  git stash push --include-untracked -m "pre-deploy-$(date -u +%Y%m%d%H%M%S)" || true
+fi
+git reset --hard origin/main
+git clean -fd
 
 # 2. Update Backend Python environment
 echo "🐍 Updating backend packages..."
@@ -63,10 +72,9 @@ sudo cp deploy/visahouse-backend.service /etc/systemd/system/visahouse-backend.s
 sudo systemctl daemon-reload
 
 echo "🔐 Fixing app permissions..."
-sudo chown -R ubuntu:www-data "$APP_DIR"
 sudo mkdir -p "$APP_DIR/storage" "$APP_DIR/data"
-sudo chown -R ubuntu:www-data "$APP_DIR/storage" "$APP_DIR/data"
-sudo chmod -R g+rwX "$APP_DIR/storage" "$APP_DIR/data"
+sudo chown -R www-data:www-data "$APP_DIR/storage" "$APP_DIR/data" "$APP_DIR/backend/storage"
+sudo chmod -R g+rwX "$APP_DIR/storage" "$APP_DIR/data" "$APP_DIR/backend/storage"
 
 echo "🔄 Restarting FastAPI backend service..."
 sudo systemctl restart visahouse-backend

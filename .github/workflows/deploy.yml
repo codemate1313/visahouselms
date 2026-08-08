@@ -70,13 +70,13 @@ jobs:
             cp deploy/visahouse-backend.service /etc/systemd/system/visahouse-backend.service
             systemctl daemon-reload
             mkdir -p /var/www/visahouse/storage /var/www/visahouse/data
-            chown -R ubuntu:www-data /var/www/visahouse
-            chmod -R g+rwX /var/www/visahouse/storage /var/www/visahouse/data
+            chown -R www-data:www-data /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
+            chmod -R g+rwX /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
 
             # 5. Restart backend and block deployment if DB-backed health fails
             systemctl restart visahouse-backend
             for attempt in $(seq 1 30); do
-              if curl -fsS http://127.0.0.1:8000/health/db >/dev/null; then
+              if curl -fsS -H "Host: thecodemate.tech" http://127.0.0.1:8000/health/db >/dev/null; then
                 echo "✅ Backend and database are healthy."
                 break
               fi
