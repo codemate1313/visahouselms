@@ -107,12 +107,14 @@ import {
 } from "./lazyPages";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { MonetaryAnalyticsRoute } from "./MonetaryAnalyticsRoute";
+import { RouteErrorBoundary } from "./RouteErrorBoundary";
 
 const developerAccessSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
 
 export const router = createBrowserRouter([
   {
     element: <LandingLayout />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       { path: "/", element: <Home /> },
       // The lander's own auth: these render the landing page with the login or
@@ -133,7 +135,7 @@ export const router = createBrowserRouter([
       { path: "/vouchers", element: <PublicVouchersPage /> },
     ],
   },
-  { path: "/testing-login", element: <TestingLoginSelector /> },
+  { path: "/testing-login", element: <TestingLoginSelector />, errorElement: <RouteErrorBoundary /> },
   { path: "/super-admin/login", element: <Navigate to="/login?role=SUPER_ADMIN" replace /> },
   { path: `/${developerAccessSlug}/login`, element: <Login allowedRoles={["DEVELOPER"]} title="Developer Control" subtitle="Verified developer access only" /> },
   { path: "/sa-instructor/login", element: <Navigate to="/login?role=SA_INSTRUCTOR" replace /> },
@@ -143,9 +145,10 @@ export const router = createBrowserRouter([
   { path: "/sa-instructor-login", element: <Navigate to="/login?role=SA_INSTRUCTOR" replace /> },
   { path: "/instructor", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
   { path: "/instructor/*", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
-  { path: "/reset-password", element: <ResetPassword /> },
+  { path: "/reset-password", element: <ResetPassword />, errorElement: <RouteErrorBoundary /> },
   {
     element: <ProtectedRoute allowedRoles={["SUPER_ADMIN"]} />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         path: "/super-admin",
@@ -231,6 +234,7 @@ export const router = createBrowserRouter([
   },
   {
     element: <ProtectedRoute allowedRoles={["DEVELOPER"]} />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         path: `/${developerAccessSlug}`,
@@ -273,6 +277,7 @@ export const router = createBrowserRouter([
   },
   {
     element: <ProtectedRoute allowedRoles={["SA_INSTRUCTOR"]} />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         path: "/super-admin/instructor",
@@ -299,6 +304,7 @@ export const router = createBrowserRouter([
   },
   {
     element: <ProtectedRoute allowedRoles={["INSTITUTE_ADMIN"]} />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         path: "/institute-portal",
@@ -337,6 +343,7 @@ export const router = createBrowserRouter([
   },
   {
     element: <ProtectedRoute allowedRoles={["INST_INSTRUCTOR"]} />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         path: "/institute-instructor",
@@ -356,6 +363,7 @@ export const router = createBrowserRouter([
   },
   {
     element: <ProtectedRoute allowedRoles={["STUDENT"]} />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         path: "/student",
