@@ -11,7 +11,7 @@ export function TestingLoginSelector() {
         <p>{strings.description}</p>
 
         <div className="testing-login-actions">
-          <Link className="testing-login-card testing-login-card-primary" to="/super-admin/login">
+          <Link className="testing-login-card testing-login-card-primary" to="/login?role=SUPER_ADMIN">
             <span className="testing-login-icon" aria-hidden="true">
               <Icon name="admin" />
             </span>
@@ -22,7 +22,7 @@ export function TestingLoginSelector() {
             <Icon name="arrowRight" />
           </Link>
 
-          <Link className="testing-login-card" to="/sa-instructor/login">
+          <Link className="testing-login-card" to="/login?role=SA_INSTRUCTOR">
             <span className="testing-login-icon" aria-hidden="true">
               <Icon name="grading" />
             </span>

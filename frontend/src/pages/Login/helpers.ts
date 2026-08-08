@@ -4,8 +4,8 @@ export const ALL_ROLE_OPTIONS: readonly RoleOption[] = [
   { role: "INSTITUTE_ADMIN", label: "Institute", basePath: "/login" },
   { role: "INST_INSTRUCTOR", label: "Instructor", basePath: "/login?role=INST_INSTRUCTOR" },
   { role: "STUDENT", label: "Student", basePath: "/login?role=STUDENT" },
-  { role: "SUPER_ADMIN", label: "Super Admin", basePath: "/super-admin/login" },
-  { role: "SA_INSTRUCTOR", label: "SA Instructor", basePath: "/super-admin/login?role=SA_INSTRUCTOR" },
+  { role: "SUPER_ADMIN", label: "Super Admin", basePath: "/login?role=SUPER_ADMIN" },
+  { role: "SA_INSTRUCTOR", label: "SA Instructor", basePath: "/login?role=SA_INSTRUCTOR" },
   { role: "DEVELOPER", label: "Developer", basePath: `/${import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a"}/login` },
 ] as const;
 

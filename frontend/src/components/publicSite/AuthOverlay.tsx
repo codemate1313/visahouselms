@@ -57,7 +57,7 @@ export function AuthOverlay({ authMode, publicTheme, onClose, onModeChange, clos
         >
           {strings.authOverlay.closeGlyph}
         </button>
-        {authMode === "login" ? <Login disableAnimation={true} /> : <Register />}
+        {authMode === "login" ? <Login allowedRoles={["INSTITUTE_ADMIN", "INST_INSTRUCTOR", "STUDENT", "SUPER_ADMIN", "SA_INSTRUCTOR"]} disableAnimation={true} /> : <Register />}
       </div>
     </div>
   );

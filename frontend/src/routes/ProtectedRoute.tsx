@@ -7,8 +7,8 @@ interface ProtectedRouteProps {
 }
 
 function loginPathForRole(role?: string) {
-  if (role === "SUPER_ADMIN") return "/super-admin/login";
-  if (role === "SA_INSTRUCTOR") return "/sa-instructor/login";
+  if (role === "SUPER_ADMIN") return "/login?role=SUPER_ADMIN";
+  if (role === "SA_INSTRUCTOR") return "/login?role=SA_INSTRUCTOR";
   if (role === "DEVELOPER") return `/${import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a"}/login`;
   return "/login";
 }

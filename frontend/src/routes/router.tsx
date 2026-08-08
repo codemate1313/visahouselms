@@ -117,9 +117,8 @@ export const router = createBrowserRouter([
       { path: "/", element: <Home /> },
       // The lander's own auth: these render the landing page with the login or
       // register overlay on top, so a visitor signing in never loses the page
-      // they were reading. The standalone `<Login />` page is for portal
-      // entrances only (Super Admin, Developer), which are not part of the
-      // marketing site.
+      // they were reading. Platform roles use this same overlay via role query
+      // params so reloads do not jump to a separate login screen.
       { path: "/login", element: <Home /> },
       { path: "/register", element: <Home /> },
       { path: "/about", element: <AboutUs /> },
@@ -135,13 +134,13 @@ export const router = createBrowserRouter([
     ],
   },
   { path: "/testing-login", element: <TestingLoginSelector /> },
-  { path: "/super-admin/login", element: <Login allowedRoles={["SUPER_ADMIN", "SA_INSTRUCTOR"]} title="Super Admin & Author Portal" subtitle="Sign in to platform management or assessment authoring" /> },
+  { path: "/super-admin/login", element: <Navigate to="/login?role=SUPER_ADMIN" replace /> },
   { path: `/${developerAccessSlug}/login`, element: <Login allowedRoles={["DEVELOPER"]} title="Developer Control" subtitle="Verified developer access only" /> },
-  { path: "/sa-instructor/login", element: <Navigate to="/super-admin/login?role=SA_INSTRUCTOR" replace /> },
-  { path: "/super-admin", element: <Navigate to="/super-admin/login" replace /> },
+  { path: "/sa-instructor/login", element: <Navigate to="/login?role=SA_INSTRUCTOR" replace /> },
+  { path: "/super-admin", element: <Navigate to="/login?role=SUPER_ADMIN" replace /> },
   { path: "/super-admin/instructor", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
-  { path: "/admin-login", element: <Navigate to="/super-admin/login" replace /> },
-  { path: "/sa-instructor-login", element: <Navigate to="/super-admin/login?role=SA_INSTRUCTOR" replace /> },
+  { path: "/admin-login", element: <Navigate to="/login?role=SUPER_ADMIN" replace /> },
+  { path: "/sa-instructor-login", element: <Navigate to="/login?role=SA_INSTRUCTOR" replace /> },
   { path: "/instructor", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
   { path: "/instructor/*", element: <Navigate to="/super-admin/instructor/dashboard" replace /> },
   { path: "/reset-password", element: <ResetPassword /> },
