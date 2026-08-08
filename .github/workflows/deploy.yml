@@ -18,7 +18,23 @@ jobs:
           port: 22
           script: |
             set -e
+            trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
+
             echo "🚀 Starting automatic deployment on VPS..."
+
+            # 0. Ensure swap file exists to prevent OOM (Out Of Memory) crashes during npm build
+            if [ -f /swapfile ]; then
+              echo "✅ Swapfile already exists."
+            else
+              echo "⚠️ No swapfile found. Creating 2GB swapfile to prevent OOM errors..."
+              fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
+              chmod 600 /swapfile
+              mkswap /swapfile
+              swapon /swapfile
+              echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+              echo "✅ Swapfile created and enabled successfully."
+            fi
+
             cd /var/www/visahouse
 
             # 1. Pull the latest commits from GitHub
@@ -28,6 +44,10 @@ jobs:
 
             # 2. Update backend virtual environment & run migrations
             cd backend
+            if [ ! -d "venv" ] && [ ! -d ".venv" ]; then
+              echo "⚠️ Virtual environment not found. Creating one..."
+              python3 -m venv venv
+            fi
             source venv/bin/activate 2>/dev/null || source .venv/bin/activate 2>/dev/null || true
             pip install -r requirements.txt
             alembic upgrade head
