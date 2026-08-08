@@ -4704,11 +4704,14 @@
 
 [data-theme="dark"] input::placeholder,
 [data-theme="dark"] textarea::placeholder,
+[data-theme="dark"] select::placeholder,
 [data-theme="dark"] .ui-input::placeholder,
 [data-theme="dark"] .sab-input-field::placeholder,
 [data-theme="dark"] .sab-search-input::placeholder,
+[data-theme="dark"] .sab-textarea-field::placeholder,
 [data-theme="dark"] .sat-input::placeholder,
 [data-theme="dark"] .sat-search-input::placeholder,
+[data-theme="dark"] .sat-textarea::placeholder,
 [data-theme="dark"] .target-search-input::placeholder,
 [data-theme="dark"] .select-search-input::placeholder,
 [data-theme="dark"] .date-input-field::placeholder,
@@ -4717,8 +4720,11 @@
 [data-theme="dark"] .pn-input::placeholder,
 [data-theme="dark"] .pn-textarea::placeholder,
 [data-theme="dark"] .ui-search-input input::placeholder,
-[data-theme="dark"] .password-input-wrap input::placeholder {
-  color: rgba(255, 255, 255, 0.55) !important;
+[data-theme="dark"] .password-input-wrap input::placeholder,
+[data-theme="dark"] .filter-bar input::placeholder,
+[data-theme="dark"] .role-profile-form input::placeholder,
+[data-theme="dark"] .role-profile-form textarea::placeholder {
+  color: rgba(255, 255, 255, 0.32) !important;
   opacity: 1 !important;
 }
 

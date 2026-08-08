@@ -258,6 +258,12 @@
   color: #f7f7fa;
 }
 
+[data-theme="dark"] .sab-input-field::placeholder,
+[data-theme="dark"] .sab-textarea-field::placeholder {
+  color: rgba(255, 255, 255, 0.32) !important;
+  opacity: 1 !important;
+}
+
 [data-theme="dark"] .sab-input-field:focus,
 [data-theme="dark"] .sab-select-field.is-open .searchable-select-trigger {
   background: rgba(255, 255, 255, 0.08);

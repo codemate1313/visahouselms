@@ -164,7 +164,7 @@ select::placeholder {
 
 [data-theme="dark"] input::placeholder,
 [data-theme="dark"] textarea::placeholder {
-  color: rgba(242, 242, 245, 0.26);
+  color: rgba(255, 255, 255, 0.32);
   opacity: 1;
 }
 
