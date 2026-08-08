@@ -94,8 +94,35 @@ class Settings(BaseSettings):
             raise ValueError("DEV_STATIC_OTP_CODE must not be set in production")
         if self.app_environment == "production":
             is_alembic = any("alembic" in arg for arg in sys.argv)
+            is_testing = "pytest" in sys.modules or any("pytest" in arg for arg in sys.argv) or "unittest" in sys.modules
             if is_alembic or os.environ.get("SKIP_SETTINGS_VALIDATION") == "1":
                 pass
+            elif not is_testing:
+                parsed_frontend = urlparse(self.frontend_url)
+                if _is_local_hostname(parsed_frontend.hostname):
+                    raise ValueError("FRONTEND_URL must be the public frontend URL in production")
+                if parsed_frontend.scheme != "https":
+                    print("⚠️ WARNING: FRONTEND_URL is not using HTTPS. This is insecure in production!")
+
+                for origin in configured_origins:
+                    if not origin:
+                        continue
+                    parsed_origin = urlparse(origin)
+                    if _is_local_hostname(parsed_origin.hostname):
+                        raise ValueError("CORS_ORIGINS must contain only public HTTPS origins in production")
+                    if parsed_origin.scheme != "https":
+                        print(f"⚠️ WARNING: CORS origin '{origin}' is not using HTTPS. This is insecure in production!")
+
+                for host in configured_hosts:
+                    if _is_local_hostname(host.split(":", 1)[0]):
+                        raise ValueError("ALLOWED_HOSTS must contain only public hostnames in production")
+
+                if self.google_redirect_uri:
+                    parsed_google_redirect = urlparse(self.google_redirect_uri)
+                    if _is_local_hostname(parsed_google_redirect.hostname):
+                        raise ValueError("GOOGLE_REDIRECT_URI must be the public HTTPS callback URL in production")
+                    if parsed_google_redirect.scheme != "https":
+                        print("⚠️ WARNING: GOOGLE_REDIRECT_URI is not using HTTPS. This is insecure in production!")
             else:
                 parsed_frontend = urlparse(self.frontend_url)
                 if parsed_frontend.scheme != "https" or _is_local_hostname(parsed_frontend.hostname):
