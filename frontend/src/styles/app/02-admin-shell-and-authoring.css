@@ -83,6 +83,10 @@
   margin: 0 !important;
 }
 
+[data-theme="dark"] .pn-card-subtitle {
+  color: #94a3b8 !important;
+}
+
 .pn-history-count {
   display: inline-flex !important;
   align-items: center !important;
@@ -111,6 +115,10 @@
   font-size: 13px !important;
   font-weight: 600 !important;
   color: #334155 !important;
+}
+
+[data-theme="dark"] .pn-form-group label {
+  color: #f1f5f9 !important;
 }
 
 .pn-input,

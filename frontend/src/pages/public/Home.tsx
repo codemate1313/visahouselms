@@ -22,6 +22,7 @@ import "@/styles/public/home.css";
 
 const HERO_INTERVAL_MS = 4000;
 const TESTIMONIAL_CARD_STEP = 384;
+const TESTIMONIAL_AUTOPLAY_MS = 3500;
 
 interface RawTestimonial {
   quote?: string;
@@ -71,6 +72,8 @@ export function Home() {
   const testimonialsRef = useRef<HTMLDivElement | null>(null);
   const testimonialCardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const testimonialSetWidthRef = useRef(0);
+  const testimonialTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [isTestimonialHovered, setIsTestimonialHovered] = useState(false);
   const [blogPreviews, setBlogPreviews] = useState<BlogListItem[]>([]);
   const [flippedStepCards, setFlippedStepCards] = useState<Record<string, boolean>>({});
 
@@ -147,6 +150,28 @@ export function Home() {
       clearTimeout(settleTimer);
     };
   }, [testimonials]);
+
+  // Auto-play loop for testimonials
+  useEffect(() => {
+    if (testimonials.length === 0 || isTestimonialHovered) {
+      if (testimonialTimerRef.current) {
+        clearInterval(testimonialTimerRef.current);
+        testimonialTimerRef.current = null;
+      }
+      return;
+    }
+
+    testimonialTimerRef.current = setInterval(() => {
+      scrollTestimonials(1);
+    }, TESTIMONIAL_AUTOPLAY_MS);
+
+    return () => {
+      if (testimonialTimerRef.current) {
+        clearInterval(testimonialTimerRef.current);
+        testimonialTimerRef.current = null;
+      }
+    };
+  }, [testimonials, isTestimonialHovered]);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/blogs`)
@@ -336,7 +361,11 @@ export function Home() {
           </div>
         </section>
 
-        <section className="vh-testimonials-section vh-reveal">
+        <section
+          className="vh-testimonials-section vh-reveal"
+          onMouseEnter={() => setIsTestimonialHovered(true)}
+          onMouseLeave={() => setIsTestimonialHovered(false)}
+        >
           <div className="vh-testimonials-header-wrap">
             <div>
               <span className="vh-testimonials-eyebrow">Student success stories</span>
