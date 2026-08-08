@@ -12,6 +12,8 @@ import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { registerStrings as strings } from "./Register.strings";
 
+import { evaluatePassword } from "@/utils/passwordStrength";
+
 export function Register() {
   const navigate = useNavigate();
   const setSession = useAuthStore((state) => state.setSession);
@@ -49,13 +51,24 @@ export function Register() {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     setSession(accessToken, user);
-    showSuccess(strings.welcomeToastMessage, strings.welcomeToastTitle);
     navigate("/student/dashboard");
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+
+    const strength = evaluatePassword(password);
+    if (!strength.allMet) {
+      const unmet = strength.rules.find((r) => !r.met);
+      const msg = unmet
+        ? `Password requirement missing: ${unmet.label}`
+        : "Password must be at least 8 characters long with uppercase, lowercase, digit, and special character.";
+      setError(msg);
+      showError(msg, strings.errorTitle);
+      return;
+    }
+
     setLoading(true);
     try {
       const { data: tokens } = await apiClient.post("/auth/register", {
