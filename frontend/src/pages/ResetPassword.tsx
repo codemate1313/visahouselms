@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { PasswordInput } from "@/components/PasswordInput";
+import { Icon } from "@/components/icons";
 import { resetPasswordStrings as strings } from "./ResetPassword.strings";
 
 export function ResetPassword() {
@@ -45,8 +46,34 @@ export function ResetPassword() {
     <div className="login-page-container" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "var(--surface-muted)" }}>
       <div
         className="login-card-container"
-        style={{ width: "100%", maxWidth: 440, background: "var(--surface)", padding: 32, borderRadius: 16, border: "1px solid var(--border)", boxShadow: "0 10px 30px rgba(var(--slate-900-rgb), 0.06)" }}
+        style={{ width: "100%", maxWidth: 440, background: "var(--surface)", padding: 32, borderRadius: 16, border: "1px solid var(--border)", boxShadow: "0 10px 30px rgba(var(--slate-900-rgb), 0.06)", position: "relative" }}
       >
+        {/* Close Button */}
+        <Link 
+          to="/login"
+          style={{
+            position: 'absolute',
+            top: 20,
+            right: 20,
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            border: '1px solid var(--border)',
+            background: 'var(--surface)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: "var(--text-muted)",
+            transition: 'all 0.2s',
+            zIndex: 10,
+            textDecoration: 'none'
+          }}
+          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-muted)"; e.currentTarget.style.color = "var(--text)"; }}
+          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "var(--surface)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+        >
+          <Icon name="x" />
+        </Link>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <div
             style={{

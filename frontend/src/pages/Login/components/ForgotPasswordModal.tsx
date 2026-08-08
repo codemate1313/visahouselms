@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { createPortal } from "react-dom";
+import { Icon } from "@/components/icons";
 import { loginStrings as strings } from "../Login.strings";
 
 interface ForgotPasswordModalProps {
@@ -65,8 +66,8 @@ export function ForgotPasswordModal({ email, onEmailChange, sent, loading, error
             width: 32,
             height: 32,
             borderRadius: '50%',
-            border: 'none',
-            background: 'transparent',
+            border: '1px solid var(--border)',
+            background: 'var(--surface)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -76,12 +77,9 @@ export function ForgotPasswordModal({ email, onEmailChange, sent, loading, error
             zIndex: 10
           }}
           onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-muted)"; e.currentTarget.style.color = "var(--text)"; }}
-          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = "var(--text-muted)"; }}
+          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "var(--surface)"; e.currentTarget.style.color = "var(--text-muted)"; }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
+          <Icon name="x" />
         </button>
 
         <div style={{ padding: '48px 40px 40px' }}>
