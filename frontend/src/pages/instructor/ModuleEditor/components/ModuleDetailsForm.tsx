@@ -1,14 +1,24 @@
 import { type FormEvent, useState } from "react";
 import { RequiredMark } from "@/components/ui";
 import { Icon } from "@/components/icons";
-import type { ExamModule } from "@/api/types";
+import type { ExamModule, OnboardingInstruction } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { MODULE_TYPE_META } from "../helpers";
+import { OnboardingInstructionsEditor } from "./OnboardingInstructionsEditor";
+
+export interface ModuleDetailsState {
+  title: string;
+  description: string;
+  instructions: string;
+  duration_minutes: number;
+  show_onboarding_instructions?: boolean;
+  onboarding_instructions?: OnboardingInstruction[];
+}
 
 interface ModuleDetailsFormProps {
   module: ExamModule;
-  details: { title: string; description: string; instructions: string; duration_minutes: number };
-  onDetailsChange: (details: { title: string; description: string; instructions: string; duration_minutes: number }) => void;
+  details: ModuleDetailsState;
+  onDetailsChange: (details: ModuleDetailsState) => void;
   isEditable: boolean;
   busy: boolean;
   onSubmit: (event: FormEvent) => void;
@@ -199,7 +209,7 @@ export function ModuleDetailsForm({
                 <textarea
                   id="edit-module-instructions"
                   className="vh-textarea-enhanced vh-code-font"
-                  rows={8}
+                  rows={6}
                   value={details.instructions}
                   onChange={(event) => onDetailsChange({ ...details, instructions: event.target.value })}
                   placeholder={t.instructionsPlaceholder}
@@ -209,6 +219,15 @@ export function ModuleDetailsForm({
                   Character Count: {(details.instructions || "").length} {(details.instructions || "").length === 1 ? "character" : "characters"}
                 </span>
               </div>
+
+              {/* Onboarding Instructions Manager */}
+              <OnboardingInstructionsEditor
+                showInstructions={details.show_onboarding_instructions ?? true}
+                onToggleShowInstructions={(enabled) => onDetailsChange({ ...details, show_onboarding_instructions: enabled })}
+                instructions={details.onboarding_instructions ?? []}
+                onInstructionsChange={(items) => onDetailsChange({ ...details, onboarding_instructions: items })}
+                isEditable={isEditable}
+              />
             </div>
           )}
         </div>

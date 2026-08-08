@@ -309,6 +309,13 @@ export interface ExamModulePart {
   assets: ExamModuleAsset[];
 }
 
+export interface OnboardingInstruction {
+  id: string;
+  title: string;
+  description: string;
+  icon?: string;
+}
+
 export interface ExamModule {
   id: number;
   module_type: ExamModuleType;
@@ -316,6 +323,8 @@ export interface ExamModule {
   title: string;
   description: string | null;
   instructions: string | null;
+  show_onboarding_instructions?: boolean;
+  onboarding_instructions?: OnboardingInstruction[];
   status: ExamModuleStatus;
   is_visible: boolean;
   /** Free sample test: students without a subscription may sit it. */
@@ -653,6 +662,8 @@ export interface Attempt {
   module_id: number;
   module_type: ExamModuleType;
   module_title: string;
+  show_onboarding_instructions?: boolean;
+  onboarding_instructions?: OnboardingInstruction[] | null;
   course_id: number | null;
   status: AttemptStatus;
   is_final: boolean;

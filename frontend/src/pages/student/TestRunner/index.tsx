@@ -94,6 +94,7 @@ export function TestRunner() {
   const [speakingMicrophoneReady, setSpeakingMicrophoneReady] = useState(hasVerifiedSpeakingMicrophone);
   const [fullscreenActive, setFullscreenActive] = useState(() => Boolean(document.fullscreenElement));
   const [securityAuthorized, setSecurityAuthorized] = useState(false);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(() => sessionStorage.getItem(`onboarding_completed_${id}`) === "true");
   const [securityStarting, setSecurityStarting] = useState(false);
   const [securityError, setSecurityError] = useState<string | null>(null);
   const [mediaState, setMediaState] = useState<SecurityMediaState>(EMPTY_MEDIA_STATE);
@@ -446,6 +447,14 @@ export function TestRunner() {
     setSecurityStarting(true);
     setSecurityError(null);
     setConcurrentTab(false);
+
+    if (!attempt.security_required) {
+      sessionStorage.setItem(`onboarding_completed_${id}`, "true");
+      setOnboardingCompleted(true);
+      setSecurityAuthorized(true);
+      setSecurityStarting(false);
+      return;
+    }
 
     let cameraStream = cameraStreamRef.current;
     let screenStream = screenStreamRef.current;
@@ -956,7 +965,7 @@ export function TestRunner() {
     />
   ) : null;
 
-  if (attempt.status === "ready" || !securityAuthorized) {
+  if (attempt.status === "ready" || !securityAuthorized || (!attempt.security_required && !onboardingCompleted)) {
     return (
       <>
         <PreExamOnboarding

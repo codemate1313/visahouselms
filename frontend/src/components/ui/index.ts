@@ -76,3 +76,14 @@ export { RecordCards } from "./RecordCards";
 export type { RecordCardsProps, RecordField } from "./RecordCards";
 export { RangeSlider } from "./RangeSlider";
 export type { RangeSliderProps } from "./RangeSlider";
+
+export {
+  Stepper,
+  StepperItem,
+  StepperTrigger,
+  StepperIndicator,
+  StepperTitle,
+  StepperDescription,
+  StepperSeparator,
+} from "./Stepper";
+export type { StepperProps, StepperItemProps, StepperTriggerProps } from "./Stepper";

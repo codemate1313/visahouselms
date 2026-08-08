@@ -38,6 +38,8 @@ class ExamModule(Base):
         String(80), nullable=False, default="LanguageCert Academic 2025"
     )
     source_module_ids: Mapped[Optional[list]] = mapped_column(JSON, nullable=True, default=list)
+    show_onboarding_instructions: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    onboarding_instructions: Mapped[Optional[list]] = mapped_column(JSON, nullable=True, default=None)
     created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     published_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, server_default=func.now())

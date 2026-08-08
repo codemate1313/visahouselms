@@ -164,7 +164,35 @@ def validation_errors(module: ExamModule) -> list[str]:
     return errors
 
 
-def serialize_module(module: ExamModule, detailed: bool = False) -> dict:
+DEFAULT_INTEGRITY_GUIDELINES = [
+    {
+        "id": "timer_protocol",
+        "title": "Strict Exam Timer",
+        "description": "The countdown timer initiates immediately upon clicking 'Commence Assessment'. Responses will auto-submit when the duration expires.",
+        "icon": "clock",
+    },
+    {
+        "id": "sync_protocol",
+        "title": "Real-Time Response Synchronization",
+        "description": "Your responses are encrypted and automatically saved every 30 seconds to prevent data loss.",
+        "icon": "cloud",
+    },
+    {
+        "id": "continuity_protocol",
+        "title": "Session Continuity Protocol",
+        "description": "In the event of network disruption, you may resume your active session. Note that the official examination clock continues running.",
+        "icon": "logout",
+    },
+    {
+        "id": "matrix_protocol",
+        "title": "Omni-Directional Question Matrix",
+        "description": "Use section tabs or the question navigator panel to review, answer, or modify responses freely prior to submission.",
+        "icon": "restore",
+    },
+]
+
+
+def serialize_module(module: ExamModule, *, detailed: bool = False) -> dict:
     blueprint = get_blueprint(module.module_type)
     errors = validation_errors(module)
     result = {
@@ -174,6 +202,8 @@ def serialize_module(module: ExamModule, detailed: bool = False) -> dict:
         "title": module.title,
         "description": module.description,
         "instructions": module.instructions,
+        "show_onboarding_instructions": module.show_onboarding_instructions if module.show_onboarding_instructions is not None else True,
+        "onboarding_instructions": module.onboarding_instructions if module.onboarding_instructions is not None else DEFAULT_INTEGRITY_GUIDELINES,
         "status": module.status,
         "is_visible": module.is_visible,
         "is_demo": module.is_demo,
@@ -426,7 +456,7 @@ def update_module(
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
     _require_draft(module)
-    for field in ("title", "description", "instructions", "duration_minutes"):
+    for field in ("title", "description", "instructions", "duration_minutes", "show_onboarding_instructions", "onboarding_instructions"):
         if field in fields_set:
             setattr(module, field, data.get(field))
     _audit(db, actor, "exam_module.update", module.id, ip, {"fields": sorted(fields_set)})

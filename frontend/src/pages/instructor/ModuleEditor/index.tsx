@@ -24,7 +24,7 @@ import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSITE_TYPES, MODULE_TYPES, SOURCE_
 import { NewModuleForm } from "./components/NewModuleForm";
 import { ModulePartNav } from "./components/ModulePartNav";
 import { ModuleReadinessPanel } from "./components/ModuleReadinessPanel";
-import { ModuleDetailsForm } from "./components/ModuleDetailsForm";
+import { ModuleDetailsForm, type ModuleDetailsState } from "./components/ModuleDetailsForm";
 import { PartSpecPanel } from "./components/PartSpecPanel";
 import { ListeningAudioPanel } from "./components/ListeningAudioPanel";
 import { SpeakingAvatarPanel } from "./components/SpeakingAvatarPanel";
@@ -43,7 +43,7 @@ export function ModuleEditor() {
   const requestedType = rawType && MODULE_TYPES.has(rawType as ExamModuleType) ? rawType as ExamModuleType : null;
   const [module, setModule] = useState<ExamModule | null>(null);
   const [selectedPartId, setSelectedPartId] = useState<number | null>(null);
-  const [details, setDetails] = useState({ title: "", description: "", instructions: "", duration_minutes: 1 });
+  const [details, setDetails] = useState<ModuleDetailsState>({ title: "", description: "", instructions: "", duration_minutes: 1, show_onboarding_instructions: true, onboarding_instructions: [] });
   const [sourceModules, setSourceModules] = useState<ExamModule[]>([]);
   const [selectedSources, setSelectedSources] = useState<Record<IeltsSection, string>>({ listening: "", reading: "", writing: "", speaking: "" });
   const [loadingSources, setLoadingSources] = useState(false);
@@ -70,7 +70,14 @@ export function ModuleEditor() {
     try {
       const { data } = await apiClient.get<ExamModule>(`/instructor/modules/${id}`);
       setModule(data);
-      setDetails({ title: data.title, description: data.description ?? "", instructions: data.instructions ?? "", duration_minutes: data.duration_minutes });
+      setDetails({
+        title: data.title,
+        description: data.description ?? "",
+        instructions: data.instructions ?? "",
+        duration_minutes: data.duration_minutes,
+        show_onboarding_instructions: data.show_onboarding_instructions ?? true,
+        onboarding_instructions: data.onboarding_instructions ?? [],
+      });
       const selected = data.parts?.find((part) => part.id === (preferredPartId ?? selectedPartId)) ?? data.parts?.[0] ?? null;
       setSelectedPartId(selected?.id ?? null);
       if (selected) setManual(emptyQuestion(selected));
@@ -134,8 +141,22 @@ export function ModuleEditor() {
 
   async function saveDetails(event: FormEvent) {
     event.preventDefault(); if (!module) return;
-    const payload = { title: details.title, description: details.description || null, instructions: details.instructions || null, duration_minutes: details.duration_minutes };
-    const original = { title: module.title, description: module.description || null, instructions: module.instructions || null, duration_minutes: module.duration_minutes };
+    const payload = {
+      title: details.title,
+      description: details.description || null,
+      instructions: details.instructions || null,
+      duration_minutes: details.duration_minutes,
+      show_onboarding_instructions: details.show_onboarding_instructions ?? true,
+      onboarding_instructions: details.onboarding_instructions || null,
+    };
+    const original = {
+      title: module.title,
+      description: module.description || null,
+      instructions: module.instructions || null,
+      duration_minutes: module.duration_minutes,
+      show_onboarding_instructions: module.show_onboarding_instructions ?? true,
+      onboarding_instructions: module.onboarding_instructions || null,
+    };
     if (isEqual(original, payload)) { showInfo(noChangesMessage); return; }
     setBusy(true); setError(null); setNotice(null);
     try {
