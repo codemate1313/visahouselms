@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
-import { Icon, type IconName } from "@/components/icons";
+import { Icon } from "@/components/icons";
 import type { ExamModule, ExamModuleType, IeltsSection } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { COMPOSITE_TYPES, SOURCE_SECTIONS } from "../helpers";
@@ -20,7 +20,7 @@ interface NewModuleFormProps {
   onSubmit: (event: FormEvent) => void;
 }
 
-import { type ModuleMeta, MODULE_TYPE_META } from "../helpers";
+import { MODULE_TYPE_META } from "../helpers";
 
 export function NewModuleForm({
   requestedType,

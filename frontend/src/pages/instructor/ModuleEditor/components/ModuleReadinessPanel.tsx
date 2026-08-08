@@ -40,8 +40,7 @@ export function ModuleReadinessPanel({ module, busy, onChangeStatus, onChoosePar
     const matchedPart = module.parts?.find(
       (p) =>
         p.title?.toLowerCase() === item.tag.toLowerCase() ||
-        `part ${p.part_number}`.toLowerCase() === item.tag.toLowerCase() ||
-        (partNum !== null && p.part_number === partNum)
+        (partNum !== null && p.part_code?.endsWith(`_${partNum}`))
     );
 
     if (matchedPart && onChoosePart) {
