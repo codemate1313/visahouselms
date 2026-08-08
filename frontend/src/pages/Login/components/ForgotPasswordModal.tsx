@@ -68,6 +68,7 @@ export function ForgotPasswordModal({ email, onEmailChange, sent, loading, error
             borderRadius: '50%',
             border: '1px solid var(--border)',
             background: 'var(--surface)',
+            padding: 0,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
