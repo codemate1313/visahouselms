@@ -197,9 +197,12 @@ export function Sidebar({
   }, [activeKey, location.pathname, expandedKeys, isCollapsed]);
 
   const toggleAccordion = (key: string) => {
+    if (isCollapsed && onToggleCollapse) {
+      onToggleCollapse();
+    }
     setExpandedKeys((prev) => ({
       ...prev,
-      [key]: !prev[key],
+      [key]: isCollapsed ? true : !prev[key],
     }));
   };
 
@@ -337,6 +340,30 @@ export function Sidebar({
                           <div className="sidebar-tooltip">{item.label}</div>
                         )}
                       </button>
+
+                      {isCollapsed && item.children && item.children.length > 0 && (
+                        <div className="sidebar-flyout-popover">
+                          <div className="sidebar-flyout-header">{item.label}</div>
+                          <ul className="sidebar-flyout-list">
+                            {item.children.map((child) => {
+                              const isSubActive = child.key === activeKey;
+                              return (
+                                <li key={child.key}>
+                                  <NavLink
+                                    to={child.to}
+                                    className={`sidebar-flyout-link ${isSubActive ? "is-sub-active" : ""}`}
+                                  >
+                                    <span>{child.label}</span>
+                                    {child.badge !== undefined && (
+                                      <span className="sidebar-badge badge-red">{child.badge}</span>
+                                    )}
+                                  </NavLink>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      )}
 
                       {/* Sub-menu Dropdown List with connector line */}
                       <div className={`sidebar-submenu-transition-wrapper ${isExpanded && !isCollapsed ? 'is-open' : ''}`}>
