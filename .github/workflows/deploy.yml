@@ -41,7 +41,12 @@ jobs:
             git config --global --add safe.directory /var/www/visahouse
             git fetch --prune origin main
             git checkout main
-            git pull --ff-only origin main
+            if [ -n "$(git status --porcelain)" ]; then
+              echo "⚠️ Local VPS checkout has uncommitted changes. Stashing before deployment reset..."
+              git stash push --include-untracked -m "pre-deploy-$(date -u +%Y%m%d%H%M%S)" || true
+            fi
+            git reset --hard origin/main
+            git clean -fd
 
             # 2. Update backend virtual environment & run migrations
             cd backend
