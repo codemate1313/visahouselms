@@ -674,12 +674,12 @@
 .sat-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(6px);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 100000 !important;
   padding: 16px;
   animation: sat-fade-in 0.2s ease-out;
 }
@@ -921,14 +921,15 @@ tr.is-drag-over {
 [data-theme="dark"] .sat-header,
 [data-theme="dark"] .sat-toolbar,
 [data-theme="dark"] .sat-card,
+[data-theme="dark"] .sat-modal,
 [data-theme="dark"] .sat-modal-content,
 [data-theme="dark"] .sat-loading,
 [data-theme="dark"] .sat-empty,
 [data-theme="dark"] .sat-table-card {
-  background: rgba(22, 22, 27, 0.88) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.34) !important;
-  color: #f3f4f6 !important;
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.5) !important;
+  color: #f8fafc !important;
 }
 
 [data-theme="dark"] .sat-header-metrics,
@@ -939,23 +940,39 @@ tr.is-drag-over {
 [data-theme="dark"] .sat-avatar,
 [data-theme="dark"] .sat-checkbox-group,
 [data-theme="dark"] .sat-table-wrap {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  color: #f3f4f6 !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
 }
 
 [data-theme="dark"] .sat-search-input,
 [data-theme="dark"] .sat-input,
+[data-theme="dark"] .sat-select,
 [data-theme="dark"] .sat-textarea {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 255, 255, 0.14) !important;
-  color: #f7f7fa !important;
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .sat-select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .sat-search-input::placeholder,
+[data-theme="dark"] .sat-input::placeholder,
+[data-theme="dark"] .sat-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.55) !important;
+  opacity: 1 !important;
 }
 
 [data-theme="dark"] .sat-search-input:focus,
 [data-theme="dark"] .sat-input:focus,
+[data-theme="dark"] .sat-select:focus,
 [data-theme="dark"] .sat-textarea:focus {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: #0f172a !important;
+  border-color: #e11d2e !important;
+  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.2) !important;
 }
 
 [data-theme="dark"] .sat-btn-secondary,
@@ -970,12 +987,14 @@ tr.is-drag-over {
 [data-theme="dark"] .sat-metric-value,
 [data-theme="dark"] .sat-card-name,
 [data-theme="dark"] .sat-empty h3,
+[data-theme="dark"] .sat-modal h2,
 [data-theme="dark"] .sat-modal-content h2,
+[data-theme="dark"] .sat-modal-header h2,
 [data-theme="dark"] .sat-form-group label,
 [data-theme="dark"] .sat-checkbox-label,
 [data-theme="dark"] .sat-table th,
 [data-theme="dark"] .sat-table td {
-  color: #f7f7fa !important;
+  color: #f8fafc !important;
 }
 
 [data-theme="dark"] .sat-header-title-row p,
@@ -991,10 +1010,24 @@ tr.is-drag-over {
 
 [data-theme="dark"] .sat-card-footer,
 [data-theme="dark"] .sat-card-header,
-[data-theme="dark"] .sat-modal-footer,
+[data-theme="dark"] .sat-modal-header,
 [data-theme="dark"] .sat-table th,
 [data-theme="dark"] .sat-table td {
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .sat-modal-footer {
+  background: #0f172a !important;
+  border-top-color: #334155 !important;
+}
+
+[data-theme="dark"] .sat-modal-close {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .sat-modal-close:hover {
+  background: #334155 !important;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .sat-table-name,

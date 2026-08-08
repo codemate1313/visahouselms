@@ -71,14 +71,17 @@ export function TestimonialFormModal({ editingItem, onChange, saving, onClose, o
               </div>
               <div className="sat-form-group">
                 <label>{t.ratingLabel}</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={editingItem.rating || 5}
-                  onChange={(e) => onChange({ ...editingItem, rating: parseInt(e.target.value) })}
-                  className="sat-input"
-                />
+                <select
+                  value={editingItem.rating ?? 5}
+                  onChange={(e) => onChange({ ...editingItem, rating: parseInt(e.target.value, 10) })}
+                  className="sat-input sat-select"
+                >
+                  <option value={5}>5 - Excellent (★★★★★)</option>
+                  <option value={4}>4 - Very Good (★★★★☆)</option>
+                  <option value={3}>3 - Good (★★★☆☆)</option>
+                  <option value={2}>2 - Fair (★★☆☆☆)</option>
+                  <option value={1}>1 - Poor (★☆☆☆☆)</option>
+                </select>
               </div>
               <div className="sat-form-group full-width">
                 <label>{t.quoteLabel}<RequiredMark /></label>
