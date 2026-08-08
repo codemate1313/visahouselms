@@ -27,27 +27,29 @@ export function PartSpecPanel({ part, isEditable, busy, onToggleAiEvaluation }: 
       )}
       <div className="part-facts">
         <span>{part.auto_marked ? t.autoMarked : t.examinerMarked}</span>
-        <span>{part.ai_evaluation_enabled ? t.aiEvaluationOn : t.aiEvaluationOff}</span>
+        {canUseAiEvaluation && <span>{part.ai_evaluation_enabled ? t.aiEvaluationOn : t.aiEvaluationOff}</span>}
         {part.max_marks && <span>{t.rawMarks(part.max_marks)}</span>}
         {part.answer_constraints.audio_plays && <span>{t.audioPlays(part.answer_constraints.audio_plays)}</span>}
         {part.answer_constraints.minimum_words && <span>{t.minimumWords(part.answer_constraints.minimum_words)}</span>}
         {part.answer_constraints.maximum_words && <span>{t.maximumWords(part.answer_constraints.maximum_words)}</span>}
       </div>
-      <div className="part-ai-evaluation-setting">
-        <div>
-          <strong>{t.aiEvaluation}</strong>
-          <p>{canUseAiEvaluation ? t.aiEvaluationHint : t.aiEvaluationUnavailable}</p>
+      {canUseAiEvaluation && (
+        <div className="part-ai-evaluation-setting">
+          <div>
+            <strong>{t.aiEvaluation}</strong>
+            <p>{t.aiEvaluationHint}</p>
+          </div>
+          <label className="part-ai-toggle">
+            <input
+              type="checkbox"
+              checked={part.ai_evaluation_enabled}
+              disabled={!isEditable || busy}
+              onChange={(event) => onToggleAiEvaluation(event.currentTarget.checked)}
+            />
+            <span />
+          </label>
         </div>
-        <label className="part-ai-toggle">
-          <input
-            type="checkbox"
-            checked={part.ai_evaluation_enabled}
-            disabled={!isEditable || busy || !canUseAiEvaluation}
-            onChange={(event) => onToggleAiEvaluation(event.currentTarget.checked)}
-          />
-          <span />
-        </label>
-      </div>
+      )}
       {!!part.rubric.length && (
         <details className="rubric-details" open>
           <summary>{t.rubricSummary(part.rubric.length)}</summary>

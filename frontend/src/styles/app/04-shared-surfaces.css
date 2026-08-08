@@ -66,6 +66,17 @@
   color: #3a3a3c;
 }
 
+[data-theme="dark"] .section-chip,
+[data-theme="dark"] .section-reading,
+[data-theme="dark"] .section-writing,
+[data-theme="dark"] .section-speaking,
+[data-theme="dark"] .section-listening,
+[data-theme="dark"] .section-full_mock,
+[data-theme="dark"] .section-final_test {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+}
+
 .test-card h2 {
   margin: 18px 0 7px;
   font-size: 18px;

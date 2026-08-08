@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
 import { API_BASE_URL } from "@/api/client";
 import type { ExamModuleAsset, ExamModulePart } from "@/api/types";
@@ -36,6 +36,8 @@ export function ListeningAudioPanel({
   onDeleteAudio,
 }: ListeningAudioPanelProps) {
   const t = strings.listeningAudio;
+  const [activeMethod, setActiveMethod] = useState<"upload" | "tts">("upload");
+
   return (
     <section className="listening-audio-panel">
       <div className="panel-title">
@@ -45,62 +47,94 @@ export function ListeningAudioPanel({
           <p>{t.description}</p>
         </div>
       </div>
+
       {isEditable && (
-        <div className="audio-method-grid">
-          <form onSubmit={onUploadAudio}>
-            <h3>{t.uploadHeading}</h3>
-            <label htmlFor="audio-title">{t.audioTitleLabel}<RequiredMark /></label>
-            <input id="audio-title" value={audioTitle} onChange={(event) => onAudioTitleChange(event.target.value)} required />
-            <label htmlFor="audio-file">{t.fileLabel}<RequiredMark /></label>
-            <input id="audio-file" type="file" accept=".mp3,audio/mpeg" onChange={(event) => onAudioFileChange(event.target.files?.[0] ?? null)} required />
-            <button type="submit" disabled={busy || !audioFile}>
-              {busy ? t.working : t.attach}
+        <div className="audio-method-tabbed-container">
+          <div className="vh-method-tabs">
+            <button
+              type="button"
+              className={`vh-method-tab ${activeMethod === "upload" ? "is-active" : ""}`}
+              onClick={() => setActiveMethod("upload")}
+            >
+              Upload MP3 File
             </button>
-          </form>
-          <form onSubmit={onGenerateAudio}>
-            <h3>{t.generateHeading}</h3>
-            <label htmlFor="tts-title">{t.audioTitleLabel}<RequiredMark /></label>
-            <input id="tts-title" value={tts.title} onChange={(event) => onTtsChange({ ...tts, title: event.target.value })} required />
-            <label htmlFor="tts-conversation">{t.conversationLabel}<RequiredMark /></label>
-            <textarea
-              id="tts-conversation"
-              rows={8}
-              value={tts.conversation}
-              onChange={(event) => onTtsChange({ ...tts, conversation: event.target.value })}
-              placeholder={t.conversationPlaceholder}
-              required
-            />
-            <p className="hint">
-              {t.conversationHint}
-              <strong>{t.speakerExampleA}</strong>
-              {t.speakerExampleOr}
-              <strong>{t.speakerExampleB}</strong>
-              {t.conversationHintSuffix}
-            </p>
-            <div className={`auto-voice-summary${detectedTtsSpeakers.length > 6 ? " has-error" : ""}`}>
-              <strong>{detectedTtsSpeakers.length ? t.speakersDetected(detectedTtsSpeakers.length) : t.waitingForConversation}</strong>
-              <span>{detectedTtsSpeakers.length ? detectedTtsSpeakers.join(" · ") : t.voicesAutomatic}</span>
-              {detectedTtsSpeakers.length > 6 && <small>{t.tooManySpeakers}</small>}
-            </div>
-            <label htmlFor="tts-rate">{t.rateLabel}</label>
-            <SearchableSelect
-              id="tts-rate"
-              options={[
-                { value: "-20%", label: t.rateSlower },
-                { value: "+0%", label: t.rateNormal },
-                { value: "+15%", label: t.rateFaster },
-              ]}
-              value={tts.rate}
-              onChange={(value) => onTtsChange({ ...tts, rate: String(value) })}
-              searchable={false}
-              className="form-dropdown-select"
-            />
-            <button type="submit" disabled={busy || !tts.conversation.trim() || detectedTtsSpeakers.length > 6}>
-              {busy ? t.savingNarration : t.saveNarration}
+            <button
+              type="button"
+              className={`vh-method-tab ${activeMethod === "tts" ? "is-active" : ""}`}
+              onClick={() => setActiveMethod("tts")}
+            >
+              Browser-Narrated Transcript
             </button>
-          </form>
+          </div>
+
+          <div className="audio-method-single-form">
+            {activeMethod === "upload" ? (
+              <form onSubmit={onUploadAudio} className="vh-tabbed-method-form">
+                <h3>{t.uploadHeading}</h3>
+                <label htmlFor="audio-title">{t.audioTitleLabel}<RequiredMark /></label>
+                <input id="audio-title" value={audioTitle} onChange={(event) => onAudioTitleChange(event.target.value)} required />
+                <label htmlFor="audio-file">{t.fileLabel}<RequiredMark /></label>
+                <input id="audio-file" type="file" accept=".mp3,audio/mpeg" onChange={(event) => onAudioFileChange(event.target.files?.[0] ?? null)} required />
+                
+                {audioFile && (
+                  <div className="audio-preview-container" style={{ margin: "16px 0" }}>
+                    <p className="hint" style={{ marginBottom: "8px" }}>Preview selected audio:</p>
+                    <audio controls src={URL.createObjectURL(audioFile)} style={{ width: "100%", height: "40px" }} />
+                  </div>
+                )}
+
+                <button type="submit" disabled={busy || !audioFile}>
+                  {busy ? t.working : t.attach}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={onGenerateAudio} className="vh-tabbed-method-form">
+                <h3>{t.generateHeading}</h3>
+                <label htmlFor="tts-title">{t.audioTitleLabel}<RequiredMark /></label>
+                <input id="tts-title" value={tts.title} onChange={(event) => onTtsChange({ ...tts, title: event.target.value })} required />
+                <label htmlFor="tts-conversation">{t.conversationLabel}<RequiredMark /></label>
+                <textarea
+                  id="tts-conversation"
+                  rows={8}
+                  value={tts.conversation}
+                  onChange={(event) => onTtsChange({ ...tts, conversation: event.target.value })}
+                  placeholder={t.conversationPlaceholder}
+                  required
+                />
+                <p className="hint">
+                  {t.conversationHint}
+                  <strong>{t.speakerExampleA}</strong>
+                  {t.speakerExampleOr}
+                  <strong>{t.speakerExampleB}</strong>
+                  {t.conversationHintSuffix}
+                </p>
+                <div className={`auto-voice-summary${detectedTtsSpeakers.length > 6 ? " has-error" : ""}`}>
+                  <strong>{detectedTtsSpeakers.length ? t.speakersDetected(detectedTtsSpeakers.length) : t.waitingForConversation}</strong>
+                  <span>{detectedTtsSpeakers.length ? detectedTtsSpeakers.join(" · ") : t.voicesAutomatic}</span>
+                  {detectedTtsSpeakers.length > 6 && <small>{t.tooManySpeakers}</small>}
+                </div>
+                <label htmlFor="tts-rate">{t.rateLabel}</label>
+                <SearchableSelect
+                  id="tts-rate"
+                  options={[
+                    { value: "-20%", label: t.rateSlower },
+                    { value: "+0%", label: t.rateNormal },
+                    { value: "+15%", label: t.rateFaster },
+                  ]}
+                  value={tts.rate}
+                  onChange={(value) => onTtsChange({ ...tts, rate: String(value) })}
+                  searchable={false}
+                  className="form-dropdown-select"
+                />
+                <button type="submit" disabled={busy || !tts.conversation.trim() || detectedTtsSpeakers.length > 6}>
+                  {busy ? t.savingNarration : t.saveNarration}
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       )}
+
       <div className="part-audio-list">
         {!part.assets.length ? (
           <p className="empty-message">{t.noAudio}</p>

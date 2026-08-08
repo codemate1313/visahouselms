@@ -56,6 +56,7 @@ export function ModuleEditor() {
   const [audioTitle, setAudioTitle] = useState("Listening audio");
   const [tts, setTts] = useState({ title: "Generated conversation", conversation: "", rate: "+0%" });
   const [avatarGenerating, setAvatarGenerating] = useState(false);
+  const [questionEntryMode, setQuestionEntryMode] = useState<"manual" | "bulk">("manual");
   const [loading, setLoading] = useState(!isNew);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -359,7 +360,14 @@ export function ModuleEditor() {
           </Link>
           <div className="breadcrumb-trail">
             <span className="breadcrumb-separator">/</span>
-            <span className={`section-chip section-${module.module_type}`}>{module.module_label}</span>
+            <span 
+              className={`section-chip section-${module.module_type}`}
+              onClick={() => setSelectedPartId(null)}
+              style={{ cursor: "pointer" }}
+              title="Edit Module Details"
+            >
+              {module.module_label}
+            </span>
             <span className="breadcrumb-separator">/</span>
             <span className="breadcrumb-current-title">{module.title}</span>
           </div>
@@ -374,14 +382,24 @@ export function ModuleEditor() {
       {error && <p className="error-text notice-line">{error}</p>}
       {notice && <p className="success-text notice-line">{notice}</p>}
 
-      <ModuleReadinessPanel module={module} busy={busy} onChangeStatus={changeStatus} />
-      <ModuleDetailsForm module={module} details={details} onDetailsChange={setDetails} isEditable={isEditable} busy={busy} onSubmit={saveDetails} onDelete={deleteModule} />
+      <ModuleReadinessPanel module={module} busy={busy} onChangeStatus={changeStatus} onChoosePart={choosePart} />
 
       <div className="module-authoring-layout">
         <ModulePartNav parts={module.parts} selectedPartId={selectedPartId} onChoosePart={choosePart} />
-        {selectedPart && (
-          <main className="module-part-editor" id="module-part-editor">
-            <PartSpecPanel
+        <main className="module-part-editor" id="module-part-editor">
+          {!selectedPart ? (
+            <ModuleDetailsForm
+              module={module}
+              details={details}
+              onDetailsChange={setDetails}
+              isEditable={isEditable}
+              busy={busy}
+              onSubmit={saveDetails}
+              onDelete={deleteModule}
+            />
+          ) : (
+            <>
+              <PartSpecPanel
               part={selectedPart}
               isEditable={isEditable}
               busy={busy}
@@ -425,22 +443,42 @@ export function ModuleEditor() {
             )}
 
             {isEditable && manual && (
-              <div className="module-entry-grid">
-                {!editingQuestionId && (
-                  <ManualQuestionForm
-                    part={selectedPart}
-                    manual={manual}
-                    editingQuestionId={editingQuestionId}
-                    busy={busy}
-                    onChangeQuestionType={changeQuestionType}
-                    onUpdateOption={updateOption}
-                    onToggleCorrect={toggleCorrect}
-                    onManualChange={setManual}
-                    onSubmit={saveQuestion}
-                    onCancelEdit={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}
-                  />
-                )}
-                <BulkImportForm module={module} part={selectedPart} importFile={importFile} onImportFileChange={setImportFile} busy={busy} onSubmit={previewImport} />
+              <div className="vh-entry-mode-wrapper">
+                <div className="vh-method-tabs" style={{ marginBottom: "16px" }}>
+                  <button
+                    type="button"
+                    className={`vh-method-tab ${questionEntryMode === "manual" ? "is-active" : ""}`}
+                    onClick={() => setQuestionEntryMode("manual")}
+                  >
+                    Single Question Entry
+                  </button>
+                  <button
+                    type="button"
+                    className={`vh-method-tab ${questionEntryMode === "bulk" ? "is-active" : ""}`}
+                    onClick={() => setQuestionEntryMode("bulk")}
+                  >
+                    Bulk Import (PDF / CSV)
+                  </button>
+                </div>
+
+                <div className="module-entry-tabbed-content">
+                  {questionEntryMode === "manual" ? (
+                    <ManualQuestionForm
+                      part={selectedPart}
+                      manual={manual}
+                      editingQuestionId={editingQuestionId}
+                      busy={busy}
+                      onChangeQuestionType={changeQuestionType}
+                      onUpdateOption={updateOption}
+                      onToggleCorrect={toggleCorrect}
+                      onManualChange={setManual}
+                      onSubmit={saveQuestion}
+                      onCancelEdit={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}
+                    />
+                  ) : (
+                    <BulkImportForm module={module} part={selectedPart} importFile={importFile} onImportFileChange={setImportFile} busy={busy} onSubmit={previewImport} />
+                  )}
+                </div>
               </div>
             )}
 
@@ -458,9 +496,10 @@ export function ModuleEditor() {
               />
             )}
 
-            <SavedQuestionsList part={selectedPart} isEditable={isEditable} onEdit={editQuestion} onDelete={deleteQuestion} />
-          </main>
-        )}
+              <SavedQuestionsList part={selectedPart} isEditable={isEditable} onEdit={editQuestion} onDelete={deleteQuestion} />
+            </>
+          )}
+        </main>
       </div>
 
       {editingQuestionId && selectedPart && manual && (
