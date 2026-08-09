@@ -16,8 +16,8 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          timeout: 120s
-          command_timeout: 15m
+          timeout: 300s
+          command_timeout: 30m
           script: |
             set -Eeuo pipefail
             trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
@@ -78,7 +78,7 @@ jobs:
             # 5. Restart backend and block deployment if DB-backed health fails
             systemctl restart visahouse-backend
             for attempt in $(seq 1 30); do
-              if curl -fsS -H "Host: thecodemate.tech" http://127.0.0.1:8000/health/db >/dev/null; then
+              if curl -fsS -H "Host: thecodemate.tech" http://127.0.0.1:8000/health/db >/dev/null 2>&1; then
                 echo "✅ Backend and database are healthy."
                 break
               fi
@@ -87,6 +87,7 @@ jobs:
                 journalctl -u visahouse-backend -n 120 --no-pager || true
                 exit 1
               fi
+              echo "⏳ Health check attempt $attempt/30, retrying in 2s..."
               sleep 2
             done
 
