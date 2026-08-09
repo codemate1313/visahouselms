@@ -358,12 +358,12 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
         <div className="support-ticket-table-card" style={{ width: "100%" }}>
           <table className="data-table institute-table" style={{ width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
             <colgroup>
-              <col style={{ width: "28%" }} />
-              <col style={{ width: "18%" }} />
-              <col style={{ width: "13%" }} />
-              <col style={{ width: "13%" }} />
-              <col style={{ width: "20%" }} />
-              <col style={{ width: "8%" }} />
+              <col style={{ width: "26%" }} />
+              <col style={{ width: "16%" }} />
+              <col style={{ width: "16%" }} />
+              <col style={{ width: "16%" }} />
+              <col style={{ width: "16%" }} />
+              <col style={{ width: "10%" }} />
             </colgroup>
             <thead>
               <tr>
