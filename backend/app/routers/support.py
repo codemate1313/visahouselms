@@ -108,6 +108,16 @@ def post_my_ticket_message(
     return support_service.serialize_ticket(ticket)
 
 
+@public_router.post("/my-tickets/{ticket_id}/close", response_model=SupportTicketResponse)
+def close_my_ticket(
+    ticket_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ticket = support_service.close_portal_ticket(db, ticket_id, user)
+    return support_service.serialize_ticket(ticket)
+
+
 @admin_router.get("", response_model=SupportTicketListResponse)
 def list_admin_tickets(
     status_filter: Optional[str] = Query(default=None, alias="status"),

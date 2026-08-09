@@ -61,6 +61,7 @@ export function SupportCenter() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const chatStreamRef = useRef<HTMLDivElement | null>(null);
@@ -95,6 +96,28 @@ export function SupportCenter() {
       chatStreamRef.current.scrollTop = chatStreamRef.current.scrollHeight;
     }
   }, [selectedTicket?.messages, selectedTicket?.id, isChatOpen]);
+
+  async function handleCloseTicket() {
+    if (!selectedTicket) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const { data: updatedTicket } = await apiClient.post<PortalSupportTicket>(
+        `/support/my-tickets/${selectedTicket.id}/close`
+      );
+      showSuccess("Support ticket closed successfully", "Ticket Closed");
+      if (updatedTicket) {
+        setTickets((prev) =>
+          prev.map((t) => (t.id === updatedTicket.id ? { ...t, ...updatedTicket } : t))
+        );
+      }
+      await loadTickets();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to close support ticket"));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function submitTicket(event: FormEvent) {
     event.preventDefault();
@@ -401,6 +424,17 @@ export function SupportCenter() {
               </span>
               <Badge tone={statusTone(selectedTicket.status)}>{label(selectedTicket.status)}</Badge>
               <Badge tone={priorityTone(selectedTicket.priority)}>{label(selectedTicket.priority)}</Badge>
+              {selectedTicket.status !== "closed" && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  leftIcon={<Icon name="check" />}
+                  loading={saving}
+                  onClick={() => void handleCloseTicket()}
+                >
+                  Close Ticket
+                </Button>
+              )}
             </div>
           ) : (
             "Support Ticket Thread"
@@ -587,7 +621,17 @@ export function SupportCenter() {
                   placeholder="Type your follow-up reply..."
                   style={{ resize: "none", borderRadius: "10px", padding: "12px", fontSize: "0.925rem", width: "100%" }}
                 />
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    leftIcon={<Icon name="check" />}
+                    loading={saving}
+                    onClick={() => void handleCloseTicket()}
+                  >
+                    Close Ticket
+                  </Button>
                   <Button
                     type="submit"
                     size="sm"
