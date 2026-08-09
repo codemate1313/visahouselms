@@ -93,6 +93,7 @@ def serialize_ticket(ticket: SupportTicket) -> dict:
         "created_at": ticket.created_at,
         "updated_at": ticket.updated_at,
         "resolved_at": ticket.resolved_at,
+        "closed_by_role": ticket.closed_by_role,
         "messages": messages_list,
     }
 
@@ -508,13 +509,6 @@ def add_ticket_message(
     institute_id: Optional[int] = None,
     attachments: Optional[List[str]] = None,
 ) -> SupportTicket:
-    ticket = get_ticket(db, ticket_id, queue=queue, institute_id=institute_id)
-    if ticket.status == SUPPORT_STATUS_CLOSED:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This support ticket is closed. Reopen the chat to send new messages.",
-        )
-
     name = sender_name or (f"{sender.first_name} {sender.last_name}" if sender else "Support Team")
     role_label = sender_role
     if sender and sender.role:
@@ -522,6 +516,17 @@ def add_ticket_message(
             role_label = "admin"
         else:
             role_label = "customer"
+
+    if ticket.status == SUPPORT_STATUS_CLOSED:
+        # If customer is replying and ticket was NOT closed by customer (closed by admin/staff), auto-reopen!
+        if role_label == "customer" and ticket.closed_by_role != "customer":
+            ticket.status = SUPPORT_STATUS_OPEN
+            ticket.closed_by_role = None
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This support ticket is closed. Reopen the chat to send new messages.",
+            )
 
     attachments_json: Optional[str] = None
     if attachments:
@@ -572,6 +577,7 @@ def close_ticket(
 ) -> SupportTicket:
     ticket = get_ticket(db, ticket_id, queue=queue, institute_id=institute_id)
     ticket.status = SUPPORT_STATUS_CLOSED
+    ticket.closed_by_role = "admin"
     ticket.resolved_at = datetime.now(timezone.utc)
     ticket.updated_at = datetime.now(timezone.utc)
     db.commit()
@@ -587,6 +593,7 @@ def reopen_ticket(
 ) -> SupportTicket:
     ticket = get_ticket(db, ticket_id, queue=queue, institute_id=institute_id)
     ticket.status = SUPPORT_STATUS_OPEN
+    ticket.closed_by_role = None
     ticket.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(ticket)
@@ -613,7 +620,40 @@ def close_portal_ticket(
             detail="Support ticket not found.",
         )
     ticket.status = SUPPORT_STATUS_CLOSED
+    ticket.closed_by_role = "customer"
     ticket.resolved_at = datetime.now(timezone.utc)
+    ticket.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+
+
+def reopen_portal_ticket(
+    db: Session,
+    ticket_id: int,
+    user: User,
+) -> SupportTicket:
+    ticket = db.scalar(
+        select(SupportTicket).where(
+            SupportTicket.id == ticket_id,
+            or_(
+                SupportTicket.requester_id == user.id,
+                func.lower(SupportTicket.email) == user.email.strip().lower(),
+            ),
+        )
+    )
+    if not ticket:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Support ticket not found.",
+        )
+    if ticket.closed_by_role == "customer":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You closed this ticket. Please raise a new query if you have a new issue.",
+        )
+    ticket.status = SUPPORT_STATUS_OPEN
+    ticket.closed_by_role = None
     ticket.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(ticket)

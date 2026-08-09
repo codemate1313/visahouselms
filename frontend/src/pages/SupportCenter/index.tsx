@@ -228,6 +228,28 @@ export function SupportCenter() {
     }
   }
 
+  async function handleReopenTicket() {
+    if (!selectedTicket) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const { data: updatedTicket } = await apiClient.post<PortalSupportTicket>(
+        `/support/my-tickets/${selectedTicket.id}/reopen`
+      );
+      showSuccess("Support ticket reopened successfully", "Ticket Reopened");
+      if (updatedTicket) {
+        setTickets((prev) =>
+          prev.map((t) => (t.id === updatedTicket.id ? { ...t, ...updatedTicket } : t))
+        );
+      }
+      await loadTickets();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to reopen support ticket"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function submitTicket(event: FormEvent) {
     event.preventDefault();
     if (!subject.trim() || !message.trim()) return;
@@ -576,7 +598,7 @@ export function SupportCenter() {
               </span>
               <Badge tone={statusTone(selectedTicket.status)}>{label(selectedTicket.status)}</Badge>
               <Badge tone={priorityTone(selectedTicket.priority)}>{label(selectedTicket.priority)}</Badge>
-              {selectedTicket.status !== "closed" && (
+              {selectedTicket.status !== "closed" && selectedTicket.status !== "resolved" ? (
                 <Button
                   size="sm"
                   variant="secondary"
@@ -586,7 +608,18 @@ export function SupportCenter() {
                 >
                   Close Ticket
                 </Button>
-              )}
+              ) : selectedTicket.closed_by_role !== "customer" ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  leftIcon={<Icon name="check" />}
+                  loading={saving}
+                  onClick={() => void handleReopenTicket()}
+                  style={{ background: "#10b981", color: "#ffffff", borderColor: "#10b981" }}
+                >
+                  Reopen Ticket
+                </Button>
+              ) : null}
             </div>
           ) : (
             "Support Ticket Thread"
@@ -760,7 +793,7 @@ export function SupportCenter() {
             </div>
 
             {/* Reply Input Bar */}
-            {selectedTicket.status === "closed" ? (
+            {selectedTicket.status === "closed" && selectedTicket.closed_by_role === "customer" ? (
               <div
                 style={{
                   padding: "14px 16px",
@@ -773,10 +806,28 @@ export function SupportCenter() {
                   fontWeight: 600,
                 }}
               >
-                🔒 This support ticket is closed. If you have a new issue, please click <strong>"Raise a Query"</strong>.
+                🔒 You closed this support ticket. If you have a new issue, please click <strong>"Raise a Query"</strong>.
               </div>
             ) : (
               <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {selectedTicket.status === "closed" && selectedTicket.closed_by_role !== "customer" && (
+                  <div
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: "10px",
+                      background: "rgba(16, 185, 129, 0.1)",
+                      border: "1px solid rgba(16, 185, 129, 0.25)",
+                      color: "#10b981",
+                      fontSize: "0.825rem",
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <span>ℹ️ Support closed this ticket. Sending a reply will automatically <strong>reopen</strong> your query.</span>
+                  </div>
+                )}
                 {/* Attachment preview strip */}
                 {attachedFiles.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", padding: "8px 10px", borderRadius: "8px", background: "var(--surface-hover, rgba(0,0,0,0.04))", border: "1px solid var(--border)" }}>
@@ -793,7 +844,7 @@ export function SupportCenter() {
                   rows={3}
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Type your follow-up reply..."
+                  placeholder={selectedTicket.status === "closed" ? "Type to reopen and reply..." : "Type your follow-up reply..."}
                   style={{ resize: "none", borderRadius: "10px", padding: "12px", fontSize: "0.925rem", width: "100%" }}
                 />
                 {/* Hidden file input */}
@@ -811,16 +862,18 @@ export function SupportCenter() {
                 />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      leftIcon={<Icon name="check" />}
-                      loading={saving}
-                      onClick={() => void handleCloseTicket()}
-                    >
-                      Close Ticket
-                    </Button>
+                    {selectedTicket.status !== "closed" && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        leftIcon={<Icon name="check" />}
+                        loading={saving}
+                        onClick={() => void handleCloseTicket()}
+                      >
+                        Close Ticket
+                      </Button>
+                    )}
                     <button
                       type="button"
                       title="Attach files (images, PDF, Word, Excel — max 5, 10MB each)"
@@ -857,7 +910,7 @@ export function SupportCenter() {
                     disabled={!replyText.trim() && attachedFiles.length === 0}
                     leftIcon={<Icon name="arrowRight" />}
                   >
-                    Send Reply
+                    {selectedTicket.status === "closed" ? "Reopen & Reply" : "Send Reply"}
                   </Button>
                 </div>
               </form>

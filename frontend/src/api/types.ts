@@ -65,6 +65,7 @@ export interface SupportTicket {
   created_at: string;
   updated_at: string | null;
   resolved_at: string | null;
+  closed_by_role?: string | null;
   messages?: SupportTicketMessage[];
 }
 
@@ -89,6 +90,7 @@ export interface PortalSupportTicket {
   created_at: string;
   updated_at: string | null;
   resolved_at: string | null;
+  closed_by_role?: string | null;
   messages?: SupportTicketMessage[];
 }
 

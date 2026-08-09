@@ -62,6 +62,7 @@ class SupportTicket(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), index=True)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now(), nullable=True)
     resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+    closed_by_role: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)  # "customer" | "admin" | "staff"
     ip_address: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
     user_agent: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 

@@ -74,6 +74,7 @@ class SupportTicketResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime] = None
     resolved_at: Optional[datetime] = None
+    closed_by_role: Optional[str] = None
     messages: list[SupportTicketMessageResponse] = Field(default_factory=list)
 
 
@@ -104,5 +105,6 @@ class PortalSupportTicketResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime] = None
     resolved_at: Optional[datetime] = None
+    closed_by_role: Optional[str] = None
     messages: list[SupportTicketMessageResponse] = Field(default_factory=list)
 
