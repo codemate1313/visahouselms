@@ -725,6 +725,7 @@ export interface Attempt {
   module_id: number;
   module_type: ExamModuleType;
   module_title: string;
+  duration_minutes?: number;
   show_onboarding_instructions?: boolean;
   onboarding_instructions?: OnboardingInstruction[] | null;
   course_id: number | null;

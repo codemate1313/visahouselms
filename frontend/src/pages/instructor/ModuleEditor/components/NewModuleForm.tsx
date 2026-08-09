@@ -1,15 +1,27 @@
 import { type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { RequiredMark, SearchableSelect } from "@/components/ui";
+import {
+  RequiredMark,
+  SearchableSelect,
+  Stepper,
+  StepperItem,
+  StepperTrigger,
+  StepperIndicator,
+  StepperTitle,
+  StepperDescription,
+  StepperSeparator,
+} from "@/components/ui";
 import { Icon } from "@/components/icons";
 import type { ExamModule, ExamModuleType, IeltsSection } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { COMPOSITE_TYPES, SOURCE_SECTIONS, MODULE_TYPE_META } from "../helpers";
+import type { ModuleDetailsState } from "./ModuleDetailsForm";
+import { OnboardingInstructionsEditor } from "./OnboardingInstructionsEditor";
 
 interface NewModuleFormProps {
   requestedType: ExamModuleType | null;
-  details: { title: string; description: string; instructions: string; duration_minutes: number };
-  onDetailsChange: (details: { title: string; description: string; instructions: string; duration_minutes: number }) => void;
+  details: ModuleDetailsState;
+  onDetailsChange: (details: ModuleDetailsState) => void;
   sourceModules: ExamModule[];
   selectedSources: Record<IeltsSection, string>;
   onSelectedSourcesChange: (sources: Record<IeltsSection, string>) => void;
@@ -50,10 +62,6 @@ export function NewModuleForm({
   const isComposite = COMPOSITE_TYPES.has(requestedType);
   const allSourcesSelected = SOURCE_SECTIONS.every((section) => selectedSources[section]);
 
-  const applySampleInstructions = () => {
-    onDetailsChange({ ...details, instructions: meta.sampleInstructions });
-  };
-
   const adjustDuration = (delta: number) => {
     const next = Math.max(1, Math.min(600, (details.duration_minutes || meta.defaultDuration) + delta));
     onDetailsChange({ ...details, duration_minutes: next });
@@ -65,7 +73,7 @@ export function NewModuleForm({
 
   return (
     <div className="new-module-studio-container">
-      {/* 1. Top Breadcrumb & Actions Bar */}
+      {/* 1. Top Breadcrumb Bar */}
       <div className="module-editor-breadcrumb-bar">
         <div className="module-editor-breadcrumb-left">
           <Link to={moduleWorkspacePath} className="button secondary module-back-btn">
@@ -76,24 +84,6 @@ export function NewModuleForm({
             <span className="breadcrumb-separator">/</span>
             <span className="breadcrumb-current-title">Create {typeLabel}</span>
           </div>
-        </div>
-        <div className="studio-tab-controls">
-          <button
-            type="button"
-            className={`studio-tab-btn ${activeTab === "config" ? "is-active" : ""}`}
-            onClick={() => setActiveTab("config")}
-          >
-            <Icon name="edit" />
-            <span>1. Test Configuration</span>
-          </button>
-          <button
-            type="button"
-            className={`studio-tab-btn ${activeTab === "instructions" ? "is-active" : ""}`}
-            onClick={() => setActiveTab("instructions")}
-          >
-            <Icon name="filePdf" />
-            <span>2. Instructions & Notes</span>
-          </button>
         </div>
       </div>
 
@@ -131,10 +121,38 @@ export function NewModuleForm({
         </div>
       </div>
 
-      {/* 3. Interactive 2-Column Studio Grid */}
+      {/* 3. Interactive 3-Column Studio Grid */}
       <form onSubmit={onSubmit} className="vh-studio-grid">
-        {/* Left Column: Form Controls */}
-        <div className="vh-studio-main-col">
+        {/* Left Column: Frameless Stepper Navigation */}
+        <aside className="vh-stepper-sidebar">
+          <div className="vh-stepper-sticky-box">
+            <h3 className="vh-stepper-sidebar-title">Authoring Steps</h3>
+            <Stepper value={activeTab === "config" ? 1 : 2} orientation="vertical">
+              <StepperItem step={1}>
+                <StepperTrigger onClick={() => setActiveTab("config")}>
+                  <StepperIndicator />
+                  <div className="space-y-0.5 text-left">
+                    <StepperTitle>1. Test Configuration</StepperTitle>
+                    <StepperDescription>Title, duration & details</StepperDescription>
+                  </div>
+                </StepperTrigger>
+                <StepperSeparator />
+              </StepperItem>
+              <StepperItem step={2}>
+                <StepperTrigger onClick={() => setActiveTab("instructions")}>
+                  <StepperIndicator />
+                  <div className="space-y-0.5 text-left">
+                    <StepperTitle>2. Instructions & Notes</StepperTitle>
+                    <StepperDescription>{details.instructions ? "Configured ✓" : "Candidate instructions"}</StepperDescription>
+                  </div>
+                </StepperTrigger>
+              </StepperItem>
+            </Stepper>
+          </div>
+        </aside>
+
+        {/* Center Column: Form Controls with Stage Animation */}
+        <div className="vh-studio-main-col stage-fade-in" key={activeTab}>
           {activeTab === "config" ? (
             <div className="vh-studio-card">
               <div className="vh-card-header">
@@ -221,20 +239,17 @@ export function NewModuleForm({
                 </div>
               </div>
 
-              {/* Description Field */}
-              <div className="vh-form-group">
-                <div className="vh-label-row">
-                  <label htmlFor="new-module-description">{t.descriptionLabel}</label>
-                  <span className="vh-char-counter">{details.description.length} / 2000</span>
-                </div>
-                <textarea
-                  id="new-module-description"
-                  className="vh-textarea-enhanced"
-                  rows={3}
-                  value={details.description}
-                  onChange={(event) => onDetailsChange({ ...details, description: event.target.value })}
-                  placeholder={t.descriptionPlaceholder}
-                />
+
+
+              <div className="vh-step-nav-row">
+                <button
+                  type="button"
+                  className="vh-btn-step-next"
+                  onClick={() => setActiveTab("instructions")}
+                >
+                  <span>Proceed to Step 2: Instructions & Notes</span>
+                  <Icon name="arrowRight" />
+                </button>
               </div>
             </div>
           ) : (
@@ -244,24 +259,24 @@ export function NewModuleForm({
                 <p>Instructions displayed to students on screen before the test begins.</p>
               </div>
 
-              <div className="vh-form-group">
-                <div className="vh-label-row">
-                  <label htmlFor="new-module-instructions">{t.instructionsLabel}</label>
-                  <button type="button" className="vh-action-link-btn" onClick={applySampleInstructions}>
-                    <Icon name="edit" /> Load Standard {typeLabel} Instructions
-                  </button>
-                </div>
-                <textarea
-                  id="new-module-instructions"
-                  className="vh-textarea-enhanced vh-code-font"
-                  rows={8}
-                  value={details.instructions}
-                  onChange={(event) => onDetailsChange({ ...details, instructions: event.target.value })}
-                  placeholder={t.instructionsPlaceholder}
-                />
-                <span className="vh-field-hint">
-                  Character Count: {details.instructions.length} {details.instructions.length === 1 ? "character" : "characters"}
-                </span>
+              {/* Candidate Pre-Exam Guidelines Manager */}
+              <OnboardingInstructionsEditor
+                showInstructions={details.show_onboarding_instructions ?? true}
+                onToggleShowInstructions={(enabled) => onDetailsChange({ ...details, show_onboarding_instructions: enabled })}
+                instructions={details.onboarding_instructions ?? []}
+                onInstructionsChange={(items) => onDetailsChange({ ...details, onboarding_instructions: items })}
+                isEditable={true}
+              />
+
+              <div className="vh-step-nav-row">
+                <button
+                  type="button"
+                  className="vh-btn-step-back"
+                  onClick={() => setActiveTab("config")}
+                >
+                  <Icon name="arrowLeft" />
+                  <span>Back to Step 1: Configuration</span>
+                </button>
               </div>
             </div>
           )}

@@ -217,9 +217,9 @@ export function Home() {
         <section id="top" className="vh-hero-section">
           <div className="vh-hero-slide-container">
             <div className="vh-hero-slide-left">
-              <h1 className="vh-hero-title">
+              <h1 className="vh-public-hero-title">
                 {activeSlide.heading}
-                <span className="vh-hero-title-accent">{activeSlide.highlight}</span>
+                <span className="vh-public-hero-title-accent">{activeSlide.highlight}</span>
               </h1>
               <p className="vh-hero-desc">{activeSlide.desc}</p>
               <div className="vh-hero-actions">

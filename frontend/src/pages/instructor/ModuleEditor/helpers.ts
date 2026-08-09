@@ -143,9 +143,9 @@ export const MODULE_TYPE_META: Record<ExamModuleType, ModuleMeta> = {
     icon: "edit",
     badge: "Essay & Task Evaluation",
     defaultDuration: 50,
-    specs: ["Task 1: 40%", "Task 2: 60%", "150-200 / 250 Words"],
+    specs: ["2 Tasks", "150-200 words for task 1", "250 Words for task 2"],
     tagline: "Design Task 1 chart & Task 2 essay prompts with automatic word counters & AI feedback.",
-    durationPresets: [30, 40, 50, 60],
+    durationPresets: [30, 40, 50, 60, 120],
     sampleInstructions: "You have 50 minutes for both tasks. Write 150–200 words for Task 1 and approximately 250 words for Task 2.",
   },
   speaking: {

@@ -21,7 +21,7 @@ export function TestRunnerHeader({
   attempt,
   currentPart,
   brandMark,
-  testContext,
+  testContext: _testContext,
   isFinalAttempt,
   partIndex,
   onSelectPart,
@@ -39,9 +39,7 @@ export function TestRunnerHeader({
         <span className="test-runner-brand-mark">{brandMark}</span>
         <div>
           <h1>{attempt.module_title}</h1>
-          <p>
-            {testContext} · {sectionLabels[currentPart.section_type as keyof typeof sectionLabels]} · {currentPart.title}
-          </p>
+          <p>{sectionLabels[currentPart.section_type as keyof typeof sectionLabels] || currentPart.section_type}</p>
         </div>
       </div>
       <div className="test-runner-header-actions">

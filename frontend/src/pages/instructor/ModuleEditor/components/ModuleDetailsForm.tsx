@@ -41,11 +41,6 @@ export function ModuleDetailsForm({
   const typeLabel = typeLabels[requestedType];
   const meta = MODULE_TYPE_META[requestedType];
 
-  const applySampleInstructions = () => {
-    if (!isEditable) return;
-    onDetailsChange({ ...details, instructions: meta.sampleInstructions });
-  };
-
   const adjustDuration = (delta: number) => {
     if (!isEditable) return;
     const next = Math.max(1, Math.min(600, (details.duration_minutes || meta.defaultDuration) + delta));
@@ -82,7 +77,7 @@ export function ModuleDetailsForm({
       </div>
 
       {/* 2. Interactive 2-Column Studio Grid */}
-      <form onSubmit={onSubmit} className="vh-studio-grid" style={{ paddingTop: "24px" }}>
+      <form onSubmit={onSubmit} className="vh-studio-grid vh-module-details-grid" style={{ paddingTop: "24px" }}>
         {/* Left Column: Form Controls */}
         <div className="vh-studio-main-col">
           {activeTab === "config" ? (
@@ -173,51 +168,13 @@ export function ModuleDetailsForm({
                 </div>
               </div>
 
-              {/* Description Field */}
-              <div className="vh-form-group">
-                <div className="vh-label-row">
-                  <label htmlFor="edit-module-description">{t.descriptionLabel}</label>
-                  <span className="vh-char-counter">{(details.description || "").length} / 2000</span>
-                </div>
-                <textarea
-                  id="edit-module-description"
-                  className="vh-textarea-enhanced"
-                  rows={3}
-                  value={details.description}
-                  onChange={(event) => onDetailsChange({ ...details, description: event.target.value })}
-                  placeholder={t.descriptionPlaceholder}
-                  readOnly={!isEditable}
-                />
-              </div>
+
             </div>
           ) : (
             <div className="vh-studio-card">
               <div className="vh-card-header">
                 <h2>Candidate Instructions</h2>
                 <p>Instructions displayed to students on screen before the test begins.</p>
-              </div>
-
-              <div className="vh-form-group">
-                <div className="vh-label-row">
-                  <label htmlFor="edit-module-instructions">{t.instructionsLabel}</label>
-                  {isEditable && (
-                    <button type="button" className="vh-action-link-btn" onClick={applySampleInstructions}>
-                      <Icon name="edit" /> Load Standard {typeLabel} Instructions
-                    </button>
-                  )}
-                </div>
-                <textarea
-                  id="edit-module-instructions"
-                  className="vh-textarea-enhanced vh-code-font"
-                  rows={6}
-                  value={details.instructions}
-                  onChange={(event) => onDetailsChange({ ...details, instructions: event.target.value })}
-                  placeholder={t.instructionsPlaceholder}
-                  readOnly={!isEditable}
-                />
-                <span className="vh-field-hint">
-                  Character Count: {(details.instructions || "").length} {(details.instructions || "").length === 1 ? "character" : "characters"}
-                </span>
               </div>
 
               {/* Onboarding Instructions Manager */}

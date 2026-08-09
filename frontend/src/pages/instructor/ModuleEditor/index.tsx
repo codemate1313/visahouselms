@@ -60,8 +60,9 @@ export function ModuleEditor() {
   const [loading, setLoading] = useState(!isNew);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const showInfo = useToastStore((state) => state.showInfo);
+  const showSuccess = useToastStore((state) => state.showSuccess);
+  const showError = useToastStore((state) => state.showError);
 
   async function loadModule(preferredPartId?: number) {
     if (!id) return;
@@ -133,7 +134,16 @@ export function ModuleEditor() {
     }
     setBusy(true); setError(null);
     try {
-      const { data } = await apiClient.post<ExamModule>("/instructor/modules", { module_type: requestedType, title: details.title, description: details.description || null, instructions: details.instructions || null, source_module_ids: isComposite ? sourceModuleIds : [] });
+      const { data } = await apiClient.post<ExamModule>("/instructor/modules", {
+        module_type: requestedType,
+        title: details.title,
+        description: details.description || null,
+        instructions: details.instructions || null,
+        duration_minutes: details.duration_minutes,
+        show_onboarding_instructions: details.show_onboarding_instructions ?? true,
+        onboarding_instructions: details.onboarding_instructions || null,
+        source_module_ids: isComposite ? sourceModuleIds : [],
+      });
       navigate(`${moduleWorkspacePath}/${data.id}`, { replace: true });
     } catch (err: unknown) { setError(extractErrorMessage(err, strings.newModule.errors.create)); }
     finally { setBusy(false); }
@@ -158,11 +168,11 @@ export function ModuleEditor() {
       onboarding_instructions: module.onboarding_instructions || null,
     };
     if (isEqual(original, payload)) { showInfo(noChangesMessage); return; }
-    setBusy(true); setError(null); setNotice(null);
+    setBusy(true); setError(null);
     try {
       const { data } = await apiClient.patch<ExamModule>(`/instructor/modules/${module.id}`, payload);
-      setModule(data); setNotice(strings.details.notices.saved);
-    } catch (err: unknown) { setError(extractErrorMessage(err, strings.details.errors.save)); }
+      setModule(data); showSuccess(strings.details.notices.saved);
+    } catch (err: unknown) { showError(extractErrorMessage(err, strings.details.errors.save)); }
     finally { setBusy(false); }
   }
 
@@ -206,15 +216,15 @@ export function ModuleEditor() {
 
   async function saveQuestion(event: FormEvent) {
     event.preventDefault(); if (!module || !selectedPart || !manual) return;
-    setBusy(true); setError(null); setNotice(null);
+    setBusy(true); setError(null);
     try {
       const base = `/instructor/modules/${module.id}/parts/${selectedPart.id}/questions`;
       if (editingQuestionId) await apiClient.put(`${base}/${editingQuestionId}`, questionPayload(manual));
       else await apiClient.post(base, questionPayload(manual));
       const message = editingQuestionId ? strings.manualQuestion.notices.updated : strings.manualQuestion.notices.added(selectedPart.title);
       setEditingQuestionId(null); setManual(emptyQuestion(selectedPart));
-      await loadModule(selectedPart.id); setNotice(message);
-    } catch (err: unknown) { setError(extractErrorMessage(err, strings.manualQuestion.errors.save)); }
+      await loadModule(selectedPart.id); showSuccess(message);
+    } catch (err: unknown) { showError(extractErrorMessage(err, strings.manualQuestion.errors.save)); }
     finally { setBusy(false); }
   }
 
@@ -298,12 +308,12 @@ export function ModuleEditor() {
   async function commitImport() {
     if (!module || !selectedPart || !preview) return;
     const questions = preview.questions.filter((_, index) => selectedImports.has(index)).map(questionPayload);
-    if (!questions.length) { setError(strings.bulkImport.errors.selectOne); return; }
+    if (!questions.length) { showError(strings.bulkImport.errors.selectOne); return; }
     setBusy(true); setError(null);
     try {
       await apiClient.post(`/instructor/modules/${module.id}/parts/${selectedPart.id}/import`, { source_type: preview.source_type, source_filename: preview.source_filename, questions });
-      setPreview(null); setImportFile(null); await loadModule(selectedPart.id); setNotice(strings.bulkImport.notices.imported(questions.length, selectedPart.title));
-    } catch (err: unknown) { setError(extractErrorMessage(err, strings.bulkImport.errors.commit)); }
+      setPreview(null); setImportFile(null); await loadModule(selectedPart.id); showSuccess(strings.bulkImport.notices.imported(questions.length, selectedPart.title));
+    } catch (err: unknown) { showError(extractErrorMessage(err, strings.bulkImport.errors.commit)); }
     finally { setBusy(false); }
   }
 
@@ -313,23 +323,23 @@ export function ModuleEditor() {
     try {
       const form = new FormData(); form.append("title", audioTitle); form.append("file", audioFile);
       await apiClient.post(`/instructor/modules/${module.id}/parts/${selectedPart.id}/audio`, form);
-      setAudioFile(null); await loadModule(selectedPart.id); setNotice(strings.listeningAudio.notices.uploaded(selectedPart.title));
-    } catch (err: unknown) { setError(extractErrorMessage(err, strings.listeningAudio.errors.upload)); }
+      setAudioFile(null); await loadModule(selectedPart.id); showSuccess(strings.listeningAudio.notices.uploaded(selectedPart.title));
+    } catch (err: unknown) { showError(extractErrorMessage(err, strings.listeningAudio.errors.upload)); }
     finally { setBusy(false); }
   }
 
   async function saveSpeakingTiming(preparationSeconds: number, responseSeconds: number) {
     if (!module || !selectedPart) return;
-    setBusy(true); setError(null); setNotice(null);
+    setBusy(true); setError(null);
     try {
       const { data } = await apiClient.patch<ExamModule>(
         `/instructor/modules/${module.id}/parts/${selectedPart.id}/speaking-timing`,
         { preparation_seconds: preparationSeconds, response_seconds: responseSeconds },
       );
       setModule(data);
-      setNotice(strings.speakingTiming.saved(selectedPart.title));
+      showSuccess(strings.speakingTiming.saved(selectedPart.title));
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, strings.speakingTiming.error));
+      showError(extractErrorMessage(err, strings.speakingTiming.error));
     } finally {
       setBusy(false);
     }
@@ -337,16 +347,16 @@ export function ModuleEditor() {
 
   async function togglePartAiEvaluation(enabled: boolean) {
     if (!module || !selectedPart) return;
-    setBusy(true); setError(null); setNotice(null);
+    setBusy(true); setError(null);
     try {
       const { data } = await apiClient.patch<ExamModule>(
         `/instructor/modules/${module.id}/parts/${selectedPart.id}/ai-evaluation`,
         { ai_evaluation_enabled: enabled },
       );
       setModule(data);
-      setNotice(strings.partSpec.aiEvaluationSaved(selectedPart.title, enabled));
+      showSuccess(strings.partSpec.aiEvaluationSaved(selectedPart.title, enabled));
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, strings.partSpec.aiEvaluationError));
+      showError(extractErrorMessage(err, strings.partSpec.aiEvaluationError));
     } finally {
       setBusy(false);
     }
@@ -357,15 +367,15 @@ export function ModuleEditor() {
     setBusy(true); setError(null);
     try {
       const { data } = await apiClient.post<ExamModuleAsset>(`/instructor/modules/${module.id}/parts/${selectedPart.id}/tts`, tts);
-      setTts((current) => ({ ...current, conversation: "" })); await loadModule(selectedPart.id); setNotice(strings.listeningAudio.notices.generated(data.tts_voice ?? "", selectedPart.title));
-    } catch (err: unknown) { setError(extractErrorMessage(err, strings.listeningAudio.errors.generate)); }
+      setTts((current) => ({ ...current, conversation: "" })); await loadModule(selectedPart.id); showSuccess(strings.listeningAudio.notices.generated(data.tts_voice ?? "", selectedPart.title));
+    } catch (err: unknown) { showError(extractErrorMessage(err, strings.listeningAudio.errors.generate)); }
     finally { setBusy(false); }
   }
 
   async function deleteAudio(assetId: number) {
     if (!module || !selectedPart || !await confirmDelete("Are you sure you want to delete this audio file?", "Delete Audio File")) return;
     try { await apiClient.delete(`/instructor/modules/${module.id}/assets/${assetId}`); await loadModule(selectedPart.id); }
-    catch (err: unknown) { setError(extractErrorMessage(err, strings.listeningAudio.errors.delete)); }
+    catch (err: unknown) { showError(extractErrorMessage(err, strings.listeningAudio.errors.delete)); }
   }
 
   async function generateAvatar() {
@@ -379,10 +389,10 @@ export function ModuleEditor() {
         if (job.status === "done") {
           setAvatarGenerating(false);
           await loadModule(partId);
-          setNotice(strings.speakingAvatar.generated);
+          showSuccess(strings.speakingAvatar.generated);
         } else if (job.status === "failed") {
           setAvatarGenerating(false);
-          setError(job.result || strings.speakingAvatar.failed);
+          showError(job.result || strings.speakingAvatar.failed);
         } else {
           setTimeout(poll, 3000);
         }
@@ -390,17 +400,17 @@ export function ModuleEditor() {
       setTimeout(poll, 3000);
     } catch (err: unknown) {
       setAvatarGenerating(false);
-      setError(extractErrorMessage(err, strings.speakingAvatar.errors.start));
+      showError(extractErrorMessage(err, strings.speakingAvatar.errors.start));
     }
   }
 
   async function changeStatus(status: "draft" | "published" | "archived") {
     if (!module) return;
-    setBusy(true); setError(null); setNotice(null);
+    setBusy(true); setError(null);
     try {
       const { data } = await apiClient.post<ExamModule>(`/instructor/modules/${module.id}/status`, { status });
-      setModule(data); setNotice(status === "published" ? strings.details.notices.published : strings.details.notices.movedTo(status));
-    } catch (err: unknown) { setError(extractErrorMessage(err, strings.details.notices.statusError)); }
+      setModule(data); showSuccess(status === "published" ? strings.details.notices.published : strings.details.notices.movedTo(status));
+    } catch (err: unknown) { showError(extractErrorMessage(err, strings.details.notices.statusError)); }
     finally { setBusy(false); }
   }
 
@@ -458,15 +468,17 @@ export function ModuleEditor() {
         </div>
 
         <div className="module-editor-breadcrumb-right">
-          <Badge tone={module.status === "published" ? "green" : module.status === "archived" ? "gray" : "amber"}>
-            {module.status}
-          </Badge>
+          {/* Breadcrumb right empty or auxiliary controls */}
         </div>
       </div>
-      {error && <p className="error-text notice-line">{error}</p>}
-      {notice && <p className="success-text notice-line">{notice}</p>}
 
-      <ModuleReadinessPanel module={module} busy={busy} onChangeStatus={changeStatus} onChoosePart={choosePart} />
+      {/* Sleek Bottom Floating Status Bar */}
+      <div className="vh-bottom-floating-status-bar">
+        <ModuleReadinessPanel module={module} busy={busy} onChangeStatus={changeStatus} onChoosePart={choosePart} />
+        <Badge tone={module.status === "published" ? "green" : module.status === "archived" ? "gray" : "amber"}>
+          {module.status}
+        </Badge>
+      </div>
 
       <div className="module-authoring-layout">
         <ModulePartNav parts={module.parts} selectedPartId={selectedPartId} onChoosePart={choosePart} />
@@ -484,11 +496,13 @@ export function ModuleEditor() {
           ) : (
             <>
               <PartSpecPanel
-              part={selectedPart}
-              isEditable={isEditable}
-              busy={busy}
-              onToggleAiEvaluation={togglePartAiEvaluation}
-            />
+                part={selectedPart}
+                isEditable={isEditable}
+                busy={busy}
+                onToggleAiEvaluation={togglePartAiEvaluation}
+                questionEntryMode={questionEntryMode}
+                onEntryModeChange={setQuestionEntryMode}
+              />
 
             {selectedPart.section_type === "listening" && (
               <ListeningAudioPanel
@@ -528,23 +542,6 @@ export function ModuleEditor() {
 
             {isEditable && manual && (
               <div className="vh-entry-mode-wrapper">
-                <div className="vh-method-tabs" style={{ marginBottom: "16px" }}>
-                  <button
-                    type="button"
-                    className={`vh-method-tab ${questionEntryMode === "manual" ? "is-active" : ""}`}
-                    onClick={() => setQuestionEntryMode("manual")}
-                  >
-                    Single Question Entry
-                  </button>
-                  <button
-                    type="button"
-                    className={`vh-method-tab ${questionEntryMode === "bulk" ? "is-active" : ""}`}
-                    onClick={() => setQuestionEntryMode("bulk")}
-                  >
-                    Bulk Import (PDF / CSV)
-                  </button>
-                </div>
-
                 <div className="module-entry-tabbed-content">
                   {questionEntryMode === "manual" ? (
                     <ManualQuestionForm

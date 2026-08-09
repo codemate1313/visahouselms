@@ -35,16 +35,9 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
                   <span>{questionLabels[question.question_type]}</span>
                   {question.interaction?.group_label && <span>{question.interaction.group_label}</span>}
                   {question.interaction?.turn_type && <span>{question.interaction.turn_type.replaceAll("_", " ")}</span>}
-                  <span>
-                    {question.points} {t.marksSuffix(Number(question.points))}
-                  </span>
-                  <span>
-                    {question.source_type}
-                    {question.source_filename ? ` · ${question.source_filename}` : ""}
-                  </span>
                 </div>
                 <h3>{question.prompt}</h3>
-                {question.passage && <p>{question.passage}</p>}
+                {part.section_type !== "writing" && question.passage && <p>{question.passage}</p>}
                 {question.image_url && (
                   <img className="saved-question-image" src={`${API_BASE_URL}${question.image_url}`} alt="" />
                 )}

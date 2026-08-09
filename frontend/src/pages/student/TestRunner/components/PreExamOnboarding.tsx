@@ -76,11 +76,21 @@ export function PreExamOnboarding({
   }, [attempt.parts]);
 
   const totalDurationMinutes = useMemo(() => {
+    if (attempt.duration_minutes && attempt.duration_minutes > 0) {
+      return attempt.duration_minutes;
+    }
     const sum = attempt.parts.reduce((acc, p) => acc + (p.duration_minutes || 0), 0);
     if (sum > 0) return sum;
+    if (attempt.started_at && attempt.expires_at) {
+      const totalMs = new Date(attempt.expires_at).getTime() - new Date(attempt.started_at).getTime();
+      if (totalMs > 0) {
+        const rawMins = Math.round(totalMs / 60000);
+        return rawMins > 2 ? rawMins - 2 : rawMins;
+      }
+    }
     if (secondsLeft > 0) return Math.ceil(secondsLeft / 60);
     return 15;
-  }, [attempt.parts, secondsLeft]);
+  }, [attempt.duration_minutes, attempt.parts, attempt.started_at, attempt.expires_at, secondsLeft]);
 
   // Skill theme styling
   const skillMeta = useMemo(() => {

@@ -40,7 +40,8 @@ export function ManualQuestionForm({
   onCancelEdit,
 }: ManualQuestionFormProps) {
   const t = strings.manualQuestion;
-  const questionLabels = strings.questionLabels;
+  const isWriting = part.section_type === "writing";
+  const isReading = part.section_type === "reading";
   const allowedTurns = part.answer_constraints.allowed_turn_types ?? [];
   const isChoiceQuestion = CHOICE_TYPES.has(manual.question_type);
   const canRemoveOption = manual.options.length > 2;
@@ -48,7 +49,6 @@ export function ManualQuestionForm({
     manual.question_type === "fill_blank" ||
     part.answer_constraints.inline_marker_required ||
     part.answer_constraints.layout === "inline_matching_blanks";
-  const questionTypeLabel = questionLabels[manual.question_type] ?? manual.question_type;
   const turnLabels: Record<SpeakingTurnType, string> = {
     identity: "Identity and origin",
     topic_question: "Familiar-topic question",
@@ -63,16 +63,10 @@ export function ManualQuestionForm({
     <section className="authoring-panel" id="manual-module-question">
       <div className="panel-title">
         <div>
-          <span className="phase-chip">{t.eyebrow}</span>
           <h2>{editingQuestionId ? t.editHeading : t.addHeading(part.title)}</h2>
         </div>
       </div>
       <form className="question-form" onSubmit={onSubmit}>
-        <div className="question-type-summary">
-          <span>{t.typeSummaryLabel}</span>
-          <h3>{questionTypeLabel}</h3>
-          <p>{t.typeSummaryHint(part.title)}</p>
-        </div>
         {showsBlankGuidance && (
           <div className="question-authoring-help">
             <h4>{t.blankHelpTitle}</h4>
@@ -153,46 +147,7 @@ export function ManualQuestionForm({
             )}
           </>
         )}
-        <div className="field-label-with-action">
-          <label htmlFor="module-question-passage">{t.passageLabel}</label>
-          <label className={`image-upload-button${uploadingImage ? " is-busy" : ""}`}>
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              disabled={uploadingImage}
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) onUploadImage(file);
-                event.target.value = "";
-              }}
-            />
-            <Icon name="image" />
-            {uploadingImage ? t.uploadingImage : manual.image_url ? t.changeImage : t.addImage}
-          </label>
-        </div>
-        <textarea
-          id="module-question-passage"
-          rows={4}
-          value={manual.passage ?? ""}
-          onChange={(event) => onManualChange({ ...manual, passage: event.target.value })}
-          placeholder={t.passagePlaceholder}
-        />
-        <label htmlFor="module-question-instructions">{t.instructionsLabel}</label>
-        <textarea
-          id="module-question-instructions"
-          rows={2}
-          value={manual.instructions ?? ""}
-          onChange={(event) => onManualChange({ ...manual, instructions: event.target.value })}
-        />
-        {manual.image_url && (
-          <div className="question-image-preview">
-            <img src={`${API_BASE_URL}${manual.image_url}`} alt={t.imagePreviewAlt} />
-            <button type="button" className="danger-text" onClick={onRemoveImage}>
-              {t.removeImage}
-            </button>
-          </div>
-        )}
+        {/* 1. Question or task prompt */}
         <label htmlFor="module-question-prompt">{t.promptLabel}<RequiredMark /></label>
         <textarea
           id="module-question-prompt"
@@ -202,6 +157,75 @@ export function ManualQuestionForm({
           placeholder={part.answer_constraints.inline_marker_required ? t.inlinePromptPlaceholder : t.promptPlaceholder}
           required
         />
+
+        {/* 2. Sleek Interactive Image Dropzone Pill */}
+        {!isReading && (
+          <div className="vh-dropzone-pill-container">
+            {!manual.image_url ? (
+              <label className={`vh-dropzone-pill${uploadingImage ? " is-busy" : ""}`}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  disabled={uploadingImage}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) onUploadImage(file);
+                    event.target.value = "";
+                  }}
+                />
+                <div className="vh-dropzone-icon-box">
+                  <Icon name="image" />
+                </div>
+                <div className="vh-dropzone-text">
+                  <span className="vh-dropzone-main">
+                    {uploadingImage ? "Uploading image..." : "Attach Question Image (Optional)"}
+                  </span>
+                  <span className="vh-dropzone-sub">
+                    Drag & drop image here or click to browse
+                  </span>
+                </div>
+                <span className="vh-dropzone-btn">Browse</span>
+              </label>
+            ) : (
+              <div className="vh-image-preview-card">
+                <div className="vh-preview-header">
+                  <span className="vh-preview-title">Question Image Attachment</span>
+                  <button type="button" className="vh-remove-img-btn" onClick={onRemoveImage}>
+                    <Icon name="x" />
+                    Remove
+                  </button>
+                </div>
+                <div className="vh-preview-image-wrapper">
+                  <img src={`${API_BASE_URL}${manual.image_url}`} alt={t.imagePreviewAlt} className="vh-large-preview-img" />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!isWriting && !isReading && (
+          <>
+            {/* 3. Passage or context */}
+            <label htmlFor="module-question-passage">{t.passageLabel}</label>
+            <textarea
+              id="module-question-passage"
+              rows={4}
+              value={manual.passage ?? ""}
+              onChange={(event) => onManualChange({ ...manual, passage: event.target.value })}
+              placeholder={t.passagePlaceholder}
+            />
+
+            {/* 4. Prompt instructions */}
+            <label htmlFor="module-question-instructions">{t.instructionsLabel}</label>
+            <textarea
+              id="module-question-instructions"
+              rows={2}
+              value={manual.instructions ?? ""}
+              onChange={(event) => onManualChange({ ...manual, instructions: event.target.value })}
+            />
+          </>
+        )}
         {isChoiceQuestion && (
           <div className="option-editor" role="group" aria-labelledby="module-options-heading">
             <div className="option-editor-header">
@@ -250,13 +274,7 @@ export function ManualQuestionForm({
             />
           </>
         )}
-        <label htmlFor="module-explanation">{t.explanationLabel}</label>
-        <textarea
-          id="module-explanation"
-          rows={3}
-          value={manual.explanation ?? ""}
-          onChange={(event) => onManualChange({ ...manual, explanation: event.target.value })}
-        />
+
         <div className="form-actions">
           <button type="submit" disabled={busy}>
             {editingQuestionId ? t.updateQuestion : t.addQuestion}

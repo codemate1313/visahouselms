@@ -461,6 +461,7 @@ def get_student_view(
         "module_id": attempt.module_id,
         "module_type": attempt.module.module_type,
         "module_title": attempt.module.title,
+        "duration_minutes": attempt.module.duration_minutes,
         "show_onboarding_instructions": attempt.module.show_onboarding_instructions if attempt.module.show_onboarding_instructions is not None else True,
         "onboarding_instructions": attempt.module.onboarding_instructions,
         "course_id": attempt.course_id,

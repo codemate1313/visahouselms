@@ -102,7 +102,7 @@ export function OnboardingInstructionsEditor({
       </div>
 
       {/* Main Visibility Switch Toggle */}
-      <div className="onboarding-toggle-row" style={{ background: "#f8fafc", padding: "16px 20px", borderRadius: 16, border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="onboarding-toggle-row" style={{ background: "#f8fafc", padding: "16px 20px", borderRadius: 16, border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 38, height: 38, borderRadius: "50%", background: showInstructions ? "#ecfdf5" : "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: showInstructions ? "#10b981" : "#94a3b8" }}>
             <Icon name={showInstructions ? "check" : "x"} />
@@ -156,7 +156,18 @@ export function OnboardingInstructionsEditor({
                       type="button"
                       disabled={idx === 0}
                       onClick={() => handleMoveItem(idx, -1)}
-                      style={{ background: "transparent", border: "none", cursor: idx === 0 ? "not-allowed" : "pointer", opacity: idx === 0 ? 0.3 : 0.75, padding: 4 }}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "#475569",
+                        cursor: idx === 0 ? "not-allowed" : "pointer",
+                        opacity: idx === 0 ? 0.3 : 0.75,
+                        padding: 6,
+                        borderRadius: 6,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
                       title="Move Up"
                     >
                       <Icon name="chevronDown" style={{ transform: "rotate(180deg)" }} />
@@ -165,7 +176,18 @@ export function OnboardingInstructionsEditor({
                       type="button"
                       disabled={idx === currentItems.length - 1}
                       onClick={() => handleMoveItem(idx, 1)}
-                      style={{ background: "transparent", border: "none", cursor: idx === currentItems.length - 1 ? "not-allowed" : "pointer", opacity: idx === currentItems.length - 1 ? 0.3 : 0.75, padding: 4 }}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "#475569",
+                        cursor: idx === currentItems.length - 1 ? "not-allowed" : "pointer",
+                        opacity: idx === currentItems.length - 1 ? 0.3 : 0.75,
+                        padding: 6,
+                        borderRadius: 6,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
                       title="Move Down"
                     >
                       <Icon name="chevronDown" />
@@ -173,7 +195,18 @@ export function OnboardingInstructionsEditor({
                     <button
                       type="button"
                       onClick={() => handleDeleteItem(idx)}
-                      style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", padding: 4, marginLeft: 6 }}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "#ef4444",
+                        cursor: "pointer",
+                        padding: 6,
+                        borderRadius: 6,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginLeft: 6,
+                      }}
                       title="Delete Guideline"
                     >
                       <Icon name="trash" />

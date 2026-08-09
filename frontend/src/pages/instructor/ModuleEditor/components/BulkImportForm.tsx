@@ -17,7 +17,6 @@ export function BulkImportForm({ module, part, importFile, onImportFileChange, b
     <section className="authoring-panel">
       <div className="panel-title">
         <div>
-          <span className="phase-chip">{t.eyebrow}</span>
           <h2>{t.heading(part.title)}</h2>
         </div>
       </div>

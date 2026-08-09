@@ -73,10 +73,7 @@ export function ImportReviewPanel({
           </ul>
         </div>
       )}
-      <details className="source-content">
-        <summary>{t.sourceTextSummary}</summary>
-        <pre>{preview.source_text}</pre>
-      </details>
+
       <div className="preview-list">
         {preview.questions.map((question, index) => (
           <article className={`preview-question${selectedImports.has(index) ? " selected" : ""}`} key={index}>
