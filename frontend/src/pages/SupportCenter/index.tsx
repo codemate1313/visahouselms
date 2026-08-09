@@ -24,25 +24,59 @@ const STORAGE_BASE = API_BASE_URL.replace(/\/api\/?$/, "") + "/storage/";
 function AttachmentPreview({ path, isLight }: { path: string; isLight?: boolean }) {
   const url = STORAGE_BASE + path;
   const isImage = /\.(png|jpg|jpeg|webp|gif)$/i.test(path);
+  const isPdf = /\.pdf$/i.test(path);
   const filename = path.split("/").pop() ?? path;
+  const cleanName = filename.length > 28 ? filename.slice(0, 25) + "..." : filename;
+
   if (isImage) {
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block" }}>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "inline-block",
+          position: "relative",
+          borderRadius: "12px",
+          overflow: "hidden",
+          border: isLight ? "1px solid rgba(255,255,255,0.3)" : "1px solid var(--border)",
+          boxShadow: "0 4px 14px rgba(0, 0, 0, 0.12)",
+          textDecoration: "none",
+        }}
+      >
         <img
           src={url}
           alt={filename}
           style={{
-            maxWidth: "160px",
-            maxHeight: "120px",
-            borderRadius: "8px",
-            border: `1px solid ${isLight ? "rgba(255,255,255,0.2)" : "var(--border)"}`,
+            maxWidth: "220px",
+            maxHeight: "160px",
+            display: "block",
             objectFit: "cover",
-            cursor: "pointer",
           }}
         />
+        <div
+          style={{
+            position: "absolute",
+            bottom: "6px",
+            right: "6px",
+            background: "rgba(0, 0, 0, 0.65)",
+            backdropFilter: "blur(6px)",
+            color: "#ffffff",
+            padding: "3px 8px",
+            borderRadius: "8px",
+            fontSize: "0.7rem",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+          }}
+        >
+          <Icon name="eye" style={{ width: "12px", height: "12px" }} /> Preview
+        </div>
       </a>
     );
   }
+
   return (
     <a
       href={url}
@@ -51,19 +85,21 @@ function AttachmentPreview({ path, isLight }: { path: string; isLight?: boolean 
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: "6px",
-        padding: "6px 12px",
-        borderRadius: "8px",
-        background: isLight ? "rgba(255,255,255,0.15)" : "var(--surface-hover)",
-        border: `1px solid ${isLight ? "rgba(255,255,255,0.25)" : "var(--border)"}`,
-        fontSize: "0.8rem",
+        gap: "8px",
+        padding: "8px 14px",
+        borderRadius: "10px",
+        background: isLight ? "rgba(255, 255, 255, 0.18)" : "var(--surface-hover, rgba(0, 0, 0, 0.04))",
+        border: `1px solid ${isLight ? "rgba(255, 255, 255, 0.3)" : "var(--border)"}`,
+        fontSize: "0.825rem",
         fontWeight: 600,
         color: isLight ? "#ffffff" : "var(--text)",
         textDecoration: "none",
-        cursor: "pointer",
+        boxShadow: isLight ? "0 2px 8px rgba(0,0,0,0.1)" : "0 2px 6px rgba(0,0,0,0.03)",
       }}
     >
-      📎 {filename.length > 28 ? filename.slice(0, 25) + "..." : filename}
+      <Icon name={isPdf ? "filePdf" : "download"} style={{ width: "16px", height: "16px", flexShrink: 0 }} />
+      <span>{cleanName}</span>
+      <Icon name="arrowRight" style={{ width: "12px", height: "12px", opacity: 0.7 }} />
     </a>
   );
 }
@@ -621,12 +657,13 @@ export function SupportCenter() {
               {selectedTicket.messages && selectedTicket.messages.length > 0 ? (
                 selectedTicket.messages.map((msg: SupportTicketMessage, idx: number) => {
                   const isAdmin = msg.sender_role === "admin" || msg.sender_role === "staff";
+                  const isAttachmentOnly = /^\(attachment\)$/i.test(msg.message.trim());
                   return (
                     <div
                       key={msg.id || idx}
                       style={{
                         alignSelf: isAdmin ? "flex-start" : "flex-end",
-                        maxWidth: "80%",
+                        maxWidth: "82%",
                         display: "flex",
                         flexDirection: "column",
                         alignItems: isAdmin ? "flex-start" : "flex-end",
@@ -648,20 +685,24 @@ export function SupportCenter() {
                       </div>
                       <div
                         style={{
-                          background: isAdmin ? "rgba(255, 255, 255, 0.08)" : "var(--primary, #b91c2b)",
+                          background: isAdmin
+                            ? "var(--surface)"
+                            : "linear-gradient(135deg, var(--primary, #b91c2b) 0%, #991b1b 100%)",
                           color: isAdmin ? "var(--text)" : "#ffffff",
                           border: isAdmin ? "1px solid var(--border)" : "none",
-                          padding: "11px 16px",
-                          borderRadius: isAdmin ? "16px 16px 16px 2px" : "16px 16px 2px 16px",
+                          padding: "12px 18px",
+                          borderRadius: isAdmin ? "18px 18px 18px 4px" : "18px 18px 4px 18px",
                           fontSize: "0.925rem",
-                          lineHeight: 1.45,
+                          lineHeight: 1.5,
                           whiteSpace: "pre-wrap",
-                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
+                          boxShadow: isAdmin
+                            ? "0 2px 10px rgba(0, 0, 0, 0.04)"
+                            : "0 4px 14px rgba(185, 28, 43, 0.2)",
                         }}
                       >
-                        {msg.message}
+                        {!isAttachmentOnly && msg.message}
                         {msg.attachments && msg.attachments.length > 0 && (
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "8px" }}>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: isAttachmentOnly ? 0 : "10px" }}>
                             {msg.attachments.map((path, i) => (
                               <AttachmentPreview key={i} path={path} isLight={!isAdmin} />
                             ))}
@@ -785,22 +826,25 @@ export function SupportCenter() {
                       title="Attach files (images, PDF, Word, Excel — max 5, 10MB each)"
                       onClick={() => fileInputRef.current?.click()}
                       style={{
-                        background: "none",
+                        background: "var(--surface)",
                         border: "1px solid var(--border)",
-                        borderRadius: "8px",
-                        padding: "7px 10px",
+                        borderRadius: "10px",
+                        padding: "7px 12px",
                         cursor: "pointer",
-                        fontSize: "1.05rem",
-                        color: "var(--text-muted)",
+                        fontSize: "0.875rem",
+                        fontWeight: 600,
+                        color: "var(--text)",
                         display: "flex",
                         alignItems: "center",
-                        gap: "4px",
+                        gap: "6px",
                         lineHeight: 1,
+                        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
                       }}
                     >
-                      📎
+                      <Icon name="download" style={{ width: "15px", height: "15px", transform: "rotate(180deg)" }} />
+                      <span>Attach</span>
                       {attachedFiles.length > 0 && (
-                        <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--primary)" }}>
+                        <span style={{ fontSize: "0.725rem", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", background: "var(--primary, #b91c2b)", color: "#ffffff" }}>
                           {attachedFiles.length}
                         </span>
                       )}
