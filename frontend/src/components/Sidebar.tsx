@@ -101,8 +101,22 @@ export function Sidebar({
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isOpenOnMobile, setIsOpenOnMobile] = useState(false);
   const [isMobileScreen, setIsMobileScreen] = useState(() => window.innerWidth <= 768);
+  const [hoveredTooltip, setHoveredTooltip] = useState<{ label: string; top: number } | null>(null);
 
   const isCollapsed = collapsed && !isMobileScreen;
+
+  const handleMouseEnterTooltip = (e: React.MouseEvent<HTMLElement>, label: string) => {
+    if (!isCollapsed) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHoveredTooltip({
+      label,
+      top: rect.top + rect.height / 2,
+    });
+  };
+
+  const handleMouseLeaveTooltip = () => {
+    setHoveredTooltip(null);
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -115,6 +129,7 @@ export function Sidebar({
   // Automatically close mobile sidebar when path changes
   useEffect(() => {
     setIsOpenOnMobile(false);
+    setHoveredTooltip(null);
   }, [location.pathname]);
 
   // Hold the body still behind the mobile drawer. Releasing through the shared
@@ -260,15 +275,14 @@ export function Sidebar({
             type="button"
             className="sidebar-collapse-btn"
             onClick={onToggleCollapse}
+            onMouseEnter={(e) => handleMouseEnterTooltip(e, isCollapsed ? "Expand Sidebar" : "Collapse Sidebar")}
+            onMouseLeave={handleMouseLeaveTooltip}
             aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             <Icon
               name="chevronDown"
               className={`collapse-chevron ${isCollapsed ? "rotated" : ""}`}
             />
-            {isCollapsed && (
-              <div className="sidebar-tooltip">Expand Sidebar</div>
-            )}
           </button>
         )}
       </div>
@@ -318,8 +332,9 @@ export function Sidebar({
                           isParentActive && (isCollapsed || !isExpanded) ? "is-active" : ""
                         }`}
                         onClick={() => toggleAccordion(item)}
+                        onMouseEnter={(e) => handleMouseEnterTooltip(e, item.label)}
+                        onMouseLeave={handleMouseLeaveTooltip}
                       >
-
                         <div className="sidebar-item-icon-wrap">
                           <Icon name={item.icon} className="sidebar-icon" />
                         </div>
@@ -341,10 +356,6 @@ export function Sidebar({
                             isExpanded ? "arrow-up" : ""
                           }`}
                         />
-
-                        {isCollapsed && (
-                          <div className="sidebar-tooltip">{item.label}</div>
-                        )}
                       </button>
 
                       {/* Sub-menu Dropdown List with connector line */}
@@ -389,8 +400,9 @@ export function Sidebar({
                       className={`sidebar-item-link ${
                         isItemDirectlyActive ? "is-active" : ""
                       } ${item.isRed ? "is-red" : ""}`}
+                      onMouseEnter={(e) => handleMouseEnterTooltip(e, item.label)}
+                      onMouseLeave={handleMouseLeaveTooltip}
                     >
-
                       <div className="sidebar-item-icon-wrap">
                         <Icon name={item.icon} className="sidebar-icon" />
                       </div>
@@ -403,9 +415,6 @@ export function Sidebar({
                         >
                           {item.badge}
                         </span>
-                      )}
-                      {isCollapsed && (
-                        <div className="sidebar-tooltip">{item.label}</div>
                       )}
                     </NavLink>
                   </li>
@@ -425,12 +434,14 @@ export function Sidebar({
                 type="button"
                 className="sidebar-item-link"
                 onClick={() => window.open(window.location.origin + "/?noredirect=1", "_blank", "noopener,noreferrer")}
+                onMouseEnter={(e) => handleMouseEnterTooltip(e, "Visit Website")}
+                onMouseLeave={handleMouseLeaveTooltip}
               >
                 <div className="sidebar-item-icon-wrap">
                   <svg className="sidebar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="2" y1="12" x2="22" y2="12" />
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                   </svg>
                 </div>
                 <span className="sidebar-item-label">Visit Website</span>
@@ -439,9 +450,6 @@ export function Sidebar({
                   <polyline points="15 3 21 3 21 9" />
                   <line x1="10" y1="14" x2="21" y2="3" />
                 </svg>
-                {isCollapsed && (
-                  <div className="sidebar-tooltip">Visit Website</div>
-                )}
               </button>
             </li>
             <li className="sidebar-menu-item">
@@ -449,21 +457,34 @@ export function Sidebar({
                 type="button"
                 className="sidebar-item-link sidebar-footer-btn is-red"
                 onClick={() => setShowLogoutModal(true)}
+                onMouseEnter={(e) => handleMouseEnterTooltip(e, "Logout")}
+                onMouseLeave={handleMouseLeaveTooltip}
               >
                 <div className="sidebar-item-icon-wrap">
                   <Icon name="logout" className="sidebar-icon" />
                 </div>
                 <span className="sidebar-item-label">Logout</span>
-                {isCollapsed && (
-                  <div className="sidebar-tooltip">Logout</div>
-                )}
               </button>
             </li>
+
 
           </ul>
         </div>
       )}
 
+      {isCollapsed && hoveredTooltip && (
+        <div
+          className="sidebar-fixed-tooltip"
+          style={{
+            position: "fixed",
+            left: "86px",
+            top: `${hoveredTooltip.top}px`,
+            transform: "translateY(-50%)",
+          }}
+        >
+          {hoveredTooltip.label}
+        </div>
+      )}
     </aside>
 
       {/* Logout Confirmation Modal - rendered via portal so it covers the full screen */}
