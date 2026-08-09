@@ -52,7 +52,14 @@ export function SupportCenter() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [readTicketIds, setReadTicketIds] = useState<Set<number>>(() => new Set());
+  const [seenTicketMsgCounts, setSeenTicketMsgCounts] = useState<Record<number, number>>(() => {
+    try {
+      const saved = localStorage.getItem("visahouse_seen_ticket_msg_counts");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
   const [category, setCategory] = useState(() => searchParams.get("category") || "general");
   const [subject, setSubject] = useState(() => searchParams.get("subject") || "");
@@ -76,15 +83,18 @@ export function SupportCenter() {
   );
 
   useEffect(() => {
-    if (isChatOpen && selectedId) {
-      setReadTicketIds((prev) => {
-        if (prev.has(selectedId)) return prev;
-        const next = new Set(prev);
-        next.add(selectedId);
+    if (isChatOpen && selectedTicket) {
+      const currentMsgCount = selectedTicket.messages ? selectedTicket.messages.length : 1;
+      setSeenTicketMsgCounts((prev) => {
+        if (prev[selectedTicket.id] === currentMsgCount) return prev;
+        const next = { ...prev, [selectedTicket.id]: currentMsgCount };
+        try {
+          localStorage.setItem("visahouse_seen_ticket_msg_counts", JSON.stringify(next));
+        } catch {}
         return next;
       });
     }
-  }, [isChatOpen, selectedId]);
+  }, [isChatOpen, selectedTicket]);
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
@@ -252,8 +262,12 @@ export function SupportCenter() {
                 </tr>
               ) : (
                 tickets.map((ticket) => {
+                  const totalMsgs = ticket.messages ? ticket.messages.length : 1;
+                  const seenCount = seenTicketMsgCounts[ticket.id] ?? 0;
+                  const isSeen = seenCount >= totalMsgs;
+
                   const isUnread =
-                    !readTicketIds.has(ticket.id) &&
+                    !isSeen &&
                     (ticket.status === "new" ||
                       (ticket.messages &&
                         ticket.messages.length > 0 &&
