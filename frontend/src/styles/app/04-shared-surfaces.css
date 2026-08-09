@@ -1393,14 +1393,13 @@
 .huge-sidebar.is-collapsed {
   width: var(--sidebar-collapsed-width);
   padding: 22px 12px 16px;
-  overflow: visible;
+  overflow: visible !important;
 }
 
 .huge-sidebar.is-collapsed .sidebar-nav-scroll {
   margin-right: 0;
   padding-right: 0;
-  overflow-x: hidden;
-  overflow-y: hidden;
+  overflow: visible !important;
   scrollbar-width: none;
 }
 
