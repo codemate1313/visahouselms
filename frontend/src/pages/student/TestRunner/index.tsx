@@ -33,6 +33,7 @@ import { SecurityWatermark } from "./components/SecurityWatermark";
 import { DesktopRequiredNotice } from "./components/DesktopRequiredNotice";
 import { ViolationPolicyModal } from "./components/ViolationPolicyModal";
 import { SpeakingInterviewStage } from "./components/SpeakingInterviewStage";
+import { DraggableCameraPreview } from "./components/DraggableCameraPreview";
 import { MicrophoneCheck } from "@/components/speaking/MicrophoneCheck";
 import {
   cloneSpeakingMicrophoneStream,
@@ -98,6 +99,7 @@ export function TestRunner() {
   const [securityStarting, setSecurityStarting] = useState(false);
   const [securityError, setSecurityError] = useState<string | null>(null);
   const [mediaState, setMediaState] = useState<SecurityMediaState>(EMPTY_MEDIA_STATE);
+  const [liveCameraStream, setLiveCameraStream] = useState<MediaStream | null>(null);
   const [concurrentTab, setConcurrentTab] = useState(false);
   const [rulesAccepted] = useState(true);
   const [violationNotice, setViolationNotice] = useState<ViolationNotice | null>(null);
@@ -429,6 +431,7 @@ export function TestRunner() {
     });
     cameraStreamRef.current = null;
     screenStreamRef.current = null;
+    setLiveCameraStream(null);
     if (cameraPreviewRef.current) cameraPreviewRef.current.srcObject = null;
     mediaStateRef.current = EMPTY_MEDIA_STATE;
     setMediaState(EMPTY_MEDIA_STATE);
@@ -523,6 +526,7 @@ export function TestRunner() {
         cameraPreviewRef.current.srcObject = cameraStream;
         cameraPreviewRef.current.play().catch(() => {});
       }
+      setLiveCameraStream(cameraStream);
       updateSecurityMedia({
         camera: cameraTrack.readyState === "live" && cameraTrack.enabled,
         microphone: microphoneTrack.readyState === "live" && microphoneTrack.enabled,
@@ -972,6 +976,9 @@ export function TestRunner() {
       onViewResult={() => navigate(`/student/attempts/${attempt.id}/result`, { replace: true })}
     />
   ) : null;
+  const cameraPreview = liveCameraStream && securityAuthorized && mediaState.camera ? (
+    <DraggableCameraPreview stream={liveCameraStream} />
+  ) : null;
 
   if (attempt.status === "ready" || !securityAuthorized || (!attempt.security_required && !onboardingCompleted)) {
     return (
@@ -1038,6 +1045,7 @@ export function TestRunner() {
             watermarkTime={watermarkTime}
           />
         )}
+        {cameraPreview}
         {confirmSubmit && (
           <SubmitConfirmModal
             answeredCount={answeredCount}
@@ -1104,6 +1112,7 @@ export function TestRunner() {
           watermarkTime={watermarkTime}
         />
       )}
+      {cameraPreview}
 
       <TestRunnerFooter
         answeredCount={answeredCount}
