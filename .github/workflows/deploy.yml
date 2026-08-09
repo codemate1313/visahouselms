@@ -14,24 +14,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Execute remote SSH commands
-        uses: nick-fields/retry@v3
+        uses: appleboy/ssh-action@v1.2.0
         with:
-          timeout_minutes: 35
-          max_attempts: 4
-          retry_wait_seconds: 15
-          action: appleboy/ssh-action@v1.2.0
-          with: |
-            host: ${{ secrets.VPS_IP }}
-            username: root
-            key: ${{ secrets.SSH_PRIVATE_KEY }}
-            port: 22
-            timeout: 60s
-            command_timeout: 30m
-            script: |
-              set -Eeuo pipefail
-              trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
+          host: ${{ secrets.VPS_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          timeout: 120s
+          command_timeout: 30m
+          script: |
+            set -Eeuo pipefail
+            trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
 
-              echo "🚀 Starting automatic deployment on VPS..."
+            echo "🚀 Starting automatic deployment on VPS..."
 
             # 0. Ensure swap file exists to prevent OOM (Out Of Memory) crashes during npm build
             if [ -f /swapfile ]; then
