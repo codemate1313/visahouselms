@@ -184,12 +184,12 @@ export function SupportCenter() {
           <table className="data-table institute-table" style={{ width: "100%" }}>
             <thead>
               <tr>
-                <th>{strings.table?.enquiry ?? "Enquiry"}</th>
-                <th>Routing</th>
-                <th>{strings.table?.status ?? "Status"}</th>
-                <th>Priority</th>
-                <th>Submitted On</th>
-                <th className="table-actions-heading">{strings.table?.actions ?? "Actions"}</th>
+                <th style={{ minWidth: "300px", width: "35%" }}>{strings.table?.enquiry ?? "Enquiry"}</th>
+                <th style={{ minWidth: "180px" }}>Routing</th>
+                <th style={{ minWidth: "120px" }}>{strings.table?.status ?? "Status"}</th>
+                <th style={{ minWidth: "110px" }}>Priority</th>
+                <th style={{ minWidth: "160px" }}>Submitted On</th>
+                <th className="table-actions-heading" style={{ minWidth: "90px" }}>{strings.table?.actions ?? "Actions"}</th>
               </tr>
             </thead>
             <tbody>
@@ -253,13 +253,14 @@ export function SupportCenter() {
                               background: isUnread ? "var(--primary, #b91c2b)" : undefined,
                               color: isUnread ? "#ffffff" : undefined,
                               position: "relative",
+                              flexShrink: 0,
                             }}
                           >
                             #
                           </div>
-                          <div className="table-item-details" style={{ minWidth: 0 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <strong className="table-item-title" style={{ whiteSpace: "nowrap" }}>
+                          <div className="table-item-details" style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                              <strong className="table-item-title" style={{ whiteSpace: "normal", wordBreak: "break-word" }}>
                                 {ticket.subject}
                               </strong>
                               {isUnread && (

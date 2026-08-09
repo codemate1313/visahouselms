@@ -278,12 +278,12 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
           <table className="data-table institute-table" style={{ width: "100%" }}>
             <thead>
               <tr>
-                <th>{strings.table.customer}</th>
-                <th>{strings.table.enquiry}</th>
-                <th>{strings.table.status}</th>
-                <th>{strings.table.priority}</th>
-                <th>{strings.table.received}</th>
-                <th className="table-actions-heading">{strings.table.actions}</th>
+                <th style={{ minWidth: "280px", width: "30%" }}>{strings.table.customer}</th>
+                <th style={{ minWidth: "220px", width: "25%" }}>{strings.table.enquiry}</th>
+                <th style={{ minWidth: "120px" }}>{strings.table.status}</th>
+                <th style={{ minWidth: "110px" }}>{strings.table.priority}</th>
+                <th style={{ minWidth: "160px" }}>{strings.table.received}</th>
+                <th className="table-actions-heading" style={{ minWidth: "90px" }}>{strings.table.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -335,6 +335,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                               background: isUnread ? "var(--primary, #b91c2b)" : undefined,
                               color: isUnread ? "#ffffff" : undefined,
                               position: "relative",
+                              flexShrink: 0,
                             }}
                           >
                             {ticket.name.charAt(0).toUpperCase()}
@@ -353,9 +354,9 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                               />
                             )}
                           </div>
-                          <div className="table-item-details" style={{ minWidth: 0 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <strong className="table-item-title" style={{ whiteSpace: "nowrap" }}>
+                          <div className="table-item-details" style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                              <strong className="table-item-title" style={{ whiteSpace: "normal", wordBreak: "break-word" }}>
                                 {ticket.name}
                               </strong>
                               {isUnread && (
@@ -380,7 +381,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                                 </span>
                               )}
                             </div>
-                            <span className="table-item-subtitle">{ticket.email}</span>
+                            <span className="table-item-subtitle" style={{ wordBreak: "break-all" }}>{ticket.email}</span>
                           </div>
                         </div>
                       </td>
