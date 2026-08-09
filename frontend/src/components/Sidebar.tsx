@@ -469,7 +469,7 @@ export function Sidebar({
         </div>
       )}
 
-      {isCollapsed && hoveredTooltip && (
+      {isCollapsed && hoveredTooltip && createPortal(
         <div
           className="sidebar-fixed-tooltip"
           style={{
@@ -477,10 +477,12 @@ export function Sidebar({
             left: `${hoveredTooltip.left}px`,
             top: `${hoveredTooltip.top}px`,
             transform: "translateY(-50%)",
+            zIndex: 9999999,
           }}
         >
           {hoveredTooltip.label}
-        </div>
+        </div>,
+        document.body
       )}
     </aside>
 
