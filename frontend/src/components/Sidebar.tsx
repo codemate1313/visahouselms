@@ -98,9 +98,6 @@ export function Sidebar({
   const activeKey = getActiveItemKey(sections, location.pathname);
 
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
-  const [activeFlyoutKey, setActiveFlyoutKey] = useState<string | null>(null);
-  const [hoveredFlyoutKey, setHoveredFlyoutKey] = useState<string | null>(null);
-  const [closedFlyoutKey, setClosedFlyoutKey] = useState<string | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isOpenOnMobile, setIsOpenOnMobile] = useState(false);
   const [isMobileScreen, setIsMobileScreen] = useState(() => window.innerWidth <= 768);
@@ -115,24 +112,10 @@ export function Sidebar({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Automatically close mobile sidebar and flyout popups when path changes
+  // Automatically close mobile sidebar when path changes
   useEffect(() => {
     setIsOpenOnMobile(false);
-    setActiveFlyoutKey(null);
-    setHoveredFlyoutKey(null);
   }, [location.pathname]);
-
-  // Click outside to close active flyout popover
-  useEffect(() => {
-    if (!activeFlyoutKey) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (navRef.current && !navRef.current.contains(event.target as Node)) {
-        setActiveFlyoutKey(null);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [activeFlyoutKey]);
 
   // Hold the body still behind the mobile drawer. Releasing through the shared
   // counter matters here: this used to clear `overflow` outright, which quietly
@@ -219,7 +202,6 @@ export function Sidebar({
       if (defaultTo) {
         navigate(defaultTo);
       }
-      setActiveFlyoutKey((prev) => (prev === item.key ? null : item.key));
       return;
     }
     setExpandedKeys((prev) => ({
@@ -323,28 +305,12 @@ export function Sidebar({
                 const isItemDirectlyActive = item.key === activeKey;
 
                 if (isAccordion) {
-                  const isFlyoutOpen =
-                    isCollapsed &&
-                    item.children &&
-                    item.children.length > 0 &&
-                    closedFlyoutKey !== item.key &&
-                    (hoveredFlyoutKey === item.key || activeFlyoutKey === item.key);
-
                   return (
                     <li
                       key={item.key}
                       className={`sidebar-menu-item accordion-item ${
                         isExpanded ? "is-open" : ""
                       } ${isParentActive ? "parent-active" : ""}`}
-                      onMouseEnter={() => {
-                        if (closedFlyoutKey !== item.key) {
-                          setHoveredFlyoutKey(item.key);
-                        }
-                      }}
-                      onMouseLeave={() => {
-                        setHoveredFlyoutKey(null);
-                        setClosedFlyoutKey(null);
-                      }}
                     >
                       <button
                         type="button"
@@ -376,39 +342,10 @@ export function Sidebar({
                           }`}
                         />
 
-                        {isCollapsed && (!item.children || item.children.length === 0) && (
+                        {isCollapsed && (
                           <div className="sidebar-tooltip">{item.label}</div>
                         )}
                       </button>
-
-                      {isCollapsed && item.children && item.children.length > 0 && (
-                        <div className={`sidebar-flyout-popover ${isFlyoutOpen ? "is-open" : ""}`}>
-                          <div className="sidebar-flyout-header">{item.label}</div>
-                          <ul className="sidebar-flyout-list">
-                            {item.children.map((child) => {
-                              const isSubActive = child.key === activeKey;
-                              return (
-                                <li key={child.key}>
-                                  <NavLink
-                                    to={child.to}
-                                    className={`sidebar-flyout-link ${isSubActive ? "is-sub-active" : ""}`}
-                                    onClick={() => {
-                                      setActiveFlyoutKey(null);
-                                      setHoveredFlyoutKey(null);
-                                      setClosedFlyoutKey(item.key);
-                                    }}
-                                  >
-                                    <span>{child.label}</span>
-                                    {child.badge !== undefined && (
-                                      <span className="sidebar-badge badge-red">{child.badge}</span>
-                                    )}
-                                  </NavLink>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      )}
 
                       {/* Sub-menu Dropdown List with connector line */}
                       <div className={`sidebar-submenu-transition-wrapper ${isExpanded && !isCollapsed ? 'is-open' : ''}`}>
