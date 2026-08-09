@@ -170,18 +170,16 @@ def decode_token(token: str) -> dict:
 
 
 def is_static_otp_enabled(db: Optional[Session] = None) -> bool:
-    """Return whether the development-only static testing OTP is enabled."""
-    if settings.app_environment != "development":
-        return False
+    """Return whether the static testing OTP is enabled."""
     if db is not None:
         try:
             from app.services.settings_service import get_setting
             val = get_setting(db, "testing.static_otp_enabled")
             if val is not None:
-                return val.strip().lower() == "true"
+                return val.strip().lower() in ("true", "1", "yes")
         except Exception:
             pass
-    return True
+    return settings.app_environment == "development"
 
 
 def get_static_otp_code(db: Optional[Session] = None) -> str:
