@@ -276,13 +276,15 @@ export function Sidebar({
             type="button"
             className="sidebar-collapse-btn"
             onClick={onToggleCollapse}
-            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             <Icon
               name="chevronDown"
               className={`collapse-chevron ${isCollapsed ? "rotated" : ""}`}
             />
+            {isCollapsed && (
+              <div className="sidebar-tooltip">Expand Sidebar</div>
+            )}
           </button>
         )}
       </div>
@@ -332,8 +334,8 @@ export function Sidebar({
                           isParentActive && (isCollapsed || !isExpanded) ? "is-active" : ""
                         }`}
                         onClick={() => toggleAccordion(item)}
-                        title={isCollapsed ? item.label : undefined}
                       >
+
                         <div className="sidebar-item-icon-wrap">
                           <Icon name={item.icon} className="sidebar-icon" />
                         </div>
@@ -428,8 +430,8 @@ export function Sidebar({
                       className={`sidebar-item-link ${
                         isItemDirectlyActive ? "is-active" : ""
                       } ${item.isRed ? "is-red" : ""}`}
-                      title={isCollapsed ? item.label : undefined}
                     >
+
                       <div className="sidebar-item-icon-wrap">
                         <Icon name={item.icon} className="sidebar-icon" />
                       </div>
@@ -464,7 +466,6 @@ export function Sidebar({
                 type="button"
                 className="sidebar-item-link"
                 onClick={() => window.open(window.location.origin + "/?noredirect=1", "_blank", "noopener,noreferrer")}
-                title={isCollapsed ? "Visit Website" : undefined}
               >
                 <div className="sidebar-item-icon-wrap">
                   <svg className="sidebar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -474,9 +475,6 @@ export function Sidebar({
                   </svg>
                 </div>
                 <span className="sidebar-item-label">Visit Website</span>
-                {/* Classed rather than inline-styled so the collapsed rail can
-                    take it out of the flow; an inline `margin-left: auto` here
-                    pushed the globe off-centre against every other icon. */}
                 <svg className="sidebar-item-external-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                   <polyline points="15 3 21 3 21 9" />
@@ -492,7 +490,6 @@ export function Sidebar({
                 type="button"
                 className="sidebar-item-link sidebar-footer-btn is-red"
                 onClick={() => setShowLogoutModal(true)}
-                title={isCollapsed ? "Logout" : undefined}
               >
                 <div className="sidebar-item-icon-wrap">
                   <Icon name="logout" className="sidebar-icon" />
@@ -503,6 +500,7 @@ export function Sidebar({
                 )}
               </button>
             </li>
+
           </ul>
         </div>
       )}
