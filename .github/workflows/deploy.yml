@@ -19,9 +19,9 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-          for attempt in {1..5}; do
-            echo "🚀 SSH Connection Attempt $attempt/5 to VPS..."
-            if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -p 22 root@${{ secrets.VPS_IP }} "bash -s" << 'EOF'
+          for attempt in {1..10}; do
+            echo "🚀 SSH Connection Attempt $attempt/10 to VPS..."
+            if ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -p 22 root@${{ secrets.VPS_IP }} "bash -s" << 'EOF'
               set -Eeuo pipefail
               trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
 
@@ -104,10 +104,10 @@ jobs:
             exit 0
           fi
 
-          echo "⚠️ Connection attempt $attempt failed. Waiting 10 seconds before retry..."
-          sleep 10
+          echo "⚠️ Connection attempt $attempt failed. Waiting 12 seconds before retry..."
+          sleep 12
           done
 
-          echo "❌ All 5 SSH connection attempts failed."
+          echo "❌ All 10 SSH connection attempts failed."
           exit 1
 
