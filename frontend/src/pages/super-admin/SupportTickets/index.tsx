@@ -367,7 +367,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
         title={
           selectedTicket ? (
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-              <span className="support-ticket-id" style={{ fontSize: "0.85rem", padding: "3px 10px", borderRadius: "6px", background: "var(--surface-hover, rgba(255,255,255,0.08))" }}>
+              <span className="support-ticket-id" style={{ fontSize: "0.85rem", padding: "4px 10px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.08)", border: "1px solid var(--border)" }}>
                 #{selectedTicket.id}
               </span>
               <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>
@@ -377,7 +377,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
               <Badge tone={priorityTone(selectedTicket.priority)}>{label(selectedTicket.priority)}</Badge>
             </div>
           ) : (
-            "Support Enquiry Chat"
+            "Support Ticket Thread"
           )
         }
         actions={
@@ -411,7 +411,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                   onClick={() => void reopenChat()}
                   style={{ background: "#10b981", color: "#ffffff", borderColor: "#10b981" }}
                 >
-                  Reopen Chat
+                  Reopen Ticket
                 </Button>
               ) : (
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -453,11 +453,11 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
         }
       >
         {selectedTicket && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            {/* Top Bar: Customer Info Card & Close Chat Action */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Top Bar: Customer Details Header */}
             <div
               style={{
-                padding: "12px 16px",
+                padding: "14px 18px",
                 borderRadius: "14px",
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
@@ -465,45 +465,66 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                 justifyContent: "space-between",
                 alignItems: "center",
                 flexWrap: "wrap",
-                gap: "12px",
+                gap: "14px",
+                boxShadow: "0 2px 10px rgba(0, 0, 0, 0.03)",
               }}
             >
-              <div>
-                <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: 700, display: "block" }}>
-                  CUSTOMER DETAILS
-                </small>
-                <strong style={{ fontSize: "1rem", color: "var(--text)", display: "block", marginTop: "2px" }}>
-                  {selectedTicket.name}
-                </strong>
-                {selectedTicket.phone_number && (
-                  <small style={{ color: "var(--text-muted)", fontSize: "0.8rem", display: "block" }}>
-                    Phone: {selectedTicket.phone_number}
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div
+                  style={{
+                    width: "42px",
+                    height: "42px",
+                    borderRadius: "50%",
+                    background: "var(--primary, #b91c2b)",
+                    color: "#ffffff",
+                    display: "grid",
+                    placeItems: "center",
+                    fontWeight: 700,
+                    fontSize: "1.1rem",
+                    flexShrink: 0,
+                  }}
+                >
+                  {selectedTicket.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <small style={{ color: "var(--text-muted)", fontSize: "0.725rem", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.5px", display: "block" }}>
+                    CUSTOMER DETAILS
                   </small>
-                )}
+                  <strong style={{ fontSize: "1.05rem", color: "var(--text)", display: "block", marginTop: "1px" }}>
+                    {selectedTicket.name}
+                  </strong>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "2px", flexWrap: "wrap" }}>
+                    <a href={`mailto:${selectedTicket.email}`} style={{ fontSize: "0.85rem", color: "var(--primary, #0284c7)", fontWeight: 600 }}>
+                      {selectedTicket.email}
+                    </a>
+                    {selectedTicket.phone_number && (
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
+                        📞 {selectedTicket.phone_number}
+                      </span>
+                    )}
+                    {selectedTicket.institute_name && (
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
+                        🏛 {selectedTicket.institute_name}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
-                <a href={`mailto:${selectedTicket.email}`} style={{ fontSize: "0.9rem", color: "var(--primary, #0284c7)", fontWeight: 600 }}>
-                  {selectedTicket.email}
-                </a>
-                {selectedTicket.institute_name && (
-                  <small style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
-                    Inst: {selectedTicket.institute_name}
-                  </small>
-                )}
-                {selectedTicket.status !== "closed" && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    loading={saving}
-                    leftIcon={<Icon name="cross" />}
-                    onClick={() => void closeChat()}
-                    style={{ background: "#ef4444", color: "#ffffff", borderColor: "#ef4444", padding: "3px 12px", fontSize: "0.8rem" }}
-                  >
-                    Close Chat
-                  </Button>
-                )}
-              </div>
+              {selectedTicket.status !== "closed" ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  loading={saving}
+                  leftIcon={<Icon name="cross" />}
+                  onClick={() => void closeChat()}
+                  style={{ background: "#ef4444", color: "#ffffff", borderColor: "#ef4444", borderRadius: "8px", fontWeight: 600 }}
+                >
+                  Close Ticket
+                </Button>
+              ) : (
+                <Badge tone="success">Ticket Closed</Badge>
+              )}
             </div>
 
             {/* Messenger Chat Thread Stream */}
@@ -512,7 +533,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
               style={{
                 height: "360px",
                 overflowY: "auto",
-                padding: "16px",
+                padding: "18px",
                 borderRadius: "14px",
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
@@ -554,7 +575,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                           background: isAdmin ? "var(--primary, #b91c2b)" : "rgba(255, 255, 255, 0.08)",
                           color: isAdmin ? "#ffffff" : "var(--text)",
                           border: isAdmin ? "none" : "1px solid var(--border)",
-                          padding: "10px 16px",
+                          padding: "11px 16px",
                           borderRadius: isAdmin ? "16px 16px 2px 16px" : "16px 16px 16px 2px",
                           fontSize: "0.925rem",
                           lineHeight: 1.45,
@@ -578,7 +599,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                       background: "rgba(255, 255, 255, 0.08)",
                       color: "var(--text)",
                       border: "1px solid var(--border)",
-                      padding: "10px 16px",
+                      padding: "11px 16px",
                       borderRadius: "16px 16px 16px 2px",
                       fontSize: "0.925rem",
                       lineHeight: 1.45,
@@ -605,7 +626,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                   fontWeight: 600,
                 }}
               >
-                🔒 This chat was closed. Click <strong>"Reopen Chat"</strong> above to continue the conversation.
+                🔒 This support ticket is closed. Click <strong>"Reopen Ticket"</strong> above to continue.
               </div>
             ) : (
               <textarea
