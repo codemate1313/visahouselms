@@ -193,6 +193,11 @@ export const moduleEditorStrings = {
     typeLabel: "Question type",
     passageLabel: "Passage or context",
     passagePlaceholder: "Optional passage, transcript context, visual description, or role-play setup",
+    addImage: "Add image",
+    uploadingImage: "Uploading...",
+    changeImage: "Change image",
+    removeImage: "Remove image",
+    imagePreviewAlt: "Uploaded question visual",
     promptLabel: "Question or task prompt",
     optionsLegend: "Options and correct answer",
     acceptedAnswersLabel: "Accepted answer(s)",
@@ -209,6 +214,7 @@ export const moduleEditorStrings = {
     errors: {
       save: "Failed to save the question.",
       delete: "Failed to delete the question.",
+      imageUpload: "Failed to upload the image.",
     },
     notices: {
       updated: "Question updated.",

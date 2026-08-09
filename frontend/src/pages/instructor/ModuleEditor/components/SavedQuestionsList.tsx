@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/api/client";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import type { ExamModulePart, ExamModuleQuestion } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
@@ -42,6 +43,9 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
                 </div>
                 <h3>{question.prompt}</h3>
                 {question.passage && <p>{question.passage}</p>}
+                {question.image_url && (
+                  <img className="saved-question-image" src={`${API_BASE_URL}${question.image_url}`} alt="" />
+                )}
                 {question.options.length > 0 && (
                   <ol className="saved-options" type="A">
                     {question.options.map((option) => (

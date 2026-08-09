@@ -127,6 +127,7 @@ def _build_content_snapshot(module: ExamModule, *, randomize: bool) -> dict:
                 "prompt": question.prompt,
                 "instructions": question.instructions,
                 "passage": question.passage,
+                "image_path": question.image_path,
                 "options": options,
                 "correct_answers": list(question.correct_answers or []),
                 "explanation": question.explanation,
@@ -256,12 +257,14 @@ def _redacted_question(
     frozen: Optional[dict] = None,
 ) -> dict:
     source = frozen or {}
+    image_path = source.get("image_path", question.image_path)
     return {
         "id": question.id,
         "question_type": source.get("question_type", question.question_type),
         "prompt": source.get("prompt", question.prompt),
         "instructions": source.get("instructions", question.instructions),
         "passage": source.get("passage", question.passage),
+        "image_url": f"/storage/{image_path}" if image_path else None,
         "options": source.get("options", question.options),
         "points": source.get("points", str(question.points)),
         "sort_order": source.get("sort_order", question.sort_order),

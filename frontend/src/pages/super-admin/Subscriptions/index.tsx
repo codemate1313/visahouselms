@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { PageHeader } from "@/components/ui";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { useToastStore } from "@/store/toastStore";
 import type { InstituteAllocation } from "@/pages/super-admin/InstituteForm/types";
 import { subscriptionsStrings as strings } from "./Subscriptions.strings";
 import type { InstituteRow, StatusResponse, SubscriptionInfo } from "./types";
@@ -36,6 +37,7 @@ export function Subscriptions() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
+  const showSuccess = useToastStore((state) => state.showSuccess);
 
   useEffect(() => {
     apiClient.get("/super-admin/institutes").then(({ data }) => {
@@ -201,6 +203,7 @@ export function Subscriptions() {
         ));
       }
       await Promise.all(uploads);
+      showSuccess(strings.notices.edited);
       setNotice(strings.notices.edited);
       await load();
       return true;

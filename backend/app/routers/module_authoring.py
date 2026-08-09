@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.core.uploads import read_validated_mp3
+from app.core.uploads import read_compressed_profile_image, read_validated_mp3
 from app.database import get_db
 from app.dependencies.auth import get_current_user, require_password_change_complete, require_role
 from app.models.exam_module import MODULE_STATUSES, MODULE_TYPES
@@ -272,6 +272,25 @@ async def upload_audio(
         transcript=None,
         voice=None,
         ip=_ip(request),
+    )
+
+
+@router.post("/{module_id}/parts/{part_id}/question-image", status_code=status.HTTP_201_CREATED)
+async def upload_question_image(
+    module_id: int,
+    part_id: int,
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    # Validate the module/part before reading a potentially large upload.
+    module_authoring_service.get_editable_part(db, actor, module_id, part_id)
+    _, content = await read_compressed_profile_image(
+        file, label="Question image", max_dimension=2000, quality=85
+    )
+    return module_authoring_service.save_question_image(
+        db, actor, module_id, part_id, content=content, ip=_ip(request)
     )
 
 

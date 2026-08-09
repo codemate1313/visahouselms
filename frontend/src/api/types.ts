@@ -175,6 +175,8 @@ export interface QuestionDraft {
   prompt: string;
   instructions: string | null;
   passage: string | null;
+  image_path: string | null;
+  image_url?: string | null;
   options: QuestionOption[];
   correct_answers: string[];
   explanation: string | null;
@@ -479,6 +481,7 @@ export interface AttemptQuestion {
   prompt: string;
   instructions: string | null;
   passage: string | null;
+  image_url: string | null;
   options: QuestionOption[];
   points: string;
   sort_order: number;

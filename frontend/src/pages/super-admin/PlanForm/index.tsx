@@ -45,6 +45,7 @@ export function PlanForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const showInfo = useToastStore((state) => state.showInfo);
+  const showSuccess = useToastStore((state) => state.showSuccess);
   const originalRef = useRef<Record<string, unknown> | null>(null);
 
   useEffect(() => {
@@ -168,10 +169,13 @@ export function PlanForm() {
     }
     setSaving(true);
     try {
-      if (isNew) await apiClient.post("/super-admin/plans", payload);
-      else {
+      if (isNew) {
+        await apiClient.post("/super-admin/plans", payload);
+        showSuccess("Plan created successfully");
+      } else {
         await apiClient.patch(`/super-admin/plans/${id}`, payload);
         originalRef.current = payload;
+        showSuccess("Plan updated successfully");
       }
       navigate(catalogue.basePath);
     } catch (err) {

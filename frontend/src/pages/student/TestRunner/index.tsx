@@ -437,6 +437,8 @@ export function TestRunner() {
   async function startSecureSession() {
     if (securityStarting) return;
     if (!attempt?.is_final) {
+      sessionStorage.setItem(`onboarding_completed_${id}`, "true");
+      setOnboardingCompleted(true);
       setSecurityAuthorized(true);
       return;
     }
@@ -568,6 +570,8 @@ export function TestRunner() {
         revisionByQuestionRef.current[question.id] = question.revision;
       }));
       setAttempt(data);
+      sessionStorage.setItem(`onboarding_completed_${id}`, "true");
+      setOnboardingCompleted(true);
       setSecurityAuthorized(true);
       setFullscreenActive(true);
     } catch (err: unknown) {
@@ -901,6 +905,10 @@ export function TestRunner() {
     () => Array.from(new Set((currentPart?.questions ?? []).map((question) => question.passage?.trim()).filter(Boolean))) as string[],
     [currentPart],
   );
+  const questionImages = useMemo(
+    () => Array.from(new Set((currentPart?.questions ?? []).map((question) => question.image_url).filter(Boolean))) as string[],
+    [currentPart],
+  );
   const questionNumberOffset = useMemo(
     () => attempt?.parts.slice(0, partIndex).reduce((sum, part) => sum + part.question_count, 0) ?? 0,
     [attempt, partIndex],
@@ -1073,8 +1081,8 @@ export function TestRunner() {
           onSelectPart={selectPart}
         />
 
-        <main className="test-runner-body">
-          <SourcePane currentPart={currentPart} passages={passages} sourcePaneRef={sourcePaneRef} />
+        <main className={`test-runner-body${currentPart.section_type === "writing" ? " test-runner-body--writing" : ""}`}>
+          <SourcePane currentPart={currentPart} passages={passages} images={questionImages} sourcePaneRef={sourcePaneRef} />
           <QuestionPane
             currentPart={currentPart}
             questionPaneRef={questionPaneRef}

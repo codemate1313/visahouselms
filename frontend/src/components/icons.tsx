@@ -61,6 +61,7 @@ export type IconName =
   | "history"
   | "printer"
   | "microphone"
+  | "image"
   | "socialLinkedin"
   | "socialGithub"
   | "socialInstagram"
@@ -531,6 +532,13 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <path d="M7 17H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2" />
       <path d="M7 14h10v7H7z" />
       <path d="M17 12h.01" />
+    </>
+  ),
+  image: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <path d="M21 15l-5-5L5 21" />
     </>
   ),
 };

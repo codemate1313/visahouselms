@@ -25,18 +25,22 @@ export function QuestionPane({
   const t = strings.questionPane;
   return (
     <section className="test-runner-question-pane" ref={questionPaneRef} aria-label={`${currentPart.title} questions`}>
-      <div className="test-runner-pane-heading test-runner-question-pane-heading">
-        <span>
-          {currentPart.question_count} {t.questionsSuffix}
-        </span>
-        <h2>{currentPart.title}</h2>
-        <p>{t.instructions}</p>
-      </div>
+      {currentPart.section_type !== "writing" && (
+        <div className="test-runner-pane-heading test-runner-question-pane-heading">
+          <span>
+            {currentPart.question_count} {t.questionsSuffix}
+          </span>
+          <h2>{currentPart.title}</h2>
+          <p>{t.instructions}</p>
+        </div>
+      )}
       {currentPart.questions.map((question, qIndex) => (
         <QuestionInput
           key={question.id}
           index={questionNumberOffset + qIndex + 1}
           question={question}
+          hidePrompt={currentPart.section_type === "writing"}
+          partInstructions={currentPart.section_type === "writing" ? currentPart.instructions : null}
           saving={savingIds.has(question.id)}
           recording={recordingQuestionId === question.id}
           onChange={(response, debounce) => onChangeResponse(question.id, response, debounce)}

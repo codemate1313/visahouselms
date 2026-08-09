@@ -96,6 +96,7 @@ class QuestionCreate(BaseModel):
     prompt: str = Field(min_length=1, max_length=20000)
     instructions: Optional[str] = Field(default=None, max_length=10000)
     passage: Optional[str] = Field(default=None, max_length=50000)
+    image_path: Optional[str] = Field(default=None, max_length=500)
     options: list[QuestionOption] = Field(default_factory=list, max_length=26)
     correct_answers: list[str] = Field(default_factory=list, max_length=26)
     explanation: Optional[str] = Field(default=None, max_length=20000)
@@ -127,6 +128,14 @@ class QuestionCreate(BaseModel):
     @classmethod
     def clean_optional_text(cls, value: Optional[str]) -> Optional[str]:
         return _optional_text(value)
+
+    @field_validator("image_path")
+    @classmethod
+    def valid_image_path(cls, value: Optional[str]) -> Optional[str]:
+        value = _optional_text(value)
+        if value is not None and not (value.startswith("exam-modules/") and value.endswith(".webp")):
+            raise ValueError("image_path must reference an uploaded question image")
+        return value
 
     @field_validator("correct_answers")
     @classmethod

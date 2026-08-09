@@ -122,6 +122,7 @@ class ExamModuleQuestion(Base):
     prompt: Mapped[str] = mapped_column(Text, nullable=False)
     instructions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     passage: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    image_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     options: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     correct_answers: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

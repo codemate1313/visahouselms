@@ -6,24 +6,42 @@ import { testRunnerStrings as strings } from "../TestRunner.strings";
 interface QuestionInputProps {
   index: number;
   question: AttemptQuestion;
+  hidePrompt?: boolean;
+  partInstructions?: string | null;
   saving: boolean;
   recording: boolean;
   onChange: (response: AttemptResponse, debounce?: boolean) => void;
   onRecord: () => void;
 }
 
-export function QuestionInput({ index, question, saving, recording, onChange, onRecord }: QuestionInputProps) {
+export function QuestionInput({
+  index,
+  question,
+  hidePrompt = false,
+  partInstructions,
+  saving,
+  recording,
+  onChange,
+  onRecord,
+}: QuestionInputProps) {
   const selected = question.response?.selected;
   const t = strings.question;
 
   return (
     <div className="test-runner-question">
-      <div className="test-runner-question-head">
-        <span>{t.label(index)}</span>
-        {saving && <span className="hint">{t.saving}</span>}
-      </div>
-      <p className="test-runner-prompt">{question.prompt}</p>
-      {question.instructions && <p className="hint">{question.instructions}</p>}
+      {!hidePrompt && (
+        <div className="test-runner-question-head">
+          <span>{t.label(index)}</span>
+          {saving && <span className="hint">{t.saving}</span>}
+        </div>
+      )}
+      {hidePrompt && saving && (
+        <div className="test-runner-question-head" style={{ marginBottom: 8, textAlign: "right" }}>
+          <span className="hint">{t.saving}</span>
+        </div>
+      )}
+      {!hidePrompt && <p className="test-runner-prompt">{question.prompt}</p>}
+      {!hidePrompt && question.instructions && <p className="hint">{question.instructions}</p>}
 
       {(question.question_type === "mcq_single" ||
         question.question_type === "true_false_not_given" ||
@@ -75,9 +93,18 @@ export function QuestionInput({ index, question, saving, recording, onChange, on
 
       {question.question_type === "essay" && (
         <div>
+          {partInstructions && (
+            <div className="test-runner-instructions" style={{ marginBottom: 14 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", padding: "2px 7px", borderRadius: 4, background: "color-mix(in srgb, var(--test-accent, var(--primary)) 14%, transparent)", color: "var(--test-accent, var(--primary))", flexShrink: 0 }}>
+                Task Directive
+              </span>
+              <span>{partInstructions}</span>
+            </div>
+          )}
           <textarea
             className="test-runner-essay"
             rows={10}
+            placeholder="Write your response here..."
             defaultValue={question.response?.text ?? ""}
             onChange={(e) => onChange({ text: e.target.value }, true)}
           />

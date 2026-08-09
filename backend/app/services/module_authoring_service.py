@@ -97,6 +97,8 @@ def _question_out(question: ExamModuleQuestion) -> dict:
         "prompt": question.prompt,
         "instructions": question.instructions,
         "passage": question.passage,
+        "image_path": question.image_path,
+        "image_url": f"/storage/{question.image_path}" if question.image_path else None,
         "options": list(question.options or []),
         "correct_answers": list(question.correct_answers or []),
         "explanation": question.explanation,
@@ -552,6 +554,7 @@ def _new_question(
         prompt=data["prompt"],
         instructions=data.get("instructions"),
         passage=data.get("passage"),
+        image_path=data.get("image_path"),
         options=[dict(option) for option in data.get("options", [])],
         correct_answers=list(data.get("correct_answers", [])),
         explanation=data.get("explanation"),
@@ -634,12 +637,15 @@ def update_question(
     part = _part_or_404(module, part_id)
     question = _question_or_404(part, question_id)
     _validate_question_for_part(part, data, max(0, len(part.questions) - 1))
-    for field in ("question_type", "prompt", "instructions", "passage", "correct_answers", "explanation", "points", "difficulty"):
+    previous_image_path = question.image_path
+    for field in ("question_type", "prompt", "instructions", "passage", "image_path", "correct_answers", "explanation", "points", "difficulty"):
         setattr(question, field, data.get(field))
     question.options = [dict(option) for option in data.get("options", [])]
     _audit(db, actor, "exam_module.question.update", module.id, ip, {"part_id": part.id, "question_id": question.id})
     db.commit()
     db.refresh(question)
+    if previous_image_path and previous_image_path != question.image_path:
+        (settings.storage_path / previous_image_path).unlink(missing_ok=True)
     return _question_out(question)
 
 
@@ -651,9 +657,35 @@ def delete_question(
     _require_draft(module)
     part = _part_or_404(module, part_id)
     question = _question_or_404(part, question_id)
+    image_path = question.image_path
     _audit(db, actor, "exam_module.question.delete", module.id, ip, {"part_id": part.id, "question_id": question.id})
     db.delete(question)
     db.commit()
+    if image_path:
+        (settings.storage_path / image_path).unlink(missing_ok=True)
+
+
+def save_question_image(
+    db: Session,
+    actor: User,
+    module_id: int,
+    part_id: int,
+    *,
+    content: bytes,
+    ip: Optional[str],
+) -> dict:
+    module = get_module_or_404(db, module_id)
+    _require_owner(module, actor)
+    _require_draft(module)
+    part = _part_or_404(module, part_id)
+
+    relative = Path("exam-modules") / str(module.id) / "questions" / f"{uuid4().hex}.webp"
+    destination = settings.storage_path / relative
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(content)
+    _audit(db, actor, "exam_module.question_image.upload", module.id, ip, {"part_id": part.id})
+    db.commit()
+    return {"image_path": relative.as_posix(), "image_url": f"/storage/{relative.as_posix()}"}
 
 
 def add_audio_asset(

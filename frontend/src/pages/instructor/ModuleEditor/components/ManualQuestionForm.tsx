@@ -1,4 +1,6 @@
 import type { FormEvent } from "react";
+import { API_BASE_URL } from "@/api/client";
+import { Icon } from "@/components/icons";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
 import type { ExamModulePart, QuestionDraft, QuestionType } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
@@ -9,10 +11,13 @@ interface ManualQuestionFormProps {
   manual: QuestionDraft;
   editingQuestionId: number | null;
   busy: boolean;
+  uploadingImage: boolean;
   onChangeQuestionType: (type: QuestionType) => void;
   onUpdateOption: (index: number, text: string) => void;
   onToggleCorrect: (key: string) => void;
   onManualChange: (manual: QuestionDraft) => void;
+  onUploadImage: (file: File) => void;
+  onRemoveImage: () => void;
   onSubmit: (event: FormEvent) => void;
   onCancelEdit: () => void;
 }
@@ -22,10 +27,13 @@ export function ManualQuestionForm({
   manual,
   editingQuestionId,
   busy,
+  uploadingImage,
   onChangeQuestionType,
   onUpdateOption,
   onToggleCorrect,
   onManualChange,
+  onUploadImage,
+  onRemoveImage,
   onSubmit,
   onCancelEdit,
 }: ManualQuestionFormProps) {
@@ -51,7 +59,24 @@ export function ManualQuestionForm({
           searchable={false}
           className="form-dropdown-select"
         />
-        <label htmlFor="module-question-passage">{t.passageLabel}</label>
+        <div className="field-label-with-action">
+          <label htmlFor="module-question-passage">{t.passageLabel}</label>
+          <label className={`image-upload-button${uploadingImage ? " is-busy" : ""}`}>
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              disabled={uploadingImage}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) onUploadImage(file);
+                event.target.value = "";
+              }}
+            />
+            <Icon name="image" />
+            {uploadingImage ? t.uploadingImage : manual.image_url ? t.changeImage : t.addImage}
+          </label>
+        </div>
         <textarea
           id="module-question-passage"
           rows={4}
@@ -59,6 +84,14 @@ export function ManualQuestionForm({
           onChange={(event) => onManualChange({ ...manual, passage: event.target.value })}
           placeholder={t.passagePlaceholder}
         />
+        {manual.image_url && (
+          <div className="question-image-preview">
+            <img src={`${API_BASE_URL}${manual.image_url}`} alt={t.imagePreviewAlt} />
+            <button type="button" className="danger-text" onClick={onRemoveImage}>
+              {t.removeImage}
+            </button>
+          </div>
+        )}
         <label htmlFor="module-question-prompt">{t.promptLabel}<RequiredMark /></label>
         <textarea
           id="module-question-prompt"

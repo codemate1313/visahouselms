@@ -56,6 +56,7 @@ export function ModuleEditor() {
   const [audioTitle, setAudioTitle] = useState("Listening audio");
   const [tts, setTts] = useState({ title: "Generated conversation", conversation: "", rate: "+0%" });
   const [avatarGenerating, setAvatarGenerating] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [questionEntryMode, setQuestionEntryMode] = useState<"manual" | "bulk">("manual");
   const [loading, setLoading] = useState(!isNew);
   const [busy, setBusy] = useState(false);
@@ -200,7 +201,28 @@ export function ModuleEditor() {
 
   function editQuestion(question: ExamModuleQuestion) {
     setEditingQuestionId(question.id);
-    setManual({ question_type: question.question_type, prompt: question.prompt, instructions: question.instructions, passage: question.passage, options: question.options, correct_answers: question.correct_answers, explanation: question.explanation, points: question.points, difficulty: question.difficulty });
+    setManual({ question_type: question.question_type, prompt: question.prompt, instructions: question.instructions, passage: question.passage, image_path: question.image_path, image_url: question.image_url, options: question.options, correct_answers: question.correct_answers, explanation: question.explanation, points: question.points, difficulty: question.difficulty });
+  }
+
+  async function uploadQuestionImage(file: File) {
+    if (!module || !selectedPart) return;
+    setUploadingImage(true); setError(null);
+    try {
+      const form = new FormData(); form.append("file", file);
+      const { data } = await apiClient.post<{ image_path: string; image_url: string }>(
+        `/instructor/modules/${module.id}/parts/${selectedPart.id}/question-image`,
+        form,
+      );
+      setManual((current) => current ? { ...current, image_path: data.image_path, image_url: data.image_url } : current);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.manualQuestion.errors.imageUpload));
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  function removeQuestionImage() {
+    setManual((current) => current ? { ...current, image_path: null, image_url: null } : current);
   }
 
   async function deleteQuestion(question: ExamModuleQuestion) {
@@ -489,10 +511,13 @@ export function ModuleEditor() {
                       manual={manual}
                       editingQuestionId={editingQuestionId}
                       busy={busy}
+                      uploadingImage={uploadingImage}
                       onChangeQuestionType={changeQuestionType}
                       onUpdateOption={updateOption}
                       onToggleCorrect={toggleCorrect}
                       onManualChange={setManual}
+                      onUploadImage={uploadQuestionImage}
+                      onRemoveImage={removeQuestionImage}
                       onSubmit={saveQuestion}
                       onCancelEdit={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}
                     />
@@ -531,10 +556,13 @@ export function ModuleEditor() {
               manual={manual}
               editingQuestionId={editingQuestionId}
               busy={busy}
+              uploadingImage={uploadingImage}
               onChangeQuestionType={changeQuestionType}
               onUpdateOption={updateOption}
               onToggleCorrect={toggleCorrect}
               onManualChange={setManual}
+              onUploadImage={uploadQuestionImage}
+              onRemoveImage={removeQuestionImage}
               onSubmit={saveQuestion}
               onCancelEdit={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}
             />
