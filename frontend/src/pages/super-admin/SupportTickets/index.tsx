@@ -471,6 +471,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                               background: isUnread ? "var(--primary, #b91c2b)" : undefined,
                               color: isUnread ? "#ffffff" : undefined,
                               position: "relative",
+                              overflow: "visible",
                               flexShrink: 0,
                             }}
                           >
@@ -479,13 +480,15 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                               <span
                                 style={{
                                   position: "absolute",
-                                  top: "-2px",
-                                  right: "-2px",
-                                  width: "10px",
-                                  height: "10px",
+                                  top: "-3px",
+                                  right: "-3px",
+                                  width: "11px",
+                                  height: "11px",
                                   borderRadius: "50%",
                                   background: "#ef4444",
                                   border: "2px solid var(--surface, #ffffff)",
+                                  boxShadow: "0 2px 6px rgba(239, 68, 68, 0.45)",
+                                  zIndex: 2,
                                 }}
                               />
                             )}
