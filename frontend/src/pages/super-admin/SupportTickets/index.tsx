@@ -56,7 +56,6 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
   const [status, setStatus] = useState<SupportTicketStatus | "">("");
   const [priority, setPriority] = useState<SupportTicketPriority | "">("");
   const [source, setSource] = useState<"" | "portal" | "customer">("");
-  const [queue, setQueue] = useState<"active" | "resolved">("active");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -82,7 +81,6 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
           status: status || undefined,
           priority: priority || undefined,
           source: isInstituteInbox ? undefined : source || undefined,
-          status_group: queue,
           page_size: 50,
         },
       });
@@ -98,7 +96,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
     } finally {
       setLoading(false);
     }
-  }, [apiBase, isInstituteInbox, priority, queue, search, setItemCount, source, status]);
+  }, [apiBase, isInstituteInbox, priority, search, setItemCount, source, status]);
 
   useEffect(() => {
     void load();
@@ -216,8 +214,8 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
         }
       />
 
-      <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap", margin: "14px 0" }}>
-        {!isInstituteInbox && (
+      {!isInstituteInbox && (
+        <div style={{ margin: "8px 0 12px" }}>
           <SegmentedControl
             className="support-ticket-source-segment"
             ariaLabel="Support request source"
@@ -229,24 +227,10 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
             value={source}
             onChange={(value) => setSource(value as "" | "portal" | "customer")}
           />
-        )}
+        </div>
+      )}
 
-        <SegmentedControl
-          className="support-ticket-queue-segment"
-          ariaLabel="Ticket queue"
-          options={[
-            { value: "active", label: strings.filters.queues.active },
-            { value: "resolved", label: strings.filters.queues.resolved },
-          ]}
-          value={queue}
-          onChange={(value) => {
-            setQueue(value as "active" | "resolved");
-            setStatus("");
-          }}
-        />
-      </div>
-
-      <div className="filter-bar institutes-filter-bar" style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", margin: "16px 0" }}>
+      <div className="filter-bar institutes-filter-bar" style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "16px" }}>
         <div style={{ flex: "1 1 240px", minWidth: "200px" }}>
           <SearchInput
             aria-label={strings.filters.search}
