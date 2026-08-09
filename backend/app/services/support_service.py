@@ -509,6 +509,7 @@ def add_ticket_message(
     institute_id: Optional[int] = None,
     attachments: Optional[List[str]] = None,
 ) -> SupportTicket:
+    ticket = get_ticket(db, ticket_id, queue=queue, institute_id=institute_id)
     name = sender_name or (f"{sender.first_name} {sender.last_name}" if sender else "Support Team")
     role_label = sender_role
     if sender and sender.role:
