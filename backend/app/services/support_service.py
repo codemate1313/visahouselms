@@ -134,6 +134,15 @@ def _notify_ticket_created(db: Session, ticket: SupportTicket) -> None:
             f"{ticket.name} ({ticket.email}) submitted a new support ticket:\n\n{ticket.message}",
             user_id=staff.id,
         )
+    if ticket.requester_id is not None:
+        notification_service.create_notification(
+            db,
+            user_id=ticket.requester_id,
+            kind=SUPPORT_TICKET_CREATED,
+            title=f"Support ticket created: {ticket.subject}",
+            message="Your support query has been submitted successfully.",
+            link_url="/student-portal/support-center" if ticket.queue == SUPPORT_QUEUE_INSTITUTE else "/portal/support",
+        )
     notification_service.send_notification_email(
         db,
         ticket.email,
@@ -554,9 +563,19 @@ def add_ticket_message(
     db.commit()
     db.refresh(ticket)
 
-    # Best-effort email notification
+    # Best-effort in-app and email notifications
     try:
         if role_label == "admin":
+            # Notify requester (student/customer) via in-app & email
+            if ticket.requester_id is not None:
+                notification_service.create_notification(
+                    db,
+                    user_id=ticket.requester_id,
+                    kind=SUPPORT_TICKET_UPDATED,
+                    title=f"New reply on: {ticket.subject}",
+                    message=f"Support Team: {message_text.strip()[:140]}",
+                    link_url="/student-portal/support-center" if ticket.queue == SUPPORT_QUEUE_INSTITUTE else "/portal/support",
+                )
             notification_service.send_notification_email(
                 db,
                 ticket.email,
@@ -564,8 +583,30 @@ def add_ticket_message(
                 f"Hi {ticket.name},\n\nSupport replied to your ticket \"{ticket.subject}\":\n\n{message_text.strip()}\n\nReply directly in your portal.",
                 user_id=ticket.requester_id,
             )
+        elif role_label == "customer":
+            # Notify staff / admin team for the queue (and assigned staff)
+            staff_members = set(_staff_for_queue(db, ticket.queue, ticket.institute_id))
+            if ticket.assigned_to:
+                staff_members.add(ticket.assigned_to)
+            link = _ticket_link(ticket.queue)
+            for staff in staff_members:
+                notification_service.create_notification(
+                    db,
+                    user_id=staff.id,
+                    kind=SUPPORT_TICKET_UPDATED,
+                    title=f"New reply from {name}",
+                    message=f'"{ticket.subject}": {message_text.strip()[:140]}',
+                    link_url=link,
+                )
+                notification_service.send_notification_email(
+                    db,
+                    staff.email,
+                    f"New reply from {name} on ticket #{ticket.id}",
+                    f"Customer {name} replied to ticket \"{ticket.subject}\":\n\n{message_text.strip()}",
+                    user_id=staff.id,
+                )
     except Exception:
-        logger.exception("Failed to send message notification for ticket %s", ticket.id)
+        logger.exception("Failed to send message notifications for ticket %s", ticket.id)
 
     return ticket
 
