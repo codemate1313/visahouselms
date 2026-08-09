@@ -226,9 +226,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
       const form = new FormData();
       form.append("message", replyText.trim() || "(attachment)");
       for (const file of attachedFiles) form.append("files", file);
-      const { data } = await apiClient.post<SupportTicket>(`${apiBase}/${selectedTicket.id}/messages`, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const { data } = await apiClient.post<SupportTicket>(`${apiBase}/${selectedTicket.id}/messages`, form);
       setReplyText("");
       setAttachedFiles([]);
       showSuccess("Reply sent successfully", "Message Sent");
@@ -249,9 +247,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
       const form = new FormData();
       form.append("message", replyText.trim() || "(attachment)");
       for (const file of attachedFiles) form.append("files", file);
-      await apiClient.post<SupportTicket>(`${apiBase}/${selectedTicket.id}/messages`, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await apiClient.post<SupportTicket>(`${apiBase}/${selectedTicket.id}/messages`, form);
       const { data } = await apiClient.post<SupportTicket>(`${apiBase}/${selectedTicket.id}/close`);
       setReplyText("");
       setAttachedFiles([]);

@@ -289,8 +289,7 @@ export function SupportCenter() {
       for (const file of attachedFiles) form.append("files", file);
       const { data: updatedTicket } = await apiClient.post<PortalSupportTicket>(
         `/support/my-tickets/${selectedTicket.id}/messages`,
-        form,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        form
       );
       setReplyText("");
       setAttachedFiles([]);

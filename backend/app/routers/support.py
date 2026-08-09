@@ -40,20 +40,27 @@ _MAX_FILES = 5
 async def _save_support_attachments(ticket_id: int, files: List[UploadFile]) -> List[str]:
     """Save uploaded files to storage and return their storage-relative paths."""
     saved: List[str] = []
+    if not files:
+        return saved
+    valid_files = [f for f in files if f and hasattr(f, "filename") and f.filename]
+    if not valid_files:
+        return saved
     attach_dir = settings.storage_path / "support_attachments" / str(ticket_id)
     attach_dir.mkdir(parents=True, exist_ok=True)
-    for upload in files[:_MAX_FILES]:
+    for upload in valid_files[:_MAX_FILES]:
         content_type = (upload.content_type or "").split(";")[0].strip()
-        if content_type not in _ALLOWED_ATTACH_TYPES:
+        if content_type and content_type not in _ALLOWED_ATTACH_TYPES:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"File type '{content_type}' is not allowed. Allowed: images, PDF, Word, Excel.",
             )
         content = await upload.read()
+        if not content:
+            continue
         if len(content) > _MAX_ATTACH_BYTES:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Each attachment must be 10 MB or smaller.",
+                detail="Each attachment must be 10 MB or smaller.",
             )
         ext = Path(upload.filename or "file").suffix or ".bin"
         filename = f"{uuid.uuid4().hex}{ext}"
@@ -138,13 +145,13 @@ def create_my_ticket(
 async def post_my_ticket_message(
     ticket_id: int,
     message: str = Form(..., min_length=1, max_length=5000),
-    files: Optional[List[UploadFile]] = File(default=None),
+    files: List[UploadFile] = File(default=[]),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     attachments: List[str] = []
     if files:
-        attachments = await _save_support_attachments(ticket_id, [f for f in files if f.filename])
+        attachments = await _save_support_attachments(ticket_id, [f for f in files if f and f.filename])
     ticket = support_service.add_ticket_message(
         db,
         ticket_id,
@@ -224,13 +231,13 @@ def update_admin_ticket(ticket_id: int, payload: SupportTicketUpdate, db: Sessio
 async def post_admin_ticket_message(
     ticket_id: int,
     message: str = Form(..., min_length=1, max_length=5000),
-    files: Optional[List[UploadFile]] = File(default=None),
+    files: List[UploadFile] = File(default=[]),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     attachments: List[str] = []
     if files:
-        attachments = await _save_support_attachments(ticket_id, [f for f in files if f.filename])
+        attachments = await _save_support_attachments(ticket_id, [f for f in files if f and f.filename])
     ticket = support_service.add_ticket_message(
         db,
         ticket_id,
@@ -328,14 +335,14 @@ def update_institute_ticket(
 async def post_institute_ticket_message(
     ticket_id: int,
     message: str = Form(..., min_length=1, max_length=5000),
-    files: Optional[List[UploadFile]] = File(default=None),
+    files: List[UploadFile] = File(default=[]),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     institute_id = require_institute_id(user)
     attachments: List[str] = []
     if files:
-        attachments = await _save_support_attachments(ticket_id, [f for f in files if f.filename])
+        attachments = await _save_support_attachments(ticket_id, [f for f in files if f and f.filename])
     ticket = support_service.add_ticket_message(
         db,
         ticket_id,
