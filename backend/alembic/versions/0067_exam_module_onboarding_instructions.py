@@ -22,6 +22,7 @@ def _has_column(table_name: str, column_name: str) -> bool:
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
     if not _has_column("exam_modules", "show_onboarding_instructions"):
         op.add_column(
             "exam_modules",
@@ -32,7 +33,8 @@ def upgrade() -> None:
                 server_default=sa.true(),
             ),
         )
-        op.alter_column("exam_modules", "show_onboarding_instructions", server_default=None)
+        if bind.dialect.name != "sqlite":
+            op.alter_column("exam_modules", "show_onboarding_instructions", server_default=None)
 
     if not _has_column("exam_modules", "onboarding_instructions"):
         op.add_column(
