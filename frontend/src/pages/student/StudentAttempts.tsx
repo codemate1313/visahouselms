@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import type { AttemptSummary } from "@/api/types";
@@ -16,21 +16,66 @@ const STATUS_CLASS: Record<string, BadgeTone> = {
   expired: "red",
 };
 
+const ATTEMPTS_REQUEST_TIMEOUT_MS = 15000;
+const GRADING_REFRESH_INTERVAL_MS = 8000;
+
 export function StudentAttempts() {
   const [attempts, setAttempts] = useState<AttemptSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const requestIdRef = useRef(0);
 
-  useEffect(() => {
-    apiClient
-      .get<AttemptSummary[]>("/student/attempts")
-      .then(({ data }) => setAttempts(data))
-      .catch(() => setError(strings.loadError))
-      .finally(() => setLoading(false));
+  const loadAttempts = useCallback(async (showInitialLoading = false) => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), ATTEMPTS_REQUEST_TIMEOUT_MS);
+
+    if (showInitialLoading) setLoading(true);
+    else setRefreshing(true);
+    setError(null);
+
+    try {
+      const { data } = await apiClient.get<AttemptSummary[]>("/student/attempts", {
+        signal: controller.signal,
+        headers: { "X-Skip-Loader": "1" },
+      });
+      if (requestIdRef.current === requestId) {
+        setAttempts(data);
+      }
+    } catch (err) {
+      if (requestIdRef.current === requestId) {
+        const aborted = err instanceof Error && err.name === "CanceledError";
+        setError(aborted ? strings.timeoutError : strings.loadError);
+      }
+    } finally {
+      window.clearTimeout(timeoutId);
+      if (requestIdRef.current === requestId) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    }
   }, []);
 
-  if (error) return <p className="error-text">{error}</p>;
+  useEffect(() => {
+    void loadAttempts(true);
+    return () => {
+      requestIdRef.current += 1;
+    };
+  }, [loadAttempts]);
+
+  useEffect(() => {
+    if (!attempts.some((attempt) => attempt.status === "submitted" || attempt.status === "grading")) return;
+
+    const intervalId = window.setInterval(() => {
+      void loadAttempts(false);
+    }, GRADING_REFRESH_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [attempts, loadAttempts]);
+
   if (loading) return <p>{strings.loading}</p>;
 
   const statusLabels = strings.statusLabels;
@@ -104,6 +149,15 @@ export function StudentAttempts() {
     <div>
       <PageHeader eyebrow={strings.eyebrow} title={strings.title} subtitle={strings.subtitle} />
 
+      {error && (
+        <div className="notice-line" style={{ marginBottom: 16 }}>
+          <p className="error-text">{error}</p>
+          <button type="button" className="button-link secondary" onClick={() => void loadAttempts(true)}>
+            {strings.retry}
+          </button>
+        </div>
+      )}
+
       <div className="filter-bar" style={{ marginBottom: 20 }}>
         <SearchableSelect
           options={[
@@ -121,6 +175,7 @@ export function StudentAttempts() {
           searchable={false}
           className="status-filter-select"
         />
+        {refreshing && <span className="text-secondary text-sm">{strings.refreshing}</span>}
       </div>
 
       {attempts.length === 0 ? (

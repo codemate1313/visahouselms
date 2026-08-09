@@ -3,7 +3,10 @@ export const studentAttemptsStrings = {
   title: "My Test History",
   subtitle: "Every attempt you've started, submitted, or completed.",
   loadError: "Failed to load your test history.",
+  timeoutError: "The test history request is taking too long. Please try again.",
   loading: "Loading...",
+  retry: "Try again",
+  refreshing: "Refreshing...",
   empty: {
     title: "No attempts yet",
     description: "Start a test from My Courses.",
