@@ -2392,27 +2392,27 @@
 
 .sidebar-tooltip {
   position: absolute;
-  left: calc(100% + 14px);
+  left: calc(100% + 12px);
   top: 50%;
-  transform: translateY(-50%) translateX(-6px);
-  background: var(--surface, #ffffff);
-  color: var(--text, #0f172a);
-  border: 1px solid var(--border, #cbd5e1);
+  transform: translateY(-50%) translateX(-4px);
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
   padding: 6px 14px;
-  border-radius: 10px;
-  font-size: 12.5px;
+  border-radius: 9px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18), 0 2px 6px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.18s;
+  transition: opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1), transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.16s;
   z-index: 10005;
 }
 
-/* Tooltip Arrow Accent pointing to icon */
-.sidebar-tooltip::before {
+/* Single Clean Dark Arrow Accent */
+.sidebar-tooltip::after {
   content: "";
   position: absolute;
   right: 100%;
@@ -2420,50 +2420,7 @@
   transform: translateY(-50%);
   border-width: 5px 6px 5px 0;
   border-style: solid;
-  border-color: transparent var(--border, #cbd5e1) transparent transparent;
-}
-
-.sidebar-tooltip::after {
-  content: "";
-  position: absolute;
-  right: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  border-width: 4px 5px 4px 0;
-  border-style: solid;
-  border-color: transparent var(--surface, #ffffff) transparent transparent;
-}
-
-/* Dark Mode Tooltip Container */
-[data-theme="dark"] .sidebar-tooltip {
-  background: #1e293b;
-  color: #f8fafc;
-  border-color: #334155;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
-}
-
-[data-theme="dark"] .sidebar-tooltip::before {
-  border-color: transparent #334155 transparent transparent;
-}
-
-[data-theme="dark"] .sidebar-tooltip::after {
-  border-color: transparent #1e293b transparent transparent;
-}
-
-/* Institute Branded Sidebar Tooltip Container */
-.institute-branded-portal .sidebar-tooltip {
-  background: #ffffff;
-  color: var(--institute-primary, #0b2388);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
-}
-
-.institute-branded-portal .sidebar-tooltip::before {
-  border-color: transparent rgba(255, 255, 255, 0.3) transparent transparent;
-}
-
-.institute-branded-portal .sidebar-tooltip::after {
-  border-color: transparent #ffffff transparent transparent;
+  border-color: transparent #0f172a transparent transparent;
 }
 
 /* Hover & Focus State to reveal Tooltip */
@@ -2477,27 +2434,39 @@
   transform: translateY(-50%) translateX(0) !important;
 }
 
+/* Submenu Flyout Popover Menu for Collapsed Sidebar */
 .sidebar-flyout-popover {
   position: absolute;
   left: calc(100% + 12px);
-  top: 0;
+  top: -4px;
   background: var(--surface, #ffffff);
   border: 1px solid var(--border, #e2e8f0);
   border-radius: var(--radius-xl, 16px);
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
-  padding: 8px;
-  width: 220px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 6px;
+  width: 210px;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.18s;
   z-index: 10000;
+}
+
+/* Invisible Hover Bridge connecting button to popover so cursor never drops hover when moving into popover */
+.sidebar-flyout-popover::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  bottom: -12px;
+  right: 100%;
+  width: 24px;
+  background: transparent;
 }
 
 [data-theme="dark"] .sidebar-flyout-popover {
   background: #1e293b;
   border-color: #334155;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
 }
 
 .huge-sidebar.is-collapsed .sidebar-menu-item.accordion-item:hover .sidebar-flyout-popover,
@@ -2510,12 +2479,12 @@
 }
 
 .sidebar-flyout-header {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--text-muted, #64748b);
-  padding: 6px 10px 4px;
+  padding: 8px 12px 6px;
   border-bottom: 1px solid var(--border, #f1f5f9);
   margin-bottom: 4px;
 }
@@ -2549,6 +2518,17 @@
 
 [data-theme="dark"] .sidebar-flyout-link {
   color: #f8fafc;
+}
+
+.sidebar-flyout-link:hover {
+  background: color-mix(in srgb, var(--primary, #e11d2e) 8%, transparent) !important;
+  color: var(--primary, #e11d2e) !important;
+}
+
+.sidebar-flyout-link.is-sub-active {
+  background: var(--primary, #e11d2e) !important;
+  color: #ffffff !important;
+  font-weight: 700;
 }
 
 .sidebar-flyout-link:hover,

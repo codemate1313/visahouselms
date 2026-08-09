@@ -358,7 +358,7 @@ export function Sidebar({
                           }`}
                         />
 
-                        {isCollapsed && (
+                        {isCollapsed && (!item.children || item.children.length === 0) && (
                           <div className="sidebar-tooltip">{item.label}</div>
                         )}
                       </button>
