@@ -8,7 +8,7 @@ import type {
   SupportTicketPriority,
   SupportTicketStatus,
 } from "@/api/types";
-import { Badge, Button, PageHeader, SearchableSelect, SearchInput, SegmentedControl } from "@/components/ui";
+import { Badge, Button, Modal, PageHeader, SearchableSelect, SearchInput, SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { useToastStore } from "@/store/toastStore";
@@ -50,6 +50,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
   const apiBase = isInstituteInbox ? "/institute/support-tickets" : "/super-admin/support-tickets";
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<SupportTicketStatus | "">("");
   const [priority, setPriority] = useState<SupportTicketPriority | "">("");
@@ -112,7 +113,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
     if (chatStreamRef.current) {
       chatStreamRef.current.scrollTop = chatStreamRef.current.scrollHeight;
     }
-  }, [selectedTicket?.messages, selectedTicket?.id]);
+  }, [selectedTicket?.messages, selectedTicket?.id, isChatOpen]);
 
   async function handleSendMessage(e?: FormEvent) {
     if (e) e.preventDefault();
@@ -278,9 +279,10 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
 
       {error && <p className="error-text notice-line">{error}</p>}
 
-      <div className="support-ticket-workspace">
-        <div className="support-ticket-table-card">
-          <table className="data-table institute-table">
+      {/* Main Full-Width Table Workspace */}
+      <div className="support-ticket-workspace" style={{ width: "100%", marginTop: "16px" }}>
+        <div className="support-ticket-table-card" style={{ width: "100%" }}>
+          <table className="data-table institute-table" style={{ width: "100%" }}>
             <thead>
               <tr>
                 <th>{strings.table.customer}</th>
@@ -302,7 +304,15 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                 </tr>
               ) : (
                 tickets.map((ticket) => (
-                  <tr key={ticket.id} className={selectedTicket?.id === ticket.id ? "is-selected-row" : ""}>
+                  <tr
+                    key={ticket.id}
+                    className={selectedTicket?.id === ticket.id ? "is-selected-row" : ""}
+                    onClick={() => {
+                      setSelectedId(ticket.id);
+                      setIsChatOpen(true);
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
                     <td>
                       <div className="table-item-cell">
                         <div className="table-avatar-tile">{ticket.name.charAt(0).toUpperCase()}</div>
@@ -322,7 +332,15 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                     <td><Badge tone={priorityTone(ticket.priority)}>{label(ticket.priority)}</Badge></td>
                     <td>{formatDate(ticket.created_at)}</td>
                     <td className="table-actions institute-row-actions">
-                      <button type="button" className="action-btn-icon" onClick={() => setSelectedId(ticket.id)}>
+                      <button
+                        type="button"
+                        className="action-btn-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedId(ticket.id);
+                          setIsChatOpen(true);
+                        }}
+                      >
                         <Icon name="eye" />
                         <span>Chat</span>
                       </button>
@@ -333,259 +351,269 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
             </tbody>
           </table>
         </div>
+      </div>
 
-        <aside className="support-ticket-detail" style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: "620px" }}>
-          {selectedTicket ? (
-            <>
-              <div className="support-ticket-detail-head" style={{ borderBottom: "1px solid var(--border)", paddingBottom: "12px", marginBottom: "12px" }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                    <span className="support-ticket-id">#{selectedTicket.id}</span>
-                    <Badge tone={statusTone(selectedTicket.status)}>{label(selectedTicket.status)}</Badge>
-                    <Badge tone={priorityTone(selectedTicket.priority)}>{label(selectedTicket.priority)}</Badge>
-                  </div>
-                  <h2 style={{ fontSize: "1.1rem", fontWeight: 700, margin: "6px 0 0 0", color: "var(--text)" }}>
-                    {selectedTicket.subject}
-                  </h2>
+      {/* Interactive Support Messenger Chat Modal */}
+      <Modal
+        open={isChatOpen && Boolean(selectedTicket)}
+        onClose={() => setIsChatOpen(false)}
+        size="lg"
+        title={
+          selectedTicket ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              <span className="support-ticket-id" style={{ fontSize: "0.85rem", padding: "3px 10px", borderRadius: "6px", background: "var(--surface-hover, rgba(255,255,255,0.08))" }}>
+                #{selectedTicket.id}
+              </span>
+              <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>
+                {selectedTicket.subject}
+              </span>
+              <Badge tone={statusTone(selectedTicket.status)}>{label(selectedTicket.status)}</Badge>
+              <Badge tone={priorityTone(selectedTicket.priority)}>{label(selectedTicket.priority)}</Badge>
+            </div>
+          ) : (
+            "Support Enquiry Chat"
+          )
+        }
+        actions={
+          selectedTicket ? (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+                <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text)", whiteSpace: "nowrap" }}>
+                  Priority:
+                </span>
+                <div style={{ width: "140px", flexShrink: 0 }}>
+                  <SearchableSelect
+                    ariaLabel={strings.filters.priority}
+                    className="support-ticket-select"
+                    options={PRIORITIES.filter(Boolean).map((item) => ({
+                      value: item,
+                      label: label(item),
+                    }))}
+                    searchable={false}
+                    value={draftPriority}
+                    onChange={(value) => setDraftPriority(String(value) as SupportTicketPriority)}
+                  />
                 </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  {selectedTicket.status === "closed" ? (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      loading={saving}
-                      leftIcon={<Icon name="check" />}
-                      onClick={() => void reopenChat()}
-                      style={{ background: "#10b981", color: "#ffffff", borderColor: "#10b981" }}
-                    >
-                      Reopen Chat
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      loading={saving}
-                      leftIcon={<Icon name="cross" />}
-                      onClick={() => void closeChat()}
-                      style={{ background: "#ef4444", color: "#ffffff", borderColor: "#ef4444" }}
-                    >
-                      Close Chat
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <div
-                className="support-ticket-meta"
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: "12px",
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  marginBottom: "12px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div>
-                  <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: 700, display: "block" }}>
-                    CUSTOMER
-                  </small>
-                  <strong style={{ fontSize: "0.95rem", color: "var(--text)", display: "block" }}>{selectedTicket.name}</strong>
-                  {selectedTicket.phone_number && (
-                    <small style={{ color: "var(--text-muted)", fontSize: "0.8rem", display: "block" }}>
-                      Phone: {selectedTicket.phone_number}
-                    </small>
-                  )}
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <a href={`mailto:${selectedTicket.email}`} style={{ fontSize: "0.85rem", color: "var(--primary, #0284c7)", fontWeight: 600 }}>
-                    {selectedTicket.email}
-                  </a>
-                  {selectedTicket.institute_name && (
-                    <small style={{ color: "var(--text-muted)", fontSize: "0.8rem", display: "block" }}>
-                      Inst: {selectedTicket.institute_name}
-                    </small>
-                  )}
-                </div>
-              </div>
-
-              <div
-                ref={chatStreamRef}
-                style={{
-                  flex: 1,
-                  minHeight: "260px",
-                  maxHeight: "380px",
-                  overflowY: "auto",
-                  padding: "12px",
-                  borderRadius: "14px",
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "12px",
-                  marginBottom: "14px",
-                }}
-              >
-                {selectedTicket.messages && selectedTicket.messages.length > 0 ? (
-                  selectedTicket.messages.map((msg: SupportTicketMessage, idx: number) => {
-                    const isAdmin = msg.sender_role === "admin" || msg.sender_role === "staff";
-                    return (
-                      <div
-                        key={msg.id || idx}
-                        style={{
-                          alignSelf: isAdmin ? "flex-end" : "flex-start",
-                          maxWidth: "85%",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: isAdmin ? "flex-end" : "flex-start",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
-                          <span
-                            style={{
-                              fontSize: "0.75rem",
-                              fontWeight: 700,
-                              color: isAdmin ? "var(--primary, #b91c2b)" : "var(--text)",
-                            }}
-                          >
-                            {msg.sender_name} {isAdmin ? "(Admin)" : ""}
-                          </span>
-                          <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                            {formatDate(msg.created_at)}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            background: isAdmin ? "var(--primary, #b91c2b)" : "rgba(255, 255, 255, 0.08)",
-                            color: isAdmin ? "#ffffff" : "var(--text)",
-                            border: isAdmin ? "none" : "1px solid var(--border)",
-                            padding: "10px 14px",
-                            borderRadius: isAdmin ? "16px 16px 2px 16px" : "16px 16px 16px 2px",
-                            fontSize: "0.9rem",
-                            lineHeight: 1.45,
-                            whiteSpace: "pre-wrap",
-                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
-                          }}
-                        >
-                          {msg.message}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div style={{ alignSelf: "flex-start", maxWidth: "85%" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
-                      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text)" }}>{selectedTicket.name}</span>
-                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{formatDate(selectedTicket.created_at)}</span>
-                    </div>
-                    <div
-                      style={{
-                        background: "rgba(255, 255, 255, 0.08)",
-                        color: "var(--text)",
-                        border: "1px solid var(--border)",
-                        padding: "10px 14px",
-                        borderRadius: "16px 16px 16px 2px",
-                        fontSize: "0.9rem",
-                        lineHeight: 1.45,
-                        whiteSpace: "pre-wrap",
-                      }}
-                    >
-                      {selectedTicket.message}
-                    </div>
-                  </div>
-                )}
               </div>
 
               {selectedTicket.status === "closed" ? (
-                <div
-                  style={{
-                    padding: "14px 16px",
-                    borderRadius: "12px",
-                    background: "rgba(239, 68, 68, 0.12)",
-                    border: "1px solid rgba(239, 68, 68, 0.25)",
-                    color: "#ef4444",
-                    textAlign: "center",
-                    fontSize: "0.875rem",
-                    fontWeight: 600,
-                    marginTop: "auto",
-                  }}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  loading={saving}
+                  leftIcon={<Icon name="check" />}
+                  onClick={() => void reopenChat()}
+                  style={{ background: "#10b981", color: "#ffffff", borderColor: "#10b981" }}
                 >
-                  🔒 This chat was closed. Click <strong>"Reopen Chat"</strong> above to continue the conversation.
-                </div>
+                  Reopen Chat
+                </Button>
               ) : (
-                <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "auto" }}>
-                  <textarea
-                    className="input"
-                    rows={3}
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Type your reply to customer..."
-                    style={{ resize: "none", borderRadius: "10px", padding: "10px 12px", fontSize: "0.9rem" }}
-                  />
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <small style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontWeight: 600 }}>Priority:</small>
-                      <SearchableSelect
-                        ariaLabel={strings.filters.priority}
-                        className="support-ticket-select"
-                        options={PRIORITIES.filter(Boolean).map((item) => ({
-                          value: item,
-                          label: label(item),
-                        }))}
-                        searchable={false}
-                        value={draftPriority}
-                        onChange={(value) => setDraftPriority(String(value) as SupportTicketPriority)}
-                      />
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      {isInstituteInbox && (
-                        <Button
-                          type="button"
-                          disabled={saving}
-                          leftIcon={<Icon name="arrowRight" />}
-                          onClick={() => void forwardSelected()}
-                          variant="secondary"
-                          size="sm"
-                        >
-                          Forward
-                        </Button>
-                      )}
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        disabled={sendingMessage || !replyText.trim()}
-                        onClick={() => void handleSendMessageAndClose()}
-                      >
-                        Send & Close
-                      </Button>
-                      <Button
-                        type="submit"
-                        size="sm"
-                        loading={sendingMessage}
-                        disabled={!replyText.trim()}
-                        leftIcon={<Icon name="arrowRight" />}
-                      >
-                        Send Reply
-                      </Button>
-                    </div>
-                  </div>
-                </form>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {isInstituteInbox && (
+                    <Button
+                      type="button"
+                      disabled={saving}
+                      leftIcon={<Icon name="arrowRight" />}
+                      onClick={() => void forwardSelected()}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      Forward
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={saving || sendingMessage || !replyText.trim()}
+                    onClick={() => void handleSendMessageAndClose()}
+                  >
+                    Send & Close
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    loading={sendingMessage}
+                    disabled={!replyText.trim()}
+                    leftIcon={<Icon name="arrowRight" />}
+                    onClick={() => void handleSendMessage()}
+                  >
+                    Send Reply
+                  </Button>
+                </div>
               )}
-            </>
-          ) : (
-            <div className="support-ticket-empty-detail">
-              <Icon name="help" />
-              <h2>{strings.detail.emptyTitle}</h2>
-              <p>{strings.detail.emptyBody}</p>
             </div>
-          )}
-        </aside>
-      </div>
+          ) : null
+        }
+      >
+        {selectedTicket && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            {/* Top Bar: Customer Info Card & Close Chat Action */}
+            <div
+              style={{
+                padding: "12px 16px",
+                borderRadius: "14px",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "12px",
+              }}
+            >
+              <div>
+                <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: 700, display: "block" }}>
+                  CUSTOMER DETAILS
+                </small>
+                <strong style={{ fontSize: "1rem", color: "var(--text)", display: "block", marginTop: "2px" }}>
+                  {selectedTicket.name}
+                </strong>
+                {selectedTicket.phone_number && (
+                  <small style={{ color: "var(--text-muted)", fontSize: "0.8rem", display: "block" }}>
+                    Phone: {selectedTicket.phone_number}
+                  </small>
+                )}
+              </div>
+
+              <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
+                <a href={`mailto:${selectedTicket.email}`} style={{ fontSize: "0.9rem", color: "var(--primary, #0284c7)", fontWeight: 600 }}>
+                  {selectedTicket.email}
+                </a>
+                {selectedTicket.institute_name && (
+                  <small style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
+                    Inst: {selectedTicket.institute_name}
+                  </small>
+                )}
+                {selectedTicket.status !== "closed" && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    loading={saving}
+                    leftIcon={<Icon name="cross" />}
+                    onClick={() => void closeChat()}
+                    style={{ background: "#ef4444", color: "#ffffff", borderColor: "#ef4444", padding: "3px 12px", fontSize: "0.8rem" }}
+                  >
+                    Close Chat
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Messenger Chat Thread Stream */}
+            <div
+              ref={chatStreamRef}
+              style={{
+                height: "360px",
+                overflowY: "auto",
+                padding: "16px",
+                borderRadius: "14px",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "14px",
+              }}
+            >
+              {selectedTicket.messages && selectedTicket.messages.length > 0 ? (
+                selectedTicket.messages.map((msg: SupportTicketMessage, idx: number) => {
+                  const isAdmin = msg.sender_role === "admin" || msg.sender_role === "staff";
+                  return (
+                    <div
+                      key={msg.id || idx}
+                      style={{
+                        alignSelf: isAdmin ? "flex-end" : "flex-start",
+                        maxWidth: "80%",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: isAdmin ? "flex-end" : "flex-start",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                        <span
+                          style={{
+                            fontSize: "0.75rem",
+                            fontWeight: 700,
+                            color: isAdmin ? "var(--primary, #b91c2b)" : "var(--text)",
+                          }}
+                        >
+                          {msg.sender_name} {isAdmin ? "(Admin)" : ""}
+                        </span>
+                        <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                          {formatDate(msg.created_at)}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          background: isAdmin ? "var(--primary, #b91c2b)" : "rgba(255, 255, 255, 0.08)",
+                          color: isAdmin ? "#ffffff" : "var(--text)",
+                          border: isAdmin ? "none" : "1px solid var(--border)",
+                          padding: "10px 16px",
+                          borderRadius: isAdmin ? "16px 16px 2px 16px" : "16px 16px 16px 2px",
+                          fontSize: "0.925rem",
+                          lineHeight: 1.45,
+                          whiteSpace: "pre-wrap",
+                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
+                        }}
+                      >
+                        {msg.message}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ alignSelf: "flex-start", maxWidth: "80%" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text)" }}>{selectedTicket.name}</span>
+                    <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{formatDate(selectedTicket.created_at)}</span>
+                  </div>
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.08)",
+                      color: "var(--text)",
+                      border: "1px solid var(--border)",
+                      padding: "10px 16px",
+                      borderRadius: "16px 16px 16px 2px",
+                      fontSize: "0.925rem",
+                      lineHeight: 1.45,
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {selectedTicket.message}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Reply Input Bar */}
+            {selectedTicket.status === "closed" ? (
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: "12px",
+                  background: "rgba(239, 68, 68, 0.12)",
+                  border: "1px solid rgba(239, 68, 68, 0.25)",
+                  color: "#ef4444",
+                  textAlign: "center",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                }}
+              >
+                🔒 This chat was closed. Click <strong>"Reopen Chat"</strong> above to continue the conversation.
+              </div>
+            ) : (
+              <textarea
+                className="input"
+                rows={3}
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Type your reply to customer..."
+                style={{ resize: "none", borderRadius: "10px", padding: "12px", fontSize: "0.925rem", width: "100%" }}
+              />
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
@@ -597,3 +625,4 @@ export function SupportTickets() {
 export function InstituteSupportTickets() {
   return <SupportTicketInbox scope="institute" />;
 }
+
