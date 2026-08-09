@@ -19,7 +19,9 @@ from app.core.security import (
     create_login_otp_token,
     decode_token,
     generate_login_otp_code,
+    get_static_otp_code,
     hash_login_otp_code,
+    is_static_otp_enabled,
     verify_login_otp_code,
 )
 from app.core.rate_limit import clear_rate_limit, enforce_rate_limit
@@ -92,12 +94,9 @@ def _limit_login_attempt(request: Request, email: str) -> None:
 
 
 def _send_login_otp(db: Session, user: User, otp_code: str) -> None:
-    # With a fixed local OTP the mail is redundant, and requiring SMTP would
-    # otherwise make local sign-in impossible. Production still treats a failed
-    # send as fatal, because there the code only reaches the user by email.
-    if settings.dev_static_otp_code and settings.app_environment != "production":
+    if is_static_otp_enabled(db):
         logging.getLogger(__name__).warning(
-            "DEV_STATIC_OTP_CODE is active - skipping OTP email for %s, use code %s",
+            "Static testing OTP is active - skipping OTP email for %s, use code %s",
             user.email,
             otp_code,
         )
@@ -118,9 +117,9 @@ def _send_login_otp(db: Session, user: User, otp_code: str) -> None:
 
 
 def _send_register_otp(db: Session, user: User, otp_code: str) -> None:
-    if settings.dev_static_otp_code and settings.app_environment != "production":
+    if is_static_otp_enabled(db):
         logging.getLogger(__name__).warning(
-            "DEV_STATIC_OTP_CODE is active - skipping OTP email for %s, use code %s",
+            "Static testing OTP is active - skipping OTP email for %s, use code %s",
             user.email,
             otp_code,
         )
@@ -156,20 +155,6 @@ def _google_redirect_uri(request: Request) -> str:
 
 
 def _skips_login_otp(user: User) -> bool:
-    """The developer account signs in on its password alone.
-
-    Every other role gets a one-time code by email, and that is the only mail
-    the login flow sends - so "no email for the developer login" and "no second
-    factor for the developer login" are the same request. The account is
-    typically a shared or unattended one whose mailbox may not be monitored, or
-    may not exist, in which case the emailed code cannot arrive at all and the
-    503 from a failed send locks the account out entirely.
-
-    This is a real reduction in protection for a privileged role: the password
-    becomes the only thing guarding it, so it should be long, unique, and not
-    shared. Everything else about the sign-in is unchanged - rate limiting, the
-    active-account check, session issuing and the audit trail all still apply.
-    """
     return user.role is not None and user.role.name == DEVELOPER
 
 
@@ -179,7 +164,7 @@ def _otp_challenge_for(
     payload: Union[LoginRequest, GoogleOtpRequest, RegisterRequest],
     auth_method: str,
 ) -> TokenResponse:
-    otp_code = generate_login_otp_code()
+    otp_code = generate_login_otp_code(db)
     if auth_method == "register":
         _send_register_otp(db, user, otp_code)
     else:
@@ -194,13 +179,14 @@ def _otp_challenge_for(
         payload.device_name,
         hash_login_otp_code(otp_code),
     )
-    static_otp_active = bool(settings.dev_static_otp_code) and settings.app_environment != "production"
+    static_otp_active = is_static_otp_enabled(db)
+    static_code = get_static_otp_code(db)
     return TokenResponse(
         otp_required=True,
         otp_challenge_id=challenge,
         otp_delivery="static" if static_otp_active else "email",
         message=(
-            "Testing mode: use the configured static OTP code."
+            f"Testing mode: use static OTP code '{static_code}'."
             if static_otp_active
             else "OTP sent to your registered email."
         ),
@@ -447,7 +433,7 @@ def verify_otp(payload: VerifyOtpRequest, request: Request, response: Response, 
         "Too many incorrect codes. Please sign in again to get a new code.",
     )
 
-    if not verify_login_otp_code(payload.otp_code, str(challenge.get("otp_hash") or "")):
+    if not verify_login_otp_code(payload.otp_code, str(challenge.get("otp_hash") or ""), db):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP code")
 
     try:

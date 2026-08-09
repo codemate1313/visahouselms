@@ -1,4 +1,5 @@
-export type Tab = "typography" | "smtp" | "fcm" | "avatar" | "ai" | "payment-gateways" | "maintenance" | "backups" | "seed" | "slider" | "contact";
+export type Tab = "typography" | "otp" | "smtp" | "fcm" | "avatar" | "ai" | "payment-gateways" | "maintenance" | "backups" | "seed" | "slider" | "contact";
+
 
 
 export interface BackupRow {

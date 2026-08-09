@@ -2,6 +2,7 @@ import type { Tab } from "./types";
 
 export const tabOrder: Tab[] = [
   "typography",
+  "otp",
   "slider",
   "contact",
   "smtp",
@@ -16,6 +17,7 @@ export const tabOrder: Tab[] = [
 
 export const tabLabels: Record<Tab, string> = {
   typography: "Typography & Weights",
+  otp: "Static OTP (Testing)",
   slider: "Login Hero Slider",
   contact: "Contact & Social",
   smtp: "SMTP",
@@ -31,6 +33,19 @@ export const tabLabels: Record<Tab, string> = {
 
 export const developerSettingsStrings = {
   pageTitle: "Platform Settings",
+  otp: {
+    title: "Static Testing OTP Controls",
+    description: "Toggle static testing OTP for all accounts across the platform. When enabled (ON by default), registration, login, and password verification codes default to your static OTP (default: 123456) without requiring real SMTP email delivery.",
+    enabledLabel: "Enable Static Testing OTP (ON by Default)",
+    enabledHint: "Recommended for local testing, staging, and demoing features without needing real email inbox delivery.",
+    codeLabel: "Static OTP Code",
+    codePlaceholder: "123456",
+    saveLabel: "Save Static OTP Settings",
+    saveSuccess: "Static OTP settings updated successfully!",
+    saveError: "Failed to update Static OTP settings.",
+    statusActive: "⚡ Static Testing OTP Active",
+    statusInactive: "📧 Real Email Delivery Active",
+  },
   typography: {
     title: "App Typography & Tag Font Weights",
     description: "Customize the global font family and tag-specific font weights across the platform in real time.",

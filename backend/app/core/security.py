@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import uuid4
 
+from sqlalchemy.orm import Session
 import bcrypt
 import jwt
 
@@ -168,17 +169,36 @@ def decode_token(token: str) -> dict:
     return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
 
 
-def generate_login_otp_code() -> str:
-    """Returns the code that will be mailed to the user and hashed into the
-    login challenge.
+def is_static_otp_enabled(db: Optional[Session] = None) -> bool:
+    """Returns True if static testing OTP is enabled. Default is ON (True)."""
+    if db is not None:
+        try:
+            from app.services.settings_service import get_setting
+            val = get_setting(db, "testing.static_otp_enabled")
+            if val is not None:
+                return val.strip().lower() == "true"
+        except Exception:
+            pass
+    return True
 
-    DEV_STATIC_OTP_CODE makes local sign-in predictable without weakening the
-    verification path: the fixed code is hashed and checked exactly like a
-    random one, so there is no bypass branch in /auth/verify-otp. Settings
-    validation refuses to start the app if it is set in production.
-    """
-    if settings.dev_static_otp_code and settings.app_environment != "production":
-        return settings.dev_static_otp_code
+
+def get_static_otp_code(db: Optional[Session] = None) -> str:
+    """Returns the configured static testing OTP code (default '123456')."""
+    if db is not None:
+        try:
+            from app.services.settings_service import get_setting
+            val = get_setting(db, "testing.static_otp_code")
+            if val and val.strip():
+                return val.strip()
+        except Exception:
+            pass
+    return settings.dev_static_otp_code or "123456"
+
+
+def generate_login_otp_code(db: Optional[Session] = None) -> str:
+    """Returns static OTP if enabled (default ON), or random 6-digit code."""
+    if is_static_otp_enabled(db):
+        return get_static_otp_code(db)
     return f"{secrets.randbelow(1_000_000):06d}"
 
 
@@ -190,11 +210,12 @@ def hash_login_otp_code(otp_code: str) -> str:
     ).hexdigest()
 
 
-def verify_login_otp_code(otp_code: str, otp_hash: str) -> bool:
+def verify_login_otp_code(otp_code: str, otp_hash: str, db: Optional[Session] = None) -> bool:
     if not otp_hash:
         return False
-    if settings.dev_static_otp_code and settings.app_environment != "production":
-        if otp_code.strip() == settings.dev_static_otp_code.strip():
+    if is_static_otp_enabled(db):
+        static_code = get_static_otp_code(db)
+        if otp_code.strip() == static_code.strip():
             return True
     return hmac.compare_digest(hash_login_otp_code(otp_code), otp_hash)
 

@@ -82,3 +82,9 @@ class PaymentGatewaySettingsIn(BaseModel):
     stripe_publishable_key: Optional[str] = None
     stripe_secret_key: Optional[str] = None
     stripe_webhook_secret: Optional[str] = None
+
+
+class StaticOtpSettingsIn(BaseModel):
+    enabled: bool = True
+    code: Optional[str] = "123456"
+

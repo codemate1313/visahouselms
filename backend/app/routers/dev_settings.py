@@ -15,11 +15,13 @@ from app.schemas.dev import (
     LogSettingsIn,
     PaymentGatewaySettingsIn,
     SmtpSettingsIn,
+    StaticOtpSettingsIn,
     TestEmailIn,
     TestFcmIn,
 )
 from app.services import ai_evaluation_service, avatar_service, fcm_service, job_service, smtp_service
-from app.services.settings_service import get_settings_group, set_settings_group
+from app.services.settings_service import get_settings_group, set_setting, set_settings_group
+from app.core.security import get_static_otp_code, is_static_otp_enabled
 
 from app.config import settings as app_config
 
@@ -416,3 +418,31 @@ def put_payment_gateways(
     set_settings_group(db, "payment_gateways", data)
     _audit(db, actor, "dev_settings.update_payment_gateways", request)
     return get_settings_group(db, "payment_gateways")
+
+
+# ---------- STATIC TESTING OTP ----------
+
+@router.get("/static-otp")
+def get_static_otp(db: Session = Depends(get_db)):
+    return {
+        "enabled": is_static_otp_enabled(db),
+        "code": get_static_otp_code(db),
+    }
+
+
+@router.put("/static-otp")
+def put_static_otp(
+    payload: StaticOtpSettingsIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    set_setting(db, "testing.static_otp_enabled", "true" if payload.enabled else "false")
+    if payload.code and payload.code.strip():
+        set_setting(db, "testing.static_otp_code", payload.code.strip())
+    _audit(db, actor, "dev_settings.update_static_otp", request)
+    return {
+        "enabled": is_static_otp_enabled(db),
+        "code": get_static_otp_code(db),
+    }
+

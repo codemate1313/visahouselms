@@ -4,6 +4,7 @@ import { SegmentedControl } from "@/components/ui";
 import { tabLabels, tabOrder } from "./DeveloperSettings.strings";
 import type { Tab } from "./types";
 import { TypographyTab } from "./components/TypographyTab";
+import { StaticOtpTab } from "./components/StaticOtpTab";
 import { LoginSliderTab } from "./components/LoginSliderTab";
 import { ContactSocialTab } from "./components/ContactSocialTab";
 import { SmtpTab } from "./components/SmtpTab";
@@ -38,6 +39,7 @@ export function DeveloperSettings() {
         value={tab}
       />
       {tab === "typography" && <TypographyTab />}
+      {tab === "otp" && <StaticOtpTab />}
       {tab === "slider" && <LoginSliderTab />}
       {tab === "contact" && <ContactSocialTab />}
       {tab === "smtp" && <SmtpTab />}
