@@ -25,8 +25,30 @@ def upgrade() -> None:
     if not _has_column("exam_module_questions", "interaction"):
         op.add_column(
             "exam_module_questions",
-            sa.Column("interaction", sa.JSON(), nullable=False, server_default="{}"),
+            sa.Column("interaction", sa.JSON(), nullable=True),
         )
+        op.execute(
+            sa.text(
+                "UPDATE exam_module_questions "
+                "SET interaction = :empty_object "
+                "WHERE interaction IS NULL"
+            ).bindparams(empty_object="{}")
+        )
+
+        if op.get_bind().dialect.name == "sqlite":
+            with op.batch_alter_table("exam_module_questions") as batch_op:
+                batch_op.alter_column(
+                    "interaction",
+                    existing_type=sa.JSON(),
+                    nullable=False,
+                )
+        else:
+            op.alter_column(
+                "exam_module_questions",
+                "interaction",
+                existing_type=sa.JSON(),
+                nullable=False,
+            )
 
 
 def downgrade() -> None:

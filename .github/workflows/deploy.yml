@@ -46,12 +46,19 @@ jobs:
               git config --global --add safe.directory /var/www/visahouse
               git fetch --prune origin main
               git checkout main
-              if [ -n "$(git status --porcelain)" ]; then
-                echo "⚠️ Local VPS checkout has uncommitted changes. Stashing..."
-                git stash push --include-untracked -m "pre-deploy-$(date -u +%Y%m%d%H%M%S)" || true
+              if ! git diff --quiet || ! git diff --cached --quiet; then
+                echo "⚠️ Local VPS checkout has tracked changes. Stashing..."
+                git stash push -m "pre-deploy-$(date -u +%Y%m%d%H%M%S)" || true
               fi
               git reset --hard origin/main
-              git clean -fd
+              # Persistent uploads, GeoIP data, environment configuration, and
+              # database files must survive every checkout cleanup.
+              git clean -fd \
+                -e data/ \
+                -e storage/ \
+                -e backend/storage/ \
+                -e backend/.env \
+                -e '*.db'
 
               # 2. Update backend virtual environment & migrations
               cd backend
@@ -110,4 +117,3 @@ jobs:
 
           echo "❌ All 10 SSH connection attempts failed."
           exit 1
-
