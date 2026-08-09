@@ -243,36 +243,42 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
         }}
       />
 
-      <div className="support-ticket-filter-bar">
-        <SearchInput
-          aria-label={strings.filters.search}
-          value={search}
-          onChange={(val: string) => setSearch(val)}
-          placeholder={strings.filters.search}
-        />
-        <SearchableSelect
-          ariaLabel={strings.filters.status}
-          className="support-ticket-filter-select"
-          options={STATUSES.map((item) => ({
-            value: item,
-            label: item ? label(item) : strings.filters.all,
-          }))}
-          searchable={false}
-          value={status}
-          onChange={(value) => setStatus(value as SupportTicketStatus | "")}
-        />
-        <SearchableSelect
-          ariaLabel={strings.filters.priority}
-          className="support-ticket-filter-select"
-          options={PRIORITIES.map((item) => ({
-            value: item,
-            label: item ? label(item) : strings.filters.all,
-          }))}
-          searchable={false}
-          value={priority}
-          onChange={(value) => setPriority(value as SupportTicketPriority | "")}
-        />
-        <Button variant="secondary" leftIcon={<Icon name="search" />} onClick={() => void load()}>
+      <div className="filter-bar institutes-filter-bar" style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", margin: "16px 0" }}>
+        <div style={{ flex: "1 1 240px", minWidth: "200px" }}>
+          <SearchInput
+            aria-label={strings.filters.search}
+            value={search}
+            onChange={(val: string) => setSearch(val)}
+            placeholder={strings.filters.search}
+          />
+        </div>
+        <div style={{ width: "180px", flexShrink: 0 }}>
+          <SearchableSelect
+            ariaLabel={strings.filters.status}
+            className="support-ticket-filter-select"
+            options={STATUSES.map((item) => ({
+              value: item,
+              label: item ? label(item) : `${strings.filters.status}: ${strings.filters.all}`,
+            }))}
+            searchable={false}
+            value={status}
+            onChange={(value) => setStatus(value as SupportTicketStatus | "")}
+          />
+        </div>
+        <div style={{ width: "180px", flexShrink: 0 }}>
+          <SearchableSelect
+            ariaLabel={strings.filters.priority}
+            className="support-ticket-filter-select"
+            options={PRIORITIES.map((item) => ({
+              value: item,
+              label: item ? label(item) : `${strings.filters.priority}: ${strings.filters.all}`,
+            }))}
+            searchable={false}
+            value={priority}
+            onChange={(value) => setPriority(value as SupportTicketPriority | "")}
+          />
+        </div>
+        <Button variant="secondary" leftIcon={<Icon name="search" />} onClick={() => void load()} style={{ flexShrink: 0 }}>
           Search
         </Button>
       </div>
