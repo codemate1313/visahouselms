@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -16,7 +20,7 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          timeout: 60s
+          timeout: 120s
           command_timeout: 30m
           script: |
             set -Eeuo pipefail
