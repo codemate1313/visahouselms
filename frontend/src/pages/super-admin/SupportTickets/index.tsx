@@ -18,6 +18,7 @@ const STATUSES: Array<SupportTicketStatus | ""> = ["", "new", "open", "resolved"
 const PRIORITIES: Array<SupportTicketPriority | ""> = ["", "low", "normal", "high"];
 
 function label(value: string) {
+  if (value === "new") return "Unread";
   return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
@@ -254,13 +255,13 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
             placeholder={strings.filters.search}
           />
         </div>
-        <div style={{ width: "180px", flexShrink: 0 }}>
+        <div style={{ width: "195px", flexShrink: 0 }}>
           <SearchableSelect
             ariaLabel={strings.filters.status}
             className="support-ticket-filter-select"
             options={STATUSES.map((item) => ({
               value: item,
-              label: item ? label(item) : `${strings.filters.status}: ${strings.filters.all}`,
+              label: item ? (item === "new" ? "New / Unread" : label(item)) : `${strings.filters.status}: ${strings.filters.all}`,
             }))}
             searchable={false}
             value={status}
@@ -318,6 +319,10 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                       ticket.messages.length > 0 &&
                       ticket.messages[ticket.messages.length - 1].sender_role === "customer");
 
+                  const unreadMsgCount = ticket.messages
+                    ? ticket.messages.filter((m) => m.sender_role === "customer").length
+                    : 1;
+
                   return (
                     <tr
                       key={ticket.id}
@@ -345,27 +350,49 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                             style={{
                               background: isUnread ? "var(--primary, #b91c2b)" : undefined,
                               color: isUnread ? "#ffffff" : undefined,
+                              position: "relative",
                             }}
                           >
                             {ticket.name.charAt(0).toUpperCase()}
+                            {isUnread && (
+                              <span
+                                style={{
+                                  position: "absolute",
+                                  top: "-2px",
+                                  right: "-2px",
+                                  width: "10px",
+                                  height: "10px",
+                                  borderRadius: "50%",
+                                  background: "#ef4444",
+                                  border: "2px solid var(--surface, #ffffff)",
+                                }}
+                              />
+                            )}
                           </div>
-                          <div className="table-item-details">
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <strong className="table-item-title">{ticket.name}</strong>
+                          <div className="table-item-details" style={{ minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <strong className="table-item-title" style={{ whiteSpace: "nowrap" }}>
+                                {ticket.name}
+                              </strong>
                               {isUnread && (
                                 <span
                                   style={{
-                                    fontSize: "0.65rem",
-                                    fontWeight: 800,
-                                    textTransform: "uppercase",
-                                    padding: "2px 6px",
-                                    borderRadius: "4px",
+                                    fontSize: "0.675rem",
+                                    fontWeight: 700,
+                                    whiteSpace: "nowrap",
+                                    flexShrink: 0,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    padding: "2px 8px",
+                                    borderRadius: "12px",
                                     background: "var(--primary, #b91c2b)",
                                     color: "#ffffff",
-                                    letterSpacing: "0.5px",
+                                    boxShadow: "0 1px 4px rgba(185, 28, 43, 0.25)",
                                   }}
                                 >
-                                  UNREAD
+                                  <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff" }} />
+                                  {unreadMsgCount > 1 ? `${unreadMsgCount} Msgs` : "Unread"}
                                 </span>
                               )}
                             </div>
