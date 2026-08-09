@@ -215,33 +215,35 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
         }
       />
 
-      {!isInstituteInbox && (
-        <SegmentedControl
-          className="support-ticket-source-segment"
-          ariaLabel="Support request source"
-          options={[
-            { value: "", label: strings.filters.sources.all },
-            { value: "portal", label: strings.filters.sources.portal },
-            { value: "customer", label: strings.filters.sources.customer },
-          ]}
-          value={source}
-          onChange={(value) => setSource(value as "" | "portal" | "customer")}
-        />
-      )}
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap", margin: "14px 0" }}>
+        {!isInstituteInbox && (
+          <SegmentedControl
+            className="support-ticket-source-segment"
+            ariaLabel="Support request source"
+            options={[
+              { value: "", label: strings.filters.sources.all },
+              { value: "portal", label: strings.filters.sources.portal },
+              { value: "customer", label: strings.filters.sources.customer },
+            ]}
+            value={source}
+            onChange={(value) => setSource(value as "" | "portal" | "customer")}
+          />
+        )}
 
-      <SegmentedControl
-        className="support-ticket-queue-segment"
-        ariaLabel="Ticket queue"
-        options={[
-          { value: "active", label: strings.filters.queues.active },
-          { value: "resolved", label: strings.filters.queues.resolved },
-        ]}
-        value={queue}
-        onChange={(value) => {
-          setQueue(value as "active" | "resolved");
-          setStatus("");
-        }}
-      />
+        <SegmentedControl
+          className="support-ticket-queue-segment"
+          ariaLabel="Ticket queue"
+          options={[
+            { value: "active", label: strings.filters.queues.active },
+            { value: "resolved", label: strings.filters.queues.resolved },
+          ]}
+          value={queue}
+          onChange={(value) => {
+            setQueue(value as "active" | "resolved");
+            setStatus("");
+          }}
+        />
+      </div>
 
       <div className="filter-bar institutes-filter-bar" style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", margin: "16px 0" }}>
         <div style={{ flex: "1 1 240px", minWidth: "200px" }}>
@@ -309,50 +311,94 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                   <td colSpan={6} className="empty-cell">{strings.table.empty}</td>
                 </tr>
               ) : (
-                tickets.map((ticket) => (
-                  <tr
-                    key={ticket.id}
-                    className={selectedTicket?.id === ticket.id ? "is-selected-row" : ""}
-                    onClick={() => {
-                      setSelectedId(ticket.id);
-                      setIsChatOpen(true);
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td>
-                      <div className="table-item-cell">
-                        <div className="table-avatar-tile">{ticket.name.charAt(0).toUpperCase()}</div>
-                        <div className="table-item-details">
-                          <strong className="table-item-title">{ticket.name}</strong>
-                          <span className="table-item-subtitle">{ticket.email}</span>
+                tickets.map((ticket) => {
+                  const isUnread =
+                    ticket.status === "new" ||
+                    (ticket.messages &&
+                      ticket.messages.length > 0 &&
+                      ticket.messages[ticket.messages.length - 1].sender_role === "customer");
+
+                  return (
+                    <tr
+                      key={ticket.id}
+                      className={`${selectedTicket?.id === ticket.id ? "is-selected-row" : ""} ${
+                        isUnread ? "is-unread-row" : ""
+                      }`}
+                      onClick={() => {
+                        setSelectedId(ticket.id);
+                        setIsChatOpen(true);
+                      }}
+                      style={{
+                        cursor: "pointer",
+                        background: isUnread
+                          ? "rgba(185, 28, 43, 0.06)"
+                          : selectedTicket?.id === ticket.id
+                          ? "var(--surface-hover, rgba(255, 255, 255, 0.04))"
+                          : undefined,
+                        borderLeft: isUnread ? "4px solid var(--primary, #b91c2b)" : "4px solid transparent",
+                      }}
+                    >
+                      <td>
+                        <div className="table-item-cell">
+                          <div
+                            className="table-avatar-tile"
+                            style={{
+                              background: isUnread ? "var(--primary, #b91c2b)" : undefined,
+                              color: isUnread ? "#ffffff" : undefined,
+                            }}
+                          >
+                            {ticket.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="table-item-details">
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <strong className="table-item-title">{ticket.name}</strong>
+                              {isUnread && (
+                                <span
+                                  style={{
+                                    fontSize: "0.65rem",
+                                    fontWeight: 800,
+                                    textTransform: "uppercase",
+                                    padding: "2px 6px",
+                                    borderRadius: "4px",
+                                    background: "var(--primary, #b91c2b)",
+                                    color: "#ffffff",
+                                    letterSpacing: "0.5px",
+                                  }}
+                                >
+                                  UNREAD
+                                </span>
+                              )}
+                            </div>
+                            <span className="table-item-subtitle">{ticket.email}</span>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="table-item-details">
-                        <span className="table-item-title">{ticket.subject}</span>
-                        <span className="table-item-subtitle">{ticket.institute_name || ticket.category}</span>
-                      </div>
-                    </td>
-                    <td><Badge tone={statusTone(ticket.status)}>{label(ticket.status)}</Badge></td>
-                    <td><Badge tone={priorityTone(ticket.priority)}>{label(ticket.priority)}</Badge></td>
-                    <td>{formatDate(ticket.created_at)}</td>
-                    <td className="table-actions institute-row-actions">
-                      <button
-                        type="button"
-                        className="action-btn-icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedId(ticket.id);
-                          setIsChatOpen(true);
-                        }}
-                      >
-                        <Icon name="eye" />
-                        <span>Chat</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td>
+                        <div className="table-item-details">
+                          <span className="table-item-title">{ticket.subject}</span>
+                          <span className="table-item-subtitle">{ticket.institute_name || ticket.category}</span>
+                        </div>
+                      </td>
+                      <td><Badge tone={statusTone(ticket.status)}>{label(ticket.status)}</Badge></td>
+                      <td><Badge tone={priorityTone(ticket.priority)}>{label(ticket.priority)}</Badge></td>
+                      <td>{formatDate(ticket.created_at)}</td>
+                      <td className="table-actions institute-row-actions">
+                        <button
+                          type="button"
+                          className="action-btn-icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedId(ticket.id);
+                            setIsChatOpen(true);
+                          }}
+                        >
+                          <Icon name="eye" />
+                          <span>Chat</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
