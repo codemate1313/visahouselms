@@ -13,17 +13,15 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-        env:
-          VPS_PORT: ${{ secrets.VPS_PORT }}
+      - name: Deploy to Hostinger VPS via SSH with Retry
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          TARGET_PORT="${VPS_PORT:-22}"
 
           for attempt in {1..10}; do
-            echo "🚀 SSH Connection Attempt $attempt/10 to VPS (Port $TARGET_PORT)..."
-            if ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -p "$TARGET_PORT" root@${{ secrets.VPS_IP }} "bash -s" << 'EOF'
+            echo "🚀 SSH Connection Attempt $attempt/10 to VPS..."
+            if ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -p 22 root@${{ secrets.VPS_IP }} "bash -s" << 'EOF'
               set -Eeuo pipefail
               trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
 
