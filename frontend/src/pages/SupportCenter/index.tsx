@@ -316,6 +316,16 @@ export function SupportCenter() {
     }
   }
 
+  const isTicketClosed = selectedTicket ? (selectedTicket.status === "closed" || selectedTicket.status === "resolved") : false;
+  const lastMsgSenderRole = selectedTicket?.messages && selectedTicket.messages.length > 0
+    ? selectedTicket.messages[selectedTicket.messages.length - 1].sender_role
+    : null;
+  const isClosedByCustomer = isTicketClosed && (
+    selectedTicket?.closed_by_role === "customer" ||
+    (!selectedTicket?.closed_by_role && lastMsgSenderRole === "customer")
+  );
+  const isClosedByAdmin = isTicketClosed && !isClosedByCustomer;
+
   return (
     <div className="support-center-page">
       <PageHeader
@@ -606,7 +616,7 @@ export function SupportCenter() {
               </span>
               <Badge tone={statusTone(selectedTicket.status)}>{label(selectedTicket.status)}</Badge>
               <Badge tone={priorityTone(selectedTicket.priority)}>{label(selectedTicket.priority)}</Badge>
-              {selectedTicket.status !== "closed" && selectedTicket.status !== "resolved" ? (
+              {!isTicketClosed ? (
                 <Button
                   size="sm"
                   variant="secondary"
@@ -616,7 +626,7 @@ export function SupportCenter() {
                 >
                   Close Ticket
                 </Button>
-              ) : selectedTicket.closed_by_role !== "customer" ? (
+              ) : isClosedByAdmin ? (
                 <Button
                   size="sm"
                   variant="secondary"
@@ -801,7 +811,7 @@ export function SupportCenter() {
             </div>
 
             {/* Reply Input Bar */}
-            {selectedTicket.status === "closed" && selectedTicket.closed_by_role === "customer" ? (
+            {isClosedByCustomer ? (
               <div
                 style={{
                   padding: "14px 16px",
@@ -818,7 +828,7 @@ export function SupportCenter() {
               </div>
             ) : (
               <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {selectedTicket.status === "closed" && selectedTicket.closed_by_role !== "customer" && (
+                {isClosedByAdmin && (
                   <div
                     style={{
                       padding: "10px 14px",

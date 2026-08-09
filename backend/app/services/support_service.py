@@ -536,8 +536,12 @@ def add_ticket_message(
             role_label = "customer"
 
     if ticket.status == SUPPORT_STATUS_CLOSED:
+        last_msg = ticket.messages[-1] if ticket.messages else None
+        is_closed_by_customer = ticket.closed_by_role == "customer" or (
+            not ticket.closed_by_role and last_msg and last_msg.sender_role == "customer"
+        )
         # If customer is replying and ticket was NOT closed by customer (closed by admin/staff), auto-reopen!
-        if role_label == "customer" and ticket.closed_by_role != "customer":
+        if role_label == "customer" and not is_closed_by_customer:
             ticket.status = SUPPORT_STATUS_OPEN
             ticket.closed_by_role = None
         else:
@@ -697,11 +701,16 @@ def reopen_portal_ticket(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Support ticket not found.",
         )
-    if ticket.closed_by_role == "customer":
+    last_msg = ticket.messages[-1] if ticket.messages else None
+    is_closed_by_customer = ticket.closed_by_role == "customer" or (
+        not ticket.closed_by_role and last_msg and last_msg.sender_role == "customer"
+    )
+    if is_closed_by_customer:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You closed this ticket. Please raise a new query if you have a new issue.",
         )
+
     ticket.status = SUPPORT_STATUS_OPEN
     ticket.closed_by_role = None
     ticket.updated_at = datetime.now(timezone.utc)
