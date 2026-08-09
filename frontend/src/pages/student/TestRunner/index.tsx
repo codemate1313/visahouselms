@@ -95,7 +95,7 @@ export function TestRunner() {
   const [speakingMicrophoneReady, setSpeakingMicrophoneReady] = useState(hasVerifiedSpeakingMicrophone);
   const [fullscreenActive, setFullscreenActive] = useState(() => Boolean(document.fullscreenElement));
   const [securityAuthorized, setSecurityAuthorized] = useState(false);
-  const [onboardingCompleted, setOnboardingCompleted] = useState(() => sessionStorage.getItem(`onboarding_completed_${id}`) === "true");
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [securityStarting, setSecurityStarting] = useState(false);
   const [securityError, setSecurityError] = useState<string | null>(null);
   const [mediaState, setMediaState] = useState<SecurityMediaState>(EMPTY_MEDIA_STATE);
@@ -134,6 +134,11 @@ export function TestRunner() {
   }, [currentPart]);
 
   useEffect(() => {
+    setOnboardingCompleted(false);
+    setSecurityAuthorized(false);
+  }, [id]);
+
+  useEffect(() => {
     apiClient
       .get<Attempt>(`/student/attempts/${id}`, { headers: securityHeaders() })
       .then(({ data }) => {
@@ -144,7 +149,7 @@ export function TestRunner() {
         data.parts.forEach((part) => part.questions.forEach((question) => {
           revisionByQuestionRef.current[question.id] = question.revision;
         }));
-        setSecurityAuthorized(data.security_authorized);
+        setSecurityAuthorized(data.status === "in_progress" ? data.security_authorized : false);
         setAttempt(data);
       })
       .catch(() => setError(strings.loadError));
@@ -979,8 +984,13 @@ export function TestRunner() {
   const cameraPreview = liveCameraStream && securityAuthorized && mediaState.camera ? (
     <DraggableCameraPreview stream={liveCameraStream} />
   ) : null;
+  const hasSavedResponses = attempt.parts.some((part) => part.answered_count > 0);
+  const shouldShowPreExamOnboarding =
+    attempt.status === "ready"
+    || (attempt.security_required && !securityAuthorized)
+    || (!attempt.security_required && !onboardingCompleted && !hasSavedResponses);
 
-  if (attempt.status === "ready" || !securityAuthorized || (!attempt.security_required && !onboardingCompleted)) {
+  if (shouldShowPreExamOnboarding) {
     return (
       <>
         <PreExamOnboarding
