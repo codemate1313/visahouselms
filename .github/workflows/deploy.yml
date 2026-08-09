@@ -64,7 +64,8 @@ jobs:
 
             # 3. Re-install packages and rebuild frontend
             cd frontend
-            npm ci
+            rm -rf node_modules
+            npm ci || (rm -rf node_modules && npm install)
             npm run build
             cd ..
 
