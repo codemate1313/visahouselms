@@ -325,7 +325,7 @@ export function PreExamOnboarding({
                               <Icon name="microphone" />
                             </div>
                             <div className="rule-text">
-                              <strong>Hardware Peripheral Requirements.</strong> Grant browser permissions for audio output and microphone access. Voice recordings are processed and submitted seamlessly.
+                              <strong>Hardware Peripheral Requirements.</strong> Grant browser permissions for audio output and microphone access. Voice recordings are processed and submitted securely.
                             </div>
                           </div>
                         )}
@@ -343,7 +343,7 @@ export function PreExamOnboarding({
                   </div>
                 ) : (
                   <div className="onboarding-summary-banner" style={{ marginTop: 20, marginBottom: 20 }}>
-                    <Icon name="info" />
+                    <Icon name="help" />
                     <span>Candidate integrity guidelines have been streamlined by your instructor for this assessment session.</span>
                   </div>
                 )}
@@ -463,7 +463,7 @@ export function PreExamOnboarding({
                   <div className="equipment-row">
                     <div className="equipment-info">
                       <div className="equipment-icon-box">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.94 0"/><circle cx="12" cy="20" r="1"/></svg>
                       </div>
                       <div>
                         <strong>Network Latency & Encryption</strong>
@@ -532,7 +532,7 @@ export function PreExamOnboarding({
             {step === 4 && (
               <div className="onboarding-step-content text-center stage-fade-in">
                 <div className="onboarding-rocket-badge">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71.12-1.67-.32-2.12a2.03 2.03 0 0 1-2.68-.38z"/><path d="M12 15l-3-3 7.35-7.35a4.5 4.5 0 0 1 6.36 6.36L12 15z"/><path d="M16.5 4.5L19.5 7.5"/></svg>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71.12-1.67-.32-2.12a2.03 2.03 0 0 0-2.82-.82c-.5.3-.41.98.1 1.48.46.46 1.12.56 1.63.06.87-.86 1.34-1.78 2.25-2.21-2.5-1.13-4.3-3.7-4.3-6.65A6.364 6.364 0 0 1 12 3.75a6.364 6.364 0 0 1 6 6.384v2.066c2.04-1.16 3.5-3.41 3.5-6.05a6.364 6.364 0 0 0-6.3-6.37"/></svg>
                 </div>
 
                 <h2 className="onboarding-ready-heading">Candidate Authorization & Exam Launch</h2>
@@ -562,7 +562,7 @@ export function PreExamOnboarding({
                     onChange={(e) => setConfirmed(e.target.checked)}
                   />
                   <span>
-                    I verify that I have reviewed the examination guidelines, completed hardware diagnostics, and am prepared to commence. I acknowledge that the timed session begins immediately upon confirmation and cannot be paused.
+                    I verify that I have reviewed the examination guidelines, completed hardware diagnostics, and am prepared to commence. I acknowledge that the timed session begins immediately upon clicking "Commence Assessment" and I cannot pause or halt the timer.
                   </span>
                 </label>
 
