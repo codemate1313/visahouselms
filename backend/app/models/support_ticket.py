@@ -68,3 +68,26 @@ class SupportTicket(Base):
     assigned_to: Mapped[Optional["User"]] = relationship(foreign_keys=[assigned_to_id])  # noqa: F821
     requester: Mapped[Optional["User"]] = relationship(foreign_keys=[requester_id])  # noqa: F821
     escalated_by: Mapped[Optional["User"]] = relationship(foreign_keys=[escalated_by_id])  # noqa: F821
+    messages: Mapped[list["SupportTicketMessage"]] = relationship(
+        back_populates="ticket", order_by="SupportTicketMessage.created_at.asc()", cascade="all, delete-orphan"
+    )
+
+
+class SupportTicketMessage(Base):
+    __tablename__ = "support_ticket_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ticket_id: Mapped[int] = mapped_column(
+        ForeignKey("support_tickets.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    sender_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    sender_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    sender_role: Mapped[str] = mapped_column(String(40), nullable=False, default="customer")  # "customer" | "admin" | "staff"
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), index=True)
+
+    ticket: Mapped["SupportTicket"] = relationship(back_populates="messages")
+    sender: Mapped[Optional["User"]] = relationship()
+

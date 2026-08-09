@@ -15,6 +15,7 @@ from app.schemas.support import (
     SupportTicketCreate,
     SupportTicketCreatedResponse,
     SupportTicketListResponse,
+    SupportTicketMessageCreate,
     SupportTicketResponse,
     SupportTicketUpdate,
 )
@@ -90,6 +91,23 @@ def create_my_ticket(
     }
 
 
+@public_router.post("/my-tickets/{ticket_id}/messages", response_model=SupportTicketResponse)
+def post_my_ticket_message(
+    ticket_id: int,
+    payload: SupportTicketMessageCreate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ticket = support_service.add_ticket_message(
+        db,
+        ticket_id,
+        message_text=payload.message,
+        sender=user,
+        sender_role="customer",
+    )
+    return support_service.serialize_ticket(ticket)
+
+
 @admin_router.get("", response_model=SupportTicketListResponse)
 def list_admin_tickets(
     status_filter: Optional[str] = Query(default=None, alias="status"),
@@ -130,6 +148,44 @@ def update_admin_ticket(ticket_id: int, payload: SupportTicketUpdate, db: Sessio
             payload,
             queue=SUPPORT_QUEUE_SUPER_ADMIN,
         )
+    )
+
+
+@admin_router.post("/{ticket_id}/messages", response_model=SupportTicketResponse)
+def post_admin_ticket_message(
+    ticket_id: int,
+    payload: SupportTicketMessageCreate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ticket = support_service.add_ticket_message(
+        db,
+        ticket_id,
+        message_text=payload.message,
+        sender=user,
+        sender_role="admin",
+        queue=SUPPORT_QUEUE_SUPER_ADMIN,
+    )
+    return support_service.serialize_ticket(ticket)
+
+
+@admin_router.post("/{ticket_id}/close", response_model=SupportTicketResponse)
+def close_admin_ticket(
+    ticket_id: int,
+    db: Session = Depends(get_db),
+):
+    return support_service.serialize_ticket(
+        support_service.close_ticket(db, ticket_id, queue=SUPPORT_QUEUE_SUPER_ADMIN)
+    )
+
+
+@admin_router.post("/{ticket_id}/reopen", response_model=SupportTicketResponse)
+def reopen_admin_ticket(
+    ticket_id: int,
+    db: Session = Depends(get_db),
+):
+    return support_service.serialize_ticket(
+        support_service.reopen_ticket(db, ticket_id, queue=SUPPORT_QUEUE_SUPER_ADMIN)
     )
 
 
@@ -194,6 +250,50 @@ def update_institute_ticket(
     )
 
 
+@institute_router.post("/{ticket_id}/messages", response_model=SupportTicketResponse)
+def post_institute_ticket_message(
+    ticket_id: int,
+    payload: SupportTicketMessageCreate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    institute_id = require_institute_id(user)
+    ticket = support_service.add_ticket_message(
+        db,
+        ticket_id,
+        message_text=payload.message,
+        sender=user,
+        sender_role="admin",
+        queue=SUPPORT_QUEUE_INSTITUTE,
+        institute_id=institute_id,
+    )
+    return support_service.serialize_ticket(ticket)
+
+
+@institute_router.post("/{ticket_id}/close", response_model=SupportTicketResponse)
+def close_institute_ticket(
+    ticket_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    institute_id = require_institute_id(user)
+    return support_service.serialize_ticket(
+        support_service.close_ticket(db, ticket_id, queue=SUPPORT_QUEUE_INSTITUTE, institute_id=institute_id)
+    )
+
+
+@institute_router.post("/{ticket_id}/reopen", response_model=SupportTicketResponse)
+def reopen_institute_ticket(
+    ticket_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    institute_id = require_institute_id(user)
+    return support_service.serialize_ticket(
+        support_service.reopen_ticket(db, ticket_id, queue=SUPPORT_QUEUE_INSTITUTE, institute_id=institute_id)
+    )
+
+
 @institute_router.post("/{ticket_id}/forward", response_model=SupportTicketResponse)
 def forward_institute_ticket(
     ticket_id: int,
@@ -203,3 +303,4 @@ def forward_institute_ticket(
     return support_service.serialize_ticket(
         support_service.forward_ticket_to_super_admin(db, ticket_id, user)
     )
+

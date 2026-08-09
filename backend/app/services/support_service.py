@@ -18,6 +18,7 @@ from app.models.support_ticket import (
     SUPPORT_STATUS_RESOLVED,
     SUPPORT_STATUSES,
     SupportTicket,
+    SupportTicketMessage,
 )
 from app.models.notification import SUPPORT_TICKET_ASSIGNED, SUPPORT_TICKET_CREATED, SUPPORT_TICKET_UPDATED
 from app.models.role import INST_INSTRUCTOR, INSTITUTE_ADMIN, STUDENT, SUPER_ADMIN, Role
@@ -31,6 +32,33 @@ logger = logging.getLogger(__name__)
 def serialize_ticket(ticket: SupportTicket) -> dict:
     assigned_to = ticket.assigned_to
     escalated_by = ticket.escalated_by
+    messages_list = []
+
+    # 1. Initial message as first message in thread if not already present
+    if ticket.message:
+        messages_list.append({
+            "id": 0,
+            "ticket_id": ticket.id,
+            "sender_id": ticket.requester_id,
+            "sender_name": ticket.name,
+            "sender_role": "customer",
+            "message": ticket.message,
+            "created_at": ticket.created_at,
+        })
+
+    # 2. Add thread messages from database
+    if hasattr(ticket, "messages") and ticket.messages:
+        for msg in ticket.messages:
+            messages_list.append({
+                "id": msg.id,
+                "ticket_id": msg.ticket_id,
+                "sender_id": msg.sender_id,
+                "sender_name": msg.sender_name,
+                "sender_role": msg.sender_role,
+                "message": msg.message,
+                "created_at": msg.created_at,
+            })
+
     return {
         "id": ticket.id,
         "source": ticket.source,
@@ -58,6 +86,7 @@ def serialize_ticket(ticket: SupportTicket) -> dict:
         "created_at": ticket.created_at,
         "updated_at": ticket.updated_at,
         "resolved_at": ticket.resolved_at,
+        "messages": messages_list,
     }
 
 
@@ -458,3 +487,93 @@ def forward_ticket_to_super_admin(
     except Exception:
         logger.exception("Failed to send notifications for escalated support ticket %s", ticket.id)
     return ticket
+
+
+def add_ticket_message(
+    db: Session,
+    ticket_id: int,
+    message_text: str,
+    sender: Optional[User] = None,
+    sender_name: Optional[str] = None,
+    sender_role: str = "staff",
+    queue: Optional[str] = None,
+    institute_id: Optional[int] = None,
+) -> SupportTicket:
+    ticket = get_ticket(db, ticket_id, queue=queue, institute_id=institute_id)
+    if ticket.status == SUPPORT_STATUS_CLOSED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This support ticket is closed. Reopen the chat to send new messages.",
+        )
+
+    name = sender_name or (f"{sender.first_name} {sender.last_name}" if sender else "Support Team")
+    role_label = sender_role
+    if sender and sender.role:
+        if sender.role.name in (SUPER_ADMIN, INSTITUTE_ADMIN, INST_INSTRUCTOR):
+            role_label = "admin"
+        else:
+            role_label = "customer"
+
+    msg = SupportTicketMessage(
+        ticket_id=ticket.id,
+        sender_id=sender.id if sender else None,
+        sender_name=name,
+        sender_role=role_label,
+        message=message_text.strip(),
+    )
+    db.add(msg)
+
+    # Auto transition 'new' -> 'open' if staff replies
+    if role_label == "admin" and ticket.status == SUPPORT_STATUS_NEW:
+        ticket.status = SUPPORT_STATUS_OPEN
+    elif role_label == "customer" and ticket.status == SUPPORT_STATUS_RESOLVED:
+        ticket.status = SUPPORT_STATUS_OPEN
+
+    ticket.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(ticket)
+
+    # Best-effort email notification
+    try:
+        if role_label == "admin":
+            notification_service.send_notification_email(
+                db,
+                ticket.email,
+                f"New reply on support ticket: {ticket.subject}",
+                f"Hi {ticket.name},\n\nSupport replied to your ticket \"{ticket.subject}\":\n\n{message_text.strip()}\n\nReply directly in your portal.",
+                user_id=ticket.requester_id,
+            )
+    except Exception:
+        logger.exception("Failed to send message notification for ticket %s", ticket.id)
+
+    return ticket
+
+
+def close_ticket(
+    db: Session,
+    ticket_id: int,
+    queue: Optional[str] = None,
+    institute_id: Optional[int] = None,
+) -> SupportTicket:
+    ticket = get_ticket(db, ticket_id, queue=queue, institute_id=institute_id)
+    ticket.status = SUPPORT_STATUS_CLOSED
+    ticket.resolved_at = datetime.now(timezone.utc)
+    ticket.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+
+
+def reopen_ticket(
+    db: Session,
+    ticket_id: int,
+    queue: Optional[str] = None,
+    institute_id: Optional[int] = None,
+) -> SupportTicket:
+    ticket = get_ticket(db, ticket_id, queue=queue, institute_id=institute_id)
+    ticket.status = SUPPORT_STATUS_OPEN
+    ticket.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+

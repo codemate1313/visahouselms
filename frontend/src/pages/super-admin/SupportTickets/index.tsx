@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type {
   SupportTicket,
   SupportTicketListResponse,
+  SupportTicketMessage,
   SupportTicketPriority,
   SupportTicketStatus,
 } from "@/api/types";
@@ -15,10 +16,6 @@ import { supportTicketsStrings as strings } from "./SupportTickets.strings";
 
 const STATUSES: Array<SupportTicketStatus | ""> = ["", "new", "open", "resolved", "closed"];
 const PRIORITIES: Array<SupportTicketPriority | ""> = ["", "low", "normal", "high"];
-const QUEUE_STATUSES: Record<"active" | "resolved", SupportTicketStatus[]> = {
-  active: ["new", "open"],
-  resolved: ["resolved", "closed"],
-};
 
 function label(value: string) {
   return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -52,13 +49,6 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
   const isInstituteInbox = scope === "institute";
   const apiBase = isInstituteInbox ? "/institute/support-tickets" : "/super-admin/support-tickets";
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
-  const [counts, setCounts] = useState<SupportTicketListResponse["counts"]>({
-    all: 0,
-    new: 0,
-    open: 0,
-    resolved: 0,
-    closed: 0,
-  });
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<SupportTicketStatus | "">("");
@@ -67,10 +57,11 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
   const [queue, setQueue] = useState<"active" | "resolved">("active");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [draftStatus, setDraftStatus] = useState<SupportTicketStatus>("new");
   const [draftPriority, setDraftPriority] = useState<SupportTicketPriority>("normal");
-  const [draftNote, setDraftNote] = useState("");
+  const chatStreamRef = useRef<HTMLDivElement | null>(null);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
   const showSuccess = useToastStore((state) => state.showSuccess);
 
@@ -78,7 +69,6 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
     () => tickets.find((ticket) => ticket.id === selectedId) ?? tickets[0] ?? null,
     [selectedId, tickets]
   );
-  const queueTotal = QUEUE_STATUSES[queue].reduce((total, item) => total + (counts[item] ?? 0), 0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,7 +85,6 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
         },
       });
       setTickets(data.items);
-      setCounts(data.counts);
       setItemCount(data.total);
       setSelectedId((current) => {
         if (current && data.items.some((ticket) => ticket.id === current)) return current;
@@ -116,27 +105,82 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
 
   useEffect(() => {
     if (!selectedTicket) return;
-    setDraftStatus(selectedTicket.status);
     setDraftPriority(selectedTicket.priority);
-    setDraftNote(selectedTicket.admin_note ?? "");
   }, [selectedTicket]);
 
-  async function saveSelected() {
+  useEffect(() => {
+    if (chatStreamRef.current) {
+      chatStreamRef.current.scrollTop = chatStreamRef.current.scrollHeight;
+    }
+  }, [selectedTicket?.messages, selectedTicket?.id]);
+
+  async function handleSendMessage(e?: FormEvent) {
+    if (e) e.preventDefault();
+    if (!selectedTicket || !replyText.trim()) return;
+    setSendingMessage(true);
+    setError(null);
+    try {
+      const { data } = await apiClient.post<SupportTicket>(`${apiBase}/${selectedTicket.id}/messages`, {
+        message: replyText.trim(),
+      });
+      setReplyText("");
+      showSuccess("Reply sent successfully", "Message Sent");
+      await load();
+      setSelectedId(data.id);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to send reply"));
+    } finally {
+      setSendingMessage(false);
+    }
+  }
+
+  async function handleSendMessageAndClose() {
+    if (!selectedTicket || !replyText.trim()) return;
+    setSendingMessage(true);
+    setError(null);
+    try {
+      await apiClient.post<SupportTicket>(`${apiBase}/${selectedTicket.id}/messages`, {
+        message: replyText.trim(),
+      });
+      const { data } = await apiClient.post<SupportTicket>(`${apiBase}/${selectedTicket.id}/close`);
+      setReplyText("");
+      showSuccess("Reply sent and chat closed", "Chat Closed");
+      await load();
+      setSelectedId(data.id);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to send reply and close chat"));
+    } finally {
+      setSendingMessage(false);
+    }
+  }
+
+  async function closeChat() {
     if (!selectedTicket) return;
     setSaving(true);
     setError(null);
     try {
-      await apiClient.patch<SupportTicket>(
-        `${apiBase}/${selectedTicket.id}`,
-        {
-          status: draftStatus,
-          priority: draftPriority,
-          admin_note: draftNote,
-        }
-      );
+      const { data } = await apiClient.post<SupportTicket>(`${apiBase}/${selectedTicket.id}/close`);
+      showSuccess("Chat closed", "Closed");
       await load();
+      setSelectedId(data.id);
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, strings.errors.update));
+      setError(extractErrorMessage(err, "Failed to close chat"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function reopenChat() {
+    if (!selectedTicket) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const { data } = await apiClient.post<SupportTicket>(`${apiBase}/${selectedTicket.id}/reopen`);
+      showSuccess("Chat reopened", "Reopened");
+      await load();
+      setSelectedId(data.id);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to reopen chat"));
     } finally {
       setSaving(false);
     }
@@ -193,58 +237,50 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
         ]}
         value={queue}
         onChange={(value) => {
-          setQueue(value);
+          setQueue(value as "active" | "resolved");
           setStatus("");
         }}
       />
 
-      <div className="support-ticket-stat-row">
-        {(["", ...QUEUE_STATUSES[queue]] as Array<SupportTicketStatus | "">).map((item) => {
-          const key = item || "all";
-          return (
-            <button
-              key={key}
-              type="button"
-              className={`support-ticket-stat ${status === item ? "is-active" : ""}`}
-              onClick={() => setStatus(item)}
-            >
-              <span>{label(key)}</span>
-              <strong>{item ? counts[item] ?? 0 : queueTotal}</strong>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="filter-bar institutes-filter-bar support-ticket-filter">
+      <div className="support-ticket-filter-bar">
         <SearchInput
+          aria-label={strings.filters.search}
           value={search}
-          onChange={setSearch}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") void load();
-          }}
+          onChange={(val: string) => setSearch(val)}
           placeholder={strings.filters.search}
         />
         <SearchableSelect
+          ariaLabel={strings.filters.status}
+          className="support-ticket-filter-select"
+          options={STATUSES.map((item) => ({
+            value: item,
+            label: item ? label(item) : strings.filters.all,
+          }))}
+          searchable={false}
+          value={status}
+          onChange={(value) => setStatus(value as SupportTicketStatus | "")}
+        />
+        <SearchableSelect
           ariaLabel={strings.filters.priority}
-          className="support-ticket-select"
+          className="support-ticket-filter-select"
           options={PRIORITIES.map((item) => ({
             value: item,
-            label: item ? label(item) : `${strings.filters.all} ${strings.filters.priority}`,
+            label: item ? label(item) : strings.filters.all,
           }))}
           searchable={false}
           value={priority}
-          onChange={(value) => setPriority(String(value) as SupportTicketPriority | "")}
+          onChange={(value) => setPriority(value as SupportTicketPriority | "")}
         />
         <Button variant="secondary" leftIcon={<Icon name="search" />} onClick={() => void load()}>
           Search
         </Button>
       </div>
 
-      {error && <p className="error-text">{error}</p>}
+      {error && <p className="error-text notice-line">{error}</p>}
 
-      <div className="support-ticket-grid">
-        <div className="table-wrap support-ticket-table-wrap">
-          <table className="data-table sleek-users-table support-ticket-table">
+      <div className="support-ticket-workspace">
+        <div className="support-ticket-table-card">
+          <table className="data-table institute-table">
             <thead>
               <tr>
                 <th>{strings.table.customer}</th>
@@ -288,7 +324,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                     <td className="table-actions institute-row-actions">
                       <button type="button" className="action-btn-icon" onClick={() => setSelectedId(ticket.id)}>
                         <Icon name="eye" />
-                        <span>Open</span>
+                        <span>Chat</span>
                       </button>
                     </td>
                   </tr>
@@ -298,94 +334,248 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
           </table>
         </div>
 
-        <aside className="support-ticket-detail">
+        <aside className="support-ticket-detail" style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: "620px" }}>
           {selectedTicket ? (
             <>
-              <div className="support-ticket-detail-head">
+              <div className="support-ticket-detail-head" style={{ borderBottom: "1px solid var(--border)", paddingBottom: "12px", marginBottom: "12px" }}>
                 <div>
-                  <span className="support-ticket-id">#{selectedTicket.id}</span>
-                  <h2>{selectedTicket.subject}</h2>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                    <span className="support-ticket-id">#{selectedTicket.id}</span>
+                    <Badge tone={statusTone(selectedTicket.status)}>{label(selectedTicket.status)}</Badge>
+                    <Badge tone={priorityTone(selectedTicket.priority)}>{label(selectedTicket.priority)}</Badge>
+                  </div>
+                  <h2 style={{ fontSize: "1.1rem", fontWeight: 700, margin: "6px 0 0 0", color: "var(--text)" }}>
+                    {selectedTicket.subject}
+                  </h2>
                 </div>
-                <Badge tone={statusTone(selectedTicket.status)}>{label(selectedTicket.status)}</Badge>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  {selectedTicket.status === "closed" ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      loading={saving}
+                      leftIcon={<Icon name="check" />}
+                      onClick={() => void reopenChat()}
+                      style={{ background: "#10b981", color: "#ffffff", borderColor: "#10b981" }}
+                    >
+                      Reopen Chat
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      loading={saving}
+                      leftIcon={<Icon name="cross" />}
+                      onClick={() => void closeChat()}
+                      style={{ background: "#ef4444", color: "#ffffff", borderColor: "#ef4444" }}
+                    >
+                      Close Chat
+                    </Button>
+                  )}
+                </div>
               </div>
 
-              <div className="support-ticket-meta">
-                <span>{strings.detail.customer}</span>
-                <strong>{selectedTicket.name}</strong>
-                <a href={`mailto:${selectedTicket.email}`}>{selectedTicket.email}</a>
-                {selectedTicket.phone_number && <small>{strings.detail.phone}: {selectedTicket.phone_number}</small>}
-                {selectedTicket.institute_name && <small>{strings.detail.institute}: {selectedTicket.institute_name}</small>}
-                {!isInstituteInbox && selectedTicket.escalated_at && (
-                  <small>
-                    {strings.detail.forwardedBy}: {selectedTicket.escalated_by_name || strings.detail.instituteAdmin}
-                    {" · "}
-                    {formatDate(selectedTicket.escalated_at)}
+              <div
+                className="support-ticket-meta"
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: "12px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  marginBottom: "12px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div>
+                  <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: 700, display: "block" }}>
+                    CUSTOMER
                   </small>
-                )}
-              </div>
-
-              <div className="support-ticket-message">
-                <span>{strings.detail.message}</span>
-                <p>{selectedTicket.message}</p>
-              </div>
-
-              <div className="support-ticket-form-row">
-                <div className="support-ticket-field">
-                  <span>{strings.filters.status}</span>
-                  <SearchableSelect
-                    ariaLabel={strings.filters.status}
-                    className="support-ticket-select"
-                    options={STATUSES.filter(Boolean).map((item) => ({
-                      value: item,
-                      label: label(item),
-                    }))}
-                    searchable={false}
-                    value={draftStatus}
-                    onChange={(value) => setDraftStatus(String(value) as SupportTicketStatus)}
-                  />
+                  <strong style={{ fontSize: "0.95rem", color: "var(--text)", display: "block" }}>{selectedTicket.name}</strong>
+                  {selectedTicket.phone_number && (
+                    <small style={{ color: "var(--text-muted)", fontSize: "0.8rem", display: "block" }}>
+                      Phone: {selectedTicket.phone_number}
+                    </small>
+                  )}
                 </div>
-                <div className="support-ticket-field">
-                  <span>{strings.filters.priority}</span>
-                  <SearchableSelect
-                    ariaLabel={strings.filters.priority}
-                    className="support-ticket-select"
-                    options={PRIORITIES.filter(Boolean).map((item) => ({
-                      value: item,
-                      label: label(item),
-                    }))}
-                    searchable={false}
-                    value={draftPriority}
-                    onChange={(value) => setDraftPriority(String(value) as SupportTicketPriority)}
-                  />
+                <div style={{ textAlign: "right" }}>
+                  <a href={`mailto:${selectedTicket.email}`} style={{ fontSize: "0.85rem", color: "var(--primary, #0284c7)", fontWeight: 600 }}>
+                    {selectedTicket.email}
+                  </a>
+                  {selectedTicket.institute_name && (
+                    <small style={{ color: "var(--text-muted)", fontSize: "0.8rem", display: "block" }}>
+                      Inst: {selectedTicket.institute_name}
+                    </small>
+                  )}
                 </div>
               </div>
 
-              <label className="support-ticket-note">
-                {strings.detail.note}
-                <textarea
-                  className="input"
-                  value={draftNote}
-                  onChange={(event) => setDraftNote(event.target.value)}
-                  placeholder={strings.detail.notePlaceholder}
-                  rows={5}
-                />
-              </label>
-
-              <div className="support-ticket-detail-actions">
-                <Button loading={saving} leftIcon={<Icon name="check" />} onClick={() => void saveSelected()}>
-                  {strings.detail.save}
-                </Button>
-                {isInstituteInbox && (
-                  <Button
-                    disabled={saving}
-                    leftIcon={<Icon name="arrowRight" />}
-                    onClick={() => void forwardSelected()}
-                    variant="secondary"
-                  >
-                    {strings.forward.action}
-                  </Button>
+              <div
+                ref={chatStreamRef}
+                style={{
+                  flex: 1,
+                  minHeight: "260px",
+                  maxHeight: "380px",
+                  overflowY: "auto",
+                  padding: "12px",
+                  borderRadius: "14px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                  marginBottom: "14px",
+                }}
+              >
+                {selectedTicket.messages && selectedTicket.messages.length > 0 ? (
+                  selectedTicket.messages.map((msg: SupportTicketMessage, idx: number) => {
+                    const isAdmin = msg.sender_role === "admin" || msg.sender_role === "staff";
+                    return (
+                      <div
+                        key={msg.id || idx}
+                        style={{
+                          alignSelf: isAdmin ? "flex-end" : "flex-start",
+                          maxWidth: "85%",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: isAdmin ? "flex-end" : "flex-start",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
+                          <span
+                            style={{
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              color: isAdmin ? "var(--primary, #b91c2b)" : "var(--text)",
+                            }}
+                          >
+                            {msg.sender_name} {isAdmin ? "(Admin)" : ""}
+                          </span>
+                          <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                            {formatDate(msg.created_at)}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            background: isAdmin ? "var(--primary, #b91c2b)" : "rgba(255, 255, 255, 0.08)",
+                            color: isAdmin ? "#ffffff" : "var(--text)",
+                            border: isAdmin ? "none" : "1px solid var(--border)",
+                            padding: "10px 14px",
+                            borderRadius: isAdmin ? "16px 16px 2px 16px" : "16px 16px 16px 2px",
+                            fontSize: "0.9rem",
+                            lineHeight: 1.45,
+                            whiteSpace: "pre-wrap",
+                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
+                          }}
+                        >
+                          {msg.message}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div style={{ alignSelf: "flex-start", maxWidth: "85%" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text)" }}>{selectedTicket.name}</span>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{formatDate(selectedTicket.created_at)}</span>
+                    </div>
+                    <div
+                      style={{
+                        background: "rgba(255, 255, 255, 0.08)",
+                        color: "var(--text)",
+                        border: "1px solid var(--border)",
+                        padding: "10px 14px",
+                        borderRadius: "16px 16px 16px 2px",
+                        fontSize: "0.9rem",
+                        lineHeight: 1.45,
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      {selectedTicket.message}
+                    </div>
+                  </div>
                 )}
               </div>
+
+              {selectedTicket.status === "closed" ? (
+                <div
+                  style={{
+                    padding: "14px 16px",
+                    borderRadius: "12px",
+                    background: "rgba(239, 68, 68, 0.12)",
+                    border: "1px solid rgba(239, 68, 68, 0.25)",
+                    color: "#ef4444",
+                    textAlign: "center",
+                    fontSize: "0.875rem",
+                    fontWeight: 600,
+                    marginTop: "auto",
+                  }}
+                >
+                  🔒 This chat was closed. Click <strong>"Reopen Chat"</strong> above to continue the conversation.
+                </div>
+              ) : (
+                <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "auto" }}>
+                  <textarea
+                    className="input"
+                    rows={3}
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="Type your reply to customer..."
+                    style={{ resize: "none", borderRadius: "10px", padding: "10px 12px", fontSize: "0.9rem" }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <small style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontWeight: 600 }}>Priority:</small>
+                      <SearchableSelect
+                        ariaLabel={strings.filters.priority}
+                        className="support-ticket-select"
+                        options={PRIORITIES.filter(Boolean).map((item) => ({
+                          value: item,
+                          label: label(item),
+                        }))}
+                        searchable={false}
+                        value={draftPriority}
+                        onChange={(value) => setDraftPriority(String(value) as SupportTicketPriority)}
+                      />
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {isInstituteInbox && (
+                        <Button
+                          type="button"
+                          disabled={saving}
+                          leftIcon={<Icon name="arrowRight" />}
+                          onClick={() => void forwardSelected()}
+                          variant="secondary"
+                          size="sm"
+                        >
+                          Forward
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        disabled={sendingMessage || !replyText.trim()}
+                        onClick={() => void handleSendMessageAndClose()}
+                      >
+                        Send & Close
+                      </Button>
+                      <Button
+                        type="submit"
+                        size="sm"
+                        loading={sendingMessage}
+                        disabled={!replyText.trim()}
+                        leftIcon={<Icon name="arrowRight" />}
+                      >
+                        Send Reply
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              )}
             </>
           ) : (
             <div className="support-ticket-empty-detail">

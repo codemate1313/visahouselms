@@ -33,6 +33,20 @@ class InstituteSupportTicketUpdate(BaseModel):
     admin_note: Optional[str] = Field(default=None, max_length=5000)
 
 
+class SupportTicketMessageCreate(BaseModel):
+    message: str = Field(min_length=1, max_length=5000)
+
+
+class SupportTicketMessageResponse(BaseModel):
+    id: int
+    ticket_id: int
+    sender_id: Optional[int] = None
+    sender_name: str
+    sender_role: str
+    message: str
+    created_at: datetime
+
+
 class SupportTicketResponse(BaseModel):
     id: int
     source: str
@@ -58,6 +72,7 @@ class SupportTicketResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime] = None
     resolved_at: Optional[datetime] = None
+    messages: list[SupportTicketMessageResponse] = Field(default_factory=list)
 
 
 class SupportTicketListResponse(BaseModel):
@@ -87,3 +102,5 @@ class PortalSupportTicketResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime] = None
     resolved_at: Optional[datetime] = None
+    messages: list[SupportTicketMessageResponse] = Field(default_factory=list)
+

@@ -29,6 +29,16 @@ export type SupportTicketStatus = "new" | "open" | "resolved" | "closed";
 export type SupportTicketPriority = "low" | "normal" | "high";
 export type SupportTicketQueue = "institute" | "super_admin";
 
+export interface SupportTicketMessage {
+  id: number;
+  ticket_id: number;
+  sender_id: number | null;
+  sender_name: string;
+  sender_role: "customer" | "admin" | "staff" | string;
+  message: string;
+  created_at: string;
+}
+
 export interface SupportTicket {
   id: number;
   source: string;
@@ -54,6 +64,7 @@ export interface SupportTicket {
   created_at: string;
   updated_at: string | null;
   resolved_at: string | null;
+  messages?: SupportTicketMessage[];
 }
 
 export interface SupportTicketListResponse {
@@ -77,6 +88,7 @@ export interface PortalSupportTicket {
   created_at: string;
   updated_at: string | null;
   resolved_at: string | null;
+  messages?: SupportTicketMessage[];
 }
 
 export interface InstructorAccount {
