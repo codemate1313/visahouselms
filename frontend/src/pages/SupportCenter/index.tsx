@@ -1,6 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { apiClient } from "@/api/client";
+import { apiClient, API_BASE_URL } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { PortalSupportTicket, SupportTicketMessage, SupportTicketPriority, SupportTicketStatus } from "@/api/types";
 import { Icon } from "@/components/icons";
@@ -18,6 +18,55 @@ import { useToastStore } from "@/store/toastStore";
 import { useAuthStore } from "@/store/authStore";
 import { supportCenterStrings as strings } from "./SupportCenter.strings";
 import "./SupportCenter.css";
+
+const STORAGE_BASE = API_BASE_URL.replace(/\/api\/?$/, "") + "/storage/";
+
+function AttachmentPreview({ path, isLight }: { path: string; isLight?: boolean }) {
+  const url = STORAGE_BASE + path;
+  const isImage = /\.(png|jpg|jpeg|webp|gif)$/i.test(path);
+  const filename = path.split("/").pop() ?? path;
+  if (isImage) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block" }}>
+        <img
+          src={url}
+          alt={filename}
+          style={{
+            maxWidth: "160px",
+            maxHeight: "120px",
+            borderRadius: "8px",
+            border: `1px solid ${isLight ? "rgba(255,255,255,0.2)" : "var(--border)"}`,
+            objectFit: "cover",
+            cursor: "pointer",
+          }}
+        />
+      </a>
+    );
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        padding: "6px 12px",
+        borderRadius: "8px",
+        background: isLight ? "rgba(255,255,255,0.15)" : "var(--surface-hover)",
+        border: `1px solid ${isLight ? "rgba(255,255,255,0.25)" : "var(--border)"}`,
+        fontSize: "0.8rem",
+        fontWeight: 600,
+        color: isLight ? "#ffffff" : "var(--text)",
+        textDecoration: "none",
+        cursor: "pointer",
+      }}
+    >
+      📎 {filename.length > 28 ? filename.slice(0, 25) + "..." : filename}
+    </a>
+  );
+}
 
 const CATEGORY_OPTIONS = Object.entries(strings.categories).map(([value, label]) => ({ value, label }));
 
@@ -65,6 +114,7 @@ export function SupportCenter() {
   const [subject, setSubject] = useState(() => searchParams.get("subject") || "");
   const [message, setMessage] = useState("");
   const [replyText, setReplyText] = useState("");
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -73,6 +123,7 @@ export function SupportCenter() {
   const [error, setError] = useState<string | null>(null);
 
   const chatStreamRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const showSuccess = useToastStore((state) => state.showSuccess);
   const role = useAuthStore((state) => state.user?.role);
   const usesInstituteSupport = role === "STUDENT" || role === "INST_INSTRUCTOR";
@@ -171,15 +222,20 @@ export function SupportCenter() {
 
   async function handleSendMessage(e?: FormEvent) {
     if (e) e.preventDefault();
-    if (!selectedTicket || !replyText.trim()) return;
+    if (!selectedTicket || (!replyText.trim() && attachedFiles.length === 0)) return;
     setSendingMessage(true);
     setError(null);
     try {
+      const form = new FormData();
+      form.append("message", replyText.trim() || "(attachment)");
+      for (const file of attachedFiles) form.append("files", file);
       const { data: updatedTicket } = await apiClient.post<PortalSupportTicket>(
         `/support/my-tickets/${selectedTicket.id}/messages`,
-        { message: replyText.trim() }
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
       setReplyText("");
+      setAttachedFiles([]);
       showSuccess("Message sent successfully", "Message Sent");
       if (updatedTicket && updatedTicket.messages) {
         setTickets((prev) =>
@@ -596,6 +652,13 @@ export function SupportCenter() {
                         }}
                       >
                         {msg.message}
+                        {msg.attachments && msg.attachments.length > 0 && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "8px" }}>
+                            {msg.attachments.map((path, i) => (
+                              <AttachmentPreview key={i} path={path} isLight={!isAdmin} />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -664,7 +727,18 @@ export function SupportCenter() {
                 🔒 This support ticket is closed. If you have a new issue, please click <strong>"Raise a Query"</strong>.
               </div>
             ) : (
-              <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {/* Attachment preview strip */}
+                {attachedFiles.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", padding: "8px 10px", borderRadius: "8px", background: "var(--surface-hover, rgba(0,0,0,0.04))", border: "1px solid var(--border)" }}>
+                    {attachedFiles.map((f, i) => (
+                      <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 10px", borderRadius: "20px", background: "var(--surface)", border: "1px solid var(--border)", fontSize: "0.78rem", fontWeight: 600 }}>
+                        {f.type.startsWith("image/") ? "🖼" : "📎"} {f.name.length > 22 ? f.name.slice(0, 20) + "..." : f.name}
+                        <button type="button" onClick={() => setAttachedFiles(prev => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "0 2px", fontSize: "0.9rem" }}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <textarea
                   className="input"
                   rows={3}
@@ -673,22 +747,62 @@ export function SupportCenter() {
                   placeholder="Type your follow-up reply..."
                   style={{ resize: "none", borderRadius: "10px", padding: "12px", fontSize: "0.925rem", width: "100%" }}
                 />
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const newFiles = Array.from(e.target.files ?? []);
+                    setAttachedFiles(prev => [...prev, ...newFiles].slice(0, 5));
+                    e.target.value = "";
+                  }}
+                />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    leftIcon={<Icon name="check" />}
-                    loading={saving}
-                    onClick={() => void handleCloseTicket()}
-                  >
-                    Close Ticket
-                  </Button>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      leftIcon={<Icon name="check" />}
+                      loading={saving}
+                      onClick={() => void handleCloseTicket()}
+                    >
+                      Close Ticket
+                    </Button>
+                    <button
+                      type="button"
+                      title="Attach files (images, PDF, Word, Excel — max 5, 10MB each)"
+                      onClick={() => fileInputRef.current?.click()}
+                      style={{
+                        background: "none",
+                        border: "1px solid var(--border)",
+                        borderRadius: "8px",
+                        padding: "7px 10px",
+                        cursor: "pointer",
+                        fontSize: "1.05rem",
+                        color: "var(--text-muted)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        lineHeight: 1,
+                      }}
+                    >
+                      📎
+                      {attachedFiles.length > 0 && (
+                        <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--primary)" }}>
+                          {attachedFiles.length}
+                        </span>
+                      )}
+                    </button>
+                  </div>
                   <Button
                     type="submit"
                     size="sm"
                     loading={sendingMessage}
-                    disabled={!replyText.trim()}
+                    disabled={!replyText.trim() && attachedFiles.length === 0}
                     leftIcon={<Icon name="arrowRight" />}
                   >
                     Send Reply

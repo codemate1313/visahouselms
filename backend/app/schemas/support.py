@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -35,6 +35,7 @@ class InstituteSupportTicketUpdate(BaseModel):
 
 class SupportTicketMessageCreate(BaseModel):
     message: str = Field(min_length=1, max_length=5000)
+    attachments: Optional[List[str]] = Field(default=None)  # list of storage-relative paths returned by upload endpoint
 
 
 class SupportTicketMessageResponse(BaseModel):
@@ -44,6 +45,7 @@ class SupportTicketMessageResponse(BaseModel):
     sender_name: str
     sender_role: str
     message: str
+    attachments: Optional[List[str]] = None
     created_at: datetime
 
 

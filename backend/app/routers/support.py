@@ -1,8 +1,11 @@
-from typing import Optional
+import uuid
+from pathlib import Path
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, status, UploadFile
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies.auth import get_current_user, require_role
 from app.models.role import INSTITUTE_ADMIN, SUPER_ADMIN
@@ -20,6 +23,46 @@ from app.schemas.support import (
     SupportTicketUpdate,
 )
 from app.services import support_service
+
+# Allowed MIME types for support attachments
+_ALLOWED_ATTACH_TYPES = {
+    "image/png", "image/jpeg", "image/webp", "image/gif",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
+_MAX_ATTACH_BYTES = 10 * 1024 * 1024  # 10 MB per file
+_MAX_FILES = 5
+
+
+async def _save_support_attachments(ticket_id: int, files: List[UploadFile]) -> List[str]:
+    """Save uploaded files to storage and return their storage-relative paths."""
+    saved: List[str] = []
+    attach_dir = settings.storage_path / "support_attachments" / str(ticket_id)
+    attach_dir.mkdir(parents=True, exist_ok=True)
+    for upload in files[:_MAX_FILES]:
+        content_type = (upload.content_type or "").split(";")[0].strip()
+        if content_type not in _ALLOWED_ATTACH_TYPES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File type '{content_type}' is not allowed. Allowed: images, PDF, Word, Excel.",
+            )
+        content = await upload.read()
+        if len(content) > _MAX_ATTACH_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Each attachment must be 10 MB or smaller.",
+            )
+        ext = Path(upload.filename or "file").suffix or ".bin"
+        filename = f"{uuid.uuid4().hex}{ext}"
+        dest = attach_dir / filename
+        dest.write_bytes(content)
+        relative = f"support_attachments/{ticket_id}/{filename}"
+        saved.append(relative)
+    return saved
+
 
 public_router = APIRouter(prefix="/support", tags=["support"])
 admin_router = APIRouter(
@@ -92,18 +135,23 @@ def create_my_ticket(
 
 
 @public_router.post("/my-tickets/{ticket_id}/messages", response_model=SupportTicketResponse)
-def post_my_ticket_message(
+async def post_my_ticket_message(
     ticket_id: int,
-    payload: SupportTicketMessageCreate,
+    message: str = Form(..., min_length=1, max_length=5000),
+    files: Optional[List[UploadFile]] = File(default=None),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    attachments: List[str] = []
+    if files:
+        attachments = await _save_support_attachments(ticket_id, [f for f in files if f.filename])
     ticket = support_service.add_ticket_message(
         db,
         ticket_id,
-        message_text=payload.message,
+        message_text=message,
         sender=user,
         sender_role="customer",
+        attachments=attachments or None,
     )
     return support_service.serialize_ticket(ticket)
 
@@ -162,19 +210,24 @@ def update_admin_ticket(ticket_id: int, payload: SupportTicketUpdate, db: Sessio
 
 
 @admin_router.post("/{ticket_id}/messages", response_model=SupportTicketResponse)
-def post_admin_ticket_message(
+async def post_admin_ticket_message(
     ticket_id: int,
-    payload: SupportTicketMessageCreate,
+    message: str = Form(..., min_length=1, max_length=5000),
+    files: Optional[List[UploadFile]] = File(default=None),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    attachments: List[str] = []
+    if files:
+        attachments = await _save_support_attachments(ticket_id, [f for f in files if f.filename])
     ticket = support_service.add_ticket_message(
         db,
         ticket_id,
-        message_text=payload.message,
+        message_text=message,
         sender=user,
         sender_role="admin",
         queue=SUPPORT_QUEUE_SUPER_ADMIN,
+        attachments=attachments or None,
     )
     return support_service.serialize_ticket(ticket)
 
@@ -261,21 +314,26 @@ def update_institute_ticket(
 
 
 @institute_router.post("/{ticket_id}/messages", response_model=SupportTicketResponse)
-def post_institute_ticket_message(
+async def post_institute_ticket_message(
     ticket_id: int,
-    payload: SupportTicketMessageCreate,
+    message: str = Form(..., min_length=1, max_length=5000),
+    files: Optional[List[UploadFile]] = File(default=None),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     institute_id = require_institute_id(user)
+    attachments: List[str] = []
+    if files:
+        attachments = await _save_support_attachments(ticket_id, [f for f in files if f.filename])
     ticket = support_service.add_ticket_message(
         db,
         ticket_id,
-        message_text=payload.message,
+        message_text=message,
         sender=user,
         sender_role="admin",
         queue=SUPPORT_QUEUE_INSTITUTE,
         institute_id=institute_id,
+        attachments=attachments or None,
     )
     return support_service.serialize_ticket(ticket)
 

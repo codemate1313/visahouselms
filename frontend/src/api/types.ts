@@ -36,6 +36,7 @@ export interface SupportTicketMessage {
   sender_name: string;
   sender_role: "customer" | "admin" | "staff" | string;
   message: string;
+  attachments?: string[] | null;
   created_at: string;
 }
 

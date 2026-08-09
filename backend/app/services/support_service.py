@@ -1,6 +1,7 @@
+import json
 import logging
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, or_, select
@@ -43,12 +44,17 @@ def serialize_ticket(ticket: SupportTicket) -> dict:
             "sender_name": ticket.name,
             "sender_role": "customer",
             "message": ticket.message,
+            "attachments": None,
             "created_at": ticket.created_at,
         })
 
     # 2. Add thread messages from database
     if hasattr(ticket, "messages") and ticket.messages:
         for msg in ticket.messages:
+            try:
+                attachments = json.loads(msg.attachments) if msg.attachments else None
+            except (json.JSONDecodeError, TypeError):
+                attachments = None
             messages_list.append({
                 "id": msg.id,
                 "ticket_id": msg.ticket_id,
@@ -56,6 +62,7 @@ def serialize_ticket(ticket: SupportTicket) -> dict:
                 "sender_name": msg.sender_name,
                 "sender_role": msg.sender_role,
                 "message": msg.message,
+                "attachments": attachments,
                 "created_at": msg.created_at,
             })
 
@@ -499,6 +506,7 @@ def add_ticket_message(
     sender_role: str = "staff",
     queue: Optional[str] = None,
     institute_id: Optional[int] = None,
+    attachments: Optional[List[str]] = None,
 ) -> SupportTicket:
     ticket = get_ticket(db, ticket_id, queue=queue, institute_id=institute_id)
     if ticket.status == SUPPORT_STATUS_CLOSED:
@@ -515,12 +523,18 @@ def add_ticket_message(
         else:
             role_label = "customer"
 
+    attachments_json: Optional[str] = None
+    if attachments:
+        valid_attachments = [p for p in attachments if isinstance(p, str) and p.startswith("support_attachments/")]
+        attachments_json = json.dumps(valid_attachments) if valid_attachments else None
+
     msg = SupportTicketMessage(
         ticket_id=ticket.id,
         sender_id=sender.id if sender else None,
         sender_name=name,
         sender_role=role_label,
         message=message_text.strip(),
+        attachments=attachments_json,
     )
     db.add(msg)
 

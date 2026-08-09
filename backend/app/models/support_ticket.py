@@ -86,6 +86,7 @@ class SupportTicketMessage(Base):
     sender_name: Mapped[str] = mapped_column(String(160), nullable=False)
     sender_role: Mapped[str] = mapped_column(String(40), nullable=False, default="customer")  # "customer" | "admin" | "staff"
     message: Mapped[str] = mapped_column(Text, nullable=False)
+    attachments: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON-encoded list of storage-relative paths
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), index=True)
 
     ticket: Mapped["SupportTicket"] = relationship(back_populates="messages")
