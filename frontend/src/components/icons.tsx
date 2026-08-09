@@ -69,9 +69,17 @@ export type IconName =
   | "socialFacebook"
   | "socialTwitter"
   | "socialTiktok"
-  | "socialWebsite";
+  | "socialWebsite"
+  | "globe";
 
 const ICON_PATHS: Record<IconName, ReactNode> = {
+  globe: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </>
+  ),
   microphone: (
     <>
       <rect x="9" y="3" width="6" height="11" rx="3" />

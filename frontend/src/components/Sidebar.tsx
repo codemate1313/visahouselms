@@ -101,7 +101,7 @@ export function Sidebar({
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isOpenOnMobile, setIsOpenOnMobile] = useState(false);
   const [isMobileScreen, setIsMobileScreen] = useState(() => window.innerWidth <= 768);
-  const [hoveredTooltip, setHoveredTooltip] = useState<{ label: string; top: number } | null>(null);
+  const [hoveredTooltip, setHoveredTooltip] = useState<{ label: string; top: number; left: number } | null>(null);
 
   const isCollapsed = collapsed && !isMobileScreen;
 
@@ -111,6 +111,7 @@ export function Sidebar({
     setHoveredTooltip({
       label,
       top: rect.top + rect.height / 2,
+      left: rect.right + 10,
     });
   };
 
@@ -438,11 +439,7 @@ export function Sidebar({
                 onMouseLeave={handleMouseLeaveTooltip}
               >
                 <div className="sidebar-item-icon-wrap">
-                  <svg className="sidebar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="2" y1="12" x2="22" y2="12" />
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                  </svg>
+                  <Icon name="globe" className="sidebar-icon" />
                 </div>
                 <span className="sidebar-item-label">Visit Website</span>
                 <svg className="sidebar-item-external-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -477,7 +474,7 @@ export function Sidebar({
           className="sidebar-fixed-tooltip"
           style={{
             position: "fixed",
-            left: "86px",
+            left: `${hoveredTooltip.left}px`,
             top: `${hoveredTooltip.top}px`,
             transform: "translateY(-50%)",
           }}
