@@ -52,6 +52,7 @@ export function SupportCenter() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [readTicketIds, setReadTicketIds] = useState<Set<number>>(() => new Set());
 
   const [category, setCategory] = useState(() => searchParams.get("category") || "general");
   const [subject, setSubject] = useState(() => searchParams.get("subject") || "");
@@ -73,6 +74,17 @@ export function SupportCenter() {
     () => tickets.find((ticket) => ticket.id === selectedId) ?? tickets[0] ?? null,
     [selectedId, tickets]
   );
+
+  useEffect(() => {
+    if (isChatOpen && selectedId) {
+      setReadTicketIds((prev) => {
+        if (prev.has(selectedId)) return prev;
+        const next = new Set(prev);
+        next.add(selectedId);
+        return next;
+      });
+    }
+  }, [isChatOpen, selectedId]);
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
@@ -241,10 +253,11 @@ export function SupportCenter() {
               ) : (
                 tickets.map((ticket) => {
                   const isUnread =
-                    ticket.status === "new" ||
-                    (ticket.messages &&
-                      ticket.messages.length > 0 &&
-                      ticket.messages[ticket.messages.length - 1].sender_role !== "customer");
+                    !readTicketIds.has(ticket.id) &&
+                    (ticket.status === "new" ||
+                      (ticket.messages &&
+                        ticket.messages.length > 0 &&
+                        ticket.messages[ticket.messages.length - 1].sender_role !== "customer"));
 
                   const unreadMsgCount = ticket.messages
                     ? ticket.messages.filter((m) => m.sender_role !== "customer").length

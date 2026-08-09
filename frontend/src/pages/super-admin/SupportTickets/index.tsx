@@ -62,6 +62,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftPriority, setDraftPriority] = useState<SupportTicketPriority>("normal");
+  const [readTicketIds, setReadTicketIds] = useState<Set<number>>(() => new Set());
   const chatStreamRef = useRef<HTMLDivElement | null>(null);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
   const showSuccess = useToastStore((state) => state.showSuccess);
@@ -70,6 +71,17 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
     () => tickets.find((ticket) => ticket.id === selectedId) ?? tickets[0] ?? null,
     [selectedId, tickets]
   );
+
+  useEffect(() => {
+    if (isChatOpen && selectedId) {
+      setReadTicketIds((prev) => {
+        if (prev.has(selectedId)) return prev;
+        const next = new Set(prev);
+        next.add(selectedId);
+        return next;
+      });
+    }
+  }, [isChatOpen, selectedId]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -298,10 +310,11 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
               ) : (
                 tickets.map((ticket) => {
                   const isUnread =
-                    ticket.status === "new" ||
-                    (ticket.messages &&
-                      ticket.messages.length > 0 &&
-                      ticket.messages[ticket.messages.length - 1].sender_role === "customer");
+                    !readTicketIds.has(ticket.id) &&
+                    (ticket.status === "new" ||
+                      (ticket.messages &&
+                        ticket.messages.length > 0 &&
+                        ticket.messages[ticket.messages.length - 1].sender_role === "customer"));
 
                   const unreadMsgCount = ticket.messages
                     ? ticket.messages.filter((m) => m.sender_role === "customer").length
