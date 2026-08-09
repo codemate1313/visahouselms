@@ -282,15 +282,23 @@ export function SupportCenter() {
       {/* Main Full-Width Table Workspace */}
       <div className="support-ticket-workspace" style={{ width: "100%", marginTop: "16px" }}>
         <div className="support-ticket-table-card" style={{ width: "100%" }}>
-          <table className="data-table institute-table" style={{ width: "100%", tableLayout: "fixed" }}>
+          <table className="data-table institute-table" style={{ width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
+            <colgroup>
+              <col style={{ width: "38%" }} />
+              <col style={{ width: "14%" }} />
+              <col style={{ width: "11%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "19%" }} />
+              <col style={{ width: "8%" }} />
+            </colgroup>
             <thead>
               <tr>
-                <th style={{ width: "55%", padding: "12px 10px 12px 16px" }}>{strings.table?.enquiry ?? "Enquiry"}</th>
-                <th style={{ width: "12%", padding: "12px 2px" }}>Routing</th>
-                <th style={{ width: "100px", textAlign: "center", padding: "12px 4px" }}>{strings.table?.status ?? "Status"}</th>
-                <th style={{ width: "95px", textAlign: "center", padding: "12px 4px" }}>Priority</th>
-                <th style={{ width: "140px", padding: "12px 8px" }}>Submitted On</th>
-                <th className="table-actions-heading" style={{ width: "55px", textAlign: "center", padding: "12px 4px" }}>{strings.table?.actions ?? "Actions"}</th>
+                <th style={{ padding: "12px 10px 12px 16px" }}>{strings.table?.enquiry ?? "Enquiry"}</th>
+                <th style={{ padding: "12px 2px" }}>Routing</th>
+                <th style={{ textAlign: "center", padding: "12px 4px" }}>{strings.table?.status ?? "Status"}</th>
+                <th style={{ textAlign: "center", padding: "12px 4px" }}>Priority</th>
+                <th style={{ padding: "12px 8px" }}>Submitted On</th>
+                <th className="table-actions-heading" style={{ textAlign: "center", padding: "12px 4px" }}>{strings.table?.actions ?? "Actions"}</th>
               </tr>
             </thead>
             <tbody>

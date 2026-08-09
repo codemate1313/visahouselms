@@ -356,15 +356,23 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
       {/* Main Full-Width Table Workspace */}
       <div className="support-ticket-workspace" style={{ width: "100%", marginTop: "16px" }}>
         <div className="support-ticket-table-card" style={{ width: "100%" }}>
-          <table className="data-table institute-table" style={{ width: "100%", tableLayout: "fixed" }}>
+          <table className="data-table institute-table" style={{ width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
+            <colgroup>
+              <col style={{ width: "38%" }} />
+              <col style={{ width: "14%" }} />
+              <col style={{ width: "11%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "19%" }} />
+              <col style={{ width: "8%" }} />
+            </colgroup>
             <thead>
               <tr>
-                <th style={{ width: "55%", padding: "12px 10px 12px 16px" }}>{strings.table.customer}</th>
-                <th style={{ width: "12%", padding: "12px 2px" }}>{strings.table.enquiry}</th>
-                <th style={{ width: "100px", textAlign: "center", padding: "12px 4px" }}>{strings.table.status}</th>
-                <th style={{ width: "95px", textAlign: "center", padding: "12px 4px" }}>{strings.table.priority}</th>
-                <th style={{ width: "140px", padding: "12px 8px" }}>{strings.table.received}</th>
-                <th className="table-actions-heading" style={{ width: "55px", textAlign: "center", padding: "12px 4px" }}>{strings.table.actions}</th>
+                <th style={{ padding: "12px 10px 12px 16px" }}>{strings.table.customer}</th>
+                <th style={{ padding: "12px 2px" }}>{strings.table.enquiry}</th>
+                <th style={{ textAlign: "center", padding: "12px 4px" }}>{strings.table.status}</th>
+                <th style={{ textAlign: "center", padding: "12px 4px" }}>{strings.table.priority}</th>
+                <th style={{ padding: "12px 8px" }}>{strings.table.received}</th>
+                <th className="table-actions-heading" style={{ textAlign: "center", padding: "12px 4px" }}>{strings.table.actions}</th>
               </tr>
             </thead>
             <tbody>
