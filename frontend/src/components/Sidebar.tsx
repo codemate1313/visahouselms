@@ -99,6 +99,7 @@ export function Sidebar({
 
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
   const [activeFlyoutKey, setActiveFlyoutKey] = useState<string | null>(null);
+  const [hoveredFlyoutKey, setHoveredFlyoutKey] = useState<string | null>(null);
   const [closedFlyoutKey, setClosedFlyoutKey] = useState<string | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isOpenOnMobile, setIsOpenOnMobile] = useState(false);
@@ -118,6 +119,7 @@ export function Sidebar({
   useEffect(() => {
     setIsOpenOnMobile(false);
     setActiveFlyoutKey(null);
+    setHoveredFlyoutKey(null);
   }, [location.pathname]);
 
   // Click outside to close active flyout popover
@@ -321,13 +323,28 @@ export function Sidebar({
                 const isItemDirectlyActive = item.key === activeKey;
 
                 if (isAccordion) {
+                  const isFlyoutOpen =
+                    isCollapsed &&
+                    item.children &&
+                    item.children.length > 0 &&
+                    closedFlyoutKey !== item.key &&
+                    (hoveredFlyoutKey === item.key || activeFlyoutKey === item.key);
+
                   return (
                     <li
                       key={item.key}
                       className={`sidebar-menu-item accordion-item ${
                         isExpanded ? "is-open" : ""
                       } ${isParentActive ? "parent-active" : ""}`}
-                      onMouseLeave={() => setClosedFlyoutKey(null)}
+                      onMouseEnter={() => {
+                        if (closedFlyoutKey !== item.key) {
+                          setHoveredFlyoutKey(item.key);
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        setHoveredFlyoutKey(null);
+                        setClosedFlyoutKey(null);
+                      }}
                     >
                       <button
                         type="button"
@@ -365,7 +382,7 @@ export function Sidebar({
                       </button>
 
                       {isCollapsed && item.children && item.children.length > 0 && (
-                        <div className={`sidebar-flyout-popover ${activeFlyoutKey === item.key ? "is-click-open" : ""} ${closedFlyoutKey === item.key ? "is-closed-suppressed" : ""}`}>
+                        <div className={`sidebar-flyout-popover ${isFlyoutOpen ? "is-open" : ""}`}>
                           <div className="sidebar-flyout-header">{item.label}</div>
                           <ul className="sidebar-flyout-list">
                             {item.children.map((child) => {
@@ -377,6 +394,7 @@ export function Sidebar({
                                     className={`sidebar-flyout-link ${isSubActive ? "is-sub-active" : ""}`}
                                     onClick={() => {
                                       setActiveFlyoutKey(null);
+                                      setHoveredFlyoutKey(null);
                                       setClosedFlyoutKey(item.key);
                                     }}
                                   >

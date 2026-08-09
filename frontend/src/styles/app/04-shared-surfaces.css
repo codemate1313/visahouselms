@@ -2433,21 +2433,22 @@
 .sidebar-flyout-popover {
   position: absolute;
   left: calc(100% + 10px);
-  top: 0;
-  max-height: calc(100vh - 40px);
+  top: -12px;
+  max-height: calc(100vh - 48px);
   overflow-y: auto;
   scrollbar-width: thin;
-  background: var(--surface, #ffffff);
-  border: 1px solid var(--border, #e2e8f0);
+  background: #ffffff !important;
+  border: 1px solid var(--border, #cbd5e1);
   border-radius: var(--radius-xl, 16px);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22), 0 4px 12px rgba(0, 0, 0, 0.08);
   padding: 6px;
   width: 210px;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.18s;
-  z-index: 10000;
+  transition: opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1), transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.16s;
+  z-index: 99999 !important;
+  isolation: isolate;
 }
 
 /* NO ARROW ICON - ZERO ::after arrows on flyout popovers */
@@ -2467,23 +2468,13 @@
   background: transparent;
 }
 
-/* Suppressed state after clicking a sublink */
-.sidebar-flyout-popover.is-closed-suppressed {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
 [data-theme="dark"] .sidebar-flyout-popover {
-  background: #1e293b;
-  border-color: #334155;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.6) !important;
 }
 
-.huge-sidebar.is-collapsed .sidebar-menu-item.accordion-item:hover .sidebar-flyout-popover:not(.is-closed-suppressed),
-.huge-sidebar.is-collapsed .sidebar-menu-item.accordion-item:focus-within .sidebar-flyout-popover:not(.is-closed-suppressed),
-.sidebar-flyout-popover.is-click-open:not(.is-closed-suppressed) {
+.sidebar-flyout-popover.is-open {
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
