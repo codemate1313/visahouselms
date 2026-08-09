@@ -2393,10 +2393,9 @@
 }
 
 .sidebar-tooltip {
-  position: absolute;
-  left: calc(100% + 10px);
-  top: 50%;
-  transform: translateY(-50%) translateX(-4px);
+  position: fixed;
+  left: 92px;
+  margin-top: -12px;
   background: #0f172a;
   color: #ffffff;
   border: none;
@@ -2410,7 +2409,7 @@
   visibility: hidden;
   pointer-events: none;
   transition: opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1), transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.16s;
-  z-index: 10005;
+  z-index: 999999;
 }
 
 /* NO ARROW ICON - ZERO ::before / ::after arrows on tooltips */
