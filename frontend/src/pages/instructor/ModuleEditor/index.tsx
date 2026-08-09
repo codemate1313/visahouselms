@@ -206,7 +206,7 @@ export function ModuleEditor() {
 
   function editQuestion(question: ExamModuleQuestion) {
     setEditingQuestionId(question.id);
-    setManual({ question_type: question.question_type, prompt: question.prompt, instructions: question.instructions, passage: question.passage, image_path: question.image_path, image_url: question.image_url, options: question.options, correct_answers: question.correct_answers, explanation: question.explanation, points: question.points, difficulty: question.difficulty });
+    setManual({ question_type: question.question_type, prompt: question.prompt, instructions: question.instructions, passage: question.passage, image_path: question.image_path, image_url: question.image_url, options: question.options, correct_answers: question.correct_answers, interaction: question.interaction ?? {}, explanation: question.explanation, points: question.points, difficulty: question.difficulty });
   }
 
   async function uploadQuestionImage(file: File) {
@@ -243,10 +243,32 @@ export function ModuleEditor() {
       const form = new FormData(); form.append("file", importFile);
       const { data } = await apiClient.post<QuestionImportPreview>(`/instructor/modules/${module.id}/parts/${selectedPart.id}/import-preview`, form);
       const allowed = selectedPart.answer_constraints.allowed_question_types ?? [];
-      const normalized = data.questions.map((question) => {
-        if (!allowed.length || allowed.includes(question.question_type)) return question;
-        const nextType = allowed[0];
-        return { ...question, question_type: nextType, options: CHOICE_TYPES.has(nextType) ? question.options : [], correct_answers: ANSWER_FREE_TYPES.has(nextType) ? [] : question.correct_answers };
+      const requiredTurns = selectedPart.answer_constraints.required_turn_types ?? [];
+      const groupSize = selectedPart.answer_constraints.questions_per_group ?? 1;
+      const normalized = data.questions.map((question, index) => {
+        const nextType = !allowed.length || allowed.includes(question.question_type) ? question.question_type : allowed[0];
+        const turnType = question.interaction?.turn_type
+          ?? requiredTurns[Math.min(index, requiredTurns.length - 1)]
+          ?? selectedPart.answer_constraints.allowed_turn_types?.[0]
+          ?? null;
+        return {
+          ...question,
+          question_type: nextType,
+          prompt: selectedPart.answer_constraints.inline_marker_required && !question.prompt.includes("{{blank}}")
+            ? `${question.prompt} {{blank}}`
+            : question.prompt,
+          options: CHOICE_TYPES.has(nextType) ? question.options : [],
+          correct_answers: ANSWER_FREE_TYPES.has(nextType) ? [] : question.correct_answers,
+          interaction: {
+            ...question.interaction,
+            group_label: question.interaction?.group_label
+              ?? (selectedPart.answer_constraints.group_label_required ? `Conversation ${Math.floor(index / groupSize) + 1}` : null),
+            turn_type: turnType,
+            preparation_seconds: question.interaction?.preparation_seconds ?? selectedPart.answer_constraints.preparation_seconds ?? null,
+            response_seconds: question.interaction?.response_seconds ?? selectedPart.answer_constraints.response_seconds ?? null,
+            adaptive_follow_up: question.interaction?.adaptive_follow_up ?? turnType === "follow_up",
+          },
+        };
       });
       const requiredPoints = selectedPart.max_marks && selectedPart.question_limit ? Number(selectedPart.max_marks) / selectedPart.question_limit : null;
       setPreview({ ...data, questions: normalized.map((question) => requiredPoints === null ? question : { ...question, points: requiredPoints }) });

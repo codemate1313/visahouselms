@@ -96,6 +96,8 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             points = Decimal(part.max_marks) / count if part.max_marks is not None else Decimal("1")
             for index in range(count):
                 prompt = f"{part.part_code} source question {index + 1}"
+                if constraints.get("inline_marker_required"):
+                    prompt += " {{blank}}"
                 if part.part_code == "reading_4" and index == 0:
                     prompt = "What does the writer imply in the first paragraph?"
                 draft = _question(
@@ -106,6 +108,17 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
                     passage=f"Shared academic source for {part.part_code}." if constraints.get("passage_required") else None,
                     correct_answer=chr(65 + index) if constraints.get("unique_answers") else "A",
                 )
+                if constraints.get("group_label_required"):
+                    draft["interaction"] = {
+                        "group_label": f"Conversation {index // constraints['questions_per_group'] + 1}"
+                    }
+                if constraints.get("required_turn_types"):
+                    required_turns = constraints["required_turn_types"]
+                    draft["interaction"] = {
+                        "turn_type": required_turns[min(index, len(required_turns) - 1)],
+                        "preparation_seconds": constraints.get("preparation_seconds"),
+                        "response_seconds": constraints.get("response_seconds"),
+                    }
                 self.db.add(
                     ExamModuleQuestion(
                         part_id=part.id,
@@ -185,6 +198,9 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         listening = module_blueprint_service.get_blueprint("listening")
         self.assertEqual([part["question_limit"] for part in listening["parts"]], [7, 10, 7, 6])
         self.assertTrue(all(part["answer_constraints"]["audio_plays"] == 2 for part in listening["parts"]))
+        self.assertEqual(listening["parts"][1]["answer_constraints"]["group_count"], 5)
+        self.assertEqual(listening["parts"][1]["answer_constraints"]["questions_per_group"], 2)
+        self.assertTrue(listening["parts"][2]["answer_constraints"]["inline_marker_required"])
 
         writing = module_blueprint_service.get_blueprint("writing")
         self.assertEqual(
@@ -203,6 +219,19 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             [part["answer_constraints"]["notes_allowed"] for part in speaking["parts"]],
             [False, False, False, True],
         )
+        self.assertEqual(
+            [part["answer_constraints"]["required_turn_types"] for part in speaking["parts"]],
+            [
+                ["identity", "topic_question"],
+                ["roleplay_response", "roleplay_initiate"],
+                ["read_aloud", "follow_up"],
+                ["presentation", "follow_up"],
+            ],
+        )
+        self.assertTrue(all(
+            part["answer_constraints"]["interaction_mode"] == "ai_interlocutor"
+            for part in speaking["parts"]
+        ))
 
     def test_instructor_can_update_overall_and_speaking_part_timing(self) -> None:
         created = self._create("speaking")
@@ -410,6 +439,25 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         source_audio_path = settings.storage_path / source_mp3["url"].removeprefix("/storage/")
         copied_audio_path = settings.storage_path / copied_mp3["url"].removeprefix("/storage/")
         self.assertEqual(source_audio_path.read_bytes(), copied_audio_path.read_bytes())
+
+        source_conversations = next(
+            part for part in sources["listening"]["parts"] if part["part_code"] == "listening_2"
+        )
+        copied_conversations = next(
+            part for part in final_test["parts"] if part["part_code"] == "listening_2"
+        )
+        self.assertEqual(
+            [question["interaction"] for question in copied_conversations["questions"]],
+            [question["interaction"] for question in source_conversations["questions"]],
+        )
+        source_speaking = next(
+            part for part in sources["speaking"]["parts"] if part["part_code"] == "speaking_4"
+        )
+        copied_speaking = next(part for part in final_test["parts"] if part["part_code"] == "speaking_4")
+        self.assertEqual(
+            [question["interaction"] for question in copied_speaking["questions"]],
+            [question["interaction"] for question in source_speaking["questions"]],
+        )
 
         published = module_authoring_service.set_status(
             self.db, self.instructor, final_test["id"], "published", None

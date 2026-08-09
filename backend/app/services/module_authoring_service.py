@@ -101,6 +101,7 @@ def _question_out(question: ExamModuleQuestion) -> dict:
         "image_url": f"/storage/{question.image_path}" if question.image_path else None,
         "options": list(question.options or []),
         "correct_answers": list(question.correct_answers or []),
+        "interaction": dict(question.interaction or {}),
         "explanation": question.explanation,
         "points": str(question.points),
         "difficulty": question.difficulty,
@@ -172,6 +173,31 @@ def validation_errors(module: ExamModule) -> list[str]:
             answers = [answer for question in part.questions for answer in (question.correct_answers or [])]
             if len(answers) != len(set(answers)):
                 errors.append(f"Each option in {part.title} may be the key for only one gap.")
+        if constraints.get("inline_marker_required"):
+            missing_markers = [question for question in part.questions if "{{blank}}" not in question.prompt]
+            if missing_markers:
+                errors.append(f"Every question in {part.title} must place a {{{{blank}}}} marker in its prompt.")
+        if constraints.get("group_label_required"):
+            groups: dict[str, int] = {}
+            for question in part.questions:
+                label = str((question.interaction or {}).get("group_label") or "").strip()
+                if label:
+                    groups[label] = groups.get(label, 0) + 1
+            expected_groups = constraints.get("group_count")
+            questions_per_group = constraints.get("questions_per_group")
+            if len(groups) != expected_groups or any(size != questions_per_group for size in groups.values()):
+                errors.append(
+                    f"{part.title} requires {expected_groups} conversation groups with "
+                    f"{questions_per_group} questions in each group."
+                )
+        required_turn_types = set(constraints.get("required_turn_types", []))
+        if required_turn_types:
+            authored_turn_types = {
+                str((question.interaction or {}).get("turn_type") or "") for question in part.questions
+            }
+            missing_turn_types = sorted(required_turn_types - authored_turn_types)
+            if missing_turn_types:
+                errors.append(f"{part.title} is missing required speaking turns: {', '.join(missing_turn_types)}.")
         minimum_inference = constraints.get("minimum_inference_questions", 0)
         if minimum_inference:
             inference_terms = (
@@ -427,6 +453,7 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
                                 "passage": question.passage,
                                 "options": list(question.options or []),
                                 "correct_answers": list(question.correct_answers or []),
+                                "interaction": dict(question.interaction or {}),
                                 "explanation": question.explanation,
                                 "points": question.points,
                                 "difficulty": question.difficulty,
@@ -588,6 +615,17 @@ def _validate_question_for_part(part: ExamModulePart, data: dict, current_count:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"{part.title} requires the source text on every question",
         )
+    interaction = dict(data.get("interaction") or {})
+    if constraints.get("group_label_required") and not str(interaction.get("group_label") or "").strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"{part.title} requires a conversation group label")
+    if constraints.get("inline_marker_required") and "{{blank}}" not in data.get("prompt", ""):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"{part.title} prompts must include a {{{{blank}}}} marker")
+    allowed_turn_types = set(constraints.get("allowed_turn_types", []))
+    if allowed_turn_types and interaction.get("turn_type") not in allowed_turn_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{part.title} requires one of these speaking turns: {', '.join(sorted(allowed_turn_types))}",
+        )
     if data["question_type"] in {"matching_unique", "matching_reusable"} and len(data.get("correct_answers", [])) != 1:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -615,6 +653,7 @@ def _new_question(
         image_path=data.get("image_path"),
         options=[dict(option) for option in data.get("options", [])],
         correct_answers=list(data.get("correct_answers", [])),
+        interaction=dict(data.get("interaction") or {}),
         explanation=data.get("explanation"),
         points=data.get("points", 1),
         difficulty=data.get("difficulty", "medium"),
@@ -696,7 +735,7 @@ def update_question(
     question = _question_or_404(part, question_id)
     _validate_question_for_part(part, data, max(0, len(part.questions) - 1))
     previous_image_path = question.image_path
-    for field in ("question_type", "prompt", "instructions", "passage", "image_path", "correct_answers", "explanation", "points", "difficulty"):
+    for field in ("question_type", "prompt", "instructions", "passage", "image_path", "correct_answers", "interaction", "explanation", "points", "difficulty"):
         setattr(question, field, data.get(field))
     question.options = [dict(option) for option in data.get("options", [])]
     _audit(db, actor, "exam_module.question.update", module.id, ip, {"part_id": part.id, "question_id": question.id})

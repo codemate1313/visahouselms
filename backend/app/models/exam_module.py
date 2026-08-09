@@ -125,6 +125,7 @@ class ExamModuleQuestion(Base):
     image_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     options: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     correct_answers: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    interaction: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     points: Mapped[Decimal] = mapped_column(Numeric(7, 2), nullable=False, default=1)
     difficulty: Mapped[str] = mapped_column(String(20), nullable=False, default="medium")

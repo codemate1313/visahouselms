@@ -5,6 +5,7 @@ import type {
   QuestionDraft,
   QuestionOption,
   QuestionType,
+  SpeakingTurnType,
 } from "@/api/types";
 
 export const MODULE_TYPES = new Set<ExamModuleType>(["reading", "speaking", "writing", "listening", "full_mock", "final_test"]);
@@ -36,6 +37,15 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
   const defaultAnswer = part.answer_constraints.unique_answers
     ? sharedOptions.find((option) => !usedAnswers.has(option.key))?.key ?? ""
     : "A";
+  const groupSize = part.answer_constraints.questions_per_group ?? 1;
+  const groupLabel = part.answer_constraints.group_label_required
+    ? `Conversation ${Math.floor(part.questions.length / groupSize) + 1}`
+    : null;
+  const requiredTurns = part.answer_constraints.required_turn_types ?? [];
+  const usedTurns = new Set(part.questions.map((question) => question.interaction?.turn_type).filter(Boolean));
+  const turnType = (requiredTurns.find((turn) => !usedTurns.has(turn))
+    ?? part.answer_constraints.allowed_turn_types?.[0]
+    ?? null) as SpeakingTurnType | null;
   return {
     question_type: type,
     prompt: "",
@@ -45,6 +55,13 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
     image_url: null,
     options: sharedOptions,
     correct_answers: ANSWER_FREE_TYPES.has(type) || !defaultAnswer ? [] : [defaultAnswer],
+    interaction: {
+      group_label: groupLabel,
+      turn_type: turnType,
+      preparation_seconds: part.answer_constraints.preparation_seconds ?? null,
+      response_seconds: part.answer_constraints.response_seconds ?? null,
+      adaptive_follow_up: part.answer_constraints.interaction_mode === "ai_interlocutor" && turnType === "follow_up",
+    },
     explanation: null,
     points,
     difficulty: "medium",
@@ -60,6 +77,13 @@ export function questionPayload(question: QuestionDraft) {
     image_path: question.image_path || null,
     options: CHOICE_TYPES.has(question.question_type) ? question.options.filter((option) => option.text.trim()) : [],
     correct_answers: ANSWER_FREE_TYPES.has(question.question_type) ? [] : question.correct_answers.map((answer) => answer.trim().toUpperCase()).filter(Boolean),
+    interaction: {
+      group_label: question.interaction?.group_label?.trim() || null,
+      turn_type: question.interaction?.turn_type || null,
+      preparation_seconds: question.interaction?.preparation_seconds ?? null,
+      response_seconds: question.interaction?.response_seconds ?? null,
+      adaptive_follow_up: Boolean(question.interaction?.adaptive_follow_up),
+    },
     explanation: question.explanation?.trim() || null,
     points: Number(question.points),
     difficulty: question.difficulty,

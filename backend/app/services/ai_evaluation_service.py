@@ -998,6 +998,114 @@ def _remote_evaluator(config: dict, payload: dict) -> dict:
     return data.get("result", data)
 
 
+def _interlocutor_instruction(current_prompt: str, next_prompt: str, next_turn_type: str) -> str:
+    return (
+        "You are the interlocutor in a LanguageCert Academic practice speaking interview. "
+        "Listen to the candidate's previous response and produce exactly one concise examiner prompt. "
+        "Keep the intent and difficulty of the authored next prompt, respond naturally to what the candidate said, "
+        "do not score or coach the candidate, and do not mention AI.\n\n"
+        f"Previous authored prompt: {current_prompt}\n"
+        f"Next turn type: {next_turn_type}\n"
+        f"Authored next prompt: {next_prompt}\n\n"
+        'Return JSON only: {"next_prompt":"..."}'
+    )
+
+
+def _gemini_interlocutor(config: dict, prompt: str, audio_b64: str, mime_type: str) -> dict:
+    model = str(config.get("model") or DEFAULT_GEMINI_MODEL).removeprefix("models/")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={config['api_key']}"
+    payload = {
+        "contents": [{"parts": [
+            {"text": prompt},
+            {"inlineData": {"mimeType": mime_type, "data": audio_b64}},
+        ]}],
+        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.25},
+    }
+    with httpx.Client(timeout=45.0) as client:
+        response = client.post(url, headers={"Content-Type": "application/json"}, json=payload)
+        response.raise_for_status()
+        data = response.json()
+    return json.loads(data["candidates"][0]["content"]["parts"][0]["text"])
+
+
+def _openai_interlocutor(config: dict, prompt: str, audio_b64: str, mime_type: str) -> dict:
+    request = {
+        "model": _resolve_model_for_provider("openai", config.get("model")),
+        "input": [{"role": "user", "content": [
+            {"type": "input_text", "text": prompt},
+            {"type": "input_audio", "input_audio": {"data": audio_b64, "format": _audio_format(mime_type)}},
+        ]}],
+        "text": {"format": {
+            "type": "json_schema",
+            "name": "speaking_interlocutor_prompt",
+            "schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {"next_prompt": {"type": "string"}},
+                "required": ["next_prompt"],
+            },
+            "strict": True,
+        }},
+    }
+    with httpx.Client(timeout=45.0) as client:
+        response = client.post(
+            "https://api.openai.com/v1/responses",
+            headers={"Authorization": f"Bearer {config['api_key']}", "Content-Type": "application/json"},
+            json=request,
+        )
+        response.raise_for_status()
+        data = response.json()
+    return json.loads(_extract_openai_text(data))
+
+
+def generate_speaking_follow_up(
+    db: Session,
+    *,
+    audio_path: Path,
+    current_prompt: str,
+    next_prompt: str,
+    next_turn_type: str,
+    evaluator: Optional[Callable[[dict, str, str, str], dict]] = None,
+) -> dict:
+    """Generate one cached interview turn without making the exam depend on AI availability."""
+    fallback = {"next_prompt": next_prompt, "generated": False}
+    if not audio_path.is_file() or not config_status(db)["configured"]:
+        return fallback
+
+    mime_type = mimetypes.guess_type(audio_path.name)[0] or "audio/webm"
+    audio_b64 = base64.b64encode(audio_path.read_bytes()).decode("ascii")
+    prompt = _interlocutor_instruction(current_prompt, next_prompt, next_turn_type)
+    for config in _candidate_configs(db):
+        try:
+            if evaluator is not None:
+                result = evaluator(config, prompt, audio_b64, mime_type)
+            elif config["provider"] == "gemini":
+                result = _gemini_interlocutor(config, prompt, audio_b64, mime_type)
+            elif config["provider"] == "openai":
+                result = _openai_interlocutor(config, prompt, audio_b64, mime_type)
+            else:
+                response = httpx.post(
+                    config["endpoint_url"],
+                    headers={"Authorization": f"Bearer {config['api_key']}", "Content-Type": "application/json"},
+                    json={
+                        "task": "speaking_interlocutor_follow_up",
+                        "model": config.get("model"),
+                        "instructions": prompt,
+                        "audio_b64": audio_b64,
+                        "mime_type": mime_type,
+                    },
+                    timeout=45.0,
+                )
+                response.raise_for_status()
+                result = response.json().get("result", response.json())
+            generated_prompt = str(result.get("next_prompt") or "").strip()
+            if generated_prompt:
+                return {"next_prompt": generated_prompt[:1000], "generated": True}
+        except Exception:
+            logger.exception("Adaptive Speaking prompt generation failed with %s", config.get("provider"))
+    return fallback
+
+
 def _normalize(result: dict, part: ExamModulePart) -> dict:
     if not isinstance(result, dict) or not isinstance(result.get("criteria"), list):
         raise ValueError("Evaluator response must contain a criteria list")

@@ -108,7 +108,7 @@ async def maintenance_gate(request: Request, call_next):
     """
     from app.core.maintenance import is_enabled, is_read_only, get_message
     from app.middleware.request_logging import is_developer_request
-    from app.database import SessionLocal
+    from app.database import SessionLocal, get_db
 
     path = request.scope.get("path", "")
     method = request.method
@@ -127,7 +127,9 @@ async def maintenance_gate(request: Request, call_next):
             content={"detail": "You are viewing as another user. Exit impersonation to make changes.", "impersonation": True},
         )
 
-    db = SessionLocal()
+    db_override = app.dependency_overrides.get(get_db)
+    db_generator = db_override() if db_override is not None else None
+    db = next(db_generator) if db_generator is not None else SessionLocal()
     try:
         developer = is_developer_request(request)
         if is_enabled(db):
@@ -151,7 +153,10 @@ async def maintenance_gate(request: Request, call_next):
                 },
             )
     finally:
-        db.close()
+        if db_generator is not None:
+            db_generator.close()
+        else:
+            db.close()
 
     return await call_next(request)
 

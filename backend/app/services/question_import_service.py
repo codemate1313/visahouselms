@@ -86,6 +86,11 @@ def _question_preview(
     explanation: str = "",
     points: object = 1,
     difficulty: str = "medium",
+    group_label: str = "",
+    turn_type: str = "",
+    preparation_seconds: object = None,
+    response_seconds: object = None,
+    adaptive_follow_up: object = False,
 ) -> dict:
     normalized_options = []
     for index, option in enumerate(options):
@@ -122,6 +127,19 @@ def _question_preview(
         difficulty = "medium"
         warnings.append("Invalid difficulty was replaced with medium")
 
+    interaction: dict[str, object] = {}
+    if _clean(group_label):
+        interaction["group_label"] = _clean(group_label)
+    if _clean(turn_type):
+        interaction["turn_type"] = _clean(turn_type).lower().replace(" ", "_")
+    for field, raw in (("preparation_seconds", preparation_seconds), ("response_seconds", response_seconds)):
+        if _clean(raw):
+            try:
+                interaction[field] = int(str(raw))
+            except ValueError:
+                warnings.append(f"Invalid {field.replace('_', ' ')} value was ignored")
+    interaction["adaptive_follow_up"] = str(adaptive_follow_up).strip().lower() in {"1", "true", "yes", "on"}
+
     return {
         "question_type": kind,
         "prompt": _clean(prompt),
@@ -129,6 +147,7 @@ def _question_preview(
         "passage": str(passage or "").strip() or None,
         "options": normalized_options,
         "correct_answers": answers,
+        "interaction": interaction,
         "explanation": _clean(explanation) or None,
         "points": numeric_points,
         "difficulty": difficulty,
@@ -187,6 +206,11 @@ def parse_csv(content: bytes) -> tuple[str, list[dict], list[str]]:
             explanation=row.get("explanation") or row.get("rationale") or "",
             points=row.get("points") or 1,
             difficulty=row.get("difficulty") or "medium",
+            group_label=row.get("group_label") or row.get("conversation") or "",
+            turn_type=row.get("turn_type") or row.get("speaking_turn") or "",
+            preparation_seconds=row.get("preparation_seconds"),
+            response_seconds=row.get("response_seconds"),
+            adaptive_follow_up=row.get("adaptive_follow_up") or False,
         )
         if preview["warnings"]:
             warnings.append(f"Row {row_number}: {'; '.join(preview['warnings'])}")

@@ -54,8 +54,12 @@ export function SpeakingInterviewStage({
   const onContinuePartRef = useRef(onContinuePart);
   const previousQuestionIdRef = useRef<number | null>(question?.id ?? null);
   const t = strings.speakingInterview;
-  const preparationSeconds = currentPart.answer_constraints.preparation_seconds ?? 5;
-  const responseSeconds = currentPart.answer_constraints.response_seconds ?? 60;
+  const preparationSeconds = question?.interaction?.preparation_seconds
+    ?? currentPart.answer_constraints.preparation_seconds
+    ?? 5;
+  const responseSeconds = question?.interaction?.response_seconds
+    ?? currentPart.answer_constraints.response_seconds
+    ?? 60;
   const isLastQuestion = questionIndex >= currentPart.questions.length - 1;
 
   useEffect(() => {
@@ -172,7 +176,7 @@ export function SpeakingInterviewStage({
       <section className="speaking-interview-content">
         <div className="speaking-interview-progress">
           <span>{t.partProgress(speakingPartNumber, speakingPartCount)}</span>
-          <span>{t.questionProgress(questionIndex + 1, currentPart.questions.length)}</span>
+          <span>{question.interaction?.turn_type?.replaceAll("_", " ") || t.questionProgress(questionIndex + 1, currentPart.questions.length)}</span>
         </div>
 
         <div className="speaking-interview-avatar">

@@ -131,6 +131,7 @@ def _build_content_snapshot(module: ExamModule, *, randomize: bool) -> dict:
                 "image_path": question.image_path,
                 "options": options,
                 "correct_answers": list(question.correct_answers or []),
+                "interaction": dict(question.interaction or {}),
                 "explanation": question.explanation,
                 "points": str(question.points),
                 "sort_order": question.sort_order,
@@ -262,11 +263,12 @@ def _redacted_question(
     return {
         "id": question.id,
         "question_type": source.get("question_type", question.question_type),
-        "prompt": source.get("prompt", question.prompt),
+        "prompt": source.get("runtime_prompt", source.get("prompt", question.prompt)),
         "instructions": source.get("instructions", question.instructions),
         "passage": source.get("passage", question.passage),
         "image_url": f"/storage/{image_path}" if image_path else None,
         "options": source.get("options", question.options),
+        "interaction": source.get("interaction", question.interaction or {}),
         "points": source.get("points", str(question.points)),
         "sort_order": source.get("sort_order", question.sort_order),
         "response": answer.response if answer else None,
@@ -822,7 +824,15 @@ def save_answer(
     revision: Optional[int] = None,
 ) -> dict:
     _require_in_progress(attempt)
-    part, _question = _question_or_404(attempt, question_id)
+    part, question = _question_or_404(attempt, question_id)
+    if response and question.question_type in {"short_answer", "fill_blank"}:
+        text = str(response.get("text") or "").strip()
+        max_words = (part.answer_constraints or {}).get("max_answer_words")
+        if max_words and len(text.split()) > max_words:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"This answer may contain no more than {max_words} words",
+            )
     answer = next((item for item in attempt.answers if item.question_id == question_id), None)
     if answer is None:
         answer = AttemptAnswer(attempt_id=attempt.id, question_id=question_id, part_id=part.id)

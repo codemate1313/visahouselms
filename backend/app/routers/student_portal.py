@@ -1,11 +1,14 @@
+from copy import deepcopy
 from decimal import Decimal
 from typing import Optional
 from pydantic import BaseModel
 
 from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, Request, UploadFile, status
+from starlette.concurrency import run_in_threadpool
 
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.core.uploads import read_validated_speaking_answer
 from app.database import get_db
 from app.dependencies.auth import get_current_session
@@ -639,7 +642,7 @@ async def get_speaking_avatar_for_attempt_part(
     attempt_service.require_security_access(attempt, session, x_attempt_token)
 
     part_view = attempt_service.get_attempt_part_view(attempt, part_id)
-    part_data = part_view.get("part", {})
+    part_data = part_view
     questions = part_view.get("questions", [])
 
     prompt_text = part_data.get("instructions") or part_data.get("title") or "Listen to the examiner prompt and record your response."
@@ -649,6 +652,43 @@ async def get_speaking_avatar_for_attempt_part(
     )
     if selected_question and selected_question.get("prompt"):
         prompt_text = selected_question["prompt"]
+
+    interaction = (selected_question or {}).get("interaction") or {}
+    if selected_question and interaction.get("adaptive_follow_up"):
+        questions_by_order = list(questions)
+        selected_index = next(
+            (index for index, question in enumerate(questions_by_order) if question.get("id") == selected_question.get("id")),
+            -1,
+        )
+        if selected_index > 0:
+            previous_question = questions_by_order[selected_index - 1]
+            previous_answer = next(
+                (answer for answer in attempt.answers if answer.question_id == previous_question.get("id")),
+                None,
+            )
+            if previous_answer and previous_answer.audio_path:
+                result = await run_in_threadpool(
+                    ai_evaluation_service.generate_speaking_follow_up,
+                    db,
+                    audio_path=settings.storage_path / previous_answer.audio_path,
+                    current_prompt=str(previous_question.get("prompt") or ""),
+                    next_prompt=prompt_text,
+                    next_turn_type=str(interaction.get("turn_type") or "follow_up"),
+                )
+                prompt_text = result["next_prompt"]
+                if result["generated"]:
+                    snapshot = deepcopy(attempt.content_snapshot or {})
+                    frozen = (
+                        snapshot.get("parts", {})
+                        .get(str(part_id), {})
+                        .get("questions", {})
+                        .get(str(selected_question["id"]))
+                    )
+                    if frozen is not None:
+                        frozen["runtime_prompt"] = prompt_text
+                        attempt.content_snapshot = snapshot
+                        db.add(attempt)
+                        db.commit()
 
     examiner = avatar_service.get_examiner(examiner_id)
     audio_url, visemes, duration = await avatar_service.get_or_create_prompt_audio(prompt_text, examiner["voice"])

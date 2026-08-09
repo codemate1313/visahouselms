@@ -33,6 +33,8 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
               <div className="question-body">
                 <div className="question-meta">
                   <span>{questionLabels[question.question_type]}</span>
+                  {question.interaction?.group_label && <span>{question.interaction.group_label}</span>}
+                  {question.interaction?.turn_type && <span>{question.interaction.turn_type.replaceAll("_", " ")}</span>}
                   <span>
                     {question.points} {t.marksSuffix(Number(question.points))}
                   </span>

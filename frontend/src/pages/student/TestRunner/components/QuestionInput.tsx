@@ -8,6 +8,7 @@ interface QuestionInputProps {
   question: AttemptQuestion;
   hidePrompt?: boolean;
   partInstructions?: string | null;
+  maxAnswerWords?: number;
   saving: boolean;
   recording: boolean;
   onChange: (response: AttemptResponse, debounce?: boolean) => void;
@@ -19,6 +20,7 @@ export function QuestionInput({
   question,
   hidePrompt = false,
   partInstructions,
+  maxAnswerWords,
   saving,
   recording,
   onChange,
@@ -26,6 +28,20 @@ export function QuestionInput({
 }: QuestionInputProps) {
   const selected = question.response?.selected;
   const t = strings.question;
+  const textResponse = question.response?.text ?? "";
+  const wordCount = textResponse.trim().split(/\s+/).filter(Boolean).length;
+  const blankMarker = "{{blank}}";
+  const hasInlineBlank = question.question_type === "fill_blank" && question.prompt.includes(blankMarker);
+  const [beforeBlank, afterBlank = ""] = hasInlineBlank ? question.prompt.split(blankMarker, 2) : [question.prompt];
+  const textInput = (
+    <input
+      type="text"
+      className="test-runner-text-input"
+      value={textResponse}
+      aria-label={`Answer for question ${index}`}
+      onChange={(e) => onChange({ text: e.target.value }, true)}
+    />
+  );
 
   return (
     <div className="test-runner-question">
@@ -40,7 +56,14 @@ export function QuestionInput({
           <span className="hint">{t.saving}</span>
         </div>
       )}
-      {!hidePrompt && <p className="test-runner-prompt">{question.prompt}</p>}
+      {!hidePrompt && !hasInlineBlank && <p className="test-runner-prompt">{question.prompt}</p>}
+      {!hidePrompt && hasInlineBlank && (
+        <p className="test-runner-prompt test-runner-inline-gap">
+          <span>{beforeBlank}</span>
+          {textInput}
+          <span>{afterBlank}</span>
+        </p>
+      )}
       {!hidePrompt && question.instructions && <p className="hint">{question.instructions}</p>}
 
       {(question.question_type === "mcq_single" ||
@@ -85,12 +108,14 @@ export function QuestionInput({
       )}
 
       {(question.question_type === "short_answer" || question.question_type === "fill_blank") && (
-        <input
-          type="text"
-          className="test-runner-text-input"
-          defaultValue={question.response?.text ?? ""}
-          onChange={(e) => onChange({ text: e.target.value }, true)}
-        />
+        <>
+          {!hasInlineBlank && textInput}
+          {maxAnswerWords && (
+            <p className={`hint${wordCount > maxAnswerWords ? " is-error" : ""}`}>
+              {wordCount}/{maxAnswerWords} words
+            </p>
+          )}
+        </>
       )}
 
       {question.question_type === "essay" && (
@@ -107,10 +132,10 @@ export function QuestionInput({
             className="test-runner-essay"
             rows={10}
             placeholder="Write your response here..."
-            defaultValue={question.response?.text ?? ""}
+            value={textResponse}
             onChange={(e) => onChange({ text: e.target.value }, true)}
           />
-          <p className="hint">{(question.response?.text ?? "").trim().split(/\s+/).filter(Boolean).length} {t.wordsSuffix}</p>
+          <p className="hint">{wordCount} {t.wordsSuffix}</p>
         </div>
       )}
 

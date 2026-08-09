@@ -95,6 +95,7 @@ READING_PARTS = [
             "option_count": 3,
             "passage_required": True,
             "shared_passage": True,
+            "layout": "shared_cloze",
             "preserve_question_order": True,
             "preserve_option_order": True,
         },
@@ -182,7 +183,7 @@ LISTENING_PARTS = [
         "minimum_questions": 10,
         "max_marks": 10,
         "auto_marked": True,
-        "answer_constraints": {"allowed_question_types": ["mcq_single"], "option_count": 3, "audio_plays": 2, "audio_required": True, "preserve_question_order": True, "preserve_option_order": True},
+        "answer_constraints": {"allowed_question_types": ["mcq_single"], "option_count": 3, "audio_plays": 2, "audio_required": True, "group_count": 5, "questions_per_group": 2, "group_label_required": True, "layout": "conversation_groups", "preserve_question_order": True, "preserve_option_order": True},
     },
     {
         "part_code": "listening_3",
@@ -194,7 +195,7 @@ LISTENING_PARTS = [
         "minimum_questions": 7,
         "max_marks": 7,
         "auto_marked": True,
-        "answer_constraints": {"allowed_question_types": ["fill_blank", "short_answer"], "max_answer_words": 3, "audio_plays": 2, "audio_required": True, "preserve_question_order": True},
+        "answer_constraints": {"allowed_question_types": ["fill_blank", "short_answer"], "max_answer_words": 3, "audio_plays": 2, "audio_required": True, "inline_marker_required": True, "layout": "notepad_gaps", "preserve_question_order": True},
     },
     {
         "part_code": "listening_4",
@@ -275,12 +276,36 @@ _SPEAKING_TIMINGS = {
     "speaking_3": (20, 90),
     "speaking_4": (60, 120),
 }
+_SPEAKING_STRUCTURES = {
+    "speaking_1": {
+        "minimum_questions": 2,
+        "required_turn_types": ["identity", "topic_question"],
+        "allowed_turn_types": ["identity", "topic_question", "follow_up"],
+    },
+    "speaking_2": {
+        "question_limit": 2,
+        "minimum_questions": 2,
+        "required_turn_types": ["roleplay_response", "roleplay_initiate"],
+        "allowed_turn_types": ["roleplay_response", "roleplay_initiate"],
+    },
+    "speaking_3": {
+        "minimum_questions": 2,
+        "required_turn_types": ["read_aloud", "follow_up"],
+        "allowed_turn_types": ["read_aloud", "follow_up"],
+    },
+    "speaking_4": {
+        "minimum_questions": 2,
+        "required_turn_types": ["presentation", "follow_up"],
+        "allowed_turn_types": ["presentation", "follow_up"],
+    },
+}
 for _part in SPEAKING_PARTS:
     _preparation_seconds, _response_seconds = _SPEAKING_TIMINGS[_part["part_code"]]
+    _structure = _SPEAKING_STRUCTURES[_part["part_code"]]
     _part.update(
         {
-            "question_limit": None,
-            "minimum_questions": 1,
+            "question_limit": _structure.get("question_limit"),
+            "minimum_questions": _structure["minimum_questions"],
             "max_marks": None,
             "auto_marked": False,
             "answer_constraints": {
@@ -288,6 +313,9 @@ for _part in SPEAKING_PARTS:
                 "preparation_seconds": _preparation_seconds,
                 "response_seconds": _response_seconds,
                 "notes_allowed": _part["part_code"] == "speaking_4",
+                "interaction_mode": "ai_interlocutor",
+                "required_turn_types": _structure["required_turn_types"],
+                "allowed_turn_types": _structure["allowed_turn_types"],
                 "preserve_question_order": True,
             },
             "rubric": SPEAKING_RUBRIC,

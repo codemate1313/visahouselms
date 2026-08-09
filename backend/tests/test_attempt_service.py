@@ -731,6 +731,62 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(records[0].error, "provider unavailable")
         self.assertEqual(self.db.query(AiEvaluationLimit).one().used_count, 1)
 
+    def test_adaptive_speaking_prompt_uses_audio_and_has_authored_fallback(self):
+        audio_path = settings.storage_path / "candidate.webm"
+        audio_path.parent.mkdir(parents=True, exist_ok=True)
+        audio_path.write_bytes(b"candidate-audio")
+        captured: dict = {}
+
+        def evaluator(config, prompt, audio_b64, mime_type):
+            captured.update({"config": config, "prompt": prompt, "audio_b64": audio_b64, "mime_type": mime_type})
+            return {"next_prompt": "How did that experience change your view?"}
+
+        with patch.object(ai_evaluation_service, "config_status", return_value={"configured": True}), patch.object(
+            ai_evaluation_service,
+            "_candidate_configs",
+            return_value=[{"provider": "gemini", "api_key": "test-key", "model": "test-model"}],
+        ):
+            result = ai_evaluation_service.generate_speaking_follow_up(
+                self.db,
+                audio_path=audio_path,
+                current_prompt="Tell me about an important experience.",
+                next_prompt="Why was it important?",
+                next_turn_type="follow_up",
+                evaluator=evaluator,
+            )
+
+        self.assertTrue(result["generated"])
+        self.assertEqual(result["next_prompt"], "How did that experience change your view?")
+        self.assertIn("Why was it important?", captured["prompt"])
+        self.assertTrue(captured["audio_b64"])
+
+        with patch.object(ai_evaluation_service, "config_status", return_value={"configured": False}):
+            fallback = ai_evaluation_service.generate_speaking_follow_up(
+                self.db,
+                audio_path=audio_path,
+                current_prompt="Previous",
+                next_prompt="Authored fallback",
+                next_turn_type="follow_up",
+            )
+        self.assertEqual(fallback, {"next_prompt": "Authored fallback", "generated": False})
+
+    def test_short_answer_word_limit_is_enforced_by_server(self):
+        module = self._build_reading_module()
+        part = module.parts[0]
+        question = part.questions[0]
+        question.question_type = "short_answer"
+        question.options = []
+        question.correct_answers = ["TWO WORDS"]
+        part.answer_constraints = {"allowed_question_types": ["short_answer"], "max_answer_words": 2}
+        self.db.add_all([part, question])
+        self.db.commit()
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+
+        with self.assertRaises(HTTPException) as error:
+            attempt_service.save_answer(self.db, attempt, question.id, {"text": "three word answer"})
+        self.assertEqual(error.exception.status_code, 400)
+
     def test_ai_key_detection_identifies_supported_and_unsupported_providers(self):
         gemini = ai_evaluation_service._detect_provider(
             api_key="AIzaSyExampleGeminiKey",

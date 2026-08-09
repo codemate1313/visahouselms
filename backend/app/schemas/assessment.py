@@ -91,6 +91,40 @@ class QuestionOption(BaseModel):
         return value.strip()
 
 
+SPEAKING_TURN_TYPES = {
+    "identity",
+    "topic_question",
+    "roleplay_response",
+    "roleplay_initiate",
+    "read_aloud",
+    "follow_up",
+    "presentation",
+}
+
+
+class QuestionInteraction(BaseModel):
+    group_label: Optional[str] = Field(default=None, max_length=120)
+    turn_type: Optional[str] = Field(default=None, max_length=40)
+    preparation_seconds: Optional[int] = Field(default=None, ge=0, le=300)
+    response_seconds: Optional[int] = Field(default=None, ge=5, le=600)
+    adaptive_follow_up: bool = False
+
+    @field_validator("group_label", "turn_type")
+    @classmethod
+    def clean_text(cls, value: Optional[str]) -> Optional[str]:
+        return _optional_text(value)
+
+    @field_validator("turn_type")
+    @classmethod
+    def valid_turn_type(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        value = value.lower()
+        if value not in SPEAKING_TURN_TYPES:
+            raise ValueError(f"turn_type must be one of: {', '.join(sorted(SPEAKING_TURN_TYPES))}")
+        return value
+
+
 class QuestionCreate(BaseModel):
     question_type: str
     prompt: str = Field(min_length=1, max_length=20000)
@@ -99,6 +133,7 @@ class QuestionCreate(BaseModel):
     image_path: Optional[str] = Field(default=None, max_length=500)
     options: list[QuestionOption] = Field(default_factory=list, max_length=26)
     correct_answers: list[str] = Field(default_factory=list, max_length=26)
+    interaction: QuestionInteraction = Field(default_factory=QuestionInteraction)
     explanation: Optional[str] = Field(default=None, max_length=20000)
     points: Decimal = Field(default=Decimal("1"), gt=0, max_digits=6, decimal_places=2)
     difficulty: str = "medium"

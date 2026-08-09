@@ -185,6 +185,16 @@ export interface QuestionOption {
   text: string;
 }
 
+export type SpeakingTurnType = "identity" | "topic_question" | "roleplay_response" | "roleplay_initiate" | "read_aloud" | "follow_up" | "presentation";
+
+export interface QuestionInteraction {
+  group_label?: string | null;
+  turn_type?: SpeakingTurnType | null;
+  preparation_seconds?: number | null;
+  response_seconds?: number | null;
+  adaptive_follow_up?: boolean;
+}
+
 export interface QuestionDraft {
   question_type: QuestionType;
   prompt: string;
@@ -194,6 +204,7 @@ export interface QuestionDraft {
   image_url?: string | null;
   options: QuestionOption[];
   correct_answers: string[];
+  interaction?: QuestionInteraction;
   explanation: string | null;
   points: number | string;
   difficulty: "easy" | "medium" | "hard";
@@ -330,6 +341,14 @@ export interface ExamModulePart {
     notes_allowed?: boolean;
     preserve_question_order?: boolean;
     preserve_option_order?: boolean;
+    layout?: "shared_cloze" | "conversation_groups" | "notepad_gaps";
+    group_count?: number;
+    questions_per_group?: number;
+    group_label_required?: boolean;
+    inline_marker_required?: boolean;
+    interaction_mode?: "ai_interlocutor";
+    required_turn_types?: SpeakingTurnType[];
+    allowed_turn_types?: SpeakingTurnType[];
   };
   rubric: ModuleRubricCriterion[];
   sort_order: number;
@@ -509,6 +528,7 @@ export interface AttemptQuestion {
   passage: string | null;
   image_url: string | null;
   options: QuestionOption[];
+  interaction: QuestionInteraction;
   points: string;
   sort_order: number;
   response: AttemptResponse | null;
@@ -676,11 +696,20 @@ export interface AttemptPart {
   rubric: ModuleRubricCriterion[];
   answer_constraints: {
     allowed_question_types?: QuestionType[];
+    max_answer_words?: number;
     preparation_seconds?: number;
     response_seconds?: number;
     option_count?: number;
     score_weight?: number;
     notes_allowed?: boolean;
+    layout?: "shared_cloze" | "conversation_groups" | "notepad_gaps";
+    group_count?: number;
+    questions_per_group?: number;
+    group_label_required?: boolean;
+    inline_marker_required?: boolean;
+    interaction_mode?: "ai_interlocutor";
+    required_turn_types?: SpeakingTurnType[];
+    allowed_turn_types?: SpeakingTurnType[];
   };
   cefr_scale: CefrScaleAnchor[];
   sort_order: number;
