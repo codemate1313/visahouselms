@@ -102,10 +102,10 @@ export function OnboardingInstructionsEditor({
       </div>
 
       {/* Main Visibility Switch Toggle */}
-      <div className="onboarding-toggle-row" style={{ background: "#f8fafc", padding: "16px 20px", borderRadius: 16, border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+      <div className="onboarding-toggle-row" style={{ background: "#f8fafc", padding: "16px 20px", borderRadius: 16, border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 38, height: 38, borderRadius: "50%", background: showInstructions ? "#ecfdf5" : "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: showInstructions ? "#10b981" : "#64748b" }}>
-            <Icon name={showInstructions ? "check" : "close"} />
+          <div style={{ width: 38, height: 38, borderRadius: "50%", background: showInstructions ? "#ecfdf5" : "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: showInstructions ? "#10b981" : "#94a3b8" }}>
+            <Icon name={showInstructions ? "check" : "x"} />
           </div>
           <div>
             <strong style={{ display: "block", fontSize: 14.5, color: "#0f172a" }}>Display Guidelines to Candidates</strong>
