@@ -229,8 +229,8 @@ export function SupportCenter() {
           <table className="data-table institute-table" style={{ width: "100%", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ width: "38%", padding: "12px 10px" }}>{strings.table?.enquiry ?? "Enquiry"}</th>
-                <th style={{ width: "24%", padding: "12px 10px" }}>Routing</th>
+                <th style={{ width: "48%", padding: "12px 10px 12px 16px" }}>{strings.table?.enquiry ?? "Enquiry"}</th>
+                <th style={{ width: "18%", padding: "12px 4px" }}>Routing</th>
                 <th style={{ width: "100px", textAlign: "center", padding: "12px 4px" }}>{strings.table?.status ?? "Status"}</th>
                 <th style={{ width: "95px", textAlign: "center", padding: "12px 4px" }}>Priority</th>
                 <th style={{ width: "160px", padding: "12px 8px" }}>Submitted On</th>
@@ -300,7 +300,7 @@ export function SupportCenter() {
                         borderLeft: isUnread ? "4px solid var(--primary, #b91c2b)" : "4px solid transparent",
                       }}
                     >
-                      <td style={{ padding: "12px 10px" }}>
+                      <td style={{ padding: "12px 10px 12px 16px" }}>
                         <div className="table-item-cell">
                           <div
                             className="table-avatar-tile"
@@ -346,7 +346,7 @@ export function SupportCenter() {
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: "12px 10px" }}>
+                      <td style={{ padding: "12px 4px" }}>
                         <Badge tone="neutral">
                           {ticket.queue === "institute"
                             ? strings.routing.institute

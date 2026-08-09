@@ -300,8 +300,8 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
           <table className="data-table institute-table" style={{ width: "100%", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ width: "38%", padding: "12px 10px" }}>{strings.table.customer}</th>
-                <th style={{ width: "24%", padding: "12px 10px" }}>{strings.table.enquiry}</th>
+                <th style={{ width: "48%", padding: "12px 10px 12px 16px" }}>{strings.table.customer}</th>
+                <th style={{ width: "18%", padding: "12px 4px" }}>{strings.table.enquiry}</th>
                 <th style={{ width: "100px", textAlign: "center", padding: "12px 4px" }}>{strings.table.status}</th>
                 <th style={{ width: "95px", textAlign: "center", padding: "12px 4px" }}>{strings.table.priority}</th>
                 <th style={{ width: "160px", padding: "12px 8px" }}>{strings.table.received}</th>
@@ -359,7 +359,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                         borderLeft: isUnread ? "4px solid var(--primary, #b91c2b)" : "4px solid transparent",
                       }}
                     >
-                      <td style={{ padding: "12px 10px" }}>
+                      <td style={{ padding: "12px 10px 12px 16px" }}>
                         <div className="table-item-cell">
                           <div
                             className="table-avatar-tile"
@@ -413,11 +413,11 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                                 </span>
                               )}
                             </div>
-                            <span className="table-item-subtitle" style={{ whiteSpace: "normal", wordBreak: "break-all" }}>{ticket.email}</span>
+                            <span className="table-item-subtitle" style={{ whiteSpace: "nowrap", display: "block" }}>{ticket.email}</span>
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: "12px 10px" }}>
+                      <td style={{ padding: "12px 4px" }}>
                         <div className="table-item-details">
                           <span className="table-item-title">{ticket.subject}</span>
                           <span className="table-item-subtitle">{ticket.institute_name || ticket.category}</span>
