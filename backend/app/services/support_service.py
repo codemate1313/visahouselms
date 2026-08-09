@@ -293,6 +293,7 @@ def list_portal_tickets(db: Session, user: User) -> list[dict]:
             "created_at": ticket.created_at,
             "updated_at": ticket.updated_at,
             "resolved_at": ticket.resolved_at,
+            "messages": serialize_ticket(ticket)["messages"],
         }
         for ticket in tickets
     ]

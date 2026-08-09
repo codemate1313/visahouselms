@@ -130,11 +130,17 @@ export function SupportCenter() {
     setSendingMessage(true);
     setError(null);
     try {
-      await apiClient.post(`/support/my-tickets/${selectedTicket.id}/messages`, {
-        message: replyText.trim(),
-      });
+      const { data: updatedTicket } = await apiClient.post<PortalSupportTicket>(
+        `/support/my-tickets/${selectedTicket.id}/messages`,
+        { message: replyText.trim() }
+      );
       setReplyText("");
       showSuccess("Message sent successfully", "Message Sent");
+      if (updatedTicket && updatedTicket.messages) {
+        setTickets((prev) =>
+          prev.map((t) => (t.id === updatedTicket.id ? { ...t, ...updatedTicket } : t))
+        );
+      }
       await loadTickets();
     } catch (err: unknown) {
       setError(extractErrorMessage(err, "Failed to send message"));
