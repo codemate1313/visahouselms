@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Optional
 from unittest.mock import patch
 
 from fastapi import HTTPException
@@ -38,14 +39,25 @@ from app.services import ai_evaluation_service, attempt_service, grading_service
 from app.services import cefr_service
 
 
-def _question(question_type: str, prompt: str, points: Decimal, correct: list[str]) -> dict:
-    choice = question_type.startswith("mcq_")
+def _question(
+    question_type: str,
+    prompt: str,
+    points: Decimal,
+    correct: list[str],
+    *,
+    option_count: int = 2,
+    passage: Optional[str] = None,
+) -> dict:
+    choice = question_type.startswith("mcq_") or question_type.startswith("matching_")
     return {
         "question_type": question_type,
         "prompt": prompt,
         "instructions": None,
-        "passage": None,
-        "options": [{"key": "A", "text": "One"}, {"key": "B", "text": "Two"}] if choice else [],
+        "passage": passage,
+        "options": [
+            {"key": chr(65 + index), "text": f"Option {index + 1}"}
+            for index in range(option_count)
+        ] if choice else [],
         "correct_answers": correct,
         "explanation": None,
         "points": points,
@@ -125,12 +137,24 @@ class AttemptServiceTestCase(unittest.TestCase):
         for part in module.parts:
             count = part.question_limit or part.minimum_questions
             points = Decimal(part.max_marks) / count
+            constraints = part.answer_constraints or {}
+            question_type = constraints["allowed_question_types"][0]
             for index in range(count):
                 # first question of every part is answered correctly in tests, rest incorrectly
+                prompt = f"{part.part_code} Q{index + 1}"
+                if part.part_code == "reading_4" and index == 0:
+                    prompt = "What does the writer imply in the first paragraph?"
                 self.db.add(
                     ExamModuleQuestion(
                         part_id=part.id,
-                        **_question("mcq_single", f"{part.part_code} Q{index + 1}", points, ["A"]),
+                        **_question(
+                            question_type,
+                            prompt,
+                            points,
+                            [chr(65 + index)] if constraints.get("unique_answers") else ["A"],
+                            option_count=constraints.get("option_count", 2),
+                            passage=f"Shared academic source for {part.part_code}." if constraints.get("passage_required") else None,
+                        ),
                         source_type="manual",
                         source_filename=None,
                         sort_order=index,
@@ -223,10 +247,15 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(attempt_out["expires_at"].utcoffset(), timedelta(0))
         attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
 
-        # answer every question correctly ("A") except the very last one
+        # Answer every question with its authored key except the very last one.
         all_questions = [q for part in attempt.module.parts for q in part.questions]
         for question in all_questions[:-1]:
-            attempt_service.save_answer(self.db, attempt, question.id, {"selected": "A"})
+            attempt_service.save_answer(
+                self.db,
+                attempt,
+                question.id,
+                {"selected": question.correct_answers[0]},
+            )
         attempt_service.save_answer(self.db, attempt, all_questions[-1].id, {"selected": "B"})
 
         result = attempt_service.submit_attempt(self.db, attempt)
@@ -238,7 +267,7 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(result["cefr_level"], "C2")
         self.assertEqual(result["cefr_policy_version"], cefr_service.POLICY_VERSION)
         self.assertEqual(result["cefr_profile"]["status"], "complete")
-        self.assertEqual(result["cefr_profile"]["skills"][0]["mapping_method"], "configured_raw_score")
+        self.assertEqual(result["cefr_profile"]["skills"][0]["mapping_method"], "languagecert_practice_scale")
 
         analysis = student_analysis_service.result_analysis(
             self.db,
@@ -288,6 +317,18 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(partial, (False, Decimal("0")))
         self.assertEqual(exact, (True, Decimal("2")))
         self.assertEqual(wrong, (False, Decimal("0")))
+
+    def test_matching_questions_grade_one_authored_key(self):
+        for question_type in ("matching_unique", "matching_reusable"):
+            question = ExamModuleQuestion(
+                question_type=question_type,
+                prompt="Match the source",
+                options=[{"key": "A", "text": "Source A"}, {"key": "B", "text": "Source B"}],
+                correct_answers=["B"],
+                points=Decimal("1"),
+            )
+            self.assertEqual(attempt_service._grade_answer(question, {"selected": "B"}), (True, Decimal("1")))
+            self.assertEqual(attempt_service._grade_answer(question, {"selected": "A"}), (False, Decimal("0")))
 
     def test_writing_attempt_routes_to_grading_queue_and_completes(self):
         module = self._build_writing_module()
@@ -342,6 +383,38 @@ class AttemptServiceTestCase(unittest.TestCase):
                 for criterion in part["grade"]["criteria"]
             )
         )
+
+    def test_writing_profile_applies_40_60_task_weighting(self):
+        module = self._build_writing_module()
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "Completed response."})
+        attempt_service.submit_attempt(self.db, attempt)
+        grading_service.claim(self.db, self.instructor, attempt)
+
+        parts = sorted(attempt.module.parts, key=lambda part: part.sort_order)
+        for index, part in enumerate(parts):
+            marks = 8 if index == 0 else 0
+            criteria = [
+                {"criterion": item["criterion"], "marks_awarded": marks}
+                for item in part.rubric
+            ]
+            attempt_service.save_part_draft(
+                self.db,
+                self.instructor,
+                attempt.id,
+                part.id,
+                criteria,
+                "Weighted scoring verification",
+            )
+
+        result = attempt_service.submit_grading(self.db, self.instructor, attempt.id)
+        writing = result["cefr_profile"]["skills"][0]
+        self.assertEqual(Decimal(writing["percentage"]), Decimal("40.0"))
+        self.assertEqual(writing["scaled_score"], "40")
+        self.assertEqual(writing["level"], "B1")
 
     def test_writing_submit_enqueues_ai_auto_grade_when_configured(self):
         self._enable_ai_evaluation()
@@ -1003,12 +1076,15 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(restarted["queue"]["assigned_to_name"], "Second Examiner")
 
     def test_cefr_percentage_policy_boundaries_are_versioned(self):
-        self.assertEqual(cefr_service.level_for_percentage(Decimal("39.9")), "Below B1")
+        self.assertEqual(cefr_service.level_for_percentage(Decimal("0")), "Pre-A1")
+        self.assertEqual(cefr_service.level_for_percentage(Decimal("10")), "A1")
+        self.assertEqual(cefr_service.level_for_percentage(Decimal("20")), "A2")
+        self.assertEqual(cefr_service.level_for_percentage(Decimal("39.9")), "A2")
         self.assertEqual(cefr_service.level_for_percentage(Decimal("40")), "B1")
         self.assertEqual(cefr_service.level_for_percentage(Decimal("60")), "B2")
         self.assertEqual(cefr_service.level_for_percentage(Decimal("75")), "C1")
         self.assertEqual(cefr_service.level_for_percentage(Decimal("90")), "C2")
-        self.assertIn("2020", cefr_service.POLICY_VERSION)
+        self.assertIn("languagecert", cefr_service.POLICY_VERSION)
 
     def test_final_test_cannot_be_retaken(self):
         created = module_authoring_service.create_module(

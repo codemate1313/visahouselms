@@ -45,7 +45,9 @@ export function QuestionInput({
 
       {(question.question_type === "mcq_single" ||
         question.question_type === "true_false_not_given" ||
-        question.question_type === "yes_no_not_given") && (
+        question.question_type === "yes_no_not_given" ||
+        question.question_type === "matching_unique" ||
+        question.question_type === "matching_reusable") && (
         <div className="test-runner-options">
           {question.options.map((option) => (
             <label key={option.key} className="test-runner-option">

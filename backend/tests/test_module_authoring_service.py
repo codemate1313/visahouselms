@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from decimal import Decimal
 from pathlib import Path
+from typing import Optional
 from unittest.mock import patch
 
 from fastapi import HTTPException
@@ -16,15 +17,26 @@ from app.models.user import User
 from app.services import module_authoring_service, module_blueprint_service
 
 
-def _question(question_type: str, prompt: str, points: Decimal = Decimal("1")) -> dict:
-    choice = question_type.startswith("mcq_")
+def _question(
+    question_type: str,
+    prompt: str,
+    points: Decimal = Decimal("1"),
+    *,
+    option_count: int = 2,
+    passage: Optional[str] = None,
+    correct_answer: str = "A",
+) -> dict:
+    choice = question_type.startswith("mcq_") or question_type.startswith("matching_")
     return {
         "question_type": question_type,
         "prompt": prompt,
         "instructions": None,
-        "passage": None,
-        "options": [{"key": "A", "text": "One"}, {"key": "B", "text": "Two"}] if choice else [],
-        "correct_answers": ["A"] if choice or question_type in {"fill_blank", "short_answer"} else [],
+        "passage": passage,
+        "options": [
+            {"key": chr(65 + index), "text": f"Option {index + 1}"}
+            for index in range(option_count)
+        ] if choice else [],
+        "correct_answers": [correct_answer] if choice or question_type in {"fill_blank", "short_answer"} else [],
         "explanation": None,
         "points": points,
         "difficulty": "medium",
@@ -79,10 +91,21 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         module = module_authoring_service.get_module_or_404(self.db, created["id"])
         for part_index, part in enumerate(module.parts):
             count = part.question_limit or part.minimum_questions
-            question_type = part.answer_constraints["allowed_question_types"][0]
+            constraints = part.answer_constraints or {}
+            question_type = constraints["allowed_question_types"][0]
             points = Decimal(part.max_marks) / count if part.max_marks is not None else Decimal("1")
             for index in range(count):
-                draft = _question(question_type, f"{part.part_code} source question {index + 1}", points)
+                prompt = f"{part.part_code} source question {index + 1}"
+                if part.part_code == "reading_4" and index == 0:
+                    prompt = "What does the writer imply in the first paragraph?"
+                draft = _question(
+                    question_type,
+                    prompt,
+                    points,
+                    option_count=constraints.get("option_count", 2),
+                    passage=f"Shared academic source for {part.part_code}." if constraints.get("passage_required") else None,
+                    correct_answer=chr(65 + index) if constraints.get("unique_answers") else "A",
+                )
                 self.db.add(
                     ExamModuleQuestion(
                         part_id=part.id,
@@ -125,7 +148,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         completed = module_authoring_service.serialize_module(
             module_authoring_service.get_module_or_404(self.db, created["id"]), detailed=True
         )
-        self.assertTrue(completed["ready_to_publish"])
+        self.assertTrue(completed["ready_to_publish"], completed.get("validation_errors"))
         return completed
 
     def test_all_six_blueprints_have_fixed_parts_and_timing(self) -> None:
@@ -142,9 +165,44 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             )
             for part in blueprints["speaking"]["parts"]
         ]
-        self.assertEqual(speaking_timings, [(5, 45), (5, 60), (30, 90), (60, 120)])
+        self.assertEqual(speaking_timings, [(0, 45), (0, 60), (20, 90), (60, 120)])
         self.assertEqual((len(blueprints["full_mock"]["parts"]), blueprints["full_mock"]["duration_minutes"]), (15, 154))
         self.assertEqual(len(blueprints["final_test"]["parts"]), 15)
+
+    def test_languagecert_blueprints_define_every_task_contract(self) -> None:
+        reading = module_blueprint_service.get_blueprint("reading")
+        self.assertEqual(
+            [part["answer_constraints"]["allowed_question_types"] for part in reading["parts"]],
+            [["mcq_single"], ["mcq_single"], ["matching_unique"], ["matching_reusable"], ["mcq_single"]],
+        )
+        self.assertEqual(
+            [part["answer_constraints"]["option_count"] for part in reading["parts"]],
+            [4, 3, 8, 4, 4],
+        )
+        self.assertTrue(reading["parts"][2]["answer_constraints"]["unique_answers"])
+        self.assertTrue(reading["parts"][3]["answer_constraints"]["shared_options"])
+
+        listening = module_blueprint_service.get_blueprint("listening")
+        self.assertEqual([part["question_limit"] for part in listening["parts"]], [7, 10, 7, 6])
+        self.assertTrue(all(part["answer_constraints"]["audio_plays"] == 2 for part in listening["parts"]))
+
+        writing = module_blueprint_service.get_blueprint("writing")
+        self.assertEqual(
+            [part["answer_constraints"]["score_weight"] for part in writing["parts"]],
+            [40, 60],
+        )
+        self.assertEqual(writing["parts"][0]["answer_constraints"]["maximum_words"], 200)
+
+        speaking = module_blueprint_service.get_blueprint("speaking")
+        task_fulfilment = next(
+            criterion for criterion in speaking["parts"][0]["rubric"]
+            if criterion["criterion"].startswith("Task Fulfilment")
+        )
+        self.assertEqual(task_fulfilment["weight"], 2)
+        self.assertEqual(
+            [part["answer_constraints"]["notes_allowed"] for part in speaking["parts"]],
+            [False, False, False, True],
+        )
 
     def test_instructor_can_update_overall_and_speaking_part_timing(self) -> None:
         created = self._create("speaking")
@@ -306,7 +364,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertEqual(stored.transcript, "Guide: Welcome to campus.\nStudent: Thank you.")
         self.assertFalse((settings.storage_path / stored.file_path).exists())
 
-    def test_final_test_copies_selected_sources_randomizes_and_can_be_deleted_when_published(self) -> None:
+    def test_final_test_copies_selected_sources_in_order_and_can_be_deleted_when_published(self) -> None:
         sources = {
             module_type: self._complete(module_type)
             for module_type in ("listening", "reading", "writing", "speaking")
@@ -331,13 +389,13 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertEqual(final_test["source_module_ids"], selected_ids)
         self.assertTrue(final_test["ready_to_publish"])
         self.assertEqual(final_test["question_count"], sum(source["question_count"] for source in sources.values()))
-        self.assertEqual(randomizer_class.return_value.shuffle.call_count, len(final_test["parts"]))
+        self.assertEqual(randomizer_class.return_value.shuffle.call_count, 0)
 
         source_reading_1a = next(part for part in sources["reading"]["parts"] if part["part_code"] == "reading_1a")
         copied_reading_1a = next(part for part in final_test["parts"] if part["part_code"] == "reading_1a")
         self.assertEqual(
             [question["prompt"] for question in copied_reading_1a["questions"]],
-            list(reversed([question["prompt"] for question in source_reading_1a["questions"]])),
+            [question["prompt"] for question in source_reading_1a["questions"]],
         )
 
         source_audio = sources["listening"]["parts"][0]["assets"][0]

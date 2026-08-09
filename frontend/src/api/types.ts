@@ -178,7 +178,7 @@ export interface Course {
   modules: CourseModuleLink[];
 }
 
-export type QuestionType = "mcq_single" | "mcq_multiple" | "true_false_not_given" | "yes_no_not_given" | "short_answer" | "fill_blank" | "essay" | "speaking_prompt";
+export type QuestionType = "mcq_single" | "mcq_multiple" | "true_false_not_given" | "yes_no_not_given" | "short_answer" | "fill_blank" | "matching_unique" | "matching_reusable" | "essay" | "speaking_prompt";
 
 export interface QuestionOption {
   key: string;
@@ -267,6 +267,7 @@ export interface ModuleRubricCriterion {
   criterion: string;
   max_marks: number;
   description: string;
+  weight?: number;
 }
 
 export interface ExamModuleAsset {
@@ -319,6 +320,16 @@ export interface ExamModulePart {
     audio_required?: boolean;
     preparation_seconds?: number;
     response_seconds?: number;
+    option_count?: number;
+    passage_required?: boolean;
+    shared_passage?: boolean;
+    shared_options?: boolean;
+    unique_answers?: boolean;
+    minimum_inference_questions?: number;
+    score_weight?: number;
+    notes_allowed?: boolean;
+    preserve_question_order?: boolean;
+    preserve_option_order?: boolean;
   };
   rubric: ModuleRubricCriterion[];
   sort_order: number;
@@ -598,10 +609,11 @@ export interface CefrSkillResult {
   raw_score: string;
   max_score: string;
   percentage: string;
+  scaled_score: string;
   level: CefrLevel | null;
   level_label: string;
   descriptor: string;
-  mapping_method: "configured_raw_score" | "local_percentage" | null;
+  mapping_method: "languagecert_practice_scale" | null;
 }
 
 export interface CefrProfile {
@@ -613,7 +625,8 @@ export interface CefrProfile {
     level: CefrLevel;
     label: string;
     descriptor: string;
-    aggregation: "lowest_completed_skill";
+    scaled_score: string;
+    aggregation: "equal_completed_skill_average";
   } | null;
   skills: CefrSkillResult[];
   source_url: string;
@@ -665,6 +678,9 @@ export interface AttemptPart {
     allowed_question_types?: QuestionType[];
     preparation_seconds?: number;
     response_seconds?: number;
+    option_count?: number;
+    score_weight?: number;
+    notes_allowed?: boolean;
   };
   cefr_scale: CefrScaleAnchor[];
   sort_order: number;

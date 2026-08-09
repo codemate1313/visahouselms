@@ -37,6 +37,7 @@ from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, 
 from app.models.instructor_profile import InstructorProfile  # noqa: E402
 from app.models.role import SA_INSTRUCTOR, Role  # noqa: E402
 from app.models.user import User  # noqa: E402
+from app.services import module_authoring_service  # noqa: E402
 from app.services.module_blueprint_service import get_blueprint  # noqa: E402
 
 
@@ -385,12 +386,19 @@ def _get_or_create_instructor(db) -> User:
 
 def _real_question(part: ExamModulePart, actor: User, order: int, item: dict, test_number: int) -> ExamModuleQuestion:
     options = [{"key": chr(65 + i), "text": text} for i, text in enumerate(item["options"])]
+    constraints = part.answer_constraints or {}
+    passage = item.get("passage")
+    if constraints.get("passage_required") and not passage:
+        passage = (
+            f"Practice Test {test_number} shared source placeholder for {part.title}. "
+            "Replace this source text before using the seeded module for assessment."
+        )
     return ExamModuleQuestion(
         part_id=part.id,
         question_type="mcq_single",
         prompt=item["prompt"],
         instructions=part.instructions,
-        passage=item.get("passage"),
+        passage=passage,
         options=options,
         correct_answers=["A"],
         explanation=(
@@ -408,23 +416,40 @@ def _real_question(part: ExamModulePart, actor: User, order: int, item: dict, te
 
 def _filler_question(part: ExamModulePart, actor: User, order: int, test_number: int) -> ExamModuleQuestion:
     number = order + 1
-    allowed = (part.answer_constraints or {}).get("allowed_question_types", ["short_answer"])
+    constraints = part.answer_constraints or {}
+    allowed = constraints.get("allowed_question_types", ["short_answer"])
     question_type = allowed[0]
     options: list[dict] = []
     correct_answers = [f"placeholder answer {number}"]
     if question_type == "true_false_not_given":
         options = [{"key": key, "text": text} for key, text in (("A", "True"), ("B", "False"), ("C", "Not Given"))]
         correct_answers = ["A"]
-    elif question_type in {"mcq_single", "mcq_multiple"}:
-        options = [{"key": key, "text": f"Placeholder option {key} for item {number}"} for key in ("A", "B", "C", "D")]
+    elif question_type in {"mcq_single", "mcq_multiple", "matching_unique", "matching_reusable"}:
+        option_count = constraints.get("option_count", 3)
+        options = [
+            {"key": chr(65 + index), "text": f"Shared placeholder option {chr(65 + index)}"}
+            for index in range(option_count)
+        ]
         correct_answers = ["A"]
+        if constraints.get("unique_answers"):
+            correct_answers = [chr(65 + order)]
+
+    prompt = f"{part.title} placeholder item {number} (Practice Test {test_number})."
+    if part.part_code == "reading_4" and order == 0:
+        prompt = "What does the writer imply in the first paragraph?"
+    passage = None
+    if constraints.get("passage_required"):
+        passage = (
+            f"Practice Test {test_number} shared source placeholder for {part.title}. "
+            "Replace this source text before using the seeded module for assessment."
+        )
 
     return ExamModuleQuestion(
         part_id=part.id,
         question_type=question_type,
-        prompt=f"{part.title} placeholder item {number} (Practice Test {test_number}).",
+        prompt=prompt,
         instructions=part.instructions,
-        passage=None,
+        passage=passage,
         options=options,
         correct_answers=correct_answers,
         explanation=PLACEHOLDER_NOTE,
@@ -529,6 +554,9 @@ def _create_module(db, actor: User, module_type: str, test_number: int) -> bool:
             )
 
     db.flush()
+    errors = module_authoring_service.validation_errors(module)
+    if errors:
+        raise RuntimeError(f"Seeded module '{title}' is invalid: {'; '.join(errors)}")
     print(f"Created module: {title}")
     return True
 

@@ -38,6 +38,7 @@ SPEAKING_RUBRIC = [
     {
         "criterion": "Task Fulfilment and Communicative Effect",
         "max_marks": 8,
+        "weight": 2,
         "description": "Ability to manage the task at the required level and link utterances into coherent speech.",
     },
     {
@@ -74,7 +75,10 @@ READING_PARTS = [
         "max_marks": 6,
         "auto_marked": True,
         "answer_constraints": {
-            "allowed_question_types": ["mcq_single", "fill_blank", "short_answer"],
+            "allowed_question_types": ["mcq_single"],
+            "option_count": 4,
+            "preserve_question_order": True,
+            "preserve_option_order": True,
         },
     },
     {
@@ -87,7 +91,12 @@ READING_PARTS = [
         "max_marks": 5,
         "auto_marked": True,
         "answer_constraints": {
-            "allowed_question_types": ["mcq_single", "fill_blank", "short_answer"],
+            "allowed_question_types": ["mcq_single"],
+            "option_count": 3,
+            "passage_required": True,
+            "shared_passage": True,
+            "preserve_question_order": True,
+            "preserve_option_order": True,
         },
     },
     {
@@ -100,7 +109,14 @@ READING_PARTS = [
         "max_marks": 6,
         "auto_marked": True,
         "answer_constraints": {
-            "allowed_question_types": ["mcq_single", "mcq_multiple", "fill_blank"],
+            "allowed_question_types": ["matching_unique"],
+            "option_count": 8,
+            "passage_required": True,
+            "shared_passage": True,
+            "shared_options": True,
+            "unique_answers": True,
+            "preserve_question_order": True,
+            "preserve_option_order": True,
         },
     },
     {
@@ -113,7 +129,13 @@ READING_PARTS = [
         "max_marks": 7,
         "auto_marked": True,
         "answer_constraints": {
-            "allowed_question_types": ["mcq_single", "true_false_not_given", "yes_no_not_given"],
+            "allowed_question_types": ["matching_reusable"],
+            "option_count": 4,
+            "passage_required": True,
+            "shared_passage": True,
+            "shared_options": True,
+            "preserve_question_order": True,
+            "preserve_option_order": True,
         },
     },
     {
@@ -126,7 +148,13 @@ READING_PARTS = [
         "max_marks": 6,
         "auto_marked": True,
         "answer_constraints": {
-            "allowed_question_types": ["mcq_single", "true_false_not_given", "yes_no_not_given", "short_answer"],
+            "allowed_question_types": ["mcq_single"],
+            "option_count": 4,
+            "passage_required": True,
+            "shared_passage": True,
+            "minimum_inference_questions": 1,
+            "preserve_question_order": True,
+            "preserve_option_order": True,
         },
     },
 ]
@@ -142,7 +170,7 @@ LISTENING_PARTS = [
         "minimum_questions": 7,
         "max_marks": 7,
         "auto_marked": True,
-        "answer_constraints": {"allowed_question_types": ["mcq_single"], "audio_plays": 2, "audio_required": True},
+        "answer_constraints": {"allowed_question_types": ["mcq_single"], "option_count": 3, "audio_plays": 2, "audio_required": True, "preserve_question_order": True, "preserve_option_order": True},
     },
     {
         "part_code": "listening_2",
@@ -154,7 +182,7 @@ LISTENING_PARTS = [
         "minimum_questions": 10,
         "max_marks": 10,
         "auto_marked": True,
-        "answer_constraints": {"allowed_question_types": ["mcq_single"], "audio_plays": 2, "audio_required": True},
+        "answer_constraints": {"allowed_question_types": ["mcq_single"], "option_count": 3, "audio_plays": 2, "audio_required": True, "preserve_question_order": True, "preserve_option_order": True},
     },
     {
         "part_code": "listening_3",
@@ -166,7 +194,7 @@ LISTENING_PARTS = [
         "minimum_questions": 7,
         "max_marks": 7,
         "auto_marked": True,
-        "answer_constraints": {"allowed_question_types": ["fill_blank", "short_answer"], "max_answer_words": 3, "audio_plays": 2, "audio_required": True},
+        "answer_constraints": {"allowed_question_types": ["fill_blank", "short_answer"], "max_answer_words": 3, "audio_plays": 2, "audio_required": True, "preserve_question_order": True},
     },
     {
         "part_code": "listening_4",
@@ -178,7 +206,7 @@ LISTENING_PARTS = [
         "minimum_questions": 6,
         "max_marks": 6,
         "auto_marked": True,
-        "answer_constraints": {"allowed_question_types": ["mcq_single"], "audio_plays": 2, "audio_required": True},
+        "answer_constraints": {"allowed_question_types": ["mcq_single"], "option_count": 3, "audio_plays": 2, "audio_required": True, "preserve_question_order": True, "preserve_option_order": True},
     },
 ]
 
@@ -193,7 +221,7 @@ WRITING_PARTS = [
         "minimum_questions": 1,
         "max_marks": 32,
         "auto_marked": False,
-        "answer_constraints": {"allowed_question_types": ["essay"], "minimum_words": 150, "maximum_words": 200},
+        "answer_constraints": {"allowed_question_types": ["essay"], "minimum_words": 150, "maximum_words": 200, "score_weight": 40, "preserve_question_order": True},
         "rubric": WRITING_RUBRIC,
     },
     {
@@ -206,7 +234,7 @@ WRITING_PARTS = [
         "minimum_questions": 1,
         "max_marks": 32,
         "auto_marked": False,
-        "answer_constraints": {"allowed_question_types": ["essay"], "minimum_words": 250},
+        "answer_constraints": {"allowed_question_types": ["essay"], "minimum_words": 250, "score_weight": 60, "preserve_question_order": True},
         "rubric": WRITING_RUBRIC,
     },
 ]
@@ -231,7 +259,7 @@ SPEAKING_PARTS = [
         "section_type": "speaking",
         "title": "Speaking 3",
         "skill_focus": "Read a text aloud and respond to follow-up questions.",
-        "instructions": "Allow 30 seconds of preparation before reading aloud.",
+        "instructions": "Allow 20 seconds of preparation before reading aloud, then ask the follow-up questions.",
     },
     {
         "part_code": "speaking_4",
@@ -242,9 +270,9 @@ SPEAKING_PARTS = [
     },
 ]
 _SPEAKING_TIMINGS = {
-    "speaking_1": (5, 45),
-    "speaking_2": (5, 60),
-    "speaking_3": (30, 90),
+    "speaking_1": (0, 45),
+    "speaking_2": (0, 60),
+    "speaking_3": (20, 90),
     "speaking_4": (60, 120),
 }
 for _part in SPEAKING_PARTS:
@@ -259,6 +287,8 @@ for _part in SPEAKING_PARTS:
                 "allowed_question_types": ["speaking_prompt"],
                 "preparation_seconds": _preparation_seconds,
                 "response_seconds": _response_seconds,
+                "notes_allowed": _part["part_code"] == "speaking_4",
+                "preserve_question_order": True,
             },
             "rubric": SPEAKING_RUBRIC,
         }
@@ -297,13 +327,13 @@ SECTION_BLUEPRINTS = {
         "label": "Writing",
         "duration_minutes": 50,
         "parts": WRITING_PARTS,
-        "assessment": {"method": "examiner_marked", "raw_marks_per_task": 32, "criteria_marks": 8},
+        "assessment": {"method": "examiner_marked", "raw_marks_per_task": 32, "criteria_marks": 8, "task_weights": [40, 60]},
     },
     "speaking": {
         "label": "Speaking",
         "duration_minutes": 14,
         "parts": SPEAKING_PARTS,
-        "assessment": {"method": "examiner_marked", "criteria_marks": 8, "criteria_count": 5, "parts_equal_weight": True},
+        "assessment": {"method": "examiner_marked", "criteria_marks": 8, "criteria_count": 5, "task_fulfilment_weight": 2, "parts_equal_weight": True},
     },
 }
 

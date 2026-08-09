@@ -147,6 +147,48 @@ def validation_errors(module: ExamModule) -> list[str]:
         invalid = sorted({question.question_type for question in part.questions if allowed and question.question_type not in allowed})
         if invalid:
             errors.append(f"{part.title} contains unsupported question types: {', '.join(invalid)}.")
+        constraints = dict(part.answer_constraints or {})
+        option_count = constraints.get("option_count")
+        for question in part.questions:
+            if option_count is not None and len(question.options or []) != option_count:
+                errors.append(
+                    f"Every question in {part.title} requires exactly {option_count} options; "
+                    f"'{question.prompt[:30]}...' has {len(question.options or [])}."
+                )
+            if constraints.get("passage_required") and not (question.passage or "").strip():
+                errors.append(f"Every question in {part.title} must include the shared source text.")
+        if part.questions and constraints.get("shared_passage"):
+            passages = {(question.passage or "").strip() for question in part.questions}
+            if len(passages) != 1:
+                errors.append(f"Every question in {part.title} must use the same source text.")
+        if part.questions and constraints.get("shared_options"):
+            option_sets = {
+                tuple((item.get("key"), item.get("text")) for item in (question.options or []))
+                for question in part.questions
+            }
+            if len(option_sets) != 1:
+                errors.append(f"Every question in {part.title} must use the same option bank.")
+        if constraints.get("unique_answers"):
+            answers = [answer for question in part.questions for answer in (question.correct_answers or [])]
+            if len(answers) != len(set(answers)):
+                errors.append(f"Each option in {part.title} may be the key for only one gap.")
+        minimum_inference = constraints.get("minimum_inference_questions", 0)
+        if minimum_inference:
+            inference_terms = (
+                "infer",
+                "imply",
+                "implication",
+                "suggest",
+                "purpose",
+                "writer doing",
+                "writer is saying",
+            )
+            inference_count = sum(
+                any(term in f"{question.prompt} {question.instructions or ''}".lower() for term in inference_terms)
+                for question in part.questions
+            )
+            if inference_count < minimum_inference:
+                errors.append(f"{part.title} requires at least {minimum_inference} inference or writer-purpose question.")
         if part.max_marks is not None:
             if part.question_limit is not None and part.question_limit > 0:
                 expected_points = Decimal(part.max_marks) / Decimal(part.question_limit)
@@ -370,9 +412,10 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
                     )
 
                 target_part.ai_evaluation_enabled = source_part.ai_evaluation_enabled
-                randomized_questions = list(source_part.questions)
-                randomizer.shuffle(randomized_questions)
-                for order, question in enumerate(randomized_questions):
+                source_questions = sorted(source_part.questions, key=lambda item: item.sort_order)
+                if not (target_part.answer_constraints or {}).get("preserve_question_order"):
+                    randomizer.shuffle(source_questions)
+                for order, question in enumerate(source_questions):
                     db.add(
                         _new_question(
                             target_part,
@@ -533,8 +576,23 @@ def _validate_question_for_part(part: ExamModulePart, data: dict, current_count:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"{part.title} accepts only: {', '.join(sorted(allowed))}",
         )
-    # Pool size is unrestricted, so we allow uploading more than question_limit questions
-    pass
+    constraints = dict(part.answer_constraints or {})
+    option_count = constraints.get("option_count")
+    if option_count is not None and len(data.get("options", [])) != option_count:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{part.title} requires exactly {option_count} options per question",
+        )
+    if constraints.get("passage_required") and not (data.get("passage") or "").strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{part.title} requires the source text on every question",
+        )
+    if data["question_type"] in {"matching_unique", "matching_reusable"} and len(data.get("correct_answers", [])) != 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Matching questions require exactly one answer key",
+        )
     max_words = (part.answer_constraints or {}).get("max_answer_words")
     if max_words and any(len(answer.split()) > max_words for answer in data.get("correct_answers", [])):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Answers in {part.title} may contain no more than {max_words} words")

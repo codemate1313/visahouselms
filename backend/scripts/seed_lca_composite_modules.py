@@ -69,7 +69,7 @@ SPEAKING_PROMPTS = {
         "extending an assignment deadline."
     ),
     "speaking_3": (
-        "After 30 seconds of preparation, read the following short text aloud, then answer two "
+        "After 20 seconds of preparation, read the following short text aloud, then answer two "
         "follow-up questions about its topic: 'Many universities now provide mental health "
         "support services for students, including counselling and peer support groups. These "
         "services aim to help students manage the pressures of academic life.'"
@@ -187,6 +187,9 @@ def _create_skill_module(db, actor: User, module_type: str, title: str, question
         db.add(question_builder(part, actor, 0))
 
     db.flush()
+    errors = module_authoring_service.validation_errors(module)
+    if errors:
+        raise RuntimeError(f"Seeded module '{title}' is invalid: {'; '.join(errors)}")
     print(f"Created module: {title}")
     return module
 

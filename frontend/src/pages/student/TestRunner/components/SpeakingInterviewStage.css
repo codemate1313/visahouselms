@@ -156,6 +156,23 @@
   gap: 12px;
 }
 
+.speaking-interview-notes {
+  display: grid;
+  width: min(680px, 100%);
+  gap: 6px;
+}
+
+.speaking-interview-notes span {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.speaking-interview-notes textarea {
+  width: 100%;
+  resize: vertical;
+}
+
 @media (max-height: 760px) {
   .speaking-interview-content {
     gap: 12px;

@@ -47,6 +47,9 @@ def _infer_type(options: list[dict], answers: list[str], supplied: str = "") -> 
         "true_false": "true_false_not_given",
         "true false not given": "true_false_not_given",
         "yes no not given": "yes_no_not_given",
+        "matching once": "matching_unique",
+        "matching unique": "matching_unique",
+        "matching reusable": "matching_reusable",
         "short answer": "short_answer",
         "fill in the blank": "fill_blank",
         "writing": "essay",
@@ -57,7 +60,8 @@ def _infer_type(options: list[dict], answers: list[str], supplied: str = "") -> 
         return aliases[normalized]
     valid = {
         "mcq_single", "mcq_multiple", "true_false_not_given", "yes_no_not_given",
-        "short_answer", "fill_blank", "essay", "speaking_prompt",
+        "short_answer", "fill_blank", "matching_unique", "matching_reusable",
+        "essay", "speaking_prompt",
     }
     if normalized in valid:
         return normalized
@@ -99,7 +103,7 @@ def _question_preview(
     warnings: list[str] = []
     if not _clean(prompt):
         warnings.append("Question text is missing")
-    if kind.startswith("mcq_") and len(normalized_options) < 2:
+    if kind in {"mcq_single", "mcq_multiple", "matching_unique", "matching_reusable"} and len(normalized_options) < 2:
         warnings.append("At least two choices are required")
     needs_answer = kind not in {"essay", "speaking_prompt"}
     if needs_answer and not answers:

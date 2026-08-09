@@ -84,26 +84,30 @@ def _get_or_create_instructor(db) -> User:
     return user
 
 
-def _options(question_number: int) -> list[dict[str, str]]:
+def _options(count: int) -> list[dict[str, str]]:
     return [
-        {"key": "A", "text": f"Option A for item {question_number}"},
-        {"key": "B", "text": f"Option B for item {question_number}"},
-        {"key": "C", "text": f"Option C for item {question_number}"},
+        {"key": chr(65 + index), "text": f"Shared sample option {chr(65 + index)}"}
+        for index in range(count)
     ]
 
 
 def _question_for_part(part: ExamModulePart, actor: User, order: int) -> ExamModuleQuestion:
-    allowed = (part.answer_constraints or {}).get("allowed_question_types", ["short_answer"])
+    constraints = part.answer_constraints or {}
+    allowed = constraints.get("allowed_question_types", ["short_answer"])
     question_type = allowed[0]
     number = order + 1
     correct_answers = [] if question_type in {"essay", "speaking_prompt"} else ["A"]
-    options = _options(number) if question_type in {"mcq_single", "mcq_multiple"} else []
+    options = _options(constraints.get("option_count", 3)) if question_type in {
+        "mcq_single", "mcq_multiple", "matching_unique", "matching_reusable"
+    } else []
     if question_type == "true_false_not_given":
         options = [{"key": key, "text": text} for key, text in (("A", "True"), ("B", "False"), ("C", "Not Given"))]
     if question_type == "yes_no_not_given":
         options = [{"key": key, "text": text} for key, text in (("A", "Yes"), ("B", "No"), ("C", "Not Given"))]
     if question_type in {"fill_blank", "short_answer"}:
         correct_answers = [f"answer {number}"]
+    if constraints.get("unique_answers"):
+        correct_answers = [chr(65 + order)]
 
     if question_type == "essay":
         prompt = (
@@ -114,6 +118,8 @@ def _question_for_part(part: ExamModulePart, actor: User, order: int) -> ExamMod
         prompt = f"{part.title}: respond to the examiner's prompt about study habits and academic goals."
     else:
         prompt = f"{part.title} sample question {number}: choose or enter the best answer."
+        if part.part_code == "reading_4" and order == 0:
+            prompt = "What does the writer imply in the first paragraph?"
 
     points = Decimal("1")
     if part.max_marks is not None and part.question_limit:
@@ -129,7 +135,7 @@ def _question_for_part(part: ExamModulePart, actor: User, order: int) -> ExamMod
         passage=(
             "Sample academic context: students discuss lectures, research deadlines, campus services, "
             "and methods for improving language performance."
-        ),
+        ) if constraints.get("passage_required") else None,
         options=options,
         correct_answers=correct_answers,
         explanation="Seeded answer for QA and layout testing.",
@@ -245,6 +251,9 @@ def _create_module(db, actor: User, module_type: str) -> bool:
             )
 
     db.flush()
+    errors = module_authoring_service.validation_errors(module)
+    if errors:
+        raise RuntimeError(f"Seeded module '{title}' is invalid: {'; '.join(errors)}")
     print(f"Created module: {title}")
     return True
 

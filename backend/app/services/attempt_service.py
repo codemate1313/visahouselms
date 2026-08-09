@@ -110,7 +110,8 @@ def _build_content_snapshot(module: ExamModule, *, randomize: bool) -> dict:
     part_ids = [part.id for part in sorted(module.parts, key=lambda item: item.sort_order)]
     for part in module.parts:
         questions = sorted(part.questions, key=lambda item: item.sort_order)
-        if randomize:
+        constraints = dict(part.answer_constraints or {})
+        if randomize and not constraints.get("preserve_question_order"):
             questions = questions[:]
             _randomizer.shuffle(questions)
         if part.question_limit is not None and part.question_limit > 0:
@@ -119,7 +120,7 @@ def _build_content_snapshot(module: ExamModule, *, randomize: bool) -> dict:
         question_data: dict[str, dict] = {}
         for question in questions:
             options = [dict(item) for item in (question.options or [])]
-            if randomize and len(options) > 1:
+            if randomize and len(options) > 1 and not constraints.get("preserve_option_order"):
                 _randomizer.shuffle(options)
             question_ids.append(question.id)
             question_data[str(question.id)] = {
@@ -917,7 +918,13 @@ def _grade_answer(
     if not response:
         return False, Decimal("0")
 
-    if qtype in ("mcq_single", "true_false_not_given", "yes_no_not_given"):
+    if qtype in (
+        "mcq_single",
+        "true_false_not_given",
+        "yes_no_not_given",
+        "matching_unique",
+        "matching_reusable",
+    ):
         selected = response.get("selected")
         is_correct = bool(selected) and _normalize(selected) in correct
     elif qtype == "mcq_multiple":

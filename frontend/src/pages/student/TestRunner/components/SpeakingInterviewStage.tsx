@@ -49,12 +49,18 @@ export function SpeakingInterviewStage({
   const [mode, setMode] = useState<InterviewMode>(recorded ? "complete" : "ready");
   const [preparationLeft, setPreparationLeft] = useState(0);
   const [responseLeft, setResponseLeft] = useState(0);
+  const [notes, setNotes] = useState("");
   const startingRef = useRef(false);
+  const onContinuePartRef = useRef(onContinuePart);
   const previousQuestionIdRef = useRef<number | null>(question?.id ?? null);
   const t = strings.speakingInterview;
   const preparationSeconds = currentPart.answer_constraints.preparation_seconds ?? 5;
   const responseSeconds = currentPart.answer_constraints.response_seconds ?? 60;
   const isLastQuestion = questionIndex >= currentPart.questions.length - 1;
+
+  useEffect(() => {
+    onContinuePartRef.current = onContinuePart;
+  }, [onContinuePart]);
 
   useEffect(() => {
     setQuestionIndex(firstOpenQuestion);
@@ -66,6 +72,7 @@ export function SpeakingInterviewStage({
       setMode(recorded ? "complete" : "ready");
       setPreparationLeft(0);
       setResponseLeft(0);
+      setNotes("");
       startingRef.current = false;
     }
   }, [question?.id, recorded]);
@@ -115,11 +122,15 @@ export function SpeakingInterviewStage({
   useEffect(() => {
     if (mode === "complete") {
       const timer = setTimeout(() => {
-        continueInterview();
+        if (!isLastQuestion) {
+          setQuestionIndex((index) => index + 1);
+        } else {
+          onContinuePartRef.current();
+        }
       }, 1200);
       return () => clearTimeout(timer);
     }
-  }, [mode]);
+  }, [isLastQuestion, mode]);
 
   if (!question) return null;
 
@@ -179,6 +190,19 @@ export function SpeakingInterviewStage({
           <div className="speaking-interview-prompt">
             <div className="speaking-interview-passage">{question.passage}</div>
           </div>
+        )}
+
+        {currentPart.answer_constraints.notes_allowed && mode !== "recording" && mode !== "uploading" && (
+          <label className="speaking-interview-notes">
+            <span>Preparation notes</span>
+            <textarea
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              rows={4}
+              maxLength={1200}
+              placeholder="Notes are available in Speaking Part 4 only."
+            />
+          </label>
         )}
 
         <div className={`speaking-interview-timer is-${mode}`}>

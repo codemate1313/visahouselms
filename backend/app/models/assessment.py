@@ -16,6 +16,8 @@ QUESTION_TYPES = (
     "yes_no_not_given",
     "short_answer",
     "fill_blank",
+    "matching_unique",
+    "matching_reusable",
     "essay",
     "speaking_prompt",
 )

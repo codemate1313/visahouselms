@@ -149,6 +149,8 @@ class QuestionCreate(BaseModel):
             "mcq_multiple",
             "true_false_not_given",
             "yes_no_not_given",
+            "matching_unique",
+            "matching_reusable",
         }
         if self.question_type in option_types:
             if len(self.options) < 2:
@@ -160,7 +162,7 @@ class QuestionCreate(BaseModel):
                 raise ValueError("Choose at least one correct answer")
             if any(answer not in keys for answer in self.correct_answers):
                 raise ValueError("Correct answers must match an option key")
-            if self.question_type == "mcq_single" and len(self.correct_answers) != 1:
+            if self.question_type in {"mcq_single", "matching_unique", "matching_reusable"} and len(self.correct_answers) != 1:
                 raise ValueError("Single-choice MCQs require exactly one correct answer")
         if self.question_type in {"short_answer", "fill_blank"} and not self.correct_answers:
             raise ValueError("Auto-graded text questions require at least one accepted answer")

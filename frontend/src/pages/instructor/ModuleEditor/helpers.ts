@@ -8,30 +8,43 @@ import type {
 } from "@/api/types";
 
 export const MODULE_TYPES = new Set<ExamModuleType>(["reading", "speaking", "writing", "listening", "full_mock", "final_test"]);
-export const CHOICE_TYPES = new Set<QuestionType>(["mcq_single", "mcq_multiple", "true_false_not_given", "yes_no_not_given"]);
+export const CHOICE_TYPES = new Set<QuestionType>(["mcq_single", "mcq_multiple", "true_false_not_given", "yes_no_not_given", "matching_unique", "matching_reusable"]);
 export const ANSWER_FREE_TYPES = new Set<QuestionType>(["essay", "speaking_prompt"]);
 export const COMPOSITE_TYPES = new Set<ExamModuleType>(["full_mock", "final_test"]);
 export const SOURCE_SECTIONS: IeltsSection[] = ["listening", "reading", "writing", "speaking"];
 
-export function optionsFor(type: QuestionType): QuestionOption[] {
+export function optionsFor(type: QuestionType, optionCount = 3): QuestionOption[] {
   if (type === "true_false_not_given") return ["True", "False", "Not Given"].map((text, index) => ({ key: String.fromCharCode(65 + index), text }));
   if (type === "yes_no_not_given") return ["Yes", "No", "Not Given"].map((text, index) => ({ key: String.fromCharCode(65 + index), text }));
-  if (type.startsWith("mcq_")) return ["A", "B", "C"].map((key) => ({ key, text: "" }));
+  if (CHOICE_TYPES.has(type)) {
+    return Array.from({ length: optionCount }, (_, index) => ({
+      key: String.fromCharCode(65 + index),
+      text: "",
+    }));
+  }
   return [];
 }
 
 export function emptyQuestion(part: ExamModulePart): QuestionDraft {
   const type = part.answer_constraints.allowed_question_types?.[0] ?? "short_answer";
   const points = part.max_marks && part.question_limit ? Number(part.max_marks) / part.question_limit : 1;
+  const firstQuestion = part.questions[0];
+  const sharedOptions = part.answer_constraints.shared_options && firstQuestion
+    ? firstQuestion.options.map((option) => ({ ...option }))
+    : optionsFor(type, part.answer_constraints.option_count ?? 3);
+  const usedAnswers = new Set(part.questions.flatMap((question) => question.correct_answers));
+  const defaultAnswer = part.answer_constraints.unique_answers
+    ? sharedOptions.find((option) => !usedAnswers.has(option.key))?.key ?? ""
+    : "A";
   return {
     question_type: type,
     prompt: "",
     instructions: null,
-    passage: null,
+    passage: part.answer_constraints.shared_passage ? firstQuestion?.passage ?? null : null,
     image_path: null,
     image_url: null,
-    options: optionsFor(type),
-    correct_answers: ANSWER_FREE_TYPES.has(type) ? [] : ["A"],
+    options: sharedOptions,
+    correct_answers: ANSWER_FREE_TYPES.has(type) || !defaultAnswer ? [] : [defaultAnswer],
     explanation: null,
     points,
     difficulty: "medium",
@@ -88,54 +101,54 @@ export const MODULE_TYPE_META: Record<ExamModuleType, ModuleMeta> = {
     icon: "module",
     badge: "Audio Listening Test",
     defaultDuration: 40,
-    specs: ["4 Audio Parts", "40 Questions", "Auto Band Scoring"],
-    tagline: "Build a 4-part computer-delivered listening test with audio recordings & interactive questions.",
+    specs: ["4 Listening Parts", "30 Questions", "Audio Played Twice"],
+    tagline: "Build the four-part LanguageCert Academic listening paper with 30 auto-marked questions.",
     durationPresets: [20, 30, 40, 60],
-    sampleInstructions: "You will hear a number of different recordings and you will have to answer questions based on what you hear. All recordings will be played ONCE only.",
+    sampleInstructions: "You will hear each recording twice. Answer all 30 questions across the four Listening parts.",
   },
   reading: {
     icon: "courses",
     badge: "Academic Reading Passages",
-    defaultDuration: 60,
-    specs: ["3 Passages", "40 Questions", "Text Highlighting"],
-    tagline: "Craft multi-passage academic reading tests with passage highlighting and 40 questions.",
-    durationPresets: [30, 45, 60, 90],
-    sampleInstructions: "You have 60 minutes to read three passages and answer 40 questions. Write your answers clearly and pay strict attention to word limits.",
+    defaultDuration: 50,
+    specs: ["5 Reading Parts", "30 Questions", "Matching & MCQ"],
+    tagline: "Create all five LanguageCert Academic Reading formats, including both matching task types.",
+    durationPresets: [30, 40, 50, 60],
+    sampleInstructions: "You have 50 minutes to answer 30 questions across Reading Parts 1A, 1B, 2, 3, and 4.",
   },
   writing: {
     icon: "edit",
     badge: "Essay & Task Evaluation",
-    defaultDuration: 60,
-    specs: ["Task 1 & Task 2", "Word Counter", "AI Essay Feedback"],
+    defaultDuration: 50,
+    specs: ["Task 1: 40%", "Task 2: 60%", "150-200 / 250 Words"],
     tagline: "Design Task 1 chart & Task 2 essay prompts with automatic word counters & AI feedback.",
-    durationPresets: [30, 45, 60, 75],
-    sampleInstructions: "You should spend about 20 minutes on Task 1 (minimum 150 words) and 40 minutes on Task 2 (minimum 250 words).",
+    durationPresets: [30, 40, 50, 60],
+    sampleInstructions: "You have 50 minutes for both tasks. Write 150–200 words for Task 1 and approximately 250 words for Task 2.",
   },
   speaking: {
     icon: "microphone",
     badge: "Interactive Speaking Interview",
     defaultDuration: 14,
-    specs: ["3 Interview Parts", "Cue Card Timer", "Speech Recorder"],
-    tagline: "Set up a 3-part interactive AI candidate interview with cue card timing rules & audio recording.",
+    specs: ["4 Speaking Parts", "14 Minutes", "Timed Recording"],
+    tagline: "Set up the four-part LanguageCert Academic Speaking interview with exact preparation rules.",
     durationPresets: [10, 14, 20, 30],
-    sampleInstructions: "Ensure your microphone is enabled. Speak clearly into the microphone. Part 1: intro questions (4-5m), Part 2: 1m prep + 2m talk, Part 3: discussion (4-5m).",
+    sampleInstructions: "Parts 1 and 2 have no preparation time. Part 3 allows 20 seconds and Part 4 allows one minute of preparation.",
   },
   full_mock: {
     icon: "overview",
     badge: "Full Exam Simulation",
-    defaultDuration: 174,
-    specs: ["4 Combined Sections", "3-Hour Simulation", "Complete Band Score"],
+    defaultDuration: 154,
+    specs: ["4 Skills", "154 Minutes", "0-100 Practice Score"],
     tagline: "Combine completed Listening, Reading, Writing, and Speaking modules into a full test simulation.",
-    durationPresets: [120, 150, 174, 180],
-    sampleInstructions: "This is a full-length mock test. Ensure you are in a quiet room without interruptions for approximately 3 hours.",
+    durationPresets: [120, 150, 154, 180],
+    sampleInstructions: "This is a full LanguageCert Academic practice test covering Listening, Reading, Writing, and Speaking.",
   },
   final_test: {
     icon: "analytics",
     badge: "Official Exit Assessment",
-    defaultDuration: 174,
-    specs: ["Final Certification", "Course Exit Exam", "Official Evaluation"],
+    defaultDuration: 154,
+    specs: ["Final Assessment", "4 Skills", "Strict Test Security"],
     tagline: "Combine 4 section modules into an official course completion exit exam to evaluate student readiness.",
-    durationPresets: [120, 150, 174, 180],
-    sampleInstructions: "This final evaluation test assesses your overall band score across all four components under strict exam conditions.",
+    durationPresets: [120, 150, 154, 180],
+    sampleInstructions: "This final assessment measures all four LanguageCert Academic skills under strict test conditions.",
   },
 };

@@ -17,7 +17,8 @@ export function CefrProfilePanel({ profile }: CefrProfilePanelProps) {
         </div>
         <div className={`cefr-overall ${profile.overall ? "is-complete" : "is-pending"} grade-${profile.overall?.label ? profile.overall.label.replace(/\s+/g, "-").toLowerCase() : ""}`}>
           <span>{t.overallLabel}</span>
-          <strong>{profile.overall?.label ?? t.pending}</strong>
+          <strong>{profile.overall ? `${profile.overall.scaled_score}/100` : t.pending}</strong>
+          {profile.overall && <small>{profile.overall.label}</small>}
         </div>
       </div>
 
@@ -36,7 +37,7 @@ export function CefrProfilePanel({ profile }: CefrProfilePanelProps) {
                     {skill.level_label}
                   </strong>
                 </div>
-                <span>{skill.status === "complete" ? `${skill.percentage}%` : t.awaitingExaminer}</span>
+                <span>{skill.status === "complete" ? `${skill.scaled_score}/100` : t.awaitingExaminer}</span>
               </div>
               <div className="cefr-meter" aria-label={`${skill.label} ${skill.percentage}%`}>
                 <span style={{ width: `${Math.min(100, Number(skill.percentage))}%` }} />

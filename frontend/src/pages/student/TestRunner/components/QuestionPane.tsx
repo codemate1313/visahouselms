@@ -2,6 +2,7 @@ import type { RefObject } from "react";
 import type { Attempt, AttemptResponse } from "@/api/types";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { QuestionInput } from "./QuestionInput";
+import { MatchingQuestionGroup } from "./MatchingQuestionGroup";
 
 interface QuestionPaneProps {
   currentPart: Attempt["parts"][number];
@@ -23,6 +24,8 @@ export function QuestionPane({
   onRecord,
 }: QuestionPaneProps) {
   const t = strings.questionPane;
+  const matchingType = currentPart.questions[0]?.question_type;
+  const isMatchingPart = matchingType === "matching_unique" || matchingType === "matching_reusable";
   return (
     <section className="test-runner-question-pane" ref={questionPaneRef} aria-label={`${currentPart.title} questions`}>
       {currentPart.section_type !== "writing" && (
@@ -34,7 +37,15 @@ export function QuestionPane({
           <p>{t.instructions}</p>
         </div>
       )}
-      {currentPart.questions.map((question, qIndex) => (
+      {isMatchingPart ? (
+        <MatchingQuestionGroup
+          questions={currentPart.questions}
+          questionNumberOffset={questionNumberOffset}
+          savingIds={savingIds}
+          reusable={matchingType === "matching_reusable"}
+          onChangeResponse={(questionId, response) => onChangeResponse(questionId, response)}
+        />
+      ) : currentPart.questions.map((question, qIndex) => (
         <QuestionInput
           key={question.id}
           index={questionNumberOffset + qIndex + 1}

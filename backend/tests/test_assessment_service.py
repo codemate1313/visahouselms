@@ -63,6 +63,21 @@ class QuestionImportTests(unittest.TestCase):
         self.assertEqual(preview["questions"][0]["correct_answers"], ["B"])
         self.assertEqual(len(preview["questions"][0]["options"]), 3)
 
+    def test_csv_preserves_languagecert_matching_type(self) -> None:
+        upload = UploadFile(
+            io.BytesIO(
+                b"type,question,option_a,option_b,option_c,answer\n"
+                b"matching reusable,Which text mentions cost?,Text A,Text B,Text C,B\n"
+            ),
+            filename="matching.csv",
+            headers=Headers({"content-type": "text/csv"}),
+        )
+        preview = asyncio.run(question_import_service.preview_upload(upload))
+        question = preview["questions"][0]
+        self.assertEqual(question["question_type"], "matching_reusable")
+        self.assertEqual(question["correct_answers"], ["B"])
+        self.assertEqual(preview["warning_count"], 0)
+
     def test_pdf_extracts_numbered_questions_options_and_answer(self) -> None:
         content = _simple_pdf([
             "1. Which word means fast?",

@@ -169,7 +169,12 @@ export function ModuleEditor() {
 
   function changeQuestionType(type: QuestionType) {
     if (!manual) return;
-    setManual({ ...manual, question_type: type, options: optionsFor(type), correct_answers: ANSWER_FREE_TYPES.has(type) ? [] : ["A"] });
+    setManual({
+      ...manual,
+      question_type: type,
+      options: optionsFor(type, selectedPart?.answer_constraints.option_count ?? 3),
+      correct_answers: ANSWER_FREE_TYPES.has(type) ? [] : ["A"],
+    });
   }
 
   function updateOption(index: number, text: string) {

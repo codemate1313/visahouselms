@@ -248,6 +248,6 @@ export const ATTEMPT_STATUS_OPTIONS = toOptions(ATTEMPT_STATUS_LABELS, ALL_STATU
 /* CEFR levels                                                               */
 /* ------------------------------------------------------------------------ */
 
-export const CEFR_LEVELS = ["Below B1", "B1", "B2", "C1", "C2"] as const;
+export const CEFR_LEVELS = ["Pre-A1", "A1", "A2", "B1", "B2", "C1", "C2"] as const;
 
 export type CefrLevel = (typeof CEFR_LEVELS)[number];

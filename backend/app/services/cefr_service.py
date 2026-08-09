@@ -1,17 +1,15 @@
-"""Versioned CEFR-aligned diagnostic evaluation for assessment attempts.
+"""Versioned LanguageCert-aligned practice evaluation for assessment attempts.
 
-CEFR provides proficiency descriptors, not universal percentage cut scores.
-The policy below therefore keeps calibrated module cut scores where they exist
-and declares the local fallback conversion used for the other skills.
+Official LanguageCert scaled scores require validated test forms and standard
+setting. This service applies an explicitly local 0-100 practice conversion.
 """
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 
 from app.models.attempt import PART_GRADE_AI_GRADED, PART_GRADE_GRADED, TestAttempt
-from app.services.module_blueprint_service import SECTION_BLUEPRINTS
 
 
-POLICY_VERSION = "cefr-companion-2020-diagnostic-v1"
+POLICY_VERSION = "languagecert-academic-practice-v2"
 FRAMEWORK_VERSION = "CEFR Companion Volume 2020"
 FRAMEWORK_SOURCE_URL = (
     "https://www.coe.int/en/web/common-european-framework-reference-languages/"
@@ -25,20 +23,31 @@ SKILL_LABELS = {
     "speaking": "Speaking",
 }
 
-LEVEL_ORDER = {"Below B1": 0, "B1": 1, "B2": 2, "C1": 3, "C2": 4}
-
-# Local diagnostic conversion for sections without validated raw-score cut
-# scores. A future standard-setting study can replace this policy version
-# without rewriting historical results.
+# Local diagnostic conversion. A future standard-setting study can replace
+# this policy version without rewriting historical results.
 PERCENTAGE_BANDS = (
     (Decimal("90"), "C2"),
     (Decimal("75"), "C1"),
     (Decimal("60"), "B2"),
     (Decimal("40"), "B1"),
+    (Decimal("20"), "A2"),
+    (Decimal("10"), "A1"),
 )
 
+LEVEL_ORDER = {
+    "Pre-A1": 0,
+    "A1": 1,
+    "A2": 2,
+    "B1": 3,
+    "B2": 4,
+    "C1": 5,
+    "C2": 6,
+}
+
 GLOBAL_DESCRIPTORS = {
-    "Below B1": "The assessed performance did not yet demonstrate the B1 target consistently.",
+    "Pre-A1": "The assessed performance is still developing toward the first CEFR proficiency band.",
+    "A1": "Can understand and use familiar everyday expressions and very basic phrases.",
+    "A2": "Can communicate in simple, routine tasks and understand frequently used expressions.",
     "B1": "Can handle the main points of clear standard language and produce connected responses on familiar matters.",
     "B2": "Can understand complex main ideas and communicate clearly, in detail, and with effective independence.",
     "C1": "Can use language fluently, flexibly, and effectively for demanding academic and professional purposes.",
@@ -91,7 +100,7 @@ def level_for_percentage(percentage: Decimal) -> str:
     for minimum, level in PERCENTAGE_BANDS:
         if percentage >= minimum:
             return level
-    return "Below B1"
+    return "Pre-A1"
 
 
 def criterion_level(marks_awarded: object, max_marks: object) -> str:
@@ -100,13 +109,7 @@ def criterion_level(marks_awarded: object, max_marks: object) -> str:
 
 
 def _level_for_section(skill: str, score: Decimal, maximum: Decimal) -> tuple[str, str]:
-    configured = SECTION_BLUEPRINTS.get(skill, {}).get("assessment", {}).get("score_bands", [])
-    if configured and maximum == _decimal(SECTION_BLUEPRINTS[skill]["assessment"].get("raw_marks")):
-        for band in sorted(configured, key=lambda item: _decimal(item["minimum"]), reverse=True):
-            if score >= _decimal(band["minimum"]):
-                return band["level"], "configured_raw_score"
-        return "Below B1", "configured_raw_score"
-    return level_for_percentage(_percentage(score, maximum)), "local_percentage"
+    return level_for_percentage(_percentage(score, maximum)), "languagecert_practice_scale"
 
 
 def _section_profile(attempt: TestAttempt, skill: str) -> dict:
@@ -134,13 +137,32 @@ def _section_profile(attempt: TestAttempt, skill: str) -> dict:
             )
             continue
 
-        rubric_max = sum((_decimal(item.get("max_marks")) for item in (part.rubric or [])), Decimal("0"))
-        maximum += rubric_max
+        rubric_max = sum(
+            (
+                _decimal(item.get("max_marks")) * _decimal(item.get("weight") or 1)
+                for item in (part.rubric or [])
+            ),
+            Decimal("0"),
+        )
+        part_weight = _decimal((part.answer_constraints or {}).get("score_weight") or 1)
+        maximum += part_weight
         grade = grades_by_part.get(part.id)
         if grade is None or grade.status not in (PART_GRADE_GRADED, PART_GRADE_AI_GRADED) or grade.total_marks is None:
             pending = True
         else:
-            score += _decimal(grade.total_marks)
+            awarded_by_criterion = {
+                item.get("criterion"): _decimal(item.get("marks_awarded"))
+                for item in (grade.criteria or [])
+            }
+            rubric_score = sum(
+                (
+                    awarded_by_criterion.get(item.get("criterion"), Decimal("0"))
+                    * _decimal(item.get("weight") or 1)
+                    for item in (part.rubric or [])
+                ),
+                Decimal("0"),
+            )
+            score += (_percentage(rubric_score, rubric_max) * part_weight / Decimal("100"))
 
     percentage = _percentage(score, maximum)
     level: Optional[str] = None
@@ -158,7 +180,12 @@ def _section_profile(attempt: TestAttempt, skill: str) -> dict:
         "percentage": str(percentage),
         "level": level,
         "level_label": level if level else "Pending",
-        "descriptor": SKILL_DESCRIPTORS[skill].get(level) if level else "Complete instructor grading to receive this skill level.",
+        "scaled_score": str(percentage.quantize(Decimal("1"), rounding=ROUND_HALF_UP)),
+        "descriptor": (
+            SKILL_DESCRIPTORS[skill].get(level) or GLOBAL_DESCRIPTORS.get(level)
+            if level
+            else "Complete instructor grading to receive this skill level."
+        ),
         "mapping_method": method,
     }
 
@@ -174,14 +201,17 @@ def evaluate_attempt(attempt: TestAttempt) -> dict:
 
     overall = None
     if complete:
-        # CEFR encourages a skill profile. Where one summary is required, this
-        # conservative policy reports the lowest demonstrated skill level.
-        level = min((skill["level"] for skill in skills), key=lambda item: LEVEL_ORDER[item])
+        scaled_score = (
+            sum((_decimal(skill["percentage"]) for skill in skills), Decimal("0"))
+            / Decimal(len(skills))
+        ).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+        level = level_for_percentage(scaled_score)
         overall = {
             "level": level,
             "label": level,
             "descriptor": GLOBAL_DESCRIPTORS[level],
-            "aggregation": "lowest_completed_skill",
+            "scaled_score": str(scaled_score),
+            "aggregation": "equal_completed_skill_average",
         }
 
     return {
@@ -193,8 +223,8 @@ def evaluate_attempt(attempt: TestAttempt) -> dict:
         "skills": skills,
         "source_url": FRAMEWORK_SOURCE_URL,
         "calibration_note": (
-            "Diagnostic CEFR-aligned estimate. CEFR does not prescribe universal test cut scores; "
-            "this LMS uses declared module cut scores where available and a versioned local mapping otherwise."
+            "LanguageCert-aligned practice score. Each completed skill is scaled to 0-100 and contributes "
+            "equally to the overall score. This is a practice estimate, not an official LanguageCert result."
         ),
     }
 
@@ -211,9 +241,11 @@ def apply_evaluation(attempt: TestAttempt) -> dict:
 def assessment_scale(skill: str) -> list[dict]:
     descriptors = SKILL_DESCRIPTORS.get(skill, GLOBAL_DESCRIPTORS)
     return [
-        {"level": "Below B1", "marks": "0-3.5 / 8", "descriptor": descriptors["Below B1"]},
-        {"level": "B1", "marks": "4-4.5 / 8", "descriptor": descriptors["B1"]},
-        {"level": "B2", "marks": "5-5.5 / 8", "descriptor": descriptors["B2"]},
-        {"level": "C1", "marks": "6-7.5 / 8", "descriptor": descriptors["C1"]},
+        {"level": "Pre-A1", "marks": "0 / 8", "descriptor": GLOBAL_DESCRIPTORS["Pre-A1"]},
+        {"level": "A1", "marks": "1 / 8", "descriptor": GLOBAL_DESCRIPTORS["A1"]},
+        {"level": "A2", "marks": "2-3 / 8", "descriptor": GLOBAL_DESCRIPTORS["A2"]},
+        {"level": "B1", "marks": "4 / 8", "descriptor": descriptors["B1"]},
+        {"level": "B2", "marks": "5 / 8", "descriptor": descriptors["B2"]},
+        {"level": "C1", "marks": "6-7 / 8", "descriptor": descriptors["C1"]},
         {"level": "C2", "marks": "8 / 8", "descriptor": descriptors["C2"]},
     ]
