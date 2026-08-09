@@ -17,10 +17,9 @@ import type {
   IeltsSection,
   QuestionDraft,
   QuestionImportPreview,
-  QuestionType,
 } from "@/api/types";
 import { moduleEditorStrings as strings } from "./ModuleEditor.strings";
-import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSITE_TYPES, MODULE_TYPES, SOURCE_SECTIONS, detectConversationSpeakers, emptyQuestion, optionsFor, questionPayload } from "./helpers";
+import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSITE_TYPES, MODULE_TYPES, SOURCE_SECTIONS, detectConversationSpeakers, emptyQuestion, questionPayload } from "./helpers";
 import { NewModuleForm } from "./components/NewModuleForm";
 import { ModulePartNav } from "./components/ModulePartNav";
 import { ModuleReadinessPanel } from "./components/ModuleReadinessPanel";
@@ -167,19 +166,34 @@ export function ModuleEditor() {
     finally { setBusy(false); }
   }
 
-  function changeQuestionType(type: QuestionType) {
-    if (!manual) return;
-    setManual({
-      ...manual,
-      question_type: type,
-      options: optionsFor(type, selectedPart?.answer_constraints.option_count ?? 3),
-      correct_answers: ANSWER_FREE_TYPES.has(type) ? [] : ["A"],
-    });
-  }
-
   function updateOption(index: number, text: string) {
     if (!manual) return;
     setManual({ ...manual, options: manual.options.map((option, current) => current === index ? { ...option, text } : option) });
+  }
+
+  function addOption() {
+    if (!manual || !CHOICE_TYPES.has(manual.question_type) || manual.options.length >= 26) return;
+    const key = String.fromCharCode(65 + manual.options.length);
+    setManual({ ...manual, options: [...manual.options, { key, text: "" }] });
+  }
+
+  function removeOption(index: number) {
+    if (!manual || !CHOICE_TYPES.has(manual.question_type) || manual.options.length <= 2) return;
+    const remaining = manual.options.filter((_, current) => current !== index);
+    const keyMap = new Map<string, string>();
+    const options = remaining.map((option, nextIndex) => {
+      const key = String.fromCharCode(65 + nextIndex);
+      keyMap.set(option.key, key);
+      return { ...option, key };
+    });
+    const correctAnswers = manual.correct_answers
+      .map((answer) => keyMap.get(answer))
+      .filter((answer): answer is string => Boolean(answer));
+    setManual({
+      ...manual,
+      options,
+      correct_answers: correctAnswers.length ? correctAnswers : [options[0]?.key ?? "A"],
+    });
   }
 
   function toggleCorrect(key: string) {
@@ -539,7 +553,8 @@ export function ModuleEditor() {
                       editingQuestionId={editingQuestionId}
                       busy={busy}
                       uploadingImage={uploadingImage}
-                      onChangeQuestionType={changeQuestionType}
+                      onAddOption={addOption}
+                      onRemoveOption={removeOption}
                       onUpdateOption={updateOption}
                       onToggleCorrect={toggleCorrect}
                       onManualChange={setManual}
@@ -584,7 +599,8 @@ export function ModuleEditor() {
               editingQuestionId={editingQuestionId}
               busy={busy}
               uploadingImage={uploadingImage}
-              onChangeQuestionType={changeQuestionType}
+              onAddOption={addOption}
+              onRemoveOption={removeOption}
               onUpdateOption={updateOption}
               onToggleCorrect={toggleCorrect}
               onManualChange={setManual}

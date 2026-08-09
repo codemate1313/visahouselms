@@ -149,11 +149,10 @@ def validation_errors(module: ExamModule) -> list[str]:
         if invalid:
             errors.append(f"{part.title} contains unsupported question types: {', '.join(invalid)}.")
         constraints = dict(part.answer_constraints or {})
-        option_count = constraints.get("option_count")
         for question in part.questions:
-            if option_count is not None and len(question.options or []) != option_count:
+            if question.question_type in OPTION_BASED_QUESTION_TYPES and len(question.options or []) < 2:
                 errors.append(
-                    f"Every question in {part.title} requires exactly {option_count} options; "
+                    f"Every option-based question in {part.title} requires at least 2 options; "
                     f"'{question.prompt[:30]}...' has {len(question.options or [])}."
                 )
             if constraints.get("passage_required") and not (question.passage or "").strip():
@@ -260,6 +259,16 @@ DEFAULT_INTEGRITY_GUIDELINES = [
         "icon": "restore",
     },
 ]
+
+
+OPTION_BASED_QUESTION_TYPES = {
+    "mcq_single",
+    "mcq_multiple",
+    "true_false_not_given",
+    "yes_no_not_given",
+    "matching_unique",
+    "matching_reusable",
+}
 
 
 def serialize_module(module: ExamModule, *, detailed: bool = False) -> dict:
@@ -604,11 +613,10 @@ def _validate_question_for_part(part: ExamModulePart, data: dict, current_count:
             detail=f"{part.title} accepts only: {', '.join(sorted(allowed))}",
         )
     constraints = dict(part.answer_constraints or {})
-    option_count = constraints.get("option_count")
-    if option_count is not None and len(data.get("options", [])) != option_count:
+    if data["question_type"] in OPTION_BASED_QUESTION_TYPES and len(data.get("options", [])) < 2:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"{part.title} requires exactly {option_count} options per question",
+            detail=f"{part.title} requires at least 2 options per option-based question",
         )
     if constraints.get("passage_required") and not (data.get("passage") or "").strip():
         raise HTTPException(

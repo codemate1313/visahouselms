@@ -2,7 +2,7 @@ import type { FormEvent } from "react";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
-import type { ExamModulePart, QuestionDraft, QuestionType, SpeakingTurnType } from "@/api/types";
+import type { ExamModulePart, QuestionDraft, SpeakingTurnType } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { ANSWER_FREE_TYPES, CHOICE_TYPES } from "../helpers";
 
@@ -12,7 +12,8 @@ interface ManualQuestionFormProps {
   editingQuestionId: number | null;
   busy: boolean;
   uploadingImage: boolean;
-  onChangeQuestionType: (type: QuestionType) => void;
+  onAddOption: () => void;
+  onRemoveOption: (index: number) => void;
   onUpdateOption: (index: number, text: string) => void;
   onToggleCorrect: (key: string) => void;
   onManualChange: (manual: QuestionDraft) => void;
@@ -28,7 +29,8 @@ export function ManualQuestionForm({
   editingQuestionId,
   busy,
   uploadingImage,
-  onChangeQuestionType,
+  onAddOption,
+  onRemoveOption,
   onUpdateOption,
   onToggleCorrect,
   onManualChange,
@@ -39,8 +41,14 @@ export function ManualQuestionForm({
 }: ManualQuestionFormProps) {
   const t = strings.manualQuestion;
   const questionLabels = strings.questionLabels;
-  const allowedTypes = part.answer_constraints.allowed_question_types ?? [];
   const allowedTurns = part.answer_constraints.allowed_turn_types ?? [];
+  const isChoiceQuestion = CHOICE_TYPES.has(manual.question_type);
+  const canRemoveOption = manual.options.length > 2;
+  const showsBlankGuidance =
+    manual.question_type === "fill_blank" ||
+    part.answer_constraints.inline_marker_required ||
+    part.answer_constraints.layout === "inline_matching_blanks";
+  const questionTypeLabel = questionLabels[manual.question_type] ?? manual.question_type;
   const turnLabels: Record<SpeakingTurnType, string> = {
     identity: "Identity and origin",
     topic_question: "Familiar-topic question",
@@ -60,15 +68,17 @@ export function ManualQuestionForm({
         </div>
       </div>
       <form className="question-form" onSubmit={onSubmit}>
-        <label htmlFor="module-question-type">{t.typeLabel}</label>
-        <SearchableSelect
-          id="module-question-type"
-          options={allowedTypes.map((type) => ({ value: type, label: questionLabels[type] }))}
-          value={manual.question_type}
-          onChange={(value) => onChangeQuestionType(String(value) as QuestionType)}
-          searchable={false}
-          className="form-dropdown-select"
-        />
+        <div className="question-type-summary">
+          <span>{t.typeSummaryLabel}</span>
+          <h3>{questionTypeLabel}</h3>
+          <p>{t.typeSummaryHint(part.title)}</p>
+        </div>
+        {showsBlankGuidance && (
+          <div className="question-authoring-help">
+            <h4>{t.blankHelpTitle}</h4>
+            <p>{t.blankHelp}</p>
+          </div>
+        )}
         {part.answer_constraints.group_label_required && (
           <>
             <label htmlFor="module-question-group">{t.groupLabel}<RequiredMark /></label>
@@ -192,9 +202,15 @@ export function ManualQuestionForm({
           placeholder={part.answer_constraints.inline_marker_required ? t.inlinePromptPlaceholder : t.promptPlaceholder}
           required
         />
-        {CHOICE_TYPES.has(manual.question_type) && (
-          <fieldset className="option-editor">
-            <legend>{t.optionsLegend}</legend>
+        {isChoiceQuestion && (
+          <div className="option-editor" role="group" aria-labelledby="module-options-heading">
+            <div className="option-editor-header">
+              <h3 id="module-options-heading">{t.optionsLegend}</h3>
+              <button type="button" className="option-add-button" onClick={onAddOption}>
+                <Icon name="plus" />
+                {t.addOption}
+              </button>
+            </div>
             {manual.options.map((option, index) => (
               <div className="option-edit-row" key={option.key}>
                 <label className="answer-picker">
@@ -206,9 +222,19 @@ export function ManualQuestionForm({
                   <span>{option.key}</span>
                 </label>
                 <input value={option.text} onChange={(event) => onUpdateOption(index, event.target.value)} required />
+                <button
+                  type="button"
+                  className="option-remove-button"
+                  onClick={() => onRemoveOption(index)}
+                  disabled={!canRemoveOption}
+                  aria-label={t.removeOption(option.key)}
+                  title={canRemoveOption ? t.removeOption(option.key) : t.minimumOptions}
+                >
+                  <Icon name="x" />
+                </button>
               </div>
             ))}
-          </fieldset>
+          </div>
         )}
         {!CHOICE_TYPES.has(manual.question_type) && !ANSWER_FREE_TYPES.has(manual.question_type) && (
           <>
@@ -224,35 +250,6 @@ export function ManualQuestionForm({
             />
           </>
         )}
-        <div className="form-grid">
-          <div>
-            <label htmlFor="module-points">{t.pointsLabel}<RequiredMark /></label>
-            <input
-              id="module-points"
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={manual.points}
-              onChange={(event) => onManualChange({ ...manual, points: event.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="module-difficulty">{t.difficultyLabel}</label>
-            <SearchableSelect
-              id="module-difficulty"
-              options={[
-                { value: "easy", label: t.difficultyEasy },
-                { value: "medium", label: t.difficultyMedium },
-                { value: "hard", label: t.difficultyHard },
-              ]}
-              value={manual.difficulty}
-              onChange={(value) => onManualChange({ ...manual, difficulty: String(value) as QuestionDraft["difficulty"] })}
-              searchable={false}
-              className="form-dropdown-select"
-            />
-          </div>
-        </div>
         <label htmlFor="module-explanation">{t.explanationLabel}</label>
         <textarea
           id="module-explanation"
