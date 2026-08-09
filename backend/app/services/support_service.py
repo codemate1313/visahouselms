@@ -182,6 +182,7 @@ def _notify_ticket_updated(db: Session, ticket: SupportTicket, *, status_changed
             kind=SUPPORT_TICKET_UPDATED,
             title=f'Update on "{ticket.subject}"',
             message=summary,
+            link_url=_portal_link(ticket.queue, ticket.id),
         )
 
     body_lines = [f"Hi {ticket.name},", "", f'Your support ticket "{ticket.subject}" was updated:', summary]
@@ -194,6 +195,58 @@ def _notify_ticket_updated(db: Session, ticket: SupportTicket, *, status_changed
         "\n".join(body_lines),
         user_id=ticket.requester_id,
     )
+
+
+def _notify_status_changed(
+    db: Session,
+    ticket: SupportTicket,
+    changed_by_role: str,  # "admin" or "customer"
+    new_status: str,        # "closed" or "open" or "resolved"
+) -> None:
+    """Best-effort: notify the opposite party when a support ticket status changes."""
+    status_label = new_status.replace("_", " ").capitalize()
+    try:
+        if changed_by_role == "admin":
+            if ticket.requester_id is not None:
+                notification_service.create_notification(
+                    db,
+                    user_id=ticket.requester_id,
+                    kind=SUPPORT_TICKET_UPDATED,
+                    title=f'Support Ticket {status_label}: "{ticket.subject}"',
+                    message=f'Support team updated ticket status to "{status_label}".',
+                    link_url=_portal_link(ticket.queue, ticket.id),
+                )
+            notification_service.send_notification_email(
+                db,
+                ticket.email,
+                f'Update on support ticket: "{ticket.subject}"',
+                f'Hi {ticket.name},\n\nYour support ticket "{ticket.subject}" status was updated to {status_label}.',
+                user_id=ticket.requester_id,
+            )
+        elif changed_by_role == "customer":
+            staff_members = set(_staff_for_queue(db, ticket.queue, ticket.institute_id))
+            if ticket.assigned_to:
+                staff_members.add(ticket.assigned_to)
+            link = _ticket_link(ticket.queue, ticket.id)
+            for staff in staff_members:
+                notification_service.create_notification(
+                    db,
+                    user_id=staff.id,
+                    kind=SUPPORT_TICKET_UPDATED,
+                    title=f'Ticket {status_label} by {ticket.name}',
+                    message=f'Customer {ticket.name} updated ticket "{ticket.subject}" status to {status_label}.',
+                    link_url=link,
+                )
+                notification_service.send_notification_email(
+                    db,
+                    staff.email,
+                    f'Ticket #{ticket.id} {status_label} by {ticket.name}',
+                    f'Customer {ticket.name} updated ticket "{ticket.subject}" status to {status_label}.',
+                    user_id=staff.id,
+                )
+    except Exception:
+        logger.exception("Failed to send status change notifications for ticket %s", ticket.id)
+
 
 
 def _notify_ticket_assigned(db: Session, ticket: SupportTicket, previous_assignee_id: Optional[int]) -> None:
@@ -636,6 +689,7 @@ def close_ticket(
     ticket.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(ticket)
+    _notify_status_changed(db, ticket, changed_by_role="admin", new_status=SUPPORT_STATUS_CLOSED)
     return ticket
 
 
@@ -651,6 +705,7 @@ def reopen_ticket(
     ticket.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(ticket)
+    _notify_status_changed(db, ticket, changed_by_role="admin", new_status=SUPPORT_STATUS_OPEN)
     return ticket
 
 
@@ -679,6 +734,7 @@ def close_portal_ticket(
     ticket.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(ticket)
+    _notify_status_changed(db, ticket, changed_by_role="customer", new_status=SUPPORT_STATUS_CLOSED)
     return ticket
 
 
@@ -716,6 +772,8 @@ def reopen_portal_ticket(
     ticket.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(ticket)
+    _notify_status_changed(db, ticket, changed_by_role="customer", new_status=SUPPORT_STATUS_OPEN)
     return ticket
+
 
 
