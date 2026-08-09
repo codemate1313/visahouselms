@@ -278,12 +278,12 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
           <table className="data-table institute-table" style={{ width: "100%" }}>
             <thead>
               <tr>
-                <th style={{ minWidth: "280px", width: "30%" }}>{strings.table.customer}</th>
-                <th style={{ minWidth: "220px", width: "25%" }}>{strings.table.enquiry}</th>
-                <th style={{ minWidth: "120px" }}>{strings.table.status}</th>
-                <th style={{ minWidth: "110px" }}>{strings.table.priority}</th>
-                <th style={{ minWidth: "160px" }}>{strings.table.received}</th>
-                <th className="table-actions-heading" style={{ minWidth: "90px" }}>{strings.table.actions}</th>
+                <th style={{ width: "340px", minWidth: "320px" }}>{strings.table.customer}</th>
+                <th style={{ minWidth: "150px" }}>{strings.table.enquiry}</th>
+                <th style={{ width: "110px", minWidth: "100px" }}>{strings.table.status}</th>
+                <th style={{ width: "100px", minWidth: "90px" }}>{strings.table.priority}</th>
+                <th style={{ width: "170px", minWidth: "150px" }}>{strings.table.received}</th>
+                <th className="table-actions-heading" style={{ width: "80px", minWidth: "75px" }}>{strings.table.actions}</th>
               </tr>
             </thead>
             <tbody>

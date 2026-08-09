@@ -184,12 +184,12 @@ export function SupportCenter() {
           <table className="data-table institute-table" style={{ width: "100%" }}>
             <thead>
               <tr>
-                <th style={{ minWidth: "300px", width: "35%" }}>{strings.table?.enquiry ?? "Enquiry"}</th>
-                <th style={{ minWidth: "180px" }}>Routing</th>
-                <th style={{ minWidth: "120px" }}>{strings.table?.status ?? "Status"}</th>
-                <th style={{ minWidth: "110px" }}>Priority</th>
-                <th style={{ minWidth: "160px" }}>Submitted On</th>
-                <th className="table-actions-heading" style={{ minWidth: "90px" }}>{strings.table?.actions ?? "Actions"}</th>
+                <th style={{ width: "360px", minWidth: "320px" }}>{strings.table?.enquiry ?? "Enquiry"}</th>
+                <th style={{ minWidth: "150px" }}>Routing</th>
+                <th style={{ width: "110px", minWidth: "100px" }}>{strings.table?.status ?? "Status"}</th>
+                <th style={{ width: "100px", minWidth: "90px" }}>Priority</th>
+                <th style={{ width: "170px", minWidth: "150px" }}>Submitted On</th>
+                <th className="table-actions-heading" style={{ width: "80px", minWidth: "75px" }}>{strings.table?.actions ?? "Actions"}</th>
               </tr>
             </thead>
             <tbody>
