@@ -219,12 +219,12 @@ export function SupportCenter() {
           <table className="data-table institute-table" style={{ width: "100%" }}>
             <thead>
               <tr>
-                <th style={{ width: "360px", minWidth: "320px" }}>{strings.table?.enquiry ?? "Enquiry"}</th>
-                <th style={{ minWidth: "150px" }}>Routing</th>
-                <th style={{ width: "110px", minWidth: "100px" }}>{strings.table?.status ?? "Status"}</th>
-                <th style={{ width: "100px", minWidth: "90px" }}>Priority</th>
-                <th style={{ width: "170px", minWidth: "150px" }}>Submitted On</th>
-                <th className="table-actions-heading" style={{ width: "80px", minWidth: "75px" }}>{strings.table?.actions ?? "Actions"}</th>
+                <th style={{ width: "380px", minWidth: "350px" }}>{strings.table?.enquiry ?? "Enquiry"}</th>
+                <th style={{ minWidth: "160px" }}>Routing</th>
+                <th style={{ width: "95px", minWidth: "85px" }}>{strings.table?.status ?? "Status"}</th>
+                <th style={{ width: "90px", minWidth: "80px" }}>Priority</th>
+                <th style={{ width: "160px", minWidth: "150px" }}>Submitted On</th>
+                <th className="table-actions-heading" style={{ width: "70px", minWidth: "65px" }}>{strings.table?.actions ?? "Actions"}</th>
               </tr>
             </thead>
             <tbody>
@@ -262,6 +262,11 @@ export function SupportCenter() {
                   const unreadMsgCount = ticket.messages
                     ? ticket.messages.filter((m) => m.sender_role !== "customer").length
                     : 0;
+
+                  const lastMsg = ticket.messages && ticket.messages.length > 0
+                    ? ticket.messages[ticket.messages.length - 1]
+                    : null;
+                  const isStaffReplied = lastMsg ? lastMsg.sender_role !== "customer" : false;
 
                   return (
                     <tr
@@ -338,7 +343,20 @@ export function SupportCenter() {
                       </td>
                       <td><Badge tone={statusTone(ticket.status)}>{label(ticket.status)}</Badge></td>
                       <td><Badge tone={priorityTone(ticket.priority)}>{label(ticket.priority)}</Badge></td>
-                      <td>{formatDate(ticket.created_at)}</td>
+                      <td>
+                        <span style={{ display: "block", fontSize: "0.85rem" }}>{formatDate(ticket.created_at)}</span>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            fontSize: "0.725rem",
+                            fontWeight: 600,
+                            marginTop: "2px",
+                            color: isStaffReplied ? "var(--success, #10b981)" : "var(--text-muted)",
+                          }}
+                        >
+                          {isStaffReplied ? "✓ Support Replied" : "● Query Submitted"}
+                        </span>
+                      </td>
                       <td className="table-actions institute-row-actions">
                         <button
                           type="button"
