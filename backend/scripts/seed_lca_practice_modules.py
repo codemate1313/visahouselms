@@ -6,8 +6,9 @@ The extract contains 160 multiple-choice items from Listening Parts 1, 2 & 4
 and Reading Parts 1a, 1b & 4 across four practice tests. Listening Part 3,
 Reading Part 2 and Reading Part 3 were *not* in the extract (the workbook
 explicitly excludes gap-fill items without individual options and matching
-tasks), so those parts are filled with clearly-labelled placeholder
-questions so every module still satisfies the blueprint and can publish.
+tasks), so those parts are filled with clearly-labelled QA content matching
+the LanguageCert interaction shape so every module still satisfies the
+blueprint and can publish.
 
 IMPORTANT: the source extract has no answer key. Every real question is
 seeded with option "A" as a placeholder correct answer so the grading
@@ -54,6 +55,103 @@ PLACEHOLDER_NOTE = (
     "options) was excluded from the extracted LanguageCert Academic practice workbook. "
     "Replace with real content before using this module for real assessment."
 )
+
+READING_2_FILLERS = {
+    1: {
+        "passage": (
+            "The turning point came during a period of intense pressure at work. "
+            "{{blank:1}} Some of those decisions held up well under scrutiny; others, "
+            "I later realised, had missed something important. What I wanted to understand "
+            "was what separated the two. I began to notice that my best decisions shared "
+            "certain qualities. They were rarely made alone. Before deciding, I would reach "
+            "out to colleagues who were directly involved in the work. {{blank:2}} What "
+            "they gave me was not agreement but clarity, which turned out to be far more "
+            "valuable. I also learnt to resist addressing only what was immediately visible. "
+            "{{blank:3}} That became one of the most reliable habits I developed. Another "
+            "thing I came to accept was the importance of owning my decisions. {{blank:4}} "
+            "Once I stopped doing that, I noticed a shift in how my team related to me. I "
+            "also grew more disciplined about thinking through the wider consequences of "
+            "each choice. {{blank:5}} Doing this saved me from several costly mistakes. "
+            "The final lesson was the most straightforward. Once a decision was made, others "
+            "needed enough context to carry it out confidently. {{blank:6}}"
+        ),
+        "options": [
+            ("A", "These were not the most senior people, but they knew exactly what was happening on the ground."),
+            ("B", "So I made a habit of thinking through likely consequences before reaching a conclusion, even under time pressure."),
+            ("C", "I realised that consulting fewer people meant reaching a conclusion more quickly, which suited the pace of events."),
+            ("D", "I learnt that a clear explanation of my reasoning, communicated promptly, made the difference between smooth implementation and unnecessary confusion."),
+            ("E", "In each case, I had little time and was acutely aware that getting it wrong could be serious."),
+            ("F", "I gradually understood that lasting solutions required me to identify the root cause."),
+            ("G", "But I eventually recognised that sharing responsibility weakened the decision and damaged trust in my leadership."),
+            ("H", "I also learnt to seek feedback after each decision and use it to improve my approach."),
+        ],
+        "answers": ["E", "A", "F", "G", "B", "D"],
+    },
+}
+
+
+def _reading_2_filler(test_number: int) -> dict:
+    base = READING_2_FILLERS[1]
+    return {
+        "passage": base["passage"].replace("intense pressure at work", f"intense pressure during project {test_number}"),
+        "options": base["options"],
+        "answers": base["answers"],
+    }
+
+
+READING_3_FILLERS = {
+    1: {
+        "options": [
+            (
+                "A",
+                "Of all the senses, smell is one of the most directly connected to emotion and memory. "
+                "A single scent can bring back a moment with force, yet individual responses differ widely. "
+                "Research suggests that claims about fragrance producing the same feeling in everyone are "
+                "more marketing than evidence.",
+            ),
+            (
+                "B",
+                "At an exhibition recreating old city smells, visitors met smoke, damp wool and drains rather "
+                "than nostalgia. One visitor laughed nervously, another covered their nose and left. The event "
+                "showed how smell can make the past feel immediate and uncomfortable.",
+            ),
+            (
+                "C",
+                "In Victorian Britain, fragrance became part of everyday respectability. Scented gloves, lavender "
+                "water and perfumed handkerchiefs marked a household as orderly and socially refined, so fragrance "
+                "came to signal status as much as personal taste.",
+            ),
+            (
+                "D",
+                "Perfume was long dismissed as too subjective for serious study, partly because it was associated "
+                "with fashion and commerce. Modern chemistry changed that view by making new synthetic compounds "
+                "available, giving scent-makers far greater creative range.",
+            ),
+        ],
+        "prompts": [
+            "explain how fragrance came to function as a marker of social status?",
+            "challenge the idea that reactions to fragrance are merely subjective?",
+            "suggest that cultural assumptions have made perfume seem unworthy of serious study?",
+            "describe an outburst prompted by an unpleasant recreation of the past?",
+            "trace how a technological change enabled greater creativity in scent-making?",
+            "argue that a commercial claim about scent has been driven by marketing rather than evidence?",
+            "demonstrate how sensory exposure can make the past feel less safely remote?",
+        ],
+        "answers": ["C", "A", "D", "B", "D", "A", "B"],
+    },
+}
+
+
+def _reading_3_filler(test_number: int) -> dict:
+    base = READING_3_FILLERS[1]
+    return {
+        "options": [
+            (key, text.replace("old city smells", f"old city smells in archive {test_number}"))
+            for key, text in base["options"]
+        ],
+        "prompts": base["prompts"],
+        "answers": base["answers"],
+    }
 
 
 def _sample_mp3_bytes() -> bytes:
@@ -387,6 +485,10 @@ def _get_or_create_instructor(db) -> User:
 def _real_question(part: ExamModulePart, actor: User, order: int, item: dict, test_number: int) -> ExamModuleQuestion:
     options = [{"key": chr(65 + i), "text": text} for i, text in enumerate(item["options"])]
     constraints = part.answer_constraints or {}
+    interaction: dict[str, str] = {}
+    if constraints.get("group_label_required"):
+        questions_per_group = int(constraints.get("questions_per_group") or 1)
+        interaction["group_label"] = f"Conversation {(order // questions_per_group) + 1}"
     passage = item.get("passage")
     if constraints.get("passage_required") and not passage:
         passage = (
@@ -401,6 +503,7 @@ def _real_question(part: ExamModulePart, actor: User, order: int, item: dict, te
         passage=passage,
         options=options,
         correct_answers=["A"],
+        interaction=interaction,
         explanation=(
             f"Source: LanguageCert Academic practice workbook, Practice Test {test_number}, "
             f"page {item['page']}. {NO_ANSWER_KEY_NOTE}"
@@ -421,10 +524,26 @@ def _filler_question(part: ExamModulePart, actor: User, order: int, test_number:
     question_type = allowed[0]
     options: list[dict] = []
     correct_answers = [f"placeholder answer {number}"]
+    interaction: dict[str, str] = {}
+    passage = None
+    if part.part_code == "reading_2":
+        reading_2 = _reading_2_filler(test_number)
+        options = [{"key": key, "text": text} for key, text in reading_2["options"]]
+        correct_answers = [reading_2["answers"][order]]
+        passage = reading_2["passage"]
+        interaction["blank_index"] = str(number)
+    elif part.part_code == "reading_3":
+        reading_3 = _reading_3_filler(test_number)
+        options = [{"key": key, "text": text} for key, text in reading_3["options"]]
+        correct_answers = [reading_3["answers"][order]]
+        passage = "Read the four texts below. Which text gives you the answer to each question?"
+    if constraints.get("group_label_required"):
+        questions_per_group = int(constraints.get("questions_per_group") or 1)
+        interaction["group_label"] = f"Conversation {(order // questions_per_group) + 1}"
     if question_type == "true_false_not_given":
         options = [{"key": key, "text": text} for key, text in (("A", "True"), ("B", "False"), ("C", "Not Given"))]
         correct_answers = ["A"]
-    elif question_type in {"mcq_single", "mcq_multiple", "matching_unique", "matching_reusable"}:
+    elif not options and question_type in {"mcq_single", "mcq_multiple", "matching_unique", "matching_reusable"}:
         option_count = constraints.get("option_count", 3)
         options = [
             {"key": chr(65 + index), "text": f"Shared placeholder option {chr(65 + index)}"}
@@ -435,10 +554,16 @@ def _filler_question(part: ExamModulePart, actor: User, order: int, test_number:
             correct_answers = [chr(65 + order)]
 
     prompt = f"{part.title} placeholder item {number} (Practice Test {test_number})."
+    if part.part_code == "reading_3":
+        prompt = _reading_3_filler(test_number)["prompts"][order]
+    if constraints.get("inline_marker_required"):
+        prompt = (
+            f"{part.title} notepad item {number}: The presentation mentions "
+            f"{{{{blank}}}} as key detail {number}."
+        )
     if part.part_code == "reading_4" and order == 0:
         prompt = "What does the writer imply in the first paragraph?"
-    passage = None
-    if constraints.get("passage_required"):
+    if constraints.get("passage_required") and passage is None:
         passage = (
             f"Practice Test {test_number} shared source placeholder for {part.title}. "
             "Replace this source text before using the seeded module for assessment."
@@ -452,6 +577,7 @@ def _filler_question(part: ExamModulePart, actor: User, order: int, test_number:
         passage=passage,
         options=options,
         correct_answers=correct_answers,
+        interaction=interaction,
         explanation=PLACEHOLDER_NOTE,
         points=Decimal("1"),
         difficulty="medium",

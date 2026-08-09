@@ -91,24 +91,21 @@ export function PreExamOnboarding({
           label: "Writing Examination",
           icon: "edit" as const,
           themeClass: "theme-writing",
-          accentColor: "#b91c2b",
-          gradient: "linear-gradient(135deg, #b91c2b 0%, #8f1522 100%)",
+          gradient: "var(--pre-exam-hero-gradient)",
         };
       case "listening":
         return {
           label: "Listening Examination",
           icon: "module" as const,
           themeClass: "theme-listening",
-          accentColor: "#2563eb",
-          gradient: "linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)",
+          gradient: "var(--pre-exam-hero-gradient)",
         };
       case "reading":
         return {
           label: "Reading Examination",
           icon: "courses" as const,
           themeClass: "theme-reading",
-          accentColor: "#059669",
-          gradient: "linear-gradient(135deg, #047857 0%, #065f46 100%)",
+          gradient: "var(--pre-exam-hero-gradient)",
         };
       case "full_mock":
       case "final_test":
@@ -116,8 +113,7 @@ export function PreExamOnboarding({
           label: type === "full_mock" ? "Full Mock Test" : "Official Exit Assessment",
           icon: "overview" as const,
           themeClass: "theme-mock",
-          accentColor: "#b91c2b",
-          gradient: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+          gradient: "var(--pre-exam-hero-gradient)",
         };
       case "speaking":
       default:
@@ -125,8 +121,7 @@ export function PreExamOnboarding({
           label: "Speaking Evaluation",
           icon: "microphone" as const,
           themeClass: "theme-speaking",
-          accentColor: "#7c3aed",
-          gradient: "linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%)",
+          gradient: "var(--pre-exam-hero-gradient)",
         };
     }
   }, [attempt.module_type]);

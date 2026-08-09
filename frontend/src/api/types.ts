@@ -341,7 +341,7 @@ export interface ExamModulePart {
     notes_allowed?: boolean;
     preserve_question_order?: boolean;
     preserve_option_order?: boolean;
-    layout?: "shared_cloze" | "conversation_groups" | "notepad_gaps";
+    layout?: "shared_cloze" | "conversation_groups" | "notepad_gaps" | "inline_matching_blanks" | "source_text_matching";
     group_count?: number;
     questions_per_group?: number;
     group_label_required?: boolean;
@@ -702,7 +702,7 @@ export interface AttemptPart {
     option_count?: number;
     score_weight?: number;
     notes_allowed?: boolean;
-    layout?: "shared_cloze" | "conversation_groups" | "notepad_gaps";
+    layout?: "shared_cloze" | "conversation_groups" | "notepad_gaps" | "inline_matching_blanks" | "source_text_matching";
     group_count?: number;
     questions_per_group?: number;
     group_label_required?: boolean;

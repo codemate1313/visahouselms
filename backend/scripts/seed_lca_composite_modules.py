@@ -57,28 +57,28 @@ WRITING_PROMPTS = {
 }
 
 SPEAKING_PROMPTS = {
-    "speaking_1": (
-        "Examiner script: 'What's your name?' / 'Which country are you from?' Then ask up to "
-        "five follow-up questions about the candidate's studies, daily routine, and interests, "
-        "e.g. 'What are you studying at the moment?', 'How do you usually get to class?', "
-        "'What do you enjoy doing in your free time?'"
-    ),
-    "speaking_2": (
-        "Role play 1 (examiner starts): you want to book a group-study room in the library for "
-        "a project meeting. Role play 2 (candidate starts): ask your course tutor about "
-        "extending an assignment deadline."
-    ),
-    "speaking_3": (
-        "After 20 seconds of preparation, read the following short text aloud, then answer two "
-        "follow-up questions about its topic: 'Many universities now provide mental health "
-        "support services for students, including counselling and peer support groups. These "
-        "services aim to help students manage the pressures of academic life.'"
-    ),
-    "speaking_4": (
-        "Prepare for one minute, then give a two-minute presentation on the following topic: "
-        "'Describe a skill you have developed during your studies and explain how it will help "
-        "you in the future.' The examiner will then ask follow-up questions."
-    ),
+    "speaking_1": {
+        "identity": "Tell the examiner your name, where you are from, and what you are studying.",
+        "topic_question": "Answer follow-up questions about your studies, daily routine, and interests.",
+    },
+    "speaking_2": {
+        "roleplay_response": "The examiner starts: respond while booking a group-study room in the library.",
+        "roleplay_initiate": "You start: ask your course tutor about extending an assignment deadline.",
+    },
+    "speaking_3": {
+        "read_aloud": (
+            "Read this text aloud: 'Many universities now provide mental health support services "
+            "for students, including counselling and peer support groups.'"
+        ),
+        "follow_up": "Answer two follow-up questions about student support services.",
+    },
+    "speaking_4": {
+        "presentation": (
+            "Prepare for one minute, then give a two-minute presentation: describe a skill you "
+            "have developed during your studies and explain how it will help you in the future."
+        ),
+        "follow_up": "Answer follow-up questions about your presentation.",
+    },
 }
 
 
@@ -114,23 +114,30 @@ def _writing_question(part: ExamModulePart, actor: User, order: int) -> ExamModu
     )
 
 
-def _speaking_question(part: ExamModulePart, actor: User, order: int) -> ExamModuleQuestion:
-    return ExamModuleQuestion(
-        part_id=part.id,
-        question_type="speaking_prompt",
-        prompt=SPEAKING_PROMPTS[part.part_code],
-        instructions=part.instructions,
-        passage=None,
-        options=[],
-        correct_answers=[],
-        explanation=QA_NOTE,
-        points=Decimal("1"),
-        difficulty="medium",
-        source_type="manual",
-        source_filename=SOURCE_FILENAME,
-        sort_order=order,
-        created_by_id=actor.id,
-    )
+def _speaking_questions(part: ExamModulePart, actor: User, order: int) -> list[ExamModuleQuestion]:
+    prompts = SPEAKING_PROMPTS[part.part_code]
+    constraints = part.answer_constraints or {}
+    turn_types = constraints.get("required_turn_types") or list(prompts)
+    return [
+        ExamModuleQuestion(
+            part_id=part.id,
+            question_type="speaking_prompt",
+            prompt=prompts[turn_type],
+            instructions=part.instructions,
+            passage=None,
+            options=[],
+            correct_answers=[],
+            interaction={"turn_type": turn_type},
+            explanation=QA_NOTE,
+            points=Decimal("1"),
+            difficulty="medium",
+            source_type="manual",
+            source_filename=SOURCE_FILENAME,
+            sort_order=order + index,
+            created_by_id=actor.id,
+        )
+        for index, turn_type in enumerate(turn_types)
+    ]
 
 
 def _create_skill_module(db, actor: User, module_type: str, title: str, question_builder) -> ExamModule | None:
@@ -184,7 +191,11 @@ def _create_skill_module(db, actor: User, module_type: str, title: str, question
     db.flush()
 
     for part in parts:
-        db.add(question_builder(part, actor, 0))
+        questions = question_builder(part, actor, 0)
+        if isinstance(questions, list):
+            db.add_all(questions)
+        else:
+            db.add(questions)
 
     db.flush()
     errors = module_authoring_service.validation_errors(module)
@@ -255,7 +266,7 @@ def main() -> None:
             db, instructor, "writing", "LCA Practice Test 1 - Writing", _writing_question
         )
         speaking = _create_skill_module(
-            db, instructor, "speaking", "LCA Practice Test 1 - Speaking", _speaking_question
+            db, instructor, "speaking", "LCA Practice Test 1 - Speaking", _speaking_questions
         )
         db.commit()
 

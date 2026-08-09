@@ -3,6 +3,8 @@ import type { Attempt, AttemptResponse } from "@/api/types";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { QuestionInput } from "./QuestionInput";
 import { MatchingQuestionGroup } from "./MatchingQuestionGroup";
+import { InlineMatchingBlankGroup } from "./InlineMatchingBlankGroup";
+import { SourceTextMatchingGroup } from "./SourceTextMatchingGroup";
 
 interface QuestionPaneProps {
   currentPart: Attempt["parts"][number];
@@ -26,6 +28,10 @@ export function QuestionPane({
   const t = strings.questionPane;
   const matchingType = currentPart.questions[0]?.question_type;
   const isMatchingPart = matchingType === "matching_unique" || matchingType === "matching_reusable";
+  const usesInlineMatchingBlanks = isMatchingPart && currentPart.answer_constraints.layout === "inline_matching_blanks";
+  const usesSourceTextMatching = isMatchingPart && (
+    currentPart.answer_constraints.layout === "source_text_matching" || currentPart.part_code === "reading_3"
+  );
   const conversationGroups = currentPart.answer_constraints.layout === "conversation_groups"
     ? currentPart.questions.reduce<Array<{ label: string; questions: typeof currentPart.questions }>>((groups, question) => {
       const label = question.interaction?.group_label?.trim() || "Conversation";
@@ -47,7 +53,25 @@ export function QuestionPane({
           <p>{t.instructions}</p>
         </div>
       )}
-      {isMatchingPart ? (
+      {usesInlineMatchingBlanks ? (
+        <InlineMatchingBlankGroup
+          questions={currentPart.questions}
+          questionNumberOffset={questionNumberOffset}
+          savingIds={savingIds}
+          reusable={matchingType === "matching_reusable"}
+          mode="options"
+          onChangeResponse={(questionId, response) => onChangeResponse(questionId, response)}
+        />
+      ) : usesSourceTextMatching ? (
+        <SourceTextMatchingGroup
+          questions={currentPart.questions}
+          questionNumberOffset={questionNumberOffset}
+          savingIds={savingIds}
+          reusable={matchingType === "matching_reusable"}
+          mode="targets"
+          onChangeResponse={(questionId, response) => onChangeResponse(questionId, response)}
+        />
+      ) : isMatchingPart ? (
         <MatchingQuestionGroup
           questions={currentPart.questions}
           questionNumberOffset={questionNumberOffset}

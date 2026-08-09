@@ -1359,12 +1359,265 @@
   min-height: 40px;
 }
 
+.test-runner-inline-matching {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.75fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.test-runner-inline-passage,
+.test-runner-inline-options {
+  border: 1px solid #d9dce2;
+  border-radius: 5px;
+  background: var(--surface);
+}
+
+.test-runner-inline-passage {
+  min-height: 420px;
+  padding: 22px;
+}
+
+.test-runner-inline-passage p {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.test-runner-inline-blank {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: min(100%, 340px);
+  min-width: 132px;
+  min-height: 32px;
+  margin: 0 5px;
+  padding: 4px 34px 4px 10px;
+  border: 1px dashed color-mix(in srgb, var(--test-accent, var(--primary)) 45%, #d9dce2);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--test-accent, var(--primary)) 8%, var(--surface));
+  color: color-mix(in srgb, var(--test-accent, var(--primary)) 78%, var(--text));
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.2;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.test-runner-inline-blank > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.test-runner-inline-blank.is-filled {
+  border-style: solid;
+  background: color-mix(in srgb, var(--test-accent, var(--primary)) 16%, var(--surface));
+  color: var(--text);
+}
+
+.test-runner-inline-blank.is-saving {
+  opacity: 0.7;
+}
+
+.test-runner-inline-blank:focus-visible,
+.test-runner-inline-options button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--test-accent, var(--primary)) 28%, transparent);
+  outline-offset: 2px;
+}
+
+.test-runner-inline-blank-clear {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  color: currentColor;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.test-runner-inline-blank-clear:hover {
+  background: color-mix(in srgb, var(--danger, #ef4444) 18%, var(--surface));
+  color: var(--danger, #ef4444);
+}
+
+.test-runner-inline-options {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.test-runner-inline-options button {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-height: 54px;
+  padding: 10px;
+  border: 1px solid #d9dce2;
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+
+.test-runner-inline-options button strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--test-accent, var(--primary)) 12%, transparent);
+  color: var(--test-accent, var(--primary));
+}
+
+.test-runner-inline-options button.is-picked {
+  border-color: var(--test-accent, var(--primary));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--test-accent, var(--primary)) 18%, transparent);
+}
+
+.test-runner-inline-options button:disabled {
+  opacity: 0.45;
+}
+
+.test-runner-source-text-options {
+  display: grid;
+  gap: 10px;
+}
+
+.test-runner-source-text-options button {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #d9dce2;
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+
+.test-runner-source-text-options button strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--test-accent, var(--primary)) 12%, transparent);
+  color: var(--test-accent, var(--primary));
+  font-size: 18px;
+}
+
+.test-runner-source-text-options button span {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.test-runner-source-text-options button.is-picked,
+.test-runner-source-text-target:focus-within {
+  border-color: var(--test-accent, var(--primary));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--test-accent, var(--primary)) 18%, transparent);
+}
+
+.test-runner-source-text-targets {
+  display: grid;
+  gap: 10px;
+}
+
+.test-runner-source-text-target {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 180px) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 74px;
+  padding: 12px;
+  border: 1px solid #d9dce2;
+  border-radius: 5px;
+  background: var(--surface);
+}
+
+.test-runner-source-text-target > div > span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.test-runner-source-text-target p {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.test-runner-source-text-target select {
+  width: 100%;
+  min-height: 42px;
+}
+
+.test-runner-source-text-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--danger, #ef4444) 34%, #d9dce2);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--danger, #ef4444) 8%, var(--surface));
+  color: var(--danger, #ef4444);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.test-runner-source-text-target small,
+.test-runner-source-text-target em {
+  grid-column: 1 / -1;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
 @media (max-width: 760px) {
   .test-runner-option-bank {
     grid-template-columns: 1fr;
   }
 
+  .test-runner-inline-matching {
+    grid-template-columns: 1fr;
+  }
+
+  .test-runner-inline-passage {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .test-runner-inline-blank {
+    min-width: 132px;
+  }
+
   .test-runner-match-target {
+    grid-template-columns: 1fr;
+  }
+
+  .test-runner-source-text-target {
     grid-template-columns: 1fr;
   }
 }

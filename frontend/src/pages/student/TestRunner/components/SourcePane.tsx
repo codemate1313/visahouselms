@@ -1,20 +1,42 @@
 import type { RefObject } from "react";
 import { API_BASE_URL } from "@/api/client";
 import { ListeningMediaAvatar } from "@/components/listening/ListeningMediaAvatar";
-import type { Attempt } from "@/api/types";
+import type { Attempt, AttemptResponse } from "@/api/types";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
+import { InlineMatchingBlankGroup } from "./InlineMatchingBlankGroup";
+import { SourceTextMatchingGroup } from "./SourceTextMatchingGroup";
 
 interface SourcePaneProps {
   currentPart: Attempt["parts"][number];
   passages: string[];
   images: string[];
   sourcePaneRef: RefObject<HTMLElement | null>;
+  questionNumberOffset: number;
+  savingIds: Set<number>;
+  onChangeResponse: (questionId: number, response: AttemptResponse) => void;
 }
 
-export function SourcePane({ currentPart, passages, images, sourcePaneRef }: SourcePaneProps) {
+export function SourcePane({
+  currentPart,
+  passages,
+  images,
+  sourcePaneRef,
+  questionNumberOffset,
+  savingIds,
+  onChangeResponse,
+}: SourcePaneProps) {
   const t = strings.sourcePane;
   const sectionLabels = strings.sectionLabels;
   const isWriting = currentPart.section_type === "writing";
+  const matchingType = currentPart.questions[0]?.question_type;
+  const usesInlineMatchingBlanks = (
+    currentPart.answer_constraints.layout === "inline_matching_blanks"
+    && (matchingType === "matching_unique" || matchingType === "matching_reusable")
+  );
+  const usesSourceTextMatching = (
+    (currentPart.answer_constraints.layout === "source_text_matching" || currentPart.part_code === "reading_3")
+    && (matchingType === "matching_unique" || matchingType === "matching_reusable")
+  );
   return (
     <section className="test-runner-source-pane" ref={sourcePaneRef}>
       <div className="test-runner-pane-heading">
@@ -60,7 +82,25 @@ export function SourcePane({ currentPart, passages, images, sourcePaneRef }: Sou
           ) : null}
         </div>
       ))}
-      {passages.length > 0 ? (
+      {usesInlineMatchingBlanks ? (
+        <InlineMatchingBlankGroup
+          questions={currentPart.questions}
+          questionNumberOffset={questionNumberOffset}
+          savingIds={savingIds}
+          reusable={matchingType === "matching_reusable"}
+          mode="source"
+          onChangeResponse={onChangeResponse}
+        />
+      ) : usesSourceTextMatching ? (
+        <SourceTextMatchingGroup
+          questions={currentPart.questions}
+          questionNumberOffset={questionNumberOffset}
+          savingIds={savingIds}
+          reusable={matchingType === "matching_reusable"}
+          mode="source"
+          onChangeResponse={onChangeResponse}
+        />
+      ) : passages.length > 0 ? (
         passages.map((passage, index) => (
           <article className="test-runner-passage" key={`${currentPart.id}-${index}`}>
             {passages.length > 1 && (

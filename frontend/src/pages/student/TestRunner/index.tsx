@@ -1090,7 +1090,15 @@ export function TestRunner() {
         />
 
         <main className={`test-runner-body${currentPart.section_type === "writing" ? " test-runner-body--writing" : ""}`}>
-          <SourcePane currentPart={currentPart} passages={passages} images={questionImages} sourcePaneRef={sourcePaneRef} />
+          <SourcePane
+            currentPart={currentPart}
+            passages={passages}
+            images={questionImages}
+            sourcePaneRef={sourcePaneRef}
+            questionNumberOffset={questionNumberOffset}
+            savingIds={savingIds}
+            onChangeResponse={(questionId, response) => updateResponse(questionId, response)}
+          />
           <QuestionPane
             currentPart={currentPart}
             questionPaneRef={questionPaneRef}
