@@ -300,12 +300,12 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
           <table className="data-table institute-table" style={{ width: "100%", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ width: "48%", padding: "12px 10px 12px 16px" }}>{strings.table.customer}</th>
-                <th style={{ width: "18%", padding: "12px 4px" }}>{strings.table.enquiry}</th>
+                <th style={{ width: "55%", padding: "12px 10px 12px 16px" }}>{strings.table.customer}</th>
+                <th style={{ width: "12%", padding: "12px 2px" }}>{strings.table.enquiry}</th>
                 <th style={{ width: "100px", textAlign: "center", padding: "12px 4px" }}>{strings.table.status}</th>
                 <th style={{ width: "95px", textAlign: "center", padding: "12px 4px" }}>{strings.table.priority}</th>
-                <th style={{ width: "160px", padding: "12px 8px" }}>{strings.table.received}</th>
-                <th className="table-actions-heading" style={{ width: "65px", textAlign: "center", padding: "12px 4px" }}>{strings.table.actions}</th>
+                <th style={{ width: "140px", padding: "12px 8px" }}>{strings.table.received}</th>
+                <th className="table-actions-heading" style={{ width: "55px", textAlign: "center", padding: "12px 4px" }}>{strings.table.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -424,7 +424,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: "12px 4px" }}>
+                      <td style={{ padding: "12px 2px" }}>
                         <div className="table-item-details">
                           <span className="table-item-title">{ticket.subject}</span>
                           <span className="table-item-subtitle">{ticket.institute_name || ticket.category}</span>
