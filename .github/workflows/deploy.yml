@@ -13,90 +13,101 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Execute remote SSH commands
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VPS_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          timeout: 120s
-          command_timeout: 30m
-          script: |
-            set -Eeuo pipefail
-            trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
+      - name: Deploy to Hostinger VPS via SSH with Retry
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-            echo "🚀 Starting automatic deployment on VPS..."
+          for attempt in {1..5}; do
+            echo "🚀 SSH Connection Attempt $attempt/5 to VPS..."
+            if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -p 22 root@${{ secrets.VPS_IP }} "bash -s" << 'EOF'
+              set -Eeuo pipefail
+              trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
 
-            # 0. Ensure swap file exists to prevent OOM (Out Of Memory) crashes during npm build
-            if [ -f /swapfile ]; then
-              echo "✅ Swapfile already exists."
-            else
-              echo "⚠️ No swapfile found. Creating 2GB swapfile to prevent OOM errors..."
-              fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
-              chmod 600 /swapfile
-              mkswap /swapfile
-              swapon /swapfile
-              echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
-              echo "✅ Swapfile created and enabled successfully."
-            fi
+              echo "🚀 Starting automatic deployment on VPS..."
 
-            cd /var/www/visahouse
-
-            # 1. Pull the latest commits from GitHub without deploying a divergent tree
-            git config --global --add safe.directory /var/www/visahouse
-            git fetch --prune origin main
-            git checkout main
-            if [ -n "$(git status --porcelain)" ]; then
-              echo "⚠️ Local VPS checkout has uncommitted changes. Stashing before deployment reset..."
-              git stash push --include-untracked -m "pre-deploy-$(date -u +%Y%m%d%H%M%S)" || true
-            fi
-            git reset --hard origin/main
-            git clean -fd
-
-            # 2. Update backend virtual environment & run migrations
-            cd backend
-            if [ ! -d ".venv" ]; then
-              echo "⚠️ Virtual environment not found. Creating one..."
-              python3 -m venv .venv
-            fi
-            source .venv/bin/activate
-            python -m pip install --upgrade pip
-            python -m pip install -r requirements.txt
-            python -m alembic upgrade head
-            cd ..
-
-            # 3. Re-install packages and rebuild frontend
-            cd frontend
-            rm -rf node_modules
-            npm ci || (rm -rf node_modules && npm install)
-            npm run build
-            cd ..
-
-            # 4. Install the service definition and reset writable permissions
-            cp deploy/visahouse-backend.service /etc/systemd/system/visahouse-backend.service
-            systemctl daemon-reload
-            mkdir -p /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
-            chown -R www-data:www-data /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
-            chmod -R g+rwX /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
-
-            # 5. Restart backend and block deployment if DB-backed health fails
-            systemctl restart visahouse-backend
-            for attempt in $(seq 1 30); do
-              if curl -fsS -H "Host: thecodemate.tech" http://127.0.0.1:8000/health/db >/dev/null 2>&1; then
-                echo "✅ Backend and database are healthy."
-                break
+              # 0. Ensure swap file exists to prevent OOM
+              if [ -f /swapfile ]; then
+                echo "✅ Swapfile already exists."
+              else
+                echo "⚠️ No swapfile found. Creating 2GB swapfile..."
+                fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
+                chmod 600 /swapfile
+                mkswap /swapfile
+                swapon /swapfile
+                echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+                echo "✅ Swapfile created."
               fi
-              if [ "$attempt" = "30" ]; then
-                echo "❌ Backend health check failed. Recent service logs:"
-                journalctl -u visahouse-backend -n 120 --no-pager || true
-                exit 1
+
+              cd /var/www/visahouse
+
+              # 1. Pull latest code
+              git config --global --add safe.directory /var/www/visahouse
+              git fetch --prune origin main
+              git checkout main
+              if [ -n "$(git status --porcelain)" ]; then
+                echo "⚠️ Local VPS checkout has uncommitted changes. Stashing..."
+                git stash push --include-untracked -m "pre-deploy-$(date -u +%Y%m%d%H%M%S)" || true
               fi
-              echo "⏳ Health check attempt $attempt/30, retrying in 2s..."
-              sleep 2
-            done
+              git reset --hard origin/main
+              git clean -fd
 
-            nginx -t
-            systemctl reload nginx
+              # 2. Update backend virtual environment & migrations
+              cd backend
+              if [ ! -d ".venv" ]; then
+                python3 -m venv .venv
+              fi
+              source .venv/bin/activate
+              python -m pip install --upgrade pip
+              python -m pip install -r requirements.txt
+              python -m alembic upgrade head
+              cd ..
 
-            echo "✨ Deployment successful!"
+              # 3. Frontend clean install & build
+              cd frontend
+              rm -rf node_modules
+              npm ci || (rm -rf node_modules && npm install)
+              npm run build
+              cd ..
+
+              # 4. Service definition & permissions
+              cp deploy/visahouse-backend.service /etc/systemd/system/visahouse-backend.service
+              systemctl daemon-reload
+              mkdir -p /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
+              chown -R www-data:www-data /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
+              chmod -R g+rwX /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
+
+              # 5. Restart backend & verify DB health
+              systemctl restart visahouse-backend
+              for a in $(seq 1 30); do
+                if curl -fsS -H "Host: thecodemate.tech" http://127.0.0.1:8000/health/db >/dev/null 2>&1; then
+                  echo "✅ Backend and database are healthy."
+                  break
+                fi
+                if [ "$a" = "30" ]; then
+                  echo "❌ Backend health check failed. Service logs:"
+                  journalctl -u visahouse-backend -n 120 --no-pager || true
+                  exit 1
+                fi
+                echo "⏳ Health check attempt $a/30, retrying in 2s..."
+                sleep 2
+              done
+
+              nginx -t
+              systemctl reload nginx
+
+              echo "✨ Deployment successful!"
+          EOF
+          then
+            echo "✅ SSH Deployment completed successfully."
+            exit 0
+          fi
+
+          echo "⚠️ Connection attempt $attempt failed. Waiting 10 seconds before retry..."
+          sleep 10
+          done
+
+          echo "❌ All 5 SSH connection attempts failed."
+          exit 1
+
