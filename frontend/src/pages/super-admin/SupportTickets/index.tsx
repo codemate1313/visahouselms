@@ -297,15 +297,15 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
       {/* Main Full-Width Table Workspace */}
       <div className="support-ticket-workspace" style={{ width: "100%", marginTop: "16px" }}>
         <div className="support-ticket-table-card" style={{ width: "100%" }}>
-          <table className="data-table institute-table" style={{ width: "100%" }}>
+          <table className="data-table institute-table" style={{ width: "100%", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ width: "380px", minWidth: "350px" }}>{strings.table.customer}</th>
-                <th style={{ minWidth: "180px" }}>{strings.table.enquiry}</th>
-                <th style={{ width: "95px", minWidth: "85px" }}>{strings.table.status}</th>
-                <th style={{ width: "90px", minWidth: "80px" }}>{strings.table.priority}</th>
-                <th style={{ width: "160px", minWidth: "150px" }}>{strings.table.received}</th>
-                <th className="table-actions-heading" style={{ width: "70px", minWidth: "65px" }}>{strings.table.actions}</th>
+                <th style={{ width: "38%", padding: "12px 10px" }}>{strings.table.customer}</th>
+                <th style={{ width: "24%", padding: "12px 10px" }}>{strings.table.enquiry}</th>
+                <th style={{ width: "100px", textAlign: "center", padding: "12px 4px" }}>{strings.table.status}</th>
+                <th style={{ width: "95px", textAlign: "center", padding: "12px 4px" }}>{strings.table.priority}</th>
+                <th style={{ width: "160px", padding: "12px 8px" }}>{strings.table.received}</th>
+                <th className="table-actions-heading" style={{ width: "65px", textAlign: "center", padding: "12px 4px" }}>{strings.table.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -359,7 +359,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                         borderLeft: isUnread ? "4px solid var(--primary, #b91c2b)" : "4px solid transparent",
                       }}
                     >
-                      <td>
+                      <td style={{ padding: "12px 10px" }}>
                         <div className="table-item-cell">
                           <div
                             className="table-avatar-tile"
@@ -413,19 +413,19 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                                 </span>
                               )}
                             </div>
-                            <span className="table-item-subtitle" style={{ whiteSpace: "nowrap" }}>{ticket.email}</span>
+                            <span className="table-item-subtitle" style={{ whiteSpace: "normal", wordBreak: "break-all" }}>{ticket.email}</span>
                           </div>
                         </div>
                       </td>
-                      <td>
+                      <td style={{ padding: "12px 10px" }}>
                         <div className="table-item-details">
                           <span className="table-item-title">{ticket.subject}</span>
                           <span className="table-item-subtitle">{ticket.institute_name || ticket.category}</span>
                         </div>
                       </td>
-                      <td><Badge tone={statusTone(ticket.status)}>{label(ticket.status)}</Badge></td>
-                      <td><Badge tone={priorityTone(ticket.priority)}>{label(ticket.priority)}</Badge></td>
-                      <td>
+                      <td style={{ textAlign: "center", padding: "12px 4px" }}><Badge tone={statusTone(ticket.status)}>{label(ticket.status)}</Badge></td>
+                      <td style={{ textAlign: "center", padding: "12px 4px" }}><Badge tone={priorityTone(ticket.priority)}>{label(ticket.priority)}</Badge></td>
+                      <td style={{ padding: "12px 8px" }}>
                         <span style={{ display: "block", fontSize: "0.85rem" }}>{formatDate(ticket.created_at)}</span>
                         <span
                           style={{
@@ -439,7 +439,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                           {isAwaitingReply ? "● Awaiting Reply" : "✓ Staff Replied"}
                         </span>
                       </td>
-                      <td className="table-actions institute-row-actions">
+                      <td className="table-actions institute-row-actions" style={{ textAlign: "center", padding: "12px 4px" }}>
                         <button
                           type="button"
                           className="action-btn-icon"

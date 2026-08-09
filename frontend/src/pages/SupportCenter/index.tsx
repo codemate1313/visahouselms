@@ -226,15 +226,15 @@ export function SupportCenter() {
       {/* Main Full-Width Table Workspace */}
       <div className="support-ticket-workspace" style={{ width: "100%", marginTop: "16px" }}>
         <div className="support-ticket-table-card" style={{ width: "100%" }}>
-          <table className="data-table institute-table" style={{ width: "100%" }}>
+          <table className="data-table institute-table" style={{ width: "100%", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ width: "380px", minWidth: "350px" }}>{strings.table?.enquiry ?? "Enquiry"}</th>
-                <th style={{ minWidth: "160px" }}>Routing</th>
-                <th style={{ width: "95px", minWidth: "85px" }}>{strings.table?.status ?? "Status"}</th>
-                <th style={{ width: "90px", minWidth: "80px" }}>Priority</th>
-                <th style={{ width: "160px", minWidth: "150px" }}>Submitted On</th>
-                <th className="table-actions-heading" style={{ width: "70px", minWidth: "65px" }}>{strings.table?.actions ?? "Actions"}</th>
+                <th style={{ width: "38%", padding: "12px 10px" }}>{strings.table?.enquiry ?? "Enquiry"}</th>
+                <th style={{ width: "24%", padding: "12px 10px" }}>Routing</th>
+                <th style={{ width: "100px", textAlign: "center", padding: "12px 4px" }}>{strings.table?.status ?? "Status"}</th>
+                <th style={{ width: "95px", textAlign: "center", padding: "12px 4px" }}>Priority</th>
+                <th style={{ width: "160px", padding: "12px 8px" }}>Submitted On</th>
+                <th className="table-actions-heading" style={{ width: "65px", textAlign: "center", padding: "12px 4px" }}>{strings.table?.actions ?? "Actions"}</th>
               </tr>
             </thead>
             <tbody>
@@ -300,7 +300,7 @@ export function SupportCenter() {
                         borderLeft: isUnread ? "4px solid var(--primary, #b91c2b)" : "4px solid transparent",
                       }}
                     >
-                      <td>
+                      <td style={{ padding: "12px 10px" }}>
                         <div className="table-item-cell">
                           <div
                             className="table-avatar-tile"
@@ -346,7 +346,7 @@ export function SupportCenter() {
                           </div>
                         </div>
                       </td>
-                      <td>
+                      <td style={{ padding: "12px 10px" }}>
                         <Badge tone="neutral">
                           {ticket.queue === "institute"
                             ? strings.routing.institute
@@ -355,9 +355,9 @@ export function SupportCenter() {
                             : strings.routing.platform}
                         </Badge>
                       </td>
-                      <td><Badge tone={statusTone(ticket.status)}>{label(ticket.status)}</Badge></td>
-                      <td><Badge tone={priorityTone(ticket.priority)}>{label(ticket.priority)}</Badge></td>
-                      <td>
+                      <td style={{ textAlign: "center", padding: "12px 4px" }}><Badge tone={statusTone(ticket.status)}>{label(ticket.status)}</Badge></td>
+                      <td style={{ textAlign: "center", padding: "12px 4px" }}><Badge tone={priorityTone(ticket.priority)}>{label(ticket.priority)}</Badge></td>
+                      <td style={{ padding: "12px 8px" }}>
                         <span style={{ display: "block", fontSize: "0.85rem" }}>{formatDate(ticket.created_at)}</span>
                         <span
                           style={{
@@ -371,7 +371,7 @@ export function SupportCenter() {
                           {isStaffReplied ? "✓ Support Replied" : "● Query Submitted"}
                         </span>
                       </td>
-                      <td className="table-actions institute-row-actions">
+                      <td className="table-actions institute-row-actions" style={{ textAlign: "center", padding: "12px 4px" }}>
                         <button
                           type="button"
                           className="action-btn-icon"
