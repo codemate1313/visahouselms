@@ -201,6 +201,15 @@ export function SupportCenter() {
   }, [loadTickets]);
 
   useEffect(() => {
+    const ticketIdParam = searchParams.get("ticketId");
+    if (ticketIdParam && !isNaN(Number(ticketIdParam))) {
+      const targetId = Number(ticketIdParam);
+      setSelectedId(targetId);
+      setIsChatOpen(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (chatStreamRef.current) {
       chatStreamRef.current.scrollTop = chatStreamRef.current.scrollHeight;
     }

@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { apiClient, API_BASE_URL } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type {
@@ -206,10 +207,21 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
     }
   }, [apiBase, isInstituteInbox, priority, search, setItemCount, source, status]);
 
+  const [searchParams] = useSearchParams();
+
   useEffect(() => {
     void load();
     return () => setItemCount(null);
   }, [load, setItemCount]);
+
+  useEffect(() => {
+    const ticketIdParam = searchParams.get("ticketId");
+    if (ticketIdParam && !isNaN(Number(ticketIdParam))) {
+      const targetId = Number(ticketIdParam);
+      setSelectedId(targetId);
+      setIsChatOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (chatStreamRef.current) {

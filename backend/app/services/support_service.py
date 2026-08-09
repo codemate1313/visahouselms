@@ -107,17 +107,25 @@ def _staff_for_queue(db: Session, queue: str, institute_id: Optional[int]) -> li
     return query.all()
 
 
-def _ticket_link(queue: str) -> str:
+def _ticket_link(queue: str, ticket_id: Optional[int] = None) -> str:
+    suffix = f"?ticketId={ticket_id}" if ticket_id else ""
     if queue == SUPPORT_QUEUE_INSTITUTE:
-        return "/institute-portal/support-tickets"
-    return "/super-admin/support-tickets"
+        return f"/institute-portal/support-tickets{suffix}"
+    return f"/super-admin/support-tickets{suffix}"
+
+
+def _portal_link(queue: str, ticket_id: Optional[int] = None) -> str:
+    suffix = f"?ticketId={ticket_id}" if ticket_id else ""
+    if queue == SUPPORT_QUEUE_INSTITUTE:
+        return f"/institute-portal/support{suffix}"
+    return f"/student/support{suffix}"
 
 
 def _notify_ticket_created(db: Session, ticket: SupportTicket) -> None:
     """Best-effort: alert the owning queue's staff of a new ticket, and confirm
     receipt to whoever submitted it. Never raises - a failure here must not
     block ticket creation."""
-    link = _ticket_link(ticket.queue)
+    link = _ticket_link(ticket.queue, ticket.id)
     for staff in _staff_for_queue(db, ticket.queue, ticket.institute_id):
         notification_service.create_notification(
             db,
@@ -141,7 +149,7 @@ def _notify_ticket_created(db: Session, ticket: SupportTicket) -> None:
             kind=SUPPORT_TICKET_CREATED,
             title=f"Support ticket created: {ticket.subject}",
             message="Your support query has been submitted successfully.",
-            link_url="/student-portal/support-center" if ticket.queue == SUPPORT_QUEUE_INSTITUTE else "/portal/support",
+            link_url=_portal_link(ticket.queue, ticket.id),
         )
     notification_service.send_notification_email(
         db,
@@ -574,7 +582,7 @@ def add_ticket_message(
                     kind=SUPPORT_TICKET_UPDATED,
                     title=f"New reply on: {ticket.subject}",
                     message=f"Support Team: {message_text.strip()[:140]}",
-                    link_url="/student-portal/support-center" if ticket.queue == SUPPORT_QUEUE_INSTITUTE else "/portal/support",
+                    link_url=_portal_link(ticket.queue, ticket.id),
                 )
             notification_service.send_notification_email(
                 db,
@@ -588,7 +596,7 @@ def add_ticket_message(
             staff_members = set(_staff_for_queue(db, ticket.queue, ticket.institute_id))
             if ticket.assigned_to:
                 staff_members.add(ticket.assigned_to)
-            link = _ticket_link(ticket.queue)
+            link = _ticket_link(ticket.queue, ticket.id)
             for staff in staff_members:
                 notification_service.create_notification(
                     db,

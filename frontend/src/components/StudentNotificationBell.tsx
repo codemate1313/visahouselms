@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { apiClient } from "../api/client";
 import type { StudentNotification } from "../api/types";
-import { notificationTime, scoreLabel } from "../utils/notificationHelpers";
+import { destinationFor, notificationTime, scoreLabel } from "../utils/notificationHelpers";
+
 import { Icon } from "./icons";
 import { PinList, type PinListItem } from "./PinList";
 
@@ -185,7 +186,7 @@ export function NotificationBell({
   function openNotification(notification: StudentNotification) {
     void markRead(notification);
     closePanel();
-    navigate(notificationsHref ?? fallbackRoute);
+    navigate(destinationFor(notification, notificationsHref ?? fallbackRoute));
   }
 
   return (
