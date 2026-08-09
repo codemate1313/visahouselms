@@ -147,7 +147,6 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [draftPriority, setDraftPriority] = useState<SupportTicketPriority>("normal");
   const [seenTicketMsgCounts, setSeenTicketMsgCounts] = useState<Record<number, number>>(() => {
     try {
       const saved = localStorage.getItem("visahouse_seen_ticket_msg_counts_admin");
@@ -211,11 +210,6 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
     void load();
     return () => setItemCount(null);
   }, [load, setItemCount]);
-
-  useEffect(() => {
-    if (!selectedTicket) return;
-    setDraftPriority(selectedTicket.priority);
-  }, [selectedTicket]);
 
   useEffect(() => {
     if (chatStreamRef.current) {
@@ -595,27 +589,9 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
         }
         actions={
           selectedTicket ? (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: "12px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
-                <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text)", whiteSpace: "nowrap" }}>
-                  Priority:
-                </span>
-                <div style={{ width: "140px", flexShrink: 0 }}>
-                  <SearchableSelect
-                    ariaLabel={strings.filters.priority}
-                    className="support-ticket-select"
-                    options={PRIORITIES.filter(Boolean).map((item) => ({
-                      value: item,
-                      label: label(item),
-                    }))}
-                    searchable={false}
-                    value={draftPriority}
-                    onChange={(value) => setDraftPriority(String(value) as SupportTicketPriority)}
-                  />
-                </div>
-              </div>
-
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", width: "100%", flexWrap: "wrap", gap: "12px" }}>
               {selectedTicket.status === "closed" ? (
+
                 <Button
                   size="sm"
                   variant="secondary"
