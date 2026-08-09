@@ -334,10 +334,17 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                     ? ticket.messages.filter((m) => m.sender_role === "customer").length
                     : 1;
 
+                  const isClosed = ticket.status === "closed" || ticket.status === "resolved";
                   const lastMsg = ticket.messages && ticket.messages.length > 0
                     ? ticket.messages[ticket.messages.length - 1]
                     : null;
-                  const isAwaitingReply = lastMsg ? lastMsg.sender_role === "customer" : ticket.status === "new";
+                  const isAwaitingReply = !isClosed && (lastMsg ? lastMsg.sender_role === "customer" : ticket.status === "new");
+
+                  const replySubtext = isClosed
+                    ? (ticket.status === "closed" ? "✓ Ticket Closed" : "✓ Resolved")
+                    : isAwaitingReply
+                    ? "● Awaiting Reply"
+                    : "✓ Staff Replied";
 
                   return (
                     <tr
@@ -433,10 +440,10 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                             fontSize: "0.725rem",
                             fontWeight: 600,
                             marginTop: "2px",
-                            color: isAwaitingReply ? "var(--primary, #b91c2b)" : "var(--text-muted)",
+                            color: isClosed ? "var(--text-muted)" : isAwaitingReply ? "var(--primary, #b91c2b)" : "var(--text-muted)",
                           }}
                         >
-                          {isAwaitingReply ? "● Awaiting Reply" : "✓ Staff Replied"}
+                          {replySubtext}
                         </span>
                       </td>
                       <td className="table-actions institute-row-actions" style={{ textAlign: "center", padding: "12px 4px" }}>

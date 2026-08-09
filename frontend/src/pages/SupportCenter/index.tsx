@@ -277,10 +277,17 @@ export function SupportCenter() {
                     ? ticket.messages.filter((m) => m.sender_role !== "customer").length
                     : 0;
 
+                  const isClosed = ticket.status === "closed" || ticket.status === "resolved";
                   const lastMsg = ticket.messages && ticket.messages.length > 0
                     ? ticket.messages[ticket.messages.length - 1]
                     : null;
                   const isStaffReplied = lastMsg ? lastMsg.sender_role !== "customer" : false;
+
+                  const replySubtext = isClosed
+                    ? (ticket.status === "closed" ? "✓ Ticket Closed" : "✓ Resolved")
+                    : isStaffReplied
+                    ? "✓ Support Replied"
+                    : "● Query Submitted";
 
                   return (
                     <tr
@@ -365,10 +372,10 @@ export function SupportCenter() {
                             fontSize: "0.725rem",
                             fontWeight: 600,
                             marginTop: "2px",
-                            color: isStaffReplied ? "var(--success, #10b981)" : "var(--text-muted)",
+                            color: isClosed ? "var(--text-muted)" : isStaffReplied ? "var(--success, #10b981)" : "var(--text-muted)",
                           }}
                         >
-                          {isStaffReplied ? "✓ Support Replied" : "● Query Submitted"}
+                          {replySubtext}
                         </span>
                       </td>
                       <td className="table-actions institute-row-actions" style={{ textAlign: "center", padding: "12px 4px" }}>
