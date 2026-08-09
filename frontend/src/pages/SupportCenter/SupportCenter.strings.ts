@@ -49,6 +49,11 @@ export const supportCenterStrings = {
     resolved: "Resolved",
     closed: "Closed",
   },
+  table: {
+    enquiry: "Enquiry / Subject",
+    status: "Status",
+    actions: "Actions",
+  },
   routing: {
     institute: "With Institute Admin",
     forwarded: "Forwarded to Super Admin",

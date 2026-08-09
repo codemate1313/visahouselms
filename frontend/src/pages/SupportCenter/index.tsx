@@ -1,15 +1,15 @@
-import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import type { PortalSupportTicket, SupportTicketStatus } from "@/api/types";
+import type { PortalSupportTicket, SupportTicketMessage, SupportTicketPriority, SupportTicketStatus } from "@/api/types";
 import { Icon } from "@/components/icons";
 import {
   Badge,
   type BadgeTone,
   Button,
-  Card,
   Input,
+  Modal,
   PageHeader,
   SearchableSelect,
   Textarea,
@@ -21,13 +21,25 @@ import "./SupportCenter.css";
 
 const CATEGORY_OPTIONS = Object.entries(strings.categories).map(([value, label]) => ({ value, label }));
 
+function label(value: string) {
+  if (value === "new") return "Unread";
+  return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 function statusTone(status: SupportTicketStatus): BadgeTone {
   if (status === "resolved" || status === "closed") return "success";
   if (status === "open") return "info";
   return "warning";
 }
 
-function formatDate(value: string) {
+function priorityTone(priority: SupportTicketPriority): BadgeTone {
+  if (priority === "high") return "danger";
+  if (priority === "low") return "neutral";
+  return "info";
+}
+
+function formatDate(value: string | null) {
+  if (!value) return "Not set";
   return new Intl.DateTimeFormat("en-IN", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -37,16 +49,29 @@ function formatDate(value: string) {
 export function SupportCenter() {
   const [searchParams] = useSearchParams();
   const [tickets, setTickets] = useState<PortalSupportTicket[]>([]);
-  const [selectedTicket, setSelectedTicket] = useState<PortalSupportTicket | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
   const [category, setCategory] = useState(() => searchParams.get("category") || "general");
   const [subject, setSubject] = useState(() => searchParams.get("subject") || "");
   const [message, setMessage] = useState("");
+  const [replyText, setReplyText] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const chatStreamRef = useRef<HTMLDivElement | null>(null);
   const showSuccess = useToastStore((state) => state.showSuccess);
   const role = useAuthStore((state) => state.user?.role);
   const usesInstituteSupport = role === "STUDENT" || role === "INST_INSTRUCTOR";
+
+  const selectedTicket = useMemo(
+    () => tickets.find((ticket) => ticket.id === selectedId) ?? tickets[0] ?? null,
+    [selectedId, tickets]
+  );
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
@@ -66,20 +91,18 @@ export function SupportCenter() {
   }, [loadTickets]);
 
   useEffect(() => {
-    if (!selectedTicket) return;
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setSelectedTicket(null);
+    if (chatStreamRef.current) {
+      chatStreamRef.current.scrollTop = chatStreamRef.current.scrollHeight;
     }
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [selectedTicket]);
+  }, [selectedTicket?.messages, selectedTicket?.id, isChatOpen]);
 
   async function submitTicket(event: FormEvent) {
     event.preventDefault();
+    if (!subject.trim() || !message.trim()) return;
     setSubmitting(true);
     setError(null);
     try {
-      await apiClient.post("/support/my-tickets", {
+      const { data } = await apiClient.post<{ id: number }>("/support/my-tickets", {
         category,
         subject: subject.trim(),
         message: message.trim(),
@@ -87,8 +110,13 @@ export function SupportCenter() {
       setCategory("general");
       setSubject("");
       setMessage("");
-      showSuccess(strings.success);
+      setIsCreateOpen(false);
+      showSuccess(strings.success, "Query Submitted");
       await loadTickets();
+      if (data?.id) {
+        setSelectedId(data.id);
+        setIsChatOpen(true);
+      }
     } catch (err: unknown) {
       setError(extractErrorMessage(err, strings.errors.submit));
     } finally {
@@ -96,22 +124,212 @@ export function SupportCenter() {
     }
   }
 
+  async function handleSendMessage(e?: FormEvent) {
+    if (e) e.preventDefault();
+    if (!selectedTicket || !replyText.trim()) return;
+    setSendingMessage(true);
+    setError(null);
+    try {
+      await apiClient.post(`/support/my-tickets/${selectedTicket.id}/messages`, {
+        message: replyText.trim(),
+      });
+      setReplyText("");
+      showSuccess("Message sent successfully", "Message Sent");
+      await loadTickets();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to send message"));
+    } finally {
+      setSendingMessage(false);
+    }
+  }
+
   return (
     <div className="support-center-page">
       <PageHeader
+        appearance="compact"
         eyebrow={strings.eyebrow}
         title={strings.title}
         subtitle={usesInstituteSupport ? strings.instituteSubtitle : strings.subtitle}
+        actions={
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Button
+              variant="primary"
+              leftIcon={<Icon name="plus" />}
+              onClick={() => setIsCreateOpen(true)}
+            >
+              Raise a Query
+            </Button>
+            <Button
+              variant="secondary"
+              leftIcon={<Icon name="notifications" />}
+              onClick={() => void loadTickets()}
+            >
+              Refresh
+            </Button>
+          </div>
+        }
       />
 
-      {error && <p className="error-text">{error}</p>}
+      {error && <p className="error-text notice-line">{error}</p>}
 
-      <div className="support-center-grid">
-        <Card as="form" className="support-query-form" onSubmit={submitTicket}>
-          <div className="support-panel-heading">
-            <h2>{strings.form.title}</h2>
-            <p>{usesInstituteSupport ? strings.form.instituteDescription : strings.form.description}</p>
-          </div>
+      {/* Main Full-Width Table Workspace */}
+      <div className="support-ticket-workspace" style={{ width: "100%", marginTop: "16px" }}>
+        <div className="support-ticket-table-card" style={{ width: "100%" }}>
+          <table className="data-table institute-table" style={{ width: "100%" }}>
+            <thead>
+              <tr>
+                <th>{strings.table?.enquiry ?? "Enquiry"}</th>
+                <th>Routing</th>
+                <th>{strings.table?.status ?? "Status"}</th>
+                <th>Priority</th>
+                <th>Submitted On</th>
+                <th className="table-actions-heading">{strings.table?.actions ?? "Actions"}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="empty-cell">{strings.history.loading}</td>
+                </tr>
+              ) : !tickets.length ? (
+                <tr>
+                  <td colSpan={6} className="empty-cell">
+                    <div style={{ padding: "32px", textAlign: "center" }}>
+                      <h3 style={{ margin: "0 0 6px 0", fontSize: "1.1rem" }}>{strings.history.emptyTitle}</h3>
+                      <p style={{ margin: "0 0 16px 0", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                        {strings.history.emptyDescription}
+                      </p>
+                      <Button
+                        variant="primary"
+                        leftIcon={<Icon name="plus" />}
+                        onClick={() => setIsCreateOpen(true)}
+                      >
+                        Raise a Query Now
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                tickets.map((ticket) => {
+                  const isUnread =
+                    ticket.status === "new" ||
+                    (ticket.messages &&
+                      ticket.messages.length > 0 &&
+                      ticket.messages[ticket.messages.length - 1].sender_role !== "customer");
+
+                  const unreadMsgCount = ticket.messages
+                    ? ticket.messages.filter((m) => m.sender_role !== "customer").length
+                    : 0;
+
+                  return (
+                    <tr
+                      key={ticket.id}
+                      className={selectedTicket?.id === ticket.id ? "is-selected-row" : ""}
+                      onClick={() => {
+                        setSelectedId(ticket.id);
+                        setIsChatOpen(true);
+                      }}
+                      style={{
+                        cursor: "pointer",
+                        background: isUnread
+                          ? "rgba(185, 28, 43, 0.06)"
+                          : selectedTicket?.id === ticket.id
+                          ? "var(--surface-hover, rgba(255, 255, 255, 0.04))"
+                          : undefined,
+                        borderLeft: isUnread ? "4px solid var(--primary, #b91c2b)" : "4px solid transparent",
+                      }}
+                    >
+                      <td>
+                        <div className="table-item-cell">
+                          <div
+                            className="table-avatar-tile"
+                            style={{
+                              background: isUnread ? "var(--primary, #b91c2b)" : undefined,
+                              color: isUnread ? "#ffffff" : undefined,
+                              position: "relative",
+                            }}
+                          >
+                            #
+                          </div>
+                          <div className="table-item-details" style={{ minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <strong className="table-item-title" style={{ whiteSpace: "nowrap" }}>
+                                {ticket.subject}
+                              </strong>
+                              {isUnread && (
+                                <span
+                                  style={{
+                                    fontSize: "0.675rem",
+                                    fontWeight: 700,
+                                    whiteSpace: "nowrap",
+                                    flexShrink: 0,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    padding: "2px 8px",
+                                    borderRadius: "12px",
+                                    background: "var(--primary, #b91c2b)",
+                                    color: "#ffffff",
+                                    boxShadow: "0 1px 4px rgba(185, 28, 43, 0.25)",
+                                  }}
+                                >
+                                  <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff" }} />
+                                  {unreadMsgCount > 0 ? `${unreadMsgCount} New Reply` : "New Update"}
+                                </span>
+                              )}
+                            </div>
+                            <span className="table-item-subtitle">
+                              Ticket #{ticket.id} &bull; {strings.categories[ticket.category as keyof typeof strings.categories] ?? ticket.category}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <Badge tone="neutral">
+                          {ticket.queue === "institute"
+                            ? strings.routing.institute
+                            : ticket.escalated_at
+                            ? strings.routing.forwarded
+                            : strings.routing.platform}
+                        </Badge>
+                      </td>
+                      <td><Badge tone={statusTone(ticket.status)}>{label(ticket.status)}</Badge></td>
+                      <td><Badge tone={priorityTone(ticket.priority)}>{label(ticket.priority)}</Badge></td>
+                      <td>{formatDate(ticket.created_at)}</td>
+                      <td className="table-actions institute-row-actions">
+                        <button
+                          type="button"
+                          className="action-btn-icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedId(ticket.id);
+                            setIsChatOpen(true);
+                          }}
+                        >
+                          <Icon name="eye" />
+                          <span>Chat</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modal 1: Raise a Query Form Modal */}
+      <Modal
+        open={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        size="md"
+        title="Raise a Query"
+      >
+        <form onSubmit={submitTicket} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "0.9rem" }}>
+            {usesInstituteSupport ? strings.form.instituteDescription : strings.form.description}
+          </p>
 
           <label className="support-field-label">
             {strings.form.category}
@@ -139,158 +357,246 @@ export function SupportCenter() {
             minLength={10}
             placeholder={strings.form.messagePlaceholder}
             required
-            rows={7}
+            rows={5}
             showCount
             value={message}
             onChange={(event) => setMessage(event.target.value)}
           />
 
-          <Button
-            fullWidth
-            leftIcon={<Icon name="help" />}
-            loading={submitting}
-            type="submit"
-          >
-            {submitting ? strings.form.submitting : strings.form.submit}
-          </Button>
-        </Card>
-
-        <section className="support-ticket-history">
-          <div className="support-history-heading">
-            <div className="support-panel-heading">
-              <h2>{strings.history.title}</h2>
-              <p>{strings.history.description}</p>
-            </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
+            <Button variant="secondary" onClick={() => setIsCreateOpen(false)} type="button">
+              Cancel
+            </Button>
             <Button
-              leftIcon={<Icon name="restore" />}
-              onClick={() => void loadTickets()}
-              size="sm"
-              variant="secondary"
+              leftIcon={<Icon name="help" />}
+              loading={submitting}
+              type="submit"
             >
-              {strings.history.refresh}
+              {submitting ? strings.form.submitting : strings.form.submit}
             </Button>
           </div>
+        </form>
+      </Modal>
 
-          {loading ? (
-            <p className="empty-message">{strings.history.loading}</p>
-          ) : tickets.length === 0 ? (
-            <Card className="support-ticket-empty" tone="muted">
-              <h3>{strings.history.emptyTitle}</h3>
-              <p>{strings.history.emptyDescription}</p>
-            </Card>
+      {/* Modal 2: Interactive Messenger Support Chat Modal */}
+      <Modal
+        open={isChatOpen && Boolean(selectedTicket)}
+        onClose={() => setIsChatOpen(false)}
+        size="lg"
+        title={
+          selectedTicket ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              <span className="support-ticket-id" style={{ fontSize: "0.85rem", padding: "4px 10px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.08)", border: "1px solid var(--border)" }}>
+                #{selectedTicket.id}
+              </span>
+              <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>
+                {selectedTicket.subject}
+              </span>
+              <Badge tone={statusTone(selectedTicket.status)}>{label(selectedTicket.status)}</Badge>
+              <Badge tone={priorityTone(selectedTicket.priority)}>{label(selectedTicket.priority)}</Badge>
+            </div>
           ) : (
-            <div className="support-ticket-list">
-              {tickets.map((ticket) => (
-                <Card
-                  as="article"
-                  aria-label={`${strings.history.openDetail}: ${ticket.subject}`}
-                  className="support-ticket-card"
-                  interactive
-                  key={ticket.id}
-                  onClick={() => setSelectedTicket(ticket)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      setSelectedTicket(ticket);
-                    }
-                  }}
-                  role="button"
-                  size="sm"
-                  tabIndex={0}
-                  title={strings.history.openDetail}
-                >
-                  <div className="support-ticket-card-head">
-                    <h3>{ticket.subject}</h3>
-                    <Badge tone={statusTone(ticket.status)}>{strings.status[ticket.status]}</Badge>
-                  </div>
-                  <span className="support-ticket-destination">
-                    {ticket.queue === "institute"
-                      ? strings.routing.institute
-                      : ticket.escalated_at
-                        ? strings.routing.forwarded
-                        : strings.routing.platform}
-                  </span>
-                  <p>{ticket.message}</p>
-                  {ticket.admin_note && (
-                    <div className="support-ticket-response-preview">
-                      <span>{strings.detail.supportResponse}</span>
-                      <p>{ticket.admin_note}</p>
-                    </div>
-                  )}
-                  <div className="support-ticket-card-meta">
-                    <span>{strings.history.ticketNumber(ticket.id)}</span>
-                    <span>{strings.categories[ticket.category as keyof typeof strings.categories] ?? ticket.category}</span>
-                    <time dateTime={ticket.created_at}>{formatDate(ticket.created_at)}</time>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
-
-      {selectedTicket && (
-        <div
-          className="support-ticket-detail-backdrop"
-          onClick={() => setSelectedTicket(null)}
-          role="presentation"
-        >
-          <aside
-            aria-labelledby="support-ticket-detail-title"
-            aria-modal="true"
-            className="support-ticket-detail-panel"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-          >
-            <div className="support-ticket-detail-head">
+            "Support Ticket Thread"
+          )
+        }
+      >
+        {selectedTicket && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Top Bar: Support Routing Card */}
+            <div
+              style={{
+                padding: "12px 16px",
+                borderRadius: "14px",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "12px",
+              }}
+            >
               <div>
-                <span className="support-ticket-detail-id">{strings.history.ticketNumber(selectedTicket.id)}</span>
-                <h2 id="support-ticket-detail-title">{selectedTicket.subject}</h2>
-              </div>
-              <button
-                aria-label={strings.detail.close}
-                className="support-ticket-detail-close"
-                onClick={() => setSelectedTicket(null)}
-                type="button"
-              >
-                <Icon name="x" />
-              </button>
-            </div>
-
-            <div className="support-ticket-detail-meta">
-              <Badge tone={statusTone(selectedTicket.status)}>{strings.status[selectedTicket.status]}</Badge>
-              <span>
-                {selectedTicket.queue === "institute"
-                  ? strings.routing.institute
-                  : selectedTicket.escalated_at
+                <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: 700, display: "block" }}>
+                  ASSIGNED SUPPORT QUEUE
+                </small>
+                <strong style={{ fontSize: "0.95rem", color: "var(--text)", display: "block", marginTop: "2px" }}>
+                  {selectedTicket.queue === "institute"
+                    ? strings.routing.institute
+                    : selectedTicket.escalated_at
                     ? strings.routing.forwarded
                     : strings.routing.platform}
-              </span>
-              <span>{strings.categories[selectedTicket.category as keyof typeof strings.categories] ?? selectedTicket.category}</span>
-              <time dateTime={selectedTicket.created_at}>{formatDate(selectedTicket.created_at)}</time>
+                </strong>
+              </div>
+              <div>
+                <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: 700, display: "block" }}>
+                  CATEGORY
+                </small>
+                <span style={{ fontSize: "0.9rem", color: "var(--text)", fontWeight: 600 }}>
+                  {strings.categories[selectedTicket.category as keyof typeof strings.categories] ?? selectedTicket.category}
+                </span>
+              </div>
+              <div>
+                <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: 700, display: "block" }}>
+                  SUBMITTED
+                </small>
+                <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                  {formatDate(selectedTicket.created_at)}
+                </span>
+              </div>
             </div>
 
-            <section className="support-ticket-detail-section">
-              <h3>{strings.detail.originalQuery}</h3>
-              <p>{selectedTicket.message}</p>
-            </section>
+            {/* Messenger Chat Thread Stream */}
+            <div
+              ref={chatStreamRef}
+              style={{
+                height: "360px",
+                overflowY: "auto",
+                padding: "18px",
+                borderRadius: "14px",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "14px",
+              }}
+            >
+              {selectedTicket.messages && selectedTicket.messages.length > 0 ? (
+                selectedTicket.messages.map((msg: SupportTicketMessage, idx: number) => {
+                  const isAdmin = msg.sender_role === "admin" || msg.sender_role === "staff";
+                  return (
+                    <div
+                      key={msg.id || idx}
+                      style={{
+                        alignSelf: isAdmin ? "flex-start" : "flex-end",
+                        maxWidth: "80%",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: isAdmin ? "flex-start" : "flex-end",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                        <span
+                          style={{
+                            fontSize: "0.75rem",
+                            fontWeight: 700,
+                            color: isAdmin ? "var(--primary, #b91c2b)" : "var(--text)",
+                          }}
+                        >
+                          {msg.sender_name} {isAdmin ? "(Support Staff)" : "(You)"}
+                        </span>
+                        <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                          {formatDate(msg.created_at)}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          background: isAdmin ? "rgba(255, 255, 255, 0.08)" : "var(--primary, #b91c2b)",
+                          color: isAdmin ? "var(--text)" : "#ffffff",
+                          border: isAdmin ? "1px solid var(--border)" : "none",
+                          padding: "11px 16px",
+                          borderRadius: isAdmin ? "16px 16px 16px 2px" : "16px 16px 2px 16px",
+                          fontSize: "0.925rem",
+                          lineHeight: 1.45,
+                          whiteSpace: "pre-wrap",
+                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
+                        }}
+                      >
+                        {msg.message}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <>
+                  <div style={{ alignSelf: "flex-end", maxWidth: "80%" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text)" }}>You</span>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{formatDate(selectedTicket.created_at)}</span>
+                    </div>
+                    <div
+                      style={{
+                        background: "var(--primary, #b91c2b)",
+                        color: "#ffffff",
+                        padding: "11px 16px",
+                        borderRadius: "16px 16px 2px 16px",
+                        fontSize: "0.925rem",
+                        lineHeight: 1.45,
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      {selectedTicket.message}
+                    </div>
+                  </div>
 
-            <section className="support-ticket-detail-section support-ticket-response-detail">
-              <h3>{strings.detail.supportResponse}</h3>
-              <p>{selectedTicket.admin_note || strings.detail.noResponse}</p>
-            </section>
-
-            <div className="support-ticket-detail-dates">
-              {selectedTicket.resolved_at && (
-                <span>{strings.detail.resolvedOn}: {formatDate(selectedTicket.resolved_at)}</span>
-              )}
-              {selectedTicket.updated_at && (
-                <span>{strings.detail.updatedOn}: {formatDate(selectedTicket.updated_at)}</span>
+                  {selectedTicket.admin_note && (
+                    <div style={{ alignSelf: "flex-start", maxWidth: "80%" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--primary, #b91c2b)" }}>Support Response</span>
+                      </div>
+                      <div
+                        style={{
+                          background: "rgba(255, 255, 255, 0.08)",
+                          color: "var(--text)",
+                          border: "1px solid var(--border)",
+                          padding: "11px 16px",
+                          borderRadius: "16px 16px 16px 2px",
+                          fontSize: "0.925rem",
+                          lineHeight: 1.45,
+                          whiteSpace: "pre-wrap",
+                        }}
+                      >
+                        {selectedTicket.admin_note}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
-          </aside>
-        </div>
-      )}
+
+            {/* Reply Input Bar */}
+            {selectedTicket.status === "closed" ? (
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: "12px",
+                  background: "rgba(239, 68, 68, 0.12)",
+                  border: "1px solid rgba(239, 68, 68, 0.25)",
+                  color: "#ef4444",
+                  textAlign: "center",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                }}
+              >
+                🔒 This support ticket is closed. If you have a new issue, please click <strong>"Raise a Query"</strong>.
+              </div>
+            ) : (
+              <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <textarea
+                  className="input"
+                  rows={3}
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Type your follow-up reply..."
+                  style={{ resize: "none", borderRadius: "10px", padding: "12px", fontSize: "0.925rem", width: "100%" }}
+                />
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    loading={sendingMessage}
+                    disabled={!replyText.trim()}
+                    leftIcon={<Icon name="arrowRight" />}
+                  >
+                    Send Reply
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
+
