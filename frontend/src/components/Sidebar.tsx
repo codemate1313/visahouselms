@@ -97,9 +97,9 @@ export function Sidebar({
   // Determine the SINGLE active item key
   const activeKey = getActiveItemKey(sections, location.pathname);
 
-  // Keep track of expanded accordions
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
   const [activeFlyoutKey, setActiveFlyoutKey] = useState<string | null>(null);
+  const [closedFlyoutKey, setClosedFlyoutKey] = useState<string | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isOpenOnMobile, setIsOpenOnMobile] = useState(false);
   const [isMobileScreen, setIsMobileScreen] = useState(() => window.innerWidth <= 768);
@@ -327,6 +327,7 @@ export function Sidebar({
                       className={`sidebar-menu-item accordion-item ${
                         isExpanded ? "is-open" : ""
                       } ${isParentActive ? "parent-active" : ""}`}
+                      onMouseLeave={() => setClosedFlyoutKey(null)}
                     >
                       <button
                         type="button"
@@ -364,7 +365,7 @@ export function Sidebar({
                       </button>
 
                       {isCollapsed && item.children && item.children.length > 0 && (
-                        <div className={`sidebar-flyout-popover ${activeFlyoutKey === item.key ? "is-click-open" : ""}`}>
+                        <div className={`sidebar-flyout-popover ${activeFlyoutKey === item.key ? "is-click-open" : ""} ${closedFlyoutKey === item.key ? "is-closed-suppressed" : ""}`}>
                           <div className="sidebar-flyout-header">{item.label}</div>
                           <ul className="sidebar-flyout-list">
                             {item.children.map((child) => {
@@ -374,7 +375,10 @@ export function Sidebar({
                                   <NavLink
                                     to={child.to}
                                     className={`sidebar-flyout-link ${isSubActive ? "is-sub-active" : ""}`}
-                                    onClick={() => setActiveFlyoutKey(null)}
+                                    onClick={() => {
+                                      setActiveFlyoutKey(null);
+                                      setClosedFlyoutKey(item.key);
+                                    }}
                                   >
                                     <span>{child.label}</span>
                                     {child.badge !== undefined && (

@@ -2392,18 +2392,18 @@
 
 .sidebar-tooltip {
   position: absolute;
-  left: calc(100% + 12px);
+  left: calc(100% + 10px);
   top: 50%;
   transform: translateY(-50%) translateX(-4px);
   background: #0f172a;
   color: #ffffff;
   border: none;
-  padding: 6px 14px;
-  border-radius: 9px;
+  padding: 6px 13px;
+  border-radius: 8px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.25);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -2411,16 +2411,11 @@
   z-index: 10005;
 }
 
-/* Single Clean Dark Arrow Accent */
+/* NO ARROW ICON - ZERO ::before / ::after arrows on tooltips */
+.sidebar-tooltip::before,
 .sidebar-tooltip::after {
-  content: "";
-  position: absolute;
-  right: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  border-width: 5px 6px 5px 0;
-  border-style: solid;
-  border-color: transparent #0f172a transparent transparent;
+  display: none !important;
+  content: none !important;
 }
 
 /* Hover & Focus State to reveal Tooltip */
@@ -2437,8 +2432,11 @@
 /* Submenu Flyout Popover Menu for Collapsed Sidebar */
 .sidebar-flyout-popover {
   position: absolute;
-  left: calc(100% + 12px);
-  top: -4px;
+  left: calc(100% + 10px);
+  top: 0;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  scrollbar-width: thin;
   background: var(--surface, #ffffff);
   border: 1px solid var(--border, #e2e8f0);
   border-radius: var(--radius-xl, 16px);
@@ -2452,6 +2450,12 @@
   z-index: 10000;
 }
 
+/* NO ARROW ICON - ZERO ::after arrows on flyout popovers */
+.sidebar-flyout-popover::after {
+  display: none !important;
+  content: none !important;
+}
+
 /* Invisible Hover Bridge connecting button to popover so cursor never drops hover when moving into popover */
 .sidebar-flyout-popover::before {
   content: "";
@@ -2463,15 +2467,23 @@
   background: transparent;
 }
 
+/* Suppressed state after clicking a sublink */
+.sidebar-flyout-popover.is-closed-suppressed {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 [data-theme="dark"] .sidebar-flyout-popover {
   background: #1e293b;
   border-color: #334155;
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
 }
 
-.huge-sidebar.is-collapsed .sidebar-menu-item.accordion-item:hover .sidebar-flyout-popover,
-.huge-sidebar.is-collapsed .sidebar-menu-item.accordion-item:focus-within .sidebar-flyout-popover,
-.sidebar-flyout-popover.is-click-open {
+.huge-sidebar.is-collapsed .sidebar-menu-item.accordion-item:hover .sidebar-flyout-popover:not(.is-closed-suppressed),
+.huge-sidebar.is-collapsed .sidebar-menu-item.accordion-item:focus-within .sidebar-flyout-popover:not(.is-closed-suppressed),
+.sidebar-flyout-popover.is-click-open:not(.is-closed-suppressed) {
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
@@ -2479,7 +2491,7 @@
 }
 
 .sidebar-flyout-header {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -2529,12 +2541,6 @@
   background: var(--primary, #e11d2e) !important;
   color: #ffffff !important;
   font-weight: 700;
-}
-
-.sidebar-flyout-link:hover,
-.sidebar-flyout-link.is-sub-active {
-  background: #e11d2e !important;
-  color: #ffffff !important;
 }
 
 /* 4. Footer Section */
