@@ -31,7 +31,7 @@
 
 .ui-input::placeholder {
   color: var(--slate-400);
-  opacity: 1;
+  opacity: 0.22;
 }
 
 .ui-input-error {
@@ -55,6 +55,6 @@
 }
 
 [data-theme="dark"] .ui-input::placeholder {
-  color: rgba(242, 242, 245, 0.44);
+  color: rgba(255, 255, 255, 0.12);
   opacity: 1;
 }

@@ -1723,7 +1723,7 @@ body {
 }
 
 [data-theme="dark"] .users-row-action-menu-panel {
-  background: #181b22;
+  background: #16161a;
   border-color: rgba(255, 255, 255, 0.14);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
 }
@@ -1736,7 +1736,7 @@ body {
 }
 
 [data-theme="dark"] .sleek-users-table.responsive-data-table .row-action-menu-panel {
-  background: #181b22;
+  background: #16161a;
   border-color: rgba(255, 255, 255, 0.14);
 }
 

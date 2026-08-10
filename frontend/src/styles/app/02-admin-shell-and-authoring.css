@@ -738,112 +738,122 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 250px;
-  padding: 22px;
+  min-height: 172px;
+  padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--radius, 18px);
   background: var(--surface);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
   text-decoration: none;
   overflow: hidden;
-  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
 }
 
+/* A single soft accent wash, revealed only on hover — replaces the old
+   corner blob, which read as a smudge against the dark surface. */
 .module-type-card::after {
   content: "";
   position: absolute;
-  right: -36px;
-  bottom: -48px;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--card-accent-soft) 0%, transparent 70%);
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(155deg, var(--card-accent-soft) 0%, transparent 46%);
+  opacity: 0;
   z-index: 0;
   pointer-events: none;
-  transition: all 0.3s ease;
+  transition: opacity 0.22s ease;
 }
 
 .module-type-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-  border-color: color-mix(in srgb, var(--card-accent) 45%, var(--border));
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--card-accent) 38%, var(--border));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
 }
 
 .module-type-card:hover::after {
-  transform: scale(1.2);
+  opacity: 1;
 }
 
 .module-type-card-header {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   z-index: 1;
 }
 
 .module-type-card h2 {
   margin: 0;
-  font-size: 19px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
   color: var(--text);
 }
 
 .module-type-card-body {
+  position: relative;
   flex: 1;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   z-index: 1;
 }
 
-.module-type-details-badges {
+/* Metadata reads as one quiet line rather than a stack of chips, so every
+   card keeps the same rhythm regardless of how many facts it carries. */
+.module-type-meta {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
 }
 
-.module-type-badge {
+.module-type-meta-item {
   display: inline-flex;
   align-items: center;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12.5px;
-  font-weight: 550;
-  background: var(--surface-muted, #f3f4f6);
-  color: var(--text-muted);
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  line-height: 1.35;
-  width: fit-content;
 }
 
-[data-theme="dark"] .module-type-badge {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.06);
-  color: #a1a1aa;
+.module-type-meta-item + .module-type-meta-item::before {
+  content: "";
+  width: 3px;
+  height: 3px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.4;
 }
 
 .module-type-icon {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  font-weight: 800;
-  font-size: 15px;
+  border-radius: 11px;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.01em;
   background: var(--card-accent-soft);
   color: var(--card-accent);
-  border: 1.5px solid color-mix(in srgb, var(--card-accent) 25%, transparent);
-  transition: all 0.25s ease;
+  border: 1px solid color-mix(in srgb, var(--card-accent) 22%, transparent);
+  transition:
+    background 0.22s ease,
+    color 0.22s ease,
+    border-color 0.22s ease;
   flex-shrink: 0;
 }
 
 .module-type-card:hover .module-type-icon {
   background: var(--card-accent);
+  border-color: var(--card-accent);
   color: #ffffff;
-  transform: scale(1.08);
-  box-shadow: 0 4px 14px var(--card-accent-soft);
 }
 
 .module-type-card-footer {
+  position: relative;
   margin-top: auto;
   z-index: 1;
 }
@@ -853,13 +863,35 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--card-accent);
-  transition: all 0.2s ease;
 }
 
-.module-type-card:hover .module-create-label {
-  transform: translateX(4px);
+/* Only the arrow travels — the label stays put, which reads as intent
+   rather than the whole row sliding. */
+.module-create-label svg {
+  transition: transform 0.22s ease;
+}
+
+.module-type-card:hover .module-create-label svg {
+  transform: translateX(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .module-type-card,
+  .module-type-card::after,
+  .module-type-icon,
+  .module-create-label svg {
+    transition: none;
+  }
+
+  .module-type-card:hover {
+    transform: none;
+  }
+
+  .module-type-card:hover .module-create-label svg {
+    transform: none;
+  }
 }
 
 /* Unique Brand Accent Colors for each module type */

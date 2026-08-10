@@ -349,7 +349,7 @@
 [data-theme="dark"] :where(.table-card, .sab-table-wrapper, .sat-table-wrapper, .dev-table-wrap, .purchase-history-card, .subscription-history-wrap, .table-card-block),
 [data-theme="dark"] :where(.sab-card, .sat-card, .invoice-card-wrapper, .purchase-stat-card, .drawer-stat-card, .neomorphic-card-widget, .activity-feed-card, .drawer-list-item-card, .developer-card, .detail-card, .quota-analytics-card, .validity-gauge-card) {
   border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(24, 27, 34, 0.98);
+  background: rgba(22, 22, 26, 0.98);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
 }
 
@@ -1057,6 +1057,12 @@ html {
 
 .premium-textarea::placeholder {
   color: var(--text-muted);
+  opacity: 0.22;
+}
+
+[data-theme="dark"] .premium-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.12);
+  opacity: 1;
 }
 
 .premium-textarea:focus {

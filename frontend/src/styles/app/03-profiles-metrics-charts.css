@@ -2411,7 +2411,7 @@ button.danger-text {
 
 /* ---------- Metric breakdown (share of a headline figure) ----------
    Categorical slots, validated against this dialog's own surfaces
-   (#f8fafc light, #181b22 dark) for the lightness band, chroma floor,
+   (#f8fafc light, #16161a dark) for the lightness band, chroma floor,
    colour-vision separation and contrast. The slot ORDER is the safety
    mechanism, not a preference - do not re-order or add a 6th hue; a longer
    tail folds into the neutral "Other" slice instead. Three light-mode hues
@@ -2439,7 +2439,7 @@ button.danger-text {
   --bd-slot-3: #199e70;
   --bd-slot-4: #c98500;
   --bd-slot-5: #d55181;
-  --bd-surface: #181b22;
+  --bd-surface: #16161a;
   --bd-ink: #f7f7fa;
   --bd-ink-soft: #c3c2b7;
   --bd-ink-muted: #898781;
@@ -2899,7 +2899,7 @@ button.danger-text {
 
 [data-theme="dark"] .chart-modal-view-container,
 [data-theme="dark"] .chart-breakdown-card {
-  background: #13151b !important;
+  background: #16161a !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   color: #f3f4f6 !important;
 }

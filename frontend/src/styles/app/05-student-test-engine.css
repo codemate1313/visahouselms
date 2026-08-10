@@ -1984,7 +1984,7 @@
   padding: 28px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius-md);
-  background: rgba(24, 27, 34, 0.98);
+  background: rgba(22, 22, 26, 0.98);
   color: #ffffff;
   text-align: center;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.42);
@@ -3675,7 +3675,7 @@ th[aria-sort="descending"] .table-sort-button::after {
 }
 
 [data-theme="dark"] .typography-stepper-btn {
-  background: var(--surface, #181b22) !important;
+  background: var(--surface, #16161a) !important;
   color: var(--text, #f3f4f6) !important;
   box-shadow: none !important;
 }
@@ -3947,8 +3947,8 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .static-auth-modal-dark {
   color-scheme: dark;
-  --surface: #181b22;
-  --surface-muted: #212530;
+  --surface: #16161a;
+  --surface-muted: #1f1f24;
   --text: #f3f4f6;
   --text-muted: #9ca3af;
   --border: rgba(255, 255, 255, 0.1);
@@ -4121,7 +4121,7 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .static-auth-modal-wrapper .form-group input::placeholder,
 .static-auth-modal-wrapper .password-input-wrap input::placeholder {
-  color: rgba(248, 250, 252, 0.42);
+  color: rgba(255, 255, 255, 0.12);
 }
 
 .static-auth-modal-wrapper .form-group>input {

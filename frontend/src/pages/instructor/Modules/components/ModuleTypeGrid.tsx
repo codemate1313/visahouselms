@@ -26,9 +26,9 @@ export function ModuleTypeGrid({ blueprints }: ModuleTypeGridProps) {
             </div>
             
             <div className="module-type-card-body">
-              <div className="module-type-details-badges">
+              <div className="module-type-meta">
                 {details.map((detail, idx) => (
-                  <span key={idx} className="module-type-badge">
+                  <span key={idx} className="module-type-meta-item">
                     {detail.trim()}
                   </span>
                 ))}
