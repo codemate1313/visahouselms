@@ -1118,7 +1118,11 @@
  * What remains here is call-site layout: fixed widths per filter context and the
  * z-index escalation on containers holding an open dropdown. */
 .searchable-select-container.status-filter-select,
-.status-filter-select {
+.status-filter-select,
+.searchable-select-container.skill-filter-select,
+.skill-filter-select,
+.searchable-select-container.support-ticket-filter-select,
+.support-ticket-filter-select {
   width: 160px !important;
   max-width: 160px !important;
   min-width: 160px !important;
