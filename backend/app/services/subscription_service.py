@@ -679,7 +679,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
     )
 
     from app.services import ai_evaluation_service
-    from app.models import TestAttempt, RetakeRequest
+    from app.models.attempt import TestAttempt, RetakeRequest
 
     ai_quota = ai_evaluation_service.get_student_ai_quota_summary(db, user)
 

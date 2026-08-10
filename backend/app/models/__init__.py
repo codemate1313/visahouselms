@@ -12,6 +12,7 @@ from app.models.attempt import (
     Enrollment,
     GradingQueueEntry,
     ReevaluationRequest,
+    RetakeRequest,
     TestAttempt,
 )
 from app.models.audit_log import AuditLog
@@ -106,4 +107,5 @@ __all__ = [
     "AiEvaluation",
     "AiEvaluationLimit",
     "ReevaluationRequest",
+    "RetakeRequest",
 ]
