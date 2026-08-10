@@ -111,7 +111,16 @@ export function ModuleEditor() {
     return "/super-admin/instructor/modules";
   }, [location.pathname]);
 
-  function choosePart(part: ExamModulePart) {
+  function choosePart(part: ExamModulePart | null) {
+    if (!part) {
+      setSelectedPartId(null);
+      setEditingQuestionId(null);
+      setPreview(null);
+      setImportFile(null);
+      setError(null);
+      document.getElementById("module-part-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     setSelectedPartId(part.id);
     setManual(emptyQuestion(part));
     setEditingQuestionId(null);
@@ -452,11 +461,9 @@ export function ModuleEditor() {
         </Badge>
       </div>
 
-      <div className={`module-authoring-layout ${!selectedPart ? "is-details-mode" : ""}`}>
-        {selectedPart && (
-          <ModulePartNav parts={module.parts} selectedPartId={selectedPartId} onChoosePart={choosePart} />
-        )}
-        <main className={`module-part-editor ${!selectedPart ? "is-full-width" : ""}`} id="module-part-editor">
+      <div className="module-authoring-layout">
+        <ModulePartNav parts={module.parts} selectedPartId={selectedPartId} onChoosePart={choosePart} />
+        <main className="module-part-editor" id="module-part-editor">
           {!selectedPart ? (
             <ModuleDetailsForm
               module={module}

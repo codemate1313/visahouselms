@@ -4,7 +4,7 @@ import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 interface ModulePartNavProps {
   parts: ExamModulePart[] | undefined;
   selectedPartId: number | null;
-  onChoosePart: (part: ExamModulePart) => void;
+  onChoosePart: (part: ExamModulePart | null) => void;
 }
 
 export function ModulePartNav({ parts, selectedPartId, onChoosePart }: ModulePartNavProps) {
@@ -14,6 +14,21 @@ export function ModulePartNav({ parts, selectedPartId, onChoosePart }: ModulePar
       <h2>{t.heading}</h2>
       <p>{t.hint}</p>
       <div className="module-part-list">
+        {/* Top Option: Module Test Configuration & Candidate Instructions */}
+        <button
+          type="button"
+          className={`module-details-nav-btn ${selectedPartId === null ? "active" : ""}`}
+          onClick={() => onChoosePart(null)}
+        >
+          <span>
+            <strong>⚙️ Test Settings & Notes</strong>
+            <small>Title, duration & candidate instructions</small>
+          </span>
+          <span className="nav-badge-edit">Edit</span>
+        </button>
+
+        <div className="vh-nav-divider" />
+
         {parts?.map((part) => (
           <button className={part.id === selectedPartId ? "active" : ""} onClick={() => onChoosePart(part)} key={part.id}>
             <span>
