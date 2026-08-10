@@ -4,7 +4,6 @@ import type { ExamModulePart, ExamModuleQuestion } from "@/api/types";
 import { renderBoldText } from "@/utils/boldText";
 import { parseClozeMarkers } from "@/utils/clozeMarkers";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
-import { renderRichText } from "@/components/ui";
 
 interface SavedQuestionsListProps {
   part: ExamModulePart;
@@ -17,7 +16,13 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
   const t = strings.savedQuestions;
   const questionLabels = strings.questionLabels;
   const isSharedCloze = part.part_code === "reading_1b" && part.answer_constraints.layout === "shared_cloze";
-  const sharedPassage = isSharedCloze ? part.questions.find((question) => question.passage?.trim())?.passage?.trim() ?? "" : "";
+  /* Every question in a shared-passage part stores the same passage, so
+     printing it under each one repeated the whole text six or seven times.
+     Show it once at the top of the list instead. */
+  const usesSharedPassage = Boolean(part.answer_constraints.shared_passage);
+  const sharedPassage = (isSharedCloze || usesSharedPassage)
+    ? part.questions.find((question) => question.passage?.trim())?.passage?.trim() ?? ""
+    : "";
   // A gap part is one task, not a list of questions - calling its rows
   // "questions" is what made six gaps read as six separate questions.
   const isGapTask = part.answer_constraints.layout === "inline_matching_blanks";
@@ -37,7 +42,7 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
         </div>
       ) : (
         <div className="saved-question-list">
-          {isSharedCloze && sharedPassage && (
+          {sharedPassage && (
             <article className="saved-question saved-cloze-passage">
               <p>
                 {parseClozeMarkers(sharedPassage).map((token) => (
@@ -58,7 +63,7 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
                   {question.interaction?.turn_type && <span>{question.interaction.turn_type.replaceAll("_", " ")}</span>}
                 </div>
                 {!isSharedCloze && <h3>{renderBoldText(question.prompt)}</h3>}
-                {!isSharedCloze && part.section_type !== "writing" && question.passage && <p>{question.passage}</p>}
+                {!isSharedCloze && !usesSharedPassage && part.section_type !== "writing" && question.passage && <p>{question.passage}</p>}
                 {question.image_url && (
                   <img className="saved-question-image" src={`${API_BASE_URL}${question.image_url}`} alt="" />
                 )}

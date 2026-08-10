@@ -52,6 +52,9 @@ export function ModuleEditor() {
   // Which part the current draft belongs to, so a reload can tell "same part,
   // keep what is typed" from "different part, start fresh".
   const manualPartIdRef = useRef<number | null>(null);
+  // Last details payload received from the server, used to tell an untouched
+  // form (safe to refresh) from one with unsaved edits (must be preserved).
+  const serverDetailsRef = useRef<ModuleDetailsState | null>(null);
   const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<QuestionImportPreview | null>(null);
@@ -75,13 +78,22 @@ export function ModuleEditor() {
     try {
       const { data } = await apiClient.get<ExamModule>(`/instructor/modules/${id}`);
       setModule(data);
-      setDetails({
+      const serverDetails: ModuleDetailsState = {
         title: data.title,
         description: data.description ?? "",
         instructions: data.instructions ?? "",
         duration_minutes: data.duration_minutes,
         show_onboarding_instructions: data.show_onboarding_instructions ?? true,
         onboarding_instructions: data.onboarding_instructions ?? [],
+      };
+      /* Take the server's version only when the author has nothing unsaved in
+         the details form - otherwise a reload triggered by some other save
+         (audio, questions, source text) would discard edits in progress,
+         including anything typed into the candidate guidelines editor. */
+      setDetails((current) => {
+        const pristine = serverDetailsRef.current === null || isEqual(current, serverDetailsRef.current);
+        serverDetailsRef.current = serverDetails;
+        return pristine ? serverDetails : current;
       });
       const selected = data.parts?.find((part) => part.id === (preferredPartId ?? selectedPartId)) ?? data.parts?.[0] ?? null;
       setSelectedPartId(selected?.id ?? null);
@@ -122,6 +134,10 @@ export function ModuleEditor() {
   const [partTitle, setPartTitle] = useState("");
   const [partInstructions, setPartInstructions] = useState("");
 
+  /* Keyed on the part's id and its saved values rather than the object itself.
+     `selectedPart` is derived from `module`, so it is a new object after every
+     reload - depending on it re-ran this effect and wiped an edited section
+     heading whenever anything else was saved. */
   useEffect(() => {
     if (selectedPart) {
       setPartTitle(selectedPart.title);
@@ -130,7 +146,8 @@ export function ModuleEditor() {
       setPartTitle("");
       setPartInstructions("");
     }
-  }, [selectedPart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPart?.id, selectedPart?.title, selectedPart?.instructions]);
 
   async function savePartHeader() {
     if (!module || !selectedPart) return;
@@ -168,6 +185,9 @@ export function ModuleEditor() {
       return;
     }
     setSelectedPartId(part.id);
+    // Switching part legitimately starts a new draft; keep the ref in step so
+    // the next reload does not think this draft belongs to the previous part.
+    manualPartIdRef.current = part.id;
     setManual(emptyQuestion(part));
     setEditingQuestionId(null);
     setPreview(null);

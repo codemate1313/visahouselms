@@ -42,6 +42,13 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit }: GapTaskCom
   const [options, setOptions] = useState<{ key: string; text: string }[]>([]);
   const [answers, setAnswers] = useState<Record<number, string>>({});
 
+  /* Re-seed only when the saved task changes. Depending on the questions array
+     itself re-ran this on every parent render - and the parent reloads after
+     every save - which wiped a passage the author was still writing. */
+  const savedSignature = existing
+    .map((question) => `${question.id}:${(question.correct_answers ?? []).join("+")}`)
+    .join("|");
+
   // Seed from whatever the part already holds so this edits rather than resets.
   useEffect(() => {
     const first = existing[0];
@@ -56,7 +63,8 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit }: GapTaskCom
         existing.map((question, index) => [index + 1, question.correct_answers?.[0] ?? ""]),
       ),
     );
-  }, [part.id, existing, optionCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [part.id, savedSignature, optionCount]);
 
   // The gaps are whatever the passage declares - the source of truth is the text.
   const gaps = useMemo(() => {

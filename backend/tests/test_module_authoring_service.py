@@ -105,7 +105,11 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
                     prompt,
                     points,
                     option_count=constraints.get("option_count", 2),
-                    passage=f"Shared academic source for {part.part_code}." if constraints.get("passage_required") else None,
+                    passage=(
+                        "Shared academic source with gaps: " + " ".join("{{blank:" + str(g) + "}}" for g in range(1, count + 1))
+                        if constraints.get("layout") == "shared_cloze"
+                        else (f"Shared academic source for {part.part_code}." if constraints.get("passage_required") else None)
+                    ),
                     correct_answer=chr(65 + index) if constraints.get("unique_answers") else "A",
                 )
                 if constraints.get("group_label_required"):
