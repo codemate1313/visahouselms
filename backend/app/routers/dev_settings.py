@@ -9,7 +9,6 @@ from app.models.user import User
 from app.schemas.dev import (
     AiEvaluationKeyTestIn,
     AiEvaluationSettingsIn,
-    AvatarSettingsIn,
     BackupSettingsIn,
     FcmSettingsIn,
     LogSettingsIn,
@@ -19,7 +18,7 @@ from app.schemas.dev import (
     TestEmailIn,
     TestFcmIn,
 )
-from app.services import ai_evaluation_service, avatar_service, fcm_service, job_service, smtp_service
+from app.services import ai_evaluation_service, fcm_service, job_service, smtp_service
 from app.services.settings_service import get_settings_group, set_setting, set_settings_group
 from app.core.security import get_static_otp_code, is_static_otp_enabled
 
@@ -101,31 +100,10 @@ def test_fcm(payload: TestFcmIn, db: Session = Depends(get_db)):
     return fcm_service.test_credentials(db)
 
 
-# ---------- Avatar (Speaking video presenter) ----------
-
-@router.get("/avatar")
-def get_avatar(db: Session = Depends(get_db)):
-    return avatar_service.get_config(db)
-
-
-@router.put("/avatar")
-def put_avatar(
-    payload: AvatarSettingsIn,
-    request: Request,
-    db: Session = Depends(get_db),
-    actor: User = Depends(get_current_user),
-):
-    values = payload.model_dump()
-    if not values.get("provider"):
-        values["provider"] = "d_id"
-    result = avatar_service.update_config(db, values)
-    _audit(db, actor, "dev_settings.update_avatar", request)
-    return result
-
-
-@router.post("/avatar/test")
-def test_avatar(db: Session = Depends(get_db)):
-    return avatar_service.test_connection(db)
+# The D-ID video-presenter settings used to live here. That vendor integration
+# was replaced by the local TTS + viseme examiner in `avatar_service`, which
+# needs no API key and no configuration, so the endpoints were removed rather
+# than left calling functions that no longer exist.
 
 
 # ---------- AI-assisted evaluation ----------
@@ -236,11 +214,17 @@ def storage_link(
     for our direct-mount setup) and report status."""
     root = app_config.storage_path
     created = []
-    for sub in ("", "avatars", "backups"):
+    # Deliberately does NOT create a "backups" folder here: this tree is served
+    # publicly at /storage, and dumps carry predictable timestamp filenames.
+    # Backups belong in app_config.backup_path, outside the mount.
+    for sub in ("", "avatars"):
         path = root / sub if sub else root
         if not path.exists():
             path.mkdir(parents=True, exist_ok=True)
             created.append(str(path))
+    if not app_config.backup_path.exists():
+        app_config.backup_path.mkdir(parents=True, exist_ok=True)
+        created.append(str(app_config.backup_path))
     writable = True
     try:
         probe = root / ".write_probe"
@@ -437,6 +421,14 @@ def put_static_otp(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
+    # Refuse rather than accept-and-ignore: is_static_otp_enabled() hard-disables
+    # the bypass in production, so silently storing "true" would leave the switch
+    # reading as on while every login still demands a real OTP.
+    if payload.enabled and app_config.app_environment == "production":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The static testing OTP cannot be enabled in production.",
+        )
     set_setting(db, "testing.static_otp_enabled", "true" if payload.enabled else "false")
     if payload.code and payload.code.strip():
         set_setting(db, "testing.static_otp_code", payload.code.strip())

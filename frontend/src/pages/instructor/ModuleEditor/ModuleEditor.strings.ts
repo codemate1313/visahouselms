@@ -173,21 +173,6 @@ export const moduleEditorStrings = {
       generated: (voice: string, partTitle: string) => `${voice || "English system voices"} narration saved for ${partTitle}.`,
     },
   },
-  speakingAvatar: {
-    eyebrow: "Optional presenter video",
-    heading: (partTitle: string) => `Avatar for ${partTitle}`,
-    description:
-      "Generate a talking-presenter video reading this part's prompts, so students see and hear an examiner rather than just text. Requires a D-ID key configured in Platform Settings — Speaking parts publish without one too.",
-    generate: "Generate avatar video",
-    generating: "Generating video... (about a minute)",
-    noVideo: "No avatar video generated yet.",
-    delete: "Delete",
-    generated: "Avatar video generated.",
-    failed: "Avatar generation failed.",
-    errors: {
-      start: "Failed to start avatar generation.",
-    },
-  },
   manualQuestion: {
     eyebrow: "Single entry",
     editHeading: "Edit question",

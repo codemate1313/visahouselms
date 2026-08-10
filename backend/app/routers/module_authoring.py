@@ -321,23 +321,10 @@ def save_browser_narration(
     )
 
 
-@router.post("/{module_id}/parts/{part_id}/avatar", status_code=status.HTTP_202_ACCEPTED)
-def generate_avatar(
-    module_id: int,
-    part_id: int,
-    request: Request,
-    db: Session = Depends(get_db),
-    actor: User = Depends(get_current_user),
-):
-    # Fail fast on obvious problems (wrong section, no prompts, not the
-    # owner, module not draft) before enqueuing the slow vendor call.
-    avatar_service.validate_part_for_generation(db, actor, module_id, part_id)
-    job = job_service.enqueue(
-        db,
-        "generate_avatar",
-        {"module_id": module_id, "part_id": part_id, "actor_id": actor.id, "ip": _ip(request)},
-    )
-    return {"job_id": job.id, "status": job.status}
+# The per-part avatar video generation route was removed with the D-ID
+# integration. Speaking prompts are now voiced at request time by
+# `avatar_service.get_or_create_prompt_audio`, so there is nothing to
+# pre-generate and no vendor job to enqueue.
 
 
 @router.get("/jobs/{job_id}")

@@ -10,7 +10,7 @@
 .pin-list-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .pin-list-label {
@@ -72,7 +72,8 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  /* Rows sat almost flush; a pinned row's accent edge needs air around it. */
+  gap: 10px;
 }
 
 .pin-list-row {
@@ -88,7 +89,9 @@
 .pin-list-row > :first-child {
   flex: 1;
   min-width: 0;
-  padding-right: 56px !important; /* Ensure space for the absolute pin button */
+  /* Gutter the pin sits in. Sized to the button (30px) plus its inset and a
+     real gap, so the timestamp never butts up against the pin. */
+  padding-right: 52px !important;
 }
 
 /* Pinned rows read as "stuck to the top" with an accent edge. */
@@ -97,20 +100,25 @@
   box-shadow: inset 3px 0 0 var(--primary) !important;
 }
 
+/* Anchored to the top of the row, not its middle.
+   Vertically centring it meant that on a row with a wrapped title and a
+   two-line message the pin floated into the middle of the text block and read
+   as sitting on top of it. Top-aligned, it lines up with the timestamp and
+   stays out of the copy no matter how many lines the row grows to. */
 .pin-list-pin {
   position: absolute !important;
-  right: 12px !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
+  right: 10px !important;
+  top: 10px !important;
+  transform: none !important;
   z-index: 5 !important;
-  width: 38px !important;
-  height: 38px !important;
+  width: 30px !important;
+  height: 30px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   padding: 0 !important;
   border: 1px solid transparent !important;
-  border-radius: var(--radius-md) !important;
+  border-radius: var(--radius-sm) !important;
   background: transparent !important;
   color: var(--text-muted) !important;
   cursor: pointer !important;
@@ -120,8 +128,8 @@
 }
 
 .pin-list-pin svg {
-  width: 17px;
-  height: 17px;
+  width: 15px;
+  height: 15px;
 }
 
 .pin-list-row:hover .pin-list-pin,
@@ -146,29 +154,26 @@
   background: var(--surface-muted) !important;
   border-color: var(--border) !important;
   color: var(--text) !important;
-  transform: translateY(-50%) translateY(-1px) !important;
 }
 
 .pin-list-pin:active:not(:disabled) {
-  transform: translateY(-50%) scale(0.94) !important;
+  transform: scale(0.94) !important;
 }
 
-/* Pinned = solid brand red with a white glyph, not a pale tint — the same
-   bold, high-contrast red/white pairing the sidebar uses for its active
-   item, so a pinned row reads as clearly "branded on" rather than a faint
-   hint of color. */
+/* Pinned reads as a tinted brand chip rather than a solid red block.
+   The previous solid fill plus coloured glow out-weighed the notification it
+   belonged to - in a list row the pin is a marker, not the primary action, and
+   the accent bar down the left edge of a pinned row already carries the state. */
 .pin-list-pin.is-pinned {
-  color: #fff;
-  background: var(--primary);
-  border-color: var(--primary);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 38%, transparent);
+  color: var(--primary);
+  background: var(--primary-soft);
+  border-color: color-mix(in srgb, var(--primary) 28%, transparent);
 }
 
 .pin-list-pin.is-pinned:hover:not(:disabled) {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-  color: #fff;
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--primary) 20%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent) !important;
+  color: var(--primary) !important;
 }
 
 .pin-list-pin:disabled {
@@ -184,13 +189,6 @@
 @media (prefers-reduced-motion: reduce) {
   .pin-list-pin {
     transition-duration: 0.01ms;
-  }
-}
-
-/* Touch devices never fire hover — keep the affordance permanently visible. */
-@media (hover: none) {
-  .pin-list-pin {
-    opacity: 1;
   }
 }
 

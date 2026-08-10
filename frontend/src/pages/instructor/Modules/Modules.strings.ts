@@ -33,6 +33,9 @@ export const modulesStrings = {
     description: "Choose one of the six module types above to begin.",
   },
   deleteDraft: "Delete draft",
+  deleteDraftShort: "Delete",
+  continueSetup: "Continue setup",
+  reviewAndPublish: "Review & publish",
   confirmDelete: {
     message: (title: string) => `Are you sure you want to delete draft "${title}"?`,
     title: "Delete Draft Course",

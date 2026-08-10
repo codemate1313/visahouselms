@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     allowed_hosts: str = ""
     storage_dir: str = "../storage"
+    # Database backups must NEVER live under storage_dir: that tree is mounted as
+    # public static files, and backup filenames are predictable timestamps, so a
+    # backup inside it is an anonymously downloadable dump of the whole platform.
+    # Kept as a sibling of storage_dir by default; override in production.
+    backup_dir: str = "../backups"
     # Path to a MaxMind GeoLite2-City .mmdb, used to resolve a session's IP to a
     # city. Optional: when unset or missing, session location shows as unknown
     # and nothing breaks. Download the free DB from MaxMind and point this here.
@@ -157,6 +162,24 @@ class Settings(BaseSettings):
         if not path.is_absolute():
             path = BACKEND_DIR / path
         return path.resolve()
+
+    @property
+    def backup_path(self) -> Path:
+        """Where database backups are written.
+
+        Refuses to sit inside `storage_path`, which is served as public static
+        files. A misconfigured BACKUP_DIR would otherwise silently re-expose
+        every dump, so we fall back to a sibling directory instead of trusting it.
+        """
+        path = Path(self.backup_dir)
+        if not path.is_absolute():
+            path = BACKEND_DIR / path
+        path = path.resolve()
+
+        storage = self.storage_path
+        if path == storage or storage in path.parents:
+            return (storage.parent / "backups").resolve()
+        return path
 
     @property
     def cors_origin_list(self) -> list[str]:

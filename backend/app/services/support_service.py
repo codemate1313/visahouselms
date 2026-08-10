@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import HTTPException, status
+from app.core.media_signing import sign_path
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -52,7 +53,14 @@ def serialize_ticket(ticket: SupportTicket) -> dict:
     if hasattr(ticket, "messages") and ticket.messages:
         for msg in ticket.messages:
             try:
-                attachments = json.loads(msg.attachments) if msg.attachments else None
+                raw_attachments = json.loads(msg.attachments) if msg.attachments else None
+                # Attachments live in a private storage folder, so the client
+                # gets time-limited signed URLs instead of raw paths.
+                attachments = (
+                    [sign_path(item) for item in raw_attachments]
+                    if isinstance(raw_attachments, list)
+                    else raw_attachments
+                )
             except (json.JSONDecodeError, TypeError):
                 attachments = None
             messages_list.append({

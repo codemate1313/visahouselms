@@ -100,39 +100,26 @@ export function StaticOtpTab() {
             boxShadow: "0 2px 8px -2px rgba(0, 0, 0, 0.04)",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-              <div
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "10px",
-                  background: form.enabled ? "rgba(16, 185, 129, 0.15)" : "rgba(100, 116, 139, 0.15)",
-                  color: form.enabled ? "#10b981" : "#94a3b8",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "1.1rem",
-                }}
-              >
+          {/* Same shape as the guidelines editor's switch row: without wrapping
+              and a shrinkable text block, the long description ran underneath
+              the checkbox on narrow panels. */}
+          <div className="onboarding-toggle-row settings-toggle-row">
+            <div className="onboarding-toggle-info">
+              <span className={`onboarding-toggle-icon ${form.enabled ? "is-on" : "is-off"}`}>
                 <Icon name="lock" />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--text)" }}>
-                  Global Testing Mode
-                </h3>
-                <small style={{ color: "var(--text-muted)" }}>
-                  Applies to all accounts (Students, Instructors, Super Admins, Institute Admins)
-                </small>
-              </div>
+              </span>
+              <span className="onboarding-toggle-text">
+                <strong>Global Testing Mode</strong>
+                <span>Applies to all accounts (Students, Instructors, Super Admins, Institute Admins)</span>
+              </span>
             </div>
 
-            <label style={{ display: "flex", alignItems: "center", gap: "0.75rem", margin: 0, cursor: "pointer", fontWeight: 600, userSelect: "none" }}>
+            <label className="onboarding-toggle-switch">
               <Checkbox
                 checked={form.enabled}
                 onChange={(e) => setForm((prev) => ({ ...prev, enabled: e.target.checked }))}
               />
-              <span style={{ color: "var(--text)" }}>{strings.otp.enabledLabel}</span>
+              <span>{strings.otp.enabledLabel}</span>
             </label>
           </div>
 

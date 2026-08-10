@@ -26,7 +26,6 @@ import { ModuleReadinessPanel } from "./components/ModuleReadinessPanel";
 import { ModuleDetailsForm, type ModuleDetailsState } from "./components/ModuleDetailsForm";
 import { PartSpecPanel } from "./components/PartSpecPanel";
 import { ListeningAudioPanel } from "./components/ListeningAudioPanel";
-import { SpeakingAvatarPanel } from "./components/SpeakingAvatarPanel";
 import { SpeakingTimingPanel } from "./components/SpeakingTimingPanel";
 import { ManualQuestionForm } from "./components/ManualQuestionForm";
 import { BulkImportForm } from "./components/BulkImportForm";
@@ -54,7 +53,6 @@ export function ModuleEditor() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioTitle, setAudioTitle] = useState("Listening audio");
   const [tts, setTts] = useState({ title: "Generated conversation", conversation: "", rate: "+0%" });
-  const [avatarGenerating, setAvatarGenerating] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [questionEntryMode, setQuestionEntryMode] = useState<"manual" | "bulk">("manual");
   const [loading, setLoading] = useState(!isNew);
@@ -378,32 +376,6 @@ export function ModuleEditor() {
     catch (err: unknown) { showError(extractErrorMessage(err, strings.listeningAudio.errors.delete)); }
   }
 
-  async function generateAvatar() {
-    if (!module || !selectedPart) return;
-    setAvatarGenerating(true); setError(null);
-    try {
-      const { data } = await apiClient.post<{ job_id: number }>(`/instructor/modules/${module.id}/parts/${selectedPart.id}/avatar`);
-      const partId = selectedPart.id;
-      const poll = async () => {
-        const { data: job } = await apiClient.get(`/instructor/modules/jobs/${data.job_id}`, { headers: { "X-Skip-Loader": "1" } });
-        if (job.status === "done") {
-          setAvatarGenerating(false);
-          await loadModule(partId);
-          showSuccess(strings.speakingAvatar.generated);
-        } else if (job.status === "failed") {
-          setAvatarGenerating(false);
-          showError(job.result || strings.speakingAvatar.failed);
-        } else {
-          setTimeout(poll, 3000);
-        }
-      };
-      setTimeout(poll, 3000);
-    } catch (err: unknown) {
-      setAvatarGenerating(false);
-      showError(extractErrorMessage(err, strings.speakingAvatar.errors.start));
-    }
-  }
-
   async function changeStatus(status: "draft" | "published" | "archived") {
     if (!module) return;
     setBusy(true); setError(null);
@@ -529,13 +501,6 @@ export function ModuleEditor() {
                   isEditable={isEditable}
                   busy={busy}
                   onSave={saveSpeakingTiming}
-                />
-                <SpeakingAvatarPanel
-                  part={selectedPart}
-                  isEditable={isEditable}
-                  avatarGenerating={avatarGenerating}
-                  onGenerateAvatar={generateAvatar}
-                  onDeleteAudio={deleteAudio}
                 />
               </>
             )}

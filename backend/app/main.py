@@ -5,6 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from app.core.media_signing import is_private
 from sqlalchemy.exc import IntegrityError
 
 from app.config import settings
@@ -49,6 +52,7 @@ from app.routers import (
     super_admin,
     support,
     terminal,
+    media,
     testimonials_router,
     trial_config,
     vouchers,
@@ -57,7 +61,25 @@ from app.routers import (
 app = FastAPI(title="IELTS LMS API")
 
 settings.storage_path.mkdir(parents=True, exist_ok=True)
-app.mount("/storage", StaticFiles(directory=str(settings.storage_path)), name="storage")
+
+
+class _PublicStorageFiles(StaticFiles):
+    """The storage tree is public by default, with an explicit private list.
+
+    Student speaking recordings, support attachments and signed agreements live
+    in this tree but must not be fetchable by URL alone. Rather than enumerate
+    every public folder as its own mount (easy to forget one when a new feature
+    adds a folder), this denies the known-private prefixes and leaves the rest
+    served as before, so no existing public asset URL changes.
+    """
+
+    async def get_response(self, path: str, scope):
+        if is_private(path.lstrip("/")):
+            raise StarletteHTTPException(status_code=404)
+        return await super().get_response(path, scope)
+
+
+app.mount("/storage", _PublicStorageFiles(directory=str(settings.storage_path)), name="storage")
 
 app.add_middleware(DeveloperActionMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
@@ -160,6 +182,7 @@ async def maintenance_gate(request: Request, call_next):
 
     return await call_next(request)
 
+app.include_router(media.router)
 app.include_router(auth.router)
 app.include_router(platform_router.router)
 app.include_router(dashboard.router)

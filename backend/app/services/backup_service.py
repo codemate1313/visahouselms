@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import subprocess
@@ -18,10 +19,48 @@ from app.services.settings_service import get_setting
 BACKUPS_SUBDIR = "backups"
 DUMP_TIMEOUT_SECONDS = 600
 
+logger = logging.getLogger(__name__)
+
+
+def _legacy_backups_dir() -> Path:
+    """Where backups used to be written - inside the public static tree."""
+    return settings.storage_path / BACKUPS_SUBDIR
+
+
+def _migrate_legacy_archives(destination: Path) -> None:
+    """Move any archive left in the old public location into the private one.
+
+    Backups written before this fix are downloadable by anyone who guesses the
+    timestamp in the filename, so relocating them is the actual remediation -
+    pointing new backups elsewhere would leave the existing ones exposed.
+    """
+    legacy = _legacy_backups_dir()
+    if not legacy.is_dir() or legacy.resolve() == destination:
+        return
+    for archive in legacy.glob("backup_*.tar.gz"):
+        try:
+            target = destination / archive.name
+            if target.exists():
+                archive.unlink()
+            else:
+                shutil.move(str(archive), str(target))
+            logger.warning(
+                "Moved backup %s out of the public storage tree into %s",
+                archive.name,
+                destination,
+            )
+        except OSError:
+            logger.exception("Could not relocate legacy backup %s", archive)
+    try:
+        legacy.rmdir()  # only succeeds once empty
+    except OSError:
+        pass
+
 
 def backups_dir() -> Path:
-    path = settings.storage_path / BACKUPS_SUBDIR
+    path = settings.backup_path
     path.mkdir(parents=True, exist_ok=True)
+    _migrate_legacy_archives(path)
     return path
 
 
@@ -83,7 +122,9 @@ def run_backup(db: Session, kind: str = "manual") -> Backup:
 
         with tarfile.open(target, "w:gz") as tar:
             tar.add(dump_path, arcname="db.sql")
-            # uploaded files, excluding the backups dir itself
+            # Uploaded files. Backups now live outside this tree, but the skip
+            # stays as a guard for installs mid-migration that still have a
+            # leftover storage/backups directory - never nest dumps in a dump.
             for entry in sorted(settings.storage_path.iterdir()):
                 if entry.name == BACKUPS_SUBDIR:
                     continue

@@ -14,6 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.config import settings
+from app.core.media_signing import sign_path
 from app.core.uploads import MIN_SPEAKING_AUDIO_BYTES
 from app.models.attempt import (
     ATTEMPT_GRADED,
@@ -272,7 +273,9 @@ def _redacted_question(
         "points": source.get("points", str(question.points)),
         "sort_order": source.get("sort_order", question.sort_order),
         "response": answer.response if answer else None,
-        "audio_path": (f"/storage/{answer.audio_path}" if answer and answer.audio_path else None),
+        # Recordings are private: hand back a short-lived signed URL rather than
+        # a permanently-public /storage path.
+        "audio_path": sign_path(answer.audio_path) if answer and answer.audio_path else None,
         "revision": answer.revision if answer else 0,
     }
 
@@ -879,7 +882,7 @@ def save_audio_answer(
         raise
     if old_path is not None:
         old_path.unlink(missing_ok=True)
-    return {"question_id": question_id, "audio_url": f"/storage/{relative.as_posix()}"}
+    return {"question_id": question_id, "audio_url": sign_path(relative.as_posix())}
 
 
 def record_flag(

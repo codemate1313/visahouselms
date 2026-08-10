@@ -9,7 +9,6 @@ import { LoginSliderTab } from "./components/LoginSliderTab";
 import { ContactSocialTab } from "./components/ContactSocialTab";
 import { SmtpTab } from "./components/SmtpTab";
 import { FcmTab } from "./components/FcmTab";
-import { AvatarTab } from "./components/AvatarTab";
 import { AiEvaluationTab } from "./components/AiEvaluationTab";
 import { PaymentGatewaysTab } from "./components/PaymentGatewaysTab";
 import { MaintenanceTab } from "./components/MaintenanceTab";
@@ -44,7 +43,6 @@ export function DeveloperSettings() {
       {tab === "contact" && <ContactSocialTab />}
       {tab === "smtp" && <SmtpTab />}
       {tab === "fcm" && <FcmTab />}
-      {tab === "avatar" && <AvatarTab />}
       {tab === "ai" && <AiEvaluationTab />}
       {tab === "payment-gateways" && <PaymentGatewaysTab />}
       {tab === "maintenance" && <MaintenanceTab />}

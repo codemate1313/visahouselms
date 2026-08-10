@@ -102,112 +102,69 @@ export function OnboardingInstructionsEditor({
       </div>
 
       {/* Main Visibility Switch Toggle */}
-      <div className="onboarding-toggle-row" style={{ background: "#f8fafc", padding: "16px 20px", borderRadius: 16, border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 38, height: 38, borderRadius: "50%", background: showInstructions ? "#ecfdf5" : "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: showInstructions ? "#10b981" : "#94a3b8" }}>
+      <div className="onboarding-toggle-row">
+        <div className="onboarding-toggle-info">
+          <span className={`onboarding-toggle-icon ${showInstructions ? "is-on" : "is-off"}`}>
             <Icon name={showInstructions ? "check" : "x"} />
-          </div>
-          <div>
-            <strong style={{ display: "block", fontSize: 14.5, color: "#0f172a" }}>Display Guidelines to Candidates</strong>
-            <span style={{ fontSize: 13, color: "#64748b" }}>{showInstructions ? "Guidelines card is active on Step 1 of onboarding wizard" : "Guidelines card is hidden from student onboarding"}</span>
-          </div>
+          </span>
+          <span className="onboarding-toggle-text">
+            <strong>Display Guidelines to Candidates</strong>
+            <span>
+              {showInstructions
+                ? "Guidelines card is active on Step 1 of onboarding wizard"
+                : "Guidelines card is hidden from student onboarding"}
+            </span>
+          </span>
         </div>
 
-        <label style={{ display: "inline-flex", alignItems: "center", cursor: isEditable ? "pointer" : "default" }}>
+        <label className="onboarding-toggle-switch" data-disabled={!isEditable}>
           <input
             type="checkbox"
             checked={showInstructions}
             onChange={(e) => onToggleShowInstructions(e.target.checked)}
             disabled={!isEditable}
-            style={{ width: 18, height: 18, accentColor: "#b91c2b", cursor: "pointer" }}
           />
-          <span style={{ marginLeft: 8, fontSize: 14, fontWeight: 650, color: "#334155" }}>
-            {showInstructions ? "Enabled" : "Disabled"}
-          </span>
+          <span>{showInstructions ? "Enabled" : "Disabled"}</span>
         </label>
       </div>
 
       {/* Instructions Items List */}
       {showInstructions && (
-        <div className="onboarding-items-editor-list" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div className="onboarding-items-editor-list">
           {currentItems.map((item, idx) => (
-            <div
-              key={item.id || idx}
-              style={{
-                background: "#ffffff",
-                border: "1px solid #e2e8f0",
-                borderRadius: 16,
-                padding: 18,
-                boxShadow: "0 2px 8px rgba(15, 23, 42, 0.03)",
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-              }}
-            >
+            <div className="onboarding-directive" key={item.id || idx}>
               {/* Item Header Toolbar */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 12.5, fontWeight: 800, color: "#b91c2b", background: "rgba(185, 28, 43, 0.08)", padding: "4px 10px", borderRadius: 999 }}>
-                  Directive #{idx + 1}
-                </span>
+              <div className="onboarding-directive-head">
+                <span className="onboarding-directive-badge">Directive #{idx + 1}</span>
 
                 {isEditable && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div className="onboarding-directive-tools">
                     <button
                       type="button"
+                      className="onboarding-tool-btn"
                       disabled={idx === 0}
                       onClick={() => handleMoveItem(idx, -1)}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "#475569",
-                        cursor: idx === 0 ? "not-allowed" : "pointer",
-                        opacity: idx === 0 ? 0.3 : 0.75,
-                        padding: 6,
-                        borderRadius: 6,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                      title="Move Up"
+                      title="Move up"
+                      aria-label={`Move directive ${idx + 1} up`}
                     >
                       <Icon name="chevronDown" style={{ transform: "rotate(180deg)" }} />
                     </button>
                     <button
                       type="button"
+                      className="onboarding-tool-btn"
                       disabled={idx === currentItems.length - 1}
                       onClick={() => handleMoveItem(idx, 1)}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "#475569",
-                        cursor: idx === currentItems.length - 1 ? "not-allowed" : "pointer",
-                        opacity: idx === currentItems.length - 1 ? 0.3 : 0.75,
-                        padding: 6,
-                        borderRadius: 6,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                      title="Move Down"
+                      title="Move down"
+                      aria-label={`Move directive ${idx + 1} down`}
                     >
                       <Icon name="chevronDown" />
                     </button>
                     <button
                       type="button"
+                      className="onboarding-tool-btn is-danger"
                       onClick={() => handleDeleteItem(idx)}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "#ef4444",
-                        cursor: "pointer",
-                        padding: 6,
-                        borderRadius: 6,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginLeft: 6,
-                      }}
-                      title="Delete Guideline"
+                      title="Delete guideline"
+                      aria-label={`Delete directive ${idx + 1}`}
                     >
                       <Icon name="trash" />
                     </button>
@@ -216,22 +173,21 @@ export function OnboardingInstructionsEditor({
               </div>
 
               {/* Title & Description Fields */}
-              <div className="vh-form-group" style={{ margin: 0 }}>
+              <div className="vh-form-group">
                 <input
                   type="text"
-                  className="vh-input-enhanced"
-                  style={{ fontWeight: 700, fontSize: 14.5 }}
+                  className="vh-input-enhanced onboarding-directive-title"
                   value={item.title}
                   onChange={(e) => handleUpdateItem(idx, "title", e.target.value)}
-                  placeholder="Guideline Title (e.g. Strict Exam Timer)"
+                  placeholder="Guideline title (e.g. Strict Exam Timer)"
                   readOnly={!isEditable}
                 />
               </div>
 
-              <div className="vh-form-group" style={{ margin: 0 }}>
+              <div className="vh-form-group">
                 <textarea
-                  className="vh-textarea-enhanced"
-                  rows={2}
+                  className="vh-textarea-enhanced onboarding-directive-body"
+                  rows={3}
                   value={item.description}
                   onChange={(e) => handleUpdateItem(idx, "description", e.target.value)}
                   placeholder="Enter detailed instruction for candidates..."
@@ -247,7 +203,7 @@ export function OnboardingInstructionsEditor({
               variant="secondary"
               onClick={handleAddItem}
               leftIcon={<Icon name="plus" />}
-              style={{ marginTop: 8, alignSelf: "flex-start" }}
+              className="onboarding-add-directive"
             >
               Add Custom Guideline
             </Button>

@@ -955,9 +955,47 @@
   text-decoration: none;
 }
 
-.module-draft-delete {
-  align-self: flex-start;
+/* Readiness text: information only. It sits above the action row so it can no
+   longer be mistaken for the thing you click. */
+.module-record-status {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.module-record-status.is-ready {
+  color: #10b981;
+}
+
+.module-record-status.needs-work {
+  color: #f59e0b;
+}
+
+/* Every card ends in the same action row, so published and draft cards line up
+   instead of one showing a text link and the other an outlined button. */
+.module-record-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.module-record-primary-action {
+  text-decoration: none;
+}
+
+/* Destructive action stays quiet until you reach for it - it should never
+   out-weigh the primary action on a card. */
+.module-record-delete {
+  margin-left: auto;
+  color: var(--text-muted);
+}
+
+.module-record-delete:hover,
+.module-record-delete:focus-visible {
+  color: var(--danger);
 }
 
 .module-record-card:hover {
@@ -1025,22 +1063,226 @@
   font-size: 15px;
 }
 
-.ready-label,
-.edit-label,
-.needs-work-label {
+/* Superseded by .module-record-status / .module-record-actions: readiness is
+   now a status line and "Edit" is a real button, so these label styles have no
+   remaining call sites. */
+
+/* ---------- Candidate guidelines editor ----------
+   Previously styled with hardcoded light inline styles, which meant it could
+   not respond to width: the label and the switch had nothing to stop them
+   colliding, and the description ran underneath the checkbox on narrow panels.
+   Everything below resolves through tokens, so dark mode needs no overrides. */
+
+.onboarding-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--surface-muted);
+}
+
+/* flex-basis lets the block wrap onto its own line before it ever has to
+   overlap the switch; min-width:0 lets the text inside actually wrap. */
+.onboarding-toggle-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.onboarding-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.onboarding-toggle-icon.is-on {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+}
+
+.onboarding-toggle-icon.is-off {
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.onboarding-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.onboarding-toggle-text strong {
+  font-size: 14.5px;
+  color: var(--text);
+}
+
+.onboarding-toggle-text > span {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.onboarding-toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.onboarding-toggle-switch[data-disabled="true"] {
+  cursor: default;
+}
+
+.onboarding-toggle-switch input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: inherit;
+}
+
+.onboarding-items-editor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.onboarding-directive {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--surface);
+}
+
+.onboarding-directive-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.onboarding-directive-badge {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.onboarding-directive-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Proper hit targets - the old 6px-padded icons were well under the 24px
+   minimum and sat almost edge to edge. */
+.onboarding-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.onboarding-tool-btn:hover:not(:disabled),
+.onboarding-tool-btn:focus-visible:not(:disabled) {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.onboarding-tool-btn.is-danger:hover:not(:disabled),
+.onboarding-tool-btn.is-danger:focus-visible:not(:disabled) {
+  color: var(--danger);
+}
+
+.onboarding-tool-btn.is-danger {
+  color: color-mix(in srgb, var(--danger) 78%, transparent);
+}
+
+.onboarding-tool-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.onboarding-directive-title {
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+/* rows={2} clipped most descriptions mid-sentence behind a scrollbar. */
+.onboarding-directive-body {
+  min-height: 96px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* Shared by settings panels that reuse the switch row outside the guidelines
+   editor - the row supplies its own surface there, so drop the inner card. */
+.settings-toggle-row {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.settings-toggle-row .onboarding-toggle-text strong {
+  font-size: 1.05rem;
   font-weight: 700;
 }
 
-.ready-label {
-  color: #10b981;
+.onboarding-add-directive {
+  align-self: flex-start;
+  margin-top: 4px;
 }
 
-.edit-label {
-  color: var(--primary);
-}
+@media (max-width: 560px) {
+  .onboarding-toggle-row {
+    padding: 14px;
+  }
 
-.needs-work-label {
-  color: #f59e0b;
+  /* Once the switch has wrapped, align it under the text rather than leaving
+     it stranded against the right edge. */
+  .onboarding-toggle-switch {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .onboarding-directive {
+    padding: 14px;
+  }
+
+  .onboarding-add-directive {
+    align-self: stretch;
+  }
 }
 
 .module-create-form {
@@ -1707,27 +1949,31 @@
 .vh-stepper-control {
   display: inline-flex;
   align-items: center;
-  border: 1.5px solid rgba(205, 212, 225, 0.8);
+  justify-content: space-between;
+  border: 1px solid var(--border, #cbd5e1);
   border-radius: 12px;
-  padding: 4px;
-  background: #ffffff;
-  gap: 4px;
+  padding: 2px 4px;
+  background: var(--surface, #ffffff);
+  min-width: 150px;
+  height: 42px;
+  box-sizing: border-box;
 }
 
 .vh-duration-val-box {
   display: inline-flex;
   align-items: center;
-  padding: 0 6px;
+  justify-content: center;
   gap: 4px;
+  flex: 1;
 }
 
 .vh-duration-input {
-  width: 48px;
+  width: 36px;
   text-align: center;
   border: none;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text-dark);
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text);
   outline: none;
   background: transparent;
   padding: 0;
@@ -1742,22 +1988,22 @@
 }
 
 .vh-stepper-unit {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
 }
 
 .vh-step-btn {
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px !important;
-  min-height: 32px !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
   padding: 0 !important;
   margin: 0 !important;
   border-radius: 8px !important;
-  border: 1.5px solid rgba(200, 208, 220, 0.8) !important;
-  background: #f1f5f9 !important;
-  color: #0f172a !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--text) !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1768,27 +2014,25 @@
 }
 
 .vh-step-btn svg {
-  width: 16px !important;
-  height: 16px !important;
-  min-width: 16px !important;
-  min-height: 16px !important;
-  stroke: #0f172a !important;
-  stroke-width: 2.5 !important;
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+  min-height: 15px !important;
+  stroke: currentColor !important;
+  stroke-width: 2.8 !important;
   display: block !important;
   fill: none !important;
   pointer-events: none !important;
 }
 
 .vh-step-btn:hover:not(:disabled) {
-  background: var(--sa-sidebar-red, #b91c2b) !important;
-  border-color: var(--sa-sidebar-red, #b91c2b) !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 10px rgba(185, 28, 43, 0.25) !important;
-  transform: none !important;
+  background: var(--surface-muted, #f1f5f9) !important;
+  color: var(--primary) !important;
+  box-shadow: none !important;
 }
 
 .vh-step-btn:hover:not(:disabled) svg {
-  stroke: #ffffff !important;
+  stroke: var(--primary) !important;
 }
 
 .vh-duration-number-input {
@@ -6293,23 +6537,23 @@ textarea:focus {
 }
 
 [data-theme="dark"] .vh-step-btn {
-  background: #222228 !important;
-  border-color: rgba(255, 255, 255, 0.14) !important;
+  background: transparent !important;
+  border-color: transparent !important;
   color: #ffffff !important;
 }
 
 [data-theme="dark"] .vh-step-btn svg {
-  stroke: #ffffff !important;
+  stroke: currentColor !important;
 }
 
 [data-theme="dark"] .vh-step-btn:hover:not(:disabled) {
-  background: var(--primary, #b91c2b) !important;
-  border-color: var(--primary, #b91c2b) !important;
-  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: transparent !important;
+  color: var(--primary) !important;
 }
 
 [data-theme="dark"] .vh-step-btn:hover:not(:disabled) svg {
-  stroke: #ffffff !important;
+  stroke: var(--primary) !important;
 }
 
 [data-theme="dark"] .vh-duration-pill {
@@ -6519,26 +6763,12 @@ textarea:focus {
   color: #d4d4d8 !important;
 }
 
-[data-theme="dark"] .onboarding-toggle-row {
-  background: #1a1a20 !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-}
-
-[data-theme="dark"] .onboarding-toggle-row strong {
-  color: #f2f2f5 !important;
-}
-
-[data-theme="dark"] .onboarding-toggle-row span {
-  color: #a1a1aa !important;
-}
-
-[data-theme="dark"] .onboarding-items-editor-list > div {
-  background: #16161a !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
+/* The onboarding guidelines editor now styles itself from design tokens (see
+   "Candidate guidelines editor" below), so it needs no dark-mode repaint. The
+   old rules here existed only to fight hardcoded light inline styles. */
 
 [data-theme="dark"] .onboarding-items-editor-list button svg {
-  stroke: currentColor !important;
+  stroke: currentColor;
 }
 
 [data-theme="dark"] .auto-voice-summary {

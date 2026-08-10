@@ -23,13 +23,6 @@ class FcmSettingsIn(BaseModel):
     web_vapid_key: Optional[str] = None
 
 
-class AvatarSettingsIn(BaseModel):
-    provider: Optional[str] = None  # currently only "d_id"
-    api_key: Optional[str] = None  # write-only; masked value leaves stored secret untouched
-    presenter_image_url: Optional[str] = None
-    voice_id: Optional[str] = None
-
-
 class AiEvaluationSettingsIn(BaseModel):
     enabled: bool = False
     provider: str = "custom_json"

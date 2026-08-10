@@ -2104,7 +2104,7 @@
   align-items: flex-start !important;
   gap: 14px !important;
   width: 100% !important;
-  padding: 12px 14px !important;
+  padding: 13px 14px 14px !important;
   background: transparent !important;
   border: none !important;
   border-radius: 16px !important;
@@ -2377,9 +2377,9 @@
 .student-notification-item {
   display: flex !important;
   align-items: flex-start !important;
-  gap: 14px !important;
+  gap: 12px !important;
   width: 100% !important;
-  padding: 12px 14px !important;
+  padding: 13px 14px 14px !important;
   background: transparent !important;
   border: none !important;
   border-radius: 16px !important;
@@ -2416,16 +2416,20 @@
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
-  gap: 3px !important;
+  /* 3px let the title and message collide visually; they are two distinct
+     pieces of information and need separating. */
+  gap: 5px !important;
   min-width: 0 !important;
   flex: 1 1 auto !important;
 }
 
+/* 14px/700 across two wrapped lines shouted over the message beneath it; the
+   row is a summary, not a heading. */
 .student-notification-item-content strong {
-  font-size: 14px !important;
-  font-weight: 700 !important;
+  font-size: 13.5px !important;
+  font-weight: 650 !important;
   color: var(--text) !important;
-  line-height: 1.25 !important;
+  line-height: 1.35 !important;
 }
 
 .student-notification-message {

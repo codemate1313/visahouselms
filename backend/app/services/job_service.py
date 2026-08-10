@@ -120,20 +120,6 @@ def _purge_logs(db: Session, payload: Optional[dict]) -> str:
     return f"Purged {deleted} request log rows past retention."
 
 
-def _generate_avatar(db: Session, payload: Optional[dict]) -> str:
-    from app.models.user import User
-    from app.services import avatar_service
-
-    payload = payload or {}
-    actor = db.get(User, payload["actor_id"])
-    if actor is None:
-        raise RuntimeError("Avatar job actor no longer exists")
-    asset = avatar_service.generate_for_part(
-        db, actor, payload["module_id"], payload["part_id"], payload.get("ip")
-    )
-    return f"Avatar video generated: asset {asset['id']}"
-
-
 def _auto_grade_attempt(db: Session, payload: Optional[dict]) -> str:
     """Runs automatic AI grading for a just-submitted attempt off the request
     thread - a Gemini/custom-provider call can take tens of seconds per part,
@@ -173,7 +159,6 @@ HANDLERS: Dict[str, Callable[[Session, Optional[dict]], str]] = {
     "migrate": _run_migrations,
     "backup": _run_backup,
     "purge_logs": _purge_logs,
-    "generate_avatar": _generate_avatar,
     "ai_auto_grade": _auto_grade_attempt,
 }
 

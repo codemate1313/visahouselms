@@ -19,13 +19,18 @@ import { useAuthStore } from "@/store/authStore";
 import { supportCenterStrings as strings } from "./SupportCenter.strings";
 import "./SupportCenter.css";
 
-const STORAGE_BASE = API_BASE_URL.replace(/\/api\/?$/, "") + "/storage/";
+// The API now returns signed, time-limited URLs for attachments (they live in
+// a private storage folder), so we only prefix the API origin.
+const MEDIA_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 
 function AttachmentPreview({ path, isLight }: { path: string; isLight?: boolean }) {
-  const url = STORAGE_BASE + path;
-  const isImage = /\.(png|jpg|jpeg|webp|gif)$/i.test(path);
-  const isPdf = /\.pdf$/i.test(path);
-  const filename = path.split("/").pop() ?? path;
+  const url = path.startsWith("http") ? path : MEDIA_ORIGIN + path;
+  // Signed URLs carry ?exp=&sig=, so strip the query before sniffing the
+  // extension or deriving a display name.
+  const bare = path.split("?")[0];
+  const isImage = /\.(png|jpg|jpeg|webp|gif)$/i.test(bare);
+  const isPdf = /\.pdf$/i.test(bare);
+  const filename = bare.split("/").pop() ?? bare;
   const cleanName = filename.length > 28 ? filename.slice(0, 25) + "..." : filename;
 
   if (isImage) {
