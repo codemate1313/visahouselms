@@ -302,17 +302,17 @@ select:focus::placeholder {
 [data-theme="dark"] {
   color-scheme: dark;
   --bg: #0d0e12;
-  --surface: #181b22;
-  --surface-muted: #212530;
+  --surface: #16161a;
+  --surface-muted: #1f1f24;
   --text: #f3f4f6;
   --text-muted: #9ca3af;
   --border: rgba(255, 255, 255, 0.1);
   --info: #93c5fd;
-  --nav-bg: rgba(24, 27, 34, 0.92);
+  --nav-bg: rgba(22, 22, 26, 0.92);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-bg: rgba(24, 27, 34, 0.85);
+  --glass-bg: rgba(22, 22, 26, 0.85);
   --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  --app-bg-gradient: linear-gradient(135deg, #0d0e12 0%, #13151b 50%, #1a1d26 100%);
+  --app-bg-gradient: linear-gradient(135deg, #0d0e12 0%, #121318 50%, #16171d 100%);
   --sidebar-active-text: #ffffff;
   --sidebar-active-bg: rgba(255, 255, 255, 0.12);
 }
