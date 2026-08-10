@@ -295,12 +295,26 @@ def list_exam_news() -> List[dict]:
         _NEWS_CACHE_TIME = now
         return _NEWS_CACHE
 
-    # 1. If cache is completely empty, initialize it with static EXAM_NEWS instantly
+    # 1. If cache is completely empty, initialize it synchronously to ensure the user gets fresh news on first load
     if _NEWS_CACHE is None:
-        with _NEWS_LOCK:
-            _NEWS_CACHE = sorted(EXAM_NEWS, key=lambda item: item["published_at"], reverse=True)
-            # Mark it as expired so it triggers background fetch immediately
-            _NEWS_CACHE_TIME = 0
+        try:
+            real_time = fetch_real_time_news()
+            if real_time:
+                seen = {item["title"].lower().strip() for item in real_time}
+                merged = list(real_time)
+                for curated in EXAM_NEWS:
+                    if curated["title"].lower().strip() not in seen:
+                        merged.append(curated)
+                _NEWS_CACHE = sorted(merged, key=lambda item: item["published_at"], reverse=True)
+                _NEWS_CACHE_TIME = now
+        except Exception:
+            pass
+
+        # Fallback to curated if fetch failed
+        if _NEWS_CACHE is None:
+            with _NEWS_LOCK:
+                _NEWS_CACHE = sorted(EXAM_NEWS, key=lambda item: item["published_at"], reverse=True)
+                _NEWS_CACHE_TIME = 0  # Retry background refresh again next time
 
     # 2. Check if cache needs updating and update thread is not already running
     if (now - _NEWS_CACHE_TIME) > _CACHE_DURATION:
@@ -314,7 +328,7 @@ def list_exam_news() -> List[dict]:
             t = threading.Thread(target=_bg_update_news, daemon=True)
             t.start()
 
-    # 3. Return whatever is in cache (either populated curated fallback or last successful fetch)
+    # 3. Return whatever is in cache
     with _NEWS_LOCK:
         return list(_NEWS_CACHE)
 
