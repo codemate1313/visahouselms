@@ -217,54 +217,6 @@ export function ModuleDetailsForm({
             </div>
           )}
         </div>
-
-        {/* Right Column: Live Interactive Module Card Preview */}
-        <div className="vh-studio-side-col">
-          <div className="vh-preview-sticky-card">
-            <div className="vh-preview-header">
-              <span className="vh-live-dot" />
-              <h3>Live Assessment Preview</h3>
-            </div>
-
-            {/* Simulated Student Module Card */}
-            <div className="vh-simulated-module-card">
-              <div className="vh-sim-top">
-                <span className={`section-chip section-${requestedType}`}>{typeLabel}</span>
-                <span className="vh-sim-time">⏱️ {details.duration_minutes || meta.defaultDuration} Mins</span>
-              </div>
-
-              <h4 className="vh-sim-title">
-                {details.title || <em className="vh-placeholder-text">Module title will appear here...</em>}
-              </h4>
-
-              <p className="vh-sim-desc">
-                {details.description || "Comprehensive IELTS practice test with automated scoring and section feedback."}
-              </p>
-
-              <div className="vh-sim-features">
-                {meta.specs.map((item, idx) => (
-                  <span key={idx} className="vh-sim-feat-chip">
-                    ✓ {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Submit Action Box */}
-            <div className="vh-submit-box">
-              {isEditable && (
-                <button
-                  type="submit"
-                  className="vh-btn-primary-brand"
-                  disabled={busy || !details.title.trim()}
-                >
-                  <span>{busy ? "Saving..." : "Save Details"}</span>
-                  <Icon name="arrowRight" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
       </form>
     </div>
   );

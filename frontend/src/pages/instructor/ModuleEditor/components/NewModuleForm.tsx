@@ -208,19 +208,6 @@ export function NewModuleForm({
                   </div>
                 </div>
               </div>
-
-
-
-              <div className="vh-step-nav-row">
-                <button
-                  type="button"
-                  className="vh-btn-step-next"
-                  onClick={() => setActiveTab("instructions")}
-                >
-                  <span>Proceed to Step 2: Instructions & Notes</span>
-                  <Icon name="arrowRight" />
-                </button>
-              </div>
             </div>
           ) : (
             <div className="vh-studio-card">
@@ -237,17 +224,6 @@ export function NewModuleForm({
                 onInstructionsChange={(items) => onDetailsChange({ ...details, onboarding_instructions: items })}
                 isEditable={true}
               />
-
-              <div className="vh-step-nav-row">
-                <button
-                  type="button"
-                  className="vh-btn-step-back"
-                  onClick={() => setActiveTab("config")}
-                >
-                  <Icon name="arrowLeft" />
-                  <span>Back to Step 1: Configuration</span>
-                </button>
-              </div>
             </div>
           )}
 
@@ -302,7 +278,7 @@ export function NewModuleForm({
             </div>
           )}
 
-          {/* Bottom Action Bar inside Main Form Column */}
+          {/* Single Clean Bottom Action Bar */}
           {activeTab === "config" ? (
             <div className="vh-main-col-actions" style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
               <button
@@ -336,72 +312,13 @@ export function NewModuleForm({
                 type="submit"
                 className="vh-btn-primary-brand"
                 disabled={busy || !details.title.trim() || (isComposite && !allSourcesSelected)}
+                style={{ minWidth: 220, padding: "12px 28px" }}
               >
                 <span>{busy ? t.creating : `Create ${typeLabel}`}</span>
                 <Icon name="arrowRight" />
               </button>
             </div>
           )}
-        </div>
-
-        {/* Right Column: Live Interactive Module Card Preview */}
-        <div className="vh-studio-side-col">
-          <div className="vh-preview-sticky-card">
-            <div className="vh-preview-header">
-              <span className="vh-live-dot" />
-              <h3>Live Assessment Preview</h3>
-            </div>
-
-            {/* Simulated Student Module Card */}
-            <div className="vh-simulated-module-card">
-              <div className="vh-sim-top">
-                <span className={`section-chip section-${requestedType}`}>{typeLabel}</span>
-                <span className="vh-sim-time">⏱️ {details.duration_minutes || meta.defaultDuration} Mins</span>
-              </div>
-
-              <h4 className="vh-sim-title">
-                {details.title || <em className="vh-placeholder-text">Module title will appear here...</em>}
-              </h4>
-
-              <p className="vh-sim-desc">
-                {details.description || "Comprehensive IELTS practice test with automated scoring and section feedback."}
-              </p>
-
-              <div className="vh-sim-features">
-                {meta.specs.map((item, idx) => (
-                  <span key={idx} className="vh-sim-feat-chip">
-                    ✓ {item}
-                  </span>
-                ))}
-              </div>
-
-              <div className="vh-sim-readiness">
-                <span className="vh-readiness-label">Status:</span>
-                {details.title ? (
-                  <span className="vh-readiness-val is-ready">✓ Ready to Create</span>
-                ) : (
-                  <span className="vh-readiness-val is-incomplete">Enter Title to Proceed</span>
-                )}
-              </div>
-            </div>
-
-            {/* Submit Action Box */}
-            <div className="vh-submit-box">
-              <button
-                type="submit"
-                className="vh-btn-primary-brand"
-                disabled={busy || !details.title.trim() || (isComposite && !allSourcesSelected)}
-              >
-                <span>{busy ? t.creating : `Create ${typeLabel}`}</span>
-                <Icon name="arrowRight" />
-              </button>
-              {isComposite && !allSourcesSelected && (
-                <p className="vh-composite-warn-text">
-                  Please select all 4 section modules above before creating.
-                </p>
-              )}
-            </div>
-          </div>
         </div>
       </form>
     </div>
