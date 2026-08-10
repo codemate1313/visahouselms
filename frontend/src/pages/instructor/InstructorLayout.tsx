@@ -31,22 +31,22 @@ export function InstructorLayout() {
           icon: "dashboard",
           to: "/super-admin/instructor/dashboard",
         },
+      ],
+    },
+    {
+      title: strings.sections.authoring,
+      items: [
         {
-          key: "authoring",
-          label: strings.items.authoring,
+          key: "modules",
+          label: strings.items.modules,
           icon: "module",
-          children: [
-            {
-              key: "modules",
-              label: strings.items.modules,
-              to: "/super-admin/instructor/modules",
-            },
-            {
-              key: "grading",
-              label: strings.items.grading,
-              to: "/super-admin/instructor/grading",
-            },
-          ],
+          to: "/super-admin/instructor/modules",
+        },
+        {
+          key: "grading",
+          label: strings.items.grading,
+          icon: "grading",
+          to: "/super-admin/instructor/grading",
         },
       ],
     },
@@ -65,26 +65,22 @@ export function InstructorLayout() {
       title: strings.sections.settings,
       items: [
         {
-          key: "account",
-          label: strings.items.account,
+          key: "profile",
+          label: strings.items.profile,
           icon: "user",
-          children: [
-            {
-              key: "profile",
-              label: strings.items.profile,
-              to: "/super-admin/instructor/profile",
-            },
-            {
-              key: "sessions",
-              label: strings.items.sessions,
-              to: "/super-admin/instructor/sessions",
-            },
-            {
-              key: "change-password",
-              label: strings.items.changePassword,
-              to: "/super-admin/instructor/change-password",
-            },
-          ],
+          to: "/super-admin/instructor/profile",
+        },
+        {
+          key: "sessions",
+          label: strings.items.sessions,
+          icon: "session",
+          to: "/super-admin/instructor/sessions",
+        },
+        {
+          key: "change-password",
+          label: strings.items.changePassword,
+          icon: "lock",
+          to: "/super-admin/instructor/change-password",
         },
       ],
     },

@@ -5,6 +5,7 @@ export const instructorLayoutStrings = {
   roleLabel: "SA Instructor",
   sections: {
     mainMenu: "MAIN MENU",
+    authoring: "AUTHORING",
     support: "SUPPORT",
     settings: "SETTINGS",
   },
