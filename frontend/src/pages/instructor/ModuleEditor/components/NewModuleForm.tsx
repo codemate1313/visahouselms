@@ -1,16 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  RequiredMark,
-  SearchableSelect,
-  Stepper,
-  StepperItem,
-  StepperTrigger,
-  StepperIndicator,
-  StepperTitle,
-  StepperDescription,
-  StepperSeparator,
-} from "@/components/ui";
+import { RequiredMark, SearchableSelect } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import type { ExamModule, ExamModuleType, IeltsSection } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
@@ -88,13 +78,6 @@ export function NewModuleForm({
         </div>
       </div>
 
-      {/* 2. Top Horizontal Authoring Stepper Bar */}
-      <HorizontalAuthoringStepper
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        hasTitle={!!details.title}
-      />
-
       {error && <p className="error-text notice-line">{error}</p>}
 
       {/* 2. Hero Header Banner in Visa House Crimson Brand Theme */}
@@ -129,37 +112,16 @@ export function NewModuleForm({
         </div>
       </div>
 
-      {/* 3. Interactive 3-Column Studio Grid */}
-      <form onSubmit={onSubmit} className="vh-studio-grid">
-        {/* Left Column: Frameless Stepper Navigation */}
-        <aside className="vh-stepper-sidebar">
-          <div className="vh-stepper-sticky-box">
-            <h3 className="vh-stepper-sidebar-title">Authoring Steps</h3>
-            <Stepper value={activeTab === "config" ? 1 : 2} orientation="vertical">
-              <StepperItem step={1}>
-                <StepperTrigger onClick={() => setActiveTab("config")}>
-                  <StepperIndicator />
-                  <div className="space-y-0.5 text-left">
-                    <StepperTitle>1. Test Configuration</StepperTitle>
-                    <StepperDescription>Title, duration & details</StepperDescription>
-                  </div>
-                </StepperTrigger>
-                <StepperSeparator />
-              </StepperItem>
-              <StepperItem step={2}>
-                <StepperTrigger onClick={() => setActiveTab("instructions")}>
-                  <StepperIndicator />
-                  <div className="space-y-0.5 text-left">
-                    <StepperTitle>2. Instructions & Notes</StepperTitle>
-                    <StepperDescription>{details.instructions ? "Configured ✓" : "Candidate instructions"}</StepperDescription>
-                  </div>
-                </StepperTrigger>
-              </StepperItem>
-            </Stepper>
-          </div>
-        </aside>
+      {/* 3. Horizontal Authoring Stepper Bar (Positioned below the red hero card) */}
+      <HorizontalAuthoringStepper
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        hasTitle={!!details.title}
+      />
 
-        {/* Center Column: Form Controls with Stage Animation */}
+      {/* 4. Interactive 2-Column Studio Grid */}
+      <form onSubmit={onSubmit} className="vh-studio-grid">
+        {/* Main Column: Form Controls with Stage Animation */}
         <div className="vh-studio-main-col stage-fade-in" key={activeTab}>
           {activeTab === "config" ? (
             <div className="vh-studio-card">

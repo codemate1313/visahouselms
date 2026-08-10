@@ -1644,10 +1644,10 @@
   height: 15px;
 }
 
-/* 3-Column Studio Grid with Vertical Left Stepper */
+/* 2-Column Studio Grid (Main Form + Live Assessment Preview) */
 .vh-studio-grid {
   display: grid;
-  grid-template-columns: 260px 1fr 340px;
+  grid-template-columns: 1fr 340px;
   gap: 24px;
   align-items: start;
 }
@@ -1657,15 +1657,12 @@
   grid-template-columns: minmax(0, 1fr) 360px !important;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   .vh-studio-grid {
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: 1fr;
   }
   .vh-module-details-grid {
     grid-template-columns: 1fr !important;
-  }
-  .vh-stepper-sidebar {
-    grid-column: span 2;
   }
 }
 
