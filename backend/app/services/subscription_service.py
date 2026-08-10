@@ -775,9 +775,25 @@ def my_current_plan_view(db: Session, user: User) -> dict:
         )
         unlocked_ids = {m.id for m in institute_modules}
     else:
-        unlocked_ids = {
-            m.id for m in plan.modules if m.status == "published" and m.is_visible and m.deleted_at is None
-        }
+        # A direct student may have multiple active subscriptions (e.g. they
+        # upgraded or were assigned an extra plan).  Unlock a module if ANY
+        # of their active plans includes it, not just the single "governing"
+        # subscription picked for billing/expiry purposes.
+        all_user_subs = (
+            db.query(Subscription)
+            .options(joinedload(Subscription.plan).joinedload(Plan.modules))
+            .filter(Subscription.user_id == user.id, Subscription.cancelled_at.is_(None))
+            .all()
+        )
+        now = _now()
+        unlocked_ids: set[int] = set()
+        for sub in all_user_subs:
+            sub_state = _state_of(sub, now)
+            if sub_state in (STATE_ACTIVE, STATE_GRACE):
+                unlocked_ids.update(
+                    m.id for m in sub.plan.modules
+                    if m.status == "published" and m.is_visible and m.deleted_at is None
+                )
 
     # For direct students, return all published modules with is_locked status
     modules_list = []

@@ -212,8 +212,13 @@ export function CourseCatalog() {
         });
         razorpay.open();
       } else {
-        // Fallback / Instant Manual Purchase
-        handlePurchaseSuccess(checkoutFor.name);
+        /* No usable gateway came back from create-order, which means payments
+           are not configured. This branch used to call handlePurchaseSuccess()
+           and reload - telling the student the purchase completed while no
+           payment was verified and no subscription was ever created, which is
+           why the plan card still read "Choose plan" afterwards. Access is
+           never granted without a verified payment. */
+        showError(strings.checkout.gatewayUnavailable, strings.checkout.gatewayUnavailableTitle);
         setBuying(false);
       }
 

@@ -14,6 +14,9 @@ export const courseCatalogStrings = {
   goToCourse: "Go to course",
   choosePlan: "Choose plan",
   checkout: {
+    gatewayUnavailableTitle: "Payments unavailable",
+    gatewayUnavailable:
+      "Online payment is not available right now, so this plan cannot be purchased. Please try again later or contact support.",
     heading: (name: string) => `Choose "${name}"`,
     couponLabel: "Coupon code (optional)",
     couponPlaceholder: "e.g. WELCOME10",
