@@ -150,3 +150,18 @@ class TTSCreate(BaseModel):
     @classmethod
     def clean_text(cls, value: str) -> str:
         return value.strip()
+
+
+class PartUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    instructions: Optional[str] = Field(default=None, max_length=20000)
+
+    @field_validator("title")
+    @classmethod
+    def clean_title(cls, value: Optional[str]) -> Optional[str]:
+        return value.strip() if value is not None else None
+
+    @field_validator("instructions")
+    @classmethod
+    def clean_instructions(cls, value: Optional[str]) -> Optional[str]:
+        return _optional_text(value)

@@ -42,7 +42,9 @@ export function QuestionInput({
       className="test-runner-text-input"
       value={textResponse}
       aria-label={`Answer for question ${index}`}
+      placeholder="Type answer here"
       onChange={(e) => onChange({ text: e.target.value }, true)}
+      disabled={saving}
     />
   );
 

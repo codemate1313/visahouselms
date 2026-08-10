@@ -336,6 +336,7 @@ export interface ExamModulePart {
     shared_passage?: boolean;
     shared_options?: boolean;
     unique_answers?: boolean;
+    multi_answer_allowed?: boolean;
     minimum_inference_questions?: number;
     score_weight?: number;
     notes_allowed?: boolean;

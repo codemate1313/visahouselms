@@ -91,6 +91,98 @@ export const moduleEditorStrings = {
       `Are you sure you want to permanently delete "${title}" and all of its questions and audio? Existing Full/Final Mock copies will not be affected.`,
     deleteConfirmTitle: "Delete Module",
   },
+  gapTask: {
+    eyebrow: "Gapped passage task",
+    heading: (partTitle: string) => `${partTitle} — one passage, one mark per gap`,
+    description: (gaps: number, options: number) =>
+      `One task: a passage with ${gaps} gaps and ${options} options. The candidate drops an option into each gap and scores a mark per correct gap — ${gaps} marks in total.`,
+    helpTitle: "How the gaps work",
+    help:
+      "Place {{blank:1}}, {{blank:2}} and so on in the passage where each gap belongs. The candidate sees the passage with those gaps inline and picks an option for each one. Extra options are distractors.",
+    passageLabel: "Passage with gap markers",
+    passagePlaceholder: "Paste the passage and put {{blank:1}}, {{blank:2}} ... where the gaps belong.",
+    optionsHeading: (count: number) => `Option bank (${count})`,
+    optionPlaceholder: (key: string) => `Text for option ${key}`,
+    addOption: "Add option",
+    answersHeading: "Correct option for each gap",
+    gapLabel: (gap: number) => `Gap ${gap}`,
+    noGaps: "No gap markers found yet. Add {{blank:1}} to the passage above.",
+    createNotice: (gaps: number) => `Saves as ${gaps} scorable gap${gaps === 1 ? "" : "s"}, 1 mark each.`,
+    replaceNotice: (existing: number) =>
+      `Rebuilds this task, replacing the ${existing} item${existing === 1 ? "" : "s"} currently saved.`,
+    create: (gaps: number) => `Save task (${gaps} gaps)`,
+    replace: (gaps: number) => `Rebuild task (${gaps} gaps)`,
+    saving: "Saving...",
+    saved: (gaps: number) => `Task saved — ${gaps} gaps, ${gaps} marks.`,
+    error: "Failed to save the gap task.",
+    replaceConfirm: (existing: number) =>
+      `This rebuilds the task from the passage above, replacing the ${existing} item${existing === 1 ? "" : "s"} currently saved. Continue?`,
+    replaceConfirmTitle: "Rebuild gap questions",
+    errors: {
+      noPassage: "Add the passage.",
+      gapCount: (found: number, expected: number) =>
+        `Found ${found} gap marker${found === 1 ? "" : "s"}; this part needs ${expected}.`,
+      gapSequence: "Gap markers must be numbered 1, 2, 3 ... with no gaps in the sequence.",
+      optionCount: (found: number, expected: number) => `Filled ${found} of ${expected} options.`,
+      missingAnswers: (missing: number) => `Choose the correct option for ${missing} more gap${missing === 1 ? "" : "s"}.`,
+      duplicateAnswers: "Each option may be the answer for only one gap in this part.",
+    },
+  },
+  sourceTextTask: {
+    eyebrow: "Source-text matching task",
+    heading: (partTitle: string) => `${partTitle} — match statements to source texts`,
+    description: (texts: number, questions: number) =>
+      `${texts} source texts and ${questions} statements. The candidate drags a text onto each statement and scores a mark per correct statement.`,
+    helpTitle: "How the matching works",
+    help:
+      "Each source text below becomes a draggable card. A statement takes one text, and the same text may answer several statements.",
+    helpMulti:
+      "Each source text below becomes a draggable card. A statement usually takes one text, and the same text may answer several statements. Selecting two or more texts for a statement makes it a multi-answer item — those are marked on an exact match, so a candidate who gets one of two right scores nothing for it.",
+    textsHeading: (count: number) => `Source texts (${count})`,
+    textPlaceholder: (key: string) => `Full text for source ${key}`,
+    addText: "Add source text",
+    questionsHeading: (count: number) => `Statements (${count})`,
+    questionPlaceholder: "In which text does the writer ...?",
+    questionLabel: (index: number) => `Statement ${index}`,
+    removeQuestion: (index: number) => `Remove statement ${index}`,
+    addQuestion: "Add statement",
+    answerFor: (index: number) => `Correct source text for statement ${index}`,
+    multiNote: "Multi-answer — exact match, no partial credit",
+    multiUnavailable:
+      "Selecting a second text is disabled for this part. Run the pending database migration (alembic upgrade head) to enable multi-answer statements here.",
+    createNotice: (count: number) => `Saves ${count} statement${count === 1 ? "" : "s"}, 1 mark each.`,
+    replaceNotice: (existing: number) =>
+      `Rebuilds this task, replacing the ${existing} statement${existing === 1 ? "" : "s"} currently saved.`,
+    create: "Save task",
+    replace: "Rebuild task",
+    saving: "Saving...",
+    saved: (count: number) => `Task saved — ${count} statements.`,
+    error: "Failed to save the matching task.",
+    replaceConfirm: (existing: number) =>
+      `This rebuilds the task, replacing the ${existing} statement${existing === 1 ? "" : "s"} currently saved. Continue?`,
+    replaceConfirmTitle: "Rebuild matching task",
+    errors: {
+      textCount: (found: number, expected: number) => `Filled ${found} of ${expected} source texts.`,
+      questionCount: (found: number, expected: number) =>
+        `Written ${found} of ${expected} statements.`,
+      missingAnswers: (count: number) =>
+        `Choose the correct source text for ${count} more statement${count === 1 ? "" : "s"}.`,
+    },
+  },
+  sharedPassage: {
+    eyebrow: "Shared source text",
+    heading: (partTitle: string) => `Source text for ${partTitle}`,
+    description:
+      "Enter the passage once. It is written to every question in this part, which is what the publishing check requires.",
+    placeholder: "Paste the reading passage or source material for this part...",
+    save: "Save source text",
+    saving: "Saving...",
+    statusApplied: (count: number) => `Applied to ${count} question${count === 1 ? "" : "s"} in this part.`,
+    statusNoQuestions: "Saved with the part. Questions you add will use this text.",
+    statusMismatch: "Questions in this part currently have different source texts. Save to make them match.",
+    saved: (partTitle: string) => `${partTitle} source text saved.`,
+    error: "Failed to save the source text for this part.",
+  },
   speakingTiming: {
     eyebrow: "Candidate timing",
     heading: (partTitle: string) => `Timing for ${partTitle}`,
@@ -194,6 +286,8 @@ export const moduleEditorStrings = {
     blankHelpSharedCloze:
       "Paste the full passage once, on every question in this part, with {{blank:1}}, {{blank:2}} and so on marking each gap in order. Each numbered gap then gets its own 3 options below — add question 1 for gap {{blank:1}}, question 2 for gap {{blank:2}}, and so on.",
     passageLabel: "Passage or context",
+    sharedPassageHint:
+      "This part shares one source text across all its questions. Paste the identical passage into every question - it is compared character-for-character.",
     passagePlaceholder: "Optional passage, transcript context, visual description, or role-play setup",
     addImage: "Add image",
     uploadingImage: "Uploading...",
@@ -272,9 +366,18 @@ export const moduleEditorStrings = {
   },
   savedQuestions: {
     heading: (partTitle: string) => `Saved content — ${partTitle}`,
-    description: (count: number, limit?: number | null) => limit
-      ? `${count} questions in the pool. Each attempt draws ${limit} at random.`
-      : `${count} saved questions`,
+    /* "at random" is only true where the part allows shuffling. Parts with
+       preserve_question_order (all of Reading) take the first N in the order
+       shown, so calling it random misled authors about which items appear. */
+    gapHeading: (partTitle: string) => `Saved task — ${partTitle}`,
+    gapDescription: (count: number) =>
+      `${count} gap${count === 1 ? "" : "s"} in this task · ${count} mark${count === 1 ? "" : "s"}. Edit them in the composer above.`,
+    description: (count: number, limit?: number | null, ordered?: boolean) => {
+      if (!limit) return `${count} saved questions`;
+      return ordered
+        ? `${count} in the pool. Each attempt uses the first ${limit}, in the order below.`
+        : `${count} questions in the pool. Each attempt draws ${limit} at random.`;
+    },
     emptyTitle: "No content yet",
     emptyDescription: "Add one item manually or upload a PDF/CSV specifically to this part.",
     marksSuffix: (points: number) => `mark${points === 1 ? "" : "s"}`,

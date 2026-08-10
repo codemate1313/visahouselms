@@ -17,6 +17,7 @@ from app.schemas.exam_module import (
     ModuleUpdate,
     PartAiEvaluationUpdate,
     PartInstructionsUpdate,
+    PartUpdate,
     SpeakingPartTimingUpdate,
     TTSCreate,
 )
@@ -106,6 +107,26 @@ def update_module(
         db,
         actor,
         module_id,
+        payload.model_dump(),
+        set(payload.model_fields_set),
+        _ip(request),
+    )
+
+
+@router.patch("/{module_id}/parts/{part_id}")
+def update_part(
+    module_id: int,
+    part_id: int,
+    payload: PartUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return module_authoring_service.update_part(
+        db,
+        actor,
+        module_id,
+        part_id,
         payload.model_dump(),
         set(payload.model_fields_set),
         _ip(request),

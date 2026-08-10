@@ -1268,3 +1268,49 @@ def unassign_from_institute(db: Session, actor: User, module_id: int, institute_
     db.add(assignment)
     _audit(db, actor, "exam_module.unassign", module_id, ip, {"institute_id": institute_id})
     db.commit()
+
+
+def serialize_part(part: ExamModulePart) -> dict:
+    return {
+        "id": part.id,
+        "module_id": part.module_id,
+        "section_type": part.section_type,
+        "part_code": part.part_code,
+        "title": part.title,
+        "skill_focus": part.skill_focus,
+        "instructions": part.instructions,
+        "question_limit": part.question_limit,
+        "minimum_questions": part.minimum_questions,
+        "max_marks": str(part.max_marks) if part.max_marks is not None else None,
+        "duration_minutes": part.duration_minutes,
+        "auto_marked": part.auto_marked,
+        "ai_evaluation_enabled": part.ai_evaluation_enabled,
+        "answer_constraints": dict(part.answer_constraints or {}),
+        "rubric": list(part.rubric or []),
+        "sort_order": part.sort_order,
+        "questions": [_question_out(question) for question in part.questions],
+        "assets": [_asset_out(asset) for asset in part.assets],
+    }
+
+
+def update_part(
+    db: Session,
+    actor: User,
+    module_id: int,
+    part_id: int,
+    data: dict,
+    fields_set: set[str],
+    ip: Optional[str],
+) -> dict:
+    module, part = get_editable_part(db, actor, module_id, part_id)
+
+    if "title" in fields_set:
+        part.title = data["title"]
+    if "instructions" in fields_set:
+        part.instructions = data["instructions"]
+
+    db.add(part)
+    _audit(db, actor, "exam_module.part_update", module.id, ip, {"part_id": part.id})
+    db.commit()
+    db.refresh(part)
+    return serialize_part(part)

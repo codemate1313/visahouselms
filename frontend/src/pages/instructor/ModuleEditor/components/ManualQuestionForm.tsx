@@ -241,7 +241,10 @@ export function ManualQuestionForm({
           </div>
         )}
 
-        {!isWriting && !isReading && (
+        {/* When the part owns one shared source text, it is edited in
+            SharedPassagePanel above and copied down on save - repeating the
+            field here is what made identical-passage mistakes so easy. */}
+        {!isWriting && !part.answer_constraints.shared_passage && (
           <>
             {/* 3. Passage or context */}
             <label htmlFor="module-question-passage">
@@ -250,7 +253,7 @@ export function ManualQuestionForm({
             </label>
             <textarea
               id="module-question-passage"
-              rows={4}
+              rows={part.answer_constraints.shared_passage ? 8 : 4}
               value={manual.passage ?? ""}
               onChange={(event) => onManualChange({ ...manual, passage: event.target.value })}
               placeholder={t.passagePlaceholder}

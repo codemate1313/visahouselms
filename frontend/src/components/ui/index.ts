@@ -87,3 +87,5 @@ export {
   StepperSeparator,
 } from "./Stepper";
 export type { StepperProps, StepperItemProps, StepperTriggerProps } from "./Stepper";
+
+export { renderRichText } from "./RichText/RichText";

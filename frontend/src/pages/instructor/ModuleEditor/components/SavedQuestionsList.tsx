@@ -4,6 +4,7 @@ import type { ExamModulePart, ExamModuleQuestion } from "@/api/types";
 import { renderBoldText } from "@/utils/boldText";
 import { parseClozeMarkers } from "@/utils/clozeMarkers";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
+import { renderRichText } from "@/components/ui";
 
 interface SavedQuestionsListProps {
   part: ExamModulePart;
@@ -17,11 +18,16 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
   const questionLabels = strings.questionLabels;
   const isSharedCloze = part.part_code === "reading_1b" && part.answer_constraints.layout === "shared_cloze";
   const sharedPassage = isSharedCloze ? part.questions.find((question) => question.passage?.trim())?.passage?.trim() ?? "" : "";
+  // A gap part is one task, not a list of questions - calling its rows
+  // "questions" is what made six gaps read as six separate questions.
+  const isGapTask = part.answer_constraints.layout === "inline_matching_blanks";
   return (
     <CollapsiblePanel
       className="question-list-section"
-      title={t.heading(part.title)}
-      description={t.description(part.questions.length, part.question_limit)}
+      title={isGapTask ? t.gapHeading(part.title) : t.heading(part.title)}
+      description={isGapTask
+        ? t.gapDescription(part.questions.length)
+        : t.description(part.questions.length, part.question_limit, Boolean(part.answer_constraints.preserve_question_order))}
       badge={<span className="count-chip">{part.questions.length}</span>}
     >
       {!part.questions.length ? (
@@ -51,7 +57,7 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
                   {question.interaction?.group_label && <span>{question.interaction.group_label}</span>}
                   {question.interaction?.turn_type && <span>{question.interaction.turn_type.replaceAll("_", " ")}</span>}
                 </div>
-                {!isSharedCloze && <h3>{part.part_code === "reading_1a" ? renderBoldText(question.prompt) : question.prompt}</h3>}
+                {!isSharedCloze && <h3>{renderBoldText(question.prompt)}</h3>}
                 {!isSharedCloze && part.section_type !== "writing" && question.passage && <p>{question.passage}</p>}
                 {question.image_url && (
                   <img className="saved-question-image" src={`${API_BASE_URL}${question.image_url}`} alt="" />

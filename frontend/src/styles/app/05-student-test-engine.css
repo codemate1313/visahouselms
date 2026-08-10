@@ -1562,56 +1562,122 @@
 
 .test-runner-source-text-target {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(120px, 180px) auto;
-  gap: 10px;
-  align-items: center;
-  min-height: 74px;
+  display: block;
   padding: 12px;
   border: 1px solid #d9dce2;
-  border-radius: 5px;
+  border-radius: 6px;
   background: var(--surface);
 }
 
-.test-runner-source-text-target > div > span {
-  display: block;
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.test-runner-source-text-target p {
-  margin: 4px 0 0;
+.test-runner-source-text-prompt {
+  margin: 0 0 8px;
   color: var(--text);
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.45;
 }
 
-.test-runner-source-text-target select {
-  width: 100%;
-  min-height: 42px;
+/* The drop zone sits directly under its question, dashed while empty and
+   tinted once a text has been placed, so the pairing is obvious at a glance. */
+.test-runner-source-text-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px;
+  border: 1px dashed color-mix(in srgb, var(--test-accent, var(--primary)) 45%, #d9dce2);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--test-accent, var(--primary)) 4%, transparent);
+  transition: border-color 140ms ease, background 140ms ease;
 }
 
-.test-runner-source-text-clear {
+.test-runner-source-text-target.is-filled .test-runner-source-text-slot {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--test-accent, var(--primary)) 55%, transparent);
+  background: color-mix(in srgb, var(--test-accent, var(--primary)) 10%, transparent);
+}
+
+.test-runner-source-text-slot-control {
+  flex: 1;
+  min-width: 0;
+}
+
+.test-runner-source-text-slot select {
+  width: 100%;
+  min-height: 38px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+  text-align: center;
+  text-align-last: center;
+}
+
+.test-runner-source-text-slot select:focus-visible {
+  outline: 2px solid var(--test-accent, var(--primary));
+  outline-offset: 2px;
+}
+
+/* Placed texts stack as chips, so a question can hold more than one. */
+.test-runner-source-text-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.test-runner-source-text-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--test-accent, var(--primary)) 45%, transparent);
+  border-radius: 5px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.test-runner-source-text-chips button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 20px;
+  height: 20px;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--danger, #ef4444) 34%, #d9dce2);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--danger, #ef4444) 8%, var(--surface));
+  border: none;
+  border-radius: 4px;
+  background: transparent;
   color: var(--danger, #ef4444);
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 12px;
   line-height: 1;
+  cursor: pointer;
 }
 
-.test-runner-source-text-target small,
-.test-runner-source-text-target em {
-  grid-column: 1 / -1;
+.test-runner-source-text-chips button:hover,
+.test-runner-source-text-chips button:focus-visible {
+  background: color-mix(in srgb, var(--danger, #ef4444) 12%, transparent);
+}
+
+.test-runner-source-text-place {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--test-accent, var(--primary));
+  border-radius: 5px;
+  background: var(--test-accent, var(--primary));
+  color: #fff;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.test-runner-source-text-saving {
+  display: block;
+  margin-top: 6px;
   color: var(--text-muted);
   font-size: 11px;
   font-style: normal;

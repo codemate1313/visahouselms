@@ -1,5 +1,5 @@
 import type { Attempt, AttemptQuestion } from "@/api/types";
-import { Badge, type BadgeTone } from "@/components/ui";
+import { Badge, renderRichText, type BadgeTone } from "@/components/ui";
 import { formatAttemptAnswer, hasAttemptResponse } from "@/pages/student/attemptMetrics";
 import { attemptResultDetailsStrings as strings } from "../AttemptResultDetails.strings";
 
@@ -59,7 +59,7 @@ export function PartReviewSection({ part }: PartReviewSectionProps) {
                 return (
                   <tr key={question.id} className={`is-${outcome.label.toLowerCase().replace(" ", "-")}`}>
                     <td>
-                      {index + 1}. {question.prompt}
+                      {index + 1}. {renderRichText(question.prompt)}
                     </td>
                     <td>{formatAttemptAnswer(question)}</td>
                     <td>{question.correct_answers?.join(", ") ?? "-"}</td>

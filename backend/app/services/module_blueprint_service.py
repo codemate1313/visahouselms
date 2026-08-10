@@ -132,11 +132,17 @@ READING_PARTS = [
         "max_marks": 7,
         "auto_marked": True,
         "answer_constraints": {
-            "allowed_question_types": ["matching_reusable"],
+            # A question normally takes one source text, and a text may answer
+            # several questions (reusable). `mcq_multiple` is allowed alongside
+            # it so a question can accept more than one text where the item
+            # genuinely calls for it - note that a multi-answer item is marked
+            # on an exact set match, with no partial credit.
+            "allowed_question_types": ["matching_reusable", "mcq_multiple"],
             "option_count": 4,
             "passage_required": True,
             "shared_passage": True,
             "shared_options": True,
+            "multi_answer_allowed": True,
             "layout": "source_text_matching",
             "preserve_question_order": True,
             "preserve_option_order": True,

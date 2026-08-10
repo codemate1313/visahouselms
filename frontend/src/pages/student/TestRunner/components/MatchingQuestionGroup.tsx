@@ -1,6 +1,8 @@
 import { useState, type DragEvent } from "react";
 import type { AttemptQuestion, AttemptResponse } from "@/api/types";
 
+import { renderRichText } from "@/components/ui";
+
 interface MatchingQuestionGroupProps {
   questions: AttemptQuestion[];
   questionNumberOffset: number;
@@ -75,7 +77,7 @@ export function MatchingQuestionGroup({
             >
               <div>
                 <strong>Question {questionNumberOffset + index + 1}</strong>
-                <p>{question.prompt}</p>
+                <p>{renderRichText(question.prompt)}</p>
               </div>
               <label>
                 <span className="sr-only">Answer for question {questionNumberOffset + index + 1}</span>

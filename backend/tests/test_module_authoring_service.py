@@ -186,7 +186,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         reading = module_blueprint_service.get_blueprint("reading")
         self.assertEqual(
             [part["answer_constraints"]["allowed_question_types"] for part in reading["parts"]],
-            [["mcq_single"], ["mcq_single"], ["matching_unique"], ["matching_reusable"], ["mcq_single"]],
+            [["mcq_single"], ["mcq_single"], ["matching_unique"], ["matching_reusable", "mcq_multiple"], ["mcq_single"]],
         )
         self.assertEqual(
             [part["answer_constraints"]["option_count"] for part in reading["parts"]],
@@ -492,6 +492,40 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertIsNone(self.db.get(ExamModule, final_test["id"]))
         self.assertFalse(copied_audio_path.exists())
         self.assertTrue(source_audio_path.exists())
+
+    def test_update_part(self) -> None:
+        module = module_authoring_service.create_module(
+            self.db,
+            self.instructor,
+            {
+                "module_type": "reading",
+                "title": "Test Reading Module",
+                "description": "Desc",
+                "instructions": "Inst",
+            },
+            None,
+        )
+        db_module = self.db.get(ExamModule, module["id"])
+        part = db_module.parts[0]
+        self.assertEqual(part.title, "Reading 1A")
+
+        # Test update part
+        updated = module_authoring_service.update_part(
+            self.db,
+            self.instructor,
+            module["id"],
+            part.id,
+            {"title": "Custom Reading Part 1A", "instructions": "Read carefully."},
+            {"title", "instructions"},
+            None
+        )
+        self.assertEqual(updated["title"], "Custom Reading Part 1A")
+        self.assertEqual(updated["instructions"], "Read carefully.")
+
+        # Refresh and verify db
+        self.db.refresh(part)
+        self.assertEqual(part.title, "Custom Reading Part 1A")
+        self.assertEqual(part.instructions, "Read carefully.")
 
 
 if __name__ == "__main__":
