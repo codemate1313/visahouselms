@@ -1305,7 +1305,17 @@ def update_part(
     module, part = get_editable_part(db, actor, module_id, part_id)
 
     if "title" in fields_set:
-        part.title = data["title"]
+        # The section heading is what the candidate sees above the part and what
+        # the publishing checklist names its errors after, so it must not be
+        # blanked. Rejected here rather than only in the UI, since the endpoint
+        # is reachable directly.
+        title = (data.get("title") or "").strip()
+        if not title:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Section heading is required.",
+            )
+        part.title = title
     if "instructions" in fields_set:
         part.instructions = data["instructions"]
 

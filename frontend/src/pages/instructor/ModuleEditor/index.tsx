@@ -34,7 +34,7 @@ import { ManualQuestionForm } from "./components/ManualQuestionForm";
 import { BulkImportForm } from "./components/BulkImportForm";
 import { ImportReviewPanel } from "./components/ImportReviewPanel";
 import { SavedQuestionsList } from "./components/SavedQuestionsList";
-import { Badge } from "@/components/ui";
+import { Badge, RequiredMark } from "@/components/ui";
 
 export function ModuleEditor() {
   const { id, type: rawType } = useParams();
@@ -132,7 +132,6 @@ export function ModuleEditor() {
 
   const selectedPart = useMemo(() => module?.parts?.find((part) => part.id === selectedPartId) ?? null, [module, selectedPartId]);
   const [partTitle, setPartTitle] = useState("");
-  const [partInstructions, setPartInstructions] = useState("");
 
   /* Keyed on the part's id and its saved values rather than the object itself.
      `selectedPart` is derived from `module`, so it is a new object after every
@@ -141,22 +140,21 @@ export function ModuleEditor() {
   useEffect(() => {
     if (selectedPart) {
       setPartTitle(selectedPart.title);
-      setPartInstructions(selectedPart.instructions ?? "");
     } else {
       setPartTitle("");
-      setPartInstructions("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPart?.id, selectedPart?.title, selectedPart?.instructions]);
+  }, [selectedPart?.id, selectedPart?.title]);
 
   async function savePartHeader() {
     if (!module || !selectedPart) return;
     setBusy(true);
     setError(null);
     try {
+      // Title only. PartSpecPanel owns instructions; sending them from here too
+      // would let a stale copy overwrite whatever was saved there.
       await apiClient.patch(`/instructor/modules/${module.id}/parts/${selectedPart.id}`, {
         title: partTitle,
-        instructions: partInstructions,
       });
       await loadModule(selectedPart.id);
       showSuccess("Section heading and instructions saved successfully.");
@@ -703,20 +701,25 @@ export function ModuleEditor() {
                 onEntryModeChange={setQuestionEntryMode}
               />
 
-              {/* Sleek Edit Heading & Instructions Panel */}
+              {/* Section heading only. Candidate instructions are edited in
+                  PartSpecPanel above - having them in both places meant two
+                  fields writing the same column, where whichever you saved last
+                  silently overwrote the other. */}
               <div className="vh-studio-card" style={{ marginBottom: 20 }}>
                 <div className="vh-card-header" style={{ marginBottom: 16 }}>
                   <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
                     <Icon name="edit" />
-                    Section Heading & Instructions
+                    Section Heading
                   </h3>
                   <p style={{ fontSize: 13, color: "var(--text-muted, #64748b)", margin: "4px 0 0" }}>
-                    Configure a custom section heading (title) and test taker instructions for this part.
+                    Configure a custom section heading (title) for this part.
                   </p>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <div className="vh-form-group">
-                    <label htmlFor="part-title-input" style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Section Heading</label>
+                    <label htmlFor="part-title-input" style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>
+                      Section Heading<RequiredMark />
+                    </label>
                     <input
                       id="part-title-input"
                       type="text"
@@ -725,20 +728,14 @@ export function ModuleEditor() {
                       value={partTitle}
                       onChange={(e) => setPartTitle(e.target.value)}
                       disabled={busy || !isEditable}
+                      required
+                      aria-describedby="part-title-help"
                     />
-                  </div>
-                  <div className="vh-form-group">
-                    <label htmlFor="part-instructions-input" style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Candidate Instructions</label>
-                    <textarea
-                      id="part-instructions-input"
-                      className="ui-input"
-                      rows={3}
-                      style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border, #cbd5e1)", background: "var(--surface, #fff)", resize: "vertical", minHeight: 70 }}
-                      value={partInstructions}
-                      onChange={(e) => setPartInstructions(e.target.value)}
-                      placeholder="e.g. Read the text below and answer questions 1-6."
-                      disabled={busy || !isEditable}
-                    />
+                    {!partTitle.trim() && (
+                      <p id="part-title-help" style={{ margin: "6px 0 0", fontSize: 12.5, color: "var(--danger)" }}>
+                        A section heading is required.
+                      </p>
+                    )}
                   </div>
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
                     <button
@@ -746,9 +743,9 @@ export function ModuleEditor() {
                       className="button primary"
                       style={{ padding: "8px 16px", borderRadius: 8, height: "auto" }}
                       onClick={savePartHeader}
-                      disabled={busy || !isEditable || (partTitle === selectedPart.title && partInstructions === (selectedPart.instructions ?? ""))}
+                      disabled={busy || !isEditable || !partTitle.trim() || partTitle === selectedPart.title}
                     >
-                      Save Section Configuration
+                      Save Section Heading
                     </button>
                   </div>
                 </div>

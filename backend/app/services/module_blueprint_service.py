@@ -162,7 +162,6 @@ READING_PARTS = [
             "option_count": 4,
             "passage_required": True,
             "shared_passage": True,
-            "minimum_inference_questions": 1,
             "preserve_question_order": True,
             "preserve_option_order": True,
         },
