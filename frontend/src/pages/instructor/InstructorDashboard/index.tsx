@@ -6,8 +6,7 @@ import { DashboardStats } from "./components/DashboardStats";
 import { ModuleAuthoringPanel } from "./components/ModuleAuthoringPanel";
 import { ProfileReadinessPanel } from "./components/ProfileReadinessPanel";
 import { RecentActivityPanel } from "./components/RecentActivityPanel";
-import { DashboardButton, PageHeader } from "@/components/ui";
-import { Icon } from "@/components/icons";
+import { PageHeader } from "@/components/ui";
 
 interface Summary {
   profile_completion: number;
@@ -49,11 +48,6 @@ export function InstructorDashboard() {
         eyebrow={strings.eyebrow}
         title={strings.welcome(user?.first_name)}
         subtitle={strings.subtitle}
-        actions={
-          <DashboardButton to="/super-admin/instructor/modules" leftIcon={<Icon name="plus" />} size="lg">
-            {strings.createModule}
-          </DashboardButton>
-        }
       />
 
       <DashboardStats
