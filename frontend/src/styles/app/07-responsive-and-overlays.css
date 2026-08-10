@@ -1921,7 +1921,7 @@ body {
 }
 
 [data-theme="dark"] .skeleton-element {
-  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%) !important;
+  background: linear-gradient(90deg, #16161a 25%, #22222a 50%, #16161a 75%) !important;
   background-size: 200% 100% !important;
 }
 
