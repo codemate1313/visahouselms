@@ -1297,14 +1297,48 @@
    ========================================================================== */
 
 .new-module-studio-container {
-  width: min(100%, 1160px);
+  width: min(100%, 920px);
   margin-inline: auto;
   padding-bottom: 48px;
 }
 
 .module-part-editor .new-module-studio-container {
-  width: 100% !important;
-  max-width: none !important;
+  width: min(100%, 920px) !important;
+  max-width: 920px !important;
+  margin-inline: auto;
+}
+
+.vh-input-enhanced.is-invalid {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3.5px rgba(239, 68, 68, 0.22) !important;
+  background: rgba(239, 68, 68, 0.03) !important;
+}
+
+.vh-validation-inline-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ef4444;
+}
+
+.vh-validation-inline-error svg {
+  width: 14px;
+  height: 14px;
+  stroke: #ef4444;
+  stroke-width: 2.5;
+}
+
+.vh-main-col-actions .vh-btn-primary-brand {
+  width: auto !important;
+  min-width: 220px;
+  padding: 12px 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 14px !important;
 }
 
 /* Studio Tab Controls in Breadcrumb Header */

@@ -42,6 +42,19 @@ export function ModuleDetailsForm({
   const typeLabel = typeLabels[requestedType];
   const meta = MODULE_TYPE_META[requestedType];
 
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const handleNextStep = () => {
+    if (!details.title.trim()) {
+      setValidationError("Module Title is required before proceeding to Step 2.");
+      document.getElementById("edit-module-title")?.focus();
+      return;
+    }
+    setValidationError(null);
+    setActiveTab("instructions");
+    window.scrollTo({ top: 120, behavior: "smooth" });
+  };
+
   const adjustDuration = (delta: number) => {
     if (!isEditable) return;
     const next = Math.max(1, Math.min(600, (details.duration_minutes || meta.defaultDuration) + delta));
@@ -58,11 +71,19 @@ export function ModuleDetailsForm({
       {/* 1. Top Horizontal Authoring Stepper Bar */}
       <HorizontalAuthoringStepper
         activeTab={activeTab}
-        onTabChange={setActiveTab}
-        hasTitle={!!details.title}
+        onTabChange={(tab) => {
+          if (tab === "instructions" && !details.title.trim()) {
+            setValidationError("Module Title is required before proceeding to Step 2.");
+            document.getElementById("edit-module-title")?.focus();
+            return;
+          }
+          setValidationError(null);
+          setActiveTab(tab);
+        }}
+        hasTitle={!!details.title.trim()}
       />
 
-      {/* 2. Interactive 2-Column Studio Grid */}
+      {/* 2. Interactive Studio Grid */}
       <form onSubmit={onSubmit} className="vh-studio-grid">
         {/* Left Column: Form Controls */}
         <div className="vh-studio-main-col">
@@ -85,9 +106,12 @@ export function ModuleDetailsForm({
                 <div className="vh-input-wrapper">
                   <input
                     id="edit-module-title"
-                    className="vh-input-enhanced"
+                    className={`vh-input-enhanced ${validationError && !details.title.trim() ? "is-invalid" : ""}`}
                     value={details.title}
-                    onChange={(event) => onDetailsChange({ ...details, title: event.target.value })}
+                    onChange={(event) => {
+                      setValidationError(null);
+                      onDetailsChange({ ...details, title: event.target.value });
+                    }}
                     placeholder={t.titlePlaceholder(typeLabel)}
                     maxLength={200}
                     required
@@ -104,6 +128,13 @@ export function ModuleDetailsForm({
                     </button>
                   )}
                 </div>
+
+                {validationError && !details.title.trim() && (
+                  <p className="vh-validation-inline-error">
+                    <Icon name="cross" />
+                    <span>{validationError}</span>
+                  </p>
+                )}
               </div>
 
               {/* Interactive Duration Stepper & Presets */}
@@ -180,10 +211,7 @@ export function ModuleDetailsForm({
               <button
                 type="button"
                 className="vh-btn-primary-brand"
-                onClick={() => {
-                  setActiveTab("instructions");
-                  window.scrollTo({ top: 120, behavior: "smooth" });
-                }}
+                onClick={handleNextStep}
               >
                 <span>Next: Instructions & Notes</span>
                 <Icon name="arrowRight" />

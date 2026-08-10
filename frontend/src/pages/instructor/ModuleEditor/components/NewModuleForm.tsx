@@ -53,6 +53,23 @@ export function NewModuleForm({
   const isComposite = COMPOSITE_TYPES.has(requestedType);
   const allSourcesSelected = SOURCE_SECTIONS.every((section) => selectedSources[section]);
 
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const handleNextStep = () => {
+    if (!details.title.trim()) {
+      setValidationError("Module Title is required before proceeding to Step 2.");
+      document.getElementById("new-module-title")?.focus();
+      return;
+    }
+    if (isComposite && !allSourcesSelected) {
+      setValidationError("Please select all 4 required source modules before proceeding.");
+      return;
+    }
+    setValidationError(null);
+    setActiveTab("instructions");
+    window.scrollTo({ top: 120, behavior: "smooth" });
+  };
+
   const adjustDuration = (delta: number) => {
     const next = Math.max(1, Math.min(600, (details.duration_minutes || meta.defaultDuration) + delta));
     onDetailsChange({ ...details, duration_minutes: next });
@@ -115,11 +132,19 @@ export function NewModuleForm({
       {/* 3. Horizontal Authoring Stepper Bar (Positioned below the red hero card) */}
       <HorizontalAuthoringStepper
         activeTab={activeTab}
-        onTabChange={setActiveTab}
-        hasTitle={!!details.title}
+        onTabChange={(tab) => {
+          if (tab === "instructions" && !details.title.trim()) {
+            setValidationError("Module Title is required before proceeding to Step 2.");
+            document.getElementById("new-module-title")?.focus();
+            return;
+          }
+          setValidationError(null);
+          setActiveTab(tab);
+        }}
+        hasTitle={!!details.title.trim()}
       />
 
-      {/* 4. Interactive 2-Column Studio Grid */}
+      {/* 4. Interactive Studio Form */}
       <form onSubmit={onSubmit} className="vh-studio-grid">
         {/* Main Column: Form Controls with Stage Animation */}
         <div className="vh-studio-main-col stage-fade-in" key={activeTab}>
@@ -142,9 +167,12 @@ export function NewModuleForm({
                 <div className="vh-input-wrapper">
                   <input
                     id="new-module-title"
-                    className="vh-input-enhanced"
+                    className={`vh-input-enhanced ${validationError && !details.title.trim() ? "is-invalid" : ""}`}
                     value={details.title}
-                    onChange={(event) => onDetailsChange({ ...details, title: event.target.value })}
+                    onChange={(event) => {
+                      setValidationError(null);
+                      onDetailsChange({ ...details, title: event.target.value });
+                    }}
                     placeholder={t.titlePlaceholder(typeLabel)}
                     maxLength={200}
                     required
@@ -161,6 +189,13 @@ export function NewModuleForm({
                     </button>
                   )}
                 </div>
+
+                {validationError && !details.title.trim() && (
+                  <p className="vh-validation-inline-error">
+                    <Icon name="cross" />
+                    <span>{validationError}</span>
+                  </p>
+                )}
               </div>
 
               {/* Interactive Duration Stepper & Presets */}
@@ -284,10 +319,7 @@ export function NewModuleForm({
               <button
                 type="button"
                 className="vh-btn-primary-brand"
-                onClick={() => {
-                  setActiveTab("instructions");
-                  window.scrollTo({ top: 120, behavior: "smooth" });
-                }}
+                onClick={handleNextStep}
               >
                 <span>Next: Instructions & Notes</span>
                 <Icon name="arrowRight" />
