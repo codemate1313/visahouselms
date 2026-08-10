@@ -150,23 +150,33 @@
   color: #f2f2f5;
 }
 
-/* Project-wide placeholder colour: a soft, faded hint rather than near-solid
-   text, so a placeholder never reads like a filled-in value. One rule for both
-   themes; the light default (a mid grey at low opacity) covers every field that
-   had no explicit placeholder colour, and the dark rule below dims it further
-   against the dark surfaces. */
 input::placeholder,
 textarea::placeholder,
 select::placeholder {
   color: var(--text-muted, #6e6e73);
   opacity: 0.42;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+input:focus::placeholder,
+textarea:focus::placeholder,
+select:focus::placeholder {
+  color: transparent !important;
+  opacity: 0 !important;
 }
 
 [data-theme="dark"] input::placeholder,
 [data-theme="dark"] textarea::placeholder,
 [data-theme="dark"] select::placeholder {
-  color: #94a3b8 !important;
+  color: rgba(255, 255, 255, 0.28) !important;
   opacity: 1 !important;
+}
+
+[data-theme="dark"] input:focus::placeholder,
+[data-theme="dark"] textarea:focus::placeholder,
+[data-theme="dark"] select:focus::placeholder {
+  color: transparent !important;
+  opacity: 0 !important;
 }
 
 [data-theme="dark"] body::before {

@@ -4724,8 +4724,35 @@
 [data-theme="dark"] .filter-bar input::placeholder,
 [data-theme="dark"] .role-profile-form input::placeholder,
 [data-theme="dark"] .role-profile-form textarea::placeholder {
-  color: #94a3b8 !important;
+  color: rgba(255, 255, 255, 0.28) !important;
   opacity: 1 !important;
+  transition: opacity 0.15s ease, color 0.15s ease !important;
+}
+
+[data-theme="dark"] input:focus::placeholder,
+[data-theme="dark"] textarea:focus::placeholder,
+[data-theme="dark"] select:focus::placeholder,
+[data-theme="dark"] .ui-input:focus::placeholder,
+[data-theme="dark"] .sab-input-field:focus::placeholder,
+[data-theme="dark"] .sab-search-input:focus::placeholder,
+[data-theme="dark"] .sab-textarea-field:focus::placeholder,
+[data-theme="dark"] .sat-input:focus::placeholder,
+[data-theme="dark"] .sat-search-input:focus::placeholder,
+[data-theme="dark"] .sat-textarea:focus::placeholder,
+[data-theme="dark"] .target-search-input:focus::placeholder,
+[data-theme="dark"] .select-search-input:focus::placeholder,
+[data-theme="dark"] .date-input-field:focus::placeholder,
+[data-theme="dark"] .datetime-picker-input:focus::placeholder,
+[data-theme="dark"] .test-runner-text-input:focus::placeholder,
+[data-theme="dark"] .pn-input:focus::placeholder,
+[data-theme="dark"] .pn-textarea:focus::placeholder,
+[data-theme="dark"] .ui-search-input input:focus::placeholder,
+[data-theme="dark"] .password-input-wrap input:focus::placeholder,
+[data-theme="dark"] .filter-bar input:focus::placeholder,
+[data-theme="dark"] .role-profile-form input:focus::placeholder,
+[data-theme="dark"] .role-profile-form textarea:focus::placeholder {
+  color: transparent !important;
+  opacity: 0 !important;
 }
 
 /* Light mode: keep the notification form (and peer search/input) placeholders
