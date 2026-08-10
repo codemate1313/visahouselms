@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
@@ -6,6 +7,7 @@ interface PartSpecPanelProps {
   isEditable: boolean;
   busy: boolean;
   onToggleAiEvaluation: (enabled: boolean) => void;
+  onUpdateInstructions: (instructions: string) => void;
   questionEntryMode?: "manual" | "bulk";
   onEntryModeChange?: (mode: "manual" | "bulk") => void;
 }
@@ -15,11 +17,25 @@ export function PartSpecPanel({
   isEditable,
   busy,
   onToggleAiEvaluation,
+  onUpdateInstructions,
   questionEntryMode,
   onEntryModeChange,
 }: PartSpecPanelProps) {
   const t = strings.partSpec;
   const canUseAiEvaluation = !part.auto_marked && ["writing", "speaking"].includes(part.section_type);
+  const isReading1a = part.part_code === "reading_1a";
+  const [isEditingInstructions, setIsEditingInstructions] = useState(false);
+  const [instructionsDraft, setInstructionsDraft] = useState(part.instructions ?? "");
+
+  useEffect(() => {
+    setInstructionsDraft(part.instructions ?? "");
+    setIsEditingInstructions(false);
+  }, [part.id, part.instructions]);
+
+  function saveInstructions() {
+    onUpdateInstructions(instructionsDraft);
+    setIsEditingInstructions(false);
+  }
 
   return (
     <div className="vh-unified-part-header-bar">
@@ -59,6 +75,47 @@ export function PartSpecPanel({
             Bulk Import (PDF / CSV)
           </button>
         </div>
+      )}
+
+      {isReading1a && (
+      <div className="vh-part-instructions-row">
+        {isEditingInstructions ? (
+          <div className="vh-part-instructions-editor">
+            <textarea
+              rows={2}
+              value={instructionsDraft}
+              onChange={(event) => setInstructionsDraft(event.target.value)}
+              placeholder={t.instructionsPlaceholder}
+            />
+            <div className="vh-part-instructions-actions">
+              <button type="button" disabled={busy} onClick={saveInstructions}>
+                {t.instructionsSave}
+              </button>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  setInstructionsDraft(part.instructions ?? "");
+                  setIsEditingInstructions(false);
+                }}
+              >
+                {t.instructionsCancel}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="vh-part-instructions-preview">
+              {part.instructions || t.instructionsEmpty}
+            </p>
+            {isEditable && (
+              <button type="button" className="secondary-button" onClick={() => setIsEditingInstructions(true)}>
+                {t.instructionsEdit}
+              </button>
+            )}
+          </>
+        )}
+      </div>
       )}
     </div>
   );

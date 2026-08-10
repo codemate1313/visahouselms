@@ -1751,6 +1751,39 @@
   margin-bottom: 0 !important;
 }
 
+.vh-part-instructions-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-basis: 100%;
+  padding-top: 8px;
+  border-top: 1px solid rgba(225, 230, 240, 0.8);
+}
+
+.vh-part-instructions-preview {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+.vh-part-instructions-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.vh-part-instructions-editor textarea {
+  width: 100%;
+}
+
+.vh-part-instructions-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .vh-unified-part-left {
   display: flex;
   align-items: center;
@@ -4731,6 +4764,32 @@ button.danger:hover:not(:disabled) {
   font-size: 12.5px;
   color: var(--text-muted);
   margin: 6px 0 0;
+}
+
+.vh-prompt-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.vh-bold-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.vh-bold-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--text);
 }
 
 .error-text {

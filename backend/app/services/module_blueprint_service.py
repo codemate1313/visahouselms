@@ -70,6 +70,7 @@ READING_PARTS = [
         "section_type": "reading",
         "title": "Reading 1A",
         "skill_focus": "Understand vocabulary used in academic texts; identify synonyms and use vocabulary in context.",
+        "instructions": "Read each sentence below. Choose the option (A, B, C or D) that is closest in meaning to the word shown in bold.",
         "question_limit": 6,
         "minimum_questions": 6,
         "max_marks": 6,

@@ -1406,6 +1406,28 @@
   cursor: pointer;
 }
 
+.test-runner-cloze-passage p {
+  line-height: 1.85;
+}
+
+.test-runner-cloze-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 1px 6px;
+  margin: 0 2px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--test-accent, var(--primary)) 14%, transparent);
+  color: color-mix(in srgb, var(--test-accent, var(--primary)) 88%, var(--text));
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.test-runner-cloze-gap:last-child {
+  margin-bottom: 0;
+}
+
 .test-runner-inline-blank > span:first-child {
   overflow: hidden;
   text-overflow: ellipsis;

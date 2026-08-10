@@ -5,6 +5,7 @@ import type { Attempt, AttemptResponse } from "@/api/types";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { InlineMatchingBlankGroup } from "./InlineMatchingBlankGroup";
 import { SourceTextMatchingGroup } from "./SourceTextMatchingGroup";
+import { SharedClozeGroup } from "./SharedClozeGroup";
 
 interface SourcePaneProps {
   currentPart: Attempt["parts"][number];
@@ -37,6 +38,7 @@ export function SourcePane({
     (currentPart.answer_constraints.layout === "source_text_matching" || currentPart.part_code === "reading_3")
     && (matchingType === "matching_unique" || matchingType === "matching_reusable")
   );
+  const usesSharedCloze = currentPart.part_code === "reading_1b" && currentPart.answer_constraints.layout === "shared_cloze";
   return (
     <section className="test-runner-source-pane" ref={sourcePaneRef}>
       <div className="test-runner-pane-heading">
@@ -82,7 +84,15 @@ export function SourcePane({
           ) : null}
         </div>
       ))}
-      {usesInlineMatchingBlanks ? (
+      {usesSharedCloze ? (
+        <SharedClozeGroup
+          questions={currentPart.questions}
+          questionNumberOffset={questionNumberOffset}
+          savingIds={savingIds}
+          mode="source"
+          onChangeResponse={onChangeResponse}
+        />
+      ) : usesInlineMatchingBlanks ? (
         <InlineMatchingBlankGroup
           questions={currentPart.questions}
           questionNumberOffset={questionNumberOffset}

@@ -1,4 +1,5 @@
 import type { FormEvent } from "react";
+import { useRef } from "react";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
@@ -42,13 +43,17 @@ export function ManualQuestionForm({
   const t = strings.manualQuestion;
   const isWriting = part.section_type === "writing";
   const isReading = part.section_type === "reading";
+  const isReading1a = part.part_code === "reading_1a";
+  const isReading1b = part.part_code === "reading_1b";
+  const promptRef = useRef<HTMLTextAreaElement>(null);
   const allowedTurns = part.answer_constraints.allowed_turn_types ?? [];
   const isChoiceQuestion = CHOICE_TYPES.has(manual.question_type);
   const canRemoveOption = manual.options.length > 2;
   const showsBlankGuidance =
     manual.question_type === "fill_blank" ||
     part.answer_constraints.inline_marker_required ||
-    part.answer_constraints.layout === "inline_matching_blanks";
+    part.answer_constraints.layout === "inline_matching_blanks" ||
+    isReading1b;
   const turnLabels: Record<SpeakingTurnType, string> = {
     identity: "Identity and origin",
     topic_question: "Familiar-topic question",
@@ -58,6 +63,24 @@ export function ManualQuestionForm({
     follow_up: "Follow-up question",
     presentation: "Extended presentation",
   };
+
+  function toggleBoldSelection() {
+    const el = promptRef.current;
+    if (!el) return;
+    const { selectionStart, selectionEnd, value } = el;
+    if (selectionStart == null || selectionEnd == null || selectionStart === selectionEnd) return;
+    const selected = value.slice(selectionStart, selectionEnd);
+    const before = value.slice(0, selectionStart);
+    const after = value.slice(selectionEnd);
+    const isBold = selected.startsWith("**") && selected.endsWith("**") && selected.length > 4;
+    const nextSelected = isBold ? selected.slice(2, -2) : `**${selected}**`;
+    onManualChange({ ...manual, prompt: `${before}${nextSelected}${after}` });
+    requestAnimationFrame(() => {
+      el.focus();
+      const cursor = before.length + nextSelected.length;
+      el.setSelectionRange(cursor, cursor);
+    });
+  }
 
   return (
     <section className="authoring-panel" id="manual-module-question">
@@ -70,7 +93,7 @@ export function ManualQuestionForm({
         {showsBlankGuidance && (
           <div className="question-authoring-help">
             <h4>{t.blankHelpTitle}</h4>
-            <p>{t.blankHelp}</p>
+            <p>{isReading1b ? t.blankHelpSharedCloze : t.blankHelp}</p>
           </div>
         )}
         {part.answer_constraints.group_label_required && (
@@ -148,9 +171,23 @@ export function ManualQuestionForm({
           </>
         )}
         {/* 1. Question or task prompt */}
-        <label htmlFor="module-question-prompt">{t.promptLabel}<RequiredMark /></label>
+        <div className="vh-prompt-label-row">
+          <label htmlFor="module-question-prompt">{t.promptLabel}<RequiredMark /></label>
+          {isReading1a && (
+            <button
+              type="button"
+              className="vh-bold-toggle-button"
+              onClick={toggleBoldSelection}
+              title={t.boldSelectionHint}
+            >
+              <strong>B</strong> {t.boldSelectionLabel}
+            </button>
+          )}
+        </div>
+        {isReading1a && <p className="hint">{t.boldSelectionHint}</p>}
         <textarea
           id="module-question-prompt"
+          ref={promptRef}
           rows={4}
           value={manual.prompt}
           onChange={(event) => onManualChange({ ...manual, prompt: event.target.value })}
@@ -207,13 +244,17 @@ export function ManualQuestionForm({
         {!isWriting && !isReading && (
           <>
             {/* 3. Passage or context */}
-            <label htmlFor="module-question-passage">{t.passageLabel}</label>
+            <label htmlFor="module-question-passage">
+              {t.passageLabel}
+              {part.answer_constraints.passage_required && <RequiredMark />}
+            </label>
             <textarea
               id="module-question-passage"
               rows={4}
               value={manual.passage ?? ""}
               onChange={(event) => onManualChange({ ...manual, passage: event.target.value })}
               placeholder={t.passagePlaceholder}
+              required={part.answer_constraints.passage_required}
             />
 
             {/* 4. Prompt instructions */}

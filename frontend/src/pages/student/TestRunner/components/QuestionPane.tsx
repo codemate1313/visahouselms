@@ -5,6 +5,7 @@ import { QuestionInput } from "./QuestionInput";
 import { MatchingQuestionGroup } from "./MatchingQuestionGroup";
 import { InlineMatchingBlankGroup } from "./InlineMatchingBlankGroup";
 import { SourceTextMatchingGroup } from "./SourceTextMatchingGroup";
+import { SharedClozeGroup } from "./SharedClozeGroup";
 
 interface QuestionPaneProps {
   currentPart: Attempt["parts"][number];
@@ -26,12 +27,14 @@ export function QuestionPane({
   onRecord,
 }: QuestionPaneProps) {
   const t = strings.questionPane;
+  const isReading1a = currentPart.part_code === "reading_1a";
   const matchingType = currentPart.questions[0]?.question_type;
   const isMatchingPart = matchingType === "matching_unique" || matchingType === "matching_reusable";
   const usesInlineMatchingBlanks = isMatchingPart && currentPart.answer_constraints.layout === "inline_matching_blanks";
   const usesSourceTextMatching = isMatchingPart && (
     currentPart.answer_constraints.layout === "source_text_matching" || currentPart.part_code === "reading_3"
   );
+  const usesSharedCloze = currentPart.part_code === "reading_1b" && currentPart.answer_constraints.layout === "shared_cloze";
   const conversationGroups = currentPart.answer_constraints.layout === "conversation_groups"
     ? currentPart.questions.reduce<Array<{ label: string; questions: typeof currentPart.questions }>>((groups, question) => {
       const label = question.interaction?.group_label?.trim() || "Conversation";
@@ -50,10 +53,18 @@ export function QuestionPane({
             {currentPart.question_count} {t.questionsSuffix}
           </span>
           <h2>{currentPart.title}</h2>
-          <p>{t.instructions}</p>
+          <p>{isReading1a ? (currentPart.instructions || t.instructions) : t.instructions}</p>
         </div>
       )}
-      {usesInlineMatchingBlanks ? (
+      {usesSharedCloze ? (
+        <SharedClozeGroup
+          questions={currentPart.questions}
+          questionNumberOffset={questionNumberOffset}
+          savingIds={savingIds}
+          mode="options"
+          onChangeResponse={(questionId, response) => onChangeResponse(questionId, response)}
+        />
+      ) : usesInlineMatchingBlanks ? (
         <InlineMatchingBlankGroup
           questions={currentPart.questions}
           questionNumberOffset={questionNumberOffset}
@@ -106,6 +117,7 @@ export function QuestionPane({
           question={question}
           hidePrompt={currentPart.section_type === "writing"}
           partInstructions={currentPart.section_type === "writing" ? currentPart.instructions : null}
+          allowBoldMarkup={isReading1a}
           maxAnswerWords={currentPart.answer_constraints.max_answer_words}
           saving={savingIds.has(question.id)}
           recording={recordingQuestionId === question.id}

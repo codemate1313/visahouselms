@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "@/api/client";
 import type { AttemptQuestion, AttemptResponse } from "@/api/types";
 import { Checkbox } from "@/components/ui";
+import { renderBoldText } from "@/utils/boldText";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 
 interface QuestionInputProps {
@@ -8,6 +9,7 @@ interface QuestionInputProps {
   question: AttemptQuestion;
   hidePrompt?: boolean;
   partInstructions?: string | null;
+  allowBoldMarkup?: boolean;
   maxAnswerWords?: number;
   saving: boolean;
   recording: boolean;
@@ -20,6 +22,7 @@ export function QuestionInput({
   question,
   hidePrompt = false,
   partInstructions,
+  allowBoldMarkup = false,
   maxAnswerWords,
   saving,
   recording,
@@ -56,12 +59,14 @@ export function QuestionInput({
           <span className="hint">{t.saving}</span>
         </div>
       )}
-      {!hidePrompt && !hasInlineBlank && <p className="test-runner-prompt">{question.prompt}</p>}
+      {!hidePrompt && !hasInlineBlank && (
+        <p className="test-runner-prompt">{allowBoldMarkup ? renderBoldText(question.prompt) : question.prompt}</p>
+      )}
       {!hidePrompt && hasInlineBlank && (
         <p className="test-runner-prompt test-runner-inline-gap">
-          <span>{beforeBlank}</span>
+          <span>{allowBoldMarkup ? renderBoldText(beforeBlank) : beforeBlank}</span>
           {textInput}
-          <span>{afterBlank}</span>
+          <span>{allowBoldMarkup ? renderBoldText(afterBlank) : afterBlank}</span>
         </p>
       )}
       {!hidePrompt && question.instructions && <p className="hint">{question.instructions}</p>}

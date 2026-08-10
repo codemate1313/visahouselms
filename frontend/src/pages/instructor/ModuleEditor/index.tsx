@@ -369,6 +369,23 @@ export function ModuleEditor() {
     }
   }
 
+  async function updatePartInstructions(instructions: string) {
+    if (!module || !selectedPart) return;
+    setBusy(true); setError(null);
+    try {
+      const { data } = await apiClient.patch<ExamModule>(
+        `/instructor/modules/${module.id}/parts/${selectedPart.id}/instructions`,
+        { instructions: instructions.trim() || null },
+      );
+      setModule(data);
+      showSuccess(strings.partSpec.instructionsSaved(selectedPart.title));
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, strings.partSpec.instructionsError));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function generateAudio(event: FormEvent) {
     event.preventDefault(); if (!module || !selectedPart) return;
     setBusy(true); setError(null);
@@ -481,6 +498,7 @@ export function ModuleEditor() {
                 isEditable={isEditable}
                 busy={busy}
                 onToggleAiEvaluation={togglePartAiEvaluation}
+                onUpdateInstructions={updatePartInstructions}
                 questionEntryMode={questionEntryMode}
                 onEntryModeChange={setQuestionEntryMode}
               />

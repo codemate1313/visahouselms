@@ -176,6 +176,18 @@ def validation_errors(module: ExamModule) -> list[str]:
             missing_markers = [question for question in part.questions if "{{blank}}" not in question.prompt]
             if missing_markers:
                 errors.append(f"Every question in {part.title} must place a {{{{blank}}}} marker in its prompt.")
+        if constraints.get("layout") == "shared_cloze" and part.questions:
+            ordered = sorted(part.questions, key=lambda question: question.sort_order)
+            shared_passage = ordered[0].passage or ""
+            missing_gaps = [
+                str(gap_number)
+                for gap_number in range(1, len(ordered) + 1)
+                if f"{{{{blank:{gap_number}}}}}" not in shared_passage
+            ]
+            if missing_gaps:
+                errors.append(
+                    f"{part.title} source text must contain a {{{{blank:N}}}} marker for gap(s): {', '.join(missing_gaps)}."
+                )
         if constraints.get("group_label_required"):
             groups: dict[str, int] = {}
             for question in part.questions:
@@ -600,6 +612,33 @@ def update_part_ai_evaluation(
         module.id,
         ip,
         {"part_id": part.id, "ai_evaluation_enabled": ai_evaluation_enabled},
+    )
+    db.commit()
+    return serialize_module(get_module_or_404(db, module.id), detailed=True)
+
+
+def update_part_instructions(
+    db: Session,
+    actor: User,
+    module_id: int,
+    part_id: int,
+    instructions: Optional[str],
+    ip: Optional[str],
+) -> dict:
+    module, part = get_editable_part(db, actor, module_id, part_id)
+    if part.part_code != "reading_1a":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A custom heading can only be set for Reading 1A",
+        )
+    part.instructions = instructions
+    _audit(
+        db,
+        actor,
+        "exam_module.part_instructions.update",
+        module.id,
+        ip,
+        {"part_id": part.id},
     )
     db.commit()
     return serialize_module(get_module_or_404(db, module.id), detailed=True)

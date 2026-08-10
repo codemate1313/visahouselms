@@ -93,6 +93,15 @@ class PartAiEvaluationUpdate(BaseModel):
     ai_evaluation_enabled: bool
 
 
+class PartInstructionsUpdate(BaseModel):
+    instructions: Optional[str] = Field(default=None, max_length=2000)
+
+    @field_validator("instructions")
+    @classmethod
+    def clean_instructions(cls, value: Optional[str]) -> Optional[str]:
+        return _optional_text(value)
+
+
 class ModuleStatusUpdate(BaseModel):
     status: str
 

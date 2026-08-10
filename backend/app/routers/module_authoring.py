@@ -16,6 +16,7 @@ from app.schemas.exam_module import (
     ModuleStatusUpdate,
     ModuleUpdate,
     PartAiEvaluationUpdate,
+    PartInstructionsUpdate,
     SpeakingPartTimingUpdate,
     TTSCreate,
 )
@@ -146,6 +147,25 @@ def update_part_ai_evaluation(
         module_id,
         part_id,
         payload.ai_evaluation_enabled,
+        _ip(request),
+    )
+
+
+@router.patch("/{module_id}/parts/{part_id}/instructions")
+def update_part_instructions(
+    module_id: int,
+    part_id: int,
+    payload: PartInstructionsUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return module_authoring_service.update_part_instructions(
+        db,
+        actor,
+        module_id,
+        part_id,
+        payload.instructions,
         _ip(request),
     )
 
