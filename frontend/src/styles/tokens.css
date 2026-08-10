@@ -179,6 +179,12 @@ select:focus::placeholder {
   opacity: 0 !important;
 }
 
+/* Universal override to ensure all inputs/textareas hide placeholder on focus */
+*:focus::placeholder {
+  color: transparent !important;
+  opacity: 0 !important;
+}
+
 [data-theme="dark"] body::before {
   background: linear-gradient(90deg, rgba(225, 29, 46, 0.06), transparent 34%, rgba(255, 255, 255, 0.04));
 }
