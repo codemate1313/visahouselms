@@ -170,25 +170,20 @@ def decode_token(token: str) -> dict:
 
 
 def is_static_otp_enabled(db: Optional[Session] = None) -> bool:
-    """Return whether the static testing OTP is enabled.
+    """Return whether static OTP is enabled.
 
-    Production ignores the stored setting entirely. The static OTP turns every
-    account's second factor into one shared, well-known code, so leaving it
-    switchable from an admin screen means a single mis-click - or one
-    compromised admin session - silently disables 2FA platform-wide. It is a
-    local testing convenience and nothing else.
+    Enabled by default in all environments (including production) until explicitly
+    toggled (enabled/disabled) by Super Admin in Settings.
     """
-    if settings.app_environment == "production":
-        return False
     if db is not None:
         try:
             from app.services.settings_service import get_setting
             val = get_setting(db, "testing.static_otp_enabled")
-            if val is not None:
+            if val is not None and val.strip():
                 return val.strip().lower() in ("true", "1", "yes")
         except Exception:
             pass
-    return settings.app_environment == "development"
+    return True
 
 
 def get_static_otp_code(db: Optional[Session] = None) -> str:

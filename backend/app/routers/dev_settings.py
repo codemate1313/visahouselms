@@ -421,14 +421,6 @@ def put_static_otp(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    # Refuse rather than accept-and-ignore: is_static_otp_enabled() hard-disables
-    # the bypass in production, so silently storing "true" would leave the switch
-    # reading as on while every login still demands a real OTP.
-    if payload.enabled and app_config.app_environment == "production":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The static testing OTP cannot be enabled in production.",
-        )
     set_setting(db, "testing.static_otp_enabled", "true" if payload.enabled else "false")
     if payload.code and payload.code.strip():
         set_setting(db, "testing.static_otp_code", payload.code.strip())

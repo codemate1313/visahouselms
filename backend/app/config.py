@@ -99,9 +99,6 @@ class Settings(BaseSettings):
             raise ValueError("ALLOWED_HOSTS must be explicitly configured in production")
         if self.refresh_cookie_samesite == "none" and self.app_environment != "production":
             raise ValueError("SameSite=None refresh cookies are only allowed in production")
-        if self.app_environment == "production" and self.dev_static_otp_code:
-            # Clear the dev OTP code for production - it should never be set
-            self.dev_static_otp_code = None
         if self.app_environment == "production":
             is_alembic = any("alembic" in arg for arg in sys.argv)
             is_testing = "pytest" in sys.modules or any("pytest" in arg for arg in sys.argv) or "unittest" in sys.modules
