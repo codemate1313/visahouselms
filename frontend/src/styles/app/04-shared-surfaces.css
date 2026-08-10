@@ -3185,6 +3185,14 @@
   color: #a1a1aa !important;
 }
 
+[data-theme="dark"] .vh-dropzone-main {
+  color: #f2f2f5 !important;
+}
+
+[data-theme="dark"] .vh-dropzone-sub {
+  color: #a1a1aa !important;
+}
+
 [data-theme="dark"] .vh-dropzone-title {
   color: #f2f2f5 !important;
 }

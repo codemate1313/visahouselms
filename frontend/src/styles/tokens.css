@@ -154,7 +154,7 @@ input::placeholder,
 textarea::placeholder,
 select::placeholder {
   color: var(--text-muted, #6e6e73);
-  opacity: 0.42;
+  opacity: 0.22 !important;
   transition: opacity 0.15s ease, color 0.15s ease;
 }
 
@@ -168,7 +168,7 @@ select:focus::placeholder {
 [data-theme="dark"] input::placeholder,
 [data-theme="dark"] textarea::placeholder,
 [data-theme="dark"] select::placeholder {
-  color: rgba(255, 255, 255, 0.28) !important;
+  color: rgba(255, 255, 255, 0.12) !important;
   opacity: 1 !important;
 }
 
