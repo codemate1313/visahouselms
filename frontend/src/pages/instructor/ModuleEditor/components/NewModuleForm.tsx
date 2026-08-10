@@ -301,6 +301,47 @@ export function NewModuleForm({
               </div>
             </div>
           )}
+
+          {/* Bottom Action Bar inside Main Form Column */}
+          {activeTab === "config" ? (
+            <div className="vh-main-col-actions" style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
+              <button
+                type="button"
+                className="vh-btn-primary-brand"
+                onClick={() => {
+                  setActiveTab("instructions");
+                  window.scrollTo({ top: 120, behavior: "smooth" });
+                }}
+              >
+                <span>Next: Instructions & Notes</span>
+                <Icon name="arrowRight" />
+              </button>
+            </div>
+          ) : (
+            <div className="vh-main-col-actions" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, gap: 16, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="button secondary"
+                style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+                onClick={() => {
+                  setActiveTab("config");
+                  window.scrollTo({ top: 120, behavior: "smooth" });
+                }}
+              >
+                <Icon name="arrowLeft" />
+                <span>Back to Step 1: Configuration</span>
+              </button>
+
+              <button
+                type="submit"
+                className="vh-btn-primary-brand"
+                disabled={busy || !details.title.trim() || (isComposite && !allSourcesSelected)}
+              >
+                <span>{busy ? t.creating : `Create ${typeLabel}`}</span>
+                <Icon name="arrowRight" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Live Interactive Module Card Preview */}

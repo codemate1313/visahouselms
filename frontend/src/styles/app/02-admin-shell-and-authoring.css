@@ -3151,26 +3151,38 @@
 }
 
 /* Active & Completed States */
+.vh-stepper-step.is-active {
+  background: var(--primary, #b91c2b) !important;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(185, 28, 43, 0.28) !important;
+}
+
 .vh-stepper-step.is-active .vh-step-icon-badge {
-  background: var(--primary, #b91c2b);
-  border-color: var(--primary, #b91c2b);
-  box-shadow: 0 4px 14px rgba(185, 28, 43, 0.3);
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  box-shadow: none !important;
 }
 
-.vh-stepper-step.is-active .vh-step-num {
-  color: #ffffff;
+.vh-stepper-step.is-active .vh-step-num,
+.vh-stepper-step.is-active .vh-step-title,
+.vh-stepper-step.is-active .vh-step-subtitle {
+  color: #ffffff !important;
 }
 
-.vh-stepper-step.is-active .vh-step-title {
-  color: var(--primary, #b91c2b);
+.vh-stepper-step:hover:not(.is-active) {
+  background: rgba(185, 28, 43, 0.08) !important;
 }
 
-.vh-stepper-step.is-completed .vh-step-icon-badge {
+.vh-stepper-step:hover:not(.is-active) .vh-step-title {
+  color: var(--primary, #b91c2b) !important;
+}
+
+.vh-stepper-step.is-completed:not(.is-active) .vh-step-icon-badge {
   background: rgba(16, 185, 129, 0.12);
   border-color: #10b981;
 }
 
-.vh-stepper-step.is-completed .vh-step-title {
+.vh-stepper-step.is-completed:not(.is-active) .vh-step-title {
   color: #10b981;
 }
 
