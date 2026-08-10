@@ -3067,6 +3067,175 @@
   gap: 24px;
 }
 
+.module-authoring-layout.is-details-mode {
+  grid-template-columns: 1fr !important;
+}
+
+/* ==========================================================================
+   STATE-OF-THE-ART HORIZONTAL AUTHORING STEPPER BAR
+   ========================================================================== */
+
+.vh-horizontal-stepper-card {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, rgba(225, 230, 240, 0.8));
+  border-radius: 20px;
+  padding: 14px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.03);
+}
+
+.vh-stepper-inner-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.vh-stepper-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.vh-stepper-step:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.vh-step-icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-muted, #f1f5f9);
+  border: 2px solid var(--border, #cbd5e1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.vh-step-num {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-muted, #64748b);
+}
+
+.vh-step-check-icon {
+  width: 18px;
+  height: 18px;
+  stroke: #10b981;
+  stroke-width: 2.8;
+}
+
+.vh-step-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.vh-step-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-muted, #64748b);
+  transition: color 0.18s ease;
+}
+
+.vh-step-subtitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted, #94a3b8);
+}
+
+/* Active & Completed States */
+.vh-stepper-step.is-active .vh-step-icon-badge {
+  background: var(--primary, #b91c2b);
+  border-color: var(--primary, #b91c2b);
+  box-shadow: 0 4px 14px rgba(185, 28, 43, 0.3);
+}
+
+.vh-stepper-step.is-active .vh-step-num {
+  color: #ffffff;
+}
+
+.vh-stepper-step.is-active .vh-step-title {
+  color: var(--primary, #b91c2b);
+}
+
+.vh-stepper-step.is-completed .vh-step-icon-badge {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: #10b981;
+}
+
+.vh-stepper-step.is-completed .vh-step-title {
+  color: #10b981;
+}
+
+/* Progress Connecting Line */
+.vh-stepper-progress-line {
+  flex: 1;
+  height: 3px;
+  background: var(--border, #e2e8f0);
+  border-radius: 99px;
+  position: relative;
+  overflow: hidden;
+  margin-inline: 8px;
+}
+
+.vh-stepper-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #10b981 0%, var(--primary, #b91c2b) 100%);
+  border-radius: 99px;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vh-stepper-progress-line.is-active .vh-stepper-progress-fill {
+  width: 100%;
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] .vh-horizontal-stepper-card {
+  background: #16161a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .vh-stepper-step:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="dark"] .vh-step-icon-badge {
+  background: #222228 !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+[data-theme="dark"] .vh-step-num {
+  color: #a1a1aa !important;
+}
+
+[data-theme="dark"] .vh-step-title {
+  color: #a1a1aa !important;
+}
+
+[data-theme="dark"] .vh-step-subtitle {
+  color: #71717a !important;
+}
+
+[data-theme="dark"] .vh-stepper-step.is-active .vh-step-title {
+  color: #f2f2f5 !important;
+}
+
+[data-theme="dark"] .vh-stepper-progress-line {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
 .module-part-nav {
   position: sticky;
   top: 18px;

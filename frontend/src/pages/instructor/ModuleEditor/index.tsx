@@ -452,9 +452,11 @@ export function ModuleEditor() {
         </Badge>
       </div>
 
-      <div className="module-authoring-layout">
-        <ModulePartNav parts={module.parts} selectedPartId={selectedPartId} onChoosePart={choosePart} />
-        <main className="module-part-editor" id="module-part-editor">
+      <div className={`module-authoring-layout ${!selectedPart ? "is-details-mode" : ""}`}>
+        {selectedPart && (
+          <ModulePartNav parts={module.parts} selectedPartId={selectedPartId} onChoosePart={choosePart} />
+        )}
+        <main className={`module-part-editor ${!selectedPart ? "is-full-width" : ""}`} id="module-part-editor">
           {!selectedPart ? (
             <ModuleDetailsForm
               module={module}

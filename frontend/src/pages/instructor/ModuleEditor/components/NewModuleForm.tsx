@@ -17,6 +17,7 @@ import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { COMPOSITE_TYPES, SOURCE_SECTIONS, MODULE_TYPE_META } from "../helpers";
 import type { ModuleDetailsState } from "./ModuleDetailsForm";
 import { OnboardingInstructionsEditor } from "./OnboardingInstructionsEditor";
+import { HorizontalAuthoringStepper } from "./HorizontalAuthoringStepper";
 
 interface NewModuleFormProps {
   requestedType: ExamModuleType | null;
@@ -86,6 +87,13 @@ export function NewModuleForm({
           </div>
         </div>
       </div>
+
+      {/* 2. Top Horizontal Authoring Stepper Bar */}
+      <HorizontalAuthoringStepper
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        hasTitle={!!details.title}
+      />
 
       {error && <p className="error-text notice-line">{error}</p>}
 

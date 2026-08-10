@@ -5,6 +5,7 @@ import type { ExamModule, OnboardingInstruction } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { MODULE_TYPE_META } from "../helpers";
 import { OnboardingInstructionsEditor } from "./OnboardingInstructionsEditor";
+import { HorizontalAuthoringStepper } from "./HorizontalAuthoringStepper";
 
 export interface ModuleDetailsState {
   title: string;
@@ -53,31 +54,16 @@ export function ModuleDetailsForm({
   };
 
   return (
-    <div className="new-module-studio-container" style={{ margin: 0 }}>
-      {/* 1. Header Banner & Actions */}
-      <div className="module-editor-breadcrumb-bar" style={{ borderRadius: "12px", borderBottomRightRadius: 0, borderBottomLeftRadius: 0 }}>
-        <div className="studio-tab-controls" style={{ marginLeft: 0 }}>
-          <button
-            type="button"
-            className={`studio-tab-btn ${activeTab === "config" ? "is-active" : ""}`}
-            onClick={() => setActiveTab("config")}
-          >
-            <Icon name="edit" />
-            <span>1. Test Configuration</span>
-          </button>
-          <button
-            type="button"
-            className={`studio-tab-btn ${activeTab === "instructions" ? "is-active" : ""}`}
-            onClick={() => setActiveTab("instructions")}
-          >
-            <Icon name="filePdf" />
-            <span>2. Instructions & Notes</span>
-          </button>
-        </div>
-      </div>
+    <div className="new-module-studio-container" style={{ margin: 0, width: "100%" }}>
+      {/* 1. Top Horizontal Authoring Stepper Bar */}
+      <HorizontalAuthoringStepper
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        hasTitle={!!details.title}
+      />
 
       {/* 2. Interactive 2-Column Studio Grid */}
-      <form onSubmit={onSubmit} className="vh-studio-grid vh-module-details-grid" style={{ paddingTop: "24px" }}>
+      <form onSubmit={onSubmit} className="vh-studio-grid">
         {/* Left Column: Form Controls */}
         <div className="vh-studio-main-col">
           {activeTab === "config" ? (
