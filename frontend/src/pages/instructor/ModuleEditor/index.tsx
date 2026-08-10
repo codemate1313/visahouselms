@@ -419,6 +419,180 @@ export function ModuleEditor() {
     catch (err: unknown) { setError(extractErrorMessage(err, strings.details.errors.delete)); }
     finally { setBusy(false); }
   }
+  async function runReadingAutoFill() {
+    if (!module) return;
+    setBusy(true);
+    try {
+      const partsMap = module.parts || [];
+      const part1a = partsMap.find(p => p.part_code === "reading_1a");
+      const part1b = partsMap.find(p => p.part_code === "reading_1b");
+      const part2 = partsMap.find(p => p.part_code === "reading_2");
+      const part3 = partsMap.find(p => p.part_code === "reading_3");
+      const part4 = partsMap.find(p => p.part_code === "reading_4");
+
+      if (part1a) {
+        const q1a = [
+          {
+            prompt: "The committee's findings were largely ______ with those of the earlier study, which strengthened confidence in both sets of results.",
+            options: [{"key": "A", "text": "consistent"}, {"key": "B", "text": "persistent"}, {"key": "C", "text": "insistent"}, {"key": "D", "text": "resistant"}],
+            correct_answers: ["A"]
+          },
+          {
+            prompt: "Rather than stating her objection openly, she chose to ______ her disagreement in a series of carefully worded questions.",
+            options: [{"key": "A", "text": "announce"}, {"key": "B", "text": "veil"}, {"key": "C", "text": "broadcast"}, {"key": "D", "text": "inflate"}],
+            correct_answers: ["B"]
+          },
+          {
+            prompt: "The report was criticised for relying on ______ evidence — a handful of memorable stories rather than systematic data.",
+            options: [{"key": "A", "text": "empirical"}, {"key": "B", "text": "statistical"}, {"key": "C", "text": "anecdotal"}, {"key": "D", "text": "theoretical"}],
+            correct_answers: ["C"]
+          },
+          {
+            prompt: "Funding for the project was ______ on the team publishing its interim results by the end of the year.",
+            options: [{"key": "A", "text": "contingent"}, {"key": "B", "text": "reluctant"}, {"key": "C", "text": "redundant"}, {"key": "D", "text": "abundant"}],
+            correct_answers: ["A"]
+          },
+          {
+            prompt: "Although the two theories appear similar, a closer reading reveals a ______ but important difference in how each defines \"value\".",
+            options: [{"key": "A", "text": "blatant"}, {"key": "B", "text": "subtle"}, {"key": "C", "text": "drastic"}, {"key": "D", "text": "profound"}],
+            correct_answers: ["B"]
+          },
+          {
+            prompt: "The museum's new wing was designed to ______ the original building rather than compete with it.",
+            options: [{"key": "A", "text": "complement"}, {"key": "B", "text": "compliment"}, {"key": "C", "text": "compensate"}, {"key": "D", "text": "compile"}],
+            correct_answers: ["A"]
+          }
+        ];
+        for (const q of q1a) {
+          await apiClient.post(`/instructor/modules/${module.id}/parts/${part1a.id}/questions`, {
+            question_type: "mcq_single",
+            prompt: q.prompt,
+            instructions: "Choose the correct word.",
+            options: q.options,
+            correct_answers: q.correct_answers,
+            points: 1.0,
+            difficulty: "medium",
+            source_type: "manual",
+            interaction: {}
+          });
+        }
+      }
+
+      if (part1b) {
+        const passage_1b = `Rethinking the office\n\nFor most of the twentieth century, the open-plan office was presented as a straightforward improvement on the private room. Removing walls, it was argued, would encourage the informal exchanges from which good ideas (1) ______. Employers were also drawn to the lower cost per employee.\n\nRecent research has complicated that picture. When one firm converted two floors to open plan, face-to-face interaction (2) ______ by roughly seventy per cent, while email traffic rose. Rather than talking more, staff appeared to retreat behind headphones and screens.\n\nThe explanation may lie in privacy. In a room with no barriers, a conversation is (3) ______ to everyone within earshot, and workers seem to compensate by having fewer of them. Concentration suffers too: studies of interrupted work suggest it can take twenty minutes to (4) ______ full focus after a distraction.\n\nNone of this means the open plan should be abandoned. It suggests instead that a single layout is unlikely to suit every kind of work, and that offices should offer a (5) ______ of spaces — quiet rooms for concentration alongside open areas for collaboration.`;
+        const q1b = [
+          { prompt: "Choose the best option for gap (1).", options: [{"key": "A", "text": "emerge"}, {"key": "B", "text": "emerged"}, {"key": "C", "text": "emergency"}], correct_answers: ["A"] },
+          { prompt: "Choose the best option for gap (2).", options: [{"key": "A", "text": "declined"}, {"key": "B", "text": "reduced"}, {"key": "C", "text": "lessened"}], correct_answers: ["A"] },
+          { prompt: "Choose the best option for gap (3).", options: [{"key": "A", "text": "audible"}, {"key": "B", "text": "audio"}, {"key": "C", "text": "auditory"}], correct_answers: ["A"] },
+          { prompt: "Choose the best option for gap (4).", options: [{"key": "A", "text": "regain"}, {"key": "B", "text": "return"}, {"key": "C", "text": "restore"}], correct_answers: ["A"] },
+          { prompt: "Choose the best option for gap (5).", options: [{"key": "A", "text": "range"}, {"key": "B", "text": "row"}, {"key": "C", "text": "rank"}], correct_answers: ["A"] }
+        ];
+        for (const q of q1b) {
+          await apiClient.post(`/instructor/modules/${module.id}/parts/${part1b.id}/questions`, {
+            question_type: "mcq_single",
+            prompt: q.prompt,
+            instructions: "Choose the correct answer for the gap.",
+            passage: passage_1b,
+            options: q.options,
+            correct_answers: q.correct_answers,
+            points: 1.0,
+            difficulty: "medium",
+            source_type: "manual",
+            interaction: {}
+          });
+        }
+      }
+
+      if (part2) {
+        const passage_2 = `Citizen science\n\nCitizen science — research carried out with the help of volunteers — has grown rapidly over the past two decades. {{blank:1}}, the practice is far from new: amateur naturalists were recording bird migrations and rainfall long before the term was coined. What has changed is scale. {{blank:2}} smartphones and online platforms, a single project can now gather millions of observations in one season.\n\nThe appeal to researchers is obvious. They obtain data at a volume no funded team could collect alone, and across areas far wider than a research station can cover. {{blank:3}}, the benefits run in both directions: participants consistently report a better grasp of how evidence is gathered and why it is uncertain.\n\n{{blank:4}}, the approach has its critics, and their central objection is data quality. Volunteers differ widely in training, and an enthusiastic observer may record a rare species that was never there. {{blank:5}}, most large projects now build in verification: photographs are required, records are cross-checked against known ranges, and statistical models weight observations by an observer's track record.\n\n{{blank:6}}, citizen science is best understood not as a cheap substitute for professional research, but as a distinct method with strengths a laboratory cannot reproduce.`;
+        const options_2 = [
+          {"key": "A", "text": "In fact"}, {"key": "B", "text": "Thanks to"}, {"key": "C", "text": "Crucially"}, {"key": "D", "text": "However"},
+          {"key": "E", "text": "In response"}, {"key": "F", "text": "Ultimately"}, {"key": "G", "text": "For instance"}, {"key": "H", "text": "In particular"}
+        ];
+        const correct_keys = ["A", "B", "C", "D", "E", "F"];
+        for (let i = 0; i < 6; i++) {
+          await apiClient.post(`/instructor/modules/${module.id}/parts/${part2.id}/questions`, {
+            question_type: "matching_unique",
+            prompt: `Reading 2 item ${i + 1}`,
+            instructions: "Match the gap to the option.",
+            passage: passage_2,
+            options: options_2,
+            correct_answers: [correct_keys[i]],
+            points: 1.0,
+            difficulty: "medium",
+            source_type: "manual",
+            interaction: {}
+          });
+        }
+      }
+
+      if (part3) {
+        const passage_3 = `A — Library: extended opening\n\nFrom 12 May until the end of the examination period, the main library will open at 07:00 and close at 02:00 daily, including weekends. Group study rooms may be booked online up to seven days in advance; bookings not claimed within fifteen minutes will be released. Silent study is enforced on floors 4 and 5. Hot food may not be brought into the building.\n\nB — Academic Writing Centre\n\nThe centre offers free one-to-one appointments of thirty minutes with a writing tutor. Bring a printed draft and a copy of the assignment brief. Tutors will discuss structure, argument and referencing, and will help you identify recurring language errors — but they do not proofread, and they will not predict a grade. Appointments open each Monday at 09:00 and are usually taken within the day.\n\nC — Careers Fair\n\nOver ninety employers will attend this year's fair in the Sports Hall on 3 June, 10:00–16:00. No registration is needed. Students are advised to bring printed copies of their CV; a free CV review desk will operate near the entrance until 14:00. Employers in engineering, health and financial services are represented most heavily this year.\n\nD — Accommodation Office\n\nApplications for university housing for the next academic year close on 30 June. Late applications are considered only if rooms remain. Students wishing to remain in their current room must apply again; rooms are not renewed automatically. The office can also advise on private rented housing and will check a tenancy agreement before you sign it.`;
+        const options_3 = [
+          {"key": "A", "text": "Library: extended opening"},
+          {"key": "B", "text": "Academic Writing Centre"},
+          {"key": "C", "text": "Careers Fair"},
+          {"key": "D", "text": "Accommodation Office"}
+        ];
+        const q3 = [
+          { p: "Which text explains where you can get feedback on a draft before submitting it?", c: "B" },
+          { p: "Which text warns that a service will not be continued automatically?", c: "D" },
+          { p: "Which text states a time limit after which a reservation is cancelled?", c: "A" },
+          { p: "Which text says that attendance requires no advance booking?", c: "C" },
+          { p: "Which text tells you a document will be checked on your behalf before you commit to it?", c: "D" },
+          { p: "Which text sets out a restriction on what you may bring into the building?", c: "A" },
+          { p: "Which text advises bringing multiple copies of a document with you?", c: "C" }
+        ];
+        for (const q of q3) {
+          await apiClient.post(`/instructor/modules/${module.id}/parts/${part3.id}/questions`, {
+            question_type: "matching_reusable",
+            prompt: q.p,
+            instructions: "Match the text to the statement.",
+            passage: passage_3,
+            options: options_3,
+            correct_answers: [q.c],
+            points: 1.0,
+            difficulty: "medium",
+            source_type: "manual",
+            interaction: {}
+          });
+        }
+      }
+
+      if (part4) {
+        const passage_4 = `The rebound effect\n\nWhen a technology becomes more efficient, the intuitive expectation is that it will consume less. A refrigerator that uses half the electricity of its predecessor should, on that reasoning, halve the household's cooling bill. Economists have known for over a century that this expectation is frequently disappointed, and the reason has a name: the rebound effect.\n\nThe mechanism is not mysterious. Efficiency lowers the cost of using a service, and when something becomes cheaper, people tend to use more of it. A driver who replaces an old car with one that travels twice as far on a litre of fuel has, in effect, halved the price of a kilometre — and may respond by driving further, or by moving further from work. The saving is not eliminated, but part of it is spent rather than banked. Economists call this the direct rebound.\n\nThe indirect rebound is harder to see and harder to measure. Money not spent on fuel does not vanish; it is spent on something else, and that something else has an energy cost of its own. A household that saves two hundred pounds a year on heating and spends it on a short flight may end the year having increased its emissions. At the level of a whole economy the effect compounds further: cheaper energy services make energy-intensive production more attractive, which is one reason the enormous efficiency gains of the industrial era were accompanied by rising, not falling, total consumption.\n\nThe size of the effect is disputed, and the dispute matters. Most estimates for household energy in wealthy countries put direct rebound somewhere between ten and thirty per cent — meaning the majority of the intended saving is still realised. A minority of researchers argue that once economy-wide effects are included, rebound can approach or even exceed one hundred per cent, a proposition known as backfire. Backfire remains contested, and the evidence for it at national scale is thin.\n\nWhat follows for policy is less that efficiency fails than that it rarely works alone. Where efficiency lowers the cost of a service, a carbon price or a tax can hold that cost steady, allowing the technical gain to be kept rather than spent. Efficiency standards paired with pricing consistently outperform either instrument used by itself. The lesson is not that we should stop making things more efficient. It is that efficiency changes what a service costs, and people notice prices.`;
+        const q4 = [
+          { p: "According to the passage, the rebound effect occurs mainly because efficiency —", o: ["makes a service cheaper to use", "requires expensive new equipment", "is usually overstated by manufacturers", "reduces the quality of the service"], c: "A" },
+          { p: "The example of the driver is used to illustrate —", o: ["indirect rebound", "direct rebound", "backfire", "the failure of efficiency standards"], c: "B" },
+          { p: "What does the passage say about the household that saves on heating?", o: ["It will always reduce its total emissions", "It typically saves the money rather than spending it", "Its overall emissions may rise despite the saving", "Its saving is cancelled out by higher heating costs later"], c: "C" },
+          { p: "How does the writer treat the idea of backfire?", o: ["As the established consensus among economists", "As a minority position that is not well supported", "As proof that efficiency policy should be abandoned", "As a phenomenon confined to household energy use"], c: "B" },
+          { p: "It can be inferred from the final paragraph that the writer would most likely support —", o: ["replacing efficiency standards with carbon pricing", "combining efficiency standards with carbon pricing", "removing taxes on energy-efficient products", "delaying efficiency standards until rebound is fully understood"], c: "B" },
+          { p: "The writer's main purpose in the passage is to —", o: ["warn that efficiency measures are ineffective and should be replaced", "explain a well-documented effect and what it implies for policy", "compare energy consumption in wealthy and developing economies", "argue that economists have misunderstood household behaviour"], c: "B" }
+        ];
+        for (const q of q4) {
+          await apiClient.post(`/instructor/modules/${module.id}/parts/${part4.id}/questions`, {
+            question_type: "mcq_single",
+            prompt: q.p,
+            instructions: "Choose the best option.",
+            passage: passage_4,
+            options: q.o.map((text, idx) => ({ key: String.fromCharCode(65 + idx), text })),
+            correct_answers: [q.c],
+            points: 1.0,
+            difficulty: "medium",
+            source_type: "manual",
+            interaction: {}
+          });
+        }
+      }
+
+      await loadModule(module.parts?.[0]?.id);
+      showSuccess("Reading Practice Test 1 successfully populated via UI Action!");
+    } catch (err: unknown) {
+      showError("Failed to populate test data.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   if (isNew) {
     return (
@@ -466,7 +640,17 @@ export function ModuleEditor() {
         </div>
 
         <div className="module-editor-breadcrumb-right">
-          {/* Breadcrumb right empty or auxiliary controls */}
+          {module.module_type === "reading" && (
+            <button
+              type="button"
+              className="ui-btn ui-btn-primary ui-btn-sm"
+              id="vh-reading-auto-fill-btn"
+              onClick={runReadingAutoFill}
+              disabled={busy}
+            >
+              <span>🧙 Auto-Fill Questions</span>
+            </button>
+          )}
         </div>
       </div>
 
