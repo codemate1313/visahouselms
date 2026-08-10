@@ -679,7 +679,48 @@ def my_current_plan_view(db: Session, user: User) -> dict:
     )
 
     from app.services import ai_evaluation_service
+    from app.models import TestAttempt, RetakeRequest
+
     ai_quota = ai_evaluation_service.get_student_ai_quota_summary(db, user)
+
+    # Fetch attempts and retake statuses for this student
+    attempt_rows = (
+        db.query(TestAttempt.module_id, TestAttempt.id, TestAttempt.status)
+        .filter(TestAttempt.user_id == user.id)
+        .order_by(TestAttempt.id.desc())
+        .all()
+    )
+    attempts_by_module: dict[int, list[dict]] = {}
+    for mod_id, att_id, att_status in attempt_rows:
+        if mod_id not in attempts_by_module:
+            attempts_by_module[mod_id] = []
+        attempts_by_module[mod_id].append({"id": att_id, "status": att_status})
+
+    available_retake_module_ids = set(
+        row[0]
+        for row in db.query(TestAttempt.module_id)
+        .join(RetakeRequest, RetakeRequest.attempt_id == TestAttempt.id)
+        .filter(
+            RetakeRequest.student_id == user.id,
+            RetakeRequest.status == "approved",
+            RetakeRequest.consumed_at.is_(None),
+        )
+        .all()
+    )
+
+    def _module_attempt_info(mod_id: int) -> dict:
+        mod_atts = attempts_by_module.get(mod_id, [])
+        has_att = len(mod_atts) > 0
+        retake_avail = mod_id in available_retake_module_ids
+        is_exh = has_att and not retake_avail
+        latest = mod_atts[0] if mod_atts else None
+        return {
+            "has_attempted": has_att,
+            "is_exhausted": is_exh,
+            "latest_attempt_id": latest["id"] if latest else None,
+            "latest_attempt_status": latest["status"] if latest else None,
+            "retake_available": retake_avail,
+        }
 
     if subscription is None or state not in (STATE_ACTIVE, STATE_GRACE):
         from app.services import trial_service
@@ -696,6 +737,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 # Free only while the trial allows it.
                 "is_locked": module.id not in demo_ids,
                 "is_demo": module.id in demo_ids,
+                **_module_attempt_info(module.id),
             }
             for module in all_published_modules
         ]
@@ -748,6 +790,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 "duration_minutes": module.duration_minutes,
                 "is_locked": False,
                 "is_demo": False,
+                **_module_attempt_info(module.id),
             })
     else:
         for module in all_published_modules:
@@ -760,6 +803,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 # affordance disappears once a plan is active.
                 "is_locked": module.id not in unlocked_ids,
                 "is_demo": False,
+                **_module_attempt_info(module.id),
             })
         modules_list.sort(key=lambda m: (m["is_locked"], m["title"]))
 

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { StudentPlanModule } from "@/api/types";
 import { ArrowIcon, ClockIcon, ModuleTypeIcon } from "../icons";
 import { Icon } from "@/components/icons";
@@ -21,11 +22,13 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
         const isStarting = starting === moduleId;
         const isLocked = Boolean(module.is_locked);
         const isDemo = Boolean(module.is_demo);
+        const isExhausted = Boolean(module.is_exhausted);
+        const retakeAvailable = Boolean(module.retake_available);
         const moduleTypeClass = `type-${module.module_type || "default"}`;
 
         return (
           <div
-            className={`premium-test-card ${moduleTypeClass}${isLocked ? " is-locked" : ""}`}
+            className={`premium-test-card ${moduleTypeClass}${isLocked ? " is-locked" : ""}${isExhausted ? " is-exhausted" : ""}`}
             key={moduleId}
           >
             {/* Ambient Background Glow Aura */}
@@ -53,11 +56,19 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
               <span className="premium-type-chip">
                 {typeLabels[module.module_type as keyof typeof typeLabels] ?? module.module_type}
               </span>
-              {isDemo && !isLocked && (
+              {isExhausted ? (
+                <span className="premium-exhausted-chip" title={strings.attemptStatus.exhaustedTooltip}>
+                  ⚠️ Attempt Exhausted
+                </span>
+              ) : retakeAvailable ? (
+                <span className="premium-retake-chip">
+                  ✓ Retake Approved
+                </span>
+              ) : isDemo && !isLocked ? (
                 <span className="premium-demo-chip" title={strings.demo.chipTooltip}>
                   {strings.demo.chip}
                 </span>
-              )}
+              ) : null}
             </div>
 
             {/* Card Body */}
@@ -87,6 +98,29 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                 >
                   Unlock Plan
                 </Button>
+              ) : isExhausted ? (
+                module.latest_attempt_id ? (
+                  <Link to={`/student/attempts/${module.latest_attempt_id}/result/details`} style={{ width: "100%", textDecoration: "none" }}>
+                    <Button
+                      variant="outline"
+                      fullWidth
+                      rightIcon={<ArrowIcon />}
+                      className="start-test-btn is-exhausted-btn"
+                    >
+                      Attempt Exhausted · View Result
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    disabled
+                    className="start-test-btn is-exhausted-btn"
+                    title={strings.attemptStatus.exhaustedTooltip}
+                  >
+                    Attempt Exhausted
+                  </Button>
+                )
               ) : (
                 <Button
                   variant="primary"
@@ -96,7 +130,11 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                   onClick={() => onStartModule(moduleId, module.module_type, false)}
                   className="start-test-btn"
                 >
-                  {isDemo ? strings.demo.startTest : strings.startTest}
+                  {retakeAvailable
+                    ? strings.attemptStatus.startRetakeBtn
+                    : isDemo
+                    ? strings.demo.startTest
+                    : strings.startTest}
                 </Button>
               )}
             </div>

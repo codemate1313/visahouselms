@@ -434,6 +434,11 @@ export interface StudentPlanModule {
   status?: ExamModuleStatus;
   is_locked?: boolean;
   is_demo?: boolean;
+  has_attempted?: boolean;
+  is_exhausted?: boolean;
+  latest_attempt_id?: number | null;
+  latest_attempt_status?: string | null;
+  retake_available?: boolean;
 }
 
 export interface StudentPlanCatalogItem {

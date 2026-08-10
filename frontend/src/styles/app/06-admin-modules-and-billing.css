@@ -7712,6 +7712,54 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   color: #4ade80;
 }
 
+.premium-exhausted-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, #ef4444 35%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, #ef4444 10%, transparent);
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="dark"] .premium-exhausted-chip {
+  color: #f87171;
+}
+
+.premium-retake-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, #10b981 35%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, #10b981 10%, transparent);
+  color: #059669;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="dark"] .premium-retake-chip {
+  color: #34d399;
+}
+
+.start-test-btn.is-exhausted-btn {
+  border-color: rgba(220, 38, 38, 0.3) !important;
+  color: #dc2626 !important;
+  background: rgba(220, 38, 38, 0.04) !important;
+  font-weight: 700 !important;
+}
+
+.start-test-btn.is-exhausted-btn:hover {
+  border-color: rgba(220, 38, 38, 0.5) !important;
+  background: rgba(220, 38, 38, 0.08) !important;
+}
+
 /* ---------------------------------------------------------------------------
    Institute self-service renewal
    Sits on the billing page between the plan summary and payment history. Reads

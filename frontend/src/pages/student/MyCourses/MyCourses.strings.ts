@@ -40,6 +40,15 @@ export const myCoursesStrings = {
     trialExpired: "Your trial period has ended",
     trialLastDay: "Today is the last day of your trial",
   },
+  attemptStatus: {
+    exhaustedChip: "Attempt Exhausted",
+    attemptedChip: "Attempt Completed",
+    retakeAvailableChip: "Retake Approved",
+    exhaustedBtn: "Attempt Exhausted",
+    viewResultBtn: "View Result",
+    startRetakeBtn: "Start Retake",
+    exhaustedTooltip: "You have already attempted this test. Raise a retake request from your results page if needed.",
+  },
   errors: {
     startModule: "Failed to start the test.",
     startModuleTitle: "Could Not Start",
