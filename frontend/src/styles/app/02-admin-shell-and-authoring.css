@@ -736,22 +736,17 @@
 
 .module-type-card {
   position: relative;
-  min-height: 172px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  gap: 14px;
-  padding: 20px;
-  overflow: hidden;
-  border: 1px solid rgba(225, 225, 230, 0.88);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.88);
-  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  min-height: 250px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
   text-decoration: none;
-  box-shadow: 0 14px 36px rgba(17, 17, 19, 0.052);
-  backdrop-filter: blur(16px) saturate(130%);
-  -webkit-backdrop-filter: blur(16px) saturate(130%);
-  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .module-type-card::after {
@@ -759,50 +754,138 @@
   position: absolute;
   right: -36px;
   bottom: -48px;
-  width: 130px;
-  height: 130px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--primary) 7%, transparent);
+  background: radial-gradient(circle, var(--card-accent-soft) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
 }
 
 .module-type-card:hover {
-  transform: translateY(-2px);
-  border-color: #8fb9b5;
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  border-color: color-mix(in srgb, var(--card-accent) 45%, var(--border));
+}
+
+.module-type-card:hover::after {
+  transform: scale(1.2);
+}
+
+.module-type-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  z-index: 1;
 }
 
 .module-type-card h2 {
-  margin: 2px 0 8px;
-  font-size: 18px;
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
 }
 
-.module-type-card p {
-  margin: 0;
+.module-type-card-body {
+  flex: 1;
+  margin-bottom: 18px;
+  z-index: 1;
+}
+
+.module-type-details-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.module-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 550;
+  background: var(--surface-muted, #f3f4f6);
   color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.55;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  line-height: 1.35;
+  width: fit-content;
+}
+
+[data-theme="dark"] .module-type-badge {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: #a1a1aa;
 }
 
 .module-type-icon {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
-  border-radius: var(--radius-lg);
-  background: var(--primary-soft);
-  color: var(--primary);
-  font-size: 13px;
+  border-radius: 12px;
   font-weight: 800;
+  font-size: 15px;
+  background: var(--card-accent-soft);
+  color: var(--card-accent);
+  border: 1.5px solid color-mix(in srgb, var(--card-accent) 25%, transparent);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.module-type-card:hover .module-type-icon {
+  background: var(--card-accent);
+  color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px var(--card-accent-soft);
+}
+
+.module-type-card-footer {
+  margin-top: auto;
+  z-index: 1;
 }
 
 .module-create-label {
-  grid-column: 2;
-  align-self: end;
-  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
   font-weight: 700;
+  color: var(--card-accent);
+  transition: all 0.2s ease;
+}
+
+.module-type-card:hover .module-create-label {
+  transform: translateX(4px);
+}
+
+/* Unique Brand Accent Colors for each module type */
+.module-type-card.module-type-reading {
+  --card-accent: #e11d48;
+  --card-accent-soft: rgba(225, 29, 72, 0.08);
+}
+.module-type-card.module-type-listening {
+  --card-accent: #2563eb;
+  --card-accent-soft: rgba(37, 99, 235, 0.08);
+}
+.module-type-card.module-type-writing {
+  --card-accent: #9333ea;
+  --card-accent-soft: rgba(147, 51, 234, 0.08);
+}
+.module-type-card.module-type-speaking {
+  --card-accent: #059669;
+  --card-accent-soft: rgba(5, 150, 105, 0.08);
+}
+.module-type-card.module-type-full_mock {
+  --card-accent: #ea580c;
+  --card-accent-soft: rgba(234, 88, 12, 0.08);
+}
+.module-type-card.module-type-final_test {
+  --card-accent: #0d9488;
+  --card-accent-soft: rgba(13, 148, 136, 0.08);
 }
 
 .module-list-heading {
