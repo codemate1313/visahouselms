@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState, useRef } from "react";
 import { lockBodyScroll } from "@/utils/scrollLock";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
@@ -49,6 +49,9 @@ export function ModuleEditor() {
   const [selectedSources, setSelectedSources] = useState<Record<IeltsSection, string>>({ listening: "", reading: "", writing: "", speaking: "" });
   const [loadingSources, setLoadingSources] = useState(false);
   const [manual, setManual] = useState<QuestionDraft | null>(null);
+  // Which part the current draft belongs to, so a reload can tell "same part,
+  // keep what is typed" from "different part, start fresh".
+  const manualPartIdRef = useRef<number | null>(null);
   const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<QuestionImportPreview | null>(null);
@@ -82,7 +85,16 @@ export function ModuleEditor() {
       });
       const selected = data.parts?.find((part) => part.id === (preferredPartId ?? selectedPartId)) ?? data.parts?.[0] ?? null;
       setSelectedPartId(selected?.id ?? null);
-      if (selected) setManual(emptyQuestion(selected));
+      /* Only seed the draft when there isn't one, or when the author has moved
+         to a different part. loadModule() runs after every save - source text,
+         audio, import, delete - and resetting here unconditionally wiped a
+         half-written question every time any of those happened. Clearing the
+         draft after a successful save is the job of the save handler, which
+         already does it. */
+      if (selected && (!manualPartIdRef.current || manualPartIdRef.current !== selected.id)) {
+        manualPartIdRef.current = selected.id;
+        setManual(emptyQuestion(selected));
+      }
       setError(null);
     } catch (err: unknown) {
       setError(extractErrorMessage(err, strings.details.errors.load));
