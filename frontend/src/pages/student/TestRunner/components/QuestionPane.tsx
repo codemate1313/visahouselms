@@ -6,7 +6,8 @@ import { MatchingQuestionGroup } from "./MatchingQuestionGroup";
 import { InlineMatchingBlankGroup } from "./InlineMatchingBlankGroup";
 import { SourceTextMatchingGroup } from "./SourceTextMatchingGroup";
 import { SharedClozeGroup } from "./SharedClozeGroup";
-import { ListeningPart1Group } from "./ListeningPart1Group";
+import { ListeningChoiceGroups } from "./ListeningChoiceGroups";
+import { NotepadGapsGroup } from "./NotepadGapsGroup";
 
 interface QuestionPaneProps {
   currentPart: Attempt["parts"][number];
@@ -36,21 +37,15 @@ export function QuestionPane({
     currentPart.answer_constraints.layout === "source_text_matching" || currentPart.part_code === "reading_3"
   );
   const usesSharedCloze = currentPart.part_code === "reading_1b" && currentPart.answer_constraints.layout === "shared_cloze";
-  const conversationGroups = currentPart.answer_constraints.layout === "conversation_groups"
-    ? currentPart.questions.reduce<Array<{ label: string; questions: typeof currentPart.questions }>>((groups, question) => {
-      const label = question.interaction?.group_label?.trim() || "Conversation";
-      const current = groups[groups.length - 1];
-      if (!current || current.label !== label) groups.push({ label, questions: [question] });
-      else current.questions.push(question);
-      return groups;
-    }, [])
-    : [];
-  let renderedQuestionIndex = 0;
+  const usesNotepadGaps = currentPart.answer_constraints.layout === "notepad_gaps" && currentPart.questions.length > 0;
   const isListening1 = currentPart.part_code === "listening_1";
+  // Listening 2 is the same answer sheet as Listening 1, split into labelled
+  // conversations - so it renders through the same component.
+  const usesConversationGroups = currentPart.answer_constraints.layout === "conversation_groups";
 
   return (
     <section className="test-runner-question-pane" ref={questionPaneRef} aria-label={`${currentPart.title} questions`}>
-      {currentPart.section_type !== "writing" && !isListening1 && (
+      {currentPart.section_type !== "writing" && !isListening1 && !usesConversationGroups && (
         <div className="test-runner-pane-heading test-runner-question-pane-heading">
           <span>
             {currentPart.question_count} {t.questionsSuffix}
@@ -59,12 +54,21 @@ export function QuestionPane({
           <p>{isReading1a ? (currentPart.instructions || t.instructions) : t.instructions}</p>
         </div>
       )}
-      {isListening1 ? (
-        <ListeningPart1Group
+      {isListening1 || usesConversationGroups ? (
+        <ListeningChoiceGroups
           currentPart={currentPart}
           questionNumberOffset={questionNumberOffset}
           savingIds={savingIds}
+          grouped={usesConversationGroups}
           onChangeResponse={(questionId, response) => onChangeResponse(questionId, response)}
+        />
+      ) : usesNotepadGaps ? (
+        <NotepadGapsGroup
+          questions={currentPart.questions}
+          questionNumberOffset={questionNumberOffset}
+          savingIds={savingIds}
+          maxAnswerWords={currentPart.answer_constraints.max_answer_words}
+          onChangeResponse={onChangeResponse}
         />
       ) : usesSharedCloze ? (
         <SharedClozeGroup
@@ -100,27 +104,7 @@ export function QuestionPane({
           reusable={matchingType === "matching_reusable"}
           onChangeResponse={(questionId, response) => onChangeResponse(questionId, response)}
         />
-      ) : conversationGroups.length > 0 ? conversationGroups.map((group) => (
-        <section className="test-runner-conversation-group" key={`${group.label}-${group.questions[0]?.id}`}>
-          <h3>{group.label}</h3>
-          {group.questions.map((question) => {
-            const index = questionNumberOffset + renderedQuestionIndex + 1;
-            renderedQuestionIndex += 1;
-            return (
-              <QuestionInput
-                key={question.id}
-                index={index}
-                question={question}
-                maxAnswerWords={currentPart.answer_constraints.max_answer_words}
-                saving={savingIds.has(question.id)}
-                recording={recordingQuestionId === question.id}
-                onChange={(response, debounce) => onChangeResponse(question.id, response, debounce)}
-                onRecord={() => onRecord(question.id)}
-              />
-            );
-          })}
-        </section>
-      )) : currentPart.questions.map((question, qIndex) => (
+      ) : currentPart.questions.map((question, qIndex) => (
         <QuestionInput
           key={question.id}
           index={questionNumberOffset + qIndex + 1}

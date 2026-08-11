@@ -3,7 +3,6 @@ import { lockBodyScroll } from "@/utils/scrollLock";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { Icon } from "@/components/icons";
 import { confirmDelete } from "@/components/confirmDialog";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
@@ -20,7 +19,7 @@ import type {
   QuestionImportPreview,
 } from "@/api/types";
 import { moduleEditorStrings as strings } from "./ModuleEditor.strings";
-import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSITE_TYPES, MODULE_TYPES, SOURCE_SECTIONS, detectConversationSpeakers, emptyQuestion, questionPayload } from "./helpers";
+import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSED_TASK_LAYOUTS, COMPOSITE_TYPES, MODULE_TYPES, SOURCE_SECTIONS, detectConversationSpeakers, emptyQuestion, notepadPromptForBlank, questionPayload } from "./helpers";
 import { NewModuleForm } from "./components/NewModuleForm";
 import { ModulePartNav } from "./components/ModulePartNav";
 import { ModuleReadinessPanel } from "./components/ModuleReadinessPanel";
@@ -30,12 +29,13 @@ import { ListeningAudioPanel } from "./components/ListeningAudioPanel";
 import { SpeakingTimingPanel } from "./components/SpeakingTimingPanel";
 import { SharedPassagePanel } from "./components/SharedPassagePanel";
 import { GapTaskComposer, type GapTaskDraft } from "./components/GapTaskComposer";
+import { NotepadGapsComposer, type NotepadTaskDraft } from "./components/NotepadGapsComposer";
 import { SourceTextComposer, type SourceTextDraft } from "./components/SourceTextComposer";
 import { ManualQuestionForm } from "./components/ManualQuestionForm";
 import { BulkImportForm } from "./components/BulkImportForm";
 import { ImportReviewPanel } from "./components/ImportReviewPanel";
 import { SavedQuestionsList } from "./components/SavedQuestionsList";
-import { Badge, RequiredMark } from "@/components/ui";
+import { Badge } from "@/components/ui";
 
 export function ModuleEditor() {
   const { id, type: rawType } = useParams();
@@ -137,6 +137,10 @@ export function ModuleEditor() {
   }, [editingQuestionId]);
 
   const selectedPart = useMemo(() => module?.parts?.find((part) => part.id === selectedPartId) ?? null, [module, selectedPartId]);
+  /* Parts whose whole task is composed in one panel - a passage, a notepad, a
+     set of source texts - rather than added question by question. The manual
+     and bulk entry paths are hidden for them: the composer owns the rows. */
+  const usesTaskComposer = COMPOSED_TASK_LAYOUTS.has(selectedPart?.answer_constraints.layout ?? "");
   const [partTitle, setPartTitle] = useState("");
 
   /* Keyed on the part's id and its saved values rather than the object itself.
@@ -498,12 +502,16 @@ export function ModuleEditor() {
     }
   }
 
-  async function generateAudio(event: FormEvent) {
-    event.preventDefault(); if (!module || !selectedPart) return;
+  async function generateAudio(payload: { title: string; conversation: string; rate: string }) {
+    if (!module || !selectedPart) return;
     setBusy(true); setError(null);
     try {
-      const { data } = await apiClient.post<ExamModuleAsset>(`/instructor/modules/${module.id}/parts/${selectedPart.id}/tts`, tts);
-      setTts((current) => ({ ...current, conversation: "" })); await loadModule(selectedPart.id); showSuccess(strings.listeningAudio.notices.generated(data.tts_voice ?? "", selectedPart.title));
+      const existingTts = selectedPart.assets.filter(a => a.asset_type === "tts_text");
+      for (const asset of existingTts) {
+        await apiClient.delete(`/instructor/modules/${module.id}/assets/${asset.id}`);
+      }
+      const { data } = await apiClient.post<ExamModuleAsset>(`/instructor/modules/${module.id}/parts/${selectedPart.id}/tts`, payload);
+      await loadModule(selectedPart.id); showSuccess(strings.listeningAudio.notices.generated(data.tts_voice ?? "", selectedPart.title));
     } catch (err: unknown) { showError(extractErrorMessage(err, strings.listeningAudio.errors.generate)); }
     finally { setBusy(false); }
   }
@@ -610,6 +618,70 @@ export function ModuleEditor() {
     }
   }
 
+  // Listening 3 is one notepad, not seven questions: the author writes it once
+  // and this generates the scorable row behind each blank. Every row carries the
+  // whole notepad on `passage` - that is what the candidate reads - and its own
+  // line as the prompt, which is what satisfies the part's {{blank}} rule.
+  async function saveNotepadTask(draft: NotepadTaskDraft) {
+    if (!module || !selectedPart) return;
+    const blanks = Object.keys(draft.answers).map(Number).sort((a, b) => a - b);
+    setBusy(true); setError(null);
+    try {
+      const base = `/instructor/modules/${module.id}/parts/${selectedPart.id}/questions`;
+      for (const question of selectedPart.questions) {
+        await apiClient.delete(`${base}/${question.id}`);
+      }
+      const points = selectedPart.max_marks && blanks.length
+        ? Number(selectedPart.max_marks) / blanks.length
+        : 1;
+      for (const blank of blanks) {
+        await apiClient.post(base, questionPayload({
+          question_type: selectedPart.answer_constraints.allowed_question_types?.[0] ?? "fill_blank",
+          prompt: notepadPromptForBlank(draft.notepad, blank),
+          instructions: null,
+          passage: draft.notepad,
+          image_path: null,
+          image_url: null,
+          options: [],
+          correct_answers: draft.answers[blank],
+          interaction: {},
+          explanation: null,
+          points,
+          difficulty: "medium",
+        }));
+      }
+      await loadModule(selectedPart.id);
+      showSuccess(strings.notepadTask.saved(blanks.length));
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, strings.notepadTask.error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteComposedTask() {
+    if (!module || !selectedPart) return;
+    const count = selectedPart.questions.length;
+    const confirmed = await confirmDelete(
+      `Are you sure you want to delete this ${selectedPart.title} task and all of its ${count} questions?`,
+      "Delete Task"
+    );
+    if (!confirmed) return;
+    setBusy(true); setError(null);
+    try {
+      const base = `/instructor/modules/${module.id}/parts/${selectedPart.id}/questions`;
+      for (const question of selectedPart.questions) {
+        await apiClient.delete(`${base}/${question.id}`);
+      }
+      await loadModule(selectedPart.id);
+      showSuccess("Task deleted successfully.");
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, "Failed to delete task."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   // The passage lives on each question, so saving the part-level source text
   // rewrites every question in the part. Questions are re-sent whole because the
   // update endpoint takes a full QuestionCreate payload, not a patch.
@@ -654,6 +726,9 @@ export function ModuleEditor() {
     try {
       const { data } = await apiClient.post<ExamModule>(`/instructor/modules/${module.id}/status`, { status });
       setModule(data); showSuccess(status === "published" ? strings.details.notices.published : strings.details.notices.movedTo(status));
+      // Publishing ends the authoring job, so hand the author back to the
+      // module list rather than leaving them in an editor for finished work.
+      if (status === "published") navigate(moduleWorkspacePath);
     } catch (err: unknown) { showError(extractErrorMessage(err, strings.details.notices.statusError)); }
     finally { setBusy(false); }
   }
@@ -712,65 +787,24 @@ export function ModuleEditor() {
             />
           ) : (
             <>
+              {/* The section heading is edited inline in this header. Candidate
+                  instructions live here too - having them in two places meant
+                  two fields writing the same column, where whichever you saved
+                  last silently overwrote the other. */}
               <PartSpecPanel
                 part={selectedPart}
                 isEditable={isEditable}
                 busy={busy}
                 onToggleAiEvaluation={togglePartAiEvaluation}
                 onUpdateInstructions={updatePartInstructions}
-                questionEntryMode={questionEntryMode}
-                onEntryModeChange={setQuestionEntryMode}
+                partTitle={partTitle}
+                onPartTitleChange={setPartTitle}
+                onSavePartTitle={savePartHeader}
+                {...(usesTaskComposer ? {} : {
+                  questionEntryMode,
+                  onEntryModeChange: setQuestionEntryMode,
+                })}
               />
-
-              {/* Section heading only. Candidate instructions are edited in
-                  PartSpecPanel above - having them in both places meant two
-                  fields writing the same column, where whichever you saved last
-                  silently overwrote the other. */}
-              <div className="vh-studio-card" style={{ marginBottom: 20 }}>
-                <div className="vh-card-header" style={{ marginBottom: 16 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                    <Icon name="edit" />
-                    Section Heading
-                  </h3>
-                  <p style={{ fontSize: 13, color: "var(--text-muted, #64748b)", margin: "4px 0 0" }}>
-                    Configure a custom section heading (title) for this part.
-                  </p>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div className="vh-form-group">
-                    <label htmlFor="part-title-input" style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>
-                      Section Heading<RequiredMark />
-                    </label>
-                    <input
-                      id="part-title-input"
-                      type="text"
-                      className="ui-input"
-                      style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border, #cbd5e1)", background: "var(--surface, #fff)" }}
-                      value={partTitle}
-                      onChange={(e) => setPartTitle(e.target.value)}
-                      disabled={busy || !isEditable}
-                      required
-                      aria-describedby="part-title-help"
-                    />
-                    {!partTitle.trim() && (
-                      <p id="part-title-help" style={{ margin: "6px 0 0", fontSize: 12.5, color: "var(--danger)" }}>
-                        A section heading is required.
-                      </p>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <button
-                      type="button"
-                      className="button primary"
-                      style={{ padding: "8px 16px", borderRadius: 8, height: "auto" }}
-                      onClick={savePartHeader}
-                      disabled={busy || !isEditable || !partTitle.trim() || partTitle === selectedPart.title}
-                    >
-                      Save Section Heading
-                    </button>
-                  </div>
-                </div>
-              </div>
 
             {selectedPart.section_type === "listening" && (
               <ListeningAudioPanel
@@ -819,9 +853,17 @@ export function ModuleEditor() {
               />
             ) : null}
 
-            {selectedPart.answer_constraints.shared_passage
-              && selectedPart.answer_constraints.layout !== "inline_matching_blanks"
-              && selectedPart.answer_constraints.layout !== "source_text_matching" && (
+            {selectedPart.answer_constraints.layout === "notepad_gaps" ? (
+              <NotepadGapsComposer
+                part={selectedPart}
+                isEditable={isEditable}
+                busy={busy}
+                onSubmit={saveNotepadTask}
+                onDelete={deleteComposedTask}
+              />
+            ) : null}
+
+            {selectedPart.answer_constraints.shared_passage && !usesTaskComposer && (
               <SharedPassagePanel
                 part={selectedPart}
                 isEditable={isEditable}
@@ -830,9 +872,7 @@ export function ModuleEditor() {
               />
             )}
 
-            {isEditable && manual
-              && selectedPart.answer_constraints.layout !== "inline_matching_blanks"
-              && selectedPart.answer_constraints.layout !== "source_text_matching" && (
+            {isEditable && manual && !usesTaskComposer && (
               <div className="vh-entry-mode-wrapper">
                 <div className="module-entry-tabbed-content">
                   {questionEntryMode === "manual" ? (
@@ -876,7 +916,12 @@ export function ModuleEditor() {
               />
             )}
 
-              <SavedQuestionsList part={selectedPart} isEditable={isEditable} onEdit={editQuestion} onDelete={deleteQuestion} />
+              {/* A composed task already shows every row it generated, with its
+                  answer, inside its own panel - and editing or deleting one row
+                  on its own would only break the task the composer rebuilds. */}
+              {!usesTaskComposer && (
+                <SavedQuestionsList part={selectedPart} isEditable={isEditable} onEdit={editQuestion} onDelete={deleteQuestion} />
+              )}
             </>
           )}
         </main>

@@ -5,6 +5,10 @@
   gap: 16px;
 }
 
+.listening-avatar-player.has-no-portrait {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .listening-avatar-portrait {
   width: 112px;
   height: 112px;

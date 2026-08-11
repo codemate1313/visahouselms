@@ -431,3 +431,197 @@
   height: 100%;
   border: none;
 }
+
+/* ---------- Redesigned Empty State & Loading State ---------- */
+
+.sm-loading-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+  padding: 12px 0;
+}
+
+.sm-skeleton-card {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-lg, 16px);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 180px;
+}
+
+.sm-skeleton-bar {
+  background: linear-gradient(90deg, var(--surface-muted, #f1f5f9) 25%, var(--border, #e2e8f0) 50%, var(--surface-muted, #f1f5f9) 75%);
+  background-size: 200% 100%;
+  animation: sm-shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+@keyframes sm-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.sm-empty-state {
+  position: relative;
+  background: linear-gradient(145deg, rgba(225, 29, 46, 0.03) 0%, rgba(59, 130, 246, 0.02) 50%, rgba(16, 185, 129, 0.02) 100%), var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-xl, 24px);
+  padding: 56px 28px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+[data-theme="dark"] .sm-empty-state {
+  background: linear-gradient(145deg, rgba(225, 29, 46, 0.06) 0%, rgba(59, 130, 246, 0.04) 50%, rgba(16, 185, 129, 0.03) 100%), rgba(20, 20, 26, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.sm-empty-illustration {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.sm-empty-glow-orb {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(225, 29, 46, 0.18) 0%, rgba(225, 29, 46, 0) 70%);
+  animation: sm-orb-pulse 3s ease-in-out infinite;
+}
+
+@keyframes sm-orb-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+.sm-empty-icon-box {
+  position: relative;
+  z-index: 2;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(225, 29, 46, 0.12), rgba(239, 68, 68, 0.05));
+  border: 1px solid rgba(225, 29, 46, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary, #e11d2e);
+  font-size: 32px;
+  box-shadow: 0 10px 25px -5px rgba(225, 29, 46, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.sm-empty-state:hover .sm-empty-icon-box {
+  transform: translateY(-2px) scale(1.04);
+}
+
+.sm-empty-icon-main {
+  font-size: 32px;
+}
+
+.sm-empty-pill {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--primary, #e11d2e);
+  background: rgba(225, 29, 46, 0.08);
+  border: 1px solid rgba(225, 29, 46, 0.18);
+  padding: 4px 14px;
+  border-radius: 999px;
+}
+
+.sm-empty-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text, #111113);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.sm-empty-desc {
+  font-size: 14.5px;
+  color: var(--text-muted, #6e6e73);
+  max-width: 520px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.sm-empty-actions {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sm-empty-tips-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+  width: 100%;
+  max-width: 900px;
+  text-align: left;
+}
+
+@media (max-width: 768px) {
+  .sm-empty-tips-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.sm-empty-tip-card {
+  background: var(--surface-muted, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-md, 14px);
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme="dark"] .sm-empty-tip-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.sm-empty-tip-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary, #e11d2e);
+}
+
+.sm-tip-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.sm-tip-content h4 {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text, #111113);
+  margin: 0 0 4px 0;
+}
+
+.sm-tip-content p {
+  font-size: 12.5px;
+  color: var(--text-muted, #64748b);
+  margin: 0;
+  line-height: 1.45;
+}

@@ -271,6 +271,27 @@
   gap: 10px;
 }
 
+/* Ending the attempt is the only action in the footer, so it carries the
+   danger weight rather than looking like another step button. */
+.test-runner-end-exam {
+  padding: 9px 22px;
+  border: 1px solid var(--danger, #dc2626);
+  border-radius: var(--radius-md, 8px);
+  background: var(--danger, #dc2626);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.test-runner-end-exam:hover:not(:disabled) {
+  background: var(--danger-hover, #b91c1c);
+  border-color: var(--danger-hover, #b91c1c);
+}
+
+.test-runner-end-exam:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .test-runner-loading {
   display: flex;
   align-items: center;
@@ -1084,6 +1105,39 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
+/* Listening runs as one column: the pane spans the window so nothing is boxed
+   off to one side, while the notes and answers inside it stay in a readable
+   centred measure. */
+.test-runner-body--listening {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 0;
+}
+
+.test-runner-body--listening .test-runner-question-pane {
+  padding: 20px 16px 32px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* The heading banner and the list that holds it run the full width of the
+   window; only the answerable content inside keeps a readable measure. */
+.test-runner-body--listening .lca-listening-part1-container,
+.test-runner-body--listening .lca-listening-instruction-banner,
+.test-runner-body--listening .test-runner-pane-heading {
+  max-width: none;
+  width: 100%;
+}
+
+.test-runner-body--listening .lca-listening-questions-list,
+.test-runner-body--listening .test-runner-conversation-group,
+.test-runner-body--listening .test-runner-question,
+.test-runner-body--listening .test-runner-notepad {
+  width: 100%;
+  max-width: none;
+}
+
 .test-runner-question-image {
   margin-bottom: 16px;
 }
@@ -1404,6 +1458,99 @@
   line-height: 1.2;
   vertical-align: middle;
   cursor: pointer;
+}
+
+/* ---------- Listening notepad (one set of notes, numbered blanks) ---------- */
+
+.test-runner-notepad {
+  position: relative;
+  margin-top: 8px;
+  padding: 46px 28px 28px;
+  border: 1px solid #d9dce2;
+  border-radius: 5px 5px 22px 5px;
+  background: var(--surface-muted, #f4f5f7);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.test-runner-notepad-rings {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 26px;
+}
+
+.test-runner-notepad-rings i {
+  width: 12px;
+  height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #6b7280 0%, #374151 100%);
+  box-shadow: 0 2px 3px rgba(15, 23, 42, 0.35);
+}
+
+.test-runner-notepad-heading {
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.test-runner-notepad-lines {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 2.1;
+}
+
+.test-runner-notepad-blank {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 4px;
+  vertical-align: middle;
+}
+
+.test-runner-notepad-number {
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.test-runner-notepad-blank .test-runner-text-input {
+  width: min(220px, 100%);
+  min-width: 120px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  line-height: 1.4;
+}
+
+.test-runner-notepad-blank .test-runner-text-input.is-error {
+  border-color: var(--danger, #b91c2b);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger, #b91c2b) 18%, transparent);
+}
+
+@media (max-width: 720px) {
+  .test-runner-notepad {
+    padding: 40px 16px 20px;
+  }
+
+  .test-runner-notepad-blank {
+    display: inline-flex;
+  }
+
+  .test-runner-notepad-blank .test-runner-text-input {
+    width: min(160px, 100%);
+    min-width: 96px;
+  }
 }
 
 .test-runner-cloze-passage p {
@@ -4534,12 +4681,16 @@ th[aria-sort="descending"] .table-sort-button::after {
    LANGUAGE CERT ACADEMIC - LISTENING PART 1 RESTRUCTURED STYLES
    ========================================================================== */
 
-/* Pinned Master Audio Header Player */
+/* Pinned Master Audio Header Player.
+   Surfaces, text and borders come from the global theme tokens so this bar
+   follows light and dark exactly like every other surface in the app. Only the
+   coral accent is fixed - that is the exam's own player colour. */
 .lca-listening-header-player {
-  background: #111318;
-  color: #ffffff;
+  --lca-accent: #e85d3f;
+  background: var(--surface);
+  color: var(--text);
   padding: 8px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -4551,25 +4702,29 @@ th[aria-sort="descending"] .table-sort-button::after {
   align-items: center;
   gap: 16px;
   width: 100%;
+  /* Centred on the same measure as the questions below it, so the bar reads as
+     the head of that column rather than a full-bleed strip. */
+  max-width: 1040px;
+  margin-inline: auto;
 }
 
 .lca-listening-status {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 240px;
+  flex: 0 0 auto;
 }
 
 .lca-listening-pulse {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #64748b;
+  background: var(--text-muted);
 }
 
 .lca-listening-pulse.is-active {
-  background: #e85d3f;
-  box-shadow: 0 0 10px rgba(232, 93, 63, 0.8);
+  background: var(--lca-accent, #e85d3f);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--lca-accent, #e85d3f) 80%, transparent);
   animation: lcaPulse 1.5s infinite;
 }
 
@@ -4583,7 +4738,7 @@ th[aria-sort="descending"] .table-sort-button::after {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.3px;
-  color: #f1f5f9;
+  color: var(--text);
 }
 
 .lca-listening-progress-wrapper {
@@ -4596,38 +4751,96 @@ th[aria-sort="descending"] .table-sort-button::after {
 .lca-listening-progress-bar {
   flex: 1;
   height: 6px;
-  background: rgba(255, 255, 255, 0.15);
+  background: color-mix(in srgb, var(--text) 14%, transparent);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .lca-listening-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #e85d3f, #f97316);
+  background: linear-gradient(90deg, var(--lca-accent, #e85d3f), #f97316);
   transition: width 0.2s linear;
 }
 
-.lca-listening-time-display {
-  font-family: monospace;
-  font-size: 12px;
-  color: #94a3b8;
-  white-space: nowrap;
+.lca-listening-volume {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  color: var(--text-muted);
 }
 
-.lca-listening-lock-badge {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  color: #fca5a5;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.lca-listening-volume svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+/* A bare 3px rail. `min-height` has to be reset explicitly: the app-wide input
+   rule gives every non-checkbox input a 42px minimum, which is what turned this
+   slider into a pill. */
+.lca-listening-volume input[type="range"] {
+  width: 84px;
+  height: 12px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.lca-listening-volume input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--text) 18%, transparent);
+}
+
+.lca-listening-volume input[type="range"]::-moz-range-track {
+  height: 3px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--text) 18%, transparent);
+}
+
+.lca-listening-volume input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  margin-top: -3.5px;
+  border: none;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: background 0.15s ease;
+}
+
+.lca-listening-volume input[type="range"]::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: none;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.lca-listening-volume:hover input[type="range"]::-webkit-slider-thumb,
+.lca-listening-volume input[type="range"]:focus-visible::-webkit-slider-thumb {
+  background: var(--lca-accent, #e85d3f);
+}
+
+.lca-listening-volume:hover input[type="range"]::-moz-range-thumb {
+  background: var(--lca-accent, #e85d3f);
+}
+
+.lca-listening-volume input[type="range"]:focus-visible {
+  outline: 2px solid var(--lca-accent, #e85d3f);
+  outline-offset: 3px;
 }
 
 /* Part 1 Main Instruction Banner */
 .lca-listening-part1-container {
+  --lca-accent: #e85d3f;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -4639,16 +4852,16 @@ th[aria-sort="descending"] .table-sort-button::after {
   align-items: center;
   gap: 14px;
   padding: 14px 18px;
-  background: #1c1d22;
-  color: #ffffff;
+  background: var(--surface-muted);
+  color: var(--text);
   border-radius: 6px;
-  border: 1px solid #2d2f36;
+  border: 1px solid var(--border);
 }
 
 .lca-listening-instruction-badge {
   width: 32px;
   height: 32px;
-  background: #000000;
+  background: var(--text);
   border-radius: 4px;
   flex-shrink: 0;
 }
@@ -4657,7 +4870,21 @@ th[aria-sort="descending"] .table-sort-button::after {
   font-size: 13.5px;
   font-weight: 600;
   line-height: 1.45;
-  color: #f1f5f9;
+  color: var(--text);
+}
+
+/* Listening 2 splits the same sheet into labelled conversations. */
+.lca-listening-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lca-listening-group-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
 }
 
 /* Question Cards & Choices */
@@ -4670,9 +4897,9 @@ th[aria-sort="descending"] .table-sort-button::after {
 .lca-listening-q-card {
   display: flex;
   flex-direction: column;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #ffffff;
+  background: var(--surface);
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
@@ -4683,19 +4910,19 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .lca-listening-q-number {
   padding: 10px 16px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
   font-size: 18px;
   font-weight: 800;
-  color: #334155;
+  color: var(--text);
 }
 
 .lca-listening-q-prompt {
   padding: 12px 16px;
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
-  border-bottom: 1px solid #f1f5f9;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
 }
 
 .lca-listening-options {
@@ -4709,8 +4936,8 @@ th[aria-sort="descending"] .table-sort-button::after {
   gap: 14px;
   padding: 10px 16px;
   border: none;
-  border-bottom: 1px solid #f1f5f9;
-  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
   cursor: pointer;
   text-align: left;
   transition: background 0.15s ease, border-color 0.15s ease;
@@ -4722,7 +4949,7 @@ th[aria-sort="descending"] .table-sort-button::after {
 }
 
 .lca-option-row:hover {
-  background: #f8fafc;
+  background: var(--surface-muted);
 }
 
 .lca-option-badge {
@@ -4732,8 +4959,8 @@ th[aria-sort="descending"] .table-sort-button::after {
   width: 24px;
   height: 24px;
   border-radius: 3px;
-  background: #cbd5e1;
-  color: #0f172a;
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+  color: var(--text);
   font-size: 13px;
   font-weight: 800;
   flex-shrink: 0;
@@ -4742,22 +4969,24 @@ th[aria-sort="descending"] .table-sort-button::after {
 .lca-option-label {
   font-size: 13.5px;
   font-weight: 500;
-  color: #334155;
+  color: var(--text);
 }
 
-/* Selected Option Highlight (Matching Reference Orange/Coral Active State) */
+/* Selected Option Highlight (Matching Reference Orange/Coral Active State).
+   Mixed into the current surface and text so the tint reads the same way on a
+   white sheet and on a dark one. */
 .lca-option-row.is-selected {
-  background: #ffedd5;
-  border-color: #fdba74;
+  background: color-mix(in srgb, var(--lca-accent, #e85d3f) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--lca-accent, #e85d3f) 45%, var(--border));
 }
 
 .lca-option-row.is-selected .lca-option-badge {
-  background: #e85d3f;
+  background: var(--lca-accent, #e85d3f);
   color: #ffffff;
 }
 
 .lca-option-row.is-selected .lca-option-label {
-  color: #9a3412;
+  color: color-mix(in srgb, var(--lca-accent, #e85d3f) 55%, var(--text));
   font-weight: 700;
 }
 

@@ -130,6 +130,7 @@ export function TestRunner() {
 
   const activeHeartbeatPartId = attempt?.parts[partIndex]?.id ?? null;
   const currentPart = attempt?.parts[partIndex];
+  const isListeningPart = currentPart?.section_type === "listening";
   const currentPartRef = useRef(currentPart);
   useEffect(() => {
     currentPartRef.current = currentPart;
@@ -925,8 +926,17 @@ export function TestRunner() {
     [attempt, partIndex],
   );
 
-  async function selectPart(index: number) {
-    if (isListeningLocked && index !== partIndex) return;
+  /* Memoised on the part it belongs to, and nothing else: the player holds a
+     five-second timer keyed on this callback, and a fresh identity on every
+     render would restart that timer forever and never advance the candidate. */
+  const totalParts = attempt?.parts.length ?? 0;
+  const handleListeningPartComplete = useCallback(() => {
+    if (partIndex < totalParts - 1) void selectPart(partIndex + 1, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partIndex, totalParts]);
+
+  async function selectPart(index: number, force = false) {
+    if (isListeningLocked && !force && index !== partIndex) return;
     const selectedPart = attempt?.parts[index];
     if (
       attempt?.is_final
@@ -1087,17 +1097,20 @@ export function TestRunner() {
         isFinalAttempt={isFinalAttempt}
         partIndex={partIndex}
         onSelectPart={selectPart}
+        onSkipPart={() => void selectPart(partIndex + 1, true)}
+        isListeningLocked={isListeningLocked}
         isImmersiveAttempt={isImmersiveAttempt}
         fullscreenActive={fullscreenActive}
         onExitDeveloperFullscreen={exitDeveloperFullscreen}
-        secondsLeft={secondsLeft}
-        isListeningLocked={isListeningLocked}
       />
 
-      {currentPart.section_type === "listening" && (
+      {isListeningPart && (
         <ListeningHeaderPlayer
+          attemptId={attempt.id}
           currentPart={currentPart}
           onAudioLockChange={setIsListeningLocked}
+          autoAdvance={partIndex < attempt.parts.length - 1}
+          onAudioComplete={handleListeningPartComplete}
         />
       )}
 
@@ -1111,16 +1124,21 @@ export function TestRunner() {
           isListeningLocked={isListeningLocked}
         />
 
-        <main className={`test-runner-body${currentPart.section_type === "writing" ? " test-runner-body--writing" : ""}`}>
-          <SourcePane
-            currentPart={currentPart}
-            passages={passages}
-            images={questionImages}
-            sourcePaneRef={sourcePaneRef}
-            questionNumberOffset={questionNumberOffset}
-            savingIds={savingIds}
-            onChangeResponse={(questionId, response) => updateResponse(questionId, response)}
-          />
+        {/* Listening has no source material to read alongside the questions -
+            the recording is the source, and it plays from the pinned header
+            bar. So the part runs as one centred column instead of a split. */}
+        <main className={`test-runner-body${currentPart.section_type === "writing" ? " test-runner-body--writing" : ""}${isListeningPart ? " test-runner-body--listening" : ""}`}>
+          {!isListeningPart && (
+            <SourcePane
+              currentPart={currentPart}
+              passages={passages}
+              images={questionImages}
+              sourcePaneRef={sourcePaneRef}
+              questionNumberOffset={questionNumberOffset}
+              savingIds={savingIds}
+              onChangeResponse={(questionId, response) => updateResponse(questionId, response)}
+            />
+          )}
           <QuestionPane
             currentPart={currentPart}
             questionPaneRef={questionPaneRef}
@@ -1147,12 +1165,8 @@ export function TestRunner() {
       <TestRunnerFooter
         answeredCount={answeredCount}
         totalQuestions={totalQuestions}
-        partIndex={partIndex}
-        isLastPart={partIndex >= attempt.parts.length - 1}
         submitting={submitting}
-        onSelectPart={selectPart}
         onRequestSubmit={() => setConfirmSubmit(true)}
-        isListeningLocked={isListeningLocked}
       />
 
       {confirmSubmit && (

@@ -76,12 +76,14 @@ export const testRunnerStrings = {
     },
   },
   header: {
-    secureBadge: "Secure",
-    secureBadgeTitle: "Final Test security controls are active",
-    partNavigationAriaLabel: "Part navigation",
     previous: "Previous",
     next: "Next",
+    partNavigationAriaLabel: "Move between test parts",
+    navigationLocked: "Navigation is locked while the listening audio plays",
+    secureBadge: "Secure",
+    secureBadgeTitle: "Final Test security controls are active",
     devExitFullscreen: "Exit full screen (dev)",
+    devSkipPart: "Skip part (dev)",
   },
   nav: {
     testSectionsAriaLabel: "Test sections",
@@ -129,8 +131,7 @@ export const testRunnerStrings = {
   },
   footer: {
     answeredOf: (answered: number, total: number) => `${answered} of ${total} answered`,
-    previousPart: "Previous part",
-    nextPart: "Next part",
+    endExam: "End exam",
     submitting: "Submitting...",
     submitTest: "Submit test",
   },

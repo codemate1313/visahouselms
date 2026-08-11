@@ -128,6 +128,32 @@ export const moduleEditorStrings = {
       duplicateAnswers: "Each option may be the answer for only one gap in this part.",
     },
   },
+  notepadTask: {
+    eyebrow: "Notepad task",
+    heading: (partTitle: string) => `${partTitle} — one notepad, one mark per blank`,
+    helpTitle: "How the notepad works",
+    help:
+      "Write the notepad exactly as the candidate sees it — a heading on the first line, then one note per line. Put {{blank:1}}, {{blank:2}} and so on where each answer belongs. Lines without a marker are shown as context.",
+    notepadLabel: "Notepad text",
+    notepadPlaceholder:
+      "The Father of Alternating Current\n\nNikola Tesla, widely regarded as the father of alternating current, was an inventor whose discoveries changed the way electricity is generated.\nTesla's mother, despite her lack of formal schooling, was behind his early instinct for {{blank:1}}.\nDuring his engineering studies, Tesla was introduced to an electrical principle where the direction of current {{blank:2}} repeatedly.",
+    answersHeading: "Answer for each blank",
+    blankLabel: (blank: number) => `Blank ${blank}`,
+    answerPlaceholder: "Accepted answer",
+    noBlanks: "No blank markers found yet. Add {{blank:1}} to the notepad above.",
+    saving: "Saving...",
+    saved: (gaps: number) => `Notepad task saved successfully (${gaps} blanks).`,
+    error: "Failed to save the notepad task.",
+    errors: {
+      noNotepad: "Write the notepad text.",
+      blankCount: (found: number, expected: number) =>
+        `Found ${found} blank marker${found === 1 ? "" : "s"}; this part needs ${expected}.`,
+      blankSequence: "Blank markers must be numbered 1, 2, 3 ... with no gaps in the sequence.",
+      missingAnswers: (missing: number) => `Add the answer for ${missing} more blank${missing === 1 ? "" : "s"}.`,
+      answerTooLong: (blank: number, maxWords: number) =>
+        `The answer for blank ${blank} is longer than ${maxWords} word${maxWords === 1 ? "" : "s"}.`,
+    },
+  },
   sourceTextTask: {
     eyebrow: "Source-text matching task",
     heading: (partTitle: string) => `${partTitle} — match statements to source texts`,

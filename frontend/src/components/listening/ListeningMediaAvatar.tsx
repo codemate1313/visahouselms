@@ -10,15 +10,75 @@ interface ListeningMediaAvatarProps {
   asset: AttemptAsset;
 }
 
+export function extractVoiceMetadata(transcript: string): Record<string, "male" | "female" | "auto"> {
+  const match = transcript.match(/^\[Voices:\s*(.*?)\]/);
+  if (!match) return {};
+  try {
+    return JSON.parse(match[1]);
+  } catch (e) {
+    return {};
+  }
+}
+
+export function stripVoiceMetadata(transcript: string): string {
+  return transcript.replace(/^\[Voices: .*?\]\s*/, "");
+}
+
 interface SpeechLine {
   speaker: string;
   text: string;
   speakerIndex: number;
 }
 
+const KNOWN_MALE_VOICES = ["daniel", "alex", "fred", "rishi", "oliver", "david", "george", "mark", "aaron", "arthur", "bruce"];
+const KNOWN_FEMALE_VOICES = ["samantha", "victoria", "karen", "moira", "fiona", "tessa", "zira", "hazel", "susan", "alice", "catherine", "lucinda", "marie", "martha", "nicky", "stephanie"];
+
+export function findVoiceByGender(voices: SpeechSynthesisVoice[], locale: string, gender: "male" | "female" | "auto"): { voice: SpeechSynthesisVoice | null, pitch: number } {
+  const matchingLocale = voices.filter((v) => v.lang.toLowerCase() === locale);
+  
+  if (gender === "auto") {
+    return { voice: matchingLocale.length ? matchingLocale[0] : (voices[0] ?? null), pitch: 1.0 };
+  }
+  
+  const target = gender.toLowerCase();
+  const knownNames = gender === "male" ? KNOWN_MALE_VOICES : KNOWN_FEMALE_VOICES;
+
+  const findInList = (list: SpeechSynthesisVoice[]) => {
+    for (const v of list) {
+      if (v.name.toLowerCase().includes(target)) return v;
+    }
+    for (const v of list) {
+      const name = v.name.toLowerCase();
+      if (knownNames.some((known) => name.includes(known))) return v;
+    }
+    return null;
+  };
+
+  const localeMatch = findInList(matchingLocale);
+  if (localeMatch) return { voice: localeMatch, pitch: 1.0 };
+
+  const globalMatch = findInList(voices);
+  if (globalMatch) return { voice: globalMatch, pitch: 1.0 };
+  
+  if (matchingLocale.length > 1 && gender === "female") {
+     return { voice: matchingLocale[1], pitch: 1.0 };
+  }
+  if (voices.length > 1 && gender === "female") {
+     return { voice: voices[1], pitch: 1.0 };
+  }
+  
+  // Extreme Fallback: the OS likely only has one English voice.
+  // We use the default voice, but alter the pitch to simulate gender.
+  const fallbackVoice = matchingLocale[0] || voices[0] || null;
+  const fallbackPitch = gender === "male" ? 0.7 : 1.3;
+  
+  return { voice: fallbackVoice, pitch: fallbackPitch };
+}
+
 function parseSpeechLines(transcript: string): SpeechLine[] {
   const speakerIndexes = new Map<string, number>();
-  return transcript
+  const cleanTranscript = stripVoiceMetadata(transcript);
+  return cleanTranscript
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean)
@@ -39,6 +99,7 @@ function speechRate(rate: string | null): number {
 export function ListeningMediaAvatar({ asset }: ListeningMediaAvatarProps) {
   const isBrowserNarration = asset.asset_type === "tts_text";
   const speechLines = useMemo(() => parseSpeechLines(asset.transcript ?? ""), [asset.transcript]);
+  const voiceMetadata = useMemo(() => extractVoiceMetadata(asset.transcript ?? ""), [asset.transcript]);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -105,7 +166,15 @@ export function ListeningMediaAvatar({ asset }: ListeningMediaAvatarProps) {
       const utterance = new SpeechSynthesisUtterance(line.text);
       utterance.lang = asset.tts_voice || "en-GB";
       utterance.rate = speechRate(asset.tts_rate);
-      utterance.voice = usableVoices[line.speakerIndex % Math.max(usableVoices.length, 1)] ?? null;
+      
+      const roleGender = voiceMetadata[line.speaker] || "auto";
+      const targetVoiceResult = roleGender === "auto" 
+        ? { voice: (usableVoices[line.speakerIndex % Math.max(usableVoices.length, 1)] ?? null), pitch: 1.0 }
+        : findVoiceByGender(englishVoices, preferredLocale, roleGender as any);
+        
+      if (targetVoiceResult.voice) utterance.voice = targetVoiceResult.voice;
+      utterance.pitch = targetVoiceResult.pitch;
+      
       utterance.onstart = () => {
         if (runRef.current !== run) return;
         setSpeaker(line.speaker);
@@ -158,14 +227,18 @@ export function ListeningMediaAvatar({ asset }: ListeningMediaAvatarProps) {
   };
 
   return (
-    <div className="listening-avatar-player">
-      <div className={`listening-avatar-portrait${isPlaying && !isPaused ? " is-speaking" : ""}`}>
-        <ExaminerAvatarSvg
-          gender={speakerIndex % 2 ? "male" : "female"}
-          isPlaying={isPlaying && !isPaused}
-          viseme={viseme}
-        />
-      </div>
+    <div className={`listening-avatar-player${isBrowserNarration ? "" : " has-no-portrait"}`}>
+      {/* The portrait lip-syncs to speech synthesis, so it only means anything
+          for browser narration. Against an uploaded mp3 it never moves. */}
+      {isBrowserNarration && (
+        <div className={`listening-avatar-portrait${isPlaying && !isPaused ? " is-speaking" : ""}`}>
+          <ExaminerAvatarSvg
+            gender={speakerIndex % 2 ? "male" : "female"}
+            isPlaying={isPlaying && !isPaused}
+            viseme={viseme}
+          />
+        </div>
+      )}
       <div className="listening-avatar-media">
         <div className="listening-avatar-heading">
           <div>

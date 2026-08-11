@@ -89,7 +89,9 @@ class ExamModulePart(Base):
     )
     section_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     part_code: Mapped[str] = mapped_column(String(40), nullable=False)
-    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    # Part titles double as the candidate-facing heading, which for Listening
+    # and Reading is a full instruction paragraph - hence Text, not String(200).
+    title: Mapped[str] = mapped_column(Text, nullable=False)
     skill_focus: Mapped[str] = mapped_column(Text, nullable=False)
     instructions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     question_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
@@ -151,7 +153,8 @@ class ExamModuleAsset(Base):
         ForeignKey("exam_module_parts.id", ondelete="CASCADE"), nullable=True, index=True
     )
     asset_type: Mapped[str] = mapped_column(String(20), nullable=False)
-    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    # Authors label listening audio with the same instruction text as the part.
+    title: Mapped[str] = mapped_column(Text, nullable=False)
     original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
     file_path: Mapped[str] = mapped_column(String(500), nullable=False, unique=True)
     mime_type: Mapped[str] = mapped_column(String(100), nullable=False)

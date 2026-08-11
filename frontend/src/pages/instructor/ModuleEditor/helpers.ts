@@ -13,6 +13,11 @@ export const CHOICE_TYPES = new Set<QuestionType>(["mcq_single", "mcq_multiple",
 export const ANSWER_FREE_TYPES = new Set<QuestionType>(["essay", "speaking_prompt"]);
 export const COMPOSITE_TYPES = new Set<ExamModuleType>(["full_mock", "final_test"]);
 export const SOURCE_SECTIONS: ExamSection[] = ["listening", "reading", "writing", "speaking"];
+/* Layouts where the candidate meets one composed task - a gapped passage, a
+   notepad, a set of source texts - and the question rows behind it exist only
+   to score each answer independently. These are authored in their own composer
+   panel, never through the per-question form. */
+export const COMPOSED_TASK_LAYOUTS = new Set<string>(["inline_matching_blanks", "source_text_matching", "notepad_gaps"]);
 
 export function optionsFor(type: QuestionType, optionCount = 3): QuestionOption[] {
   if (type === "true_false_not_given") return ["True", "False", "Not Given"].map((text, index) => ({ key: String.fromCharCode(65 + index), text }));
@@ -91,6 +96,26 @@ export function questionPayload(question: QuestionDraft) {
     points: Number(question.points),
     difficulty: question.difficulty,
   };
+}
+
+/**
+ * The notepad line a given blank sits on, as a standalone question prompt.
+ *
+ * Notepad blanks are stored one question row per blank so each scores its own
+ * mark, and every row still has to satisfy the part's `{{blank}}` marker rule.
+ * The row's prompt is therefore its own line from the notepad, with the
+ * numbered marker rewritten to the plain one. The full notepad travels on
+ * `passage`, which is what the candidate actually reads.
+ */
+export function notepadPromptForBlank(notepad: string, blank: number): string {
+  const marker = `{{blank:${blank}}}`;
+  const line = notepad.split(/\r?\n/).find((item) => item.includes(marker)) ?? marker;
+  return line
+    .split(marker).join("{{blank}}")
+    // Any other blank sharing this line belongs to its own row, so it reads as
+    // a gap here rather than leaking a marker into grading and review screens.
+    .replace(/\{\{blank:\d+\}\}/g, "______")
+    .trim();
 }
 
 export function detectConversationSpeakers(conversation: string): string[] {

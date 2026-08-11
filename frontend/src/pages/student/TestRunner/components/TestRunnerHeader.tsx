@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import type { Attempt } from "@/api/types";
-import { formatTime } from "../helpers";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 
 interface TestRunnerHeaderProps {
@@ -11,11 +10,12 @@ interface TestRunnerHeaderProps {
   isFinalAttempt: boolean;
   partIndex: number;
   onSelectPart: (index: number) => void;
+  /** Jumps to the next part even while audio holds the part locked. */
+  onSkipPart?: () => void;
+  isListeningLocked?: boolean;
   isImmersiveAttempt: boolean;
   fullscreenActive: boolean;
   onExitDeveloperFullscreen: () => void;
-  secondsLeft: number;
-  isListeningLocked?: boolean;
 }
 
 export function TestRunnerHeader({
@@ -26,11 +26,11 @@ export function TestRunnerHeader({
   isFinalAttempt,
   partIndex,
   onSelectPart,
+  onSkipPart,
+  isListeningLocked = false,
   isImmersiveAttempt,
   fullscreenActive,
   onExitDeveloperFullscreen,
-  secondsLeft,
-  isListeningLocked = false,
 }: TestRunnerHeaderProps) {
   const t = strings.header;
   const sectionLabels = strings.sectionLabels;
@@ -56,7 +56,7 @@ export function TestRunnerHeader({
             className="secondary-button"
             disabled={partIndex === 0 || isListeningLocked}
             onClick={() => onSelectPart(partIndex - 1)}
-            title={isListeningLocked ? "Navigation locked during listening section audio" : undefined}
+            title={isListeningLocked ? t.navigationLocked : undefined}
           >
             {t.previous}
           </button>
@@ -64,20 +64,28 @@ export function TestRunnerHeader({
             type="button"
             disabled={partIndex === attempt.parts.length - 1 || isListeningLocked}
             onClick={() => onSelectPart(partIndex + 1)}
-            title={isListeningLocked ? "Navigation locked during listening section audio" : undefined}
+            title={isListeningLocked ? t.navigationLocked : undefined}
           >
             {t.next}
           </button>
         </div>
+        {/* Testing aid: the lock exists so a candidate cannot skip a recording,
+            so this deliberately overrides it - and only in development. */}
+        {import.meta.env.DEV && onSkipPart && (
+          <button
+            type="button"
+            className="test-runner-dev-exit"
+            onClick={onSkipPart}
+            disabled={partIndex >= attempt.parts.length - 1}
+          >
+            {t.devSkipPart}
+          </button>
+        )}
         {import.meta.env.DEV && isImmersiveAttempt && fullscreenActive && (
           <button type="button" className="test-runner-dev-exit" onClick={onExitDeveloperFullscreen}>
             {t.devExitFullscreen}
           </button>
         )}
-        <div className={`test-runner-timer${secondsLeft < 300 ? " is-urgent" : ""}`} aria-label="Time remaining">
-          <span>{strings.security.timeLeft}</span>
-          <strong>{formatTime(secondsLeft)}</strong>
-        </div>
       </div>
     </header>
   );

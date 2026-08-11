@@ -141,7 +141,7 @@ class ModuleQuestionBatchCreate(BaseModel):
 
 
 class TTSCreate(BaseModel):
-    title: str = Field(default="Generated conversation", min_length=1, max_length=200)
+    title: str = Field(default="Generated conversation", min_length=1, max_length=2000)
     conversation: str = Field(min_length=1, max_length=20000)
     voice: str = Field(default="en-GB", pattern=r"^en-(?:AU|CA|GB|IN|US)$")
     rate: str = Field(default="+0%", pattern=r"^[+-](?:[0-9]|[1-9][0-9]|100)%$")
@@ -153,7 +153,9 @@ class TTSCreate(BaseModel):
 
 
 class PartUpdate(BaseModel):
-    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    # Part titles carry the candidate instructions for the section, so they are
+    # capped like a paragraph rather than like a name.
+    title: Optional[str] = Field(default=None, min_length=1, max_length=2000)
     instructions: Optional[str] = Field(default=None, max_length=20000)
 
     @field_validator("title")

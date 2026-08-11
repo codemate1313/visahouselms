@@ -1,6 +1,5 @@
 import type { RefObject } from "react";
 import { API_BASE_URL } from "@/api/client";
-import { ListeningMediaAvatar } from "@/components/listening/ListeningMediaAvatar";
 import type { Attempt, AttemptResponse } from "@/api/types";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { InlineMatchingBlankGroup } from "./InlineMatchingBlankGroup";
@@ -39,6 +38,11 @@ export function SourcePane({
     && (matchingType === "matching_unique" || matchingType === "matching_reusable")
   );
   const usesSharedCloze = currentPart.part_code === "reading_1b" && currentPart.answer_constraints.layout === "shared_cloze";
+  /* The notepad is the answer surface, so it is rendered once in the question
+     pane. Its text also rides along on every question as the passage - showing
+     that here would repeat the whole notepad, blank markers and all. */
+  const usesNotepadGaps = currentPart.answer_constraints.layout === "notepad_gaps";
+  const sourcePassages = usesNotepadGaps ? [] : passages;
   return (
     <section className="test-runner-source-pane" ref={sourcePaneRef}>
       <div className="test-runner-pane-heading">
@@ -49,7 +53,7 @@ export function SourcePane({
         ) : (
           <>
             <span>{currentPart.part_code.replaceAll("_", " ")}</span>
-            <h2>{passages.length > 0 ? t.sourceMaterial : t.partInstructions}</h2>
+            <h2>{sourcePassages.length > 0 ? t.sourceMaterial : t.partInstructions}</h2>
             {currentPart.skill_focus && <p>{currentPart.skill_focus}</p>}
           </>
         )}
@@ -73,11 +77,11 @@ export function SourcePane({
           <img src={`${API_BASE_URL}${url}`} alt="" />
         </div>
       ))}
+      {/* Listening never reaches this pane - its recording plays from the
+          pinned header bar, so there is no narrator portrait here. */}
       {currentPart.assets.map((asset) => (
         <div className="test-runner-asset" key={asset.id}>
-          {currentPart.section_type === "listening" ? (
-            <ListeningMediaAvatar asset={asset} />
-          ) : asset.asset_type === "avatar_mp4" && asset.url ? (
+          {asset.asset_type === "avatar_mp4" && asset.url ? (
             <video controls src={`${API_BASE_URL}${asset.url}`} />
           ) : asset.url ? (
             <audio controls src={`${API_BASE_URL}${asset.url}`} />
@@ -110,10 +114,10 @@ export function SourcePane({
           mode="source"
           onChangeResponse={onChangeResponse}
         />
-      ) : passages.length > 0 ? (
-        passages.map((passage, index) => (
+      ) : sourcePassages.length > 0 ? (
+        sourcePassages.map((passage, index) => (
           <article className="test-runner-passage" key={`${currentPart.id}-${index}`}>
-            {passages.length > 1 && (
+            {sourcePassages.length > 1 && (
               <strong>
                 {t.passagePrefix} {index + 1}
               </strong>

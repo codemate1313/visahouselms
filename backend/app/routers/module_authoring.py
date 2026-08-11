@@ -293,7 +293,7 @@ async def upload_audio(
     module_id: int,
     part_id: int,
     request: Request,
-    title: str = Form(..., min_length=1, max_length=200),
+    title: str = Form(..., min_length=1, max_length=2000),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),

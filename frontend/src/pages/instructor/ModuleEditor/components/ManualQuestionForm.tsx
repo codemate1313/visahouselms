@@ -49,6 +49,7 @@ export function ManualQuestionForm({
   const t = strings.manualQuestion;
   const isWriting = part.section_type === "writing";
   const isReading = part.section_type === "reading";
+  const isListening = part.section_type === "listening";
   const isListening1 = part.part_code === "listening_1";
   const isReading1a = part.part_code === "reading_1a";
   const isReading1b = part.part_code === "reading_1b";
@@ -299,8 +300,11 @@ export function ManualQuestionForm({
 
         {/* When the part owns one shared source text, it is edited in
             SharedPassagePanel above and copied down on save - repeating the
-            field here is what made identical-passage mistakes so easy. */}
-        {!isWriting && !part.answer_constraints.shared_passage && !isListening1 && (
+            field here is what made identical-passage mistakes so easy.
+            Listening questions carry no passage or per-question instructions
+            either: the audio is the source and the part heading is the
+            instruction. */}
+        {!isWriting && !isListening && !part.answer_constraints.shared_passage && (
           <>
             {/* 3. Passage or context */}
             <label htmlFor="module-question-passage">

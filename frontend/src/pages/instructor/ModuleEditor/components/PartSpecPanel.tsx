@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
+import { Icon } from "@/components/icons";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
 interface PartSpecPanelProps {
@@ -8,6 +9,9 @@ interface PartSpecPanelProps {
   busy: boolean;
   onToggleAiEvaluation: (enabled: boolean) => void;
   onUpdateInstructions: (instructions: string) => void;
+  partTitle: string;
+  onPartTitleChange: (title: string) => void;
+  onSavePartTitle: () => void;
   questionEntryMode?: "manual" | "bulk";
   onEntryModeChange?: (mode: "manual" | "bulk") => void;
 }
@@ -18,6 +22,9 @@ export function PartSpecPanel({
   busy,
   onToggleAiEvaluation,
   onUpdateInstructions,
+  partTitle,
+  onPartTitleChange,
+  onSavePartTitle,
   questionEntryMode,
   onEntryModeChange,
 }: PartSpecPanelProps) {
@@ -26,21 +33,78 @@ export function PartSpecPanel({
   const isReading1a = part.part_code === "reading_1a";
   const [isEditingInstructions, setIsEditingInstructions] = useState(false);
   const [instructionsDraft, setInstructionsDraft] = useState(part.instructions ?? "");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   useEffect(() => {
     setInstructionsDraft(part.instructions ?? "");
     setIsEditingInstructions(false);
   }, [part.id, part.instructions]);
 
+  useEffect(() => {
+    setIsEditingTitle(false);
+  }, [part.id]);
+
   function saveInstructions() {
     onUpdateInstructions(instructionsDraft);
     setIsEditingInstructions(false);
   }
 
+  function saveTitle() {
+    if (!partTitle.trim() || partTitle === part.title) {
+      setIsEditingTitle(false);
+      onPartTitleChange(part.title);
+      return;
+    }
+    onSavePartTitle();
+    setIsEditingTitle(false);
+  }
+
+  function cancelTitle() {
+    onPartTitleChange(part.title);
+    setIsEditingTitle(false);
+  }
+
   return (
     <div className="vh-unified-part-header-bar">
       <div className="vh-unified-part-left">
-        <h3 className="vh-unified-part-title">{part.title}</h3>
+        {isEditingTitle ? (
+          <div className="vh-part-title-edit">
+            <input
+              type="text"
+              className="ui-input"
+              value={partTitle}
+              autoFocus
+              disabled={busy}
+              aria-label="Section heading"
+              onChange={(event) => onPartTitleChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") { event.preventDefault(); saveTitle(); }
+                if (event.key === "Escape") cancelTitle();
+              }}
+            />
+            <button type="button" className="button primary" disabled={busy || !partTitle.trim()} onClick={saveTitle}>
+              Save
+            </button>
+            <button type="button" className="secondary-button" disabled={busy} onClick={cancelTitle}>
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <>
+            <h3 className="vh-unified-part-title" title={part.title}>{part.title}</h3>
+            {isEditable && (
+              <button
+                type="button"
+                className="vh-title-edit-btn"
+                onClick={() => setIsEditingTitle(true)}
+                aria-label="Rename section heading"
+                title="Rename section heading"
+              >
+                <Icon name="edit" />
+              </button>
+            )}
+          </>
+        )}
         <span className="count-chip">{t.questionsCount(part.questions.length, part.question_limit)}</span>
         {canUseAiEvaluation && (
           <div className="vh-slim-ai-toggle-group">

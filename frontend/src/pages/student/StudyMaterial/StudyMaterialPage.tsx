@@ -132,24 +132,50 @@ export function StudyMaterialPage() {
 
       {/* Material Display */}
       {loading ? (
-        <div style={{ padding: "60px 0", textAlign: "center", color: "var(--text-muted, #64748b)" }}>
-          Loading study materials...
+        <div className="sm-loading-container">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="sm-skeleton-card">
+              <div style={{ display: "flex", gap: "14px", alignItems: "center" }}>
+                <div className="sm-skeleton-bar" style={{ width: "46px", height: "46px", borderRadius: "12px", flexShrink: 0 }} />
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div className="sm-skeleton-bar" style={{ width: "65%", height: "18px" }} />
+                  <div className="sm-skeleton-bar" style={{ width: "40%", height: "14px" }} />
+                </div>
+              </div>
+              <div className="sm-skeleton-bar" style={{ width: "90%", height: "14px", marginTop: "12px" }} />
+              <div className="sm-skeleton-bar" style={{ width: "100%", height: "38px", marginTop: "auto" }} />
+            </div>
+          ))}
         </div>
       ) : filteredMaterials.length === 0 ? (
-        <div className="gc-empty-card" style={{ padding: "60px 24px" }}>
-          <div className="gc-empty-icon">📖</div>
-          <h3 className="gc-empty-title">
-            {search ? "No Matching Study Materials Found" : "No Study Material Available"}
+        <div className="sm-empty-state">
+          <div className="sm-empty-illustration">
+            <div className="sm-empty-glow-orb" />
+            <div className="sm-empty-icon-box">
+              {search ? (
+                <Icon name="search" className="sm-empty-icon-main" />
+              ) : (
+                <Icon name="filePdf" className="sm-empty-icon-main" />
+              )}
+            </div>
+          </div>
+          <span className="sm-empty-pill">
+            {search ? "No Matches Found" : "Library Empty"}
+          </span>
+          <h3 className="sm-empty-title">
+            {search ? `No study materials match "${search}"` : "No Study Material Available Yet"}
           </h3>
-          <p className="gc-empty-desc">
+          <p className="sm-empty-desc">
             {search
-              ? `No resources match your search query "${search}". Try searching for another keyword.`
-              : "Your instructor has not published any grammar study materials yet. Please check back later!"}
+              ? "We couldn't find any resources matching your search query. Try checking for typos or searching for a broader keyword."
+              : "Your instructor has not published any grammar study materials or PDF guides yet. Check back soon for new updates!"}
           </p>
           {search && (
-            <Button variant="secondary" onClick={() => setSearch("")}>
-              Clear Search
-            </Button>
+            <div className="sm-empty-actions">
+              <Button variant="secondary" onClick={() => setSearch("")} style={{ gap: "6px" }}>
+                <Icon name="cross" /> Clear Search Filter
+              </Button>
+            </div>
           )}
         </div>
       ) : viewMode === "grid" ? (
