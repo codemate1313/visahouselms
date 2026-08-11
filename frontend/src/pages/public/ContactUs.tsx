@@ -52,6 +52,23 @@ function getInterestedPlanId(search: string): number | null {
   return Number.isFinite(plan) && plan > 0 ? plan : null;
 }
 
+function getOfficeStatus(): { isOpen: boolean; text: string } {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const istDate = new Date(utc + 5.5 * 3600000);
+
+  const day = istDate.getDay();
+  const hour = istDate.getHours();
+
+  const isWeekday = day >= 1 && day <= 5;
+  const isBusinessHours = hour >= 9 && hour < 17;
+
+  if (isWeekday && isBusinessHours) {
+    return { isOpen: true, text: "Open now (9am – 5pm IST)" };
+  }
+  return { isOpen: false, text: "Closed now · Mon–Fri 9am–5pm IST" };
+}
+
 function ArrowRightIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round">
@@ -74,6 +91,8 @@ export function ContactUs() {
 
   const [institutePlans, setInstitutePlans] = useState<LandingPlan[]>([]);
   const [formType, setFormType] = useState<FormType>(() => getInitialFormType(location.search));
+
+  const officeStatus = getOfficeStatus();
 
   useEffect(() => {
     setFormType(getInitialFormType(location.search));
@@ -373,14 +392,22 @@ export function ContactUs() {
               <div className="vh-info-card-value">{contact?.email ?? "enquiry.langugaecert@gmail.com"}</div>
               <div className="vh-info-card-note">{contact?.email_note ?? "Replies within 1 working day"}</div>
             </div>
+
             <div className="vh-info-card vh-reveal">
-              <div className="vh-info-card-eyebrow">
-                <span className="vh-info-card-dot" style={{ background: "#7c5cff" }} />
-                Call sales
+              <div className="vh-info-card-header-row">
+                <div className="vh-info-card-eyebrow" style={{ marginBottom: 0 }}>
+                  <span className="vh-info-card-dot" style={{ background: "#7c5cff" }} />
+                  Call sales
+                </div>
+                <div className={`vh-status-badge ${officeStatus.isOpen ? "is-open" : "is-closed"}`}>
+                  <span className={`vh-pulse-dot ${officeStatus.isOpen ? "is-open" : "is-closed"}`} />
+                  {officeStatus.isOpen ? "Open" : "Closed"}
+                </div>
               </div>
               <div className="vh-info-card-value">{contact?.phone ?? "+91 9779047164"}</div>
-              <div className="vh-info-card-note">{contact?.phone_note ?? "Mon–Fri · 9am to 5pm IST"}</div>
+              <div className="vh-info-card-note">{officeStatus.text}</div>
             </div>
+
             <div className="vh-info-card vh-reveal">
               <div className="vh-info-card-eyebrow">
                 <span className="vh-info-card-dot" style={{ background: "#22c55e" }} />
@@ -389,6 +416,7 @@ export function ContactUs() {
               <div className="vh-info-card-value">{contact?.support_url ?? "support.visahouse.com (to be created)"}</div>
               <div className="vh-info-card-note">{contact?.support_note ?? "Existing partners only"}</div>
             </div>
+
             <div className="vh-info-card vh-reveal">
               <div className="vh-office-card-title">Head office</div>
               <div className="vh-office-card-body">
@@ -401,17 +429,27 @@ export function ContactUs() {
                   </span>
                 ))}
               </div>
-              <div style={{ marginTop: "1rem", borderRadius: "8px", overflow: "hidden" }}>
+              <div className="vh-map-container">
                 <iframe
                   title="Office Location Map"
                   src="https://maps.google.com/maps?q=31.4638481,74.9170381+(Visa+House)&t=&z=16&ie=UTF8&iwloc=&output=embed"
                   width="100%"
-                  height="250"
+                  height="220"
                   style={{ border: 0, display: "block" }}
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                 ></iframe>
+                <div className="vh-map-overlay-bar">
+                  <a
+                    href="https://maps.google.com/?q=31.4638481,74.9170381"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="vh-map-overlay-btn"
+                  >
+                    Open in Google Maps ↗
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -429,3 +467,5 @@ export function ContactUs() {
     </div>
   );
 }
+
+

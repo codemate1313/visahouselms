@@ -296,3 +296,122 @@
     padding: 22px;
   }
 }
+
+/* --- Interactive Contact Enhancements --- */
+.vh-info-card {
+  position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.vh-info-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(225, 29, 46, 0.25);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.08);
+}
+[data-theme="dark"] .vh-info-card:hover {
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.4);
+}
+
+.vh-info-card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.vh-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: var(--chip);
+  border: 1px solid var(--line);
+}
+.vh-status-badge.is-open {
+  color: #166534;
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.1);
+}
+.vh-status-badge.is-closed {
+  color: #9a3412;
+  border-color: rgba(249, 115, 22, 0.3);
+  background: rgba(249, 115, 22, 0.1);
+}
+[data-theme="dark"] .vh-status-badge.is-open {
+  color: #4ade80;
+}
+[data-theme="dark"] .vh-status-badge.is-closed {
+  color: #fb923c;
+}
+
+.vh-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  position: relative;
+}
+.vh-pulse-dot.is-open {
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  animation: vhPulseOpen 2s infinite;
+}
+.vh-pulse-dot.is-closed {
+  background: #f97316;
+}
+
+@keyframes vhPulseOpen {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.vh-map-container {
+  position: relative;
+  margin-top: 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.vh-map-overlay-bar {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  z-index: 2;
+}
+.vh-map-overlay-btn {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: background 0.2s, transform 0.2s;
+}
+.vh-map-overlay-btn:hover {
+  background: var(--ac);
+  color: #fff !important;
+  transform: translateY(-1px);
+}
+
+.vh-form-input:focus,
+.vh-form-textarea:focus {
+  border-color: var(--ac);
+  box-shadow: 0 0 0 3px var(--acWash);
+}
+
+

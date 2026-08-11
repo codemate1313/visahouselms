@@ -15,6 +15,7 @@ CONTENT_SECURITY_POLICY = "; ".join(
         "base-uri 'self'",
         "object-src 'none'",
         "frame-ancestors 'none'",
+        "frame-src 'self' https://maps.google.com https://www.google.com https://*.google.com",
         "img-src 'self' data: blob: https:",
         "font-src 'self' data:",
         "media-src 'self' blob:",

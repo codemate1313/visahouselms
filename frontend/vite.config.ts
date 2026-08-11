@@ -18,7 +18,7 @@ const localDevSecurityHeaders = {
     "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 ws://localhost:* ws://127.0.0.1:* https: https://*.razorpay.com https://*.razorpay.in https://*.stripe.com https://api.stripe.com",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com https://checkout.razorpay.com https://checkout-static.razorpay.com https://cdn.razorpay.com https://api.razorpay.com https://*.razorpay.com https://*.razorpay.in https://js.stripe.com https://*.stripe.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "frame-src 'self' https://checkout.razorpay.com https://checkout-static.razorpay.com https://api.razorpay.com https://*.razorpay.com https://*.razorpay.in https://js.stripe.com https://hooks.stripe.com https://*.stripe.com",
+    "frame-src 'self' https://maps.google.com https://www.google.com https://*.google.com https://checkout.razorpay.com https://checkout-static.razorpay.com https://api.razorpay.com https://*.razorpay.com https://*.razorpay.in https://js.stripe.com https://hooks.stripe.com https://*.stripe.com",
     "form-action 'self'",
   ].join('; '),
 
@@ -40,7 +40,7 @@ const productionPreviewSecurityHeaders = {
     "connect-src 'self' https: https://*.razorpay.com https://*.razorpay.in https://*.stripe.com https://api.stripe.com",
     "script-src 'self' https://checkout.razorpay.com https://checkout-static.razorpay.com https://cdn.razorpay.com https://api.razorpay.com https://*.razorpay.com https://*.razorpay.in https://js.stripe.com https://*.stripe.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "frame-src 'self' https://checkout.razorpay.com https://checkout-static.razorpay.com https://api.razorpay.com https://*.razorpay.com https://*.razorpay.in https://js.stripe.com https://hooks.stripe.com https://*.stripe.com",
+    "frame-src 'self' https://maps.google.com https://www.google.com https://*.google.com https://checkout.razorpay.com https://checkout-static.razorpay.com https://api.razorpay.com https://*.razorpay.com https://*.razorpay.in https://js.stripe.com https://hooks.stripe.com https://*.stripe.com",
     "form-action 'self'",
     "upgrade-insecure-requests",
   ].join('; '),
