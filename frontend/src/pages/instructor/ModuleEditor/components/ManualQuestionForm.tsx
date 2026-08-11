@@ -179,7 +179,7 @@ export function ManualQuestionForm({
         )}
         {/* 1. Question or task prompt */}
         <div className="vh-prompt-label-row">
-          <label htmlFor="module-question-prompt">{t.promptLabel}<RequiredMark /></label>
+          <label htmlFor="module-question-prompt">{isListening1 ? "Question" : t.promptLabel}<RequiredMark /></label>
           {isReading1a && (
             <button
               type="button"
@@ -195,10 +195,10 @@ export function ManualQuestionForm({
         <textarea
           id="module-question-prompt"
           ref={promptRef}
-          rows={4}
+          rows={isListening1 ? 2 : 4}
           value={manual.prompt}
           onChange={(event) => onManualChange({ ...manual, prompt: event.target.value })}
-          placeholder={part.answer_constraints.inline_marker_required ? t.inlinePromptPlaceholder : t.promptPlaceholder}
+          placeholder={isListening1 ? "Question 1" : (part.answer_constraints.inline_marker_required ? t.inlinePromptPlaceholder : t.promptPlaceholder)}
           required
         />
 

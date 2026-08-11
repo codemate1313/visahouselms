@@ -46,9 +46,12 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
   const turnType = (requiredTurns.find((turn) => !usedTurns.has(turn))
     ?? part.answer_constraints.allowed_turn_types?.[0]
     ?? null) as SpeakingTurnType | null;
+  const defaultPrompt = part.part_code === "listening_1"
+    ? `Question ${part.questions.length + 1}`
+    : "";
   return {
     question_type: type,
-    prompt: "",
+    prompt: defaultPrompt,
     instructions: null,
     passage: part.answer_constraints.shared_passage ? firstQuestion?.passage ?? null : null,
     image_path: null,
