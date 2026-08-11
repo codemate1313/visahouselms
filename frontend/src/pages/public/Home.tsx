@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import gsap from "gsap";
 import { PublicHeader } from "@/components/publicSite/PublicHeader";
 import { PublicFooter } from "@/components/publicSite/PublicFooter";
 import { PublicOrbBackground } from "@/components/publicSite/PublicOrbBackground";
@@ -65,7 +64,7 @@ export function Home() {
   const { handleAuth, showInstituteBanner, closeInstituteBanner, goToMyCourses } = usePublicAuthAction();
 
   const [heroIndex, setHeroIndex] = useState(0);
-  const heroImageRef = useRef<HTMLImageElement | null>(null);
+  const heroBgWrapperRef = useRef<HTMLDivElement | null>(null);
   const heroTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [testimonials, setTestimonials] = useState<TestimonialCard[]>([]);
@@ -84,6 +83,13 @@ export function Home() {
   }
 
   useEffect(() => {
+    HERO_SLIDES.forEach((slide) => {
+      const img = new Image();
+      img.src = slide.image;
+    });
+  }, []);
+
+  useEffect(() => {
     heroTimerRef.current = setInterval(() => {
       setHeroIndex((i) => (i + 1) % HERO_SLIDES.length);
     }, HERO_INTERVAL_MS);
@@ -97,10 +103,10 @@ export function Home() {
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          if (heroImageRef.current) {
+          if (heroBgWrapperRef.current) {
             const scrollY = window.scrollY;
             if (scrollY <= 1200) {
-              heroImageRef.current.style.transform = `translate3d(0, ${scrollY * 0.38}px, 0) scale(1.1)`;
+              heroBgWrapperRef.current.style.transform = `translate3d(0, ${scrollY * 0.38}px, 0)`;
             }
           }
           ticking = false;
@@ -112,11 +118,6 @@ export function Home() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  useEffect(() => {
-    if (!heroImageRef.current) return;
-    gsap.fromTo(heroImageRef.current, { opacity: 0, scale: 1.18 }, { opacity: 1, scale: 1.1, duration: 0.8, ease: "power2.out" });
-  }, [heroIndex]);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/testimonials`)
@@ -249,8 +250,16 @@ export function Home() {
         <PublicHeader />
 
         <section id="top" className="vh-hero-section">
-          <div className="vh-hero-bg-wrapper">
-            <img ref={heroImageRef} key={heroIndex} src={activeSlide.image} alt={activeSlide.heading} className="vh-hero-bg-img" />
+          <div className="vh-hero-bg-wrapper" ref={heroBgWrapperRef}>
+            {HERO_SLIDES.map((slide, idx) => (
+              <img
+                key={slide.image}
+                src={slide.image}
+                alt={slide.heading}
+                className={`vh-hero-bg-img${idx === heroIndex ? " vh-hero-bg-img-active" : ""}`}
+                aria-hidden={idx !== heroIndex}
+              />
+            ))}
             <div className="vh-hero-bg-overlay" aria-hidden="true" />
           </div>
 
