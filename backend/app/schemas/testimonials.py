@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class TestimonialBase(BaseModel):
     student_name: str
-    student_role: Optional[str] = "Academic IELTS Student"
+    student_role: Optional[str] = "Academic Language CERT Student"
     target_score: Optional[str] = "Band 7.5+"
     avatar_url: Optional[str] = None
     rating: int = 5

@@ -14,7 +14,7 @@ function getEventMessage(config: InternalAxiosRequestConfig): string {
   if (url.includes("/auth/register")) return "Creating your account...";
   if (url.includes("/auth/google/request-otp")) return "Sending Google login OTP...";
   if (url.includes("/auth/verify-otp")) return "Verifying login OTP...";
-  if (url.includes("/auth/login") || url.includes("/auth/me")) return "Signing into IELTS LMS...";
+  if (url.includes("/auth/login") || url.includes("/auth/me")) return "Signing into Language CERT...";
   if (url.includes("/auth/refresh")) return "Refreshing secure session...";
   if (url.includes("/upload-avatar") || url.includes("/me/avatar")) return "Uploading profile picture...";
   if (url.includes("/change-password") || url.includes("/me/profile")) return "Updating account profile...";

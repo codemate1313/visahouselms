@@ -7,7 +7,9 @@ cd backend
 
 echo "Starting Backend (FastAPI)..."
 source .venv/bin/activate
+alembic upgrade head
 uvicorn app.main:app --reload &
+
 BACKEND_PID=$!
 
 echo "Starting Frontend (React/Vite)..."

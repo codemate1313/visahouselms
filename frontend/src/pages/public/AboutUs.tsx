@@ -94,7 +94,7 @@ function StatCard({ stat }: { stat: { value: string; label: string } }) {
 }
 
 export function AboutUs() {
-  useSEO({ title: "About Us", description: "Visa House started as a small team of IELTS trainers frustrated by paper mocks. Today we power computer-delivered simulation and AI feedback for institutes across three continents." });
+  useSEO({ title: "About Us", description: "Visa House started as a small team of Language CERT trainers frustrated by paper mocks. Today we power computer-delivered simulation and AI feedback for institutes across three continents." });
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const contactSettings = useContactSettings();
@@ -116,7 +116,7 @@ export function AboutUs() {
             <span className="vh-accent"> Trusted by educators.</span>
           </h1>
           <p>
-            Visa House started as a small team of IELTS trainers frustrated by paper mocks. Today we power computer-delivered simulation and AI feedback for
+            Visa House started as a small team of Language CERT trainers frustrated by paper mocks. Today we power computer-delivered simulation and AI feedback for
             institutes across three continents.
           </p>
         </section>
@@ -134,7 +134,7 @@ export function AboutUs() {
             <h2>
               Test day should feel like <span className="vh-accent">just another mock</span>.
             </h2>
-            <p>We build the environment, the audio, the timer and the marking pipeline that lets students walk into the real IELTS having already sat forty of them.</p>
+            <p>We build the environment, the audio, the timer and the marking pipeline that lets students walk into the real Language CERT having already sat forty of them.</p>
             <div className="vh-mission-checklist">
               {MISSION_POINTS.map((point) => (
                 <div className="vh-mission-checklist-item" key={point}>

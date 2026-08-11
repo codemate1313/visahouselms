@@ -21,7 +21,7 @@ class InstructorProfile(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
     )
-    title: Mapped[str] = mapped_column(String(120), nullable=False, default="IELTS Instructor")
+    title: Mapped[str] = mapped_column(String(120), nullable=False, default="Language CERT Instructor")
     bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     specializations: Mapped[List[str]] = mapped_column(JSON, nullable=False, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

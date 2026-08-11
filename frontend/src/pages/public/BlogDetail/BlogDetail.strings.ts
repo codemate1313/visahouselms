@@ -1,7 +1,7 @@
 export const blogDetailStrings = {
   seo: {
-    fallbackTitle: "IELTS Blog Article",
-    fallbackKeywords: "IELTS, Preparation",
+    fallbackTitle: "Language CERT Blog Article",
+    fallbackKeywords: "Language CERT, Preparation",
   },
   loading: "Loading article details...",
   notFound: {

@@ -49,7 +49,7 @@ export const revenueDashboardStrings = {
     load: "Failed to load revenue summary.",
   },
   pdf: {
-    header: "IELTS LMS — Financial & Revenue Summary Report",
+    header: "Language CERT — Financial & Revenue Summary Report",
     generatedPrefix: "Generated:",
     kpiOverview: "KPI Overview:",
     kpiLine: (total: string, b2b: string, b2c: string, due: string, count: number) =>

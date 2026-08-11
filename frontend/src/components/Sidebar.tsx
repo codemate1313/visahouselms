@@ -83,7 +83,7 @@ function getActiveItemKey(sections: MenuSection[], pathname: string): string | n
 }
 
 export function Sidebar({
-  brandTitle = "IELTS LMS",
+  brandTitle = "Language CERT",
   brandSubtitle,
   brandLogoUrl,
   sections,

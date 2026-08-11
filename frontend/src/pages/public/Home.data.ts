@@ -14,9 +14,9 @@ export interface HeroSlide {
 export const HERO_SLIDES: HeroSlide[] = [
   {
     badge: "AI Evaluator Live · 15,000+ Students Prepared",
-    heading: "Master IELTS with Real Exam Simulations",
+    heading: "Master Language CERT with Real Exam Simulations",
     highlight: " & Exam Timers.",
-    desc: "Authentic computer-delivered test environments — with exact IELTS timing, section tracking, and auto-saving interfaces.",
+    desc: "Authentic computer-delivered test environments — with exact Language CERT timing, section tracking, and auto-saving interfaces.",
     image: "/images/slide_simulation.jpg",
     ctaText: "Sign up for free",
     ctaLink: "/register",
@@ -48,7 +48,7 @@ export const HERO_SLIDES: HeroSlide[] = [
     badge: "Detailed Learning Analytics & Dashboards",
     heading: "Track Your Journey to Your Dream Band",
     highlight: " & Performance Charts.",
-    desc: "Interactive analytics dashboards isolate your weak areas and highlight vocabulary or speed gaps across all four IELTS modules.",
+    desc: "Interactive analytics dashboards isolate your weak areas and highlight vocabulary or speed gaps across all four Language CERT modules.",
     image: "/images/slide_progress.jpg",
     ctaText: "View Dashboard Demo",
     ctaLink: "/login",

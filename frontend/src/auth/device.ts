@@ -1,4 +1,4 @@
-const DEVICE_ID_KEY = "ielts-lms-device-id";
+const DEVICE_ID_KEY = "language-cert-device-id";
 
 function createDeviceId(): string {
   try {

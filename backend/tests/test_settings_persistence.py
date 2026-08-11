@@ -29,7 +29,7 @@ class SettingsPersistenceTests(unittest.TestCase):
     def test_public_seo_read_does_not_create_default_row(self) -> None:
         response = seo_router.get_public_seo_settings(self.db)
 
-        self.assertEqual(response["site_name"], "IELTS LMS Pro")
+        self.assertEqual(response["site_name"], "Language CERT Pro")
         self.assertEqual(self.db.query(SEOSetting).count(), 0)
 
     def test_public_contact_read_does_not_create_default_row(self) -> None:
@@ -51,7 +51,7 @@ class SettingsPersistenceTests(unittest.TestCase):
         )
         blog = BlogPost(
             title="Configured title",
-            slug="ielts-speaking-band-8-strategies",
+            slug="language-cert-speaking-band-8-strategies",
             summary="Configured summary",
             category="Configured category",
             tags="configured",

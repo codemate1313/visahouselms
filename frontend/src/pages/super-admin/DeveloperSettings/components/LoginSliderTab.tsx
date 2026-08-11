@@ -11,7 +11,7 @@ export function LoginSliderTab() {
   const [newUrl, setNewUrl] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [newSubtitle, setNewSubtitle] = useState("");
-  const [newBadge, setNewBadge] = useState("IELTS LMS PLATFORM");
+  const [newBadge, setNewBadge] = useState("Language CERT PLATFORM");
   const t = strings.slider;
 
   function handleAdd(e: FormEvent) {

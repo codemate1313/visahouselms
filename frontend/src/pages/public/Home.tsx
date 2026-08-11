@@ -275,7 +275,7 @@ export function Home() {
         <section id="modules" className="vh-modules-section vh-reveal">
           <div className="vh-section-intro">
             <h2>
-              Designed for realistic <span className="vh-accent">IELTS success</span>
+              Designed for realistic <span className="vh-accent">Language CERT success</span>
             </h2>
             <p>Whether preparing independently or managing an entire institute batch, Visa House delivers complete, exam-accurate coverage.</p>
           </div>
@@ -378,7 +378,7 @@ export function Home() {
           <div className="vh-testimonials-header-wrap">
             <div>
               <span className="vh-testimonials-eyebrow">Student success stories</span>
-              <h2>Trusted by 10,000+ IELTS aspirants</h2>
+              <h2>Trusted by 10,000+ Language CERT aspirants</h2>
               <p>Read real experiences from candidates who achieved their target band scores using Visa House LMS.</p>
             </div>
             <div className="vh-testimonial-controls">
@@ -441,7 +441,7 @@ export function Home() {
           <div className="vh-blog-preview-head">
             <div>
               <span className="vh-testimonials-eyebrow">Latest from our blog</span>
-              <h2>Insights &amp; strategies from IELTS examiners</h2>
+              <h2>Insights &amp; strategies from Language CERT examiners</h2>
             </div>
             <Link to="/blogs" className="vh-blog-preview-view-all">
               View all blog posts
@@ -487,7 +487,7 @@ export function Home() {
 
         <div id="plans">
           <PublicCtaBanner
-            heading="Ready to elevate your IELTS preparation?"
+            heading="Ready to elevate your Language CERT preparation?"
             body="Create your student account now, or explore subscription plans built for students and institutes."
             primary={{ label: "Sign up for free →", onClick: () => handleAuth("register") }}
             secondary={{ label: "See pricing", href: "/plans" }}

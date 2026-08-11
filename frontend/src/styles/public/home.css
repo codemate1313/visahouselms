@@ -10,6 +10,7 @@
   z-index: 0;
   overflow: hidden;
 }
+.vh-hero-decor-band,
 .vh-ielts-band {
   position: absolute;
   left: 50%;

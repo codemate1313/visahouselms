@@ -30,7 +30,7 @@ function categoryLabel(category: string): string {
   return strings.categories[category as keyof typeof strings.categories] ?? category;
 }
 
-/** Exam & immigration news: which destinations accept IELTS/PTE/TOEFL, the
+/** Exam & immigration news: which destinations accept Language CERT/PTE/TOEFL, the
  * score bars they ask for, and exam-format changes. A sidebar lists every
  * update newest-first; each card links out to the official source. */
 export function ExamNews() {

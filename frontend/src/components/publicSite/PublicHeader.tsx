@@ -108,7 +108,7 @@ export function PublicHeader() {
               {authLabel}
             </button>
           </div>
-          <p className="vh-drawer-foot vh-drawer-item">IELTS mock tests, band analytics &amp; AI feedback.</p>
+          <p className="vh-drawer-foot vh-drawer-item">Language CERT mock tests, band analytics &amp; AI feedback.</p>
         </div>
       </div>
     </header>

@@ -56,9 +56,11 @@ from app.routers import (
     testimonials_router,
     trial_config,
     vouchers,
+    grammar_content,
 )
 
-app = FastAPI(title="IELTS LMS API")
+
+app = FastAPI(title="Language CERT API")
 
 settings.storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -217,6 +219,8 @@ app.include_router(gst_rates.router)
 app.include_router(payment_webhooks.router)
 app.include_router(revenue.router)
 app.include_router(vouchers.router)
+app.include_router(grammar_content.router)
+
 
 app.include_router(student_portal.router)
 app.include_router(notifications.router)

@@ -13,19 +13,19 @@ def seed_voucher_data():
     try:
         print("Seeding voucher types and offerings...")
 
-        # 1. IELTS Academic
-        ielts_type = db.query(VoucherType).filter(VoucherType.code == "ielts-academic").first()
-        if not ielts_type:
-            ielts_type = VoucherType(
-                name="IELTS Academic",
-                code="ielts-academic",
-                description="Official IDP IELTS Academic exam voucher code with 180-day validity.",
+        # 1. Language CERT Academic
+        langcert_type = db.query(VoucherType).filter(VoucherType.code == "language-cert-academic").first()
+        if not langcert_type:
+            langcert_type = VoucherType(
+                name="Language CERT Academic",
+                code="language-cert-academic",
+                description="Official Language CERT Academic exam voucher code with 180-day validity.",
                 badge_color="#0284c7",
                 default_price=Decimal("16250.00"),
                 default_validity_days=180,
                 is_active=True,
             )
-            db.add(ielts_type)
+            db.add(langcert_type)
             db.flush()
 
         # 2. PTE Academic
@@ -61,12 +61,12 @@ def seed_voucher_data():
         db.commit()
 
         # Seed Offerings
-        o1 = db.query(VoucherOffering).filter(VoucherOffering.title == "IELTS Academic Standard Voucher").first()
+        o1 = db.query(VoucherOffering).filter(VoucherOffering.title == "Language CERT Academic Standard Voucher").first()
         if not o1:
             db.add(VoucherOffering(
-                voucher_type_id=ielts_type.id,
-                title="IELTS Academic Standard Voucher",
-                description="Instant delivery of 16-digit alphanumeric code valid at all official IDP centers.",
+                voucher_type_id=langcert_type.id,
+                title="Language CERT Academic Standard Voucher",
+                description="Instant delivery of 16-digit alphanumeric code valid at all official centers.",
                 price=Decimal("16250.00"),
                 discount_price=Decimal("14999.00"),
                 validity_days=180,
@@ -99,13 +99,13 @@ def seed_voucher_data():
 
         db.commit()
 
-        # Seed initial sample 16-digit stock codes for IELTS and PTE
-        sample_ielts_codes = [
-            "IELTS2026ACAD0001",
-            "IELTS2026ACAD0002",
-            "IELTS2026ACAD0003",
-            "IELTS2026ACAD0004",
-            "IELTS2026ACAD0005",
+        # Seed initial sample 16-digit stock codes for Language CERT and PTE
+        sample_langcert_codes = [
+            "LANGCERT2026ACAD1",
+            "LANGCERT2026ACAD2",
+            "LANGCERT2026ACAD3",
+            "LANGCERT2026ACAD4",
+            "LANGCERT2026ACAD5",
         ]
         sample_pte_codes = [
             "PTEACAD2026EXAM1",
@@ -115,7 +115,7 @@ def seed_voucher_data():
             "PTEACAD2026EXAM5",
         ]
 
-        add_bulk_voucher_codes(db, ielts_type.id, sample_ielts_codes, filename="seed_sample_ielts.txt")
+        add_bulk_voucher_codes(db, langcert_type.id, sample_langcert_codes, filename="seed_sample_langcert.txt")
         add_bulk_voucher_codes(db, pte_type.id, sample_pte_codes, filename="seed_sample_pte.txt")
 
         print("Voucher seed completed successfully!")

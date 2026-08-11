@@ -27,7 +27,7 @@ export function exportUsersPDF(users: DirectoryUser[], role: DirectoryRole, show
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text(`IELTS LMS — ${strings.tabs[role]}`, 14, 12);
+  doc.text(`Language CERT — ${strings.tabs[role]}`, 14, 12);
 
   const head = showInstitute
     ? ["#", "Name", "Email", "Institute", "Status", "Created"]

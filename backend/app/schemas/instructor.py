@@ -15,7 +15,7 @@ class InstructorAccountCreate(BaseModel):
     email: EmailStr
     first_name: str = Field(max_length=100)
     last_name: str = Field(max_length=100)
-    title: str = Field(default="IELTS Instructor", max_length=120)
+    title: str = Field(default="Language CERT Instructor", max_length=120)
     bio: Optional[str] = Field(default=None, max_length=3000)
     dob: Optional[datetime] = None
     phone_number: str

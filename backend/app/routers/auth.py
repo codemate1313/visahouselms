@@ -44,7 +44,7 @@ from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-DEVICE_COOKIE = "ielts_lms_device"
+DEVICE_COOKIE = "language_cert_device"
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo"

@@ -88,8 +88,8 @@ def send_test_email(db: Session, to_address: str) -> None:
     send_email(
         db,
         to_address,
-        "IELTS LMS - SMTP test",
-        "This is a test email from your IELTS LMS Platform Settings. SMTP is working.",
+        "Language CERT - SMTP test",
+        "This is a test email from your Language CERT Platform Settings. SMTP is working.",
     )
 
 
@@ -117,7 +117,7 @@ Purchase Reference: {purchase_number}
 
 Instructions:
 1. Copy your 16-digit voucher code: {code_16_digit}
-2. Visit the official test booking portal (e.g. IDP IELTS / Pearson PTE portal).
+2. Visit the official test booking portal (e.g. Language CERT / Pearson PTE portal).
 3. Select your test center and date.
 4. Enter this 16-digit code at the payment checkout step to redeem your exam seat.
 

@@ -23,8 +23,8 @@ from app.models.user import User
 COURSES_DATA = [
     {
         "module_type": "listening",
-        "title": "IELTS Listening Masterclass — Academic Set 1",
-        "slug": "ielts-listening-masterclass-academic-set-1",
+        "title": "Language CERT Listening Masterclass — Academic Set 1",
+        "slug": "language-cert-listening-masterclass-academic-set-1",
         "summary": "Master section 1 to 4 listening tasks with audio passages, accent recognition, and strategies.",
         "description": "Comprehensive training covering multiple-choice, form completion, diagram labeling, and short answer listening questions.",
         "level": "all_levels",
@@ -33,8 +33,8 @@ COURSES_DATA = [
     },
     {
         "module_type": "reading",
-        "title": "IELTS Reading Excellence — Academic Set 1",
-        "slug": "ielts-reading-excellence-academic-set-1",
+        "title": "Language CERT Reading Excellence — Academic Set 1",
+        "slug": "language-cert-reading-excellence-academic-set-1",
         "summary": "In-depth reading comprehension, skimming & scanning techniques, and True/False/Not Given practice.",
         "description": "Intensive reading module featuring academic texts, vocabulary insights, and step-by-step strategy guides for high band scores.",
         "level": "all_levels",
@@ -43,8 +43,8 @@ COURSES_DATA = [
     },
     {
         "module_type": "writing",
-        "title": "IELTS Writing Task 1 & Task 2 — Academic Set 1",
-        "slug": "ielts-writing-task-1-task-2-academic-set-1",
+        "title": "Language CERT Writing Task 1 & Task 2 — Academic Set 1",
+        "slug": "language-cert-writing-task-1-task-2-academic-set-1",
         "summary": "Academic report writing and essay structuring with instant AI evaluation & feedback.",
         "description": "Covers line graphs, bar charts, process diagrams, and Task 2 opinion/discussion essay frameworks with sample model answers.",
         "level": "all_levels",
@@ -53,8 +53,8 @@ COURSES_DATA = [
     },
     {
         "module_type": "speaking",
-        "title": "IELTS Speaking Fluency & Cue Cards — Academic Set 1",
-        "slug": "ielts-speaking-fluency-cue-cards-academic-set-1",
+        "title": "Language CERT Speaking Fluency & Cue Cards — Academic Set 1",
+        "slug": "language-cert-speaking-fluency-cue-cards-academic-set-1",
         "summary": "Interactive Part 1, 2, and 3 speaking prompts with AI pronunciation and fluency scoring.",
         "description": "Practice Cue Card topics, fluency building, lexical resource enrichment, and realistic examiner Q&A sessions.",
         "level": "all_levels",
@@ -63,8 +63,8 @@ COURSES_DATA = [
     },
     {
         "module_type": "full_mock",
-        "title": "IELTS Complete Practice Mock Exam — Set 1",
-        "slug": "ielts-complete-practice-mock-exam-set-1",
+        "title": "Language CERT Complete Practice Mock Exam — Set 1",
+        "slug": "language-cert-complete-practice-mock-exam-set-1",
         "summary": "Full-length timed mock examination covering Listening, Reading, Writing, and Speaking under realistic exam conditions.",
         "description": "Simulate real test day experience with full band score calculation, detailed module analytics, and AI-powered diagnostic evaluation.",
         "level": "all_levels",
@@ -73,8 +73,8 @@ COURSES_DATA = [
     },
     {
         "module_type": "final_test",
-        "title": "IELTS Academic Final Assessment Test — Set 1",
-        "slug": "ielts-academic-final-assessment-test-set-1",
+        "title": "Language CERT Academic Final Assessment Test — Set 1",
+        "slug": "language-cert-academic-final-assessment-test-set-1",
         "summary": "Official benchmark evaluation designed to measure final test readiness before your exam date.",
         "description": "Final comprehensive evaluation test with detailed performance breakdown across all 4 skill domains.",
         "level": "all_levels",
@@ -140,12 +140,12 @@ def seed_sample_courses():
             created_courses.append(course)
 
         # Seed/Update B2C Plan for Direct Students
-        plan_name = "Visa House IELTS Premium All-Access Plan"
+        plan_name = "Visa House Language CERT Premium All-Access Plan"
         plan = db.query(Plan).filter(Plan.name == plan_name).first()
         if not plan:
             plan = Plan(
                 name=plan_name,
-                description="Unlimited access to all 6 IELTS preparation courses, mock tests, and AI evaluation feedback.",
+                description="Unlimited access to all 6 Language CERT preparation courses, mock tests, and AI evaluation feedback.",
                 price=Decimal("1499.00"),
                 currency="INR",
                 duration_days=30,
@@ -159,7 +159,7 @@ def seed_sample_courses():
                 is_internal=False,
                 ai_evaluation_limit=100,
                 features=[
-                    "Access to all 6 IELTS Modules (Listening, Reading, Writing, Speaking, Mock, Final)",
+                    "Access to all 6 Language CERT Modules (Listening, Reading, Writing, Speaking, Mock, Final)",
                     "100 AI Writing & Speaking Evaluations / month",
                     "Instant Band Score Analytics & Model Answers",
                     "30 Days Full Access"

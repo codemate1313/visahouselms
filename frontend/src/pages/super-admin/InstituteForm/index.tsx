@@ -581,7 +581,7 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
             <div className="form-grid-2col" style={{ marginBottom: 28 }}>
               <div>
                 <label htmlFor="name">{strings.nameLabel}<RequiredMark /></label>
-                <input id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. Visa House IELTS Academy" />
+                <input id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. Visa House Language CERT Academy" />
               </div>
               <div>
                 <label htmlFor="contact_email">{strings.contactEmailLabel}</label>

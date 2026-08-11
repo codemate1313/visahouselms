@@ -42,7 +42,7 @@ def seed_sample_voucher_data(db: Session):
         return
 
     sample_types = [
-        {"name": "IELTS Academic Exam", "code": "ielts-academic", "description": "Official British Council / IDP IELTS Academic exam voucher", "color": "#0284c7"},
+        {"name": "Language CERT Academic Exam", "code": "language-cert-academic", "description": "Official Language CERT Academic exam voucher", "color": "#0284c7"},
         {"name": "PTE Academic Exam", "code": "pte-academic", "description": "Pearson Test of English Academic computer-based test voucher", "color": "#7c3aed"},
         {"name": "TOEFL iBT Exam", "code": "toefl-ibt", "description": "ETS Official TOEFL iBT internet-based test registration voucher", "color": "#059669"},
         {"name": "GRE General Test", "code": "gre-general", "description": "Graduate Record Examination general test registration voucher code", "color": "#ea580c"},
@@ -63,7 +63,7 @@ def seed_sample_voucher_data(db: Session):
 
     # Add Offerings
     offerings_data = [
-        {"type_code": "ielts-academic", "title": "IELTS Academic Standard Exam Voucher", "price": Decimal("15500.00"), "discount_price": Decimal("14200.00"), "validity": 180, "desc": "Includes official practice test + instant 16-digit redemption code."},
+        {"type_code": "language-cert-academic", "title": "Language CERT Academic Standard Exam Voucher", "price": Decimal("15500.00"), "discount_price": Decimal("14200.00"), "validity": 180, "desc": "Includes official practice test + instant 16-digit redemption code."},
         {"type_code": "pte-academic", "title": "PTE Academic Saver Pass", "price": Decimal("17000.00"), "discount_price": Decimal("15900.00"), "validity": 180, "desc": "Official Pearson PTE voucher code valid for all test centers across India."},
         {"type_code": "toefl-ibt", "title": "TOEFL iBT Standard Registration", "price": Decimal("16900.00"), "discount_price": Decimal("14999.00"), "validity": 365, "desc": "ETS official 1-year registration code with free scoring support."},
         {"type_code": "gre-general", "title": "GRE General Test Registration Voucher", "price": Decimal("22500.00"), "discount_price": Decimal("20500.00"), "validity": 180, "desc": "ETS official GRE General Test registration voucher valid for all centers."},

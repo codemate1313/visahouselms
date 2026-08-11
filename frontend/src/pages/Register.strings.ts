@@ -1,8 +1,8 @@
 export const registerStrings = {
   brandName: "Visa House",
-  brandTag: "IELTS LMS",
+  brandTag: "Language CERT",
   createAccount: "account.",
-  subtitle: "Sign up as a student to browse and access IELTS courses.",
+  subtitle: "Sign up as a student to browse and access Language CERT courses.",
   firstNameLabel: "First name",
   firstNamePlaceholder: "First name",
   lastNameLabel: "Last name",

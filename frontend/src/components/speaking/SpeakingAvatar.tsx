@@ -247,7 +247,7 @@ export function SpeakingAvatar({
             ) : (
               <span className="examiner-status-badge">
                 <span className="status-dot-pulse" />
-                {hasPlayedPrompt ? "Examiner Audio Played" : audioFullUrl ? "Click Avatar to Listen" : "IELTS Examiner Ready"}
+                {hasPlayedPrompt ? "Examiner Audio Played" : audioFullUrl ? "Click Avatar to Listen" : "Language CERT Examiner Ready"}
               </span>
             )}
           </div>
@@ -283,7 +283,7 @@ export function SpeakingAvatar({
         {/* Examiner Information & Prompt Content */}
         <div className="avatar-info-panel">
           <div className="avatar-badge-row">
-            <span className="examiner-role-tag">IELTS Live Examiner</span>
+            <span className="examiner-role-tag">Language CERT Live Examiner</span>
 
             {isCandidateRecording ? (
               <span className="examiner-status-badge recording">
@@ -308,7 +308,7 @@ export function SpeakingAvatar({
             {/* Examiner Selector */}
             {examiners.length > 0 && (
               <SearchableSelect
-                ariaLabel="Select IELTS Examiner Voice"
+                ariaLabel="Select Language CERT Examiner Voice"
                 className="examiner-select-dropdown"
                 options={examiners.map((ex) => ({
                   value: ex.id,
@@ -323,7 +323,7 @@ export function SpeakingAvatar({
           </div>
 
           <h3 className="examiner-name-title">
-            {examiner ? `${examiner.name} — ${examiner.title}` : "IELTS Senior Examiner"}
+            {examiner ? `${examiner.name} — ${examiner.title}` : "Language CERT Senior Examiner"}
           </h3>
 
           <p className="prompt-text-display">

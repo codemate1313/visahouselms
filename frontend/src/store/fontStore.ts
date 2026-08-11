@@ -32,7 +32,7 @@ function applyCssVars(config: TypographyConfig) {
 // Load saved config or default
 function getSavedConfig(): TypographyConfig {
   try {
-    const saved = localStorage.getItem("ielts_lms_typography");
+    const saved = localStorage.getItem("language_cert_typography");
     return saved ? JSON.parse(saved) : DEFAULT_TYPOGRAPHY;
   } catch {
     return DEFAULT_TYPOGRAPHY;
@@ -52,12 +52,12 @@ export const useFontStore = create<FontStore>((set, get) => ({
   config: initialConfig,
   updateConfig: (newConfig) => {
     const updated = { ...get().config, ...newConfig };
-    localStorage.setItem("ielts_lms_typography", JSON.stringify(updated));
+    localStorage.setItem("language_cert_typography", JSON.stringify(updated));
     applyCssVars(updated);
     set({ config: updated });
   },
   resetConfig: () => {
-    localStorage.setItem("ielts_lms_typography", JSON.stringify(DEFAULT_TYPOGRAPHY));
+    localStorage.setItem("language_cert_typography", JSON.stringify(DEFAULT_TYPOGRAPHY));
     applyCssVars(DEFAULT_TYPOGRAPHY);
     set({ config: DEFAULT_TYPOGRAPHY });
   },

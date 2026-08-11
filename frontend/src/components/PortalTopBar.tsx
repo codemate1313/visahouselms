@@ -107,6 +107,7 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: ["/super-admin/dev-settings", "/super-admin/platform-settings"], eyebrow: "SETTINGS", title: "Platform Settings" },
   { match: "/super-admin/logs", eyebrow: "SETTINGS", title: "System Logs" },
   { match: "/super-admin/terminal", eyebrow: "SETTINGS", title: "CMD Terminal" },
+  { match: "/student/study-material", eyebrow: "ACADEMICS", title: "Study Material" },
   { match: ["/super-admin/profile", "/institute-portal/profile", "/instructor-portal/profile", "/institute-instructor/profile", "/student/profile"], eyebrow: "ACCOUNT", title: "My Profile" },
   { match: ["/super-admin/sessions", "/institute-portal/sessions", "/instructor-portal/sessions", "/institute-instructor/sessions", "/student/sessions"], eyebrow: "ACCOUNT", title: "Active Sessions" },
   { match: ["/super-admin/change-password", "/institute-portal/change-password", "/instructor-portal/change-password", "/institute-instructor/change-password", "/student/change-password"], eyebrow: "ACCOUNT", title: "Change Password" },
@@ -121,7 +122,7 @@ function routeMatches(pathname: string, matcher: PageMetaRoute["match"]): boolea
 function getPageMeta(pathname: string, user: any): PageMeta {
   const userGreetingName = getUserDisplayName(user);
   const route = namedPageRoutes.find((item) => routeMatches(pathname, item.match));
-  if (!route) return { eyebrow: "IELTS LMS", title: "Portal Workspace" };
+  if (!route) return { eyebrow: "Language CERT", title: "Portal Workspace" };
   return {
     eyebrow: route.eyebrow,
     title: typeof route.title === "function" ? route.title(userGreetingName) : route.title,

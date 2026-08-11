@@ -1,4 +1,4 @@
-"""Live Portrait Speaking Avatar Service for IELTS LMS.
+"""Live Portrait Speaking Avatar Service for Language CERT.
 
 Handles examiner profile selection, TTS audio synthesis with viseme timing,
 and avatar asset delivery.
@@ -30,7 +30,7 @@ EXAMINER_PROFILES = {
     "sonia": {
         "id": "sonia",
         "name": "Sonia Radcliffe",
-        "title": "Senior IELTS Speaking Examiner",
+        "title": "Senior Language CERT Speaking Examiner",
         "gender": "female",
         "voice": "en-GB-SoniaNeural",
         "accent": "British English",
@@ -39,7 +39,7 @@ EXAMINER_PROFILES = {
     "ryan": {
         "id": "ryan",
         "name": "Ryan Mitchell",
-        "title": "Senior IELTS Speaking Examiner",
+        "title": "Senior Language CERT Speaking Examiner",
         "gender": "male",
         "voice": "en-GB-RyanNeural",
         "accent": "British English",
@@ -48,7 +48,7 @@ EXAMINER_PROFILES = {
     "jenny": {
         "id": "jenny",
         "name": "Jenny Parker",
-        "title": "IELTS Speaking Specialist",
+        "title": "Language CERT Speaking Specialist",
         "gender": "female",
         "voice": "en-US-JennyNeural",
         "accent": "US English",
@@ -57,7 +57,7 @@ EXAMINER_PROFILES = {
     "guy": {
         "id": "guy",
         "name": "Guy Thornton",
-        "title": "IELTS Speaking Specialist",
+        "title": "Language CERT Speaking Specialist",
         "gender": "male",
         "voice": "en-US-GuyNeural",
         "accent": "US English",
