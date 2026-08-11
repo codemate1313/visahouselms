@@ -1,6 +1,6 @@
 # Visa House LMS
 
-Multi-tenant IELTS learning platform with a FastAPI/SQLAlchemy backend and a
+Multi-tenant Language CERT learning platform with a FastAPI/SQLAlchemy backend and a
 React/Vite frontend.
 
 ## Current delivery status

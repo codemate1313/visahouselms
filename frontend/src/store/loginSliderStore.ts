@@ -12,16 +12,16 @@ const DEFAULT_SLIDES: LoginSlide[] = [
   {
     id: "slide-1",
     imageUrl: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1200&auto=format&fit=crop",
-    badge: "IELTS LMS PLATFORM",
+    badge: "Language CERT PLATFORM",
     title: "Smart Evaluation & Institute Analytics",
-    subtitle: "Empowering institutes and students with real-time IELTS scoring, automated grading, and comprehensive analytics.",
+    subtitle: "Empowering institutes and students with real-time Language CERT scoring, automated grading, and comprehensive analytics.",
   },
   {
     id: "slide-2",
     imageUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop",
     badge: "ACADEMIC EXCELLENCE",
     title: "Interactive Practice & AI Mock Tests",
-    subtitle: "Deliver authentic computer-delivered IELTS exam environments with live speaking evaluation and instant feedback.",
+    subtitle: "Deliver authentic computer-delivered Language CERT exam environments with live speaking evaluation and instant feedback.",
   },
   {
     id: "slide-3",

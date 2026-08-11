@@ -128,7 +128,7 @@ export function SuperAdminSEOSettings() {
               rows={3}
               value={formData.default_meta_description}
               onChange={(e) => setFormData({ ...formData, default_meta_description: e.target.value })}
-              placeholder="e.g. Experience authentic computer-delivered IELTS environments with AI Speaking & Writing scoring."
+              placeholder="e.g. Experience authentic computer-delivered Language CERT environments with AI Speaking & Writing scoring."
             />
           </div>
 
@@ -138,7 +138,7 @@ export function SuperAdminSEOSettings() {
               rows={2}
               value={formData.default_meta_keywords}
               onChange={(e) => setFormData({ ...formData, default_meta_keywords: e.target.value })}
-              placeholder="e.g. Visa House, IELTS Practice, AI IELTS Evaluation, Computer Delivered IELTS"
+              placeholder="e.g. Visa House, Language CERT Practice, AI Language CERT Evaluation, Computer Delivered Language CERT"
             />
           </div>
         </div>

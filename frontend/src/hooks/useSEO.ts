@@ -24,8 +24,8 @@ const DEFAULT_SEO: SEOSettingsData = {
   site_name: "Visa House",
   default_title: "Visa House | Computer-Delivered Exam Platform & AI Feedback",
   title_template: "%s | Visa House",
-  default_meta_description: "Experience authentic computer-delivered IELTS environments. Powered by instant AI Speaking evaluation, automated Writing feedback, and real-time institute tracking.",
-  default_meta_keywords: "Visa House, IELTS Practice, AI IELTS Evaluation, Computer Delivered IELTS",
+  default_meta_description: "Experience authentic computer-delivered Language CERT environments. Powered by instant AI Speaking evaluation, automated Writing feedback, and real-time institute tracking.",
+  default_meta_keywords: "Visa House, Language CERT Practice, AI Language CERT Evaluation, Computer Delivered Language CERT",
   default_og_image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
   twitter_handle: "@visahouse",
 };

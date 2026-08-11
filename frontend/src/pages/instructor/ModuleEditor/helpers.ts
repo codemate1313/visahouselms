@@ -1,7 +1,7 @@
 import type {
   ExamModulePart,
   ExamModuleType,
-  IeltsSection,
+  ExamSection,
   QuestionDraft,
   QuestionOption,
   QuestionType,
@@ -12,7 +12,7 @@ export const MODULE_TYPES = new Set<ExamModuleType>(["reading", "speaking", "wri
 export const CHOICE_TYPES = new Set<QuestionType>(["mcq_single", "mcq_multiple", "true_false_not_given", "yes_no_not_given", "matching_unique", "matching_reusable"]);
 export const ANSWER_FREE_TYPES = new Set<QuestionType>(["essay", "speaking_prompt"]);
 export const COMPOSITE_TYPES = new Set<ExamModuleType>(["full_mock", "final_test"]);
-export const SOURCE_SECTIONS: IeltsSection[] = ["listening", "reading", "writing", "speaking"];
+export const SOURCE_SECTIONS: ExamSection[] = ["listening", "reading", "writing", "speaking"];
 
 export function optionsFor(type: QuestionType, optionCount = 3): QuestionOption[] {
   if (type === "true_false_not_given") return ["True", "False", "Not Given"].map((text, index) => ({ key: String.fromCharCode(65 + index), text }));

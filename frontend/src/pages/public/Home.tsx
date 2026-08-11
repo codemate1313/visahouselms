@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { PublicHeader } from "@/components/publicSite/PublicHeader";
 import { PublicFooter } from "@/components/publicSite/PublicFooter";
@@ -14,7 +14,7 @@ import { useThemeStore } from "@/store/themeStore";
 import { useSEO } from "@/hooks/useSEO";
 import { API_BASE_URL } from "@/api/client";
 import { useContactSettings } from "./useContactSettings";
-import { HERO_SLIDES, MODULE_CARDS, STEP_CARDS, type TestimonialCard } from "./Home.data";
+import { EVERYTHING_CARDS, HERO_SLIDES, STEP_CARDS, type TestimonialCard } from "./Home.data";
 import { ModuleIcon, ModulePreview, StepIcon } from "./Home.previews";
 import type { BlogListItem } from "./blogTypes";
 import "@/styles/public/chrome.css";
@@ -55,6 +55,7 @@ function mapTestimonials(raw: RawTestimonial[]): TestimonialCard[] {
 
 export function Home() {
   useSEO({});
+  const navigate = useNavigate();
   const contactSettings = useContactSettings();
   const theme = useThemeStore((state) => state.theme);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -203,6 +204,18 @@ export function Home() {
     el.scrollBy({ left: direction * step, behavior: "smooth" });
   }
 
+  function handleHeroCta(link: string) {
+    if (link === "/login") {
+      handleAuth("login");
+      return;
+    }
+    if (link === "/register") {
+      handleAuth("register");
+      return;
+    }
+    navigate(link);
+  }
+
   const activeSlide = HERO_SLIDES[heroIndex];
   const loopedTestimonials = testimonials.length
     ? [...testimonials, ...testimonials, ...testimonials, ...testimonials]
@@ -224,7 +237,7 @@ export function Home() {
               </h1>
               <p className="vh-hero-desc">{activeSlide.desc}</p>
               <div className="vh-hero-actions">
-                <button type="button" className="vh-hero-cta-solid" onClick={() => handleAuth(activeSlide.ctaLink === "/login" ? "login" : "register")}>
+                <button type="button" className="vh-hero-cta-solid" onClick={() => handleHeroCta(activeSlide.ctaLink)}>
                   {activeSlide.ctaText}
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14" />
@@ -273,40 +286,36 @@ export function Home() {
           </div>
         </section>
 
-        <section id="modules" className="vh-modules-section vh-reveal">
+        <section id="features" className="vh-modules-section vh-reveal">
           <div className="vh-section-intro">
             <span className="vh-section-kicker">Everything in one place</span>
             <h2>
-              Everything you need to prepare <span className="vh-accent">with confidence</span>.
+              Everything you need to <span className="vh-accent">prepare with confidence</span>.
             </h2>
-            <p>Preparing for an English language test should not mean jumping between books, websites and scattered practice materials.</p>
+            <p>From realistic mock tests and skill-based practice to detailed performance tracking and feedback — everything is brought together in one place.</p>
           </div>
           <div className="vh-modules-grid">
-            {MODULE_CARDS.map((m) => (
-              <div className="vh-module-card vh-reveal" key={m.num}>
+            {EVERYTHING_CARDS.map((f) => (
+              <div className="vh-module-card vh-reveal" key={f.num}>
                 <div className="vh-module-card-head">
                   <div className="vh-module-card-head-left">
-                    <div style={{ color: m.g1, display: "grid", placeItems: "center" }}>
-                      <ModuleIcon kind={m.kind} />
+                    <div style={{ color: f.g1, display: "grid", placeItems: "center" }}>
+                      <ModuleIcon kind={f.kind === "mocks" ? "listening" : f.kind === "listening_reading" ? "reading" : f.kind === "writing" ? "writing" : f.kind === "speaking" ? "speaking" : "reading"} />
                     </div>
                     <div>
-                      <div className="vh-module-eyebrow">Module {m.num}</div>
-                      <h3>{m.title}</h3>
+                      <div className="vh-module-eyebrow">Feature {f.num}</div>
+                      <h3>{f.title}</h3>
                     </div>
                   </div>
                 </div>
-                <div className="vh-module-preview" style={{ background: `linear-gradient(135deg, ${m.wash1}, ${m.wash2})` }}>
-                  <ModulePreview kind={m.kind} color={m.g1} />
+                <div className="vh-module-preview" style={{ background: `linear-gradient(135deg, ${f.wash1}, ${f.wash2})` }}>
+                  <ModulePreview kind={f.kind === "mocks" ? "listening" : f.kind === "listening_reading" ? "reading" : f.kind === "writing" ? "writing" : f.kind === "speaking" ? "speaking" : "reading"} color={f.g1} />
                 </div>
-                <p>{m.desc}</p>
+                <p>{f.desc}</p>
                 <div className="vh-module-card-foot">
-                  <div className="vh-module-status">
-                    <span className="vh-module-status-dot" style={{ background: m.g1 }} />
-                    {m.status}
-                  </div>
-                  <span className="vh-module-try" style={{ color: m.g1 }}>
-                    Learn more <span>→</span>
-                  </span>
+                  <Link to={f.ctaLink} className="vh-module-try" style={{ color: f.g1 }}>
+                    {f.ctaText}
+                  </Link>
                 </div>
               </div>
             ))}
@@ -315,7 +324,7 @@ export function Home() {
 
         <section id="steps" className="vh-steps-section vh-reveal">
           <div className="vh-steps-intro">
-            <h2>From paper mocks to smarter preparation</h2>
+            <h2>From first mock to target band in three steps</h2>
           </div>
           <div className="vh-steps-grid">
             {STEP_CARDS.map((s, i) => (
@@ -371,7 +380,7 @@ export function Home() {
             ))}
           </div>
         </section>
-
+        
         <section
           className="vh-testimonials-section vh-reveal"
           onMouseEnter={() => setIsTestimonialHovered(true)}
@@ -379,7 +388,7 @@ export function Home() {
         >
           <div className="vh-testimonials-header-wrap">
             <div>
-              <span className="vh-testimonials-eyebrow">Student success stories</span>
+              <span className="vh-testimonials-eyebrow">Student Success Stories</span>
               <h2>Trusted by LanguageCert candidates</h2>
               <p>Read real experiences from students who used Visa House LMS to prepare for their LanguageCert exam and achieve their target results.</p>
             </div>
@@ -489,9 +498,9 @@ export function Home() {
 
         <div id="plans">
           <PublicCtaBanner
-            heading="Ready to transform your LanguageCert preparation?"
-            body="Bring a complete LanguageCert LMS to your institute with realistic mock tests, structured learning, student progress tracking, performance analytics and expert-led support."
-            primary={{ label: "Book a Platform Demo →", onClick: () => handleAuth("register") }}
+            heading="Ready to elevate your LanguageCert preparation?"
+            body="Give your institute a LanguageCert advantage. A purpose-built LMS for institutes that want more than worksheets and practice tests — with digital assessments, performance insights and a better way to prepare students."
+            primary={{ label: "Book a Platform Demo →", onClick: () => navigate("/contact?tab=partner") }}
             secondary={{ label: "See plans and vouchers", href: "/plans" }}
           />
         </div>

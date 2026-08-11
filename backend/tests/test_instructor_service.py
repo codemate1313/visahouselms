@@ -46,7 +46,7 @@ class InstructorServiceTests(unittest.TestCase):
             first_name="Test",
             last_name="Teacher",
             title="Senior Instructor",
-            bio="IELTS writing specialist",
+            bio="Language CERT writing specialist",
             ip="127.0.0.1",
         )
 

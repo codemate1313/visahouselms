@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user, require_password_change_complete, require_role
-from app.models.assessment import ASSESSMENT_STATUSES, IELTS_SECTIONS
+from app.models.assessment import ASSESSMENT_STATUSES, EXAM_SECTIONS
 from app.models.role import SA_INSTRUCTOR
 from app.models.user import User
 from app.schemas.assessment import (
@@ -44,7 +44,7 @@ def list_question_banks(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    if section and section not in IELTS_SECTIONS:
+    if section and section not in EXAM_SECTIONS:
         return []
     return assessment_service.list_banks(
         db, search, section, course_id, actor.id if mine else None

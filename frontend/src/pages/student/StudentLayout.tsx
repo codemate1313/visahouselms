@@ -46,6 +46,7 @@ export function StudentLayout() {
   );
   if (hasActivePlan) {
     mainItems.push(
+      { key: "study-material", label: menu.studyMaterial, icon: "filePdf", to: "/student/study-material" },
       { key: "progress", label: menu.progress, icon: "analytics", to: "/student/progress" },
       { key: "news", label: menu.news, icon: "notifications", to: "/student/news" },
       { key: "vouchers", label: menu.vouchers, icon: "transactions", to: "/student/vouchers" },
@@ -54,6 +55,7 @@ export function StudentLayout() {
       mainItems.push({ key: "purchase-history", label: menu.purchaseHistory, icon: "transactions", to: "/student/purchase-history" });
     }
   }
+
 
   const sections: MenuSection[] = [
     {

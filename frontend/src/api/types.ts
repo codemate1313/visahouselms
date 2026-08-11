@@ -4,9 +4,9 @@
  * so the runtime values and these types can never drift apart.
  */
 
-import type { AttemptStatus, CefrLevel, ExamModuleStatus, IeltsSection } from "@/constants";
+import type { AttemptStatus, CefrLevel, ExamModuleStatus, ExamSection, IeltsSection } from "@/constants";
 
-export type { AttemptStatus, CefrLevel, ExamModuleStatus, IeltsSection };
+export type { AttemptStatus, CefrLevel, ExamModuleStatus, ExamSection, IeltsSection };
 export interface SuperAdminAccount {
   id: number;
   email: string;

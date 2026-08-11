@@ -254,7 +254,7 @@ class SupportServiceTests(unittest.TestCase):
                 phone_number="+91 99999 00000",
                 institute_name="Meridian Institute",
                 subject=subject,
-                message="We need a complete IELTS LMS demo for our institute batches.",
+                message="We need a complete Language CERT demo for our institute batches.",
                 category="demo",
             ),
             ip_address="127.0.0.1",

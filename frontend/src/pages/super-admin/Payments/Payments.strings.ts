@@ -82,7 +82,7 @@ export const paymentsStrings = {
     recordDue: "Failed to record due payment.",
   },
   pdf: {
-    header: "IELTS LMS — Payment Transactions Report",
+    header: "Language CERT — Payment Transactions Report",
     generatedPrefix: "Generated:",
     columns: ["#", "Invoice", "Source", "Institute / Plan", "Reference", "Amount Paid", "Due Amount", "Status", "Date"],
   },

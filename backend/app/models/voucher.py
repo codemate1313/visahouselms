@@ -12,8 +12,8 @@ class VoucherType(Base):
     __tablename__ = "voucher_types"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)  # e.g., IELTS Academic, PTE Academic
-    code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)  # e.g., ielts-academic
+    name: Mapped[str] = mapped_column(String(100), nullable=False)  # e.g., Language CERT Academic, PTE Academic
+    code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)  # e.g., language-cert-academic
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     badge_color: Mapped[str] = mapped_column(String(20), nullable=False, default="#0284c7")
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

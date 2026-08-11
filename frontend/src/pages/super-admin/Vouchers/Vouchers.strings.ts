@@ -12,7 +12,7 @@ export const vouchersStrings = {
     addType: "Add Voucher Type",
     editType: "Edit Voucher Type",
     typeName: "Voucher Type Name",
-    typeCode: "Code / Slug (e.g. ielts-academic)",
+    typeCode: "Code / Slug (e.g. language-cert-academic)",
     description: "Description",
     badgeColor: "Badge Color",
     defaultPrice: "Default Price (₹)",

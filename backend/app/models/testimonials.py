@@ -12,7 +12,7 @@ class Testimonial(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     student_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    student_role: Mapped[Optional[str]] = mapped_column(String(255), default="Academic IELTS Student")
+    student_role: Mapped[Optional[str]] = mapped_column(String(255), default="Academic Language CERT Student")
     target_score: Mapped[Optional[str]] = mapped_column(String(50), default="Band 7.5+")
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     rating: Mapped[int] = mapped_column(Integer, default=5)

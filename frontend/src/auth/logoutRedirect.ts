@@ -1,4 +1,4 @@
-const LOGOUT_REDIRECT_KEY = "ielts_lms_logout_redirect";
+const LOGOUT_REDIRECT_KEY = "language_cert_logout_redirect";
 
 export function markLogoutRedirect() {
   sessionStorage.setItem(LOGOUT_REDIRECT_KEY, "1");

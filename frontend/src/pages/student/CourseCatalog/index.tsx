@@ -167,7 +167,7 @@ export function CourseCatalog() {
           key: data.key_id,
           amount: data.amount,
           currency: data.currency || "INR",
-          name: "Visa House IELTS LMS",
+          name: "Visa House Language CERT",
           description: `${data.plan_name} Purchase`,
           image: "/brand/vh-mark-96.png",
           order_id: data.order_id,

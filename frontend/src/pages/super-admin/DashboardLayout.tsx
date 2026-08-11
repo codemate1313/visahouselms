@@ -7,7 +7,7 @@ import { Sidebar, type MenuItem, type MenuSection } from "@/components/Sidebar";
 import { useAuthStore } from "@/store/authStore";
 import { dashboardLayoutStrings as strings } from "./DashboardLayout.strings";
 
-const COLLAPSE_STORAGE_KEY = "ielts-lms-sidebar-collapsed";
+const COLLAPSE_STORAGE_KEY = "language-cert-sidebar-collapsed";
 
 export function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(

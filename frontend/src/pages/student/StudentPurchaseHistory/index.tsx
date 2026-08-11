@@ -111,18 +111,18 @@ export function StudentPurchaseHistory() {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(15);
         doc.setFont("helvetica", "bold");
-        doc.text("VISA HOUSE IELTS LMS", 36, 17);
+        doc.text("VISA HOUSE LANGUAGE CERT", 36, 17);
       } catch {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(15);
         doc.setFont("helvetica", "bold");
-        doc.text("VISA HOUSE IELTS LMS", 14, 17);
+        doc.text("VISA HOUSE LANGUAGE CERT", 14, 17);
       }
     } else {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(15);
       doc.setFont("helvetica", "bold");
-      doc.text("VISA HOUSE IELTS LMS", 14, 17);
+      doc.text("VISA HOUSE LANGUAGE CERT", 14, 17);
     }
 
     doc.setFontSize(9);
@@ -269,7 +269,7 @@ export function StudentPurchaseHistory() {
     doc.setFontSize(8);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(148, 163, 184);
-    doc.text("Official Tax Receipt issued by Visa House IELTS LMS Platform. Digitally Verified.", 105, 280, {
+    doc.text("Official Tax Receipt issued by Visa House Language CERT Platform. Digitally Verified.", 105, 280, {
       align: "center",
     });
 

@@ -58,9 +58,9 @@ sudo apt install -y git python3-pip python3-venv nginx mysql-server certbot pyth
    ```
 2. Create the database and user:
    ```sql
-   CREATE DATABASE ielts_lms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   CREATE USER 'ielts_user'@'localhost' IDENTIFIED BY 'REPLACE_WITH_STRONG_MYSQL_PASSWORD';
-   GRANT ALL PRIVILEGES ON ielts_lms.* TO 'ielts_user'@'localhost';
+   CREATE DATABASE language_cert_lms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE USER 'language_cert_user'@'localhost' IDENTIFIED BY 'REPLACE_WITH_STRONG_MYSQL_PASSWORD';
+   GRANT ALL PRIVILEGES ON language_cert_lms.* TO 'language_cert_user'@'localhost';
    FLUSH PRIVILEGES;
    EXIT;
    ```

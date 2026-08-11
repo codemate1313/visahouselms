@@ -1,7 +1,7 @@
 import { instituteMemberFormStrings as strings } from "../InstituteMemberForm.strings";
 import { LinkButton } from "@/components/ui";
 
-const SUPER_ADMIN_CONTACT_EMAIL = "support@ieltslmspro.com";
+const SUPER_ADMIN_CONTACT_EMAIL = "support@languagecertpro.com";
 
 interface CapacityLockedViewProps {
   label: string;

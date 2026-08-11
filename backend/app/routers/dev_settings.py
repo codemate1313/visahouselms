@@ -95,7 +95,7 @@ def put_fcm(
 def test_fcm(payload: TestFcmIn, db: Session = Depends(get_db)):
     if payload.device_token:
         return fcm_service.send_test_notification(
-            db, payload.device_token, "IELTS LMS", "FCM test notification"
+            db, payload.device_token, "Language CERT", "FCM test notification"
         )
     return fcm_service.test_credentials(db)
 

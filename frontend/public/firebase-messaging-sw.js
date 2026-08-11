@@ -19,7 +19,7 @@ if (firebaseConfig.apiKey) {
   const messaging = firebase.messaging();
 
   messaging.onBackgroundMessage((payload) => {
-    const title = payload.notification?.title || "IELTS LMS";
+    const title = payload.notification?.title || "Language CERT";
     const body = payload.notification?.body || "";
     const link = payload.fcmOptions?.link || payload.data?.link_url || "/";
     self.registration.showNotification(title, {

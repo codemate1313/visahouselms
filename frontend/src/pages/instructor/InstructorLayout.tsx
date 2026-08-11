@@ -48,8 +48,15 @@ export function InstructorLayout() {
           icon: "grading",
           to: "/super-admin/instructor/grading",
         },
+        {
+          key: "grammar-content",
+          label: strings.items.grammarContent,
+          icon: "filePdf",
+          to: "/super-admin/instructor/grammar-content",
+        },
       ],
     },
+
     {
       title: strings.sections.support,
       items: [

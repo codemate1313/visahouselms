@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from app.models.assessment import (
     ASSESSMENT_STATUSES,
     ASSESSMENT_TYPES,
-    IELTS_SECTIONS,
+    EXAM_SECTIONS,
     QUESTION_DIFFICULTIES,
     QUESTION_TYPES,
 )
@@ -39,8 +39,8 @@ class QuestionBankCreate(BaseModel):
     @classmethod
     def valid_section(cls, value: str) -> str:
         value = value.strip().lower()
-        if value not in IELTS_SECTIONS:
-            raise ValueError(f"section must be one of: {', '.join(IELTS_SECTIONS)}")
+        if value not in EXAM_SECTIONS:
+            raise ValueError(f"section must be one of: {', '.join(EXAM_SECTIONS)}")
         return value
 
 
@@ -71,8 +71,8 @@ class QuestionBankUpdate(BaseModel):
         if value is None:
             return None
         value = value.strip().lower()
-        if value not in IELTS_SECTIONS:
-            raise ValueError(f"section must be one of: {', '.join(IELTS_SECTIONS)}")
+        if value not in EXAM_SECTIONS:
+            raise ValueError(f"section must be one of: {', '.join(EXAM_SECTIONS)}")
         return value
 
 

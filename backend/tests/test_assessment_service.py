@@ -133,8 +133,8 @@ class AssessmentServiceTests(unittest.TestCase):
         self.db.add(self.instructor)
         self.db.flush()
         self.course = Course(
-            title="IELTS Reading",
-            slug="ielts-reading",
+            title="Language CERT Reading",
+            slug="language-cert-reading",
             summary="Reading course",
             level="all_levels",
             price=0,

@@ -8,7 +8,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 
 
-IELTS_SECTIONS = ("listening", "reading", "writing", "speaking")
+EXAM_SECTIONS = ("listening", "reading", "writing", "speaking")
+IELTS_SECTIONS = EXAM_SECTIONS
 QUESTION_TYPES = (
     "mcq_single",
     "mcq_multiple",

@@ -174,28 +174,34 @@ export const ALL_SCOPES_LABEL = "All scopes";
 export const COUPON_SCOPE_OPTIONS = toOptions(COUPON_SCOPE_LABELS, ALL_SCOPES_LABEL);
 
 /* ------------------------------------------------------------------------ */
-/* IELTS sections                                                            */
+/* Exam sections (Listening, Reading, Writing, Speaking)                   */
 /* ------------------------------------------------------------------------ */
 
-export const IELTS_SECTION = {
+export const EXAM_SECTION = {
   LISTENING: "listening",
   READING: "reading",
   WRITING: "writing",
   SPEAKING: "speaking",
 } as const;
 
-export type IeltsSection = (typeof IELTS_SECTION)[keyof typeof IELTS_SECTION];
+export const IELTS_SECTION = EXAM_SECTION;
 
-/** Order matches how IELTS is sat, which is also how every filter listed it. */
-export const IELTS_SECTION_LABELS: Readonly<Record<IeltsSection, string>> = {
-  [IELTS_SECTION.LISTENING]: "Listening",
-  [IELTS_SECTION.READING]: "Reading",
-  [IELTS_SECTION.WRITING]: "Writing",
-  [IELTS_SECTION.SPEAKING]: "Speaking",
+export type ExamSection = (typeof EXAM_SECTION)[keyof typeof EXAM_SECTION];
+export type IeltsSection = ExamSection;
+
+/** Standard section order. */
+export const EXAM_SECTION_LABELS: Readonly<Record<ExamSection, string>> = {
+  [EXAM_SECTION.LISTENING]: "Listening",
+  [EXAM_SECTION.READING]: "Reading",
+  [EXAM_SECTION.WRITING]: "Writing",
+  [EXAM_SECTION.SPEAKING]: "Speaking",
 };
 
+export const IELTS_SECTION_LABELS = EXAM_SECTION_LABELS;
+
 export const ALL_SECTIONS_LABEL = "All sections";
-export const IELTS_SECTION_OPTIONS = toOptions(IELTS_SECTION_LABELS, ALL_SECTIONS_LABEL);
+export const EXAM_SECTION_OPTIONS = toOptions(EXAM_SECTION_LABELS, ALL_SECTIONS_LABEL);
+export const IELTS_SECTION_OPTIONS = EXAM_SECTION_OPTIONS;
 
 /* ------------------------------------------------------------------------ */
 /* Question difficulty                                                       */

@@ -44,7 +44,7 @@ export const institutesStrings = {
     reactivateTitle: "Reactivate Institute",
   },
   pdf: {
-    header: "IELTS LMS — Institutes Report",
+    header: "Language CERT — Institutes Report",
     generatedPrefix: "Generated:",
     columns: ["#", "Institute", "Slug", "Contact Email", "Subscription", "Status", "Onboarding"],
   },

@@ -14,6 +14,8 @@ export const instructorLayoutStrings = {
     authoring: "Authoring",
     modules: "Courses",
     grading: "Grading Queue",
+    grammarContent: "Grammar Content",
+
     raiseQuery: "Raise a Query",
     account: "Account",
     profile: "My Profile",

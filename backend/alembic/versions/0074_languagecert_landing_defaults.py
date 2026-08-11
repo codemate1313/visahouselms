@@ -1,15 +1,15 @@
 """update LanguageCert landing contact and voucher defaults
 
-Revision ID: 0073
-Revises: 0072
+Revision ID: 0074
+Revises: 0073
 Create Date: 2026-08-11
 
 """
 from alembic import op
 import sqlalchemy as sa
 
-revision = "0073"
-down_revision = "0072"
+revision = "0074"
+down_revision = "0073"
 branch_labels = None
 depends_on = None
 

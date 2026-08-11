@@ -55,7 +55,10 @@ export const StudentAttempts = lazy(() => import("../pages/student/StudentAttemp
 export const StudentDashboard = lazy(() => import("../pages/student/StudentDashboard").then((module) => ({ default: module.StudentDashboard })));
 export const StudentLayout = lazy(() => import("../pages/student/StudentLayout").then((module) => ({ default: module.StudentLayout })));
 export const StudentProfile = lazy(() => import("../pages/student/StudentProfile").then((module) => ({ default: module.StudentProfile })));
+export const GrammarContent = lazy(() => import("../pages/instructor/GrammarContent/GrammarContentPage").then((module) => ({ default: module.GrammarContentPage })));
+export const StudyMaterial = lazy(() => import("../pages/student/StudyMaterial/StudyMaterialPage").then((module) => ({ default: module.StudyMaterialPage })));
 export const StudentProgress = lazy(() => import("../pages/student/StudentProgress").then((module) => ({ default: module.StudentProgress })));
+
 export const AccountForm = lazy(() => import("../pages/super-admin/AccountForm").then((module) => ({ default: module.AccountForm })));
 export const Users = lazy(() => import("../pages/super-admin/Users").then((module) => ({ default: module.Users })));
 export const DirectStudentForm = lazy(() => import("../pages/super-admin/Users/DirectStudentForm").then((module) => ({ default: module.DirectStudentForm })));

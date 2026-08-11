@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { instituteMembersStrings as strings } from "../InstituteMembers.strings";
 import { Badge, LinkButton } from "@/components/ui";
 
-const SUPER_ADMIN_CONTACT_EMAIL = "support@ieltslmspro.com";
+const SUPER_ADMIN_CONTACT_EMAIL = "support@languagecertpro.com";
 
 interface MembersFeatureLockedProps {
   canViewBilling: boolean | undefined;

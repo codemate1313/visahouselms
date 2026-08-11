@@ -40,7 +40,7 @@ export const couponsStrings = {
     deactivateTitle: "Deactivate Coupon",
   },
   pdf: {
-    header: "IELTS LMS — Discount Coupons Report",
+    header: "Language CERT — Discount Coupons Report",
     generatedPrefix: "Generated:",
     columns: ["#", "Coupon Code", "Discount Value", "Scope", "Usage Count", "Valid Window", "Status"],
   },

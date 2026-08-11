@@ -14,7 +14,7 @@ import type {
   ExamModulePart,
   ExamModuleQuestion,
   ExamModuleType,
-  IeltsSection,
+  ExamSection,
   QuestionDraft,
   QuestionImportPreview,
 } from "@/api/types";
@@ -46,7 +46,7 @@ export function ModuleEditor() {
   const [selectedPartId, setSelectedPartId] = useState<number | null>(null);
   const [details, setDetails] = useState<ModuleDetailsState>({ title: "", description: "", instructions: "", duration_minutes: 1, show_onboarding_instructions: true, onboarding_instructions: [] });
   const [sourceModules, setSourceModules] = useState<ExamModule[]>([]);
-  const [selectedSources, setSelectedSources] = useState<Record<IeltsSection, string>>({ listening: "", reading: "", writing: "", speaking: "" });
+  const [selectedSources, setSelectedSources] = useState<Record<ExamSection, string>>({ listening: "", reading: "", writing: "", speaking: "" });
   const [loadingSources, setLoadingSources] = useState(false);
   const [manual, setManual] = useState<QuestionDraft | null>(null);
   // Which part the current draft belongs to, so a reload can tell "same part,
@@ -120,7 +120,7 @@ export function ModuleEditor() {
     if (!isNew || !requestedType || !COMPOSITE_TYPES.has(requestedType)) return;
     setLoadingSources(true);
     apiClient.get<ExamModule[]>("/instructor/modules")
-      .then(({ data }) => setSourceModules(data.filter((item) => SOURCE_SECTIONS.includes(item.module_type as IeltsSection) && item.status !== "archived" && item.ready_to_publish)))
+      .then(({ data }) => setSourceModules(data.filter((item) => SOURCE_SECTIONS.includes(item.module_type as ExamSection) && item.status !== "archived" && item.ready_to_publish)))
       .catch((err: unknown) => setError(extractErrorMessage(err, "Failed to load completed source modules.")))
       .finally(() => setLoadingSources(false));
   }, [isNew, requestedType]);

@@ -69,7 +69,7 @@ def _serialize(user: User) -> dict:
         "last_name": user.last_name,
         "is_active": user.is_active,
         "force_password_reset": user.force_password_reset,
-        "title": profile.title if profile else "IELTS Instructor",
+        "title": profile.title if profile else "Language CERT Instructor",
         "bio": profile.bio if profile else None,
         "dob": user.dob,
         "phone_number": user.phone_number,

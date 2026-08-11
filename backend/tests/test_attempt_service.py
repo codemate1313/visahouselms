@@ -153,7 +153,11 @@ class AttemptServiceTestCase(unittest.TestCase):
                             points,
                             [chr(65 + index)] if constraints.get("unique_answers") else ["A"],
                             option_count=constraints.get("option_count", 2),
-                            passage=f"Shared academic source for {part.part_code}." if constraints.get("passage_required") else None,
+                            passage=(
+                            " ".join([f"Word {i+1} {{{{blank:{i+1}}}}}" for i in range(count)])
+                            if constraints.get("layout") == "shared_cloze"
+                            else (f"Shared academic source for {part.part_code}." if constraints.get("passage_required") else None)
+                        ),
                         ),
                         source_type="manual",
                         source_filename=None,

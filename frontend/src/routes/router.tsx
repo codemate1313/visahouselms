@@ -29,7 +29,10 @@ import {
   GradingDetail,
   GradingOversight,
   GradingQueue,
+  GrammarContent,
+  StudyMaterial,
   GstRates,
+
   Home,
   InstituteAnnouncements,
   InstituteBilling,
@@ -293,7 +296,9 @@ export const router = createBrowserRouter([
           { path: "tests/*", element: <Navigate to="/super-admin/instructor/modules" replace /> },
           { path: "grading", element: <GradingQueue /> },
           { path: "grading/:id", element: <GradingDetail /> },
+          { path: "grammar-content", element: <GrammarContent /> },
           { path: "notifications", element: <NotificationsInbox fallbackRoute="/super-admin/instructor/dashboard" /> },
+
           { path: "support", element: <SupportCenter /> },
           { path: "profile", element: <InstructorProfile /> },
           { path: "sessions", element: <Sessions apiBase="/instructor" /> },
@@ -378,7 +383,9 @@ export const router = createBrowserRouter([
           { path: "attempts", element: <StudentAttempts /> },
           { path: "attempts/:id/result", element: <AttemptResult /> },
           { path: "attempts/:id/result/details", element: <AttemptResultDetails /> },
+          { path: "study-material", element: <RequireActivePlan><StudyMaterial /></RequireActivePlan> },
           { path: "progress", element: <RequireActivePlan><StudentProgress /></RequireActivePlan> },
+
           { path: "news", element: <RequireActivePlan><ExamNews /></RequireActivePlan> },
           { path: "announcements", element: <RequireActivePlan><StudentAnnouncements /></RequireActivePlan> },
           { path: "notifications", element: <RequireActivePlan><NotificationsInbox fallbackRoute="/student/dashboard" /></RequireActivePlan> },

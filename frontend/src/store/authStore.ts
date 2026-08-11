@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 // Remove sessions persisted by versions that stored bearer tokens in localStorage.
 if (typeof window !== "undefined") {
-  window.localStorage.removeItem("ielts-lms-auth");
+  window.localStorage.removeItem("language-cert-auth");
 }
 
 export interface AuthUser {

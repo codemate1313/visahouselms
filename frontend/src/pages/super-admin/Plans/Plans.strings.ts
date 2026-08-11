@@ -123,7 +123,7 @@ export const plansStrings = {
     deactivateTitle: "Deactivate Plan",
   },
   pdf: {
-    header: "IELTS LMS — Subscription Plans Report",
+    header: "Language CERT — Subscription Plans Report",
     generatedPrefix: "Generated:",
     columns: ["#", "Plan Name", "Price", "Duration", "Limits (Students/Staff/Tests)", "Grace", "Courses", "Subs", "Status"],
   },

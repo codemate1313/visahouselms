@@ -16,123 +16,134 @@ export const HERO_SLIDES: HeroSlide[] = [
     badge: "Realistic Computer-Based Practice · Expert-Led Preparation",
     heading: "Prepare Smarter. Perform Better. Your LanguageCert Journey.",
     highlight: " Built for Success.",
-    desc: "LanguageCert LMS brings preparation together in one place — from realistic mock tests and skill-based practice to detailed performance tracking and feedback.",
+    desc: "LanguageCert LMS brings your preparation together in one place — from realistic mock tests and skill-based practice to detailed performance tracking and feedback, backed by Visa House's decade of international education experience.",
     image: "/images/slide_simulation.jpg",
-    ctaText: "Sign up for free",
-    ctaLink: "/register",
+    ctaText: "Book a Platform Demo",
+    ctaLink: "/contact?tab=partner",
     altText: "View plans and vouchers →",
     altLink: "/plans",
     stats: [
-      { value: "100+", label: "Students prepared" },
+      { value: "20K+", label: "Students prepared" },
       { value: "20+", label: "Partner institutes" },
       { value: "4.9/5", label: "Target band rate" },
     ],
   },
   {
-    badge: "Structured Practice · CEFR-Aligned Feedback",
-    heading: "Everything You Need to Prepare",
-    highlight: " With Confidence.",
-    desc: "Practise listening, reading, writing and speaking with structured resources designed around your target level and real progress.",
+    badge: "Built for Institutes · Trusted by Educators",
+    heading: "From Paper Mocks to Smarter Prep",
+    highlight: " & Digital Testing.",
+    desc: "We build the environment, audio, timer and marking pipeline so students walk into the real LanguageCert having already sat forty realistic mocks.",
     image: "/images/slide_ai_feedback.jpg",
-    ctaText: "Start practising",
-    ctaLink: "/login",
+    ctaText: "Explore Features",
+    ctaLink: "#features",
     altText: "Explore practice tools →",
-    altLink: "#modules",
+    altLink: "#features",
     stats: [
-      { value: "CEFR", label: "Aligned profile" },
-      { value: "4 Skills", label: "Practice coverage" },
-      { value: "24/7", label: "Dashboard access" },
+      { value: "10+", label: "Years of Experience" },
+      { value: "1000+", label: "Visa Successes" },
+      { value: "Global", label: "Support" },
     ],
   },
   {
-    badge: "Built by Visa House · 10+ Years of Experience",
-    heading: "Built for Institutes.",
-    highlight: " Trusted by Educators.",
-    desc: "Give trainers the tools to manage learning, give students a realistic digital practice environment and give your institute clear visibility into performance.",
+    badge: "Detailed Performance Analytics & Dashboards",
+    heading: "Everything You Need to Prepare",
+    highlight: " with Confidence.",
+    desc: "Track student performance across every skill, identify weaknesses, and use examiner-authored question banks and CEFR-aligned profiles to guide progress.",
     image: "/images/slide_progress.jpg",
-    ctaText: "Book a Platform Demo",
-    ctaLink: "/login",
-    altText: "See how progress tracking works →",
+    ctaText: "Book a Demo",
+    ctaLink: "/contact?tab=partner",
+    altText: "See how we track progress →",
     altLink: "#steps",
     stats: [
-      { value: "20K+", label: "Students prepared" },
-      { value: "1000+", label: "Visa successes" },
-      { value: "Leaderboard", label: "Institute batch ranks" },
+      { value: "Examiner", label: "Authored Question Banks" },
+      { value: "CEFR-Aligned", label: "Proficiency Profiles" },
+      { value: "Institute-Only", label: "Leaderboards & Branding" },
     ],
   },
 ];
 
 export interface ModuleCard {
+  kind: string;
+}
+
+export interface FeatureCard {
   num: string;
   title: string;
   desc: string;
+  ctaText: string;
+  ctaLink: string;
   g1: string;
   wash1: string;
   wash2: string;
-  status: string;
-  kind: "listening" | "reading" | "writing" | "speaking";
+  kind: "mocks" | "listening_reading" | "writing" | "speaking" | "progress" | "guidance";
 }
 
-export const MODULE_CARDS: ModuleCard[] = [
+export const EVERYTHING_CARDS: FeatureCard[] = [
   {
     num: "01",
     title: "Realistic Mock Tests",
     desc: "Experience computer-based practice designed to help you become comfortable with the format, timing and pressure of the real test.",
+    ctaText: "Practice →",
+    ctaLink: "/register",
     g1: "#e11d2e",
     wash1: "rgba(225, 29, 46,0.10)",
     wash2: "rgba(225, 29, 46,0.02)",
-    status: "Practice ready",
-    kind: "listening",
+    kind: "mocks",
   },
   {
     num: "02",
     title: "Listening & Reading Practice",
     desc: "Build accuracy, speed and comprehension with structured practice designed around your target level.",
+    ctaText: "Improve Your Skills →",
+    ctaLink: "/register",
     g1: "#7c5cff",
     wash1: "rgba(124,92,255,0.10)",
     wash2: "rgba(124,92,255,0.02)",
-    status: "Skill builder",
-    kind: "reading",
+    kind: "listening_reading",
   },
   {
     num: "03",
     title: "Writing Feedback",
-    desc: "Practise your writing and understand where you are losing marks with structured feedback against key assessment criteria.",
+    desc: "Practise your writing and understand where you're losing marks with structured feedback against key assessment criteria.",
+    ctaText: "Improve Your Writing →",
+    ctaLink: "/register",
     g1: "#00b8e6",
     wash1: "rgba(0,184,230,0.10)",
     wash2: "rgba(0,184,230,0.02)",
-    status: "Feedback available",
     kind: "writing",
   },
   {
     num: "04",
     title: "Speaking Practice",
     desc: "Develop fluency, pronunciation and confidence through focused speaking practice and performance feedback.",
+    ctaText: "Practise Speaking →",
+    ctaLink: "/register",
     g1: "#22c55e",
     wash1: "rgba(34,197,94,0.10)",
     wash2: "rgba(34,197,94,0.02)",
-    status: "Practice speaking",
     kind: "speaking",
   },
   {
     num: "05",
     title: "Track Your Progress",
     desc: "See your performance across every skill, identify weaknesses and understand exactly where you need to improve.",
+    ctaText: "View Progress →",
+    ctaLink: "/register",
     g1: "#f59e0b",
     wash1: "rgba(245,158,11,0.10)",
     wash2: "rgba(245,158,11,0.02)",
-    status: "Progress mapped",
-    kind: "reading",
+    kind: "progress",
   },
   {
     num: "06",
     title: "Expert Guidance",
     desc: "Learn with preparation strategies shaped by experienced trainers and Visa House's years of working with international students.",
-    g1: "#14b8a6",
-    wash1: "rgba(20,184,166,0.10)",
-    wash2: "rgba(20,184,166,0.02)",
-    status: "Trainer-led",
-    kind: "speaking",
+    ctaText: "Learn More →",
+    ctaLink: "/about",
+    g1: "#ec4899",
+    wash1: "rgba(236,72,153,0.10)",
+    wash2: "rgba(236,72,153,0.02)",
+    kind: "guidance",
   },
 ];
 

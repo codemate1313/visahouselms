@@ -66,9 +66,9 @@ class CourseServiceTests(unittest.TestCase):
             self.db,
             self.instructor,
             {
-                "title": "IELTS Academic Writing",
+                "title": "Language CERT Academic Writing",
                 "summary": "Build a stronger writing score.",
-                "description": "Guided IELTS writing resources.",
+                "description": "Guided Language CERT writing resources.",
                 "level": "intermediate",
                 "estimated_duration_minutes": 180,
                 "price": Decimal("1999.00"),

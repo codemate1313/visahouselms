@@ -172,9 +172,11 @@ def decode_token(token: str) -> dict:
 def is_static_otp_enabled(db: Optional[Session] = None) -> bool:
     """Return whether static OTP is enabled.
 
-    Enabled by default in all environments (including production) until explicitly
-    toggled (enabled/disabled) by Super Admin in Settings.
+    Disabled by default in production. In non-production environments, enabled by default
+    until explicitly toggled in Settings.
     """
+    if settings.app_environment == "production":
+        return False
     if db is not None:
         try:
             from app.services.settings_service import get_setting

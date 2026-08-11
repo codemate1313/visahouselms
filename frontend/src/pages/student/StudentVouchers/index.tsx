@@ -175,7 +175,7 @@ export function StudentVouchers() {
           </span>
           <h1 className="text-3xl font-extrabold tracking-tight">Buy & Manage Test Vouchers</h1>
           <p className="voucher-header-desc text-sm">
-            Purchase 16-digit official exam voucher codes for IELTS, PTE, and more with instant activation.
+            Purchase 16-digit official exam voucher codes for Language CERT, PTE, and more with instant activation.
           </p>
         </div>
 

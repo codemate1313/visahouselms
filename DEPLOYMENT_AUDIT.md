@@ -76,7 +76,7 @@ and tables are utf8mb4** on the server side — the client charset alone does no
 convert existing latin1/utf8 tables:
 
 ```sql
-ALTER DATABASE ielts_lms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER DATABASE language_cert_lms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 -- and for existing tables that were created before this:
 ALTER TABLE <table> CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```

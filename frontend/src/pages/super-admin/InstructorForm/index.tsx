@@ -19,7 +19,7 @@ export function InstructorForm({ basePath = "/super-admin" }: { basePath?: strin
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [title, setTitle] = useState("IELTS Instructor");
+  const [title, setTitle] = useState("Language CERT Instructor");
   const [bio, setBio] = useState("");
   const [dob, setDob] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -39,7 +39,7 @@ export function InstructorForm({ basePath = "/super-admin" }: { basePath?: strin
     if (isNew) return;
     apiClient.get<InstructorAccount>(`/super-admin/instructors/${id}`)
       .then(({ data }) => {
-        const loadedTitle = data.title ?? "IELTS Instructor";
+        const loadedTitle = data.title ?? "Language CERT Instructor";
         const loadedDob = data.dob ? data.dob.split("T")[0] : "";
         const loadedAvatarPath = data.avatar_path ?? "";
         setEmail(data.email ?? "");

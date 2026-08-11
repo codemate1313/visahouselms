@@ -755,7 +755,7 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
         "rubric": part.rubric or [],
         "responses": responses,
         "instructions": (
-            "You are an expert IELTS and CEFR language examiner. "
+            "You are an expert Language CERT and CEFR language examiner. "
             "Analyze the student's submission carefully against the provided rubric criteria. "
             "Return JSON ONLY matching the required schema. "
             "Score EVERY rubric criterion strictly between 0 and its max_marks. "
