@@ -23,10 +23,11 @@ type Audience = "students" | "institutes";
 type Billing = "monthly" | "annual";
 
 const FAQS = [
-  { q: "Can I switch between monthly and annual?", a: "Yes. Upgrade or downgrade any time from your billing page — the switch is prorated against whatever you have already paid." },
-  { q: "Does the institute plan include instructor accounts?", a: "Every institute plan comes with one Institute Admin and up to five instructor seats. Extra seats can be added." },
-  { q: "How does the AI feedback pricing work?", a: "AI drafts on writing are included in all plans. Monthly usage caps apply per direct/institute scope — see the docs for exact limits." },
-  { q: "Can we white-label the platform?", a: "The Institute and Enterprise plans include full branding — your logo, colors, and domain across the portal." },
+  { q: "How do I get started?", a: "Simply choose your preparation plan, create your account and start practising. Your dashboard will guide you through the available resources and help you track your preparation." },
+  { q: "Is LanguageCert LMS suitable for beginners?", a: "Yes. Whether you're starting your preparation from scratch or looking to improve your existing performance, you can use the platform to practise at your level and work towards your target result." },
+  { q: "Can I practise Writing and Speaking?", a: "Yes. LanguageCert LMS provides dedicated Writing and Speaking practice, along with feedback and performance insights to help you identify areas for improvement." },
+  { q: "How can I track my progress?", a: "Your performance is recorded within your LMS dashboard, allowing you to review your results, monitor improvement and identify the skills that need more attention." },
+  { q: "Can I get help if I have a problem with my preparation?", a: "Yes. You can contact the LanguageCert LMS support team for assistance with the platform, preparation resources and account-related questions." },
 ];
 
 function formatPrice(plan: LandingPlan) {
@@ -188,7 +189,6 @@ export function Plans() {
   const cataloguePlans = audience ? audiencePlans(audience) : [];
   const showBillingToggle = cataloguePlans.some((p) => p.billing_period === "monthly") && cataloguePlans.some((p) => p.billing_period === "annual");
   const visiblePlans = showBillingToggle ? cataloguePlans.filter((p) => p.billing_period === billing || p.billing_period === "custom") : cataloguePlans;
-  const showAudienceToggle = showStudentPlans && showInstitutePlans;
   const pending = payload === null || audience === null;
   const hasPlans = !pending && visiblePlans.length > 0;
   const showEmptyState = !pending && visiblePlans.length === 0;
@@ -209,27 +209,24 @@ export function Plans() {
 
         <section className="vh-page-hero">
           <h1>
-            One platform.
-            <span className="vh-accent"> Two audiences.</span>
+            Plans and <span className="vh-accent">vouchers</span>
           </h1>
-          <p>Direct student subscriptions and institute partnerships — priced honestly, billed monthly or annual, cancel anytime.</p>
+          <p>Choose your LanguageCert preparation plan or book official exam seats with discounted vouchers.</p>
         </section>
 
         <section className="vh-plans-section vh-reveal">
-          {showAudienceToggle && (
-            <div className="vh-pill-toggle-row">
-              <SegmentedControl<Audience>
-                ariaLabel="Target audience"
-                value={audience || "students"}
-                onChange={(val) => selectAudience(val)}
-                neverCollapse
-                options={[
-                  { label: "For Students", value: "students" },
-                  { label: "For Institutes", value: "institutes" },
-                ]}
-              />
-            </div>
-          )}
+          <div className="vh-pill-toggle-row">
+            <SegmentedControl<Audience>
+              ariaLabel="Target audience"
+              value={audience || "students"}
+              onChange={(val) => selectAudience(val)}
+              neverCollapse
+              options={[
+                { label: "For Students", value: "students" },
+                { label: "For Institutes", value: "institutes" },
+              ]}
+            />
+          </div>
 
           {showBillingToggle && (
             <div className="vh-pill-toggle-row vh-pill-toggle-row-billing">

@@ -16,14 +16,14 @@ SOCIAL_PLATFORMS = (
 
 
 class ContactInfoBase(BaseModel):
-    email: str = "partners@visahouse.io"
+    email: str = "enquiry.langugaecert@gmail.com"
     email_note: Optional[str] = "Replies within 1 working day"
-    phone: str = "+91 80 4700 8100"
-    phone_note: Optional[str] = "Mon–Fri · 10am to 7pm IST"
-    support_url: str = "support.visahouse.io"
+    phone: str = "+91 9779047164"
+    phone_note: Optional[str] = "Mon–Fri · 9am to 5pm IST"
+    support_url: str = "support.visahouse.com"
     support_note: Optional[str] = "Existing partners only"
-    office_name: str = "Visa House Learning Pvt. Ltd."
-    office_address: str = "4th Floor, Prestige Meridian,\nMG Road, Bangalore 560001"
+    office_name: str = "Visa House Immigration"
+    office_address: str = "Gali lakeer Sahib wali, Amritsar bypass Road,\nTarntaran, 143401"
 
 
 class ContactInfoUpdate(BaseModel):

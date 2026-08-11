@@ -370,7 +370,7 @@ export function ContactUs() {
                 <span className="vh-info-card-dot" style={{ background: "#e11d2e" }} />
                 Email us
               </div>
-              <div className="vh-info-card-value">{contact?.email ?? "partners@visahouse.io"}</div>
+              <div className="vh-info-card-value">{contact?.email ?? "enquiry.langugaecert@gmail.com"}</div>
               <div className="vh-info-card-note">{contact?.email_note ?? "Replies within 1 working day"}</div>
             </div>
             <div className="vh-info-card vh-reveal">
@@ -378,21 +378,21 @@ export function ContactUs() {
                 <span className="vh-info-card-dot" style={{ background: "#7c5cff" }} />
                 Call sales
               </div>
-              <div className="vh-info-card-value">{contact?.phone ?? "+91 80 4700 8100"}</div>
-              <div className="vh-info-card-note">{contact?.phone_note ?? "Mon–Fri · 10am to 7pm IST"}</div>
+              <div className="vh-info-card-value">{contact?.phone ?? "+91 9779047164"}</div>
+              <div className="vh-info-card-note">{contact?.phone_note ?? "Mon–Fri · 9am to 5pm IST"}</div>
             </div>
             <div className="vh-info-card vh-reveal">
               <div className="vh-info-card-eyebrow">
                 <span className="vh-info-card-dot" style={{ background: "#22c55e" }} />
                 Support portal
               </div>
-              <div className="vh-info-card-value">{contact?.support_url ?? "support.visahouse.io"}</div>
+              <div className="vh-info-card-value">{contact?.support_url ?? "support.visahouse.com"}</div>
               <div className="vh-info-card-note">{contact?.support_note ?? "Existing partners only"}</div>
             </div>
             <div className="vh-info-card vh-reveal">
               <div className="vh-office-card-title">Head office</div>
               <div className="vh-office-card-body">
-                {contact?.office_name ?? "Visa House Learning Pvt. Ltd."}
+                {contact?.office_name ?? "Visa House Immigration"}
                 <br />
                 {officeAddressLines.map((line, i) => (
                   <span key={i}>

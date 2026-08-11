@@ -48,7 +48,7 @@ export function BlogsList() {
             Fresh from
             <span className="vh-accent"> our examiners.</span>
           </h1>
-          <p>Band-boosting strategies, product notes and Language CERT news — written by trainers who mark hundreds of scripts a week.</p>
+          <p>Band-boosting strategies, product notes and Language cert news — written by trainers who mark hundreds of scripts a week.</p>
         </section>
 
         <section className="vh-blog-categories vh-reveal">

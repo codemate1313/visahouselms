@@ -13,106 +13,137 @@ export interface HeroSlide {
 
 export const HERO_SLIDES: HeroSlide[] = [
   {
-    badge: "AI Evaluator Live · 15,000+ Students Prepared",
-    heading: "Master Language CERT with Real Exam Simulations",
-    highlight: " & Exam Timers.",
-    desc: "Authentic computer-delivered test environments — with exact Language CERT timing, section tracking, and auto-saving interfaces.",
+    badge: "Realistic Computer-Based Practice · Expert-Led Preparation",
+    heading: "Prepare Smarter. Perform Better.",
+    highlight: " Your LanguageCert Journey.",
+    desc: "LanguageCert LMS brings your preparation together in one place — from realistic mock tests and skill-based practice to detailed performance tracking and feedback, backed by Visa House's decade of international education experience.",
     image: "/images/slide_simulation.jpg",
-    ctaText: "Sign up for free",
-    ctaLink: "/register",
+    ctaText: "Book a Platform Demo",
+    ctaLink: "/contact?tab=partner",
     altText: "View plans & pricing →",
     altLink: "/plans",
     stats: [
-      { value: "15,000+", label: "Students prepared" },
-      { value: "180+", label: "Partner institutes" },
-      { value: "98.4%", label: "Target band rate" },
+      { value: "20K+", label: "Students prepared" },
+      { value: "20+", label: "Partner institutes" },
+      { value: "4.9/5", label: "Target band rate" },
     ],
   },
   {
-    badge: "Instant AI Score Feedback · Speaks & Essays",
-    heading: "Instant Speaking & Writing Analysis",
-    highlight: " & CEFR Bands.",
-    desc: "Our advanced neural networks evaluate pronunciation, grammatical accuracy, coherence, and task response with pinpoint accuracy.",
+    badge: "Built for Institutes · Trusted by Educators",
+    heading: "From Paper Mocks to Smarter Prep",
+    highlight: " & Digital Testing.",
+    desc: "We build the environment, audio, timer and marking pipeline so students walk into the real LanguageCert having already sat forty realistic mocks.",
     image: "/images/slide_ai_feedback.jpg",
-    ctaText: "Try Speaking Demo",
-    ctaLink: "/login",
+    ctaText: "Explore Features",
+    ctaLink: "#features",
     altText: "Learn about AI scoring →",
     altLink: "#modules",
     stats: [
-      { value: "Band 8.5", label: "Average speaking score" },
-      { value: "Real-time", label: "Speech-to-text conversion" },
-      { value: "24/7", label: "Instant evaluation availability" },
+      { value: "10+", label: "Years of Experience" },
+      { value: "1000+", label: "Visa Successes" },
+      { value: "Global", label: "Support" },
     ],
   },
   {
-    badge: "Detailed Learning Analytics & Dashboards",
-    heading: "Track Your Journey to Your Dream Band",
-    highlight: " & Performance Charts.",
-    desc: "Interactive analytics dashboards isolate your weak areas and highlight vocabulary or speed gaps across all four Language CERT modules.",
+    badge: "Detailed Performance Analytics & Dashboards",
+    heading: "Everything You Need to Prepare",
+    highlight: " with Confidence.",
+    desc: "Track student performance across every skill, identify weaknesses, and use examiner-authored question banks and CEFR-aligned profiles to guide progress.",
     image: "/images/slide_progress.jpg",
-    ctaText: "View Dashboard Demo",
-    ctaLink: "/login",
+    ctaText: "Book a Demo",
+    ctaLink: "/contact?tab=partner",
     altText: "See how we track progress →",
     altLink: "#steps",
     stats: [
-      { value: "Weak-spots", label: "Detected automatically" },
-      { value: "Leaderboard", label: "Institute batch ranks" },
-      { value: "One-Click", label: "PDF report downloads" },
+      { value: "Examiner", label: "Authored Question Banks" },
+      { value: "CEFR-Aligned", label: "Proficiency Profiles" },
+      { value: "Institute-Only", label: "Leaderboards & Branding" },
     ],
   },
 ];
 
 export interface ModuleCard {
+  kind: string;
+}
+
+export interface FeatureCard {
   num: string;
   title: string;
   desc: string;
+  ctaText: string;
+  ctaLink: string;
   g1: string;
   wash1: string;
   wash2: string;
-  status: string;
-  kind: "listening" | "reading" | "writing" | "speaking";
+  kind: "mocks" | "listening_reading" | "writing" | "speaking" | "progress" | "guidance";
 }
 
-export const MODULE_CARDS: ModuleCard[] = [
+export const EVERYTHING_CARDS: FeatureCard[] = [
   {
     num: "01",
-    title: "Listening Simulations",
-    desc: "High-fidelity native-accent audio with section progress, waveform seeking and answer autocommit.",
+    title: "Realistic Mock Tests",
+    desc: "Experience computer-based practice designed to help you become comfortable with the format, timing and pressure of the real test.",
+    ctaText: "Practice →",
+    ctaLink: "/register",
     g1: "#e11d2e",
     wash1: "rgba(225, 29, 46,0.10)",
     wash2: "rgba(225, 29, 46,0.02)",
-    status: "Audio playing",
-    kind: "listening",
+    kind: "mocks",
   },
   {
     num: "02",
-    title: "Reading Passages",
-    desc: "Split-screen passage view with live highlighter, T/F/NG, matching headings and summary completion.",
+    title: "Listening & Reading Practice",
+    desc: "Build accuracy, speed and comprehension with structured practice designed around your target level.",
+    ctaText: "Improve Your Skills →",
+    ctaLink: "/register",
     g1: "#7c5cff",
     wash1: "rgba(124,92,255,0.10)",
     wash2: "rgba(124,92,255,0.02)",
-    status: "Highlight active",
-    kind: "reading",
+    kind: "listening_reading",
   },
   {
     num: "03",
-    title: "Writing Assessor",
-    desc: "Task 1 & 2 editor with live word counter, AI scoring across TR, CC, LR & GRA, and grammar fixes.",
+    title: "Writing Feedback",
+    desc: "Practise your writing and understand where you're losing marks with structured feedback against key assessment criteria.",
+    ctaText: "Improve Your Writing →",
+    ctaLink: "/register",
     g1: "#00b8e6",
     wash1: "rgba(0,184,230,0.10)",
     wash2: "rgba(0,184,230,0.02)",
-    status: "Word count synced",
     kind: "writing",
   },
   {
     num: "04",
-    title: "Speaking Evaluator",
-    desc: "Part 1–3 voice recording with speech-to-text, lexical density, pace and fluency scoring.",
+    title: "Speaking Practice",
+    desc: "Develop fluency, pronunciation and confidence through focused speaking practice and performance feedback.",
+    ctaText: "Practise Speaking →",
+    ctaLink: "/register",
     g1: "#22c55e",
     wash1: "rgba(34,197,94,0.10)",
     wash2: "rgba(34,197,94,0.02)",
-    status: "Recording live",
     kind: "speaking",
+  },
+  {
+    num: "05",
+    title: "Track Your Progress",
+    desc: "See your performance across every skill, identify weaknesses and understand exactly where you need to improve.",
+    ctaText: "View Progress →",
+    ctaLink: "/register",
+    g1: "#f59e0b",
+    wash1: "rgba(245,158,11,0.10)",
+    wash2: "rgba(245,158,11,0.02)",
+    kind: "progress",
+  },
+  {
+    num: "06",
+    title: "Expert Guidance",
+    desc: "Learn with preparation strategies shaped by experienced trainers and Visa House's years of working with international students.",
+    ctaText: "Learn More →",
+    ctaLink: "/about",
+    g1: "#ec4899",
+    wash1: "rgba(236,72,153,0.10)",
+    wash2: "rgba(236,72,153,0.02)",
+    kind: "guidance",
   },
 ];
 

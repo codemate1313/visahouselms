@@ -167,7 +167,7 @@ export function VouchersSection() {
             Book Your Exam Seats With Discounted Vouchers
           </h2>
           <p className="vh-pub-muted text-base">
-            Get instant delivery of 16-digit official exam voucher codes for Language CERT, PTE, and more directly on your screen and email.
+            Get instant delivery of 16-digit official exam voucher codes for LanguageCert, Duolingo, PTE, and more directly on your screen and email.
           </p>
         </div>
 

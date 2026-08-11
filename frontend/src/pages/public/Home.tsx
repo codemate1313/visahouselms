@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { PublicHeader } from "@/components/publicSite/PublicHeader";
 import { PublicFooter } from "@/components/publicSite/PublicFooter";
@@ -14,7 +14,7 @@ import { useThemeStore } from "@/store/themeStore";
 import { useSEO } from "@/hooks/useSEO";
 import { API_BASE_URL } from "@/api/client";
 import { useContactSettings } from "./useContactSettings";
-import { HERO_SLIDES, MODULE_CARDS, STEP_CARDS, type TestimonialCard } from "./Home.data";
+import { EVERYTHING_CARDS, HERO_SLIDES, STEP_CARDS, type TestimonialCard } from "./Home.data";
 import { ModuleIcon, ModulePreview, StepIcon } from "./Home.previews";
 import type { BlogListItem } from "./blogTypes";
 import "@/styles/public/chrome.css";
@@ -55,6 +55,7 @@ function mapTestimonials(raw: RawTestimonial[]): TestimonialCard[] {
 
 export function Home() {
   useSEO({});
+  const navigate = useNavigate();
   const contactSettings = useContactSettings();
   const theme = useThemeStore((state) => state.theme);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -272,39 +273,36 @@ export function Home() {
           </div>
         </section>
 
-        <section id="modules" className="vh-modules-section vh-reveal">
+        <section id="features" className="vh-modules-section vh-reveal">
           <div className="vh-section-intro">
+            <span className="vh-testimonials-eyebrow" style={{ textTransform: "uppercase", letterSpacing: "1.5px" }}>EVERYTHING IN ONE PLACE</span>
             <h2>
-              Designed for realistic <span className="vh-accent">Language CERT success</span>
+              Everything you need to <span className="vh-accent">prepare with confidence</span>.
             </h2>
-            <p>Whether preparing independently or managing an entire institute batch, Visa House delivers complete, exam-accurate coverage.</p>
+            <p>From realistic mock tests and skill-based practice to detailed performance tracking and feedback — everything is brought together in one place.</p>
           </div>
           <div className="vh-modules-grid">
-            {MODULE_CARDS.map((m) => (
-              <div className="vh-module-card vh-reveal" key={m.num}>
+            {EVERYTHING_CARDS.map((f) => (
+              <div className="vh-module-card vh-reveal" key={f.num}>
                 <div className="vh-module-card-head">
                   <div className="vh-module-card-head-left">
-                    <div style={{ color: m.g1, display: "grid", placeItems: "center" }}>
-                      <ModuleIcon kind={m.kind} />
+                    <div style={{ color: f.g1, display: "grid", placeItems: "center" }}>
+                      <ModuleIcon kind={f.kind === "mocks" ? "listening" : f.kind === "listening_reading" ? "reading" : f.kind === "writing" ? "writing" : f.kind === "speaking" ? "speaking" : "reading"} />
                     </div>
                     <div>
-                      <div className="vh-module-eyebrow">Module {m.num}</div>
-                      <h3>{m.title}</h3>
+                      <div className="vh-module-eyebrow">Feature {f.num}</div>
+                      <h3>{f.title}</h3>
                     </div>
                   </div>
                 </div>
-                <div className="vh-module-preview" style={{ background: `linear-gradient(135deg, ${m.wash1}, ${m.wash2})` }}>
-                  <ModulePreview kind={m.kind} color={m.g1} />
+                <div className="vh-module-preview" style={{ background: `linear-gradient(135deg, ${f.wash1}, ${f.wash2})` }}>
+                  <ModulePreview kind={f.kind === "mocks" ? "listening" : f.kind === "listening_reading" ? "reading" : f.kind === "writing" ? "writing" : f.kind === "speaking" ? "speaking" : "reading"} color={f.g1} />
                 </div>
-                <p>{m.desc}</p>
+                <p>{f.desc}</p>
                 <div className="vh-module-card-foot">
-                  <div className="vh-module-status">
-                    <span className="vh-module-status-dot" style={{ background: m.g1 }} />
-                    {m.status}
-                  </div>
-                  <span className="vh-module-try" style={{ color: m.g1 }}>
-                    Try module <span>→</span>
-                  </span>
+                  <Link to={f.ctaLink} className="vh-module-try" style={{ color: f.g1 }}>
+                    {f.ctaText}
+                  </Link>
                 </div>
               </div>
             ))}
@@ -370,6 +368,74 @@ export function Home() {
           </div>
         </section>
 
+        {/* Timeline Section */}
+        <section className="vh-modules-section vh-reveal" style={{ paddingTop: 60, paddingBottom: 60 }}>
+          <div className="vh-section-intro">
+            <span className="vh-testimonials-eyebrow">Where We've Been</span>
+            <h2>Our Journey in <span className="vh-accent">LanguageCert Preparation</span></h2>
+            <p>From a small team of LanguageCert trainers to a digital-first learning platform backed by 10+ years of Visa House immigration expertise.</p>
+          </div>
+          <div className="vh-steps-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24 }}>
+            <div className="vh-module-card vh-reveal">
+              <div className="vh-step-num-badge" style={{ marginBottom: 12 }}>2019</div>
+              <h3>Visa House Begins</h3>
+              <p style={{ marginTop: 8 }}>Started with a vision to help students navigate international education and immigration with greater confidence.</p>
+            </div>
+            <div className="vh-module-card vh-reveal">
+              <div className="vh-step-num-badge" style={{ marginBottom: 12 }}>2021</div>
+              <h3>Digital Preparation</h3>
+              <p style={{ marginTop: 8 }}>Introduced structured online learning and digital practice to make English test preparation more accessible.</p>
+            </div>
+            <div className="vh-module-card vh-reveal">
+              <div className="vh-step-num-badge" style={{ marginBottom: 12 }}>2023</div>
+              <h3>Smarter Feedback</h3>
+              <p style={{ marginTop: 8 }}>Expanded our preparation approach with technology-driven assessment and personalised performance feedback.</p>
+            </div>
+            <div className="vh-module-card vh-reveal" style={{ borderColor: "var(--ac)" }}>
+              <div className="vh-step-num-badge" style={{ background: "var(--ac)", color: "#fff", marginBottom: 12 }}>2026</div>
+              <h3>LanguageCert LMS</h3>
+              <p style={{ marginTop: 8 }}>Bringing LanguageCert preparation, realistic mock tests, expert guidance and progress tracking together in one powerful platform.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* About the Platform B2B Section */}
+        <section className="vh-modules-section vh-reveal" style={{ paddingTop: 60, paddingBottom: 60 }}>
+          <div className="vh-section-intro">
+            <span className="vh-testimonials-eyebrow">About the Platform</span>
+            <h2>A smarter way to deliver <span className="vh-accent">LanguageCert preparation</span></h2>
+            <p>LanguageCert LMS is a purpose-built SaaS platform for language training institutes that brings teaching, practice, assessment and student performance into one connected ecosystem.</p>
+          </div>
+          <div className="vh-steps-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 20, marginBottom: 36 }}>
+            <div className="vh-module-card vh-reveal" style={{ padding: 24 }}>
+              <strong style={{ fontSize: 18, color: "var(--ac)" }}>Teach</strong>
+              <p style={{ marginTop: 8, fontSize: 14 }}>Deliver structured LanguageCert preparation and learning resources.</p>
+            </div>
+            <div className="vh-module-card vh-reveal" style={{ padding: 24 }}>
+              <strong style={{ fontSize: 18, color: "#7c5cff" }}>Assess</strong>
+              <p style={{ marginTop: 8, fontSize: 14 }}>Create and manage realistic mock tests and assessments.</p>
+            </div>
+            <div className="vh-module-card vh-reveal" style={{ padding: 24 }}>
+              <strong style={{ fontSize: 18, color: "#00b8e6" }}>Track</strong>
+              <p style={{ marginTop: 8, fontSize: 14 }}>Monitor individual and cohort-level student performance.</p>
+            </div>
+            <div className="vh-module-card vh-reveal" style={{ padding: 24 }}>
+              <strong style={{ fontSize: 18, color: "#22c55e" }}>Improve</strong>
+              <p style={{ marginTop: 8, fontSize: 14 }}>Identify weaknesses and use performance insights to guide preparation.</p>
+            </div>
+            <div className="vh-module-card vh-reveal" style={{ padding: 24 }}>
+              <strong style={{ fontSize: 18, color: "#f59e0b" }}>Scale</strong>
+              <p style={{ marginTop: 8, fontSize: 14 }}>Manage more students and trainers through one central platform.</p>
+            </div>
+          </div>
+          <div className="text-center" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+            <p style={{ fontSize: 18, fontWeight: 600 }}>One platform. Your entire LanguageCert ecosystem.</p>
+            <Link to="/contact?tab=partner" className="vh-hero-cta-solid" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 }}>
+              Book a Private Demo →
+            </Link>
+          </div>
+        </section>
+
         <section
           className="vh-testimonials-section vh-reveal"
           onMouseEnter={() => setIsTestimonialHovered(true)}
@@ -377,9 +443,9 @@ export function Home() {
         >
           <div className="vh-testimonials-header-wrap">
             <div>
-              <span className="vh-testimonials-eyebrow">Student success stories</span>
-              <h2>Trusted by 10,000+ Language CERT aspirants</h2>
-              <p>Read real experiences from candidates who achieved their target band scores using Visa House LMS.</p>
+              <span className="vh-testimonials-eyebrow">Student Success Stories</span>
+              <h2>Trusted by LanguageCert candidates</h2>
+              <p>Read real experiences from students who used Visa House LMS to prepare for their LanguageCert exam and achieve their target results.</p>
             </div>
             <div className="vh-testimonial-controls">
               <button type="button" className="vh-slider-nav-btn" aria-label="Previous testimonial" onClick={() => scrollTestimonials(-1)}>
@@ -441,7 +507,7 @@ export function Home() {
           <div className="vh-blog-preview-head">
             <div>
               <span className="vh-testimonials-eyebrow">Latest from our blog</span>
-              <h2>Insights &amp; strategies from Language CERT examiners</h2>
+              <h2>Insights &amp; strategies from Language cert examiners</h2>
             </div>
             <Link to="/blogs" className="vh-blog-preview-view-all">
               View all blog posts
@@ -487,9 +553,9 @@ export function Home() {
 
         <div id="plans">
           <PublicCtaBanner
-            heading="Ready to elevate your Language CERT preparation?"
-            body="Create your student account now, or explore subscription plans built for students and institutes."
-            primary={{ label: "Sign up for free →", onClick: () => handleAuth("register") }}
+            heading="Ready to elevate your Language Cert preparation?"
+            body="Give your institute a LanguageCert advantage. A purpose-built LMS for institutes that want more than worksheets and practice tests — with digital assessments, performance insights and a better way to prepare students."
+            primary={{ label: "Book a Platform Demo →", onClick: () => navigate("/contact?tab=partner") }}
             secondary={{ label: "See pricing", href: "/plans" }}
           />
         </div>

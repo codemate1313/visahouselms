@@ -26,14 +26,14 @@ admin_router = APIRouter(
 )
 
 DEFAULT_CONTACT_INFO = {
-    "email": "partners@visahouse.io",
+    "email": "enquiry.langugaecert@gmail.com",
     "email_note": "Replies within 1 working day",
-    "phone": "+91 80 4700 8100",
-    "phone_note": "Mon-Fri · 10am to 7pm IST",
-    "support_url": "support.visahouse.io",
+    "phone": "+91 9779047164",
+    "phone_note": "Mon-Fri · 9am to 5pm IST",
+    "support_url": "support.visahouse.com",
     "support_note": "Existing partners only",
-    "office_name": "Visa House Learning Pvt. Ltd.",
-    "office_address": "4th Floor, Prestige Meridian,\nMG Road, Bangalore 560001",
+    "office_name": "Visa House Immigration",
+    "office_address": "Gali lakeer Sahib wali, Amritsar bypass Road,\nTarntaran, 143401",
 }
 
 
