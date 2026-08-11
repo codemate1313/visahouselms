@@ -15,6 +15,7 @@ interface TestRunnerHeaderProps {
   fullscreenActive: boolean;
   onExitDeveloperFullscreen: () => void;
   secondsLeft: number;
+  isListeningLocked?: boolean;
 }
 
 export function TestRunnerHeader({
@@ -29,6 +30,7 @@ export function TestRunnerHeader({
   fullscreenActive,
   onExitDeveloperFullscreen,
   secondsLeft,
+  isListeningLocked = false,
 }: TestRunnerHeaderProps) {
   const t = strings.header;
   const sectionLabels = strings.sectionLabels;
@@ -49,10 +51,21 @@ export function TestRunnerHeader({
           </div>
         )}
         <div className="test-runner-header-navigation" aria-label={t.partNavigationAriaLabel}>
-          <button type="button" className="secondary-button" disabled={partIndex === 0} onClick={() => onSelectPart(partIndex - 1)}>
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={partIndex === 0 || isListeningLocked}
+            onClick={() => onSelectPart(partIndex - 1)}
+            title={isListeningLocked ? "Navigation locked during listening section audio" : undefined}
+          >
             {t.previous}
           </button>
-          <button type="button" disabled={partIndex === attempt.parts.length - 1} onClick={() => onSelectPart(partIndex + 1)}>
+          <button
+            type="button"
+            disabled={partIndex === attempt.parts.length - 1 || isListeningLocked}
+            onClick={() => onSelectPart(partIndex + 1)}
+            title={isListeningLocked ? "Navigation locked during listening section audio" : undefined}
+          >
             {t.next}
           </button>
         </div>

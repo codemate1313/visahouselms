@@ -6,6 +6,7 @@ import { MatchingQuestionGroup } from "./MatchingQuestionGroup";
 import { InlineMatchingBlankGroup } from "./InlineMatchingBlankGroup";
 import { SourceTextMatchingGroup } from "./SourceTextMatchingGroup";
 import { SharedClozeGroup } from "./SharedClozeGroup";
+import { ListeningPart1Group } from "./ListeningPart1Group";
 
 interface QuestionPaneProps {
   currentPart: Attempt["parts"][number];
@@ -45,9 +46,11 @@ export function QuestionPane({
     }, [])
     : [];
   let renderedQuestionIndex = 0;
+  const isListening1 = currentPart.part_code === "listening_1";
+
   return (
     <section className="test-runner-question-pane" ref={questionPaneRef} aria-label={`${currentPart.title} questions`}>
-      {currentPart.section_type !== "writing" && (
+      {currentPart.section_type !== "writing" && !isListening1 && (
         <div className="test-runner-pane-heading test-runner-question-pane-heading">
           <span>
             {currentPart.question_count} {t.questionsSuffix}
@@ -56,7 +59,14 @@ export function QuestionPane({
           <p>{isReading1a ? (currentPart.instructions || t.instructions) : t.instructions}</p>
         </div>
       )}
-      {usesSharedCloze ? (
+      {isListening1 ? (
+        <ListeningPart1Group
+          currentPart={currentPart}
+          questionNumberOffset={questionNumberOffset}
+          savingIds={savingIds}
+          onChangeResponse={(questionId, response) => onChangeResponse(questionId, response)}
+        />
+      ) : usesSharedCloze ? (
         <SharedClozeGroup
           questions={currentPart.questions}
           questionNumberOffset={questionNumberOffset}

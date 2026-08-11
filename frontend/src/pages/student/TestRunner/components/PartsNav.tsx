@@ -13,9 +13,10 @@ interface PartsNavProps {
   sectionGroups: SectionGroup[];
   partIndex: number;
   onSelectPart: (index: number) => void;
+  isListeningLocked?: boolean;
 }
 
-export function PartsNav({ answeredCount, totalQuestions, sectionGroups, partIndex, onSelectPart }: PartsNavProps) {
+export function PartsNav({ answeredCount, totalQuestions, sectionGroups, partIndex, onSelectPart, isListeningLocked = false }: PartsNavProps) {
   const t = strings.nav;
   return (
     <nav className="test-runner-parts" aria-label={t.testSectionsAriaLabel}>
@@ -34,9 +35,11 @@ export function PartsNav({ answeredCount, totalQuestions, sectionGroups, partInd
               <button
                 type="button"
                 key={part.id}
-                className={`test-runner-part-tab${index === partIndex ? " is-active" : ""}${complete ? " is-complete" : ""}`}
-                onClick={() => onSelectPart(index)}
+                disabled={isListeningLocked && index !== partIndex}
+                className={`test-runner-part-tab${index === partIndex ? " is-active" : ""}${complete ? " is-complete" : ""}${isListeningLocked && index !== partIndex ? " is-disabled" : ""}`}
+                onClick={() => !isListeningLocked && onSelectPart(index)}
                 aria-current={index === partIndex ? "step" : undefined}
+                title={isListeningLocked && index !== partIndex ? "Navigation locked during listening section audio" : undefined}
               >
                 <span>{part.title}</span>
                 <span className="test-runner-part-progress">

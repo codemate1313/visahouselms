@@ -23,6 +23,7 @@ import {
 import "@/styles/app/pre-exam-onboarding.css";
 import { PreExamOnboarding } from "./components/PreExamOnboarding";
 import { TestRunnerHeader } from "./components/TestRunnerHeader";
+import { ListeningHeaderPlayer } from "./components/ListeningHeaderPlayer";
 import { PartsNav } from "./components/PartsNav";
 import { SourcePane } from "./components/SourcePane";
 import { QuestionPane } from "./components/QuestionPane";
@@ -82,6 +83,7 @@ export function TestRunner() {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [isListeningLocked, setIsListeningLocked] = useState(false);
   const hasSpeakingPart = attempt?.parts.some((part) => part.section_type === "speaking") ?? false;
 
   const [savingIds, setSavingIds] = useState<Set<number>>(new Set());
@@ -924,6 +926,7 @@ export function TestRunner() {
   );
 
   async function selectPart(index: number) {
+    if (isListeningLocked && index !== partIndex) return;
     const selectedPart = attempt?.parts[index];
     if (
       attempt?.is_final
@@ -1088,7 +1091,15 @@ export function TestRunner() {
         fullscreenActive={fullscreenActive}
         onExitDeveloperFullscreen={exitDeveloperFullscreen}
         secondsLeft={secondsLeft}
+        isListeningLocked={isListeningLocked}
       />
+
+      {currentPart.section_type === "listening" && (
+        <ListeningHeaderPlayer
+          currentPart={currentPart}
+          onAudioLockChange={setIsListeningLocked}
+        />
+      )}
 
       <div className="test-runner-layout">
         <PartsNav
@@ -1097,6 +1108,7 @@ export function TestRunner() {
           sectionGroups={sectionGroups}
           partIndex={partIndex}
           onSelectPart={selectPart}
+          isListeningLocked={isListeningLocked}
         />
 
         <main className={`test-runner-body${currentPart.section_type === "writing" ? " test-runner-body--writing" : ""}`}>
@@ -1140,6 +1152,7 @@ export function TestRunner() {
         submitting={submitting}
         onSelectPart={selectPart}
         onRequestSubmit={() => setConfirmSubmit(true)}
+        isListeningLocked={isListeningLocked}
       />
 
       {confirmSubmit && (

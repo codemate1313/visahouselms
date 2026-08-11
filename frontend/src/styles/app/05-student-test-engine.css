@@ -4529,3 +4529,241 @@ th[aria-sort="descending"] .table-sort-button::after {
     display: none;
   }
 }
+
+/* ==========================================================================
+   LANGUAGE CERT ACADEMIC - LISTENING PART 1 RESTRUCTURED STYLES
+   ========================================================================== */
+
+/* Pinned Master Audio Header Player */
+.lca-listening-header-player {
+  background: #111318;
+  color: #ffffff;
+  padding: 8px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 90;
+}
+
+.lca-listening-player-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.lca-listening-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 240px;
+}
+
+.lca-listening-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #64748b;
+}
+
+.lca-listening-pulse.is-active {
+  background: #e85d3f;
+  box-shadow: 0 0 10px rgba(232, 93, 63, 0.8);
+  animation: lcaPulse 1.5s infinite;
+}
+
+@keyframes lcaPulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.lca-listening-status-text {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #f1f5f9;
+}
+
+.lca-listening-progress-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lca-listening-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.lca-listening-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #e85d3f, #f97316);
+  transition: width 0.2s linear;
+}
+
+.lca-listening-time-display {
+  font-family: monospace;
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.lca-listening-lock-badge {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Part 1 Main Instruction Banner */
+.lca-listening-part1-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.lca-listening-instruction-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #1c1d22;
+  color: #ffffff;
+  border-radius: 6px;
+  border: 1px solid #2d2f36;
+}
+
+.lca-listening-instruction-badge {
+  width: 32px;
+  height: 32px;
+  background: #000000;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.lca-listening-instruction-text {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #f1f5f9;
+}
+
+/* Question Cards & Choices */
+.lca-listening-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lca-listening-q-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.lca-listening-q-card.is-saving {
+  opacity: 0.7;
+}
+
+.lca-listening-q-number {
+  padding: 10px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #334155;
+}
+
+.lca-listening-q-prompt {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.lca-listening-options {
+  display: flex;
+  flex-direction: column;
+}
+
+.lca-option-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  width: 100%;
+}
+
+.lca-option-row:last-child {
+  border-bottom: none;
+}
+
+.lca-option-row:hover {
+  background: #f8fafc;
+}
+
+.lca-option-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  background: #cbd5e1;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.lca-option-label {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #334155;
+}
+
+/* Selected Option Highlight (Matching Reference Orange/Coral Active State) */
+.lca-option-row.is-selected {
+  background: #ffedd5;
+  border-color: #fdba74;
+}
+
+.lca-option-row.is-selected .lca-option-badge {
+  background: #e85d3f;
+  color: #ffffff;
+}
+
+.lca-option-row.is-selected .lca-option-label {
+  color: #9a3412;
+  font-weight: 700;
+}
+
+/* Disabled State for Navigation Tabs */
+.test-runner-part-tab.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
