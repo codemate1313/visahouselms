@@ -13,19 +13,19 @@ import "@/styles/public/chrome.css";
 import "@/styles/public/about.css";
 
 const STATS = [
-  { value: "15K+", label: "Students prepared" },
-  { value: "180+", label: "Partner institutes" },
-  { value: "98.4%", label: "Target band rate" },
-  { value: "4.9/5", label: "User satisfaction" },
+  { value: "10+", label: "Years of Experience" },
+  { value: "20K+", label: "Students Prepared" },
+  { value: "1000+", label: "Visa Successes" },
+  { value: "4.9/5", label: "Student satisfaction" },
 ];
 
 const MISSION_POINTS = ["Examiner-authored question banks", "CEFR-aligned proficiency profile", "Institute-only leaderboards & branding"];
 
 const TIMELINE = [
-  { year: "2019", title: "Started", desc: "Paper mocks turned digital in a Bangalore classroom." },
-  { year: "2021", title: "AI feedback", desc: "First writing rubric prototype shipped to partner institutes." },
-  { year: "2023", title: "Speaking AI", desc: "Fluency and pronunciation evaluator moved to production." },
-  { year: "2026", title: "Global", desc: "180+ institutes across India, UAE and Southeast Asia." },
+  { year: "2019", title: "Visa House Begins", desc: "Started with a vision to help students navigate international education and immigration with greater confidence." },
+  { year: "2021", title: "Digital Preparation", desc: "Introduced structured online learning and digital practice to make English test preparation more accessible." },
+  { year: "2023", title: "Smarter Feedback", desc: "Expanded our preparation approach with technology-driven assessment and personalised performance feedback." },
+  { year: "2026", title: "LanguageCert LMS", desc: "Bringing LanguageCert preparation, realistic mock tests, expert guidance and progress tracking together in one powerful platform." },
 ];
 
 function CheckIcon() {
@@ -94,7 +94,7 @@ function StatCard({ stat }: { stat: { value: string; label: string } }) {
 }
 
 export function AboutUs() {
-  useSEO({ title: "About Us", description: "Visa House started as a small team of IELTS trainers frustrated by paper mocks. Today we power computer-delivered simulation and AI feedback for institutes across three continents." });
+  useSEO({ title: "About Us", description: "A smarter way to deliver LanguageCert preparation, backed by 10+ years of Visa House immigration and education expertise." });
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const contactSettings = useContactSettings();
@@ -112,12 +112,12 @@ export function AboutUs() {
 
         <section className="vh-page-hero">
           <h1>
-            Built for institutes.
-            <span className="vh-accent"> Trusted by educators.</span>
+            About the Platform.
+            <span className="vh-accent"> A smarter way to deliver LanguageCert preparation.</span>
           </h1>
           <p>
-            Visa House started as a small team of IELTS trainers frustrated by paper mocks. Today we power computer-delivered simulation and AI feedback for
-            institutes across three continents.
+            LanguageCert LMS is a purpose-built SaaS platform for language training institutes that brings teaching, practice, assessment and student performance
+            into one connected ecosystem.
           </p>
         </section>
 
@@ -134,7 +134,7 @@ export function AboutUs() {
             <h2>
               Test day should feel like <span className="vh-accent">just another mock</span>.
             </h2>
-            <p>We build the environment, the audio, the timer and the marking pipeline that lets students walk into the real IELTS having already sat forty of them.</p>
+            <p>We build the environment, the audio, the timer and the marking pipeline that lets students walk into the real LanguageCert having already sat forty of them.</p>
             <div className="vh-mission-checklist">
               {MISSION_POINTS.map((point) => (
                 <div className="vh-mission-checklist-item" key={point}>
@@ -168,10 +168,10 @@ export function AboutUs() {
         </section>
 
         <PublicCtaBanner
-          heading="Ready to bring Visa House to your institute?"
-          body="Book a walkthrough with our partnerships team — see the platform, the pricing and a live student cohort."
+          heading="One platform. Your entire LanguageCert ecosystem."
+          body="From the first lesson to the final mock test, LanguageCert LMS gives your institute the infrastructure to deliver a more structured, measurable and scalable preparation experience."
           primary={{ label: authCtaLabel, onClick: goAuth }}
-          secondary={{ label: "Talk to sales", href: "/contact" }}
+          secondary={{ label: "Book a Private Demo →", href: "/contact?form=partner" }}
         />
 
         <PublicFooter socialLinks={contactSettings?.social_links} />

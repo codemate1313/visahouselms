@@ -23,10 +23,11 @@ type Audience = "students" | "institutes";
 type Billing = "monthly" | "annual";
 
 const FAQS = [
-  { q: "Can I switch between monthly and annual?", a: "Yes. Upgrade or downgrade any time from your billing page — the switch is prorated against whatever you have already paid." },
-  { q: "Does the institute plan include instructor accounts?", a: "Every institute plan comes with one Institute Admin and up to five instructor seats. Extra seats can be added." },
-  { q: "How does the AI feedback pricing work?", a: "AI drafts on writing are included in all plans. Monthly usage caps apply per direct/institute scope — see the docs for exact limits." },
-  { q: "Can we white-label the platform?", a: "The Institute and Enterprise plans include full branding — your logo, colors, and domain across the portal." },
+  { q: "How do I get started?", a: "Simply choose your preparation plan, create your account and start practising. Your dashboard will guide you through the available resources and help you track your preparation." },
+  { q: "Is LanguageCert LMS suitable for beginners?", a: "Yes. Whether you are starting your preparation from scratch or looking to improve your existing performance, you can use the platform to practise at your level and work towards your target result." },
+  { q: "Can I practise Writing and Speaking?", a: "Yes. LanguageCert LMS provides dedicated Writing and Speaking practice, along with feedback and performance insights to help you identify areas for improvement." },
+  { q: "How can I track my progress?", a: "Your performance is recorded within your LMS dashboard, allowing you to review your results, monitor improvement and identify the skills that need more attention." },
+  { q: "Can I get help if I have a problem with my preparation?", a: "Yes. You can contact the LanguageCert LMS support team for assistance with the platform, preparation resources and account-related questions." },
 ];
 
 function formatPrice(plan: LandingPlan) {
@@ -108,7 +109,7 @@ function PlanCard({ plan, featured, onSelect, onChoose }: { plan: LandingPlan; f
 }
 
 export function Plans() {
-  useSEO({ title: "Plans & Pricing", description: "Direct student subscriptions and institute partnerships — priced honestly, billed monthly or annual, cancel anytime." });
+  useSEO({ title: "Plans and Vouchers", description: "LanguageCert plans, institute packages and official exam vouchers in one place." });
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const theme = useThemeStore((state) => state.theme);
@@ -209,10 +210,10 @@ export function Plans() {
 
         <section className="vh-page-hero">
           <h1>
-            One platform.
-            <span className="vh-accent"> Two audiences.</span>
+            Plans
+            <span className="vh-accent"> and vouchers.</span>
           </h1>
-          <p>Direct student subscriptions and institute partnerships — priced honestly, billed monthly or annual, cancel anytime.</p>
+          <p>Choose a LanguageCert preparation plan for students or institutes, then purchase official exam vouchers from the same page.</p>
         </section>
 
         <section className="vh-plans-section vh-reveal">
@@ -281,7 +282,7 @@ export function Plans() {
         <section className="vh-faq-section vh-reveal">
           <div className="vh-faq-intro">
 
-            <h2>Common questions</h2>
+            <h2>FAQs</h2>
           </div>
           <div className="vh-acc">
             {FAQS.map((faq, i) => (
@@ -301,8 +302,8 @@ export function Plans() {
         </section>
 
         <PublicCtaBanner
-          heading="Not sure which plan fits?"
-          body="Book a 15-minute call. We will match you to a plan based on your student count and goals."
+          heading="Ready to elevate your LanguageCert preparation?"
+          body="Give your institute a LanguageCert advantage with digital assessments, performance insights and a better way to prepare students."
           primary={{ label: user ? "Go to dashboard →" : "Sign in to portal →", onClick: goAuth }}
           secondary={{ label: "Talk to sales", href: "/contact" }}
         />

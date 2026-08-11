@@ -62,7 +62,7 @@ function ArrowRightIcon() {
 }
 
 export function ContactUs() {
-  useSEO({ title: "Contact Us", description: "Fill in the form, or use the direct channels below. We reply within one working day." });
+  useSEO({ title: "Contact Us", description: "Email, call or contact Visa House for LanguageCert LMS support and institute demos." });
   const location = useLocation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
@@ -165,7 +165,7 @@ export function ContactUs() {
       useToastStore.getState().showSuccess(successMsg);
       setPartner(EMPTY_PARTNER_FORM);
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "We could not submit your application. Please email partners@visahouse.io.";
+      const errorMsg = error instanceof Error ? error.message : "We could not submit your application. Please email enquiry.langugaecert@gmail.com.";
       setPartnerStatus({ message: errorMsg, tone: "error" });
       useToastStore.getState().showError(errorMsg);
     } finally {
@@ -198,7 +198,7 @@ export function ContactUs() {
       useToastStore.getState().showSuccess(successMsg);
       setQuery(EMPTY_QUERY_FORM);
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "We could not submit your enquiry. Please email partners@visahouse.io.";
+      const errorMsg = error instanceof Error ? error.message : "We could not submit your enquiry. Please email enquiry.langugaecert@gmail.com.";
       setQueryStatus({ message: errorMsg, tone: "error" });
       useToastStore.getState().showError(errorMsg);
     } finally {
@@ -207,7 +207,7 @@ export function ContactUs() {
   }
 
   const contact = contactSettings?.contact;
-  const officeAddressLines = (contact?.office_address ?? "4th Floor, Prestige Meridian,\nMG Road, Bangalore 560001").split("\n");
+  const officeAddressLines = (contact?.office_address ?? "Gali lakeer Sahib wali, Amritsar bypass Road\nTarntaran, 143401").split("\n");
 
   return (
     <div className="vh-public" ref={(el) => { rootRef.current = el; }}>
@@ -217,10 +217,10 @@ export function ContactUs() {
 
         <section className="vh-page-hero">
           <h1>
-            Let us bring Visa House
-            <span className="vh-accent"> to your students.</span>
+            Contact
+            <span className="vh-accent"> LanguageCert LMS.</span>
           </h1>
-          <p>Fill in the form, or use the direct channels below. We reply within one working day.</p>
+          <p>Fill in the form, email us, or call sales. We reply within one working day.</p>
         </section>
 
         <section className="vh-contact-grid vh-reveal" ref={formSectionRef}>
@@ -370,7 +370,7 @@ export function ContactUs() {
                 <span className="vh-info-card-dot" style={{ background: "#e11d2e" }} />
                 Email us
               </div>
-              <div className="vh-info-card-value">{contact?.email ?? "partners@visahouse.io"}</div>
+              <div className="vh-info-card-value">{contact?.email ?? "enquiry.langugaecert@gmail.com"}</div>
               <div className="vh-info-card-note">{contact?.email_note ?? "Replies within 1 working day"}</div>
             </div>
             <div className="vh-info-card vh-reveal">
@@ -378,21 +378,21 @@ export function ContactUs() {
                 <span className="vh-info-card-dot" style={{ background: "#7c5cff" }} />
                 Call sales
               </div>
-              <div className="vh-info-card-value">{contact?.phone ?? "+91 80 4700 8100"}</div>
-              <div className="vh-info-card-note">{contact?.phone_note ?? "Mon–Fri · 10am to 7pm IST"}</div>
+              <div className="vh-info-card-value">{contact?.phone ?? "+91 9779047164"}</div>
+              <div className="vh-info-card-note">{contact?.phone_note ?? "Mon-Fri · 9am to 5pm IST"}</div>
             </div>
             <div className="vh-info-card vh-reveal">
               <div className="vh-info-card-eyebrow">
                 <span className="vh-info-card-dot" style={{ background: "#22c55e" }} />
                 Support portal
               </div>
-              <div className="vh-info-card-value">{contact?.support_url ?? "support.visahouse.io"}</div>
+              <div className="vh-info-card-value">{contact?.support_url ?? "support.visahouse.com (to be created)"}</div>
               <div className="vh-info-card-note">{contact?.support_note ?? "Existing partners only"}</div>
             </div>
             <div className="vh-info-card vh-reveal">
               <div className="vh-office-card-title">Head office</div>
               <div className="vh-office-card-body">
-                {contact?.office_name ?? "Visa House Learning Pvt. Ltd."}
+                {contact?.office_name ?? "Visa House Immigration"}
                 <br />
                 {officeAddressLines.map((line, i) => (
                   <span key={i}>
@@ -406,8 +406,8 @@ export function ContactUs() {
         </section>
 
         <PublicCtaBanner
-          heading="Prefer to see it first?"
-          body="Start a free 14-day trial for your institute — no card, no commitment."
+          heading="Ready to transform your LanguageCert preparation?"
+          body="Book a platform demo and see realistic mock tests, structured learning, performance analytics and expert-led support in action."
           primary={{ label: user ? "Go to dashboard →" : "Sign in to portal →", onClick: goAuth }}
           secondary={{ label: "Talk to sales", href: "/contact" }}
         />

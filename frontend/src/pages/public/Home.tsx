@@ -40,8 +40,8 @@ function mapTestimonials(raw: RawTestimonial[]): TestimonialCard[] {
   return raw.map((t) => ({
     quote: t.quote || "",
     name: t.student_name || "Student",
-    role: t.student_role || "Academic Candidate",
-    score: t.target_score || "Band 8.0",
+    role: t.student_role || "LanguageCert Candidate",
+    score: t.target_score || "Target level achieved",
     init: (t.student_name || "S")
       .split(" ")
       .map((n) => n[0])
@@ -217,6 +217,7 @@ export function Home() {
         <section id="top" className="vh-hero-section">
           <div className="vh-hero-slide-container">
             <div className="vh-hero-slide-left">
+              <span className="vh-hero-badge">{activeSlide.badge}</span>
               <h1 className="vh-public-hero-title">
                 {activeSlide.heading}
                 <span className="vh-public-hero-title-accent">{activeSlide.highlight}</span>
@@ -274,10 +275,11 @@ export function Home() {
 
         <section id="modules" className="vh-modules-section vh-reveal">
           <div className="vh-section-intro">
+            <span className="vh-section-kicker">Everything in one place</span>
             <h2>
-              Designed for realistic <span className="vh-accent">IELTS success</span>
+              Everything you need to prepare <span className="vh-accent">with confidence</span>.
             </h2>
-            <p>Whether preparing independently or managing an entire institute batch, Visa House delivers complete, exam-accurate coverage.</p>
+            <p>Preparing for an English language test should not mean jumping between books, websites and scattered practice materials.</p>
           </div>
           <div className="vh-modules-grid">
             {MODULE_CARDS.map((m) => (
@@ -303,7 +305,7 @@ export function Home() {
                     {m.status}
                   </div>
                   <span className="vh-module-try" style={{ color: m.g1 }}>
-                    Try module <span>→</span>
+                    Learn more <span>→</span>
                   </span>
                 </div>
               </div>
@@ -313,7 +315,7 @@ export function Home() {
 
         <section id="steps" className="vh-steps-section vh-reveal">
           <div className="vh-steps-intro">
-            <h2>From first mock to target band in three steps</h2>
+            <h2>From paper mocks to smarter preparation</h2>
           </div>
           <div className="vh-steps-grid">
             {STEP_CARDS.map((s, i) => (
@@ -378,8 +380,8 @@ export function Home() {
           <div className="vh-testimonials-header-wrap">
             <div>
               <span className="vh-testimonials-eyebrow">Student success stories</span>
-              <h2>Trusted by 10,000+ IELTS aspirants</h2>
-              <p>Read real experiences from candidates who achieved their target band scores using Visa House LMS.</p>
+              <h2>Trusted by LanguageCert candidates</h2>
+              <p>Read real experiences from students who used Visa House LMS to prepare for their LanguageCert exam and achieve their target results.</p>
             </div>
             <div className="vh-testimonial-controls">
               <button type="button" className="vh-slider-nav-btn" aria-label="Previous testimonial" onClick={() => scrollTestimonials(-1)}>
@@ -441,7 +443,7 @@ export function Home() {
           <div className="vh-blog-preview-head">
             <div>
               <span className="vh-testimonials-eyebrow">Latest from our blog</span>
-              <h2>Insights &amp; strategies from IELTS examiners</h2>
+              <h2>Insights &amp; strategies from LanguageCert examiners</h2>
             </div>
             <Link to="/blogs" className="vh-blog-preview-view-all">
               View all blog posts
@@ -487,10 +489,10 @@ export function Home() {
 
         <div id="plans">
           <PublicCtaBanner
-            heading="Ready to elevate your IELTS preparation?"
-            body="Create your student account now, or explore subscription plans built for students and institutes."
-            primary={{ label: "Sign up for free →", onClick: () => handleAuth("register") }}
-            secondary={{ label: "See pricing", href: "/plans" }}
+            heading="Ready to transform your LanguageCert preparation?"
+            body="Bring a complete LanguageCert LMS to your institute with realistic mock tests, structured learning, student progress tracking, performance analytics and expert-led support."
+            primary={{ label: "Book a Platform Demo →", onClick: () => handleAuth("register") }}
+            secondary={{ label: "See plans and vouchers", href: "/plans" }}
           />
         </div>
 

@@ -9,7 +9,7 @@ export interface PublicNavItem {
 export const PUBLIC_NAV_ITEMS: PublicNavItem[] = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
-  { label: "Plans", href: "/plans" },
+  { label: "Plans & Vouchers", href: "/plans" },
   { label: "Blogs", href: "/blogs" },
   { label: "Contact", href: "/contact" },
 ];
@@ -35,7 +35,7 @@ export const PUBLIC_FOOTER_COLUMNS: PublicFooterColumn[] = [
     links: [
       { label: "Platform Home", url: "/" },
       { label: "About Us", url: "/about" },
-      { label: "Plans & Pricing", url: "/plans" },
+      { label: "Plans & Vouchers", url: "/plans" },
       { label: "Contact Support", url: "/contact" },
     ],
   },

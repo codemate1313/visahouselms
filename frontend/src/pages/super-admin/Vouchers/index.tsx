@@ -1003,7 +1003,7 @@ export function Vouchers() {
                 <Icon name="plus" />
               </div>
               <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">No Voucher Types Found</h4>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">Create a master voucher type (e.g. IELTS Academic, PTE) to start uploading codes.</p>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">Create a master voucher type (e.g. LanguageCert Academic, Duolingo, PTE) to start uploading codes.</p>
               <Button variant="primary" size="small" onClick={() => openTypeModal()}>
                 + Add Voucher Type
               </Button>
@@ -1093,7 +1093,7 @@ export function Vouchers() {
                 required
                 value={typeForm.name}
                 onChange={(e) => setTypeForm({ ...typeForm, name: e.target.value })}
-                placeholder="e.g. IELTS Academic"
+                placeholder="e.g. LanguageCert Academic"
               />
             </div>
 
@@ -1104,7 +1104,7 @@ export function Vouchers() {
                 disabled={!!editingType}
                 value={typeForm.code}
                 onChange={(e) => setTypeForm({ ...typeForm, code: e.target.value })}
-                placeholder="e.g. ielts-academic"
+                placeholder="e.g. languagecert-academic"
               />
             </div>
           </div>
@@ -1197,7 +1197,7 @@ export function Vouchers() {
                 required
                 value={offeringForm.title}
                 onChange={(e) => setOfferingForm({ ...offeringForm, title: e.target.value })}
-                placeholder="e.g. IELTS Academic Standard Exam Voucher"
+                placeholder="e.g. LanguageCert Academic Standard Exam Voucher"
               />
 
               <Textarea

@@ -19,7 +19,7 @@ function formatBlogDate(createdAt: string) {
 }
 
 export function BlogsList() {
-  useSEO({ title: "Blogs", description: "Band-boosting strategies, product notes and IELTS news — written by trainers who mark hundreds of scripts a week." });
+  useSEO({ title: "Blogs", description: "Band-boosting strategies, product notes and LanguageCert news — written by trainers who mark hundreds of scripts a week." });
   const contactSettings = useContactSettings();
   const [blogs, setBlogs] = useState<BlogListItem[]>([]);
   const [activeCategory, setActiveCategory] = useState("All");
@@ -48,7 +48,7 @@ export function BlogsList() {
             Fresh from
             <span className="vh-accent"> our examiners.</span>
           </h1>
-          <p>Band-boosting strategies, product notes and IELTS news — written by trainers who mark hundreds of scripts a week.</p>
+          <p>Band-boosting strategies, product notes and LanguageCert news — written by trainers who mark hundreds of scripts a week.</p>
         </section>
 
         <section className="vh-blog-categories vh-reveal">

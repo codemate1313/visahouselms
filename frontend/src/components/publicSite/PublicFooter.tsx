@@ -53,7 +53,7 @@ export function PublicFooter({ socialLinks = [] }: { socialLinks?: PublicSocialL
       </div>
 
       <div className="vh-footer-bottom">
-        <span>© {new Date().getFullYear()} Visa House IELTS LMS. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} Visa House LanguageCert LMS. All rights reserved.</span>
         <div className="vh-footer-bottom-links">
           <a href="#">Privacy Policy</a>
           <a href="#">Terms of Service</a>
