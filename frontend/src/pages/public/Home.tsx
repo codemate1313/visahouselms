@@ -93,8 +93,29 @@ export function Home() {
   }, []);
 
   useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          if (heroImageRef.current) {
+            const scrollY = window.scrollY;
+            if (scrollY <= 1200) {
+              heroImageRef.current.style.transform = `translate3d(0, ${scrollY * 0.38}px, 0) scale(1.1)`;
+            }
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
     if (!heroImageRef.current) return;
-    gsap.fromTo(heroImageRef.current, { opacity: 0, scale: 0.94, rotateY: 4 }, { opacity: 1, scale: 1, rotateY: 0, duration: 0.65, ease: "power3.out" });
+    gsap.fromTo(heroImageRef.current, { opacity: 0, scale: 1.18 }, { opacity: 1, scale: 1.1, duration: 0.8, ease: "power2.out" });
   }, [heroIndex]);
 
   useEffect(() => {
@@ -228,8 +249,13 @@ export function Home() {
         <PublicHeader />
 
         <section id="top" className="vh-hero-section">
-          <div className="vh-hero-slide-container">
-            <div className="vh-hero-slide-left">
+          <div className="vh-hero-bg-wrapper">
+            <img ref={heroImageRef} key={heroIndex} src={activeSlide.image} alt={activeSlide.heading} className="vh-hero-bg-img" />
+            <div className="vh-hero-bg-overlay" aria-hidden="true" />
+          </div>
+
+          <div className="vh-hero-inner-container">
+            <div className="vh-hero-content">
               <span className="vh-hero-badge">{activeSlide.badge}</span>
               <h1 className="vh-public-hero-title">
                 {activeSlide.heading}
@@ -263,25 +289,19 @@ export function Home() {
                 ))}
               </div>
             </div>
-            <div className="vh-hero-slide-right">
-              <div className="vh-hero-slide-glow" aria-hidden="true" />
-              <div className="vh-hero-slide-frame">
-                <img ref={heroImageRef} key={heroIndex} src={activeSlide.image} alt={activeSlide.heading} />
-              </div>
-            </div>
-          </div>
 
-          <div className="vh-hero-dots">
-            <div className="vh-hero-dots-inner">
-              {HERO_SLIDES.map((slide, i) => (
-                <button
-                  key={slide.heading}
-                  type="button"
-                  className={`vh-dot${i === heroIndex ? " vh-dot-active" : ""}`}
-                  aria-label={`Show slide ${i + 1}`}
-                  onClick={() => selectHero(i)}
-                />
-              ))}
+            <div className="vh-hero-dots">
+              <div className="vh-hero-dots-inner">
+                {HERO_SLIDES.map((slide, i) => (
+                  <button
+                    key={slide.heading}
+                    type="button"
+                    className={`vh-dot${i === heroIndex ? " vh-dot-active" : ""}`}
+                    aria-label={`Show slide ${i + 1}`}
+                    onClick={() => selectHero(i)}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </section>
