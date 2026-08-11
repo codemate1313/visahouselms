@@ -15,8 +15,8 @@ export const HERO_SLIDES: HeroSlide[] = [
   {
     badge: "Realistic Computer-Based Practice · Expert-Led Preparation",
     heading: "Prepare Smarter, Perform Better.\nYour LanguageCert Journey.",
-    highlight: "\nBuilt for Success.",
-    desc: "LanguageCert LMS brings your preparation together in one place — from realistic mock tests and skill-based practice to detailed performance tracking and feedback, backed by Visa House's decade of international education experience.",
+    highlight: " Built for Success.",
+    desc: "LanguageCert LMS brings your preparation together in one place — from realistic mock tests and skill-based practice to detailed performance tracking and feedback.",
     image: "/images/hero_slide_1.png",
     ctaText: "Book a Platform Demo",
     ctaLink: "/contact?tab=partner",
@@ -30,8 +30,8 @@ export const HERO_SLIDES: HeroSlide[] = [
   },
   {
     badge: "Built for Institutes · Trusted by Educators",
-    heading: "Practice Smarter and Experience a Modern Testing Journey.",
-    highlight: "\nDesigned for Success.",
+    heading: "Practice Smarter & Experience\na Modern Testing Journey.",
+    highlight: " Designed for Success.",
     desc: "We build the environment, audio, timer and marking pipeline so students walk into the real LanguageCert having already sat forty realistic mocks.",
     image: "/images/hero_slide_2.png",
     ctaText: "Explore Features",
@@ -46,8 +46,8 @@ export const HERO_SLIDES: HeroSlide[] = [
   },
   {
     badge: "Detailed Performance Analytics & Dashboards",
-    heading: "Everything You Need to Prepare, Practice & Perform Your Best.",
-    highlight: " \nwith Confidence.",
+    heading: "Everything You Need to Prepare,\nPractice & Perform Your Best.",
+    highlight: " with Confidence.",
     desc: "Track student performance across every skill, identify weaknesses, and use examiner-authored question banks and CEFR-aligned profiles to guide progress.",
     image: "/images/hero_slide_3.png",
     ctaText: "Book a Demo",

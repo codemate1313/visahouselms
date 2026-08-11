@@ -32,7 +32,9 @@
   max-width: 100%;
   margin: 0 0 40px;
   padding: 80px 32px 90px;
-  min-height: 660px;
+  height: 600px;
+  min-height: 600px;
+  max-height: 600px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -110,7 +112,7 @@
   font-weight: 600;
   margin-bottom: 16px;
   color: #ffffff;
-  min-height: 4.6em;
+  min-height: 3.2em;
   white-space: pre-line;
   overflow-wrap: break-word;
 }
@@ -130,7 +132,7 @@
   color: rgba(241, 245, 249, 0.82);
   max-width: 32em;
   margin-bottom: 32px;
-  min-height: 4.8em;
+  min-height: 3.4em;
 }
 .vh-hero-actions {
   display: flex;
