@@ -35,7 +35,7 @@ class SettingsPersistenceTests(unittest.TestCase):
     def test_public_contact_read_does_not_create_default_row(self) -> None:
         response = contact_settings_router.get_public_contact_settings(self.db)
 
-        self.assertEqual(response["contact"]["email"], "partners@visahouse.io")
+        self.assertEqual(response["contact"]["email"], "enquiry.langugaecert@gmail.com")
         self.assertEqual(response["social_links"], [])
         self.assertEqual(self.db.query(ContactSettings).count(), 0)
 

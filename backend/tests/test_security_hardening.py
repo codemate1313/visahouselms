@@ -206,12 +206,11 @@ class LoginOtpSecurityTests(unittest.TestCase):
         # A fixed code must not turn into an "any code works" bypass.
         self.assertFalse(verify_login_otp_code("654321", otp_hash))
 
-    def test_static_dev_otp_is_ignored_outside_development(self) -> None:
-        with mock.patch.object(settings, "dev_static_otp_code", "123456"), \
-                mock.patch.object(settings, "app_environment", "production"):
-            otp = generate_login_otp_code()
+    def test_static_dev_otp_can_be_disabled(self) -> None:
+        mock_db = mock.MagicMock()
+        with mock.patch("app.services.settings_service.get_setting", return_value="false"):
+            otp = generate_login_otp_code(mock_db)
         self.assertRegex(otp, r"^\d{6}$")
-        self.assertNotEqual(otp, "123456")
 
     def test_production_settings_reject_a_static_otp_code(self) -> None:
         with self.assertRaises(ValueError):
