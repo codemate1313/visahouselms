@@ -367,75 +367,7 @@ export function Home() {
             ))}
           </div>
         </section>
-
-        {/* Timeline Section */}
-        <section className="vh-modules-section vh-reveal" style={{ paddingTop: 60, paddingBottom: 60 }}>
-          <div className="vh-section-intro">
-            <span className="vh-testimonials-eyebrow">Where We've Been</span>
-            <h2>Our Journey in <span className="vh-accent">LanguageCert Preparation</span></h2>
-            <p>From a small team of LanguageCert trainers to a digital-first learning platform backed by 10+ years of Visa House immigration expertise.</p>
-          </div>
-          <div className="vh-steps-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24 }}>
-            <div className="vh-module-card vh-reveal">
-              <div className="vh-step-num-badge" style={{ marginBottom: 12 }}>2019</div>
-              <h3>Visa House Begins</h3>
-              <p style={{ marginTop: 8 }}>Started with a vision to help students navigate international education and immigration with greater confidence.</p>
-            </div>
-            <div className="vh-module-card vh-reveal">
-              <div className="vh-step-num-badge" style={{ marginBottom: 12 }}>2021</div>
-              <h3>Digital Preparation</h3>
-              <p style={{ marginTop: 8 }}>Introduced structured online learning and digital practice to make English test preparation more accessible.</p>
-            </div>
-            <div className="vh-module-card vh-reveal">
-              <div className="vh-step-num-badge" style={{ marginBottom: 12 }}>2023</div>
-              <h3>Smarter Feedback</h3>
-              <p style={{ marginTop: 8 }}>Expanded our preparation approach with technology-driven assessment and personalised performance feedback.</p>
-            </div>
-            <div className="vh-module-card vh-reveal" style={{ borderColor: "var(--ac)" }}>
-              <div className="vh-step-num-badge" style={{ background: "var(--ac)", color: "#fff", marginBottom: 12 }}>2026</div>
-              <h3>LanguageCert LMS</h3>
-              <p style={{ marginTop: 8 }}>Bringing LanguageCert preparation, realistic mock tests, expert guidance and progress tracking together in one powerful platform.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* About the Platform B2B Section */}
-        <section className="vh-modules-section vh-reveal" style={{ paddingTop: 60, paddingBottom: 60 }}>
-          <div className="vh-section-intro">
-            <span className="vh-testimonials-eyebrow">About the Platform</span>
-            <h2>A smarter way to deliver <span className="vh-accent">LanguageCert preparation</span></h2>
-            <p>LanguageCert LMS is a purpose-built SaaS platform for language training institutes that brings teaching, practice, assessment and student performance into one connected ecosystem.</p>
-          </div>
-          <div className="vh-steps-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 20, marginBottom: 36 }}>
-            <div className="vh-module-card vh-reveal" style={{ padding: 24 }}>
-              <strong style={{ fontSize: 18, color: "var(--ac)" }}>Teach</strong>
-              <p style={{ marginTop: 8, fontSize: 14 }}>Deliver structured LanguageCert preparation and learning resources.</p>
-            </div>
-            <div className="vh-module-card vh-reveal" style={{ padding: 24 }}>
-              <strong style={{ fontSize: 18, color: "#7c5cff" }}>Assess</strong>
-              <p style={{ marginTop: 8, fontSize: 14 }}>Create and manage realistic mock tests and assessments.</p>
-            </div>
-            <div className="vh-module-card vh-reveal" style={{ padding: 24 }}>
-              <strong style={{ fontSize: 18, color: "#00b8e6" }}>Track</strong>
-              <p style={{ marginTop: 8, fontSize: 14 }}>Monitor individual and cohort-level student performance.</p>
-            </div>
-            <div className="vh-module-card vh-reveal" style={{ padding: 24 }}>
-              <strong style={{ fontSize: 18, color: "#22c55e" }}>Improve</strong>
-              <p style={{ marginTop: 8, fontSize: 14 }}>Identify weaknesses and use performance insights to guide preparation.</p>
-            </div>
-            <div className="vh-module-card vh-reveal" style={{ padding: 24 }}>
-              <strong style={{ fontSize: 18, color: "#f59e0b" }}>Scale</strong>
-              <p style={{ marginTop: 8, fontSize: 14 }}>Manage more students and trainers through one central platform.</p>
-            </div>
-          </div>
-          <div className="text-center" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-            <p style={{ fontSize: 18, fontWeight: 600 }}>One platform. Your entire LanguageCert ecosystem.</p>
-            <Link to="/contact?tab=partner" className="vh-hero-cta-solid" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 }}>
-              Book a Private Demo →
-            </Link>
-          </div>
-        </section>
-
+        
         <section
           className="vh-testimonials-section vh-reveal"
           onMouseEnter={() => setIsTestimonialHovered(true)}
