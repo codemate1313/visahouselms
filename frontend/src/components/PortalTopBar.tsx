@@ -358,8 +358,14 @@ export function PortalTopBar({
   const menuRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const customBreadcrumbs = usePageTitleStore((state) => state.customBreadcrumbs);
   const pageMeta = useMemo(() => getPageMeta(location.pathname, user), [location.pathname, user]);
-  const breadcrumbs = useMemo(() => getBreadcrumbs(location.pathname, pageMeta.eyebrow, pageMeta.title), [location.pathname, pageMeta.eyebrow, pageMeta.title]);
+  const breadcrumbs = useMemo(() => {
+    if (customBreadcrumbs && customBreadcrumbs.length > 0) {
+      return customBreadcrumbs;
+    }
+    return getBreadcrumbs(location.pathname, pageMeta.eyebrow, pageMeta.title);
+  }, [customBreadcrumbs, location.pathname, pageMeta.eyebrow, pageMeta.title]);
   const resolvedAvatarUrl = avatarUrl(user?.avatar_url);
   const name = displayName(user?.first_name, user?.last_name, user?.email);
   const initials = userInitials(user?.first_name, user?.last_name, user?.email);
@@ -430,6 +436,9 @@ export function PortalTopBar({
     currentPath === "/institute-portal/setup" ||
     /^\/student\/attempts\/[^/]+\/take$/.test(currentPath);
   const showBackButton = currentPath !== portalHomePath && !isTerminalPath;
+  const currentTitle = customBreadcrumbs && customBreadcrumbs.length > 0
+    ? customBreadcrumbs[customBreadcrumbs.length - 1].label
+    : pageMeta.title;
 
   return (
     <header className="portal-app-bar">
@@ -465,7 +474,7 @@ export function PortalTopBar({
               <Icon name="arrowLeft" />
             </button>
           )}
-          <h2 className="portal-app-heading">{pageMeta.title}</h2>
+          <h2 className="portal-app-heading">{currentTitle}</h2>
           {itemCount !== null && (
             <span className="portal-app-count-badge">
               {itemCount} {itemCount === 1 ? "entry" : "entries"}

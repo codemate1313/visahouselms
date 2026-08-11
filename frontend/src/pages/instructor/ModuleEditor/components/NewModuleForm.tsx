@@ -1,7 +1,8 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { usePageTitleStore } from "@/store/pageTitleStore";
 import type { ExamModule, ExamModuleType, ExamSection } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { COMPOSITE_TYPES, SOURCE_SECTIONS, MODULE_TYPE_META } from "../helpers";
@@ -38,6 +39,18 @@ export function NewModuleForm({
   const t = strings.newModule;
   const typeLabels = strings.typeLabels;
   const [activeTab, setActiveTab] = useState<"config" | "instructions">("config");
+  const setCustomBreadcrumbs = usePageTitleStore((state) => state.setCustomBreadcrumbs);
+
+  const typeLabel = requestedType ? typeLabels[requestedType] : "";
+
+  useEffect(() => {
+    if (!requestedType) return;
+    setCustomBreadcrumbs([
+      { label: "All Modules", path: moduleWorkspacePath },
+      { label: `Create ${typeLabel}` },
+    ]);
+    return () => setCustomBreadcrumbs(null);
+  }, [requestedType, typeLabel, moduleWorkspacePath, setCustomBreadcrumbs]);
 
   if (!requestedType) {
     return (
@@ -48,7 +61,6 @@ export function NewModuleForm({
     );
   }
 
-  const typeLabel = typeLabels[requestedType];
   const meta = MODULE_TYPE_META[requestedType];
   const isComposite = COMPOSITE_TYPES.has(requestedType);
   const allSourcesSelected = SOURCE_SECTIONS.every((section) => selectedSources[section]);
@@ -81,20 +93,6 @@ export function NewModuleForm({
 
   return (
     <div className="new-module-studio-container">
-      {/* 1. Top Breadcrumb Bar */}
-      <div className="module-editor-breadcrumb-bar">
-        <div className="module-editor-breadcrumb-left">
-          <Link to={moduleWorkspacePath} className="button secondary module-back-btn">
-            <Icon name="arrowLeft" />
-            All Modules
-          </Link>
-          <div className="breadcrumb-trail">
-            <span className="breadcrumb-separator">/</span>
-            <span className="breadcrumb-current-title">Create {typeLabel}</span>
-          </div>
-        </div>
-      </div>
-
       {error && <p className="error-text notice-line">{error}</p>}
 
       {/* 2. Hero Header Banner in Visa House Crimson Brand Theme */}

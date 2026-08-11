@@ -7,6 +7,7 @@ import { Icon } from "@/components/icons";
 import { confirmDelete } from "@/components/confirmDialog";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
+import { usePageTitleStore } from "@/store/pageTitleStore";
 import { isEqual } from "@/utils/isEqual";
 import type {
   ExamModule,
@@ -72,8 +73,8 @@ export function ModuleEditor() {
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
 
-  async function loadModule(preferredPartId?: number) {
-    if (!id) return;
+  async function loadModule(preferredPartId?: number): Promise<ExamModulePart | null> {
+    if (!id) return null;
     const showFullPageLoader = !module;
     if (showFullPageLoader) setLoading(true);
     try {
@@ -109,12 +110,16 @@ export function ModuleEditor() {
         setManual(emptyQuestion(selected));
       }
       setError(null);
+      return selected;
     } catch (err: unknown) {
       setError(extractErrorMessage(err, strings.details.errors.load));
+      return null;
     } finally {
       if (showFullPageLoader) setLoading(false);
     }
   }
+
+  const setCustomBreadcrumbs = usePageTitleStore((state) => state.setCustomBreadcrumbs);
 
   useEffect(() => { loadModule(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
   useEffect(() => {
@@ -172,6 +177,16 @@ export function ModuleEditor() {
     if (location.pathname.startsWith("/institute-instructor/modules")) return "/institute-instructor/modules";
     return "/super-admin/instructor/modules";
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!module) return;
+    setCustomBreadcrumbs([
+      { label: "All Modules", path: moduleWorkspacePath },
+      { label: module.module_label?.toUpperCase() || module.module_type?.toUpperCase() || "MODULE" },
+      { label: module.title },
+    ]);
+    return () => setCustomBreadcrumbs(null);
+  }, [module, moduleWorkspacePath, setCustomBreadcrumbs]);
 
   function choosePart(part: ExamModulePart | null) {
     if (!part) {
@@ -294,8 +309,10 @@ export function ModuleEditor() {
       if (editingQuestionId) await apiClient.put(`${base}/${editingQuestionId}`, questionPayload(manual));
       else await apiClient.post(base, questionPayload(manual));
       const message = editingQuestionId ? strings.manualQuestion.notices.updated : strings.manualQuestion.notices.added(selectedPart.title);
-      setEditingQuestionId(null); setManual(emptyQuestion(selectedPart));
-      await loadModule(selectedPart.id); showSuccess(message);
+      setEditingQuestionId(null);
+      const freshPart = await loadModule(selectedPart.id);
+      setManual(emptyQuestion(freshPart ?? selectedPart));
+      showSuccess(message);
     } catch (err: unknown) { showError(extractErrorMessage(err, strings.manualQuestion.errors.save)); }
     finally { setBusy(false); }
   }
@@ -672,33 +689,6 @@ export function ModuleEditor() {
 
   return (
     <div className="module-editor-page">
-      {/* Sleek Breadcrumb Navigation Bar */}
-      <div className="module-editor-breadcrumb-bar">
-        <div className="module-editor-breadcrumb-left">
-          <Link to={moduleWorkspacePath} className="button secondary module-back-btn">
-            <Icon name="arrowLeft" />
-            All Modules
-          </Link>
-          <div className="breadcrumb-trail">
-            <span className="breadcrumb-separator">/</span>
-            <span 
-              className={`section-chip section-${module.module_type}`}
-              onClick={() => setSelectedPartId(null)}
-              style={{ cursor: "pointer" }}
-              title="Edit Module Details"
-            >
-              {module.module_label}
-            </span>
-            <span className="breadcrumb-separator">/</span>
-            <span className="breadcrumb-current-title">{module.title}</span>
-          </div>
-        </div>
-
-        <div className="module-editor-breadcrumb-right">
-          {/* Breadcrumb right empty or auxiliary controls */}
-        </div>
-      </div>
-
       {/* Sleek Bottom Floating Status Bar */}
       <div className="vh-bottom-floating-status-bar">
         <ModuleReadinessPanel module={module} busy={busy} onChangeStatus={changeStatus} onChoosePart={choosePart} />
