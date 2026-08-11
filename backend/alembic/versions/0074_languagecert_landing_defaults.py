@@ -26,7 +26,7 @@ OLD_CONTACT = {
 NEW_CONTACT = {
     "email": "enquiry.langugaecert@gmail.com",
     "phone": "+91 9779047164",
-    "phone_note": "Mon-Fri · 9am to 5pm IST",
+    "phone_note": "Mon–Fri · 9am to 5pm IST",
     "support_url": "support.visahouse.com (to be created)",
     "office_name": "Visa House Immigration",
     "office_address": "Gali lakeer Sahib wali, Amritsar bypass Road\nTarntaran, 143401",

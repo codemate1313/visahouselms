@@ -19,7 +19,7 @@ class ContactInfoBase(BaseModel):
     email: str = "enquiry.langugaecert@gmail.com"
     email_note: Optional[str] = "Replies within 1 working day"
     phone: str = "+91 9779047164"
-    phone_note: Optional[str] = "Mon-Fri · 9am to 5pm IST"
+    phone_note: Optional[str] = "Mon–Fri · 9am to 5pm IST"
     support_url: str = "support.visahouse.com (to be created)"
     support_note: Optional[str] = "Existing partners only"
     office_name: str = "Visa House Immigration"

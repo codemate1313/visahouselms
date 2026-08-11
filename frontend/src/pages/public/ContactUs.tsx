@@ -379,7 +379,7 @@ export function ContactUs() {
                 Call sales
               </div>
               <div className="vh-info-card-value">{contact?.phone ?? "+91 9779047164"}</div>
-              <div className="vh-info-card-note">{contact?.phone_note ?? "Mon-Fri · 9am to 5pm IST"}</div>
+              <div className="vh-info-card-note">{contact?.phone_note ?? "Mon–Fri · 9am to 5pm IST"}</div>
             </div>
             <div className="vh-info-card vh-reveal">
               <div className="vh-info-card-eyebrow">
@@ -400,6 +400,18 @@ export function ContactUs() {
                     <br />
                   </span>
                 ))}
+              </div>
+              <div style={{ marginTop: "1rem", borderRadius: "8px", overflow: "hidden" }}>
+                <iframe
+                  title="Office Location Map"
+                  src="https://maps.google.com/maps?q=31.4638481,74.9170381+(Visa+House)&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                  width="100%"
+                  height="250"
+                  style={{ border: 0, display: "block" }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                ></iframe>
               </div>
             </div>
           </div>

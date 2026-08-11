@@ -16,7 +16,7 @@ class ContactSettings(Base):
     email: Mapped[str] = mapped_column(String(255), default="enquiry.langugaecert@gmail.com")
     email_note: Mapped[Optional[str]] = mapped_column(String(255), default="Replies within 1 working day")
     phone: Mapped[str] = mapped_column(String(50), default="+91 9779047164")
-    phone_note: Mapped[Optional[str]] = mapped_column(String(255), default="Mon-Fri · 9am to 5pm IST")
+    phone_note: Mapped[Optional[str]] = mapped_column(String(255), default="Mon–Fri · 9am to 5pm IST")
     support_url: Mapped[str] = mapped_column(String(255), default="support.visahouse.com (to be created)")
     support_note: Mapped[Optional[str]] = mapped_column(String(255), default="Existing partners only")
     office_name: Mapped[str] = mapped_column(String(255), default="Visa House Immigration")
