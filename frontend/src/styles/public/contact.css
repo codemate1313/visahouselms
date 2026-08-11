@@ -388,24 +388,24 @@
 }
 .vh-map-overlay-btn {
   font-family: inherit;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(8px);
-  color: #fff;
+  padding: 7px 14px;
+  border-radius: 100px;
+  background: var(--ac);
+  color: #fff !important;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  transition: background 0.2s, transform 0.2s;
+  box-shadow: 0 4px 14px rgba(225, 29, 46, 0.4);
+  transition: transform 0.2s, filter 0.2s, box-shadow 0.2s;
 }
 .vh-map-overlay-btn:hover {
-  background: var(--ac);
-  color: #fff !important;
   transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: 0 6px 18px rgba(225, 29, 46, 0.5);
+  color: #fff !important;
 }
 
 .vh-form-input:focus,

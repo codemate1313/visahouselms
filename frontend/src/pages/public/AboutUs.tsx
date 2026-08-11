@@ -98,7 +98,42 @@ export function AboutUs() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const contactSettings = useContactSettings();
+
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!timelineRef.current) return;
+      const rect = timelineRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const startTrigger = windowHeight * 0.6; 
+      const distanceScrolled = startTrigger - rect.top;
+      const totalScrollable = rect.height;
+      let progress = distanceScrolled / totalScrollable;
+      progress = Math.max(0, Math.min(1, progress));
+      setScrollProgress(progress * 100);
+
+      const cards = timelineRef.current.querySelectorAll('.vh-timeline-card');
+      cards.forEach((card) => {
+        const cardEl = card as HTMLElement;
+        // Calculate the center point of the card relative to the timeline container
+        // plus an offset to match the visual progress line
+        const triggerPoint = cardEl.offsetTop + cardEl.offsetHeight / 2;
+        if (distanceScrolled >= triggerPoint) {
+          cardEl.classList.add('vh-timeline-active');
+        } else {
+          cardEl.classList.remove('vh-timeline-active');
+        }
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   useRevealOnScroll(rootRef);
 
   const authCtaLabel = user ? "Go to dashboard →" : "Sign in to portal →";
@@ -112,8 +147,9 @@ export function AboutUs() {
 
         <section className="vh-page-hero">
           <h1>
-            About the Platform.
-            <span className="vh-accent"> A smarter way to deliver LanguageCert preparation.</span>
+            A smarter way to deliver
+            <span className="vh-accent"> LanguageCert </span>
+            preparation.
           </h1>
           <p>
             LanguageCert LMS is a purpose-built SaaS platform for language training institutes that brings teaching, practice, assessment and student performance
@@ -129,36 +165,40 @@ export function AboutUs() {
           </div>
         </section>
 
-        <section className="vh-about-mission vh-reveal">
-          <div>
-            <h2>
-              Test day should feel like <span className="vh-accent">just another mock</span>.
-            </h2>
-            <p>We build the environment, the audio, the timer and the marking pipeline that lets students walk into the real LanguageCert having already sat forty of them.</p>
-            <div className="vh-mission-checklist">
-              {MISSION_POINTS.map((point) => (
-                <div className="vh-mission-checklist-item" key={point}>
-                  <span className="vh-check-badge">
-                    <CheckIcon />
-                  </span>
-                  <span>{point}</span>
-                </div>
-              ))}
+        <section className="vh-about-mission">
+          <div className="vh-parallax-bg" />
+          <div className="vh-about-mission-overlay" />
+          <div className="vh-about-mission-container vh-reveal">
+            <div className="vh-about-mission-content">
+              <h2>
+                Test day should feel like <span className="vh-accent">just another mock</span>.
+              </h2>
+              <p>We build the environment, the audio, the timer and the marking pipeline that lets students walk into the real LanguageCert having already sat forty of them.</p>
+              <div className="vh-mission-checklist">
+                {MISSION_POINTS.map((point) => (
+                  <div className="vh-mission-checklist-item" key={point}>
+                    <span className="vh-check-badge">
+                      <CheckIcon />
+                    </span>
+                    <span>{point}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="vh-about-mission-photo">
-            <img src="/images/about_team.jpg" alt="Visa House team working together around a table" />
           </div>
         </section>
 
-        <section className="vh-about-timeline vh-reveal">
-          <div className="vh-about-timeline-intro">
-
+        <section className="vh-about-timeline" ref={timelineRef}>
+          <div className="vh-about-timeline-intro vh-reveal">
             <h2>Where we have been</h2>
           </div>
-          <div className="vh-about-timeline-grid">
-            {TIMELINE.map((item) => (
-              <div className="vh-timeline-card vh-reveal" key={item.year}>
+          <div className="vh-about-timeline-grid vh-timeline-vertical">
+            <div className="vh-timeline-track">
+              <div className="vh-timeline-progress" style={{ height: `${scrollProgress}%` }}></div>
+            </div>
+            {TIMELINE.map((item, index) => (
+              <div className={`vh-timeline-card vh-reveal ${index % 2 === 0 ? "vh-timeline-left" : "vh-timeline-right"}`} key={item.year}>
+                <div className="vh-timeline-node"></div>
                 <div className="vh-timeline-year">{item.year}</div>
                 <div className="vh-timeline-title">{item.title}</div>
                 <div className="vh-timeline-desc">{item.desc}</div>

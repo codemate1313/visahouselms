@@ -149,6 +149,11 @@ export function Plans() {
   const institutePlans = payload?.institutes ?? [];
   const anyCatalogueShown = showStudentPlans || showInstitutePlans;
 
+  const audienceOptions = [
+    ...(showStudentPlans ? [{ label: "For Students", value: "students" as Audience }] : []),
+    ...(showInstitutePlans ? [{ label: "For Institutes", value: "institutes" as Audience }] : []),
+  ];
+
   const audiencePlans = useCallback(
     (aud: Audience) => (aud === "institutes" ? (showInstitutePlans ? institutePlans : []) : showStudentPlans ? studentPlans : []),
     [showInstitutePlans, institutePlans, showStudentPlans, studentPlans],
@@ -156,7 +161,7 @@ export function Plans() {
 
   useEffect(() => {
     if (!payload || audience !== null) return;
-    const initialAudience: Audience = showStudentPlans || !showInstitutePlans ? "students" : "institutes";
+    const initialAudience: Audience = showStudentPlans ? "students" : showInstitutePlans ? "institutes" : "students";
     const plans = audiencePlans(initialAudience);
     setAudienceState(initialAudience);
     setBilling(plans.some((p) => p.billing_period === "monthly") ? "monthly" : "annual");
@@ -186,12 +191,16 @@ export function Plans() {
 
   const goAuth = () => navigate(user ? destinationFor(user) ?? "/" : "/login");
 
-  const cataloguePlans = audience ? audiencePlans(audience) : [];
+  const effectiveAudience = audience && audienceOptions.some((o) => o.value === audience)
+    ? audience
+    : audienceOptions[0]?.value ?? null;
+
+  const cataloguePlans = effectiveAudience ? audiencePlans(effectiveAudience) : [];
   const showBillingToggle = cataloguePlans.some((p) => p.billing_period === "monthly") && cataloguePlans.some((p) => p.billing_period === "annual");
   const visiblePlans = showBillingToggle ? cataloguePlans.filter((p) => p.billing_period === billing || p.billing_period === "custom") : cataloguePlans;
-  const pending = payload === null || audience === null;
+  const pending = payload === null;
   const hasPlans = !pending && visiblePlans.length > 0;
-  const showEmptyState = !pending && visiblePlans.length === 0;
+  const showEmptyState = !pending && (!anyCatalogueShown || visiblePlans.length === 0);
   const planGridClass = `vh-plan-grid${visiblePlans.length < 3 ? " vh-plan-grid-few" : ""}`;
 
   const emptyTitle = failed ? "Pricing is temporarily unavailable" : anyCatalogueShown ? "Pricing is being finalised" : "Pricing is available on request";
@@ -216,18 +225,17 @@ export function Plans() {
         </section>
 
         <section className="vh-plans-section vh-reveal">
-          <div className="vh-pill-toggle-row">
-            <SegmentedControl<Audience>
-              ariaLabel="Target audience"
-              value={audience || "students"}
-              onChange={(val) => selectAudience(val)}
-              neverCollapse
-              options={[
-                { label: "For Students", value: "students" },
-                { label: "For Institutes", value: "institutes" },
-              ]}
-            />
-          </div>
+          {audienceOptions.length > 1 && (
+            <div className="vh-pill-toggle-row">
+              <SegmentedControl<Audience>
+                ariaLabel="Target audience"
+                value={effectiveAudience || "students"}
+                onChange={(val) => selectAudience(val)}
+                neverCollapse
+                options={audienceOptions}
+              />
+            </div>
+          )}
 
           {showBillingToggle && (
             <div className="vh-pill-toggle-row vh-pill-toggle-row-billing">

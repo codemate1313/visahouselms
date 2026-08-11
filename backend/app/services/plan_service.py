@@ -551,6 +551,10 @@ def list_public_plans(db: Session, user: User) -> List[dict]:
         current_user_subscription,
     )
 
+    visibility = get_landing_visibility(db)
+    if not visibility.get(AUDIENCE_DIRECT, True):
+        return []
+
     if user.institute_id is not None:
         subscription, state = current_subscription(db, user.institute_id)
         entitled_plan_ids = (

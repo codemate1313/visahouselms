@@ -432,7 +432,7 @@ export function ContactUs() {
               <div className="vh-map-container">
                 <iframe
                   title="Office Location Map"
-                  src="https://maps.google.com/maps?q=31.4638481,74.9170381+(Visa+House)&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                  src="https://maps.google.com/maps?q=31.4638482,74.9196184+(Visa+House)&t=&z=17&ie=UTF8&iwloc=&output=embed"
                   width="100%"
                   height="220"
                   style={{ border: 0, display: "block" }}
@@ -442,7 +442,7 @@ export function ContactUs() {
                 ></iframe>
                 <div className="vh-map-overlay-bar">
                   <a
-                    href="https://maps.google.com/?q=31.4638481,74.9170381"
+                    href="https://maps.app.goo.gl/9DfwXmJcfyzQnwC67"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="vh-map-overlay-btn"
