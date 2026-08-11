@@ -105,9 +105,21 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  animation: vh-hero-text-fade 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes vh-hero-text-fade {
+  0% {
+    opacity: 0.3;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .vh-hero-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -115,6 +127,7 @@
   text-transform: uppercase;
   color: #ff4d5e;
   margin-bottom: 16px;
+  min-height: 32px;
 }
 .vh-public-hero-title {
   font-size: clamp(24px, 3.2vw, 38px);
@@ -257,31 +270,28 @@ a.vh-hero-cta-alt:hover {
 
 @media (max-width: 900px) {
   .vh-hero-section {
-    padding: 84px 24px 48px;
-    height: auto;
-    min-height: auto;
-    max-height: none;
+    padding: 76px 24px 28px;
+    margin: 0 0 24px;
+    min-height: 460px;
     width: 100%;
     justify-content: flex-start;
   }
   .vh-hero-inner-container {
     flex-direction: column;
     align-items: flex-start;
-    gap: 24px;
+    gap: 16px;
   }
   .vh-hero-dots {
     align-self: center;
     padding-bottom: 0;
-    margin-top: 8px;
+    margin-top: 6px;
   }
 }
 @media (max-width: 640px) {
   .vh-hero-section {
-    padding: 76px 16px 36px;
-    margin: 0 0 32px;
-    height: auto;
-    min-height: auto;
-    max-height: none;
+    padding: 68px 16px 20px;
+    margin: 0 0 20px;
+    min-height: 420px;
     width: 100%;
     justify-content: flex-start;
   }
@@ -290,47 +300,56 @@ a.vh-hero-cta-alt:hover {
     max-width: 100%;
   }
   .vh-hero-badge {
-    font-size: 10.5px;
-    letter-spacing: 0.8px;
-    padding: 4px 10px;
-    line-height: 1.4;
+    font-size: clamp(9px, 2.5vw, 10px);
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+    padding: 0;
     white-space: normal;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    word-break: break-word;
   }
   .vh-public-hero-title {
-    font-size: clamp(22px, 6.2vw, 28px);
+    font-size: clamp(19.5px, 5.5vw, 24px);
     line-height: 1.2;
-    min-height: auto;
-    margin-bottom: 12px;
-    white-space: normal;
+    min-height: 3.2em;
+    margin-bottom: 8px;
+    white-space: pre-line;
+    overflow-wrap: break-word;
   }
   .vh-hero-desc {
-    font-size: 14px;
-    line-height: 1.5;
-    min-height: auto;
-    margin-bottom: 20px;
+    font-size: 13px;
+    line-height: 1.45;
+    min-height: 3.1em;
+    margin-bottom: 14px;
   }
   .vh-hero-actions {
     width: 100%;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 24px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
   }
   .vh-hero-cta-solid,
   .vh-hero-cta-alt,
   a.vh-hero-cta-alt {
-    width: 100%;
+    flex: 1 1 calc(50% - 4px);
+    min-width: 135px;
     justify-content: center;
-    padding: 12px 20px;
-    font-size: 14px;
+    padding: 10px 14px;
+    font-size: 13px;
+    white-space: nowrap;
   }
   .vh-hero-stats {
     display: flex;
     flex-direction: row;
     align-items: stretch;
     justify-content: space-between;
-    gap: 8px;
-    padding-top: 16px;
+    gap: 6px;
+    padding-top: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.15);
     width: 100%;
   }
@@ -342,11 +361,11 @@ a.vh-hero-cta-alt:hover {
   .vh-hero-stat-group + .vh-hero-stat-group {
     border-left: 1px solid rgba(255, 255, 255, 0.15);
     border-top: none;
-    padding-left: 8px;
+    padding-left: 6px;
     padding-top: 0;
   }
   .vh-hero-stat-value {
-    font-size: clamp(15px, 4.5vw, 19px);
+    font-size: clamp(13.5px, 4vw, 17px);
     line-height: 1.15;
     font-weight: 700;
     white-space: nowrap;
@@ -354,16 +373,16 @@ a.vh-hero-cta-alt:hover {
     text-overflow: ellipsis;
   }
   .vh-hero-stat-label {
-    font-size: 10.5px;
-    line-height: 1.25;
-    margin-top: 3px;
-    min-height: auto;
+    font-size: 10px;
+    line-height: 1.2;
+    margin-top: 2px;
+    min-height: 2.4em;
     color: rgba(241, 245, 249, 0.75);
     word-break: break-word;
   }
   .vh-hero-dots {
     align-self: center;
-    margin-top: 12px;
+    margin-top: 8px;
   }
 }
 

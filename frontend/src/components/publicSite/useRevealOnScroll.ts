@@ -24,7 +24,7 @@ export function useRevealOnScroll(containerRef: React.RefObject<HTMLElement | nu
           }
         });
       },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+      { threshold: 0.01, rootMargin: "50px 0px 50px 0px" },
     );
 
     const observeNew = (scope: ParentNode) => {

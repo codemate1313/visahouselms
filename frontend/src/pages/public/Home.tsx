@@ -264,7 +264,7 @@ export function Home() {
           </div>
 
           <div className="vh-hero-inner-container">
-            <div className="vh-hero-content">
+            <div className="vh-hero-content" key={heroIndex}>
               <span className="vh-hero-badge">{activeSlide.badge}</span>
               <h1 className="vh-public-hero-title">
                 {activeSlide.heading}
