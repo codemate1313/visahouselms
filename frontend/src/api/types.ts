@@ -193,6 +193,8 @@ export interface QuestionInteraction {
   preparation_seconds?: number | null;
   response_seconds?: number | null;
   adaptive_follow_up?: boolean;
+  audio_path?: string | null;
+  audio_url?: string | null;
 }
 
 export interface QuestionDraft {

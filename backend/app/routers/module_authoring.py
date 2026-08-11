@@ -335,6 +335,22 @@ async def upload_question_image(
     )
 
 
+@router.post("/{module_id}/parts/{part_id}/question-audio", status_code=status.HTTP_201_CREATED)
+async def upload_question_audio(
+    module_id: int,
+    part_id: int,
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    module_authoring_service.get_editable_part(db, actor, module_id, part_id)
+    content = await read_validated_mp3(file)
+    return module_authoring_service.save_question_audio(
+        db, actor, module_id, part_id, content=content, ip=_ip(request)
+    )
+
+
 @router.post("/{module_id}/parts/{part_id}/tts", status_code=status.HTTP_201_CREATED)
 def save_browser_narration(
     module_id: int,

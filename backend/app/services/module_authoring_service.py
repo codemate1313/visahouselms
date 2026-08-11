@@ -832,6 +832,29 @@ def save_question_image(
     return {"image_path": relative.as_posix(), "image_url": f"/storage/{relative.as_posix()}"}
 
 
+def save_question_audio(
+    db: Session,
+    actor: User,
+    module_id: int,
+    part_id: int,
+    *,
+    content: bytes,
+    ip: Optional[str],
+) -> dict:
+    module = get_module_or_404(db, module_id)
+    _require_owner(module, actor)
+    _require_draft(module)
+    part = _part_or_404(module, part_id)
+
+    relative = Path("exam-modules") / str(module.id) / "questions" / f"{uuid4().hex}.mp3"
+    destination = settings.storage_path / relative
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(content)
+    _audit(db, actor, "exam_module.question_audio.upload", module.id, ip, {"part_id": part.id})
+    db.commit()
+    return {"audio_path": relative.as_posix(), "audio_url": f"/storage/{relative.as_posix()}"}
+
+
 def add_audio_asset(
     db: Session,
     actor: User,

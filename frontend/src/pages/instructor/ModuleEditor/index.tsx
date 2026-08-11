@@ -63,6 +63,7 @@ export function ModuleEditor() {
   const [audioTitle, setAudioTitle] = useState("Listening audio");
   const [tts, setTts] = useState({ title: "Generated conversation", conversation: "", rate: "+0%" });
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
   const [questionEntryMode, setQuestionEntryMode] = useState<"manual" | "bulk">("manual");
   const [loading, setLoading] = useState(!isNew);
   const [busy, setBusy] = useState(false);
@@ -323,6 +324,36 @@ export function ModuleEditor() {
 
   function removeQuestionImage() {
     setManual((current) => current ? { ...current, image_path: null, image_url: null } : current);
+  }
+
+  async function uploadQuestionAudio(file: File) {
+    if (!module || !selectedPart) return;
+    setUploadingAudio(true); setError(null);
+    try {
+      const form = new FormData(); form.append("file", file);
+      const { data } = await apiClient.post<{ audio_path: string; audio_url: string }>(
+        `/instructor/modules/${module.id}/parts/${selectedPart.id}/question-audio`,
+        form,
+      );
+      setManual((current) => current ? {
+        ...current,
+        interaction: { ...(current.interaction || {}), audio_path: data.audio_path, audio_url: data.audio_url },
+      } : current);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to upload question audio clip"));
+    } finally {
+      setUploadingAudio(false);
+    }
+  }
+
+  function removeQuestionAudio() {
+    setManual((current) => {
+      if (!current) return current;
+      const nextInteraction = { ...(current.interaction || {}) };
+      delete nextInteraction.audio_path;
+      delete nextInteraction.audio_url;
+      return { ...current, interaction: nextInteraction };
+    });
   }
 
   async function deleteQuestion(question: ExamModuleQuestion) {
@@ -821,6 +852,7 @@ export function ModuleEditor() {
                       editingQuestionId={editingQuestionId}
                       busy={busy}
                       uploadingImage={uploadingImage}
+                      uploadingAudio={uploadingAudio}
                       onAddOption={addOption}
                       onRemoveOption={removeOption}
                       onUpdateOption={updateOption}
@@ -828,6 +860,8 @@ export function ModuleEditor() {
                       onManualChange={setManual}
                       onUploadImage={uploadQuestionImage}
                       onRemoveImage={removeQuestionImage}
+                      onUploadAudio={uploadQuestionAudio}
+                      onRemoveAudio={removeQuestionAudio}
                       onSubmit={saveQuestion}
                       onCancelEdit={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}
                     />
@@ -867,6 +901,7 @@ export function ModuleEditor() {
               editingQuestionId={editingQuestionId}
               busy={busy}
               uploadingImage={uploadingImage}
+              uploadingAudio={uploadingAudio}
               onAddOption={addOption}
               onRemoveOption={removeOption}
               onUpdateOption={updateOption}
@@ -874,6 +909,8 @@ export function ModuleEditor() {
               onManualChange={setManual}
               onUploadImage={uploadQuestionImage}
               onRemoveImage={removeQuestionImage}
+              onUploadAudio={uploadQuestionAudio}
+              onRemoveAudio={removeQuestionAudio}
               onSubmit={saveQuestion}
               onCancelEdit={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}
             />

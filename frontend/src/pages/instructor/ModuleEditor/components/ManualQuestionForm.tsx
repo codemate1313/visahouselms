@@ -13,6 +13,7 @@ interface ManualQuestionFormProps {
   editingQuestionId: number | null;
   busy: boolean;
   uploadingImage: boolean;
+  uploadingAudio?: boolean;
   onAddOption: () => void;
   onRemoveOption: (index: number) => void;
   onUpdateOption: (index: number, text: string) => void;
@@ -20,6 +21,8 @@ interface ManualQuestionFormProps {
   onManualChange: (manual: QuestionDraft) => void;
   onUploadImage: (file: File) => void;
   onRemoveImage: () => void;
+  onUploadAudio?: (file: File) => void;
+  onRemoveAudio?: () => void;
   onSubmit: (event: FormEvent) => void;
   onCancelEdit: () => void;
 }
@@ -30,6 +33,7 @@ export function ManualQuestionForm({
   editingQuestionId,
   busy,
   uploadingImage,
+  uploadingAudio = false,
   onAddOption,
   onRemoveOption,
   onUpdateOption,
@@ -37,12 +41,15 @@ export function ManualQuestionForm({
   onManualChange,
   onUploadImage,
   onRemoveImage,
+  onUploadAudio,
+  onRemoveAudio,
   onSubmit,
   onCancelEdit,
 }: ManualQuestionFormProps) {
   const t = strings.manualQuestion;
   const isWriting = part.section_type === "writing";
   const isReading = part.section_type === "reading";
+  const isListening1 = part.part_code === "listening_1";
   const isReading1a = part.part_code === "reading_1a";
   const isReading1b = part.part_code === "reading_1b";
   const promptRef = useRef<HTMLTextAreaElement>(null);
@@ -195,8 +202,8 @@ export function ManualQuestionForm({
           required
         />
 
-        {/* 2. Sleek Interactive Image Dropzone Pill */}
-        {!isReading && (
+        {/* 2. Sleek Interactive Image Dropzone Pill (hidden for listening_1) */}
+        {!isReading && !isListening1 && (
           <div className="vh-dropzone-pill-container">
             {!manual.image_url ? (
               <label className={`vh-dropzone-pill${uploadingImage ? " is-busy" : ""}`}>
@@ -241,10 +248,59 @@ export function ManualQuestionForm({
           </div>
         )}
 
+        {/* 2b. Question Audio Dropzone Pill (For Listening Part 1) */}
+        {isListening1 && (
+          <div className="vh-dropzone-pill-container">
+            {!manual.interaction?.audio_url && !manual.interaction?.audio_path ? (
+              <label className={`vh-dropzone-pill${uploadingAudio ? " is-busy" : ""}`}>
+                <input
+                  type="file"
+                  accept="audio/*"
+                  hidden
+                  disabled={uploadingAudio}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file && onUploadAudio) onUploadAudio(file);
+                    event.target.value = "";
+                  }}
+                />
+                <div className="vh-dropzone-icon-box">
+                  <Icon name="play" />
+                </div>
+                <div className="vh-dropzone-text">
+                  <span className="vh-dropzone-main">
+                    {uploadingAudio ? "Uploading audio clip..." : "Attach Question Audio Clip (Optional)"}
+                  </span>
+                  <span className="vh-dropzone-sub">
+                    Drag & drop MP3 audio file here or click to browse
+                  </span>
+                </div>
+                <span className="vh-dropzone-btn">Browse</span>
+              </label>
+            ) : (
+              <div className="vh-image-preview-card">
+                <div className="vh-preview-header">
+                  <span className="vh-preview-title">Question Audio Clip</span>
+                  <button type="button" className="vh-remove-img-btn" onClick={onRemoveAudio}>
+                    <Icon name="x" />
+                    Remove
+                  </button>
+                </div>
+                <div className="vh-preview-image-wrapper" style={{ padding: "12px 16px" }}>
+                  <audio
+                    controls
+                    src={manual.interaction?.audio_url || `${API_BASE_URL}/storage/${manual.interaction?.audio_path}`}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* When the part owns one shared source text, it is edited in
             SharedPassagePanel above and copied down on save - repeating the
             field here is what made identical-passage mistakes so easy. */}
-        {!isWriting && !part.answer_constraints.shared_passage && (
+        {!isWriting && !part.answer_constraints.shared_passage && !isListening1 && (
           <>
             {/* 3. Passage or context */}
             <label htmlFor="module-question-passage">
