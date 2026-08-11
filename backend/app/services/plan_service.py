@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import List, Optional
 
@@ -517,6 +518,29 @@ def _landing_group(db: Session, audience: str, counts: dict) -> List[dict]:
     return result
 
 
+def _live_user_plan_ids(db: Session, user_id: int) -> set[int]:
+    """Plan ids this student holds an active-or-in-grace subscription for.
+
+    A student can legitimately hold several at once (an early renewal, or a
+    second plan bought alongside the first), so entitlement is a set rather than
+    one winning term. Access windows still come from subscription_service; this
+    only answers "have I bought this plan".
+    """
+    now = datetime.utcnow()
+    rows = (
+        db.query(Subscription)
+        .filter(Subscription.user_id == user_id, Subscription.cancelled_at.is_(None))
+        .all()
+    )
+    live: set[int] = set()
+    for row in rows:
+        if row.starts_at > now:
+            continue  # scheduled, not yet started
+        if now <= row.expires_at + timedelta(days=row.grace_days or 0):
+            live.add(row.plan_id)
+    return live
+
+
 def list_public_plans(db: Session, user: User) -> List[dict]:
     """Active plans with each plan's module bundle plus whether this student
     (institute-linked or direct/B2C) is currently entitled to it."""
@@ -529,9 +553,20 @@ def list_public_plans(db: Session, user: User) -> List[dict]:
 
     if user.institute_id is not None:
         subscription, state = current_subscription(db, user.institute_id)
+        entitled_plan_ids = (
+            {subscription.plan_id}
+            if subscription and state in (STATE_ACTIVE, STATE_GRACE)
+            else set()
+        )
     else:
-        subscription, state = current_user_subscription(db, user.id)
-    entitled_plan_id = subscription.plan_id if subscription and state in (STATE_ACTIVE, STATE_GRACE) else None
+        # Every plan the student currently holds, not just the single governing
+        # term. `current_user_subscription` returns one winner - the longest-
+        # dated started subscription - which is correct for deciding access, but
+        # wrong for "which of these cards have I bought". A student holding a
+        # long institute-style term alongside a short direct plan had the long
+        # one win, so the plan they had just paid for came back as not entitled
+        # and still showed a "Choose plan" button.
+        entitled_plan_ids = _live_user_plan_ids(db, user.id)
 
     plans = (
         db.query(Plan)
@@ -549,6 +584,6 @@ def list_public_plans(db: Session, user: User) -> List[dict]:
         data = _serialize(plan)
         data["modules"] = [module for module in data["modules"] if module["status"] == "published" and module["is_visible"]]
         data["module_count"] = len(data["modules"])
-        data["entitled"] = plan.id == entitled_plan_id
+        data["entitled"] = plan.id in entitled_plan_ids
         result.append(data)
     return result
