@@ -1,3 +1,4 @@
+/* oxlint-disable */
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";

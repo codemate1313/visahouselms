@@ -39,6 +39,7 @@ export function NewModuleForm({
   const t = strings.newModule;
   const typeLabels = strings.typeLabels;
   const [activeTab, setActiveTab] = useState<"config" | "instructions">("config");
+  const [validationError, setValidationError] = useState<string | null>(null);
   const setCustomBreadcrumbs = usePageTitleStore((state) => state.setCustomBreadcrumbs);
 
   const typeLabel = requestedType ? typeLabels[requestedType] : "";
@@ -64,8 +65,6 @@ export function NewModuleForm({
   const meta = MODULE_TYPE_META[requestedType];
   const isComposite = COMPOSITE_TYPES.has(requestedType);
   const allSourcesSelected = SOURCE_SECTIONS.every((section) => selectedSources[section]);
-
-  const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleNextStep = () => {
     if (!details.title.trim()) {

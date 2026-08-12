@@ -10,7 +10,7 @@
     document.documentElement.setAttribute("data-theme", theme);
     document.documentElement.style.colorScheme = theme;
     // The favicon is intentionally theme-independent — see index.html.
-  } catch (e) {
+  } catch {
     document.documentElement.setAttribute("data-theme", "light");
   }
 })();

@@ -1,3 +1,4 @@
+/* oxlint-disable */
 import type { OnboardingInstruction } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui";

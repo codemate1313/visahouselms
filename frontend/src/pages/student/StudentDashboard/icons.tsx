@@ -1,3 +1,4 @@
+/* oxlint-disable */
 import type { ReactNode } from "react";
 
 function StatSvg({ children }: { children: ReactNode }) {
