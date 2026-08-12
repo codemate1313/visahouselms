@@ -4,6 +4,7 @@ import { PublicHeader } from "@/components/publicSite/PublicHeader";
 import { PublicFooter } from "@/components/publicSite/PublicFooter";
 import { PublicOrbBackground } from "@/components/publicSite/PublicOrbBackground";
 import { PublicCtaBanner } from "@/components/publicSite/PublicCtaBanner";
+import { StackedTimelinePanels } from "@/components/publicSite/StackedTimelinePanels";
 import { useRevealOnScroll } from "@/components/publicSite/useRevealOnScroll";
 import { useAuthStore } from "@/store/authStore";
 import { destinationFor } from "@/pages/Login/helpers";
@@ -20,13 +21,6 @@ const STATS = [
 ];
 
 const MISSION_POINTS = ["Examiner-authored question banks", "CEFR-aligned proficiency profile", "Institute-only leaderboards & branding"];
-
-const TIMELINE = [
-  { year: "2019", title: "Visa House Begins", desc: "Started with a vision to help students navigate international education and immigration with greater confidence." },
-  { year: "2021", title: "Digital Preparation", desc: "Introduced structured online learning and digital practice to make English test preparation more accessible." },
-  { year: "2023", title: "Smarter Feedback", desc: "Expanded our preparation approach with technology-driven assessment and personalised performance feedback." },
-  { year: "2026", title: "LanguageCert LMS", desc: "Bringing LanguageCert preparation, realistic mock tests, expert guidance and progress tracking together in one powerful platform." },
-];
 
 function CheckIcon() {
   return (
@@ -98,41 +92,7 @@ export function AboutUs() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const contactSettings = useContactSettings();
-
-  const timelineRef = useRef<HTMLDivElement>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const rootRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!timelineRef.current) return;
-      const rect = timelineRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const startTrigger = windowHeight * 0.6; 
-      const distanceScrolled = startTrigger - rect.top;
-      const totalScrollable = rect.height;
-      let progress = distanceScrolled / totalScrollable;
-      progress = Math.max(0, Math.min(1, progress));
-      setScrollProgress(progress * 100);
-
-      const cards = timelineRef.current.querySelectorAll('.vh-timeline-card');
-      cards.forEach((card) => {
-        const cardEl = card as HTMLElement;
-        // Calculate the center point of the card relative to the timeline container
-        // plus an offset to match the visual progress line
-        const triggerPoint = cardEl.offsetTop + cardEl.offsetHeight / 2;
-        if (distanceScrolled >= triggerPoint) {
-          cardEl.classList.add('vh-timeline-active');
-        } else {
-          cardEl.classList.remove('vh-timeline-active');
-        }
-      });
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useRevealOnScroll(rootRef);
 
@@ -188,24 +148,8 @@ export function AboutUs() {
           </div>
         </section>
 
-        <section className="vh-about-timeline" ref={timelineRef}>
-          <div className="vh-about-timeline-intro vh-reveal">
-            <h2>Where we have been</h2>
-          </div>
-          <div className="vh-about-timeline-grid vh-timeline-vertical">
-            <div className="vh-timeline-track">
-              <div className="vh-timeline-progress" style={{ height: `${scrollProgress}%` }}></div>
-            </div>
-            {TIMELINE.map((item, index) => (
-              <div className={`vh-timeline-card vh-reveal ${index % 2 === 0 ? "vh-timeline-left" : "vh-timeline-right"}`} key={item.year}>
-                <div className="vh-timeline-node"></div>
-                <div className="vh-timeline-year">{item.year}</div>
-                <div className="vh-timeline-title">{item.title}</div>
-                <div className="vh-timeline-desc">{item.desc}</div>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* GSAP Full-Width Stacked Panels Timeline (Cards coming from bottom on scroll) */}
+        <StackedTimelinePanels />
 
         <PublicCtaBanner
           heading="One platform. Your entire LanguageCert ecosystem."
