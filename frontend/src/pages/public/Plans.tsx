@@ -16,6 +16,8 @@ import { useSEO } from "@/hooks/useSEO";
 import { useContactSettings } from "./useContactSettings";
 import type { LandingPlan, LandingPlansPayload } from "./Plans.types";
 import { SegmentedControl } from "@/components/ui";
+import { motion, AnimatePresence } from "framer-motion";
+import NumberFlow from "@number-flow/react";
 import "@/styles/public/chrome.css";
 import "@/styles/public/plans.css";
 
@@ -73,7 +75,25 @@ function PlanCard({ plan, featured, onSelect, onChoose }: { plan: LandingPlan; f
         {plan.name}
       </div>
       <div className="vh-plan-price-row">
-        <span className="vh-plan-price">{formatPrice(plan)}</span>
+        <span className="vh-plan-price">
+          {Number.isFinite(Number(plan.price)) ? (
+            <NumberFlow
+              value={Number(plan.price)}
+              format={{
+                style: "currency",
+                currency: plan.currency || "INR",
+                maximumFractionDigits: Number.isInteger(Number(plan.price)) ? 0 : 2,
+              }}
+              transformTiming={{
+                duration: 600,
+                easing: "ease-out",
+              }}
+              willChange
+            />
+          ) : (
+            formatPrice(plan)
+          )}
+        </span>
         <span className="vh-plan-period" style={{ color: mutedInk }}>
           {plan.period_label}
         </span>
@@ -95,14 +115,39 @@ function PlanCard({ plan, featured, onSelect, onChoose }: { plan: LandingPlan; f
         {forInstitutes ? "Apply for this plan" : `Choose ${plan.name}`}
       </button>
       <div className="vh-plan-features">
-        {(plan.features ?? []).map((feature) => (
-          <div className="vh-plan-feature" style={{ color: featureInk }} key={feature}>
-            <span className="vh-plan-check" style={{ background: checkBg, color: checkInk }}>
-              <CheckIcon />
-            </span>
-            <span>{feature}</span>
-          </div>
-        ))}
+        <AnimatePresence mode="popLayout">
+          {(plan.features ?? []).map((feature, i) => (
+            <motion.div
+              key={`${plan.audience || "plan"}-${feature}-${i}`}
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 16 }}
+              transition={{
+                duration: 0.35,
+                delay: i * 0.04,
+                ease: "easeOut",
+              }}
+              className="vh-plan-feature"
+              style={{ color: featureInk }}
+            >
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 450,
+                  damping: 18,
+                  delay: i * 0.04 + 0.1,
+                }}
+                className="vh-plan-check"
+                style={{ background: checkBg, color: checkInk }}
+              >
+                <CheckIcon />
+              </motion.span>
+              <span>{feature}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -254,11 +299,11 @@ export function Plans() {
 
           {hasPlans && (
             <div className={planGridClass}>
-              {visiblePlans.map((plan) => {
+              {visiblePlans.map((plan, index) => {
                 const featured = selectedPlanId !== null ? selectedPlanId === plan.id : Boolean(plan.is_popular);
                 return (
                   <PlanCard
-                    key={plan.id}
+                    key={index}
                     plan={plan}
                     featured={featured}
                     onSelect={() => setSelectedPlanId(plan.id)}

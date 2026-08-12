@@ -457,7 +457,7 @@ export function ContactUs() {
 
         <PublicCtaBanner
           heading="Ready to transform your LanguageCert preparation?"
-          body="Book a platform demo and see realistic mock tests, structured learning, performance analytics and expert-led support in action."
+          body="Book a demo to explore mock tests, structured learning, performance analytics, and expert support."
           primary={{ label: user ? "Go to dashboard →" : "Sign in to portal →", onClick: goAuth }}
           secondary={{ label: "Talk to sales", href: "/contact" }}
         />

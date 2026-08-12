@@ -669,16 +669,16 @@
   max-width: 580px;
 }
 .vh-cta-copy h2 {
-  font-size: 44px;
+  font-size: 34px;
   font-weight: 600;
   letter-spacing: -1.5px;
   line-height: 1.05;
   margin: 0 0 14px;
 }
 .vh-cta-copy p {
-  font-size: 17px;
-  line-height: 1.55;
-  opacity: 0.92;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  line-height: 1.5;
   margin: 0;
 }
 .vh-cta-actions {
