@@ -18,6 +18,7 @@ from app.schemas.exam_module import (
     PartAiEvaluationUpdate,
     PartInstructionsUpdate,
     PartUpdate,
+    SpeakingAvatarPreview,
     SpeakingPartTimingUpdate,
     TTSCreate,
 )
@@ -53,6 +54,12 @@ def list_blueprints():
 @router.get("/tts-voices")
 def list_tts_voices():
     return tts_service.TTS_VOICES
+
+
+# Declared above "/{module_id}" so the literal path is not read as a module id.
+@router.get("/speaking-examiners")
+def list_speaking_examiners():
+    return avatar_service.list_examiners()
 
 
 @router.get("")
@@ -376,6 +383,31 @@ def save_browser_narration(
         rate=payload.rate,
         ip=_ip(request),
     )
+
+
+@router.post("/{module_id}/parts/{part_id}/speaking-avatar-preview")
+async def preview_speaking_avatar(
+    module_id: int,
+    part_id: int,
+    payload: SpeakingAvatarPreview,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Voice one authored speaking prompt so the author can verify it before
+    a candidate ever hears it. Same synthesis path as the live exam, so what
+    plays here is exactly what the exam plays."""
+    module_authoring_service.get_speaking_part_for_preview(db, actor, module_id, part_id)
+    examiner = avatar_service.get_examiner(payload.examiner_id)
+    audio_url, visemes, duration = await avatar_service.get_or_create_prompt_audio(
+        payload.prompt, examiner["voice"]
+    )
+    return {
+        "examiner": examiner,
+        "prompt_text": payload.prompt,
+        "audio_url": audio_url,
+        "duration": duration,
+        "visemes": visemes,
+    }
 
 
 # The per-part avatar video generation route was removed with the D-ID

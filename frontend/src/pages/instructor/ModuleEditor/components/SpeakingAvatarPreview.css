@@ -1,0 +1,251 @@
+/* Module-wide examiner picker. A single strip above the authoring layout, so
+   the voice reads as a property of the module rather than of the open part. */
+.vh-examiner-picker {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 14px;
+  padding: 10px 16px;
+  border: 1px solid rgba(185, 28, 43, 0.18);
+  border-radius: 14px;
+  background: rgba(185, 28, 43, 0.03);
+}
+
+.vh-examiner-picker-portrait {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(185, 28, 43, 0.85) 0%, rgba(99, 102, 241, 0.85) 55%, rgba(56, 189, 248, 0.85) 100%);
+}
+
+.vh-examiner-picker-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.vh-examiner-picker-title {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.vh-examiner-picker-hint {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.vh-examiner-picker-select {
+  min-width: 210px;
+}
+
+[data-theme="dark"] .vh-examiner-picker {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .vh-examiner-picker-title {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .vh-examiner-picker-hint {
+  color: #94a3b8;
+}
+
+/* Examiner preview card shown while authoring a Speaking prompt. Sized to sit
+   inside the question form next to the image/audio attachment cards rather
+   than to dominate it like the full-screen exam stage. */
+.vh-avatar-preview-card {
+  margin: 14px 0 18px;
+  border: 1px solid rgba(185, 28, 43, 0.18);
+  border-radius: 14px;
+  background: rgba(185, 28, 43, 0.02);
+  overflow: hidden;
+}
+
+.vh-avatar-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(185, 28, 43, 0.12);
+  background: rgba(185, 28, 43, 0.04);
+}
+
+.vh-avatar-preview-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.01em;
+}
+
+.vh-avatar-preview-select {
+  min-width: 210px;
+}
+
+.vh-avatar-preview-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+}
+
+.vh-avatar-preview-portrait {
+  width: 96px;
+  height: 96px;
+  min-width: 96px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(135deg, rgba(185, 28, 43, 0.85) 0%, rgba(99, 102, 241, 0.85) 55%, rgba(56, 189, 248, 0.85) 100%);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+}
+
+.vh-avatar-preview-portrait.is-speaking {
+  animation: vh-avatar-preview-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes vh-avatar-preview-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(185, 28, 43, 0.55); }
+  70% { box-shadow: 0 0 0 12px rgba(185, 28, 43, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(185, 28, 43, 0); }
+}
+
+.vh-avatar-preview-frame {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+}
+
+.vh-avatar-preview-frame .examiner-svg-stage {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* The exam runner's stylesheet is not loaded on the authoring page, so the
+   blink is redeclared here rather than imported for one rule. */
+.vh-avatar-preview-frame .examiner-svg-stage.is-speaking .examiner-eye-group {
+  animation: vh-avatar-preview-blink 4s infinite ease-in-out;
+}
+
+@keyframes vh-avatar-preview-blink {
+  0%, 94%, 100% {
+    transform: scaleY(1);
+    transform-origin: 200px 166px;
+  }
+  97% {
+    transform: scaleY(0.08);
+    transform-origin: 200px 166px;
+  }
+}
+
+.vh-avatar-preview-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.vh-avatar-preview-name {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.vh-avatar-preview-prompt {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #334155;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.vh-avatar-preview-status {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.vh-avatar-preview-status.is-error {
+  color: #b91c2b;
+}
+
+.vh-avatar-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.vh-avatar-preview-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--sa-sidebar-red, #b91c2b);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vh-avatar-preview-button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.vh-avatar-preview-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.vh-avatar-preview-button svg {
+  width: 13px;
+  height: 13px;
+}
+
+.vh-avatar-preview-button.is-ghost {
+  background: #ffffff;
+  color: var(--sa-sidebar-red, #b91c2b);
+  border-color: rgba(185, 28, 43, 0.25);
+}
+
+[data-theme="dark"] .vh-avatar-preview-card {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .vh-avatar-preview-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .vh-avatar-preview-title,
+[data-theme="dark"] .vh-avatar-preview-name {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .vh-avatar-preview-prompt {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .vh-avatar-preview-status {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .vh-avatar-preview-button.is-ghost {
+  background: transparent;
+  color: #f8b4bc;
+  border-color: rgba(255, 255, 255, 0.18);
+}

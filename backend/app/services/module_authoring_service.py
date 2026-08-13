@@ -971,6 +971,26 @@ def speaking_script(part: ExamModulePart) -> str:
     return "  ...  ".join(prompts)
 
 
+def get_speaking_part_for_preview(
+    db: Session, actor: User, module_id: int, part_id: int
+) -> ExamModulePart:
+    """Resolve a Speaking part for an authoring-time examiner preview.
+
+    Previewing only reads the prompt back in the examiner voice, so unlike
+    `get_editable_part` it stays available once the module is published or
+    archived - the author still needs to hear what candidates will hear.
+    """
+    module = get_module_or_404(db, module_id)
+    _require_owner(module, actor)
+    part = _part_or_404(module, part_id)
+    if part.section_type != "speaking":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Examiner preview is available only for Speaking parts",
+        )
+    return part
+
+
 def add_avatar_asset(
     db: Session,
     actor: User,

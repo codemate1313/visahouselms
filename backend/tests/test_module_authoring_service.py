@@ -228,7 +228,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             [
                 ["identity", "topic_question"],
                 ["roleplay_response", "roleplay_initiate"],
-                ["read_aloud", "follow_up"],
+                ["read_aloud"],
                 ["presentation", "follow_up"],
             ],
         )
@@ -236,6 +236,14 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             part["answer_constraints"]["interaction_mode"] == "ai_interlocutor"
             for part in speaking["parts"]
         ))
+        # Speaking 3 is one read-aloud turn: a sitting draws a single text from
+        # the pool, and no follow-up question is asked after it.
+        speaking_3 = speaking["parts"][2]
+        self.assertEqual(
+            (speaking_3["question_limit"], speaking_3["minimum_questions"]),
+            (1, 1),
+        )
+        self.assertEqual(speaking_3["answer_constraints"]["allowed_turn_types"], ["read_aloud"])
 
     def test_instructor_can_update_overall_and_speaking_part_timing(self) -> None:
         created = self._create("speaking")
@@ -273,6 +281,19 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
                 preparation_seconds=5,
                 response_seconds=60,
                 ip=None,
+            )
+
+    def test_examiner_preview_resolves_speaking_parts_only(self) -> None:
+        speaking = self._create("speaking")
+        part = module_authoring_service.get_speaking_part_for_preview(
+            self.db, self.instructor, speaking["id"], speaking["parts"][0]["id"]
+        )
+        self.assertEqual(part.part_code, "speaking_1")
+
+        reading = self._create("reading")
+        with self.assertRaises(HTTPException):
+            module_authoring_service.get_speaking_part_for_preview(
+                self.db, self.instructor, reading["id"], reading["parts"][0]["id"]
             )
 
     def test_instructor_can_toggle_ai_evaluation_for_subjective_parts(self) -> None:

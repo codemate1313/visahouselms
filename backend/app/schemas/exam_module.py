@@ -152,6 +152,26 @@ class TTSCreate(BaseModel):
         return value.strip()
 
 
+class SpeakingAvatarPreview(BaseModel):
+    """Authoring-time request to hear a speaking prompt in the examiner voice."""
+
+    prompt: str = Field(min_length=1, max_length=5000)
+    examiner_id: Optional[str] = Field(default=None, max_length=50)
+
+    @field_validator("prompt")
+    @classmethod
+    def clean_prompt(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("prompt must not be empty")
+        return value
+
+    @field_validator("examiner_id")
+    @classmethod
+    def clean_examiner(cls, value: Optional[str]) -> Optional[str]:
+        return _optional_text(value)
+
+
 class PartUpdate(BaseModel):
     # Part titles carry the candidate instructions for the section, so they are
     # capped like a paragraph rather than like a name.

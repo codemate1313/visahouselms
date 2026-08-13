@@ -267,8 +267,8 @@ SPEAKING_PARTS = [
         "part_code": "speaking_3",
         "section_type": "speaking",
         "title": "Speaking 3",
-        "skill_focus": "Read a text aloud and respond to follow-up questions.",
-        "instructions": "Allow 20 seconds of preparation before reading aloud, then ask the follow-up questions.",
+        "skill_focus": "Read a text aloud.",
+        "instructions": "Allow 20 seconds of preparation, then ask the candidate to read the text aloud.",
     },
     {
         "part_code": "speaking_4",
@@ -296,10 +296,14 @@ _SPEAKING_STRUCTURES = {
         "required_turn_types": ["roleplay_response", "roleplay_initiate"],
         "allowed_turn_types": ["roleplay_response", "roleplay_initiate"],
     },
+    # Speaking 3 is a single read-aloud turn: the candidate gets one text and
+    # reads it, with no follow-up questions after it. The pool may hold several
+    # texts, but `question_limit` draws exactly one of them per attempt.
     "speaking_3": {
-        "minimum_questions": 2,
-        "required_turn_types": ["read_aloud", "follow_up"],
-        "allowed_turn_types": ["read_aloud", "follow_up"],
+        "question_limit": 1,
+        "minimum_questions": 1,
+        "required_turn_types": ["read_aloud"],
+        "allowed_turn_types": ["read_aloud"],
     },
     "speaking_4": {
         "minimum_questions": 2,

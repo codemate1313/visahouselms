@@ -27,6 +27,7 @@ import { ModuleDetailsForm, type ModuleDetailsState } from "./components/ModuleD
 import { PartSpecPanel } from "./components/PartSpecPanel";
 import { ListeningAudioPanel } from "./components/ListeningAudioPanel";
 import { SpeakingTimingPanel } from "./components/SpeakingTimingPanel";
+import { DEFAULT_EXAMINER_ID, SpeakingExaminerPicker, type SpeakingExaminer } from "./components/SpeakingExaminerPicker";
 import { SharedPassagePanel } from "./components/SharedPassagePanel";
 import { GapTaskComposer, type GapTaskDraft } from "./components/GapTaskComposer";
 import { NotepadGapsComposer, type NotepadTaskDraft } from "./components/NotepadGapsComposer";
@@ -66,6 +67,11 @@ export function ModuleEditor() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
   const [questionEntryMode, setQuestionEntryMode] = useState<"manual" | "bulk">("manual");
+  // One examiner for the whole module. Remembered per module so reopening the
+  // editor keeps rehearsing prompts in the voice the author already chose.
+  const examinerStorageKey = `vh.module-editor.examiner.${id ?? "new"}`;
+  const [examiner, setExaminer] = useState<SpeakingExaminer | null>(null);
+  const [storedExaminerId] = useState(() => localStorage.getItem(examinerStorageKey) ?? DEFAULT_EXAMINER_ID);
   const [loading, setLoading] = useState(!isNew);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -733,6 +739,11 @@ export function ModuleEditor() {
     finally { setBusy(false); }
   }
 
+  function chooseExaminer(next: SpeakingExaminer) {
+    setExaminer(next);
+    localStorage.setItem(examinerStorageKey, next.id);
+  }
+
   async function deleteModule() {
     if (!module || !await confirmDelete(strings.details.deleteConfirm(module.title), strings.details.deleteConfirmTitle)) return;
     setBusy(true); setError(null);
@@ -771,6 +782,15 @@ export function ModuleEditor() {
           {module.status}
         </Badge>
       </div>
+
+      {/* Sits above the part navigation because the examiner belongs to the
+          module, not to whichever speaking part happens to be open. */}
+      {module.parts.some((part) => part.section_type === "speaking") && (
+        <SpeakingExaminerPicker
+          examinerId={examiner?.id ?? storedExaminerId}
+          onChange={chooseExaminer}
+        />
+      )}
 
       <div className="module-authoring-layout">
         <ModulePartNav parts={module.parts} selectedPartId={selectedPartId} onChoosePart={choosePart} />
@@ -877,6 +897,8 @@ export function ModuleEditor() {
                 <div className="module-entry-tabbed-content">
                   {questionEntryMode === "manual" ? (
                     <ManualQuestionForm
+                      moduleId={module.id}
+                      examiner={examiner}
                       part={selectedPart}
                       manual={manual}
                       editingQuestionId={editingQuestionId}
@@ -931,6 +953,8 @@ export function ModuleEditor() {
         <div className="modal-backdrop" onClick={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ width: "min(640px, 100%)", maxHeight: "95vh", overflowY: "auto", padding: 0, border: "none", background: "transparent", boxShadow: "none" }}>
             <ManualQuestionForm
+              moduleId={module.id}
+              examiner={examiner}
               part={selectedPart}
               manual={manual}
               editingQuestionId={editingQuestionId}

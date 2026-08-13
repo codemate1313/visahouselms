@@ -160,14 +160,16 @@
   animation: blink-eyes 4s infinite ease-in-out;
 }
 
+/* The origin is the eye line of the portrait in viewBox units - lids that
+   close towards anywhere else slide instead of blinking. */
 @keyframes blink-eyes {
-  0%, 96%, 100% {
+  0%, 94%, 100% {
     transform: scaleY(1);
-    transform-origin: 200px 158px;
+    transform-origin: 200px 166px;
   }
-  98% {
-    transform: scaleY(0.1);
-    transform-origin: 200px 158px;
+  97% {
+    transform: scaleY(0.08);
+    transform-origin: 200px 166px;
   }
 }
 

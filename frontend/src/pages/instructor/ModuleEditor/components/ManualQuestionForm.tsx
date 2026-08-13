@@ -6,8 +6,13 @@ import { RequiredMark, SearchableSelect } from "@/components/ui";
 import type { ExamModulePart, QuestionDraft, SpeakingTurnType } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { ANSWER_FREE_TYPES, CHOICE_TYPES } from "../helpers";
+import { SpeakingAvatarPreview } from "./SpeakingAvatarPreview";
+import type { SpeakingExaminer } from "./SpeakingExaminerPicker";
 
 interface ManualQuestionFormProps {
+  moduleId: number;
+  /** The module's one examiner, picked above the editor, not on this form. */
+  examiner: SpeakingExaminer | null;
   part: ExamModulePart;
   manual: QuestionDraft;
   editingQuestionId: number | null;
@@ -28,6 +33,8 @@ interface ManualQuestionFormProps {
 }
 
 export function ManualQuestionForm({
+  moduleId,
+  examiner,
   part,
   manual,
   editingQuestionId,
@@ -51,6 +58,11 @@ export function ManualQuestionForm({
   const isReading = part.section_type === "reading";
   const isListening = part.section_type === "listening";
   const isListening1 = part.part_code === "listening_1";
+  /* Speaking 1 is spoken start to finish: the examiner reads the question out
+     loud, so there is no passage to show, no separate instruction line to
+     print and nothing to illustrate. The examiner preview replaces all three. */
+  const isSpeaking1 = part.part_code === "speaking_1";
+  const isSpeaking = part.section_type === "speaking";
   const isReading1a = part.part_code === "reading_1a";
   const isReading1b = part.part_code === "reading_1b";
   const promptRef = useRef<HTMLTextAreaElement>(null);
@@ -203,8 +215,18 @@ export function ManualQuestionForm({
           required
         />
 
-        {/* 2. Sleek Interactive Image Dropzone Pill (hidden for listening_1) */}
-        {!isReading && !isListening1 && (
+        {/* 1b. Examiner avatar preview - hear the question as the candidate will */}
+        {isSpeaking && manual.prompt.trim().length > 0 && (
+          <SpeakingAvatarPreview
+            moduleId={moduleId}
+            partId={part.id}
+            prompt={manual.prompt}
+            examiner={examiner}
+          />
+        )}
+
+        {/* 2. Sleek Interactive Image Dropzone Pill (hidden for listening_1 and speaking_1) */}
+        {!isReading && !isListening1 && !isSpeaking1 && (
           <div className="vh-dropzone-pill-container">
             {!manual.image_url ? (
               <label className={`vh-dropzone-pill${uploadingImage ? " is-busy" : ""}`}>
@@ -303,8 +325,9 @@ export function ManualQuestionForm({
             field here is what made identical-passage mistakes so easy.
             Listening questions carry no passage or per-question instructions
             either: the audio is the source and the part heading is the
-            instruction. */}
-        {!isWriting && !isListening && !part.answer_constraints.shared_passage && (
+            instruction. Speaking 1 is the same story with the examiner voice
+            in place of the audio file. */}
+        {!isWriting && !isListening && !isSpeaking1 && !part.answer_constraints.shared_passage && (
           <>
             {/* 3. Passage or context */}
             <label htmlFor="module-question-passage">
