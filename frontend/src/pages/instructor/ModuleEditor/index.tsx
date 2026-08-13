@@ -785,7 +785,7 @@ export function ModuleEditor() {
 
       {/* Sits above the part navigation because the examiner belongs to the
           module, not to whichever speaking part happens to be open. */}
-      {module.parts.some((part) => part.section_type === "speaking") && (
+      {module.parts?.some((part) => part.section_type === "speaking") && (
         <SpeakingExaminerPicker
           examinerId={examiner?.id ?? storedExaminerId}
           onChange={chooseExaminer}
