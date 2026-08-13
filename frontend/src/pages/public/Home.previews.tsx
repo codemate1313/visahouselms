@@ -178,3 +178,109 @@ export function StepIcon({ index }: { index: number }) {
     </svg>
   );
 }
+
+export function StepCardVisualPreview({ index }: { index: number }) {
+  if (index === 0) {
+    return (
+      <div className="vh-step-card-ui-mockup">
+        <div className="vh-mockup-header">
+          <div className="vh-mockup-tag">
+            <span className="vh-mockup-dot-active" />
+            LIVE EXAM ENVIRONMENT
+          </div>
+          <div className="vh-mockup-timer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span>01:54:20</span>
+          </div>
+        </div>
+        <div className="vh-mockup-body">
+          <div className="vh-mockup-audio-bar">
+            <span>Audio Section 2 (Listening)</span>
+            <div className="vh-mockup-wave-mini">
+              <span style={{ height: "40%" }} />
+              <span style={{ height: "80%" }} />
+              <span style={{ height: "60%" }} />
+              <span style={{ height: "100%" }} />
+              <span style={{ height: "50%" }} />
+            </div>
+          </div>
+          <div className="vh-mockup-status-row">
+            <span className="vh-mockup-chip green">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Auto-saved
+            </span>
+            <span className="vh-mockup-chip blue">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              Fullscreen Monitored
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (index === 1) {
+    return (
+      <div className="vh-step-card-ui-mockup">
+        <div className="vh-mockup-header">
+          <div className="vh-mockup-tag">
+            <span className="vh-mockup-dot-star" />
+            AI & EXAMINER AUDITED
+          </div>
+          <div className="vh-mockup-score-badge">Band 8.0 · C1</div>
+        </div>
+        <div className="vh-mockup-body">
+          <div className="vh-mockup-skill-bars">
+            <div className="vh-mockup-bar-item">
+              <div className="vh-mockup-bar-meta"><span>Listening</span><strong>8.5</strong></div>
+              <div className="vh-mockup-track"><div className="vh-mockup-fill" style={{ width: "94%" }} /></div>
+            </div>
+            <div className="vh-mockup-bar-item">
+              <div className="vh-mockup-bar-meta"><span>Speaking</span><strong>8.0</strong></div>
+              <div className="vh-mockup-track"><div className="vh-mockup-fill" style={{ width: "88%" }} /></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="vh-step-card-ui-mockup">
+      <div className="vh-mockup-header">
+        <div className="vh-mockup-tag">
+          <span className="vh-mockup-dot-trend" />
+          PROGRESS TRACKER
+        </div>
+        <div className="vh-mockup-trend-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+            <polyline points="17 6 23 6 23 12" />
+          </svg>
+          <span>+1.5 Bands</span>
+        </div>
+      </div>
+      <div className="vh-mockup-body">
+        <div className="vh-mockup-growth-row">
+          <div className="vh-mockup-stat">
+            <span className="lbl">Initial</span>
+            <span className="val">Band 6.5</span>
+          </div>
+          <div className="vh-mockup-arrow-icon">→</div>
+          <div className="vh-mockup-stat highlight">
+            <span className="lbl">Target Achieved</span>
+            <span className="val">Band 8.0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

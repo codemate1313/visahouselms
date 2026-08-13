@@ -14,10 +14,14 @@ import { useSEO } from "@/hooks/useSEO";
 import { API_BASE_URL } from "@/api/client";
 import { useContactSettings } from "./useContactSettings";
 import { EVERYTHING_CARDS, HERO_SLIDES, STEP_CARDS, type TestimonialCard } from "./Home.data";
-import { ModuleIcon, ModulePreview, StepIcon } from "./Home.previews";
+import { ModuleIcon, ModulePreview, StepIcon, StepCardVisualPreview } from "./Home.previews";
 import type { BlogListItem } from "./blogTypes";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "@/styles/public/chrome.css";
 import "@/styles/public/home.css";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const HERO_INTERVAL_MS = 4000;
 const TESTIMONIAL_CARD_STEP = 384;
@@ -73,14 +77,115 @@ export function Home() {
   const testimonialSetWidthRef = useRef(0);
   const [isTestimonialHovered, setIsTestimonialHovered] = useState(false);
   const [blogPreviews, setBlogPreviews] = useState<BlogListItem[]>([]);
-  const [flippedStepCards, setFlippedStepCards] = useState<Record<string, boolean>>({});
 
-  function toggleStepCardFlip(num: string) {
-    setFlippedStepCards((prev) => ({
-      ...prev,
-      [num]: !prev[num],
-    }));
-  }
+  const stepsContainerRef = useRef<HTMLDivElement | null>(null);
+  const scrollTriggerRef = useRef<ScrollTrigger | null>(null);
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
+
+  useEffect(() => {
+    const container = stepsContainerRef.current;
+    if (!container) return;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    ScrollTrigger.getAll().forEach((st) => {
+      if (st.trigger === container || st.pin === container) {
+        st.kill();
+      }
+    });
+
+    const cards = gsap.utils.toArray<HTMLElement>(".vh-steps-gsap-card", container);
+    if (!cards.length) return;
+
+    cards.forEach((card, i) => {
+      gsap.set(card, {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        xPercent: 0,
+        yPercent: i === 0 ? 0 : -110,
+        opacity: i === 0 ? 1 : 0,
+        scale: i === 0 ? 1 : 0.94,
+        zIndex: i + 1,
+      });
+    });
+
+    const numCards = cards.length;
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: container,
+        start: "top top",
+        end: () => `+=${(numCards - 1) * 100}%`,
+        pin: true,
+        pinSpacing: true,
+        scrub: 1,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          const progress = self.progress;
+          const index = Math.min(
+            numCards - 1,
+            Math.floor(progress * (numCards - 1) + 0.35)
+          );
+          setActiveStepIndex(index);
+        },
+      },
+    });
+
+    if (tl.scrollTrigger) {
+      scrollTriggerRef.current = tl.scrollTrigger;
+    }
+
+    for (let i = 1; i < numCards; i++) {
+      tl.to(
+        cards[i - 1],
+        {
+          yPercent: 110,
+          opacity: 0,
+          scale: 0.92,
+          duration: 1,
+          ease: "none",
+        },
+        `step-${i}`
+      ).to(
+        cards[i],
+        {
+          yPercent: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 1,
+          ease: "none",
+        },
+        `step-${i}`
+      );
+    }
+
+    const timer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 150);
+
+    return () => {
+      clearTimeout(timer);
+      tl.kill();
+      if (scrollTriggerRef.current) {
+        scrollTriggerRef.current.kill();
+      }
+    };
+  }, []);
+
+  const goToStepCard = (targetIdx: number) => {
+    if (targetIdx < 0 || targetIdx >= STEP_CARDS.length) return;
+    const st = scrollTriggerRef.current;
+    if (st && st.start !== undefined && st.end !== undefined) {
+      const totalDistance = st.end - st.start;
+      const targetProgress = targetIdx / (STEP_CARDS.length - 1);
+      const targetScroll = st.start + targetProgress * totalDistance;
+      window.scrollTo({ top: targetScroll, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     HERO_SLIDES.forEach((slide) => {
@@ -351,47 +456,79 @@ export function Home() {
           </div>
         </section>
 
-        <section id="steps" className="vh-steps-section vh-reveal">
-          <div className="vh-steps-intro">
-            <h2>From first mock to target band in three steps</h2>
-          </div>
-          <div className="vh-steps-grid">
-            {STEP_CARDS.map((s, i) => (
-              <div className="vh-reveal" key={s.num}>
+        <section id="steps" className="vh-steps-gsap-section" ref={stepsContainerRef}>
+          <div className="vh-steps-inner-container">
+            {/* Left Fixed Sidebar */}
+            <div className="vh-steps-sidebar">
+              <div className="vh-steps-sidebar-inner">
+                <span className="vh-steps-eyebrow">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
+                  </svg>
+                  3 SIMPLE STEPS
+                </span>
+                <h2>
+                  From first mock to <span className="vh-gradient-text-light">target band</span> in 3 steps
+                </h2>
+                <p className="vh-steps-subtitle">
+                  Follow a structured, exam-realistic preparation flow designed to maximize your LanguageCert score.
+                </p>
+
+                <div className="vh-steps-nav">
+                  {STEP_CARDS.map((s, index) => {
+                    const isActive = activeStepIndex === index;
+                    const isCompleted = activeStepIndex > index;
+                    return (
+                      <div key={s.num} className="vh-stepper-item-wrapper">
+                        {index < STEP_CARDS.length - 1 && (
+                          <div className={`vh-stepper-connector ${isCompleted || isActive ? "is-filled" : ""}`}>
+                            <div className="vh-stepper-connector-fill" />
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          className={`vh-steps-nav-item ${isActive ? "is-active" : isCompleted ? "is-completed" : ""}`}
+                          onClick={() => goToStepCard(index)}
+                        >
+                          <div className="vh-steps-nav-node">
+                            <span className="vh-steps-nav-num">{s.num}</span>
+                          </div>
+                          <div className="vh-steps-nav-content-box">
+                            <span className="vh-steps-nav-title">{s.title}</span>
+                            <span className="vh-steps-nav-sub">{s.subtitle}</span>
+                          </div>
+                          <svg className="vh-steps-nav-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 12h14M12 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column Stage: GSAP Sliding Cards */}
+            <div className="vh-steps-cards-stage">
+              {STEP_CARDS.map((s, i) => (
                 <div
-                  className={`vh-flip ${flippedStepCards[s.num] ? "is-flipped" : ""}`}
-                  onClick={() => toggleStepCardFlip(s.num)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      toggleStepCardFlip(s.num);
-                    }
-                  }}
+                  key={s.num}
+                  className="vh-steps-gsap-card"
                 >
-                  <div className="vh-flip-inner">
-                    <div className="vh-face vh-step-face-front">
-                      <div className="vh-step-face-front-top">
-                        <div className="vh-step-num-badge">{s.num}</div>
-                        <div style={{ opacity: 0.75 }}>
-                          <StepIcon index={i} />
-                        </div>
-                      </div>
-                      <div>
-                        <h3>{s.title}</h3>
-                        <p>{s.desc}</p>
-                      </div>
-                      <div className="vh-step-hover-hint">
-                        Click / hover for details
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 12a9 9 0 1 1-6.2-8.55" />
-                          <path d="m17 3 4 4-4 4" />
-                        </svg>
-                      </div>
+                  <div className="vh-step-card-header">
+                    <div className="vh-step-num-badge">{s.num}</div>
+                    <div className="vh-step-card-icon">
+                      <StepIcon index={i} />
                     </div>
-                    <div className="vh-face vh-back vh-step-face-back">
-                      <div className="vh-step-back-eyebrow">Step {s.num} · what you get</div>
+                  </div>
+
+                  <div className="vh-step-card-content">
+                    <h3>{s.title}</h3>
+                    <p className="vh-step-card-desc">{s.desc}</p>
+                    <StepCardVisualPreview index={i} />
+
+                    <div className="vh-step-card-points">
+                      <div className="vh-step-points-title">Key Capabilities:</div>
                       {s.points.map((point) => (
                         <div className="vh-step-point" key={point}>
                           <span className="vh-step-point-badge">
@@ -405,8 +542,8 @@ export function Home() {
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
         

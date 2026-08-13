@@ -150,6 +150,7 @@ export const EVERYTHING_CARDS: FeatureCard[] = [
 export interface StepCard {
   num: string;
   title: string;
+  subtitle: string;
   desc: string;
   points: string[];
 }
@@ -158,18 +159,21 @@ export const STEP_CARDS: StepCard[] = [
   {
     num: "01",
     title: "Take a timed mock",
+    subtitle: "Real exam environment & timer",
     desc: "Sit a full computer-based LanguageCert mock with realistic timing, audio and autosaving.",
     points: ["Real LanguageCert exam layout", "Autosaves every answer", "Focus & fullscreen tracked"],
   },
   {
     num: "02",
     title: "Get instant feedback",
+    subtitle: "Detailed AI & examiner score breakdown",
     desc: "Objective sections mark automatically; writing and speaking feedback helps you understand the next improvement.",
     points: ["AI drafts across TR, CC, LR, GRA", "Human examiner confirms every mark", "Per-skill CEFR level assigned"],
   },
   {
     num: "03",
     title: "Track and improve",
+    subtitle: "Targeted weak area practice & progress",
     desc: "Per-skill progress, weak-area detection and institute leaderboards guide every session.",
     points: ["Weak-area detector alerts", "Institute-only leaderboard", "One-click PDF report cards"],
   },
