@@ -35,11 +35,11 @@
   --border-subtle: var(--border);
 
   /* Semantic status colors */
-  --primary: #e11d2e;
-  --primary-hover: #b91323;
+  --primary: #b80f28;
+  --primary-hover: #900a1c;
   --primary-soft: color-mix(in srgb, var(--primary) 14%, transparent);
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
+  --danger: #b80f28;
+  --danger-hover: #900a1c;
   --success: #1f7a4d;
   --info: #2563eb;
   --warning: #9a6a17;
@@ -51,7 +51,7 @@
   --nav-text: #6e6e73;
 
   /* Chart color system */
-  --series-1: #e11d2e;
+  --series-1: #b80f28;
   --series-2: #3b82f6;
   --series-3: #10b981;
   --series-4: #8b5cf6;
@@ -60,11 +60,11 @@
   --series-7: #ec4899;
   --series-8: #6366f1;
   --chart-grid: rgba(142, 142, 147, 0.24);
-  --chart-highlight: #e11d2e;
+  --chart-highlight: #b80f28;
   --chart-muted: #3b82f6;
   --emerald-500: #10b981;
   --amber-500: #f59e0b;
-  --red-500: #e11d2e;
+  --red-500: #b80f28;
   --blue-500: #3b82f6;
   --shade-8b5cf6: #8b5cf6;
   --purple-500: #8b5cf6;

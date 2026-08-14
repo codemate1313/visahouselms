@@ -457,6 +457,11 @@ export function Home() {
         </section>
 
         <section id="steps" className="vh-steps-gsap-section" ref={stepsContainerRef}>
+          {/* Transparent Visa House Logo Watermark */}
+          <div className="vh-steps-watermark-bg" aria-hidden="true">
+            <img src="/brand/vh-mark-light.png" alt="" />
+          </div>
+
           <div className="vh-steps-inner-container">
             {/* Left Fixed Sidebar */}
             <div className="vh-steps-sidebar">

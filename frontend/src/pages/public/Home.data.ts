@@ -85,9 +85,9 @@ export const EVERYTHING_CARDS: FeatureCard[] = [
     desc: "Experience computer-based practice designed to help you become comfortable with the format, timing and pressure of the real test.",
     ctaText: "Practice →",
     ctaLink: "/register",
-    g1: "#e11d2e",
-    wash1: "rgba(225, 29, 46,0.10)",
-    wash2: "rgba(225, 29, 46,0.02)",
+    g1: "#b80f28",
+    wash1: "rgba(184, 15, 40, 0.10)",
+    wash2: "rgba(184, 15, 40, 0.02)",
     kind: "mocks",
   },
   {

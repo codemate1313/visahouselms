@@ -40,14 +40,14 @@
 /* ---------- Theme tokens ---------- */
 
 .vh-public {
-  --ac: #e11d2e;
-  --ac2: #ef4444;
+  --ac: #b80f28;
+  --ac2: #900a1c;
   --bg: #f7f5f2;
   --ink: #0e0d10;
   --ink2: #5f6270;
   --line: rgba(14, 13, 16, 0.1);
-  --acLine: rgba(225, 29, 46, 0.35);
-  --acWash: rgba(225, 29, 46, 0.08);
+  --acLine: rgba(184, 15, 40, 0.35);
+  --acWash: rgba(184, 15, 40, 0.08);
   --card: rgba(255, 255, 255, 0.7);
   --cardSolid: rgba(255, 255, 255, 0.95);
   --chip: rgba(14, 13, 16, 0.04);
@@ -65,7 +65,7 @@
   --ink: #f5f5f7;
   --ink2: #9095a3;
   --line: rgba(255, 255, 255, 0.1);
-  --acWash: rgba(225, 29, 46, 0.14);
+  --acWash: rgba(184, 15, 40, 0.14);
   --card: rgba(20, 20, 28, 0.55);
   --cardSolid: rgba(20, 20, 28, 0.9);
   --chip: rgba(255, 255, 255, 0.06);
@@ -517,11 +517,11 @@
   background: var(--ac);
   color: #ffffff;
   border: 1px solid transparent;
-  box-shadow: 0 14px 30px -14px rgba(225, 29, 46, 0.75);
+  box-shadow: 0 14px 30px -14px rgba(184, 15, 40, 0.75);
 }
 .vh-drawer-btn-solid:hover {
   transform: translateY(-1px);
-  box-shadow: 0 18px 38px -14px rgba(225, 29, 46, 0.85);
+  box-shadow: 0 18px 38px -14px rgba(184, 15, 40, 0.85);
 }
 .vh-drawer-btn-solid svg {
   transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
