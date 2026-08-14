@@ -4356,8 +4356,8 @@ th[aria-sort="descending"] .table-sort-button::after {
 
 .static-auth-modal-wrapper .form-group input::placeholder,
 .static-auth-modal-wrapper .password-input-wrap input::placeholder {
-  color: #64748b;
-  -webkit-text-fill-color: #64748b;
+  color: #71717a;
+  -webkit-text-fill-color: #71717a;
 }
 
 .static-auth-modal-wrapper .form-group>input {

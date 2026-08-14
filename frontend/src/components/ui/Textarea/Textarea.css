@@ -65,7 +65,7 @@
 }
 
 [data-theme="dark"] .ui-textarea::placeholder {
-  color: #64748b;
-  -webkit-text-fill-color: #64748b;
+  color: #71717a;
+  -webkit-text-fill-color: #71717a;
   opacity: 1;
 }

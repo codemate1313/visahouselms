@@ -161,8 +161,8 @@ textarea::placeholder {
 
 [data-theme="dark"] input::placeholder,
 [data-theme="dark"] textarea::placeholder {
-  color: #64748b !important;
-  -webkit-text-fill-color: #64748b !important;
+  color: #71717a !important;
+  -webkit-text-fill-color: #71717a !important;
   opacity: 1 !important;
 }
 
@@ -176,8 +176,8 @@ textarea::-webkit-input-placeholder {
 
 [data-theme="dark"] input::-webkit-input-placeholder,
 [data-theme="dark"] textarea::-webkit-input-placeholder {
-  color: #64748b !important;
-  -webkit-text-fill-color: #64748b !important;
+  color: #71717a !important;
+  -webkit-text-fill-color: #71717a !important;
   opacity: 1 !important;
 }
 
@@ -190,7 +190,7 @@ textarea::-moz-placeholder {
 
 [data-theme="dark"] input::-moz-placeholder,
 [data-theme="dark"] textarea::-moz-placeholder {
-  color: #64748b !important;
+  color: #71717a !important;
   opacity: 1 !important;
 }
 

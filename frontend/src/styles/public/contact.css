@@ -369,8 +369,8 @@
 
 [data-theme="dark"] .vh-form-input::placeholder,
 [data-theme="dark"] .vh-form-textarea::placeholder {
-  color: #64748b;
-  -webkit-text-fill-color: #64748b;
+  color: #71717a;
+  -webkit-text-fill-color: #71717a;
 }
 
 .vh-form-textarea {

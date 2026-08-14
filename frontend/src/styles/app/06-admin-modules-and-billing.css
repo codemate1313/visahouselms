@@ -4722,8 +4722,8 @@
 [data-theme="dark"] .filter-bar input::placeholder,
 [data-theme="dark"] .role-profile-form input::placeholder,
 [data-theme="dark"] .role-profile-form textarea::placeholder {
-  color: #64748b !important;
-  -webkit-text-fill-color: #64748b !important;
+  color: #71717a !important;
+  -webkit-text-fill-color: #71717a !important;
   opacity: 1 !important;
   transition: opacity 0.15s ease, color 0.15s ease !important;
 }
