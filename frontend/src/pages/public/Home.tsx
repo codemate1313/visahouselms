@@ -24,7 +24,6 @@ import "@/styles/public/home.css";
 gsap.registerPlugin(ScrollTrigger);
 
 const HERO_INTERVAL_MS = 4000;
-const TESTIMONIAL_CARD_STEP = 384;
 
 interface RawTestimonial {
   quote?: string;
@@ -72,9 +71,7 @@ export function Home() {
   const heroTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [testimonials, setTestimonials] = useState<TestimonialCard[]>([]);
-  const testimonialsRef = useRef<HTMLDivElement | null>(null);
-  const testimonialCardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const testimonialSetWidthRef = useRef(0);
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [isTestimonialHovered, setIsTestimonialHovered] = useState(false);
   const [blogPreviews, setBlogPreviews] = useState<BlogListItem[]>([]);
 
@@ -232,81 +229,94 @@ export function Home() {
   }, []);
 
   useEffect(() => {
-    const el = testimonialsRef.current;
-    if (!el || testimonials.length === 0) return;
+    if (!testimonials.length || isTestimonialHovered) return;
+    const timer = setInterval(() => {
+      setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+    }, 2700);
+    return () => clearInterval(timer);
+  }, [testimonials.length, isTestimonialHovered]);
 
-    function anchorToMiddleSet() {
-      const firstCard = testimonialCardRefs.current[0];
-      const secondSetCard = testimonialCardRefs.current[testimonials.length];
-      if (!el || !firstCard || !secondSetCard) return;
-      const setWidth = secondSetCard.offsetLeft - firstCard.offsetLeft;
-      if (setWidth <= 0) return;
-      testimonialSetWidthRef.current = setWidth;
-      el.scrollLeft = setWidth;
+  function prevTestimonial() {
+    if (!testimonials.length) return;
+    setTestimonialIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  }
+
+  function nextTestimonial() {
+    if (!testimonials.length) return;
+    setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+  }
+
+  function get3DCardStyle(i: number, activeIndex: number, total: number) {
+    if (!total) return {};
+    let diff = i - activeIndex;
+
+    if (diff > total / 2) diff -= total;
+    if (diff < -total / 2) diff += total;
+
+    const absDiff = Math.abs(diff);
+
+    if (absDiff === 0) {
+      return {
+        transform: "perspective(1200px) translate3d(0%, 0, 0) rotateY(0deg) scale(1.06)",
+        opacity: 1,
+        zIndex: 10,
+        filter: "none",
+        cursor: "default",
+        pointerEvents: "auto" as const,
+      };
     }
 
-    anchorToMiddleSet();
-    window.addEventListener("resize", anchorToMiddleSet);
-    return () => window.removeEventListener("resize", anchorToMiddleSet);
-  }, [testimonials]);
-
-  useEffect(() => {
-    const el = testimonialsRef.current;
-    if (!el || testimonials.length === 0) return;
-
-    function handleScroll() {
-      const current = testimonialsRef.current;
-      const setWidth = testimonialSetWidthRef.current;
-      if (!current || !setWidth) return;
-
-      // Real-time silent rebalancing:
-      // When scrolled past Set 2, instantly shift back by 1 set width without visual jump.
-      if (current.scrollLeft >= setWidth * 2) {
-        current.scrollLeft -= setWidth;
-      }
-      // When scrolled before Set 1, instantly shift forward by 1 set width.
-      else if (current.scrollLeft < setWidth) {
-        current.scrollLeft += setWidth;
-      }
+    if (diff === -1) {
+      return {
+        transform: "perspective(1200px) translate3d(-58%, 0, -140px) rotateY(20deg) scale(0.85)",
+        opacity: 0.58,
+        zIndex: 6,
+        filter: "brightness(0.9) blur(0.5px)",
+        cursor: "pointer",
+        pointerEvents: "auto" as const,
+      };
     }
 
-    el.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      el.removeEventListener("scroll", handleScroll);
+    if (diff === 1) {
+      return {
+        transform: "perspective(1200px) translate3d(58%, 0, -140px) rotateY(-20deg) scale(0.85)",
+        opacity: 0.58,
+        zIndex: 6,
+        filter: "brightness(0.9) blur(0.5px)",
+        cursor: "pointer",
+        pointerEvents: "auto" as const,
+      };
+    }
+
+    if (diff === -2) {
+      return {
+        transform: "perspective(1200px) translate3d(-108%, 0, -280px) rotateY(32deg) scale(0.72)",
+        opacity: 0.22,
+        zIndex: 3,
+        filter: "brightness(0.75) blur(2px)",
+        cursor: "pointer",
+        pointerEvents: "auto" as const,
+      };
+    }
+
+    if (diff === 2) {
+      return {
+        transform: "perspective(1200px) translate3d(108%, 0, -280px) rotateY(-32deg) scale(0.72)",
+        opacity: 0.22,
+        zIndex: 3,
+        filter: "brightness(0.75) blur(2px)",
+        cursor: "pointer",
+        pointerEvents: "auto" as const,
+      };
+    }
+
+    return {
+      transform: `perspective(1200px) translate3d(${diff > 0 ? 150 : -150}%, 0, -420px) scale(0.5)`,
+      opacity: 0,
+      zIndex: 1,
+      pointerEvents: "none" as const,
     };
-  }, [testimonials]);
-
-  // Continuous smooth auto-slide ticker for testimonials
-  const animFrameRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const el = testimonialsRef.current;
-    if (!el || testimonials.length === 0 || isTestimonialHovered) {
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-        animFrameRef.current = null;
-      }
-      return;
-    }
-
-    const SPEED = 0.75; // pixels per frame for a smooth continuous glide
-
-    function step() {
-      if (testimonialsRef.current && !isTestimonialHovered) {
-        testimonialsRef.current.scrollLeft += SPEED;
-      }
-      animFrameRef.current = requestAnimationFrame(step);
-    }
-
-    animFrameRef.current = requestAnimationFrame(step);
-
-    return () => {
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-        animFrameRef.current = null;
-      }
-    };
-  }, [testimonials, isTestimonialHovered]);
+  }
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/blogs`)
@@ -323,14 +333,6 @@ export function Home() {
     }, HERO_INTERVAL_MS);
   }
 
-  function scrollTestimonials(direction: 1 | -1) {
-    const el = testimonialsRef.current;
-    if (!el || testimonials.length === 0) return;
-    const setWidth = testimonialSetWidthRef.current;
-    const step = setWidth ? setWidth / testimonials.length : TESTIMONIAL_CARD_STEP;
-    el.scrollBy({ left: direction * step, behavior: "smooth" });
-  }
-
   function handleHeroCta(link: string) {
     if (link === "/login") {
       handleAuth("login");
@@ -344,9 +346,6 @@ export function Home() {
   }
 
   const activeSlide = HERO_SLIDES[heroIndex];
-  const loopedTestimonials = testimonials.length
-    ? [...testimonials, ...testimonials, ...testimonials, ...testimonials]
-    : [];
 
   return (
     <div className="vh-public" ref={rootRef}>
@@ -563,54 +562,81 @@ export function Home() {
               <h2>Trusted by LanguageCert candidates</h2>
               <p>Read real experiences from students who used Visa House LMS to prepare for their LanguageCert exam and achieve their target results.</p>
             </div>
-            <div className="vh-testimonial-controls">
-              <button type="button" className="vh-slider-nav-btn" aria-label="Previous testimonial" onClick={() => scrollTestimonials(-1)}>
-                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M16 22 6 12 16 2" />
-                </svg>
-              </button>
-              <button type="button" className="vh-slider-nav-btn" aria-label="Next testimonial" onClick={() => scrollTestimonials(1)}>
-                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M8 22 18 12 8 2" />
-                </svg>
-              </button>
-            </div>
           </div>
           {testimonials.length > 0 ? (
-            <div className="vh-testimonial-slider-wrapper" ref={testimonialsRef}>
-              <div className="vh-testimonial-slider-track">
-                {loopedTestimonials.map((t, i) => (
-                  <div
-                    className="vh-testimonial-card"
-                    key={i}
-                    ref={(node) => {
-                      testimonialCardRefs.current[i] = node;
-                    }}
-                  >
-                    <div>
-                      <div className="vh-testimonial-header">
-                        <div className="vh-testimonial-avatar" style={{ background: t.grad }}>
-                          <span>{t.init}</span>
-                          {t.avatar && (
-                            <img
-                              src={t.avatar}
-                              alt={t.name}
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                              }}
-                            />
-                          )}
+            <div className="vh-3d-coverflow-wrapper">
+              <button
+                type="button"
+                className="vh-3d-nav-btn vh-3d-nav-btn-prev"
+                aria-label="Previous testimonial"
+                onClick={prevTestimonial}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                className="vh-3d-nav-btn vh-3d-nav-btn-next"
+                aria-label="Next testimonial"
+                onClick={nextTestimonial}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              <div className="vh-3d-coverflow-stage">
+                {testimonials.map((t, i) => {
+                  const style = get3DCardStyle(i, testimonialIndex, testimonials.length);
+                  const isCenter = i === testimonialIndex;
+                  return (
+                    <div
+                      key={i}
+                      className={`vh-testimonial-card vh-3d-card ${isCenter ? "is-center" : ""}`}
+                      style={style}
+                      onClick={() => {
+                        if (!isCenter) setTestimonialIndex(i);
+                      }}
+                    >
+                      <div>
+                        <div className="vh-testimonial-header">
+                          <div className="vh-testimonial-avatar" style={{ background: t.grad }}>
+                            <span>{t.init}</span>
+                            {t.avatar && (
+                              <img
+                                src={t.avatar}
+                                alt={t.name}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
+                              />
+                            )}
+                          </div>
+                          <div className="vh-testimonial-author-info">
+                            <strong>{t.name}</strong>
+                            <span>{t.role}</span>
+                            <div className="vh-testimonial-score-badge">{t.score}</div>
+                          </div>
                         </div>
-                        <div className="vh-testimonial-author-info">
-                          <strong>{t.name}</strong>
-                          <span>{t.role}</span>
-                          <div className="vh-testimonial-score-badge">{t.score}</div>
-                        </div>
+                        <p className="vh-testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
                       </div>
-                      <p className="vh-testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
+                      <div className="vh-testimonial-stars">★★★★★</div>
                     </div>
-                    <div className="vh-testimonial-stars">★★★★★</div>
-                  </div>
+                  );
+                })}
+              </div>
+
+              <div className="vh-3d-dots">
+                {testimonials.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={`vh-3d-dot ${idx === testimonialIndex ? "is-active" : ""}`}
+                    onClick={() => setTestimonialIndex(idx)}
+                    aria-label={`Go to slide ${idx + 1}`}
+                  />
                 ))}
               </div>
             </div>
