@@ -2,7 +2,7 @@ import { type ChangeEvent, type FormEvent, type KeyboardEvent, useEffect, useMem
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { Button, LinkButton, RequiredMark, SearchableSelect } from "@/components/ui";
+import { Button, Checkbox, LinkButton, RequiredMark, SearchableSelect } from "@/components/ui";
 import { BrandingPreview } from "@/pages/super-admin/InstituteBranding/components/BrandingPreview";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
@@ -903,13 +903,15 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
                 return (
                   <div
                     key={module.id}
-                    onClick={() => toggleModule(module.id)}
+                    onClick={() => {
+                      if (!selectedPlanId) toggleModule(module.id);
+                    }}
                     style={{
                       padding: "14px 16px",
                       borderRadius: 12,
                       border: isSelected ? "2px solid var(--primary, var(--red-500))" : "1px solid var(--border, rgba(226, 232, 240, 0.9))",
                       background: isSelected ? "rgba(225, 29, 46, 0.04)" : "var(--surface)",
-                      cursor: selectedPlanId ? "not-allowed" : "pointer",
+                      cursor: selectedPlanId ? "default" : "pointer",
                       opacity: selectedPlanId && !isSelected ? 0.55 : 1,
                       transition: "all 0.2s ease",
                       display: "flex",
@@ -917,7 +919,14 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
                       gap: 12,
                     }}
                   >
-                    <input type="checkbox" checked={isSelected} disabled={Boolean(selectedPlanId)} readOnly style={{ marginTop: 3, cursor: selectedPlanId ? "not-allowed" : "pointer" }} />
+                    <Checkbox
+                      checked={isSelected}
+                      readOnly
+                      onChange={() => {
+                        if (!selectedPlanId) toggleModule(module.id);
+                      }}
+                      style={{ marginTop: 2, pointerEvents: selectedPlanId ? "none" : "auto" }}
+                    />
                     <div>
                       <strong style={{ fontSize: 13.5, display: "block", color: "var(--text)" }}>{module.title}</strong>
                       <span style={{ fontSize: 11.5, color: "var(--text-muted, var(--slate-500))", textTransform: "uppercase", letterSpacing: "0.04em" }}>
