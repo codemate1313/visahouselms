@@ -150,38 +150,65 @@
   color: #f2f2f5;
 }
 
+/* Cross-browser placeholder styling (valid selectors only) */
 input::placeholder,
-textarea::placeholder,
-select::placeholder {
-  color: var(--slate-400, #94a3b8);
+textarea::placeholder {
+  color: var(--slate-400, #94a3b8) !important;
+  -webkit-text-fill-color: var(--slate-400, #94a3b8) !important;
   opacity: 1 !important;
   transition: opacity 0.15s ease, color 0.15s ease;
 }
 
-input:focus::placeholder,
-textarea:focus::placeholder,
-select:focus::placeholder {
-  color: transparent !important;
-  opacity: 0 !important;
-}
-
 [data-theme="dark"] input::placeholder,
-[data-theme="dark"] textarea::placeholder,
-[data-theme="dark"] select::placeholder {
-  color: #94a3b8 !important;
+[data-theme="dark"] textarea::placeholder {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
   opacity: 1 !important;
 }
 
-[data-theme="dark"] input:focus::placeholder,
-[data-theme="dark"] textarea:focus::placeholder,
-[data-theme="dark"] select:focus::placeholder {
-  color: transparent !important;
-  opacity: 0 !important;
+/* WebKit / Chrome */
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder {
+  color: var(--slate-400, #94a3b8) !important;
+  -webkit-text-fill-color: var(--slate-400, #94a3b8) !important;
+  opacity: 1 !important;
 }
 
-/* Universal override to ensure all inputs/textareas hide placeholder on focus */
-*:focus::placeholder {
+[data-theme="dark"] input::-webkit-input-placeholder,
+[data-theme="dark"] textarea::-webkit-input-placeholder {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+  opacity: 1 !important;
+}
+
+/* Firefox */
+input::-moz-placeholder,
+textarea::-moz-placeholder {
+  color: var(--slate-400, #94a3b8) !important;
+  opacity: 1 !important;
+}
+
+[data-theme="dark"] input::-moz-placeholder,
+[data-theme="dark"] textarea::-moz-placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
+/* Focus state: clear placeholder so typed text starts clean */
+input:focus::placeholder,
+textarea:focus::placeholder,
+[data-theme="dark"] input:focus::placeholder,
+[data-theme="dark"] textarea:focus::placeholder,
+input:focus::-webkit-input-placeholder,
+textarea:focus::-webkit-input-placeholder,
+[data-theme="dark"] input:focus::-webkit-input-placeholder,
+[data-theme="dark"] textarea:focus::-webkit-input-placeholder,
+input:focus::-moz-placeholder,
+textarea:focus::-moz-placeholder,
+[data-theme="dark"] input:focus::-moz-placeholder,
+[data-theme="dark"] textarea:focus::-moz-placeholder {
   color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
   opacity: 0 !important;
 }
 

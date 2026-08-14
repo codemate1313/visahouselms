@@ -4703,7 +4703,6 @@
 
 [data-theme="dark"] input::placeholder,
 [data-theme="dark"] textarea::placeholder,
-[data-theme="dark"] select::placeholder,
 [data-theme="dark"] .ui-input::placeholder,
 [data-theme="dark"] .sab-input-field::placeholder,
 [data-theme="dark"] .sab-search-input::placeholder,
@@ -4723,14 +4722,14 @@
 [data-theme="dark"] .filter-bar input::placeholder,
 [data-theme="dark"] .role-profile-form input::placeholder,
 [data-theme="dark"] .role-profile-form textarea::placeholder {
-  color: #94a3b8 !important;
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
   opacity: 1 !important;
   transition: opacity 0.15s ease, color 0.15s ease !important;
 }
 
 [data-theme="dark"] input:focus::placeholder,
 [data-theme="dark"] textarea:focus::placeholder,
-[data-theme="dark"] select:focus::placeholder,
 [data-theme="dark"] .ui-input:focus::placeholder,
 [data-theme="dark"] .sab-input-field:focus::placeholder,
 [data-theme="dark"] .sab-search-input:focus::placeholder,
@@ -4751,6 +4750,7 @@
 [data-theme="dark"] .role-profile-form input:focus::placeholder,
 [data-theme="dark"] .role-profile-form textarea:focus::placeholder {
   color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
   opacity: 0 !important;
 }
 

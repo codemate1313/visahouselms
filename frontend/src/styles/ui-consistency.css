@@ -1061,7 +1061,8 @@ html {
 }
 
 [data-theme="dark"] .premium-textarea::placeholder {
-  color: #94a3b8;
+  color: #64748b;
+  -webkit-text-fill-color: #64748b;
   opacity: 1;
 }
 

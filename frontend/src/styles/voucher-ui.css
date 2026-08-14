@@ -388,7 +388,8 @@
   color: #f2f2f5;
 }
 [data-theme="dark"] .voucher-ui-scope .vh-pub-input::placeholder {
-  color: #94a3b8;
+  color: #64748b;
+  -webkit-text-fill-color: #64748b;
 }
 [data-theme="dark"] .voucher-ui-scope .vh-pub-done-btn {
   background: rgba(255, 255, 255, 0.06);
