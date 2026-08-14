@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Badge, Button, SegmentedControl, Textarea } from "@/components/ui";
@@ -24,7 +24,6 @@ const STATUS_TONE: Record<SignupStatus, "amber" | "green" | "gray"> = {
  * the row and emails the reviewer's own reason.
  */
 export function InstituteSignups() {
-  const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
 
   const [status, setStatus] = useState<SignupStatus>("pending");
@@ -34,9 +33,6 @@ export function InstituteSignups() {
   const [busyId, setBusyId] = useState<number | null>(null);
   const [rejecting, setRejecting] = useState<InstituteSignupRequest | null>(null);
   const [reason, setReason] = useState("");
-  // Held in memory only: the server returns a temporary password once, and this
-  // is the reviewer's single chance to relay it if the email never lands.
-  const [approved, setApproved] = useState<InstituteSignupRequest | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,20 +53,12 @@ export function InstituteSignups() {
     load();
   }, [load]);
 
-  async function approve(row: InstituteSignupRequest) {
-    setBusyId(row.id);
-    try {
-      const { data } = await apiClient.post<InstituteSignupRequest>(
-        `/super-admin/institute-signups/${row.id}/approve`,
-      );
-      setApproved(data);
-      showSuccess(strings.approvedBody(data.admin_email), strings.approvedTitle);
-      await load();
-    } catch (err: unknown) {
-      showError(extractErrorMessage(err, strings.errors.approve));
-    } finally {
-      setBusyId(null);
-    }
+  const navigate = useNavigate();
+
+  function approveAndOnboard(row: InstituteSignupRequest) {
+    navigate(`/super-admin/institutes/new?signup_id=${row.id}`, {
+      state: { signup: row },
+    });
   }
 
   async function confirmReject() {
@@ -102,23 +90,6 @@ export function InstituteSignups() {
           onChange={setStatus}
         />
       </div>
-
-      {approved && (
-        <section className="form-card wide signup-approved-card">
-          <strong>{strings.approvedTitle}</strong>
-          <p className="hint">{strings.approvedBody(approved.admin_email)}</p>
-          {approved.admin_temp_password && (
-            <>
-              <span className="signup-field-label">{strings.tempPasswordLabel}</span>
-              <code className="signup-temp-password">{approved.admin_temp_password}</code>
-              <p className="hint">{strings.tempPasswordHint}</p>
-            </>
-          )}
-          {approved.created_institute_id && (
-            <Link to={`/super-admin/institutes/${approved.created_institute_id}`}>{strings.viewInstitute}</Link>
-          )}
-        </section>
-      )}
 
       {loading ? (
         <p>{strings.loading}</p>
@@ -197,11 +168,10 @@ export function InstituteSignups() {
                   <Button
                     type="button"
                     variant="primary"
-                    loading={busyId === row.id}
                     disabled={busyId !== null}
-                    onClick={() => approve(row)}
+                    onClick={() => approveAndOnboard(row)}
                   >
-                    {busyId === row.id ? strings.approving : strings.approve}
+                    {strings.approve}
                   </Button>
                   <button
                     type="button"

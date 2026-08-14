@@ -10,7 +10,7 @@ from app.models.role import STUDENT
 from app.models.user import User
 from app.schemas.institute import BrandingUpdate, InstituteCreate, InstituteUpdate
 from app.schemas.institute_admin import InstituteMemberCreate, InstituteMemberUpdate
-from app.services import institute_admin_service, institute_service
+from app.services import institute_admin_service, institute_service, institute_signup_service
 
 router = APIRouter(
     prefix="/super-admin/institutes",
@@ -55,6 +55,10 @@ def create_institute(
     # create_institute() only writes the institute and its admin account.
     temp_pwd = res.get("admin_temp_password")
     institute_service.update_institute(db, actor, res["id"], payload.model_dump(exclude_unset=True), _client_ip(request))
+    if payload.signup_request_id:
+        institute_signup_service.mark_approved_with_institute(
+            db, actor, payload.signup_request_id, res["id"], _client_ip(request)
+        )
     res = institute_service.get_institute(db, res["id"])
     if temp_pwd:
         res["admin_temp_password"] = temp_pwd

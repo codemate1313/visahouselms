@@ -30,6 +30,7 @@ class InstituteCreate(BaseModel):
     module_ids: Optional[list[int]] = Field(default_factory=list)
     primary_color: Optional[str] = "#e53935"
     secondary_color: Optional[str] = "#17191d"
+    signup_request_id: Optional[int] = None
 
     @model_validator(mode="after")
     def _received_within_agreed(self) -> "InstituteCreate":

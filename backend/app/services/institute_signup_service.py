@@ -309,3 +309,31 @@ def reject(db: Session, actor: User, request_id: int, reason: str, ip: Optional[
         ),
     )
     return _serialize(get_or_404(db, request_id))
+
+
+def mark_approved_with_institute(
+    db: Session,
+    actor: User,
+    request_id: int,
+    institute_id: int,
+    ip: Optional[str] = None,
+) -> None:
+    """Marks an application approved when on-boarded directly via the institute creation form."""
+    row = db.get(InstituteSignupRequest, request_id)
+    if not row or row.status != STATUS_PENDING:
+        return
+    row.status = STATUS_APPROVED
+    row.reviewed_by_id = actor.id
+    row.reviewed_at = _now()
+    row.created_institute_id = institute_id
+    db.add(row)
+    _audit(
+        db,
+        actor,
+        "institute_signup.approve",
+        row.id,
+        ip,
+        {"institute_id": institute_id, "admin_email": row.admin_email, "source": "institute_onboarding_form"},
+    )
+    db.commit()
+

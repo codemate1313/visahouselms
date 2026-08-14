@@ -1,5 +1,5 @@
 import { type ChangeEvent, type FormEvent, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Button, LinkButton, RequiredMark, SearchableSelect } from "@/components/ui";
@@ -46,8 +46,19 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
   const { id } = useParams();
   const isNew = id === "new" || id === undefined;
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const [activeTab, setActiveTab] = useState<TabKey>("profile");
+
+  const signupFromLocation = (location.state as { signup?: any } | null)?.signup;
+  const signupIdFromParam = searchParams.get("signup_id");
+  const [signupRequestId, setSignupRequestId] = useState<number | null>(() => {
+    if (signupFromLocation?.id) return signupFromLocation.id;
+    if (signupIdFromParam) return Number(signupIdFromParam);
+    return null;
+  });
+  const [signupInfo, setSignupInfo] = useState<any>(signupFromLocation || null);
 
   // Core & Admin Account State
   const [name, setName] = useState("");
@@ -86,7 +97,7 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
 
-  // Plans & package selections
+  // Plans & package selections (default to Custom / No Package with editable fields)
   const [plans, setPlans] = useState<any[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
 
@@ -99,6 +110,44 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showInfo = useToastStore((state) => state.showInfo);
   const originalRef = useRef<Record<string, unknown> | null>(null);
+
+  // Prefill from application when onboarding a new institute from partner signup queue
+  useEffect(() => {
+    if (!isNew) return;
+
+    function applySignup(s: any) {
+      if (s.institute_name) setName(s.institute_name);
+      if (s.contact_email) setContactEmail(s.contact_email);
+      if (s.admin_email) setAdminEmail(s.admin_email);
+      if (s.admin_first_name) setAdminFirstName(s.admin_first_name);
+      if (s.admin_last_name) setAdminLastName(s.admin_last_name);
+      if (s.message) setAgreementNotes(`Applicant note: ${s.message}`);
+
+      setAllocation((prev) => ({
+        ...prev,
+        student_limit: s.expected_students != null ? String(s.expected_students) : prev.student_limit,
+        staff_limit: s.expected_instructors != null ? String(s.expected_instructors) : prev.staff_limit,
+        access_duration_days: prev.access_duration_days || "365",
+        grace_days: prev.grace_days || "0",
+      }));
+
+      // Ensure custom package is selected by default with editable fields
+      setSelectedPlanId("");
+    }
+
+    if (signupFromLocation) {
+      applySignup(signupFromLocation);
+    } else if (signupIdFromParam) {
+      apiClient
+        .get(`/super-admin/institute-signups/${signupIdFromParam}`)
+        .then(({ data }) => {
+          setSignupInfo(data);
+          setSignupRequestId(data.id);
+          applySignup(data);
+        })
+        .catch(() => undefined);
+    }
+  }, [isNew, signupFromLocation, signupIdFromParam]);
 
   useEffect(() => {
     Promise.all([
@@ -366,6 +415,9 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
         payload.admin_email = adminEmail;
         payload.admin_first_name = adminFirstName;
         payload.admin_last_name = adminLastName;
+        if (signupRequestId) {
+          payload.signup_request_id = signupRequestId;
+        }
 
         const { data } = await apiClient.post("/super-admin/institutes", payload);
         const instituteId = data.id;
@@ -486,6 +538,66 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
 
   return (
     <div className="institute-form-shell">
+      {signupRequestId && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            padding: "14px 18px",
+            marginBottom: 20,
+            borderRadius: 12,
+            background: "rgba(225, 29, 46, 0.05)",
+            border: "1px solid rgba(225, 29, 46, 0.22)",
+            color: "var(--text)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 20 }}>📋</span>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <strong style={{ fontSize: 13.5, color: "var(--primary, #e11d2e)" }}>
+                  Onboarding from Partner Application #{signupRequestId} ({signupInfo?.institute_name || name || "Applicant"})
+                </strong>
+                <span
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: 999,
+                    background: "var(--surface, #fff)",
+                    fontSize: 11.5,
+                    fontWeight: 650,
+                    border: "1px solid var(--border)",
+                    color: "var(--text)",
+                  }}
+                >
+                  Custom Package (Editable)
+                </span>
+              </div>
+              <span style={{ fontSize: 12.5, color: "var(--text-muted)", display: "block", marginTop: 2 }}>
+                Values prefilled from applicant submission. You can freely customize the pricing, student limits, instructor limits, duration, and courses.
+              </span>
+            </div>
+          </div>
+          {signupInfo?.interested_plan_name && (
+            <span
+              style={{
+                flexShrink: 0,
+                padding: "5px 12px",
+                borderRadius: 999,
+                background: "var(--surface, #fff)",
+                fontSize: 12,
+                fontWeight: 600,
+                border: "1px solid var(--border)",
+                color: "var(--text)",
+              }}
+            >
+              Interested Plan: {signupInfo.interested_plan_name}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="stepper-navigation-header">
         <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "nowrap", flexShrink: 0 }}>
           {stepsDef.map((tab, idx) => {
