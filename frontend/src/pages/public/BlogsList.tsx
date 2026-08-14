@@ -4,7 +4,7 @@ import { PublicHeader } from "@/components/publicSite/PublicHeader";
 import { PublicFooter } from "@/components/publicSite/PublicFooter";
 import { PublicOrbBackground } from "@/components/publicSite/PublicOrbBackground";
 import { useRevealOnScroll } from "@/components/publicSite/useRevealOnScroll";
-import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { SegmentedControl } from "@/components/ui";
 import { useSEO } from "@/hooks/useSEO";
 import { API_BASE_URL } from "@/api/client";
 import { useContactSettings } from "./useContactSettings";
@@ -58,7 +58,6 @@ export function BlogsList() {
         <section className="vh-blog-categories vh-reveal">
           <SegmentedControl
             ariaLabel="Filter blog categories"
-            className="vh-blog-category-control"
             neverCollapse
             onChange={setActiveCategory}
             options={CATEGORY_OPTIONS}

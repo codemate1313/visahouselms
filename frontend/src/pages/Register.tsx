@@ -4,6 +4,7 @@ import axios from "axios";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { getDeviceIdentity } from "@/auth/device";
 import { extractErrorMessage } from "@/api/errors";
+import { GoogleIcon } from "@/components/auth/GoogleIcon";
 import { HeroSlider } from "@/components/auth/HeroSlider";
 import { PasswordInput } from "@/components/PasswordInput";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
@@ -219,7 +220,9 @@ export function Register() {
               disabled={loading || googleLoading}
               onClick={handleGoogleSignup}
             >
-              <span className="google-mark" aria-hidden="true">G</span>
+              <span className="google-mark" aria-hidden="true">
+                <GoogleIcon />
+              </span>
               {googleLoading ? strings.googleSignupBusy : strings.googleSignupLabel}
             </button>
           </form>

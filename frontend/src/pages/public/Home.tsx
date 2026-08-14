@@ -201,27 +201,6 @@ export function Home() {
   }, []);
 
   useEffect(() => {
-    let ticking = false;
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          if (heroBgWrapperRef.current) {
-            const scrollY = window.scrollY;
-            if (scrollY <= 1200) {
-              heroBgWrapperRef.current.style.transform = `translate3d(0, ${scrollY * 0.38}px, 0)`;
-            }
-          }
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
     fetch(`${API_BASE_URL}/testimonials`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setTestimonials(Array.isArray(data) ? mapTestimonials(data) : []))

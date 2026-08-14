@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { API_BASE_URL, apiClient } from "../../api/client";
 import { SearchableSelect } from "@/components/ui";
 import { ExaminerAvatarSvg } from "./ExaminerAvatarSvg";
+import { PhotoExaminerAvatar } from "./PhotoExaminerAvatar";
+import { getExaminerPhotoSet } from "./examinerPhotoSets";
 import "./SpeakingAvatar.css";
 
 interface Examiner {
@@ -148,6 +150,8 @@ export function SpeakingAvatar({
   }, [isPlaying, avatarData]);
 
   const examiner = avatarData?.examiner || examiners.find((e) => e.id === selectedExaminer);
+  // Photo avatar when this examiner has a frame set; vector avatar otherwise.
+  const photoSet = getExaminerPhotoSet(examiner?.gender);
   const audioFullUrl = avatarData?.audio_url ? `${API_BASE_URL}${avatarData.audio_url}` : "";
   const promptPlayKey = avatarData
     ? `speaking-avatar-played:${attemptId}:${partId}:${selectedExaminer}:${avatarData.prompt_text}`
@@ -219,11 +223,20 @@ export function SpeakingAvatar({
             style={{ cursor: audioFullUrl && !hasPlayedPrompt ? "pointer" : "default" }}
           >
             <div className="avatar-portrait-frame">
-              <ExaminerAvatarSvg
-                gender={examiner?.gender}
-                viseme={currentViseme}
-                isPlaying={isPlaying}
-              />
+              {photoSet ? (
+                <PhotoExaminerAvatar
+                  set={photoSet}
+                  audioRef={audioRef}
+                  isPlaying={isPlaying}
+                  visemes={avatarData?.visemes}
+                />
+              ) : (
+                <ExaminerAvatarSvg
+                  gender={examiner?.gender}
+                  viseme={currentViseme}
+                  isPlaying={isPlaying}
+                />
+              )}
             </div>
           </div>
 
@@ -272,11 +285,20 @@ export function SpeakingAvatar({
         {/* Examiner Vector Stage Container */}
         <div className={`avatar-portrait-container ${isPlaying ? "speaking" : ""}`}>
           <div className="avatar-portrait-frame">
-            <ExaminerAvatarSvg
-              gender={examiner?.gender}
-              viseme={currentViseme}
-              isPlaying={isPlaying}
-            />
+            {photoSet ? (
+              <PhotoExaminerAvatar
+                set={photoSet}
+                audioRef={audioRef}
+                isPlaying={isPlaying}
+                visemes={avatarData?.visemes}
+              />
+            ) : (
+              <ExaminerAvatarSvg
+                gender={examiner?.gender}
+                viseme={currentViseme}
+                isPlaying={isPlaying}
+              />
+            )}
           </div>
         </div>
 

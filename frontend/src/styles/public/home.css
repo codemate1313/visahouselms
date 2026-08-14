@@ -30,7 +30,7 @@
   position: relative;
   width: 100%;
   max-width: 100%;
-  margin: -70px 0 40px;
+  margin: calc(-1 * var(--vh-public-header-height)) 0 40px;
   padding: 100px 48px 80px;
   height: calc(100vh - 76px);
   min-height: 720px;
@@ -43,15 +43,15 @@
 }
 .vh-hero-bg-wrapper {
   position: absolute;
-  top: -20%;
+  top: -36%;
   left: 0;
   right: 0;
-  bottom: -20%;
+  bottom: -36%;
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
   background-color: #08080e;
-  will-change: transform;
+  transform: none !important;
 }
 .vh-hero-bg-img {
   position: absolute;

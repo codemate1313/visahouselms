@@ -3,6 +3,8 @@ import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
 import { ExaminerAvatarSvg } from "@/components/speaking/ExaminerAvatarSvg";
+import { PhotoExaminerAvatar } from "@/components/speaking/PhotoExaminerAvatar";
+import { getExaminerPhotoSet } from "@/components/speaking/examinerPhotoSets";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { DEFAULT_EXAMINER_ID, type SpeakingExaminer } from "./SpeakingExaminerPicker";
 import "./SpeakingAvatarPreview.css";
@@ -133,7 +135,19 @@ export function SpeakingAvatarPreview({ moduleId, partId, prompt, examiner }: Sp
       <div className="vh-avatar-preview-body">
         <div className={`vh-avatar-preview-portrait${isPlaying ? " is-speaking" : ""}`}>
           <div className="vh-avatar-preview-frame">
-            <ExaminerAvatarSvg gender={examiner?.gender} viseme={currentViseme} isPlaying={isPlaying} />
+            {(() => {
+            const photoSet = getExaminerPhotoSet(examiner?.gender);
+            return photoSet ? (
+              <PhotoExaminerAvatar
+                set={photoSet}
+                audioRef={audioRef}
+                isPlaying={isPlaying}
+                visemes={payload?.visemes}
+              />
+            ) : (
+              <ExaminerAvatarSvg gender={examiner?.gender} viseme={currentViseme} isPlaying={isPlaying} />
+            );
+          })()}
           </div>
         </div>
 

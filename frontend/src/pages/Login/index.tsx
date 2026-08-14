@@ -6,6 +6,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { getDeviceIdentity } from "@/auth/device";
+import { GoogleIcon } from "@/components/auth/GoogleIcon";
 import { HeroSlider } from "@/components/auth/HeroSlider";
 import { PasswordInput } from "@/components/PasswordInput";
 import { RequiredMark } from "@/components/ui";
@@ -433,7 +434,9 @@ export function Login({
               disabled={loading || googleLoading}
               onClick={handleGoogleLogin}
             >
-              <span className="google-mark" aria-hidden="true">G</span>
+              <span className="google-mark" aria-hidden="true">
+                <GoogleIcon />
+              </span>
               {googleLoading ? strings.googleLoginBusy : strings.googleLoginLabel}
             </button>
           </form>

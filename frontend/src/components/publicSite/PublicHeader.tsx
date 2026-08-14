@@ -48,6 +48,7 @@ export function PublicHeader() {
   const user = useAuthStore((state) => state.user);
   const { open, toggle, close, drawerRef, scrimRef, line1Ref, line2Ref, line3Ref } = useMobileDrawer();
   const [headerVisible, setHeaderVisible] = useState(true);
+  const [overHero, setOverHero] = useState(() => location.pathname === "/" && (typeof window === "undefined" || window.scrollY <= 96));
   const lastScrollYRef = useRef(0);
   const scrollFrameRef = useRef<number | null>(null);
 
@@ -63,12 +64,14 @@ export function PublicHeader() {
   useEffect(() => {
     lastScrollYRef.current = window.scrollY;
     setHeaderVisible(true);
+    setOverHero(location.pathname === "/" && window.scrollY <= 96);
   }, [location.pathname]);
 
   useEffect(() => {
     const updateHeader = () => {
       const currentScrollY = Math.max(window.scrollY, 0);
       const previousScrollY = lastScrollYRef.current;
+      setOverHero(location.pathname === "/" && currentScrollY <= 96);
 
       if (open || currentScrollY <= 12) {
         setHeaderVisible(true);
@@ -95,7 +98,7 @@ export function PublicHeader() {
         window.cancelAnimationFrame(scrollFrameRef.current);
       }
     };
-  }, [open]);
+  }, [location.pathname, open]);
 
   const hideHeaderAfterHover = () => {
     if (!open && window.scrollY > 12) {
@@ -111,7 +114,7 @@ export function PublicHeader() {
         aria-hidden="true"
       />
       <header
-        className={`vh-header${headerVisible ? "" : " vh-header-hidden"}`}
+        className={`vh-header${headerVisible ? "" : " vh-header-hidden"}${overHero ? " vh-header-over-hero" : ""}`}
         onPointerLeave={hideHeaderAfterHover}
         onFocusCapture={() => setHeaderVisible(true)}
       >

@@ -54,6 +54,45 @@ function CheckIcon() {
   );
 }
 
+function RollingPrice({ plan }: { plan: LandingPlan }) {
+  const amount = Number(plan.price);
+  const [displayAmount, setDisplayAmount] = useState(0);
+
+  useEffect(() => {
+    if (!Number.isFinite(amount)) return undefined;
+
+    setDisplayAmount(0);
+    const frame = requestAnimationFrame(() => {
+      setDisplayAmount(amount);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [amount, plan.id]);
+
+  if (!Number.isFinite(amount)) return <>{formatPrice(plan)}</>;
+
+  return (
+    <NumberFlow
+      value={displayAmount}
+      format={{
+        style: "currency",
+        currency: plan.currency || "INR",
+        maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+      }}
+      isolate
+      transformTiming={{
+        duration: 300,
+        easing: "ease-out",
+      }}
+      spinTiming={{
+        duration: 520,
+        easing: "ease-out",
+      }}
+      willChange
+    />
+  );
+}
+
 function PlanCard({ plan, featured, onSelect, onChoose }: { plan: LandingPlan; featured: boolean; onSelect: () => void; onChoose: () => void }) {
   const forInstitutes = plan.audience === "institutes";
   const cardBg = featured ? "linear-gradient(155deg, var(--ac), var(--ac2))" : "var(--card)";
@@ -76,23 +115,7 @@ function PlanCard({ plan, featured, onSelect, onChoose }: { plan: LandingPlan; f
       </div>
       <div className="vh-plan-price-row">
         <span className="vh-plan-price">
-          {Number.isFinite(Number(plan.price)) ? (
-            <NumberFlow
-              value={Number(plan.price)}
-              format={{
-                style: "currency",
-                currency: plan.currency || "INR",
-                maximumFractionDigits: Number.isInteger(Number(plan.price)) ? 0 : 2,
-              }}
-              transformTiming={{
-                duration: 600,
-                easing: "ease-out",
-              }}
-              willChange
-            />
-          ) : (
-            formatPrice(plan)
-          )}
+          <RollingPrice plan={plan} />
         </span>
         <span className="vh-plan-period" style={{ color: mutedInk }}>
           {plan.period_label}
@@ -299,11 +322,11 @@ export function Plans() {
 
           {hasPlans && (
             <div className={planGridClass}>
-              {visiblePlans.map((plan, index) => {
+              {visiblePlans.map((plan) => {
                 const featured = selectedPlanId !== null ? selectedPlanId === plan.id : Boolean(plan.is_popular);
                 return (
                   <PlanCard
-                    key={index}
+                    key={plan.id}
                     plan={plan}
                     featured={featured}
                     onSelect={() => setSelectedPlanId(plan.id)}

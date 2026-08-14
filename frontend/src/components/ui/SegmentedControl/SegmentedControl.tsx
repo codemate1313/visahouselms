@@ -126,11 +126,13 @@ export function SegmentedControl<T extends string>({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasMeasuredSliderRef = useRef(false);
 
   const isMobile = useIsMobile();
   const [overflows, setOverflows] = useState(false);
   const [open, setOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
+  const [sliderReady, setSliderReady] = useState(false);
 
   const collapsed = isMobile && !neverCollapse && overflows;
   const active = options.find((option) => option.value === value) ?? options[0];
@@ -181,7 +183,7 @@ export function SegmentedControl<T extends string>({
     opacity: 0,
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container || collapsed) return;
 
@@ -195,6 +197,10 @@ export function SegmentedControl<T extends string>({
         top: activeEl.offsetTop,
         opacity: 1,
       });
+      if (!hasMeasuredSliderRef.current) {
+        hasMeasuredSliderRef.current = true;
+        window.requestAnimationFrame(() => setSliderReady(true));
+      }
     };
 
     updateSlider();
@@ -380,7 +386,7 @@ export function SegmentedControl<T extends string>({
         </button>
       ) : (
         <div ref={containerRef} className={classes} role="group" aria-label={ariaLabel}>
-          <span className="ui-segmented-slider" style={sliderStyle} aria-hidden="true" />
+          <span className={`ui-segmented-slider${sliderReady ? " is-ready" : ""}`} style={sliderStyle} aria-hidden="true" />
           {options.map(renderOption)}
         </div>
       )}

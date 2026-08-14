@@ -326,3 +326,22 @@
   font-weight: 500;
   cursor: pointer;
 }
+
+/* Photo examiner avatar -------------------------------------------------- */
+/* The engine builds its own stack of <img> layers inside this mount and keeps
+   the photo's aspect ratio itself, so it only needs to be told to fill the
+   round portrait frame it sits in. */
+.photo-examiner-avatar {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.photo-examiner-avatar .ta-stage,
+.photo-examiner-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
