@@ -19,6 +19,7 @@ class InstituteSignupCreate(BaseModel):
     admin_email: EmailStr
 
     expected_students: Optional[int] = Field(default=None, ge=0, le=1_000_000)
+    expected_instructors: Optional[int] = Field(default=None, ge=0, le=100_000)
     message: Optional[str] = Field(default=None, max_length=2000)
     # Which tier they were looking at. Context for the reviewer, never binding.
     interested_plan_id: Optional[int] = None

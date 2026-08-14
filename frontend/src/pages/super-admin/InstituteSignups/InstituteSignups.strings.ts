@@ -15,6 +15,7 @@ export const instituteSignupsStrings = {
     location: "Location",
     website: "Website",
     expected: "Expected students",
+    expectedInstructors: "Expected instructors",
     interested: "Interested in",
     message: "What they told us",
     reviewedBy: "Reviewed by",

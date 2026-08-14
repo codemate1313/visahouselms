@@ -41,6 +41,7 @@ class InstituteSignupRequest(Base):
     admin_email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
 
     expected_students: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    expected_instructors: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     # Which tier caught their eye on the pricing page. Context for the reviewer
     # only - the binding choice is made by the admin after approval.

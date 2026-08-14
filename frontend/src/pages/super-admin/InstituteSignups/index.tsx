@@ -159,7 +159,11 @@ export function InstituteSignups() {
                 </div>
                 <div>
                   <dt>{f.expected}</dt>
-                  <dd>{row.expected_students ?? f.none}</dd>
+                  <dd>{row.expected_students != null ? `${row.expected_students}` : f.none}</dd>
+                </div>
+                <div>
+                  <dt>{f.expectedInstructors}</dt>
+                  <dd>{row.expected_instructors != null ? `${row.expected_instructors}` : f.none}</dd>
                 </div>
                 <div>
                   <dt>{f.interested}</dt>

@@ -29,6 +29,7 @@ const EMPTY_PARTNER_FORM = {
   last: "",
   adminEmail: "",
   students: "",
+  instructors: "",
   message: "",
 };
 
@@ -167,7 +168,7 @@ export function ContactUs() {
 
   async function submitDemoRequest() {
     if (submittingDemo) return;
-    const { instName, email, phone, city, country, website, first, last, adminEmail, students, message } = partner;
+    const { instName, email, phone, city, country, website, first, last, adminEmail, students, instructors, message } = partner;
     if (!instName.trim() || !email.trim() || !phone.trim() || !first.trim() || !last.trim() || !adminEmail.trim()) {
       const msg = "Please fill in all required fields marked with *.";
       setPartnerStatus({ message: msg, tone: "error" });
@@ -192,6 +193,7 @@ export function ContactUs() {
           admin_last_name: last.trim(),
           admin_email: adminEmail.trim(),
           expected_students: students.trim() ? Number(students.trim()) : null,
+          expected_instructors: instructors.trim() ? Number(instructors.trim()) : null,
           message: message.trim() || null,
           interested_plan_id: interestedPlanId,
         }),
@@ -294,26 +296,24 @@ export function ContactUs() {
                   </span>
                 </a>
 
-                <div className="vh-contact-detail">
+                <a className="vh-contact-detail" href="https://support.visahouse.com" target="_blank" rel="noopener noreferrer">
                   <ContactInfoIcon type="support" />
                   <span className="vh-contact-detail-copy">
                     <strong>Support portal</strong>
-                    <span>{contact?.support_url ?? "Coming soon"}</span>
+                    <span>{contact?.support_url ?? "support.visahouse.com (to be created)"}</span>
                     <small>{contact?.support_note ?? "Existing partners only"}</small>
                   </span>
-                </div>
+                </a>
               </div>
             </section>
 
-            <section className="vh-apply-form" aria-labelledby="contact-form-title">
-              <div className="vh-contact-form-heading">
+            <section className="vh-contact-form-card" aria-labelledby="partner-form-heading">
+              <div className="vh-contact-form-header">
                 <div>
-                  <h2 id="contact-form-title">{formType === "partner" ? "Partner information" : "Personal information"}</h2>
-                  <p className="vh-apply-form-lede">
-                    {formType === "partner" ? "Tell us about your centre and the person who will manage it." : "Send us a message and our team will reply within one working day."}
-                  </p>
+                  <h2 id="partner-form-heading">{formType === "partner" ? "Partner information" : "Send us a message"}</h2>
+                  <p>{formType === "partner" ? "Tell us about your centre and the person who will manage it." : "We're here to help answer questions and get you started."}</p>
                 </div>
-                <div className="vh-form-toggle-row">
+                <div className="vh-form-toggle-wrap">
                   <SegmentedControl<FormType>
                     ariaLabel="Contact mode"
                     value={formType}
@@ -377,9 +377,13 @@ export function ContactUs() {
 
                   <div className="vh-form-section-title">Anything else</div>
                   <div className="vh-form-grid">
-                    <div className="vh-form-field-span2">
+                    <div>
                       <label className="vh-form-label">Approx. students</label>
-                      <input className="vh-form-input" type="text" placeholder="150" value={partner.students} onChange={(e) => updatePartner("students", e.target.value)} />
+                      <input className="vh-form-input" type="number" min="0" placeholder="150" value={partner.students} onChange={(e) => updatePartner("students", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="vh-form-label">Approx. instructors</label>
+                      <input className="vh-form-input" type="number" min="0" placeholder="5" value={partner.instructors} onChange={(e) => updatePartner("instructors", e.target.value)} />
                     </div>
                     <div className="vh-form-field-span2">
                       <label className="vh-form-label">Tell us about your centre</label>

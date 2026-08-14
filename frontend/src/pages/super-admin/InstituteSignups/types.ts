@@ -12,6 +12,7 @@ export interface InstituteSignupRequest {
   admin_last_name: string;
   admin_email: string;
   expected_students: number | null;
+  expected_instructors: number | null;
   message: string | null;
   interested_plan_id: number | null;
   interested_plan_name: string | null;
