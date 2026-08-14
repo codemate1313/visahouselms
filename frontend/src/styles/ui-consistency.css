@@ -1056,12 +1056,12 @@ html {
 }
 
 .premium-textarea::placeholder {
-  color: var(--text-muted);
-  opacity: 0.22;
+  color: var(--text-muted, #94a3b8);
+  opacity: 1;
 }
 
 [data-theme="dark"] .premium-textarea::placeholder {
-  color: rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
   opacity: 1;
 }
 
