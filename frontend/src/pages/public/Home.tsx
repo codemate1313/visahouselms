@@ -105,7 +105,7 @@ export function Home() {
         width: "100%",
         height: "100%",
         xPercent: 0,
-        yPercent: i === 0 ? 0 : -110,
+        yPercent: i === 0 ? 0 : 110,
         opacity: i === 0 ? 1 : 0,
         scale: i === 0 ? 1 : 0.94,
         zIndex: i + 1,
@@ -143,7 +143,7 @@ export function Home() {
       tl.to(
         cards[i - 1],
         {
-          yPercent: 110,
+          yPercent: -110,
           opacity: 0,
           scale: 0.92,
           duration: 1,
