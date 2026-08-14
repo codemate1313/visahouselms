@@ -72,8 +72,11 @@ export function Home() {
 
   const [testimonials, setTestimonials] = useState<TestimonialCard[]>([]);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
-  const [isTestimonialHovered, setIsTestimonialHovered] = useState(false);
+  const [isMainCardHovered, setIsMainCardHovered] = useState(false);
   const [blogPreviews, setBlogPreviews] = useState<BlogListItem[]>([]);
+  const animFrameRef = useRef<number | null>(null);
+  const isHoveredRef = useRef(false);
+  isHoveredRef.current = isMainCardHovered;
 
   const stepsContainerRef = useRef<HTMLDivElement | null>(null);
   const scrollTriggerRef = useRef<ScrollTrigger | null>(null);
@@ -228,93 +231,80 @@ export function Home() {
       .catch(() => setTestimonials([]));
   }, []);
 
+  // Continuous 60fps float progress for infinite smooth 3D coverflow loop
+  // ONLY pauses when the active main center card is hovered
   useEffect(() => {
-    if (!testimonials.length || isTestimonialHovered) return;
-    const timer = setInterval(() => {
-      setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
-    }, 2700);
-    return () => clearInterval(timer);
-  }, [testimonials.length, isTestimonialHovered]);
+    if (!testimonials.length) return;
+
+    const SPEED = 0.003; // Buttery smooth continuous 60fps pace
+
+    function tick() {
+      if (!isHoveredRef.current) {
+        setTestimonialIndex((prev) => {
+          let next = prev + SPEED;
+          if (next >= testimonials.length) {
+            next = next % testimonials.length;
+          }
+          return next;
+        });
+      }
+      animFrameRef.current = requestAnimationFrame(tick);
+    }
+
+    animFrameRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = null;
+      }
+    };
+  }, [testimonials.length]);
 
   function prevTestimonial() {
     if (!testimonials.length) return;
-    setTestimonialIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    setTestimonialIndex((prev) => {
+      const currentInt = Math.round(prev);
+      return (currentInt - 1 + testimonials.length) % testimonials.length;
+    });
   }
 
   function nextTestimonial() {
     if (!testimonials.length) return;
-    setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+    setTestimonialIndex((prev) => {
+      const currentInt = Math.floor(prev);
+      return (currentInt + 1) % testimonials.length;
+    });
   }
 
-  function get3DCardStyle(i: number, activeIndex: number, total: number) {
+  function get3DCardStyle(i: number, activeProgress: number, total: number) {
     if (!total) return {};
-    let diff = i - activeIndex;
+    let diff = i - activeProgress;
 
-    if (diff > total / 2) diff -= total;
-    if (diff < -total / 2) diff += total;
+    while (diff > total / 2) diff -= total;
+    while (diff < -total / 2) diff += total;
 
     const absDiff = Math.abs(diff);
 
-    if (absDiff === 0) {
-      return {
-        transform: "perspective(1200px) translate3d(0%, 0, 0) rotateY(0deg) scale(1.06)",
-        opacity: 1,
-        zIndex: 10,
-        filter: "none",
-        cursor: "default",
-        pointerEvents: "auto" as const,
-      };
-    }
-
-    if (diff === -1) {
-      return {
-        transform: "perspective(1200px) translate3d(-58%, 0, -140px) rotateY(20deg) scale(0.85)",
-        opacity: 0.58,
-        zIndex: 6,
-        filter: "brightness(0.9) blur(0.5px)",
-        cursor: "pointer",
-        pointerEvents: "auto" as const,
-      };
-    }
-
-    if (diff === 1) {
-      return {
-        transform: "perspective(1200px) translate3d(58%, 0, -140px) rotateY(-20deg) scale(0.85)",
-        opacity: 0.58,
-        zIndex: 6,
-        filter: "brightness(0.9) blur(0.5px)",
-        cursor: "pointer",
-        pointerEvents: "auto" as const,
-      };
-    }
-
-    if (diff === -2) {
-      return {
-        transform: "perspective(1200px) translate3d(-108%, 0, -280px) rotateY(32deg) scale(0.72)",
-        opacity: 0.22,
-        zIndex: 3,
-        filter: "brightness(0.75) blur(2px)",
-        cursor: "pointer",
-        pointerEvents: "auto" as const,
-      };
-    }
-
-    if (diff === 2) {
-      return {
-        transform: "perspective(1200px) translate3d(108%, 0, -280px) rotateY(-32deg) scale(0.72)",
-        opacity: 0.22,
-        zIndex: 3,
-        filter: "brightness(0.75) blur(2px)",
-        cursor: "pointer",
-        pointerEvents: "auto" as const,
-      };
-    }
+    // Smooth continuous 3D card layout parameters
+    const translateX = diff * 290;
+    const translateZ = -absDiff * 140;
+    const rotateY = -diff * 20;
+    const scale = Math.max(0.68, 1.06 - absDiff * 0.18);
+    const opacity = Math.max(0, 1 - absDiff * 0.42);
+    const blur = Math.min(4, absDiff * 1.5);
+    const zIndex = Math.round(100 - absDiff * 20);
 
     return {
-      transform: `perspective(1200px) translate3d(${diff > 0 ? 150 : -150}%, 0, -420px) scale(0.5)`,
-      opacity: 0,
-      zIndex: 1,
-      pointerEvents: "none" as const,
+      transform: `perspective(1200px) translate3d(${translateX}px, 0, ${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
+      opacity: opacity,
+      zIndex: zIndex,
+      filter: absDiff < 0.2 ? "none" : `brightness(${Math.max(0.72, 1 - absDiff * 0.15)}) blur(${blur}px)`,
+      cursor: absDiff > 0.3 ? "pointer" : "default",
+      pointerEvents: opacity > 0.1 ? ("auto" as const) : ("none" as const),
+      transition: isMainCardHovered
+        ? "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1)"
+        : "none",
     };
   }
 
@@ -551,11 +541,7 @@ export function Home() {
           </div>
         </section>
         
-        <section
-          className="vh-testimonials-section vh-reveal"
-          onMouseEnter={() => setIsTestimonialHovered(true)}
-          onMouseLeave={() => setIsTestimonialHovered(false)}
-        >
+        <section className="vh-testimonials-section vh-reveal">
           <div className="vh-testimonials-header-wrap">
             <div>
               <span className="vh-testimonials-eyebrow">Student Success Stories</span>
@@ -590,14 +576,24 @@ export function Home() {
               <div className="vh-3d-coverflow-stage">
                 {testimonials.map((t, i) => {
                   const style = get3DCardStyle(i, testimonialIndex, testimonials.length);
-                  const isCenter = i === testimonialIndex;
+                  let diff = i - testimonialIndex;
+                  while (diff > testimonials.length / 2) diff -= testimonials.length;
+                  while (diff < -testimonials.length / 2) diff += testimonials.length;
+                  const isCenter = Math.abs(diff) < 0.4;
+
                   return (
                     <div
                       key={i}
                       className={`vh-testimonial-card vh-3d-card ${isCenter ? "is-center" : ""}`}
                       style={style}
+                      onMouseEnter={() => {
+                        if (isCenter) setIsMainCardHovered(true);
+                      }}
+                      onMouseLeave={() => {
+                        setIsMainCardHovered(false);
+                      }}
                       onClick={() => {
-                        if (!isCenter) setTestimonialIndex(i);
+                        setTestimonialIndex(i);
                       }}
                     >
                       <div>
@@ -629,15 +625,18 @@ export function Home() {
               </div>
 
               <div className="vh-3d-dots">
-                {testimonials.map((_, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    className={`vh-3d-dot ${idx === testimonialIndex ? "is-active" : ""}`}
-                    onClick={() => setTestimonialIndex(idx)}
-                    aria-label={`Go to slide ${idx + 1}`}
-                  />
-                ))}
+                {testimonials.map((_, idx) => {
+                  const activeDotIdx = Math.round(testimonialIndex) % testimonials.length;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`vh-3d-dot ${idx === activeDotIdx ? "is-active" : ""}`}
+                      onClick={() => setTestimonialIndex(idx)}
+                      aria-label={`Go to slide ${idx + 1}`}
+                    />
+                  );
+                })}
               </div>
             </div>
           ) : (

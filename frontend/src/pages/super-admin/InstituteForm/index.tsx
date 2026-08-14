@@ -173,6 +173,7 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
   const currentTabIndex = TAB_KEYS.indexOf(activeTab);
 
   function toggleModule(moduleId: number) {
+    if (selectedPlanId) return;
     setSelectedModules((curr) => {
       const next = new Set(curr);
       if (next.has(moduleId)) next.delete(moduleId); else next.add(moduleId);
@@ -181,6 +182,7 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
   }
 
   function toggleAllModules() {
+    if (selectedPlanId) return;
     setSelectedModules((curr) => (curr.size === modules.length ? new Set() : new Set(modules.map((m) => m.id))));
   }
 
@@ -628,7 +630,11 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
             <div style={{ marginBottom: 24, display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 20, alignItems: "center", background: "var(--surface-muted)", padding: "16px 20px", borderRadius: 12, border: "1px solid var(--border)" }}>
               <div>
                 <label htmlFor="package_select" style={{ fontWeight: 700, margin: 0, display: "block" }}>Select Package / Plan</label>
-                <span className="hint" style={{ fontSize: 12, display: "block", marginTop: 2, color: "var(--text-muted)" }}>Optionally choose a plan to auto-fill limits and pricing. You can still modify fields manually afterwards.</span>
+                <span className="hint" style={{ fontSize: 12, display: "block", marginTop: 2, color: "var(--text-muted)" }}>
+                  {selectedPlanId
+                    ? "Package selected: pricing and quota allocations are locked to this tier. Switch to 'Custom / No Package' to enter custom values."
+                    : "Choose a predefined package to auto-fill limits and pricing, or leave as 'Custom / No Package' to enter custom values manually."}
+                </span>
               </div>
               <div>
                 <SearchableSelect
@@ -650,12 +656,23 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
                         setAgreedAmount(found.price != null ? Number(found.price) : "");
                         setCurrency(found.currency ?? "INR");
                         setAllocation({
-                          student_limit: String(found.student_limit ?? 50),
+                          student_limit: String(found.student_limit ?? 0),
                           staff_limit: String(found.staff_limit ?? 0),
-                          access_duration_days: String(found.duration_days ?? 365),
-                          grace_days: String(found.grace_days ?? 7),
+                          access_duration_days: String(found.duration_days ?? 30),
+                          grace_days: String(found.grace_days ?? 0),
                         });
+                        if (found.modules && found.modules.length > 0) {
+                          setSelectedModules(new Set(found.modules.map((m: any) => m.id)));
+                        } else if (found.module_ids && found.module_ids.length > 0) {
+                          setSelectedModules(new Set(found.module_ids));
+                        }
                       }
+                    } else {
+                      // Custom / No Package -> clear fields to empty for manual custom entry
+                      setAgreedAmount("");
+                      setCurrency("INR");
+                      setAllocation(EMPTY_ALLOCATION);
+                      setSelectedModules(new Set());
                     }
                   }}
                   searchable={true}
@@ -671,7 +688,17 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
               </div>
               <div>
                 <label htmlFor="agreed_amount">Agreed Amount<RequiredMark /></label>
-                <input id="agreed_amount" type="number" min="0" value={agreedAmount} onChange={(e) => setAgreedAmount(e.target.value === "" ? "" : Number(e.target.value))} placeholder="50000" />
+                <input
+                  id="agreed_amount"
+                  type="number"
+                  min="0"
+                  value={agreedAmount}
+                  onChange={(e) => setAgreedAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="50000"
+                  disabled={Boolean(selectedPlanId)}
+                  style={selectedPlanId ? { background: "var(--surface-muted)", cursor: "not-allowed", opacity: 0.88 } : undefined}
+                  title={selectedPlanId ? "Locked to selected package — switch to 'Custom / No Package' to edit" : undefined}
+                />
               </div>
               <div>
                 <label htmlFor="amount_received">Amount Received<RequiredMark /></label>
@@ -679,7 +706,15 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
               </div>
               <div>
                 <label htmlFor="currency">Currency<RequiredMark /></label>
-                <input id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} placeholder="INR" />
+                <input
+                  id="currency"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  placeholder="INR"
+                  disabled={Boolean(selectedPlanId)}
+                  style={selectedPlanId ? { background: "var(--surface-muted)", cursor: "not-allowed", opacity: 0.88 } : undefined}
+                  title={selectedPlanId ? "Locked to selected package — switch to 'Custom / No Package' to edit" : undefined}
+                />
               </div>
               <div>
                 <label htmlFor="payment_method">Payment Method<RequiredMark /></label>
@@ -715,7 +750,7 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
               onRemovePaymentProof={() => void removeAttachment("payment-proof")}
             />
 
-            <AllocationFieldset allocation={allocation} onChange={updateAllocation} />
+            <AllocationFieldset allocation={allocation} onChange={updateAllocation} isPackageLocked={Boolean(selectedPlanId)} />
           </div>
         )}
 
@@ -724,15 +759,31 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <div>
-                <h2 className="form-section-title" style={{ margin: 0 }}>Included Course Modules</h2>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <h2 className="form-section-title" style={{ margin: 0 }}>Included Course Modules</h2>
+                  {selectedPlanId && (
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", background: "var(--surface-muted)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text-muted)" }}>
+                      Locked by Package
+                    </span>
+                  )}
+                </div>
                 <p className="form-section-subtitle" style={{ margin: 0 }}>
-                  Select the course modules included in this institute's agreement.
+                  {selectedPlanId
+                    ? "Course modules are bundled with the selected package. Switch to 'Custom / No Package' in the Agreement tab to customize courses."
+                    : "Select the course modules included in this institute's agreement."}
                 </p>
               </div>
-              <Button variant="secondary" size="sm" onClick={toggleAllModules}>
+              <Button variant="secondary" size="sm" onClick={toggleAllModules} disabled={Boolean(selectedPlanId)}>
                 {selectedModules.size === modules.length ? strings.wizard.deselectAllModules : strings.wizard.selectAllModules}
               </Button>
             </div>
+
+            {selectedPlanId && (
+              <div style={{ marginBottom: 16, padding: "10px 16px", background: "var(--surface-muted)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 13, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 14 }}>🔒</span>
+                <span>Courses are fixed to the selected package tier. Switch to <strong>Custom / No Package</strong> in the Agreement tab to add or remove courses manually.</span>
+              </div>
+            )}
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
               {modules.map((module) => {
@@ -746,14 +797,15 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
                       borderRadius: 12,
                       border: isSelected ? "2px solid var(--primary, var(--red-500))" : "1px solid var(--border, rgba(226, 232, 240, 0.9))",
                       background: isSelected ? "rgba(225, 29, 46, 0.04)" : "var(--surface)",
-                      cursor: "pointer",
+                      cursor: selectedPlanId ? "not-allowed" : "pointer",
+                      opacity: selectedPlanId && !isSelected ? 0.55 : 1,
                       transition: "all 0.2s ease",
                       display: "flex",
                       alignItems: "flex-start",
                       gap: 12,
                     }}
                   >
-                    <input type="checkbox" checked={isSelected} readOnly style={{ marginTop: 3, cursor: "pointer" }} />
+                    <input type="checkbox" checked={isSelected} disabled={Boolean(selectedPlanId)} readOnly style={{ marginTop: 3, cursor: selectedPlanId ? "not-allowed" : "pointer" }} />
                     <div>
                       <strong style={{ fontSize: 13.5, display: "block", color: "var(--text)" }}>{module.title}</strong>
                       <span style={{ fontSize: 11.5, color: "var(--text-muted, var(--slate-500))", textTransform: "uppercase", letterSpacing: "0.04em" }}>

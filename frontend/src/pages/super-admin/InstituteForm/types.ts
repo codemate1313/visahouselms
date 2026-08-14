@@ -17,10 +17,10 @@ export interface InstituteAllocation {
  *  price - the server derives one - and no test ceiling, since an institute's
  *  students take as many tests as they like. */
 export const EMPTY_ALLOCATION = {
-  student_limit: "50",
-  staff_limit: "0",
-  access_duration_days: "365",
-  grace_days: "0",
+  student_limit: "",
+  staff_limit: "",
+  access_duration_days: "",
+  grace_days: "",
 };
 
 /** The headline numbers, for the "this institute gets" summary. */

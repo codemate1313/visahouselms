@@ -45,6 +45,8 @@ export const planFormStrings = {
     currency: "Currency",
     durationDays: "Access duration (days)",
     graceDays: "Grace period (days)",
+    studentLimit: "Student limit",
+    staffLimit: "Instructor / Staff limit",
   },
   coursePicker: {
     legend: "Included courses",

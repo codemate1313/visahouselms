@@ -50,8 +50,26 @@ function App() {
     };
     document.addEventListener("play", handlePlay, true);
 
+    // Prevent mouse wheel scrolling from changing values in number/range inputs across all forms
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target instanceof HTMLInputElement &&
+        (target.type === "number" || target.type === "range")
+      ) {
+        target.blur();
+      } else if (
+        document.activeElement instanceof HTMLInputElement &&
+        (document.activeElement.type === "number" || document.activeElement.type === "range")
+      ) {
+        document.activeElement.blur();
+      }
+    };
+    window.addEventListener("wheel", handleWheel, { passive: true });
+
     return () => {
       document.removeEventListener("play", handlePlay, true);
+      window.removeEventListener("wheel", handleWheel);
     };
   }, []);
 

@@ -36,7 +36,11 @@ export function PlanForm() {
     searchParams.get("audience") === "institutes" ? "institutes" : "direct_students",
   );
   const catalogue = planFormCatalogues[audience];
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState(() => ({
+    ...EMPTY,
+    student_limit: searchParams.get("audience") === "institutes" ? "50" : "1",
+    staff_limit: searchParams.get("audience") === "institutes" ? "2" : "0",
+  }));
   const [modules, setModules] = useState<PlanModule[]>([]);
   const [gstRates, setGstRates] = useState<GstOption[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -232,6 +236,33 @@ export function PlanForm() {
             <label>{f.graceDays}<RequiredMark /></label>
             <input type="number" min="0" value={form.grace_days} onChange={set("grace_days")} required />
           </div>
+
+          {audience === "institutes" && (
+            <>
+              <div>
+                <label>{f.studentLimit}<RequiredMark /></label>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="e.g. 50"
+                  value={form.student_limit}
+                  onChange={set("student_limit")}
+                  required
+                />
+              </div>
+              <div>
+                <label>{f.staffLimit}<RequiredMark /></label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 2"
+                  value={form.staff_limit}
+                  onChange={set("staff_limit")}
+                  required
+                />
+              </div>
+            </>
+          )}
         </div>
 
         {/* International Pricing Section */}
