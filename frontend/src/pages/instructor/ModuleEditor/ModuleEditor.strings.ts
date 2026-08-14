@@ -225,6 +225,11 @@ export const moduleEditorStrings = {
     title: "Examiner voice",
     hint: "Chosen once for this module. Every speaking prompt is previewed in this examiner's voice.",
     label: "Select the examiner voice for this module",
+    sample: "Sample",
+    preparingSample: "Preparing...",
+    samplePrompt: (name: string) => `Hello, I am ${name}. This is the voice candidates will hear during the Speaking test.`,
+    playSample: (name: string) => `Play a sample of ${name}'s voice`,
+    sampleError: "Failed to play the examiner sample.",
   },
   avatarPreview: {
     title: "Examiner avatar preview",

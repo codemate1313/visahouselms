@@ -141,8 +141,7 @@ def create_instructor(
     gender: Optional[str] = None,
     ip: Optional[str],
 ) -> dict:
-    if db.query(User).filter(User.email == email).first() is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+    email = account_service.ensure_user_credentials_available(db, email)
 
     role = _instructor_role(db)
     temporary_password = _temporary_password()

@@ -1,13 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { apiClient, API_BASE_URL } from "@/api/client";
 import { PublicHeader } from "@/components/publicSite/PublicHeader";
 import { PublicFooter } from "@/components/publicSite/PublicFooter";
-import { PublicOrbBackground } from "@/components/publicSite/PublicOrbBackground";
-import { PublicCtaBanner } from "@/components/publicSite/PublicCtaBanner";
-import { useRevealOnScroll } from "@/components/publicSite/useRevealOnScroll";
-import { useAuthStore } from "@/store/authStore";
-import { destinationFor } from "@/pages/Login/helpers";
 import { useSEO } from "@/hooks/useSEO";
 import { useContactSettings } from "./useContactSettings";
 import type { LandingPlan, LandingPlansPayload } from "./Plans.types";
@@ -78,16 +73,43 @@ function ArrowRightIcon() {
   );
 }
 
+function ContactInfoIcon({ type }: { type: "phone" | "location" | "email" | "support" }) {
+  const paths = {
+    phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.69 2.8a2 2 0 0 1-.45 2.11L8.08 9.9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.33 1.84.56 2.8.69A2 2 0 0 1 22 16.92z" />,
+    location: (
+      <>
+        <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z" />
+        <circle cx="12" cy="10" r="2.5" />
+      </>
+    ),
+    email: (
+      <>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="m3 7 9 6 9-6" />
+      </>
+    ),
+    support: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M8.5 12h7M12 8.5v7" />
+      </>
+    ),
+  };
+
+  return (
+    <span className={`vh-contact-info-icon is-${type}`} aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        {paths[type]}
+      </svg>
+    </span>
+  );
+}
+
 export function ContactUs() {
   useSEO({ title: "Contact Us", description: "Email, call or contact Visa House for LanguageCert LMS support and institute demos." });
   const location = useLocation();
-  const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
   const contactSettings = useContactSettings();
-  const goAuth = () => navigate(user ? destinationFor(user) ?? "/" : "/login");
-  const rootRef = useMemo(() => ({ current: null as HTMLDivElement | null }), []);
   const formSectionRef = useRef<HTMLElement | null>(null);
-  useRevealOnScroll(rootRef);
 
   const [institutePlans, setInstitutePlans] = useState<LandingPlan[]>([]);
   const [formType, setFormType] = useState<FormType>(() => getInitialFormType(location.search));
@@ -229,243 +251,216 @@ export function ContactUs() {
   const officeAddressLines = (contact?.office_address ?? "Gali lakeer Sahib wali, Amritsar bypass Road\nTarntaran, 143401").split("\n");
 
   return (
-    <div className="vh-public" ref={(el) => { rootRef.current = el; }}>
-      <PublicOrbBackground />
+    <div className="vh-public vh-contact-page">
       <div className="vh-page-content">
         <PublicHeader />
 
-        <section className="vh-page-hero">
-          <h1>
-            Contact
-            <span className="vh-accent"> LanguageCert LMS.</span>
-          </h1>
-          <p>Fill in the form, email us, or call sales. We reply within one working day.</p>
+        <section className="vh-contact-hero">
+          <div className="vh-contact-hero-copy">
+            <h1>Get in touch with our team</h1>
+            <p>Connect with our experts to discuss your needs and discover how Visa House can support your goals.</p>
+          </div>
         </section>
 
-        <section className="vh-contact-grid vh-reveal" ref={formSectionRef}>
-          <div className="vh-apply-form">
-            <div className="vh-form-toggle-row">
-              <SegmentedControl<FormType>
-                ariaLabel="Contact mode"
-                value={formType}
-                onChange={(val) => switchForm(val)}
-                fullWidth
-                neverCollapse
-                options={[
-                  { label: "Contact Us", value: "query" },
-                  { label: "Become a Partner", value: "partner" },
-                ]}
-              />
-            </div>
-
-            {formType === "partner" ? (
-              <>
-                <h2>Become a Partner</h2>
-                <p className="vh-apply-form-lede">Tell us about your centre to apply for an institute account.</p>
-                {interestedPlanName ? <div className="vh-plan-badge">Interested in: {interestedPlanName} Plan</div> : <div className="vh-plan-badge-spacer" />}
-
-                <div className="vh-form-section-title">About your institute</div>
-                <div className="vh-form-grid">
-                  <div className="vh-form-field-span2">
-                    <label className="vh-form-label">Institute name *</label>
-                    <input className="vh-form-input" type="text" placeholder="Meridian Institute" value={partner.instName} onChange={(e) => updatePartner("instName", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="vh-form-label">Institute contact email *</label>
-                    <input className="vh-form-input" type="email" placeholder="info@meridian.com" value={partner.email} onChange={(e) => updatePartner("email", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="vh-form-label">Phone *</label>
-                    <input className="vh-form-input" type="tel" required placeholder="+91 99999 99999" value={partner.phone} onChange={(e) => updatePartner("phone", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="vh-form-label">City</label>
-                    <input className="vh-form-input" type="text" placeholder="Bangalore" value={partner.city} onChange={(e) => updatePartner("city", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="vh-form-label">Country</label>
-                    <input className="vh-form-input" type="text" placeholder="India" value={partner.country} onChange={(e) => updatePartner("country", e.target.value)} />
-                  </div>
-                  <div className="vh-form-field-span2">
-                    <label className="vh-form-label">Website</label>
-                    <input className="vh-form-input" type="text" placeholder="https://meridian.com" value={partner.website} onChange={(e) => updatePartner("website", e.target.value)} />
-                  </div>
-                </div>
-
-                <div className="vh-form-section-title">Who will run it</div>
-                <div className="vh-form-grid">
-                  <div>
-                    <label className="vh-form-label">First name *</label>
-                    <input className="vh-form-input" type="text" placeholder="Priya" value={partner.first} onChange={(e) => updatePartner("first", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="vh-form-label">Last name *</label>
-                    <input className="vh-form-input" type="text" placeholder="Nair" value={partner.last} onChange={(e) => updatePartner("last", e.target.value)} />
-                  </div>
-                  <div className="vh-form-field-span2">
-                    <label className="vh-form-label">Admin login email *</label>
-                    <input className="vh-form-input" type="email" placeholder="priya@meridian.com" value={partner.adminEmail} onChange={(e) => updatePartner("adminEmail", e.target.value)} />
-                  </div>
-                </div>
-
-                <div className="vh-form-section-title">Anything else</div>
-                <div className="vh-form-grid">
-                  <div className="vh-form-field-span2">
-                    <label className="vh-form-label">Approx. students</label>
-                    <input className="vh-form-input" type="text" placeholder="150" value={partner.students} onChange={(e) => updatePartner("students", e.target.value)} />
-                  </div>
-                  <div className="vh-form-field-span2">
-                    <label className="vh-form-label">Tell us about your centre</label>
-                    <textarea
-                      className="vh-form-textarea"
-                      rows={4}
-                      placeholder="How long you've been running, what exams you prepare students for, etc."
-                      value={partner.message}
-                      onChange={(e) => updatePartner("message", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {partnerStatus && partnerStatus.tone === "ok" && (
-                  <div className="vh-form-status vh-form-status-visible is-ok" aria-live="polite" role="status">
-                    {partnerStatus.message}
-                  </div>
-                )}
-
-                <button type="button" className="vh-form-submit-btn" onClick={submitDemoRequest} disabled={submittingDemo}>
-                  {submittingDemo ? "Submitting..." : "Apply now"}
-                  <ArrowRightIcon />
-                </button>
-              </>
-            ) : (
-              <>
-                <h2>Contact Us</h2>
-                <p className="vh-apply-form-lede" style={{ marginBottom: 26 }}>
-                  Have questions about pricing, features, or support? Send us a message.
-                </p>
-
-                <div className="vh-form-grid">
-                  <div>
-                    <label className="vh-form-label">Your name *</label>
-                    <input className="vh-form-input" type="text" placeholder="Priya Nair" value={query.name} onChange={(e) => updateQuery("name", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="vh-form-label">Email address *</label>
-                    <input className="vh-form-input" type="email" placeholder="priya@example.com" value={query.email} onChange={(e) => updateQuery("email", e.target.value)} />
-                  </div>
-                  <div className="vh-form-field-span2">
-                    <label className="vh-form-label">Subject *</label>
-                    <input
-                      className="vh-form-input"
-                      type="text"
-                      placeholder="Question about student limits / Custom branding"
-                      value={query.subject}
-                      onChange={(e) => updateQuery("subject", e.target.value)}
-                    />
-                  </div>
-                  <div className="vh-form-field-span2">
-                    <label className="vh-form-label">Message *</label>
-                    <textarea className="vh-form-textarea" rows={6} placeholder="How can we help you?" value={query.message} onChange={(e) => updateQuery("message", e.target.value)} />
-                  </div>
-                </div>
-
-                {queryStatus && queryStatus.tone === "ok" && (
-                  <div className="vh-form-status vh-form-status-visible is-ok" aria-live="polite" role="status">
-                    {queryStatus.message}
-                  </div>
-                )}
-
-                <button type="button" className="vh-form-submit-btn" onClick={submitQueryRequest} disabled={submittingQuery}>
-                  {submittingQuery ? "Sending..." : "Submit query"}
-                  <ArrowRightIcon />
-                </button>
-              </>
-            )}
-          </div>
-
-          <div className="vh-contact-info-col">
-            <div className="vh-info-card vh-reveal">
-              <div className="vh-info-card-eyebrow">
-                <span className="vh-info-card-dot" style={{ background: "#e11d2e" }} />
-                Email us
-              </div>
-              <div className="vh-info-card-value">{contact?.email ?? "enquiry.langugaecert@gmail.com"}</div>
-              <div className="vh-info-card-note">{contact?.email_note ?? "Replies within 1 working day"}</div>
-            </div>
-
-            <div className="vh-info-card vh-reveal">
-              <div className="vh-info-card-header-row">
-                <div className="vh-info-card-eyebrow" style={{ marginBottom: 0 }}>
-                  <span className="vh-info-card-dot" style={{ background: "#7c5cff" }} />
-                  Call sales
-                </div>
-                <div className={`vh-status-badge ${officeStatus.isOpen ? "is-open" : "is-closed"}`}>
-                  <span className={`vh-pulse-dot ${officeStatus.isOpen ? "is-open" : "is-closed"}`} />
-                  {officeStatus.isOpen ? "Open" : "Closed"}
-                </div>
-              </div>
-              <div className="vh-info-card-value">{contact?.phone ?? "+91 9779047164"}</div>
-              <div className="vh-info-card-note">{officeStatus.text}</div>
-            </div>
-
-            <div className="vh-info-card vh-reveal">
-              <div className="vh-info-card-eyebrow">
-                <span className="vh-info-card-dot" style={{ background: "#22c55e" }} />
-                Support portal
-              </div>
-              <div className="vh-info-card-value">{contact?.support_url ?? "support.visahouse.com (to be created)"}</div>
-              <div className="vh-info-card-note">{contact?.support_note ?? "Existing partners only"}</div>
-            </div>
-
-            <div className="vh-info-card vh-reveal">
-              <div className="vh-office-card-title">Head office</div>
-              <div className="vh-office-card-body">
-                {contact?.office_name ?? "Visa House Immigration"}
-                <br />
-                {officeAddressLines.map((line, i) => (
-                  <span key={i}>
-                    {line}
-                    <br />
+        <main className="vh-contact-stage" ref={formSectionRef}>
+          <div className="vh-contact-panel">
+            <section className="vh-contact-company" aria-labelledby="company-information-title">
+              <h2 id="company-information-title">Company information</h2>
+              <div className="vh-contact-details-grid">
+                <a className="vh-contact-detail" href={`tel:${contact?.phone ?? "+919779047164"}`}>
+                  <ContactInfoIcon type="phone" />
+                  <span className="vh-contact-detail-copy">
+                    <strong>Phone</strong>
+                    <span>{contact?.phone ?? "+91 9779047164"}</span>
+                    <small>{officeStatus.text}</small>
                   </span>
-                ))}
+                </a>
+
+                <a className="vh-contact-detail" href="https://maps.app.goo.gl/9DfwXmJcfyzQnwC67" target="_blank" rel="noopener noreferrer">
+                  <ContactInfoIcon type="location" />
+                  <span className="vh-contact-detail-copy">
+                    <strong>Address</strong>
+                    <span>{contact?.office_name ?? "Visa House Immigration"}</span>
+                    <small>{officeAddressLines.join(", ")}</small>
+                  </span>
+                </a>
+
+                <a className="vh-contact-detail" href={`mailto:${contact?.email ?? "enquiry.langugaecert@gmail.com"}`}>
+                  <ContactInfoIcon type="email" />
+                  <span className="vh-contact-detail-copy">
+                    <strong>Email</strong>
+                    <span>{contact?.email ?? "enquiry.langugaecert@gmail.com"}</span>
+                    <small>{contact?.email_note ?? "Replies within 1 working day"}</small>
+                  </span>
+                </a>
+
+                <div className="vh-contact-detail">
+                  <ContactInfoIcon type="support" />
+                  <span className="vh-contact-detail-copy">
+                    <strong>Support portal</strong>
+                    <span>{contact?.support_url ?? "Coming soon"}</span>
+                    <small>{contact?.support_note ?? "Existing partners only"}</small>
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <section className="vh-apply-form" aria-labelledby="contact-form-title">
+              <div className="vh-contact-form-heading">
+                <div>
+                  <h2 id="contact-form-title">{formType === "partner" ? "Partner information" : "Personal information"}</h2>
+                  <p className="vh-apply-form-lede">
+                    {formType === "partner" ? "Tell us about your centre and the person who will manage it." : "Send us a message and our team will reply within one working day."}
+                  </p>
+                </div>
+                <div className="vh-form-toggle-row">
+                  <SegmentedControl<FormType>
+                    ariaLabel="Contact mode"
+                    value={formType}
+                    onChange={(val) => switchForm(val)}
+                    fullWidth
+                    neverCollapse
+                    options={[
+                      { label: "Contact Us", value: "query" },
+                      { label: "Become a Partner", value: "partner" },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {formType === "partner" ? (
+                <>
+                  {interestedPlanName ? <div className="vh-plan-badge">Interested in: {interestedPlanName} Plan</div> : null}
+                  <div className="vh-form-section-title">About your institute</div>
+                  <div className="vh-form-grid">
+                    <div className="vh-form-field-span2">
+                      <label className="vh-form-label">Institute name *</label>
+                      <input className="vh-form-input" type="text" placeholder="Meridian Institute" value={partner.instName} onChange={(e) => updatePartner("instName", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="vh-form-label">Institute contact email *</label>
+                      <input className="vh-form-input" type="email" placeholder="info@meridian.com" value={partner.email} onChange={(e) => updatePartner("email", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="vh-form-label">Phone *</label>
+                      <input className="vh-form-input" type="tel" required placeholder="+91 99999 99999" value={partner.phone} onChange={(e) => updatePartner("phone", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="vh-form-label">City</label>
+                      <input className="vh-form-input" type="text" placeholder="Bangalore" value={partner.city} onChange={(e) => updatePartner("city", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="vh-form-label">Country</label>
+                      <input className="vh-form-input" type="text" placeholder="India" value={partner.country} onChange={(e) => updatePartner("country", e.target.value)} />
+                    </div>
+                    <div className="vh-form-field-span2">
+                      <label className="vh-form-label">Website</label>
+                      <input className="vh-form-input" type="text" placeholder="https://meridian.com" value={partner.website} onChange={(e) => updatePartner("website", e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div className="vh-form-section-title">Who will run it</div>
+                  <div className="vh-form-grid">
+                    <div>
+                      <label className="vh-form-label">First name *</label>
+                      <input className="vh-form-input" type="text" placeholder="Priya" value={partner.first} onChange={(e) => updatePartner("first", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="vh-form-label">Last name *</label>
+                      <input className="vh-form-input" type="text" placeholder="Nair" value={partner.last} onChange={(e) => updatePartner("last", e.target.value)} />
+                    </div>
+                    <div className="vh-form-field-span2">
+                      <label className="vh-form-label">Admin login email *</label>
+                      <input className="vh-form-input" type="email" placeholder="priya@meridian.com" value={partner.adminEmail} onChange={(e) => updatePartner("adminEmail", e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div className="vh-form-section-title">Anything else</div>
+                  <div className="vh-form-grid">
+                    <div className="vh-form-field-span2">
+                      <label className="vh-form-label">Approx. students</label>
+                      <input className="vh-form-input" type="text" placeholder="150" value={partner.students} onChange={(e) => updatePartner("students", e.target.value)} />
+                    </div>
+                    <div className="vh-form-field-span2">
+                      <label className="vh-form-label">Tell us about your centre</label>
+                      <textarea className="vh-form-textarea" rows={4} placeholder="How long you've been running and which exams you prepare students for." value={partner.message} onChange={(e) => updatePartner("message", e.target.value)} />
+                    </div>
+                  </div>
+
+                  {partnerStatus ? (
+                    <div className={`vh-form-status vh-form-status-visible is-${partnerStatus.tone}`} aria-live="polite" role="status">
+                      {partnerStatus.message}
+                    </div>
+                  ) : null}
+
+                  <button type="button" className="vh-form-submit-btn" onClick={submitDemoRequest} disabled={submittingDemo}>
+                    {submittingDemo ? "Submitting..." : "Apply now"}
+                    <ArrowRightIcon />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="vh-form-grid">
+                    <div>
+                      <label className="vh-form-label">Your full name *</label>
+                      <input className="vh-form-input" type="text" placeholder="Priya Nair" value={query.name} onChange={(e) => updateQuery("name", e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="vh-form-label">Email address *</label>
+                      <input className="vh-form-input" type="email" placeholder="priya@example.com" value={query.email} onChange={(e) => updateQuery("email", e.target.value)} />
+                    </div>
+                    <div className="vh-form-field-span2">
+                      <label className="vh-form-label">Subject *</label>
+                      <input className="vh-form-input" type="text" placeholder="How can we help?" value={query.subject} onChange={(e) => updateQuery("subject", e.target.value)} />
+                    </div>
+                    <div className="vh-form-field-span2">
+                      <label className="vh-form-label">Message *</label>
+                      <textarea className="vh-form-textarea" rows={5} placeholder="Tell us what you need help with." value={query.message} onChange={(e) => updateQuery("message", e.target.value)} />
+                    </div>
+                  </div>
+
+                  {queryStatus ? (
+                    <div className={`vh-form-status vh-form-status-visible is-${queryStatus.tone}`} aria-live="polite" role="status">
+                      {queryStatus.message}
+                    </div>
+                  ) : null}
+
+                  <button type="button" className="vh-form-submit-btn" onClick={submitQueryRequest} disabled={submittingQuery}>
+                    {submittingQuery ? "Sending..." : "Submit request"}
+                    <ArrowRightIcon />
+                  </button>
+                </>
+              )}
+            </section>
+
+            <section className="vh-contact-map-section" aria-labelledby="visit-office-title">
+              <div className="vh-contact-map-heading">
+                <div>
+                  <h2 id="visit-office-title">Visit our office</h2>
+                  <p>{contact?.office_name ?? "Visa House Immigration"} · {officeAddressLines.join(", ")}</p>
+                </div>
+                <a href="https://maps.app.goo.gl/9DfwXmJcfyzQnwC67" target="_blank" rel="noopener noreferrer" className="vh-map-overlay-btn">
+                  Open in Google Maps ↗
+                </a>
               </div>
               <div className="vh-map-container">
                 <iframe
                   title="Office Location Map"
                   src="https://maps.google.com/maps?q=31.4638482,74.9196184+(Visa+House)&t=&z=17&ie=UTF8&iwloc=&output=embed"
                   width="100%"
-                  height="220"
+                  height="360"
                   style={{ border: 0, display: "block" }}
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                ></iframe>
-                <div className="vh-map-overlay-bar">
-                  <a
-                    href="https://maps.app.goo.gl/9DfwXmJcfyzQnwC67"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="vh-map-overlay-btn"
-                  >
-                    Open in Google Maps ↗
-                  </a>
-                </div>
+                />
               </div>
-            </div>
+            </section>
           </div>
-        </section>
-
-        <PublicCtaBanner
-          heading="Ready to transform your LanguageCert preparation?"
-          body="Book a demo to explore mock tests, structured learning, performance analytics, and expert support."
-          primary={{ label: user ? "Go to dashboard →" : "Sign in to portal →", onClick: goAuth }}
-          secondary={{ label: "Talk to sales", href: "/contact" }}
-        />
+        </main>
 
         <PublicFooter socialLinks={contactSettings?.social_links} />
       </div>
     </div>
   );
 }
-
-

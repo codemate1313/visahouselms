@@ -37,8 +37,10 @@ export function PublicCtaBanner({
   return (
     <section className="vh-cta-section vh-reveal">
       <div className="vh-cta-banner">
-        <div className="vh-cta-circle-a" aria-hidden="true" />
-        <div className="vh-cta-circle-b" aria-hidden="true" />
+        <div className="vh-cta-bubbles" aria-hidden="true">
+          <span className="vh-cta-bubble vh-cta-bubble-left" />
+          <span className="vh-cta-bubble vh-cta-bubble-right" />
+        </div>
         <div className="vh-cta-copy">
           <h2>{heading}</h2>
           <p>{body}</p>

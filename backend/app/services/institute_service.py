@@ -296,8 +296,7 @@ def create_institute(
     *,
     commit: bool = True,
 ) -> dict:
-    if db.query(User).filter(User.email == admin_email).first() is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Admin email already in use")
+    admin_email = account_service.ensure_user_credentials_available(db, admin_email)
 
     role = db.query(Role).filter(Role.name == INSTITUTE_ADMIN).first()
     if role is None:

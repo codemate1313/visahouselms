@@ -3214,14 +3214,15 @@
   border: none;
   padding: 8px 16px;
   border-radius: 12px;
-  cursor: pointer;
+  cursor: default;
   text-align: left;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
 }
 
-.vh-stepper-step:hover {
-  background: rgba(0, 0, 0, 0.03);
+.vh-stepper-step:focus-visible {
+  outline: 2px solid var(--primary, #b91c2b);
+  outline-offset: 3px;
 }
 
 .vh-step-icon-badge {
@@ -3287,14 +3288,6 @@
   color: #ffffff !important;
 }
 
-.vh-stepper-step:hover:not(.is-active) {
-  background: rgba(185, 28, 43, 0.08) !important;
-}
-
-.vh-stepper-step:hover:not(.is-active) .vh-step-title {
-  color: var(--primary, #b91c2b) !important;
-}
-
 .vh-stepper-step.is-completed:not(.is-active) .vh-step-icon-badge {
   background: rgba(16, 185, 129, 0.12);
   border-color: #10b981;
@@ -3332,10 +3325,6 @@
   background: #16161a !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
-}
-
-[data-theme="dark"] .vh-stepper-step:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
 }
 
 [data-theme="dark"] .vh-step-icon-badge {
@@ -3403,6 +3392,10 @@
   display: flex;
   align-items: center;
   flex: 0 0 auto;
+}
+
+.mps-examiner-node {
+  min-width: 0;
 }
 
 .mps-connector {
@@ -7464,5 +7457,3 @@ textarea:focus {
     font-size: 14px;
   }
 }
-
-

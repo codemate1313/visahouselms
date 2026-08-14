@@ -172,8 +172,7 @@ def create_super_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only the owner account can grant monetary analytics access",
         )
-    if db.query(User).filter(User.email == email).first() is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+    email = account_service.ensure_user_credentials_available(db, email)
 
     user = User(
         email=email,
@@ -237,8 +236,7 @@ def create_developer_managed_super_admin(
 ) -> User:
     _require_verified_developer(db, actor)
     role = _super_admin_role(db)
-    if db.query(User).filter(User.email == email).first() is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+    email = account_service.ensure_user_credentials_available(db, email)
 
     user = User(
         email=email,
@@ -546,8 +544,7 @@ def create_developer(
 ) -> User:
     _require_owner(actor, detail="Only the owner account can create developer accounts")
     role = _role_or_500(db, DEVELOPER)
-    if db.query(User).filter(User.email == email).first() is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+    email = account_service.ensure_user_credentials_available(db, email)
 
     user = User(
         email=email,
@@ -585,8 +582,7 @@ def create_developer_managed_developer(
 ) -> User:
     _require_verified_developer(db, actor)
     role = _role_or_500(db, DEVELOPER)
-    if db.query(User).filter(User.email == email).first() is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+    email = account_service.ensure_user_credentials_available(db, email)
 
     user = User(
         email=email,

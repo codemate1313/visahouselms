@@ -4,6 +4,7 @@ import { PublicHeader } from "@/components/publicSite/PublicHeader";
 import { PublicFooter } from "@/components/publicSite/PublicFooter";
 import { PublicOrbBackground } from "@/components/publicSite/PublicOrbBackground";
 import { useRevealOnScroll } from "@/components/publicSite/useRevealOnScroll";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useSEO } from "@/hooks/useSEO";
 import { API_BASE_URL } from "@/api/client";
 import { useContactSettings } from "./useContactSettings";
@@ -11,7 +12,10 @@ import type { BlogListItem } from "./blogTypes";
 import "@/styles/public/chrome.css";
 import "@/styles/public/blogs.css";
 
-const CATEGORIES = ["All", "Strategy", "Writing", "Speaking", "Listening", "Reading", "Institute", "News"];
+const CATEGORIES = ["All", "Strategy", "Writing", "Speaking", "Listening", "Reading", "Institute", "News"] as const;
+type BlogCategory = (typeof CATEGORIES)[number];
+
+const CATEGORY_OPTIONS = CATEGORIES.map((label) => ({ label, value: label }));
 
 function formatBlogDate(createdAt: string) {
   const date = createdAt ? new Date(createdAt) : new Date();
@@ -22,7 +26,7 @@ export function BlogsList() {
   useSEO({ title: "Blogs", description: "Band-boosting strategies, product notes and LanguageCert news — written by trainers who mark hundreds of scripts a week." });
   const contactSettings = useContactSettings();
   const [blogs, setBlogs] = useState<BlogListItem[]>([]);
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [activeCategory, setActiveCategory] = useState<BlogCategory>("All");
   const rootRef = useRef<HTMLDivElement | null>(null);
   useRevealOnScroll(rootRef);
 
@@ -52,16 +56,14 @@ export function BlogsList() {
         </section>
 
         <section className="vh-blog-categories vh-reveal">
-          {CATEGORIES.map((label) => (
-            <button
-              key={label}
-              type="button"
-              className={`vh-blog-pill${activeCategory === label ? " vh-blog-pill-active" : ""}`}
-              onClick={() => setActiveCategory(label)}
-            >
-              {label}
-            </button>
-          ))}
+          <SegmentedControl
+            ariaLabel="Filter blog categories"
+            className="vh-blog-category-control"
+            neverCollapse
+            onChange={setActiveCategory}
+            options={CATEGORY_OPTIONS}
+            value={activeCategory}
+          />
         </section>
 
         <section className="vh-blog-grid-section vh-reveal">

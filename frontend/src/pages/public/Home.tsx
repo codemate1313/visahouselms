@@ -72,11 +72,8 @@ export function Home() {
 
   const [testimonials, setTestimonials] = useState<TestimonialCard[]>([]);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
-  const [isMainCardHovered, setIsMainCardHovered] = useState(false);
+  const [isTestimonialHovered, setIsTestimonialHovered] = useState(false);
   const [blogPreviews, setBlogPreviews] = useState<BlogListItem[]>([]);
-  const animFrameRef = useRef<number | null>(null);
-  const isHoveredRef = useRef(false);
-  isHoveredRef.current = isMainCardHovered;
 
   const stepsContainerRef = useRef<HTMLDivElement | null>(null);
   const scrollTriggerRef = useRef<ScrollTrigger | null>(null);
@@ -231,80 +228,226 @@ export function Home() {
       .catch(() => setTestimonials([]));
   }, []);
 
-  // Continuous 60fps float progress for infinite smooth 3D coverflow loop
-  // ONLY pauses when the active main center card is hovered
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const dragDataRef = useRef<{
+    startX: number;
+    startTime: number;
+    lastX: number;
+    lastTime: number;
+    velocity: number;
+    isDragging: boolean;
+    hasMoved: boolean;
+  }>({
+    startX: 0,
+    startTime: 0,
+    lastX: 0,
+    lastTime: 0,
+    velocity: 0,
+    isDragging: false,
+    hasMoved: false,
+  });
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Autoplay every 5 seconds (5000ms), paused on hover or active dragging
   useEffect(() => {
-    if (!testimonials.length) return;
+    if (!testimonials.length || isTestimonialHovered || isDragging) return;
+    const timer = setInterval(() => {
+      setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [testimonials.length, isTestimonialHovered, isDragging]);
 
-    const SPEED = 0.003; // Buttery smooth continuous 60fps pace
+  const wheelLockRef = useRef(false);
 
-    function tick() {
-      if (!isHoveredRef.current) {
-        setTestimonialIndex((prev) => {
-          let next = prev + SPEED;
-          if (next >= testimonials.length) {
-            next = next % testimonials.length;
-          }
-          return next;
-        });
+  // Mac Trackpad two-finger swipe handler (moves 1 card smoothly per swipe)
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || !testimonials.length) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 8) {
+        e.preventDefault();
+        if (wheelLockRef.current) return;
+        wheelLockRef.current = true;
+
+        if (e.deltaX > 0) {
+          setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+        } else {
+          setTestimonialIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+        }
+
+        setTimeout(() => {
+          wheelLockRef.current = false;
+        }, 320);
       }
-      animFrameRef.current = requestAnimationFrame(tick);
-    }
+    };
 
-    animFrameRef.current = requestAnimationFrame(tick);
-
+    stage.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-        animFrameRef.current = null;
-      }
+      stage.removeEventListener("wheel", handleWheel);
     };
   }, [testimonials.length]);
 
-  function prevTestimonial() {
-    if (!testimonials.length) return;
-    setTestimonialIndex((prev) => {
-      const currentInt = Math.round(prev);
-      return (currentInt - 1 + testimonials.length) % testimonials.length;
-    });
-  }
+  const handleDragStart = (clientX: number) => {
+    const now = performance.now();
+    dragDataRef.current = {
+      startX: clientX,
+      startTime: now,
+      lastX: clientX,
+      lastTime: now,
+      velocity: 0,
+      isDragging: true,
+      hasMoved: false,
+    };
+    setIsDragging(true);
+  };
 
-  function nextTestimonial() {
-    if (!testimonials.length) return;
-    setTestimonialIndex((prev) => {
-      const currentInt = Math.floor(prev);
-      return (currentInt + 1) % testimonials.length;
-    });
-  }
+  const handleDragMove = (clientX: number) => {
+    if (!dragDataRef.current.isDragging) return;
+    const now = performance.now();
+    const dt = now - dragDataRef.current.lastTime;
+    const dx = clientX - dragDataRef.current.lastX;
+    if (dt > 8) {
+      dragDataRef.current.velocity = dx / dt;
+      dragDataRef.current.lastX = clientX;
+      dragDataRef.current.lastTime = now;
+    }
+    if (Math.abs(clientX - dragDataRef.current.startX) > 6) {
+      dragDataRef.current.hasMoved = true;
+    }
+  };
 
-  function get3DCardStyle(i: number, activeProgress: number, total: number) {
+  const handleDragEnd = (clientX: number) => {
+    if (!dragDataRef.current.isDragging) return;
+    const { startX, hasMoved } = dragDataRef.current;
+    dragDataRef.current.isDragging = false;
+    setIsDragging(false);
+
+    const totalDx = clientX - startX;
+    if (hasMoved && Math.abs(totalDx) > 18) {
+      if (totalDx < 0) {
+        setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+      } else {
+        setTestimonialIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+      }
+    }
+  };
+
+  const handleCardOrStageClick = (e: React.MouseEvent, clickedIndex?: number) => {
+    if (dragDataRef.current.hasMoved) {
+      e.stopPropagation();
+      return;
+    }
+    if (!testimonials.length) return;
+
+    if (clickedIndex !== undefined && clickedIndex !== testimonialIndex) {
+      let diff = clickedIndex - testimonialIndex;
+      if (diff > testimonials.length / 2) diff -= testimonials.length;
+      if (diff < -testimonials.length / 2) diff += testimonials.length;
+
+      if (diff > 0) {
+        setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+      } else {
+        setTestimonialIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+      }
+      return;
+    }
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    if (clickX < rect.width / 2) {
+      setTestimonialIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    } else {
+      setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+    }
+  };
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    handleDragStart(e.clientX);
+    const onMouseMove = (moveEv: MouseEvent) => {
+      handleDragMove(moveEv.clientX);
+    };
+    const onMouseUp = (upEv: MouseEvent) => {
+      handleDragEnd(upEv.clientX);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      handleDragStart(e.touches[0].clientX);
+    }
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      handleDragMove(e.touches[0].clientX);
+    }
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (e.changedTouches.length > 0) {
+      handleDragEnd(e.changedTouches[0].clientX);
+    }
+  };
+
+  function get3DCardStyle(i: number, activeIndex: number, total: number) {
     if (!total) return {};
-    let diff = i - activeProgress;
+    let diff = i - activeIndex;
 
     while (diff > total / 2) diff -= total;
-    while (diff < -total / 2) diff += total;
+    while (diff <= -total / 2) diff += total;
 
-    const absDiff = Math.abs(diff);
+    if (diff === 0) {
+      return {
+        transform: "perspective(1200px) translate3d(0%, 0, 0) rotateY(0deg) scale(1.02)",
+        opacity: 1,
+        zIndex: 10,
+        filter: "none",
+        cursor: isDragging ? "grabbing" : "grab",
+        pointerEvents: "auto" as const,
+      };
+    }
 
-    // Smooth continuous 3D card layout parameters
-    const translateX = diff * 290;
-    const translateZ = -absDiff * 140;
-    const rotateY = -diff * 20;
-    const scale = Math.max(0.68, 1.06 - absDiff * 0.18);
-    const opacity = Math.max(0, 1 - absDiff * 0.42);
-    const blur = Math.min(4, absDiff * 1.5);
-    const zIndex = Math.round(100 - absDiff * 20);
+    if (diff === -1) {
+      return {
+        transform: "perspective(1200px) translate3d(-54%, 0, -120px) rotateY(16deg) scale(0.85)",
+        opacity: 0.65,
+        zIndex: 6,
+        filter: "brightness(0.85) blur(0.5px)",
+        cursor: isDragging ? "grabbing" : "pointer",
+        pointerEvents: "auto" as const,
+      };
+    }
+
+    if (diff === 1) {
+      return {
+        transform: "perspective(1200px) translate3d(54%, 0, -120px) rotateY(-16deg) scale(0.85)",
+        opacity: 0.65,
+        zIndex: 6,
+        filter: "brightness(0.85) blur(0.5px)",
+        cursor: isDragging ? "grabbing" : "pointer",
+        pointerEvents: "auto" as const,
+      };
+    }
+
+    if (diff < -1) {
+      return {
+        transform: "perspective(1200px) translate3d(-105%, 0, -280px) rotateY(24deg) scale(0.65)",
+        opacity: 0,
+        zIndex: 1,
+        filter: "brightness(0.5) blur(3px)",
+        pointerEvents: "none" as const,
+      };
+    }
 
     return {
-      transform: `perspective(1200px) translate3d(${translateX}px, 0, ${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
-      opacity: opacity,
-      zIndex: zIndex,
-      filter: absDiff < 0.2 ? "none" : `brightness(${Math.max(0.72, 1 - absDiff * 0.15)}) blur(${blur}px)`,
-      cursor: absDiff > 0.3 ? "pointer" : "default",
-      pointerEvents: opacity > 0.1 ? ("auto" as const) : ("none" as const),
-      transition: isMainCardHovered
-        ? "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1)"
-        : "none",
+      transform: "perspective(1200px) translate3d(105%, 0, -280px) rotateY(-24deg) scale(0.65)",
+      opacity: 0,
+      zIndex: 1,
+      filter: "brightness(0.5) blur(3px)",
+      pointerEvents: "none" as const,
     };
   }
 
@@ -541,7 +684,11 @@ export function Home() {
           </div>
         </section>
         
-        <section className="vh-testimonials-section vh-reveal">
+        <section
+          className="vh-testimonials-section vh-reveal"
+          onMouseEnter={() => setIsTestimonialHovered(true)}
+          onMouseLeave={() => setIsTestimonialHovered(false)}
+        >
           <div className="vh-testimonials-header-wrap">
             <div>
               <span className="vh-testimonials-eyebrow">Student Success Stories</span>
@@ -551,49 +698,26 @@ export function Home() {
           </div>
           {testimonials.length > 0 ? (
             <div className="vh-3d-coverflow-wrapper">
-              <button
-                type="button"
-                className="vh-3d-nav-btn vh-3d-nav-btn-prev"
-                aria-label="Previous testimonial"
-                onClick={prevTestimonial}
+              <div
+                ref={stageRef}
+                className={`vh-3d-coverflow-stage ${isDragging ? "is-dragging" : ""}`}
+                onMouseDown={onMouseDown}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+                onClick={(e) => handleCardOrStageClick(e)}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-              </button>
-
-              <button
-                type="button"
-                className="vh-3d-nav-btn vh-3d-nav-btn-next"
-                aria-label="Next testimonial"
-                onClick={nextTestimonial}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </button>
-
-              <div className="vh-3d-coverflow-stage">
                 {testimonials.map((t, i) => {
                   const style = get3DCardStyle(i, testimonialIndex, testimonials.length);
-                  let diff = i - testimonialIndex;
-                  while (diff > testimonials.length / 2) diff -= testimonials.length;
-                  while (diff < -testimonials.length / 2) diff += testimonials.length;
-                  const isCenter = Math.abs(diff) < 0.4;
-
+                  const isCenter = i === testimonialIndex;
                   return (
                     <div
                       key={i}
                       className={`vh-testimonial-card vh-3d-card ${isCenter ? "is-center" : ""}`}
                       style={style}
-                      onMouseEnter={() => {
-                        if (isCenter) setIsMainCardHovered(true);
-                      }}
-                      onMouseLeave={() => {
-                        setIsMainCardHovered(false);
-                      }}
-                      onClick={() => {
-                        setTestimonialIndex(i);
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCardOrStageClick(e, i);
                       }}
                     >
                       <div>
@@ -620,21 +744,6 @@ export function Home() {
                       </div>
                       <div className="vh-testimonial-stars">★★★★★</div>
                     </div>
-                  );
-                })}
-              </div>
-
-              <div className="vh-3d-dots">
-                {testimonials.map((_, idx) => {
-                  const activeDotIdx = Math.round(testimonialIndex) % testimonials.length;
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      className={`vh-3d-dot ${idx === activeDotIdx ? "is-active" : ""}`}
-                      onClick={() => setTestimonialIndex(idx)}
-                      aria-label={`Go to slide ${idx + 1}`}
-                    />
                   );
                 })}
               </div>

@@ -783,17 +783,24 @@ export function ModuleEditor() {
         </Badge>
       </div>
 
-      {/* Sits above the part navigation because the examiner belongs to the
-          module, not to whichever speaking part happens to be open. */}
-      {module.parts?.some((part) => part.section_type === "speaking") && (
-        <SpeakingExaminerPicker
-          examinerId={examiner?.id ?? storedExaminerId}
-          onChange={chooseExaminer}
-        />
-      )}
-
       <div className="module-authoring-layout">
-        <ModulePartNav parts={module.parts} selectedPartId={selectedPartId} onChoosePart={choosePart} />
+        <ModulePartNav
+          parts={module.parts}
+          selectedPartId={selectedPartId}
+          onChoosePart={choosePart}
+          examinerPicker={(() => {
+            const speakingPart = module.parts?.find((part) => part.section_type === "speaking");
+            if (!speakingPart) return undefined;
+            return (
+              <SpeakingExaminerPicker
+                examinerId={examiner?.id ?? storedExaminerId}
+                moduleId={module.id}
+                samplePartId={speakingPart.id}
+                onChange={chooseExaminer}
+              />
+            );
+          })()}
+        />
         <main className="module-part-editor" id="module-part-editor">
           {!selectedPart ? (
             <ModuleDetailsForm

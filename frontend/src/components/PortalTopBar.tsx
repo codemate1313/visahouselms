@@ -14,7 +14,6 @@ import { commonActions } from "@/content/common.strings";
 
 interface QuickLink {
   title: string;
-  description: string;
   path: string;
   icon: IconName;
 }
@@ -162,9 +161,9 @@ function readableRole(role: string | undefined) {
 
 function quickLinksForRole(role: string | undefined): QuickLink[] {
   const commonSettings: QuickLink[] = [
-    { title: "My Profile", description: "Account details and avatar", path: "/profile", icon: "user" },
-    { title: "Active Sessions", description: "Signed-in devices and sessions", path: "/sessions", icon: "session" },
-    { title: "Change Password", description: "Update account password", path: "/change-password", icon: "lock" },
+    { title: "My Profile", path: "/profile", icon: "user" },
+    { title: "Active Sessions", path: "/sessions", icon: "session" },
+    { title: "Change Password", path: "/change-password", icon: "lock" },
   ];
 
   if (role === "SUPER_ADMIN") return commonSettings.map((item) => ({ ...item, path: `/super-admin${item.path}` }));
@@ -525,7 +524,6 @@ export function PortalTopBar({
                   <Icon name={item.icon} />
                   <span>
                     <strong>{item.title}</strong>
-                    <em>{item.description}</em>
                   </span>
                 </button>
               ))}

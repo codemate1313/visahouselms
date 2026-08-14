@@ -23,6 +23,7 @@ from app.models.role import STUDENT, Role
 from app.models.user import User
 from app.models.user_device import UserDevice
 from app.models.user_session import UserSession
+from app.services import account_service
 
 INVALID_CREDENTIALS = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
@@ -231,21 +232,10 @@ def get_or_create_google_student(
     normalized_email = email.strip().lower()
     user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
     if user is not None:
-        if not user.is_active:
-            raise INVALID_CREDENTIALS
-        if user.institute_id is not None and not user.institute.is_active:
-            db.add(
-                AuditLog(
-                    user_id=user.id,
-                    action="institute.login_blocked_suspended",
-                    entity_type="institute",
-                    entity_id=user.institute_id,
-                    ip_address=ip_address,
-                )
-            )
-            db.commit()
-            raise INVALID_CREDENTIALS
-        return user
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=account_service.USER_CREDENTIALS_CONFLICT_DETAIL,
+        )
 
     role = db.query(Role).filter(Role.name == STUDENT).first()
     if role is None:
@@ -321,10 +311,7 @@ def register(
 ) -> User:
     """Public self-registration for a direct (B2C) student - institute_id is
     always NULL here; institute students are created by their institute."""
-    normalized_email = email.strip().lower()
-    existing = db.query(User).filter(func.lower(User.email) == normalized_email).first()
-    if existing is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="An account with this email already exists")
+    normalized_email = account_service.ensure_user_credentials_available(db, email)
 
     role = db.query(Role).filter(Role.name == STUDENT).first()
     if role is None:

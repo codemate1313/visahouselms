@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
@@ -46,6 +47,9 @@ export function PublicHeader() {
   const toggleTheme = useThemeStore((state) => state.toggleTheme);
   const user = useAuthStore((state) => state.user);
   const { open, toggle, close, drawerRef, scrimRef, line1Ref, line2Ref, line3Ref } = useMobileDrawer();
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollYRef = useRef(0);
+  const scrollFrameRef = useRef<number | null>(null);
 
   const dark = theme === "dark";
   const authHref = user ? destinationFor(user) ?? "/" : "/login";
@@ -56,8 +60,61 @@ export function PublicHeader() {
     navigate(authHref);
   };
 
+  useEffect(() => {
+    lastScrollYRef.current = window.scrollY;
+    setHeaderVisible(true);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const updateHeader = () => {
+      const currentScrollY = Math.max(window.scrollY, 0);
+      const previousScrollY = lastScrollYRef.current;
+
+      if (open || currentScrollY <= 12) {
+        setHeaderVisible(true);
+      } else if (currentScrollY > previousScrollY) {
+        setHeaderVisible(false);
+      } else if (currentScrollY < previousScrollY) {
+        setHeaderVisible(true);
+      }
+
+      lastScrollYRef.current = currentScrollY;
+      scrollFrameRef.current = null;
+    };
+
+    const handleScroll = () => {
+      if (scrollFrameRef.current === null) {
+        scrollFrameRef.current = window.requestAnimationFrame(updateHeader);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current);
+      }
+    };
+  }, [open]);
+
+  const hideHeaderAfterHover = () => {
+    if (!open && window.scrollY > 12) {
+      setHeaderVisible(false);
+    }
+  };
+
   return (
-    <header className="vh-header">
+    <>
+      <div
+        className={`vh-header-reveal-zone${headerVisible ? "" : " vh-active"}`}
+        onPointerEnter={() => setHeaderVisible(true)}
+        aria-hidden="true"
+      />
+      <header
+        className={`vh-header${headerVisible ? "" : " vh-header-hidden"}`}
+        onPointerLeave={hideHeaderAfterHover}
+        onFocusCapture={() => setHeaderVisible(true)}
+      >
       <div className="vh-header-bar">
         <Link to="/" className="vh-brand">
           <img src={dark ? "/brand/vh-mark-dark.png" : "/brand/vh-mark-light.png"} alt="Visa House" width={38} height={38} />
@@ -111,6 +168,7 @@ export function PublicHeader() {
           <p className="vh-drawer-foot vh-drawer-item">LanguageCert mock tests, progress analytics &amp; expert feedback.</p>
         </div>
       </div>
-    </header>
+      </header>
+    </>
   );
 }

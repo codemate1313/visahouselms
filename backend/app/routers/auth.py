@@ -306,8 +306,13 @@ def google_callback(
             role = "STUDENT"
         else:
             user = auth_service.get_otp_login_user(db, google_email, _client_ip(request), role=role)
-    except HTTPException:
-        return _frontend_redirect(return_path, {"role": role, "google_error": "No active LMS account matches this Google email"})
+    except HTTPException as exc:
+        google_error = (
+            exc.detail
+            if exc.status_code == status.HTTP_409_CONFLICT and isinstance(exc.detail, str)
+            else "No active LMS account matches this Google email"
+        )
+        return _frontend_redirect(return_path, {"role": role, "google_error": google_error})
 
     payload = GoogleOtpRequest(
         email=google_email,

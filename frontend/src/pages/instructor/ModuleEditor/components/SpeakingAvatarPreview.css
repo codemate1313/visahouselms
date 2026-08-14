@@ -1,13 +1,16 @@
 /* Module-wide examiner picker. A single strip above the authoring layout, so
    the voice reads as a property of the module rather than of the open part. */
 .vh-examiner-picker {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px minmax(150px, 220px) minmax(220px, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  margin: 0 0 14px;
-  padding: 10px 16px;
+  gap: 10px;
+  flex: 0 0 min(760px, 78vw);
+  min-width: 520px;
+  margin: 0;
+  padding: 6px 8px;
   border: 1px solid rgba(185, 28, 43, 0.18);
-  border-radius: 14px;
+  border-radius: 999px;
   background: rgba(185, 28, 43, 0.03);
 }
 
@@ -21,8 +24,7 @@
 }
 
 .vh-examiner-picker-copy {
-  flex: 1;
-  min-width: 0;
+  min-width: 220px;
 }
 
 .vh-examiner-picker-title {
@@ -35,11 +37,53 @@
 .vh-examiner-picker-hint {
   margin: 2px 0 0;
   font-size: 11.5px;
+  line-height: 1.45;
   color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vh-examiner-picker-hint.is-error {
+  color: #dc2626;
 }
 
 .vh-examiner-picker-select {
+  width: 100%;
+  max-width: none;
   min-width: 210px;
+}
+
+.vh-examiner-sample-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(185, 28, 43, 0.24);
+  border-radius: 999px;
+  background: rgba(185, 28, 43, 0.08);
+  color: var(--primary, #b91c2b);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vh-examiner-sample-button:hover:not(:disabled) {
+  background: rgba(185, 28, 43, 0.14);
+  box-shadow: 0 8px 18px rgba(185, 28, 43, 0.16);
+}
+
+.vh-examiner-sample-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.vh-examiner-sample-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
 }
 
 [data-theme="dark"] .vh-examiner-picker {
@@ -53,6 +97,32 @@
 
 [data-theme="dark"] .vh-examiner-picker-hint {
   color: #94a3b8;
+}
+
+[data-theme="dark"] .vh-examiner-picker-hint.is-error {
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .vh-examiner-sample-button {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f8fafc;
+}
+
+@media (max-width: 860px) {
+  .vh-examiner-picker {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    flex-basis: 82vw;
+    min-width: 420px;
+  }
+
+  .vh-examiner-picker-copy {
+    min-width: 0;
+  }
+
+  .vh-examiner-picker-select {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Examiner preview card shown while authoring a Speaking prompt. Sized to sit

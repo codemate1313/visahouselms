@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import type { ExamModulePart } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
@@ -7,6 +7,7 @@ interface ModulePartNavProps {
   parts: ExamModulePart[] | undefined;
   selectedPartId: number | null;
   onChoosePart: (part: ExamModulePart | null) => void;
+  examinerPicker?: ReactNode;
 }
 
 /** Part titles double as candidate instructions, so they can be a whole
@@ -23,7 +24,7 @@ function isPartComplete(part: ExamModulePart) {
     : part.questions.length > 0;
 }
 
-export function ModulePartNav({ parts, selectedPartId, onChoosePart }: ModulePartNavProps) {
+export function ModulePartNav({ parts, selectedPartId, onChoosePart, examinerPicker }: ModulePartNavProps) {
   const t = strings.partNav;
   const activeRef = useRef<HTMLButtonElement>(null);
 
@@ -52,6 +53,15 @@ export function ModulePartNav({ parts, selectedPartId, onChoosePart }: ModulePar
             <span className="mps-meta">Title & duration</span>
           </span>
         </button>
+
+        {examinerPicker && (
+          <div className="mps-node mps-examiner-node">
+            <span className="mps-connector is-filled" aria-hidden="true">
+              <i />
+            </span>
+            {examinerPicker}
+          </div>
+        )}
 
         {parts?.map((part, index) => {
           const complete = isPartComplete(part);

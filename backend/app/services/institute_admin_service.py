@@ -289,9 +289,7 @@ def create_member(
     if role_name not in MANAGED_ROLES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid member role")
 
-    normalized_email = email.strip().lower()
-    if db.query(User).filter(User.email == normalized_email).first() is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+    normalized_email = account_service.ensure_user_credentials_available(db, email)
 
     enforce_limit(db, institute_id, "students" if role_name == STUDENT else "staff")
     role = db.query(Role).filter(Role.name == role_name).first()
@@ -654,7 +652,7 @@ def import_students(
             reason = "Duplicate email in file"
         seen.add(email)
         if reason is None and db.query(User).filter(func.lower(User.email) == email).first() is not None:
-            reason = "Email already exists"
+            reason = account_service.USER_CREDENTIALS_CONFLICT_DETAIL
         if reason is None and len(created) >= available:
             reason = "Student plan limit reached"
         if reason is not None:

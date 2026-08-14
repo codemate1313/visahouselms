@@ -28,7 +28,7 @@ from app.models.institute_signup import (
 from app.models.plan import AUDIENCE_INSTITUTES, Plan
 from app.models.role import DEVELOPER, SUPER_ADMIN
 from app.models.user import User
-from app.services import institute_service, notification_service
+from app.services import account_service, institute_service, notification_service
 
 
 def _now() -> datetime:
@@ -110,13 +110,7 @@ def submit(db: Session, data: dict, ip: Optional[str]) -> dict:
     belonging to a user, and an application from the same address still waiting
     in the queue.
     """
-    admin_email = data["admin_email"].strip().lower()
-
-    if db.query(User).filter(User.email == admin_email, User.deleted_at.is_(None)).first() is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="An account already exists for this email - sign in instead, or apply with a different address",
-        )
+    admin_email = account_service.ensure_user_credentials_available(db, data["admin_email"])
 
     pending = (
         db.query(InstituteSignupRequest)

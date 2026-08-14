@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from fastapi import HTTPException, UploadFile, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -12,6 +13,31 @@ from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.models.user_session import UserSession
 from app.services import geoip_service
+
+USER_CREDENTIALS_CONFLICT_DETAIL = "These creds belong to a user"
+
+
+def normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
+def ensure_user_credentials_available(
+    db: Session,
+    email: str,
+    *,
+    exclude_user_id: Optional[int] = None,
+) -> str:
+    normalized_email = normalize_email(email)
+    query = db.query(User).filter(func.lower(User.email) == normalized_email)
+    if exclude_user_id is not None:
+        query = query.filter(User.id != exclude_user_id)
+    if query.first() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=USER_CREDENTIALS_CONFLICT_DETAIL,
+        )
+    return normalized_email
+
 
 def _audit(db: Session, actor: User, action: str, entity_id: int, ip: Optional[str], details: Optional[dict] = None) -> None:
     db.add(
