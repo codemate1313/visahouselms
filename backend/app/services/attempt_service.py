@@ -180,7 +180,7 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         _auto_expire(db, existing_in_progress)
 
     # Every module type allows exactly one original sitting; an approved,
-    # unconsumed RetakeRequest is the only way to earn another.
+    # unconsumed RetakeRequest is the only way to earn another (except final tests).
     original_attempt = (
         db.query(TestAttempt)
         .filter(
@@ -192,6 +192,11 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
     )
     retake_request = None
     if original_attempt is not None:
+        if is_final:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="You have already attempted the final test. Final tests cannot be retaken.",
+            )
         retake_request = retake_service.get_available_retake(db, user.id, module.id)
         if retake_request is None:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ALREADY_ATTEMPTED_DETAIL)

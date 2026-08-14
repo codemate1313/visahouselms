@@ -131,7 +131,10 @@ export function AttemptResult() {
   const canRequestReview = ["grading", "graded"].includes(attempt.status) && hasInstructorReviewablePart && !hasOpenReevaluation;
   
   const canRequestRetake =
-    ["submitted", "grading", "graded", "expired"].includes(attempt.status) && !attempt.retake_request;
+    !attempt.is_final &&
+    attempt.module_type !== "final_test" &&
+    ["submitted", "grading", "graded", "expired"].includes(attempt.status) &&
+    !attempt.retake_request;
 
   const isAiGraded = attempt.parts.some((part) => part.grade?.status === "ai_graded");
   const statusLabels = strings.statusLabels;
