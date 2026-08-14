@@ -78,6 +78,100 @@ export function Home() {
   const stepsContainerRef = useRef<HTMLDivElement | null>(null);
   const scrollTriggerRef = useRef<ScrollTrigger | null>(null);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const featuresSectionRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const section = featuresSectionRef.current;
+    if (!section) return;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const cards = gsap.utils.toArray<HTMLElement>(".vh-prag-card", section);
+    if (!cards.length) return;
+
+    const ctx = gsap.context(() => {
+      const introEl = section.querySelector(".vh-section-intro");
+      const gridEl = section.querySelector(".vh-modules-grid");
+      const leftCards = gsap.utils.toArray<HTMLElement>(".vh-prag-col-left", section);
+      const rightCards = gsap.utils.toArray<HTMLElement>(".vh-prag-col-right", section);
+
+      if (introEl) {
+        gsap.fromTo(
+          introEl,
+          { opacity: 0, y: 45 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.85,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: introEl,
+              start: "top 88%",
+              toggleActions: "restart none none reverse",
+            },
+          }
+        );
+      }
+
+      const cardsTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: gridEl || section,
+          start: "top 86%",
+          toggleActions: "restart none none reverse",
+        },
+      });
+
+      // Left Column cards glide up dramatically from bottom first
+      if (leftCards.length) {
+        cardsTimeline.fromTo(
+          leftCards,
+          {
+            opacity: 0,
+            y: 130,
+            scale: 0.92,
+            filter: "blur(4px)",
+          },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            filter: "blur(0px)",
+            duration: 1.1,
+            stagger: 0.22,
+            ease: "power3.out",
+            clearProps: "all",
+          },
+          0
+        );
+      }
+
+      // Right Column cards follow right after with distinct column stagger
+      if (rightCards.length) {
+        cardsTimeline.fromTo(
+          rightCards,
+          {
+            opacity: 0,
+            y: 140,
+            scale: 0.92,
+            filter: "blur(4px)",
+          },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            filter: "blur(0px)",
+            duration: 1.1,
+            stagger: 0.22,
+            ease: "power3.out",
+            clearProps: "all",
+          },
+          0.28
+        );
+      }
+    }, section);
+
+    return () => ctx.revert();
+  }, []);
 
   useEffect(() => {
     const container = stepsContainerRef.current;
@@ -531,7 +625,11 @@ export function Home() {
           </div>
         </section>
 
-        <section id="features" className="vh-modules-section vh-reveal">
+        <section id="features" ref={featuresSectionRef} className="vh-modules-section">
+          {/* Ambient Glows */}
+          <div className="vh-modules-ambient-glow left" aria-hidden="true" />
+          <div className="vh-modules-ambient-glow right" aria-hidden="true" />
+
           <div className="vh-section-intro">
             <span className="vh-section-kicker">Everything in one place</span>
             <h2>
@@ -539,29 +637,36 @@ export function Home() {
             </h2>
             <p>From realistic mock tests and skill-based practice to detailed performance tracking and feedback — everything is brought together in one place.</p>
           </div>
+
           <div className="vh-modules-grid">
-            {EVERYTHING_CARDS.map((f) => (
-              <div className="vh-module-card vh-reveal" key={f.num}>
-                <div className="vh-module-card-head">
-                  <div className="vh-module-card-head-left">
-                    <div style={{ color: f.g1, display: "grid", placeItems: "center" }}>
-                      <ModuleIcon kind={f.kind === "mocks" ? "listening" : f.kind === "listening_reading" ? "reading" : f.kind === "writing" ? "writing" : f.kind === "speaking" ? "speaking" : "reading"} />
-                    </div>
-                    <div>
-                      <div className="vh-module-eyebrow">Feature {f.num}</div>
-                      <h3>{f.title}</h3>
-                    </div>
+            {EVERYTHING_CARDS.map((f, idx) => (
+              <div
+                className={`vh-module-card vh-prag-card ${idx % 2 === 0 ? "vh-prag-col-left" : "vh-prag-col-right"}`}
+                key={f.num}
+                style={{ "--card-accent": f.g1 } as React.CSSProperties}
+              >
+                <div className="vh-module-card-top">
+                  <div className="vh-prag-number-wrapper">
+                    <span className="vh-prag-number">{parseInt(f.num, 10)}</span>
+                  </div>
+                  <div className="vh-module-card-icon" style={{ color: f.g1 }}>
+                    <ModuleIcon kind={f.kind === "mocks" ? "listening" : f.kind === "listening_reading" ? "reading" : f.kind === "writing" ? "writing" : f.kind === "speaking" ? "speaking" : "reading"} />
                   </div>
                 </div>
-                <div className="vh-module-preview" style={{ background: `linear-gradient(135deg, ${f.wash1}, ${f.wash2})` }}>
+
+                <div className="vh-module-card-content">
+                  <div className="vh-module-eyebrow">Feature {f.num}</div>
+                  <h3 className="vh-module-title">{f.title}</h3>
+                </div>
+
+                <div
+                  className="vh-module-preview vh-folder-tab-left"
+                  style={{ background: `linear-gradient(135deg, ${f.wash1}, ${f.wash2})` }}
+                >
                   <ModulePreview kind={f.kind === "mocks" ? "listening" : f.kind === "listening_reading" ? "reading" : f.kind === "writing" ? "writing" : f.kind === "speaking" ? "speaking" : "reading"} color={f.g1} />
                 </div>
-                <p>{f.desc}</p>
-                <div className="vh-module-card-foot">
-                  <Link to={f.ctaLink} className="vh-module-try" style={{ color: f.g1 }}>
-                    {f.ctaText}
-                  </Link>
-                </div>
+
+                <p className="vh-module-desc">{f.desc}</p>
               </div>
             ))}
           </div>
