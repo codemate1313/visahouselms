@@ -321,7 +321,7 @@ export function Home() {
   useEffect(() => {
     fetch(`${API_BASE_URL}/blogs`)
       .then((res) => (res.ok ? res.json() : []))
-      .then((data) => setBlogPreviews(Array.isArray(data) ? data.slice(0, 3) : []))
+      .then((data) => setBlogPreviews(Array.isArray(data) ? data.slice(0, 2) : []))
       .catch(() => setBlogPreviews([]));
   }, []);
 
@@ -661,7 +661,7 @@ export function Home() {
           </div>
           {blogPreviews.length > 0 ? (
             <div className="vh-blog-preview-grid">
-              {blogPreviews.map((post) => (
+              {blogPreviews.slice(0, 2).map((post) => (
                 <Link to={`/blogs/${post.slug}`} className="vh-blog-preview-card" key={post.id}>
                   <div className="vh-blog-preview-image">
                     <img
