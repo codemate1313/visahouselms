@@ -218,25 +218,7 @@
   transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.28s ease;
   will-change: transform;
 }
-.vh-header.vh-header-over-hero {
-  background: rgba(8, 8, 14, 0.34);
-  border-bottom-color: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-}
-.vh-header.vh-header-over-hero .vh-brand span,
-.vh-header.vh-header-over-hero .vh-nav-link,
-.vh-header.vh-header-over-hero .vh-nav-link.vh-active {
-  color: #ffffff;
-}
-.vh-header.vh-header-over-hero .vh-nav-link:hover {
-  color: #ffffff;
-}
-.vh-header.vh-header-over-hero .vh-theme-toggle {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-}
+
 .vh-header.vh-header-hidden {
   transform: translateY(calc(-100% - 1px));
   box-shadow: none;
