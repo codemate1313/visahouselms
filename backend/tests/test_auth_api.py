@@ -142,29 +142,25 @@ class AuthApiTestCase(unittest.TestCase):
 
     def test_revoke_others_uses_current_access_session(self):
         admin = self._make_user("owner@example.com", SUPER_ADMIN)
-        access_a, _ = auth_service.issue_login_session(
+        # Create three sessions directly so this endpoint test can exercise its
+        # cleanup behavior independently of the login-time single-session rule.
+        access_a, _ = auth_service.issue_token_pair(
             self.db,
             admin,
             "Chrome A",
             "127.0.0.1",
-            device_identifier="admin-device-a",
-            device_name="Chrome A",
         )
-        access_b, _ = auth_service.issue_login_session(
+        access_b, _ = auth_service.issue_token_pair(
             self.db,
             admin,
             "Chrome B",
             "127.0.0.1",
-            device_identifier="admin-device-b",
-            device_name="Chrome B",
         )
-        access_c, _ = auth_service.issue_login_session(
+        access_c, _ = auth_service.issue_token_pair(
             self.db,
             admin,
             "Chrome C",
             "127.0.0.1",
-            device_identifier="admin-device-c",
-            device_name="Chrome C",
         )
 
         response = self.client.post(

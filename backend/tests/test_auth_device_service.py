@@ -161,20 +161,43 @@ class InstituteSessionPolicyTests(unittest.TestCase):
             name,
         )
 
-    def test_institute_policy_sets_absolute_session_expiry_without_student_device_lock(self):
+    def test_institute_policy_sets_absolute_expiry_and_new_login_revokes_old_session(self):
         _, refresh = self._login("admin-device-a-0001", "Chrome on macOS")
         session = self.db.query(UserSession).filter(UserSession.revoked_at.is_(None)).one()
         expires_at = session.expires_at.replace(tzinfo=timezone.utc)
         self.assertLess(abs(expires_at - (datetime.now(timezone.utc) + timedelta(hours=2))), timedelta(seconds=5))
 
-        auth_service.refresh(self.db, refresh, "Test Browser", "127.0.0.1")
+        previous_access, previous_refresh = auth_service.refresh(
+            self.db, refresh, "Test Browser", "127.0.0.1"
+        )
         replacement = self.db.query(UserSession).filter(UserSession.revoked_at.is_(None)).one()
         replacement_expiry = replacement.expires_at.replace(tzinfo=timezone.utc)
         self.assertLess(abs(replacement_expiry - expires_at), timedelta(seconds=1))
 
-        self._login("admin-device-b-0002", "Firefox on Windows")
+        replacement_access, _ = self._login("admin-device-b-0002", "Firefox on Windows")
         active_sessions = self.db.query(UserSession).filter(UserSession.revoked_at.is_(None)).all()
-        self.assertEqual(len(active_sessions), 2)
+        self.assertEqual(len(active_sessions), 1)
+        self.assertEqual(active_sessions[0].device.name, "Firefox on Windows")
+
+        with self.assertRaises(HTTPException):
+            get_current_user(
+                credentials=HTTPAuthorizationCredentials(
+                    scheme="Bearer", credentials=previous_access
+                ),
+                db=self.db,
+            )
+        with self.assertRaises(HTTPException):
+            auth_service.refresh(
+                self.db, previous_refresh, "Test Browser", "127.0.0.1"
+            )
+
+        current = get_current_user(
+            credentials=HTTPAuthorizationCredentials(
+                scheme="Bearer", credentials=replacement_access
+            ),
+            db=self.db,
+        )
+        self.assertEqual(current.id, self.admin.id)
 
 
 if __name__ == "__main__":

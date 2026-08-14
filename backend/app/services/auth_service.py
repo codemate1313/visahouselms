@@ -94,7 +94,7 @@ def _resolve_device(
     if enforce_single_device:
         # Sessions created before device tracking cannot identify a real device.
         # Retire them before enforcing the one-device rule so they do not lock a
-        # student out as an "Unknown device" for the rest of their lifetime.
+        # user out as an "Unknown device" for the rest of their lifetime.
         legacy_sessions = [session for session in active_sessions if session.device_id is None]
         for session in legacy_sessions:
             session.revoked_at = now
@@ -103,8 +103,8 @@ def _resolve_device(
         identified_sessions = [
             session for session in active_sessions if session.device_id is not None
         ]
-        # Student accounts keep one active session at a time. A fresh successful
-        # login takes over the account and signs out any previous student device.
+        # Every account keeps one active session at a time. A fresh successful
+        # login takes over the account and signs out every previous device.
         for session in identified_sessions:
             session.revoked_at = now
             db.add(session)
@@ -293,7 +293,7 @@ def issue_login_session(
         device_name,
         user_agent,
         ip_address,
-        enforce_single_device=user.role.name == STUDENT,
+        enforce_single_device=True,
     )
     return issue_token_pair(db, user, user_agent, ip_address, auth_method=auth_method, device=device)
 
