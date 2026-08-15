@@ -101,7 +101,7 @@ export function PinList<T extends PinListItem>({
   const unpinned = items.filter((item) => !item.pinned);
 
   function renderGroup(groupItems: T[], label: string, variant: "pinned" | "unpinned") {
-    if (groupItems.length === 0 && variant === "unpinned") return null;
+    if (groupItems.length === 0) return null;
     return (
       <section className={`pin-list-group pin-list-group-${variant}`}>
         <h2 className="pin-list-label">

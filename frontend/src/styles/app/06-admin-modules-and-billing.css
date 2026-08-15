@@ -1833,6 +1833,24 @@
   height: 17px !important;
   min-width: 17px !important;
   flex: 0 0 17px !important;
+  stroke: currentColor !important;
+}
+
+.portal-back-button svg * {
+  stroke: currentColor !important;
+  opacity: 1 !important;
+}
+
+[data-theme="dark"] .portal-back-button {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .portal-back-button svg,
+[data-theme="dark"] .portal-back-button svg * {
+  stroke: #ffffff !important;
+  opacity: 1 !important;
 }
 
 .portal-app-heading {
@@ -2280,19 +2298,17 @@
   top: calc(100% + 12px);
   right: 0;
   z-index: 1600;
-  width: min(430px, calc(100vw - 28px));
+  width: min(480px, calc(100vw - 24px));
   max-height: calc(100vh - 110px);
   max-height: calc(100dvh - 110px);
   overflow: hidden;
   color: #20242c;
   background: var(--surface) !important;
-  /* --surface is rgba(255,255,255,.9) in light theme, so without a backdrop
-     filter the dashboard cards read straight through this panel. */
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   border: 1px solid #e7e9ef;
-  border-radius: 14px;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.16);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
   pointer-events: auto;
 }
 
@@ -2306,7 +2322,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 15px 16px;
+  padding: 16px 20px;
   border-bottom: 1px solid #eceef3;
 }
 
@@ -2317,31 +2333,85 @@
   font-weight: 820;
 }
 
+.student-notification-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-bottom: 1px solid #eceef3;
+  background: var(--surface-muted, #f8fafc);
+}
+
+.student-notification-tab {
+  min-height: 28px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.student-notification-tab:hover {
+  background: var(--primary, #b91c2b) !important;
+  color: #ffffff !important;
+  border-color: var(--primary, #b91c2b) !important;
+}
+
+.student-notification-tab.is-active {
+  background: var(--primary, #b91c2b) !important;
+  color: #ffffff !important;
+  border-color: var(--primary, #b91c2b) !important;
+  font-weight: 700;
+}
+
+.student-notification-item-title-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  width: 100% !important;
+}
+
+.student-notification-unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--primary, #b91c2b);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--primary, #b91c2b) 60%, transparent);
+  flex-shrink: 0;
+}
 
 .student-notification-list {
-  max-height: min(462px, calc(100vh - 230px));
-  max-height: min(462px, calc(100dvh - 230px));
+  max-height: min(440px, calc(100vh - 220px));
+  max-height: min(440px, calc(100dvh - 220px));
   overflow-y: auto;
   overscroll-behavior: contain;
-  display: grid;
-  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
 }
 
-/* PinList sits inside the compact popover rather than a full page section —
-   tighten its default spacing to match the bell's denser rhythm. */
 .student-notification-list .pin-list {
-  gap: 12px;
-  padding: 10px 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
 }
 
 .student-notification-list .pin-list-rows {
-  gap: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .student-notification-list .pin-list-row {
-  gap: 2px;
+  gap: 6px;
 }
 
 .student-notification-list .pin-list-empty-hint {
@@ -2375,10 +2445,10 @@
   align-items: flex-start !important;
   gap: 12px !important;
   width: 100% !important;
-  padding: 13px 14px 14px !important;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 16px !important;
+  padding: 13px 14px !important;
+  background: var(--surface-muted, #f8fafc) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  border-radius: 12px !important;
   color: var(--text) !important;
   text-align: left !important;
   cursor: pointer !important;
@@ -2389,22 +2459,25 @@
 }
 
 .student-notification-item:hover {
-  background: var(--surface-muted) !important;
+  background: var(--surface-hover, #f1f5f9) !important;
+  border-color: var(--primary, #b91c2b) !important;
 }
 
 .student-notification-item.is-unread {
-  background: color-mix(in srgb, var(--primary, var(--primary)) 6%, transparent) !important;
+  background: color-mix(in srgb, var(--primary, #b91c2b) 6%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary, #b91c2b) 25%, transparent) !important;
 }
 
 .student-notification-item.is-unread:hover {
-  background: color-mix(in srgb, var(--primary, var(--primary)) 12%, transparent) !important;
+  background: color-mix(in srgb, var(--primary, #b91c2b) 12%, transparent) !important;
+  border-color: var(--primary, #b91c2b) !important;
 }
 
 .student-notification-item-icon {
   width: 22px !important;
   height: 22px !important;
   flex: 0 0 22px !important;
-  color: var(--primary, var(--primary)) !important;
+  color: var(--primary, #b91c2b) !important;
   margin-top: 2px !important;
 }
 
@@ -2412,20 +2485,17 @@
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
-  /* 3px let the title and message collide visually; they are two distinct
-     pieces of information and need separating. */
-  gap: 5px !important;
+  gap: 4px !important;
   min-width: 0 !important;
   flex: 1 1 auto !important;
 }
 
-/* 14px/700 across two wrapped lines shouted over the message beneath it; the
-   row is a summary, not a heading. */
 .student-notification-item-content strong {
   font-size: 13.5px !important;
   font-weight: 650 !important;
   color: var(--text) !important;
   line-height: 1.35 !important;
+  padding-right: 6px !important;
 }
 
 .student-notification-message {
@@ -2433,7 +2503,7 @@
   overflow: hidden;
   color: var(--text-muted, #64748b);
   font-size: 12.5px;
-  line-height: 1.35;
+  line-height: 1.4;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -2445,6 +2515,7 @@
   font-size: 11.5px;
   font-weight: 500;
   white-space: nowrap;
+  margin-left: auto;
 }
 
 .student-notification-state {
@@ -2485,22 +2556,25 @@
 
 .student-notification-view-all {
   width: 100%;
-  min-height: 54px;
-  display: grid;
-  place-items: center;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 0 16px;
-  color: var(--portal-icon-color) !important;
+  color: var(--primary, #b91c2b) !important;
   background: var(--surface) !important;
   border: 0 !important;
-  border-radius: 0 0 14px 14px;
+  border-top: 1px solid #eceef3 !important;
+  border-radius: 0 0 16px 16px;
   box-shadow: none !important;
-  font-size: 15px;
-  font-weight: 820;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.18s ease;
 }
 
 .student-notification-view-all:hover {
-  color: var(--portal-icon-color) !important;
-  background: #fbfaff !important;
+  color: var(--primary, #b91c2b) !important;
+  background: var(--surface-hover, #f8fafc) !important;
   box-shadow: none !important;
   transform: none;
 }
@@ -4551,24 +4625,48 @@
   color: #ffffff !important;
 }
 
+[data-theme="dark"] .student-notification-tabs {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .student-notification-tab {
+  color: #9ca3af !important;
+}
+
+[data-theme="dark"] .student-notification-tab:hover {
+  background: var(--primary, #b91c2b) !important;
+  color: #ffffff !important;
+  border-color: var(--primary, #b91c2b) !important;
+}
+
+[data-theme="dark"] .student-notification-tab.is-active {
+  background: var(--primary, #b91c2b) !important;
+  color: #ffffff !important;
+  border-color: var(--primary, #b91c2b) !important;
+  font-weight: 700;
+}
+
 
 [data-theme="dark"] .student-notification-item {
-  background: transparent !important;
-  border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
   color: #d1d5db !important;
 }
 
 [data-theme="dark"] .student-notification-item.is-unread {
-  background: rgba(255, 255, 255, 0.02) !important;
+  background: rgba(185, 28, 43, 0.12) !important;
+  border-color: rgba(185, 28, 43, 0.3) !important;
 }
 
 [data-theme="dark"] .student-notification-item:hover,
 [data-theme="dark"] .student-notification-item.is-unread:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--primary, #b91c2b) !important;
   color: #ffffff !important;
 }
 
-[data-theme="dark"] .student-notification-item-content>strong {
+[data-theme="dark"] .student-notification-item-content > strong {
   color: #ffffff !important;
 }
 
@@ -4577,13 +4675,17 @@
 }
 
 [data-theme="dark"] .student-notification-time {
-  color: #6b7280 !important;
+  color: #9ca3af !important;
 }
 
 [data-theme="dark"] .student-notification-view-all {
-  background: transparent !important;
-  border-bottom-color: rgba(255, 255, 255, 0.05) !important;
-  color: #9ca3af !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+  color: var(--primary, #b91c2b) !important;
+}
+
+[data-theme="dark"] .student-notification-view-all:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
 }
 
 [data-theme="dark"] .student-notification-view-all:hover {
@@ -5678,8 +5780,10 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 }
 
 [data-theme="dark"] .test-runner-instructions {
-  background: color-mix(in srgb, var(--primary) 8%, transparent) !important;
-  border-left-color: var(--test-accent, var(--primary)) !important;
+  background: transparent !important;
+  border: none !important;
+  border-left: none !important;
+  color: var(--test-accent, var(--primary)) !important;
 }
 
 [data-theme="dark"] .test-runner-asset audio,

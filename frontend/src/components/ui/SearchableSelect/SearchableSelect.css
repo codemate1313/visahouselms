@@ -292,3 +292,12 @@
 .select-option-item.is-selected .option-check-icon {
   color: var(--primary);
 }
+
+[data-theme="dark"] .select-search-icon {
+  color: #94a3b8 !important;
+  stroke: currentColor !important;
+}
+
+[data-theme="dark"] .select-search-input:focus ~ .select-search-icon {
+  color: #e2e8f0 !important;
+}

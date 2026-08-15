@@ -25,12 +25,13 @@ export function ModuleFilterBar({
   onSubmit,
 }: ModuleFilterBarProps) {
   return (
-    <form className="filter-bar responsive-filters" onSubmit={onSubmit}>
+    <form className="filter-bar course-filter-bar" onSubmit={onSubmit}>
       <SearchInput
         aria-label={strings.searchAriaLabel}
         placeholder={strings.searchPlaceholder}
         value={search}
         onChange={onSearchChange}
+        className="course-filter-search"
       />
       <SearchableSelect
         ariaLabel={strings.typeFilter.ariaLabel}

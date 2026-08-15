@@ -295,21 +295,32 @@ export function ManualQuestionForm({
             </div>
             {isReading1a && <p className="hint">{t.boldSelectionHint}</p>}
             {isSpeaking && <p className="hint">{speakingPromptHint}</p>}
-            <textarea
-              id="module-question-prompt"
-              ref={promptRef}
-              rows={isListening1 ? 2 : 4}
-              value={manual.prompt}
-              onChange={(event) => {
-                onManualChange({ ...manual, prompt: event.target.value });
-                if (boldError && /\*\*(.+?)\*\*/.test(event.target.value)) {
-                  setBoldError(false);
-                }
-              }}
-              placeholder={isSpeaking ? speakingPromptPlaceholder : isListening1 ? "Question 1" : (part.answer_constraints.inline_marker_required ? t.inlinePromptPlaceholder : t.promptPlaceholder)}
-              style={boldError ? { borderColor: "var(--danger, #ef4444)", boxShadow: "0 0 0 1px var(--danger, #ef4444)" } : undefined}
-              required
-            />
+            {part.section_type === "writing" || part.part_code.startsWith("writing_") ? (
+              <RichTextEditor
+                id="module-question-prompt"
+                rows={6}
+                value={manual.prompt}
+                onChange={(nextPrompt) => onManualChange({ ...manual, prompt: nextPrompt })}
+                placeholder={t.promptPlaceholder}
+                required
+              />
+            ) : (
+              <textarea
+                id="module-question-prompt"
+                ref={promptRef}
+                rows={isListening1 ? 2 : 4}
+                value={manual.prompt}
+                onChange={(event) => {
+                  onManualChange({ ...manual, prompt: event.target.value });
+                  if (boldError && /\*\*(.+?)\*\*/.test(event.target.value)) {
+                    setBoldError(false);
+                  }
+                }}
+                placeholder={isSpeaking ? speakingPromptPlaceholder : isListening1 ? "Question 1" : (part.answer_constraints.inline_marker_required ? t.inlinePromptPlaceholder : t.promptPlaceholder)}
+                style={boldError ? { borderColor: "var(--danger, #ef4444)", boxShadow: "0 0 0 1px var(--danger, #ef4444)" } : undefined}
+                required
+              />
+            )}
             {isReading1a && boldError && (
               <p className="error-text" style={{ marginTop: "4px", fontSize: "12.5px", fontWeight: 500 }}>
                 {t.errors.boldRequired}

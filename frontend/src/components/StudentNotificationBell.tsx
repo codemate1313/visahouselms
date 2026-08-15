@@ -108,17 +108,25 @@ export function NotificationBell({
     setPanelVisible(true);
   }, []);
 
-  const unread = notifications.filter((notification) => !notification.read_at);
+  const [filterTab, setFilterTab] = useState<"all" | "unread" | "read">("all");
 
-  // Pinned first (newest pin on top), then newest-first — same ordering the
-  // server returns, re-applied client-side so an optimistic pin/unpin
-  // reorders immediately instead of waiting on the next poll. This has to
-  // happen before the slice below, or a just-pinned older notification could
-  // still fall outside the popover's visible window.
+  const unread = notifications.filter((notification) => !notification.read_at);
+  const read = notifications.filter((notification) => Boolean(notification.read_at));
+
+  const filteredNotifications = useMemo(() => {
+    if (filterTab === "unread") {
+      return notifications.filter((n) => !n.read_at);
+    }
+    if (filterTab === "read") {
+      return notifications.filter((n) => Boolean(n.read_at));
+    }
+    return notifications;
+  }, [notifications, filterTab]);
+
   const pinnableItems = useMemo<PinnableNotification[]>(() => {
     const byRecency = (a: StudentNotification, b: StudentNotification) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    return [...notifications]
+    return [...filteredNotifications]
       .sort((a, b) => {
         if (a.pinned_at && b.pinned_at) return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
         if (a.pinned_at) return -1;
@@ -127,7 +135,7 @@ export function NotificationBell({
       })
       .slice(0, VISIBLE_COUNT)
       .map((notification) => ({ ...notification, pinned: Boolean(notification.pinned_at) }));
-  }, [notifications]);
+  }, [filteredNotifications]);
 
   async function markRead(notification: StudentNotification) {
     if (notification.read_at) return;
@@ -224,6 +232,30 @@ export function NotificationBell({
             )}
           </div>
 
+          <div className="student-notification-tabs">
+            <button
+              type="button"
+              className={`student-notification-tab${filterTab === "all" ? " is-active" : ""}`}
+              onClick={() => setFilterTab("all")}
+            >
+              All ({notifications.length})
+            </button>
+            <button
+              type="button"
+              className={`student-notification-tab${filterTab === "unread" ? " is-active" : ""}`}
+              onClick={() => setFilterTab("unread")}
+            >
+              Unread ({unread.length})
+            </button>
+            <button
+              type="button"
+              className={`student-notification-tab${filterTab === "read" ? " is-active" : ""}`}
+              onClick={() => setFilterTab("read")}
+            >
+              Read ({read.length})
+            </button>
+          </div>
+
           <div className="student-notification-list">
 
             {loading ? (
@@ -235,8 +267,20 @@ export function NotificationBell({
               </div>
             ) : pinnableItems.length === 0 ? (
               <div className="student-notification-state">
-                <strong>No notifications</strong>
-                <p>{eyebrow}. You are all caught up.</p>
+                <strong>
+                  {filterTab === "unread"
+                    ? "No unread notifications"
+                    : filterTab === "read"
+                    ? "No read notifications"
+                    : "No notifications"}
+                </strong>
+                <p>
+                  {filterTab === "unread"
+                    ? "You have read all your notifications."
+                    : filterTab === "read"
+                    ? "You have no read notifications yet."
+                    : `${eyebrow}. You are all caught up.`}
+                </p>
               </div>
             ) : (
               <PinList
@@ -250,7 +294,10 @@ export function NotificationBell({
                   >
                     <Icon name="notifications" className="student-notification-item-icon" />
                     <span className="student-notification-item-content">
-                      <strong>{notification.title}</strong>
+                      <span className="student-notification-item-title-row">
+                        <strong>{notification.title}</strong>
+                        {!notification.read_at && <span className="student-notification-unread-dot" title="Unread" />}
+                      </span>
                       <span className="student-notification-message">
                         {notification.message}
                         {scoreLabel(notification) ? ` Score ${scoreLabel(notification)}.` : ""}

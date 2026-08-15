@@ -1075,7 +1075,7 @@ export function ModuleEditor() {
             {isEditable && manual && !usesTaskComposer && !partIsFull && (
               <div className="vh-entry-mode-wrapper">
                 <div className="module-entry-tabbed-content">
-                  {questionEntryMode === "manual" ? (
+                  {questionEntryMode === "manual" || selectedPart.section_type === "writing" || selectedPart.part_code.startsWith("writing_") ? (
                     <ManualQuestionForm
                       moduleId={module.id}
                       examiner={examiner}

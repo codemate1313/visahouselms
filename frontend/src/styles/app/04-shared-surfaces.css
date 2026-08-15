@@ -948,13 +948,15 @@
   padding: 16px;
   border: 1px solid var(--border);
   border-radius: 9px;
-  background: #fafafa;
+  background: var(--surface-subtle, #f8fafc);
+  color: var(--text);
   opacity: 0.68;
 }
 
 .preview-question.selected {
-  border-color: #99d5ce;
-  background: white;
+  border-color: var(--primary, #b91c2b);
+  background: var(--surface, #ffffff);
+  color: var(--text);
   opacity: 1;
 }
 
@@ -992,6 +994,10 @@
   padding: 15px;
   border: 1px solid var(--border);
   border-radius: 9px;
+}
+
+.saved-question h3 {
+  white-space: pre-line;
 }
 
 .saved-question.saved-cloze-passage {
@@ -2604,8 +2610,15 @@
    for one glyph, and it should be the one that names the destination. */
 .sidebar-item-external-icon {
   margin-left: auto;
-  opacity: 0.5;
+  opacity: 0.75;
   flex-shrink: 0;
+}
+
+.sidebar-item-external-icon path,
+.sidebar-item-external-icon line,
+.sidebar-item-external-icon polyline {
+  stroke: currentColor !important;
+  opacity: 1 !important;
 }
 
 .huge-sidebar.is-collapsed .sidebar-item-external-icon {

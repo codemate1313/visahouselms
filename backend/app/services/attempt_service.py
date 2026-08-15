@@ -38,9 +38,8 @@ from app.models.user import User
 from app.models.user_session import UserSession
 from app.services import cefr_service
 
-# Small buffer so a slow network round-trip near the deadline doesn't cost
-# the student their last answer - the server clock is still authoritative.
-EXPIRY_BUFFER_MINUTES = 2
+# Exact expiration matching the module's configured duration.
+EXPIRY_BUFFER_MINUTES = 0
 # The countdown is the candidate's answering time. Anything the system spends on
 # their behalf - the examiner avatar speaking a prompt, a recording uploading -
 # is credited back so it does not eat that time. Credits are keyed per event and
@@ -510,6 +509,12 @@ def get_student_view(
         db.add(attempt)
         db.commit()
     reveal = attempt.status in (ATTEMPT_GRADING, ATTEMPT_GRADED)
+    effective_expires_at = attempt.expires_at
+    if attempt.started_at and attempt.module and attempt.module.duration_minutes:
+        max_expiry = attempt.started_at + timedelta(minutes=attempt.module.duration_minutes)
+        if attempt.expires_at > max_expiry:
+            effective_expires_at = max_expiry
+
     return {
         "id": attempt.id,
         "module_id": attempt.module_id,
@@ -527,7 +532,7 @@ def get_student_view(
         "security_last_heartbeat_at": _utc_out(attempt.security_last_heartbeat_at),
         "security_risk_score": attempt.security_risk_score,
         "started_at": _utc_out(attempt.started_at),
-        "expires_at": _utc_out(attempt.expires_at),
+        "expires_at": _utc_out(effective_expires_at),
         "submitted_at": _utc_out(attempt.submitted_at),
         "raw_score": str(attempt.raw_score) if attempt.raw_score is not None else None,
         "max_score": str(attempt.max_score) if attempt.max_score is not None else None,

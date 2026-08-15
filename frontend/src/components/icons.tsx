@@ -76,8 +76,7 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
   globe: (
     <>
       <circle cx="12" cy="12" r="10" />
-      <line x1="2" y1="12" x2="22" y2="12" />
-      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
     </>
   ),
   microphone: (
@@ -95,12 +94,7 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <line x1="15" y1="4" x2="15" y2="20" />
     </>
   ),
-  arrowLeft: (
-    <>
-      <line x1="19" y1="12" x2="5" y2="12" />
-      <polyline points="12 19 5 12 12 5" />
-    </>
-  ),
+  arrowLeft: <path d="M19 12H5M12 19l-7-7 7-7" />,
   eye: (
     <>
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -263,8 +257,8 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
   ),
   search: (
     <>
-      <circle cx="11" cy="11" r="7" />
-      <path d="M20 20l-4.5-4.5" />
+      <circle cx="11" cy="11" r="7.5" />
+      <path d="m21 21-4.3-4.3" />
     </>
   ),
   // Pin Icon (pushpin, used by the pinnable notification list)
@@ -509,24 +503,9 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <path d="M18 6L6 18M6 6l12 12" />
     </>
   ),
-  arrowRight: (
-    <>
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <polyline points="12 5 19 12 12 19" />
-    </>
-  ),
-  arrowUp: (
-    <>
-      <line x1="12" y1="19" x2="12" y2="5" />
-      <polyline points="5 12 12 5 19 12" />
-    </>
-  ),
-  arrowDown: (
-    <>
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <polyline points="19 12 12 19 5 12" />
-    </>
-  ),
+  arrowRight: <path d="M5 12h14M12 5l7 7-7 7" />,
+  arrowUp: <path d="M12 19V5M5 12l7-7 7 7" />,
+  arrowDown: <path d="M12 5v14M19 12l-7 7-7-7" />,
   history: (
     <>
       <path d="M3 12a9 9 0 1 0 3-6.7" />

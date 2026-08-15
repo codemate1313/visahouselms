@@ -80,15 +80,19 @@ export function ImportReviewPanel({
             <label className="preview-selector">
               <Checkbox checked={selectedImports.has(index)} onChange={() => toggleImport(index)} /> {t.includeItem(index + 1)}
             </label>
-            <label>{t.typeLabel}</label>
-            <SearchableSelect
-              options={allowedTypes.map((type) => ({ value: type, label: questionLabels[type] }))}
-              value={question.question_type}
-              onChange={(value) => onUpdatePreview(index, { question_type: String(value) as QuestionType })}
-              searchable={false}
-              className="form-dropdown-select"
-              ariaLabel={t.typeAriaLabel(index + 1)}
-            />
+            {allowedTypes.length > 1 && (
+              <>
+                <label>{t.typeLabel}</label>
+                <SearchableSelect
+                  options={allowedTypes.map((type) => ({ value: type, label: questionLabels[type] }))}
+                  value={question.question_type}
+                  onChange={(value) => onUpdatePreview(index, { question_type: String(value) as QuestionType })}
+                  searchable={false}
+                  className="form-dropdown-select"
+                  ariaLabel={t.typeAriaLabel(index + 1)}
+                />
+              </>
+            )}
             <label>{t.promptLabel}</label>
             <textarea rows={3} value={question.prompt} onChange={(event) => onUpdatePreview(index, { prompt: event.target.value })} />
             {!ANSWER_FREE_TYPES.has(question.question_type) && (

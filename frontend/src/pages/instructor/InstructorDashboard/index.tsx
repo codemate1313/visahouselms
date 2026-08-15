@@ -59,9 +59,10 @@ export function InstructorDashboard() {
 
       <div className="workspace-grid">
         <ModuleAuthoringPanel
-          skillModuleCount={
-            summary.content.reading + summary.content.listening + summary.content.writing + summary.content.speaking
-          }
+          readingCount={summary.content.reading}
+          listeningCount={summary.content.listening}
+          writingCount={summary.content.writing}
+          speakingCount={summary.content.speaking}
           fullMockCount={summary.content.full_mock}
           finalTestCount={summary.content.final_test}
           audioCount={summary.content.audio}

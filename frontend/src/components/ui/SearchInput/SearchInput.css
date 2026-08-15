@@ -63,10 +63,19 @@
   color: #e2e8f0;
 }
 
+[data-theme="dark"] .ui-search-input-icon {
+  color: #94a3b8 !important;
+  stroke: currentColor !important;
+}
+
 [data-theme="dark"] .ui-search-input input:focus {
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--primary);
   color: #f7f7fa;
+}
+
+[data-theme="dark"] .ui-search-input input:focus ~ .ui-search-input-icon {
+  color: #e2e8f0 !important;
 }
 
 [data-theme="dark"] .ui-search-input-clear:hover {

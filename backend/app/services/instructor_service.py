@@ -315,7 +315,10 @@ def dashboard_summary(db: Session, actor: User) -> dict:
     return {
         "profile_completion": completion,
         "content": {
-            "modules": db.query(ExamModule).filter(ExamModule.created_by_id == actor.id).count(),
+            "modules": db.query(ExamModule).filter(
+                ExamModule.created_by_id == actor.id,
+                ExamModule.status != "archived",
+            ).count(),
             "drafts": db.query(ExamModule).filter(
                 ExamModule.created_by_id == actor.id, ExamModule.status == "draft"
             ).count(),
@@ -325,15 +328,16 @@ def dashboard_summary(db: Session, actor: User) -> dict:
             "questions": db.query(ExamModuleQuestion)
             .join(ExamModuleQuestion.part)
             .join(ExamModule)
-            .filter(ExamModule.created_by_id == actor.id)
+            .filter(ExamModule.created_by_id == actor.id, ExamModule.status != "archived")
             .count(),
             "audio": db.query(ExamModuleAsset)
             .join(ExamModule)
-            .filter(ExamModule.created_by_id == actor.id)
+            .filter(ExamModule.created_by_id == actor.id, ExamModule.status != "archived")
             .count(),
             **{
                 module_type: db.query(ExamModule).filter(
                     ExamModule.created_by_id == actor.id,
+                    ExamModule.status != "archived",
                     ExamModule.module_type == module_type,
                 ).count()
                 for module_type in (

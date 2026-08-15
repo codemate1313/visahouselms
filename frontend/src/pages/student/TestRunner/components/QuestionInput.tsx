@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@/api/client";
 import type { AttemptQuestion, AttemptResponse } from "@/api/types";
-import { Checkbox } from "@/components/ui";
+import { Checkbox, RichTextEditor } from "@/components/ui";
 import { renderBoldText } from "@/utils/boldText";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 
@@ -8,7 +8,6 @@ interface QuestionInputProps {
   index: number;
   question: AttemptQuestion;
   hidePrompt?: boolean;
-  partInstructions?: string | null;
   allowBoldMarkup?: boolean;
   maxAnswerWords?: number;
   saving: boolean;
@@ -21,7 +20,6 @@ export function QuestionInput({
   index,
   question,
   hidePrompt = false,
-  partInstructions,
   allowBoldMarkup = false,
   maxAnswerWords,
   saving,
@@ -53,12 +51,9 @@ export function QuestionInput({
       {!hidePrompt && (
         <div className="test-runner-question-head">
           <span>{t.label(index)}</span>
-          {saving && <span className="hint">{t.saving}</span>}
-        </div>
-      )}
-      {hidePrompt && saving && (
-        <div className="test-runner-question-head" style={{ marginBottom: 8, textAlign: "right" }}>
-          <span className="hint">{t.saving}</span>
+          <span className="hint" style={{ visibility: saving ? "visible" : "hidden", opacity: saving ? 1 : 0, transition: "opacity 0.2s ease" }}>
+            {t.saving}
+          </span>
         </div>
       )}
       {!hidePrompt && !hasInlineBlank && (
@@ -126,23 +121,22 @@ export function QuestionInput({
       )}
 
       {question.question_type === "essay" && (
-        <div>
-          {partInstructions && (
-            <div className="test-runner-instructions" style={{ marginBottom: 14 }}>
-              <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", padding: "2px 7px", borderRadius: 4, background: "color-mix(in srgb, var(--test-accent, var(--primary)) 14%, transparent)", color: "var(--test-accent, var(--primary))", flexShrink: 0 }}>
-                Task Directive
-              </span>
-              <span>{partInstructions}</span>
-            </div>
-          )}
-          <textarea
+        <div className="test-runner-essay-wrapper">
+          <RichTextEditor
             className="test-runner-essay"
-            rows={10}
+            rows={16}
             placeholder="Write your response here..."
             value={textResponse}
-            onChange={(e) => onChange({ text: e.target.value }, true)}
+            onChange={(nextText) => onChange({ text: nextText }, true)}
+            toolbarExtras={
+              <span className="hint" style={{ visibility: saving ? "visible" : "hidden", opacity: saving ? 1 : 0, transition: "opacity 0.2s ease", marginLeft: "auto", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                {t.saving}
+              </span>
+            }
           />
-          <p className="hint">{wordCount} {t.wordsSuffix}</p>
+          <div className="test-runner-essay-footer">
+            <p className="hint">{wordCount} {t.wordsSuffix}</p>
+          </div>
         </div>
       )}
 
