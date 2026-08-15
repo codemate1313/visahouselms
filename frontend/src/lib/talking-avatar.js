@@ -47,9 +47,9 @@ export const DEFAULTS = {
   levels: [0.0, 0.28, 0.60, 1.0],
 
   /* ---- audio -> mouth --------------------------------------------------- */
-  sensitivity: 1.0,   // overall gain on the mouth. >1 = bigger mouth movement
+  sensitivity: 0.85,  // overall gain on the mouth. >1 = bigger mouth movement
   gate: 0.055,        // below this normalised loudness the mouth is CLOSED
-  gamma: 0.72,        // <1 opens the mouth earlier (more lively), >1 = calmer
+  gamma: 0.80,        // <1 opens the mouth earlier (more lively), >1 = calmer
   autoGain: true,     // adapt to quiet or loud recordings automatically
   fftSize: 1024,
 

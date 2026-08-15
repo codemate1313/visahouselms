@@ -209,11 +209,13 @@
   right: 0;
   z-index: 50;
   width: 100%;
-  backdrop-filter: blur(18px) saturate(155%);
-  -webkit-backdrop-filter: blur(18px) saturate(155%);
-  background: #ffffff;
-  border-bottom: 1px solid rgba(14, 13, 16, 0.08);
-  box-shadow: 0 2px 12px rgba(8, 8, 14, 0.04);
+  backdrop-filter: blur(22px) saturate(175%);
+  -webkit-backdrop-filter: blur(22px) saturate(175%);
+  background: linear-gradient(110deg, rgba(255, 255, 255, 0.82), rgba(247, 245, 242, 0.62));
+  border-bottom: 1px solid rgba(14, 13, 16, 0.11);
+  box-shadow:
+    0 12px 34px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
   transform: translateY(0);
   transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.28s ease;
   will-change: transform;

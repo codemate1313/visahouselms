@@ -25,6 +25,11 @@ export interface ExaminerPhotoSet {
 const SONIA: ExaminerPhotoSet = {
   base: "/examiner-avatar",
   options: {
+    // How far the mouth opens. Lower sensitivity caps the peak; higher gamma
+    // means only the loud parts reach the wide-open frame. At 1.0 / 0.72 the
+    // mouth sat in the wide band ~80% of the time, which read as gawping.
+    sensitivity: 0.85,
+    gamma: 0.8,
     // where the mouth sits in the 768px frames, so shaping pivots on it
     mouth: { cx: 359, cy: 401 },
     // measured eye rectangles (only used by the CSS fallback lid; the
