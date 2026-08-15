@@ -31,6 +31,12 @@ class VerifyOtpRequest(BaseModel):
     otp_code: str = Field(min_length=4, max_length=12)
 
 
+class ResendOtpRequest(BaseModel):
+    challenge_id: Optional[str] = Field(default=None, max_length=3000)
+    email: Optional[EmailStr] = None
+    role: Optional[str] = Field(default=None, max_length=80)
+
+
 class RegisterRequest(BaseModel):
     """Public self-registration for direct (B2C) students only - every other
     role in this app is admin-created."""

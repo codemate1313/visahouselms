@@ -165,8 +165,9 @@ def create_google_oauth_state_token(
     )
 
 
-def decode_token(token: str) -> dict:
-    return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+def decode_token(token: str, verify_exp: bool = True) -> dict:
+    options = {} if verify_exp else {"verify_exp": False}
+    return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm], options=options)
 
 
 def is_static_otp_enabled(db: Optional[Session] = None) -> bool:

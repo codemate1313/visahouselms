@@ -9,7 +9,7 @@ import type {
   SupportTicketPriority,
   SupportTicketStatus,
 } from "@/api/types";
-import { Badge, Button, Modal, PageHeader, SearchableSelect, SearchInput, SegmentedControl } from "@/components/ui";
+import { Badge, Button, Modal, SearchableSelect, SearchInput, SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { useToastStore } from "@/store/toastStore";
@@ -327,19 +327,8 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
 
   return (
     <div className="support-ticket-page">
-      <PageHeader
-        appearance="compact"
-        title={isInstituteInbox ? strings.instituteTitle : strings.title}
-        subtitle={isInstituteInbox ? strings.instituteSubtitle : strings.subtitle}
-        actions={
-          <Button variant="secondary" leftIcon={<Icon name="notifications" />} onClick={() => void load()}>
-            Refresh
-          </Button>
-        }
-      />
-
-      {!isInstituteInbox && (
-        <div style={{ margin: "8px 0 12px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", margin: "0 0 16px", flexWrap: "wrap" }}>
+        {!isInstituteInbox ? (
           <SegmentedControl
             className="support-ticket-source-segment"
             ariaLabel="Support request source"
@@ -351,8 +340,11 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
             value={source}
             onChange={(value) => setSource(value as "" | "portal" | "customer")}
           />
-        </div>
-      )}
+        ) : <div />}
+        <Button variant="secondary" leftIcon={<Icon name="notifications" />} onClick={() => void load()}>
+          Refresh
+        </Button>
+      </div>
 
       <div className="filter-bar institutes-filter-bar" style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "16px" }}>
         <div style={{ flex: "1 1 240px", minWidth: "200px" }}>

@@ -565,7 +565,6 @@ h1 {
   border-radius: 4px;
 }
 
-/* Right Form Side */
 .login-form-side {
   padding: 20px 32px 16px;
   display: flex;
@@ -576,6 +575,12 @@ h1 {
   -ms-overflow-style: none;
   will-change: opacity;
   animation: formSideReveal 3000ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.login-form-side.has-otp-view {
+  justify-content: center !important;
+  align-items: center !important;
+  min-height: 100%;
 }
 
 .login-form-side::-webkit-scrollbar {
@@ -654,18 +659,20 @@ h1 {
 .below-password-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 4px;
+  margin-top: 9px;
 }
 
 .inline-forgot-link {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 12.5px;
+  font-weight: 600;
   color: #e11d48;
   text-decoration: none;
+  transition: opacity 0.15s ease;
 }
 
 .inline-forgot-link:hover {
   text-decoration: underline;
+  opacity: 0.85;
 }
 
 .form-group input {
@@ -903,42 +910,382 @@ h1 {
   justify-content: center;
   gap: 10px;
   width: 100%;
-  margin-bottom: 20px;
+  margin: 18px 0 22px 0;
 }
 
 .otp-box-input {
-  width: 44px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border, rgba(148, 163, 184, 0.34));
-  background: var(--surface-muted, rgba(15, 23, 42, 0.72));
-  color: var(--text, #f8fafc);
-  font-size: 20px;
+  width: 50px;
+  height: 58px;
+  border-radius: 14px;
+  border: 1.5px solid #d1d5db;
+  background: #ffffff;
+  color: var(--text, #0f172a);
+  font-size: 24px;
   font-weight: 800;
+  font-family: inherit;
   text-align: center;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.02), inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+[data-theme="dark"] .otp-box-input {
+  background: rgba(15, 23, 42, 0.85);
+  color: var(--text, #f8fafc);
+  border-color: rgba(71, 85, 105, 0.7);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.otp-box-input:hover:not(:disabled):not(:focus) {
+  border-color: #94a3b8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .otp-box-input:hover:not(:disabled):not(:focus) {
+  border-color: rgba(148, 163, 184, 0.6);
+}
+
+.otp-box-input.is-filled {
+  border-color: #475569;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07), inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+[data-theme="dark"] .otp-box-input.is-filled {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(148, 163, 184, 0.7);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .otp-box-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
-  transform: scale(1.05);
+  border-color: var(--primary, #e11d2e) !important;
+  box-shadow: 0 0 0 3.5px rgba(225, 29, 46, 0.18), 0 6px 20px rgba(225, 29, 46, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  transform: translateY(-2px) scale(1.02);
 }
 
-body.has-otp-overlay #root {
-  filter: blur(12px);
-  pointer-events: none;
-  transition: filter 0.25s ease;
+[data-theme="dark"] .otp-box-input:focus {
+  border-color: var(--primary, #e11d2e) !important;
+  box-shadow: 0 0 0 3.5px rgba(225, 29, 46, 0.35), 0 8px 24px rgba(225, 29, 46, 0.25) !important;
 }
 
-.otp-login-backdrop {
-  background: rgba(10, 11, 15, 0.65) !important;
+.otp-box-input.is-expired {
+  border-color: #ef4444;
+  background: #fef2f2;
+  opacity: 0.7;
+}
+
+[data-theme="dark"] .otp-box-input.is-expired {
+  background: rgba(153, 27, 27, 0.2);
+}
+
+/* Premium Inline OTP View Styles */
+.login-otp-inline-view {
+  animation: fadeIn 0.25s ease-out;
+  width: 100%;
+  max-width: 420px;
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.login-otp-inline-view .login-form-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  margin-top: -10px;
+  margin-bottom: 12px;
+}
+
+.login-otp-inline-view .concise-form {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.otp-badge-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(225, 29, 46, 0.12) 0%, rgba(225, 29, 46, 0.04) 100%);
+  color: #e11d2e;
+  margin: 0 auto 16px auto;
+  border: 1.5px solid rgba(225, 29, 46, 0.25);
+  box-shadow: 0 8px 24px rgba(225, 29, 46, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: transform 0.2s ease;
+}
+
+.otp-email-highlight {
+  color: var(--primary, #e11d2e);
+  font-weight: 700;
+  word-break: break-all;
+}
+
+[data-theme="dark"] .otp-email-highlight {
+  color: #fb7185;
+}
+
+.otp-inputs-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.otp-inputs-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 18px auto 22px auto;
+}
+
+.otp-status-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 0 auto 22px auto;
+  width: 100%;
+  text-align: center;
+}
+
+.otp-timer-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 650;
+  font-feature-settings: "tnum";
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+  margin: 0 auto;
+}
+
+[data-theme="dark"] .otp-timer-pill {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(51, 65, 85, 0.8);
+  color: #cbd5e1;
+}
+
+.otp-timer-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.6;
+  }
+}
+
+.otp-timer-pill.is-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+[data-theme="dark"] .otp-timer-pill.is-warning {
+  background: rgba(180, 83, 9, 0.2);
+  border-color: rgba(217, 119, 6, 0.4);
+  color: #fbbf24;
+}
+
+.otp-timer-pill.is-warning .otp-timer-pulse-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+
+.otp-timer-pill.is-expired {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c2b;
+}
+
+[data-theme="dark"] .otp-timer-pill.is-expired {
+  background: rgba(185, 28, 43, 0.2);
+  border-color: rgba(225, 29, 46, 0.4);
+  color: #fda4af;
+}
+
+.otp-timer-pill.is-expired .otp-timer-pulse-dot {
+  background: #e11d2e;
+  box-shadow: 0 0 0 2px rgba(225, 29, 46, 0.25);
+  animation: none;
+}
+
+.otp-resend-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  margin: 0 auto;
+}
+
+.otp-resend-prompt {
+  color: #64748b;
+  font-size: 13px;
+}
+
+[data-theme="dark"] .otp-resend-prompt {
+  color: #94a3b8;
+}
+
+.otp-resend-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #64748b;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: not-allowed;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  line-height: 1;
+}
+
+[data-theme="dark"] .otp-resend-pill-btn {
+  background: rgba(51, 65, 85, 0.4);
+  border-color: rgba(71, 85, 105, 0.5);
+  color: #94a3b8;
+}
+
+.otp-resend-pill-btn.is-active {
+  background: rgba(225, 29, 46, 0.08);
+  border-color: rgba(225, 29, 46, 0.22);
+  color: #e11d2e;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(225, 29, 46, 0.05);
+}
+
+[data-theme="dark"] .otp-resend-pill-btn.is-active {
+  background: rgba(225, 29, 46, 0.16);
+  border-color: rgba(225, 29, 46, 0.4);
+  color: #fda4af;
+}
+
+.otp-resend-pill-btn.is-active:hover {
+  background: rgba(225, 29, 46, 0.14);
+  border-color: rgba(225, 29, 46, 0.35);
+  color: #b91c2b;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(225, 29, 46, 0.15);
+}
+
+[data-theme="dark"] .otp-resend-pill-btn.is-active:hover {
+  background: rgba(225, 29, 46, 0.25);
+  color: #ffffff;
+}
+
+.otp-inline-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin: 4px auto 0 auto;
+}
+
+.otp-btn-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border, #cbd5e1);
+  background: var(--surface, #ffffff);
+  color: var(--text, #334155);
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .otp-btn-back {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.otp-btn-back:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] .otp-btn-back:hover:not(:disabled) {
+  background: #334155;
+  border-color: #475569;
+  color: #ffffff;
+}
+
+.otp-btn-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  border-radius: 12px !important;
+  font-size: 14.5px !important;
+  font-weight: 750 !important;
+  margin-top: 0 !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.otp-btn-submit.is-ready {
+  background: linear-gradient(135deg, #e11d2e 0%, #b91c2b 100%) !important;
+  box-shadow: 0 8px 22px rgba(225, 29, 46, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-1px);
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+
+.otp-btn-submit.is-ready:hover:not(:disabled) {
+  background: linear-gradient(135deg, #eb2738 0%, #c41e2e 100%) !important;
+  box-shadow: 0 10px 28px rgba(225, 29, 46, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px);
 }
 
 .otp-error-box {
   width: 100%;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .login-footer-links {

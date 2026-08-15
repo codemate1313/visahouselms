@@ -19,17 +19,17 @@
   gap: 8px;
   margin: 0;
   padding: 0 2px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-muted, #94a3b8);
 }
 
 .pin-list-label svg {
-  width: 14px;
-  height: 14px;
-  color: var(--primary);
+  width: 13px;
+  height: 13px;
+  color: #e11d2e;
 }
 
 .pin-list-count {
@@ -39,31 +39,29 @@
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: var(--radius-pill);
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0;
-  color: var(--text-muted);
+  color: var(--text-muted, #64748b);
 }
 
-/* The pinned count reads as a small brand badge — same solid-red/white
-   contrast the app's sidebar and unread-count badge already use — so
-   "Pinned" registers as the notable, branded group at a glance. */
 .pin-list-group-pinned .pin-list-count {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
+  background: #e11d2e;
+  border-color: #e11d2e;
+  color: #ffffff;
 }
 
 .pin-list-empty-hint {
   margin: 0;
   padding: 14px 16px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-lg);
-  font-size: 13px;
-  color: var(--text-muted);
+  border: 1px dashed rgba(203, 213, 225, 0.8);
+  border-radius: 12px;
+  font-size: 12.5px;
+  color: var(--text-muted, #94a3b8);
+  text-align: center;
 }
 
 .pin-list-rows {
@@ -72,8 +70,9 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  /* Rows sat almost flush; a pinned row's accent edge needs air around it. */
   gap: 10px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .pin-list-row {
@@ -81,55 +80,42 @@
   display: flex;
   align-items: stretch;
   gap: 6px;
-  /* Flip animates transforms; keeping rows on their own layer avoids
-     sub-pixel text shimmer while a row is in flight. */
+  max-width: 100%;
+  overflow-x: hidden;
   will-change: transform;
 }
 
 .pin-list-row > :first-child {
   flex: 1;
   min-width: 0;
-  /* Gutter the pin sits in. Sized to the button (30px) plus its inset and a
-     real gap, so the timestamp never butts up against the pin. */
-  padding-right: 52px !important;
+  max-width: 100%;
+  padding-right: 48px !important;
 }
 
-/* Pinned rows read as "stuck to the top" with an accent edge. */
-.pin-list-group-pinned .pin-list-row > :first-child {
-  border-color: var(--primary-soft) !important;
-  box-shadow: inset 3px 0 0 var(--primary) !important;
-}
-
-/* Anchored to the top of the row, not its middle.
-   Vertically centring it meant that on a row with a wrapped title and a
-   two-line message the pin floated into the middle of the text block and read
-   as sitting on top of it. Top-aligned, it lines up with the timestamp and
-   stays out of the copy no matter how many lines the row grows to. */
 .pin-list-pin {
   position: absolute !important;
-  right: 10px !important;
-  top: 10px !important;
+  right: 12px !important;
+  top: 12px !important;
   transform: none !important;
   z-index: 5 !important;
-  width: 30px !important;
-  height: 30px !important;
+  width: 28px !important;
+  height: 28px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   padding: 0 !important;
   border: 1px solid transparent !important;
-  border-radius: var(--radius-sm) !important;
+  border-radius: 8px !important;
   background: transparent !important;
-  color: var(--text-muted) !important;
+  color: var(--text-muted, #94a3b8) !important;
   cursor: pointer !important;
   opacity: 0;
-  transition: opacity 0.18s ease, color 0.18s ease, background 0.18s ease,
-    border-color 0.18s ease, transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .pin-list-pin svg {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
 }
 
 .pin-list-row:hover .pin-list-pin,
@@ -138,12 +124,6 @@
   opacity: 1;
 }
 
-/* A device that cannot hover cannot reveal this.
- *
- * The pin was invisible until its row was hovered, which on a phone or tablet
- * is never - the button was still there and still tappable, but nothing told
- * you so, which made pinning unreachable in practice. Where hover does not
- * exist, the pin is simply always shown. */
 @media (hover: none) {
   .pin-list-pin {
     opacity: 1;
@@ -151,29 +131,25 @@
 }
 
 .pin-list-pin:hover:not(:disabled) {
-  background: var(--surface-muted) !important;
-  border-color: var(--border) !important;
-  color: var(--text) !important;
+  background: rgba(148, 163, 184, 0.12) !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
+  color: var(--text, #0f172a) !important;
+}
+
+.pin-list-pin.is-pinned {
+  color: #e11d2e !important;
+  background: rgba(225, 29, 46, 0.08) !important;
+  border-color: rgba(225, 29, 46, 0.2) !important;
+}
+
+.pin-list-pin.is-pinned:hover:not(:disabled) {
+  background: rgba(225, 29, 46, 0.14) !important;
+  border-color: rgba(225, 29, 46, 0.3) !important;
+  color: #b91c1c !important;
 }
 
 .pin-list-pin:active:not(:disabled) {
   transform: scale(0.94) !important;
-}
-
-/* Pinned reads as a tinted brand chip rather than a solid red block.
-   The previous solid fill plus coloured glow out-weighed the notification it
-   belonged to - in a list row the pin is a marker, not the primary action, and
-   the accent bar down the left edge of a pinned row already carries the state. */
-.pin-list-pin.is-pinned {
-  color: var(--primary);
-  background: var(--primary-soft);
-  border-color: color-mix(in srgb, var(--primary) 28%, transparent);
-}
-
-.pin-list-pin.is-pinned:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--primary) 20%, transparent) !important;
-  border-color: color-mix(in srgb, var(--primary) 45%, transparent) !important;
-  color: var(--primary) !important;
 }
 
 .pin-list-pin:disabled {

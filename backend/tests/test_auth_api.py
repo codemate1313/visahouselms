@@ -333,6 +333,51 @@ class AuthApiTestCase(unittest.TestCase):
         self.assertEqual(res_expired.status_code, 400)
         self.assertIn("Invalid or expired reset link", res_expired.json().get("detail", ""))
 
+    def test_resend_otp_generates_new_challenge(self):
+        user = self._make_user("resend_otp_user@example.com", STUDENT)
+        login_res = self.client.post(
+            "/auth/login",
+            json={"email": "resend_otp_user@example.com", "password": PASSWORD, "role": STUDENT},
+        )
+        self.assertEqual(login_res.status_code, 200)
+        orig_challenge = login_res.json().get("otp_challenge_id")
+        self.assertIsNotNone(orig_challenge)
+
+        resend_res = self.client.post(
+            "/auth/resend-otp",
+            json={"challenge_id": orig_challenge},
+        )
+        self.assertEqual(resend_res.status_code, 200)
+        resend_data = resend_res.json()
+        self.assertTrue(resend_data.get("otp_required"))
+        self.assertIsNotNone(resend_data.get("otp_challenge_id"))
+
+    def test_login_otp_challenge_expires_after_10_minutes(self):
+        import jwt
+        from datetime import datetime, timezone, timedelta
+
+        user = self._make_user("otp_expired_user@example.com", STUDENT)
+        expired_payload = {
+            "sub": str(user.id),
+            "role": user.role.name,
+            "institute_id": None,
+            "type": "login_otp",
+            "iat": datetime.now(timezone.utc) - timedelta(minutes=11),
+            "exp": datetime.now(timezone.utc) - timedelta(minutes=1),
+            "jti": "test-expired-jti-123",
+            "auth_method": "password",
+            "remember_me": True,
+            "otp_hash": "dummy_hash",
+        }
+        expired_token = jwt.encode(expired_payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+        verify_res = self.client.post(
+            "/auth/verify-otp",
+            json={"challenge_id": expired_token, "otp_code": "123456"},
+        )
+        self.assertEqual(verify_res.status_code, 401)
+        self.assertIn("expired", verify_res.json().get("detail", "").lower())
+
 
 if __name__ == "__main__":
     unittest.main()

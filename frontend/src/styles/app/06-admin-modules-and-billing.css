@@ -1806,25 +1806,36 @@
   box-sizing: border-box !important;
   color: var(--text) !important;
   background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 6px !important;
+  border: 1px solid rgba(203, 213, 225, 0.5) !important;
+  border-radius: 50% !important;
   line-height: 1 !important;
-  box-shadow: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
   transform: none !important;
   cursor: pointer;
-  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-theme="dark"] .portal-back-button {
+  border-color: rgba(71, 85, 105, 0.4) !important;
+  background: rgba(30, 41, 59, 0.6) !important;
 }
 
 .portal-back-button:hover {
-  color: var(--primary) !important;
-  background: var(--portal-icon-bg) !important;
-  border-color: color-mix(in srgb, var(--portal-icon-color) 40%, var(--border)) !important;
-  box-shadow: none !important;
-  transform: none !important;
+  color: #e11d2e !important;
+  background: rgba(225, 29, 46, 0.06) !important;
+  border-color: rgba(225, 29, 46, 0.25) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  transform: translateX(-1px) !important;
+}
+
+[data-theme="dark"] .portal-back-button:hover {
+  color: #f87171 !important;
+  background: rgba(225, 29, 46, 0.15) !important;
+  border-color: rgba(225, 29, 46, 0.4) !important;
 }
 
 .portal-back-button:focus-visible {
-  outline: 2px solid var(--portal-icon-color);
+  outline: 2px solid #e11d2e;
   outline-offset: 2px;
 }
 
@@ -2275,6 +2286,106 @@
   box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4) !important;
 }
 
+/* Full Right-Side Notification Drawer (GSAP Side Sheet) */
+.student-notification-drawer-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: auto;
+}
+
+.student-notification-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1;
+}
+
+[data-theme="dark"] .student-notification-drawer-backdrop {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.student-notification-drawer-panel {
+  position: relative;
+  z-index: 2;
+  width: min(520px, 100vw);
+  height: 100vh;
+  height: 100dvh;
+  background: var(--surface, #ffffff);
+  color: var(--text, #0f172a);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -12px 0 45px rgba(15, 23, 42, 0.18), -2px 0 8px rgba(0, 0, 0, 0.04);
+  border-left: 1px solid rgba(226, 232, 240, 0.9);
+  overflow: hidden;
+  will-change: transform;
+}
+
+[data-theme="dark"] .student-notification-drawer-panel {
+  background: #0f172a;
+  color: #f8fafc;
+  border-left: 1px solid rgba(51, 65, 85, 0.8);
+  box-shadow: -12px 0 50px rgba(0, 0, 0, 0.6);
+}
+
+.student-notification-drawer-footer {
+  padding: 14px 18px 18px;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  background: var(--surface-muted, #f8fafc);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .student-notification-drawer-footer {
+  background: #090d16;
+  border-top-color: rgba(51, 65, 85, 0.6);
+}
+
+.student-notification-drawer-panel .student-notification-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden !important;
+  padding: 16px 8px 16px 16px;
+  max-height: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+.student-notification-drawer-panel .student-notification-list::-webkit-scrollbar,
+.student-notification-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.student-notification-drawer-panel .student-notification-list::-webkit-scrollbar-track,
+.student-notification-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.student-notification-drawer-panel .student-notification-list::-webkit-scrollbar-thumb,
+.student-notification-list::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+.student-notification-drawer-panel .student-notification-list::-webkit-scrollbar-thumb:hover,
+.student-notification-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+
+[data-theme="dark"] .student-notification-drawer-panel .student-notification-list::-webkit-scrollbar-thumb,
+[data-theme="dark"] .student-notification-list::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+}
+
+[data-theme="dark"] .student-notification-drawer-panel .student-notification-list::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] .student-notification-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+
 .student-notification-popover {
   position: absolute;
   top: calc(100% + 12px);
@@ -2283,17 +2394,17 @@
   width: min(430px, calc(100vw - 28px));
   max-height: calc(100vh - 110px);
   max-height: calc(100dvh - 110px);
-  overflow: hidden;
-  color: #20242c;
-  background: var(--surface) !important;
-  /* --surface is rgba(255,255,255,.9) in light theme, so without a backdrop
-     filter the dashboard cards read straight through this panel. */
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid #e7e9ef;
-  border-radius: 14px;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.16);
+  overflow-y: auto;
+  overflow-x: hidden !important;
+  color: var(--text, #1f2937);
+  background: var(--surface, #ffffff) !important;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18), 0 4px 16px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   pointer-events: auto;
+  transform-origin: top right;
 }
 
 .student-notification-popover::before {
@@ -2305,28 +2416,239 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 15px 16px;
-  border-bottom: 1px solid #eceef3;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.student-notification-header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .student-notification-header h2 {
   margin: 0;
-  color: #1f232b;
+  color: var(--text, #1f232b);
   font-size: 18px;
-  font-weight: 820;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
+.student-notification-unread-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(225, 29, 46, 0.1);
+  border: 1px solid rgba(225, 29, 46, 0.2);
+  color: #e11d2e;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.student-notification-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.student-notification-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #64748b;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
+  padding: 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.student-notification-close-btn svg {
+  pointer-events: none;
+}
+
+.student-notification-close-btn:hover {
+  background: rgba(225, 29, 46, 0.12);
+  border-color: rgba(225, 29, 46, 0.3);
+  color: #e11d2e;
+  transform: rotate(90deg) scale(1.06);
+}
+
+/* Ultra-Premium Full-Width Segmented Pill Filter Track with Sliding Indicator */
+.student-notification-filter-bar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 16px 8px;
+  box-sizing: border-box;
+  background: transparent !important;
+  border-bottom: none !important;
+}
+
+[data-theme="dark"] .student-notification-filter-bar {
+  background: transparent !important;
+  border-bottom: none !important;
+}
+
+.student-notification-segmented-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 3px;
+  background: rgba(241, 245, 249, 0.95);
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-sizing: border-box;
+  gap: 0;
+}
+
+[data-theme="dark"] .student-notification-segmented-track {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(51, 65, 85, 0.75);
+}
+
+.student-notification-tab-indicator {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 3);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #e11d2e 0%, #b91c1c 100%);
+  box-shadow: 0 2px 8px rgba(185, 28, 28, 0.35), 0 1px 2px rgba(0, 0, 0, 0.08);
+  z-index: 1;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+[data-theme="dark"] .student-notification-tab-indicator {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.45);
+}
+
+.student-notification-filter-tab {
+  position: relative !important;
+  z-index: 2 !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 7px 8px !important;
+  border-radius: 999px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  color: #64748b !important;
+  background: transparent !important;
+  border: 0 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: color 0.22s ease !important;
+  user-select: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.student-notification-filter-tab:hover {
+  color: #0f172a !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.student-notification-filter-tab.is-active {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.student-notification-tab-label {
+  display: inline-block;
+  letter-spacing: -0.01em;
+}
+
+.student-notification-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(148, 163, 184, 0.2);
+  color: #64748b;
+  transition: all 0.22s ease;
+}
+
+.student-notification-filter-tab:hover .student-notification-tab-badge {
+  color: #0f172a;
+}
+
+.student-notification-filter-tab.is-active .student-notification-tab-badge {
+  background: rgba(255, 255, 255, 0.26) !important;
+  color: #ffffff !important;
+}
+
+.student-notification-tab-badge.has-unread {
+  background: rgba(225, 29, 46, 0.16);
+  color: #e11d2e;
+}
+
+.student-notification-filter-tab.is-active .student-notification-tab-badge.has-unread {
+  background: rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .student-notification-filter-tab {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .student-notification-filter-tab:hover {
+  background: transparent !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .student-notification-filter-tab.is-active {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .student-notification-tab-badge {
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .student-notification-filter-tab:hover .student-notification-tab-badge {
+  color: #f8fafc;
+}
 
 .student-notification-list {
   max-height: min(462px, calc(100vh - 230px));
   max-height: min(462px, calc(100dvh - 230px));
   overflow-y: auto;
+  overflow-x: hidden !important;
   overscroll-behavior: contain;
   display: grid;
-  padding: 0 16px;
+  padding: 0 10px 0 16px;
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
 }
 
 /* PinList sits inside the compact popover rather than a full page section —
@@ -2334,14 +2656,20 @@
 .student-notification-list .pin-list {
   gap: 12px;
   padding: 10px 0 6px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .student-notification-list .pin-list-rows {
-  gap: 0;
+  gap: 8px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .student-notification-list .pin-list-row {
   gap: 2px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .student-notification-list .pin-list-empty-hint {
@@ -2351,100 +2679,265 @@
 
 .student-notification-read-all {
   min-height: auto;
-  padding: 4px 8px;
-  color: var(--portal-brand-color, #4338ca);
-  background: transparent;
-  border: 0;
-  border-radius: 4px;
-  box-shadow: none;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 5px 12px !important;
+  color: #b91c1c !important;
+  background: rgba(225, 29, 46, 0.08) !important;
+  border: 1px solid rgba(225, 29, 46, 0.18) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  white-space: nowrap !important;
+}
+
+.student-notification-read-all svg {
+  width: 12px !important;
+  height: 12px !important;
+  flex-shrink: 0 !important;
 }
 
 .student-notification-read-all:hover {
-  color: var(--portal-brand-color, #3730a3) !important;
-  background: var(--surface-hover, #f3f4f6) !important;
-  box-shadow: none !important;
-  transform: none;
+  color: #ffffff !important;
+  background: #b91c1c !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 2px 8px rgba(185, 28, 28, 0.25) !important;
+  transform: translateY(-1px) !important;
 }
 
 .student-notification-item {
+  position: relative !important;
   display: flex !important;
   align-items: flex-start !important;
-  gap: 12px !important;
+  gap: 14px !important;
   width: 100% !important;
-  padding: 13px 14px 14px !important;
+  max-width: 100% !important;
+  padding: 16px 12px !important;
   background: transparent !important;
   border: none !important;
-  border-radius: 16px !important;
-  color: var(--text) !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7) !important;
+  border-radius: 12px !important;
+  color: var(--text, #0f172a) !important;
   text-align: left !important;
   cursor: pointer !important;
-  transition: all 0.18s ease !important;
+  transition: background 0.15s ease !important;
   box-shadow: none !important;
   margin: 0 !important;
   box-sizing: border-box !important;
+  overflow: hidden !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+[data-theme="dark"] .student-notification-item {
+  border-bottom-color: rgba(51, 65, 85, 0.5) !important;
+  color: #f8fafc !important;
 }
 
 .student-notification-item:hover {
-  background: var(--surface-muted) !important;
+  background: rgba(241, 245, 249, 0.7) !important;
+}
+
+[data-theme="dark"] .student-notification-item:hover {
+  background: rgba(30, 41, 59, 0.6) !important;
 }
 
 .student-notification-item.is-unread {
-  background: color-mix(in srgb, var(--primary, var(--primary)) 6%, transparent) !important;
+  background: rgba(225, 29, 46, 0.02) !important;
+}
+
+[data-theme="dark"] .student-notification-item.is-unread {
+  background: rgba(225, 29, 46, 0.06) !important;
 }
 
 .student-notification-item.is-unread:hover {
-  background: color-mix(in srgb, var(--primary, var(--primary)) 12%, transparent) !important;
+  background: rgba(225, 29, 46, 0.05) !important;
 }
 
-.student-notification-item-icon {
-  width: 22px !important;
-  height: 22px !important;
-  flex: 0 0 22px !important;
-  color: var(--primary, var(--primary)) !important;
+[data-theme="dark"] .student-notification-item.is-unread:hover {
+  background: rgba(225, 29, 46, 0.1) !important;
+}
+
+.student-notification-item.is-pinned {
+  background: rgba(225, 29, 46, 0.03) !important;
+}
+
+[data-theme="dark"] .student-notification-item.is-pinned {
+  background: rgba(225, 29, 46, 0.08) !important;
+}
+
+/* Avatar squircle + mini badge + unread dot */
+.student-notification-avatar-wrap {
+  position: relative !important;
+  flex-shrink: 0 !important;
   margin-top: 2px !important;
 }
 
+.student-notification-unread-dot {
+  position: absolute !important;
+  top: -2px !important;
+  left: -2px !important;
+  width: 9px !important;
+  height: 9px !important;
+  border-radius: 50% !important;
+  background: #ef4444 !important;
+  border: 2px solid var(--surface, #ffffff) !important;
+  z-index: 3 !important;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6) !important;
+}
+
+[data-theme="dark"] .student-notification-unread-dot {
+  border-color: #0f172a !important;
+}
+
+.student-notification-icon-squircle {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.student-notification-item:hover .student-notification-icon-squircle {
+  transform: scale(1.04) !important;
+}
+
+.student-notification-tile-icon {
+  width: 20px !important;
+  height: 20px !important;
+  color: #ffffff !important;
+}
+
+.student-notification-mini-badge {
+  position: absolute !important;
+  right: -3px !important;
+  bottom: -3px !important;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  border: 2px solid var(--surface, #ffffff) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 2 !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="dark"] .student-notification-mini-badge {
+  border-color: #0f172a !important;
+}
+
+.student-notification-mini-badge.is-check {
+  background: #10b981 !important;
+  color: #ffffff !important;
+}
+
+.student-notification-mini-badge.is-arrow {
+  background: #0f172a !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .student-notification-mini-badge.is-arrow {
+  background: #334155 !important;
+}
+
+.student-notification-mini-badge.is-refresh {
+  background: #0f172a !important;
+  color: #ffffff !important;
+}
+
+.student-notification-mini-badge.is-alert {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+/* Text Content Area */
 .student-notification-item-content {
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
-  /* 3px let the title and message collide visually; they are two distinct
-     pieces of information and need separating. */
-  gap: 5px !important;
+  gap: 3px !important;
   min-width: 0 !important;
+  max-width: 100% !important;
   flex: 1 1 auto !important;
+  overflow: hidden !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
 }
 
-/* 14px/700 across two wrapped lines shouted over the message beneath it; the
-   row is a summary, not a heading. */
-.student-notification-item-content strong {
+.student-notification-headline {
   font-size: 13.5px !important;
-  font-weight: 650 !important;
-  color: var(--text) !important;
-  line-height: 1.35 !important;
+  line-height: 1.45 !important;
+  color: var(--text, #1e293b) !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  max-width: 100% !important;
 }
 
-.student-notification-message {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--text-muted, #64748b);
-  font-size: 12.5px;
-  line-height: 1.35;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+[data-theme="dark"] .student-notification-headline {
+  color: #f1f5f9 !important;
+}
+
+.student-notification-title-highlight {
+  font-weight: 700 !important;
+  color: var(--text, #0f172a) !important;
+}
+
+[data-theme="dark"] .student-notification-title-highlight {
+  color: #ffffff !important;
+}
+
+.student-notification-message-body {
+  font-weight: 400 !important;
+  color: var(--text-muted, #475569) !important;
+}
+
+[data-theme="dark"] .student-notification-message-body {
+  color: #94a3b8 !important;
+}
+
+.student-notification-score-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 4px 0 2px !important;
+  padding: 3px 10px !important;
+  border-radius: 6px !important;
+  background: rgba(241, 245, 249, 0.9) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  font-size: 12px !important;
+  color: #334155 !important;
+}
+
+[data-theme="dark"] .student-notification-score-chip {
+  background: rgba(30, 41, 59, 0.8) !important;
+  border-color: rgba(51, 65, 85, 0.6) !important;
+  color: #cbd5e1 !important;
+}
+
+.student-notification-score-diamond {
+  color: #f59e0b !important;
+  font-size: 10px !important;
 }
 
 .student-notification-time {
-  align-self: flex-start;
-  padding-top: 2px;
-  color: var(--text-muted, #94a3b8);
-  font-size: 11.5px;
-  font-weight: 500;
-  white-space: nowrap;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  color: var(--text-muted, #94a3b8) !important;
+  margin-top: 2px !important;
 }
 
 .student-notification-state {
@@ -2485,24 +2978,33 @@
 
 .student-notification-view-all {
   width: 100%;
-  min-height: 54px;
-  display: grid;
-  place-items: center;
-  padding: 0 16px;
-  color: var(--portal-icon-color) !important;
-  background: var(--surface) !important;
-  border: 0 !important;
-  border-radius: 0 0 14px 14px;
-  box-shadow: none !important;
-  font-size: 15px;
-  font-weight: 820;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #e11d2e 0%, #b91524 100%) !important;
+  border: 1px solid rgba(225, 29, 46, 0.4) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 14px rgba(225, 29, 46, 0.28) !important;
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .student-notification-view-all:hover {
-  color: var(--portal-icon-color) !important;
-  background: #fbfaff !important;
-  box-shadow: none !important;
-  transform: none;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #c51927 0%, #9e101e 100%) !important;
+  box-shadow: 0 6px 20px rgba(225, 29, 46, 0.4) !important;
+  transform: translateY(-1px) !important;
+}
+
+.student-notification-view-all:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px rgba(225, 29, 46, 0.3) !important;
 }
 
 @media (max-width: 820px) {
@@ -4537,18 +5039,36 @@
 
 /* 7. Notifications (Dark Mode) */
 [data-theme="dark"] .student-notification-popover {
-  background: #16161a !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35) !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+  border-color: rgba(51, 65, 85, 0.8) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   color: #f3f4f6 !important;
 }
 
 [data-theme="dark"] .student-notification-header {
-  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+  border-bottom-color: rgba(51, 65, 85, 0.6) !important;
 }
 
 [data-theme="dark"] .student-notification-header h2 {
-  color: #ffffff !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .student-notification-unread-pill {
+  background: rgba(225, 29, 46, 0.2);
+  border-color: rgba(225, 29, 46, 0.4);
+  color: #fda4af;
+}
+
+[data-theme="dark"] .student-notification-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .student-notification-close-btn:hover {
+  background: rgba(225, 29, 46, 0.25);
+  border-color: rgba(225, 29, 46, 0.45);
+  color: #ffffff;
 }
 
 
@@ -4581,22 +5101,30 @@
 }
 
 [data-theme="dark"] .student-notification-view-all {
-  background: transparent !important;
-  border-bottom-color: rgba(255, 255, 255, 0.05) !important;
-  color: #9ca3af !important;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #e11d2e 0%, #b91524 100%) !important;
+  border: 1px solid rgba(225, 29, 46, 0.5) !important;
+  box-shadow: 0 4px 16px rgba(225, 29, 46, 0.35) !important;
 }
 
 [data-theme="dark"] .student-notification-view-all:hover {
   color: #ffffff !important;
+  background: linear-gradient(135deg, #f02839 0%, #c51927 100%) !important;
+  box-shadow: 0 6px 22px rgba(225, 29, 46, 0.5) !important;
 }
 
 [data-theme="dark"] .student-notification-read-all {
-  color: var(--portal-brand-color, #818cf8) !important;
+  color: #f87171 !important;
+  background: rgba(225, 29, 46, 0.14) !important;
+  border-color: rgba(225, 29, 46, 0.3) !important;
 }
 
 [data-theme="dark"] .student-notification-read-all:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
-  color: var(--portal-brand-color, #a5b4fc) !important;
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.4) !important;
+  transform: translateY(-1px) !important;
 }
 
 /* Dark-mode hardening for legacy/local component CSS that still ships fixed
@@ -6816,28 +7344,6 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 /* 2-Column Split Layout for Unscrollable Form Access */
 
 
-/* Fix notification items and absolute pin buttons positioning */
-.pin-list-row {
-  position: relative !important;
-}
-.pin-list-row .student-notification-item {
-  padding-right: 58px !important;
-}
-.pin-list-row .student-notification-item-content {
-  padding-right: 12px !important;
-}
-.pin-list-row .student-notification-time {
-  margin-right: 12px !important;
-}
-.pin-list-pin {
-  position: absolute !important;
-  right: 10px !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  z-index: 99 !important;
-}
-
-
 /* ==========================================================================
    Leaderboard Podium 3D Isometric & Volumetric Design
    ========================================================================== */
@@ -7285,37 +7791,83 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 }
 
 
-/* ---------- Super Admin dashboard: no live plan warning ---------- */
+/* ---------- Super Admin dashboard: notification / review banner ---------- */
 .dashboard-plan-alert {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 20px;
-  padding: 16px 20px;
-  border-radius: var(--radius-lg);
-  border: 1px solid color-mix(in srgb, #f59e0b 45%, transparent);
-  background: color-mix(in srgb, #f59e0b 12%, var(--surface));
+  margin-bottom: 22px;
+  padding: 18px 24px;
+  border-radius: 16px;
+  background: var(--surface, #ffffff);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-left: 4.5px solid #e11d2e;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .dashboard-plan-alert {
+  background: #111827;
+  border-color: rgba(51, 65, 85, 0.7);
+  border-left-color: #e11d2e;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-plan-alert-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.dashboard-plan-alert-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(225, 29, 46, 0.08);
+  border: 1px solid rgba(225, 29, 46, 0.15);
+  color: #e11d2e;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .dashboard-plan-alert-icon-badge {
+  background: rgba(225, 29, 46, 0.15);
+  border-color: rgba(225, 29, 46, 0.3);
 }
 
 .dashboard-plan-alert-text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
 .dashboard-plan-alert-text strong {
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--text, #0f172a);
+  letter-spacing: -0.01em;
+}
+
+[data-theme="dark"] .dashboard-plan-alert-text strong {
+  color: #f8fafc;
 }
 
 .dashboard-plan-alert-text span {
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.5;
-  color: var(--text-muted);
+  color: var(--text-muted, #64748b);
+}
+
+[data-theme="dark"] .dashboard-plan-alert-text span {
+  color: #94a3b8;
 }
 
 /* ---------- Plan form: pricing card feature editor ---------- */

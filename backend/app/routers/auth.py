@@ -34,6 +34,7 @@ from app.schemas.auth import (
     LogoutRequest,
     RefreshRequest,
     RegisterRequest,
+    ResendOtpRequest,
     ResetPasswordRequest,
     TokenResponse,
     VerifyOtpRequest,
@@ -416,6 +417,11 @@ def google_request_otp(payload: GoogleOtpRequest, request: Request, response: Re
 def verify_otp(payload: VerifyOtpRequest, request: Request, response: Response, db: Session = Depends(get_db)):
     try:
         challenge = decode_token(payload.challenge_id)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="The verification code has expired (valid for 10 minutes). Please click 'Resend Code' to receive a new OTP.",
+        ) from None
     except jwt.PyJWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired OTP challenge")
 
@@ -462,6 +468,80 @@ def verify_otp(payload: VerifyOtpRequest, request: Request, response: Response, 
     clear_rate_limit(challenge_key)
     set_refresh_cookie(response, refresh_token, persistent=bool(challenge.get("remember_me", True)))
     return TokenResponse(access_token=access_token)
+
+
+@router.post("/resend-otp", response_model=TokenResponse)
+def resend_otp(payload: ResendOtpRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    user: Optional[User] = None
+    auth_method = "password"
+    remember_me = True
+    device_identifier = None
+    device_name = None
+
+    if payload.challenge_id:
+        try:
+            challenge = decode_token(payload.challenge_id, verify_exp=False)
+        except jwt.PyJWTError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP challenge")
+
+        if challenge.get("type") != TOKEN_TYPE_LOGIN_OTP:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP challenge")
+
+        try:
+            user_id = int(challenge["sub"])
+        except (KeyError, TypeError, ValueError):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP challenge")
+
+        user = db.get(User, user_id)
+        auth_method = challenge.get("auth_method", "password")
+        remember_me = bool(challenge.get("remember_me", True))
+        device_identifier = challenge.get("device_identifier")
+        device_name = challenge.get("device_name")
+    elif payload.email:
+        user = auth_service.get_otp_login_user(db, str(payload.email), _client_ip(request), role=payload.role)
+        device_identifier = _device_identifier(request, response, None)
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Challenge ID or email is required")
+
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or inactive account")
+
+    # Rate limit resends: maximum 4 requests per 60 seconds
+    enforce_rate_limit(
+        f"otp-resend:{user.id}",
+        4,
+        60,
+        "Please wait a moment before requesting another OTP code.",
+    )
+
+    otp_code = generate_login_otp_code(db)
+    if auth_method == "register":
+        _send_register_otp(db, user, otp_code)
+    else:
+        _send_login_otp(db, user, otp_code)
+
+    challenge_token = create_login_otp_token(
+        user.id,
+        user.role.name,
+        user.institute_id,
+        auth_method,
+        remember_me,
+        device_identifier,
+        device_name,
+        hash_login_otp_code(otp_code),
+    )
+    static_otp_active = is_static_otp_enabled(db)
+    static_code = get_static_otp_code(db)
+    return TokenResponse(
+        otp_required=True,
+        otp_challenge_id=challenge_token,
+        otp_delivery="static" if static_otp_active else "email",
+        message=(
+            f"Testing mode: use static OTP code '{static_code}'."
+            if static_otp_active
+            else "A new OTP has been sent to your registered email."
+        ),
+    )
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)

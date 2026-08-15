@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { apiClient } from "../api/client";
@@ -10,7 +11,7 @@ import { PinList, type PinListItem } from "./PinList";
 
 type PinnableNotification = StudentNotification & PinListItem;
 
-const VISIBLE_COUNT = 6;
+const VISIBLE_COUNT = 8;
 
 interface NotificationBellProps {
   eyebrow?: string;
@@ -18,6 +19,52 @@ interface NotificationBellProps {
   notificationsPath?: string;
   notificationsHref?: string;
   title?: string;
+}
+
+function getNotificationVisual(notification: StudentNotification) {
+  const k = (notification.kind || "").toLowerCase();
+  const t = (notification.title || "").toLowerCase();
+
+  if (k.includes("failed") || k.includes("security") || t.includes("failed") || t.includes("error")) {
+    return {
+      gradient: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+      iconName: "notifications" as const,
+      badge: "alert",
+    };
+  }
+  if (k.includes("grade") || k.includes("score") || t.includes("grade") || t.includes("reviewed")) {
+    return {
+      gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+      iconName: "grading" as const,
+      badge: "check",
+    };
+  }
+  if (k.includes("payment") || t.includes("payment") || t.includes("approved")) {
+    return {
+      gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+      iconName: "restore" as const,
+      badge: "check",
+    };
+  }
+  if (k.includes("retake") || t.includes("retake") || t.includes("updated")) {
+    return {
+      gradient: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+      iconName: "restore" as const,
+      badge: "refresh",
+    };
+  }
+  if (k.includes("institute") || t.includes("institute") || t.includes("application")) {
+    return {
+      gradient: "linear-gradient(135deg, #ec4899 0%, #e11d2e 100%)",
+      iconName: "building" as const,
+      badge: "arrow",
+    };
+  }
+  return {
+    gradient: "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)",
+    iconName: "notifications" as const,
+    badge: "arrow",
+  };
 }
 
 export function NotificationBell({
@@ -29,9 +76,15 @@ export function NotificationBell({
 }: NotificationBellProps) {
   const navigate = useNavigate();
   const shellRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const backdropRef = useRef<HTMLDivElement | null>(null);
+  const timelineRef = useRef<gsap.core.Timeline | null>(null);
+  const isInitialMount = useRef(true);
+
   const [notifications, setNotifications] = useState<StudentNotification[]>([]);
-  const [panelVisible, setPanelVisible] = useState(false);
+  const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
+  const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,82 +105,137 @@ export function NotificationBell({
   useEffect(() => {
     void loadNotifications();
     const interval = window.setInterval(() => void loadNotifications(), 30_000);
-    const refreshOnFocus = () => void loadNotifications();
-    window.addEventListener("focus", refreshOnFocus);
-    return () => {
-      window.clearInterval(interval);
-      window.removeEventListener("focus", refreshOnFocus);
-    };
+    return () => window.clearInterval(interval);
   }, [loadNotifications]);
 
-  useLayoutEffect(() => {
-    if (!panelVisible || !panelRef.current) return;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    gsap.fromTo(
-      panelRef.current,
-      { autoAlpha: 0, y: reducedMotion ? 0 : -16, scale: reducedMotion ? 1 : 0.86, transformOrigin: "top right" },
-      { autoAlpha: 1, y: 0, scale: 1, duration: reducedMotion ? 0 : 0.6, ease: "elastic.out(1, 0.65)" },
-    );
-  }, [panelVisible]);
+  const unread = useMemo(() => notifications.filter((n) => !n.read_at), [notifications]);
+  const read = useMemo(() => notifications.filter((n) => Boolean(n.read_at)), [notifications]);
 
-  const closePanel = useCallback(() => {
+  const filteredNotifications = useMemo(() => {
+    if (filter === "unread") return unread;
+    if (filter === "read") return read;
+    return notifications;
+  }, [filter, notifications, unread, read]);
+
+  const pinnableItems: PinnableNotification[] = useMemo(
+    () =>
+      filteredNotifications.slice(0, VISIBLE_COUNT).map((notification) => ({
+        ...notification,
+        pinned: Boolean(notification.pinned_at),
+      })),
+    [filteredNotifications],
+  );
+
+  const togglePanel = () => {
+    setIsOpen((prev) => !prev);
+  };
+
+  const closePanel = () => {
+    setIsOpen(false);
+  };
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
     const panel = panelRef.current;
-    if (!panelVisible || !panel) {
-      setPanelVisible(false);
+    const backdrop = backdropRef.current;
+    if (!container || !panel || !backdrop) return;
+
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      gsap.set(container, { visibility: "hidden", pointerEvents: "none" });
+      gsap.set(backdrop, { opacity: 0 });
+      gsap.set(panel, { x: "101%", y: 0, rotation: 0 });
       return;
     }
+
+    if (timelineRef.current) {
+      timelineRef.current.kill();
+    }
+
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    gsap.killTweensOf(panel);
-    gsap.to(panel, {
-      autoAlpha: 0,
-      y: -6,
-      scale: reducedMotion ? 1 : 0.98,
-      duration: reducedMotion ? 0 : 0.16,
-      ease: "power2.in",
-      onComplete: () => setPanelVisible(false),
-    });
-  }, [panelVisible]);
+
+    const tl = gsap.timeline();
+    timelineRef.current = tl;
+
+    if (isOpen) {
+      if (reducedMotion) {
+        gsap.set(container, { visibility: "visible", pointerEvents: "auto" });
+        gsap.set(backdrop, { opacity: 1 });
+        gsap.set(panel, { x: "0%", y: 0, rotation: 0 });
+        return;
+      }
+
+      tl.set(container, { visibility: "visible", pointerEvents: "auto" })
+        .fromTo(
+          backdrop,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.32, ease: "power2.out" },
+          0,
+        )
+        .fromTo(
+          panel,
+          { x: "101%", y: 0, rotation: 0 },
+          { x: "0%", y: 0, rotation: 0, duration: 0.52, ease: "back.out(1.1)" },
+          0,
+        );
+
+      const items = panel.querySelectorAll(".student-notification-item, .student-notification-state");
+      if (items.length > 0) {
+        tl.fromTo(
+          items,
+          { opacity: 0, x: -16 },
+          { opacity: 1, x: 0, duration: 0.5, ease: "expo.out", stagger: 0.025 },
+          0.08,
+        );
+      }
+    } else {
+      if (reducedMotion) {
+        gsap.set(container, { visibility: "hidden", pointerEvents: "none" });
+        return;
+      }
+
+      tl.to(
+        panel,
+        {
+          y: "160vh",
+          rotation: "random(-10, 10)",
+          duration: 0.46,
+          ease: "power3.in",
+        },
+        0,
+      )
+      .to(
+        backdrop,
+        {
+          opacity: 0,
+          duration: 0.22,
+          ease: "power2.in",
+        },
+        0.04,
+      )
+      .set(container, { visibility: "hidden", pointerEvents: "none" });
+    }
+  }, [isOpen]);
 
   useEffect(() => {
-    if (!panelVisible) return;
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!shellRef.current?.contains(event.target as Node)) closePanel();
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
+    if (!isOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+      if (shellRef.current && shellRef.current.contains(target)) return;
+      if (panelRef.current && !panelRef.current.contains(target)) {
+        closePanel();
+      }
+    }
+    function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") closePanel();
-    };
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
     return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
     };
-  }, [closePanel, panelVisible]);
-
-  const openPanel = useCallback(() => {
-    setPanelVisible(true);
-  }, []);
-
-  const unread = notifications.filter((notification) => !notification.read_at);
-
-  // Pinned first (newest pin on top), then newest-first — same ordering the
-  // server returns, re-applied client-side so an optimistic pin/unpin
-  // reorders immediately instead of waiting on the next poll. This has to
-  // happen before the slice below, or a just-pinned older notification could
-  // still fall outside the popover's visible window.
-  const pinnableItems = useMemo<PinnableNotification[]>(() => {
-    const byRecency = (a: StudentNotification, b: StudentNotification) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    return [...notifications]
-      .sort((a, b) => {
-        if (a.pinned_at && b.pinned_at) return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
-        if (a.pinned_at) return -1;
-        if (b.pinned_at) return 1;
-        return byRecency(a, b);
-      })
-      .slice(0, VISIBLE_COUNT)
-      .map((notification) => ({ ...notification, pinned: Boolean(notification.pinned_at) }));
-  }, [notifications]);
+  }, [isOpen]);
 
   async function markRead(notification: StudentNotification) {
     if (notification.read_at) return;
@@ -177,7 +285,7 @@ export function NotificationBell({
         undefined,
         { headers: { "X-Skip-Loader": "1" } },
       );
-      setNotifications((items) => items.map((item) => (item.id === notification.id ? data : item)));
+      setNotifications((items) => items.map((item) => item.id === notification.id ? data : item));
     } catch {
       setNotifications(previous);
     }
@@ -185,7 +293,7 @@ export function NotificationBell({
 
   function openNotification(notification: StudentNotification) {
     void markRead(notification);
-    closePanel();
+    setIsOpen(false);
     navigate(destinationFor(notification, notificationsHref ?? fallbackRoute));
   }
 
@@ -194,10 +302,10 @@ export function NotificationBell({
       <button
         type="button"
         className={`student-notification-bell${unread.length ? " has-unread" : ""}`}
-        onClick={() => (panelVisible ? closePanel() : openPanel())}
+        onClick={togglePanel}
         aria-label={`Notifications${unread.length ? `, ${unread.length} unread` : ""}`}
         aria-haspopup="dialog"
-        aria-expanded={panelVisible}
+        aria-expanded={isOpen}
       >
         <Icon name="notifications" />
         {unread.length > 0 && (
@@ -207,75 +315,197 @@ export function NotificationBell({
         )}
       </button>
 
-      {panelVisible && (
+      {typeof document !== "undefined" && createPortal(
         <div
-          ref={panelRef}
-          className="student-notification-popover"
-          role="dialog"
-          aria-modal="false"
-          aria-labelledby="portal-notification-title"
+          ref={containerRef}
+          className="student-notification-drawer-wrapper"
+          style={{ visibility: "hidden", pointerEvents: "none" }}
         >
-          <div className="student-notification-header">
-            <h2 id="portal-notification-title">{title}</h2>
-            {unread.length > 0 && (
-              <button type="button" className="student-notification-read-all" onClick={() => void markAllRead()}>
-                Mark all as read
-              </button>
-            )}
-          </div>
-
-          <div className="student-notification-list">
-
-            {loading ? (
-              <p className="student-notification-state">Loading notifications...</p>
-            ) : error ? (
-              <div className="student-notification-state is-error">
-                <p>{error}</p>
-                <button type="button" onClick={() => void loadNotifications()}>Try again</button>
+          <div
+            ref={backdropRef}
+            className="student-notification-drawer-backdrop"
+            onClick={closePanel}
+            aria-hidden="true"
+          />
+          <div
+            ref={panelRef}
+            className="student-notification-drawer-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="portal-notification-title"
+          >
+            <div className="student-notification-header">
+              <div className="student-notification-header-title-group">
+                <h2 id="portal-notification-title">{title}</h2>
+                {unread.length > 0 && (
+                  <span className="student-notification-unread-pill">{unread.length} new</span>
+                )}
               </div>
-            ) : pinnableItems.length === 0 ? (
-              <div className="student-notification-state">
-                <strong>No notifications</strong>
-                <p>{eyebrow}. You are all caught up.</p>
-              </div>
-            ) : (
-              <PinList
-                items={pinnableItems}
-                onTogglePin={(notification) => void togglePin(notification)}
-                renderItem={(notification) => (
+              <div className="student-notification-header-actions">
+                {unread.length > 0 && (
                   <button
                     type="button"
-                    className={`student-notification-item${notification.read_at ? " is-read" : " is-unread"}`}
-                    onClick={() => openNotification(notification)}
+                    className="student-notification-read-all"
+                    onClick={() => void markAllRead()}
+                    title="Mark all notifications as read"
                   >
-                    <Icon name="notifications" className="student-notification-item-icon" />
-                    <span className="student-notification-item-content">
-                      <strong>{notification.title}</strong>
-                      <span className="student-notification-message">
-                        {notification.message}
-                        {scoreLabel(notification) ? ` Score ${scoreLabel(notification)}.` : ""}
-                      </span>
-                    </span>
-                    <time className="student-notification-time" dateTime={notification.created_at}>
-                      {notificationTime(notification.created_at)}
-                    </time>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Mark all as read</span>
                   </button>
                 )}
-              />
-            )}
-          </div>
+                <button
+                  type="button"
+                  className="student-notification-close-btn"
+                  onClick={closePanel}
+                  aria-label="Close notifications"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            </div>
 
-          <button
-            type="button"
-            className="student-notification-view-all"
-            onClick={() => {
-              closePanel();
-              navigate(notificationsHref ?? fallbackRoute);
-            }}
-          >
-            View All Notifications
-          </button>
-        </div>
+            <div className="student-notification-filter-bar">
+              <div className="student-notification-segmented-track" role="tablist" aria-label="Notification filters">
+                <div
+                  className="student-notification-tab-indicator"
+                  style={{ transform: `translateX(${filter === "unread" ? 100 : filter === "read" ? 200 : 0}%)` }}
+                  aria-hidden="true"
+                />
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === "all"}
+                  className={`student-notification-filter-tab${filter === "all" ? " is-active" : ""}`}
+                  onClick={() => setFilter("all")}
+                >
+                  <span className="student-notification-tab-label">All</span>
+                  <span className="student-notification-tab-badge">{notifications.length}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === "unread"}
+                  className={`student-notification-filter-tab${filter === "unread" ? " is-active" : ""}`}
+                  onClick={() => setFilter("unread")}
+                >
+                  <span className="student-notification-tab-label">Unread</span>
+                  <span className={`student-notification-tab-badge${unread.length > 0 ? " has-unread" : ""}`}>
+                    {unread.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === "read"}
+                  className={`student-notification-filter-tab${filter === "read" ? " is-active" : ""}`}
+                  onClick={() => setFilter("read")}
+                >
+                  <span className="student-notification-tab-label">Read</span>
+                  <span className="student-notification-tab-badge">{read.length}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="student-notification-list">
+              {loading ? (
+                <p className="student-notification-state">Loading notifications...</p>
+              ) : error ? (
+                <div className="student-notification-state is-error">
+                  <p>{error}</p>
+                  <button type="button" onClick={() => void loadNotifications()}>Try again</button>
+                </div>
+              ) : pinnableItems.length === 0 ? (
+                <div className="student-notification-state">
+                  <strong>No notifications</strong>
+                  <p>{eyebrow}. You are all caught up.</p>
+                </div>
+              ) : (
+                <PinList
+                  key={filter}
+                  items={pinnableItems}
+                  onTogglePin={(notification) => void togglePin(notification)}
+                  renderItem={(notification) => {
+                    const visual = getNotificationVisual(notification);
+                    const isUnread = !notification.read_at;
+                    const score = scoreLabel(notification);
+
+                    return (
+                      <button
+                        type="button"
+                        className={`student-notification-item${isUnread ? " is-unread" : " is-read"}${notification.pinned ? " is-pinned" : ""}`}
+                        onClick={() => openNotification(notification)}
+                      >
+                        <div className="student-notification-avatar-wrap">
+                          {isUnread && <span className="student-notification-unread-dot" aria-hidden="true" />}
+                          <div className="student-notification-icon-squircle" style={{ background: visual.gradient }}>
+                            <Icon name={visual.iconName} className="student-notification-tile-icon" />
+                          </div>
+                          <div className={`student-notification-mini-badge is-${visual.badge}`}>
+                            {visual.badge === "check" ? (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            ) : visual.badge === "refresh" ? (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="23 4 23 10 17 10" />
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                              </svg>
+                            ) : visual.badge === "alert" ? (
+                              <span style={{ fontSize: "8.5px", fontWeight: 800 }}>!</span>
+                            ) : (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                                <polyline points="12 5 19 12 12 19" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="student-notification-item-content">
+                          <div className="student-notification-headline">
+                            <strong className="student-notification-title-highlight">“{notification.title}”</strong>{" "}
+                            <span className="student-notification-message-body">{notification.message}</span>
+                          </div>
+
+                          {score && (
+                            <div className="student-notification-score-chip">
+                              <span>Result</span>
+                              <span className="student-notification-score-diamond">◆</span>
+                              <strong>{score}</strong>
+                            </div>
+                          )}
+
+                          <time className="student-notification-time" dateTime={notification.created_at}>
+                            {notificationTime(notification.created_at)}
+                          </time>
+                        </div>
+                      </button>
+                    );
+                  }}
+                />
+              )}
+            </div>
+
+            <div className="student-notification-drawer-footer">
+              <button
+                type="button"
+                className="student-notification-view-all"
+                onClick={() => {
+                  closePanel();
+                  navigate(notificationsHref ?? fallbackRoute);
+                }}
+              >
+                View All Notifications
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
