@@ -112,10 +112,8 @@ export function NewModuleForm({
           <div className="vh-hero-title-group">
             <div className="vh-hero-chip-group">
               <span className="vh-chip-white-solid">{typeLabel}</span>
-              <span className="vh-chip-outline-glass">{meta.badge}</span>
             </div>
             <h1 className="vh-hero-title">Author New {typeLabel} Test</h1>
-            <p className="vh-hero-subtitle">{meta.tagline}</p>
           </div>
           <div className="vh-hero-icon-box">
             <Icon name={meta.icon} />
