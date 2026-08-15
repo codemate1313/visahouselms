@@ -21,6 +21,7 @@ from app.routers import (
     blogs_router,
     contact_settings_router,
     coupons,
+    instagram_router,
     dashboard,
     dev_settings,
     developer,
@@ -238,6 +239,8 @@ app.include_router(seo_router.public_router)
 app.include_router(seo_router.admin_router)
 app.include_router(contact_settings_router.public_router)
 app.include_router(contact_settings_router.admin_router)
+app.include_router(instagram_router.public_router)
+app.include_router(instagram_router.admin_router)
 
 
 @app.exception_handler(IntegrityError)

@@ -1,8 +1,8 @@
 import type { FormEvent } from "react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
-import { RequiredMark } from "@/components/ui";
+import { RequiredMark, RichTextEditor } from "@/components/ui";
 import type { ExamModulePart, QuestionDraft, SpeakingTurnType } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { ANSWER_FREE_TYPES, CHOICE_TYPES } from "../helpers";
@@ -61,9 +61,7 @@ export function ManualQuestionForm({
   onCancelEdit,
 }: ManualQuestionFormProps) {
   const t = strings.manualQuestion;
-  const isWriting = part.section_type === "writing";
   const isReading = part.section_type === "reading";
-  const isListening = part.section_type === "listening";
   const isListening1 = part.part_code === "listening_1";
   const isSpeaking = part.section_type === "speaking";
   const isSpeakingQuestionOnly = part.part_code === "speaking_1" || part.part_code === "speaking_2";
@@ -72,14 +70,18 @@ export function ManualQuestionForm({
   const isReading1a = part.part_code === "reading_1a";
   const isReading1b = part.part_code === "reading_1b";
   const promptRef = useRef<HTMLTextAreaElement>(null);
+  const [boldError, setBoldError] = useState(false);
   const allowedTurns = part.answer_constraints.allowed_turn_types ?? [];
   const isChoiceQuestion = CHOICE_TYPES.has(manual.question_type);
   const canRemoveOption = manual.options.length > 2;
   const showsBlankGuidance =
-    manual.question_type === "fill_blank" ||
-    part.answer_constraints.inline_marker_required ||
-    part.answer_constraints.layout === "inline_matching_blanks" ||
-    isReading1b;
+    (manual.question_type === "fill_blank" ||
+      part.answer_constraints.inline_marker_required ||
+      part.answer_constraints.layout === "inline_matching_blanks") &&
+    !isReading1b;
+  const reading1bGapIndex = editingQuestionId
+    ? (part.questions.findIndex((q) => q.id === editingQuestionId) + 1 || 1)
+    : (part.questions.length + 1);
   const turnLabels: Record<SpeakingTurnType, string> = {
     identity: "Identity and origin",
     topic_question: "Familiar-topic question",
@@ -146,7 +148,11 @@ export function ManualQuestionForm({
     const after = value.slice(selectionEnd);
     const isBold = selected.startsWith("**") && selected.endsWith("**") && selected.length > 4;
     const nextSelected = isBold ? selected.slice(2, -2) : `**${selected}**`;
-    onManualChange({ ...manual, prompt: `${before}${nextSelected}${after}` });
+    const nextPrompt = `${before}${nextSelected}${after}`;
+    onManualChange({ ...manual, prompt: nextPrompt });
+    if (/\*\*(.+?)\*\*/.test(nextPrompt)) {
+      setBoldError(false);
+    }
     requestAnimationFrame(() => {
       el.focus();
       const cursor = before.length + nextSelected.length;
@@ -154,18 +160,34 @@ export function ManualQuestionForm({
     });
   }
 
+  function handleFormSubmit(event: FormEvent) {
+    if (isReading1a && !/\*\*(.+?)\*\*/.test(manual.prompt)) {
+      event.preventDefault();
+      setBoldError(true);
+      if (promptRef.current) promptRef.current.focus();
+      return;
+    }
+    if (isReading1b && !manual.prompt?.trim()) {
+      manual.prompt = `Gap ${reading1bGapIndex}`;
+    }
+    setBoldError(false);
+    onSubmit(event);
+  }
+
   return (
     <section className="authoring-panel" id="manual-module-question">
-      <div className="panel-title">
-        <div>
-          <h2>{editingQuestionId ? t.editHeading : t.addHeading(part.title)}</h2>
+      {editingQuestionId && (
+        <div className="panel-title">
+          <div>
+            <h2>{t.editHeading}</h2>
+          </div>
         </div>
-      </div>
-      <form className="question-form" onSubmit={onSubmit}>
+      )}
+      <form className="question-form" onSubmit={handleFormSubmit}>
         {showsBlankGuidance && (
           <div className="question-authoring-help">
             <h4>{t.blankHelpTitle}</h4>
-            <p>{isReading1b ? t.blankHelpSharedCloze : t.blankHelp}</p>
+            <p>{t.blankHelp}</p>
           </div>
         )}
         {part.answer_constraints.group_label_required && (
@@ -247,30 +269,54 @@ export function ManualQuestionForm({
           </div>
         )}
         {/* 1. Question or task prompt */}
-        <div className="vh-prompt-label-row">
-          <label htmlFor="module-question-prompt">{isSpeaking ? speakingPromptLabel : isListening1 ? "Question" : t.promptLabel}<RequiredMark /></label>
-          {isReading1a && (
-            <button
-              type="button"
-              className="vh-bold-toggle-button"
-              onClick={toggleBoldSelection}
-              title={t.boldSelectionHint}
-            >
-              <strong>B</strong> {t.boldSelectionLabel}
-            </button>
-          )}
-        </div>
-        {isReading1a && <p className="hint">{t.boldSelectionHint}</p>}
-        {isSpeaking && <p className="hint">{speakingPromptHint}</p>}
-        <textarea
-          id="module-question-prompt"
-          ref={promptRef}
-          rows={isListening1 ? 2 : 4}
-          value={manual.prompt}
-          onChange={(event) => onManualChange({ ...manual, prompt: event.target.value })}
-          placeholder={isSpeaking ? speakingPromptPlaceholder : isListening1 ? "Question 1" : (part.answer_constraints.inline_marker_required ? t.inlinePromptPlaceholder : t.promptPlaceholder)}
-          required
-        />
+        {isReading1b ? (
+          <div className="vh-reading-1b-gap-header" style={{ marginBottom: "16px", padding: "10px 14px", background: "rgba(185, 28, 43, 0.04)", borderRadius: "8px", border: "1px solid rgba(185, 28, 43, 0.15)" }}>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--sa-sidebar-red, #b91c2b)" }}>
+              Options for Gap {reading1bGapIndex}
+            </span>
+            <p style={{ margin: "4px 0 0", fontSize: "12.5px", color: "var(--text-muted)" }}>
+              Set the 3 options for <strong>{`{{blank:${reading1bGapIndex}}}`}</strong> in the passage above.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="vh-prompt-label-row">
+              <label htmlFor="module-question-prompt">{isSpeaking ? speakingPromptLabel : isListening1 ? "Question" : t.promptLabel}<RequiredMark /></label>
+              {isReading1a && (
+                <button
+                  type="button"
+                  className="vh-bold-toggle-button"
+                  onClick={toggleBoldSelection}
+                  title={t.boldSelectionHint}
+                >
+                  <strong>B</strong> {t.boldSelectionLabel}
+                </button>
+              )}
+            </div>
+            {isReading1a && <p className="hint">{t.boldSelectionHint}</p>}
+            {isSpeaking && <p className="hint">{speakingPromptHint}</p>}
+            <textarea
+              id="module-question-prompt"
+              ref={promptRef}
+              rows={isListening1 ? 2 : 4}
+              value={manual.prompt}
+              onChange={(event) => {
+                onManualChange({ ...manual, prompt: event.target.value });
+                if (boldError && /\*\*(.+?)\*\*/.test(event.target.value)) {
+                  setBoldError(false);
+                }
+              }}
+              placeholder={isSpeaking ? speakingPromptPlaceholder : isListening1 ? "Question 1" : (part.answer_constraints.inline_marker_required ? t.inlinePromptPlaceholder : t.promptPlaceholder)}
+              style={boldError ? { borderColor: "var(--danger, #ef4444)", boxShadow: "0 0 0 1px var(--danger, #ef4444)" } : undefined}
+              required
+            />
+            {isReading1a && boldError && (
+              <p className="error-text" style={{ marginTop: "4px", fontSize: "12.5px", fontWeight: 500 }}>
+                {t.errors.boldRequired}
+              </p>
+            )}
+          </>
+        )}
 
         {/* 1b. Examiner avatar preview - hear the question as the candidate will */}
         {isSpeaking && manual.prompt.trim().length > 0 && (
@@ -295,16 +341,16 @@ export function ManualQuestionForm({
 
             <div className="vh-speaking-material-field">
               <label htmlFor="module-question-candidate-text">Support text</label>
-              <textarea
+              <RichTextEditor
                 id="module-question-candidate-text"
                 rows={4}
                 value={manual.passage ?? ""}
-                onChange={(event) => onManualChange({
+                onChange={(next) => onManualChange({
                   ...manual,
-                  passage: event.target.value,
+                  passage: next,
                   interaction: {
                     ...manual.interaction,
-                    candidate_material_type: candidateAttachmentType === "none" && event.target.value.trim() ? "text" : candidateAttachmentType,
+                    candidate_material_type: candidateAttachmentType === "none" && next.trim() ? "text" : candidateAttachmentType,
                   },
                 })}
                 placeholder="Optional support text shown to the candidate"
@@ -340,16 +386,16 @@ export function ManualQuestionForm({
 
             <div className="vh-speaking-material-field">
               <label htmlFor="module-question-candidate-text">{candidateTextLabel}{isSpeakingReadAloud ? <RequiredMark /> : null}</label>
-              <textarea
+              <RichTextEditor
                 id="module-question-candidate-text"
                 rows={6}
                 value={manual.passage ?? ""}
-                onChange={(event) => onManualChange({
+                onChange={(next) => onManualChange({
                   ...manual,
-                  passage: event.target.value,
+                  passage: next,
                   interaction: {
                     ...manual.interaction,
-                    candidate_material_type: candidateAttachmentType === "none" && event.target.value.trim() ? "text" : candidateAttachmentType,
+                    candidate_material_type: candidateAttachmentType === "none" && next.trim() ? "text" : candidateAttachmentType,
                   },
                 })}
                 placeholder={candidateTextPlaceholder}
@@ -541,39 +587,11 @@ export function ManualQuestionForm({
           </div>
         )}
 
-        {/* When the part owns one shared source text, it is edited in
-            SharedPassagePanel above and copied down on save - repeating the
-            field here is what made identical-passage mistakes so easy.
-            Listening questions carry no passage or per-question instructions
-            either: the audio is the source and the part heading is the
-            instruction. Speaking material is handled by the separate
-            candidate-workspace builder above. */}
-        {!isWriting && !isListening && !isSpeaking && !part.answer_constraints.shared_passage && (
-          <>
-            {/* 3. Passage or context */}
-            <label htmlFor="module-question-passage">
-              {t.passageLabel}
-              {part.answer_constraints.passage_required && <RequiredMark />}
-            </label>
-            <textarea
-              id="module-question-passage"
-              rows={part.answer_constraints.shared_passage ? 8 : 4}
-              value={manual.passage ?? ""}
-              onChange={(event) => onManualChange({ ...manual, passage: event.target.value })}
-              placeholder={t.passagePlaceholder}
-              required={part.answer_constraints.passage_required}
-            />
-
-            {/* 4. Prompt instructions */}
-            <label htmlFor="module-question-instructions">{t.instructionsLabel}</label>
-            <textarea
-              id="module-question-instructions"
-              rows={2}
-              value={manual.instructions ?? ""}
-              onChange={(event) => onManualChange({ ...manual, instructions: event.target.value })}
-            />
-          </>
-        )}
+        {/* No per-question passage or instruction fields. A part that needs a
+            source text owns one shared passage, edited in SharedPassagePanel
+            above and copied down on save; every other part takes its source
+            from the audio or the examiner voice, and its instruction line from
+            the part heading. */}
         {isChoiceQuestion && (
           <div className="option-editor" role="group" aria-labelledby="module-options-heading">
             <div className="option-editor-header">

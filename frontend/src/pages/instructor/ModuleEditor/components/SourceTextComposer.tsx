@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
-import { Button, RequiredMark } from "@/components/ui";
+import { Button, RequiredMark, RichTextEditor } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
@@ -98,7 +98,7 @@ export function SourceTextComposer({ part, isEditable, busy, onSubmit }: SourceT
     <section className="authoring-panel source-text-composer">
       <div className="panel-title">
         <div>
-          <span className="phase-chip">{t.eyebrow}</span>
+          {part.part_code !== "reading_3" && <span className="phase-chip">{t.eyebrow}</span>}
           <h2>{t.heading(part.title)}</h2>
           <p>{t.description(textCount, questionCount)}</p>
         </div>
@@ -117,15 +117,16 @@ export function SourceTextComposer({ part, isEditable, busy, onSubmit }: SourceT
         {texts.map((item, index) => (
           <div className="source-text-item" key={item.key}>
             <span className="gap-task-option-key">{item.key}</span>
-            <textarea
+            <RichTextEditor
               rows={5}
               value={item.text}
-              onChange={(event) =>
+              onChange={(next) =>
                 setTexts(texts.map((entry, current) =>
-                  current === index ? { ...entry, text: event.target.value } : entry))
+                  current === index ? { ...entry, text: next } : entry))
               }
               placeholder={t.textPlaceholder(item.key)}
               readOnly={!isEditable}
+              aria-label={t.textPlaceholder(item.key)}
             />
           </div>
         ))}

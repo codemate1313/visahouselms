@@ -115,10 +115,18 @@
   right: 0 !important;
 }
 
-/* Portal variant — position is injected as inline fixed style by the
-   component; we only add decoration + animation here. */
+/* Portal variant — position, width and max-height are injected as inline fixed
+   styles by the component (see utils/anchoredMenu), which is the only place
+   that knows how much room the viewport actually has. Sizing rules from the
+   base class are neutralised here so they cannot fight those inline values:
+   `min-width: 100%` in particular resolves against the viewport once the panel
+   is portalled to <body>. */
 .searchable-select-portal-dropdown {
   position: fixed !important;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: none;
   background-color: var(--surface) !important;
   background-image: none !important;
   backdrop-filter: none;
@@ -231,6 +239,20 @@
   overflow-y: auto;
   padding: 4px 6px;
   background: var(--surface);
+}
+
+/* Inside the portal the panel owns the height budget: the search box keeps its
+   size and the list takes whatever is left over and scrolls, so the last option
+   is always reachable no matter how little room the trigger had. */
+.searchable-select-portal-dropdown .select-search-header {
+  flex: 0 0 auto;
+}
+
+.searchable-select-portal-dropdown .select-options-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overscroll-behavior: contain;
 }
 
 .select-option-item {

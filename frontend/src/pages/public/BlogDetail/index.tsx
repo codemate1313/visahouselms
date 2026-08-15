@@ -184,7 +184,7 @@ export function BlogDetail() {
             {/* Centered Yellow Meta */}
             <div className="vh-blog-hero-meta-centered">
               <span>{formatBlogDate(post.created_at)}</span>
-              <span className="vh-dot">•</span>
+              <span className="vh-blog-meta-sep">·</span>
               <span>{post.read_time_minutes || 5} min read</span>
             </div>
 

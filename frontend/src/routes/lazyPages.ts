@@ -100,6 +100,7 @@ export const SuperAdminBlogs = lazy(() => import("../pages/super-admin/SuperAdmi
 export const SuperAdminBlogForm = lazy(() => import("../pages/super-admin/SuperAdminBlogForm").then((module) => ({ default: module.SuperAdminBlogForm })));
 export const SuperAdminTestimonials = lazy(() => import("../pages/super-admin/SuperAdminTestimonials").then((module) => ({ default: module.SuperAdminTestimonials })));
 export const SuperAdminSEOSettings = lazy(() => import("../pages/super-admin/SuperAdminSEOSettings").then((module) => ({ default: module.SuperAdminSEOSettings })));
+export const SuperAdminInstagramSettings = lazy(() => import("../pages/super-admin/InstagramSettings").then((module) => ({ default: module.InstagramSettings })));
 export const StudentPurchaseHistory = lazy(() => import("../pages/student/StudentPurchaseHistory").then((module) => ({ default: module.StudentPurchaseHistory })));
 export const StudentVouchers = lazy(() => import("../pages/student/StudentVouchers").then((module) => ({ default: module.StudentVouchers })));
 export const Vouchers = lazy(() => import("../pages/super-admin/Vouchers").then((module) => ({ default: module.Vouchers })));

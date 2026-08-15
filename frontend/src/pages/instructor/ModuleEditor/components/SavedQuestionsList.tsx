@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "@/api/client";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import type { ExamModulePart, ExamModuleQuestion } from "@/api/types";
+import { renderRichText, RichTextContent } from "@/components/ui";
 import { renderBoldText } from "@/utils/boldText";
 import { parseClozeMarkers } from "@/utils/clozeMarkers";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
@@ -32,7 +33,7 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
       title={isGapTask ? t.gapHeading(part.title) : t.heading(part.title)}
       description={isGapTask
         ? t.gapDescription(part.questions.length)
-        : t.description(part.questions.length, part.question_limit, Boolean(part.answer_constraints.preserve_question_order))}
+        : t.description(part.questions.length, part.question_limit)}
       badge={<span className="count-chip">{part.questions.length}</span>}
     >
       {!part.questions.length ? (
@@ -47,8 +48,13 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
               <p>
                 {parseClozeMarkers(sharedPassage).map((token) => (
                   token.type === "text"
-                    ? <span key={token.key}>{token.text}</span>
-                    : <strong key={token.key} className="saved-cloze-marker">({token.gapNumber})</strong>
+                    ? <span key={token.key}>{renderRichText(token.text)}</span>
+                    : (
+                      <span key={token.key} className="saved-cloze-blank">
+                        <strong>({token.gapNumber})</strong>
+                        <span className="saved-blank-dots">....................</span>
+                      </span>
+                    )
                 ))}
               </p>
             </article>
@@ -63,7 +69,7 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
                   {question.interaction?.turn_type && <span>{question.interaction.turn_type.replaceAll("_", " ")}</span>}
                 </div>
                 {!isSharedCloze && <h3>{renderBoldText(question.prompt)}</h3>}
-                {!isSharedCloze && !usesSharedPassage && part.section_type !== "writing" && question.passage && <p>{question.passage}</p>}
+                {!isSharedCloze && !usesSharedPassage && part.section_type !== "writing" && question.passage && <RichTextContent text={question.passage} />}
                 {question.image_url && (
                   <img className="saved-question-image" src={`${API_BASE_URL}${question.image_url}`} alt="" />
                 )}

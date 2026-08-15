@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Attempt } from "@/api/types";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
+import { formatTime } from "../helpers";
 
 interface TestRunnerHeaderProps {
   attempt: Attempt;
@@ -16,6 +17,7 @@ interface TestRunnerHeaderProps {
   isImmersiveAttempt: boolean;
   fullscreenActive: boolean;
   onExitDeveloperFullscreen: () => void;
+  secondsLeft?: number;
 }
 
 export function TestRunnerHeader({
@@ -31,6 +33,7 @@ export function TestRunnerHeader({
   isImmersiveAttempt,
   fullscreenActive,
   onExitDeveloperFullscreen,
+  secondsLeft,
 }: TestRunnerHeaderProps) {
   const t = strings.header;
   const sectionLabels = strings.sectionLabels;
@@ -45,6 +48,12 @@ export function TestRunnerHeader({
         </div>
       </div>
       <div className="test-runner-header-actions">
+        {attempt.status === "in_progress" && secondsLeft !== undefined && secondsLeft > 0 && (
+          <div className={`test-runner-timer${secondsLeft < 300 ? " is-urgent" : ""}`} role="timer" aria-live="polite">
+            <span>{t.timeLeft || "Time Left"}</span>
+            <strong>{formatTime(secondsLeft)}</strong>
+          </div>
+        )}
         {isFinalAttempt && (
           <div className="test-security-live" title={t.secureBadgeTitle}>
             <span /> {t.secureBadge}

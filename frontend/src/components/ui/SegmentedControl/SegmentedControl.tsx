@@ -9,6 +9,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import "./SegmentedControl.css";
+import { placeAnchoredMenu } from "@/utils/anchoredMenu";
 
 export interface SegmentedOption<T extends string> {
   ariaLabel?: string;
@@ -224,26 +225,13 @@ export function SegmentedControl<T extends string>({
   const place = useCallback(() => {
     const trigger = triggerRef.current;
     if (!trigger) return;
-    const rect = trigger.getBoundingClientRect();
-    const width = Math.max(rect.width, MIN_MENU_WIDTH);
-
-    let left = rect.left;
-    if (left + width > window.innerWidth - VIEWPORT_MARGIN) {
-      left = window.innerWidth - VIEWPORT_MARGIN - width;
-    }
-    left = Math.max(VIEWPORT_MARGIN, left);
-
-    // Drop upward when the space below cannot hold the list.
-    const estimated = Math.min(options.length, 6) * 42 + 12;
-    const below = window.innerHeight - rect.bottom;
-    const dropUp = below < estimated && rect.top > below;
-
-    setMenuStyle({
-      left,
-      width,
-      maxHeight: Math.max(120, (dropUp ? rect.top : below) - VIEWPORT_MARGIN - 6),
-      ...(dropUp ? { bottom: window.innerHeight - rect.top + 6 } : { top: rect.bottom + 6 }),
+    const { top, left, width, maxHeight } = placeAnchoredMenu(trigger, {
+      width: Math.max(trigger.offsetWidth, MIN_MENU_WIDTH),
+      margin: VIEWPORT_MARGIN,
+      desiredHeight: Math.min(options.length, 8) * 42 + 12,
+      minHeight: 120,
     });
+    setMenuStyle({ top, left, width, maxHeight });
   }, [options.length]);
 
   useLayoutEffect(() => {

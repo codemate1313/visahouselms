@@ -10,6 +10,7 @@ import {
   StepperTitle,
   StepperDescription,
   StepperSeparator,
+  renderRichText,
 } from "@/components/ui";
 
 interface PreExamOnboardingProps {
@@ -208,7 +209,7 @@ export function PreExamOnboarding({
           </Button>
 
           {/* Hero Header Pill */}
-          <div className="sidebar-hero-card" style={{ background: skillMeta.gradient }}>
+          <div className="sidebar-hero-card">
             <div className="sidebar-hero-badge">
               <Icon name={skillMeta.icon} />
               <span>{skillMeta.label}</span>
@@ -290,7 +291,7 @@ export function PreExamOnboarding({
                               <Icon name={(item.icon as any) || "check"} />
                             </div>
                             <div className="rule-text">
-                              <strong>{item.title}.</strong> {item.description}
+                              <strong>{item.title}.</strong> {renderRichText(item.description)}
                             </div>
                           </div>
                         );

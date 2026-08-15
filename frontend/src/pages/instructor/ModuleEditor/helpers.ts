@@ -54,8 +54,15 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
   const type = part.answer_constraints.allowed_question_types?.[0] ?? "short_answer";
   const points = part.max_marks && part.question_limit ? Number(part.max_marks) / part.question_limit : 1;
   const firstQuestion = part.questions[0];
+  const isPlaceholder = (text: string, key: string) =>
+    text.trim().toLowerCase() === `option ${key.toLowerCase()}` ||
+    text.trim().toLowerCase() === `option ${key}`.toLowerCase();
+
   const sharedOptions = part.answer_constraints.shared_options && firstQuestion
-    ? firstQuestion.options.map((option) => ({ ...option }))
+    ? firstQuestion.options.map((option) => ({
+        key: option.key,
+        text: isPlaceholder(option.text, option.key) ? "" : option.text,
+      }))
     : optionsFor(type, part.answer_constraints.option_count ?? 3);
   const usedAnswers = new Set(part.questions.flatMap((question) => question.correct_answers));
   const defaultAnswer = part.answer_constraints.unique_answers
@@ -68,12 +75,16 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
   const turnType = defaultSpeakingTurn(part);
   const defaultPrompt = part.part_code === "listening_1"
     ? `Question ${part.questions.length + 1}`
+    : part.part_code === "reading_1b"
+    ? `Gap ${part.questions.length + 1}`
     : "";
   return {
     question_type: type,
     prompt: defaultPrompt,
     instructions: null,
-    passage: part.answer_constraints.shared_passage ? firstQuestion?.passage ?? null : null,
+    passage: part.answer_constraints.shared_passage
+      ? (firstQuestion?.passage ?? (typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`vh.passage.${part.id}`) : null) ?? null)
+      : null,
     image_path: null,
     image_url: null,
     options: sharedOptions,

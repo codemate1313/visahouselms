@@ -1,6 +1,7 @@
 import type { RefObject } from "react";
 import { API_BASE_URL } from "@/api/client";
 import type { Attempt, AttemptResponse } from "@/api/types";
+import { renderRichText, RichTextContent } from "@/components/ui";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { InlineMatchingBlankGroup } from "./InlineMatchingBlankGroup";
 import { SourceTextMatchingGroup } from "./SourceTextMatchingGroup";
@@ -52,13 +53,16 @@ export function SourcePane({
           </h2>
         ) : (
           <>
-            <span>{currentPart.part_code.replaceAll("_", " ")}</span>
             <h2>{sourcePassages.length > 0 ? t.sourceMaterial : t.partInstructions}</h2>
-            {currentPart.skill_focus && <p>{currentPart.skill_focus}</p>}
+            {currentPart.section_type !== "reading" && currentPart.skill_focus && <p>{currentPart.skill_focus}</p>}
           </>
         )}
       </div>
-      {!isWriting && currentPart.instructions && <p className="test-runner-instructions">{currentPart.instructions}</p>}
+      {/* Instructions stay one flex row (see `.test-runner-instructions`), so
+          they take the inline renderer rather than the block one. */}
+      {!isWriting && currentPart.instructions && (
+        <p className="test-runner-instructions">{renderRichText(currentPart.instructions)}</p>
+      )}
       {isWriting && currentPart.questions.map((question, qIdx) => (
         <div className="test-runner-writing-prompt" key={`writing-prompt-${question.id}`} style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", color: "#6c6e76", marginBottom: 4 }}>
@@ -122,7 +126,7 @@ export function SourcePane({
                 {t.passagePrefix} {index + 1}
               </strong>
             )}
-            <p>{passage}</p>
+            <RichTextContent text={passage} />
           </article>
         ))
       ) : !isWriting && images.length === 0 && currentPart.assets.length === 0 ? (

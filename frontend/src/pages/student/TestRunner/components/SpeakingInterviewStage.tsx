@@ -3,7 +3,7 @@ import { API_BASE_URL } from "@/api/client";
 import type { Attempt } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { SpeakingAvatar } from "@/components/speaking/SpeakingAvatar";
-import { Button } from "@/components/ui";
+import { Button, RichTextContent } from "@/components/ui";
 import { hasAttemptResponse } from "@/pages/student/attemptMetrics";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { formatTime } from "../helpers";
@@ -273,7 +273,9 @@ export function SpeakingInterviewStage({
           ) : (
           <div className={materialClassName}>
             {hasCandidateText && question.passage ? (
-              <article className="speaking-interview-passage">{question.passage}</article>
+              <article className="speaking-interview-passage">
+                <RichTextContent text={question.passage} />
+              </article>
             ) : null}
             {candidateImageUrl ? (
               <figure className="speaking-candidate-attachment">

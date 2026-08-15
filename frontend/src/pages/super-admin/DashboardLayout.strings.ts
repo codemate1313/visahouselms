@@ -34,6 +34,7 @@ export const dashboardLayoutStrings = {
     testimonials: "Testimonials",
     blogsCms: "Blogs CMS",
     seoSettings: "SEO & Meta Settings",
+    instagramFeed: "Instagram Feed",
     settings: "SETTINGS",
     system: "System",
     systemDev: "Platform Settings",

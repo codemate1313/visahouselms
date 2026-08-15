@@ -88,4 +88,8 @@ export {
 } from "./Stepper";
 export type { StepperProps, StepperItemProps, StepperTriggerProps } from "./Stepper";
 
-export { renderRichText } from "./RichText/RichText";
+export { renderRichText, RichTextContent, stripRichTextMarkers } from "./RichText/RichText";
+export type { RichTextContentProps } from "./RichText/RichText";
+
+export { RichTextEditor } from "./RichTextEditor/RichTextEditor";
+export type { RichTextEditorProps } from "./RichTextEditor/RichTextEditor";

@@ -6,6 +6,7 @@ import { PublicOrbBackground } from "@/components/publicSite/PublicOrbBackground
 import { PublicCtaBanner } from "@/components/publicSite/PublicCtaBanner";
 import { AuthOverlay } from "@/components/publicSite/AuthOverlay";
 import { InstitutePlanBanner } from "@/components/publicSite/InstitutePlanBanner";
+import { InstagramFeedSection } from "@/components/publicSite/InstagramFeedSection";
 import { usePublicAuthOverlay } from "@/components/publicSite/usePublicAuthOverlay";
 import { usePublicAuthAction } from "@/components/publicSite/usePublicAuthAction";
 import { useRevealOnScroll } from "@/components/publicSite/useRevealOnScroll";
@@ -79,6 +80,7 @@ export function Home() {
   const scrollTriggerRef = useRef<ScrollTrigger | null>(null);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const featuresSectionRef = useRef<HTMLElement | null>(null);
+  const testimonialsSectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const section = featuresSectionRef.current;
@@ -188,6 +190,67 @@ export function Home() {
     const cards = gsap.utils.toArray<HTMLElement>(".vh-steps-gsap-card", container);
     if (!cards.length) return;
 
+    // 1. Initial Scroll Entrance Animation (Left sidebar from Left, Right Card Stage from Right)
+    const eyebrowEl = container.querySelector(".vh-steps-eyebrow");
+    const headingEl = container.querySelector(".vh-steps-sidebar h2");
+    const subtitleEl = container.querySelector(".vh-steps-subtitle");
+    const navItems = gsap.utils.toArray<HTMLElement>(".vh-stepper-item-wrapper", container);
+    const rightStage = container.querySelector(".vh-steps-cards-stage");
+
+    const entranceTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: container,
+        start: "top 85%",
+        toggleActions: "play none none reverse",
+      },
+    });
+
+    if (eyebrowEl) {
+      entranceTl.fromTo(
+        eyebrowEl,
+        { opacity: 0, x: -75 },
+        { opacity: 1, x: 0, duration: 0.75, ease: "power3.out" },
+        0
+      );
+    }
+
+    if (headingEl) {
+      entranceTl.fromTo(
+        headingEl,
+        { opacity: 0, x: -85, filter: "blur(4px)" },
+        { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.85, ease: "power3.out" },
+        0.08
+      );
+    }
+
+    if (subtitleEl) {
+      entranceTl.fromTo(
+        subtitleEl,
+        { opacity: 0, x: -75 },
+        { opacity: 1, x: 0, duration: 0.75, ease: "power2.out" },
+        0.15
+      );
+    }
+
+    if (navItems.length) {
+      entranceTl.fromTo(
+        navItems,
+        { opacity: 0, x: -80 },
+        { opacity: 1, x: 0, duration: 0.8, stagger: 0.1, ease: "power3.out" },
+        0.2
+      );
+    }
+
+    if (rightStage) {
+      entranceTl.fromTo(
+        rightStage,
+        { opacity: 0, x: 95, rotateY: -10, rotateZ: 2.5, scale: 0.92, filter: "blur(6px)" },
+        { opacity: 1, x: 0, rotateY: 0, rotateZ: 0, scale: 1, filter: "blur(0px)", duration: 1.1, ease: "power4.out" },
+        0.1
+      );
+    }
+
+    // 2. Setup pinned sliding cards
     cards.forEach((card, i) => {
       gsap.set(card, {
         position: "absolute",
@@ -260,6 +323,7 @@ export function Home() {
 
     return () => {
       clearTimeout(timer);
+      entranceTl.kill();
       tl.kill();
       if (scrollTriggerRef.current) {
         scrollTriggerRef.current.kill();
@@ -300,6 +364,66 @@ export function Home() {
       .then((data) => setTestimonials(Array.isArray(data) ? mapTestimonials(data) : []))
       .catch(() => setTestimonials([]));
   }, []);
+
+  useEffect(() => {
+    const section = testimonialsSectionRef.current;
+    if (!section || !testimonials.length) return;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const ctx = gsap.context(() => {
+      const eyebrow = section.querySelector(".vh-testimonials-eyebrow");
+      const title = section.querySelector(".vh-testimonials-header-wrap h2");
+      const desc = section.querySelector(".vh-testimonials-header-wrap p");
+      const stage = section.querySelector(".vh-3d-coverflow-wrapper");
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: section,
+          start: "top 82%",
+          toggleActions: "play none none reverse",
+        },
+      });
+
+      if (eyebrow) {
+        tl.fromTo(
+          eyebrow,
+          { opacity: 0, y: 24 },
+          { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" },
+          0
+        );
+      }
+
+      if (title) {
+        tl.fromTo(
+          title,
+          { opacity: 0, y: 32, filter: "blur(4px)" },
+          { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.85, ease: "power3.out" },
+          0.08
+        );
+      }
+
+      if (desc) {
+        tl.fromTo(
+          desc,
+          { opacity: 0, y: 26 },
+          { opacity: 1, y: 0, duration: 0.75, ease: "power2.out" },
+          0.16
+        );
+      }
+
+      if (stage) {
+        tl.fromTo(
+          stage,
+          { opacity: 0, y: 50, scale: 0.94, filter: "blur(6px)" },
+          { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 1.05, ease: "power4.out" },
+          0.12
+        );
+      }
+    }, section);
+
+    return () => ctx.revert();
+  }, [testimonials.length]);
 
   const stageRef = useRef<HTMLDivElement | null>(null);
   const dragDataRef = useRef<{
@@ -768,13 +892,18 @@ export function Home() {
           </div>
         </section>
         
-        <section className="vh-testimonials-section vh-reveal">
+        {/* Instagram Reels & Posts Showcase */}
+        <InstagramFeedSection />
+
+        <section ref={testimonialsSectionRef} className="vh-testimonials-section">
           <div className="vh-testimonials-header-wrap">
-            <div>
-              <span className="vh-testimonials-eyebrow">Student Success Stories</span>
-              <h2>Trusted by LanguageCert candidates</h2>
-              <p>Read real experiences from students who used Visa House LMS to prepare for their LanguageCert exam and achieve their target results.</p>
-            </div>
+            <span className="vh-testimonials-eyebrow">Student Success Stories</span>
+            <h2>
+              Trusted by <span className="vh-accent">LanguageCert</span> candidates
+            </h2>
+            <p>
+              Read real experiences from students who used Visa House LMS to prepare for their LanguageCert exam and achieve their target results.
+            </p>
           </div>
           {testimonials.length > 0 ? (
             <div

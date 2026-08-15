@@ -43,6 +43,7 @@ from app.models.support_ticket import SupportTicket
 from app.models.testimonials import Testimonial
 from app.models.blogs import BlogPost
 from app.models.seo_settings import SEOSetting
+from app.models.instagram_settings import InstagramSettings
 from app.models.trial_config import TrialConfig
 from app.models.user import User
 from app.models.gst_rate import GstRate

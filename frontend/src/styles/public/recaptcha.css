@@ -1,0 +1,159 @@
+.vh-recaptcha-card {
+  width: 302px;
+  height: 76px;
+  background: #f9f9f9;
+  border: 1px solid #d3d3d3;
+  border-radius: 4px;
+  box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 0 14px;
+  margin: 20px 0 16px;
+  user-select: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+[data-theme="dark"] .vh-recaptcha-card {
+  background: #1c1d26;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.vh-recaptcha-card.has-error {
+  border-color: #e11d2e;
+  box-shadow: 0 0 0 1px #e11d2e, 0 2px 8px rgba(225, 29, 46, 0.2);
+}
+
+.vh-recaptcha-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vh-recaptcha-checkbox {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #c1c1c1;
+  border-radius: 2px;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+[data-theme="dark"] .vh-recaptcha-checkbox {
+  background: #252733;
+  border-color: #4a4d5d;
+}
+
+.vh-recaptcha-checkbox:hover:not(:disabled) {
+  border-color: #b2b2b2;
+}
+
+.vh-recaptcha-card.is-verified .vh-recaptcha-checkbox {
+  border-color: #00a651;
+  background: #ffffff;
+}
+
+[data-theme="dark"] .vh-recaptcha-card.is-verified .vh-recaptcha-checkbox {
+  background: #1c1d26;
+}
+
+.vh-recaptcha-label {
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #222222;
+  cursor: pointer;
+}
+
+[data-theme="dark"] .vh-recaptcha-label {
+  color: #e2e8f0;
+}
+
+.vh-recaptcha-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid #4285f4;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: vhRecaptchaSpin 0.75s linear infinite;
+  display: block;
+}
+
+@keyframes vhRecaptchaSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.vh-recaptcha-checkmark {
+  width: 20px;
+  height: 20px;
+  animation: vhCheckPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes vhCheckPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.vh-recaptcha-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.vh-recaptcha-logo-icon {
+  width: 26px;
+  height: 26px;
+}
+
+.vh-recaptcha-brand {
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: #555555;
+  margin-top: 1px;
+}
+
+[data-theme="dark"] .vh-recaptcha-brand {
+  color: #94a3b8;
+}
+
+.vh-recaptcha-links {
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 8px;
+  color: #555555;
+  display: flex;
+  gap: 3px;
+  margin-top: 1px;
+}
+
+.vh-recaptcha-links a {
+  color: #555555;
+  text-decoration: none;
+}
+
+.vh-recaptcha-links a:hover {
+  text-decoration: underline;
+}
+
+[data-theme="dark"] .vh-recaptcha-links,
+[data-theme="dark"] .vh-recaptcha-links a {
+  color: #94a3b8;
+}
+
+.vh-recaptcha-sep {
+  opacity: 0.6;
+}
+
+@media (max-width: 420px) {
+  .vh-recaptcha-card {
+    width: 100%;
+    max-width: 302px;
+  }
+}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
-import { Button, RequiredMark } from "@/components/ui";
+import { Button, RequiredMark, RichTextEditor } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
@@ -149,12 +149,12 @@ export function NotepadGapsComposer({ part, isEditable, busy, onSubmit, onDelete
       )}
 
       <label htmlFor="notepad-task-text">{t.notepadLabel}<RequiredMark /></label>
-      <textarea
+      <RichTextEditor
         id="notepad-task-text"
         className="gap-task-passage"
         rows={14}
         value={notepad}
-        onChange={(event) => setNotepad(event.target.value)}
+        onChange={setNotepad}
         placeholder={t.notepadPlaceholder}
         readOnly={!isEditable || !isEditing}
       />

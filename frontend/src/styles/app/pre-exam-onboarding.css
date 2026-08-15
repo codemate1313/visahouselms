@@ -1,8 +1,10 @@
-/* Pre-Exam Onboarding Styles - Vertical Glassmorphism Sidebar Theme */
+/* ==========================================================================
+   Pre-Exam Onboarding Styles - Ultra-Premium Glassmorphism & HUD Theme
+   ========================================================================== */
 
 .student-portal .onboarding-wrapper {
-  --pre-exam-primary: var(--institute-primary, #6d00d7);
-  --pre-exam-primary-strong: color-mix(in srgb, var(--pre-exam-primary) 82%, #160722);
+  --pre-exam-primary: var(--institute-primary, #e11d2e);
+  --pre-exam-primary-strong: color-mix(in srgb, var(--pre-exam-primary) 85%, #000000);
   --pre-exam-primary-soft: color-mix(in srgb, var(--pre-exam-primary) 14%, transparent);
   --pre-exam-primary-border: color-mix(in srgb, var(--pre-exam-primary) 28%, transparent);
   --primary: var(--pre-exam-primary);
@@ -10,16 +12,16 @@
   --primary-soft: var(--pre-exam-primary-soft);
   --pre-exam-hero-gradient: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--pre-exam-primary) 94%, #ffffff 6%) 0%,
-    color-mix(in srgb, var(--pre-exam-primary) 78%, #090512 22%) 100%
+    color-mix(in srgb, var(--pre-exam-primary) 92%, #ffffff 8%) 0%,
+    color-mix(in srgb, var(--pre-exam-primary) 75%, #000000 25%) 100%
   );
-  --pre-exam-dark-page: color-mix(in srgb, var(--pre-exam-primary) 5%, #090b12);
-  --pre-exam-dark-panel: color-mix(in srgb, var(--pre-exam-primary) 10%, #121823);
-  --pre-exam-dark-panel-strong: color-mix(in srgb, var(--pre-exam-primary) 16%, #172033);
-  --pre-exam-dark-card: color-mix(in srgb, var(--pre-exam-primary) 7%, rgba(255, 255, 255, 0.055));
-  --pre-exam-dark-card-hover: color-mix(in srgb, var(--pre-exam-primary) 10%, rgba(255, 255, 255, 0.08));
-  --pre-exam-dark-border: color-mix(in srgb, var(--pre-exam-primary) 24%, rgba(148, 163, 184, 0.3));
-  --pre-exam-dark-border-soft: color-mix(in srgb, var(--pre-exam-primary) 16%, rgba(148, 163, 184, 0.22));
+  --pre-exam-dark-page: #08080c;
+  --pre-exam-dark-panel: rgba(17, 24, 39, 0.82);
+  --pre-exam-dark-panel-strong: rgba(22, 30, 49, 0.92);
+  --pre-exam-dark-card: rgba(255, 255, 255, 0.035);
+  --pre-exam-dark-card-hover: rgba(255, 255, 255, 0.065);
+  --pre-exam-dark-border: rgba(255, 255, 255, 0.08);
+  --pre-exam-dark-border-soft: rgba(255, 255, 255, 0.06);
   --pre-exam-dark-text: #f8fafc;
   --pre-exam-dark-muted: #cbd5e1;
   --pre-exam-dark-subtle: #94a3b8;
@@ -44,7 +46,7 @@
 @keyframes onboarding-fade-in {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -52,7 +54,7 @@
   }
 }
 
-/* 2-Column Grid Layout - Increased Left Segment Size (360px) */
+/* 2-Column Grid Layout */
 .onboarding-grid-layout {
   display: grid;
   grid-template-columns: 360px 1fr;
@@ -67,7 +69,9 @@
   }
 }
 
-/* LEFT COLUMN: Vertical Glassmorphism Sidebar */
+/* ==========================================================================
+   LEFT COLUMN: Glassmorphic Sidebar
+   ========================================================================== */
 .onboarding-sidebar {
   position: sticky;
   top: 24px;
@@ -75,8 +79,8 @@
   flex-direction: column;
   gap: 26px;
   background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 28px;
   padding: 28px;
@@ -84,16 +88,17 @@
 }
 
 [data-theme="dark"] .onboarding-sidebar {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--pre-exam-primary) 16%, #172033) 0%, #101722 100%);
-  border-color: color-mix(in srgb, var(--pre-exam-primary) 22%, rgba(148, 163, 184, 0.2));
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.88) 0%, rgba(10, 14, 23, 0.95) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
 }
 
 /* Sidebar Hero Card */
 .sidebar-hero-card {
   border-radius: 22px;
-  padding: 26px;
+  padding: 24px;
   color: #ffffff;
   box-shadow: 0 14px 32px -6px color-mix(in srgb, var(--pre-exam-primary) 42%, transparent);
   display: flex;
@@ -101,16 +106,23 @@
   gap: 14px;
   position: relative;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+[data-theme="dark"] .sidebar-hero-card {
+  background: linear-gradient(135deg, rgba(225, 29, 46, 0.28) 0%, rgba(139, 92, 246, 0.16) 45%, rgba(15, 23, 42, 0.95) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .sidebar-hero-card::after {
   content: "";
   position: absolute;
-  right: -40px;
-  bottom: -40px;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.22) 0%, transparent 70%);
+  right: -30px;
+  bottom: -30px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--pre-exam-primary) 30%, transparent) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -119,15 +131,16 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 6px 14px;
   border-radius: 999px;
   font-size: 12.5px;
   font-weight: 750;
   width: fit-content;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  letter-spacing: -0.01em;
 }
 
 .sidebar-hero-badge svg {
@@ -136,11 +149,12 @@
 }
 
 .sidebar-hero-title {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 800;
   margin: 0;
   line-height: 1.25;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.02em;
+  color: #ffffff;
 }
 
 .sidebar-meta-list {
@@ -156,24 +170,42 @@
   gap: 10px;
   font-size: 13px;
   font-weight: 650;
-  opacity: 0.94;
-  background: rgba(0, 0, 0, 0.14);
-  padding: 6px 12px;
-  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 7px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+[data-theme="dark"] .sidebar-meta-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
 }
 
 .sidebar-meta-item svg {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
+  color: var(--pre-exam-primary);
+}
+
+[data-theme="dark"] .sidebar-meta-item svg {
+  color: #ff6b81;
 }
 
 .sidebar-brand-mark {
   margin-left: auto;
   font-weight: 800;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Vertical Milestone Navigation Area */
+/* Vertical Stepper Navigation */
 .vertical-milestone-nav {
   display: flex;
   flex-direction: column;
@@ -181,60 +213,52 @@
   position: relative;
 }
 
-/* Sidebar Footer */
 .sidebar-footer {
   padding-top: 14px;
   border-top: 1px solid #f1f5f9;
 }
 
 [data-theme="dark"] .sidebar-footer {
-  border-top-color: var(--pre-exam-dark-border-soft);
+  border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="dark"] .onboarding-sidebar .ui-stepper-indicator {
-  background: color-mix(in srgb, var(--pre-exam-primary) 7%, #111827);
-  border-color: var(--pre-exam-dark-border);
-  color: var(--pre-exam-dark-subtle);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
 }
 
 [data-theme="dark"] .onboarding-sidebar .ui-stepper-indicator[data-state="active"] {
-  background: var(--pre-exam-primary);
-  border-color: var(--pre-exam-primary);
-  color: #ffffff;
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--pre-exam-primary) 16%, transparent);
-}
-
-[data-theme="dark"] .onboarding-sidebar .ui-stepper-indicator[data-state="active"]::after {
-  border-color: color-mix(in srgb, var(--pre-exam-primary) 58%, #ffffff);
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+  border-color: #f43f5e !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 20px rgba(225, 29, 72, 0.5), 0 0 0 5px rgba(225, 29, 72, 0.2) !important;
 }
 
 [data-theme="dark"] .onboarding-sidebar .ui-stepper-item[data-state="active"] .ui-stepper-title {
-  color: var(--pre-exam-dark-text);
+  color: #ffffff;
+  font-weight: 750;
 }
 
 [data-theme="dark"] .onboarding-sidebar .ui-stepper-title {
-  color: var(--pre-exam-dark-text);
+  color: #f1f5f9;
 }
 
 [data-theme="dark"] .onboarding-sidebar .ui-stepper-description {
-  color: var(--pre-exam-dark-subtle);
+  color: #94a3b8;
 }
 
 [data-theme="dark"] .onboarding-sidebar .ui-stepper-separator {
-  background: var(--pre-exam-dark-border-soft);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="dark"] .onboarding-sidebar .ui-stepper-separator-line {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--pre-exam-primary) 80%, #ffffff) 0%,
-    var(--pre-exam-primary) 100%
-  );
+  background: linear-gradient(180deg, #e11d48 0%, rgba(225, 29, 72, 0.3) 100%);
 }
 
-
-
-/* RIGHT COLUMN: Stage Content Area */
+/* ==========================================================================
+   RIGHT COLUMN: Stage Content Area
+   ========================================================================== */
 .onboarding-main-stage {
   display: flex;
   flex-direction: column;
@@ -254,9 +278,11 @@
 }
 
 [data-theme="dark"] .stage-top-header {
-  background: linear-gradient(135deg, var(--pre-exam-dark-panel) 0%, color-mix(in srgb, var(--pre-exam-primary) 7%, #111827) 100%);
-  border-color: color-mix(in srgb, var(--pre-exam-primary) 22%, rgba(148, 163, 184, 0.2));
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 .stage-step-pill {
@@ -270,8 +296,9 @@
 }
 
 [data-theme="dark"] .stage-step-pill {
-  background: var(--pre-exam-primary-soft);
-  color: color-mix(in srgb, var(--pre-exam-primary) 36%, #ffffff);
+  background: rgba(225, 29, 72, 0.16);
+  color: #ff6b81;
+  border: 1px solid rgba(225, 29, 72, 0.3);
 }
 
 .stage-progress-bar-track {
@@ -283,17 +310,14 @@
 }
 
 [data-theme="dark"] .stage-progress-bar-track {
-  background: #334155;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .stage-progress-bar-fill {
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--pre-exam-primary) 0%,
-    color-mix(in srgb, var(--pre-exam-primary) 46%, #ffffff) 100%
-  );
+  background: linear-gradient(90deg, #e11d48 0%, #ff4d6d 100%);
   border-radius: 999px;
+  box-shadow: 0 0 12px rgba(225, 29, 72, 0.5);
   transition: width 0.75s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -305,7 +329,7 @@
 }
 
 [data-theme="dark"] .stage-percent-text {
-  color: var(--pre-exam-dark-subtle);
+  color: #94a3b8;
 }
 
 /* Active Stage Card Body */
@@ -313,16 +337,16 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 26px;
-  padding: 40px;
+  padding: 38px;
   box-shadow: 0 12px 36px rgba(15, 23, 42, 0.05);
 }
 
 [data-theme="dark"] .onboarding-card-body {
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--pre-exam-primary) 12%, transparent) 0%, transparent 36%),
-    linear-gradient(180deg, var(--pre-exam-dark-panel) 0%, #111722 100%);
-  border-color: color-mix(in srgb, var(--pre-exam-primary) 22%, rgba(148, 163, 184, 0.2));
-  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.82) 0%, rgba(10, 14, 23, 0.94) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
 }
 
 .stage-fade-in {
@@ -360,8 +384,10 @@
 }
 
 [data-theme="dark"] .header-icon-badge {
-  background: var(--pre-exam-primary-soft);
-  color: color-mix(in srgb, var(--pre-exam-primary) 42%, #ffffff);
+  background: rgba(225, 29, 72, 0.16);
+  color: #ff6b81;
+  border: 1px solid rgba(225, 29, 72, 0.3);
+  box-shadow: 0 0 20px rgba(225, 29, 72, 0.2);
 }
 
 .header-icon-badge svg {
@@ -378,7 +404,7 @@
 }
 
 [data-theme="dark"] .onboarding-card-header h2 {
-  color: var(--pre-exam-dark-text);
+  color: #ffffff;
 }
 
 .header-subtitle {
@@ -388,25 +414,27 @@
 }
 
 [data-theme="dark"] .header-subtitle {
-  color: var(--pre-exam-dark-muted);
+  color: #94a3b8;
 }
 
-/* Rules List */
+/* ==========================================================================
+   STEP 1: PROTOCOL & DIRECTIVES CARDS
+   ========================================================================== */
 .onboarding-rules-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .onboarding-rule-item {
   display: flex;
   align-items: flex-start;
   gap: 18px;
-  padding: 20px 24px;
+  padding: 18px 22px;
   background: #f8fafc;
   border: 1px solid #f1f5f9;
   border-radius: 18px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .onboarding-rule-item:hover {
@@ -417,67 +445,115 @@
 }
 
 [data-theme="dark"] .onboarding-rule-item {
-  background: color-mix(in srgb, var(--pre-exam-primary) 6%, rgba(255, 255, 255, 0.045));
-  border-color: var(--pre-exam-dark-border-soft);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 [data-theme="dark"] .onboarding-rule-item:hover {
-  background: color-mix(in srgb, var(--pre-exam-primary) 9%, rgba(255, 255, 255, 0.07));
-  border-color: color-mix(in srgb, var(--pre-exam-primary) 30%, rgba(148, 163, 184, 0.3));
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
-}
-
-[data-theme="dark"] .rule-icon-box.icon-blue,
-[data-theme="dark"] .rule-icon-box.icon-green,
-[data-theme="dark"] .rule-icon-box.icon-amber,
-[data-theme="dark"] .rule-icon-box.icon-cyan,
-[data-theme="dark"] .rule-icon-box.icon-purple {
-  background: color-mix(in srgb, currentColor 16%, rgba(255, 255, 255, 0.05));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.065) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-color: rgba(225, 29, 72, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35), 0 0 24px rgba(225, 29, 72, 0.15);
+  transform: translateY(-2px);
 }
 
 .rule-icon-box {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: transform 0.3s ease;
 }
 
+.onboarding-rule-item:hover .rule-icon-box {
+  transform: scale(1.06);
+}
+
+.rule-icon-box svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Light Theme Icon Badges */
 .rule-icon-box.icon-blue {
   background: #eff6ff;
   color: #2563eb;
+  border: 1px solid #dbeafe;
 }
 
 .rule-icon-box.icon-green {
   background: #ecfdf5;
   color: #059669;
+  border: 1px solid #d1fae5;
 }
 
 .rule-icon-box.icon-amber {
   background: #fffbeb;
   color: #d97706;
+  border: 1px solid #fef3c7;
 }
 
 .rule-icon-box.icon-cyan {
   background: #f5f3ff;
   color: #7c3aed;
+  border: 1px solid #ede9fe;
 }
 
 .rule-icon-box.icon-purple {
   background: #fdf2f8;
   color: #db2777;
+  border: 1px solid #fce7f3;
+}
+
+/* Dark Theme Luminous Neon Badges */
+[data-theme="dark"] .rule-icon-box.icon-blue {
+  background: rgba(59, 130, 246, 0.16);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.25);
+}
+
+[data-theme="dark"] .rule-icon-box.icon-green {
+  background: rgba(16, 185, 129, 0.16);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+}
+
+[data-theme="dark"] .rule-icon-box.icon-amber {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+}
+
+[data-theme="dark"] .rule-icon-box.icon-cyan {
+  background: rgba(99, 102, 241, 0.16);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.25);
+}
+
+[data-theme="dark"] .rule-icon-box.icon-purple {
+  background: rgba(225, 29, 72, 0.16);
+  color: #fb7185;
+  border: 1px solid rgba(225, 29, 72, 0.35);
+  box-shadow: 0 0 16px rgba(225, 29, 72, 0.25);
 }
 
 .rule-text {
   font-size: 14.5px;
   color: #475569;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
 [data-theme="dark"] .rule-text {
-  color: var(--pre-exam-dark-muted);
+  color: #cbd5e1;
 }
 
 .rule-text strong {
@@ -485,16 +561,26 @@
 }
 
 [data-theme="dark"] .rule-text strong {
-  color: var(--pre-exam-dark-text);
+  color: #ffffff;
+  font-weight: 750;
 }
 
-/* Instructor Directives */
+/* ==========================================================================
+   Official Instructor Notes Box
+   ========================================================================== */
 .onboarding-instructor-notes-box {
   margin-top: 28px;
   padding: 24px 26px;
   background: var(--pre-exam-primary-soft);
   border: 1px solid var(--pre-exam-primary-border);
   border-radius: 20px;
+}
+
+[data-theme="dark"] .onboarding-instructor-notes-box {
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.08) 0%, rgba(15, 23, 42, 0.65) 100%);
+  border: 1px solid rgba(225, 29, 72, 0.28);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .onboarding-instructor-notes-box .notes-header {
@@ -507,21 +593,41 @@
   margin-bottom: 14px;
 }
 
+[data-theme="dark"] .onboarding-instructor-notes-box .notes-header {
+  color: #ff6b81;
+}
+
 .directive-item {
   display: flex;
   align-items: flex-start;
   gap: 14px;
   margin-top: 10px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+}
+
+[data-theme="dark"] .directive-item {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
 }
 
 .directive-tag {
   background: var(--pre-exam-primary);
   color: #ffffff;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 800;
   padding: 4px 10px;
   border-radius: 6px;
   flex-shrink: 0;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .directive-tag {
+  background: linear-gradient(135deg, #e11d2e 0%, #b80f28 100%);
+  box-shadow: 0 2px 8px rgba(225, 29, 46, 0.4);
 }
 
 .directive-item p {
@@ -531,20 +637,17 @@
   line-height: 1.55;
 }
 
-[data-theme="dark"] .onboarding-instructor-notes-box {
-  background: color-mix(in srgb, var(--pre-exam-primary) 12%, var(--pre-exam-dark-panel));
-  border-color: color-mix(in srgb, var(--pre-exam-primary) 30%, var(--pre-exam-dark-border-soft));
-}
-
 [data-theme="dark"] .directive-item p {
-  color: var(--pre-exam-dark-muted);
+  color: #e2e8f0;
 }
 
-/* Step 2 Test Architecture Grid */
+/* ==========================================================================
+   STEP 2: ASSESSMENT STRUCTURE
+   ========================================================================== */
 .onboarding-parts-grid {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .onboarding-part-card {
@@ -556,7 +659,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 20px;
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .onboarding-part-card:hover {
@@ -566,14 +669,18 @@
 }
 
 [data-theme="dark"] .onboarding-part-card {
-  background: color-mix(in srgb, var(--pre-exam-primary) 6%, rgba(255, 255, 255, 0.045));
-  border-color: var(--pre-exam-dark-border-soft);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 [data-theme="dark"] .onboarding-part-card:hover {
-  background: color-mix(in srgb, var(--pre-exam-primary) 9%, rgba(255, 255, 255, 0.07));
-  border-color: color-mix(in srgb, var(--pre-exam-primary) 30%, rgba(148, 163, 184, 0.3));
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.065) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-color: rgba(225, 29, 72, 0.4);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35), 0 0 20px rgba(225, 29, 72, 0.15);
+  transform: translateY(-2px);
 }
 
 .part-num-badge {
@@ -591,8 +698,9 @@
 }
 
 [data-theme="dark"] .part-num-badge {
-  background: var(--pre-exam-primary-soft);
-  color: color-mix(in srgb, var(--pre-exam-primary) 42%, #ffffff);
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.4);
 }
 
 .part-card-info {
@@ -614,7 +722,7 @@
 }
 
 [data-theme="dark"] .part-card-info h3 {
-  color: var(--pre-exam-dark-text);
+  color: #ffffff;
 }
 
 .part-desc {
@@ -624,7 +732,7 @@
 }
 
 [data-theme="dark"] .part-desc {
-  color: var(--pre-exam-dark-muted);
+  color: #94a3b8;
 }
 
 .part-q-tag {
@@ -637,8 +745,9 @@
 }
 
 [data-theme="dark"] .part-q-tag {
-  background: var(--pre-exam-primary-soft);
-  color: color-mix(in srgb, var(--pre-exam-primary) 42%, #ffffff);
+  background: rgba(225, 29, 72, 0.16);
+  color: #ff6b81;
+  border: 1px solid rgba(225, 29, 72, 0.3);
 }
 
 .part-time-share-bar {
@@ -650,13 +759,18 @@
 }
 
 [data-theme="dark"] .part-time-share-bar {
-  background: #334155;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .part-time-share-fill {
   height: 100%;
   background: var(--pre-exam-primary);
   border-radius: 999px;
+}
+
+[data-theme="dark"] .part-time-share-fill {
+  background: linear-gradient(90deg, #e11d48 0%, #ff4d6d 100%);
+  box-shadow: 0 0 10px rgba(225, 29, 72, 0.4);
 }
 
 .onboarding-summary-banner {
@@ -673,9 +787,9 @@
 }
 
 [data-theme="dark"] .onboarding-summary-banner {
-  background: color-mix(in srgb, var(--pre-exam-primary) 6%, rgba(255, 255, 255, 0.045));
-  color: var(--pre-exam-dark-muted);
-  border-color: var(--pre-exam-dark-border-soft);
+  background: rgba(255, 255, 255, 0.035);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .onboarding-summary-banner svg {
@@ -684,7 +798,13 @@
   color: var(--pre-exam-primary);
 }
 
-/* Step 3 Hardware Diagnostics List */
+[data-theme="dark"] .onboarding-summary-banner svg {
+  color: #ff6b81;
+}
+
+/* ==========================================================================
+   STEP 3: HARDWARE DIAGNOSTICS
+   ========================================================================== */
 .onboarding-equipment-list {
   display: flex;
   flex-direction: column;
@@ -702,8 +822,9 @@
 }
 
 [data-theme="dark"] .equipment-row {
-  background: color-mix(in srgb, var(--pre-exam-primary) 6%, rgba(255, 255, 255, 0.045));
-  border-color: var(--pre-exam-dark-border-soft);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 .equipment-info {
@@ -723,6 +844,12 @@
   justify-content: center;
 }
 
+[data-theme="dark"] .equipment-icon-box {
+  background: rgba(225, 29, 72, 0.16);
+  color: #ff6b81;
+  border: 1px solid rgba(225, 29, 72, 0.3);
+}
+
 .equipment-info strong {
   font-size: 15.5px;
   color: #0f172a;
@@ -730,7 +857,7 @@
 }
 
 [data-theme="dark"] .equipment-info strong {
-  color: var(--pre-exam-dark-text);
+  color: #ffffff;
 }
 
 .equipment-info p {
@@ -740,7 +867,7 @@
 }
 
 [data-theme="dark"] .equipment-info p {
-  color: var(--pre-exam-dark-muted);
+  color: #94a3b8;
 }
 
 .equipment-status-badge {
@@ -755,12 +882,26 @@
   color: #15803d;
 }
 
+[data-theme="dark"] .equipment-status-badge.status-green {
+  background: rgba(16, 185, 129, 0.16);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+
 .equipment-status-badge.status-amber {
   background: #fef3c7;
   color: #b45309;
 }
 
-/* Interactive Microphone Equalizer Container */
+[data-theme="dark"] .equipment-status-badge.status-amber {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+}
+
+/* Microphone Tester */
 .onboarding-mic-tester-container {
   margin-top: 26px;
   border: 2px dashed #cbd5e1;
@@ -775,8 +916,8 @@
 }
 
 [data-theme="dark"] .onboarding-mic-tester-container {
-  background: color-mix(in srgb, var(--pre-exam-primary) 5%, rgba(255, 255, 255, 0.035));
-  border-color: var(--pre-exam-dark-border);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 2px dashed rgba(255, 255, 255, 0.12);
 }
 
 .mic-equalizer-icon-wrapper {
@@ -788,6 +929,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+[data-theme="dark"] .mic-equalizer-icon-wrapper {
+  background: rgba(225, 29, 72, 0.16);
+  color: #ff6b81;
+  border: 1px solid rgba(225, 29, 72, 0.3);
 }
 
 .mic-equalizer-icon-wrapper svg {
@@ -803,7 +950,7 @@
 }
 
 [data-theme="dark"] .onboarding-mic-tester-container h3 {
-  color: var(--pre-exam-dark-text);
+  color: #ffffff;
 }
 
 .mic-tester-hint {
@@ -813,7 +960,7 @@
 }
 
 [data-theme="dark"] .mic-tester-hint {
-  color: var(--pre-exam-dark-muted);
+  color: #94a3b8;
 }
 
 .onboarding-test-mic-btn {
@@ -833,6 +980,11 @@
   margin-top: 4px;
 }
 
+[data-theme="dark"] .onboarding-test-mic-btn {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  box-shadow: 0 6px 20px rgba(225, 29, 72, 0.45);
+}
+
 .onboarding-test-mic-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px color-mix(in srgb, var(--pre-exam-primary) 44%, transparent);
@@ -849,16 +1001,15 @@
 
 .eq-bar {
   width: 8px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--pre-exam-primary) 42%, #ffffff) 0%,
-    var(--pre-exam-primary) 100%
-  );
+  background: linear-gradient(180deg, #ff4d6d 0%, #e11d48 100%);
   border-radius: 999px;
+  box-shadow: 0 0 8px rgba(225, 29, 72, 0.5);
   transition: height 0.15s ease;
 }
 
-/* Step 4 Launch Layout */
+/* ==========================================================================
+   STEP 4: LAUNCH AUTHORIZATION
+   ========================================================================== */
 .text-center {
   text-align: center;
 }
@@ -875,6 +1026,13 @@
   margin: 0 auto 22px;
 }
 
+[data-theme="dark"] .onboarding-rocket-badge {
+  background: rgba(225, 29, 72, 0.16);
+  color: #ff6b81;
+  border: 1px solid rgba(225, 29, 72, 0.3);
+  box-shadow: 0 0 24px rgba(225, 29, 72, 0.3);
+}
+
 .onboarding-ready-heading {
   font-size: 28px;
   font-weight: 800;
@@ -884,7 +1042,7 @@
 }
 
 [data-theme="dark"] .onboarding-ready-heading {
-  color: var(--pre-exam-dark-text);
+  color: #ffffff;
 }
 
 .onboarding-ready-desc {
@@ -896,7 +1054,7 @@
 }
 
 [data-theme="dark"] .onboarding-ready-desc {
-  color: var(--pre-exam-dark-muted);
+  color: #94a3b8;
 }
 
 .onboarding-stat-summary-row {
@@ -919,8 +1077,9 @@
 }
 
 [data-theme="dark"] .stat-box {
-  background: color-mix(in srgb, var(--pre-exam-primary) 14%, var(--pre-exam-dark-panel));
-  border-color: color-mix(in srgb, var(--pre-exam-primary) 28%, var(--pre-exam-dark-border-soft));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .stat-box strong {
@@ -930,7 +1089,8 @@
 }
 
 [data-theme="dark"] .stat-box strong {
-  color: color-mix(in srgb, var(--pre-exam-primary) 42%, #ffffff);
+  color: #ffffff;
+  text-shadow: 0 0 16px rgba(225, 29, 72, 0.4);
 }
 
 .stat-box span {
@@ -940,7 +1100,7 @@
 }
 
 [data-theme="dark"] .stat-box span {
-  color: color-mix(in srgb, var(--pre-exam-primary) 42%, #ffffff);
+  color: #94a3b8;
 }
 
 .onboarding-consent-card {
@@ -955,7 +1115,7 @@
   max-width: 740px;
   margin: 0 auto 30px;
   cursor: pointer;
-  transition: border-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .onboarding-consent-card:hover {
@@ -963,8 +1123,13 @@
 }
 
 [data-theme="dark"] .onboarding-consent-card {
-  background: color-mix(in srgb, var(--pre-exam-primary) 10%, var(--pre-exam-dark-panel));
-  border-color: color-mix(in srgb, var(--pre-exam-primary) 26%, var(--pre-exam-dark-border-soft));
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.08) 0%, rgba(15, 23, 42, 0.65) 100%);
+  border: 1px solid rgba(225, 29, 72, 0.28);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .onboarding-consent-card:hover {
+  border-color: rgba(225, 29, 72, 0.5);
 }
 
 .onboarding-consent-card input[type="checkbox"] {
@@ -983,7 +1148,7 @@
 }
 
 [data-theme="dark"] .onboarding-consent-card span {
-  color: var(--pre-exam-dark-muted);
+  color: #e2e8f0;
 }
 
 .onboarding-security-error {
@@ -1007,7 +1172,7 @@
   color: var(--pre-exam-dark-subtle);
 }
 
-/* Common Actions Row Buttons */
+/* Common Actions Row */
 .onboarding-actions-row {
   display: flex;
   align-items: center;
@@ -1021,3 +1186,4 @@
 .onboarding-actions-row.space-between {
   justify-content: space-between;
 }
+

@@ -901,10 +901,15 @@ def import_questions(
     # message instead of committing the rows that happened to fit.
     ceiling = part.question_limit or (part.answer_constraints or {}).get("maximum_questions")
     if ceiling is not None and len(part.questions) + len(questions) > ceiling:
+        limit_phrase = (
+            f"exactly {part.question_limit}"
+            if part.question_limit is not None
+            else f"at most {ceiling}"
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
-                f"{part.title} takes at most {ceiling} "
+                f"{part.title} takes {limit_phrase} "
                 f"question{'s' if ceiling != 1 else ''} and already has {len(part.questions)}. "
                 f"Importing {len(questions)} more would exceed it - import at most "
                 f"{ceiling - len(part.questions)}."

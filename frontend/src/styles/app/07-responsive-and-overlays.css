@@ -1666,6 +1666,11 @@ body {
   width: max-content;
   min-width: 190px;
   max-width: min(260px, calc(100vw - 24px));
+  /* max-height is injected by RowActionMenu from the viewport-aware placement
+     helper; a menu with more actions than the screen has room for scrolls
+     rather than running off the bottom. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 6px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);

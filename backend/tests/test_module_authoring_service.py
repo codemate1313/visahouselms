@@ -423,6 +423,87 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         )
         self.assertEqual(edited_question["prompt"], "Updated task after publication")
 
+    def test_a_part_holds_exactly_its_question_limit(self) -> None:
+        # There is no pool: Reading 1A sits 6 questions, so the 7th has to be
+        # refused at authoring time rather than silently never shown.
+        created = self._create("reading")
+        part = next(item for item in created["parts"] if item["part_code"] == "reading_1a")
+        limit = part["question_limit"]
+        for index in range(limit):
+            module_authoring_service.add_question(
+                self.db,
+                self.instructor,
+                created["id"],
+                part["id"],
+                _question("mcq_single", f"Define the **term** number {index + 1}", option_count=4),
+                None,
+            )
+
+        with self.assertRaises(HTTPException) as overflow:
+            module_authoring_service.add_question(
+                self.db,
+                self.instructor,
+                created["id"],
+                part["id"],
+                _question("mcq_single", "One **extra** question too many", option_count=4),
+                None,
+            )
+        self.assertIn("takes exactly", str(overflow.exception.detail))
+
+        with self.assertRaises(HTTPException) as bulk:
+            module_authoring_service.import_questions(
+                self.db,
+                self.instructor,
+                created["id"],
+                part["id"],
+                [_question("mcq_single", "Imported **surplus** question", option_count=4)],
+                "csv",
+                "extra.csv",
+                None,
+            )
+        self.assertIn("would exceed it", str(bulk.exception.detail))
+
+        # Editing one of the 6 stays allowed while the part is at capacity.
+        saved = module_authoring_service.serialize_module(
+            module_authoring_service.get_module_or_404(self.db, created["id"]), detailed=True
+        )
+        saved_part = next(item for item in saved["parts"] if item["part_code"] == "reading_1a")
+        edited = module_authoring_service.update_question(
+            self.db,
+            self.instructor,
+            created["id"],
+            part["id"],
+            saved_part["questions"][0]["id"],
+            _question("mcq_single", "Rewritten **term** question", option_count=4),
+            None,
+        )
+        self.assertEqual(edited["prompt"], "Rewritten **term** question")
+
+    def test_publishing_is_blocked_when_a_part_exceeds_its_question_count(self) -> None:
+        created = self._complete("reading")
+        module = module_authoring_service.get_module_or_404(self.db, created["id"])
+        self.assertEqual(module_authoring_service.validation_errors(module), [])
+
+        # Legacy modules authored before the cap can still hold surplus rows.
+        part = next(item for item in module.parts if item.part_code == "reading_1a")
+        self.db.add(
+            ExamModuleQuestion(
+                part_id=part.id,
+                **_question("mcq_single", "Surplus **legacy** question", Decimal("1"), option_count=4),
+                source_type="manual",
+                source_filename=None,
+                sort_order=99,
+                created_by_id=self.instructor.id,
+            )
+        )
+        self.db.commit()
+        self.db.refresh(module)
+        errors = module_authoring_service.validation_errors(module)
+        self.assertTrue(
+            any("Reading 1A takes exactly 6 questions; it currently has 7." == message for message in errors),
+            errors,
+        )
+
     def test_listening_requires_part_specific_audio(self) -> None:
         created = self._create("listening")
         first = created["parts"][0]

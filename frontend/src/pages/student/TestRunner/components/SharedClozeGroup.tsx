@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { AttemptQuestion, AttemptResponse } from "@/api/types";
+import { renderRichText } from "@/components/ui";
 import { parseClozeMarkers } from "@/utils/clozeMarkers";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 
@@ -36,8 +37,13 @@ export function SharedClozeGroup({
       <p>
         {tokens.map((token) => (
           token.type === "text"
-            ? <span key={token.key}>{token.text}</span>
-            : <strong key={token.key} className="test-runner-cloze-marker">({questionNumberOffset + token.gapNumber})</strong>
+            ? <span key={token.key}>{renderRichText(token.text)}</span>
+            : (
+              <span key={token.key} className="test-runner-cloze-blank">
+                <strong>({questionNumberOffset + token.gapNumber})</strong>
+                <span className="test-runner-blank-dots">....................</span>
+              </span>
+            )
         ))}
       </p>
     </article>
@@ -49,11 +55,11 @@ export function SharedClozeGroup({
         const selected = question.response?.selected;
         const saving = savingIds.has(question.id);
         return (
-          <div className="test-runner-question test-runner-cloze-gap" key={question.id}>
-            <div className="test-runner-question-head">
-              <span>{t.label(questionNumberOffset + index + 1)}</span>
-              {saving && <span className="hint">{t.saving}</span>}
-            </div>
+            <div className="test-runner-question test-runner-cloze-gap" key={question.id}>
+              <div className="test-runner-question-head">
+                <span className="test-runner-cloze-gap-number">{questionNumberOffset + index + 1}</span>
+                {saving && <span className="hint">{t.saving}</span>}
+              </div>
             <div className="test-runner-options">
               {question.options.map((option) => (
                 <label key={option.key} className="test-runner-option">
