@@ -41,6 +41,12 @@ from app.services import cefr_service
 # Small buffer so a slow network round-trip near the deadline doesn't cost
 # the student their last answer - the server clock is still authoritative.
 EXPIRY_BUFFER_MINUTES = 2
+# The countdown is the candidate's answering time. Anything the system spends on
+# their behalf - the examiner avatar speaking a prompt, a recording uploading -
+# is credited back so it does not eat that time. Credits are keyed per event and
+# granted once, and the total is capped so a replayed request cannot buy time.
+MAX_CLOCK_CREDIT_SECONDS = 600
+CLOCK_TRANSITION_ALLOWANCE_SECONDS = 3
 FINAL_TEST_HEARTBEAT_GRACE_SECONDS = 30
 FINAL_TEST_AUTO_SUBMIT_VIOLATION_LIMIT = 3
 
@@ -115,6 +121,9 @@ def _build_content_snapshot(module: ExamModule, *, randomize: bool) -> dict:
         if randomize and not constraints.get("preserve_question_order"):
             questions = questions[:]
             _randomizer.shuffle(questions)
+        # Authoring caps a part at question_limit, so this only ever trims
+        # modules created before that cap existed - it keeps their marks adding
+        # up to max_marks instead of overshooting it.
         if part.question_limit is not None and part.question_limit > 0:
             questions = questions[:part.question_limit]
         question_ids: list[int] = []
@@ -238,6 +247,36 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
     return get_student_view(db, get_attempt_or_404(db, user, attempt.id))
 
 
+def credit_clock(db: Session, attempt: TestAttempt, key: str, seconds: float) -> bool:
+    """Give the candidate back time that was never theirs to spend.
+
+    `key` identifies the event (for example `prompt:41` or `upload:41`) so the
+    same examiner prompt or the same upload can never be credited twice, however
+    many times the client asks for it. Returns True when the clock moved.
+    """
+    if attempt.status != ATTEMPT_IN_PROGRESS:
+        return False
+    seconds = int(max(0, min(seconds, MAX_CLOCK_CREDIT_SECONDS)))
+    if seconds <= 0:
+        return False
+
+    credits = dict(attempt.clock_credits or {})
+    if key in credits:
+        return False
+    already = sum(int(value or 0) for value in credits.values())
+    remaining = MAX_CLOCK_CREDIT_SECONDS - already
+    if remaining <= 0:
+        return False
+    seconds = min(seconds, remaining)
+
+    credits[key] = seconds
+    attempt.clock_credits = credits
+    attempt.expires_at = attempt.expires_at + timedelta(seconds=seconds)
+    db.add(attempt)
+    db.commit()
+    return True
+
+
 def _auto_expire(db: Session, attempt: TestAttempt) -> None:
     if attempt.status == ATTEMPT_IN_PROGRESS:
         attempt.status = "expired"
@@ -269,7 +308,10 @@ def _redacted_question(
     interaction = dict(source.get("interaction", question.interaction or {}))
     material_path = interaction.get("candidate_material_path")
     if material_path:
-        interaction["candidate_material_url"] = f"/storage/{material_path}"
+        # Exam content, not a public asset: hand back a short-lived signed URL
+        # the same way the candidate's own recording is handled below, so the
+        # material cannot be copied out and passed to the next candidate.
+        interaction["candidate_material_url"] = sign_path(material_path)
     return {
         "id": question.id,
         "question_type": source.get("question_type", question.question_type),

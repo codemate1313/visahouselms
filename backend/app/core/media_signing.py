@@ -34,9 +34,18 @@ PRIVATE_PREFIXES: tuple[str, ...] = (
 DEFAULT_TTL_SECONDS = 6 * 60 * 60
 
 
+# Speaking candidate material (role-play cards, presentation handouts) lives at
+# `exam-modules/<module_id>/speaking-materials/...`, so the module id sits in the
+# middle and a fixed prefix cannot match it. It is exam content a candidate must
+# not be able to hand to the next candidate, so it is matched by segment instead.
+PRIVATE_SEGMENTS: tuple[str, ...] = ("speaking-materials/",)
+
+
 def is_private(relative_path: str) -> bool:
     normalized = relative_path.lstrip("/")
-    return normalized.startswith(PRIVATE_PREFIXES)
+    if normalized.startswith(PRIVATE_PREFIXES):
+        return True
+    return any(f"/{segment}" in f"/{normalized}" for segment in PRIVATE_SEGMENTS)
 
 
 def _signature(relative_path: str, expires_at: int) -> str:

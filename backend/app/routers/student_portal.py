@@ -1,3 +1,4 @@
+import time
 from copy import deepcopy
 from decimal import Decimal
 from typing import Optional
@@ -569,11 +570,20 @@ async def save_audio_answer(
     session: UserSession = Depends(get_current_session),
     x_attempt_token: Optional[str] = Header(default=None),
 ):
+    started_at = time.monotonic()
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
     attempt_service.require_security_access(attempt, session, x_attempt_token)
     attempt_service.require_live_security(attempt)
     content, extension = await read_validated_speaking_answer(file)
-    return attempt_service.save_audio_answer(db, attempt, question_id, content, extension)
+    result = attempt_service.save_audio_answer(db, attempt, question_id, content, extension)
+    # Waiting for a recording to reach the server is not answering time. Measured
+    # rather than estimated, so a slow connection is compensated properly, and
+    # keyed on the question so a retried upload cannot be credited twice.
+    attempt_service.credit_clock(
+        db, attempt, f"upload:{question_id}", time.monotonic() - started_at
+    )
+    result["expires_at"] = attempt.expires_at
+    return result
 
 
 @router.post("/attempts/{attempt_id}/flags", status_code=status.HTTP_201_CREATED)
@@ -699,11 +709,23 @@ async def get_speaking_avatar_for_attempt_part(
     examiner = avatar_service.get_examiner()
     audio_url, visemes, duration = await avatar_service.get_or_create_prompt_audio(prompt_text, examiner["voice"])
 
+    # The candidate cannot answer until the examiner has finished speaking, so
+    # that time is credited back to the countdown. Keyed on the question, so
+    # replaying this request cannot buy more than the one prompt's worth.
+    credit_key = f"prompt:{selected_question['id']}" if selected_question else f"part-intro:{part_id}"
+    attempt_service.credit_clock(
+        db,
+        attempt,
+        credit_key,
+        duration + attempt_service.CLOCK_TRANSITION_ALLOWANCE_SECONDS,
+    )
+
     return {
         "examiner": examiner,
         "prompt_text": prompt_text,
         "audio_url": audio_url,
         "video_url": None,
+        "expires_at": attempt.expires_at,
         "duration": duration,
         "visemes": visemes,
     }

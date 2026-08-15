@@ -50,7 +50,19 @@ export function SpeakingInterviewStage({
   const [mode, setMode] = useState<InterviewMode>(recorded ? "complete" : "ready");
   const [preparationLeft, setPreparationLeft] = useState(0);
   const [responseLeft, setResponseLeft] = useState(0);
-  const [notes, setNotes] = useState("");
+  const notesStorageKey = `speaking-notes:${attemptId}:${question?.id ?? "none"}`;
+  const [notes, setNotesState] = useState("");
+  const setNotes = useCallback((value: string) => {
+    setNotesState(value);
+    // Kept in session storage so a refresh or a dropped connection mid-
+    // preparation does not wipe what the candidate planned to say.
+    try {
+      sessionStorage.setItem(notesStorageKey, value);
+    } catch {
+      // Storage can be unavailable in private browsing - notes are a
+      // convenience, never worth breaking the exam over.
+    }
+  }, [notesStorageKey]);
   const startingRef = useRef(false);
   const onContinuePartRef = useRef(onContinuePart);
   const previousQuestionIdRef = useRef<number | null>(question?.id ?? null);
@@ -92,10 +104,10 @@ export function SpeakingInterviewStage({
       setMode(recorded ? "complete" : "ready");
       setPreparationLeft(0);
       setResponseLeft(0);
-      setNotes("");
+      setNotesState(sessionStorage.getItem(`speaking-notes:${attemptId}:${question?.id ?? "none"}`) ?? "");
       startingRef.current = false;
     }
-  }, [question?.id, recorded]);
+  }, [attemptId, question?.id, recorded]);
 
   useEffect(() => {
     if (mode !== "preparing" || preparationLeft <= 0) return undefined;
@@ -166,6 +178,12 @@ export function SpeakingInterviewStage({
   };
 
   const beginPreparation = () => {
+    // Only ever start from a standing start. The examiner avatar calls this on
+    // audio end, and the Start button calls it too - without this guard, a
+    // candidate who pressed Start while the examiner was still speaking was
+    // thrown out of `recording` and back into `preparing` a moment later, losing
+    // the answer they had already begun.
+    if (mode !== "ready") return;
     if (preparationSeconds <= 0) {
       setPreparationLeft(0);
       startRecording();
@@ -278,12 +296,16 @@ export function SpeakingInterviewStage({
           </div>
           )}
 
-          {introComplete && currentPart.answer_constraints.notes_allowed && mode !== "recording" && mode !== "uploading" && (
+          {introComplete && currentPart.answer_constraints.notes_allowed && (
             <label className="speaking-interview-notes">
               <span>Preparation notes</span>
+              {/* Stay visible while recording: these notes exist to be spoken
+                  from, and hiding them at the moment the candidate starts
+                  presenting defeats the point of the preparation minute. */}
               <textarea
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
+                readOnly={mode === "recording" || mode === "uploading"}
                 rows={4}
                 maxLength={1200}
                 placeholder="Notes are available in Speaking Part 4 only."

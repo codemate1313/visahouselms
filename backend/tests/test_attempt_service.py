@@ -1322,11 +1322,23 @@ class AttemptServiceTestCase(unittest.TestCase):
 
         out = attempt_service._redacted_question(question, None)
 
-        self.assertEqual(
-            out["interaction"]["candidate_material_url"],
-            "/storage/exam-modules/4/speaking-materials/card.pdf",
-        )
+        # Candidate material is exam content, so it is handed out as a
+        # short-lived signed URL rather than a permanent public /storage path -
+        # otherwise one candidate could copy the link and pass the material to
+        # the next. (Was: a plain /storage URL that worked for anyone, forever.)
+        material_url = out["interaction"]["candidate_material_url"]
+        self.assertTrue(material_url.startswith("/media/exam-modules/4/speaking-materials/card.pdf?"))
+        self.assertIn("sig=", material_url)
+        self.assertIn("exp=", material_url)
+        self.assertFalse(material_url.startswith("/storage/"))
         self.assertEqual(out["interaction"]["candidate_material_name"], "card.pdf")
+
+        from app.core.media_signing import is_private
+
+        self.assertTrue(is_private("exam-modules/4/speaking-materials/card.pdf"))
+        # Listening audio and question images stay public - unchanged.
+        self.assertFalse(is_private("exam-modules/4/questions/diagram.webp"))
+        self.assertFalse(is_private("exam-modules/4/listening.mp3"))
 
 
 if __name__ == "__main__":

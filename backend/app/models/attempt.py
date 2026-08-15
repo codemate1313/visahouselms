@@ -193,6 +193,11 @@ class TestAttempt(Base):
     security_risk_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     security_media_state: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     content_snapshot: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    # Time that belongs to the system rather than the candidate: the examiner
+    # avatar speaking a prompt, and waiting for a recording to upload. Each
+    # entry is keyed so it can only ever be granted once, and the total is
+    # capped, so this cannot be replayed to buy extra answering time.
+    clock_credits: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
     started_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)

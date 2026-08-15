@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from math import ceil
 from pathlib import Path
+import re
 import secrets
 from typing import Optional
 from uuid import uuid4
@@ -11,8 +12,9 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.config import settings
+from app.core.media_signing import sign_path
 from app.models.audit_log import AuditLog
-from app.models.attempt import ATTEMPT_GRADED, ATTEMPT_GRADING, ATTEMPT_SUBMITTED, TestAttempt
+from app.models.attempt import ATTEMPT_GRADED, ATTEMPT_GRADING, ATTEMPT_SUBMITTED, AttemptAnswer, TestAttempt
 from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion, InstituteModule
 from app.models.institute import Institute
 from app.models.plan import Plan
@@ -94,7 +96,7 @@ def _question_out(question: ExamModuleQuestion) -> dict:
     interaction = dict(question.interaction or {})
     material_path = interaction.get("candidate_material_path")
     if material_path:
-        interaction["candidate_material_url"] = f"/storage/{material_path}"
+        interaction["candidate_material_url"] = sign_path(material_path)
     return {
         "id": question.id,
         "part_id": question.part_id,
@@ -201,14 +203,24 @@ def validation_errors(module: ExamModule) -> list[str]:
     errors: list[str] = []
     for part in module.parts:
         count = len(part.questions)
-        if count < part.minimum_questions:
+        # A part with a fixed limit must hold exactly that many questions; only
+        # the open-ended parts (Speaking 1 and 4) fall back to a lower bound.
+        if part.question_limit is not None:
+            if count != part.question_limit:
+                errors.append(
+                    f"{part.title} takes exactly {part.question_limit} question"
+                    f"{'s' if part.question_limit != 1 else ''}; it currently has {count}."
+                )
+        elif count < part.minimum_questions:
             errors.append(
                 f"{part.title} requires at least {part.minimum_questions} question"
                 f"{'s' if part.minimum_questions != 1 else ''}; it currently has {count}."
             )
-        if part.question_limit is not None and count < part.question_limit:
+        elif (part.answer_constraints or {}).get("maximum_questions") and count > part.answer_constraints["maximum_questions"]:
+            maximum = part.answer_constraints["maximum_questions"]
             errors.append(
-                f"{part.title} draws {part.question_limit} questions per attempt; its pool currently has {count}."
+                f"{part.title} takes at most {maximum} question"
+                f"{'s' if maximum != 1 else ''}; it currently has {count}."
             )
         allowed = set((part.answer_constraints or {}).get("allowed_question_types", []))
         invalid = sorted({question.question_type for question in part.questions if allowed and question.question_type not in allowed})
@@ -299,7 +311,7 @@ def validation_errors(module: ExamModule) -> list[str]:
                     if Decimal(q.points) != expected_points:
                         errors.append(
                             f"Each question in {part.title} must carry exactly {expected_points:g} marks "
-                            f"(total {part.max_marks:g} / {part.question_limit} questions drawn per attempt); "
+                            f"(total {part.max_marks:g} / {part.question_limit} questions); "
                             f"question '{q.prompt[:30]}...' has {q.points:g} marks."
                         )
             else:
@@ -752,6 +764,31 @@ def update_part_instructions(
 
 
 def _validate_question_for_part(part: ExamModulePart, data: dict, current_count: int) -> None:
+    # Parts with no fixed question_limit (Speaking 1 and 4) are open-ended, but
+    # not unbounded: every extra prompt adds its own preparation and response
+    # time to the module's derived duration, so an unchecked part can silently
+    # turn a 12-minute test into a 40-minute one.
+    maximum_questions = (part.answer_constraints or {}).get("maximum_questions")
+    if part.question_limit is None and maximum_questions and current_count >= maximum_questions:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"{part.title} takes at most {maximum_questions} "
+                f"question{'s' if maximum_questions != 1 else ''} and already has {current_count}."
+            ),
+        )
+    # A part holds exactly the questions the student sits - there is no pool to
+    # draw from, so the limit is a hard cap at authoring time rather than a
+    # sampling size at attempt time.
+    if part.question_limit is not None and current_count >= part.question_limit:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"{part.title} takes exactly {part.question_limit} "
+                f"question{'s' if part.question_limit != 1 else ''} and already has {current_count}. "
+                "Delete one before adding another."
+            ),
+        )
     allowed = set((part.answer_constraints or {}).get("allowed_question_types", []))
     if allowed and data["question_type"] not in allowed:
         raise HTTPException(
@@ -789,6 +826,11 @@ def _validate_question_for_part(part: ExamModulePart, data: dict, current_count:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Matching questions require exactly one answer key",
+        )
+    if part.part_code == "reading_1a" and not re.search(r"\*\*(.+?)\*\*", data.get("prompt", "")):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reading 1A questions require at least 1 bold word in the question prompt (e.g. **word**)",
         )
     max_words = (part.answer_constraints or {}).get("max_answer_words")
     if max_words and any(len(answer.split()) > max_words for answer in data.get("correct_answers", [])):
@@ -855,8 +897,19 @@ def import_questions(
     _require_owner(module, actor)
     _require_draft(module)
     part = _part_or_404(module, part_id)
-    # Pool size is unrestricted, so we allow importing more than question_limit questions
-    pass
+    # Reject the whole batch up front so a part-full import fails with one clear
+    # message instead of committing the rows that happened to fit.
+    ceiling = part.question_limit or (part.answer_constraints or {}).get("maximum_questions")
+    if ceiling is not None and len(part.questions) + len(questions) > ceiling:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"{part.title} takes at most {ceiling} "
+                f"question{'s' if ceiling != 1 else ''} and already has {len(part.questions)}. "
+                f"Importing {len(questions)} more would exceed it - import at most "
+                f"{ceiling - len(part.questions)}."
+            ),
+        )
     for offset, question in enumerate(questions):
         _validate_question_for_part(part, question, len(part.questions) + offset)
     records = [
@@ -924,6 +977,7 @@ def delete_question(
     image_path = question.image_path
     material_path = (question.interaction or {}).get("candidate_material_path")
     _audit(db, actor, "exam_module.question.delete", module.id, ip, {"part_id": part.id, "question_id": question.id})
+    db.query(AttemptAnswer).filter(AttemptAnswer.question_id == question.id).delete(synchronize_session=False)
     db.delete(question)
     db.flush()
     _refresh_speaking_duration(db, module)
@@ -982,7 +1036,7 @@ def save_speaking_material_pdf(
     db.commit()
     return {
         "candidate_material_path": relative.as_posix(),
-        "candidate_material_url": f"/storage/{relative.as_posix()}",
+        "candidate_material_url": sign_path(relative.as_posix()),
         "candidate_material_name": Path(original_filename).name[:255],
     }
 

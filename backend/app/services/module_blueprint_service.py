@@ -34,31 +34,35 @@ WRITING_RUBRIC = [
     },
 ]
 
+# Each Speaking part carries a quarter of the 40-mark Speaking total, so the
+# whole test is marked out of 40 - in line with Reading (30) and Listening
+# (30). Previously every part carried the full 40, which made a Speaking
+# module worth 160 and let it dominate a Full Mock Test's overall score.
 SPEAKING_RUBRIC = [
     {
         "criterion": "Task Fulfilment and Communicative Effect",
-        "max_marks": 8,
+        "max_marks": 2,
         "weight": 2,
         "description": "Ability to manage the task at the required level and link utterances into coherent speech.",
     },
     {
         "criterion": "Coherence",
-        "max_marks": 8,
+        "max_marks": 2,
         "description": "Ability to give coherent responses, especially in extended speech, and link ideas and contributions.",
     },
     {
         "criterion": "Accuracy and Range of Grammar",
-        "max_marks": 8,
+        "max_marks": 2,
         "description": "Ability to vary and control grammatical structures appropriate to the task.",
     },
     {
         "criterion": "Accuracy and Range of Vocabulary",
-        "max_marks": 8,
+        "max_marks": 2,
         "description": "Ability to vary and control lexis and register appropriate to the task.",
     },
     {
         "criterion": "Pronunciation, Intonation and Fluency",
-        "max_marks": 8,
+        "max_marks": 2,
         "description": "Understandable English sounds with appropriate stress and intonation while maintaining the flow of speech.",
     },
 ]
@@ -70,7 +74,7 @@ READING_PARTS = [
         "section_type": "reading",
         "title": "Reading 1A",
         "skill_focus": "Understand vocabulary used in academic texts; identify synonyms and use vocabulary in context.",
-        "instructions": "Read each sentence below. Choose the option (A, B, C or D) that is closest in meaning to the word shown in bold.",
+        "instructions": "Read each sentence. Choose the word that can best replace the bold word without changing the meaning.",
         "question_limit": 6,
         "minimum_questions": 6,
         "max_marks": 6,
@@ -87,6 +91,7 @@ READING_PARTS = [
         "section_type": "reading",
         "title": "Reading 1B",
         "skill_focus": "Understand vocabulary and lexico-grammatical features in academic texts.",
+        "instructions": "Read the text and choose the correct word for each gap.",
         "question_limit": 5,
         "minimum_questions": 5,
         "max_marks": 5,
@@ -106,6 +111,7 @@ READING_PARTS = [
         "section_type": "reading",
         "title": "Reading 2",
         "skill_focus": "Understand how meaning is built in discourse and recognise text organisation and discourse features.",
+        "instructions": "Read the text. Six sentences have been removed. Choose the sentence that best fits each gap. One sentence is a distractor.",
         "question_limit": 6,
         "minimum_questions": 6,
         "max_marks": 6,
@@ -127,6 +133,7 @@ READING_PARTS = [
         "section_type": "reading",
         "title": "Reading 3",
         "skill_focus": "Understand the purpose of different texts and scan and locate specific information.",
+        "instructions": "Read texts A–D. For questions 18–24, decide which text answers the question.",
         "question_limit": 7,
         "minimum_questions": 7,
         "max_marks": 7,
@@ -153,6 +160,7 @@ READING_PARTS = [
         "section_type": "reading",
         "title": "Reading 4",
         "skill_focus": "Understand long complex texts including opinion, purpose, argumentation, exemplification, comparison and contrast, cause and effect, and locate specific information.",
+        "instructions": "Read the text and choose the correct answer for each question.",
         "question_limit": 6,
         "minimum_questions": 6,
         "max_marks": 6,
@@ -286,6 +294,10 @@ _SPEAKING_TIMINGS = {
 }
 _SPEAKING_STRUCTURES = {
     "speaking_1": {
+        # Identity turn plus "up to five questions" (see the part instructions),
+        # so six prompts is the ceiling. Without a ceiling the derived duration
+        # grows unbounded: every extra prompt adds its own response time.
+        "maximum_questions": 6,
         "minimum_questions": 2,
         "required_turn_types": ["identity", "topic_question"],
         "allowed_turn_types": ["identity", "topic_question", "follow_up"],
@@ -297,8 +309,9 @@ _SPEAKING_STRUCTURES = {
         "allowed_turn_types": ["roleplay_response", "roleplay_initiate"],
     },
     # Speaking 3 is a single read-aloud turn: the candidate gets one text and
-    # reads it, with no follow-up questions after it. The pool may hold several
-    # texts, but `question_limit` draws exactly one of them per attempt.
+    # reads it, with no follow-up questions after it. The part holds exactly one
+    # text - authoring refuses a second, and publishing refuses a part that has
+    # more or fewer than `question_limit`.
     "speaking_3": {
         "question_limit": 1,
         "minimum_questions": 1,
@@ -306,6 +319,10 @@ _SPEAKING_STRUCTURES = {
         "allowed_turn_types": ["read_aloud"],
     },
     "speaking_4": {
+        # One presentation plus follow-up questions. Each prompt here costs
+        # three minutes of derived duration (60s preparation + 120s response),
+        # so the ceiling matters more than anywhere else.
+        "maximum_questions": 3,
         "minimum_questions": 2,
         "required_turn_types": ["presentation", "follow_up"],
         "allowed_turn_types": ["presentation", "follow_up"],
@@ -322,6 +339,7 @@ for _part in SPEAKING_PARTS:
             "auto_marked": False,
             "answer_constraints": {
                 "allowed_question_types": ["speaking_prompt"],
+                "maximum_questions": _structure.get("maximum_questions"),
                 "preparation_seconds": _preparation_seconds,
                 "response_seconds": _response_seconds,
                 "notes_allowed": _part["part_code"] == "speaking_4",
