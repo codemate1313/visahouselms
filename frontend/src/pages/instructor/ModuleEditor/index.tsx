@@ -868,6 +868,20 @@ export function ModuleEditor() {
     }
   }
 
+  async function deleteSharedPassage() {
+    if (!module || !selectedPart) return;
+    const confirmed = await confirmDelete(
+      `Are you sure you want to delete the shared source text for ${selectedPart.title}?`,
+      "Delete Source Text"
+    );
+    if (!confirmed) return;
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.removeItem(`vh.passage.${selectedPart.id}`);
+    }
+    await saveSharedPassage("");
+    showSuccess("Source text deleted successfully.");
+  }
+
   async function changeStatus(status: "draft" | "published" | "archived") {
     if (!module) return;
     setBusy(true); setError(null);
@@ -1024,6 +1038,7 @@ export function ModuleEditor() {
                 isEditable={isEditable}
                 busy={busy}
                 onSave={saveSharedPassage}
+                onDelete={deleteSharedPassage}
               />
             )}
 

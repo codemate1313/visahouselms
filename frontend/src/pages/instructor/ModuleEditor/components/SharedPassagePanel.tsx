@@ -9,6 +9,7 @@ interface SharedPassagePanelProps {
   isEditable: boolean;
   busy: boolean;
   onSave: (passage: string) => void;
+  onDelete?: () => void;
 }
 
 /**
@@ -20,23 +21,31 @@ interface SharedPassagePanelProps {
  * most likely way to fail that check, so the part owns the passage here and
  * writes it down to every question on save.
  */
-export function SharedPassagePanel({ part, isEditable, busy, onSave }: SharedPassagePanelProps) {
+export function SharedPassagePanel({ part, isEditable, busy, onSave, onDelete }: SharedPassagePanelProps) {
   const t = strings.sharedPassage;
   const storedPassage = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`vh.passage.${part.id}`) || "" : "";
-  const saved = part.questions[0]?.passage ?? storedPassage;
+  const saved = (part.questions[0]?.passage ?? storedPassage).trim();
   const [draft, setDraft] = useState(saved);
+  const [isEditing, setIsEditing] = useState(saved.length === 0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Re-sync when the part changes or the module reloads after a save.
   useEffect(() => {
     const currentStored = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`vh.passage.${part.id}`) || "" : "";
-    const effective = part.questions[0]?.passage ?? currentStored;
+    const effective = (part.questions[0]?.passage ?? currentStored).trim();
     setDraft(effective);
-  }, [saved, part.id, part.questions]);
+    setIsEditing(effective.length === 0);
+  }, [part.id]);
 
-  const dirty = draft.trim() !== saved.trim();
+  useEffect(() => {
+    if (saved.length > 0 && !draft.trim()) {
+      setDraft(saved);
+    }
+  }, [saved]);
+
+  const dirty = draft.trim() !== saved;
   const mismatched = part.questions.some(
-    (question) => (question.passage ?? "").trim() !== saved.trim(),
+    (question) => (question.passage ?? "").trim() !== saved,
   );
 
   const isClozePart =
@@ -58,6 +67,7 @@ export function SharedPassagePanel({ part, isEditable, busy, onSave }: SharedPas
   }, [existingGaps, limit]);
 
   function insertBlank(gapNum?: number) {
+    if (!isEditing) setIsEditing(true);
     const el = textareaRef.current;
     const targetGap = gapNum ?? nextGapNumber;
     const blankTag = `{{blank:${targetGap}}}`;
@@ -78,6 +88,34 @@ export function SharedPassagePanel({ part, isEditable, busy, onSave }: SharedPas
     });
   }
 
+  function handleSave() {
+    onSave(draft.trim());
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem(`vh.passage.${part.id}`, draft.trim());
+    }
+    setIsEditing(false);
+  }
+
+  function handleCancel() {
+    setDraft(saved);
+    setIsEditing(false);
+  }
+
+  function handleDelete() {
+    if (onDelete) {
+      onDelete();
+    } else {
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.removeItem(`vh.passage.${part.id}`);
+      }
+      setDraft("");
+      onSave("");
+      setIsEditing(true);
+    }
+  }
+
+  const isSavedState = saved.length > 0 && !isEditing;
+
   return (
     <section className="authoring-panel shared-passage-panel">
       <div className="panel-title">
@@ -97,7 +135,7 @@ export function SharedPassagePanel({ part, isEditable, busy, onSave }: SharedPas
         </div>
       )}
 
-      {isClozePart && isEditable && (
+      {isClozePart && isEditable && isEditing && (
         <div className="vh-passage-blank-toolbar">
           <div className="vh-passage-blank-main-actions">
             <button
@@ -150,20 +188,57 @@ export function SharedPassagePanel({ part, isEditable, busy, onSave }: SharedPas
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
         placeholder={t.placeholder}
-        readOnly={!isEditable}
+        readOnly={!isEditable || !isEditing}
         aria-label={t.heading(part.title)}
       />
 
       <div className="shared-passage-footer">
         {isEditable && (
-          <Button
-            variant="primary"
-            size="md"
-            disabled={busy || !draft.trim() || (!dirty && !mismatched)}
-            onClick={() => onSave(draft)}
-          >
-            {busy ? t.saving : t.save}
-          </Button>
+          <>
+            {isSavedState ? (
+              <>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  disabled={busy}
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Icon name="edit" style={{ width: "14px", height: "14px" }} />
+                  Edit source text
+                </Button>
+                <Button
+                  variant="danger"
+                  size="md"
+                  disabled={busy}
+                  onClick={handleDelete}
+                >
+                  <Icon name="trash" style={{ width: "14px", height: "14px" }} />
+                  Delete source text
+                </Button>
+              </>
+            ) : (
+              <>
+                {saved.length > 0 && (
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    disabled={busy}
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </Button>
+                )}
+                <Button
+                  variant="primary"
+                  size="md"
+                  disabled={busy || !draft.trim() || (!dirty && !mismatched && saved.length > 0)}
+                  onClick={handleSave}
+                >
+                  {busy ? t.saving : t.save}
+                </Button>
+              </>
+            )}
+          </>
         )}
       </div>
     </section>
