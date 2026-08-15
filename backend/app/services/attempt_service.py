@@ -266,6 +266,10 @@ def _redacted_question(
 ) -> dict:
     source = frozen or {}
     image_path = source.get("image_path", question.image_path)
+    interaction = dict(source.get("interaction", question.interaction or {}))
+    material_path = interaction.get("candidate_material_path")
+    if material_path:
+        interaction["candidate_material_url"] = f"/storage/{material_path}"
     return {
         "id": question.id,
         "question_type": source.get("question_type", question.question_type),
@@ -274,7 +278,7 @@ def _redacted_question(
         "passage": source.get("passage", question.passage),
         "image_url": f"/storage/{image_path}" if image_path else None,
         "options": source.get("options", question.options),
-        "interaction": source.get("interaction", question.interaction or {}),
+        "interaction": interaction,
         "points": source.get("points", str(question.points)),
         "sort_order": source.get("sort_order", question.sort_order),
         "response": answer.response if answer else None,

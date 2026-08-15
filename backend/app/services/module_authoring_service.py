@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal
+from math import ceil
 from pathlib import Path
 import secrets
 from typing import Optional
@@ -90,6 +91,10 @@ def get_editable_part(
 
 
 def _question_out(question: ExamModuleQuestion) -> dict:
+    interaction = dict(question.interaction or {})
+    material_path = interaction.get("candidate_material_path")
+    if material_path:
+        interaction["candidate_material_url"] = f"/storage/{material_path}"
     return {
         "id": question.id,
         "part_id": question.part_id,
@@ -101,7 +106,7 @@ def _question_out(question: ExamModuleQuestion) -> dict:
         "image_url": f"/storage/{question.image_path}" if question.image_path else None,
         "options": list(question.options or []),
         "correct_answers": list(question.correct_answers or []),
-        "interaction": dict(question.interaction or {}),
+        "interaction": interaction,
         "explanation": question.explanation,
         "points": str(question.points),
         "difficulty": question.difficulty,
@@ -111,6 +116,67 @@ def _question_out(question: ExamModuleQuestion) -> dict:
         "created_at": question.created_at,
         "updated_at": question.updated_at,
     }
+
+
+DERIVED_DURATION_MODULE_TYPES = {"speaking", "full_mock", "final_test"}
+
+
+def _effective_speaking_question_seconds(part: ExamModulePart, question: ExamModuleQuestion) -> int:
+    constraints = dict(part.answer_constraints or {})
+    interaction = dict(question.interaction or {})
+    preparation = interaction.get("preparation_seconds")
+    response = interaction.get("response_seconds")
+    if preparation is None:
+        preparation = constraints.get("preparation_seconds", 0)
+    if response is None:
+        response = constraints.get("response_seconds", 0)
+    return max(0, int(preparation or 0)) + max(0, int(response or 0))
+
+
+def _questions_used_for_duration(
+    part: ExamModulePart,
+    questions: list[ExamModuleQuestion],
+) -> list[ExamModuleQuestion]:
+    ordered = sorted(questions, key=lambda item: item.sort_order)
+    limit = part.question_limit
+    if limit is None or limit <= 0 or len(ordered) <= limit:
+        return ordered
+    if (part.answer_constraints or {}).get("preserve_question_order"):
+        return ordered[:limit]
+    # Random pools can produce different sittings. Use the longest possible
+    # selection so the countdown never expires before a valid sitting.
+    return sorted(
+        ordered,
+        key=lambda question: _effective_speaking_question_seconds(part, question),
+        reverse=True,
+    )[:limit]
+
+
+def _refresh_speaking_duration(db: Session, module: ExamModule) -> None:
+    """Persist the maximum candidate time represented by speaking prompts."""
+    total_seconds = 0
+    has_questions = False
+    for part in module.parts:
+        if part.section_type != "speaking":
+            continue
+        questions = (
+            db.query(ExamModuleQuestion)
+            .filter(ExamModuleQuestion.part_id == part.id)
+            .order_by(ExamModuleQuestion.sort_order)
+            .all()
+        )
+        selected = _questions_used_for_duration(part, questions)
+        part_seconds = sum(_effective_speaking_question_seconds(part, question) for question in selected)
+        part.duration_minutes = max(1, ceil(part_seconds / 60)) if selected else None
+        total_seconds += part_seconds
+        has_questions = has_questions or bool(selected)
+
+    if module.module_type == "speaking":
+        module.duration_minutes = (
+            max(1, ceil(total_seconds / 60))
+            if has_questions
+            else get_blueprint("speaking")["duration_minutes"]
+        )
 
 
 def _asset_out(asset: ExamModuleAsset) -> dict:
@@ -411,9 +477,14 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
     sources = _composite_sources(db, actor, source_module_ids) if composite else {}
     if not composite and source_module_ids:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Source modules are only valid for composite tests")
+    calculated_duration = (
+        sum(source.duration_minutes for source in sources.values())
+        if composite
+        else blueprint["duration_minutes"]
+    )
     module = ExamModule(
         **payload,
-        duration_minutes=blueprint["duration_minutes"],
+        duration_minutes=calculated_duration,
         source_module_ids=source_module_ids,
         created_by_id=actor.id,
     )
@@ -463,6 +534,37 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
                 if not (target_part.answer_constraints or {}).get("preserve_question_order"):
                     randomizer.shuffle(source_questions)
                 for order, question in enumerate(source_questions):
+                    image_path = question.image_path
+                    if image_path:
+                        source_image = settings.storage_path / image_path
+                        if not source_image.is_file():
+                            raise HTTPException(
+                                status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Question image for {source_part.title} is missing from storage",
+                            )
+                        relative_image = Path("exam-modules") / str(module.id) / "questions" / f"{uuid4().hex}{source_image.suffix or '.webp'}"
+                        destination_image = settings.storage_path / relative_image
+                        destination_image.parent.mkdir(parents=True, exist_ok=True)
+                        destination_image.write_bytes(source_image.read_bytes())
+                        created_paths.append(destination_image)
+                        image_path = relative_image.as_posix()
+
+                    interaction = dict(question.interaction or {})
+                    material_path = interaction.get("candidate_material_path")
+                    if material_path:
+                        source_material = settings.storage_path / material_path
+                        if not source_material.is_file():
+                            raise HTTPException(
+                                status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Candidate material for {source_part.title} is missing from storage",
+                            )
+                        relative_material = Path("exam-modules") / str(module.id) / "speaking-materials" / f"{uuid4().hex}.pdf"
+                        destination_material = settings.storage_path / relative_material
+                        destination_material.parent.mkdir(parents=True, exist_ok=True)
+                        destination_material.write_bytes(source_material.read_bytes())
+                        created_paths.append(destination_material)
+                        interaction["candidate_material_path"] = relative_material.as_posix()
+
                     db.add(
                         _new_question(
                             target_part,
@@ -472,9 +574,10 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
                                 "prompt": question.prompt,
                                 "instructions": question.instructions,
                                 "passage": question.passage,
+                                "image_path": image_path,
                                 "options": list(question.options or []),
                                 "correct_answers": list(question.correct_answers or []),
-                                "interaction": dict(question.interaction or {}),
+                                "interaction": interaction,
                                 "explanation": question.explanation,
                                 "points": question.points,
                                 "difficulty": question.difficulty,
@@ -551,6 +654,8 @@ def update_module(
     _require_draft(module)
     for field in ("title", "description", "instructions", "duration_minutes", "show_onboarding_instructions", "onboarding_instructions"):
         if field in fields_set:
+            if field == "duration_minutes" and module.module_type in DERIVED_DURATION_MODULE_TYPES:
+                continue
             setattr(module, field, data.get(field))
     _audit(db, actor, "exam_module.update", module.id, ip, {"fields": sorted(fields_set)})
     db.commit()
@@ -574,6 +679,8 @@ def update_speaking_part_timing(
     constraints["preparation_seconds"] = preparation_seconds
     constraints["response_seconds"] = response_seconds
     part.answer_constraints = constraints
+    db.flush()
+    _refresh_speaking_duration(db, module)
     _audit(
         db,
         actor,
@@ -722,6 +829,7 @@ def add_question(
     question = _new_question(part, actor, data, "manual", None, len(part.questions))
     db.add(question)
     db.flush()
+    _refresh_speaking_duration(db, module)
     _audit(db, actor, "exam_module.question.create", module.id, ip, {"part_id": part.id, "question_id": question.id})
     db.commit()
     db.refresh(question)
@@ -752,6 +860,7 @@ def import_questions(
     ]
     db.add_all(records)
     db.flush()
+    _refresh_speaking_duration(db, module)
     _audit(db, actor, "exam_module.question.import", module.id, ip, {"part_id": part.id, "count": len(records), "source_type": source_type, "source_filename": source_filename})
     db.commit()
     for record in records:
@@ -782,14 +891,20 @@ def update_question(
     question = _question_or_404(part, question_id)
     _validate_question_for_part(part, data, max(0, len(part.questions) - 1))
     previous_image_path = question.image_path
+    previous_material_path = (question.interaction or {}).get("candidate_material_path")
     for field in ("question_type", "prompt", "instructions", "passage", "image_path", "correct_answers", "interaction", "explanation", "points", "difficulty"):
         setattr(question, field, data.get(field))
     question.options = [dict(option) for option in data.get("options", [])]
+    db.flush()
+    _refresh_speaking_duration(db, module)
     _audit(db, actor, "exam_module.question.update", module.id, ip, {"part_id": part.id, "question_id": question.id})
     db.commit()
     db.refresh(question)
     if previous_image_path and previous_image_path != question.image_path:
         (settings.storage_path / previous_image_path).unlink(missing_ok=True)
+    current_material_path = (question.interaction or {}).get("candidate_material_path")
+    if previous_material_path and previous_material_path != current_material_path:
+        (settings.storage_path / previous_material_path).unlink(missing_ok=True)
     return _question_out(question)
 
 
@@ -802,11 +917,16 @@ def delete_question(
     part = _part_or_404(module, part_id)
     question = _question_or_404(part, question_id)
     image_path = question.image_path
+    material_path = (question.interaction or {}).get("candidate_material_path")
     _audit(db, actor, "exam_module.question.delete", module.id, ip, {"part_id": part.id, "question_id": question.id})
     db.delete(question)
+    db.flush()
+    _refresh_speaking_duration(db, module)
     db.commit()
     if image_path:
         (settings.storage_path / image_path).unlink(missing_ok=True)
+    if material_path:
+        (settings.storage_path / material_path).unlink(missing_ok=True)
 
 
 def save_question_image(
@@ -830,6 +950,36 @@ def save_question_image(
     _audit(db, actor, "exam_module.question_image.upload", module.id, ip, {"part_id": part.id})
     db.commit()
     return {"image_path": relative.as_posix(), "image_url": f"/storage/{relative.as_posix()}"}
+
+
+def save_speaking_material_pdf(
+    db: Session,
+    actor: User,
+    module_id: int,
+    part_id: int,
+    *,
+    content: bytes,
+    original_filename: str,
+    ip: Optional[str],
+) -> dict:
+    module = get_module_or_404(db, module_id)
+    _require_owner(module, actor)
+    _require_draft(module)
+    part = _part_or_404(module, part_id)
+    if part.section_type != "speaking":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="PDF material is available only for Speaking parts")
+
+    relative = Path("exam-modules") / str(module.id) / "speaking-materials" / f"{uuid4().hex}.pdf"
+    destination = settings.storage_path / relative
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(content)
+    _audit(db, actor, "exam_module.speaking_material.upload", module.id, ip, {"part_id": part.id})
+    db.commit()
+    return {
+        "candidate_material_path": relative.as_posix(),
+        "candidate_material_url": f"/storage/{relative.as_posix()}",
+        "candidate_material_name": Path(original_filename).name[:255],
+    }
 
 
 def save_question_audio(
@@ -1068,6 +1218,7 @@ def set_status(
         errors = validation_errors(module)
         if errors:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"message": "Module is not ready to publish", "errors": errors})
+        _refresh_speaking_duration(db, module)
         module.published_at = _now()
     elif new_status == "draft":
         module.published_at = None

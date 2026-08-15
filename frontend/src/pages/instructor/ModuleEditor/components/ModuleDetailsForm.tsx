@@ -3,7 +3,7 @@ import { RequiredMark } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import type { ExamModule, OnboardingInstruction } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
-import { MODULE_TYPE_META } from "../helpers";
+import { DERIVED_DURATION_MODULE_TYPES, MODULE_TYPE_META } from "../helpers";
 import { OnboardingInstructionsEditor } from "./OnboardingInstructionsEditor";
 import { HorizontalAuthoringStepper } from "./HorizontalAuthoringStepper";
 
@@ -39,6 +39,7 @@ export function ModuleDetailsForm({
   const [activeTab, setActiveTab] = useState<"config" | "instructions">("config");
 
   const requestedType = module.module_type;
+  const durationIsCalculated = DERIVED_DURATION_MODULE_TYPES.has(requestedType);
   const typeLabel = typeLabels[requestedType];
   const meta = MODULE_TYPE_META[requestedType];
 
@@ -141,13 +142,13 @@ export function ModuleDetailsForm({
               <div className="vh-form-group">
                 <div className="vh-label-row">
                   <label htmlFor="edit-module-duration">
-                    Exam Duration (Minutes) <RequiredMark />
+                    {durationIsCalculated ? t.calculatedDurationLabel : "Exam Duration (Minutes)"} <RequiredMark />
                   </label>
                 </div>
 
                 <div className="vh-duration-stepper-row">
                   <div className="vh-stepper-control">
-                    <button type="button" className="vh-step-btn" onClick={() => adjustDuration(-5)} disabled={!isEditable} title="Subtract 5 minutes">
+                    <button type="button" className="vh-step-btn" onClick={() => adjustDuration(-5)} disabled={!isEditable || durationIsCalculated} title="Subtract 5 minutes">
                       <Icon name="minus" />
                     </button>
                     <div className="vh-duration-val-box">
@@ -160,16 +161,16 @@ export function ModuleDetailsForm({
                         value={details.duration_minutes || meta.defaultDuration}
                         onChange={(event) => onDetailsChange({ ...details, duration_minutes: Number(event.target.value) })}
                         required
-                        readOnly={!isEditable}
+                        readOnly={!isEditable || durationIsCalculated}
                       />
                       <span className="vh-stepper-unit">mins</span>
                     </div>
-                    <button type="button" className="vh-step-btn" onClick={() => adjustDuration(5)} disabled={!isEditable} title="Add 5 minutes">
+                    <button type="button" className="vh-step-btn" onClick={() => adjustDuration(5)} disabled={!isEditable || durationIsCalculated} title="Add 5 minutes">
                       <Icon name="plus" />
                     </button>
                   </div>
 
-                  <div className="vh-duration-preset-pills">
+                  {!durationIsCalculated && <div className="vh-duration-preset-pills">
                     {meta.durationPresets.map((val) => (
                       <button
                         key={val}
@@ -181,8 +182,9 @@ export function ModuleDetailsForm({
                         {val}m
                       </button>
                     ))}
-                  </div>
+                  </div>}
                 </div>
+                {durationIsCalculated && <p className="field-hint">{strings.details.calculatedDurationHint}</p>}
               </div>
 
 

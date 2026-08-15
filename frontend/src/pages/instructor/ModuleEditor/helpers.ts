@@ -12,6 +12,7 @@ export const MODULE_TYPES = new Set<ExamModuleType>(["reading", "speaking", "wri
 export const CHOICE_TYPES = new Set<QuestionType>(["mcq_single", "mcq_multiple", "true_false_not_given", "yes_no_not_given", "matching_unique", "matching_reusable"]);
 export const ANSWER_FREE_TYPES = new Set<QuestionType>(["essay", "speaking_prompt"]);
 export const COMPOSITE_TYPES = new Set<ExamModuleType>(["full_mock", "final_test"]);
+export const DERIVED_DURATION_MODULE_TYPES = new Set<ExamModuleType>(["speaking", "full_mock", "final_test"]);
 export const SOURCE_SECTIONS: ExamSection[] = ["listening", "reading", "writing", "speaking"];
 /* Layouts where the candidate meets one composed task - a gapped passage, a
    notepad, a set of source texts - and the question rows behind it exist only
@@ -69,6 +70,10 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
       preparation_seconds: part.answer_constraints.preparation_seconds ?? null,
       response_seconds: part.answer_constraints.response_seconds ?? null,
       adaptive_follow_up: part.answer_constraints.interaction_mode === "ai_interlocutor" && turnType === "follow_up",
+      candidate_material_type: "none",
+      candidate_material_path: null,
+      candidate_material_url: null,
+      candidate_material_name: null,
     },
     explanation: null,
     points,
@@ -91,6 +96,9 @@ export function questionPayload(question: QuestionDraft) {
       preparation_seconds: question.interaction?.preparation_seconds ?? null,
       response_seconds: question.interaction?.response_seconds ?? null,
       adaptive_follow_up: Boolean(question.interaction?.adaptive_follow_up),
+      candidate_material_type: question.interaction?.candidate_material_type || "none",
+      candidate_material_path: question.interaction?.candidate_material_path || null,
+      candidate_material_name: question.interaction?.candidate_material_name?.trim() || null,
     },
     explanation: question.explanation?.trim() || null,
     points: Number(question.points),

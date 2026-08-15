@@ -120,6 +120,11 @@ def _assignment_out(assignment: InstituteCourse) -> dict:
 
 def serialize(course: Course, include_assignments: bool = False) -> dict:
     active_assignments = [item for item in course.institute_assignments if item.is_active]
+    calculated_duration = (
+        sum(link.module.duration_minutes for link in course.course_modules)
+        if course.course_modules
+        else course.estimated_duration_minutes
+    )
     result = {
         "id": course.id,
         "title": course.title,
@@ -127,7 +132,7 @@ def serialize(course: Course, include_assignments: bool = False) -> dict:
         "summary": course.summary,
         "description": course.description,
         "level": course.level,
-        "estimated_duration_minutes": course.estimated_duration_minutes,
+        "estimated_duration_minutes": calculated_duration,
         "price": str(course.price),
         "currency": course.currency,
         "status": course.status,

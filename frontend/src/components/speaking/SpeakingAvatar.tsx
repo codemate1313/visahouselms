@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { API_BASE_URL, apiClient } from "../../api/client";
-import { SearchableSelect } from "@/components/ui";
 import { ExaminerAvatarSvg } from "./ExaminerAvatarSvg";
 import { PhotoExaminerAvatar } from "./PhotoExaminerAvatar";
 import { getExaminerPhotoSet } from "./examinerPhotoSets";
@@ -31,6 +30,16 @@ interface AvatarData {
   visemes: VisemeFrame[];
 }
 
+const SONIA: Examiner = {
+  id: "sonia",
+  name: "Sonia Radcliffe",
+  title: "Senior Language CERT Speaking Examiner",
+  gender: "female",
+  voice: "en-GB-SoniaNeural",
+  accent: "British English",
+  avatar_image: "/storage/avatars/examiner_female.svg",
+};
+
 interface SpeakingAvatarProps {
   attemptId: number;
   partId: number;
@@ -48,8 +57,6 @@ export function SpeakingAvatar({
   avatarOnly = true,
   onAudioEnded,
 }: SpeakingAvatarProps) {
-  const [examiners, setExaminers] = useState<Examiner[]>([]);
-  const [selectedExaminer, setSelectedExaminer] = useState<string>("sonia");
   const [avatarData, setAvatarData] = useState<AvatarData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -59,20 +66,8 @@ export function SpeakingAvatar({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  // Load available examiner list
-  useEffect(() => {
-    async function loadExaminers() {
-      try {
-        const { data } = await apiClient.get<Examiner[]>("/student/speaking-examiners");
-        setExaminers(data);
-      } catch {
-        // Fallback default
-      }
-    }
-    loadExaminers();
-  }, []);
-
-  // Fetch avatar payload for part & selected examiner
+  // Sonia is the fixed examiner. Authors control only what she says, never the
+  // candidate-facing examiner identity or voice.
   useEffect(() => {
     let isMounted = true;
     async function loadAvatar() {
@@ -82,7 +77,7 @@ export function SpeakingAvatar({
       try {
         const { data } = await apiClient.get<AvatarData>(
           `/student/attempts/${attemptId}/speaking-avatar/${partId}`,
-          { params: { examiner_id: selectedExaminer, question_id: questionId } }
+          { params: { examiner_id: SONIA.id, question_id: questionId } }
         );
         if (isMounted) {
           setAvatarData(data);
@@ -103,7 +98,7 @@ export function SpeakingAvatar({
     return () => {
       isMounted = false;
     };
-  }, [attemptId, partId, questionId, selectedExaminer]);
+  }, [attemptId, partId, questionId]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -149,12 +144,12 @@ export function SpeakingAvatar({
     };
   }, [isPlaying, avatarData]);
 
-  const examiner = avatarData?.examiner || examiners.find((e) => e.id === selectedExaminer);
+  const examiner = avatarData?.examiner || SONIA;
   // Photo avatar when this examiner has a frame set; vector avatar otherwise.
-  const photoSet = getExaminerPhotoSet(examiner?.gender);
+  const photoSet = getExaminerPhotoSet(examiner?.id);
   const audioFullUrl = avatarData?.audio_url ? `${API_BASE_URL}${avatarData.audio_url}` : "";
   const promptPlayKey = avatarData
-    ? `speaking-avatar-played:${attemptId}:${partId}:${selectedExaminer}:${avatarData.prompt_text}`
+    ? `speaking-avatar-played:${attemptId}:${partId}:${SONIA.id}:${avatarData.prompt_text}`
     : "";
 
   useEffect(() => {
@@ -327,21 +322,6 @@ export function SpeakingAvatar({
               <span className="examiner-status-badge">Ready</span>
             )}
 
-            {/* Examiner Selector */}
-            {examiners.length > 0 && (
-              <SearchableSelect
-                ariaLabel="Select Language CERT Examiner Voice"
-                className="examiner-select-dropdown"
-                options={examiners.map((ex) => ({
-                  value: ex.id,
-                  label: `${ex.name} (${ex.accent})`,
-                }))}
-                searchable={false}
-                value={selectedExaminer}
-                onChange={(value) => setSelectedExaminer(String(value))}
-                disabled={isPlaying}
-              />
-            )}
           </div>
 
           <h3 className="examiner-name-title">
@@ -349,9 +329,7 @@ export function SpeakingAvatar({
           </h3>
 
           <p className="prompt-text-display">
-            {loading
-              ? "Preparing examiner audio..."
-              : avatarData?.prompt_text || "Listen to the examiner prompt and speak your answer clearly."}
+            {loading ? "Preparing Sonia's audio..." : "Listen carefully to Sonia, then record your answer."}
           </p>
 
           {/* Avatar Audio Controls */}

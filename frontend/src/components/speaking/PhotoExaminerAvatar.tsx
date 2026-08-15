@@ -7,6 +7,7 @@ import {
   framesFor,
   VISEME_TO_MOUTH,
 } from "./examinerPhotoSets";
+import "./PhotoExaminerAvatar.css";
 
 interface VisemeFrame {
   time: number;

@@ -195,6 +195,10 @@ export interface QuestionInteraction {
   adaptive_follow_up?: boolean;
   audio_path?: string | null;
   audio_url?: string | null;
+  candidate_material_type?: "none" | "text" | "image" | "pdf" | null;
+  candidate_material_path?: string | null;
+  candidate_material_url?: string | null;
+  candidate_material_name?: string | null;
 }
 
 export interface QuestionDraft {

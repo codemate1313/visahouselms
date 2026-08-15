@@ -11,8 +11,8 @@
  * light (mouth closed / just parted / open / wide), run
  *   tools/build_mouth_overlays.py  and  tools/build_blink_frames.py
  * from the talking-avatar project, drop the output in
- * `public/examiner-avatar/<key>/`, and add an entry here. Genders with no entry
- * fall back to the original vector examiner automatically.
+ * `public/examiner-avatar/<key>/`, and add an entry here. Examiners with no
+ * entry fall back to the original vector examiner automatically.
  */
 
 export interface ExaminerPhotoSet {
@@ -30,6 +30,10 @@ const SONIA: ExaminerPhotoSet = {
     // mouth sat in the wide band ~80% of the time, which read as gawping.
     sensitivity: 0.85,
     gamma: 0.8,
+    // Keep the portrait anchored inside its circular crop. Translating the
+    // square photo to simulate a nod exposed the frame background at the edge.
+    idle: { enabled: false, breathe: false },
+    jaw: { drop: 0, squash: 0, nod: 0 },
     // where the mouth sits in the 768px frames, so shaping pivots on it
     mouth: { cx: 359, cy: 401 },
     // measured eye rectangles (only used by the CSS fallback lid; the
@@ -42,18 +46,14 @@ const SONIA: ExaminerPhotoSet = {
   },
 };
 
-/**
- * gender -> photo set. `male` has no photo frames yet, so male examiners keep
- * the vector avatar until a male frame set is shot.
- */
+/** Examiner id -> photo set. A voice must never inherit another examiner's face. */
 const SETS: Record<string, ExaminerPhotoSet | undefined> = {
-  female: SONIA,
-  male: undefined,
+  sonia: SONIA,
 };
 
-export function getExaminerPhotoSet(gender?: string | null): ExaminerPhotoSet | null {
-  if (!gender) return null;
-  return SETS[gender.toLowerCase()] ?? null;
+export function getExaminerPhotoSet(examinerId?: string | null): ExaminerPhotoSet | null {
+  if (!examinerId) return null;
+  return SETS[examinerId.toLowerCase()] ?? null;
 }
 
 /** Build the frame URLs the engine expects from a set's base folder. */

@@ -168,7 +168,7 @@ async def get_or_create_prompt_audio(text: str, voice: str) -> tuple[str, List[D
 
 
 def list_examiners() -> List[Dict[str, Any]]:
-    return list(EXAMINER_PROFILES.values())
+    return [EXAMINER_PROFILES[DEFAULT_EXAMINER_ID]]
 
 
 def get_examiner(examiner_id: Optional[str] = None) -> Dict[str, Any]:

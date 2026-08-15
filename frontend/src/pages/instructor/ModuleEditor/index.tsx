@@ -19,7 +19,7 @@ import type {
   QuestionImportPreview,
 } from "@/api/types";
 import { moduleEditorStrings as strings } from "./ModuleEditor.strings";
-import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSED_TASK_LAYOUTS, COMPOSITE_TYPES, MODULE_TYPES, SOURCE_SECTIONS, detectConversationSpeakers, emptyQuestion, notepadPromptForBlank, questionPayload } from "./helpers";
+import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSED_TASK_LAYOUTS, COMPOSITE_TYPES, DERIVED_DURATION_MODULE_TYPES, MODULE_TYPES, SOURCE_SECTIONS, detectConversationSpeakers, emptyQuestion, notepadPromptForBlank, questionPayload } from "./helpers";
 import { NewModuleForm } from "./components/NewModuleForm";
 import { ModulePartNav } from "./components/ModulePartNav";
 import { ModuleReadinessPanel } from "./components/ModuleReadinessPanel";
@@ -27,7 +27,8 @@ import { ModuleDetailsForm, type ModuleDetailsState } from "./components/ModuleD
 import { PartSpecPanel } from "./components/PartSpecPanel";
 import { ListeningAudioPanel } from "./components/ListeningAudioPanel";
 import { SpeakingTimingPanel } from "./components/SpeakingTimingPanel";
-import { DEFAULT_EXAMINER_ID, SpeakingExaminerPicker, type SpeakingExaminer } from "./components/SpeakingExaminerPicker";
+import { SpeakingExaminerPicker } from "./components/SpeakingExaminerPicker";
+import { SONIA_EXAMINER } from "./speakingExaminer";
 import { SharedPassagePanel } from "./components/SharedPassagePanel";
 import { GapTaskComposer, type GapTaskDraft } from "./components/GapTaskComposer";
 import { NotepadGapsComposer, type NotepadTaskDraft } from "./components/NotepadGapsComposer";
@@ -65,13 +66,10 @@ export function ModuleEditor() {
   const [audioTitle, setAudioTitle] = useState("Listening audio");
   const [tts, setTts] = useState({ title: "Generated conversation", conversation: "", rate: "+0%" });
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingSpeakingPdf, setUploadingSpeakingPdf] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
   const [questionEntryMode, setQuestionEntryMode] = useState<"manual" | "bulk">("manual");
-  // One examiner for the whole module. Remembered per module so reopening the
-  // editor keeps rehearsing prompts in the voice the author already chose.
-  const examinerStorageKey = `vh.module-editor.examiner.${id ?? "new"}`;
-  const [examiner, setExaminer] = useState<SpeakingExaminer | null>(null);
-  const [storedExaminerId] = useState(() => localStorage.getItem(examinerStorageKey) ?? DEFAULT_EXAMINER_ID);
+  const examiner = SONIA_EXAMINER;
   const [loading, setLoading] = useState(!isNew);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -236,7 +234,7 @@ export function ModuleEditor() {
         title: details.title,
         description: details.description || null,
         instructions: details.instructions || null,
-        duration_minutes: details.duration_minutes,
+        ...(DERIVED_DURATION_MODULE_TYPES.has(requestedType) ? {} : { duration_minutes: details.duration_minutes }),
         show_onboarding_instructions: details.show_onboarding_instructions ?? true,
         onboarding_instructions: details.onboarding_instructions || null,
         source_module_ids: isComposite ? sourceModuleIds : [],
@@ -252,7 +250,7 @@ export function ModuleEditor() {
       title: details.title,
       description: details.description || null,
       instructions: details.instructions || null,
-      duration_minutes: details.duration_minutes,
+      ...(DERIVED_DURATION_MODULE_TYPES.has(module.module_type) ? {} : { duration_minutes: details.duration_minutes }),
       show_onboarding_instructions: details.show_onboarding_instructions ?? true,
       onboarding_instructions: details.onboarding_instructions || null,
     };
@@ -260,7 +258,7 @@ export function ModuleEditor() {
       title: module.title,
       description: module.description || null,
       instructions: module.instructions || null,
-      duration_minutes: module.duration_minutes,
+      ...(DERIVED_DURATION_MODULE_TYPES.has(module.module_type) ? {} : { duration_minutes: module.duration_minutes }),
       show_onboarding_instructions: module.show_onboarding_instructions ?? true,
       onboarding_instructions: module.onboarding_instructions || null,
     };
@@ -341,7 +339,19 @@ export function ModuleEditor() {
         `/instructor/modules/${module.id}/parts/${selectedPart.id}/question-image`,
         form,
       );
-      setManual((current) => current ? { ...current, image_path: data.image_path, image_url: data.image_url } : current);
+      setManual((current) => current ? {
+        ...current,
+        passage: selectedPart.section_type === "speaking" ? null : current.passage,
+        image_path: data.image_path,
+        image_url: data.image_url,
+        interaction: selectedPart.section_type === "speaking" ? {
+          ...(current.interaction || {}),
+          candidate_material_type: "image",
+          candidate_material_path: null,
+          candidate_material_url: null,
+          candidate_material_name: null,
+        } : current.interaction,
+      } : current);
     } catch (err: unknown) {
       setError(extractErrorMessage(err, strings.manualQuestion.errors.imageUpload));
     } finally {
@@ -351,6 +361,48 @@ export function ModuleEditor() {
 
   function removeQuestionImage() {
     setManual((current) => current ? { ...current, image_path: null, image_url: null } : current);
+  }
+
+  async function uploadSpeakingMaterialPdf(file: File) {
+    if (!module || !selectedPart) return;
+    setUploadingSpeakingPdf(true); setError(null);
+    try {
+      const form = new FormData(); form.append("file", file);
+      const { data } = await apiClient.post<{
+        candidate_material_path: string;
+        candidate_material_url: string;
+        candidate_material_name: string;
+      }>(`/instructor/modules/${module.id}/parts/${selectedPart.id}/speaking-material-pdf`, form);
+      setManual((current) => current ? {
+        ...current,
+        passage: null,
+        image_path: null,
+        image_url: null,
+        interaction: {
+          ...(current.interaction || {}),
+          candidate_material_type: "pdf",
+          candidate_material_path: data.candidate_material_path,
+          candidate_material_url: data.candidate_material_url,
+          candidate_material_name: data.candidate_material_name,
+        },
+      } : current);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to upload candidate PDF material"));
+    } finally {
+      setUploadingSpeakingPdf(false);
+    }
+  }
+
+  function removeSpeakingMaterialPdf() {
+    setManual((current) => current ? {
+      ...current,
+      interaction: {
+        ...(current.interaction || {}),
+        candidate_material_path: null,
+        candidate_material_url: null,
+        candidate_material_name: null,
+      },
+    } : current);
   }
 
   async function uploadQuestionAudio(file: File) {
@@ -466,6 +518,10 @@ export function ModuleEditor() {
         { preparation_seconds: preparationSeconds, response_seconds: responseSeconds },
       );
       setModule(data);
+      setDetails((current) => ({ ...current, duration_minutes: data.duration_minutes }));
+      if (serverDetailsRef.current) {
+        serverDetailsRef.current = { ...serverDetailsRef.current, duration_minutes: data.duration_minutes };
+      }
       showSuccess(strings.speakingTiming.saved(selectedPart.title));
     } catch (err: unknown) {
       showError(extractErrorMessage(err, strings.speakingTiming.error));
@@ -739,11 +795,6 @@ export function ModuleEditor() {
     finally { setBusy(false); }
   }
 
-  function chooseExaminer(next: SpeakingExaminer) {
-    setExaminer(next);
-    localStorage.setItem(examinerStorageKey, next.id);
-  }
-
   async function deleteModule() {
     if (!module || !await confirmDelete(strings.details.deleteConfirm(module.title), strings.details.deleteConfirmTitle)) return;
     setBusy(true); setError(null);
@@ -773,6 +824,8 @@ export function ModuleEditor() {
   if (loading) return <p>{strings.loading}</p>;
   if (!module) return <div><p className="error-text">{error || strings.notFound}</p><Link to={moduleWorkspacePath}>{strings.backToModules}</Link></div>;
 
+  const speakingPart = module.parts?.find((part) => part.section_type === "speaking");
+
   return (
     <div className="module-editor-page">
       {/* Sleek Bottom Floating Status Bar */}
@@ -784,23 +837,21 @@ export function ModuleEditor() {
       </div>
 
       <div className="module-authoring-layout">
-        <ModulePartNav
-          parts={module.parts}
-          selectedPartId={selectedPartId}
-          onChoosePart={choosePart}
-          examinerPicker={(() => {
-            const speakingPart = module.parts?.find((part) => part.section_type === "speaking");
-            if (!speakingPart) return undefined;
-            return (
+        <div className="module-authoring-sticky-stack">
+          <ModulePartNav
+            parts={module.parts}
+            selectedPartId={selectedPartId}
+            onChoosePart={choosePart}
+          />
+          {speakingPart && (
+            <div className="module-examiner-picker-slot">
               <SpeakingExaminerPicker
-                examinerId={examiner?.id ?? storedExaminerId}
                 moduleId={module.id}
                 samplePartId={speakingPart.id}
-                onChange={chooseExaminer}
               />
-            );
-          })()}
-        />
+            </div>
+          )}
+        </div>
         <main className="module-part-editor" id="module-part-editor">
           {!selectedPart ? (
             <ModuleDetailsForm
@@ -911,6 +962,7 @@ export function ModuleEditor() {
                       editingQuestionId={editingQuestionId}
                       busy={busy}
                       uploadingImage={uploadingImage}
+                      uploadingSpeakingPdf={uploadingSpeakingPdf}
                       uploadingAudio={uploadingAudio}
                       onAddOption={addOption}
                       onRemoveOption={removeOption}
@@ -919,6 +971,8 @@ export function ModuleEditor() {
                       onManualChange={setManual}
                       onUploadImage={uploadQuestionImage}
                       onRemoveImage={removeQuestionImage}
+                      onUploadSpeakingPdf={uploadSpeakingMaterialPdf}
+                      onRemoveSpeakingPdf={removeSpeakingMaterialPdf}
                       onUploadAudio={uploadQuestionAudio}
                       onRemoveAudio={removeQuestionAudio}
                       onSubmit={saveQuestion}
@@ -967,6 +1021,7 @@ export function ModuleEditor() {
               editingQuestionId={editingQuestionId}
               busy={busy}
               uploadingImage={uploadingImage}
+              uploadingSpeakingPdf={uploadingSpeakingPdf}
               uploadingAudio={uploadingAudio}
               onAddOption={addOption}
               onRemoveOption={removeOption}
@@ -975,6 +1030,8 @@ export function ModuleEditor() {
               onManualChange={setManual}
               onUploadImage={uploadQuestionImage}
               onRemoveImage={removeQuestionImage}
+              onUploadSpeakingPdf={uploadSpeakingMaterialPdf}
+              onRemoveSpeakingPdf={removeSpeakingMaterialPdf}
               onUploadAudio={uploadQuestionAudio}
               onRemoveAudio={removeQuestionAudio}
               onSubmit={saveQuestion}

@@ -119,6 +119,56 @@
   color: var(--text);
 }
 
+/* Destructive actions must keep their label readable when the broad legacy
+   button hover rule supplies a solid brand-red background. This class is used
+   by saved questions and listening assets, so define its complete interaction
+   contract here instead of patching each authoring panel separately. */
+button.danger-text {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--danger) 42%, transparent);
+  color: var(--danger);
+  box-shadow: none;
+}
+
+button.danger-text:hover:not(:disabled),
+button.danger-text:focus-visible:not(:disabled) {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #ffffff;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--danger) 28%, transparent);
+}
+
+button.danger-text:disabled {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--danger) 24%, transparent);
+  color: color-mix(in srgb, var(--danger) 52%, transparent);
+  box-shadow: none;
+}
+
+/* Filled destructive variants appear across shared buttons, authoring and
+   confirmation surfaces. Their foreground is always white in both themes. */
+:where(.ui-btn-danger, .vh-btn-danger, .btn-action-danger, .premium-modal-btn.confirm-btn.btn-danger) {
+  color: #ffffff;
+}
+
+:where(.ui-btn-danger, .vh-btn-danger, .btn-action-danger, .premium-modal-btn.confirm-btn.btn-danger):hover:not(:disabled),
+:where(.ui-btn-danger, .vh-btn-danger, .btn-action-danger, .premium-modal-btn.confirm-btn.btn-danger):focus-visible:not(:disabled) {
+  color: #ffffff;
+}
+
+[data-theme="dark"] button.danger-text {
+  background: color-mix(in srgb, var(--danger) 11%, transparent);
+  border-color: color-mix(in srgb, #fb7185 62%, transparent);
+  color: #fb7185;
+}
+
+[data-theme="dark"] button.danger-text:hover:not(:disabled),
+[data-theme="dark"] button.danger-text:focus-visible:not(:disabled) {
+  background: var(--danger);
+  border-color: #fb7185;
+  color: #ffffff;
+}
+
 :where(.sab-card, .sat-card, .invoice-card-wrapper, .purchase-stat-card, .purchase-history-card, .drawer-stat-card, .neomorphic-card-widget, .activity-feed-card, .drawer-list-item-card, .developer-card, .detail-card, .quota-analytics-card, .validity-gauge-card) {
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1126,4 +1176,3 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
-

@@ -42,6 +42,203 @@
   font-variant-numeric: tabular-nums;
 }
 
+.speaking-interview-layout {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 260px;
+  min-height: 0;
+  background: #f7f7f5;
+  color: #17181d;
+}
+
+.speaking-interview-parts {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 26px 18px;
+  border-right: 1px solid #d9dce2;
+  background: #ffffff;
+}
+
+.speaking-interview-parts-label {
+  margin-bottom: 5px;
+  color: #4b5563;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.speaking-interview-part {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid #d5d8df;
+  color: #4b5563;
+}
+
+.speaking-interview-part span {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  background: #eceef2;
+  font-size: 11px;
+}
+
+.speaking-interview-part strong {
+  font-size: 12px;
+}
+
+.speaking-interview-part.is-current {
+  position: relative;
+  border-color: #24262d;
+  background: #24262d;
+  color: #ffffff;
+}
+
+.speaking-interview-part.is-current::after {
+  position: absolute;
+  top: 50%;
+  right: -11px;
+  width: 0;
+  height: 0;
+  border-top: 19px solid transparent;
+  border-bottom: 19px solid transparent;
+  border-left: 11px solid #24262d;
+  content: "";
+  transform: translateY(-50%);
+}
+
+.speaking-interview-part.is-complete {
+  border-color: #c51f32;
+  background: #c51f32;
+  color: #ffffff;
+}
+
+.speaking-interview-part.is-complete span,
+.speaking-interview-part.is-current span {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.speaking-interview-workspace {
+  display: grid;
+  grid-template-rows: auto minmax(260px, 1fr) auto auto;
+  min-width: 0;
+  min-height: 0;
+  gap: 16px;
+  padding: 22px 28px 24px;
+}
+
+.speaking-candidate-material {
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #d9dce2;
+  background: #ffffff;
+  box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05);
+}
+
+.speaking-candidate-material.is-text {
+  place-items: center stretch;
+  overflow: auto;
+}
+
+.speaking-candidate-material img {
+  display: block;
+  max-width: 100%;
+  max-height: min(58vh, 650px);
+  object-fit: contain;
+}
+
+.speaking-candidate-material object {
+  width: 100%;
+  height: 100%;
+  min-height: 430px;
+  border: 0;
+}
+
+.speaking-candidate-material .speaking-interview-passage {
+  width: min(820px, calc(100% - 48px));
+  max-height: 100%;
+  margin: auto;
+  overflow: auto;
+  padding: 24px 28px;
+  border: 1px solid #d8a66a;
+  border-radius: 4px;
+  background: #fffdf9;
+  color: #27272a;
+  font-size: clamp(15px, 1.25vw, 19px);
+  line-height: 1.65;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+.speaking-candidate-empty {
+  display: grid;
+  max-width: 390px;
+  place-items: center;
+  gap: 8px;
+  padding: 32px;
+  color: #667085;
+  text-align: center;
+}
+
+.speaking-candidate-empty svg {
+  width: 36px;
+  height: 36px;
+  color: #c51f32;
+}
+
+.speaking-candidate-empty strong {
+  color: #25272e;
+  font-size: 18px;
+}
+
+.speaking-interview-examiner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 20px;
+  border-left: 1px solid #d9dce2;
+  background: #ffffff;
+}
+
+.speaking-interview-examiner .speaking-interview-avatar .avatar-portrait-container {
+  width: min(22vw, 220px);
+  height: min(22vw, 220px);
+  min-width: min(22vw, 220px);
+}
+
+.speaking-interview-examiner-copy {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+
+.speaking-interview-examiner-copy strong {
+  color: #25272e;
+  font-size: 14px;
+}
+
+.speaking-interview-examiner-copy span {
+  color: #667085;
+  font-size: 11px;
+}
+
+.speaking-interview-control-dock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding-top: 2px;
+}
+
 .speaking-interview-content {
   display: grid;
   width: min(100%, 1040px);
@@ -183,5 +380,84 @@
     width: min(25vh, 210px);
     height: min(25vh, 210px);
     min-width: min(25vh, 210px);
+  }
+}
+
+@media (max-width: 960px) {
+  .speaking-interview-layout {
+    grid-template-columns: 104px minmax(0, 1fr) 190px;
+  }
+
+  .speaking-interview-parts {
+    padding-inline: 10px;
+  }
+
+  .speaking-interview-part {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .speaking-interview-part strong {
+    font-size: 10px;
+  }
+
+  .speaking-interview-workspace {
+    padding-inline: 18px;
+  }
+}
+
+@media (max-width: 720px) {
+  .speaking-interview-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+
+  .speaking-interview-parts {
+    flex-direction: row;
+    padding: 10px 14px;
+    border-right: 0;
+    border-bottom: 1px solid #d9dce2;
+  }
+
+  .speaking-interview-parts-label {
+    display: none;
+  }
+
+  .speaking-interview-part {
+    flex: 1;
+    min-height: 34px;
+  }
+
+  .speaking-interview-part.is-current::after {
+    display: none;
+  }
+
+  .speaking-interview-examiner {
+    grid-row: 2;
+    flex-direction: row;
+    justify-content: center;
+    padding: 10px 16px;
+    border-left: 0;
+    border-bottom: 1px solid #d9dce2;
+  }
+
+  .speaking-interview-examiner .speaking-interview-avatar .avatar-portrait-container {
+    width: 82px;
+    height: 82px;
+    min-width: 82px;
+  }
+
+  .speaking-interview-workspace {
+    grid-row: 3;
+    padding: 14px;
+  }
+
+  .speaking-interview-control-dock {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .speaking-interview-timer {
+    min-width: 0;
   }
 }

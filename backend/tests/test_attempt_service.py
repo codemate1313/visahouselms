@@ -1302,6 +1302,32 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertIn(attempt.status, {ATTEMPT_GRADED, ATTEMPT_GRADING})
         self.assertTrue(attempt.security_media_state["auto_submitted_for_violations"])
 
+    def test_student_speaking_question_receives_candidate_material_url(self):
+        question = SimpleNamespace(
+            id=91,
+            question_type="speaking_prompt",
+            prompt="Private Sonia script",
+            instructions=None,
+            passage=None,
+            image_path=None,
+            options=[],
+            interaction={
+                "candidate_material_type": "pdf",
+                "candidate_material_path": "exam-modules/4/speaking-materials/card.pdf",
+                "candidate_material_name": "card.pdf",
+            },
+            points=Decimal("1"),
+            sort_order=0,
+        )
+
+        out = attempt_service._redacted_question(question, None)
+
+        self.assertEqual(
+            out["interaction"]["candidate_material_url"],
+            "/storage/exam-modules/4/speaking-materials/card.pdf",
+        )
+        self.assertEqual(out["interaction"]["candidate_material_name"], "card.pdf")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -6,7 +6,7 @@ import { ExaminerAvatarSvg } from "@/components/speaking/ExaminerAvatarSvg";
 import { PhotoExaminerAvatar } from "@/components/speaking/PhotoExaminerAvatar";
 import { getExaminerPhotoSet } from "@/components/speaking/examinerPhotoSets";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
-import { DEFAULT_EXAMINER_ID, type SpeakingExaminer } from "./SpeakingExaminerPicker";
+import { DEFAULT_EXAMINER_ID, type SpeakingExaminer } from "../speakingExaminer";
 import "./SpeakingAvatarPreview.css";
 
 interface VisemeFrame {
@@ -26,8 +26,7 @@ interface SpeakingAvatarPreviewProps {
   moduleId: number;
   partId: number;
   prompt: string;
-  /** Chosen once for the module by SpeakingExaminerPicker; null until the
-      examiner roster has loaded, when the server default is used. */
+  /** Fixed Sonia profile supplied by the module editor. */
   examiner: SpeakingExaminer | null;
 }
 
@@ -49,8 +48,7 @@ export function SpeakingAvatarPreview({ moduleId, partId, prompt, examiner }: Sp
   const trimmedPrompt = prompt.trim();
   const isStale = Boolean(payload) && previewedPrompt !== trimmedPrompt;
 
-  // A voice change makes the generated audio wrong, so drop it and let the
-  // author play the prompt again in the newly chosen examiner's voice.
+  // Reset cached preview audio if the fixed examiner profile ever changes.
   useEffect(() => {
     audioRef.current?.pause();
     setPayload(null);
@@ -136,7 +134,7 @@ export function SpeakingAvatarPreview({ moduleId, partId, prompt, examiner }: Sp
         <div className={`vh-avatar-preview-portrait${isPlaying ? " is-speaking" : ""}`}>
           <div className="vh-avatar-preview-frame">
             {(() => {
-            const photoSet = getExaminerPhotoSet(examiner?.gender);
+            const photoSet = getExaminerPhotoSet(examiner?.id);
             return photoSet ? (
               <PhotoExaminerAvatar
                 set={photoSet}

@@ -1,8 +1,9 @@
 import { type FormEvent, useEffect, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
-import { Button, RequiredMark } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
+import { MinuteSecondInput } from "./MinuteSecondInput";
 
 interface SpeakingTimingPanelProps {
   part: ExamModulePart;
@@ -30,32 +31,26 @@ export function SpeakingTimingPanel({ part, isEditable, busy, onSave }: Speaking
     <form className="form-card wide speaking-timing-card" onSubmit={submit}>
       <CollapsiblePanel title={t.heading(part.title)} description={t.description} eyebrow={t.eyebrow}>
         <div className="speaking-timing-fields">
-          <div>
-            <label htmlFor={`preparation-${part.id}`}>{t.preparationLabel}<RequiredMark /></label>
-            <input
-              id={`preparation-${part.id}`}
-              type="number"
-              min={0}
-              max={600}
-              value={preparationSeconds}
-              onChange={(event) => setPreparationSeconds(Number(event.target.value))}
-              required
-              readOnly={!isEditable}
-            />
-          </div>
-          <div>
-            <label htmlFor={`response-${part.id}`}>{t.responseLabel}<RequiredMark /></label>
-            <input
-              id={`response-${part.id}`}
-              type="number"
-              min={5}
-              max={1800}
-              value={responseSeconds}
-              onChange={(event) => setResponseSeconds(Number(event.target.value))}
-              required
-              readOnly={!isEditable}
-            />
-          </div>
+          <MinuteSecondInput
+            id={`preparation-${part.id}`}
+            label={t.preparationLabel}
+            minSeconds={0}
+            maxSeconds={600}
+            value={preparationSeconds}
+            onChange={setPreparationSeconds}
+            required
+            readOnly={!isEditable}
+          />
+          <MinuteSecondInput
+            id={`response-${part.id}`}
+            label={t.responseLabel}
+            minSeconds={5}
+            maxSeconds={1800}
+            value={responseSeconds}
+            onChange={setResponseSeconds}
+            required
+            readOnly={!isEditable}
+          />
         </div>
         <p className="field-hint">{t.hint}</p>
         {isEditable && <Button type="submit" disabled={busy}>{busy ? t.saving : t.save}</Button>}

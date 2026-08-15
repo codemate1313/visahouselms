@@ -1,0 +1,28 @@
+/* Self-contained sizing for every compact and full-size use of the shared
+   photo avatar. The talking-avatar engine creates the internal image stack. */
+.photo-examiner-avatar {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.photo-examiner-avatar .ta-stage,
+.photo-examiner-avatar img {
+  object-fit: cover;
+}
+
+/* Slightly overscan the square source beneath the circular mask. This keeps
+   antialiasing and sub-pixel rounding from revealing a dark crescent. */
+.photo-examiner-avatar .ta-stage {
+  top: -2%;
+  left: -2%;
+  width: 104% !important;
+  height: 104% !important;
+}
+
+.photo-examiner-avatar img {
+  width: 100%;
+  height: 100%;
+}

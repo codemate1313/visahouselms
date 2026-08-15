@@ -108,8 +108,11 @@ class QuestionInteraction(BaseModel):
     preparation_seconds: Optional[int] = Field(default=None, ge=0, le=300)
     response_seconds: Optional[int] = Field(default=None, ge=5, le=600)
     adaptive_follow_up: bool = False
+    candidate_material_type: Optional[str] = Field(default="none", max_length=10)
+    candidate_material_path: Optional[str] = Field(default=None, max_length=500)
+    candidate_material_name: Optional[str] = Field(default=None, max_length=255)
 
-    @field_validator("group_label", "turn_type")
+    @field_validator("group_label", "turn_type", "candidate_material_name")
     @classmethod
     def clean_text(cls, value: Optional[str]) -> Optional[str]:
         return _optional_text(value)
@@ -122,6 +125,26 @@ class QuestionInteraction(BaseModel):
         value = value.lower()
         if value not in SPEAKING_TURN_TYPES:
             raise ValueError(f"turn_type must be one of: {', '.join(sorted(SPEAKING_TURN_TYPES))}")
+        return value
+
+    @field_validator("candidate_material_type")
+    @classmethod
+    def valid_candidate_material_type(cls, value: Optional[str]) -> str:
+        normalized = (value or "none").strip().lower()
+        if normalized not in {"none", "text", "image", "pdf"}:
+            raise ValueError("candidate_material_type must be none, text, image, or pdf")
+        return normalized
+
+    @field_validator("candidate_material_path")
+    @classmethod
+    def valid_candidate_material_path(cls, value: Optional[str]) -> Optional[str]:
+        value = _optional_text(value)
+        if value is not None and not (
+            value.startswith("exam-modules/")
+            and "/speaking-materials/" in value
+            and value.lower().endswith(".pdf")
+        ):
+            raise ValueError("candidate_material_path must reference an uploaded speaking PDF")
         return value
 
 
@@ -201,6 +224,14 @@ class QuestionCreate(BaseModel):
                 raise ValueError("Single-choice MCQs require exactly one correct answer")
         if self.question_type in {"short_answer", "fill_blank"} and not self.correct_answers:
             raise ValueError("Auto-graded text questions require at least one accepted answer")
+        if self.question_type == "speaking_prompt":
+            material_type = self.interaction.candidate_material_type or "none"
+            if material_type == "text" and not self.passage:
+                raise ValueError("Candidate-visible text is required when speaking material type is text")
+            if material_type == "image" and not self.image_path:
+                raise ValueError("A candidate image is required when speaking material type is image")
+            if material_type == "pdf" and not self.interaction.candidate_material_path:
+                raise ValueError("A candidate PDF is required when speaking material type is pdf")
         return self
 
 

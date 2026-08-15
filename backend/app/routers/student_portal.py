@@ -694,7 +694,9 @@ async def get_speaking_avatar_for_attempt_part(
                         db.add(attempt)
                         db.commit()
 
-    examiner = avatar_service.get_examiner(examiner_id)
+    # Candidate delivery always uses Sonia. Keep the legacy query parameter for
+    # backward-compatible clients, but never let it change the examiner.
+    examiner = avatar_service.get_examiner()
     audio_url, visemes, duration = await avatar_service.get_or_create_prompt_audio(prompt_text, examiner["voice"])
 
     return {

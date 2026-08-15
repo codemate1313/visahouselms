@@ -14,6 +14,7 @@ from app.core.security import hash_password
 from app.models import Base, ExamModule, ExamModuleAsset, ExamModuleQuestion
 from app.models.role import SA_INSTRUCTOR, Role
 from app.models.user import User
+from app.schemas.assessment import QuestionCreate
 from app.services import module_authoring_service, module_blueprint_service
 
 
@@ -245,7 +246,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         )
         self.assertEqual(speaking_3["answer_constraints"]["allowed_turn_types"], ["read_aloud"])
 
-    def test_instructor_can_update_overall_and_speaking_part_timing(self) -> None:
+    def test_speaking_duration_is_derived_and_part_timing_remains_configurable(self) -> None:
         created = self._create("speaking")
         updated = module_authoring_service.update_module(
             self.db,
@@ -255,7 +256,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             {"duration_minutes"},
             "127.0.0.1",
         )
-        self.assertEqual(updated["duration_minutes"], 22)
+        self.assertEqual(updated["duration_minutes"], 14)
 
         first_part = updated["parts"][0]
         updated = module_authoring_service.update_speaking_part_timing(
@@ -270,6 +271,57 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         constraints = updated["parts"][0]["answer_constraints"]
         self.assertEqual(constraints["preparation_seconds"], 15)
         self.assertEqual(constraints["response_seconds"], 75)
+
+        prompt = _question("speaking_prompt", "Tell me about yourself")
+        prompt["interaction"] = {
+            "turn_type": "identity",
+            "preparation_seconds": 15,
+            "response_seconds": 75,
+        }
+        question = module_authoring_service.add_question(
+            self.db,
+            self.instructor,
+            created["id"],
+            first_part["id"],
+            prompt,
+            None,
+        )
+        recalculated = module_authoring_service.serialize_module(
+            module_authoring_service.get_module_or_404(self.db, created["id"]),
+            detailed=True,
+        )
+        self.assertEqual(recalculated["duration_minutes"], 2)
+        self.assertEqual(recalculated["parts"][0]["duration_minutes"], 2)
+
+        prompt["interaction"]["response_seconds"] = 125
+        module_authoring_service.update_question(
+            self.db,
+            self.instructor,
+            created["id"],
+            first_part["id"],
+            question["id"],
+            prompt,
+            None,
+        )
+        recalculated = module_authoring_service.serialize_module(
+            module_authoring_service.get_module_or_404(self.db, created["id"]),
+            detailed=True,
+        )
+        self.assertEqual(recalculated["duration_minutes"], 3)
+
+        module_authoring_service.delete_question(
+            self.db,
+            self.instructor,
+            created["id"],
+            first_part["id"],
+            question["id"],
+            None,
+        )
+        reset = module_authoring_service.serialize_module(
+            module_authoring_service.get_module_or_404(self.db, created["id"]),
+            detailed=True,
+        )
+        self.assertEqual(reset["duration_minutes"], 14)
 
         reading = self._create("reading")
         with self.assertRaises(HTTPException):
@@ -423,6 +475,14 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             module_type: self._complete(module_type)
             for module_type in ("listening", "reading", "writing", "speaking")
         }
+        sources["reading"] = module_authoring_service.update_module(
+            self.db,
+            self.instructor,
+            sources["reading"]["id"],
+            {"duration_minutes": 55},
+            {"duration_minutes"},
+            None,
+        )
         selected_ids = [sources[module_type]["id"] for module_type in ("listening", "reading", "writing", "speaking")]
 
         with patch("app.services.module_authoring_service.secrets.SystemRandom") as randomizer_class:
@@ -441,6 +501,10 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             )
 
         self.assertEqual(final_test["source_module_ids"], selected_ids)
+        self.assertEqual(
+            final_test["duration_minutes"],
+            sum(source["duration_minutes"] for source in sources.values()),
+        )
         self.assertTrue(final_test["ready_to_publish"])
         self.assertEqual(final_test["question_count"], sum(source["question_count"] for source in sources.values()))
         self.assertEqual(randomizer_class.return_value.shuffle.call_count, 0)
@@ -551,6 +615,61 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.db.refresh(part)
         self.assertEqual(part.title, "Custom Reading Part 1A")
         self.assertEqual(part.instructions, "Read carefully.")
+
+    def test_speaking_pdf_material_is_serialized_and_deleted_with_question(self) -> None:
+        created = self._create("speaking")
+        module = module_authoring_service.get_module_or_404(self.db, created["id"])
+        part = module.parts[0]
+        uploaded = module_authoring_service.save_speaking_material_pdf(
+            self.db,
+            self.instructor,
+            module.id,
+            part.id,
+            content=b"%PDF-1.4 speaking material",
+            original_filename="role-play card.pdf",
+            ip=None,
+        )
+        stored_path = settings.storage_path / uploaded["candidate_material_path"]
+        self.assertTrue(stored_path.exists())
+
+        draft = QuestionCreate(
+            question_type="speaking_prompt",
+            prompt="Sonia asks the candidate to read the role-play card.",
+            interaction={
+                "turn_type": "identity",
+                "response_seconds": 45,
+                "candidate_material_type": "pdf",
+                "candidate_material_path": uploaded["candidate_material_path"],
+                "candidate_material_name": uploaded["candidate_material_name"],
+            },
+        ).model_dump()
+        question = module_authoring_service.add_question(
+            self.db, self.instructor, module.id, part.id, draft, None
+        )
+        self.assertEqual(
+            question["interaction"]["candidate_material_url"],
+            uploaded["candidate_material_url"],
+        )
+        self.assertIsNone(question["passage"])
+
+        module_authoring_service.delete_question(
+            self.db, self.instructor, module.id, part.id, question["id"], None
+        )
+        self.assertFalse(stored_path.exists())
+
+    def test_speaking_material_mode_requires_its_candidate_content(self) -> None:
+        with self.assertRaises(ValueError):
+            QuestionCreate(
+                question_type="speaking_prompt",
+                prompt="Describe the chart.",
+                interaction={"candidate_material_type": "image"},
+            )
+        with self.assertRaises(ValueError):
+            QuestionCreate(
+                question_type="speaking_prompt",
+                prompt="Read this text aloud.",
+                interaction={"candidate_material_type": "text"},
+            )
 
 
 if __name__ == "__main__":

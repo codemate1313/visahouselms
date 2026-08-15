@@ -5,7 +5,7 @@ import { Icon } from "@/components/icons";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import type { ExamModule, ExamModuleType, ExamSection } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
-import { COMPOSITE_TYPES, SOURCE_SECTIONS, MODULE_TYPE_META } from "../helpers";
+import { COMPOSITE_TYPES, DERIVED_DURATION_MODULE_TYPES, SOURCE_SECTIONS, MODULE_TYPE_META } from "../helpers";
 import type { ModuleDetailsState } from "./ModuleDetailsForm";
 import { OnboardingInstructionsEditor } from "./OnboardingInstructionsEditor";
 import { HorizontalAuthoringStepper } from "./HorizontalAuthoringStepper";
@@ -64,7 +64,19 @@ export function NewModuleForm({
 
   const meta = MODULE_TYPE_META[requestedType];
   const isComposite = COMPOSITE_TYPES.has(requestedType);
+  const durationIsCalculated = DERIVED_DURATION_MODULE_TYPES.has(requestedType);
   const allSourcesSelected = SOURCE_SECTIONS.every((section) => selectedSources[section]);
+  const selectedSourceDuration = isComposite
+    ? SOURCE_SECTIONS.reduce((total, section) => {
+        const moduleId = Number(selectedSources[section]);
+        return total + (sourceModules.find((module) => module.id === moduleId)?.duration_minutes ?? 0);
+      }, 0)
+    : 0;
+  const displayedDuration = isComposite
+    ? selectedSourceDuration || meta.defaultDuration
+    : durationIsCalculated
+      ? meta.defaultDuration
+      : details.duration_minutes || meta.defaultDuration;
 
   const handleNextStep = () => {
     if (!details.title.trim()) {
@@ -121,7 +133,7 @@ export function NewModuleForm({
           </div>
           <div className="vh-duration-quick-badge">
             <Icon name="history" />
-            <span>Target Duration: <strong>{details.duration_minutes || meta.defaultDuration} mins</strong></span>
+            <span>{durationIsCalculated ? "Calculated Duration" : "Target Duration"}: <strong>{displayedDuration} mins</strong></span>
           </div>
         </div>
       </div>
@@ -199,13 +211,13 @@ export function NewModuleForm({
               <div className="vh-form-group">
                 <div className="vh-label-row">
                   <label htmlFor="new-module-duration">
-                    Exam Duration (Minutes) <RequiredMark />
+                    {durationIsCalculated ? t.calculatedDurationLabel : "Exam Duration (Minutes)"} <RequiredMark />
                   </label>
                 </div>
 
                 <div className="vh-duration-stepper-row">
                   <div className="vh-stepper-control">
-                    <button type="button" className="vh-step-btn" onClick={() => adjustDuration(-5)} title="Subtract 5 minutes">
+                    <button type="button" className="vh-step-btn" onClick={() => adjustDuration(-5)} disabled={durationIsCalculated} title="Subtract 5 minutes">
                       <Icon name="minus" />
                     </button>
                     <div className="vh-duration-val-box">
@@ -215,18 +227,19 @@ export function NewModuleForm({
                         className="vh-duration-input"
                         min={1}
                         max={600}
-                        value={details.duration_minutes || meta.defaultDuration}
+                        value={displayedDuration}
                         onChange={(event) => onDetailsChange({ ...details, duration_minutes: Number(event.target.value) })}
                         required
+                        readOnly={durationIsCalculated}
                       />
                       <span className="vh-stepper-unit">mins</span>
                     </div>
-                    <button type="button" className="vh-step-btn" onClick={() => adjustDuration(5)} title="Add 5 minutes">
+                    <button type="button" className="vh-step-btn" onClick={() => adjustDuration(5)} disabled={durationIsCalculated} title="Add 5 minutes">
                       <Icon name="plus" />
                     </button>
                   </div>
 
-                  <div className="vh-duration-preset-pills">
+                  {!durationIsCalculated && <div className="vh-duration-preset-pills">
                     {meta.durationPresets.map((val) => (
                       <button
                         key={val}
@@ -237,8 +250,13 @@ export function NewModuleForm({
                         {val}m
                       </button>
                     ))}
-                  </div>
+                  </div>}
                 </div>
+                {durationIsCalculated && (
+                  <p className="field-hint">
+                    {isComposite ? t.calculatedCompositeDurationHint : t.calculatedSpeakingDurationHint}
+                  </p>
+                )}
               </div>
             </div>
           ) : (
@@ -353,5 +371,3 @@ export function NewModuleForm({
     </div>
   );
 }
-
-

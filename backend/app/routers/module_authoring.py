@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.core.uploads import read_compressed_profile_image, read_validated_mp3
+from app.core.uploads import read_compressed_profile_image, read_validated_course_asset, read_validated_mp3
 from app.database import get_db
 from app.dependencies.auth import get_current_user, require_password_change_complete, require_role
 from app.models.exam_module import MODULE_STATUSES, MODULE_TYPES
@@ -339,6 +339,32 @@ async def upload_question_image(
     )
     return module_authoring_service.save_question_image(
         db, actor, module_id, part_id, content=content, ip=_ip(request)
+    )
+
+
+@router.post("/{module_id}/parts/{part_id}/speaking-material-pdf", status_code=status.HTTP_201_CREATED)
+async def upload_speaking_material_pdf(
+    module_id: int,
+    part_id: int,
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    _, part = module_authoring_service.get_editable_part(db, actor, module_id, part_id)
+    if part.section_type != "speaking":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="PDF material is available only for Speaking parts")
+    asset_type, _, content = await read_validated_course_asset(file)
+    if asset_type != "pdf":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Speaking material must be a PDF file")
+    return module_authoring_service.save_speaking_material_pdf(
+        db,
+        actor,
+        module_id,
+        part_id,
+        content=content,
+        original_filename=file.filename or "speaking-material.pdf",
+        ip=_ip(request),
     )
 
 

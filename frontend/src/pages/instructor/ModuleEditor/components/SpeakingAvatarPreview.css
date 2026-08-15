@@ -1,12 +1,13 @@
-/* Module-wide examiner picker. A single strip above the authoring layout, so
-   the voice reads as a property of the module rather than of the open part. */
+/* Module-wide examiner picker. It sits between the part navigation and the
+   selected part editor rather than becoming an oversized navigation step. */
 .vh-examiner-picker {
   display: grid;
-  grid-template-columns: 44px minmax(150px, 220px) minmax(220px, 1fr) auto;
+  grid-template-columns: 44px minmax(150px, 220px) auto;
   align-items: center;
+  justify-content: start;
   gap: 10px;
-  flex: 0 0 min(760px, 78vw);
-  min-width: 520px;
+  width: 100%;
+  min-width: 0;
   margin: 0;
   padding: 6px 8px;
   border: 1px solid rgba(185, 28, 43, 0.18);
@@ -23,8 +24,12 @@
   background: linear-gradient(135deg, rgba(185, 28, 43, 0.85) 0%, rgba(99, 102, 241, 0.85) 55%, rgba(56, 189, 248, 0.85) 100%);
 }
 
+.vh-examiner-picker-portrait.is-speaking {
+  animation: vh-avatar-preview-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
 .vh-examiner-picker-copy {
-  min-width: 220px;
+  min-width: 0;
 }
 
 .vh-examiner-picker-title {
@@ -46,12 +51,6 @@
 
 .vh-examiner-picker-hint.is-error {
   color: #dc2626;
-}
-
-.vh-examiner-picker-select {
-  width: 100%;
-  max-width: none;
-  min-width: 210px;
 }
 
 .vh-examiner-sample-button {
@@ -112,17 +111,12 @@
 @media (max-width: 860px) {
   .vh-examiner-picker {
     grid-template-columns: 44px minmax(0, 1fr) auto;
-    flex-basis: 82vw;
-    min-width: 420px;
   }
 
   .vh-examiner-picker-copy {
     min-width: 0;
   }
 
-  .vh-examiner-picker-select {
-    grid-column: 1 / -1;
-  }
 }
 
 /* Examiner preview card shown while authoring a Speaking prompt. Sized to sit
@@ -318,4 +312,160 @@
   background: transparent;
   color: #f8b4bc;
   border-color: rgba(255, 255, 255, 0.18);
+}
+
+.vh-speaking-material-builder {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 16px;
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.vh-speaking-material-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.vh-speaking-material-heading h3 {
+  margin: 2px 0 4px;
+  color: #0f172a;
+  font-size: 17px;
+}
+
+.vh-speaking-material-heading p,
+.vh-speaking-material-empty {
+  margin: 0;
+  color: #64748b;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.vh-speaking-material-kicker {
+  color: var(--sa-sidebar-red, #b91c2b);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.vh-speaking-material-optional {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.vh-speaking-material-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.035);
+}
+
+.vh-speaking-material-tabs button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.vh-speaking-material-tabs button.is-active {
+  background: #ffffff;
+  color: var(--sa-sidebar-red, #b91c2b);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.09);
+}
+
+.vh-speaking-material-field {
+  display: grid;
+  gap: 7px;
+}
+
+.vh-speaking-pdf-card {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid rgba(185, 28, 43, 0.18);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.vh-speaking-pdf-card > svg {
+  width: 26px;
+  height: 26px;
+  color: var(--sa-sidebar-red, #b91c2b);
+}
+
+.vh-speaking-pdf-card div {
+  display: grid;
+  min-width: 0;
+}
+
+.vh-speaking-pdf-card strong {
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vh-speaking-pdf-card span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+[data-theme="dark"] .vh-speaking-material-builder {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+[data-theme="dark"] .vh-speaking-material-heading h3,
+[data-theme="dark"] .vh-speaking-pdf-card strong {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .vh-speaking-material-heading p,
+[data-theme="dark"] .vh-speaking-material-empty,
+[data-theme="dark"] .vh-speaking-pdf-card span {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .vh-speaking-material-tabs {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+[data-theme="dark"] .vh-speaking-material-tabs button.is-active,
+[data-theme="dark"] .vh-speaking-pdf-card {
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+}
+
+@media (max-width: 620px) {
+  .vh-speaking-material-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vh-speaking-pdf-card {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+  .vh-speaking-pdf-card button {
+    grid-column: 1 / -1;
+  }
 }
