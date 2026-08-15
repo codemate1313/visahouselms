@@ -75,7 +75,9 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
     question_type: type,
     prompt: defaultPrompt,
     instructions: null,
-    passage: part.answer_constraints.shared_passage ? firstQuestion?.passage ?? null : null,
+    passage: part.answer_constraints.shared_passage
+      ? (firstQuestion?.passage ?? (typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`vh.passage.${part.id}`) : null) ?? null)
+      : null,
     image_path: null,
     image_url: null,
     options: sharedOptions,

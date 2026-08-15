@@ -22,12 +22,17 @@ interface SharedPassagePanelProps {
  */
 export function SharedPassagePanel({ part, isEditable, busy, onSave }: SharedPassagePanelProps) {
   const t = strings.sharedPassage;
-  const saved = part.questions[0]?.passage ?? "";
+  const storedPassage = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`vh.passage.${part.id}`) || "" : "";
+  const saved = part.questions[0]?.passage ?? storedPassage;
   const [draft, setDraft] = useState(saved);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Re-sync when the part changes or the module reloads after a save.
-  useEffect(() => setDraft(saved), [saved, part.id]);
+  useEffect(() => {
+    const currentStored = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`vh.passage.${part.id}`) || "" : "";
+    const effective = part.questions[0]?.passage ?? currentStored;
+    setDraft(effective);
+  }, [saved, part.id, part.questions]);
 
   const dirty = draft.trim() !== saved.trim();
   const mismatched = part.questions.some(

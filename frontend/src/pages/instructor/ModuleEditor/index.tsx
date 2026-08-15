@@ -799,6 +799,9 @@ export function ModuleEditor() {
     if (!module || !selectedPart) return;
     setBusy(true); setError(null);
     try {
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.setItem(`vh.passage.${selectedPart.id}`, passage);
+      }
       const base = `/instructor/modules/${module.id}/parts/${selectedPart.id}/questions`;
       if (selectedPart.questions.length > 0) {
         for (const question of selectedPart.questions) {
@@ -821,7 +824,7 @@ export function ModuleEditor() {
           );
         }
       } else {
-        // Initial question creation so the passage persists to DB even before manually adding all options
+        // Initial question creation only for Reading 2 (composed inline matching blanks) where entire task is authored together
         if (selectedPart.answer_constraints.layout === "inline_matching_blanks") {
           const limit = selectedPart.question_limit ?? 6;
           const optionCount = selectedPart.answer_constraints.option_count ?? 8;
@@ -844,31 +847,6 @@ export function ModuleEditor() {
                 image_url: null,
                 options,
                 correct_answers: [answer],
-                interaction: {},
-                explanation: null,
-                points: 1,
-                difficulty: "medium",
-              }),
-            );
-          }
-        } else if (selectedPart.part_code === "reading_1b") {
-          const limit = selectedPart.question_limit ?? 5;
-          for (let gap = 1; gap <= limit; gap++) {
-            await apiClient.post(
-              base,
-              questionPayload({
-                question_type: "mcq_single",
-                prompt: `Gap ${gap}`,
-                instructions: null,
-                passage,
-                image_path: null,
-                image_url: null,
-                options: [
-                  { key: "A", text: "Option A" },
-                  { key: "B", text: "Option B" },
-                  { key: "C", text: "Option C" },
-                ],
-                correct_answers: ["A"],
                 interaction: {},
                 explanation: null,
                 points: 1,
