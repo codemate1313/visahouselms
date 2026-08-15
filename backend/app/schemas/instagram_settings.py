@@ -48,3 +48,14 @@ class InstagramTestConnectionResponse(BaseModel):
     message: str
     account_id: Optional[str] = None
     media_count: Optional[int] = None
+
+
+class InstagramAddUrlItemRequest(BaseModel):
+    url: str = Field(..., description="Full Instagram Reel, Post or TV URL (e.g. https://www.instagram.com/reel/C8vZ_abc123/)")
+    media_type: Optional[str] = Field(default=None, description="REEL, VIDEO, IMAGE, or POST")
+    thumbnail_url: Optional[str] = Field(default=None, description="Direct URL of the video thumbnail or cover image")
+    caption: Optional[str] = Field(default=None, description="Caption, title or description of the reel")
+    like_count: Optional[int] = Field(default=1200, ge=0)
+    views_count: Optional[int] = Field(default=15000, ge=0)
+    comments_count: Optional[int] = Field(default=45, ge=0)
+

@@ -10,7 +10,7 @@ from app.models.instagram_settings import InstagramSettings
 from app.models.role import Role, SUPER_ADMIN
 from app.models.user import User
 from app.routers import instagram_router
-from app.schemas.instagram_settings import InstagramSettingsUpdate
+from app.schemas.instagram_settings import InstagramAddUrlItemRequest, InstagramSettingsUpdate
 from app.services import instagram_service
 
 
@@ -121,6 +121,48 @@ class InstagramSettingsTests(unittest.TestCase):
         )
         self.assertFalse(res.success)
 
+    def test_add_reel_by_url_success(self) -> None:
+        payload = InstagramAddUrlItemRequest(
+            url="https://www.instagram.com/reel/DFK8j21s9Ab/",
+            caption="High-yield IELTS Speaking Part 2 breakdown!",
+            like_count=2300,
+            views_count=45000,
+        )
+        res = instagram_router.add_instagram_feed_item_by_url(
+            payload,
+            self.dummy_request,
+            self.db,
+            self.admin_user,
+        )
+        self.assertGreaterEqual(len(res.feed_items), 1)
+        first_item = res.feed_items[0]
+        self.assertEqual(first_item.id, "ig_manual_DFK8j21s9Ab")
+        self.assertEqual(first_item.permalink, "https://www.instagram.com/reel/DFK8j21s9Ab/")
+        self.assertEqual(first_item.media_type, "REEL")
+        self.assertEqual(first_item.like_count, 2300)
+        self.assertEqual(first_item.views_count, 45000)
+
+        # Public feed should also show it
+        public_feed = instagram_router.get_public_instagram_feed(self.db)
+        self.assertIn("ig_manual_DFK8j21s9Ab", [i.id for i in public_feed.items])
+
+    def test_add_post_by_url_success(self) -> None:
+        payload = InstagramAddUrlItemRequest(
+            url="https://www.instagram.com/p/C9vX1234/",
+            caption="Important updates for Visa House students",
+        )
+        res = instagram_router.add_instagram_feed_item_by_url(
+            payload,
+            self.dummy_request,
+            self.db,
+            self.admin_user,
+        )
+        first_item = res.feed_items[0]
+        self.assertEqual(first_item.id, "ig_manual_C9vX1234")
+        self.assertEqual(first_item.media_type, "POST")
+        self.assertEqual(first_item.permalink, "https://www.instagram.com/p/C9vX1234/")
+
 
 if __name__ == "__main__":
     unittest.main()
+

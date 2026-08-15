@@ -11,6 +11,7 @@ from app.dependencies.auth import require_super_admin_or_verified_developer
 from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.schemas.instagram_settings import (
+    InstagramAddUrlItemRequest,
     InstagramPublicFeedResponse,
     InstagramSettingsAdminResponse,
     InstagramSettingsUpdate,
@@ -286,3 +287,50 @@ def delete_single_instagram_feed_item(
         last_fetched_at=setting.last_fetched_at,
         updated_at=setting.updated_at,
     )
+
+
+@admin_router.post("/feed-items/by-url", response_model=InstagramSettingsAdminResponse)
+def add_instagram_feed_item_by_url(
+    payload: InstagramAddUrlItemRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_super_admin_or_verified_developer),
+):
+    try:
+        items = instagram_service.add_item_by_url(db, payload)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
+    except Exception as exc:
+        logger.exception("Failed to add Instagram reel by URL")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add Instagram reel: {str(exc)}",
+        )
+
+    setting = instagram_service.get_or_create_instagram_settings(db)
+    _audit(
+        db,
+        actor,
+        "instagram_settings.add_item_by_url",
+        request,
+        entity_id=setting.id,
+        details={"url": payload.url, "caption": payload.caption},
+    )
+
+    return InstagramSettingsAdminResponse(
+        id=setting.id,
+        is_enabled=setting.is_enabled,
+        access_token_masked=instagram_service.mask_token(setting.access_token),
+        has_access_token=bool(setting.access_token and setting.access_token.strip()),
+        instagram_account_id=setting.instagram_account_id,
+        username=setting.username,
+        fetch_limit=setting.fetch_limit,
+        feed_items=items,
+        last_fetched_at=setting.last_fetched_at,
+        updated_at=setting.updated_at,
+    )
+
+

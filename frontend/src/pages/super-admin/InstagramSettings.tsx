@@ -58,6 +58,69 @@ export function InstagramSettings() {
   const [refreshingFeed, setRefreshingFeed] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
+  // Add Reel / Post by URL Modal State
+  const [showAddUrlModal, setShowAddUrlModal] = useState(false);
+  const [reelUrl, setReelUrl] = useState("");
+  const [reelCaption, setReelCaption] = useState("");
+  const [reelThumbnail, setReelThumbnail] = useState("");
+  const [reelLikes, setReelLikes] = useState<number | "">(1450);
+  const [reelViews, setReelViews] = useState<number | "">(18500);
+  const [reelMediaType, setReelMediaType] = useState<"REEL" | "POST">("REEL");
+  const [addingByUrl, setAddingByUrl] = useState(false);
+
+  const handleOpenAddUrlModal = () => {
+    setReelUrl("");
+    setReelCaption("");
+    setReelThumbnail("");
+    setReelLikes(1450);
+    setReelViews(18500);
+    setReelMediaType("REEL");
+    setShowAddUrlModal(true);
+  };
+
+  const handleUrlChange = (val: string) => {
+    setReelUrl(val);
+    const lower = val.toLowerCase();
+    if (lower.includes("/reel/") || lower.includes("/reels/") || lower.includes("/tv/")) {
+      setReelMediaType("REEL");
+    } else if (lower.includes("/p/")) {
+      setReelMediaType("POST");
+    }
+  };
+
+  const handleAddReelByUrl = (e: FormEvent) => {
+    e.preventDefault();
+    if (!reelUrl.trim()) {
+      useToastStore.getState().showError("Please enter a valid Instagram URL.");
+      return;
+    }
+
+    setAddingByUrl(true);
+    const payload = {
+      url: reelUrl.trim(),
+      media_type: reelMediaType,
+      thumbnail_url: reelThumbnail.trim() || undefined,
+      caption: reelCaption.trim() || undefined,
+      like_count: typeof reelLikes === "number" ? reelLikes : 1200,
+      views_count: typeof reelViews === "number" ? reelViews : 15000,
+    };
+
+    apiClient
+      .post<InstagramSettingsData>("/super-admin/instagram-settings/feed-items/by-url", payload)
+      .then(({ data: res }) => {
+        setAddingByUrl(false);
+        setShowAddUrlModal(false);
+        setData(res);
+        setFeedItems(res.feed_items || []);
+        useToastStore.getState().showSuccess("Instagram Reel/Post added to live showcase!");
+      })
+      .catch((err) => {
+        setAddingByUrl(false);
+        const msg = err?.response?.data?.detail || "Failed to add Instagram item.";
+        useToastStore.getState().showError(msg);
+      });
+  };
+
   const handleToggleEnable = (nextValue: boolean) => {
     setIsEnabled(nextValue);
     setToggling(true);
@@ -517,7 +580,31 @@ export function InstagramSettings() {
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="button primary"
+                onClick={handleOpenAddUrlModal}
+                style={{
+                  fontSize: 12.5,
+                  padding: "6px 14px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "linear-gradient(135deg, #E1306C 0%, #C13584 50%, #833AB4 100%)",
+                  border: "none",
+                  color: "#ffffff",
+                  boxShadow: "0 2px 8px rgba(193, 53, 132, 0.3)",
+                }}
+                title="Add specific Instagram Reel or Post by URL"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
+                Add Reel by URL
+              </button>
+
               <button
                 type="button"
                 className="button secondary"
@@ -722,6 +809,188 @@ export function InstagramSettings() {
           </ol>
         </div>
       </div>
+
+      {/* Add Reel / Post by URL Modal */}
+      {showAddUrlModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.65)",
+            backdropFilter: "blur(6px)",
+            zIndex: 9999,
+            display: "grid",
+            placeItems: "center",
+            padding: "20px",
+          }}
+          onClick={() => !addingByUrl && setShowAddUrlModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "var(--card)",
+              borderRadius: 18,
+              border: "1px solid var(--border)",
+              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)",
+              width: "100%",
+              maxWidth: 520,
+              padding: "26px",
+              position: "relative",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: "linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
+                    display: "grid",
+                    placeItems: "center",
+                    color: "#fff",
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "var(--text)" }}>Add Reel / Post by URL</h3>
+                  <p className="hint" style={{ margin: 0, fontSize: 12 }}>Import any public Instagram Reel or Post directly</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowAddUrlModal(false)}
+                disabled={addingByUrl}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: 20,
+                  cursor: "pointer",
+                  color: "var(--text-muted)",
+                  padding: 4,
+                  lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddReelByUrl}>
+              {/* URL Input */}
+              <div className="form-group" style={{ marginBottom: 16 }}>
+                <label className="form-label" style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>Instagram URL *</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: reelMediaType === "REEL" ? "var(--primary)" : "#3b82f6" }}>
+                    {reelMediaType === "REEL" ? "▶ REEL DETECTED" : "🖼 POST DETECTED"}
+                  </span>
+                </label>
+                <input
+                  type="url"
+                  className="text-input"
+                  required
+                  placeholder="https://www.instagram.com/reel/DFK8j21s.../"
+                  value={reelUrl}
+                  onChange={(e) => handleUrlChange(e.target.value)}
+                  style={{ width: "100%", fontSize: 13 }}
+                  autoFocus
+                />
+                <p className="hint" style={{ marginTop: 4, fontSize: 11.5 }}>
+                  Paste any Instagram Reel or Post link.
+                </p>
+              </div>
+
+              {/* Thumbnail URL Input */}
+              <div className="form-group" style={{ marginBottom: 16 }}>
+                <label className="form-label">Thumbnail / Cover Image URL (Optional)</label>
+                <input
+                  type="url"
+                  className="text-input"
+                  placeholder="https://... image URL (or leave blank for high-res cover)"
+                  value={reelThumbnail}
+                  onChange={(e) => setReelThumbnail(e.target.value)}
+                  style={{ width: "100%", fontSize: 13 }}
+                />
+                <p className="hint" style={{ marginTop: 4, fontSize: 11.5 }}>
+                  Leave blank to use our high-res education cover.
+                </p>
+              </div>
+
+              {/* Caption */}
+              <div className="form-group" style={{ marginBottom: 16 }}>
+                <label className="form-label">Caption / Description (Optional)</label>
+                <textarea
+                  className="text-input"
+                  rows={3}
+                  placeholder="e.g. Master LanguageCert Part 2 with these 3 tips! #Speaking #VisaHouse"
+                  value={reelCaption}
+                  onChange={(e) => setReelCaption(e.target.value)}
+                  style={{ width: "100%", fontSize: 13, resize: "vertical" }}
+                />
+              </div>
+
+              {/* Stats */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 22 }}>
+                <div className="form-group">
+                  <label className="form-label">Like Count</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="text-input"
+                    value={reelLikes}
+                    onChange={(e) => setReelLikes(e.target.value === "" ? "" : Number(e.target.value))}
+                    style={{ width: "100%", fontSize: 13 }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">View Count</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="text-input"
+                    value={reelViews}
+                    onChange={(e) => setReelViews(e.target.value === "" ? "" : Number(e.target.value))}
+                    style={{ width: "100%", fontSize: 13 }}
+                  />
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() => setShowAddUrlModal(false)}
+                  disabled={addingByUrl}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="button primary"
+                  disabled={addingByUrl}
+                  style={{
+                    background: "linear-gradient(135deg, #E1306C, #C13584, #833AB4)",
+                    border: "none",
+                    color: "#fff",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  {addingByUrl ? "Adding..." : "Add to Showcase"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

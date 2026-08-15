@@ -1,5 +1,7 @@
 import json
 import logging
+import re
+import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -8,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.instagram_settings import InstagramSettings
-from app.schemas.instagram_settings import InstagramFeedItem
+from app.schemas.instagram_settings import InstagramAddUrlItemRequest, InstagramFeedItem
 
 logger = logging.getLogger(__name__)
 
@@ -180,6 +182,96 @@ def delete_feed_item(db: Session, item_id: str) -> List[InstagramFeedItem]:
     db.commit()
     db.refresh(setting)
     return parse_feed_items(setting.feed_data_json)
+
+
+DEFAULT_THUMBNAILS = [
+    "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop&q=80",
+]
+
+
+def parse_instagram_url_meta(url: str) -> Tuple[str, str, str]:
+    """
+    Parses an Instagram URL and returns (shortcode, canonical_permalink, media_type).
+    Supports reels, posts, and tv URLs.
+    """
+    clean_url = url.strip()
+    if not clean_url:
+        raise ValueError("Instagram URL cannot be empty.")
+
+    match = re.search(r"instagram\.com\/(reel|reels|p|tv)\/([A-Za-z0-9_-]+)", clean_url, re.IGNORECASE)
+    if match:
+        raw_type = match.group(1).lower()
+        shortcode = match.group(2)
+        media_type = "REEL" if raw_type in ("reel", "reels", "tv") else "POST"
+        permalink = f"https://www.instagram.com/{'reel' if media_type == 'REEL' else 'p'}/{shortcode}/"
+        return shortcode, permalink, media_type
+
+    # If it's a general Instagram URL or bare shortcode
+    if "instagram.com" in clean_url or re.match(r"^[A-Za-z0-9_-]{5,}$", clean_url):
+        parts = [p for p in clean_url.strip("/").split("/") if p]
+        shortcode = parts[-1] if parts else f"reel_{int(time.time())}"
+        shortcode = re.sub(r"[^A-Za-z0-9_-]", "", shortcode) or f"reel_{int(time.time())}"
+        is_reel = "reel" in clean_url.lower()
+        media_type = "REEL" if is_reel else "POST"
+        permalink = f"https://www.instagram.com/{'reel' if media_type == 'REEL' else 'p'}/{shortcode}/"
+        return shortcode, permalink, media_type
+
+    raise ValueError("Invalid Instagram URL. Please enter a valid link like https://www.instagram.com/reel/C8vZ_abc123/")
+
+
+def add_item_by_url(db: Session, request: InstagramAddUrlItemRequest) -> List[InstagramFeedItem]:
+    shortcode, canonical_url, detected_type = parse_instagram_url_meta(request.url)
+    media_type = (request.media_type or detected_type).upper()
+    if media_type not in ("REEL", "POST", "VIDEO", "IMAGE", "CAROUSEL_ALBUM"):
+        media_type = "REEL"
+
+    # Select thumbnail
+    thumbnail = (request.thumbnail_url or "").strip()
+    if not thumbnail:
+        idx = abs(hash(shortcode)) % len(DEFAULT_THUMBNAILS)
+        thumbnail = DEFAULT_THUMBNAILS[idx]
+
+    caption = (request.caption or "").strip()
+    if not caption:
+        caption = "LanguageCert & Visa House Preparation • Watch on Instagram 🎓✨ #LanguageCert #VisaHouse #StudyAbroad"
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    unique_id = f"ig_manual_{shortcode}"
+
+    new_item_dict = {
+        "id": unique_id,
+        "media_type": media_type,
+        "media_url": thumbnail,
+        "thumbnail_url": thumbnail,
+        "permalink": canonical_url,
+        "caption": caption,
+        "like_count": request.like_count if request.like_count is not None else 1250,
+        "comments_count": request.comments_count if request.comments_count is not None else 35,
+        "views_count": request.views_count if request.views_count is not None else 16500,
+        "timestamp": now_iso,
+    }
+
+    setting = get_or_create_instagram_settings(db)
+    current_items = parse_feed_items(setting.feed_data_json)
+
+    # Filter out duplicate ID or permalink if already exists, and insert new item at the front
+    filtered = [
+        item.model_dump() if hasattr(item, "model_dump") else item.dict()
+        for item in current_items
+        if item.id != unique_id and item.permalink != canonical_url
+    ]
+    updated = [new_item_dict] + filtered
+
+    setting.feed_data_json = json.dumps(updated)
+    setting.last_fetched_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(setting)
+
+    return parse_feed_items(setting.feed_data_json)
+
 
 
 def test_instagram_token(access_token: str) -> Tuple[bool, str, Optional[str], Optional[int]]:
