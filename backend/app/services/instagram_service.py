@@ -10,7 +10,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.instagram_settings import InstagramSettings
-from app.schemas.instagram_settings import InstagramAddUrlItemRequest, InstagramFeedItem
+from app.schemas.instagram_settings import (
+    InstagramAddUrlItemRequest,
+    InstagramFeedItem,
+    InstagramUpdateFeedItemRequest,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -271,6 +275,50 @@ def add_item_by_url(db: Session, request: InstagramAddUrlItemRequest) -> List[In
     db.refresh(setting)
 
     return parse_feed_items(setting.feed_data_json)
+
+
+def update_feed_item(
+    db: Session,
+    item_id: str,
+    request: InstagramUpdateFeedItemRequest,
+) -> List[InstagramFeedItem]:
+    setting = get_or_create_instagram_settings(db)
+    current_items = parse_feed_items(setting.feed_data_json)
+
+    updated_items = []
+    found = False
+    for item in current_items:
+        item_dict = item.model_dump() if hasattr(item, "model_dump") else item.dict()
+        if item.id == item_id:
+            found = True
+            if request.media_type is not None:
+                item_dict["media_type"] = request.media_type
+            if request.permalink is not None:
+                item_dict["permalink"] = request.permalink
+            if request.thumbnail_url is not None:
+                item_dict["thumbnail_url"] = request.thumbnail_url
+                if not item_dict.get("media_url") or item_dict.get("media_url") == item.thumbnail_url:
+                    item_dict["media_url"] = request.thumbnail_url
+            if request.media_url is not None:
+                item_dict["media_url"] = request.media_url
+            if request.caption is not None:
+                item_dict["caption"] = request.caption
+            if request.like_count is not None:
+                item_dict["like_count"] = request.like_count
+            if request.views_count is not None:
+                item_dict["views_count"] = request.views_count
+            if request.comments_count is not None:
+                item_dict["comments_count"] = request.comments_count
+        updated_items.append(item_dict)
+
+    if not found:
+        raise ValueError(f"Feed item '{item_id}' not found.")
+
+    setting.feed_data_json = json.dumps(updated_items)
+    db.commit()
+    db.refresh(setting)
+    return parse_feed_items(setting.feed_data_json)
+
 
 
 

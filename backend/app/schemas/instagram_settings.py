@@ -59,3 +59,15 @@ class InstagramAddUrlItemRequest(BaseModel):
     views_count: Optional[int] = Field(default=15000, ge=0)
     comments_count: Optional[int] = Field(default=45, ge=0)
 
+
+class InstagramUpdateFeedItemRequest(BaseModel):
+    media_type: Optional[str] = None
+    permalink: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    media_url: Optional[str] = None
+    caption: Optional[str] = None
+    like_count: Optional[int] = Field(default=None, ge=0)
+    views_count: Optional[int] = Field(default=None, ge=0)
+    comments_count: Optional[int] = Field(default=None, ge=0)
+
+

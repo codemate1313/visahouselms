@@ -121,6 +121,60 @@ export function InstagramSettings() {
       });
   };
 
+  // Edit Reel / Post Modal State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editMediaType, setEditMediaType] = useState<"REEL" | "POST">("REEL");
+  const [editPermalink, setEditPermalink] = useState("");
+  const [editThumbnail, setEditThumbnail] = useState("");
+  const [editCaption, setEditCaption] = useState("");
+  const [editLikes, setEditLikes] = useState<number | "">(0);
+  const [editViews, setEditViews] = useState<number | "">(0);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const handleOpenEditModal = (item: FeedItem) => {
+    setEditingItemId(item.id);
+    const isReel = (item.media_type || "").toUpperCase() === "REEL" || (item.permalink || "").includes("/reel/");
+    setEditMediaType(isReel ? "REEL" : "POST");
+    setEditPermalink(item.permalink || "");
+    setEditThumbnail(item.thumbnail_url || item.media_url || "");
+    setEditCaption(item.caption || "");
+    setEditLikes(item.like_count ?? 0);
+    setEditViews(item.views_count ?? 0);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!editingItemId) return;
+
+    setSavingEdit(true);
+    const payload = {
+      media_type: editMediaType,
+      permalink: editPermalink.trim() || undefined,
+      thumbnail_url: editThumbnail.trim() || undefined,
+      caption: editCaption.trim() || undefined,
+      like_count: typeof editLikes === "number" ? editLikes : 0,
+      views_count: typeof editViews === "number" ? editViews : 0,
+    };
+
+    apiClient
+      .put<InstagramSettingsData>(`/super-admin/instagram-settings/feed-items/${editingItemId}`, payload)
+      .then(({ data: res }) => {
+        setSavingEdit(false);
+        setShowEditModal(false);
+        setEditingItemId(null);
+        setData(res);
+        setFeedItems(res.feed_items || []);
+        useToastStore.getState().showSuccess("Instagram Reel/Post updated successfully!");
+      })
+      .catch((err) => {
+        setSavingEdit(false);
+        const msg = err?.response?.data?.detail || "Failed to update item.";
+        useToastStore.getState().showError(msg);
+      });
+  };
+
   const handleToggleEnable = (nextValue: boolean) => {
     setIsEnabled(nextValue);
     setToggling(true);
@@ -689,50 +743,93 @@ export function InstagramSettings() {
                         {isReel ? "▶ Reel" : "Post"}
                       </span>
 
-                      {/* Delete Item Button */}
-                      <button
-                        type="button"
-                        title={strings.preview.deleteItem}
-                        onClick={() => handleDeleteSingleItem(item.id)}
-                        disabled={deletingItemId === item.id}
+                      {/* Actions: Edit & Delete Button Group */}
+                      <div
                         style={{
                           position: "absolute",
                           top: 8,
                           right: 8,
-                          width: 28,
-                          height: 28,
-                          borderRadius: "50%",
-                          backgroundColor: "rgba(0, 0, 0, 0.65)",
-                          backdropFilter: "blur(4px)",
-                          border: "1px solid rgba(255, 255, 255, 0.2)",
-                          color: "#ffffff",
-                          display: "grid",
-                          placeItems: "center",
-                          cursor: "pointer",
-                          transition: "all 0.2s ease",
-                          padding: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
                           zIndex: 3,
                         }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "rgba(220, 38, 38, 0.9)";
-                          e.currentTarget.style.transform = "scale(1.1)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.65)";
-                          e.currentTarget.style.transform = "scale(1)";
-                        }}
                       >
-                        {deletingItemId === item.id ? (
-                          <span style={{ fontSize: 10 }}>...</span>
-                        ) : (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            <line x1="10" y1="11" x2="10" y2="17" />
-                            <line x1="14" y1="11" x2="14" y2="17" />
+                        {/* Edit Item Button */}
+                        <button
+                          type="button"
+                          title="Edit Reel / Post"
+                          onClick={() => handleOpenEditModal(item)}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: "50%",
+                            backgroundColor: "rgba(0, 0, 0, 0.65)",
+                            backdropFilter: "blur(4px)",
+                            border: "1px solid rgba(255, 255, 255, 0.2)",
+                            color: "#ffffff",
+                            display: "grid",
+                            placeItems: "center",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                            padding: 0,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "rgba(59, 130, 246, 0.9)";
+                            e.currentTarget.style.transform = "scale(1.1)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.65)";
+                            e.currentTarget.style.transform = "scale(1)";
+                          }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                           </svg>
-                        )}
-                      </button>
+                        </button>
+
+                        {/* Delete Item Button */}
+                        <button
+                          type="button"
+                          title={strings.preview.deleteItem}
+                          onClick={() => handleDeleteSingleItem(item.id)}
+                          disabled={deletingItemId === item.id}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: "50%",
+                            backgroundColor: "rgba(0, 0, 0, 0.65)",
+                            backdropFilter: "blur(4px)",
+                            border: "1px solid rgba(255, 255, 255, 0.2)",
+                            color: "#ffffff",
+                            display: "grid",
+                            placeItems: "center",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                            padding: 0,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "rgba(220, 38, 38, 0.9)";
+                            e.currentTarget.style.transform = "scale(1.1)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.65)";
+                            e.currentTarget.style.transform = "scale(1)";
+                          }}
+                        >
+                          {deletingItemId === item.id ? (
+                            <span style={{ fontSize: 10 }}>...</span>
+                          ) : (
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              <line x1="10" y1="11" x2="10" y2="17" />
+                              <line x1="14" y1="11" x2="14" y2="17" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
 
                       {/* Engagement overlay stats */}
                       <div
@@ -816,8 +913,9 @@ export function InstagramSettings() {
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.65)",
-            backdropFilter: "blur(6px)",
+            backgroundColor: "rgba(0, 0, 0, 0.78)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
             zIndex: 9999,
             display: "grid",
             placeItems: "center",
@@ -826,41 +924,46 @@ export function InstagramSettings() {
           onClick={() => !addingByUrl && setShowAddUrlModal(false)}
         >
           <div
+            className="ig-add-url-modal-card"
             style={{
-              backgroundColor: "var(--card)",
-              borderRadius: 18,
-              border: "1px solid var(--border)",
-              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)",
+              backgroundColor: "#182234",
+              background: "linear-gradient(180deg, #1e293b 0%, #111827 100%)",
+              borderRadius: 20,
+              border: "1px solid rgba(255, 255, 255, 0.14)",
+              boxShadow: "0 25px 60px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05)",
               width: "100%",
-              maxWidth: 520,
-              padding: "26px",
+              maxWidth: 540,
+              padding: "28px",
               position: "relative",
+              color: "#ffffff",
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
                     background: "linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
                     display: "grid",
                     placeItems: "center",
                     color: "#fff",
+                    boxShadow: "0 4px 14px rgba(220, 39, 67, 0.35)",
+                    flexShrink: 0,
                   }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
                     <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
                     <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
                   </svg>
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "var(--text)" }}>Add Reel / Post by URL</h3>
-                  <p className="hint" style={{ margin: 0, fontSize: 12 }}>Import any public Instagram Reel or Post directly</p>
+                  <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.01em" }}>Add Reel / Post by URL</h3>
+                  <p style={{ margin: "2px 0 0", fontSize: 12.5, color: "#94a3b8" }}>Import any public Instagram Reel or Post directly</p>
                 </div>
               </div>
 
@@ -869,13 +972,17 @@ export function InstagramSettings() {
                 onClick={() => setShowAddUrlModal(false)}
                 disabled={addingByUrl}
                 style={{
-                  background: "none",
-                  border: "none",
-                  fontSize: 20,
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: "50%",
+                  width: 32,
+                  height: 32,
+                  fontSize: 14,
                   cursor: "pointer",
-                  color: "var(--text-muted)",
-                  padding: 4,
-                  lineHeight: 1,
+                  color: "#cbd5e1",
+                  display: "grid",
+                  placeItems: "center",
+                  transition: "all 0.2s ease",
                 }}
               >
                 ✕
@@ -884,107 +991,440 @@ export function InstagramSettings() {
 
             <form onSubmit={handleAddReelByUrl}>
               {/* URL Input */}
-              <div className="form-group" style={{ marginBottom: 16 }}>
-                <label className="form-label" style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>Instagram URL *</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: reelMediaType === "REEL" ? "var(--primary)" : "#3b82f6" }}>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+                  <span>Instagram URL <span style={{ color: "#f43f5e" }}>*</span></span>
+                  <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 6, background: reelMediaType === "REEL" ? "rgba(225, 48, 108, 0.18)" : "rgba(59, 130, 246, 0.18)", color: reelMediaType === "REEL" ? "#ff6b8b" : "#60a5fa", border: `1px solid ${reelMediaType === "REEL" ? "rgba(225, 48, 108, 0.3)" : "rgba(59, 130, 246, 0.3)"}` }}>
                     {reelMediaType === "REEL" ? "▶ REEL DETECTED" : "🖼 POST DETECTED"}
                   </span>
                 </label>
                 <input
                   type="url"
-                  className="text-input"
                   required
                   placeholder="https://www.instagram.com/reel/DFK8j21s.../"
                   value={reelUrl}
                   onChange={(e) => handleUrlChange(e.target.value)}
-                  style={{ width: "100%", fontSize: 13 }}
+                  style={{
+                    width: "100%",
+                    fontSize: 13.5,
+                    padding: "11px 14px",
+                    borderRadius: 10,
+                    background: "rgba(255, 255, 255, 0.08)",
+                    border: "1.5px solid rgba(255, 255, 255, 0.18)",
+                    color: "#ffffff",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
                   autoFocus
                 />
-                <p className="hint" style={{ marginTop: 4, fontSize: 11.5 }}>
+                <p style={{ marginTop: 6, marginBottom: 0, fontSize: 12, color: "#94a3b8" }}>
                   Paste any Instagram Reel or Post link.
                 </p>
               </div>
 
               {/* Thumbnail URL Input */}
-              <div className="form-group" style={{ marginBottom: 16 }}>
-                <label className="form-label">Thumbnail / Cover Image URL (Optional)</label>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+                  Thumbnail / Cover Image URL <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8" }}>(Optional)</span>
+                </label>
                 <input
                   type="url"
-                  className="text-input"
                   placeholder="https://... image URL (or leave blank for high-res cover)"
                   value={reelThumbnail}
                   onChange={(e) => setReelThumbnail(e.target.value)}
-                  style={{ width: "100%", fontSize: 13 }}
+                  style={{
+                    width: "100%",
+                    fontSize: 13.5,
+                    padding: "11px 14px",
+                    borderRadius: 10,
+                    background: "rgba(255, 255, 255, 0.08)",
+                    border: "1.5px solid rgba(255, 255, 255, 0.18)",
+                    color: "#ffffff",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
                 />
-                <p className="hint" style={{ marginTop: 4, fontSize: 11.5 }}>
+                <p style={{ marginTop: 6, marginBottom: 0, fontSize: 12, color: "#94a3b8" }}>
                   Leave blank to use our high-res education cover.
                 </p>
               </div>
 
               {/* Caption */}
-              <div className="form-group" style={{ marginBottom: 16 }}>
-                <label className="form-label">Caption / Description (Optional)</label>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+                  Caption / Description <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8" }}>(Optional)</span>
+                </label>
                 <textarea
-                  className="text-input"
                   rows={3}
                   placeholder="e.g. Master LanguageCert Part 2 with these 3 tips! #Speaking #VisaHouse"
                   value={reelCaption}
                   onChange={(e) => setReelCaption(e.target.value)}
-                  style={{ width: "100%", fontSize: 13, resize: "vertical" }}
+                  style={{
+                    width: "100%",
+                    fontSize: 13.5,
+                    padding: "11px 14px",
+                    borderRadius: 10,
+                    background: "rgba(255, 255, 255, 0.08)",
+                    border: "1.5px solid rgba(255, 255, 255, 0.18)",
+                    color: "#ffffff",
+                    outline: "none",
+                    resize: "vertical",
+                    boxSizing: "border-box",
+                    fontFamily: "inherit",
+                  }}
                 />
               </div>
 
               {/* Stats */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 22 }}>
-                <div className="form-group">
-                  <label className="form-label">Like Count</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
+                <div>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>Like Count</label>
                   <input
                     type="number"
                     min="0"
-                    className="text-input"
                     value={reelLikes}
                     onChange={(e) => setReelLikes(e.target.value === "" ? "" : Number(e.target.value))}
-                    style={{ width: "100%", fontSize: 13 }}
+                    style={{
+                      width: "100%",
+                      fontSize: 13.5,
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      background: "rgba(255, 255, 255, 0.08)",
+                      border: "1.5px solid rgba(255, 255, 255, 0.18)",
+                      color: "#ffffff",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
                   />
                 </div>
-                <div className="form-group">
-                  <label className="form-label">View Count</label>
+                <div>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>View Count</label>
                   <input
                     type="number"
                     min="0"
-                    className="text-input"
                     value={reelViews}
                     onChange={(e) => setReelViews(e.target.value === "" ? "" : Number(e.target.value))}
-                    style={{ width: "100%", fontSize: 13 }}
+                    style={{
+                      width: "100%",
+                      fontSize: 13.5,
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      background: "rgba(255, 255, 255, 0.08)",
+                      border: "1.5px solid rgba(255, 255, 255, 0.18)",
+                      color: "#ffffff",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
                   />
                 </div>
               </div>
 
               {/* Modal Actions */}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
                 <button
                   type="button"
-                  className="button secondary"
                   onClick={() => setShowAddUrlModal(false)}
                   disabled={addingByUrl}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.08)",
+                    border: "1px solid rgba(255, 255, 255, 0.16)",
+                    color: "#ffffff",
+                    padding: "10px 20px",
+                    borderRadius: 10,
+                    fontWeight: 650,
+                    fontSize: 13.5,
+                    cursor: "pointer",
+                  }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="button primary"
                   disabled={addingByUrl}
                   style={{
                     background: "linear-gradient(135deg, #E1306C, #C13584, #833AB4)",
                     border: "none",
-                    color: "#fff",
+                    color: "#ffffff",
+                    padding: "10px 24px",
+                    borderRadius: 10,
+                    fontWeight: 750,
+                    fontSize: 13.5,
+                    cursor: "pointer",
+                    boxShadow: "0 4px 16px rgba(225, 48, 108, 0.4)",
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: 6,
+                    gap: 8,
                   }}
                 >
                   {addingByUrl ? "Adding..." : "Add to Showcase"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Reel / Post Modal */}
+      {showEditModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.78)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            zIndex: 9999,
+            display: "grid",
+            placeItems: "center",
+            padding: "20px",
+          }}
+          onClick={() => !savingEdit && setShowEditModal(false)}
+        >
+          <div
+            className="ig-edit-url-modal-card"
+            style={{
+              backgroundColor: "#182234",
+              background: "linear-gradient(180deg, #1e293b 0%, #111827 100%)",
+              borderRadius: 20,
+              border: "1px solid rgba(255, 255, 255, 0.14)",
+              boxShadow: "0 25px 60px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05)",
+              width: "100%",
+              maxWidth: 540,
+              padding: "28px",
+              position: "relative",
+              color: "#ffffff",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)",
+                    display: "grid",
+                    placeItems: "center",
+                    color: "#fff",
+                    boxShadow: "0 4px 14px rgba(99, 102, 241, 0.35)",
+                    flexShrink: 0,
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.01em" }}>Edit Reel / Post</h3>
+                  <p style={{ margin: "2px 0 0", fontSize: 12.5, color: "#94a3b8" }}>Modify thumbnail, caption, or engagement metrics</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                disabled={savingEdit}
+                style={{
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: "50%",
+                  width: 32,
+                  height: 32,
+                  fontSize: 14,
+                  cursor: "pointer",
+                  color: "#cbd5e1",
+                  display: "grid",
+                  placeItems: "center",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit}>
+              {/* Type Selection & Permalink */}
+              <div style={{ display: "grid", gridTemplateColumns: "130px 1fr", gap: 12, marginBottom: 18 }}>
+                <div>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>Type</label>
+                  <select
+                    value={editMediaType}
+                    onChange={(e) => setEditMediaType(e.target.value as "REEL" | "POST")}
+                    style={{
+                      width: "100%",
+                      fontSize: 13.5,
+                      padding: "11px 12px",
+                      borderRadius: 10,
+                      background: "rgba(255, 255, 255, 0.08)",
+                      border: "1.5px solid rgba(255, 255, 255, 0.18)",
+                      color: "#ffffff",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <option value="REEL" style={{ background: "#1e293b", color: "#fff" }}>▶ Reel</option>
+                    <option value="POST" style={{ background: "#1e293b", color: "#fff" }}>🖼 Post</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>Instagram URL</label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://www.instagram.com/reel/.../"
+                    value={editPermalink}
+                    onChange={(e) => setEditPermalink(e.target.value)}
+                    style={{
+                      width: "100%",
+                      fontSize: 13.5,
+                      padding: "11px 14px",
+                      borderRadius: 10,
+                      background: "rgba(255, 255, 255, 0.08)",
+                      border: "1.5px solid rgba(255, 255, 255, 0.18)",
+                      color: "#ffffff",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Thumbnail URL Input */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+                  Thumbnail / Cover Image URL
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://... image URL"
+                  value={editThumbnail}
+                  onChange={(e) => setEditThumbnail(e.target.value)}
+                  style={{
+                    width: "100%",
+                    fontSize: 13.5,
+                    padding: "11px 14px",
+                    borderRadius: 10,
+                    background: "rgba(255, 255, 255, 0.08)",
+                    border: "1.5px solid rgba(255, 255, 255, 0.18)",
+                    color: "#ffffff",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              {/* Caption */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+                  Caption / Description
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="e.g. Master LanguageCert Part 2 with these 3 tips! #Speaking #VisaHouse"
+                  value={editCaption}
+                  onChange={(e) => setEditCaption(e.target.value)}
+                  style={{
+                    width: "100%",
+                    fontSize: 13.5,
+                    padding: "11px 14px",
+                    borderRadius: 10,
+                    background: "rgba(255, 255, 255, 0.08)",
+                    border: "1.5px solid rgba(255, 255, 255, 0.18)",
+                    color: "#ffffff",
+                    outline: "none",
+                    resize: "vertical",
+                    boxSizing: "border-box",
+                    fontFamily: "inherit",
+                  }}
+                />
+              </div>
+
+              {/* Stats */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
+                <div>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>Like Count</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editLikes}
+                    onChange={(e) => setEditLikes(e.target.value === "" ? "" : Number(e.target.value))}
+                    style={{
+                      width: "100%",
+                      fontSize: 13.5,
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      background: "rgba(255, 255, 255, 0.08)",
+                      border: "1.5px solid rgba(255, 255, 255, 0.18)",
+                      color: "#ffffff",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>View Count</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editViews}
+                    onChange={(e) => setEditViews(e.target.value === "" ? "" : Number(e.target.value))}
+                    style={{
+                      width: "100%",
+                      fontSize: 13.5,
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      background: "rgba(255, 255, 255, 0.08)",
+                      border: "1.5px solid rgba(255, 255, 255, 0.18)",
+                      color: "#ffffff",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  disabled={savingEdit}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.08)",
+                    border: "1px solid rgba(255, 255, 255, 0.16)",
+                    color: "#ffffff",
+                    padding: "10px 20px",
+                    borderRadius: 10,
+                    fontWeight: 650,
+                    fontSize: 13.5,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  style={{
+                    background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+                    border: "none",
+                    color: "#ffffff",
+                    padding: "10px 24px",
+                    borderRadius: 10,
+                    fontWeight: 750,
+                    fontSize: 13.5,
+                    cursor: "pointer",
+                    boxShadow: "0 4px 16px rgba(99, 102, 241, 0.4)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  {savingEdit ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </form>

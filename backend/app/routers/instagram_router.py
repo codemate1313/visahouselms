@@ -16,6 +16,7 @@ from app.schemas.instagram_settings import (
     InstagramSettingsAdminResponse,
     InstagramSettingsUpdate,
     InstagramTestConnectionResponse,
+    InstagramUpdateFeedItemRequest,
 )
 from app.services import instagram_service
 
@@ -332,5 +333,52 @@ def add_instagram_feed_item_by_url(
         last_fetched_at=setting.last_fetched_at,
         updated_at=setting.updated_at,
     )
+
+
+@admin_router.put("/feed-items/{item_id}", response_model=InstagramSettingsAdminResponse)
+def update_single_instagram_feed_item(
+    item_id: str,
+    payload: InstagramUpdateFeedItemRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_super_admin_or_verified_developer),
+):
+    try:
+        items = instagram_service.update_feed_item(db, item_id, payload)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        )
+    except Exception as exc:
+        logger.exception("Failed to update Instagram feed item")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update feed item: {str(exc)}",
+        )
+
+    setting = instagram_service.get_or_create_instagram_settings(db)
+    _audit(
+        db,
+        actor,
+        "instagram_settings.update_item",
+        request,
+        entity_id=setting.id,
+        details={"item_id": item_id, "caption": payload.caption},
+    )
+
+    return InstagramSettingsAdminResponse(
+        id=setting.id,
+        is_enabled=setting.is_enabled,
+        access_token_masked=instagram_service.mask_token(setting.access_token),
+        has_access_token=bool(setting.access_token and setting.access_token.strip()),
+        instagram_account_id=setting.instagram_account_id,
+        username=setting.username,
+        fetch_limit=setting.fetch_limit,
+        feed_items=items,
+        last_fetched_at=setting.last_fetched_at,
+        updated_at=setting.updated_at,
+    )
+
 
 

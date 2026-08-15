@@ -10,7 +10,11 @@ from app.models.instagram_settings import InstagramSettings
 from app.models.role import Role, SUPER_ADMIN
 from app.models.user import User
 from app.routers import instagram_router
-from app.schemas.instagram_settings import InstagramAddUrlItemRequest, InstagramSettingsUpdate
+from app.schemas.instagram_settings import (
+    InstagramAddUrlItemRequest,
+    InstagramSettingsUpdate,
+    InstagramUpdateFeedItemRequest,
+)
 from app.services import instagram_service
 
 
@@ -162,7 +166,31 @@ class InstagramSettingsTests(unittest.TestCase):
         self.assertEqual(first_item.media_type, "POST")
         self.assertEqual(first_item.permalink, "https://www.instagram.com/p/C9vX1234/")
 
+    def test_update_feed_item_success(self) -> None:
+        # First ensure feed items exist
+        res = instagram_router.get_admin_instagram_settings(self.db)
+        self.assertGreaterEqual(len(res.feed_items), 1)
+        item_to_edit = res.feed_items[0]
+
+        update_payload = InstagramUpdateFeedItemRequest(
+            caption="Updated reel caption for LanguageCert masterclass!",
+            like_count=5000,
+            views_count=99000,
+        )
+        updated_res = instagram_router.update_single_instagram_feed_item(
+            item_to_edit.id,
+            update_payload,
+            self.dummy_request,
+            self.db,
+            self.admin_user,
+        )
+        matched = next(i for i in updated_res.feed_items if i.id == item_to_edit.id)
+        self.assertEqual(matched.caption, "Updated reel caption for LanguageCert masterclass!")
+        self.assertEqual(matched.like_count, 5000)
+        self.assertEqual(matched.views_count, 99000)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

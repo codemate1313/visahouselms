@@ -24,10 +24,22 @@ interface InstagramFeedResponse {
   items: InstagramItem[];
 }
 
+function getInstagramEmbedUrl(permalink?: string, mediaUrl?: string): string | null {
+  const target = permalink || mediaUrl || "";
+  const match = target.match(/(?:instagram\.com\/(?:reel|reels|p|tv)\/)([A-Za-z0-9_-]+)/i);
+  if (match && match[1]) {
+    const isReel = /(?:reel|reels)/i.test(target);
+    const typePath = isReel ? "reel" : "p";
+    return `https://www.instagram.com/${typePath}/${match[1]}/embed/`;
+  }
+  return null;
+}
+
 export function InstagramFeedSection() {
   const [feed, setFeed] = useState<InstagramFeedResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<InstagramItem | null>(null);
+  const [playMode, setPlayMode] = useState(true);
   const sectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -305,7 +317,10 @@ export function InstagramFeedSection() {
               <div
                 key={item.id}
                 className={`vh-instagram-card ${staggerClass} ${animDirClass}`}
-                onClick={() => setSelectedItem(item)}
+                onClick={() => {
+                  setSelectedItem(item);
+                  setPlayMode(true);
+                }}
               >
                 <div className="vh-instagram-media-wrap">
                   {/* Subtle luxury light sweep on hover */}
@@ -393,63 +408,113 @@ export function InstagramFeedSection() {
       </div>
 
       {/* Modal Preview on Item Click */}
-      {selectedItem && (
-        <div className="vh-instagram-modal-backdrop" onClick={() => setSelectedItem(null)}>
-          <div className="vh-instagram-modal-card" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="vh-instagram-modal-close"
-              onClick={() => setSelectedItem(null)}
-              aria-label="Close"
-            >
-              ✕
-            </button>
+      {selectedItem && (() => {
+        const isReel = selectedItem.media_type === "REEL" || selectedItem.permalink.includes("/reel/");
+        const isDirectVideo = Boolean(selectedItem.media_url && selectedItem.media_url.endsWith(".mp4"));
+        const embedUrl = getInstagramEmbedUrl(selectedItem.permalink, selectedItem.media_url);
 
-            <div className="vh-instagram-modal-media">
-              <img
-                src={selectedItem.thumbnail_url || selectedItem.media_url}
-                alt="Instagram Preview"
-              />
-            </div>
-
-            <div className="vh-instagram-modal-info">
-              <div className="vh-instagram-modal-author">
-                <div className="vh-instagram-author-avatar-img-wrap">
-                  <img
-                    src="/brand/visa-house-round-logo.png"
-                    alt="Visa House Logo"
-                    className="vh-instagram-modal-logo"
-                  />
-                </div>
-                <div>
-                  <div className="vh-instagram-author-handle">@{username}</div>
-                  <div className="vh-instagram-author-sub">Visa House Immigrations</div>
-                </div>
-              </div>
-
-              <div className="vh-instagram-modal-body">
-                <p>{selectedItem.caption || "LanguageCert exam preparation & study tips."}</p>
-              </div>
-
-              <div className="vh-instagram-modal-stats">
-                <span>♥ {selectedItem.like_count ? selectedItem.like_count.toLocaleString() : 0} likes</span>
-                {selectedItem.views_count ? (
-                  <span>👁 {selectedItem.views_count.toLocaleString()} views</span>
-                ) : null}
-              </div>
-
-              <a
-                href={selectedItem.permalink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="vh-instagram-modal-link-btn"
+        return (
+          <div className="vh-instagram-modal-backdrop" onClick={() => setSelectedItem(null)}>
+            <div className="vh-instagram-modal-card" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className="vh-instagram-modal-close"
+                onClick={() => setSelectedItem(null)}
+                aria-label="Close"
               >
-                Watch on Instagram ↗
-              </a>
+                ✕
+              </button>
+
+              <div className="vh-instagram-modal-media">
+                {playMode && isDirectVideo ? (
+                  <video
+                    src={selectedItem.media_url}
+                    poster={selectedItem.thumbnail_url}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="vh-instagram-modal-video"
+                  />
+                ) : playMode && embedUrl ? (
+                  <div className="vh-instagram-iframe-container">
+                    <iframe
+                      src={embedUrl}
+                      title={selectedItem.caption || "Instagram Reel"}
+                      className="vh-instagram-modal-iframe"
+                      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                      allowFullScreen
+                      frameBorder="0"
+                      scrolling="no"
+                    />
+                  </div>
+                ) : (
+                  <div className="vh-instagram-modal-cover-wrap">
+                    <img
+                      src={selectedItem.thumbnail_url || selectedItem.media_url}
+                      alt="Instagram Preview"
+                      className="vh-instagram-modal-cover-img"
+                    />
+                    {(isReel || embedUrl || isDirectVideo) && (
+                      <button
+                        type="button"
+                        className="vh-instagram-modal-play-btn"
+                        onClick={() => setPlayMode(true)}
+                        title="Play Reel Video"
+                      >
+                        <div className="vh-instagram-play-circle-lg">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="6 4 20 12 6 20 6 4" />
+                          </svg>
+                        </div>
+                        <span>Play Video</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="vh-instagram-modal-info">
+                <div className="vh-instagram-modal-author">
+                  <div className="vh-instagram-author-avatar-img-wrap">
+                    <img
+                      src="/brand/visa-house-round-logo.png"
+                      alt="Visa House Logo"
+                      className="vh-instagram-modal-logo"
+                    />
+                  </div>
+                  <div>
+                    <div className="vh-instagram-author-handle">@{username}</div>
+                    <div className="vh-instagram-author-sub">Visa House Immigrations</div>
+                  </div>
+                </div>
+
+                <div className="vh-instagram-modal-body">
+                  <p>{selectedItem.caption || "LanguageCert exam preparation & study tips."}</p>
+                </div>
+
+                <div className="vh-instagram-modal-stats">
+                  <span>♥ {selectedItem.like_count ? selectedItem.like_count.toLocaleString() : 0} likes</span>
+                  {selectedItem.views_count ? (
+                    <span>👁 {selectedItem.views_count.toLocaleString()} views</span>
+                  ) : null}
+                </div>
+
+                <a
+                  href={selectedItem.permalink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="vh-instagram-modal-link-btn"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{ verticalAlign: "middle", marginRight: 8 }}>
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                  Watch Reel on Instagram ↗
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </section>
   );
 }

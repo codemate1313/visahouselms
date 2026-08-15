@@ -208,7 +208,7 @@ export function PreExamOnboarding({
           </Button>
 
           {/* Hero Header Pill */}
-          <div className="sidebar-hero-card" style={{ background: skillMeta.gradient }}>
+          <div className="sidebar-hero-card">
             <div className="sidebar-hero-badge">
               <Icon name={skillMeta.icon} />
               <span>{skillMeta.label}</span>
