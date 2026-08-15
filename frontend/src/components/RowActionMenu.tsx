@@ -7,36 +7,42 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "@/components/icons";
+import { placeAnchoredMenu, type AnchoredMenuPlacement } from "@/utils/anchoredMenu";
 
 interface RowActionMenuProps {
   items: ReactElement[];
   label?: string;
 }
 
-interface MenuPosition {
-  bottom?: number;
-  right: number;
-  top?: number;
-}
-
 export function RowActionMenu({ items, label = "More actions" }: RowActionMenuProps) {
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState<MenuPosition>({ right: 12, top: 0 });
+  const [placement, setPlacement] = useState<AnchoredMenuPlacement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
+  /* The panel is `width: max-content`, so it has to exist before it can be
+     measured. This runs before paint, so the un-placed first render is never
+     visible — see the hidden-until-placed style below. */
   useLayoutEffect(() => {
-    if (!open || !triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const right = Math.max(12, window.innerWidth - rect.right);
-    const roomBelow = window.innerHeight - rect.bottom;
-
-    setPosition(
-      roomBelow >= 230
-        ? { right, top: rect.bottom + 8 }
-        : { bottom: window.innerHeight - rect.top + 8, right },
+    if (!open) {
+      setPlacement(null);
+      return;
+    }
+    const trigger = triggerRef.current;
+    const panel = panelRef.current;
+    if (!trigger || !panel) return;
+    // Measured while still unplaced, so this is the menu's natural size.
+    const natural = panel.getBoundingClientRect();
+    setPlacement(
+      placeAnchoredMenu(trigger, {
+        align: "end",
+        gap: 8,
+        width: natural.width,
+        desiredHeight: natural.height,
+        minHeight: 140,
+      }),
     );
-  }, [open]);
+  }, [open, items.length]);
 
   useEffect(() => {
     if (!open) return;
@@ -93,7 +99,11 @@ export function RowActionMenu({ items, label = "More actions" }: RowActionMenuPr
             if ((event.target as HTMLElement).closest("button, a")) setOpen(false);
           }}
           role="menu"
-          style={position}
+          style={
+            placement
+              ? { top: placement.top, left: placement.left, maxHeight: placement.maxHeight }
+              : { visibility: "hidden" }
+          }
         >
           {items}
         </div>,

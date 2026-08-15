@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from math import ceil
 from pathlib import Path
+import re
 import secrets
 from typing import Optional
 from uuid import uuid4
@@ -201,14 +202,18 @@ def validation_errors(module: ExamModule) -> list[str]:
     errors: list[str] = []
     for part in module.parts:
         count = len(part.questions)
-        if count < part.minimum_questions:
+        # A part with a fixed limit must hold exactly that many questions; only
+        # the open-ended parts (Speaking 1 and 4) fall back to a lower bound.
+        if part.question_limit is not None:
+            if count != part.question_limit:
+                errors.append(
+                    f"{part.title} takes exactly {part.question_limit} question"
+                    f"{'s' if part.question_limit != 1 else ''}; it currently has {count}."
+                )
+        elif count < part.minimum_questions:
             errors.append(
                 f"{part.title} requires at least {part.minimum_questions} question"
                 f"{'s' if part.minimum_questions != 1 else ''}; it currently has {count}."
-            )
-        if part.question_limit is not None and count < part.question_limit:
-            errors.append(
-                f"{part.title} draws {part.question_limit} questions per attempt; its pool currently has {count}."
             )
         allowed = set((part.answer_constraints or {}).get("allowed_question_types", []))
         invalid = sorted({question.question_type for question in part.questions if allowed and question.question_type not in allowed})
@@ -299,7 +304,7 @@ def validation_errors(module: ExamModule) -> list[str]:
                     if Decimal(q.points) != expected_points:
                         errors.append(
                             f"Each question in {part.title} must carry exactly {expected_points:g} marks "
-                            f"(total {part.max_marks:g} / {part.question_limit} questions drawn per attempt); "
+                            f"(total {part.max_marks:g} / {part.question_limit} questions); "
                             f"question '{q.prompt[:30]}...' has {q.points:g} marks."
                         )
             else:
@@ -752,6 +757,18 @@ def update_part_instructions(
 
 
 def _validate_question_for_part(part: ExamModulePart, data: dict, current_count: int) -> None:
+    # A part holds exactly the questions the student sits - there is no pool to
+    # draw from, so the limit is a hard cap at authoring time rather than a
+    # sampling size at attempt time.
+    if part.question_limit is not None and current_count >= part.question_limit:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"{part.title} takes exactly {part.question_limit} "
+                f"question{'s' if part.question_limit != 1 else ''} and already has {current_count}. "
+                "Delete one before adding another."
+            ),
+        )
     allowed = set((part.answer_constraints or {}).get("allowed_question_types", []))
     if allowed and data["question_type"] not in allowed:
         raise HTTPException(
@@ -789,6 +806,11 @@ def _validate_question_for_part(part: ExamModulePart, data: dict, current_count:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Matching questions require exactly one answer key",
+        )
+    if part.part_code == "reading_1a" and not re.search(r"\*\*(.+?)\*\*", data.get("prompt", "")):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reading 1A questions require at least 1 bold word in the question prompt (e.g. **word**)",
         )
     max_words = (part.answer_constraints or {}).get("max_answer_words")
     if max_words and any(len(answer.split()) > max_words for answer in data.get("correct_answers", [])):
@@ -855,8 +877,18 @@ def import_questions(
     _require_owner(module, actor)
     _require_draft(module)
     part = _part_or_404(module, part_id)
-    # Pool size is unrestricted, so we allow importing more than question_limit questions
-    pass
+    # Reject the whole batch up front so a part-full import fails with one clear
+    # message instead of committing the rows that happened to fit.
+    if part.question_limit is not None and len(part.questions) + len(questions) > part.question_limit:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"{part.title} takes exactly {part.question_limit} "
+                f"question{'s' if part.question_limit != 1 else ''} and already has {len(part.questions)}. "
+                f"Importing {len(questions)} more would exceed it - import at most "
+                f"{part.question_limit - len(part.questions)}."
+            ),
+        )
     for offset, question in enumerate(questions):
         _validate_question_for_part(part, question, len(part.questions) + offset)
     records = [

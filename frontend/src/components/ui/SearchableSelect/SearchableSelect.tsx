@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import "./SearchableSelect.css";
 import { Icon } from "@/components/icons";
 import { commonActions } from "@/content/common.strings";
+import { placeAnchoredMenu, type AnchoredMenuPlacement } from "@/utils/anchoredMenu";
 
 export interface SelectOption {
   value: string | number;
@@ -25,13 +26,14 @@ interface SearchableSelectProps {
   ariaLabel?: string;
 }
 
-interface DropdownRect {
-  top: number;
-  left: number;
-  width: number;
-  alignRight: boolean;
-  openUpward: boolean;
-}
+/* Row/chrome heights used to estimate the panel's natural height. They only
+   need to be close: the estimate picks the flip side and the max-height, and
+   anything taller than the estimate simply scrolls. */
+const OPTION_ROW_HEIGHT = 38;
+const SEARCH_HEADER_HEIGHT = 51;
+const PANEL_CHROME_HEIGHT = 20;
+const MAX_PANEL_HEIGHT = 320;
+const MIN_PANEL_WIDTH = 200;
 
 export function SearchableSelect({
   id,
@@ -49,7 +51,7 @@ export function SearchableSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [dropdownRect, setDropdownRect] = useState<DropdownRect | null>(null);
+  const [placement, setPlacement] = useState<AnchoredMenuPlacement | null>(null);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -72,28 +74,30 @@ export function SearchableSelect({
     [options, search, searchable],
   );
 
-  /** Compute fixed-position coordinates for the portal dropdown. */
-  const computeRect = useCallback((): DropdownRect | null => {
-    if (!triggerRef.current) return null;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceRight = window.innerWidth - rect.left;
-    const estimatedDropdownHeight = 260; // px — worst-case estimate
-    const openUpward = spaceBelow < estimatedDropdownHeight && rect.top > estimatedDropdownHeight;
-    return {
-      top: openUpward ? rect.top : rect.bottom + 6,
-      left: rect.left,
-      width: rect.width,
-      alignRight: spaceRight < 220,
-      openUpward,
-    };
-  }, []);
+  /**
+   * Compute fixed-position coordinates for the portal dropdown. The shared
+   * helper does the flipping and viewport clamping, so a select at the very
+   * bottom of a long form opens a shorter, scrollable panel instead of one that
+   * runs off screen.
+   */
+  const computePlacement = useCallback((): AnchoredMenuPlacement | null => {
+    const trigger = triggerRef.current;
+    if (!trigger) return null;
+    const rows = Math.max(filteredOptions.length, 1);
+    return placeAnchoredMenu(trigger, {
+      width: Math.max(trigger.offsetWidth, MIN_PANEL_WIDTH),
+      desiredHeight: Math.min(
+        PANEL_CHROME_HEIGHT + (searchable ? SEARCH_HEADER_HEIGHT : 0) + rows * OPTION_ROW_HEIGHT,
+        MAX_PANEL_HEIGHT,
+      ),
+    });
+  }, [filteredOptions.length, searchable]);
 
-  /** Recompute rect on scroll / resize so the portal stays anchored. */
+  /** Recompute on scroll / resize so the portal stays anchored. */
   useEffect(() => {
     if (!isOpen) return;
     function update() {
-      setDropdownRect(computeRect());
+      setPlacement(computePlacement());
     }
     window.addEventListener("scroll", update, true);
     window.addEventListener("resize", update);
@@ -101,7 +105,7 @@ export function SearchableSelect({
       window.removeEventListener("scroll", update, true);
       window.removeEventListener("resize", update);
     };
-  }, [isOpen, computeRect]);
+  }, [isOpen, computePlacement]);
 
   /** Close on outside click — check both the container and the portal dropdown. */
   useEffect(() => {
@@ -119,7 +123,7 @@ export function SearchableSelect({
 
   useEffect(() => {
     if (isOpen) {
-      setDropdownRect(computeRect());
+      setPlacement(computePlacement());
       if (searchable) {
         setTimeout(() => searchInputRef.current?.focus(), 40);
       }
@@ -130,9 +134,9 @@ export function SearchableSelect({
     } else {
       setSearch("");
       setHighlightedIndex(-1);
-      setDropdownRect(null);
+      setPlacement(null);
     }
-  }, [filteredOptions, isOpen, searchable, value, computeRect]);
+  }, [filteredOptions, isOpen, searchable, value, computePlacement]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -181,28 +185,22 @@ export function SearchableSelect({
     }
   }
 
-  const dropdownStyle: React.CSSProperties = dropdownRect
+  const dropdownStyle: React.CSSProperties = placement
     ? {
         position: "fixed",
-        top: dropdownRect.openUpward ? undefined : dropdownRect.top,
-        bottom: dropdownRect.openUpward
-          ? window.innerHeight - dropdownRect.top + 6
-          : undefined,
-        left: dropdownRect.alignRight ? undefined : dropdownRect.left,
-        right: dropdownRect.alignRight
-          ? window.innerWidth - (dropdownRect.left + dropdownRect.width)
-          : undefined,
-        minWidth: dropdownRect.width,
-        maxWidth: 340,
+        top: placement.top,
+        left: placement.left,
+        width: placement.width,
+        maxHeight: placement.maxHeight,
         zIndex: 99999,
       }
     : {};
 
-  const dropdownNode = isOpen && dropdownRect ? (
+  const dropdownNode = isOpen && placement ? (
     <div
       ref={dropdownRef}
       id={listboxId}
-      className={`searchable-select-dropdown searchable-select-portal-dropdown${dropdownRect.openUpward ? " opens-upward" : ""}`}
+      className={`searchable-select-dropdown searchable-select-portal-dropdown${placement.openUpward ? " opens-upward" : ""}`}
       role="listbox"
       style={dropdownStyle}
       onKeyDown={handleKeyDown}

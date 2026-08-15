@@ -115,6 +115,9 @@ def _build_content_snapshot(module: ExamModule, *, randomize: bool) -> dict:
         if randomize and not constraints.get("preserve_question_order"):
             questions = questions[:]
             _randomizer.shuffle(questions)
+        # Authoring caps a part at question_limit, so this only ever trims
+        # modules created before that cap existed - it keeps their marks adding
+        # up to max_marks instead of overshooting it.
         if part.question_limit is not None and part.question_limit > 0:
             questions = questions[:part.question_limit]
         question_ids: list[int] = []

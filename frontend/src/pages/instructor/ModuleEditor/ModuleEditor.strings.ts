@@ -97,9 +97,9 @@ export const moduleEditorStrings = {
   },
   gapTask: {
     eyebrow: "Gapped passage task",
-    heading: (partTitle: string) => `${partTitle} — one passage, one mark per gap`,
+    heading: (partTitle: string) => partTitle,
     description: (gaps: number, options: number) =>
-      `One task: a passage with ${gaps} gaps and ${options} options. The candidate drops an option into each gap and scores a mark per correct gap — ${gaps} marks in total.`,
+      `A passage with ${gaps} gaps and ${options} options. The candidate drops an option into each gap and scores a mark per correct gap — ${gaps} marks in total.`,
     helpTitle: "How the gaps work",
     help:
       "Place {{blank:1}}, {{blank:2}} and so on in the passage where each gap belongs. The candidate sees the passage with those gaps inline and picks an option for each one. Extra options are distractors.",
@@ -202,8 +202,7 @@ export const moduleEditorStrings = {
   sharedPassage: {
     eyebrow: "Shared source text",
     heading: (partTitle: string) => `Source text for ${partTitle}`,
-    description:
-      "Enter the passage once. It is written to every question in this part, which is what the publishing check requires.",
+    description: "Enter the passage once. It will apply to all questions in this part.",
     placeholder: "Paste the reading passage or source material for this part...",
     save: "Save source text",
     saving: "Saving...",
@@ -269,7 +268,7 @@ export const moduleEditorStrings = {
     aiEvaluationSaved: (partTitle: string, enabled: boolean) => `${partTitle} AI evaluation ${enabled ? "enabled" : "disabled"}.`,
     aiEvaluationError: "Failed to update AI evaluation for this part.",
     instructionsLabel: "Heading shown to students",
-    instructionsPlaceholder: "e.g. Read each sentence below. Choose the option (A, B, C or D) that is closest in meaning to the word shown in bold.",
+    instructionsPlaceholder: "e.g. Read each sentence. Choose the word that can best replace the bold word without changing the meaning.",
     instructionsEdit: "Edit heading",
     instructionsSave: "Save heading",
     instructionsCancel: "Cancel",
@@ -282,7 +281,7 @@ export const moduleEditorStrings = {
     maximumWords: (count: number) => `Maximum ${count} words`,
     rubricSummary: (count: number) => `Assessment criteria — ${count} × 8 marks`,
     marksRange: (max: number) => `0–${max}`,
-    questionsCount: (count: number, limit?: number | null) => limit ? `${count} in pool · draws ${limit}` : `${count} questions`,
+    questionsCount: (count: number, limit?: number | null) => limit ? `${count} of ${limit} questions` : `${count} questions`,
   },
   listeningAudio: {
     eyebrow: "Required listening media",
@@ -331,6 +330,10 @@ export const moduleEditorStrings = {
     eyebrow: "Single entry",
     editHeading: "Edit question",
     addHeading: (partTitle: string) => `Add to ${partTitle}`,
+    partFullHeading: (partTitle: string) => `${partTitle} is complete`,
+    partFullBody: (limit: number) =>
+      `This part takes exactly ${limit} question${limit === 1 ? "" : "s"} and they are all added. ` +
+      "Edit or delete one below to make room for a different question.",
     typeLabel: "Question type",
     typeSummaryLabel: "Creating question type",
     typeSummaryHint: (partTitle: string) => `This is set by ${partTitle}, so the question stays in the correct LanguageCert format.`,
@@ -339,10 +342,6 @@ export const moduleEditorStrings = {
       "For one blank, place {{blank}} exactly where the answer belongs. For source-material matching blanks, place {{blank:1}}, {{blank:2}} and so on in the passage; each marker connects to the matching question in order.",
     blankHelpSharedCloze:
       "Paste the full passage once, on every question in this part, with {{blank:1}}, {{blank:2}} and so on marking each gap in order. Each numbered gap then gets its own 3 options below — add question 1 for gap {{blank:1}}, question 2 for gap {{blank:2}}, and so on.",
-    passageLabel: "Passage or context",
-    sharedPassageHint:
-      "This part shares one source text across all its questions. Paste the identical passage into every question - it is compared character-for-character.",
-    passagePlaceholder: "Optional passage, transcript context, visual description, or role-play setup",
     addImage: "Add image",
     uploadingImage: "Uploading...",
     changeImage: "Change image",
@@ -351,9 +350,8 @@ export const moduleEditorStrings = {
     promptLabel: "Question or task prompt",
     promptPlaceholder: "Enter the candidate-facing prompt",
     inlinePromptPlaceholder: "Enter the notepad line and place {{blank}} where the answer belongs",
-    instructionsLabel: "Prompt instructions",
     boldSelectionLabel: "Bold",
-    boldSelectionHint: "Select the tested word in the sentence, then click Bold to highlight it for students.",
+    boldSelectionHint: "Select the word in the sentence, then click Bold to highlight it for students.",
     groupLabel: "Conversation group",
     turnTypeLabel: "Speaking turn",
     preparationSecondsLabel: "Preparation time",
@@ -378,6 +376,7 @@ export const moduleEditorStrings = {
       save: "Failed to save the question.",
       delete: "Failed to delete the question.",
       imageUpload: "Failed to upload the image.",
+      boldRequired: "Please bold at least 1 word in the question prompt (select the word and click Bold).",
     },
     notices: {
       updated: "Question updated.",
@@ -397,6 +396,9 @@ export const moduleEditorStrings = {
       preview: "Could not extract questions from this file.",
       commit: "Review the extracted questions and try again.",
       selectOne: "Select at least one extracted question.",
+      tooMany: (selected: number, remaining: number, partTitle: string) =>
+        `You selected ${selected} questions but ${partTitle} has room for ${remaining === 0 ? "no more" : `only ${remaining}`}. ` +
+        "Deselect the extras before importing.",
     },
     notices: {
       imported: (count: number, partTitle: string) => `${count} questions imported into ${partTitle}.`,
@@ -420,17 +422,16 @@ export const moduleEditorStrings = {
   },
   savedQuestions: {
     heading: (partTitle: string) => `Saved content — ${partTitle}`,
-    /* "at random" is only true where the part allows shuffling. Parts with
-       preserve_question_order (all of Reading) take the first N in the order
-       shown, so calling it random misled authors about which items appear. */
     gapHeading: (partTitle: string) => `Saved task — ${partTitle}`,
     gapDescription: (count: number) =>
       `${count} gap${count === 1 ? "" : "s"} in this task · ${count} mark${count === 1 ? "" : "s"}. Edit them in the composer above.`,
-    description: (count: number, limit?: number | null, ordered?: boolean) => {
+    /* There is no pool: a part holds exactly the questions the student sits,
+       in the order shown here. */
+    description: (count: number, limit?: number | null) => {
       if (!limit) return `${count} saved questions`;
-      return ordered
-        ? `${count} in the pool. Each attempt uses the first ${limit}, in the order below.`
-        : `${count} questions in the pool. Each attempt draws ${limit} at random.`;
+      return count === limit
+        ? `All ${limit} question${limit === 1 ? "" : "s"} added. Students see them in the order below.`
+        : `${count} of ${limit} question${limit === 1 ? "" : "s"} added. Add ${limit - count} more to complete this part.`;
     },
     emptyTitle: "No content yet",
     emptyDescription: "Add one item manually or upload a PDF/CSV specifically to this part.",

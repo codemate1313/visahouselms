@@ -189,7 +189,13 @@
 .test-runner-prompt {
   margin: 0 0 8px;
   font-size: 15px;
-  font-weight: 650;
+  font-weight: 450;
+  line-height: 1.5;
+}
+
+.test-runner-prompt strong,
+.test-runner-prompt .vh-bold-target {
+  font-weight: 800;
 }
 
 .test-runner-options {
@@ -234,6 +240,27 @@
 .test-runner-option:has(input:checked) {
   border-color: var(--primary);
   background: color-mix(in srgb, var(--primary) 5%, transparent);
+}
+
+.test-runner-cloze-gap {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.test-runner-cloze-gap .test-runner-question-head {
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.test-runner-cloze-gap-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-heading, #1e293b);
+  letter-spacing: normal;
 }
 
 .test-runner-text-input {

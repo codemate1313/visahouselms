@@ -2084,6 +2084,12 @@
   right: 0 !important;
   z-index: 9999 !important;
   width: 300px !important;
+  /* Anchored under a fixed top bar, so the only edge it can run past is the
+     bottom of a short window — scroll there instead of hiding Log out. */
+  max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 12px !important;
   background: var(--surface) !important;
   /* same translucent --surface as the notification popover — needs the blur so

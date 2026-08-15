@@ -68,6 +68,8 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
   const turnType = defaultSpeakingTurn(part);
   const defaultPrompt = part.part_code === "listening_1"
     ? `Question ${part.questions.length + 1}`
+    : part.part_code === "reading_1b"
+    ? `Gap ${part.questions.length + 1}`
     : "";
   return {
     question_type: type,

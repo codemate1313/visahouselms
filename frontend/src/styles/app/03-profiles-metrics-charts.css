@@ -1480,10 +1480,20 @@ button.secondary-button {
 }
 
 
-button.danger-text {
+button.danger-text,
+.danger-text {
   border: 1px solid #fecaca;
   background: transparent;
-  color: var(--danger);
+  color: var(--danger, #dc2626);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+button.danger-text:hover,
+.danger-text:hover {
+  background: var(--danger, #dc2626) !important;
+  color: #ffffff !important;
+  border-color: var(--danger, #dc2626) !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25) !important;
 }
 
 

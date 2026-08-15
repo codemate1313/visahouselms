@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
 import { Button, RequiredMark, SearchableSelect } from "@/components/ui";
 import { Icon } from "@/components/icons";
@@ -15,6 +15,7 @@ interface GapTaskComposerProps {
   isEditable: boolean;
   busy: boolean;
   onSubmit: (draft: GapTaskDraft) => void;
+  onSavePassage?: (passage: string, options?: { key: string; text: string }[], answers?: Record<number, string>) => void;
 }
 
 const BLANK_MARKER = /\{\{blank:(\d+)\}\}/g;
@@ -32,7 +33,7 @@ const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
  * So the task is composed here as the candidate sees it, and the rows are
  * generated from it on save.
  */
-export function GapTaskComposer({ part, isEditable, busy, onSubmit }: GapTaskComposerProps) {
+export function GapTaskComposer({ part, isEditable, busy, onSubmit, onSavePassage }: GapTaskComposerProps) {
   const t = strings.gapTask;
   const optionCount = part.answer_constraints.option_count ?? 8;
   const uniqueAnswers = Boolean(part.answer_constraints.unique_answers);
@@ -46,7 +47,7 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit }: GapTaskCom
      itself re-ran this on every parent render - and the parent reloads after
      every save - which wiped a passage the author was still writing. */
   const savedSignature = existing
-    .map((question) => `${question.id}:${(question.correct_answers ?? []).join("+")}`)
+    .map((question) => `${question.id}:${(question.correct_answers ?? []).join("+")}:${question.passage ?? ""}:${JSON.stringify(question.options ?? [])}`)
     .join("|");
 
   // Seed from whatever the part already holds so this edits rather than resets.
@@ -91,14 +92,43 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit }: GapTaskCom
   if (duplicateKeys.length) problems.push(t.errors.duplicateAnswers);
 
   const ready = problems.length === 0;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const existingGaps = useMemo(() => new Set(gaps), [gaps]);
+  const nextGapNumber = useMemo(() => {
+    for (let i = 1; i <= expectedGaps; i++) {
+      if (!existingGaps.has(i)) return i;
+    }
+    return (existingGaps.size > 0 ? Math.max(...Array.from(existingGaps)) : 0) + 1;
+  }, [existingGaps, expectedGaps]);
+
+  function insertBlank(gapNum?: number) {
+    const el = textareaRef.current;
+    const targetGap = gapNum ?? nextGapNumber;
+    const blankTag = `{{blank:${targetGap}}}`;
+    if (!el) {
+      setPassage((prev) => (prev ? `${prev} ${blankTag}` : blankTag));
+      return;
+    }
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? el.value.length;
+    const before = el.value.slice(0, start);
+    const after = el.value.slice(end);
+    const newText = `${before}${blankTag}${after}`;
+    setPassage(newText);
+    requestAnimationFrame(() => {
+      el.focus();
+      const newPos = start + blankTag.length;
+      el.setSelectionRange(newPos, newPos);
+    });
+  }
 
   return (
     <section className="authoring-panel gap-task-composer">
       <div className="panel-title">
         <div>
-          <span className="phase-chip">{t.eyebrow}</span>
-          <h2>{t.heading(part.title)}</h2>
-          <p>{t.description(expectedGaps, optionCount)}</p>
+          {part.part_code !== "reading_2" && <span className="phase-chip">{t.eyebrow}</span>}
+          {part.part_code !== "reading_2" && <h2>{t.heading(part.title)}</h2>}
+          <p style={{ margin: "0" }}>{t.description(expectedGaps, optionCount)}</p>
         </div>
       </div>
 
@@ -107,8 +137,55 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit }: GapTaskCom
         <p>{t.help}</p>
       </div>
 
+      {isEditable && (
+        <div className="vh-passage-blank-toolbar" style={{ marginTop: "12px", marginBottom: "14px" }}>
+          <div className="vh-passage-blank-main-actions">
+            <button
+              type="button"
+              className="vh-insert-blank-btn"
+              onClick={() => insertBlank(nextGapNumber)}
+              title="Click where you want the blank in the text, then click here to insert it."
+            >
+              <Icon name="plus" className="vh-btn-icon" style={{ width: "15px", height: "15px", strokeWidth: 2.5 }} />
+              <span>Insert Gap {nextGapNumber <= expectedGaps ? `(${nextGapNumber})` : ""}</span>
+            </button>
+            <span className="vh-passage-blank-hint">
+              Position cursor in the text and click <strong>Insert Gap</strong> (or click a gap pill below)
+            </span>
+          </div>
+
+          <div className="vh-gap-pill-list" aria-label="Passage gaps status">
+            {Array.from({ length: expectedGaps }, (_, i) => i + 1).map((gapNum) => {
+              const present = existingGaps.has(gapNum);
+              return (
+                <button
+                  key={gapNum}
+                  type="button"
+                  className={`vh-gap-pill ${present ? "is-present" : "is-missing"}`}
+                  onClick={() => insertBlank(gapNum)}
+                  title={present ? `Gap ${gapNum} is in passage. Click to insert another marker.` : `Click to insert Gap ${gapNum} at cursor`}
+                >
+                  {present ? (
+                    <>
+                      <Icon name="check" style={{ width: "12px", height: "12px", strokeWidth: 2.5 }} />
+                      <span>Gap {gapNum}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="plus" style={{ width: "12px", height: "12px", strokeWidth: 2.5 }} />
+                      <span>Gap {gapNum}</span>
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <label htmlFor="gap-task-passage">{t.passageLabel}<RequiredMark /></label>
       <textarea
+        ref={textareaRef}
         id="gap-task-passage"
         className="gap-task-passage"
         rows={12}
@@ -117,6 +194,19 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit }: GapTaskCom
         placeholder={t.passagePlaceholder}
         readOnly={!isEditable}
       />
+
+      <div className="shared-passage-footer" style={{ marginBottom: "20px" }}>
+        {isEditable && onSavePassage && (
+          <Button
+            variant="primary"
+            size="md"
+            disabled={busy || !passage.trim()}
+            onClick={() => onSavePassage(passage, options, answers)}
+          >
+            {busy ? strings.sharedPassage.saving : strings.sharedPassage.save}
+          </Button>
+        )}
+      </div>
 
       <h3 className="gap-task-subheading">{t.optionsHeading(optionCount)}</h3>
       <div className="gap-task-options">
@@ -139,6 +229,7 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit }: GapTaskCom
         <button
           type="button"
           className="option-add-button"
+          style={{ marginTop: "10px" }}
           onClick={() => setOptions([...options, { key: LETTERS[options.length], text: "" }])}
         >
           <Icon name="plus" />

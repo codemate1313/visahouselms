@@ -17,7 +17,7 @@ interface ParsedError {
 }
 
 function parseValidationError(errorStr: string): ParsedError {
-  const match = errorStr.match(/^([A-Za-z0-9\s]+?)\s+(requires|draws|needs|has)(.+)$/i);
+  const match = errorStr.match(/^([A-Za-z0-9\s]+?)\s+(requires|takes|draws|needs|has)(.+)$/i);
   if (match) {
     const tag = match[1].trim();
     const rest = (match[2] + match[3]).trim().replace(/\.$/, "");

@@ -49,11 +49,11 @@ export function SharedClozeGroup({
         const selected = question.response?.selected;
         const saving = savingIds.has(question.id);
         return (
-          <div className="test-runner-question test-runner-cloze-gap" key={question.id}>
-            <div className="test-runner-question-head">
-              <span>{t.label(questionNumberOffset + index + 1)}</span>
-              {saving && <span className="hint">{t.saving}</span>}
-            </div>
+            <div className="test-runner-question test-runner-cloze-gap" key={question.id}>
+              <div className="test-runner-question-head">
+                <span className="test-runner-cloze-gap-number">{questionNumberOffset + index + 1}</span>
+                {saving && <span className="hint">{t.saving}</span>}
+              </div>
             <div className="test-runner-options">
               {question.options.map((option) => (
                 <label key={option.key} className="test-runner-option">

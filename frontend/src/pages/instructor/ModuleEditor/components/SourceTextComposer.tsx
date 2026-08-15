@@ -98,7 +98,7 @@ export function SourceTextComposer({ part, isEditable, busy, onSubmit }: SourceT
     <section className="authoring-panel source-text-composer">
       <div className="panel-title">
         <div>
-          <span className="phase-chip">{t.eyebrow}</span>
+          {part.part_code !== "reading_3" && <span className="phase-chip">{t.eyebrow}</span>}
           <h2>{t.heading(part.title)}</h2>
           <p>{t.description(textCount, questionCount)}</p>
         </div>

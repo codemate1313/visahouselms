@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState, useRef } from "react";
 import { lockBodyScroll } from "@/utils/scrollLock";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmDelete } from "@/components/confirmDialog";
@@ -43,6 +43,7 @@ export function ModuleEditor() {
   const isNew = !id;
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const requestedType = rawType && MODULE_TYPES.has(rawType as ExamModuleType) ? rawType as ExamModuleType : null;
   const [module, setModule] = useState<ExamModule | null>(null);
   const [selectedPartId, setSelectedPartId] = useState<number | null>(null);
@@ -100,8 +101,31 @@ export function ModuleEditor() {
         serverDetailsRef.current = serverDetails;
         return pristine ? serverDetails : current;
       });
-      const selected = data.parts?.find((part) => part.id === (preferredPartId ?? selectedPartId)) ?? data.parts?.[0] ?? null;
+
+      const activePartKey = searchParams.get("part") || (id ? sessionStorage.getItem(`vh.module-editor.part.${id}`) : null);
+      let selected: ExamModulePart | null = null;
+      if (preferredPartId !== undefined) {
+        selected = data.parts?.find((part) => part.id === preferredPartId) ?? null;
+      } else if (activePartKey === "settings") {
+        selected = null;
+      } else if (activePartKey) {
+        selected = data.parts?.find((part) => part.part_code === activePartKey || String(part.id) === activePartKey) ?? null;
+      }
+      if (!selected && activePartKey !== "settings") {
+        selected = data.parts?.find((part) => part.id === selectedPartId) ?? data.parts?.[0] ?? null;
+      }
+
       setSelectedPartId(selected?.id ?? null);
+      if (id) {
+        if (selected) {
+          sessionStorage.setItem(`vh.module-editor.part.${id}`, selected.part_code || String(selected.id));
+          setSearchParams({ part: selected.part_code || String(selected.id) }, { replace: true });
+        } else if (activePartKey === "settings") {
+          sessionStorage.setItem(`vh.module-editor.part.${id}`, "settings");
+          setSearchParams({ part: "settings" }, { replace: true });
+        }
+      }
+
       /* Only seed the draft when there isn't one, or when the author has moved
          to a different part. loadModule() runs after every save - source text,
          audio, import, delete - and resetting here unconditionally wiped a
@@ -144,6 +168,14 @@ export function ModuleEditor() {
      set of source texts - rather than added question by question. The manual
      and bulk entry paths are hidden for them: the composer owns the rows. */
   const usesTaskComposer = COMPOSED_TASK_LAYOUTS.has(selectedPart?.answer_constraints.layout ?? "");
+  /* A part holds exactly question_limit questions - there is no pool, so once
+     it is full the only way forward is editing or deleting what is there. */
+  const partIsFull = Boolean(
+    selectedPart?.question_limit && selectedPart.questions.length >= selectedPart.question_limit,
+  );
+  const remainingSlots = selectedPart?.question_limit
+    ? Math.max(0, selectedPart.question_limit - selectedPart.questions.length)
+    : null;
   const [partTitle, setPartTitle] = useState("");
 
   /* Keyed on the part's id and its saved values rather than the object itself.
@@ -198,6 +230,10 @@ export function ModuleEditor() {
   function choosePart(part: ExamModulePart | null) {
     if (!part) {
       setSelectedPartId(null);
+      if (id) {
+        sessionStorage.setItem(`vh.module-editor.part.${id}`, "settings");
+        setSearchParams({ part: "settings" }, { replace: true });
+      }
       setEditingQuestionId(null);
       setPreview(null);
       setImportFile(null);
@@ -206,6 +242,10 @@ export function ModuleEditor() {
       return;
     }
     setSelectedPartId(part.id);
+    if (id) {
+      sessionStorage.setItem(`vh.module-editor.part.${id}`, part.part_code || String(part.id));
+      setSearchParams({ part: part.part_code || String(part.id) }, { replace: true });
+    }
     // Switching part legitimately starts a new draft; keep the ref in step so
     // the next reload does not think this draft belongs to the previous part.
     manualPartIdRef.current = part.id;
@@ -310,6 +350,10 @@ export function ModuleEditor() {
 
   async function saveQuestion(event: FormEvent) {
     event.preventDefault(); if (!module || !selectedPart || !manual) return;
+    if (selectedPart.part_code === "reading_1a" && !/\*\*(.+?)\*\*/.test(manual.prompt)) {
+      showError(strings.manualQuestion.errors.boldRequired);
+      return;
+    }
     setBusy(true); setError(null);
     try {
       const base = `/instructor/modules/${module.id}/parts/${selectedPart.id}/questions`;
@@ -484,6 +528,12 @@ export function ModuleEditor() {
     if (!module || !selectedPart || !preview) return;
     const questions = preview.questions.filter((_, index) => selectedImports.has(index)).map(questionPayload);
     if (!questions.length) { showError(strings.bulkImport.errors.selectOne); return; }
+    // Catch an over-selection here so the author can deselect rows, rather than
+    // sending a batch the part-size cap will reject wholesale.
+    if (remainingSlots !== null && questions.length > remainingSlots) {
+      showError(strings.bulkImport.errors.tooMany(questions.length, remainingSlots, selectedPart.title));
+      return;
+    }
     setBusy(true); setError(null);
     try {
       await apiClient.post(`/instructor/modules/${module.id}/parts/${selectedPart.id}/import`, { source_type: preview.source_type, source_filename: preview.source_filename, questions });
@@ -741,28 +791,92 @@ export function ModuleEditor() {
   // The passage lives on each question, so saving the part-level source text
   // rewrites every question in the part. Questions are re-sent whole because the
   // update endpoint takes a full QuestionCreate payload, not a patch.
-  async function saveSharedPassage(passage: string) {
+  async function saveSharedPassage(
+    passage: string,
+    draftOptions?: { key: string; text: string }[],
+    draftAnswers?: Record<number, string>,
+  ) {
     if (!module || !selectedPart) return;
     setBusy(true); setError(null);
     try {
-      for (const question of selectedPart.questions) {
-        await apiClient.put(
-          `/instructor/modules/${module.id}/parts/${selectedPart.id}/questions/${question.id}`,
-          questionPayload({
-            question_type: question.question_type,
-            prompt: question.prompt,
-            instructions: question.instructions,
-            passage,
-            image_path: question.image_path,
-            image_url: question.image_url,
-            options: question.options,
-            correct_answers: question.correct_answers,
-            interaction: question.interaction ?? {},
-            explanation: question.explanation,
-            points: question.points,
-            difficulty: question.difficulty,
-          }),
-        );
+      const base = `/instructor/modules/${module.id}/parts/${selectedPart.id}/questions`;
+      if (selectedPart.questions.length > 0) {
+        for (const question of selectedPart.questions) {
+          await apiClient.put(
+            `${base}/${question.id}`,
+            questionPayload({
+              question_type: question.question_type,
+              prompt: question.prompt,
+              instructions: question.instructions,
+              passage,
+              image_path: question.image_path,
+              image_url: question.image_url,
+              options: question.options,
+              correct_answers: question.correct_answers,
+              interaction: question.interaction ?? {},
+              explanation: question.explanation,
+              points: question.points,
+              difficulty: question.difficulty,
+            }),
+          );
+        }
+      } else {
+        // Initial question creation so the passage persists to DB even before manually adding all options
+        if (selectedPart.answer_constraints.layout === "inline_matching_blanks") {
+          const limit = selectedPart.question_limit ?? 6;
+          const optionCount = selectedPart.answer_constraints.option_count ?? 8;
+          const options = draftOptions && draftOptions.length >= 2
+            ? draftOptions.map((o) => ({ key: o.key, text: o.text || `Option ${o.key}` }))
+            : Array.from({ length: optionCount }, (_, i) => ({
+                key: String.fromCharCode(65 + i),
+                text: `Option ${String.fromCharCode(65 + i)}`,
+              }));
+          for (let gap = 1; gap <= limit; gap++) {
+            const answer = draftAnswers?.[gap] || String.fromCharCode(65 + ((gap - 1) % options.length));
+            await apiClient.post(
+              base,
+              questionPayload({
+                question_type: selectedPart.answer_constraints.allowed_question_types?.[0] ?? "matching_unique",
+                prompt: strings.gapTask.gapLabel(gap),
+                instructions: null,
+                passage,
+                image_path: null,
+                image_url: null,
+                options,
+                correct_answers: [answer],
+                interaction: {},
+                explanation: null,
+                points: 1,
+                difficulty: "medium",
+              }),
+            );
+          }
+        } else if (selectedPart.part_code === "reading_1b") {
+          const limit = selectedPart.question_limit ?? 5;
+          for (let gap = 1; gap <= limit; gap++) {
+            await apiClient.post(
+              base,
+              questionPayload({
+                question_type: "mcq_single",
+                prompt: `Gap ${gap}`,
+                instructions: null,
+                passage,
+                image_path: null,
+                image_url: null,
+                options: [
+                  { key: "A", text: "Option A" },
+                  { key: "B", text: "Option B" },
+                  { key: "C", text: "Option C" },
+                ],
+                correct_answers: ["A"],
+                interaction: {},
+                explanation: null,
+                points: 1,
+                difficulty: "medium",
+              }),
+            );
+          }
+        }
       }
       const partId = selectedPart.id;
       await loadModule(partId);
@@ -912,6 +1026,7 @@ export function ModuleEditor() {
                 isEditable={isEditable}
                 busy={busy}
                 onSubmit={saveGapTask}
+                onSavePassage={saveSharedPassage}
               />
             ) : null}
 
@@ -934,7 +1049,14 @@ export function ModuleEditor() {
               />
             )}
 
-            {isEditable && manual && !usesTaskComposer && (
+            {isEditable && partIsFull && !usesTaskComposer && !editingQuestionId && (
+              <div className="empty-state compact-empty">
+                <h2>{strings.manualQuestion.partFullHeading(selectedPart.title)}</h2>
+                <p>{strings.manualQuestion.partFullBody(selectedPart.question_limit ?? 0)}</p>
+              </div>
+            )}
+
+            {isEditable && manual && !usesTaskComposer && !partIsFull && (
               <div className="vh-entry-mode-wrapper">
                 <div className="module-entry-tabbed-content">
                   {questionEntryMode === "manual" ? (

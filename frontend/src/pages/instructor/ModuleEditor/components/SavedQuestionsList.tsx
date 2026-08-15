@@ -32,7 +32,7 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
       title={isGapTask ? t.gapHeading(part.title) : t.heading(part.title)}
       description={isGapTask
         ? t.gapDescription(part.questions.length)
-        : t.description(part.questions.length, part.question_limit, Boolean(part.answer_constraints.preserve_question_order))}
+        : t.description(part.questions.length, part.question_limit)}
       badge={<span className="count-chip">{part.questions.length}</span>}
     >
       {!part.questions.length ? (
