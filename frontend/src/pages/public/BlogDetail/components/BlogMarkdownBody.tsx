@@ -4,57 +4,106 @@ interface BlogMarkdownBodyProps {
   markdown: string;
 }
 
-function formatInlineMarkdown(text: string) {
+function formatInlineMarkdown(text: string): string {
   return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.*?)\*/g, "<em>$1</em>");
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
 function renderMarkdownLines(markdown: string) {
+  if (!markdown) return null;
   const lines = markdown.split(/\r?\n/);
   const elements: ReactNode[] = [];
-  let currentList: string[] = [];
+  let currentBulletList: string[] = [];
+  let currentNumberedList: string[] = [];
+  let currentQuote: string[] = [];
 
-  const flushList = () => {
-    if (currentList.length > 0) {
+  const flushBulletList = () => {
+    if (currentBulletList.length > 0) {
       elements.push(
-        <ul key={`ul-${elements.length}`}>
-          {currentList.map((it, i) => (
+        <ul key={`ul-${elements.length}`} className="vh-blog-prose-ul">
+          {currentBulletList.map((it, i) => (
             <li key={i} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(it) }} />
           ))}
         </ul>
       );
-      currentList = [];
+      currentBulletList = [];
     }
+  };
+
+  const flushNumberedList = () => {
+    if (currentNumberedList.length > 0) {
+      elements.push(
+        <ol key={`ol-${elements.length}`} className="vh-blog-prose-ol">
+          {currentNumberedList.map((it, i) => (
+            <li key={i} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(it) }} />
+          ))}
+        </ol>
+      );
+      currentNumberedList = [];
+    }
+  };
+
+  const flushQuote = () => {
+    if (currentQuote.length > 0) {
+      elements.push(
+        <blockquote key={`quote-${elements.length}`} className="vh-blog-prose-blockquote">
+          {currentQuote.map((it, i) => (
+            <p key={i} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(it) }} />
+          ))}
+        </blockquote>
+      );
+      currentQuote = [];
+    }
+  };
+
+  const flushAll = () => {
+    flushBulletList();
+    flushNumberedList();
+    flushQuote();
   };
 
   lines.forEach((line, index) => {
     const trimmed = line.trim();
     if (!trimmed) {
-      flushList();
+      flushAll();
       return;
     }
 
-    if (trimmed.startsWith("- ")) {
-      currentList.push(trimmed.substring(2));
+    if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+      flushNumberedList();
+      flushQuote();
+      currentBulletList.push(trimmed.substring(2));
+    } else if (/^\d+\.\s+/.test(trimmed)) {
+      flushBulletList();
+      flushQuote();
+      currentNumberedList.push(trimmed.replace(/^\d+\.\s+/, ""));
+    } else if (trimmed.startsWith(">")) {
+      flushBulletList();
+      flushNumberedList();
+      currentQuote.push(trimmed.replace(/^>\s*/, ""));
     } else {
-      flushList();
+      flushAll();
       if (trimmed.startsWith("# ")) {
-        elements.push(<h1 key={index} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^#\s+/, "")) }} />);
+        elements.push(<h1 key={index} className="vh-blog-prose-h1" dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^#\s+/, "")) }} />);
       } else if (trimmed.startsWith("## ")) {
-        elements.push(<h2 key={index} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^##\s+/, "")) }} />);
+        elements.push(<h2 key={index} className="vh-blog-prose-h2" dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^##\s+/, "")) }} />);
       } else if (trimmed.startsWith("### ")) {
-        elements.push(<h3 key={index} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^###\s+/, "")) }} />);
+        elements.push(<h3 key={index} className="vh-blog-prose-h3" dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^###\s+/, "")) }} />);
+      } else if (trimmed.startsWith("#### ")) {
+        elements.push(<h4 key={index} className="vh-blog-prose-h4" dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^####\s+/, "")) }} />);
       } else {
-        elements.push(<p key={index} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed) }} />);
+        elements.push(<p key={index} className="vh-blog-prose-p" dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed) }} />);
       }
     }
   });
 
-  flushList();
+  flushAll();
   return elements;
 }
 
 export function BlogMarkdownBody({ markdown }: BlogMarkdownBodyProps) {
-  return <div className="blog-markdown-body">{renderMarkdownLines(markdown)}</div>;
+  return <div className="vh-blog-markdown-prose">{renderMarkdownLines(markdown)}</div>;
 }

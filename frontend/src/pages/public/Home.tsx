@@ -321,12 +321,12 @@ export function Home() {
   });
   const [isDragging, setIsDragging] = useState(false);
 
-  // Autoplay every 5 seconds (5000ms), paused on hover or active dragging
+  // Autoplay every 3 seconds (3000ms), paused only on card hover or active dragging
   useEffect(() => {
     if (!testimonials.length || isTestimonialHovered || isDragging) return;
     const timer = setInterval(() => {
       setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
+    }, 3000);
     return () => clearInterval(timer);
   }, [testimonials.length, isTestimonialHovered, isDragging]);
 
@@ -768,11 +768,7 @@ export function Home() {
           </div>
         </section>
         
-        <section
-          className="vh-testimonials-section vh-reveal"
-          onMouseEnter={() => setIsTestimonialHovered(true)}
-          onMouseLeave={() => setIsTestimonialHovered(false)}
-        >
+        <section className="vh-testimonials-section vh-reveal">
           <div className="vh-testimonials-header-wrap">
             <div>
               <span className="vh-testimonials-eyebrow">Student Success Stories</span>
@@ -781,7 +777,11 @@ export function Home() {
             </div>
           </div>
           {testimonials.length > 0 ? (
-            <div className="vh-3d-coverflow-wrapper">
+            <div
+              className="vh-3d-coverflow-wrapper"
+              onMouseEnter={() => setIsTestimonialHovered(true)}
+              onMouseLeave={() => setIsTestimonialHovered(false)}
+            >
               <div
                 ref={stageRef}
                 className={`vh-3d-coverflow-stage ${isDragging ? "is-dragging" : ""}`}

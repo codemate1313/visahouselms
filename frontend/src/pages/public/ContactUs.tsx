@@ -6,7 +6,6 @@ import { PublicFooter } from "@/components/publicSite/PublicFooter";
 import { useSEO } from "@/hooks/useSEO";
 import { useContactSettings } from "./useContactSettings";
 import type { LandingPlan, LandingPlansPayload } from "./Plans.types";
-import { SegmentedControl } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import "@/styles/public/chrome.css";
 import "@/styles/public/contact.css";
@@ -124,10 +123,10 @@ const OFFICE_BRANCHES: OfficeBranch[] = [
     city: "Amritsar",
     name: "Amritsar Office",
     tag: "Head Office",
-    address: "Mezzanine floor, Sco-21, B - Block, Ranjit Avenue, Amritsar, Punjab 143001",
+    address: "Mezzanine floor, Sco-21, B-Block, Ranjit Avenue, Amritsar, Punjab 143001",
     addressShort: "Sco-21, B-Block, Ranjit Avenue, Amritsar",
     mapEmbedUrl:
-      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3692.6816320116436!2d74.8629167!3d31.65075!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3919650028ff0af9%3A0x7c60b7408534d94d!2sVISA%20HOUSE%20immigration!5e1!3m2!1sen!2sin!4v1786779632431!5m2!1sen!2sin",
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3692.6816320116436!2d74.8629167!3d31.65075!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3919650028ff0af9%3A0x7c60b7408534d94d!2sVISA%20HOUSE%20immigration!5e0!3m2!1sen!2sin!4v1786779632431!5m2!1sen!2sin",
     mapLink: "https://www.google.com/maps/place/VISA+HOUSE+immigration/@31.65075,74.8629167,17z",
     phone: "+91 9779047164",
   },
@@ -136,10 +135,10 @@ const OFFICE_BRANCHES: OfficeBranch[] = [
     city: "Tarn Taran",
     name: "Tarn Taran Office",
     tag: "Branch Office",
-    address: "Gali lakeer Sahib wali, Amritsar bypass Road, Tarntaran, Punjab 143401",
-    addressShort: "Gali Lakeer Sahib Wali, Bypass Rd, Tarntaran",
+    address: "Gali Lakeer Sahib Wali, Amritsar Bypass Road, Tarn Taran, Punjab 143401",
+    addressShort: "Gali Lakeer Sahib Wali, Bypass Rd, Tarn Taran",
     mapEmbedUrl:
-      "https://maps.google.com/maps?q=31.4638482,74.9196184+(Visa+House+Immigration)&t=&z=16&ie=UTF8&iwloc=&output=embed",
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3403.475908208477!2d74.9170435!3d31.4638482!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39197f991e05cd0f%3A0x64c8d99f3ec4c656!2sVisa%20House!5e0!3m2!1sen!2sin!4v1786779800000!5m2!1sen!2sin",
     mapLink: "https://maps.app.goo.gl/9DfwXmJcfyzQnwC67",
     phone: "+91 9779047164",
   },
@@ -318,19 +317,6 @@ export function ContactUs() {
                   </span>
                 </a>
 
-                <div className="vh-contact-detail vh-contact-detail-address">
-                  <ContactInfoIcon type="location" />
-                  <div className="vh-contact-detail-copy">
-                    <strong>Our Offices</strong>
-                    {OFFICE_BRANCHES.map((b) => (
-                      <div className="vh-office-mini-block" key={b.id} style={{ marginTop: b.id === "amritsar" ? 0 : 4 }}>
-                        <span className="vh-office-mini-label">{b.city} ({b.tag}):</span>
-                        <span className="vh-office-mini-text">{b.addressShort}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 <a className="vh-contact-detail" href={`mailto:${contact?.email ?? "enquiry.langugaecert@gmail.com"}`}>
                   <ContactInfoIcon type="email" />
                   <span className="vh-contact-detail-copy">
@@ -340,7 +326,27 @@ export function ContactUs() {
                   </span>
                 </a>
 
-                <a className="vh-contact-detail" href="https://support.visahouse.com" target="_blank" rel="noopener noreferrer">
+                {OFFICE_BRANCHES.map((b) => (
+                  <a
+                    key={b.id}
+                    className="vh-contact-detail"
+                    href={b.mapLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => {
+                      setSelectedBranchId(b.id);
+                    }}
+                  >
+                    <ContactInfoIcon type="location" />
+                    <span className="vh-contact-detail-copy">
+                      <strong>{b.name} ({b.tag})</strong>
+                      <span>{b.address}</span>
+                      <small>Open in Google Maps ↗</small>
+                    </span>
+                  </a>
+                ))}
+
+                <a className="vh-contact-detail vh-contact-detail-span2" href="https://support.visahouse.com" target="_blank" rel="noopener noreferrer">
                   <ContactInfoIcon type="support" />
                   <span className="vh-contact-detail-copy">
                     <strong>Support portal</strong>
@@ -353,22 +359,30 @@ export function ContactUs() {
 
             <section className="vh-contact-form-card" aria-labelledby="partner-form-heading">
               <div className="vh-contact-form-header">
-                <div>
+                <div className="vh-contact-form-title-wrap">
                   <h2 id="partner-form-heading">{formType === "partner" ? "Partner information" : "Send us a message"}</h2>
                   <p>{formType === "partner" ? "Tell us about your centre and the person who will manage it." : "We're here to help answer questions and get you started."}</p>
                 </div>
-                <div className="vh-form-toggle-wrap">
-                  <SegmentedControl<FormType>
-                    ariaLabel="Contact mode"
-                    value={formType}
-                    onChange={(val) => switchForm(val)}
-                    fullWidth
-                    neverCollapse
-                    options={[
-                      { label: "Contact Us", value: "query" },
-                      { label: "Become a Partner", value: "partner" },
-                    ]}
-                  />
+                
+                <div className="vh-form-horizontal-tabs" role="tablist" aria-label="Contact form options">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={formType === "query"}
+                    className={`vh-form-tab-btn ${formType === "query" ? "is-active" : ""}`}
+                    onClick={() => switchForm("query")}
+                  >
+                    Contact Us
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={formType === "partner"}
+                    className={`vh-form-tab-btn ${formType === "partner" ? "is-active" : ""}`}
+                    onClick={() => switchForm("partner")}
+                  >
+                    Become a Partner
+                  </button>
                 </div>
               </div>
 
