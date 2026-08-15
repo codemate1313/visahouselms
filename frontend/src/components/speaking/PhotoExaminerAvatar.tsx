@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 // @ts-expect-error - plain JS engine, no type declarations
 import { TalkingAvatar } from "@/lib/talking-avatar.js";
 import {
@@ -52,10 +52,12 @@ export function PhotoExaminerAvatar({
   const attachedTo = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const fallbackRef = useRef(false);
+  const [avatarReady, setAvatarReady] = useState(false);
 
   // Build the avatar once per frame set.
   useEffect(() => {
     if (!mountRef.current) return;
+    setAvatarReady(false);
     const avatar = new TalkingAvatar(mountRef.current, {
       ...set.options,
       frames: framesFor(set),
@@ -66,6 +68,10 @@ export function PhotoExaminerAvatar({
     avatar.load().catch(() => {
       // A missing frame leaves the mount empty rather than throwing into React.
       if (alive) avatarRef.current = null;
+    }).then(() => {
+      if (alive && avatarRef.current === avatar) {
+        setAvatarReady(true);
+      }
     });
     return () => {
       alive = false;
@@ -73,6 +79,7 @@ export function PhotoExaminerAvatar({
       avatarRef.current = null;
       attachedTo.current = null;
       fallbackRef.current = false;
+      setAvatarReady(false);
     };
   }, [set]);
 
@@ -81,20 +88,20 @@ export function PhotoExaminerAvatar({
   useEffect(() => {
     const avatar = avatarRef.current;
     const audio = audioRef.current;
-    if (!avatar || !audio || attachedTo.current === audio) return;
+    if (!avatarReady || !avatar || !audio || attachedTo.current === audio) return;
     try {
       avatar.attachMediaElement(audio);
       attachedTo.current = audio;
     } catch {
       fallbackRef.current = true;
     }
-  }, [audioRef, isPlaying]);
+  }, [audioRef, isPlaying, avatarReady]);
 
   // Playback state: resume the context (browsers start it suspended), blink on
   // wake, and run the viseme fallback ticker while speaking.
   useEffect(() => {
     const avatar = avatarRef.current;
-    if (!avatar) return;
+    if (!avatarReady || !avatar) return;
 
     if (!isPlaying) {
       avatar.audioDriven = false;
@@ -138,7 +145,7 @@ export function PhotoExaminerAvatar({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [isPlaying, visemes, audioRef]);
+  }, [isPlaying, visemes, audioRef, avatarReady]);
 
   return <div ref={mountRef} className="photo-examiner-avatar" aria-hidden="true" />;
 }
