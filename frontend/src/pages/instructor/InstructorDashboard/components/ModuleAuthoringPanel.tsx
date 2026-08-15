@@ -4,14 +4,20 @@ import { Icon } from "@/components/icons";
 import { Badge } from "@/components/ui";
 
 interface ModuleAuthoringPanelProps {
-  skillModuleCount: number;
+  readingCount: number;
+  listeningCount: number;
+  writingCount: number;
+  speakingCount: number;
   fullMockCount: number;
   finalTestCount: number;
   audioCount: number;
 }
 
 export function ModuleAuthoringPanel({
-  skillModuleCount,
+  readingCount,
+  listeningCount,
+  writingCount,
+  speakingCount,
   fullMockCount,
   finalTestCount,
   audioCount,
@@ -29,7 +35,7 @@ export function ModuleAuthoringPanel({
       <div className="authoring-actions">
         <div>
           <strong>{t.skillModulesTitle}</strong>
-          <p>{t.skillModulesDetail(skillModuleCount)}</p>
+          <p>{t.skillModulesDetail({ reading: readingCount, listening: listeningCount, writing: writingCount, speaking: speakingCount })}</p>
         </div>
         <div>
           <strong>{t.completeTestsTitle}</strong>

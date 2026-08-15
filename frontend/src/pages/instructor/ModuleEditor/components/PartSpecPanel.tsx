@@ -145,7 +145,7 @@ export function PartSpecPanel({
         )}
       </div>
 
-      {isEditable && onEntryModeChange && questionEntryMode && (
+      {isEditable && onEntryModeChange && questionEntryMode && part.section_type !== "writing" && !part.part_code.startsWith("writing_") && (
         <div className="vh-method-tabs">
           <button
             type="button"

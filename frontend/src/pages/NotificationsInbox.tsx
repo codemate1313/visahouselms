@@ -4,7 +4,7 @@ import { apiClient } from "@/api/client";
 import type { StudentNotification } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { PinList, type PinListItem } from "@/components/PinList";
-import { PageHeader } from "@/components/ui";
+import { PageHeader, SearchableSelect } from "@/components/ui";
 import { destinationFor, notificationTime, scoreLabel } from "@/utils/notificationHelpers";
 import { notificationsInboxStrings as strings } from "./NotificationsInbox.strings";
 import "./NotificationsInbox.css";
@@ -13,6 +13,27 @@ type PinnableNotification = StudentNotification & PinListItem;
 
 interface NotificationsInboxProps {
   fallbackRoute: string;
+}
+
+type TimeFilter = "all" | "today" | "7days" | "30days";
+
+function matchesTimeFilter(createdAt: string, timeFilter: TimeFilter): boolean {
+  if (timeFilter === "all") return true;
+  const created = new Date(createdAt);
+  const now = new Date();
+  const diffMs = now.getTime() - created.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+  if (timeFilter === "today") {
+    return created.toDateString() === now.toDateString();
+  }
+  if (timeFilter === "7days") {
+    return diffDays <= 7;
+  }
+  if (timeFilter === "30days") {
+    return diffDays <= 30;
+  }
+  return true;
 }
 
 export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
@@ -39,7 +60,20 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
     void loadNotifications();
   }, [loadNotifications]);
 
+  const [filterTab, setFilterTab] = useState<"all" | "unread" | "read">("all");
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+
   const unread = notifications.filter((notification) => !notification.read_at);
+  const read = notifications.filter((notification) => Boolean(notification.read_at));
+
+  const filteredNotifications = useMemo(() => {
+    return notifications.filter((n) => {
+      if (filterTab === "unread" && n.read_at) return false;
+      if (filterTab === "read" && !n.read_at) return false;
+      if (!matchesTimeFilter(n.created_at, timeFilter)) return false;
+      return true;
+    });
+  }, [notifications, filterTab, timeFilter]);
 
   async function markRead(notification: StudentNotification) {
     if (notification.read_at) return;
@@ -96,7 +130,7 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
   const pinnableItems = useMemo<PinnableNotification[]>(() => {
     const byRecency = (a: StudentNotification, b: StudentNotification) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    return [...notifications]
+    return [...filteredNotifications]
       .sort((a, b) => {
         if (a.pinned_at && b.pinned_at) return new Date(b.pinned_at).getTime() - new Date(a.pinned_at).getTime();
         if (a.pinned_at) return -1;
@@ -104,7 +138,7 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
         return byRecency(a, b);
       })
       .map((notification) => ({ ...notification, pinned: Boolean(notification.pinned_at) }));
-  }, [notifications]);
+  }, [filteredNotifications]);
 
   return (
     <div className="notifications-inbox-page">
@@ -120,6 +154,55 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
       />
 
       <section className="workspace-panel notifications-inbox-panel">
+        {!loading && !error && notifications.length > 0 && (
+          <div className="notifications-inbox-filter-bar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "18px", padding: "10px 16px", background: "var(--surface-muted, #f8fafc)", borderRadius: "14px", border: "1px solid var(--border)" }}>
+            <div className="student-notification-tabs" style={{ padding: 0, background: "transparent", border: "none" }}>
+              <button
+                type="button"
+                className={`student-notification-tab${filterTab === "all" ? " is-active" : ""}`}
+                onClick={() => setFilterTab("all")}
+              >
+                All ({notifications.length})
+              </button>
+              <button
+                type="button"
+                className={`student-notification-tab${filterTab === "unread" ? " is-active" : ""}`}
+                onClick={() => setFilterTab("unread")}
+              >
+                Unread ({unread.length})
+              </button>
+              <button
+                type="button"
+                className={`student-notification-tab${filterTab === "read" ? " is-active" : ""}`}
+                onClick={() => setFilterTab("read")}
+              >
+                Read ({read.length})
+              </button>
+            </div>
+
+            <div className="notifications-time-filter" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap", flexShrink: 0 }}>
+                Time Range:
+              </span>
+              <div style={{ width: "160px", flexShrink: 0 }}>
+                <SearchableSelect
+                  options={[
+                    { value: "all", label: "All Time" },
+                    { value: "today", label: "Today" },
+                    { value: "7days", label: "Last 7 Days" },
+                    { value: "30days", label: "Last 30 Days" },
+                  ]}
+                  value={timeFilter}
+                  onChange={(val) => setTimeFilter(val as TimeFilter)}
+                  searchable={false}
+                  align="end"
+                  placeholder="Time Range"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <p className="empty-message">{strings.loadingMessage}</p>
         ) : error ? (
@@ -130,10 +213,26 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
               {strings.retryLabel}
             </button>
           </div>
-        ) : notifications.length === 0 ? (
+        ) : pinnableItems.length === 0 ? (
           <div className="empty-state">
-            <h2>{strings.emptyTitle}</h2>
-            <p>{strings.emptyDescription}</p>
+            <h2>
+              {timeFilter !== "all"
+                ? "No notifications found"
+                : filterTab === "unread"
+                ? "No unread notifications"
+                : filterTab === "read"
+                ? "No read notifications"
+                : strings.emptyTitle}
+            </h2>
+            <p>
+              {timeFilter !== "all"
+                ? `No notifications found for ${timeFilter === "today" ? "Today" : timeFilter === "7days" ? "the Last 7 Days" : "the Last 30 Days"}.`
+                : filterTab === "unread"
+                ? "You have read all your notifications."
+                : filterTab === "read"
+                ? "You have no read notifications yet."
+                : strings.emptyDescription}
+            </p>
           </div>
         ) : (
           <PinList

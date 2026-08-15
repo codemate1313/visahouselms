@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { Suspense, useLayoutEffect, useRef, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import gsap from "gsap";
 
@@ -24,6 +24,37 @@ interface GsapRouteAnimatorProps {
   className?: string;
 }
 
+function RouteLoadingFallback() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "260px",
+        width: "100%",
+        padding: "40px 0",
+      }}
+    >
+      <div
+        style={{
+          width: "28px",
+          height: "28px",
+          border: "3px solid var(--border, rgba(15, 23, 42, 0.1))",
+          borderTopColor: "var(--primary, #b91c2b)",
+          borderRadius: "50%",
+          animation: "routeSpinner 0.7s linear infinite",
+        }}
+      />
+      <style>{`
+        @keyframes routeSpinner {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export function GsapRouteAnimator({ children, className }: GsapRouteAnimatorProps) {
   const scopeRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
@@ -44,11 +75,6 @@ export function GsapRouteAnimator({ children, className }: GsapRouteAnimatorProp
           y: 0,
           duration: 0.32,
           ease: "power2.out",
-          // Drop the finished transform instead of leaving matrix(1,0,0,1,0,0)
-          // behind. Any transform - identity included - makes this element the
-          // containing block for its position:fixed descendants, which pinned
-          // every modal backdrop to the content area rather than the viewport,
-          // so the sidebar and header stayed unblurred behind an open dialog.
           clearProps: "transform",
         },
       );
@@ -77,7 +103,9 @@ export function GsapRouteAnimator({ children, className }: GsapRouteAnimatorProp
 
   return (
     <div ref={scopeRef} className={className ?? "gsap-route-scope"}>
-      {children}
+      <Suspense fallback={<RouteLoadingFallback />}>
+        {children}
+      </Suspense>
     </div>
   );
 }

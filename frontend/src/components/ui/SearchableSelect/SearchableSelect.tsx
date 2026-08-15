@@ -24,6 +24,7 @@ interface SearchableSelectProps {
   className?: string;
   emptyMessage?: string;
   ariaLabel?: string;
+  align?: "start" | "end";
 }
 
 /* Row/chrome heights used to estimate the panel's natural height. They only
@@ -47,6 +48,7 @@ export function SearchableSelect({
   className = "",
   emptyMessage = "No matching options found.",
   ariaLabel,
+  align = "start",
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -86,12 +88,13 @@ export function SearchableSelect({
     const rows = Math.max(filteredOptions.length, 1);
     return placeAnchoredMenu(trigger, {
       width: Math.max(trigger.offsetWidth, MIN_PANEL_WIDTH),
+      align,
       desiredHeight: Math.min(
         PANEL_CHROME_HEIGHT + (searchable ? SEARCH_HEADER_HEIGHT : 0) + rows * OPTION_ROW_HEIGHT,
         MAX_PANEL_HEIGHT,
       ),
     });
-  }, [filteredOptions.length, searchable]);
+  }, [filteredOptions.length, searchable, align]);
 
   /** Recompute on scroll / resize so the portal stays anchored. */
   useEffect(() => {

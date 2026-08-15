@@ -7530,6 +7530,77 @@ textarea:focus {
   color: #ffffff !important;
 }
 
+[data-theme="dark"] .import-upload {
+  background: #141418 !important;
+  border: 1.5px dashed rgba(255, 255, 255, 0.2) !important;
+  color: #f2f2f5 !important;
+}
+
+[data-theme="dark"] .module-part-stepper {
+  background: rgba(22, 22, 26, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="dark"] .mps-title {
+  color: #f2f2f5 !important;
+}
+
+[data-theme="dark"] .mps-meta {
+  color: #a1a1aa !important;
+}
+
+[data-theme="dark"] .mps-step:not(.is-active) .mps-title {
+  color: #e4e4e7 !important;
+}
+
+[data-theme="dark"] .mps-step:not(.is-active) .mps-badge {
+  background: #222228 !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+[data-theme="dark"] .mps-step:not(.is-active) .mps-num {
+  color: #a1a1aa !important;
+}
+
+[data-theme="dark"] .import-review {
+  background: #141418 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #f2f2f5 !important;
+}
+
+[data-theme="dark"] .preview-question {
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: #18181c !important;
+  color: #f2f2f5 !important;
+  opacity: 0.65;
+}
+
+[data-theme="dark"] .preview-question.selected {
+  border: 1.5px solid var(--primary, #e11d2e) !important;
+  background: #1e1e24 !important;
+  color: #ffffff !important;
+  opacity: 1;
+}
+
+[data-theme="dark"] .preview-question label {
+  color: #a1a1aa !important;
+}
+
+[data-theme="dark"] .preview-question textarea,
+[data-theme="dark"] .preview-question input:not([type="checkbox"]) {
+  background: #101014 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .preview-question .saved-options {
+  color: #e4e4e7 !important;
+}
+
+[data-theme="dark"] .preview-question .saved-options li {
+  color: #f2f2f5 !important;
+}
+
 [data-theme="dark"] .vh-tabbed-method-form {
   background: #16161a !important;
   border-color: rgba(255, 255, 255, 0.1) !important;

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Attempt } from "@/api/types";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { formatTime } from "../helpers";
 
@@ -48,6 +49,7 @@ export function TestRunnerHeader({
         </div>
       </div>
       <div className="test-runner-header-actions">
+        <ThemeToggle className="test-runner-theme-toggle" />
         {attempt.status === "in_progress" && secondsLeft !== undefined && secondsLeft > 0 && (
           <div className={`test-runner-timer${secondsLeft < 300 ? " is-urgent" : ""}`} role="timer" aria-live="polite">
             <span>{t.timeLeft || "Time Left"}</span>

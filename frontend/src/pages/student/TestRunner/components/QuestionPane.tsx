@@ -112,7 +112,6 @@ export function QuestionPane({
           index={questionNumberOffset + qIndex + 1}
           question={question}
           hidePrompt={currentPart.section_type === "writing"}
-          partInstructions={currentPart.section_type === "writing" ? currentPart.instructions : null}
           allowBoldMarkup={isReading1a}
           maxAnswerWords={currentPart.answer_constraints.max_answer_words}
           saving={savingIds.has(question.id)}
