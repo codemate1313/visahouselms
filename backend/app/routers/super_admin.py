@@ -357,6 +357,13 @@ async def upload_account_avatar(
     return await account_service.save_temp_avatar(file)
 
 
+@router.post("/upload-image")
+async def upload_general_image(
+    file: UploadFile = File(...),
+):
+    return await account_service.save_temp_avatar(file)
+
+
 @router.get("/me/sessions", response_model=List[SessionOut])
 def list_my_sessions(
     db: Session = Depends(get_db),

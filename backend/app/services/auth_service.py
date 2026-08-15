@@ -377,7 +377,7 @@ def request_password_reset(db: Session, email: str) -> None:
         )
 
     now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(minutes=30)
+    expires_at = now + timedelta(minutes=settings.password_reset_expiry_minutes)
     reset_payload = {
         "sub": str(user.id),
         "email": user.email,

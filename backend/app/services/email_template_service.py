@@ -270,7 +270,7 @@ def render_forgot_password_email(first_name: str, reset_url: str) -> tuple[str, 
 
 We received a security request to reset the password for your Visa House account.
 
-To set up a new password, please click the secure link below. For your protection, this link will expire in exactly 30 minutes.
+To set up a new password, please click the secure link below. For your protection, this link will expire in exactly 10 minutes.
 
 Reset Password Link:
 {reset_url}
@@ -289,7 +289,7 @@ The Visa House Security Team
       We received a security request to reset the password associated with your <strong style="color: #b91c2b;">Visa House</strong> account.
     </p>
     <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin: 0 0 24px 0;">
-      Click the button below to securely set up a new password. For your protection, this verification link is only valid for <strong>30 minutes</strong>.
+      Click the button below to securely set up a new password. For your protection, this verification link is only valid for <strong>10 minutes</strong>.
     </p>
     
     <!-- Security Notice Card -->

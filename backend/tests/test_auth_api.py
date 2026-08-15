@@ -296,6 +296,43 @@ class AuthApiTestCase(unittest.TestCase):
         self.assertTrue(data.get("otp_required"))
         self.assertIsNotNone(data.get("otp_challenge_id"))
 
+    def test_password_reset_token_expires_after_10_minutes(self):
+        import jwt
+        from datetime import datetime, timezone, timedelta
+
+        user = self._make_user("reset_expiry_test@example.com", STUDENT)
+
+        # 1. Valid token (generated now, expires in 10 minutes)
+        valid_payload = {
+            "sub": str(user.id),
+            "email": user.email,
+            "type": "password_reset",
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=10),
+        }
+        valid_token = jwt.encode(valid_payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+        res_valid = self.client.post(
+            "/auth/reset-password",
+            json={"token": valid_token, "new_password": "NewSecretPassword123!"},
+        )
+        self.assertEqual(res_valid.status_code, 200)
+
+        # 2. Expired token (11 minutes old / expired in past)
+        expired_payload = {
+            "sub": str(user.id),
+            "email": user.email,
+            "type": "password_reset",
+            "exp": datetime.now(timezone.utc) - timedelta(minutes=1),
+        }
+        expired_token = jwt.encode(expired_payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+        res_expired = self.client.post(
+            "/auth/reset-password",
+            json={"token": expired_token, "new_password": "AnotherNewPassword123!"},
+        )
+        self.assertEqual(res_expired.status_code, 400)
+        self.assertIn("Invalid or expired reset link", res_expired.json().get("detail", ""))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { StudentPlanModule } from "@/api/types";
-import { ArrowIcon, ClockIcon, ModuleTypeIcon } from "../icons";
+import { AlertCircleIcon, ArrowIcon, CheckCircleIcon, ClockIcon, ModuleTypeIcon } from "../icons";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/Button/Button";
 import { myCoursesStrings as strings } from "../MyCourses.strings";
@@ -31,9 +31,6 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
             className={`premium-test-card ${moduleTypeClass}${isLocked ? " is-locked" : ""}${isExhausted ? " is-exhausted" : ""}`}
             key={moduleId}
           >
-            {/* Ambient Background Glow Aura */}
-            <div className="premium-card-ambient-aura" />
-
             {/* Locked Center Overlay */}
             {isLocked && (
               <div
@@ -58,11 +55,13 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
               </span>
               {isExhausted ? (
                 <span className="premium-exhausted-chip" title={strings.attemptStatus.exhaustedTooltip}>
-                  ⚠️ Attempt Exhausted
+                  <AlertCircleIcon />
+                  <span>Attempt Exhausted</span>
                 </span>
               ) : retakeAvailable ? (
                 <span className="premium-retake-chip">
-                  ✓ Retake Approved
+                  <CheckCircleIcon />
+                  <span>Retake Approved</span>
                 </span>
               ) : isDemo && !isLocked ? (
                 <span className="premium-demo-chip" title={strings.demo.chipTooltip}>

@@ -241,28 +241,30 @@ export function CourseCatalog() {
         subtitle={strings.subtitle}
         actions={
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              display: "inline-flex",
-              alignItems: "center",
-              background: "#e2e8f0",
-              padding: "3px",
-              borderRadius: "10px",
-              fontSize: "12px",
-              fontWeight: 700,
-            }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                background: "var(--surface-muted, #f1f5f9)",
+                border: "1px solid var(--border, #e2e8f0)",
+                padding: "3px",
+                borderRadius: "10px",
+                fontSize: "12px",
+              }}
+            >
               <button
                 type="button"
                 onClick={() => setSelectedCurrency("INR")}
                 style={{
                   padding: "5px 12px",
-                  borderRadius: "8px",
+                  borderRadius: "7px",
                   border: "none",
-                  background: selectedCurrency === "INR" ? "#fff" : "transparent",
-                  color: selectedCurrency === "INR" ? "#c8202e" : "#64748b",
-                  boxShadow: selectedCurrency === "INR" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                  background: selectedCurrency === "INR" ? "var(--surface, #fff)" : "transparent",
+                  color: selectedCurrency === "INR" ? "var(--primary, #e11d48)" : "var(--text-muted, #64748b)",
+                  boxShadow: selectedCurrency === "INR" ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
                   cursor: "pointer",
-                  fontWeight: 800,
-                  transition: "all 0.15s",
+                  fontWeight: 650,
+                  transition: "all 0.15s ease",
                 }}
               >
                 ₹ INR (India)
@@ -272,14 +274,14 @@ export function CourseCatalog() {
                 onClick={() => setSelectedCurrency("USD")}
                 style={{
                   padding: "5px 12px",
-                  borderRadius: "8px",
+                  borderRadius: "7px",
                   border: "none",
-                  background: selectedCurrency === "USD" ? "#fff" : "transparent",
-                  color: selectedCurrency === "USD" ? "#2563eb" : "#64748b",
-                  boxShadow: selectedCurrency === "USD" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                  background: selectedCurrency === "USD" ? "var(--surface, #fff)" : "transparent",
+                  color: selectedCurrency === "USD" ? "var(--primary, #e11d48)" : "var(--text-muted, #64748b)",
+                  boxShadow: selectedCurrency === "USD" ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
                   cursor: "pointer",
-                  fontWeight: 800,
-                  transition: "all 0.15s",
+                  fontWeight: 650,
+                  transition: "all 0.15s ease",
                 }}
               >
                 $ USD (Global)
@@ -291,17 +293,19 @@ export function CourseCatalog() {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.5rem 1rem",
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: "8px",
+                gap: "6px",
+                padding: "6px 12px",
+                background: "var(--surface, #ffffff)",
+                border: "1px solid var(--border, #e2e8f0)",
+                borderRadius: "10px",
+                fontSize: "12.5px",
                 fontWeight: 600,
-                color: "var(--text)",
+                color: "var(--text, #0f172a)",
                 textDecoration: "none",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
               }}
             >
-              <Icon name="transactions" style={{ fontSize: "16px" }} />
+              <Icon name="transactions" style={{ fontSize: "14px" }} />
               Purchase History
             </Link>
           </div>

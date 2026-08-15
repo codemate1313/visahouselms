@@ -164,7 +164,7 @@ export function TestRunner() {
   }, [currentPart]);
 
   useEffect(() => {
-    setOnboardingCompleted(false);
+    setOnboardingCompleted(sessionStorage.getItem(`onboarding_completed_${id}`) === "true");
     setSecurityAuthorized(false);
   }, [id]);
 
@@ -1078,10 +1078,13 @@ export function TestRunner() {
     <DraggableCameraPreview stream={liveCameraStream} />
   ) : null;
   const hasSavedResponses = attempt.parts.some((part) => part.answered_count > 0);
+  const isFreshAttempt = !onboardingCompleted && !hasSavedResponses && sessionStorage.getItem(`onboarding_completed_${id}`) !== "true";
   const shouldShowPreExamOnboarding =
-    attempt.status === "ready"
-    || (attempt.security_required && !securityAuthorized)
-    || (!attempt.security_required && attempt.status !== "in_progress" && !onboardingCompleted && !hasSavedResponses);
+    (attempt.show_onboarding_instructions ?? true) && (
+      attempt.status === "ready"
+      || (attempt.security_required && !securityAuthorized)
+      || isFreshAttempt
+    );
 
   if (shouldShowPreExamOnboarding) {
     return (

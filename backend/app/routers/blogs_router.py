@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
@@ -9,6 +9,7 @@ from app.dependencies.auth import require_role
 from app.models.blogs import BlogPost
 from app.models.role import SUPER_ADMIN
 from app.schemas.blogs import BlogPostCreate, BlogPostResponse, BlogPostUpdate
+from app.services import account_service
 
 public_router = APIRouter(prefix="/blogs", tags=["blogs"])
 admin_router = APIRouter(
@@ -16,6 +17,13 @@ admin_router = APIRouter(
     tags=["admin-blogs"],
     dependencies=[Depends(require_role(SUPER_ADMIN))],
 )
+
+
+@admin_router.post("/upload-cover")
+async def upload_blog_cover(
+    file: UploadFile = File(...),
+):
+    return await account_service.save_temp_avatar(file)
 
 
 @public_router.get("", response_model=List[BlogPostResponse])

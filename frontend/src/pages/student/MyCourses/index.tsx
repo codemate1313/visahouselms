@@ -174,14 +174,9 @@ export function MyCourses() {
         </div>
       ) : (
         <div className="my-courses-content-wrapper">
-          {/* Top Hero Membership Card. Without an active subscription this is
-              demo access: free sample tests plus locked previews. */}
+          {/* Top Hero Membership Card */}
           <div className="my-courses-hero-card">
             <div className="my-courses-hero-left">
-              <div className="my-courses-hero-badge">
-                <span className="my-courses-hero-dot" />
-                {access.state === "active" || access.state === "grace" ? "ACTIVE MEMBERSHIP" : strings.demo.heroBadge}
-              </div>
               <h2 className="my-courses-hero-title">
                 {access.state === "active" || access.state === "grace" ? access.plan.name : strings.demo.heroTitle}
               </h2>
