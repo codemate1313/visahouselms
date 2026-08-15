@@ -69,9 +69,16 @@ export function GapTaskComposer({
     const effectivePassage = (first?.passage ?? currentStored).trim();
     setPassage(effectivePassage);
     setIsEditingPassage(effectivePassage.length === 0);
+    const isPlaceholder = (text: string, key: string) =>
+      text.trim().toLowerCase() === `option ${key.toLowerCase()}` ||
+      text.trim().toLowerCase() === `option ${key}`.toLowerCase();
+
     setOptions(
       first?.options?.length
-        ? first.options.map((option) => ({ key: option.key, text: option.text }))
+        ? first.options.map((option) => ({
+            key: option.key,
+            text: isPlaceholder(option.text, option.key) ? "" : option.text,
+          }))
         : Array.from({ length: optionCount }, (_, index) => ({ key: LETTERS[index], text: "" })),
     );
     setAnswers(

@@ -370,7 +370,27 @@ export function ModuleEditor() {
 
   function editQuestion(question: ExamModuleQuestion) {
     setEditingQuestionId(question.id);
-    setManual({ question_type: question.question_type, prompt: question.prompt, instructions: question.instructions, passage: question.passage, image_path: question.image_path, image_url: question.image_url, options: question.options, correct_answers: question.correct_answers, interaction: question.interaction ?? {}, explanation: question.explanation, points: question.points, difficulty: question.difficulty });
+    const isPlaceholder = (text: string, key: string) =>
+      text.trim().toLowerCase() === `option ${key.toLowerCase()}` ||
+      text.trim().toLowerCase() === `option ${key}`.toLowerCase();
+
+    setManual({
+      question_type: question.question_type,
+      prompt: question.prompt,
+      instructions: question.instructions,
+      passage: question.passage,
+      image_path: question.image_path,
+      image_url: question.image_url,
+      options: (question.options || []).map((opt) => ({
+        key: opt.key,
+        text: isPlaceholder(opt.text, opt.key) ? "" : opt.text,
+      })),
+      correct_answers: question.correct_answers,
+      interaction: question.interaction ?? {},
+      explanation: question.explanation,
+      points: question.points,
+      difficulty: question.difficulty,
+    });
   }
 
   async function uploadQuestionImage(file: File) {
@@ -791,11 +811,7 @@ export function ModuleEditor() {
   // The passage lives on each question, so saving the part-level source text
   // rewrites every question in the part. Questions are re-sent whole because the
   // update endpoint takes a full QuestionCreate payload, not a patch.
-  async function saveSharedPassage(
-    passage: string,
-    draftOptions?: { key: string; text: string }[],
-    draftAnswers?: Record<number, string>,
-  ) {
+  async function saveSharedPassage(passage: string) {
     if (!module || !selectedPart) return;
     setBusy(true); setError(null);
     try {
@@ -822,38 +838,6 @@ export function ModuleEditor() {
               difficulty: question.difficulty,
             }),
           );
-        }
-      } else {
-        // Initial question creation only for Reading 2 (composed inline matching blanks) where entire task is authored together
-        if (selectedPart.answer_constraints.layout === "inline_matching_blanks") {
-          const limit = selectedPart.question_limit ?? 6;
-          const optionCount = selectedPart.answer_constraints.option_count ?? 8;
-          const options = draftOptions && draftOptions.length >= 2
-            ? draftOptions.map((o) => ({ key: o.key, text: o.text || `Option ${o.key}` }))
-            : Array.from({ length: optionCount }, (_, i) => ({
-                key: String.fromCharCode(65 + i),
-                text: `Option ${String.fromCharCode(65 + i)}`,
-              }));
-          for (let gap = 1; gap <= limit; gap++) {
-            const answer = draftAnswers?.[gap] || String.fromCharCode(65 + ((gap - 1) % options.length));
-            await apiClient.post(
-              base,
-              questionPayload({
-                question_type: selectedPart.answer_constraints.allowed_question_types?.[0] ?? "matching_unique",
-                prompt: strings.gapTask.gapLabel(gap),
-                instructions: null,
-                passage,
-                image_path: null,
-                image_url: null,
-                options,
-                correct_answers: [answer],
-                interaction: {},
-                explanation: null,
-                points: 1,
-                difficulty: "medium",
-              }),
-            );
-          }
         }
       }
       const partId = selectedPart.id;
