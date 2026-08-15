@@ -19,7 +19,7 @@ import type {
   QuestionImportPreview,
 } from "@/api/types";
 import { moduleEditorStrings as strings } from "./ModuleEditor.strings";
-import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSED_TASK_LAYOUTS, COMPOSITE_TYPES, DERIVED_DURATION_MODULE_TYPES, MODULE_TYPES, SOURCE_SECTIONS, detectConversationSpeakers, emptyQuestion, notepadPromptForBlank, questionPayload } from "./helpers";
+import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSED_TASK_LAYOUTS, COMPOSITE_TYPES, DERIVED_DURATION_MODULE_TYPES, MODULE_TYPES, SOURCE_SECTIONS, defaultSpeakingTurn, detectConversationSpeakers, emptyQuestion, notepadPromptForBlank, questionPayload } from "./helpers";
 import { NewModuleForm } from "./components/NewModuleForm";
 import { ModulePartNav } from "./components/ModulePartNav";
 import { ModuleReadinessPanel } from "./components/ModuleReadinessPanel";
@@ -27,7 +27,6 @@ import { ModuleDetailsForm, type ModuleDetailsState } from "./components/ModuleD
 import { PartSpecPanel } from "./components/PartSpecPanel";
 import { ListeningAudioPanel } from "./components/ListeningAudioPanel";
 import { SpeakingTimingPanel } from "./components/SpeakingTimingPanel";
-import { SpeakingExaminerPicker } from "./components/SpeakingExaminerPicker";
 import { SONIA_EXAMINER } from "./speakingExaminer";
 import { SharedPassagePanel } from "./components/SharedPassagePanel";
 import { GapTaskComposer, type GapTaskDraft } from "./components/GapTaskComposer";
@@ -341,7 +340,6 @@ export function ModuleEditor() {
       );
       setManual((current) => current ? {
         ...current,
-        passage: selectedPart.section_type === "speaking" ? null : current.passage,
         image_path: data.image_path,
         image_url: data.image_url,
         interaction: selectedPart.section_type === "speaking" ? {
@@ -375,7 +373,6 @@ export function ModuleEditor() {
       }>(`/instructor/modules/${module.id}/parts/${selectedPart.id}/speaking-material-pdf`, form);
       setManual((current) => current ? {
         ...current,
-        passage: null,
         image_path: null,
         image_url: null,
         interaction: {
@@ -448,14 +445,11 @@ export function ModuleEditor() {
       const form = new FormData(); form.append("file", importFile);
       const { data } = await apiClient.post<QuestionImportPreview>(`/instructor/modules/${module.id}/parts/${selectedPart.id}/import-preview`, form);
       const allowed = selectedPart.answer_constraints.allowed_question_types ?? [];
-      const requiredTurns = selectedPart.answer_constraints.required_turn_types ?? [];
       const groupSize = selectedPart.answer_constraints.questions_per_group ?? 1;
       const normalized = data.questions.map((question, index) => {
         const nextType = !allowed.length || allowed.includes(question.question_type) ? question.question_type : allowed[0];
         const turnType = question.interaction?.turn_type
-          ?? requiredTurns[Math.min(index, requiredTurns.length - 1)]
-          ?? selectedPart.answer_constraints.allowed_turn_types?.[0]
-          ?? null;
+          ?? defaultSpeakingTurn(selectedPart, index);
         return {
           ...question,
           question_type: nextType,
@@ -824,8 +818,6 @@ export function ModuleEditor() {
   if (loading) return <p>{strings.loading}</p>;
   if (!module) return <div><p className="error-text">{error || strings.notFound}</p><Link to={moduleWorkspacePath}>{strings.backToModules}</Link></div>;
 
-  const speakingPart = module.parts?.find((part) => part.section_type === "speaking");
-
   return (
     <div className="module-editor-page">
       {/* Sleek Bottom Floating Status Bar */}
@@ -843,14 +835,6 @@ export function ModuleEditor() {
             selectedPartId={selectedPartId}
             onChoosePart={choosePart}
           />
-          {speakingPart && (
-            <div className="module-examiner-picker-slot">
-              <SpeakingExaminerPicker
-                moduleId={module.id}
-                samplePartId={speakingPart.id}
-              />
-            </div>
-          )}
         </div>
         <main className="module-part-editor" id="module-part-editor">
           {!selectedPart ? (

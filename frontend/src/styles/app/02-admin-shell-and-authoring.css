@@ -1768,6 +1768,21 @@
   flex: 1;
 }
 
+.vh-part-instructions-preview-block {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+}
+
+.vh-part-instructions-preview-block > span,
+.vh-part-instructions-editor label {
+  color: var(--sa-sidebar-red, #b91c2b);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .vh-part-instructions-editor {
   display: flex;
   flex-direction: column;

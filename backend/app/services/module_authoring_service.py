@@ -780,6 +780,11 @@ def _validate_question_for_part(part: ExamModulePart, data: dict, current_count:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"{part.title} requires one of these speaking turns: {', '.join(sorted(allowed_turn_types))}",
         )
+    if part.part_code == "speaking_3" and interaction.get("turn_type") == "read_aloud" and not (data.get("passage") or "").strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Speaking 3 read-aloud prompts require the candidate-visible text to read",
+        )
     if data["question_type"] in {"matching_unique", "matching_reusable"} and len(data.get("correct_answers", [])) != 1:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

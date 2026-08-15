@@ -314,6 +314,93 @@
   border-color: rgba(255, 255, 255, 0.18);
 }
 
+.vh-speaking-flow-guide {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  margin: 12px 0 16px;
+  padding: 14px;
+  border: 1px solid rgba(185, 28, 43, 0.16);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(185, 28, 43, 0.08), rgba(15, 23, 42, 0.025));
+}
+
+.vh-speaking-flow-guide > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.vh-speaking-flow-guide strong {
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.vh-speaking-flow-kicker {
+  color: var(--sa-sidebar-red, #b91c2b);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.vh-speaking-flow-guide ol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vh-speaking-flow-guide li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.vh-speaking-flow-guide li span {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  place-items: center;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--sa-sidebar-red, #b91c2b);
+  font-size: 11px;
+  box-shadow: 0 5px 12px rgba(15, 23, 42, 0.1);
+}
+
+.vh-speaking-auto-type {
+  display: inline-grid;
+  justify-self: start;
+  gap: 3px;
+  margin: 4px 0 8px;
+  padding: 9px 12px;
+  border: 1px solid rgba(185, 28, 43, 0.18);
+  border-radius: 12px;
+  background: rgba(185, 28, 43, 0.055);
+}
+
+.vh-speaking-auto-type span {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.vh-speaking-auto-type strong {
+  color: #0f172a;
+  font-size: 13px;
+}
+
 .vh-speaking-material-builder {
   display: grid;
   gap: 14px;
@@ -322,6 +409,13 @@
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 16px;
   background: rgba(248, 250, 252, 0.72);
+}
+
+.vh-speaking-material-builder.is-compact {
+  gap: 12px;
+  padding: 14px;
+  border-style: dashed;
+  background: rgba(248, 250, 252, 0.5);
 }
 
 .vh-speaking-material-heading {
@@ -362,36 +456,83 @@
   font-weight: 700;
 }
 
-.vh-speaking-material-tabs {
+.vh-speaking-attachment-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  padding: 5px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.vh-speaking-attachment-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
   border: 1px solid rgba(15, 23, 42, 0.1);
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.035);
+  background: rgba(255, 255, 255, 0.55);
 }
 
-.vh-speaking-material-tabs button {
-  min-height: 38px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 750;
-  cursor: pointer;
+.vh-speaking-attachment-head {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
 }
 
-.vh-speaking-material-tabs button.is-active {
-  background: #ffffff;
+.vh-speaking-attachment-head > svg {
+  width: 22px;
+  height: 22px;
   color: var(--sa-sidebar-red, #b91c2b);
-  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.09);
+}
+
+.vh-speaking-attachment-head div {
+  display: grid;
+  min-width: 0;
+}
+
+.vh-speaking-attachment-head strong {
+  color: #0f172a;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.vh-speaking-attachment-head span {
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .vh-speaking-material-field {
   display: grid;
   gap: 7px;
+}
+
+.vh-speaking-compact-file {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.vh-speaking-compact-file > svg {
+  width: 18px;
+  height: 18px;
+  color: var(--sa-sidebar-red, #b91c2b);
+}
+
+.vh-speaking-compact-file span {
+  min-width: 0;
+  overflow: hidden;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .vh-speaking-pdf-card {
@@ -434,6 +575,38 @@
   background: rgba(255, 255, 255, 0.025);
 }
 
+[data-theme="dark"] .vh-speaking-flow-guide {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, rgba(185, 28, 43, 0.2), rgba(255, 255, 255, 0.035));
+}
+
+[data-theme="dark"] .vh-speaking-flow-guide strong {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .vh-speaking-flow-guide li {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .vh-speaking-flow-guide li span {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8b4bc;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .vh-speaking-auto-type {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+[data-theme="dark"] .vh-speaking-auto-type span {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .vh-speaking-auto-type strong {
+  color: #f8fafc;
+}
+
 [data-theme="dark"] .vh-speaking-material-heading h3,
 [data-theme="dark"] .vh-speaking-pdf-card strong {
   color: #f1f5f9;
@@ -445,20 +618,41 @@
   color: #94a3b8;
 }
 
-[data-theme="dark"] .vh-speaking-material-tabs {
+[data-theme="dark"] .vh-speaking-attachment-card {
   border-color: rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.035);
 }
 
-[data-theme="dark"] .vh-speaking-material-tabs button.is-active,
+[data-theme="dark"] .vh-speaking-compact-file {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+[data-theme="dark"] .vh-speaking-compact-file span {
+  color: #cbd5e1;
+}
+
 [data-theme="dark"] .vh-speaking-pdf-card {
   background: rgba(255, 255, 255, 0.09);
   color: #ffffff;
 }
 
+[data-theme="dark"] .vh-speaking-attachment-head strong {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .vh-speaking-attachment-head span {
+  color: #94a3b8;
+}
+
 @media (max-width: 620px) {
-  .vh-speaking-material-tabs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .vh-speaking-flow-guide,
+  .vh-speaking-attachment-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vh-speaking-flow-guide ol {
+    grid-template-columns: 1fr;
   }
 
   .vh-speaking-pdf-card {

@@ -31,6 +31,17 @@ export function PartSpecPanel({
   const t = strings.partSpec;
   const canUseAiEvaluation = !part.auto_marked && ["writing", "speaking"].includes(part.section_type);
   const isReading1a = part.part_code === "reading_1a";
+  const isSpeaking = part.section_type === "speaking";
+  const canEditPartInstructions = isReading1a || isSpeaking;
+  const instructionsLabel = isSpeaking ? "Sonia segment intro" : t.instructionsLabel;
+  const instructionsPlaceholder = isSpeaking
+    ? "Example: In this part, I will ask you some questions about yourself. Answer each question clearly."
+    : t.instructionsPlaceholder;
+  const instructionsEditLabel = isSpeaking ? "Edit intro" : t.instructionsEdit;
+  const instructionsSaveLabel = isSpeaking ? "Save intro" : t.instructionsSave;
+  const instructionsEmpty = isSpeaking
+    ? "No intro set yet — Sonia will start with the first question."
+    : t.instructionsEmpty;
   const [isEditingInstructions, setIsEditingInstructions] = useState(false);
   const [instructionsDraft, setInstructionsDraft] = useState(part.instructions ?? "");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -141,19 +152,21 @@ export function PartSpecPanel({
         </div>
       )}
 
-      {isReading1a && (
+      {canEditPartInstructions && (
       <div className="vh-part-instructions-row">
         {isEditingInstructions ? (
           <div className="vh-part-instructions-editor">
+            <label htmlFor={`part-instructions-${part.id}`}>{instructionsLabel}</label>
             <textarea
+              id={`part-instructions-${part.id}`}
               rows={2}
               value={instructionsDraft}
               onChange={(event) => setInstructionsDraft(event.target.value)}
-              placeholder={t.instructionsPlaceholder}
+              placeholder={instructionsPlaceholder}
             />
             <div className="vh-part-instructions-actions">
               <button type="button" disabled={busy} onClick={saveInstructions}>
-                {t.instructionsSave}
+                {instructionsSaveLabel}
               </button>
               <button
                 type="button"
@@ -169,12 +182,15 @@ export function PartSpecPanel({
           </div>
         ) : (
           <>
-            <p className="vh-part-instructions-preview">
-              {part.instructions || t.instructionsEmpty}
-            </p>
+            <div className="vh-part-instructions-preview-block">
+              <span>{instructionsLabel}</span>
+              <p className="vh-part-instructions-preview">
+                {part.instructions || instructionsEmpty}
+              </p>
+            </div>
             {isEditable && (
               <button type="button" className="secondary-button" onClick={() => setIsEditingInstructions(true)}>
-                {t.instructionsEdit}
+                {instructionsEditLabel}
               </button>
             )}
           </>

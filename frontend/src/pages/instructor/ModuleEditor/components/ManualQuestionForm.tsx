@@ -2,7 +2,7 @@ import type { FormEvent } from "react";
 import { useRef } from "react";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
-import { RequiredMark, SearchableSelect } from "@/components/ui";
+import { RequiredMark } from "@/components/ui";
 import type { ExamModulePart, QuestionDraft, SpeakingTurnType } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { ANSWER_FREE_TYPES, CHOICE_TYPES } from "../helpers";
@@ -66,6 +66,9 @@ export function ManualQuestionForm({
   const isListening = part.section_type === "listening";
   const isListening1 = part.part_code === "listening_1";
   const isSpeaking = part.section_type === "speaking";
+  const isSpeakingQuestionOnly = part.part_code === "speaking_1" || part.part_code === "speaking_2";
+  const isSpeakingReadAloud = part.part_code === "speaking_3";
+  const isSpeakingPresentation = part.part_code === "speaking_4";
   const isReading1a = part.part_code === "reading_1a";
   const isReading1b = part.part_code === "reading_1b";
   const promptRef = useRef<HTMLTextAreaElement>(null);
@@ -86,33 +89,52 @@ export function ManualQuestionForm({
     follow_up: "Follow-up question",
     presentation: "Extended presentation",
   };
-  const inferredCandidateMaterial = manual.interaction?.candidate_material_path
+  const candidateAttachmentType = manual.interaction?.candidate_material_path
     ? "pdf"
     : manual.image_path
       ? "image"
-      : manual.passage
-        ? "text"
-        : "none";
-  const candidateMaterialType = manual.interaction?.candidate_material_type === "none"
-    && inferredCandidateMaterial !== "none"
-    ? inferredCandidateMaterial
-    : manual.interaction?.candidate_material_type ?? inferredCandidateMaterial;
-
-  function chooseCandidateMaterial(type: "none" | "text" | "image" | "pdf") {
-    onManualChange({
-      ...manual,
-      passage: type === "text" ? manual.passage : null,
-      image_path: type === "image" ? manual.image_path : null,
-      image_url: type === "image" ? manual.image_url : null,
-      interaction: {
-        ...manual.interaction,
-        candidate_material_type: type,
-        candidate_material_path: type === "pdf" ? manual.interaction?.candidate_material_path : null,
-        candidate_material_url: type === "pdf" ? manual.interaction?.candidate_material_url : null,
-        candidate_material_name: type === "pdf" ? manual.interaction?.candidate_material_name : null,
-      },
-    });
-  }
+      : "none";
+  const speakingPromptLabel = isSpeakingReadAloud
+    ? "What Sonia says before read aloud"
+    : isSpeakingPresentation
+      ? "What Sonia says before the presentation"
+      : "What Sonia asks";
+  const speakingPromptHint = isSpeakingReadAloud
+    ? "Private examiner instruction. Sonia says this first; the student reads the candidate-visible text aloud."
+    : isSpeakingPresentation
+      ? "Private examiner instruction. Sonia gives these instructions before the student sees and presents the material."
+      : "Private examiner script. Sonia asks this aloud; it is not printed in the candidate workspace.";
+  const speakingPromptPlaceholder = isSpeakingReadAloud
+    ? "Example: You will now read the text aloud. You have 20 seconds to prepare."
+    : isSpeakingPresentation
+      ? "Example: Look at the image and prepare a short presentation. You have one minute to prepare."
+      : "Enter Sonia's question or instruction for this turn";
+  const candidateTextLabel = isSpeakingReadAloud
+    ? "Read-aloud text"
+    : isSpeakingPresentation
+      ? "Presentation notes or demographic text"
+      : "Candidate-visible text";
+  const candidateTextPlaceholder = isSpeakingReadAloud
+    ? "Paste the exact text the student must read aloud"
+    : isSpeakingPresentation
+      ? "Add any labels, demographics, context, or written notes that should appear with the uploaded image"
+      : "Optional text shown to the candidate, if this turn needs a visible card";
+  const candidateWorkspaceHint = isSpeakingReadAloud
+    ? "Add the exact text the student reads aloud. Sonia's instruction stays separate."
+    : isSpeakingPresentation
+      ? "Add the image/demographic material and optional text the student presents from. Sonia gives the custom instructions first."
+      : "For Parts 1 and 2, Sonia normally asks the question and the student answers. Add visible text only if this turn needs a card.";
+  const speakingFlowTitle = isSpeakingReadAloud
+    ? "Read-aloud setup"
+    : isSpeakingPresentation
+      ? "Presentation setup"
+      : "Question-and-answer setup";
+  const speakingFlowSteps = isSpeakingReadAloud
+    ? ["Sonia gives the instruction", "Candidate reads the text", "Recording is saved"]
+    : isSpeakingPresentation
+      ? ["Sonia gives instructions", "Candidate views material", "Candidate presents"]
+      : ["Sonia asks the question", "Candidate answers", "Recording is saved"];
+  const hasVisibleCandidateMaterial = Boolean(manual.passage?.trim() || manual.image_url || manual.interaction?.candidate_material_url);
 
   function toggleBoldSelection() {
     const el = promptRef.current;
@@ -162,18 +184,12 @@ export function ManualQuestionForm({
         )}
         {allowedTurns.length > 0 && (
           <>
-            <label htmlFor="module-question-turn">{t.turnTypeLabel}<RequiredMark /></label>
-            <SearchableSelect
-              id="module-question-turn"
-              options={allowedTurns.map((turn) => ({ value: turn, label: turnLabels[turn] }))}
-              value={manual.interaction?.turn_type ?? allowedTurns[0]}
-              onChange={(value) => onManualChange({
-                ...manual,
-                interaction: { ...manual.interaction, turn_type: String(value) as SpeakingTurnType },
-              })}
-              searchable={false}
-              className="form-dropdown-select"
-            />
+            {isSpeaking && manual.interaction?.turn_type && (
+              <div className="vh-speaking-auto-type">
+                <span>Prompt type</span>
+                <strong>{turnLabels[manual.interaction.turn_type]}</strong>
+              </div>
+            )}
             <div className="form-grid">
               <MinuteSecondInput
                 id="module-question-preparation"
@@ -214,9 +230,25 @@ export function ManualQuestionForm({
             )}
           </>
         )}
+        {isSpeaking && (
+          <div className="vh-speaking-flow-guide" aria-label={`${part.title} speaking flow`}>
+            <div>
+              <span className="vh-speaking-flow-kicker">{part.title}</span>
+              <strong>{speakingFlowTitle}</strong>
+            </div>
+            <ol>
+              {speakingFlowSteps.map((step, index) => (
+                <li key={step}>
+                  <span>{index + 1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
         {/* 1. Question or task prompt */}
         <div className="vh-prompt-label-row">
-          <label htmlFor="module-question-prompt">{isSpeaking ? "What Sonia says" : isListening1 ? "Question" : t.promptLabel}<RequiredMark /></label>
+          <label htmlFor="module-question-prompt">{isSpeaking ? speakingPromptLabel : isListening1 ? "Question" : t.promptLabel}<RequiredMark /></label>
           {isReading1a && (
             <button
               type="button"
@@ -229,14 +261,14 @@ export function ManualQuestionForm({
           )}
         </div>
         {isReading1a && <p className="hint">{t.boldSelectionHint}</p>}
-        {isSpeaking && <p className="hint">Private examiner script. Sonia speaks this aloud; it is not printed in the candidate workspace.</p>}
+        {isSpeaking && <p className="hint">{speakingPromptHint}</p>}
         <textarea
           id="module-question-prompt"
           ref={promptRef}
           rows={isListening1 ? 2 : 4}
           value={manual.prompt}
           onChange={(event) => onManualChange({ ...manual, prompt: event.target.value })}
-          placeholder={isSpeaking ? "Enter Sonia's instruction or question for this turn" : isListening1 ? "Question 1" : (part.answer_constraints.inline_marker_required ? t.inlinePromptPlaceholder : t.promptPlaceholder)}
+          placeholder={isSpeaking ? speakingPromptPlaceholder : isListening1 ? "Question 1" : (part.answer_constraints.inline_marker_required ? t.inlinePromptPlaceholder : t.promptPlaceholder)}
           required
         />
 
@@ -250,77 +282,107 @@ export function ManualQuestionForm({
           />
         )}
 
-        {isSpeaking && (
+        {isSpeakingQuestionOnly && hasVisibleCandidateMaterial && (
+          <section className="vh-speaking-material-builder is-compact" aria-labelledby="candidate-material-heading">
+            <div className="vh-speaking-material-heading">
+              <div>
+                <span className="vh-speaking-material-kicker">Optional card</span>
+                <h3 id="candidate-material-heading">Student-visible support</h3>
+                <p>Leave empty for the normal Part 1/2 flow where Sonia asks and the student answers.</p>
+              </div>
+              <span className="vh-speaking-material-optional">Optional</span>
+            </div>
+
+            <div className="vh-speaking-material-field">
+              <label htmlFor="module-question-candidate-text">Support text</label>
+              <textarea
+                id="module-question-candidate-text"
+                rows={4}
+                value={manual.passage ?? ""}
+                onChange={(event) => onManualChange({
+                  ...manual,
+                  passage: event.target.value,
+                  interaction: {
+                    ...manual.interaction,
+                    candidate_material_type: candidateAttachmentType === "none" && event.target.value.trim() ? "text" : candidateAttachmentType,
+                  },
+                })}
+                placeholder="Optional support text shown to the candidate"
+              />
+            </div>
+            {manual.image_url && (
+              <div className="vh-speaking-compact-file">
+                <Icon name="image" />
+                <span>Image support is attached.</span>
+                <button type="button" className="vh-remove-img-btn" onClick={onRemoveImage}><Icon name="x" />Remove</button>
+              </div>
+            )}
+            {manual.interaction?.candidate_material_url && (
+              <div className="vh-speaking-compact-file">
+                <Icon name="filePdf" />
+                <span>{manual.interaction.candidate_material_name || "PDF support is attached."}</span>
+                <button type="button" className="vh-remove-img-btn" onClick={onRemoveSpeakingPdf}><Icon name="x" />Remove</button>
+              </div>
+            )}
+          </section>
+        )}
+
+        {isSpeaking && !isSpeakingQuestionOnly && (
           <section className="vh-speaking-material-builder" aria-labelledby="candidate-material-heading">
             <div className="vh-speaking-material-heading">
               <div>
                 <span className="vh-speaking-material-kicker">Candidate workspace</span>
                 <h3 id="candidate-material-heading">What the candidate sees</h3>
-                <p>Choose one support format. This stays separate from Sonia's spoken script.</p>
+                <p>{candidateWorkspaceHint}</p>
               </div>
-              <span className="vh-speaking-material-optional">Optional</span>
-            </div>
-            <div className="vh-speaking-material-tabs" role="radiogroup" aria-label="Candidate material type">
-              {([
-                ["none", "Nothing"],
-                ["text", "Text"],
-                ["image", "Image"],
-                ["pdf", "PDF"],
-              ] as const).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  role="radio"
-                  aria-checked={candidateMaterialType === value}
-                  className={candidateMaterialType === value ? "is-active" : ""}
-                  onClick={() => chooseCandidateMaterial(value)}
-                >
-                  {label}
-                </button>
-              ))}
+              <span className="vh-speaking-material-optional">{isSpeakingReadAloud ? "Required" : "Optional"}</span>
             </div>
 
-            {candidateMaterialType === "none" && (
-              <p className="vh-speaking-material-empty">The candidate will only see Sonia and the response controls.</p>
-            )}
+            <div className="vh-speaking-material-field">
+              <label htmlFor="module-question-candidate-text">{candidateTextLabel}{isSpeakingReadAloud ? <RequiredMark /> : null}</label>
+              <textarea
+                id="module-question-candidate-text"
+                rows={6}
+                value={manual.passage ?? ""}
+                onChange={(event) => onManualChange({
+                  ...manual,
+                  passage: event.target.value,
+                  interaction: {
+                    ...manual.interaction,
+                    candidate_material_type: candidateAttachmentType === "none" && event.target.value.trim() ? "text" : candidateAttachmentType,
+                  },
+                })}
+                placeholder={candidateTextPlaceholder}
+                required={isSpeakingReadAloud}
+              />
+            </div>
 
-            {candidateMaterialType === "text" && (
-              <div className="vh-speaking-material-field">
-                <label htmlFor="module-question-candidate-text">Candidate-visible text</label>
-                <textarea
-                  id="module-question-candidate-text"
-                  rows={6}
-                  value={manual.passage ?? ""}
-                  onChange={(event) => onManualChange({
-                    ...manual,
-                    passage: event.target.value,
-                    interaction: { ...manual.interaction, candidate_material_type: "text" },
-                  })}
-                  placeholder="Paste the passage, role-play card, read-aloud text, or presentation topic shown to the candidate"
-                  required
-                />
-              </div>
-            )}
-
-            {candidateMaterialType === "image" && (
-              <div className="vh-dropzone-pill-container">
+            {!isSpeakingReadAloud && (
+            <div className="vh-speaking-attachment-grid">
+              <div className="vh-speaking-attachment-card">
+                <div className="vh-speaking-attachment-head">
+                  <Icon name="image" />
+                  <div>
+                    <strong>{isSpeakingPresentation ? "Demographic/image attachment" : "Image attachment"}</strong>
+                    <span>{isSpeakingPresentation ? "Upload the image, chart, or demographic the student presents from" : "Any supported raster image format"}</span>
+                  </div>
+                </div>
                 {!manual.image_url ? (
-                  <label className={`vh-dropzone-pill${uploadingImage ? " is-busy" : ""}`}>
+                  <label className={`vh-dropzone-pill${uploadingImage || candidateAttachmentType === "pdf" ? " is-busy" : ""}`}>
                     <input
                       type="file"
-                      accept="image/png,image/jpeg,image/webp"
+                      accept="image/*"
                       hidden
-                      disabled={uploadingImage}
+                      disabled={uploadingImage || candidateAttachmentType === "pdf"}
                       onChange={(event) => {
                         const file = event.target.files?.[0];
                         if (file) onUploadImage(file);
                         event.target.value = "";
                       }}
                     />
-                    <div className="vh-dropzone-icon-box"><Icon name="image" /></div>
                     <div className="vh-dropzone-text">
-                      <span className="vh-dropzone-main">{uploadingImage ? "Uploading image..." : "Upload candidate image"}</span>
-                      <span className="vh-dropzone-sub">PNG, JPEG, or WebP</span>
+                      <span className="vh-dropzone-main">{uploadingImage ? "Uploading image..." : "Upload image"}</span>
+                      <span className="vh-dropzone-sub">{candidateAttachmentType === "pdf" ? "Remove PDF first to use an image" : "Supported raster image formats"}</span>
                     </div>
                     <span className="vh-dropzone-btn">Browse</span>
                   </label>
@@ -336,27 +398,31 @@ export function ManualQuestionForm({
                   </div>
                 )}
               </div>
-            )}
 
-            {candidateMaterialType === "pdf" && (
-              <div className="vh-dropzone-pill-container">
+              <div className="vh-speaking-attachment-card">
+                <div className="vh-speaking-attachment-head">
+                  <Icon name="filePdf" />
+                  <div>
+                    <strong>PDF attachment</strong>
+                    <span>Use when the candidate should inspect a document</span>
+                  </div>
+                </div>
                 {!manual.interaction?.candidate_material_url ? (
-                  <label className={`vh-dropzone-pill${uploadingSpeakingPdf ? " is-busy" : ""}`}>
+                  <label className={`vh-dropzone-pill${uploadingSpeakingPdf || candidateAttachmentType === "image" ? " is-busy" : ""}`}>
                     <input
                       type="file"
                       accept="application/pdf"
                       hidden
-                      disabled={uploadingSpeakingPdf}
+                      disabled={uploadingSpeakingPdf || candidateAttachmentType === "image"}
                       onChange={(event) => {
                         const file = event.target.files?.[0];
                         if (file && onUploadSpeakingPdf) onUploadSpeakingPdf(file);
                         event.target.value = "";
                       }}
                     />
-                    <div className="vh-dropzone-icon-box"><Icon name="filePdf" /></div>
                     <div className="vh-dropzone-text">
                       <span className="vh-dropzone-main">{uploadingSpeakingPdf ? "Uploading PDF..." : "Upload candidate PDF"}</span>
-                      <span className="vh-dropzone-sub">PDF up to 25 MB</span>
+                      <span className="vh-dropzone-sub">{candidateAttachmentType === "image" ? "Remove image first to use a PDF" : "PDF up to 25 MB"}</span>
                     </div>
                     <span className="vh-dropzone-btn">Browse</span>
                   </label>
@@ -371,6 +437,11 @@ export function ManualQuestionForm({
                   </div>
                 )}
               </div>
+            </div>
+            )}
+
+            {candidateAttachmentType === "none" && !manual.passage?.trim() && (
+              <p className="vh-speaking-material-empty">Leave this blank when the candidate should only see Sonia and the response controls.</p>
             )}
           </section>
         )}

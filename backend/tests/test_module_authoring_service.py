@@ -635,6 +635,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         draft = QuestionCreate(
             question_type="speaking_prompt",
             prompt="Sonia asks the candidate to read the role-play card.",
+            passage="Use this role-play card to prepare your answer.",
             interaction={
                 "turn_type": "identity",
                 "response_seconds": 45,
@@ -650,7 +651,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             question["interaction"]["candidate_material_url"],
             uploaded["candidate_material_url"],
         )
-        self.assertIsNone(question["passage"])
+        self.assertEqual(question["passage"], "Use this role-play card to prepare your answer.")
 
         module_authoring_service.delete_question(
             self.db, self.instructor, module.id, part.id, question["id"], None
@@ -670,6 +671,36 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
                 prompt="Read this text aloud.",
                 interaction={"candidate_material_type": "text"},
             )
+        mixed = QuestionCreate(
+            question_type="speaking_prompt",
+            prompt="Describe the image.",
+            passage="Use the image and the notes below to answer.",
+            image_path="exam-modules/1/questions/chart.webp",
+            interaction={"candidate_material_type": "image"},
+        )
+        self.assertEqual(mixed.passage, "Use the image and the notes below to answer.")
+
+    def test_speaking_three_read_aloud_requires_candidate_text(self) -> None:
+        created = self._create("speaking")
+        module = module_authoring_service.get_module_or_404(self.db, created["id"])
+        part = next(item for item in module.parts if item.part_code == "speaking_3")
+        draft = QuestionCreate(
+            question_type="speaking_prompt",
+            prompt="You will now read the text aloud.",
+            interaction={
+                "turn_type": "read_aloud",
+                "preparation_seconds": 20,
+                "response_seconds": 90,
+            },
+        ).model_dump()
+
+        with self.assertRaises(HTTPException) as ctx:
+            module_authoring_service.add_question(
+                self.db, self.instructor, module.id, part.id, draft, None
+            )
+
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("read-aloud", ctx.exception.detail)
 
 
 if __name__ == "__main__":

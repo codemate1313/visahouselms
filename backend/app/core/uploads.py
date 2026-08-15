@@ -41,10 +41,11 @@ async def read_compressed_profile_image(
     quality: int = 82,
 ) -> tuple[str, bytes]:
     """Validate and normalize a profile image into a compact, metadata-free WebP."""
-    if (upload.content_type or "") not in ALLOWED_IMAGE_TYPES:
+    content_type = (upload.content_type or "").split(";", 1)[0].strip().lower()
+    if not content_type.startswith("image/") or content_type == "image/svg+xml":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"{label} must be a PNG, JPEG, or WebP image",
+            detail=f"{label} must be a supported raster image",
         )
 
     await upload.seek(0)

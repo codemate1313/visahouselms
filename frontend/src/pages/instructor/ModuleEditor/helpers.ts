@@ -32,6 +32,24 @@ export function optionsFor(type: QuestionType, optionCount = 3): QuestionOption[
   return [];
 }
 
+export function defaultSpeakingTurn(part: ExamModulePart, pendingOffset = 0): SpeakingTurnType | null {
+  const requiredTurns = part.answer_constraints.required_turn_types ?? [];
+  const allowedTurns = part.answer_constraints.allowed_turn_types ?? [];
+  const usedTurns = new Set(part.questions.map((question) => question.interaction?.turn_type).filter(Boolean));
+
+  for (let index = 0; index < pendingOffset; index += 1) {
+    const nextMissing = requiredTurns.find((turn) => !usedTurns.has(turn));
+    if (nextMissing) {
+      usedTurns.add(nextMissing);
+    }
+  }
+
+  const missingRequired = requiredTurns.find((turn) => !usedTurns.has(turn));
+  if (missingRequired) return missingRequired as SpeakingTurnType;
+  if (allowedTurns.includes("follow_up")) return "follow_up";
+  return (allowedTurns[0] ?? null) as SpeakingTurnType | null;
+}
+
 export function emptyQuestion(part: ExamModulePart): QuestionDraft {
   const type = part.answer_constraints.allowed_question_types?.[0] ?? "short_answer";
   const points = part.max_marks && part.question_limit ? Number(part.max_marks) / part.question_limit : 1;
@@ -47,11 +65,7 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
   const groupLabel = part.answer_constraints.group_label_required
     ? `Conversation ${Math.floor(part.questions.length / groupSize) + 1}`
     : null;
-  const requiredTurns = part.answer_constraints.required_turn_types ?? [];
-  const usedTurns = new Set(part.questions.map((question) => question.interaction?.turn_type).filter(Boolean));
-  const turnType = (requiredTurns.find((turn) => !usedTurns.has(turn))
-    ?? part.answer_constraints.allowed_turn_types?.[0]
-    ?? null) as SpeakingTurnType | null;
+  const turnType = defaultSpeakingTurn(part);
   const defaultPrompt = part.part_code === "listening_1"
     ? `Question ${part.questions.length + 1}`
     : "";
@@ -82,6 +96,16 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
 }
 
 export function questionPayload(question: QuestionDraft) {
+  const candidateMaterialType = question.question_type === "speaking_prompt"
+    ? question.interaction?.candidate_material_path
+      ? "pdf"
+      : question.image_path
+        ? "image"
+        : question.passage?.trim()
+          ? "text"
+          : "none"
+    : question.interaction?.candidate_material_type || "none";
+
   return {
     question_type: question.question_type,
     prompt: question.prompt.trim(),
@@ -96,7 +120,7 @@ export function questionPayload(question: QuestionDraft) {
       preparation_seconds: question.interaction?.preparation_seconds ?? null,
       response_seconds: question.interaction?.response_seconds ?? null,
       adaptive_follow_up: Boolean(question.interaction?.adaptive_follow_up),
-      candidate_material_type: question.interaction?.candidate_material_type || "none",
+      candidate_material_type: candidateMaterialType,
       candidate_material_path: question.interaction?.candidate_material_path || null,
       candidate_material_name: question.interaction?.candidate_material_name?.trim() || null,
     },
