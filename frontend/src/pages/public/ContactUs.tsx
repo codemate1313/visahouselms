@@ -106,6 +106,45 @@ function ContactInfoIcon({ type }: { type: "phone" | "location" | "email" | "sup
   );
 }
 
+interface OfficeBranch {
+  id: string;
+  city: string;
+  name: string;
+  tag: string;
+  address: string;
+  addressShort: string;
+  mapEmbedUrl: string;
+  mapLink: string;
+  phone: string;
+}
+
+const OFFICE_BRANCHES: OfficeBranch[] = [
+  {
+    id: "amritsar",
+    city: "Amritsar",
+    name: "Amritsar Office",
+    tag: "Head Office",
+    address: "Mezzanine floor, Sco-21, B - Block, Ranjit Avenue, Amritsar, Punjab 143001",
+    addressShort: "Sco-21, B-Block, Ranjit Avenue, Amritsar",
+    mapEmbedUrl:
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3692.6816320116436!2d74.8629167!3d31.65075!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3919650028ff0af9%3A0x7c60b7408534d94d!2sVISA%20HOUSE%20immigration!5e1!3m2!1sen!2sin!4v1786779632431!5m2!1sen!2sin",
+    mapLink: "https://www.google.com/maps/place/VISA+HOUSE+immigration/@31.65075,74.8629167,17z",
+    phone: "+91 9779047164",
+  },
+  {
+    id: "tarntaran",
+    city: "Tarn Taran",
+    name: "Tarn Taran Office",
+    tag: "Branch Office",
+    address: "Gali lakeer Sahib wali, Amritsar bypass Road, Tarntaran, Punjab 143401",
+    addressShort: "Gali Lakeer Sahib Wali, Bypass Rd, Tarntaran",
+    mapEmbedUrl:
+      "https://maps.google.com/maps?q=31.4638482,74.9196184+(Visa+House+Immigration)&t=&z=16&ie=UTF8&iwloc=&output=embed",
+    mapLink: "https://maps.app.goo.gl/9DfwXmJcfyzQnwC67",
+    phone: "+91 9779047164",
+  },
+];
+
 export function ContactUs() {
   useSEO({ title: "Contact Us", description: "Email, call or contact Visa House for LanguageCert LMS support and institute demos." });
   const location = useLocation();
@@ -114,8 +153,10 @@ export function ContactUs() {
 
   const [institutePlans, setInstitutePlans] = useState<LandingPlan[]>([]);
   const [formType, setFormType] = useState<FormType>(() => getInitialFormType(location.search));
+  const [selectedBranchId, setSelectedBranchId] = useState<string>("amritsar");
 
   const officeStatus = getOfficeStatus();
+  const activeBranch = OFFICE_BRANCHES.find((b) => b.id === selectedBranchId) ?? OFFICE_BRANCHES[0];
 
   useEffect(() => {
     setFormType(getInitialFormType(location.search));
@@ -250,7 +291,6 @@ export function ContactUs() {
   }
 
   const contact = contactSettings?.contact;
-  const officeAddressLines = (contact?.office_address ?? "Gali lakeer Sahib wali, Amritsar bypass Road\nTarntaran, 143401").split("\n");
 
   return (
     <div className="vh-public vh-contact-page">
@@ -278,14 +318,18 @@ export function ContactUs() {
                   </span>
                 </a>
 
-                <a className="vh-contact-detail" href="https://maps.app.goo.gl/9DfwXmJcfyzQnwC67" target="_blank" rel="noopener noreferrer">
+                <div className="vh-contact-detail vh-contact-detail-address">
                   <ContactInfoIcon type="location" />
-                  <span className="vh-contact-detail-copy">
-                    <strong>Address</strong>
-                    <span>{contact?.office_name ?? "Visa House Immigration"}</span>
-                    <small>{officeAddressLines.join(", ")}</small>
-                  </span>
-                </a>
+                  <div className="vh-contact-detail-copy">
+                    <strong>Our Offices</strong>
+                    {OFFICE_BRANCHES.map((b) => (
+                      <div className="vh-office-mini-block" key={b.id} style={{ marginTop: b.id === "amritsar" ? 0 : 4 }}>
+                        <span className="vh-office-mini-label">{b.city} ({b.tag}):</span>
+                        <span className="vh-office-mini-text">{b.addressShort}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
                 <a className="vh-contact-detail" href={`mailto:${contact?.email ?? "enquiry.langugaecert@gmail.com"}`}>
                   <ContactInfoIcon type="email" />
@@ -440,23 +484,43 @@ export function ContactUs() {
             <section className="vh-contact-map-section" aria-labelledby="visit-office-title">
               <div className="vh-contact-map-heading">
                 <div>
-                  <h2 id="visit-office-title">Visit our office</h2>
-                  <p>{contact?.office_name ?? "Visa House Immigration"} · {officeAddressLines.join(", ")}</p>
+                  <div className="vh-contact-map-title-row">
+                    <h2 id="visit-office-title">Visit our offices</h2>
+                    <div className="vh-branch-toggle-pills" role="tablist" aria-label="Select office branch">
+                      {OFFICE_BRANCHES.map((b) => (
+                        <button
+                          key={b.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={b.id === selectedBranchId}
+                          className={`vh-branch-pill ${b.id === selectedBranchId ? "is-active" : ""}`}
+                          onClick={() => setSelectedBranchId(b.id)}
+                        >
+                          <span className="vh-branch-pill-dot" />
+                          <span className="vh-branch-pill-city">{b.city}</span>
+                          <span className="vh-branch-pill-badge">{b.tag}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="vh-contact-map-sub">{activeBranch.name} · {activeBranch.address}</p>
                 </div>
-                <a href="https://maps.app.goo.gl/9DfwXmJcfyzQnwC67" target="_blank" rel="noopener noreferrer" className="vh-map-overlay-btn">
+                <a href={activeBranch.mapLink} target="_blank" rel="noopener noreferrer" className="vh-map-overlay-btn">
                   Open in Google Maps ↗
                 </a>
               </div>
+
               <div className="vh-map-container">
                 <iframe
-                  title="Office Location Map"
-                  src="https://maps.google.com/maps?q=31.4638482,74.9196184+(Visa+House)&t=&z=17&ie=UTF8&iwloc=&output=embed"
+                  key={activeBranch.id}
+                  title={`${activeBranch.name} Location Map`}
+                  src={activeBranch.mapEmbedUrl}
                   width="100%"
-                  height="360"
+                  height="390"
                   style={{ border: 0, display: "block" }}
                   allowFullScreen
                   loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
+                  referrerPolicy="strict-origin-when-cross-origin"
                 />
               </div>
             </section>
