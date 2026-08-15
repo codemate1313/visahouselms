@@ -15,7 +15,8 @@ interface GapTaskComposerProps {
   isEditable: boolean;
   busy: boolean;
   onSubmit: (draft: GapTaskDraft) => void;
-  onSavePassage?: (passage: string, options?: { key: string; text: string }[], answers?: Record<number, string>) => void;
+  onSavePassage?: (passage: string) => void;
+  onDeletePassage?: () => void;
 }
 
 const BLANK_MARKER = /\{\{blank:(\d+)\}\}/g;
@@ -33,13 +34,25 @@ const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
  * So the task is composed here as the candidate sees it, and the rows are
  * generated from it on save.
  */
-export function GapTaskComposer({ part, isEditable, busy, onSubmit, onSavePassage }: GapTaskComposerProps) {
+export function GapTaskComposer({
+  part,
+  isEditable,
+  busy,
+  onSubmit,
+  onSavePassage,
+  onDeletePassage,
+}: GapTaskComposerProps) {
   const t = strings.gapTask;
   const optionCount = part.answer_constraints.option_count ?? 8;
   const uniqueAnswers = Boolean(part.answer_constraints.unique_answers);
   const existing = part.questions;
 
-  const [passage, setPassage] = useState("");
+  const storedPassage = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`vh.passage.${part.id}`) || "" : "";
+  const first = existing[0];
+  const savedPassage = (first?.passage ?? storedPassage).trim();
+
+  const [passage, setPassage] = useState(savedPassage);
+  const [isEditingPassage, setIsEditingPassage] = useState(savedPassage.length === 0);
   const [options, setOptions] = useState<{ key: string; text: string }[]>([]);
   const [answers, setAnswers] = useState<Record<number, string>>({});
 
@@ -52,8 +65,10 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit, onSavePassag
 
   // Seed from whatever the part already holds so this edits rather than resets.
   useEffect(() => {
-    const first = existing[0];
-    setPassage(first?.passage ?? "");
+    const currentStored = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`vh.passage.${part.id}`) || "" : "";
+    const effectivePassage = (first?.passage ?? currentStored).trim();
+    setPassage(effectivePassage);
+    setIsEditingPassage(effectivePassage.length === 0);
     setOptions(
       first?.options?.length
         ? first.options.map((option) => ({ key: option.key, text: option.text }))
@@ -66,6 +81,12 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit, onSavePassag
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [part.id, savedSignature, optionCount]);
+
+  useEffect(() => {
+    if (savedPassage.length > 0 && !passage.trim()) {
+      setPassage(savedPassage);
+    }
+  }, [savedPassage]);
 
   // The gaps are whatever the passage declares - the source of truth is the text.
   const gaps = useMemo(() => {
@@ -102,6 +123,7 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit, onSavePassag
   }, [existingGaps, expectedGaps]);
 
   function insertBlank(gapNum?: number) {
+    if (!isEditingPassage) setIsEditingPassage(true);
     const el = textareaRef.current;
     const targetGap = gapNum ?? nextGapNumber;
     const blankTag = `{{blank:${targetGap}}}`;
@@ -122,6 +144,36 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit, onSavePassag
     });
   }
 
+  function handleSavePassage() {
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem(`vh.passage.${part.id}`, passage.trim());
+    }
+    if (onSavePassage) {
+      onSavePassage(passage.trim());
+    }
+    setIsEditingPassage(false);
+  }
+
+  function handleCancelPassage() {
+    setPassage(savedPassage);
+    setIsEditingPassage(false);
+  }
+
+  function handleDeletePassage() {
+    if (onDeletePassage) {
+      onDeletePassage();
+    } else {
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.removeItem(`vh.passage.${part.id}`);
+      }
+      setPassage("");
+      if (onSavePassage) onSavePassage("");
+      setIsEditingPassage(true);
+    }
+  }
+
+  const isSavedState = savedPassage.length > 0 && !isEditingPassage;
+
   return (
     <section className="authoring-panel gap-task-composer">
       <div className="panel-title">
@@ -137,7 +189,7 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit, onSavePassag
         <p>{t.help}</p>
       </div>
 
-      {isEditable && (
+      {isEditable && isEditingPassage && (
         <div className="vh-passage-blank-toolbar" style={{ marginTop: "12px", marginBottom: "14px" }}>
           <div className="vh-passage-blank-main-actions">
             <button
@@ -192,19 +244,58 @@ export function GapTaskComposer({ part, isEditable, busy, onSubmit, onSavePassag
         value={passage}
         onChange={(event) => setPassage(event.target.value)}
         placeholder={t.passagePlaceholder}
-        readOnly={!isEditable}
+        readOnly={!isEditable || !isEditingPassage}
       />
 
       <div className="shared-passage-footer" style={{ marginBottom: "20px" }}>
-        {isEditable && onSavePassage && (
-          <Button
-            variant="primary"
-            size="md"
-            disabled={busy || !passage.trim()}
-            onClick={() => onSavePassage(passage, options, answers)}
-          >
-            {busy ? strings.sharedPassage.saving : strings.sharedPassage.save}
-          </Button>
+        {isEditable && (
+          <>
+            {isSavedState ? (
+              <>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  disabled={busy}
+                  onClick={() => setIsEditingPassage(true)}
+                >
+                  <Icon name="edit" style={{ width: "14px", height: "14px" }} />
+                  Edit source text
+                </Button>
+                <Button
+                  variant="danger"
+                  size="md"
+                  disabled={busy}
+                  onClick={handleDeletePassage}
+                >
+                  <Icon name="trash" style={{ width: "14px", height: "14px" }} />
+                  Delete source text
+                </Button>
+              </>
+            ) : (
+              <>
+                {savedPassage.length > 0 && (
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    disabled={busy}
+                    onClick={handleCancelPassage}
+                  >
+                    Cancel
+                  </Button>
+                )}
+                {onSavePassage && (
+                  <Button
+                    variant="primary"
+                    size="md"
+                    disabled={busy || !passage.trim() || (passage.trim() === savedPassage && savedPassage.length > 0)}
+                    onClick={handleSavePassage}
+                  >
+                    {busy ? strings.sharedPassage.saving : strings.sharedPassage.save}
+                  </Button>
+                )}
+              </>
+            )}
+          </>
         )}
       </div>
 

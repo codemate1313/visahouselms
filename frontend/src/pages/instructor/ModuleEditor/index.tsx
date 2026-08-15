@@ -1019,6 +1019,7 @@ export function ModuleEditor() {
                 busy={busy}
                 onSubmit={saveGapTask}
                 onSavePassage={saveSharedPassage}
+                onDeletePassage={deleteSharedPassage}
               />
             ) : null}
 
