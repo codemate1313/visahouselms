@@ -253,7 +253,7 @@ a.vh-hero-cta-alt:hover {
   gap: 8px;
   align-items: center;
 }
-.vh-dot {
+.vh-hero-dots-inner .vh-dot {
   width: 8px;
   height: 8px;
   background: rgba(255, 255, 255, 0.35);
@@ -263,7 +263,7 @@ a.vh-hero-cta-alt:hover {
   transition: all 0.3s ease;
   padding: 0;
 }
-.vh-dot.vh-dot-active {
+.vh-hero-dots-inner .vh-dot.vh-dot-active {
   width: 24px;
   background: #b80f28;
   box-shadow: 0 0 10px rgba(184, 15, 40, 0.6);
@@ -2360,6 +2360,7 @@ a.vh-hero-cta-alt:hover {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 18%;
   display: block;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }

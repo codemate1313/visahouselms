@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { apiClient, API_BASE_URL } from "@/api/client";
 import { PublicHeader } from "@/components/publicSite/PublicHeader";
 import { PublicFooter } from "@/components/publicSite/PublicFooter";
+import { ReCaptchaWidget } from "@/components/publicSite/ReCaptchaWidget";
 import { useSEO } from "@/hooks/useSEO";
 import { useContactSettings } from "./useContactSettings";
 import type { LandingPlan, LandingPlansPayload } from "./Plans.types";
@@ -62,15 +63,6 @@ function getOfficeStatus(): { isOpen: boolean; text: string } {
     return { isOpen: true, text: "Open now (9am – 5pm IST)" };
   }
   return { isOpen: false, text: "Closed now · Mon–Fri 9am–5pm IST" };
-}
-
-function ArrowRightIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 12h14" />
-      <path d="m13 6 6 6-6 6" />
-    </svg>
-  );
 }
 
 function ContactInfoIcon({ type }: { type: "phone" | "location" | "email" | "support" }) {
@@ -183,6 +175,9 @@ export function ContactUs() {
   const [queryStatus, setQueryStatus] = useState<FormStatus | null>(null);
   const [submittingQuery, setSubmittingQuery] = useState(false);
 
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [captchaError, setCaptchaError] = useState(false);
+
   useEffect(() => {
     apiClient
       .get<LandingPlansPayload>("/plans", { headers: { "X-Skip-Loader": "true" } })
@@ -197,6 +192,7 @@ export function ContactUs() {
     setFormType(next);
     setPartnerStatus(null);
     setQueryStatus(null);
+    setCaptchaError(false);
   }
 
   function updatePartner<K extends keyof typeof EMPTY_PARTNER_FORM>(key: K, value: string) {
@@ -211,6 +207,14 @@ export function ContactUs() {
     const { instName, email, phone, city, country, website, first, last, adminEmail, students, instructors, message } = partner;
     if (!instName.trim() || !email.trim() || !phone.trim() || !first.trim() || !last.trim() || !adminEmail.trim()) {
       const msg = "Please fill in all required fields marked with *.";
+      setPartnerStatus({ message: msg, tone: "error" });
+      useToastStore.getState().showError(msg);
+      return;
+    }
+
+    if (!captchaVerified) {
+      const msg = "Please verify that you are not a robot.";
+      setCaptchaError(true);
       setPartnerStatus({ message: msg, tone: "error" });
       useToastStore.getState().showError(msg);
       return;
@@ -247,6 +251,7 @@ export function ContactUs() {
       setPartnerStatus({ message: successMsg, tone: "ok" });
       useToastStore.getState().showSuccess(successMsg);
       setPartner(EMPTY_PARTNER_FORM);
+      setCaptchaVerified(false);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "We could not submit your application. Please email enquiry.langugaecert@gmail.com.";
       setPartnerStatus({ message: errorMsg, tone: "error" });
@@ -266,6 +271,14 @@ export function ContactUs() {
       return;
     }
 
+    if (!captchaVerified) {
+      const msg = "Please verify that you are not a robot.";
+      setCaptchaError(true);
+      setQueryStatus({ message: msg, tone: "error" });
+      useToastStore.getState().showError(msg);
+      return;
+    }
+
     setSubmittingQuery(true);
     setQueryStatus({ message: "Sending your message...", tone: "ok" });
     try {
@@ -280,6 +293,7 @@ export function ContactUs() {
       setQueryStatus({ message: successMsg, tone: "ok" });
       useToastStore.getState().showSuccess(successMsg);
       setQuery(EMPTY_QUERY_FORM);
+      setCaptchaVerified(false);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "We could not submit your enquiry. Please email enquiry.langugaecert@gmail.com.";
       setQueryStatus({ message: errorMsg, tone: "error" });
@@ -298,7 +312,9 @@ export function ContactUs() {
 
         <section className="vh-contact-hero">
           <div className="vh-contact-hero-copy">
-            <h1>Get in touch with our team</h1>
+            <h1>
+              Get in touch <span className="vh-accent">with our team</span>
+            </h1>
             <p>Connect with our experts to discuss your needs and discover how Visa House can support your goals.</p>
           </div>
         </section>
@@ -449,6 +465,15 @@ export function ContactUs() {
                     </div>
                   </div>
 
+                  <ReCaptchaWidget
+                    verified={captchaVerified}
+                    onVerify={(v) => {
+                      setCaptchaVerified(v);
+                      setCaptchaError(false);
+                    }}
+                    hasError={captchaError}
+                  />
+
                   {partnerStatus ? (
                     <div className={`vh-form-status vh-form-status-visible is-${partnerStatus.tone}`} aria-live="polite" role="status">
                       {partnerStatus.message}
@@ -457,7 +482,6 @@ export function ContactUs() {
 
                   <button type="button" className="vh-form-submit-btn" onClick={submitDemoRequest} disabled={submittingDemo}>
                     {submittingDemo ? "Submitting..." : "Apply now"}
-                    <ArrowRightIcon />
                   </button>
                 </>
               ) : (
@@ -481,6 +505,15 @@ export function ContactUs() {
                     </div>
                   </div>
 
+                  <ReCaptchaWidget
+                    verified={captchaVerified}
+                    onVerify={(v) => {
+                      setCaptchaVerified(v);
+                      setCaptchaError(false);
+                    }}
+                    hasError={captchaError}
+                  />
+
                   {queryStatus ? (
                     <div className={`vh-form-status vh-form-status-visible is-${queryStatus.tone}`} aria-live="polite" role="status">
                       {queryStatus.message}
@@ -489,7 +522,6 @@ export function ContactUs() {
 
                   <button type="button" className="vh-form-submit-btn" onClick={submitQueryRequest} disabled={submittingQuery}>
                     {submittingQuery ? "Sending..." : "Submit request"}
-                    <ArrowRightIcon />
                   </button>
                 </>
               )}

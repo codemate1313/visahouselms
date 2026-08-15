@@ -1,9 +1,36 @@
 .vh-contact-page {
-  background: #efefed;
+  position: relative;
+  background-color: #eaedf2;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.vh-contact-page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 980px;
+  background-image:
+    linear-gradient(180deg, rgba(6, 7, 12, 0.84) 0%, rgba(6, 7, 12, 0.74) 280px, rgba(6, 7, 12, 0.82) 500px, rgba(234, 237, 242, 0.6) 740px, rgba(234, 237, 242, 0.95) 880px, #eaedf2 100%),
+    linear-gradient(90deg, rgba(6, 7, 12, 0.65) 0%, transparent 35%, transparent 65%, rgba(6, 7, 12, 0.65) 100%),
+    url("/images/contact_hero.png");
+  background-position: center top;
+  background-size: cover;
+  pointer-events: none;
+  z-index: 0;
 }
 
 [data-theme="dark"] .vh-contact-page {
-  background: #08080e;
+  background-color: #08080e;
+}
+
+[data-theme="dark"] .vh-contact-page::before {
+  background-image:
+    linear-gradient(180deg, rgba(4, 4, 8, 0.9) 0%, rgba(4, 4, 8, 0.8) 280px, rgba(4, 4, 8, 0.88) 500px, rgba(8, 8, 14, 0.6) 740px, rgba(8, 8, 14, 0.95) 880px, #08080e 100%),
+    linear-gradient(90deg, rgba(4, 4, 8, 0.75) 0%, transparent 35%, transparent 65%, rgba(4, 4, 8, 0.75) 100%),
+    url("/images/contact_hero.png");
 }
 
 /* The reference is static, so the contact page deliberately opts out of the
@@ -16,57 +43,44 @@
 
 .vh-contact-hero {
   position: relative;
-  min-height: 480px;
-  margin-top: -70px;
-  padding: 138px 32px 210px;
+  z-index: 2;
+  padding: 104px 32px 28px;
   display: grid;
   place-items: start center;
-  overflow: hidden;
-  isolation: isolate;
-  background-image:
-    linear-gradient(180deg, rgba(8, 8, 14, 0.42) 0%, rgba(8, 8, 14, 0.6) 60%, rgba(8, 8, 14, 0.88) 100%),
-    linear-gradient(90deg, rgba(8, 8, 14, 0.48), rgba(8, 8, 14, 0.18) 50%, rgba(8, 8, 14, 0.48)),
-    url("/images/contact_hero.png");
-  background-position: center 42%;
-  background-size: cover;
-}
-
-.vh-contact-hero::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 32%;
-  z-index: -1;
-  background: linear-gradient(180deg, transparent, rgba(8, 8, 14, 0.6) 60%, #efefed 100%);
-  pointer-events: none;
-}
-
-[data-theme="dark"] .vh-contact-hero {
-  background-image:
-    linear-gradient(180deg, rgba(8, 8, 14, 0.55) 0%, rgba(8, 8, 14, 0.74) 60%, #08080e 100%),
-    linear-gradient(90deg, rgba(8, 8, 14, 0.72), rgba(8, 8, 14, 0.12) 50%, rgba(8, 8, 14, 0.72)),
-    url("/images/contact_hero.png");
-}
-
-[data-theme="dark"] .vh-contact-hero::after {
-  background: linear-gradient(180deg, transparent, #08080e);
+  overflow: visible;
+  background: none;
 }
 
 .vh-contact-hero-copy {
-  width: min(620px, 100%);
+  position: relative;
+  z-index: 2;
+  width: min(640px, 100%);
   text-align: center;
 }
 
 .vh-contact-hero h1 {
   max-width: 620px;
-  margin: 0 auto 16px;
-  font-size: clamp(40px, 4.5vw, 62px);
-  line-height: 1.01;
-  letter-spacing: -0.055em;
-  font-weight: 650;
+  margin: 0 auto 12px;
+  font-size: clamp(38px, 4.2vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  font-weight: 500;
   color: #ffffff;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.45);
   text-wrap: balance;
+}
+
+.vh-contact-hero h1 .vh-accent {
+  font-style: normal;
+  font-weight: 600;
+  background: linear-gradient(135deg, #ff758c 0%, #ff3b56 50%, #ff1e42 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  display: inline;
+  text-shadow: none;
+  filter: drop-shadow(0 2px 18px rgba(255, 65, 95, 0.55));
 }
 
 .vh-contact-hero p {
@@ -74,7 +88,7 @@
   margin: 0 auto;
   color: rgba(255, 255, 255, 0.85);
   font-size: 15px;
-  line-height: 1.65;
+  line-height: 1.6;
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4);
   text-wrap: balance;
 }
@@ -92,7 +106,7 @@
   position: relative;
   z-index: 3;
   max-width: 1244px;
-  margin: -168px auto 96px;
+  margin: 0 auto 96px;
   padding: 0 32px;
 }
 
@@ -100,18 +114,21 @@
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
   overflow: hidden;
-  border: 1px solid rgba(14, 13, 16, 0.09);
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 30px 90px rgba(24, 26, 33, 0.13);
-  backdrop-filter: blur(22px) saturate(130%);
-  -webkit-backdrop-filter: blur(22px) saturate(130%);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.02),
+    0 20px 45px -8px rgba(15, 23, 42, 0.08),
+    0 40px 80px -15px rgba(15, 23, 42, 0.06);
 }
 
 [data-theme="dark"] .vh-contact-panel {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(18, 18, 25, 0.94);
-  box-shadow: 0 34px 100px rgba(0, 0, 0, 0.42);
+  border-color: rgba(255, 255, 255, 0.09);
+  background: #11121a;
+  box-shadow:
+    0 24px 60px -10px rgba(0, 0, 0, 0.6),
+    0 48px 100px -15px rgba(0, 0, 0, 0.4);
 }
 
 .vh-contact-company,
@@ -503,11 +520,11 @@
   width: 100%;
   height: 48px;
   margin-top: 6px;
-  padding: 0 20px;
+  padding: 0 24px;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: center;
+  text-align: center;
   border: 0;
   border-radius: 12px;
   background: var(--primary, #e11d2e);
@@ -515,18 +532,10 @@
   box-shadow: 0 4px 14px rgba(225, 29, 46, 0.25);
   cursor: pointer;
   font: inherit;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
-}
-
-.vh-form-submit-btn svg {
-  width: 26px;
-  height: 26px;
-  padding: 5px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.22);
-  color: #ffffff;
 }
 
 .vh-form-submit-btn:hover {
@@ -718,19 +727,20 @@
 }
 
 @media (max-width: 760px) {
+  .vh-contact-page::before {
+    height: 860px;
+  }
+
   .vh-contact-hero {
-    min-height: 420px;
-    margin-top: -58px;
-    padding: 118px 20px 180px;
-    background-position: 60% center;
+    padding: 104px 20px 32px;
   }
 
   .vh-contact-hero h1 {
-    font-size: clamp(38px, 11vw, 54px);
+    font-size: clamp(34px, 10vw, 48px);
   }
 
   .vh-contact-stage {
-    margin-top: -126px;
+    margin-top: 0;
     padding: 0 18px;
   }
 
@@ -759,7 +769,7 @@
 
 @media (max-width: 560px) {
   .vh-contact-hero {
-    margin-top: -54px;
+    padding: 96px 16px 24px;
   }
 
   .vh-contact-stage {
