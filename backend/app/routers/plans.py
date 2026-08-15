@@ -4,11 +4,12 @@ from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.core.geo_ip import detect_country_code
 from app.dependencies.auth import get_current_user, require_role
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
 from app.schemas.plan import PlanCreate, PlanDisplaySettings, PlanUpdate
-from app.services import plan_service
+from app.services import currency_conversion_service, plan_service
 
 router = APIRouter(
     prefix="/super-admin/plans",
@@ -23,6 +24,18 @@ public_router = APIRouter(prefix="/plans", tags=["plans"])
 @public_router.get("")
 def list_landing_plans(db: Session = Depends(get_db)):
     return plan_service.list_landing_plans(db)
+
+
+@public_router.get("/location")
+def get_landing_location(request: Request):
+    country_code = detect_country_code(request)
+    response = {
+        "country": country_code,
+        "default_currency": "INR" if country_code == "IN" else "USD",
+    }
+    if country_code != "IN":
+        response["conversion"] = currency_conversion_service.get_inr_usd_display_rate()
+    return response
 
 
 def _client_ip(request: Request) -> Optional[str]:

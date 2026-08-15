@@ -159,7 +159,19 @@
 
 .vh-form-toggle-wrap {
   flex-shrink: 0;
-  min-width: 240px;
+  width: clamp(280px, 26vw, 340px);
+  min-width: 0;
+}
+
+.vh-form-toggle-wrap .ui-segmented-control {
+  flex-wrap: nowrap;
+}
+
+.vh-form-toggle-wrap .ui-segmented-option {
+  flex: 1 1 50%;
+  width: auto;
+  min-width: 0;
+  padding-inline: 12px;
 }
 
 .vh-contact-details-grid {
@@ -579,8 +591,17 @@
   }
 
   .vh-contact-company,
+  .vh-contact-form-card,
   .vh-apply-form {
     padding: 30px 24px;
+  }
+
+  .vh-contact-form-header {
+    flex-direction: column;
+  }
+
+  .vh-form-toggle-wrap {
+    width: 100%;
   }
 
   .vh-contact-map-section {

@@ -68,6 +68,7 @@ export function CourseCatalog() {
   const [couponCode, setCouponCode] = useState("");
   const [buying, setBuying] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<"INR" | "USD">("INR");
+  const [inrUsdRate, setInrUsdRate] = useState<number | null>(null);
 
   async function load() {
     setLoading(true);
@@ -87,10 +88,11 @@ export function CourseCatalog() {
     if (!isInstituteStudent) {
       load();
       loadRazorpayScript();
-      apiClient.get<{ default_currency: string } >("/student/detect-location")
+      apiClient.get<{ default_currency: string; conversion?: { rate: number } }>("/student/detect-location")
         .then((res) => {
           if (res.data?.default_currency === "USD") {
             setSelectedCurrency("USD");
+            setInrUsdRate(res.data.conversion?.rate ?? null);
           }
         })
         .catch(() => {});
@@ -319,6 +321,7 @@ export function CourseCatalog() {
         <PlanGrid
           plans={plans}
           selectedCurrency={selectedCurrency}
+          inrUsdRate={inrUsdRate}
           onGoToCourse={() => navigate("/student/my-courses")}
           onChoosePlan={setCheckoutFor}
         />

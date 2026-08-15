@@ -124,6 +124,14 @@
 .vh-plan-period {
   font-size: 15px;
 }
+.vh-plan-price-note {
+  margin: -2px 0 10px;
+  color: inherit;
+  font-size: 11.5px;
+  font-weight: 650;
+  line-height: 1.4;
+  opacity: 0.78;
+}
 .vh-plan-desc {
   font-size: 14.5px;
   line-height: 1.55;

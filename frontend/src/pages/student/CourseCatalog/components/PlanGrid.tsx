@@ -3,22 +3,22 @@ import { formatCurrencyAmount } from "@/utils/currency";
 import { courseCatalogStrings as strings } from "../CourseCatalog.strings";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/Button/Button";
+import { getCatalogDisplayPrice } from "../pricing";
 
 interface PlanGridProps {
   plans: StudentPlanCatalogItem[];
   selectedCurrency?: "INR" | "USD";
+  inrUsdRate?: number | null;
   onGoToCourse: () => void;
   onChoosePlan: (plan: StudentPlanCatalogItem) => void;
 }
 
-export function PlanGrid({ plans, selectedCurrency = "INR", onGoToCourse, onChoosePlan }: PlanGridProps) {
+export function PlanGrid({ plans, selectedCurrency = "INR", inrUsdRate, onGoToCourse, onChoosePlan }: PlanGridProps) {
   return (
     <div className="uui-pricing-grid">
       {plans.map((plan, index) => {
         const isFeatured = index === 0 || plans.length === 1;
-        const isUSD = selectedCurrency === "USD" && plan.is_international_enabled && plan.usd_price;
-        const displayPrice = isUSD ? plan.usd_price : plan.price;
-        const displayCurrency = isUSD ? "USD" : (plan.currency || "INR");
+        const display = getCatalogDisplayPrice(plan, selectedCurrency, inrUsdRate);
 
         return (
           <div
@@ -44,7 +44,7 @@ export function PlanGrid({ plans, selectedCurrency = "INR", onGoToCourse, onChoo
               {/* Price Display */}
               <div className="uui-price-row">
                 <span className="uui-price-value">
-                  {formatCurrencyAmount(displayPrice, displayCurrency)}
+                  {display.isConverted ? "≈" : ""}{formatCurrencyAmount(display.amount, display.currency)}
                 </span>
                 <span className="uui-price-period">/ {plan.duration_days} days</span>
               </div>
@@ -52,9 +52,9 @@ export function PlanGrid({ plans, selectedCurrency = "INR", onGoToCourse, onChoo
               {/* Description */}
               <p className="uui-plan-desc">{plan.description || strings.defaultDescription}</p>
 
-              {isUSD && (
+              {(display.usesInternationalPrice || display.isConverted) && (
                 <span className="uui-stripe-tag">
-                  Global Stripe Payment
+                  {display.usesInternationalPrice ? "Global Stripe Payment" : "Approx. USD converted from INR · billed in INR"}
                 </span>
               )}
 

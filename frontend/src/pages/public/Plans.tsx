@@ -14,7 +14,7 @@ import { useThemeStore } from "@/store/themeStore";
 import { destinationFor } from "@/pages/Login/helpers";
 import { useSEO } from "@/hooks/useSEO";
 import { useContactSettings } from "./useContactSettings";
-import type { LandingPlan, LandingPlansPayload } from "./Plans.types";
+import type { LandingPlan, LandingPlansPayload, PricingLocation } from "./Plans.types";
 import { SegmentedControl } from "@/components/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import NumberFlow from "@number-flow/react";
@@ -32,17 +32,43 @@ const FAQS = [
   { q: "Can I get help if I have a problem with my preparation?", a: "Yes. You can contact the LanguageCert LMS support team for assistance with the platform, preparation resources and account-related questions." },
 ];
 
-function formatPrice(plan: LandingPlan) {
-  const amount = Number(plan.price);
-  if (!Number.isFinite(amount)) return String(plan.price ?? "");
+interface DisplayPrice {
+  amount: number;
+  currency: string;
+  isConverted: boolean;
+}
+
+function getDisplayPrice(plan: LandingPlan, location: PricingLocation | null): DisplayPrice {
+  const baseAmount = Number(plan.price);
+  const baseCurrency = plan.currency || "INR";
+  if (location?.default_currency !== "USD") {
+    return { amount: baseAmount, currency: baseCurrency, isConverted: false };
+  }
+
+  const configuredUsd = Number(plan.usd_price);
+  if (plan.is_international_enabled && plan.usd_price != null && plan.usd_price !== "" && Number.isFinite(configuredUsd)) {
+    return { amount: configuredUsd, currency: "USD", isConverted: false };
+  }
+
+  const rate = Number(location.conversion?.rate);
+  if (baseCurrency.toUpperCase() === "INR" && Number.isFinite(baseAmount) && Number.isFinite(rate) && rate > 0) {
+    return { amount: baseAmount * rate, currency: "USD", isConverted: true };
+  }
+
+  return { amount: baseAmount, currency: baseCurrency, isConverted: false };
+}
+
+function formatPrice(display: DisplayPrice) {
+  const { amount, currency } = display;
+  if (!Number.isFinite(amount)) return "";
   try {
-    return new Intl.NumberFormat("en-IN", {
+    return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
       style: "currency",
-      currency: plan.currency || "INR",
+      currency,
       maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
     }).format(amount);
   } catch {
-    return `${plan.currency || "INR"} ${amount.toLocaleString("en-IN")}`;
+    return `${currency} ${amount.toLocaleString(currency === "INR" ? "en-IN" : "en-US")}`;
   }
 }
 
@@ -54,8 +80,8 @@ function CheckIcon() {
   );
 }
 
-function RollingPrice({ plan }: { plan: LandingPlan }) {
-  const amount = Number(plan.price);
+function RollingPrice({ display, planId }: { display: DisplayPrice; planId: number }) {
+  const { amount, currency } = display;
   const [displayAmount, setDisplayAmount] = useState(0);
 
   useEffect(() => {
@@ -67,16 +93,16 @@ function RollingPrice({ plan }: { plan: LandingPlan }) {
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [amount, plan.id]);
+  }, [amount, planId]);
 
-  if (!Number.isFinite(amount)) return <>{formatPrice(plan)}</>;
+  if (!Number.isFinite(amount)) return <>{formatPrice(display)}</>;
 
   return (
     <NumberFlow
       value={displayAmount}
       format={{
         style: "currency",
-        currency: plan.currency || "INR",
+        currency,
         maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
       }}
       isolate
@@ -93,8 +119,9 @@ function RollingPrice({ plan }: { plan: LandingPlan }) {
   );
 }
 
-function PlanCard({ plan, featured, onSelect, onChoose }: { plan: LandingPlan; featured: boolean; onSelect: () => void; onChoose: () => void }) {
+function PlanCard({ plan, featured, location, onSelect, onChoose }: { plan: LandingPlan; featured: boolean; location: PricingLocation | null; onSelect: () => void; onChoose: () => void }) {
   const forInstitutes = plan.audience === "institutes";
+  const display = getDisplayPrice(plan, location);
   const cardBg = featured ? "linear-gradient(155deg, var(--ac), var(--ac2))" : "var(--card)";
   const cardInk = featured ? "#fff" : "var(--ink)";
   const cardBorder = featured ? "transparent" : "var(--line)";
@@ -115,12 +142,13 @@ function PlanCard({ plan, featured, onSelect, onChoose }: { plan: LandingPlan; f
       </div>
       <div className="vh-plan-price-row">
         <span className="vh-plan-price">
-          <RollingPrice plan={plan} />
+          <RollingPrice display={display} planId={plan.id} />
         </span>
         <span className="vh-plan-period" style={{ color: mutedInk }}>
           {plan.period_label}
         </span>
       </div>
+      {display.isConverted ? <div className="vh-plan-price-note">Approx. USD converted from INR · billed in INR</div> : null}
       {plan.description && (
         <p className="vh-plan-desc" style={{ color: mutedInk }}>
           {plan.description}
@@ -187,6 +215,7 @@ export function Plans() {
   useRevealOnScroll(rootRef);
 
   const [payload, setPayload] = useState<LandingPlansPayload | null>(null);
+  const [pricingLocation, setPricingLocation] = useState<PricingLocation | null>(null);
   const [failed, setFailed] = useState(false);
   const [audience, setAudienceState] = useState<Audience | null>(null);
   const [billing, setBilling] = useState<Billing>("monthly");
@@ -195,10 +224,17 @@ export function Plans() {
 
   useEffect(() => {
     let cancelled = false;
-    apiClient
-      .get<LandingPlansPayload>("/plans", { headers: { "X-Skip-Loader": "true" } })
-      .then(({ data }) => {
-        if (!cancelled) setPayload(data);
+    const plansRequest = apiClient.get<LandingPlansPayload>("/plans", { headers: { "X-Skip-Loader": "true" } });
+    const locationRequest = apiClient
+      .get<PricingLocation>("/plans/location", { headers: { "X-Skip-Loader": "true" } })
+      .catch(() => null);
+
+    Promise.all([plansRequest, locationRequest])
+      .then(([plansResponse, locationResponse]) => {
+        if (!cancelled) {
+          setPayload(plansResponse.data);
+          setPricingLocation(locationResponse?.data ?? null);
+        }
       })
       .catch(() => {
         if (!cancelled) {
@@ -329,6 +365,7 @@ export function Plans() {
                     key={plan.id}
                     plan={plan}
                     featured={featured}
+                    location={pricingLocation}
                     onSelect={() => setSelectedPlanId(plan.id)}
                     onChoose={() => (plan.audience === "institutes" ? applyForInstitute(plan.id) : handleAuth("register", plan.id))}
                   />

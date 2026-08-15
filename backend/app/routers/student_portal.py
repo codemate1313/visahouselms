@@ -36,6 +36,7 @@ from app.services import (
     avatar_service,
     exam_news_service,
     coupon_service,
+    currency_conversion_service,
     grading_service,
     notification_service,
     payment_service,
@@ -271,11 +272,14 @@ class ValidateCouponRequest(BaseModel):
 @router.get("/detect-location")
 def get_detected_location(request: Request):
     country_code = detect_country_code(request)
-    return {
+    response = {
         "country": country_code,
         "default_currency": "INR" if country_code == "IN" else "USD",
         "gateway": "razorpay" if country_code == "IN" else "stripe",
     }
+    if country_code != "IN":
+        response["conversion"] = currency_conversion_service.get_inr_usd_display_rate()
+    return response
 
 
 @router.get("/payment-config")

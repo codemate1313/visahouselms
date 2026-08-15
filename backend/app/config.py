@@ -1,5 +1,6 @@
 import os
 import sys
+from decimal import Decimal
 from pathlib import Path
 from typing import Literal, Optional
 from urllib.parse import urlparse
@@ -64,6 +65,9 @@ class Settings(BaseSettings):
     db_pool_size: int = 10
     db_max_overflow: int = 20
     db_pool_timeout_seconds: int = 30
+    # Display-only fallback when the daily INR/USD reference-rate provider is
+    # unavailable. It never changes the currency charged at checkout.
+    inr_usd_display_rate: Decimal = Decimal("0.0104")
 
     ai_enabled: bool = True
     ai_provider: str = "gemini"

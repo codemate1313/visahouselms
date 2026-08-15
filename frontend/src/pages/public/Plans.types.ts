@@ -11,6 +11,8 @@ export interface LandingPlan {
   description: string | null;
   price: string;
   currency: string;
+  is_international_enabled?: boolean;
+  usd_price?: string | null;
   duration_days: number;
   audience: "both" | "direct_students" | "institutes";
   billing_period: "monthly" | "annual" | "custom";
@@ -19,6 +21,16 @@ export interface LandingPlan {
   features: string[];
   subscription_count: number;
   is_popular: boolean;
+}
+
+export interface PricingLocation {
+  country: string;
+  default_currency: "INR" | "USD";
+  conversion?: {
+    rate: number;
+    date: string | null;
+    source: string;
+  };
 }
 
 /**

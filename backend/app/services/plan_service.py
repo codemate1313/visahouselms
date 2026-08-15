@@ -497,6 +497,8 @@ def _landing_group(db: Session, audience: str, counts: dict) -> List[dict]:
                 "description": plan.description,
                 "price": str(plan.price),
                 "currency": plan.currency,
+                "is_international_enabled": plan.is_international_enabled,
+                "usd_price": str(plan.usd_price) if plan.usd_price is not None else None,
                 "duration_days": plan.duration_days,
                 "audience": plan.audience,
                 "billing_period": _billing_period(plan.duration_days),
