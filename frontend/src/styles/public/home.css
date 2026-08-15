@@ -1206,10 +1206,10 @@ a.vh-hero-cta-alt:hover {
 }
 
 .vh-steps-sidebar h2 {
-  font-size: 42px;
-  font-weight: 700;
-  letter-spacing: -1.4px;
-  line-height: 1.1;
+  font-size: clamp(30px, 3.6vw, 42px);
+  font-weight: 600;
+  letter-spacing: -0.8px;
+  line-height: 1.05;
   margin: 0 0 16px;
   color: #ffffff;
 }
@@ -1382,84 +1382,83 @@ a.vh-hero-cta-alt:hover {
 }
 
 .vh-steps-gsap-card:hover {
-  box-shadow: 0 40px 90px -12px rgba(0, 0, 0, 0.58), 0 0 0 2px rgba(255, 255, 255, 0.98) inset;
-  border-color: #ffffff;
+  box-shadow: 0 32px 70px -12px rgba(0, 0, 0, 0.45);
+  border-color: rgba(255, 255, 255, 0.9);
 }
 
 .vh-step-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .vh-step-card-header .vh-step-num-badge {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #c8102e 0%, #900a1c 60%, #590410 100%);
-  color: #ffffff;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: rgba(184, 15, 40, 0.08);
+  color: #b80f28;
   display: grid;
   place-items: center;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 24px -4px rgba(144, 10, 28, 0.45);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border: 1px solid rgba(184, 15, 40, 0.18);
+  box-shadow: none;
+  transition: transform 0.3s ease, background 0.3s ease;
 }
 .vh-steps-gsap-card:hover .vh-step-num-badge {
-  transform: scale(1.08) rotate(-3deg);
-  box-shadow: 0 12px 28px -2px rgba(144, 10, 28, 0.6);
+  background: rgba(184, 15, 40, 0.12);
+  transform: scale(1.05);
 }
 .vh-step-card-icon {
   color: #b80f28;
-  opacity: 0.95;
-  width: 38px;
-  height: 38px;
+  opacity: 0.9;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
-  background: rgba(184, 15, 40, 0.08);
-  border: 1px solid rgba(184, 15, 40, 0.15);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(184, 15, 40, 0.08);
-  transition: all 0.35s ease;
+  background: rgba(184, 15, 40, 0.05);
+  border: 1px solid rgba(184, 15, 40, 0.12);
+  border-radius: 11px;
+  box-shadow: none;
+  transition: all 0.3s ease;
 }
 .vh-steps-gsap-card:hover .vh-step-card-icon {
-  background: rgba(184, 15, 40, 0.16);
-  border-color: rgba(184, 15, 40, 0.3);
-  transform: scale(1.08);
-  box-shadow: 0 6px 18px rgba(184, 15, 40, 0.18);
+  background: rgba(184, 15, 40, 0.1);
+  border-color: rgba(184, 15, 40, 0.22);
+  transform: scale(1.05);
 }
 .vh-step-card-content h3 {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.025em;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
   color: #0f172a;
-  margin: 0 0 4px;
-  line-height: 1.2;
+  margin: 0 0 6px;
+  line-height: 1.25;
 }
 .vh-step-card-desc {
   font-size: 14px;
-  line-height: 1.5;
-  color: #475569;
-  margin: 0 0 12px;
-  font-weight: 450;
+  line-height: 1.55;
+  color: #64748b;
+  margin: 0 0 14px;
+  font-weight: 400;
 }
 
 /* UI Mockup Component inside Steps Cards - Sleek Premium Architecture */
 .vh-step-card-ui-mockup.vh-step-premium-widget {
-  background: #ffffff;
-  border: 1.5px solid rgba(15, 23, 42, 0.08);
-  border-radius: 20px;
-  padding: 14px 18px;
-  margin-bottom: 12px;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.02);
-  transition: border-color 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  box-shadow: none;
+  transition: border-color 0.3s ease, background 0.3s ease;
 }
 
 .vh-steps-gsap-card:hover .vh-step-card-ui-mockup.vh-step-premium-widget {
-  border-color: rgba(15, 23, 42, 0.16);
-  box-shadow: 0 18px 42px -12px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.03);
+  border-color: #cbd5e1;
+  background: #f8fafc;
 }
 
 .vh-mockup-header {
@@ -1472,33 +1471,33 @@ a.vh-hero-cta-alt:hover {
 .vh-mockup-tag {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
   color: #64748b;
   text-transform: uppercase;
 }
 
 .vh-mockup-dot-active {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #10b981;
-  box-shadow: 0 0 10px #10b981;
+  box-shadow: 0 0 8px #10b981;
   animation: vh-pulse 1.4s infinite;
 }
 
 .vh-mockup-dot-star {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #b80f28;
 }
 
 .vh-mockup-dot-trend {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #059669;
 }
@@ -1508,8 +1507,8 @@ a.vh-hero-cta-alt:hover {
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 500;
+  color: #334155;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1520,7 +1519,7 @@ a.vh-hero-cta-alt:hover {
 
 .vh-mockup-score-clean {
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   color: #b80f28;
   letter-spacing: -0.2px;
 }
@@ -1530,17 +1529,17 @@ a.vh-hero-cta-alt:hover {
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   color: #059669;
   letter-spacing: -0.2px;
 }
 
 /* Step 1 Audio Player Card */
 .vh-mockup-audio-card {
-  background: #f8fafc;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px 14px;
+  border-radius: 11px;
+  padding: 9px 12px;
   margin: 8px 0;
 }
 
@@ -1549,16 +1548,16 @@ a.vh-hero-cta-alt:hover {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 7px;
 }
 
 .vh-mockup-audio-info {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #0f172a;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1e293b;
 }
 
 .vh-mockup-audio-info svg {
@@ -1570,18 +1569,18 @@ a.vh-hero-cta-alt:hover {
   display: flex;
   align-items: center;
   gap: 3px;
-  height: 14px;
+  height: 13px;
 }
 
 .vh-mockup-wave-mini span {
-  width: 3px;
+  width: 2.5px;
   background: #b80f28;
   border-radius: 2px;
   animation: vh-wave 0.8s ease-in-out infinite alternate;
 }
 
 .vh-mockup-scrubber {
-  height: 4px;
+  height: 3.5px;
   background: #e2e8f0;
   border-radius: 999px;
   overflow: hidden;
@@ -1597,9 +1596,9 @@ a.vh-hero-cta-alt:hover {
 .vh-mockup-audio-meta {
   display: flex;
   justify-content: space-between;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: #64748b;
+  font-size: 10px;
+  font-weight: 400;
+  color: #94a3b8;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1609,7 +1608,7 @@ a.vh-hero-cta-alt:hover {
   gap: 8px;
   font-size: 11px;
   color: #64748b;
-  font-weight: 600;
+  font-weight: 450;
 }
 
 .vh-mockup-status-item {
@@ -1624,7 +1623,7 @@ a.vh-hero-cta-alt:hover {
 
 .vh-mockup-status-sep {
   color: #cbd5e1;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* Step 2 Performance Bars */
@@ -1638,25 +1637,25 @@ a.vh-hero-cta-alt:hover {
 .vh-mockup-bar-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .vh-mockup-bar-meta {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
-  color: #334155;
-  font-weight: 600;
+  font-size: 11.5px;
+  color: #475569;
+  font-weight: 450;
 }
 
 .vh-mockup-bar-meta strong {
   color: #0f172a;
-  font-weight: 800;
-  font-size: 12.5px;
+  font-weight: 600;
+  font-size: 11.5px;
 }
 
 .vh-mockup-track {
-  height: 6px;
+  height: 5px;
   background: #f1f5f9;
   border-radius: 999px;
   overflow: hidden;
@@ -1672,20 +1671,20 @@ a.vh-hero-cta-alt:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 10.5px;
   color: #64748b;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .vh-mockup-criteria-clean strong {
   color: #0f172a;
-  font-weight: 700;
+  font-weight: 500;
   margin-left: 2px;
 }
 
 .vh-mockup-criteria-clean .sep {
   color: #cbd5e1;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* Step 3 Performance Trajectory */
@@ -1709,7 +1708,7 @@ a.vh-hero-cta-alt:hover {
 
 .vh-growth-col .lbl {
   font-size: 9.5px;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
   color: #64748b;
   letter-spacing: 0.5px;
@@ -1717,10 +1716,10 @@ a.vh-hero-cta-alt:hover {
 }
 
 .vh-growth-col .val {
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 600;
   color: #0f172a;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.2px;
 }
 
 .vh-growth-col.target .val {
@@ -1729,7 +1728,7 @@ a.vh-hero-cta-alt:hover {
 
 .vh-growth-col .sub {
   font-size: 9.5px;
-  font-weight: 600;
+  font-weight: 400;
   color: #94a3b8;
   margin-top: 1px;
 }
@@ -1758,7 +1757,7 @@ a.vh-hero-cta-alt:hover {
   align-items: center;
   gap: 6px;
   font-size: 10.5px;
-  font-weight: 600;
+  font-weight: 400;
   color: #64748b;
 }
 
@@ -1772,42 +1771,43 @@ a.vh-hero-cta-alt:hover {
 
 .vh-step-card-points {
   border-top: 1px dashed rgba(226, 232, 240, 0.9);
-  padding-top: 10px;
+  padding-top: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 .vh-step-points-title {
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 1.4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: #64748b;
-  margin-bottom: 1px;
+  color: #94a3b8;
+  margin-bottom: 2px;
 }
 .vh-step-point {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 13.5px;
-  font-weight: 600;
-  color: #0f172a;
+  font-weight: 450;
+  color: #334155;
 }
 .vh-step-point-badge {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(184, 15, 40, 0.14), rgba(184, 15, 40, 0.06));
-  border: 1px solid rgba(184, 15, 40, 0.2);
+  background: rgba(184, 15, 40, 0.06);
+  border: 1px solid rgba(184, 15, 40, 0.14);
   color: #b80f28;
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(184, 15, 40, 0.1);
+  box-shadow: none;
+  font-size: 10px;
   transition: transform 0.25s ease;
 }
 .vh-steps-gsap-card:hover .vh-step-point-badge {
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
 @media (max-width: 1024px) {
@@ -1824,7 +1824,7 @@ a.vh-hero-cta-alt:hover {
 }
 @media (max-width: 960px) {
   .vh-steps-gsap-section {
-    padding: 36px 0;
+    padding: 20px 0;
     margin: 0;
     height: 100vh !important;
     min-height: 100vh !important;
@@ -1836,18 +1836,34 @@ a.vh-hero-cta-alt:hover {
   }
   .vh-steps-inner-container {
     grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 0 20px;
+    gap: 10px;
+    padding: 0 16px;
+    max-width: 440px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
   }
-  .vh-steps-sidebar h2 {
-    font-size: 26px;
-    line-height: 1.15;
+  .vh-steps-sidebar {
+    text-align: center;
+  }
+  .vh-steps-sidebar-inner {
+    align-items: center;
+  }
+  .vh-steps-eyebrow {
+    font-size: 10px;
+    padding: 4px 12px;
     margin-bottom: 6px;
   }
+  .vh-steps-sidebar h2 {
+    font-size: 22px;
+    line-height: 1.15;
+    margin-bottom: 4px;
+  }
   .vh-steps-subtitle {
-    font-size: 13px;
-    line-height: 1.4;
+    font-size: 12px;
+    line-height: 1.35;
     margin-bottom: 0;
+    max-width: 320px;
   }
 
   /* HIDE TIMELINE / STEP BUTTONS ON MOBILE */
@@ -1857,129 +1873,123 @@ a.vh-hero-cta-alt:hover {
 
   /* GSAP Cards Stage Responsive on Mobile */
   .vh-steps-cards-stage {
-    height: 470px;
+    height: 480px;
     width: 100%;
     margin-top: 4px;
+    position: relative;
   }
   .vh-steps-gsap-card {
-    padding: 22px 18px;
-    border-radius: 24px;
+    padding: 16px 16px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
   }
   .vh-step-card-header {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
   .vh-step-card-header .vh-step-num-badge {
-    width: 38px;
-    height: 38px;
-    font-size: 14px;
-    border-radius: 12px;
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+    border-radius: 9px;
   }
   .vh-step-card-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
   }
   .vh-step-card-content h3 {
-    font-size: 20px;
-    letter-spacing: -0.02em;
-    margin-bottom: 4px;
+    font-size: 18px;
+    letter-spacing: -0.3px;
+    margin-bottom: 3px;
+    line-height: 1.2;
   }
   .vh-step-card-desc {
-    font-size: 13.5px;
-    line-height: 1.45;
-    margin-bottom: 12px;
+    font-size: 12px;
+    line-height: 1.4;
+    margin-bottom: 8px;
   }
-  .vh-step-card-ui-mockup {
-    padding: 12px 14px;
-    margin-bottom: 12px;
-    border-radius: 16px;
+  .vh-step-card-ui-mockup.vh-step-premium-widget {
+    padding: 9px 12px;
+    margin-bottom: 8px;
+    border-radius: 13px;
   }
   .vh-mockup-header {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   .vh-mockup-tag {
-    font-size: 9.5px;
-    letter-spacing: 0.8px;
+    font-size: 9px;
+    letter-spacing: 0.6px;
   }
-  .vh-mockup-timer,
-  .vh-mockup-score-badge,
-  .vh-mockup-trend-pill {
-    padding: 3px 8px;
+  .vh-mockup-audio-card {
+    padding: 6px 10px;
+    margin: 6px 0;
+  }
+  .vh-mockup-audio-info {
+    font-size: 11.5px;
+    gap: 6px;
+  }
+  .vh-mockup-criteria-clean {
+    flex-wrap: wrap;
+    gap: 3px 6px;
+    font-size: 10px;
+  }
+  .vh-mockup-skill-bars {
+    gap: 6px;
+    margin: 6px 0 8px;
+  }
+  .vh-mockup-bar-meta {
     font-size: 11px;
-    border-radius: 8px;
-  }
-  .vh-mockup-audio-bar {
-    padding: 8px 12px;
-    font-size: 12px;
-    margin-bottom: 8px;
-  }
-  .vh-mockup-chip {
-    padding: 3px 8px;
-    font-size: 10.5px;
-    border-radius: 6px;
   }
   .vh-step-card-points {
-    padding-top: 12px;
-    gap: 8px;
+    padding-top: 8px;
+    gap: 5px;
   }
   .vh-step-points-title {
-    font-size: 10px;
-    margin-bottom: 0;
+    font-size: 9px;
+    margin-bottom: 1px;
   }
   .vh-step-point {
-    font-size: 13px;
-    gap: 8px;
+    font-size: 12px;
+    gap: 7px;
   }
   .vh-step-point-badge {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
   }
 }
 
-@media (max-width: 480px) {
-  .vh-steps-gsap-section {
-    padding: 24px 0;
-    margin: 0;
-    height: 100vh !important;
-    min-height: 100vh !important;
-    max-height: none !important;
-  }
+@media (max-width: 420px) {
   .vh-steps-inner-container {
-    padding: 0 14px;
-    gap: 12px;
+    padding: 0 12px;
+    gap: 8px;
   }
   .vh-steps-sidebar h2 {
-    font-size: 21px;
-    margin-bottom: 4px;
-  }
-  .vh-steps-subtitle {
-    font-size: 12px;
-    line-height: 1.35;
+    font-size: 20px;
   }
   .vh-steps-cards-stage {
-    height: 420px;
+    height: 465px;
   }
   .vh-steps-gsap-card {
-    padding: 16px 14px;
-    border-radius: 20px;
+    padding: 14px 14px;
   }
   .vh-step-card-content h3 {
-    font-size: 17.5px;
+    font-size: 17px;
   }
   .vh-step-card-desc {
-    font-size: 12px;
-    margin-bottom: 8px;
+    font-size: 11.5px;
+    line-height: 1.35;
+    margin-bottom: 6px;
   }
-  .vh-step-card-ui-mockup {
+  .vh-step-card-ui-mockup.vh-step-premium-widget {
     padding: 8px 10px;
-    margin-bottom: 8px;
-  }
-  .vh-mockup-audio-bar {
-    padding: 6px 10px;
-    font-size: 11px;
+    margin-bottom: 6px;
   }
   .vh-step-point {
-    font-size: 12px;
+    font-size: 11.5px;
   }
 }
 @media (max-width: 760px) {
@@ -2020,37 +2030,45 @@ a.vh-hero-cta-alt:hover {
   padding: 20px 24px 40px;
 }
 .vh-testimonials-header-wrap {
+  text-align: center;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto 42px;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-.vh-testimonials-header-wrap h2 {
-  font-size: 32px;
-  font-weight: 800;
-  letter-spacing: -0.6px;
-  line-height: 1.12;
-  margin: 0 0 12px;
+  flex-direction: column;
+  align-items: center;
 }
 .vh-testimonials-eyebrow {
   display: inline-block;
   font-size: 11.5px;
-  font-weight: 800;
-  letter-spacing: 2px;
+  font-weight: 700;
+  letter-spacing: 2.2px;
   text-transform: uppercase;
   color: var(--ac);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  text-align: center;
 }
-.vh-testimonials-header-wrap > div:first-child {
-  max-width: 620px;
+.vh-testimonials-header-wrap h2 {
+  font-size: clamp(28px, 3.4vw, 38px);
+  font-weight: 600;
+  letter-spacing: -0.8px;
+  line-height: 1.15;
+  margin: 0 0 14px;
+  text-align: center;
+  color: var(--ink);
+}
+@media (min-width: 768px) {
+  .vh-testimonials-header-wrap h2 {
+    white-space: nowrap;
+  }
 }
 .vh-testimonials-header-wrap p {
-  font-size: 15px;
+  font-size: 15.5px;
   color: var(--ink2);
   line-height: 1.6;
-  margin: 0;
+  margin: 0 auto;
+  max-width: 620px;
+  text-align: center;
 }
 .vh-testimonial-controls {
   display: flex;
@@ -2279,10 +2297,10 @@ a.vh-hero-cta-alt:hover {
   gap: 20px;
 }
 .vh-blog-preview-head h2 {
-  font-size: 32px;
-  font-weight: 800;
-  letter-spacing: -0.6px;
-  line-height: 1.12;
+  font-size: clamp(28px, 3.2vw, 38px);
+  font-weight: 600;
+  letter-spacing: -0.8px;
+  line-height: 1.08;
   margin: 0;
 }
 .vh-blog-preview-view-all {
@@ -2372,38 +2390,39 @@ a.vh-hero-cta-alt:hover {
   justify-content: space-between;
 }
 .vh-blog-preview-body h3 {
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: -0.4px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.35px;
   line-height: 1.35;
   color: var(--ink);
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   transition: color 0.25s ease;
 }
 .vh-blog-preview-card:hover .vh-blog-preview-body h3 {
   color: #b80f28;
 }
 .vh-blog-preview-body p {
-  font-size: 14.5px;
+  font-size: 14px;
+  font-weight: 400;
   line-height: 1.6;
   color: var(--ink2);
-  margin: 0 0 24px;
+  margin: 0 0 20px;
 }
 .vh-blog-preview-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ink2);
   border-top: 1px dashed rgba(226, 232, 240, 0.9);
-  padding-top: 18px;
+  padding-top: 16px;
 }
 .vh-blog-preview-meta span:first-child {
-  font-weight: 700;
-  color: var(--ink);
+  font-weight: 500;
+  color: var(--ink2);
 }
 .vh-blog-preview-meta span:last-child {
-  font-weight: 700;
+  font-weight: 500;
   color: #b80f28;
   background: var(--acWash);
   padding: 3px 10px;
@@ -2428,3 +2447,716 @@ a.vh-hero-cta-alt:hover {
     padding-right: 14px;
   }
 }
+
+/* ==========================================================================
+   Instagram Reels & Posts Showcase Section (Ultra-Sleek Atmospheric Backdrop)
+   ========================================================================== */
+
+.vh-instagram-section {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  padding: 96px 0 120px;
+  background: 
+    radial-gradient(circle at 10% 18%, rgba(240, 148, 51, 0.07) 0%, transparent 45%),
+    radial-gradient(circle at 90% 12%, rgba(225, 48, 108, 0.09) 0%, transparent 50%),
+    radial-gradient(circle at 50% 88%, rgba(131, 58, 180, 0.06) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(254, 250, 252, 0.75) 0%, rgba(248, 249, 253, 0.98) 45%, rgba(253, 250, 252, 0.8) 100%);
+  border-top: 1px solid rgba(225, 48, 108, 0.08);
+  border-bottom: 1px solid rgba(131, 58, 180, 0.08);
+}
+
+[data-theme="dark"] .vh-instagram-section {
+  background: 
+    radial-gradient(circle at 10% 15%, rgba(240, 148, 51, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 90% 12%, rgba(225, 48, 108, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 50% 88%, rgba(131, 58, 180, 0.13) 0%, transparent 55%),
+    linear-gradient(180deg, #090910 0%, #0d0c15 50%, #07070b 100%);
+  border-top-color: rgba(225, 48, 108, 0.15);
+  border-bottom-color: rgba(131, 58, 180, 0.15);
+}
+
+/* Atmospheric Glow Orbs */
+.vh-instagram-aura {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(80px);
+  opacity: 0.55;
+  z-index: 1;
+}
+
+.vh-instagram-aura-top-left {
+  top: -60px;
+  left: -80px;
+  width: 440px;
+  height: 440px;
+  background: radial-gradient(circle, rgba(240, 148, 51, 0.22) 0%, rgba(225, 48, 108, 0.12) 60%, transparent 80%);
+  animation: vhAuraFloat 14s ease-in-out infinite alternate;
+}
+
+.vh-instagram-aura-top-right {
+  top: -40px;
+  right: -80px;
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(225, 48, 108, 0.24) 0%, rgba(131, 58, 180, 0.14) 60%, transparent 80%);
+  animation: vhAuraFloat 16s ease-in-out infinite alternate-reverse;
+}
+
+.vh-instagram-aura-center {
+  bottom: -60px;
+  left: 45%;
+  transform: translateX(-50%);
+  width: 560px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(131, 58, 180, 0.16) 0%, rgba(184, 15, 40, 0.09) 60%, transparent 80%);
+  animation: vhAuraFloat 18s ease-in-out infinite alternate;
+}
+
+@keyframes vhAuraFloat {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(25px, -18px) scale(1.08);
+  }
+  100% {
+    transform: translate(-20px, 15px) scale(0.95);
+  }
+}
+
+.vh-instagram-container {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 32px;
+  position: relative;
+  z-index: 2;
+}
+
+.vh-instagram-header-centered {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vh-instagram-eyebrow {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: var(--ac, #b80f28);
+  margin-bottom: 10px;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+}
+
+.vh-instagram-title-centered {
+  font-size: clamp(30px, 3.6vw, 40px);
+  font-weight: 600;
+  letter-spacing: -0.8px;
+  line-height: 1.05;
+  color: var(--ink);
+  margin: 0 0 14px;
+  text-align: center;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+}
+
+.vh-instagram-subtitle-centered {
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--ink2);
+  max-width: 580px;
+  margin: 0 auto 20px;
+  text-align: center;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+}
+
+/* ==========================================================================
+   Instagram Profile Bar Widget (Wide, Clean, Borderless Luxury Social Bar)
+   ========================================================================== */
+
+.vh-instagram-profile-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 36px;
+  background: transparent;
+  border: none;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  border-radius: 0;
+  padding: 8px 0;
+  box-shadow: none;
+  margin: 10px auto 0;
+  max-width: 860px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.vh-instagram-profile-card:hover {
+  transform: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.vh-instagram-profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.vh-instagram-avatar-ring {
+  padding: 3px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+
+.vh-instagram-avatar-ring:hover {
+  transform: scale(1.08) rotate(4deg);
+  box-shadow: 0 0 20px rgba(225, 48, 108, 0.45);
+}
+
+.vh-instagram-avatar-inner {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--surface, #ffffff);
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.vh-instagram-avatar-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.vh-instagram-avatar-initials {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #b80f28 0%, #4a050f 100%);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vh-instagram-profile-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.vh-instagram-profile-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15.5px;
+  font-weight: 750;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.vh-instagram-verified-badge {
+  flex-shrink: 0;
+}
+
+.vh-instagram-profile-handle {
+  font-size: 13px;
+  color: var(--ink2);
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+.vh-instagram-profile-stats {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+
+.vh-instagram-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.vh-instagram-stat-num {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.vh-instagram-stat-label {
+  font-size: 12px;
+  color: var(--ink2);
+  text-transform: capitalize;
+  margin-top: 3px;
+}
+
+.vh-instagram-profile-action {
+  display: flex;
+  align-items: center;
+}
+
+.vh-instagram-profile-follow-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 24px;
+  border-radius: 9px;
+  background: #0095f6;
+  color: #ffffff !important;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 149, 246, 0.35);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vh-instagram-profile-follow-btn:hover {
+  background: #1877f2;
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(0, 149, 246, 0.5);
+  color: #ffffff !important;
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .vh-instagram-profile-card {
+    flex-direction: column;
+    gap: 18px;
+    padding: 0;
+  }
+  .vh-instagram-profile-stats {
+    width: 100%;
+    justify-content: space-around;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .vh-instagram-profile-action {
+    width: 100%;
+  }
+  .vh-instagram-profile-follow-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.vh-instagram-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.vh-instagram-grid-staggered {
+  align-items: start;
+  padding-bottom: 48px;
+}
+
+.vh-instagram-card {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--cardSolid);
+  border: 1px solid var(--line);
+  aspect-ratio: 9 / 14;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s ease,
+              border-color 0.35s ease;
+}
+
+/* Staggered Alternating Up / Down */
+.vh-instagram-card.vh-instagram-card-up {
+  margin-top: 0;
+}
+
+.vh-instagram-card.vh-instagram-card-down {
+  margin-top: 42px;
+}
+
+.vh-instagram-card:hover {
+  border-color: rgba(184, 15, 40, 0.35);
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.12);
+}
+
+.vh-instagram-card.vh-instagram-card-up:hover {
+  transform: translateY(-8px);
+}
+
+.vh-instagram-card.vh-instagram-card-down:hover {
+  transform: translateY(-8px);
+}
+
+.vh-instagram-media-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+.vh-instagram-card-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.28) 50%, transparent 65%);
+  transform: translateX(-120%);
+  transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vh-instagram-card:hover .vh-instagram-card-sheen {
+  transform: translateX(120%);
+}
+
+.vh-instagram-media-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vh-instagram-card:hover .vh-instagram-media-img {
+  transform: scale(1.08);
+}
+
+.vh-instagram-type-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.vh-instagram-play-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.vh-instagram-card:hover .vh-instagram-play-overlay {
+  opacity: 1;
+}
+
+.vh-instagram-play-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+}
+
+.vh-instagram-card:hover .vh-instagram-play-circle {
+  transform: scale(1);
+  background: rgba(225, 48, 108, 0.85);
+}
+
+.vh-instagram-overlay-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  padding: 44px 14px 14px;
+  background: linear-gradient(to top, rgba(8, 8, 14, 0.96) 0%, rgba(8, 8, 14, 0.65) 60%, transparent 100%);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vh-instagram-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.vh-instagram-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.14);
+  padding: 3px 9px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+}
+
+.vh-instagram-caption-snippet {
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Modal Popup Preview */
+
+.vh-instagram-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(8, 8, 14, 0.82);
+  backdrop-filter: blur(12px);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  animation: vhFadeIn 0.25s ease;
+}
+
+.vh-instagram-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 820px;
+  max-height: 90vh;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  box-shadow: 0 32px 64px -16px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .vh-instagram-modal-card {
+  background: #12121c;
+}
+
+.vh-instagram-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--chip);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s ease;
+}
+
+.vh-instagram-modal-close:hover {
+  background: var(--ac);
+  color: #fff;
+}
+
+.vh-instagram-modal-media {
+  background: #000;
+  height: 100%;
+  min-height: 380px;
+}
+
+.vh-instagram-modal-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vh-instagram-modal-info {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.vh-instagram-modal-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.vh-instagram-author-avatar-img-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface, #ffffff);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vh-instagram-modal-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.vh-instagram-author-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--ac), #7c5cff);
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-weight: 750;
+  font-size: 14px;
+}
+
+.vh-instagram-author-handle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.vh-instagram-author-sub {
+  font-size: 12px;
+  color: var(--ink2);
+}
+
+.vh-instagram-modal-body {
+  margin: 18px 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.vh-instagram-modal-body p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.vh-instagram-modal-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink2);
+  padding: 12px 0 16px;
+}
+
+.vh-instagram-modal-link-btn {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--ac, #b80f28);
+  color: #ffffff !important;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.vh-instagram-modal-link-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1024px) {
+  .vh-instagram-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .vh-instagram-card.vh-instagram-card-down {
+    margin-top: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .vh-instagram-section {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 70px;
+  }
+  .vh-instagram-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .vh-instagram-card {
+    aspect-ratio: 9 / 13;
+  }
+  .vh-instagram-modal-card {
+    grid-template-columns: 1fr;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .vh-instagram-modal-media {
+    min-height: 260px;
+  }
+}
+
+@media (max-width: 520px) {
+  .vh-instagram-section {
+    padding-left: 14px;
+    padding-right: 14px;
+    padding-bottom: 50px;
+  }
+  .vh-instagram-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .vh-instagram-card.vh-instagram-card-down {
+    margin-top: 0;
+  }
+}
+
+

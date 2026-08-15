@@ -92,6 +92,7 @@ import {
   SuperAdminInstituteStudents,
   SuperAdminInstructorForm,
   SuperAdminSEOSettings,
+  SuperAdminInstagramSettings,
   SuperAdminStudentForm,
   SuperAdminStudentOverview,
   DeveloperInstituteAccounts,
@@ -163,6 +164,7 @@ export const router = createBrowserRouter([
           { path: "blogs/new", element: <SuperAdminBlogForm /> },
           { path: "blogs/:id", element: <SuperAdminBlogForm /> },
           { path: "seo-settings", element: <SuperAdminSEOSettings /> },
+          { path: "instagram-settings", element: <SuperAdminInstagramSettings /> },
           { path: "ai-settings", element: <Navigate to="/super-admin/platform-settings?tab=ai" replace /> },
           // Unified cross-role directory. The per-role create/edit forms below
           // remain the place accounts are actually managed.

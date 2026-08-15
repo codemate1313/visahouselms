@@ -134,6 +134,12 @@ export function DashboardLayout() {
           icon: "settings",
           to: "/super-admin/seo-settings",
         },
+        {
+          key: "instagram_settings",
+          label: m.instagramFeed,
+          icon: "play",
+          to: "/super-admin/instagram-settings",
+        },
       ],
     },
     {
