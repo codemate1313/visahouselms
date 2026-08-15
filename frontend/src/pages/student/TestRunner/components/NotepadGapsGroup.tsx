@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { AttemptQuestion, AttemptResponse } from "@/api/types";
+import { renderRichText } from "@/components/ui";
 
 interface NotepadGapsGroupProps {
   questions: AttemptQuestion[];
@@ -78,7 +79,7 @@ export function NotepadGapsGroup({
         {lines.map((line, lineIndex) => (
           <li key={`line-${lineIndex}`}>
             {tokenize(line, questions, `line-${lineIndex}`).map((token) => {
-              if (token.type === "text") return <span key={token.key}>{token.text}</span>;
+              if (token.type === "text") return <span key={token.key}>{renderRichText(token.text)}</span>;
               const value = token.question.response?.text ?? "";
               const words = value.trim().split(/\s+/).filter(Boolean).length;
               const overLimit = Boolean(maxAnswerWords && words > maxAnswerWords);

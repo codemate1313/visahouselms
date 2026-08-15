@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { Attempt, AttemptResponse, ProctorFlagType } from "@/api/types";
@@ -60,6 +60,7 @@ interface ViolationNotice {
 export function TestRunner() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const user = useAuthStore((state) => state.user);
 
   const [isMobileDevice, setIsMobileDevice] = useState(() => {
@@ -79,7 +80,19 @@ export function TestRunner() {
   const showError = useToastStore((state) => state.showError);
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [partIndex, setPartIndex] = useState(0);
+  const [partIndex, setPartIndex] = useState(() => {
+    const param = searchParams.get("part");
+    if (param !== null) {
+      const p = parseInt(param, 10);
+      if (!Number.isNaN(p) && p >= 0) return p;
+    }
+    const stored = id ? sessionStorage.getItem(`test-runner-part:${id}`) : null;
+    if (stored !== null) {
+      const p = parseInt(stored, 10);
+      if (!Number.isNaN(p) && p >= 0) return p;
+    }
+    return 0;
+  });
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
@@ -128,6 +141,20 @@ export function TestRunner() {
     attemptTokenRef.current ? { "X-Attempt-Token": attemptTokenRef.current } : {}
   ), []);
 
+  useEffect(() => {
+    if (id) {
+      sessionStorage.setItem(`test-runner-part:${id}`, String(partIndex));
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (next.get("part") !== String(partIndex)) {
+          next.set("part", String(partIndex));
+          return next;
+        }
+        return prev;
+      }, { replace: true });
+    }
+  }, [id, partIndex, setSearchParams]);
+
   const activeHeartbeatPartId = attempt?.parts[partIndex]?.id ?? null;
   const currentPart = attempt?.parts[partIndex];
   const isListeningPart = currentPart?.section_type === "listening";
@@ -153,7 +180,33 @@ export function TestRunner() {
           revisionByQuestionRef.current[question.id] = question.revision;
         }));
         setSecurityAuthorized(data.status === "in_progress" ? data.security_authorized : false);
-        setAttempt(data);
+
+        // Restore active part from URL or sessionStorage
+        const savedPartParam = searchParams.get("part");
+        const savedPartStorage = sessionStorage.getItem(`test-runner-part:${id}`);
+        const candidateIndex = savedPartParam !== null ? parseInt(savedPartParam, 10) : (savedPartStorage !== null ? parseInt(savedPartStorage, 10) : 0);
+        const resolvedPartIndex = (!Number.isNaN(candidateIndex) && candidateIndex >= 0 && candidateIndex < data.parts.length) ? candidateIndex : 0;
+        setPartIndex(resolvedPartIndex);
+
+        const targetPart = data.parts[resolvedPartIndex];
+        if (data.is_final && targetPart && targetPart.question_count > 0 && targetPart.questions.length === 0) {
+          apiClient.get<Attempt["parts"][number]>(
+            `/student/attempts/${id}/parts/${targetPart.id}`,
+            { headers: { ...securityHeaders(), "X-Skip-Loader": "1" } },
+          ).then(({ data: partData }) => {
+            partData.questions.forEach((question) => {
+              revisionByQuestionRef.current[question.id] = question.revision;
+            });
+            setAttempt({
+              ...data,
+              parts: data.parts.map((p) => p.id === partData.id ? partData : p),
+            });
+          }).catch(() => {
+            setAttempt(data);
+          });
+        } else {
+          setAttempt(data);
+        }
       })
       .catch(() => setError(strings.loadError));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1028,7 +1081,7 @@ export function TestRunner() {
   const shouldShowPreExamOnboarding =
     attempt.status === "ready"
     || (attempt.security_required && !securityAuthorized)
-    || (!attempt.security_required && !onboardingCompleted && !hasSavedResponses);
+    || (!attempt.security_required && attempt.status !== "in_progress" && !onboardingCompleted && !hasSavedResponses);
 
   if (shouldShowPreExamOnboarding) {
     return (

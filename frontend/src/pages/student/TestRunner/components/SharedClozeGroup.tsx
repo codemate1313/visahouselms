@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { AttemptQuestion, AttemptResponse } from "@/api/types";
+import { renderRichText } from "@/components/ui";
 import { parseClozeMarkers } from "@/utils/clozeMarkers";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 
@@ -36,8 +37,13 @@ export function SharedClozeGroup({
       <p>
         {tokens.map((token) => (
           token.type === "text"
-            ? <span key={token.key}>{token.text}</span>
-            : <strong key={token.key} className="test-runner-cloze-marker">({questionNumberOffset + token.gapNumber})</strong>
+            ? <span key={token.key}>{renderRichText(token.text)}</span>
+            : (
+              <span key={token.key} className="test-runner-cloze-blank">
+                <strong>({questionNumberOffset + token.gapNumber})</strong>
+                <span className="test-runner-blank-dots">....................</span>
+              </span>
+            )
         ))}
       </p>
     </article>

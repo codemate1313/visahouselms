@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.config import settings
 from app.models.audit_log import AuditLog
-from app.models.attempt import ATTEMPT_GRADED, ATTEMPT_GRADING, ATTEMPT_SUBMITTED, TestAttempt
+from app.models.attempt import ATTEMPT_GRADED, ATTEMPT_GRADING, ATTEMPT_SUBMITTED, AttemptAnswer, TestAttempt
 from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion, InstituteModule
 from app.models.institute import Institute
 from app.models.plan import Plan
@@ -956,6 +956,7 @@ def delete_question(
     image_path = question.image_path
     material_path = (question.interaction or {}).get("candidate_material_path")
     _audit(db, actor, "exam_module.question.delete", module.id, ip, {"part_id": part.id, "question_id": question.id})
+    db.query(AttemptAnswer).filter(AttemptAnswer.question_id == question.id).delete(synchronize_session=False)
     db.delete(question)
     db.flush()
     _refresh_speaking_duration(db, module)

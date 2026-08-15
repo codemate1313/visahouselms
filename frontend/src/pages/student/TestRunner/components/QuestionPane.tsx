@@ -47,9 +47,11 @@ export function QuestionPane({
     <section className="test-runner-question-pane" ref={questionPaneRef} aria-label={`${currentPart.title} questions`}>
       {currentPart.section_type !== "writing" && !isListening1 && !usesConversationGroups && (
         <div className="test-runner-pane-heading test-runner-question-pane-heading">
-          <span>
-            {currentPart.question_count} {t.questionsSuffix}
-          </span>
+          {currentPart.section_type !== "reading" && (
+            <span>
+              {currentPart.question_count} {t.questionsSuffix}
+            </span>
+          )}
           <h2>{currentPart.title}</h2>
           <p>{isReading1a ? (currentPart.instructions || t.instructions) : t.instructions}</p>
         </div>

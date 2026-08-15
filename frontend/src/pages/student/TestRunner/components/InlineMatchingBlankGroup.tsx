@@ -1,5 +1,6 @@
 import { useMemo, useState, type DragEvent } from "react";
 import type { AttemptQuestion, AttemptResponse, QuestionOption } from "@/api/types";
+import { renderRichText } from "@/components/ui";
 
 interface InlineMatchingBlankGroupProps {
   questions: AttemptQuestion[];
@@ -90,7 +91,7 @@ export function InlineMatchingBlankGroup({
       <article className="test-runner-inline-passage">
         <p>
           {tokens.map((token) => {
-            if (token.type === "text") return <span key={token.key}>{token.text}</span>;
+            if (token.type === "text") return <span key={token.key}>{renderRichText(token.text)}</span>;
             const selected = selectedByQuestion.get(token.question.id) ?? "";
             const saving = savingIds.has(token.question.id);
             return (

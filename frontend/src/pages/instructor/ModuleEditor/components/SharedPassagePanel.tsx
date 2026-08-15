@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
-import { Button } from "@/components/ui";
+import { Button, RichTextEditor } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
@@ -181,12 +181,12 @@ export function SharedPassagePanel({ part, isEditable, busy, onSave, onDelete }:
         </div>
       )}
 
-      <textarea
+      <RichTextEditor
         ref={textareaRef}
         className="shared-passage-input"
         rows={12}
         value={draft}
-        onChange={(event) => setDraft(event.target.value)}
+        onChange={setDraft}
         placeholder={t.placeholder}
         readOnly={!isEditable || !isEditing}
         aria-label={t.heading(part.title)}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
-import { Button, RequiredMark, SearchableSelect } from "@/components/ui";
+import { Button, RequiredMark, RichTextEditor, SearchableSelect } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
@@ -69,21 +69,21 @@ export function GapTaskComposer({
     const effectivePassage = (first?.passage ?? currentStored).trim();
     setPassage(effectivePassage);
     setIsEditingPassage(effectivePassage.length === 0);
-    const isPlaceholder = (text: string, key: string) =>
-      text.trim().toLowerCase() === `option ${key.toLowerCase()}` ||
-      text.trim().toLowerCase() === `option ${key}`.toLowerCase();
-
     setOptions(
       first?.options?.length
         ? first.options.map((option) => ({
             key: option.key,
-            text: isPlaceholder(option.text, option.key) ? "" : option.text,
+            text: option.text ?? "",
           }))
         : Array.from({ length: optionCount }, (_, index) => ({ key: LETTERS[index], text: "" })),
     );
     setAnswers(
       Object.fromEntries(
-        existing.map((question, index) => [index + 1, question.correct_answers?.[0] ?? ""]),
+        existing.map((question, index) => {
+          const match = question.prompt?.match(/\d+/);
+          const gapNum = match ? Number(match[0]) : index + 1;
+          return [gapNum, question.correct_answers?.[0] ?? ""];
+        }),
       ),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -243,13 +243,13 @@ export function GapTaskComposer({
       )}
 
       <label htmlFor="gap-task-passage">{t.passageLabel}<RequiredMark /></label>
-      <textarea
+      <RichTextEditor
         ref={textareaRef}
         id="gap-task-passage"
         className="gap-task-passage"
         rows={12}
         value={passage}
-        onChange={(event) => setPassage(event.target.value)}
+        onChange={setPassage}
         placeholder={t.passagePlaceholder}
         readOnly={!isEditable || !isEditingPassage}
       />

@@ -1019,9 +1019,9 @@
 
 .test-runner-parts {
   display: block;
-  width: 184px;
-  flex: 0 0 184px;
-  padding: 16px 12px;
+  width: 210px;
+  flex: 0 0 210px;
+  padding: 18px 14px;
   overflow-x: hidden;
   overflow-y: auto;
   border-right: 1px solid #d9dce2;
@@ -1033,50 +1033,53 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
-  padding: 10px;
+  margin-bottom: 20px;
+  padding: 12px 14px;
   border: 1px solid #dde0e5;
-  border-radius: var(--radius-xs);
-  background: rgba(255, 255, 255, 0.78);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .test-runner-progress-summary span {
-  color: #777982;
-  font-size: 11px;
+  color: #64748b;
+  font-size: 13.5px;
+  font-weight: 600;
 }
 
 .test-runner-progress-summary strong {
   color: #17181c;
-  font-size: 12px;
+  font-size: 16px;
+  font-weight: 800;
 }
 
 .test-runner-section-group {
-  margin-bottom: 17px;
+  margin-bottom: 18px;
 }
 
 .test-runner-section-group h2 {
-  margin: 0 7px 6px;
-  color: #777982;
-  font-size: 10px;
+  margin: 0 8px 8px;
+  color: #64748b;
+  font-size: 12px;
   font-weight: 800;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
 }
 
 .test-runner-part-tab {
   display: flex;
   width: 100%;
-  min-height: 34px;
+  min-height: 40px;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 5px;
-  padding: 7px 8px 7px 10px;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 9px 12px;
   border: 1px solid transparent;
-  border-radius: 5px;
+  border-radius: 7px;
   background: transparent;
-  color: #5f626b;
-  font-size: 11px;
-  font-weight: 650;
+  color: #475569;
+  font-size: 13.5px;
+  font-weight: 700;
   text-align: left;
   white-space: normal;
   box-shadow: none;
@@ -1098,9 +1101,9 @@
 
 .test-runner-part-tab.is-complete:not(.is-active)::before {
   content: "";
-  width: 6px;
-  height: 6px;
-  flex: 0 0 6px;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
   border-radius: 50%;
   background: #16865b;
 }
@@ -1112,7 +1115,8 @@
 
 .test-runner-part-progress {
   flex: 0 0 auto;
-  font-size: 9px;
+  font-size: 12px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1194,7 +1198,7 @@
 
 .test-runner-pane-heading {
   margin-bottom: 14px;
-  padding-bottom: 12px;
+  padding-bottom: 0;
   border-bottom: 1px solid #e2e4e8;
 }
 
@@ -1206,15 +1210,17 @@
 }
 
 .test-runner-pane-heading h2 {
-  margin: 3px 0 4px;
+  margin: 4px 0 6px;
   color: #191a1e;
-  font-size: 17px;
+  font-size: 22px;
+  font-weight: 800;
 }
 
 .test-runner-pane-heading p {
   margin: 0;
-  color: #777982;
-  font-size: 11.5px;
+  color: #64748b;
+  font-size: 14.5px;
+  line-height: 1.55;
 }
 
 .test-runner-instructions {
@@ -1253,9 +1259,9 @@
   padding: 0;
   border-radius: 0;
   background: transparent;
-  color: #34363c;
-  font-size: 13px;
-  line-height: 1.72;
+  color: #1e293b;
+  font-size: 15.5px;
+  line-height: 1.85;
   white-space: pre-wrap;
 }
 
@@ -1336,41 +1342,45 @@
 }
 
 .test-runner-question-head {
-  margin-bottom: 7px;
-  color: #6c6e76;
-  font-size: 10px;
+  margin-bottom: 8px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .test-runner-prompt {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   color: #191a1e;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.6;
 }
 
 .test-runner-options {
-  gap: 6px;
+  gap: 8px;
 }
 
 .test-runner-option {
   display: grid;
-  min-height: 42px;
-  grid-template-columns: 18px minmax(0, 1fr);
+  min-height: 48px;
+  grid-template-columns: 20px minmax(0, 1fr);
   align-items: center;
   justify-content: stretch;
-  gap: 9px;
-  padding: 8px 11px;
-  border-radius: 5px;
-  color: #2e3036;
-  font-size: 12px;
-  line-height: 1.4;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 7px;
+  color: #1e293b;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .test-runner-option input[type="radio"],
 .test-runner-option input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  flex-basis: 16px;
+  width: 18px;
+  height: 18px;
+  flex-basis: 18px;
 }
 
 .test-runner-text-input,
@@ -1583,7 +1593,30 @@
 }
 
 .test-runner-cloze-passage p {
-  line-height: 1.85;
+  line-height: 1.95;
+}
+
+.test-runner-cloze-blank {
+  display: inline-flex;
+  align-items: baseline;
+  margin: 0 4px;
+  font-weight: 700;
+  vertical-align: baseline;
+}
+
+.test-runner-cloze-blank strong {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.test-runner-blank-dots {
+  display: inline-block;
+  letter-spacing: 1.5px;
+  color: #475569;
+  font-weight: 800;
+  font-size: 15px;
+  user-select: none;
 }
 
 .test-runner-cloze-marker {
@@ -1683,8 +1716,34 @@
   color: var(--test-accent, var(--primary));
 }
 
+.test-runner-inline-options button:hover:not(:disabled),
+.test-runner-inline-options button.is-picked,
+.test-runner-source-text-options button:hover:not(:disabled),
+.test-runner-source-text-options button.is-picked {
+  background: var(--test-accent, var(--primary)) !important;
+  border-color: var(--test-accent, var(--primary)) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.test-runner-inline-options button:hover:not(:disabled) strong,
+.test-runner-inline-options button.is-picked strong,
+.test-runner-source-text-options button:hover:not(:disabled) strong,
+.test-runner-source-text-options button.is-picked strong {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.test-runner-inline-options button:hover:not(:disabled) span,
+.test-runner-inline-options button.is-picked span,
+.test-runner-source-text-options button:hover:not(:disabled) span,
+.test-runner-source-text-options button.is-picked span {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
 .test-runner-inline-options button.is-picked {
-  border-color: var(--test-accent, var(--primary));
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--test-accent, var(--primary)) 18%, transparent);
 }
 
@@ -5026,3 +5085,22 @@ th[aria-sort="descending"] .table-sort-button::after {
   cursor: not-allowed !important;
 }
 
+
+/* ---------------------------------------------------------------------------
+   Formatted passages
+
+   `.test-runner-passage` keeps `white-space: pre-wrap` for passages authored as
+   raw text. Once the block renderer has turned the source into real paragraphs
+   and lists, pre-wrap would count the newlines a second time and double every
+   gap, so rich content opts back out.
+   --------------------------------------------------------------------------- */
+
+.test-runner-passage .vh-rich-text,
+.test-runner-inline-passage .vh-rich-text,
+.speaking-interview-passage .vh-rich-text {
+  white-space: normal;
+}
+
+.test-runner-instructions .highlighted-word {
+  font-weight: 800;
+}

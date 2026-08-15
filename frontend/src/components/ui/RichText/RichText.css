@@ -1,0 +1,58 @@
+/*
+ * Rendered passage/paragraph markup.
+ *
+ * Deliberately inherits font-size, family and colour from whatever pane it sits
+ * in - the same passage renders inside the instructor preview, the saved-question
+ * list and the candidate's source pane, and each of those sets its own reading
+ * type scale.
+ */
+
+.vh-rich-text > *:first-child {
+  margin-top: 0;
+}
+
+.vh-rich-text > *:last-child {
+  margin-bottom: 0;
+}
+
+.vh-rich-text p {
+  margin: 0 0 0.85em;
+}
+
+.vh-rich-text h3,
+.vh-rich-text h4,
+.vh-rich-text h5 {
+  margin: 1.1em 0 0.45em;
+  font-weight: 700;
+  line-height: 1.3;
+  color: inherit;
+}
+
+.vh-rich-text h3 { font-size: 1.18em; }
+.vh-rich-text h4 { font-size: 1.08em; }
+.vh-rich-text h5 { font-size: 1em; }
+
+.vh-rich-text ul,
+.vh-rich-text ol {
+  margin: 0 0 0.85em;
+  padding-left: 1.5em;
+}
+
+.vh-rich-text li {
+  margin-bottom: 0.3em;
+}
+
+.vh-rich-text ul { list-style: disc; }
+.vh-rich-text ol { list-style: decimal; }
+
+.vh-rich-text blockquote {
+  margin: 0 0 0.85em;
+  padding: 0.35em 0 0.35em 0.9em;
+  border-left: 3px solid color-mix(in srgb, var(--primary, #b91c2b) 45%, transparent);
+  color: var(--text-muted, #6c6e76);
+  font-style: italic;
+}
+
+.vh-rich-text u {
+  text-underline-offset: 2px;
+}

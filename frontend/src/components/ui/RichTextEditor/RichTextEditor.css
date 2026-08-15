@@ -1,0 +1,160 @@
+/*
+ * Toolbar + textarea, styled as one field.
+ *
+ * The textarea keeps whatever sizing the calling panel already gave it (the
+ * authoring stylesheets target `.gap-task-passage`, `.shared-passage-input` and
+ * friends), so this file only owns the chrome around it and the seam where the
+ * two meet.
+ */
+
+.vh-rte {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.vh-rte-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--border, #e2e4ea);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: var(--surface-muted, #f7f8fa);
+}
+
+.vh-rte-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 6px;
+  border-right: 1px solid var(--border, #e2e4ea);
+}
+
+.vh-rte-group:last-of-type {
+  border-right: none;
+  padding-right: 0;
+}
+
+.vh-rte-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted, #55575f);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+/* The admin shell paints every bare <button> solid on hover from a rule that
+   outranks a single class, so the filled state is matched rather than fought:
+   the glyph goes white so it stays legible against it. Scoped through `.vh-rte`
+   to clear that rule's specificity. */
+.vh-rte .vh-rte-button:hover:not(:disabled) {
+  background: var(--primary-hover, var(--primary, #b91c2b));
+  border-color: transparent;
+  color: #fff;
+}
+
+.vh-rte-button:focus-visible {
+  outline: none;
+  border-color: var(--primary, #b91c2b);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary, #b91c2b) 25%, transparent);
+}
+
+.vh-rte-button.is-active {
+  background: color-mix(in srgb, var(--primary, #b91c2b) 14%, transparent);
+  color: var(--primary, #b91c2b);
+  border-color: color-mix(in srgb, var(--primary, #b91c2b) 35%, transparent);
+}
+
+.vh-rte-button svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+}
+
+.vh-rte-glyph {
+  font-size: 13.5px;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.vh-rte-glyph.is-bold { font-weight: 800; }
+.vh-rte-glyph.is-italic { font-style: italic; font-weight: 700; }
+.vh-rte-glyph.is-underline { text-decoration: underline; text-underline-offset: 2px; font-weight: 700; }
+
+.vh-rte-glyph.is-heading {
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+/* Pushed to the far end so the destructive-adjacent controls never sit under
+   the cursor's path to Bold. */
+.vh-rte-preview-toggle {
+  margin-left: auto;
+  padding: 0 10px;
+  border-color: var(--border, #e2e4ea);
+  font-size: 12px;
+}
+
+/* The toolbar and the field read as one control, so the seam between them is
+   closed rather than double-bordered. */
+.vh-rte-toolbar + .vh-rte-textarea,
+.vh-rte-toolbar + .vh-rte-preview {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.vh-rte-textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.vh-rte-preview {
+  padding: 12px 14px;
+  border: 1px solid var(--border, #e2e4ea);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-main, #23252b);
+}
+
+.vh-rte-preview-empty {
+  margin: 0;
+  color: var(--text-muted, #8b8d95);
+  font-style: italic;
+}
+
+.vh-rte.is-readonly .vh-rte-toolbar {
+  opacity: 0.75;
+}
+
+@media (max-width: 640px) {
+  .vh-rte-toolbar {
+    gap: 4px;
+    padding: 5px 6px;
+  }
+
+  .vh-rte-group {
+    padding-right: 4px;
+  }
+
+  .vh-rte-preview-toggle {
+    margin-left: 0;
+  }
+}

@@ -1,7 +1,7 @@
 /* oxlint-disable */
 import type { OnboardingInstruction } from "@/api/types";
 import { Icon } from "@/components/icons";
-import { Button } from "@/components/ui";
+import { Button, RichTextEditor } from "@/components/ui";
 
 export const DEFAULT_PREFILLED_INSTRUCTIONS: OnboardingInstruction[] = [
   {
@@ -186,13 +186,14 @@ export function OnboardingInstructionsEditor({
               </div>
 
               <div className="vh-form-group">
-                <textarea
+                <RichTextEditor
                   className="vh-textarea-enhanced onboarding-directive-body"
                   rows={3}
                   value={item.description}
-                  onChange={(e) => handleUpdateItem(idx, "description", e.target.value)}
+                  onChange={(next) => handleUpdateItem(idx, "description", next)}
                   placeholder="Enter detailed instruction for candidates..."
                   readOnly={!isEditable}
+                  aria-label="Guideline description"
                 />
               </div>
             </div>

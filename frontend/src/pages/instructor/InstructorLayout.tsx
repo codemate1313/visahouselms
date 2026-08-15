@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "../../auth/logout";
 import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
 import { PortalTopBar } from "../../components/PortalTopBar";
@@ -9,29 +9,14 @@ import { instructorLayoutStrings as strings } from "./InstructorLayout.strings";
 const COLLAPSE_STORAGE_KEY = "instructor-lms-sidebar-collapsed";
 const MODULE_WORKSPACE_PATH = "/super-admin/instructor/modules";
 
-function isModuleEditorPath(pathname: string) {
-  return pathname.startsWith(`${MODULE_WORKSPACE_PATH}/new/`)
-    || /^\/super-admin\/instructor\/modules\/\d+$/.test(pathname);
-}
-
 export function InstructorLayout() {
-  const location = useLocation();
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1"
   );
-  const [moduleWorkspaceTarget, setModuleWorkspaceTarget] = useState(MODULE_WORKSPACE_PATH);
 
   useEffect(() => {
     localStorage.setItem(COLLAPSE_STORAGE_KEY, collapsed ? "1" : "0");
   }, [collapsed]);
-
-  useEffect(() => {
-    if (location.pathname === MODULE_WORKSPACE_PATH) {
-      setModuleWorkspaceTarget(MODULE_WORKSPACE_PATH);
-    } else if (isModuleEditorPath(location.pathname)) {
-      setModuleWorkspaceTarget(location.pathname);
-    }
-  }, [location.pathname]);
 
   async function logout() {
     await logoutAndRedirectHome();
@@ -56,7 +41,7 @@ export function InstructorLayout() {
           key: "modules",
           label: strings.items.modules,
           icon: "module",
-          to: moduleWorkspaceTarget,
+          to: MODULE_WORKSPACE_PATH,
         },
         {
           key: "grading",

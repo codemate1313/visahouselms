@@ -97,7 +97,8 @@ export function ModuleEditor() {
          (audio, questions, source text) would discard edits in progress,
          including anything typed into the candidate guidelines editor. */
       setDetails((current) => {
-        const pristine = serverDetailsRef.current === null || isEqual(current, serverDetailsRef.current);
+        const isCurrentEmpty = !current.title;
+        const pristine = serverDetailsRef.current === null || isCurrentEmpty || isEqual(current, serverDetailsRef.current);
         serverDetailsRef.current = serverDetails;
         return pristine ? serverDetails : current;
       });
@@ -663,17 +664,15 @@ export function ModuleEditor() {
     setBusy(true); setError(null);
     try {
       const base = `/instructor/modules/${module.id}/parts/${selectedPart.id}/questions`;
-      for (const question of selectedPart.questions) {
-        await apiClient.delete(`${base}/${question.id}`);
-      }
-      // The four texts double as the shared passage so the part still satisfies
-      // its passage_required check without asking for the same content twice.
       const passage = draft.texts.map((item) => `${item.key}. ${item.text}`).join("\n\n");
       const points = selectedPart.max_marks && draft.questions.length
         ? Number(selectedPart.max_marks) / draft.questions.length
         : 1;
-      for (const question of draft.questions) {
-        await apiClient.post(base, questionPayload({
+
+      const existing = selectedPart.questions;
+      for (let i = 0; i < draft.questions.length; i++) {
+        const question = draft.questions[i];
+        const payload = questionPayload({
           question_type: question.answers.length > 1 ? "mcq_multiple" : "matching_reusable",
           prompt: question.prompt,
           instructions: null,
@@ -686,8 +685,21 @@ export function ModuleEditor() {
           explanation: null,
           points,
           difficulty: "medium",
-        }));
+        });
+
+        if (i < existing.length) {
+          await apiClient.put(`${base}/${existing[i].id}`, payload);
+        } else {
+          await apiClient.post(base, payload);
+        }
       }
+
+      if (draft.questions.length < existing.length) {
+        for (let i = draft.questions.length; i < existing.length; i++) {
+          await apiClient.delete(`${base}/${existing[i].id}`);
+        }
+      }
+
       await loadModule(selectedPart.id);
       showSuccess(strings.sourceTextTask.saved(draft.questions.length));
     } catch (err: unknown) {
@@ -713,14 +725,14 @@ export function ModuleEditor() {
     setBusy(true); setError(null);
     try {
       const base = `/instructor/modules/${module.id}/parts/${selectedPart.id}/questions`;
-      for (const question of selectedPart.questions) {
-        await apiClient.delete(`${base}/${question.id}`);
-      }
       const points = selectedPart.max_marks && gaps.length
         ? Number(selectedPart.max_marks) / gaps.length
         : 1;
-      for (const gap of gaps) {
-        await apiClient.post(base, questionPayload({
+
+      const existing = selectedPart.questions;
+      for (let i = 0; i < gaps.length; i++) {
+        const gap = gaps[i];
+        const payload = questionPayload({
           question_type: selectedPart.answer_constraints.allowed_question_types?.[0] ?? "matching_unique",
           prompt: strings.gapTask.gapLabel(gap),
           instructions: null,
@@ -733,8 +745,21 @@ export function ModuleEditor() {
           explanation: null,
           points,
           difficulty: "medium",
-        }));
+        });
+
+        if (i < existing.length) {
+          await apiClient.put(`${base}/${existing[i].id}`, payload);
+        } else {
+          await apiClient.post(base, payload);
+        }
       }
+
+      if (gaps.length < existing.length) {
+        for (let i = gaps.length; i < existing.length; i++) {
+          await apiClient.delete(`${base}/${existing[i].id}`);
+        }
+      }
+
       await loadModule(selectedPart.id);
       showSuccess(strings.gapTask.saved(gaps.length));
     } catch (err: unknown) {
@@ -754,14 +779,14 @@ export function ModuleEditor() {
     setBusy(true); setError(null);
     try {
       const base = `/instructor/modules/${module.id}/parts/${selectedPart.id}/questions`;
-      for (const question of selectedPart.questions) {
-        await apiClient.delete(`${base}/${question.id}`);
-      }
       const points = selectedPart.max_marks && blanks.length
         ? Number(selectedPart.max_marks) / blanks.length
         : 1;
-      for (const blank of blanks) {
-        await apiClient.post(base, questionPayload({
+
+      const existing = selectedPart.questions;
+      for (let i = 0; i < blanks.length; i++) {
+        const blank = blanks[i];
+        const payload = questionPayload({
           question_type: selectedPart.answer_constraints.allowed_question_types?.[0] ?? "fill_blank",
           prompt: notepadPromptForBlank(draft.notepad, blank),
           instructions: null,
@@ -774,8 +799,21 @@ export function ModuleEditor() {
           explanation: null,
           points,
           difficulty: "medium",
-        }));
+        });
+
+        if (i < existing.length) {
+          await apiClient.put(`${base}/${existing[i].id}`, payload);
+        } else {
+          await apiClient.post(base, payload);
+        }
       }
+
+      if (blanks.length < existing.length) {
+        for (let i = blanks.length; i < existing.length; i++) {
+          await apiClient.delete(`${base}/${existing[i].id}`);
+        }
+      }
+
       await loadModule(selectedPart.id);
       showSuccess(strings.notepadTask.saved(blanks.length));
     } catch (err: unknown) {

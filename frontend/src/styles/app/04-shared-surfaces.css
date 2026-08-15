@@ -998,6 +998,29 @@
   color: var(--text);
 }
 
+.saved-cloze-blank {
+  display: inline-flex;
+  align-items: baseline;
+  margin: 0 3px;
+  font-weight: 700;
+  vertical-align: baseline;
+}
+
+.saved-cloze-blank strong {
+  font-size: 14px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.saved-blank-dots {
+  display: inline-block;
+  letter-spacing: 1.5px;
+  color: #475569;
+  font-weight: 800;
+  font-size: 14px;
+  user-select: none;
+}
+
 .saved-cloze-marker {
   display: inline-flex;
   align-items: center;
@@ -3528,4 +3551,16 @@
   to {
     transform: scaleX(0);
   }
+}
+
+/* Passage previews in the saved-question list inherit the list's type scale;
+   the block renderer only needs its outer margins collapsed to match the
+   single `<p>` it replaced. */
+.saved-question .vh-rich-text {
+  margin: 0 0 8px;
+  white-space: normal;
+}
+
+.saved-question .vh-rich-text > *:last-child {
+  margin-bottom: 0;
 }

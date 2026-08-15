@@ -2,7 +2,7 @@ import type { FormEvent } from "react";
 import { useRef, useState } from "react";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
-import { RequiredMark } from "@/components/ui";
+import { RequiredMark, RichTextEditor } from "@/components/ui";
 import type { ExamModulePart, QuestionDraft, SpeakingTurnType } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { ANSWER_FREE_TYPES, CHOICE_TYPES } from "../helpers";
@@ -341,16 +341,16 @@ export function ManualQuestionForm({
 
             <div className="vh-speaking-material-field">
               <label htmlFor="module-question-candidate-text">Support text</label>
-              <textarea
+              <RichTextEditor
                 id="module-question-candidate-text"
                 rows={4}
                 value={manual.passage ?? ""}
-                onChange={(event) => onManualChange({
+                onChange={(next) => onManualChange({
                   ...manual,
-                  passage: event.target.value,
+                  passage: next,
                   interaction: {
                     ...manual.interaction,
-                    candidate_material_type: candidateAttachmentType === "none" && event.target.value.trim() ? "text" : candidateAttachmentType,
+                    candidate_material_type: candidateAttachmentType === "none" && next.trim() ? "text" : candidateAttachmentType,
                   },
                 })}
                 placeholder="Optional support text shown to the candidate"
@@ -386,16 +386,16 @@ export function ManualQuestionForm({
 
             <div className="vh-speaking-material-field">
               <label htmlFor="module-question-candidate-text">{candidateTextLabel}{isSpeakingReadAloud ? <RequiredMark /> : null}</label>
-              <textarea
+              <RichTextEditor
                 id="module-question-candidate-text"
                 rows={6}
                 value={manual.passage ?? ""}
-                onChange={(event) => onManualChange({
+                onChange={(next) => onManualChange({
                   ...manual,
-                  passage: event.target.value,
+                  passage: next,
                   interaction: {
                     ...manual.interaction,
-                    candidate_material_type: candidateAttachmentType === "none" && event.target.value.trim() ? "text" : candidateAttachmentType,
+                    candidate_material_type: candidateAttachmentType === "none" && next.trim() ? "text" : candidateAttachmentType,
                   },
                 })}
                 placeholder={candidateTextPlaceholder}

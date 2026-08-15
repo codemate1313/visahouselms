@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
 import { Icon } from "@/components/icons";
+import { RichTextEditor } from "@/components/ui";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
 interface PartSpecPanelProps {
@@ -168,11 +169,11 @@ export function PartSpecPanel({
           {isEditingInstructions ? (
             <div className="vh-part-instructions-editor">
               <label htmlFor={`part-instructions-${part.id}`}>{instructionsLabel}</label>
-              <textarea
+              <RichTextEditor
                 id={`part-instructions-${part.id}`}
-                rows={2}
+                rows={3}
                 value={instructionsDraft}
-                onChange={(event) => setInstructionsDraft(event.target.value)}
+                onChange={setInstructionsDraft}
                 placeholder={instructionsPlaceholder}
               />
               <div className="vh-part-instructions-actions">

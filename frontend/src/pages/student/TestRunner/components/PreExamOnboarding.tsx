@@ -10,6 +10,7 @@ import {
   StepperTitle,
   StepperDescription,
   StepperSeparator,
+  renderRichText,
 } from "@/components/ui";
 
 interface PreExamOnboardingProps {
@@ -290,7 +291,7 @@ export function PreExamOnboarding({
                               <Icon name={(item.icon as any) || "check"} />
                             </div>
                             <div className="rule-text">
-                              <strong>{item.title}.</strong> {item.description}
+                              <strong>{item.title}.</strong> {renderRichText(item.description)}
                             </div>
                           </div>
                         );
