@@ -1105,67 +1105,17 @@ export function TestRunner() {
 
   if (!currentPart) return <div className="test-runner-loading">{strings.loading}</div>;
 
-  if (currentPart.section_type === "speaking") {
-    if (!isFinalAttempt && !speakingMicrophoneReady) {
-      return (
-        <MicrophoneCheck
-          testTitle={attempt.module_title}
-          onReady={() => setSpeakingMicrophoneReady(true)}
-        />
-      );
-    }
-    const speakingParts = attempt.parts.filter((part) => part.section_type === "speaking");
-    const speakingPartNumber = speakingParts.findIndex((part) => part.id === currentPart.id) + 1;
+  if (currentPart.section_type === "speaking" && !isFinalAttempt && !speakingMicrophoneReady) {
     return (
-      <div className={`test-runner-shell${brandedTestClass}`}>
-        <SpeakingInterviewStage
-          attemptId={attempt.id}
-          currentPart={currentPart}
-          isLastTestPart={partIndex >= attempt.parts.length - 1}
-          moduleTitle={attempt.module_title}
-          onContinuePart={() => {
-            if (partIndex < attempt.parts.length - 1) {
-              void selectPart(partIndex + 1);
-            } else {
-              setConfirmSubmit(true);
-            }
-          }}
-          onRecord={recordSpeakingAnswer}
-          speakingPartCount={speakingParts.length}
-          speakingPartNumber={speakingPartNumber}
-          recordingFailedQuestionId={recordingFailedQuestionId}
-          recordingQuestionId={recordingQuestionId}
-          savingIds={savingIds}
-          secondsLeft={secondsLeft}
-        />
-
-        {isFinalAttempt && (
-          <SecurityWatermark
-            firstName={user?.first_name}
-            lastName={user?.last_name}
-            userId={user?.id}
-            attemptId={attempt.id}
-            watermarkTime={watermarkTime}
-          />
-        )}
-        {cameraPreview}
-        {confirmSubmit && (
-          <SubmitConfirmModal
-            answeredCount={answeredCount}
-            totalQuestions={totalQuestions}
-            isFinal={attempt.is_final}
-            submitting={submitting}
-            onClose={() => setConfirmSubmit(false)}
-            onConfirm={submit}
-          />
-        )}
-        {violationModal}
-        {isImmersiveAttempt && !fullscreenActive && !developerFullscreenBypass.current && !violationNotice?.autoSubmitted && (
-          <FullscreenGate isFinal={attempt.is_final} secondsLeft={secondsLeft} onEnterFullscreen={enterFullscreen} />
-        )}
-      </div>
+      <MicrophoneCheck
+        testTitle={attempt.module_title}
+        onReady={() => setSpeakingMicrophoneReady(true)}
+      />
     );
   }
+
+  const speakingParts = attempt.parts.filter((part) => part.section_type === "speaking");
+  const speakingPartNumber = speakingParts.findIndex((part) => part.id === currentPart.id) + 1;
 
   return (
     <div className={`test-runner-shell${brandedTestClass}`}>
@@ -1205,37 +1155,60 @@ export function TestRunner() {
           isListeningLocked={isListeningLocked}
         />
 
-        {/* Listening and standalone MCQ parts without separate source text span
-            the screen as one full-width column, matching the listening test styling. */}
+        {/* Listening, Speaking, and standalone MCQ parts without separate source text span
+            the screen as one full-width column, matching the standard engine layout. */}
         <main
           className={`test-runner-body${
             currentPart.section_type === "writing" ? " test-runner-body--writing" : ""
           }${
-            isListeningPart || !hasSourcePane
+            isListeningPart || !hasSourcePane || currentPart.section_type === "speaking"
               ? " test-runner-body--listening test-runner-body--single-column"
               : ""
           }`}
         >
-          {hasSourcePane && (
-            <SourcePane
+          {currentPart.section_type === "speaking" ? (
+            <SpeakingInterviewStage
+              attemptId={attempt.id}
               currentPart={currentPart}
-              passages={passages}
-              images={questionImages}
-              sourcePaneRef={sourcePaneRef}
-              questionNumberOffset={questionNumberOffset}
+              isLastTestPart={partIndex >= attempt.parts.length - 1}
+              onContinuePart={() => {
+                if (partIndex < attempt.parts.length - 1) {
+                  void selectPart(partIndex + 1);
+                } else {
+                  setConfirmSubmit(true);
+                }
+              }}
+              onRecord={recordSpeakingAnswer}
+              speakingPartCount={speakingParts.length}
+              speakingPartNumber={speakingPartNumber}
+              recordingFailedQuestionId={recordingFailedQuestionId}
+              recordingQuestionId={recordingQuestionId}
               savingIds={savingIds}
-              onChangeResponse={(questionId, response) => updateResponse(questionId, response)}
             />
+          ) : (
+            <>
+              {hasSourcePane && (
+                <SourcePane
+                  currentPart={currentPart}
+                  passages={passages}
+                  images={questionImages}
+                  sourcePaneRef={sourcePaneRef}
+                  questionNumberOffset={questionNumberOffset}
+                  savingIds={savingIds}
+                  onChangeResponse={(questionId, response) => updateResponse(questionId, response)}
+                />
+              )}
+              <QuestionPane
+                currentPart={currentPart}
+                questionPaneRef={questionPaneRef}
+                questionNumberOffset={questionNumberOffset}
+                savingIds={savingIds}
+                recordingQuestionId={recordingQuestionId}
+                onChangeResponse={updateResponse}
+                onRecord={recordSpeakingAnswer}
+              />
+            </>
           )}
-          <QuestionPane
-            currentPart={currentPart}
-            questionPaneRef={questionPaneRef}
-            questionNumberOffset={questionNumberOffset}
-            savingIds={savingIds}
-            recordingQuestionId={recordingQuestionId}
-            onChangeResponse={updateResponse}
-            onRecord={recordSpeakingAnswer}
-          />
         </main>
       </div>
 

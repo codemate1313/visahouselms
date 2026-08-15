@@ -13,12 +13,10 @@ type InterviewMode = "ready" | "preparing" | "recording" | "uploading" | "comple
 
 interface SpeakingInterviewStageProps {
   attemptId: number;
-  moduleTitle: string;
   currentPart: Attempt["parts"][number];
   speakingPartNumber: number;
   speakingPartCount: number;
   isLastTestPart: boolean;
-  secondsLeft: number;
   savingIds: Set<number>;
   recordingQuestionId: number | null;
   recordingFailedQuestionId: number | null;
@@ -28,12 +26,10 @@ interface SpeakingInterviewStageProps {
 
 export function SpeakingInterviewStage({
   attemptId,
-  moduleTitle,
   currentPart,
   speakingPartNumber,
   speakingPartCount,
   isLastTestPart,
-  secondsLeft,
   savingIds,
   recordingQuestionId,
   recordingFailedQuestionId,
@@ -228,32 +224,8 @@ export function SpeakingInterviewStage({
   ].filter(Boolean).join(" ");
 
   return (
-    <main className="speaking-interview-stage">
-      <header className="speaking-interview-header">
-        <div>
-          <span>{moduleTitle}</span>
-          <strong>{currentPart.title}</strong>
-        </div>
-        <div className="speaking-interview-overall-time">
-          <span>{t.testTime}</span>
-          <strong>{formatTime(secondsLeft)}</strong>
-        </div>
-      </header>
-
-      <section className="speaking-interview-layout">
-        <aside className="speaking-interview-parts" aria-label="Speaking test parts">
-          <span className="speaking-interview-parts-label">Speaking</span>
-          {Array.from({ length: speakingPartCount }, (_, index) => {
-            const partNumber = index + 1;
-            const state = partNumber < speakingPartNumber ? "complete" : partNumber === speakingPartNumber ? "current" : "upcoming";
-            return (
-              <div className={`speaking-interview-part is-${state}`} key={partNumber} aria-current={state === "current" ? "step" : undefined}>
-                <span>{partNumber < speakingPartNumber ? "✓" : partNumber}</span>
-                <strong>Part {partNumber}</strong>
-              </div>
-            );
-          })}
-        </aside>
+    <div className="speaking-interview-stage">
+      <div className="speaking-interview-layout">
 
         <section className="speaking-interview-workspace">
           <div className="speaking-interview-progress">
@@ -368,7 +340,7 @@ export function SpeakingInterviewStage({
             <span>{mode === "recording" ? "Listening to your response" : "Speaking examiner"}</span>
           </div>
         </aside>
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }
