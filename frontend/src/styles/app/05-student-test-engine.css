@@ -1132,15 +1132,15 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
-/* Listening runs as one column: the pane spans the window so nothing is boxed
-   off to one side, while the notes and answers inside it stay in a readable
-   centred measure. */
-.test-runner-body--listening {
+/* Single-column full-width layout for listening or standalone MCQ parts without separate source material */
+.test-runner-body--listening,
+.test-runner-body--single-column {
   grid-template-columns: minmax(0, 1fr);
   padding: 0;
 }
 
-.test-runner-body--listening .test-runner-question-pane {
+.test-runner-body--listening .test-runner-question-pane,
+.test-runner-body--single-column .test-runner-question-pane {
   padding: 20px 16px 32px;
   border: none;
   border-radius: 0;
@@ -1152,7 +1152,8 @@
    window; only the answerable content inside keeps a readable measure. */
 .test-runner-body--listening .lca-listening-part1-container,
 .test-runner-body--listening .lca-listening-instruction-banner,
-.test-runner-body--listening .test-runner-pane-heading {
+.test-runner-body--listening .test-runner-pane-heading,
+.test-runner-body--single-column .test-runner-pane-heading {
   max-width: none;
   width: 100%;
 }
@@ -1160,7 +1161,8 @@
 .test-runner-body--listening .lca-listening-questions-list,
 .test-runner-body--listening .test-runner-conversation-group,
 .test-runner-body--listening .test-runner-question,
-.test-runner-body--listening .test-runner-notepad {
+.test-runner-body--listening .test-runner-notepad,
+.test-runner-body--single-column .test-runner-question {
   width: 100%;
   max-width: none;
 }

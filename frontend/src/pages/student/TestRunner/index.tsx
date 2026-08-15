@@ -926,6 +926,33 @@ export function TestRunner() {
     [attempt, partIndex],
   );
 
+  const hasSourcePane = useMemo(() => {
+    if (!currentPart || isListeningPart) return false;
+    const matchingType = currentPart.questions[0]?.question_type;
+    const usesInlineMatchingBlanks =
+      currentPart.answer_constraints.layout === "inline_matching_blanks" &&
+      (matchingType === "matching_unique" || matchingType === "matching_reusable");
+    const usesSourceTextMatching =
+      (currentPart.answer_constraints.layout === "source_text_matching" || currentPart.part_code === "reading_3") &&
+      (matchingType === "matching_unique" || matchingType === "matching_reusable");
+    const usesSharedCloze =
+      currentPart.part_code === "reading_1b" && currentPart.answer_constraints.layout === "shared_cloze";
+    const isWriting = currentPart.section_type === "writing";
+    const hasRealPassage = passages.length > 0 && currentPart.answer_constraints.layout !== "notepad_gaps";
+    const hasImages = questionImages.length > 0;
+    const hasAssets = (currentPart.assets?.length ?? 0) > 0;
+
+    return (
+      isWriting ||
+      usesSharedCloze ||
+      usesInlineMatchingBlanks ||
+      usesSourceTextMatching ||
+      hasRealPassage ||
+      hasImages ||
+      hasAssets
+    );
+  }, [currentPart, isListeningPart, passages, questionImages]);
+
   /* Memoised on the part it belongs to, and nothing else: the player holds a
      five-second timer keyed on this callback, and a fresh identity on every
      render would restart that timer forever and never advance the candidate. */
@@ -1102,6 +1129,7 @@ export function TestRunner() {
         isImmersiveAttempt={isImmersiveAttempt}
         fullscreenActive={fullscreenActive}
         onExitDeveloperFullscreen={exitDeveloperFullscreen}
+        secondsLeft={secondsLeft}
       />
 
       {isListeningPart && (
@@ -1124,11 +1152,18 @@ export function TestRunner() {
           isListeningLocked={isListeningLocked}
         />
 
-        {/* Listening has no source material to read alongside the questions -
-            the recording is the source, and it plays from the pinned header
-            bar. So the part runs as one centred column instead of a split. */}
-        <main className={`test-runner-body${currentPart.section_type === "writing" ? " test-runner-body--writing" : ""}${isListeningPart ? " test-runner-body--listening" : ""}`}>
-          {!isListeningPart && (
+        {/* Listening and standalone MCQ parts without separate source text span
+            the screen as one full-width column, matching the listening test styling. */}
+        <main
+          className={`test-runner-body${
+            currentPart.section_type === "writing" ? " test-runner-body--writing" : ""
+          }${
+            isListeningPart || !hasSourcePane
+              ? " test-runner-body--listening test-runner-body--single-column"
+              : ""
+          }`}
+        >
+          {hasSourcePane && (
             <SourcePane
               currentPart={currentPart}
               passages={passages}

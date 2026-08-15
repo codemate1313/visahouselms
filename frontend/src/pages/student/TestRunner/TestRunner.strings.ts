@@ -76,6 +76,7 @@ export const testRunnerStrings = {
     },
   },
   header: {
+    timeLeft: "Time Left",
     previous: "Previous",
     next: "Next",
     partNavigationAriaLabel: "Move between test parts",
