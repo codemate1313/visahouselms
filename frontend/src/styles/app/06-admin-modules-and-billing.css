@@ -6743,17 +6743,33 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 }
 
 
-/* Leaderboard Podium styling */
+/* ==========================================================================
+   Leaderboard Podium 3D Isometric & Volumetric Design
+   ========================================================================== */
+.leaderboard-podium-container {
+  position: relative;
+  width: 100%;
+  padding: 32px 16px 24px;
+  perspective: 1200px;
+  background: radial-gradient(ellipse at 50% 85%, rgba(225, 29, 46, 0.05) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 75%);
+  border-radius: 24px;
+  margin: 16px 0 36px;
+  overflow: visible;
+}
+
+[data-theme="dark"] .leaderboard-podium-container {
+  background: radial-gradient(ellipse at 50% 85%, rgba(225, 29, 46, 0.08) 0%, rgba(99, 102, 241, 0.08) 40%, transparent 75%);
+}
+
 .leaderboard-podium {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  gap: -6px !important;
-  margin: 32px auto 40px;
-  max-width: 600px;
-  width: 100%;
-  padding: 0 10px;
-  box-sizing: border-box;
+  gap: 16px;
+  max-width: 660px;
+  margin: 0 auto;
+  position: relative;
+  transform-style: preserve-3d;
 }
 
 .podium-col {
@@ -6761,13 +6777,19 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   flex-direction: column;
   align-items: center;
   flex: 1;
-  max-width: 150px;
+  max-width: 180px;
   text-align: center;
   position: relative;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-style: preserve-3d;
+}
+
+.podium-col:hover {
+  transform: translateY(-6px);
 }
 
 .podium-col.first {
-  order: 2; /* Golden center */
+  order: 2; /* Golden Apex center */
   z-index: 3;
 }
 
@@ -6781,140 +6803,306 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   z-index: 1;
 }
 
-/* 3D-ish pedestals with heights */
-.podium-pedestal {
-  width: 100%;
-  border-radius: 12px 12px 0 0;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 10px 25px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
+/* Floating 3D Crests */
+.podium-crest-3d {
   position: relative;
-}
-
-.podium-col.first .podium-pedestal {
-  height: 130px;
-  background: linear-gradient(135deg, #ffd700, #b8860b);
-  border: 1px solid #ffd700;
-}
-
-.podium-col.second .podium-pedestal {
-  height: 90px;
-  background: linear-gradient(135deg, #c0c0c0, #708090);
-  border: 1px solid #c0c0c0;
-}
-
-.podium-col.third .podium-pedestal {
-  height: 65px;
-  background: linear-gradient(135deg, #cd7f32, #8b4513);
-  border: 1px solid #cd7f32;
-}
-
-/* Labels on pedestals */
-.podium-pedestal::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 32px;
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.28);
-}
-
-.podium-col.first .podium-pedestal::after {
-  content: "1";
-}
-
-.podium-col.second .podium-pedestal::after {
-  content: "2";
-}
-
-.podium-col.third .podium-pedestal::after {
-  content: "3";
-}
-
-/* Avatars & Medals styling */
-.podium-avatar {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
+  width: 112px;
+  height: 96px;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  margin-bottom: 12px;
-  font-weight: bold;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  margin-bottom: -16px;
+  z-index: 5;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.28));
+  animation: floatCrest 3.5s ease-in-out infinite;
 }
 
-.podium-avatar.gold {
-  border: 3px solid #ffd700;
-  background: radial-gradient(circle, #fff3b0 0%, #ffd700 100%);
-  color: #8b6508;
-  width: 78px;
-  height: 78px;
+.podium-col.first .podium-crest-3d {
+  width: 130px;
+  height: 110px;
+  margin-bottom: -20px;
+  animation-duration: 3.2s;
 }
 
-.podium-avatar.silver {
-  border: 3px solid #c0c0c0;
-  background: radial-gradient(circle, #f0f0f0 0%, #c0c0c0 100%);
-  color: #4f5d73;
+.podium-col.second .podium-crest-3d {
+  animation-delay: -1.2s;
 }
 
-.podium-avatar.bronze {
-  border: 3px solid #cd7f32;
-  background: radial-gradient(circle, #ffe4c4 0%, #cd7f32 100%);
-  color: #5c2e0b;
+.podium-col.third .podium-crest-3d {
+  animation-delay: -2.4s;
 }
 
-/* Crown / Medals indicators */
-.podium-crown {
+@keyframes floatCrest {
+  0%, 100% {
+    transform: translateY(0) rotateX(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotateX(2deg);
+  }
+}
+
+.crest-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.crown-container {
   position: absolute;
-  top: -24px;
-  font-size: 24px;
-  animation: floatCrown 2.5s ease-in-out infinite;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 30px;
+  z-index: 6;
+  animation: floatCrownApex 3.2s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(217, 119, 6, 0.5));
 }
 
-@keyframes floatCrown {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-4px) rotate(2deg); }
+@keyframes floatCrownApex {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-4px) rotate(2deg);
+  }
 }
 
-.podium-rank {
-  font-size: 20px;
-  font-weight: 800;
+.crest-glow-aura {
+  position: absolute;
+  inset: -15%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(14px);
+  opacity: 0.7;
+  animation: pulseAura 3s ease-in-out infinite;
 }
 
-.podium-avatar.gold .podium-rank {
-  font-size: 24px;
+.crest-glow-aura.gold {
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.55) 0%, rgba(245, 158, 11, 0.2) 60%, transparent 100%);
+}
+
+.crest-glow-aura.silver {
+  background: radial-gradient(circle, rgba(203, 213, 225, 0.55) 0%, rgba(148, 163, 184, 0.2) 60%, transparent 100%);
+}
+
+.crest-glow-aura.bronze {
+  background: radial-gradient(circle, rgba(251, 146, 60, 0.55) 0%, rgba(194, 65, 12, 0.2) 60%, transparent 100%);
+}
+
+@keyframes pulseAura {
+  0%, 100% { transform: scale(0.92); opacity: 0.6; }
+  50% { transform: scale(1.12); opacity: 0.88; }
+}
+
+.podium-crest-3d.is-empty {
+  animation: none;
+  filter: none;
+  color: var(--text-muted);
+  opacity: 0.45;
+}
+
+/* 3D Volumetric Pedestal Columns */
+.podium-pedestal-3d {
+  width: 100%;
+  position: relative;
+  border-radius: 16px 16px 6px 6px;
+  overflow: hidden;
+  box-shadow: 
+    0 20px 35px -10px rgba(0, 0, 0, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.4) inset;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+/* Gold Apex Column */
+.podium-col.first .podium-pedestal-3d {
+  height: 154px;
+  background: linear-gradient(180deg, #ffd700 0%, #f59e0b 22%, #d97706 65%, #92400e 100%);
+  border: 1px solid #fde68a;
+  border-bottom: 2px solid #78350f;
+  box-shadow: 
+    0 25px 45px -10px rgba(217, 119, 6, 0.45),
+    0 0 35px rgba(251, 191, 36, 0.25),
+    0 2px 0 rgba(255, 255, 255, 0.6) inset;
+}
+
+/* Silver Column */
+.podium-col.second .podium-pedestal-3d {
+  height: 112px;
+  background: linear-gradient(180deg, #f8fafc 0%, #cbd5e1 22%, #94a3b8 65%, #475569 100%);
+  border: 1px solid #ffffff;
+  border-bottom: 2px solid #334155;
+  box-shadow: 
+    0 20px 35px -10px rgba(100, 116, 139, 0.4),
+    0 0 25px rgba(203, 213, 225, 0.2),
+    0 2px 0 rgba(255, 255, 255, 0.7) inset;
+}
+
+/* Bronze Column */
+.podium-col.third .podium-pedestal-3d {
+  height: 84px;
+  background: linear-gradient(180deg, #ffedd5 0%, #fb923c 22%, #ea580c 65%, #7c2d12 100%);
+  border: 1px solid #fed7aa;
+  border-bottom: 2px solid #431407;
+  box-shadow: 
+    0 18px 30px -10px rgba(194, 65, 12, 0.4),
+    0 0 25px rgba(251, 146, 60, 0.2),
+    0 2px 0 rgba(255, 255, 255, 0.5) inset;
+}
+
+/* 3D Top Cap Platform */
+.pedestal-top-cap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.15) 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* 3D Front Face with lighting sheen & 3D engraved numeral */
+.pedestal-front-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: 
+    linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0%, transparent 20%, transparent 80%, rgba(0, 0, 0, 0.2) 100%),
+    linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.25) 100%);
+  pointer-events: none;
+}
+
+.pedestal-numeral {
+  font-family: var(--font-heading, "Outfit", -apple-system, sans-serif);
+  font-size: 46px;
+  font-weight: 900;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.45);
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 -1px 0 rgba(255, 255, 255, 0.6);
+  letter-spacing: -0.04em;
+  transform: translateY(8px);
+}
+
+.podium-col.first .pedestal-numeral {
+  font-size: 56px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Empty Pedestal Glassmorphic State */
+.podium-col.empty-pedestal .podium-pedestal-3d {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
+  border: 1.5px dashed var(--border) !important;
+  border-bottom: 2px dashed var(--border) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(8px);
+}
+
+.podium-col.empty-pedestal .pedestal-top-cap {
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px dashed var(--border);
+}
+
+.podium-col.empty-pedestal .pedestal-numeral {
+  color: var(--text-muted) !important;
+  opacity: 0.25;
+  text-shadow: none;
 }
 
 /* Info container above pedestal */
 .podium-info {
-  margin-bottom: 24px;
-  z-index: 2;
+  margin-bottom: 18px;
+  z-index: 4;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .podium-name {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 14.5px;
+  font-weight: 750;
   color: var(--text);
-  max-width: 130px;
+  max-width: 140px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: -0.01em;
+}
+
+.podium-name .you-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #e11d2e, #b80f28);
+  color: #fff;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(225, 29, 46, 0.35);
 }
 
 .podium-score {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--primary);
-  margin-bottom: 1px;
+  font-size: 18px;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  color: var(--primary, #e11d2e);
+  margin-bottom: 2px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 8px rgba(225, 29, 46, 0.25);
 }
 
 .podium-meta {
-  font-size: 11px;
+  font-size: 11.5px;
+  font-weight: 550;
   color: var(--text-muted);
+  letter-spacing: -0.01em;
+}
+
+.podium-info.placeholder {
+  opacity: 0.45;
+}
+
+@media (max-width: 580px) {
+  .leaderboard-podium {
+    gap: 8px;
+  }
+
+  .podium-crest-3d {
+    width: 90px;
+    height: 78px;
+  }
+
+  .podium-col.first .podium-crest-3d {
+    width: 106px;
+    height: 92px;
+  }
+
+  .podium-name {
+    font-size: 13px;
+    max-width: 105px;
+  }
+
+  .podium-score {
+    font-size: 16px;
+  }
+
+  .podium-meta {
+    font-size: 10px;
+  }
 }
 
 /* Current User Standing Row card style */
