@@ -36,10 +36,12 @@
 .section-chip,
 .count-chip {
   display: inline-flex;
-  padding: 5px 9px;
+  align-items: center;
+  padding: 4px 11px;
   border-radius: 999px;
-  background: rgba(17, 17, 19, 0.08);
-  color: var(--text);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  color: var(--primary);
   font-size: 11px;
   font-weight: 750;
   text-transform: uppercase;
@@ -47,25 +49,30 @@
 }
 
 .section-reading {
-  background: rgba(17, 17, 19, 0.08);
-  color: var(--text);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  color: var(--primary);
 }
 
 .section-writing {
   background: rgba(110, 110, 115, 0.14);
+  border: 1px solid rgba(110, 110, 115, 0.25);
   color: #3a3a3c;
 }
 
 .section-speaking {
   background: color-mix(in srgb, var(--primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
   color: var(--primary-hover);
 }
 
 .section-listening {
   background: rgba(142, 142, 147, 0.16);
+  border: 1px solid rgba(142, 142, 147, 0.28);
   color: #3a3a3c;
 }
 
+[data-theme="dark"] .count-chip,
 [data-theme="dark"] .section-chip,
 [data-theme="dark"] .section-reading,
 [data-theme="dark"] .section-writing,
@@ -74,6 +81,7 @@
 [data-theme="dark"] .section-full_mock,
 [data-theme="dark"] .section-final_test {
   background: rgba(255, 255, 255, 0.14) !important;
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
   color: #ffffff !important;
 }
 
