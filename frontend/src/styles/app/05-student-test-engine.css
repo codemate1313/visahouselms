@@ -5026,8 +5026,14 @@ th[aria-sort="descending"] .table-sort-button::after {
   width: 32px;
   height: 32px;
   background: var(--text);
+  color: var(--surface);
   border-radius: 4px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
 }
 
 .lca-listening-instruction-text {

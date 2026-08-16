@@ -50,7 +50,7 @@ export function ListeningChoiceGroups({
     <div className="lca-listening-part1-container">
       {/* Main Instruction Banner Box */}
       <div className="lca-listening-instruction-banner">
-        <div className="lca-listening-instruction-badge" aria-hidden="true" />
+        <div className="lca-listening-instruction-badge">L</div>
         <div className="lca-listening-instruction-text">{heading}</div>
       </div>
 
@@ -69,6 +69,7 @@ export function ListeningChoiceGroups({
               const rawSelected = question.response?.selected;
               const selectedValue = Array.isArray(rawSelected) ? rawSelected[0] : (rawSelected || "");
               const isSaving = savingIds.has(question.id);
+              const isListening1 = currentPart.part_code === "listening_1";
 
               return (
                 <div
@@ -81,7 +82,7 @@ export function ListeningChoiceGroups({
                   </div>
 
                   {/* Question Prompt (if available) */}
-                  {question.prompt && (
+                  {question.prompt && !isListening1 && (
                     <div className="lca-listening-q-prompt">
                       {question.prompt}
                     </div>
