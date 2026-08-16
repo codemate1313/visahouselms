@@ -813,7 +813,8 @@ export function Home() {
                   3 SIMPLE STEPS
                 </span>
                 <h2>
-                  From first mock to <span className="vh-gradient-text-light">target band</span> in 3 steps
+                  From first mock to<br />
+                  <span className="vh-gradient-text-light">target band in 3 steps</span>
                 </h2>
                 <p className="vh-steps-subtitle">
                   Follow a structured, exam-realistic preparation flow designed to maximize your LanguageCert score.
@@ -842,9 +843,11 @@ export function Home() {
                             <span className="vh-steps-nav-title">{s.title}</span>
                             <span className="vh-steps-nav-sub">{s.subtitle}</span>
                           </div>
-                          <svg className="vh-steps-nav-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M5 12h14M12 5l7 7-7 7" />
-                          </svg>
+                          <div className="vh-steps-nav-arrow-circle">
+                            <svg className="vh-steps-nav-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                          </div>
                         </button>
                       </div>
                     );
