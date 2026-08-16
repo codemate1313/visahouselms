@@ -757,8 +757,10 @@
 
 .progress-section .panel-heading h2 {
   margin: 0 0 4px;
+  font-family: var(--font-heading);
   font-size: 19px;
-  letter-spacing: 0;
+  font-weight: 800;
+  letter-spacing: -0.025em;
 }
 
 .progress-section .panel-heading p {

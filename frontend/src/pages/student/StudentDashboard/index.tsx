@@ -81,9 +81,11 @@ export function StudentDashboard() {
         subtitle={strings.subtitle}
       />
 
-      <StudentValidityCard plan={myPlan} isInstituteStudent={isInstituteStudent} />
-
-      <DailyEnglishChallenge />
+      <div className="workspace-panel sd-combined-hero-panel">
+        <StudentValidityCard plan={myPlan} isInstituteStudent={isInstituteStudent} />
+        <div className="sd-combined-hero-divider" />
+        <DailyEnglishChallenge />
+      </div>
 
       <StatCardsGrid stats={statCards} />
 

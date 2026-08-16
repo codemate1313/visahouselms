@@ -1,8 +1,64 @@
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.student-stat-grid,
+.sd-dashboard .metric-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.student-stat-grid .metric-card,
+.sd-dashboard .metric-card {
+  padding: 14px 14px 12px;
+  border-radius: 14px;
+}
+
+.student-stat-grid .metric-card-header-row,
+.sd-dashboard .metric-card-header-row {
+  margin-bottom: 6px;
+  gap: 6px;
+}
+
+.student-stat-grid .metric-card-label,
+.sd-dashboard .metric-card-label {
+  font-size: 10.5px;
+  line-height: 1.2;
+}
+
+.student-stat-grid .metric-card-icon-bubble,
+.sd-dashboard .metric-card-icon-bubble {
+  width: 32px;
+  height: 32px;
+}
+
+.student-stat-grid .metric-card-icon-bubble svg,
+.sd-dashboard .metric-card-icon-bubble svg {
+  width: 15px;
+  height: 15px;
+}
+
+.student-stat-grid .metric-card-number,
+.sd-dashboard .metric-card-number {
+  font-size: 24px;
+}
+
+@media (max-width: 1100px) {
+  .student-stat-grid,
+  .sd-dashboard .metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .student-stat-grid,
+  .sd-dashboard .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
 }
 
 .metric-card:not([role="button"]) {

@@ -15,7 +15,6 @@ export function StudentValidityCard({ plan, isInstituteStudent }: StudentValidit
   const isTrial = !isInstituteStudent && (plan.access_type === "trial" || (plan.demo?.state === "active" && !plan.starts_at));
   const isGrace = plan.state === "grace";
   const isExpired = plan.state === "expired" || (plan.demo?.state === "locked" && plan.state !== "active");
-  const isActive = (plan.state === "active" || (!isExpired && !isGrace && Boolean(plan.expires_at))) && !isTrial;
 
   // Calculate days remaining
   let daysRemaining: number | null = null;
@@ -47,39 +46,30 @@ export function StudentValidityCard({ plan, isInstituteStudent }: StudentValidit
   let subtitle = "";
   let badgeTone: "green" | "amber" | "blue" | "red" | "purple" = "green";
   let badgeLabel: string = t.directActiveEyebrow;
-  let badgeIcon: "check" | "due" | "building" | "plan" | "lock" = "plan";
 
   if (isInstituteStudent) {
     title = plan.institute_name || "Enrolled Institute";
     subtitle = plan.institute_name ? t.managedBy(plan.institute_name) : t.instituteEyebrow;
     badgeLabel = isGrace ? t.directGraceEyebrow : t.instituteEyebrow;
     badgeTone = isGrace ? "amber" : "blue";
-    badgeIcon = "building";
   } else if (isTrial) {
     title = "Free Trial & Practice Access";
     subtitle = plan.demo ? t.trialNotice(plan.demo.tests_taken, plan.demo.test_limit) : "Limited free practice access.";
     badgeLabel = t.trialEyebrow;
     badgeTone = "purple";
-    badgeIcon = "due";
   } else if (isExpired) {
     title = plan.plan?.name || "Membership Plan";
     subtitle = t.expiredNotice;
     badgeLabel = t.expiredEyebrow;
     badgeTone = "red";
-    badgeIcon = "lock";
   } else if (isGrace) {
     subtitle = t.graceNotice;
     badgeLabel = t.directGraceEyebrow;
     badgeTone = "amber";
-    badgeIcon = "due";
   } else {
     subtitle = plan.plan?.description || "Full access to published IELTS mock tests & study materials.";
     badgeTone = "green";
-    badgeIcon = "check";
   }
-
-  // Quotas
-  const aiQuota = plan.ai_evaluations;
 
   // Sleek 48-tick radial clock marks
   const ticks = useMemo(() => {
@@ -109,70 +99,39 @@ export function StudentValidityCard({ plan, isInstituteStudent }: StudentValidit
     : arcCircumference - (arcCircumference * progressPercent) / 100;
 
   return (
-    <section className={`sd-validity-hero-card tone-${badgeTone}`}>
+    <div className={`sd-validity-hero-card tone-${badgeTone}`}>
       <div className="sd-validity-hero-inner">
         {/* Left Side: Plan Info, Badges, Description & Action Buttons */}
         <div className="sd-validity-info-panel">
-          <div className="sd-validity-header-row">
-            <div className="sd-validity-badges-wrap">
-              <span className={`sd-hero-badge badge-${badgeTone}`}>
-                <Icon name={badgeIcon} />
-                <span>{badgeLabel}</span>
-              </span>
-              {isActive && daysRemaining != null && (
-                <span className={`sd-hero-status-pill ${isExpiringSoon ? "pill-urgent" : "pill-ok"}`}>
-                  <span className="sd-status-dot-pulse" />
-                  {isExpiringSoon ? t.expiringSoon(daysRemaining) : t.daysRemaining(daysRemaining)}
-                </span>
-              )}
-              {isGrace && (
-                <span className="sd-hero-status-pill pill-urgent">
-                  <span className="sd-status-dot-pulse" />
-                  {t.directGraceEyebrow}
-                </span>
-              )}
-            </div>
+          <div className="sd-hero-title-row">
+            <h2 className="sd-hero-plan-title">{title}</h2>
+            <span className={`sd-hero-badge badge-${badgeTone}`}>
+              <span className="sd-hero-badge-dot" />
+              <span>{badgeLabel}</span>
+            </span>
           </div>
 
-          <h2 className="sd-hero-plan-title">{title}</h2>
           <p className="sd-hero-plan-desc">{subtitle}</p>
-
-          {/* AI Quotas chips if enabled */}
-          {aiQuota && aiQuota.ai_enabled && (
-            <div className="sd-hero-quotas-row">
-              <div className="sd-hero-quota-chip">
-                <Icon name="grading" />
-                <span>
-                  <strong>{aiQuota.ai_evaluations_left}</strong> AI Evaluations Left
-                </span>
-              </div>
-              <div className="sd-hero-quota-chip muted">
-                <Icon name="check" />
-                <span>
-                  <strong>{aiQuota.ai_evaluations_used}</strong> Used
-                </span>
-              </div>
-            </div>
-          )}
 
           {/* Action CTAs */}
           <div className="sd-hero-actions-bar">
             {isInstituteStudent ? (
-              <Link to="/student/my-courses" className="sd-hero-action-btn btn-secondary">
+              <Link to="/student/my-courses" className="sd-hero-action-btn btn-primary">
                 <span>{t.viewTestsBtn}</span>
                 <Icon name="arrowRight" />
               </Link>
             ) : (
-              <Link to="/student/courses" className="sd-hero-action-btn btn-primary">
-                <Icon name="plan" />
-                <span>{isExpired || isGrace ? t.renewBtn : "Explore Test Plans"}</span>
-              </Link>
+              <>
+                <Link to="/student/courses" className="sd-hero-action-btn btn-primary">
+                  <Icon name="plan" />
+                  <span>{isExpired || isGrace ? t.renewBtn : "Explore Test Plans"}</span>
+                </Link>
+                <Link to="/student/my-courses" className="sd-hero-action-btn btn-secondary">
+                  <span>View My Tests & Modules</span>
+                  <Icon name="arrowRight" />
+                </Link>
+              </>
             )}
-
-            <Link to="/student/my-courses" className="sd-hero-sub-action-link">
-              <span>View My Tests & Modules</span>
-              <Icon name="arrowRight" />
-            </Link>
           </div>
         </div>
 
@@ -260,6 +219,6 @@ export function StudentValidityCard({ plan, isInstituteStudent }: StudentValidit
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

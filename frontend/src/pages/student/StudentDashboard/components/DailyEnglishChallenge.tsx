@@ -54,11 +54,58 @@ function StreakFlame({ sparkCount, label }: { sparkCount: number; label: string 
   return (
     <span className="daily-completion-fire" aria-label={label}>
       <span className="daily-fire-halo" />
-      <span className="daily-fire-flame">
-        <i className="daily-fire-outer" />
-        <i className="daily-fire-middle" />
-        <i className="daily-fire-core" />
-      </span>
+      <svg
+        className="daily-fire-svg"
+        viewBox="0 0 64 64"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="fireOuterGrad" x1="32" y1="60" x2="32" y2="4" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#dc2626" />
+            <stop offset="45%" stopColor="#ea580c" />
+            <stop offset="100%" stopColor="#f59e0b" />
+          </linearGradient>
+          <linearGradient id="fireInnerGrad" x1="32" y1="58" x2="32" y2="16" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#f97316" />
+            <stop offset="60%" stopColor="#fbbf24" />
+            <stop offset="100%" stopColor="#fef08a" />
+          </linearGradient>
+          <linearGradient id="fireCoreGrad" x1="32" y1="56" x2="32" y2="30" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#f59e0b" />
+            <stop offset="70%" stopColor="#ffffff" />
+          </linearGradient>
+        </defs>
+
+        {/* Outer Flame Silhouette */}
+        <path
+          className="flame-outer"
+          d="M32 4C32 4 23 16.5 21 27.5C20.2 31.9 21.6 35.8 23.5 39C24.5 34.5 27.5 30.5 31 28C30.2 32.5 32 37.5 36.5 39.5C36 34.5 38 29.5 42 26C41.2 31 43.5 36.5 45.5 38.5C48.2 33.5 48.5 27 45 20C40.5 11 32 4 32 4Z"
+          fill="url(#fireOuterGrad)"
+        />
+
+        {/* Base Flame Body */}
+        <path
+          className="flame-body"
+          d="M17 38C17 48 23.7 58 32 58C40.3 58 47 48 47 38C47 34.5 45.8 31 44 28C42 34 37 38 32 38C27 38 22 34 20 28C18.2 31 17 34.5 17 38Z"
+          fill="url(#fireOuterGrad)"
+        />
+
+        {/* Inner Flame Tongue */}
+        <path
+          className="flame-inner"
+          d="M32 18C32 18 25 28 25 38C25 45.7 28.1 52 32 52C35.9 52 39 45.7 39 38C39 28 32 18 32 18Z"
+          fill="url(#fireInnerGrad)"
+        />
+
+        {/* Glowing Core */}
+        <path
+          className="flame-core"
+          d="M32 32C32 32 28 38 28 44C28 48.4 29.8 51 32 51C34.2 51 36 48.4 36 44C36 38 32 32 32 32Z"
+          fill="url(#fireCoreGrad)"
+        />
+      </svg>
       <span className="daily-fire-sparks" aria-hidden="true">
         {Array.from({ length: sparkCount }, (_, index) => (
           <i
@@ -186,31 +233,55 @@ export function DailyEnglishChallenge() {
 
   const answered = activeQuestion.selected_answer !== null;
   const fireLevel = challenge.score >= 4 ? "high" : challenge.score >= 2 ? "medium" : "low";
+  const sparkCount = Math.max(3, challenge.score * 2);
+  const isCompletedView = challenge.completed && !reviewing;
 
-  if (challenge.completed && !reviewing) {
-    const sparkCount = Math.max(3, challenge.score * 2);
-    return (
-      <section className={`workspace-panel daily-english-panel daily-completion is-${fireLevel}`}>
-        <div className="daily-completion-layout">
-          {showFacts ? (
+  return (
+    <div className={`daily-english-panel${isCompletedView ? ` daily-completion is-${fireLevel}` : ""}`}>
+      <div className="daily-english-header">
+        <div>
+          <span className="daily-english-eyebrow">
+            {isCompletedView && showFacts ? "English Discovery" : t.eyebrow}
+          </span>
+          <h2>
+            {isCompletedView
+              ? showFacts
+                ? `English Fact #${factIndex + 1}`
+                : t.completedHeading
+              : t.heading}
+          </h2>
+          <p>
+            {isCompletedView
+              ? showFacts
+                ? "A fact while you keep learning"
+                : t.completedMessage
+              : t.subtitle(calendarLabel)}
+          </p>
+        </div>
+        <div className="daily-streak-stats">
+          <div className="daily-streak-card">
+            <span>{t.currentStreak}</span>
+            <div className="daily-flip-counter" aria-label={`Current streak: ${challenge.current_streak}`}>
+              {(challenge.current_streak >= 10 ? String(challenge.current_streak) : `0${challenge.current_streak}`).split("").map((digit, i) => (
+                <span className="daily-flip-digit" key={i}>{digit}</span>
+              ))}
+            </div>
+          </div>
+          <div className="daily-streak-card">
+            <span>{t.longestStreak}</span>
+            <div className="daily-flip-counter" aria-label={`Longest streak: ${challenge.longest_streak}`}>
+              {(challenge.longest_streak >= 10 ? String(challenge.longest_streak) : `0${challenge.longest_streak}`).split("").map((digit, i) => (
+                <span className="daily-flip-digit" key={i}>{digit}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="daily-english-layout">
+        {isCompletedView ? (
+          showFacts ? (
             <div className="daily-facts-summary">
-              <div className="daily-facts-header">
-                <button
-                  className="daily-fire-button"
-                  onClick={() => setShowFacts(false)}
-                  title={t.fireLabel(challenge.score)}
-                  type="button"
-                >
-                  <StreakFlame label={t.fireLabel(challenge.score)} sparkCount={sparkCount} />
-                  <span className="daily-fire-button-streak">
-                    {challenge.current_streak} {challenge.current_streak === 1 ? t.day : t.days}
-                  </span>
-                </button>
-                <span className="daily-facts-heading-group">
-                  <span className="daily-english-eyebrow">English Discovery</span>
-                  <h2>English Fact #{factIndex + 1}</h2>
-                </span>
-              </div>
               <div className="daily-fact-card">
                 <div className="daily-fact-content">
                   {facts[factIndex] ? (
@@ -255,28 +326,32 @@ export function DailyEnglishChallenge() {
                   )}
                 </div>
                 {facts.length > 0 && (
-                  <div className="daily-fact-navigation">
-                    <DashboardButton
-                      onClick={() => {
-                        setFailedImageId(null);
-                        setFactIndex((idx) => (idx === 0 ? facts.length - 1 : idx - 1));
-                      }}
-                      variant="secondary"
-                      className="fact-nav-btn"
-                    >
-                      <Icon name="arrowLeft" />
-                    </DashboardButton>
-                    <span className="fact-nav-indicator">{factIndex + 1} / {facts.length}</span>
-                    <DashboardButton
-                      onClick={() => {
-                        setFailedImageId(null);
-                        setFactIndex((idx) => (idx === facts.length - 1 ? 0 : idx + 1));
-                      }}
-                      variant="secondary"
-                      className="fact-nav-btn"
-                    >
-                      <Icon name="arrowRight" />
-                    </DashboardButton>
+                  <div className="daily-fact-nav-wrapper">
+                    <div className="daily-fact-navigation">
+                      <button
+                        type="button"
+                        className="daily-fact-nav-btn"
+                        onClick={() => {
+                          setFailedImageId(null);
+                          setFactIndex((idx) => (idx === 0 ? facts.length - 1 : idx - 1));
+                        }}
+                        aria-label="Previous fact"
+                      >
+                        <Icon name="arrowLeft" />
+                      </button>
+                      <span className="daily-fact-indicator">{factIndex + 1} / {facts.length}</span>
+                      <button
+                        type="button"
+                        className="daily-fact-nav-btn"
+                        onClick={() => {
+                          setFailedImageId(null);
+                          setFactIndex((idx) => (idx === facts.length - 1 ? 0 : idx + 1));
+                        }}
+                        aria-label="Next fact"
+                      >
+                        <Icon name="arrowRight" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -287,19 +362,25 @@ export function DailyEnglishChallenge() {
               </div>
             </div>
           ) : (
-            <div className="daily-completion-summary">
-              <StreakFlame label={t.fireLabel(challenge.score)} sparkCount={sparkCount} />
-              <div className="daily-completion-copy">
-                <span className="daily-english-eyebrow">{t.eyebrow}</span>
-                <h2>{t.completedHeading}</h2>
-                <p>{t.completedMessage}</p>
-                <strong className="daily-completion-score">{t.complete(challenge.score, challenge.total_questions)}</strong>
-              </div>
-              <div className="daily-completion-actions">
-                <div className="daily-completion-streak">
-                  <span>{t.currentStreak}</span>
-                  <strong>{challenge.current_streak} {challenge.current_streak === 1 ? t.day : t.days}</strong>
+            <div className="daily-completion-card">
+              <div className="daily-completion-badge-wrap">
+                <div className="daily-flame-aura">
+                  <StreakFlame label={t.fireLabel(challenge.score)} sparkCount={sparkCount} />
                 </div>
+                <div className="daily-completion-details">
+                  <div className="daily-completion-score-row">
+                    <h3 className="daily-completion-score-text">
+                      {challenge.score} of {challenge.total_questions} Correct
+                    </h3>
+                    <span className="daily-accuracy-simple">
+                      • {Math.round((challenge.score / challenge.total_questions) * 100)}% accuracy
+                    </span>
+                  </div>
+                  <p className="daily-completion-subtext">Daily English challenge completed for today</p>
+                </div>
+              </div>
+
+              <div className="daily-completion-actions">
                 <div className="completion-btn-row">
                   <DashboardButton
                     leftIcon={<Icon name="eye" />}
@@ -323,35 +404,9 @@ export function DailyEnglishChallenge() {
                 </div>
               </div>
             </div>
-          )}
-          <PracticeActivity activity={challenge.activity} />
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="workspace-panel daily-english-panel">
-      <div className="daily-english-header">
-        <div>
-          <span className="daily-english-eyebrow">{t.eyebrow}</span>
-          <h2>{t.heading}</h2>
-          <p>{t.subtitle(calendarLabel)}</p>
-        </div>
-        <div className="daily-streak-stats">
-          <div>
-            <span>{t.currentStreak}</span>
-            <strong>{challenge.current_streak}</strong>
-          </div>
-          <div>
-            <span>{t.longestStreak}</span>
-            <strong>{challenge.longest_streak}</strong>
-          </div>
-        </div>
-      </div>
-
-      <div className="daily-english-layout">
-        <div className="daily-question-area">
+          )
+        ) : (
+          <div className="daily-question-area">
           <div className="daily-progress-row">
             <span>{t.questionProgress(activeIndex + 1, challenge.total_questions)}</span>
             <strong>{challenge.answered_count}/{challenge.total_questions}</strong>
@@ -422,9 +477,10 @@ export function DailyEnglishChallenge() {
             )}
           </div>
         </div>
+        )}
 
         <PracticeActivity activity={challenge.activity} />
       </div>
-    </section>
+    </div>
   );
 }

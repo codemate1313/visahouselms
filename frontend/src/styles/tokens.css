@@ -16,8 +16,9 @@
 :root {
   /* Typography */
   --app-font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --app-heading-weight: 600;
-  --app-stat-weight: 600;
+  --font-heading: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --app-heading-weight: 750;
+  --app-stat-weight: 700;
   --app-body-weight: 400;
 
   /* Surfaces & text */

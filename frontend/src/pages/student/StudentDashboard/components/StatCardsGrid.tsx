@@ -16,7 +16,7 @@ interface StatCardsGridProps {
 
 export function StatCardsGrid({ stats }: StatCardsGridProps) {
   return (
-    <div className="metric-grid">
+    <div className="metric-grid student-stat-grid">
       {stats.map((stat) => (
         <MetricCard
           iconNode={STAT_ICONS[stat.key]}

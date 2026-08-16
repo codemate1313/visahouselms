@@ -1273,7 +1273,10 @@ button.secondary-button {
 .workspace-panel h2,
 .empty-state h2 {
   margin: 0 0 5px;
+  font-family: var(--font-heading);
   font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
 }
 
 .workspace-panel p,

@@ -87,12 +87,27 @@ body::before {
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.22), transparent 70%);
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--app-heading-weight, 750);
+  letter-spacing: -0.025em;
+  color: var(--text);
+}
+
 h1 {
-  font-size: 34px;
-  font-weight: 750;
-  line-height: 1.12;
-  letter-spacing: 0;
+  font-size: 32px;
+  line-height: 1.15;
   margin: 0 0 20px;
+}
+
+h2 {
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+h3 {
+  font-size: 18px;
+  line-height: 1.25;
 }
 
 ::selection {
