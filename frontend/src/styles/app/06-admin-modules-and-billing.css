@@ -4713,9 +4713,9 @@
 
 .assigned-tests-filter-bar .ui-segmented-slider {
   border-radius: 8px !important;
-  background: var(--primary, #e11d48) !important;
-  border-color: var(--primary, #e11d48) !important;
-  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.25) !important;
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 30%, transparent) !important;
 }
 
 .assigned-tests-filter-bar .ui-segmented-option {
@@ -4749,8 +4749,8 @@
   border-radius: 999px;
   font-size: 10.5px;
   font-weight: 800;
-  background: rgba(225, 29, 72, 0.12);
-  color: var(--primary, #e11d48);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
 }
 
 .ui-segmented-option.is-active .segmented-tab-count {
@@ -4787,7 +4787,7 @@
 
 .premium-test-card:hover {
   transform: translateY(-3px);
-  border-color: rgba(225, 29, 72, 0.3);
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
   box-shadow: 0 14px 32px -6px rgba(0, 0, 0, 0.08);
 }
 
@@ -4800,7 +4800,7 @@
 }
 
 [data-theme="dark"] .premium-test-card:hover {
-  border-color: rgba(225, 29, 72, 0.4);
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
   box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.6);
 }
 
@@ -4860,15 +4860,15 @@
   font-weight: 700;
   padding: 4px 11px;
   border-radius: 999px;
-  background: rgba(225, 29, 72, 0.08);
-  color: #e11d48;
-  border: 1px solid rgba(225, 29, 72, 0.2);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
 }
 
 [data-theme="dark"] .premium-exhausted-chip {
-  background: rgba(225, 29, 72, 0.16);
-  color: #fda4af;
-  border-color: rgba(225, 29, 72, 0.35);
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
 }
 
 .premium-retake-chip {
@@ -4958,14 +4958,14 @@
 }
 
 .start-test-btn.is-exhausted-btn {
-  border-color: rgba(225, 29, 72, 0.3) !important;
-  color: #e11d48 !important;
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent) !important;
+  color: var(--primary) !important;
   background: transparent !important;
 }
 
 .start-test-btn.is-exhausted-btn:hover {
-  background: rgba(225, 29, 72, 0.06) !important;
-  border-color: #e11d48 !important;
+  background: color-mix(in srgb, var(--primary) 6%, transparent) !important;
+  border-color: var(--primary) !important;
 }
 
 .premium-meta-pill.text-muted {
