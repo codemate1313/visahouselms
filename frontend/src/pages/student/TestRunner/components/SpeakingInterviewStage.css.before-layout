@@ -1,24 +1,53 @@
 .speaking-interview-stage {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: auto;
+  background: #0d1018;
+  color: #f7f7fa;
+}
+
+.speaking-interview-header {
   display: flex;
-  flex-direction: column;
-  min-height: 0;
-  width: 100%;
-  border-radius: 7px;
-  overflow: hidden;
-  border: 1px solid #d7dae0;
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 6px 18px rgba(22, 24, 29, 0.04);
+  min-height: 70px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 12px 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: #151923;
+}
+
+.speaking-interview-header > div:first-child span,
+.speaking-interview-overall-time span {
+  display: block;
+  color: #9ca5b5;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.speaking-interview-header strong {
+  display: block;
+  margin-top: 3px;
+}
+
+.speaking-interview-overall-time {
+  text-align: right;
+}
+
+.speaking-interview-overall-time strong {
+  font-variant-numeric: tabular-nums;
 }
 
 .speaking-interview-layout {
-  /* The parts rail now comes from the shared PartsNav on the left of the
-     test-runner layout, so this grid only owns the workspace and the examiner. */
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: 150px minmax(0, 1fr) 260px;
   min-height: 0;
-  background: var(--surface);
-  color: var(--text);
+  background: #f7f7f5;
+  color: #17181d;
 }
 
 .speaking-interview-parts {
@@ -232,8 +261,8 @@
   align-items: center;
   gap: 12px;
   padding: 28px 20px;
-  border-left: 1px solid var(--border, #d9dce2);
-  background: var(--surface, #ffffff);
+  border-left: 1px solid #d9dce2;
+  background: #ffffff;
 }
 
 .speaking-interview-examiner .speaking-interview-avatar .avatar-portrait-container {
@@ -249,12 +278,12 @@
 }
 
 .speaking-interview-examiner-copy strong {
-  color: var(--text, #25272e);
+  color: #25272e;
   font-size: 14px;
 }
 
 .speaking-interview-examiner-copy span {
-  color: var(--text-muted, #667085);
+  color: #667085;
   font-size: 11px;
 }
 

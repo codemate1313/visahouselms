@@ -78,9 +78,9 @@ export function blinkFramesFor(set: ExaminerPhotoSet) {
  */
 export const VISEME_TO_MOUTH: Record<number, { level: number; tilt: number }> = {
   0: { level: 0.0, tilt: 0 },
-  1: { level: 1.0, tilt: -0.2 },
-  2: { level: 0.55, tilt: 1 },
-  3: { level: 0.35, tilt: -1 },
+  1: { level: 0.78, tilt: -0.2 }, // reduced from 1.0
+  2: { level: 0.48, tilt: 1 },    // reduced from 0.55
+  3: { level: 0.30, tilt: -1 },   // reduced from 0.35
   4: { level: 0.0, tilt: 0 },
-  5: { level: 0.45, tilt: 0.4 },
+  5: { level: 0.38, tilt: 0.4 },  // reduced from 0.45
 };
