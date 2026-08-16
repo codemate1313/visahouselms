@@ -201,14 +201,14 @@
   font-size: 13.5px;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(185, 28, 43, 0.22);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 22%, transparent);
   transition: all 180ms ease;
   white-space: nowrap;
 }
 
 .grant-access-btn:hover:not(:disabled) {
-  background: #8f1420;
-  box-shadow: 0 6px 16px rgba(185, 28, 43, 0.3);
+  background: color-mix(in srgb, var(--primary) 85%, black);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
 .grant-access-btn:disabled {
@@ -449,14 +449,14 @@
   font-weight: 700 !important;
   background: #b91c2b !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 16px rgba(185, 28, 43, 0.22) !important;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 22%, transparent) !important;
   transition: all 180ms ease !important;
 }
 
 .primary-submit-btn:hover:not(:disabled) {
   background: #991b1b !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 6px 20px rgba(185, 28, 43, 0.3) !important;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 30%, transparent) !important;
 }
 
 /* ---------- Revenue Dashboard Styling ---------- */
@@ -481,7 +481,7 @@
 .date-input-field:focus {
   background: var(--surface);
   border-color: #b91c2b;
-  box-shadow: 0 0 0 3px rgba(185, 28, 43, 0.12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
 .date-sep-text {
@@ -4001,7 +4001,7 @@
 .sd-hero-action-btn.btn-primary {
   background: var(--primary, #b91c2b);
   color: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(185, 28, 43, 0.22);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 22%, transparent);
 }
 
 .sd-hero-action-btn.btn-primary * {
@@ -4011,7 +4011,7 @@
 .sd-hero-action-btn.btn-primary:hover {
   filter: brightness(1.08);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(185, 28, 43, 0.32);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 32%, transparent);
 }
 
 .sd-hero-action-btn.btn-secondary {
@@ -4023,7 +4023,7 @@
 
 .sd-hero-action-btn.btn-secondary:hover {
   background: color-mix(in srgb, var(--primary) 4%, var(--surface));
-  border-color: rgba(185, 28, 43, 0.35);
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
   color: var(--primary, #b91c2b);
   transform: translateY(-1px);
 }
