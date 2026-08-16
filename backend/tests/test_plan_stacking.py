@@ -626,16 +626,12 @@ class AlreadyPurchasedTests(unittest.TestCase):
             "a student who cannot see an end date has no idea when to renew",
         )
 
-    def test_buying_a_held_plan_again_is_refused_before_payment(self):
-        from fastapi import HTTPException
-
+    def test_buying_a_held_plan_again_is_allowed(self):
         a = self._plan("Plan A", 90)
         subscription_service.subscribe_user(self.db, self.student.id, a.id, None)
 
-        with self.assertRaises(HTTPException) as raised:
-            self.plan_service.assert_plan_not_already_held(self.db, self.student.id, a.id)
-        self.assertEqual(raised.exception.status_code, 409)
-        self.assertIn("already purchased", raised.exception.detail.lower())
+        res = self.plan_service.assert_plan_not_already_held(self.db, self.student.id, a.id)
+        self.assertIsNone(res)
 
     def test_a_lapsed_plan_can_be_bought_again(self):
         a = self._plan("Plan A", 30)
@@ -666,3 +662,39 @@ class AlreadyPurchasedTests(unittest.TestCase):
             self._catalogue()["Plan A"]["entitled"],
             "the term is still theirs while a renewal clears",
         )
+
+    def test_cancelled_and_ready_attempts_do_not_consume_sittings(self):
+        a = self._plan("Plan A", 90)
+        subscription_service.subscribe_user(self.db, self.student.id, a.id, None)
+
+        # Confirm we have 1 sitting remaining
+        self.assertEqual(entitlement_service.sittings_remaining(self.db, self.student.id, self.module.id), 1)
+
+        # Create a ready attempt
+        ready_attempt = TestAttempt(
+            user_id=self.student.id,
+            module_id=self.module.id,
+            status="ready",
+            is_retake=False,
+            expires_at=_now() + timedelta(minutes=60),
+            sitting_number=1,
+        )
+        self.db.add(ready_attempt)
+        self.db.commit()
+
+        # It should still have 1 sitting remaining, and starting a test should not raise conflict
+        self.assertEqual(entitlement_service.sittings_remaining(self.db, self.student.id, self.module.id), 1)
+
+        # Create a cancelled attempt
+        cancelled_attempt = TestAttempt(
+            user_id=self.student.id,
+            module_id=self.module.id,
+            status="cancelled",
+            is_retake=False,
+            expires_at=_now() + timedelta(minutes=60),
+            sitting_number=2,
+        )
+        self.db.add(cancelled_attempt)
+        self.db.commit()
+
+        self.assertEqual(entitlement_service.sittings_remaining(self.db, self.student.id, self.module.id), 1)

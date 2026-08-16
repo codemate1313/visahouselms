@@ -302,6 +302,7 @@ def sittings_remaining(db: Session, user_id: int, module_id: int) -> int:
             TestAttempt.user_id == user_id,
             TestAttempt.module_id == module_id,
             TestAttempt.is_retake.is_(False),
+            TestAttempt.status.notin_(["cancelled", "ready"]),
         )
         .count()
     )

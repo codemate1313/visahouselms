@@ -1013,6 +1013,19 @@ def my_current_plan_view(db: Session, user: User) -> dict:
         # than an expired entitlement. It also carries course-bundled modules,
         # which the plan-modules loop above never saw.
         from app.services import entitlement_service
+        from app.models.module_entitlement import ModuleEntitlement
+
+        # Self-healing sync: rebuild direct student entitlements from all their subscriptions dynamically
+        # to guarantee sittings and expiry dates perfectly stack and match active plan definitions.
+        user_subs = entitlement_service.subscriptions_for_user(db, user.id)
+        active_subs = [s for s in user_subs if s.cancelled_at is None]
+        if active_subs:
+            db.query(ModuleEntitlement).filter(
+                ModuleEntitlement.user_id == user.id,
+                ModuleEntitlement.source.in_([entitlement_service.SOURCE_PLAN, entitlement_service.SOURCE_BACKFILL])
+            ).delete()
+            entitlement_service.replay_subscriptions(db, user.id, active_subs)
+            db.commit()
 
         module_expiry = {
             row["module_id"]: row

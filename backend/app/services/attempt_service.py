@@ -218,6 +218,7 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
             TestAttempt.user_id == user.id,
             TestAttempt.module_id == module.id,
             TestAttempt.is_retake.is_(False),
+            TestAttempt.status.notin_(["cancelled", "ready"]),
         )
         .count()
     )

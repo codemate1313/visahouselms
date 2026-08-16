@@ -2606,6 +2606,25 @@
   border-radius: var(--radius-xs);
   font-size: 12px;
   color: #ffffff !important;
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 28%, transparent) !important;
+}
+
+.result-overview-meta .ui-link-btn:hover,
+.result-overview-meta .ui-link-btn:focus-visible {
+  background: var(--primary-hover, color-mix(in srgb, var(--primary) 82%, #000)) !important;
+  border-color: var(--primary-hover, color-mix(in srgb, var(--primary) 82%, #000)) !important;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 40%, transparent) !important;
+  transform: translateY(-1px);
+}
+
+/* Back button in test onboarding sidebar uses brand color on hover */
+.onboarding-back-btn:hover,
+.onboarding-back-btn:focus-visible {
+  color: var(--primary) !important;
+  background: color-mix(in srgb, var(--primary) 10%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary) 24%, transparent) !important;
 }
 
 .student-analysis-panel {
