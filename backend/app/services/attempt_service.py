@@ -330,7 +330,7 @@ def credit_clock(db: Session, attempt: TestAttempt, key: str, seconds: float) ->
     same examiner prompt or the same upload can never be credited twice, however
     many times the client asks for it. Returns True when the clock moved.
     """
-    if attempt.status != ATTEMPT_IN_PROGRESS:
+    if attempt.status not in (ATTEMPT_IN_PROGRESS, ATTEMPT_READY):
         return False
     seconds = int(max(0, min(seconds, MAX_CLOCK_CREDIT_SECONDS)))
     if seconds <= 0:
