@@ -15,6 +15,8 @@ frontend/.env
 # Local file storage
 storage/*
 !storage/.gitkeep
+backups/
+*.sql
 
 # OS
 .DS_Store

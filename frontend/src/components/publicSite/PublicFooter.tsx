@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
-import { useThemeStore } from "@/store/themeStore";
 import { PUBLIC_FOOTER_COLUMNS, SOCIAL_ICON_NAMES, SOCIAL_LABELS } from "./navConfig";
 import { useFooterParallax } from "./useFooterParallax";
 import "@/styles/public/chrome.css";
@@ -12,39 +11,102 @@ export interface PublicSocialLink {
   url: string;
 }
 
+const DEFAULT_SOCIAL_LINKS: PublicSocialLink[] = [
+  { id: "linkedin", platform: "linkedin", url: "https://linkedin.com" },
+  { id: "github", platform: "github", url: "https://github.com" },
+  { id: "instagram", platform: "instagram", url: "https://instagram.com" },
+  { id: "youtube", platform: "youtube", url: "https://youtube.com" },
+];
+
 export function PublicFooter({ socialLinks = [] }: { socialLinks?: PublicSocialLink[] }) {
-  const dark = useThemeStore((state) => state.theme === "dark");
   const footerRef = useRef<HTMLElement | null>(null);
   useFooterParallax(footerRef);
+
+  const displaySocialLinks = socialLinks.length > 0 ? socialLinks : DEFAULT_SOCIAL_LINKS;
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
 
   return (
     <footer className="vh-footer" ref={footerRef}>
       <div className="vh-footer-grid">
-        <div>
+        {/* Brand & Overview Column */}
+        <div className="vh-footer-brand-col">
           <div className="vh-footer-brand-row">
-            <img src={dark ? "/brand/vh-mark-dark.png" : "/brand/vh-mark-light.png"} alt="Visa House" width={34} height={34} />
-            <span>Visa House</span>
+            <img src="/brand/vh-mark-dark.png" alt="Visa House" width={40} height={40} />
+            <div className="vh-footer-brand-info">
+              <span className="vh-footer-brand-title">Visa House</span>
+              <span className="vh-footer-brand-badge">Official LMS Ecosystem</span>
+            </div>
           </div>
-          <ul className="footer-social-icons">
-            {socialLinks.map((social) => (
-              <li className="icon-content" key={social.id}>
-                <a href={social.url} data-social={social.platform} target="_blank" rel="noopener noreferrer" aria-label={SOCIAL_LABELS[social.platform] || social.platform}>
-                  <div className="filled" />
-                  <Icon name={SOCIAL_ICON_NAMES[social.platform] ?? "socialWebsite"} />
-                </a>
-                <div className="tooltip">{SOCIAL_LABELS[social.platform] || social.platform}</div>
-              </li>
-            ))}
-          </ul>
+
+          <p className="vh-footer-tagline">
+            Next-generation LanguageCert preparation, AI-powered mock tests, and smart LMS infrastructure for institutions & students worldwide.
+          </p>
+
+          <div className="vh-footer-interactive-row">
+            <ul className="footer-social-icons">
+              {displaySocialLinks.map((social) => (
+                <li className="icon-content" key={social.id}>
+                  <a
+                    href={social.url}
+                    data-social={social.platform}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={SOCIAL_LABELS[social.platform] || social.platform}
+                  >
+                    <div className="filled" />
+                    <Icon name={SOCIAL_ICON_NAMES[social.platform] ?? "socialWebsite"} />
+                  </a>
+                  <div className="tooltip">{SOCIAL_LABELS[social.platform] || social.platform}</div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="vh-footer-back-to-top-wrap">
+              <button
+                type="button"
+                className="vh-footer-back-to-top"
+                onClick={scrollToTop}
+                aria-label="Back to top"
+                title="Scroll to top"
+              >
+                <svg
+                  className="vh-footer-back-to-top-icon"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="18 15 12 9 6 15" />
+                  <polyline points="18 9 12 3 6 9" />
+                </svg>
+                <span>BACK TO TOP</span>
+              </button>
+            </div>
+          </div>
         </div>
 
+        {/* Navigation Columns */}
         {PUBLIC_FOOTER_COLUMNS.map((col) => (
           <div className="vh-footer-col" key={col.title}>
-            <h4>{col.title}</h4>
+            <h4>
+              <span className="vh-footer-col-accent" />
+              {col.title}
+            </h4>
             <div className="vh-footer-col-links">
               {col.links.map((link) => (
-                <Link key={link.label} to={link.url}>
-                  {link.label}
+                <Link key={link.label} to={link.url} className="vh-footer-link">
+                  <span className="vh-footer-link-text">{link.label}</span>
                 </Link>
               ))}
             </div>
@@ -52,13 +114,24 @@ export function PublicFooter({ socialLinks = [] }: { socialLinks?: PublicSocialL
         ))}
       </div>
 
+      {/* Bottom Bar */}
       <div className="vh-footer-bottom">
-        <span>© {new Date().getFullYear()} Visa House LanguageCert LMS. All rights reserved.</span>
+        <div className="vh-footer-bottom-copy">
+          <span>© {new Date().getFullYear()} Visa House LanguageCert LMS. All rights reserved.</span>
+        </div>
+
         <div className="vh-footer-bottom-links">
           <a href="#">Privacy Policy</a>
+          <span className="vh-footer-dot-sep">•</span>
           <a href="#">Terms of Service</a>
+          <span className="vh-footer-dot-sep">•</span>
           <a href="#">Security</a>
         </div>
+      </div>
+
+      {/* Giant Shaded Brand Watermark */}
+      <div className="vh-footer-watermark-wrap" aria-hidden="true">
+        <span className="vh-footer-watermark-text">VISA HOUSE</span>
       </div>
     </footer>
   );

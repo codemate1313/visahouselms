@@ -1,15 +1,19 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { grammarContentApi, type GrammarContentItem } from "@/api/grammarContentApi";
 import { confirmDelete } from "@/components/confirmDialog";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
-import { Badge, Button, DataTableCard, Input, Modal, PageHeader, Textarea } from "@/components/ui";
+import { Badge, Button, DataTableCard, Input, Modal, SearchInput, Textarea } from "@/components/ui";
 import "./GrammarContentPage.css";
 
 export function GrammarContentPage() {
   const [items, setItems] = useState<GrammarContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Search & Filter State
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "disabled">("all");
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,6 +43,27 @@ export function GrammarContentPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const activeCount = useMemo(() => items.filter((i) => i.is_active).length, [items]);
+  const disabledCount = useMemo(() => items.filter((i) => !i.is_active).length, [items]);
+
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const q = search.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        item.title.toLowerCase().includes(q) ||
+        (item.description && item.description.toLowerCase().includes(q)) ||
+        item.file_name.toLowerCase().includes(q);
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && item.is_active) ||
+        (statusFilter === "disabled" && !item.is_active);
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [items, search, statusFilter]);
 
   const openCreateModal = () => {
     setEditingItem(null);
@@ -139,23 +164,69 @@ export function GrammarContentPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   };
 
+  const isFiltering = search.trim() !== "" || statusFilter !== "all";
+
   return (
     <div className="gc-container">
-      <PageHeader
-        title="Grammar Content"
-        subtitle="Manage grammar PDF learning materials for students"
-        actions={
-          <Button variant="primary" onClick={openCreateModal}>
-            <Icon name="plus" /> Add Grammar Content
-          </Button>
-        }
-      />
-
       {error && <div className="gc-error-banner">{error}</div>}
 
+      {/* Modern Filter, Search & Action Bar */}
+      <div className="gc-toolbar-card">
+        <div className="gc-search-filter-group">
+          <div className="gc-search-wrapper">
+            <SearchInput
+              placeholder="Search by title, description, or file name..."
+              value={search}
+              onChange={setSearch}
+              className="gc-search-input"
+            />
+          </div>
+
+          <div className="gc-status-filter-pills" role="tablist" aria-label="Status filter">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={statusFilter === "all"}
+              className={`gc-filter-pill${statusFilter === "all" ? " is-active" : ""}`}
+              onClick={() => setStatusFilter("all")}
+            >
+              <span>All</span>
+              <span className="gc-pill-count">{items.length}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={statusFilter === "active"}
+              className={`gc-filter-pill${statusFilter === "active" ? " is-active" : ""}`}
+              onClick={() => setStatusFilter("active")}
+            >
+              <span>Active</span>
+              <span className="gc-pill-count">{activeCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={statusFilter === "disabled"}
+              className={`gc-filter-pill${statusFilter === "disabled" ? " is-active" : ""}`}
+              onClick={() => setStatusFilter("disabled")}
+            >
+              <span>Disabled</span>
+              <span className="gc-pill-count">{disabledCount}</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="gc-toolbar-actions">
+          <Button variant="primary" onClick={openCreateModal} className="gc-add-btn">
+            <Icon name="plus" /> Add Grammar Content
+          </Button>
+        </div>
+      </div>
+
       {loading ? (
-        <div style={{ padding: "40px 0", textAlign: "center", color: "var(--text-muted, #64748b)" }}>
-          Loading grammar content...
+        <div className="gc-loading-state">
+          <div className="gc-loading-spinner" />
+          <p>Loading grammar content...</p>
         </div>
       ) : items.length === 0 ? (
         <div className="gc-empty-card">
@@ -168,87 +239,149 @@ export function GrammarContentPage() {
             <Icon name="plus" /> Add First PDF Content
           </Button>
         </div>
+      ) : filteredItems.length === 0 ? (
+        <div className="gc-empty-card gc-no-match-card">
+          <div className="gc-empty-icon">🔍</div>
+          <h3 className="gc-empty-title">No Matching Content</h3>
+          <p className="gc-empty-desc">
+            No materials match your current search or filter criteria.
+          </p>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setSearch("");
+              setStatusFilter("all");
+            }}
+          >
+            Reset Filters
+          </Button>
+        </div>
       ) : (
-        <DataTableCard>
-          <table className="data-table gc-table">
-            <thead>
-              <tr>
-                <th className="gc-col-title">Title</th>
-                <th className="gc-col-desc">Description</th>
-                <th className="gc-col-file">File</th>
-                <th className="gc-col-status">Status</th>
-                <th className="table-actions-heading col-actions gc-col-actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td className="gc-col-title">
-                    <div className="gc-title-text" title={item.title}>{item.title}</div>
-                  </td>
-                  <td className="gc-col-desc">
-                    <div className="gc-desc-text">
-                      {item.description || <span style={{ opacity: 0.5, fontStyle: "italic" }}>No description</span>}
-                    </div>
-                  </td>
-                  <td className="gc-col-file">
-                    <div className="gc-file-info">
-                      <div className="gc-file-icon">
-                        <Icon name="filePdf" />
-                      </div>
-                      <div className="gc-file-details">
-                        <div className="gc-file-name" title={item.file_name}>{item.file_name}</div>
-                        <div className="gc-file-size">{formatFileSize(item.file_size)}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="gc-col-status">
-                    <Badge tone={item.is_active ? "green" : "gray"}>
-                      {item.is_active ? "Active" : "Disabled"}
-                    </Badge>
-                  </td>
-                  <td className="table-actions col-actions gc-col-actions">
-                    <div className="row-actions-inline">
-                      <button
-                        type="button"
-                        className="action-btn-icon action-neutral"
-                        onClick={() => openEditModal(item)}
-                        data-tooltip="Edit"
-                      >
-                        <Icon name="edit" />
-                      </button>
+        <div className="gc-table-container">
+          {isFiltering && (
+            <div className="gc-filter-status-row">
+              <span>
+                Showing <strong>{filteredItems.length}</strong> of <strong>{items.length}</strong> materials
+              </span>
+              <button
+                type="button"
+                className="gc-clear-filter-btn"
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("all");
+                }}
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
 
-                      <RowActionMenu
-                        items={[
-                          <button key="toggle" type="button" onClick={() => handleToggleStatus(item)}>
-                            <Icon name={item.is_active ? "toggleOff" : "toggleOn"} />
-                            <span>{item.is_active ? "Deactivate" : "Activate"}</span>
-                          </button>,
-                          <a
-                            key="view"
-                            href={item.file_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{ display: "flex", alignItems: "center", gap: "8px", color: "inherit", textDecoration: "none" }}
-                          >
-                            <Icon name="eye" />
-                            <span>View PDF</span>
-                          </a>,
-                          <button key="delete" type="button" className="danger" onClick={() => handleDelete(item)}>
-                            <Icon name="trash" />
-                            <span>Delete</span>
-                          </button>,
-                        ]}
-                      />
-                    </div>
-                  </td>
+          <DataTableCard>
+            <table className="data-table gc-table">
+              <thead>
+                <tr>
+                  <th className="gc-col-title">TITLE</th>
+                  <th className="gc-col-desc">DESCRIPTION</th>
+                  <th className="gc-col-file">FILE</th>
+                  <th className="gc-col-status">STATUS</th>
+                  <th className="table-actions-heading col-actions gc-col-actions">ACTIONS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </DataTableCard>
+              </thead>
+              <tbody>
+                {filteredItems.map((item) => (
+                  <tr key={item.id}>
+                    <td className="gc-col-title">
+                      <div className="gc-title-wrap">
+                        <span className="gc-title-text" title={item.title}>
+                          {item.title}
+                        </span>
+                        {item.created_at && (
+                          <span className="gc-date-subtext">
+                            Added {new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="gc-col-desc">
+                      <div className="gc-desc-text">
+                        {item.description ? (
+                          item.description
+                        ) : (
+                          <span className="gc-desc-empty">No description</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="gc-col-file">
+                      <a
+                        href={item.file_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="gc-file-info-link"
+                        title={`Open ${item.file_name} in new tab`}
+                      >
+                        <div className="gc-file-icon">
+                          <Icon name="filePdf" />
+                        </div>
+                        <div className="gc-file-details">
+                          <div className="gc-file-name" title={item.file_name}>
+                            {item.file_name}
+                          </div>
+                          <div className="gc-file-size">
+                            {formatFileSize(item.file_size)}
+                          </div>
+                        </div>
+                      </a>
+                    </td>
+                    <td className="gc-col-status">
+                      <Badge tone={item.is_active ? "green" : "gray"}>
+                        {item.is_active ? "Active" : "Disabled"}
+                      </Badge>
+                    </td>
+                    <td className="table-actions col-actions gc-col-actions">
+                      <div className="row-actions-inline">
+                        <a
+                          href={item.file_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="action-btn-icon action-neutral gc-action-eye-btn"
+                          title="View PDF"
+                          data-tooltip="View PDF"
+                          aria-label={`View PDF for ${item.title}`}
+                        >
+                          <Icon name="eye" />
+                        </a>
 
+                        <button
+                          type="button"
+                          className="action-btn-icon action-neutral"
+                          onClick={() => openEditModal(item)}
+                          title="Edit"
+                          data-tooltip="Edit"
+                          aria-label={`Edit ${item.title}`}
+                        >
+                          <Icon name="edit" />
+                        </button>
 
+                        <RowActionMenu
+                          items={[
+                            <button key="toggle" type="button" onClick={() => handleToggleStatus(item)}>
+                              <Icon name={item.is_active ? "toggleOff" : "toggleOn"} />
+                              <span>{item.is_active ? "Deactivate" : "Activate"}</span>
+                            </button>,
+                            <button key="delete" type="button" className="danger" onClick={() => handleDelete(item)}>
+                              <Icon name="trash" />
+                              <span>Delete</span>
+                            </button>,
+                          ]}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </DataTableCard>
+        </div>
       )}
 
       {/* Create / Edit Modal */}
