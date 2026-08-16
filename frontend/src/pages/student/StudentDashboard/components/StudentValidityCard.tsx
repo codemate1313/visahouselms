@@ -145,9 +145,9 @@ export function StudentValidityCard({ plan, isInstituteStudent }: StudentValidit
             >
               <defs>
                 <linearGradient id="vhSleekDialGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#b91c2b" />
-                  <stop offset="60%" stopColor="#e11d48" />
-                  <stop offset="100%" stopColor="#f43f5e" />
+                  <stop offset="0%" stopColor="var(--primary)" />
+                  <stop offset="60%" stopColor="color-mix(in srgb, var(--primary) 85%, white)" />
+                  <stop offset="100%" stopColor="color-mix(in srgb, var(--primary) 70%, white)" />
                 </linearGradient>
               </defs>
 

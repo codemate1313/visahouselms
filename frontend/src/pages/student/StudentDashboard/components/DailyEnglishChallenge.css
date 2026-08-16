@@ -99,7 +99,7 @@
   justify-content: center;
   min-width: 36px;
   height: 38px;
-  background: linear-gradient(180deg, #b91c2b 0%, #941320 100%);
+  background: linear-gradient(180deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 70%, black) 100%);
   border-radius: 6px;
   color: #ffffff;
   font-family: var(--font-heading, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
@@ -107,7 +107,7 @@
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
-  box-shadow: 0 3px 8px rgba(185, 28, 43, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--primary) 32%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   overflow: hidden;
   user-select: none;
 }
@@ -1166,8 +1166,8 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 }
 
 [data-theme="dark"] .daily-flip-digit {
-  background: linear-gradient(180deg, #b91c2b 0%, #88131e 100%);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45), 0 0 12px rgba(185, 28, 43, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  background: linear-gradient(180deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 65%, black) 100%);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45), 0 0 12px color-mix(in srgb, var(--primary) 25%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 [data-theme="dark"] .daily-completion-card {
