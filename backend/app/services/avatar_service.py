@@ -142,7 +142,25 @@ async def get_or_create_prompt_audio(text: str, voice: str) -> tuple[str, List[D
         try:
             with open(meta_path, "r", encoding="utf-8") as f:
                 meta = json.load(f)
-            return audio_url, meta.get("visemes", []), meta.get("duration", 3.0)
+            
+            visemes = meta.get("visemes")
+            duration = meta.get("duration")
+            
+            # If visemes are missing/empty or duration is missing, rebuild them to upgrade old cache files
+            if not visemes or duration is None:
+                if duration is None:
+                    mp3_len = audio_path.stat().st_size if audio_path.exists() else 0
+                    duration = max(mp3_len / 4000.0, 1.5)
+                visemes = _generate_text_visemes(clean_text, duration)
+                meta["visemes"] = visemes
+                meta["duration"] = round(duration, 2)
+                try:
+                    with open(meta_path, "w", encoding="utf-8") as f_out:
+                        json.dump(meta, f_out)
+                except Exception:
+                    pass
+            
+            return audio_url, visemes, duration
         except Exception:
             logger.exception("Failed to load cached viseme metadata")
 
