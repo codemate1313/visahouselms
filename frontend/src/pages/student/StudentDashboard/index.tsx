@@ -7,6 +7,7 @@ import { studentDashboardStrings as strings } from "./StudentDashboard.strings";
 import { COMPLETED_STATUSES, attemptTime, progressForStatus, statusLabel } from "./helpers";
 import { useDashboardAnimations } from "./useDashboardAnimations";
 import { StatCardsGrid, type StatCard } from "./components/StatCardsGrid";
+import { StudentValidityCard } from "./components/StudentValidityCard";
 import { LearningPlanPanel } from "./components/LearningPlanPanel";
 import { RecentActivityPanel } from "./components/RecentActivityPanel";
 import type { TestProgressItem } from "./types";
@@ -79,6 +80,8 @@ export function StudentDashboard() {
         title={strings.welcome(user?.first_name)}
         subtitle={strings.subtitle}
       />
+
+      <StudentValidityCard plan={myPlan} isInstituteStudent={isInstituteStudent} />
 
       <DailyEnglishChallenge />
 

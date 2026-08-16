@@ -511,8 +511,11 @@ export interface StudentCurrentPlan {
     modules: StudentPlanModule[];
   } | null;
   state: "none" | "active" | "grace" | "expired" | "scheduled";
+  starts_at?: string | null;
   expires_at: string | null;
-  access_type: "institute" | "direct";
+  grace_days?: number | null;
+  access_type: "institute" | "direct" | "trial";
+  institute_name?: string | null;
   ai_evaluations?: StudentAiQuotaSummary;
   demo?: {
     state: "active" | "locked";

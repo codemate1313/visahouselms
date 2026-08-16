@@ -759,6 +759,35 @@ def my_current_plan_view(db: Session, user: User) -> dict:
         ]
         modules_payload.sort(key=lambda m: (m["is_locked"], m["title"]))
 
+        institute_name = None
+        if user.institute_id is not None:
+            if getattr(user, "institute", None):
+                institute_name = user.institute.name
+
+        # Calculate dates for trial / demo or previous subscription
+        trial_starts_at = user.created_at or _now()
+        trial_duration = demo.get("duration_days") or 7
+        trial_expires_at = trial_starts_at + timedelta(days=trial_duration)
+
+        latest_sub = None
+        if user.institute_id is not None:
+            latest_sub = (
+                db.query(Subscription)
+                .filter(Subscription.institute_id == user.institute_id)
+                .order_by(Subscription.expires_at.desc())
+                .first()
+            )
+        else:
+            latest_sub = (
+                db.query(Subscription)
+                .filter(Subscription.user_id == user.id)
+                .order_by(Subscription.expires_at.desc())
+                .first()
+            )
+
+        effective_starts_at = latest_sub.starts_at if latest_sub else (trial_starts_at if demo["state"] == "active" else user.created_at)
+        effective_expires_at = latest_sub.expires_at if latest_sub else (trial_expires_at if demo["state"] == "active" else None)
+
         return {
             "plan": {
                 "id": 0,
@@ -768,8 +797,11 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 "modules": modules_payload,
             },
             "state": state,
-            "expires_at": None,
-            "access_type": "institute" if user.institute_id is not None else "direct",
+            "starts_at": effective_starts_at,
+            "expires_at": effective_expires_at,
+            "grace_days": latest_sub.grace_days if latest_sub else 0,
+            "access_type": "institute" if user.institute_id is not None else ("trial" if (demo["state"] == "active" and not latest_sub) else "direct"),
+            "institute_name": institute_name,
             "ai_evaluations": ai_quota,
             "demo": demo,
         }
@@ -839,6 +871,13 @@ def my_current_plan_view(db: Session, user: User) -> dict:
             })
         modules_list.sort(key=lambda m: (m["is_locked"], m["title"]))
 
+    institute_name = None
+    if user.institute_id is not None:
+        if getattr(user, "institute", None):
+            institute_name = user.institute.name
+        elif subscription.institute_name_snapshot:
+            institute_name = subscription.institute_name_snapshot
+
     return {
         "plan": {
             "id": 0 if user.institute_id is not None else plan.id,
@@ -852,7 +891,10 @@ def my_current_plan_view(db: Session, user: User) -> dict:
             "modules": modules_list,
         },
         "state": state,
+        "starts_at": subscription.starts_at,
         "expires_at": subscription.expires_at,
+        "grace_days": subscription.grace_days,
         "access_type": "institute" if user.institute_id is not None else "direct",
+        "institute_name": institute_name,
         "ai_evaluations": ai_quota,
     }

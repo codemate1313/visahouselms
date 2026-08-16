@@ -3772,6 +3772,291 @@
   min-height: 100dvh;
 }
 
+/* Student Validity & Plan Access Card */
+.sd-validity-card {
+  margin-bottom: 36px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 20px;
+  padding: 24px 28px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.sd-validity-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 5px;
+  background: var(--primary, #b91c2b);
+}
+
+.sd-validity-card.tone-green::before {
+  background: #10b981;
+}
+
+.sd-validity-card.tone-blue::before {
+  background: #3b82f6;
+}
+
+.sd-validity-card.tone-purple::before {
+  background: #8b5cf6;
+}
+
+.sd-validity-card.tone-amber::before {
+  background: #f59e0b;
+}
+
+.sd-validity-card.tone-red::before {
+  background: #ef4444;
+}
+
+.sd-validity-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.sd-validity-identity {
+  flex: 1 1 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sd-validity-badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.sd-validity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sd-validity-badge.badge-green {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.sd-validity-badge.badge-blue {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+
+.sd-validity-badge.badge-purple {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+}
+
+.sd-validity-badge.badge-amber {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.sd-validity-badge.badge-red {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.sd-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sd-status-pill.pill-ok {
+  background: rgba(16, 185, 129, 0.08);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.sd-status-pill.pill-urgent {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.sd-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.sd-validity-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text, #0f172a);
+  letter-spacing: -0.01em;
+}
+
+.sd-validity-desc {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-muted, #64748b);
+  line-height: 1.45;
+}
+
+.sd-validity-quotas {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.sd-quota-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--surface-muted, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-muted, #475569);
+}
+
+.sd-quota-chip strong {
+  color: var(--text, #0f172a);
+}
+
+.sd-validity-dates-box {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.sd-date-metrics-grid {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 18px;
+  background: var(--surface-muted, rgba(0, 0, 0, 0.02));
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+}
+
+.sd-date-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sd-date-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sd-date-value {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text, #0f172a);
+}
+
+.sd-date-value.text-danger {
+  color: #ef4444;
+}
+
+.sd-date-value.text-warning {
+  color: #d97706;
+}
+
+.sd-validity-actions {
+  display: flex;
+  align-items: center;
+}
+
+.sd-validity-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.sd-validity-cta-btn.btn-primary {
+  background: var(--primary, #b91c2b);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(185, 28, 43, 0.25);
+}
+
+.sd-validity-cta-btn.btn-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.sd-validity-cta-btn.btn-secondary {
+  background: var(--surface-muted, #f1f5f9);
+  color: var(--text, #0f172a);
+  border: 1px solid var(--border, #cbd5e1);
+}
+
+.sd-validity-cta-btn.btn-secondary:hover {
+  background: var(--surface, #ffffff);
+  border-color: var(--primary, #b91c2b);
+  color: var(--primary, #b91c2b);
+  transform: translateY(-1px);
+}
+
+.sd-validity-cta-btn.btn-outline {
+  background: transparent;
+  color: var(--primary, #b91c2b);
+  border: 1.5px solid var(--primary, #b91c2b);
+}
+
+.sd-validity-cta-btn.btn-outline:hover {
+  background: var(--primary, #b91c2b);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .sd-validity-card {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .sd-date-metrics-grid {
+  background: rgba(15, 23, 42, 0.5);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .sd-dashboard .page-header {
   margin-bottom: 48px;
 }
