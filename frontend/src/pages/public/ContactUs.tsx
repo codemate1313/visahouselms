@@ -7,6 +7,7 @@ import { ReCaptchaWidget } from "@/components/publicSite/ReCaptchaWidget";
 import { useSEO } from "@/hooks/useSEO";
 import { useContactSettings } from "./useContactSettings";
 import type { LandingPlan, LandingPlansPayload } from "./Plans.types";
+import { useRevealOnScroll } from "@/components/publicSite/useRevealOnScroll";
 import { useToastStore } from "@/store/toastStore";
 import "@/styles/public/chrome.css";
 import "@/styles/public/contact.css";
@@ -140,7 +141,10 @@ export function ContactUs() {
   useSEO({ title: "Contact Us", description: "Email, call or contact Visa House for LanguageCert LMS support and institute demos." });
   const location = useLocation();
   const contactSettings = useContactSettings();
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const formSectionRef = useRef<HTMLElement | null>(null);
+
+  useRevealOnScroll(rootRef);
 
   const [institutePlans, setInstitutePlans] = useState<LandingPlan[]>([]);
   const [formType, setFormType] = useState<FormType>(() => getInitialFormType(location.search));
@@ -306,7 +310,7 @@ export function ContactUs() {
   const contact = contactSettings?.contact;
 
   return (
-    <div className="vh-public vh-contact-page">
+    <div className="vh-public vh-contact-page" ref={rootRef}>
       <div className="vh-page-content">
         <PublicHeader />
 
@@ -320,7 +324,7 @@ export function ContactUs() {
         </section>
 
         <main className="vh-contact-stage" ref={formSectionRef}>
-          <div className="vh-contact-panel">
+          <div className="vh-contact-panel vh-reveal">
             <section className="vh-contact-company" aria-labelledby="company-information-title">
               <h2 id="company-information-title">Company information</h2>
               <div className="vh-contact-details-grid">

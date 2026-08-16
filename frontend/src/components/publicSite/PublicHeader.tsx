@@ -70,7 +70,7 @@ export function PublicHeader() {
       const currentScrollY = Math.max(window.scrollY, 0);
       const previousScrollY = lastScrollYRef.current;
 
-      if (open || currentScrollY <= 12) {
+      if (open || currentScrollY <= 80) {
         setHeaderVisible(true);
       } else if (currentScrollY > previousScrollY) {
         setHeaderVisible(false);

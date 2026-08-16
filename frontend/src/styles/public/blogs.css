@@ -225,12 +225,6 @@
   background: var(--bg);
 }
 
-.vh-blog-detail-page .vh-reveal {
-  opacity: 1 !important;
-  transform: none !important;
-  transition: none !important;
-}
-
 .vh-blog-reading-progress {
   position: fixed;
   top: 0;

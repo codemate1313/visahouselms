@@ -7,11 +7,11 @@
 
 .vh-contact-page::before {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 980px;
+  height: 100vh;
   background-image:
     linear-gradient(180deg, rgba(6, 7, 12, 0.84) 0%, rgba(6, 7, 12, 0.74) 280px, rgba(6, 7, 12, 0.82) 500px, rgba(234, 237, 242, 0.6) 740px, rgba(234, 237, 242, 0.95) 880px, #eaedf2 100%),
     linear-gradient(90deg, rgba(6, 7, 12, 0.65) 0%, transparent 35%, transparent 65%, rgba(6, 7, 12, 0.65) 100%),
@@ -33,14 +33,6 @@
     url("/images/contact_hero.png");
 }
 
-/* The reference is static, so the contact page deliberately opts out of the
-   shared slide/reveal motion used elsewhere on the marketing site. */
-.vh-contact-page .vh-reveal {
-  opacity: 1;
-  transform: none;
-  transition: none;
-}
-
 .vh-contact-hero {
   position: relative;
   z-index: 2;
@@ -49,25 +41,27 @@
   place-items: start center;
   overflow: visible;
   background: none;
+  animation: vh-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .vh-contact-hero-copy {
   position: relative;
   z-index: 2;
-  width: min(640px, 100%);
+  width: min(920px, 100%);
   text-align: center;
 }
 
 .vh-contact-hero h1 {
-  max-width: 620px;
+  max-width: 900px;
   margin: 0 auto 12px;
-  font-size: clamp(38px, 4.2vw, 56px);
-  line-height: 1.05;
+  font-size: clamp(32px, 3.8vw, 50px);
+  line-height: 1.1;
   letter-spacing: -0.035em;
   font-weight: 500;
   color: #ffffff;
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.45);
-  text-wrap: balance;
+  white-space: nowrap;
+  animation: vh-rise 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .vh-contact-hero h1 .vh-accent {
@@ -91,6 +85,7 @@
   line-height: 1.6;
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4);
   text-wrap: balance;
+  animation: vh-rise 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
 }
 
 [data-theme="dark"] .vh-contact-hero h1 {
@@ -737,6 +732,7 @@
 
   .vh-contact-hero h1 {
     font-size: clamp(34px, 10vw, 48px);
+    white-space: normal;
   }
 
   .vh-contact-stage {

@@ -209,9 +209,7 @@
   right: 0;
   z-index: 50;
   width: 100%;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: var(--surface, #ffffff);
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   transform: translateY(0);
@@ -237,7 +235,7 @@
   pointer-events: auto;
 }
 [data-theme="dark"] .vh-header {
-  background: rgba(10, 10, 15, 0.8);
+  background: #0a0a0f;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
@@ -765,6 +763,7 @@
   letter-spacing: -1.5px;
   line-height: 1.05;
   margin: 0 0 14px;
+  color: #ffffff;
 }
 .vh-cta-copy p {
   color: rgba(255, 255, 255, 0.7);

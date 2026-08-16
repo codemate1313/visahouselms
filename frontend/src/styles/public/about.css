@@ -783,6 +783,11 @@
   letter-spacing: -0.025em;
   margin-bottom: 16px;
   line-height: 1.1;
+  color: inherit;
+}
+
+.vh-panel-dark .vh-panel-title {
+  color: #ffffff;
 }
 
 .vh-panel-desc {
@@ -791,6 +796,7 @@
   line-height: 1.6;
   opacity: 0.88;
   font-weight: 400;
+  color: inherit;
 }
 
 .vh-panel-bottom-nav {

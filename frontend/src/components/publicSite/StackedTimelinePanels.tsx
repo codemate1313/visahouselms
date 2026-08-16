@@ -241,8 +241,12 @@ export function StackedTimelinePanels({ items = DEFAULT_TIMELINE_ITEMS }: Stacke
                 {item.year}
               </h2>
 
-              <h3 className="vh-panel-title">{item.title}</h3>
-              <p className="vh-panel-desc">{item.desc}</p>
+              <h3 className="vh-panel-title" style={{ color: item.textColor }}>
+                {item.title}
+              </h3>
+              <p className="vh-panel-desc" style={{ color: item.textColor }}>
+                {item.desc}
+              </p>
             </div>
 
             {/* Clean Bottom Navigation Bar */}
