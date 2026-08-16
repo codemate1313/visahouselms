@@ -785,8 +785,8 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 .first()
             )
 
-        effective_starts_at = latest_sub.starts_at if latest_sub else (trial_starts_at if demo["state"] == "active" else user.created_at)
-        effective_expires_at = latest_sub.expires_at if latest_sub else (trial_expires_at if demo["state"] == "active" else None)
+        effective_starts_at = getattr(user, "access_starts_at", None) or (latest_sub.starts_at if latest_sub else (trial_starts_at if demo["state"] == "active" else user.created_at))
+        effective_expires_at = getattr(user, "access_ends_at", None) or (latest_sub.expires_at if latest_sub else (trial_expires_at if demo["state"] == "active" else None))
 
         return {
             "plan": {
@@ -878,6 +878,9 @@ def my_current_plan_view(db: Session, user: User) -> dict:
         elif subscription.institute_name_snapshot:
             institute_name = subscription.institute_name_snapshot
 
+    starts_at = getattr(user, "access_starts_at", None) or subscription.starts_at
+    expires_at = getattr(user, "access_ends_at", None) or subscription.expires_at
+
     return {
         "plan": {
             "id": 0 if user.institute_id is not None else plan.id,
@@ -891,8 +894,8 @@ def my_current_plan_view(db: Session, user: User) -> dict:
             "modules": modules_list,
         },
         "state": state,
-        "starts_at": subscription.starts_at,
-        "expires_at": subscription.expires_at,
+        "starts_at": starts_at,
+        "expires_at": expires_at,
         "grace_days": subscription.grace_days,
         "access_type": "institute" if user.institute_id is not None else "direct",
         "institute_name": institute_name,

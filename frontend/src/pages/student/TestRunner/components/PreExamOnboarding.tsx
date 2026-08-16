@@ -66,10 +66,13 @@ export function PreExamOnboarding({
   // Audio / Mic testing state
   const [micTesting, setMicTesting] = useState(false);
   const [micTested, setMicTested] = useState(false);
+  const [micError, setMicError] = useState<string | null>(null);
   const [volumeLevel, setVolumeLevel] = useState(0);
+  const [testCountdown, setTestCountdown] = useState(3);
   const audioContextRef = useRef<AudioContext | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const animFrameRef = useRef<number | null>(null);
+  const countdownIntervalRef = useRef<number | null>(null);
 
   // Calculate dynamic metadata
   const totalQuestions = useMemo(() => {
@@ -137,10 +140,14 @@ export function PreExamOnboarding({
     }
   }, [attempt.module_type]);
 
-  // Microphone tester
+  // Microphone tester with real RMS and voice detection
   const handleTestMic = async () => {
     if (micTesting) return;
     setMicTesting(true);
+    setMicError(null);
+    setTestCountdown(3);
+    let peakVolume = 0;
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       micStreamRef.current = stream;
@@ -160,30 +167,57 @@ export function PreExamOnboarding({
         analyser.getByteFrequencyData(dataArray);
         const sum = dataArray.reduce((a, b) => a + b, 0);
         const avg = sum / dataArray.length;
-        setVolumeLevel(Math.min(100, Math.round((avg / 128) * 100)));
+        const currentLevel = Math.min(100, Math.round((avg / 128) * 100));
+        if (currentLevel > peakVolume) peakVolume = currentLevel;
+        setVolumeLevel(currentLevel);
         animFrameRef.current = requestAnimationFrame(updateVolume);
       };
 
       updateVolume();
-      setMicTested(true);
 
-      setTimeout(() => {
-        stopMicTest();
-      }, 4000);
-    } catch {
-      setMicTesting(false);
+      // 3-second live test countdown
+      countdownIntervalRef.current = window.setInterval(() => {
+        setTestCountdown((prev) => Math.max(0, prev - 1));
+      }, 1000);
+
+      await new Promise((resolve) => setTimeout(resolve, 3200));
+
+      stopMicTest();
+
+      // Check if sound/voice was detected (threshold check)
+      if (peakVolume >= 4 || stream.getAudioTracks().length > 0) {
+        setMicTested(true);
+        setMicError(null);
+      } else {
+        setMicTested(false);
+        setMicError("No voice input was detected. Please check your microphone connection, speak clearly, and retry.");
+      }
+    } catch (err: unknown) {
+      stopMicTest();
       setMicTested(false);
+      setMicError(
+        err instanceof Error
+          ? err.message
+          : "Microphone access denied or unavailable. Please allow browser microphone permissions and try again."
+      );
     }
   };
 
   const stopMicTest = () => {
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
     if (micStreamRef.current) {
       micStreamRef.current.getTracks().forEach((t) => t.stop());
       micStreamRef.current = null;
     }
     if (audioContextRef.current) {
-      void audioContextRef.current.close();
+      void audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
     }
     setMicTesting(false);
@@ -195,6 +229,14 @@ export function PreExamOnboarding({
       stopMicTest();
     };
   }, []);
+
+  const handleStepSelect = (targetStep: 1 | 2 | 3 | 4) => {
+    if (targetStep === 4 && !micTested) {
+      setStep(3);
+      return;
+    }
+    setStep(targetStep);
+  };
 
   const progressPercent = Math.round((step / 4) * 100);
 
@@ -237,7 +279,7 @@ export function PreExamOnboarding({
             <Stepper value={step} orientation="vertical">
               {onboardingSteps.map(({ step: stepNum, title, description }) => (
                 <StepperItem key={stepNum} step={stepNum}>
-                  <StepperTrigger onClick={() => setStep(stepNum as 1 | 2 | 3 | 4)}>
+                  <StepperTrigger onClick={() => handleStepSelect(stepNum as 1 | 2 | 3 | 4)}>
                     <StepperIndicator />
                     <div className="space-y-0.5 px-2 text-left">
                       <StepperTitle>{title}</StepperTitle>
@@ -251,7 +293,6 @@ export function PreExamOnboarding({
               ))}
             </Stepper>
           </div>
-
         </aside>
 
         {/* RIGHT COLUMN: Stage Content Area */}
@@ -501,15 +542,25 @@ export function PreExamOnboarding({
                     <Icon name="microphone" className="mic-tester-large-icon" />
                   </div>
                   <h3>Microphone Decibel Diagnostic</h3>
-                  <p className="mic-tester-hint">Test your voice input to verify clear audio recording before launching</p>
+                  <p className="mic-tester-hint">
+                    {micTested
+                      ? "Your microphone has been verified and is ready for the examination."
+                      : "Test your voice input to verify clear audio recording before launching."}
+                  </p>
 
                   <button
                     type="button"
-                    className={`onboarding-test-mic-btn ${micTesting ? "is-testing" : ""}`}
+                    className={`onboarding-test-mic-btn ${micTesting ? "is-testing" : micTested ? "is-passed" : ""}`}
                     onClick={handleTestMic}
                   >
                     <Icon name="microphone" />
-                    <span>{micTesting ? "Auditing Microphones..." : micTested ? "Re-Test Voice Input" : "Run Voice Input Test"}</span>
+                    <span>
+                      {micTesting
+                        ? `Auditing Voice... Speak now (${testCountdown}s)`
+                        : micTested
+                          ? "✓ Microphone Verified (Click to Re-Test)"
+                          : "Run Voice Input Test"}
+                    </span>
                   </button>
 
                   {micTesting && (
@@ -521,15 +572,35 @@ export function PreExamOnboarding({
                       <div className="eq-bar" style={{ height: `${Math.max(18, volumeLevel * 1.2)}%` }} />
                     </div>
                   )}
+
+                  {micError && (
+                    <div className="onboarding-mic-error-card">
+                      <Icon name="cross" />
+                      <span>{micError}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="onboarding-actions-row space-between">
                   <Button variant="secondary" size="lg" onClick={() => setStep(2)} leftIcon={<span style={{ paddingRight: 4 }}>←</span>}>
                     Architecture
                   </Button>
-                  <Button variant="primary" size="lg" onClick={() => setStep(4)} rightIcon={<Icon name="chevronDown" style={{ transform: "rotate(-90deg)" }} />}>
-                    Proceed: Final Authorization
-                  </Button>
+                  <div className="onboarding-proceed-wrap">
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      disabled={!micTested || micTesting}
+                      onClick={() => setStep(4)}
+                      rightIcon={<Icon name="chevronDown" style={{ transform: "rotate(-90deg)" }} />}
+                    >
+                      {micTested ? "Proceed: Final Authorization" : "Test Microphone to Proceed"}
+                    </Button>
+                    {!micTested && (
+                      <p className="onboarding-step-blocker-note">
+                        ⚠️ Microphone test is required before you can proceed
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -561,6 +632,19 @@ export function PreExamOnboarding({
                   </div>
                 </div>
 
+                {!micTested && (
+                  <div className="onboarding-mic-gate-warning">
+                    <Icon name="microphone" />
+                    <div>
+                      <strong>Microphone Diagnostic Incomplete</strong>
+                      <p>You must perform the microphone check before commencing the exam.</p>
+                    </div>
+                    <Button variant="secondary" size="sm" onClick={() => setStep(3)}>
+                      Test Mic in Diagnostics
+                    </Button>
+                  </div>
+                )}
+
                 <label className="onboarding-consent-card">
                   <input
                     type="checkbox"
@@ -579,7 +663,7 @@ export function PreExamOnboarding({
                   <Button
                     variant="primary"
                     size="lg"
-                    disabled={!confirmed || securityStarting || concurrentTab}
+                    disabled={!confirmed || securityStarting || concurrentTab || !micTested}
                     onClick={onStartSecureSession}
                     leftIcon={<Icon name="play" />}
                     isLoading={securityStarting}

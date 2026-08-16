@@ -3772,73 +3772,67 @@
   min-height: 100dvh;
 }
 
-/* Student Validity & Plan Access Card */
-.sd-validity-card {
-  margin-bottom: 36px;
+/* ==========================================================================
+   Student Validity Hero Card (Sleek Right-Aligned Dial Theme)
+   ========================================================================== */
+
+.sd-validity-hero-card {
+  margin-bottom: 32px;
   background: var(--surface, #ffffff);
   border: 1px solid var(--border, #e2e8f0);
   border-radius: 20px;
   padding: 24px 28px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04);
   position: relative;
   overflow: hidden;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: all 0.25s ease;
 }
 
-.sd-validity-card::before {
-  content: "";
+.sd-validity-ambient-aura {
   position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 5px;
-  background: var(--primary, #b91c2b);
+  top: -60px;
+  right: -60px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(185, 28, 43, 0.06) 0%, rgba(225, 29, 72, 0.02) 50%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
-.sd-validity-card.tone-green::before {
-  background: #10b981;
-}
-
-.sd-validity-card.tone-blue::before {
-  background: #3b82f6;
-}
-
-.sd-validity-card.tone-purple::before {
-  background: #8b5cf6;
-}
-
-.sd-validity-card.tone-amber::before {
-  background: #f59e0b;
-}
-
-.sd-validity-card.tone-red::before {
-  background: #ef4444;
-}
-
-.sd-validity-main {
+.sd-validity-hero-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 32px;
-  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
-.sd-validity-identity {
-  flex: 1 1 420px;
+/* 1. Left Side: Info Panel */
+.sd-validity-info-panel {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.sd-validity-badges {
+.sd-validity-header-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 2px;
 }
 
-.sd-validity-badge {
+.sd-validity-badges-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sd-hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -3850,32 +3844,32 @@
   letter-spacing: 0.04em;
 }
 
-.sd-validity-badge.badge-green {
+.sd-hero-badge.badge-green {
   background: rgba(16, 185, 129, 0.1);
   color: #059669;
 }
 
-.sd-validity-badge.badge-blue {
+.sd-hero-badge.badge-blue {
   background: rgba(59, 130, 246, 0.1);
   color: #2563eb;
 }
 
-.sd-validity-badge.badge-purple {
+.sd-hero-badge.badge-purple {
   background: rgba(139, 92, 246, 0.1);
   color: #7c3aed;
 }
 
-.sd-validity-badge.badge-amber {
+.sd-hero-badge.badge-amber {
   background: rgba(245, 158, 11, 0.1);
   color: #d97706;
 }
 
-.sd-validity-badge.badge-red {
+.sd-hero-badge.badge-red {
   background: rgba(239, 68, 68, 0.1);
   color: #dc2626;
 }
 
-.sd-status-pill {
+.sd-hero-status-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -3885,19 +3879,19 @@
   font-weight: 600;
 }
 
-.sd-status-pill.pill-ok {
+.sd-hero-status-pill.pill-ok {
   background: rgba(16, 185, 129, 0.08);
   color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
-.sd-status-pill.pill-urgent {
+.sd-hero-status-pill.pill-urgent {
   background: rgba(245, 158, 11, 0.1);
   color: #d97706;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
-.sd-status-dot {
+.sd-status-dot-pulse {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -3906,155 +3900,242 @@
   box-shadow: 0 0 6px currentColor;
 }
 
-.sd-validity-title {
+.sd-plan-tier-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  background: var(--surface-muted, #f1f5f9);
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+
+.sd-hero-plan-title {
   margin: 0;
   font-size: 22px;
   font-weight: 800;
   color: var(--text, #0f172a);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
-.sd-validity-desc {
+.sd-hero-plan-desc {
   margin: 0;
   font-size: 13.5px;
   color: var(--text-muted, #64748b);
   line-height: 1.45;
 }
 
-.sd-validity-quotas {
+/* Quotas */
+.sd-hero-quotas-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
-  margin-top: 6px;
+  margin-top: 2px;
 }
 
-.sd-quota-chip {
+.sd-hero-quota-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: var(--surface-muted, #f8fafc);
-  border: 1px solid var(--border, #e2e8f0);
+  background: rgba(185, 28, 43, 0.06);
+  border: 1px solid rgba(185, 28, 43, 0.15);
   border-radius: 8px;
   font-size: 12px;
-  color: var(--text-muted, #475569);
+  color: var(--primary, #b91c2b);
 }
 
-.sd-quota-chip strong {
+.sd-hero-quota-chip.muted {
+  background: var(--surface-muted, #f8fafc);
+  border-color: var(--border, #e2e8f0);
+  color: var(--text-muted, #64748b);
+}
+
+.sd-hero-quota-chip strong {
   color: var(--text, #0f172a);
 }
 
-.sd-validity-dates-box {
+/* Actions Bar */
+.sd-hero-actions-bar {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
+  margin-top: 4px;
   flex-wrap: wrap;
 }
 
-.sd-date-metrics-grid {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 12px 18px;
-  background: var(--surface-muted, rgba(0, 0, 0, 0.02));
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 14px;
-}
-
-.sd-date-metric {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.sd-date-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-muted, #64748b);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.sd-date-value {
-  font-size: 14.5px;
-  font-weight: 700;
-  color: var(--text, #0f172a);
-}
-
-.sd-date-value.text-danger {
-  color: #ef4444;
-}
-
-.sd-date-value.text-warning {
-  color: #d97706;
-}
-
-.sd-validity-actions {
-  display: flex;
-  align-items: center;
-}
-
-.sd-validity-cta-btn {
+.sd-hero-action-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 9px 20px;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
-  transition: all 0.18s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
-.sd-validity-cta-btn.btn-primary {
+.sd-hero-action-btn.btn-primary {
   background: var(--primary, #b91c2b);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(185, 28, 43, 0.25);
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(185, 28, 43, 0.28);
 }
 
-.sd-validity-cta-btn.btn-primary:hover {
+.sd-hero-action-btn.btn-primary * {
+  color: #ffffff !important;
+}
+
+.sd-hero-action-btn.btn-primary:hover {
   filter: brightness(1.08);
   transform: translateY(-1px);
 }
 
-.sd-validity-cta-btn.btn-secondary {
+.sd-hero-action-btn.btn-secondary {
   background: var(--surface-muted, #f1f5f9);
   color: var(--text, #0f172a);
   border: 1px solid var(--border, #cbd5e1);
 }
 
-.sd-validity-cta-btn.btn-secondary:hover {
+.sd-hero-action-btn.btn-secondary:hover {
   background: var(--surface, #ffffff);
   border-color: var(--primary, #b91c2b);
   color: var(--primary, #b91c2b);
   transform: translateY(-1px);
 }
 
-.sd-validity-cta-btn.btn-outline {
-  background: transparent;
+.sd-hero-sub-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--primary, #b91c2b);
-  border: 1.5px solid var(--primary, #b91c2b);
+  text-decoration: none;
+  transition: all 0.18s ease;
 }
 
-.sd-validity-cta-btn.btn-outline:hover {
-  background: var(--primary, #b91c2b);
-  color: #ffffff;
-  transform: translateY(-1px);
+.sd-hero-sub-action-link:hover {
+  text-decoration: underline;
+  transform: translateX(2px);
 }
 
-[data-theme="dark"] .sd-validity-card {
+/* 2. Right Side: Sleek Simple Circular Dial Gauge */
+.sd-sleek-dial-container {
+  flex: 0 0 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sd-sleek-dial-wrapper {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sd-sleek-dial-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.sd-sleek-gauge-arc {
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sd-sleek-center-circle {
+  fill: var(--surface, #ffffff);
+}
+
+.sd-sleek-center-text-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 110px;
+  pointer-events: none;
+}
+
+.sd-sleek-eyebrow {
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #64748b);
+  margin-bottom: 2px;
+}
+
+.sd-sleek-metric-val {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--text, #0f172a);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+
+.sd-sleek-metric-val.text-danger {
+  color: #ef4444;
+}
+
+.sd-sleek-metric-val.text-warning {
+  color: #d97706;
+}
+
+.sd-sleek-expires-note {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+}
+
+/* Dark Theme Adaptations */
+[data-theme="dark"] .sd-validity-hero-card {
   background: rgba(30, 41, 59, 0.7);
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-[data-theme="dark"] .sd-date-metrics-grid {
-  background: rgba(15, 23, 42, 0.5);
-  border-color: rgba(255, 255, 255, 0.08);
+[data-theme="dark"] .sd-plan-tier-label {
+  background: rgba(15, 23, 42, 0.6);
+  color: #cbd5e1;
+}
+
+@media (max-width: 860px) {
+  .sd-validity-hero-inner {
+    flex-direction: column-reverse;
+    text-align: center;
+  }
+  .sd-validity-header-row,
+  .sd-validity-badges-wrap,
+  .sd-hero-quotas-row,
+  .sd-hero-actions-bar {
+    justify-content: center;
+  }
+}
+
+[data-theme="dark"] .sd-plan-tier-label {
+  background: rgba(15, 23, 42, 0.6);
+  color: #cbd5e1;
+}
+
+@media (max-width: 960px) {
+  .sd-validity-hero-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+  .sd-validity-header-row,
+  .sd-validity-badges-wrap,
+  .sd-hero-quotas-row,
+  .sd-hero-actions-bar {
+    justify-content: center;
+  }
 }
 
 .sd-dashboard .page-header {

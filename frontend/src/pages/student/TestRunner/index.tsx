@@ -501,9 +501,18 @@ export function TestRunner() {
   async function startSecureSession() {
     if (securityStarting) return;
     if (!attempt?.is_final) {
-      sessionStorage.setItem(`onboarding_completed_${id}`, "true");
-      setOnboardingCompleted(true);
-      setSecurityAuthorized(true);
+      try {
+        setSecurityStarting(true);
+        const { data } = await apiClient.post<Attempt>(`/student/attempts/${id}/commence`);
+        setAttempt(data);
+        sessionStorage.setItem(`onboarding_completed_${id}`, "true");
+        setOnboardingCompleted(true);
+        setSecurityAuthorized(true);
+      } catch (err: unknown) {
+        showError(extractErrorMessage(err, "Failed to start assessment session"));
+      } finally {
+        setSecurityStarting(false);
+      }
       return;
     }
     if (!rulesAccepted) {
@@ -515,10 +524,17 @@ export function TestRunner() {
     setConcurrentTab(false);
 
     if (!attempt.security_required) {
-      sessionStorage.setItem(`onboarding_completed_${id}`, "true");
-      setOnboardingCompleted(true);
-      setSecurityAuthorized(true);
-      setSecurityStarting(false);
+      try {
+        const { data } = await apiClient.post<Attempt>(`/student/attempts/${id}/commence`);
+        setAttempt(data);
+        sessionStorage.setItem(`onboarding_completed_${id}`, "true");
+        setOnboardingCompleted(true);
+        setSecurityAuthorized(true);
+      } catch (err: unknown) {
+        showError(extractErrorMessage(err, "Failed to start assessment session"));
+      } finally {
+        setSecurityStarting(false);
+      }
       return;
     }
 
@@ -1099,7 +1115,16 @@ export function TestRunner() {
           concurrentTab={concurrentTab}
           mediaState={mediaState}
           onStartSecureSession={startSecureSession}
-          onCancel={() => navigate(-1)}
+          onCancel={async () => {
+            if (attempt.status === "ready") {
+              try {
+                await apiClient.post(`/student/attempts/${id}/cancel-onboarding`);
+              } catch {
+                // Ignore network errors on cancel
+              }
+            }
+            navigate("/student/courses");
+          }}
         />
         {violationModal}
       </>

@@ -498,6 +498,26 @@ def start_attempt(
     return attempt_service.start_attempt(db, user, module)
 
 
+@router.post("/attempts/{attempt_id}/commence")
+def commence_attempt(
+    attempt_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    return attempt_service.commence_attempt(db, user, attempt)
+
+
+@router.post("/attempts/{attempt_id}/cancel-onboarding")
+def cancel_onboarding(
+    attempt_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    return attempt_service.cancel_onboarding_attempt(db, user, attempt_id)
+
+
+
 @router.post("/attempts/{attempt_id}/security/preflight")
 def final_test_preflight(
     attempt_id: int,

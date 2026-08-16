@@ -30,14 +30,11 @@ function getCategoryInfo(category: string) {
   return (
     CATEGORY_STYLES[normalized] || {
       label: strings.categories[category as keyof typeof strings.categories] ?? category,
-      color: "#64748b",
+      color: "#b91c2b",
     }
   );
 }
 
-/** Exam & immigration news: which destinations accept Language CERT/PTE/TOEFL, the
- * score bars they ask for, and exam-format changes. A sidebar lists every
- * update newest-first; each card links out to the official source. */
 export function ExamNews() {
   const [items, setItems] = useState<ExamNewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,74 +95,92 @@ export function ExamNews() {
             <div className="exam-news-grid">
               {visible.map((item) => {
                 const catInfo = getCategoryInfo(item.category);
+                const sourceInitial = item.source_name ? item.source_name.charAt(0).toUpperCase() : "N";
 
                 return (
-                  <article className="exam-news-card" id={`news-${item.id}`} key={item.id}>
-                    {/* Header Row */}
-                    <div className="exam-news-card-head">
-                      <div className="exam-news-country-group">
-                        <span className="exam-news-flag" aria-hidden="true">
+                  <article className="exam-news-clean-card" id={`news-${item.id}`} key={item.id}>
+                    {/* Top Row: Country Badge & Category Pill */}
+                    <div className="exam-news-clean-head">
+                      <div className="exam-news-clean-country">
+                        <span className="exam-news-clean-flag" aria-hidden="true">
                           {item.flag}
                         </span>
-                        <strong className="exam-news-country">{item.country}</strong>
+                        <span>{item.country}</span>
                       </div>
 
-                      <div className="exam-news-category-tag">
+                      <span
+                        className="exam-news-clean-cat-badge"
+                        style={{
+                          backgroundColor: `${catInfo.color}14`,
+                          color: catInfo.color,
+                        }}
+                      >
                         <span
-                          className="exam-news-cat-dot"
+                          className="exam-news-clean-cat-dot"
                           style={{ backgroundColor: catInfo.color }}
                         />
-                        <span className="exam-news-cat-label" style={{ color: catInfo.color }}>
-                          {catInfo.label}
-                        </span>
-                      </div>
+                        <span>{catInfo.label}</span>
+                      </span>
                     </div>
 
-                    {/* Date */}
-                    <div className="exam-news-date-row">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    {/* Date Row */}
+                    <div className="exam-news-clean-date">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10" />
                         <polyline points="12 6 12 12 16 14" />
                       </svg>
                       <time dateTime={item.published_at}>{formatDate(item.published_at)}</time>
                     </div>
 
-                    {/* Title & Summary */}
-                    <h3 className="exam-news-card-title">{item.title}</h3>
-                    <p className="exam-news-card-summary">{item.summary}</p>
+                    {/* Title */}
+                    <h3 className="exam-news-clean-title">
+                      <a
+                        href={item.source_url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="exam-news-clean-title-link"
+                      >
+                        {item.title}
+                      </a>
+                    </h3>
 
-                    {/* Test tags */}
+                    {/* Summary */}
+                    <p className="exam-news-clean-summary">{item.summary}</p>
+
+                    {/* Test Tags */}
                     {item.tests && item.tests.length > 0 && (
-                      <div className="exam-news-tests">
+                      <div className="exam-news-clean-tests">
                         {item.tests.map((test) => (
-                          <span className="exam-news-test-chip" key={test}>
+                          <span className="exam-news-clean-test-chip" key={test}>
                             {test}
                           </span>
                         ))}
                       </div>
                     )}
 
-                    {/* Source Link */}
-                    <div className="exam-news-card-footer">
+                    {/* Footer Row (Source Profile & Read More Action Button) */}
+                    <div className="exam-news-clean-footer">
+                      <div className="exam-news-clean-source">
+                        <div
+                          className="exam-news-clean-source-avatar"
+                          style={{ backgroundColor: `${catInfo.color}18`, color: catInfo.color }}
+                        >
+                          {sourceInitial}
+                        </div>
+                        <div className="exam-news-clean-source-meta">
+                          <span className="exam-news-clean-source-name">{item.source_name}</span>
+                          <span className="exam-news-clean-source-label">Official Source</span>
+                        </div>
+                      </div>
+
                       <a
-                        className="exam-news-source-link"
+                        className="exam-news-clean-read-btn"
                         href={item.source_url}
                         rel="noreferrer noopener"
                         target="_blank"
                       >
-                        <div className="exam-news-source-info">
-                          <span className="exam-news-source-label">Official Source</span>
-                          <span className="exam-news-source-name">{item.source_name}</span>
-                        </div>
-                        <svg
-                          className="exam-news-source-arrow"
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.2"
-                        >
+                        <span>Read more</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <path d="M7 17L17 7M17 7H7M17 7V17" />
                         </svg>
                       </a>
@@ -176,7 +191,7 @@ export function ExamNews() {
             </div>
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar: Live Timeline Updates */}
           <aside className="exam-news-sidebar">
             <div className="exam-news-sidebar-head">
               <div className="exam-news-sidebar-title-group">

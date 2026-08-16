@@ -1007,6 +1007,86 @@
   transition: height 0.15s ease;
 }
 
+.onboarding-test-mic-btn.is-passed {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+
+.onboarding-mic-error-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+[data-theme="dark"] .onboarding-mic-error-card {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+
+.onboarding-proceed-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.onboarding-step-blocker-note {
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 0;
+}
+
+[data-theme="dark"] .onboarding-step-blocker-note {
+  color: #fca5a5;
+}
+
+.onboarding-mic-gate-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 14px;
+  color: #92400e;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+[data-theme="dark"] .onboarding-mic-gate-warning {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: #fde68a;
+}
+
+.onboarding-mic-gate-warning strong {
+  display: block;
+  font-size: 14px;
+  color: #78350f;
+  margin-bottom: 2px;
+}
+
+[data-theme="dark"] .onboarding-mic-gate-warning strong {
+  color: #fef3c7;
+}
+
+.onboarding-mic-gate-warning p {
+  margin: 0;
+  font-size: 12.5px;
+}
+
 /* ==========================================================================
    STEP 4: LAUNCH AUTHORIZATION
    ========================================================================== */
