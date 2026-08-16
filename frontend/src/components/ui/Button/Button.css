@@ -49,9 +49,7 @@
 
 /* Variants */
 .ui-btn-primary,
-.ui-btn-primary .ui-btn-label,
-a.ui-btn-primary,
-a.ui-btn-primary .ui-btn-label {
+a.ui-btn-primary {
   background: var(--primary);
   color: #ffffff !important;
   border: 1px solid var(--primary);
@@ -63,9 +61,7 @@ a.ui-btn-primary .ui-btn-label {
 }
 
 .ui-btn-primary:hover:not(:disabled),
-.ui-btn-primary:hover:not(:disabled) .ui-btn-label,
-a.ui-btn-primary:hover,
-a.ui-btn-primary:hover .ui-btn-label {
+a.ui-btn-primary:hover {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
   color: #ffffff !important;

@@ -3431,6 +3431,9 @@ body {
 .access-window-fieldset .badge,
 .access-window-modal .badge {
   text-transform: none;
+  background: color-mix(in srgb, var(--primary) 10%, transparent) !important;
+  color: var(--primary) !important;
+  border-color: color-mix(in srgb, var(--primary) 28%, transparent) !important;
 }
 
 /* The quick-pick chips sit inside a form, where the app's own button styling

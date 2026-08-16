@@ -68,10 +68,10 @@ export function AccessWindowModal({
       className="access-window-modal"
       actions={
         <>
-          <button type="submit" form="access-window-form" disabled={!canSubmit}>
+          <button type="submit" form="access-window-form" className="btn-primary" disabled={!canSubmit}>
             {busy ? t.saving : t.confirm(mode)}
           </button>
-          <button type="button" onClick={onClose} disabled={busy}>
+          <button type="button" className="btn-secondary" onClick={onClose} disabled={busy}>
             {t.cancel}
           </button>
         </>
