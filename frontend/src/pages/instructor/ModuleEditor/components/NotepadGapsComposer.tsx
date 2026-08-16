@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import type { ExamModulePart } from "@/api/types";
-import { Button, RequiredMark, RichTextEditor } from "@/components/ui";
+import { Button, RequiredMark, RichTextEditor, RichTextContent } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
@@ -99,6 +99,28 @@ export function NotepadGapsComposer({ part, isEditable, busy, onSubmit, onDelete
   if (blanks.some((blank, index) => blank !== index + 1)) problems.push(t.errors.blankSequence);
   if (answered.length !== blanks.length) problems.push(t.errors.missingAnswers(blanks.length - answered.length));
   overLong.forEach((blank) => problems.push(t.errors.answerTooLong(blank, maxWords)));
+
+  const previewText = useMemo(() => {
+    let result = notepad;
+    BLANK_MARKER.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    const foundBlanks = new Set<number>();
+    
+    while ((match = BLANK_MARKER.exec(notepad)) !== null) {
+      foundBlanks.add(Number(match[1]));
+    }
+    
+    foundBlanks.forEach((blankNum) => {
+      const raw = answers[blankNum] ?? "";
+      const firstAlt = raw.split("|")[0]?.trim();
+      const replacement = firstAlt 
+        ? `__**[${firstAlt}]**__`
+        : `__**[Gap ${blankNum}]**__`;
+      result = result.split(`{{blank:${blankNum}}}`).join(replacement);
+    });
+    
+    return result;
+  }, [notepad, answers]);
 
   const ready = problems.length === 0;
 
@@ -270,6 +292,27 @@ export function NotepadGapsComposer({ part, isEditable, busy, onSubmit, onDelete
         <ul className="gap-task-problems">
           {problems.map((problem) => <li key={problem}>{problem}</li>)}
         </ul>
+      )}
+
+      {notepad.trim() && (
+        <div 
+          className="notepad-gaps-live-preview"
+          style={{
+            marginTop: "24px",
+            padding: "20px",
+            background: "var(--surface-color-variant, rgba(255,255,255,0.03))",
+            border: "1px solid var(--border)",
+            borderRadius: "12px",
+            boxShadow: "inset 0 2px 4px rgba(0,0,0,0.05)"
+          }}
+        >
+          <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700, color: "var(--text)" }}>
+            Live Preview (Filled)
+          </h3>
+          <div style={{ fontSize: "14.5px", lineHeight: "1.6", color: "var(--text)" }}>
+            <RichTextContent text={previewText} />
+          </div>
+        </div>
       )}
     </section>
   );
