@@ -612,6 +612,7 @@ def record_flag(
 @router.post("/attempts/{attempt_id}/submit")
 def submit_attempt(
     attempt_id: int,
+    auto: bool = False,
     db: Session = Depends(get_db),
     user: User = Depends(require_student),
     session: UserSession = Depends(get_current_session),
@@ -619,7 +620,7 @@ def submit_attempt(
 ):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
     attempt_service.require_security_access(attempt, session, x_attempt_token)
-    return attempt_service.submit_attempt(db, attempt)
+    return attempt_service.submit_attempt(db, attempt, require_complete_speaking=not auto)
 
 
 @router.get("/achievements")

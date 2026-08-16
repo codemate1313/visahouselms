@@ -220,7 +220,7 @@ export function TestRunner() {
     recordingQuestionIdRef.current = recordingQuestionId;
   }, [recordingQuestionId]);
 
-  const submit = useCallback(async () => {
+  const submit = useCallback(async (isAuto: any = false) => {
     if (submittedRef.current) return;
     submittedRef.current = true;
     setSubmitting(true);
@@ -238,7 +238,7 @@ export function TestRunner() {
     }
 
     try {
-      await apiClient.post(`/student/attempts/${id}/submit`, undefined, { headers: securityHeaders() });
+      await apiClient.post(`/student/attempts/${id}/submit${isAuto === true ? "?auto=true" : ""}`, undefined, { headers: securityHeaders() });
       stopSecurityMedia();
       sessionStorage.removeItem(securityStorageKey(id, "token"));
       navigate(`/student/attempts/${id}/result`, { replace: true });
@@ -287,7 +287,7 @@ export function TestRunner() {
       if (!attempt) return;
       const remaining = (parseServerTimestamp(attempt.expires_at) - Date.now()) / 1000;
       setSecondsLeft(remaining);
-      if (remaining <= 0) submit();
+      if (remaining <= 0) submit(true);
     }
     tick();
     const interval = setInterval(tick, 1000);

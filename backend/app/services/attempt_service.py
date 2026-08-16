@@ -1062,16 +1062,18 @@ def submit_attempt(
         return get_student_view(db, attempt)
 
     if require_complete_speaking:
-        missing_recordings = _missing_speaking_recordings(attempt)
-        if missing_recordings:
-            count = len(missing_recordings)
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=(
-                    f"{count} Speaking recording{'s are' if count != 1 else ' is'} missing. "
-                    "Complete every Speaking response before submitting the test."
-                ),
-            )
+        is_expired = attempt.expires_at is not None and attempt.expires_at - timedelta(seconds=15) <= _now()
+        if not is_expired:
+            missing_recordings = _missing_speaking_recordings(attempt)
+            if missing_recordings:
+                count = len(missing_recordings)
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"{count} Speaking recording{'s are' if count != 1 else ' is'} missing. "
+                        "Complete every Speaking response before submitting the test."
+                    ),
+                )
 
     attempt.status = ATTEMPT_SUBMITTED
     attempt.submitted_at = _now()
