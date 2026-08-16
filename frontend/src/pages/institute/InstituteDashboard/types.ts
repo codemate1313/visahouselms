@@ -8,6 +8,15 @@ export interface MemberSummary {
   created_at: string;
 }
 
+export interface AssignedCourseSummary {
+  id: number;
+  title: string;
+  slug: string;
+  summary: string | null;
+  level: string;
+  estimated_duration_minutes: number | null;
+}
+
 export interface DashboardSummary {
   institute: { name: string; contact_email: string | null };
   counts: { students: number; instructors: number; active_members: number };
@@ -20,6 +29,7 @@ export interface DashboardSummary {
   access: AccessWindow;
   permissions: Record<string, boolean>;
   recent_members: MemberSummary[];
+  assigned_courses: AssignedCourseSummary[];
 }
 
 /** Countdown to the moment the institute (and every account under it) loses

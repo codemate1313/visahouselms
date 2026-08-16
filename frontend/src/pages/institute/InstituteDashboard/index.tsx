@@ -8,6 +8,7 @@ import { DashboardStats } from "./components/DashboardStats";
 import { SubscriptionUsagePanel } from "./components/SubscriptionUsagePanel";
 import { RecentMembersPanel } from "./components/RecentMembersPanel";
 import { AccessCountdownCard } from "./components/AccessCountdownCard";
+import { AssignedCoursesPanel } from "./components/AssignedCoursesPanel";
 
 export function InstituteDashboard() {
   const user = useAuthStore((state) => state.user);
@@ -56,6 +57,8 @@ export function InstituteDashboard() {
         {canSeeBilling && subscriptionSummary && <SubscriptionUsagePanel subscriptionSummary={subscriptionSummary} />}
 
         {(canSeeStudents || canSeeStaff) && <RecentMembersPanel members={summary.recent_members} />}
+
+        <AssignedCoursesPanel courses={summary.assigned_courses} />
 
         {!canSeeStudents && !canSeeStaff && !canSeeBilling && (
           <section className="workspace-panel">

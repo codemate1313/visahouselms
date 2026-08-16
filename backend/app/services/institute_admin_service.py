@@ -17,6 +17,7 @@ from app.core.security import hash_password
 from app.dependencies.limits import enforce_limit
 from app.models.attempt import AttemptPartGrade, TestAttempt
 from app.models.audit_log import AuditLog
+from app.models.course import Course, InstituteCourse
 from app.models.institute import Institute
 from app.models.role import DEVELOPER, INST_INSTRUCTOR, INSTITUTE_ADMIN, STUDENT, SUPER_ADMIN, Role
 from app.models.user import (
@@ -1283,6 +1284,17 @@ def dashboard_summary(db: Session, actor: User) -> dict:
         if permissions["view_billing"]
         else None
     )
+    assigned_courses = (
+        db.query(Course)
+        .join(InstituteCourse, InstituteCourse.course_id == Course.id)
+        .filter(
+            InstituteCourse.institute_id == institute_id,
+            InstituteCourse.is_active.is_(True),
+            Course.deleted_at.is_(None),
+        )
+        .all()
+    )
+
     return {
         "institute": {
             "id": institute.id,
@@ -1302,4 +1314,15 @@ def dashboard_summary(db: Session, actor: User) -> dict:
         "access": subscription_service.access_window(db, institute_id),
         "permissions": permissions,
         "recent_members": visible_members[:6],
+        "assigned_courses": [
+            {
+                "id": course.id,
+                "title": course.title,
+                "slug": course.slug,
+                "summary": course.summary,
+                "level": course.level,
+                "estimated_duration_minutes": course.estimated_duration_minutes,
+            }
+            for course in assigned_courses
+        ],
     }
