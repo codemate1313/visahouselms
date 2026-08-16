@@ -336,36 +336,36 @@ a.vh-hero-cta-alt:hover {
     border: none !important;
     color: #ff6b7a;
     margin-bottom: 8px;
-    min-height: 28px;
-    max-height: 28px;
+    min-height: 0;
+    max-height: none !important;
     display: inline-flex;
     align-items: flex-start;
     width: 100%;
     max-width: 100%;
     white-space: normal;
     word-break: break-word;
-    overflow: hidden;
+    overflow: visible !important;
   }
   .vh-public-hero-title {
-    font-size: clamp(20px, 5.6vw, 26px);
-    line-height: 1.2;
-    min-height: 64px;
-    max-height: 64px;
-    margin-bottom: 8px;
+    font-size: clamp(20px, 5.6vw, 25px);
+    line-height: 1.22;
+    min-height: 0;
+    max-height: none !important;
+    margin-bottom: 10px;
     white-space: normal;
     overflow-wrap: break-word;
     font-weight: 700;
-    overflow: hidden;
+    overflow: visible !important;
   }
   .vh-hero-desc {
     font-size: 13px;
     line-height: 1.5;
-    min-height: 60px;
-    max-height: 60px;
+    min-height: 0;
+    max-height: none !important;
     margin-bottom: 16px;
     color: rgba(241, 245, 249, 0.84);
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible !important;
   }
   .vh-hero-actions {
     width: 100%;
@@ -398,8 +398,9 @@ a.vh-hero-cta-alt:hover {
     padding-top: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.14);
     width: 100%;
-    min-height: 48px;
-    max-height: 48px;
+    min-height: auto;
+    max-height: none !important;
+    overflow: visible !important;
   }
   .vh-hero-stat-group {
     flex: none;
@@ -426,14 +427,14 @@ a.vh-hero-cta-alt:hover {
     font-size: 10px;
     line-height: 1.25;
     margin-top: 2px;
-    min-height: 25px;
-    max-height: 25px;
+    min-height: 0;
+    max-height: none !important;
     color: rgba(241, 245, 249, 0.72);
-    overflow: hidden;
+    overflow: visible !important;
   }
   .vh-hero-dots {
     align-self: center;
-    margin-top: 8px;
+    margin-top: 12px;
   }
 }
 
