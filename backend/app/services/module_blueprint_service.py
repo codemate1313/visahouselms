@@ -340,8 +340,12 @@ for _part in SPEAKING_PARTS:
             "answer_constraints": {
                 "allowed_question_types": ["speaking_prompt"],
                 "maximum_questions": _structure.get("maximum_questions"),
-                "preparation_seconds": _preparation_seconds,
-                "response_seconds": _response_seconds,
+                # Timing belongs to the prompt, not the part: a two-minute
+                # presentation and a short follow-up sit in the same part. The
+                # part's duration is the sum of its prompts, never a figure of
+                # its own, so there is nothing to default here.
+                "suggested_preparation_seconds": _preparation_seconds,
+                "suggested_response_seconds": _response_seconds,
                 "notes_allowed": _part["part_code"] == "speaking_4",
                 "interaction_mode": "ai_interlocutor",
                 "required_turn_types": _structure["required_turn_types"],

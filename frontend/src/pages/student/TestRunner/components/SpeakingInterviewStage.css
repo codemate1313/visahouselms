@@ -12,6 +12,8 @@
 }
 
 .speaking-interview-layout {
+  /* The parts rail now comes from the shared PartsNav on the left of the
+     test-runner layout, so this grid only owns the workspace and the examiner. */
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
   min-height: 0;

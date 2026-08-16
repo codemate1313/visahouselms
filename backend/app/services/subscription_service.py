@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
+from app.config import settings
 from app.models.audit_log import AuditLog
 from app.models.exam_module import ExamModule, InstituteModule
 from app.models.institute import Institute
@@ -44,6 +45,18 @@ def _audit(db: Session, actor: User, action: str, entity_id: Optional[int], ip: 
 def _now() -> datetime:
     # DB stores naive UTC datetimes (existing convention across the app)
     return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _dev_unlimited_speaking_attempts(db: Session, module: ExamModule) -> bool:
+    if settings.app_environment != "development" or module.module_type != "speaking":
+        return False
+    try:
+        from app.services import settings_service
+
+        value = settings_service.get_setting(db, "dev.unlimited_speaking_attempts")
+    except Exception:
+        return False
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def get_institute_or_404(db: Session, institute_id: int) -> Institute:
@@ -708,10 +721,11 @@ def my_current_plan_view(db: Session, user: User) -> dict:
         .all()
     )
 
-    def _module_attempt_info(mod_id: int) -> dict:
-        mod_atts = attempts_by_module.get(mod_id, [])
+    def _module_attempt_info(module: ExamModule) -> dict:
+        mod_atts = attempts_by_module.get(module.id, [])
         has_att = len(mod_atts) > 0
-        retake_avail = mod_id in available_retake_module_ids
+        dev_unlimited_speaking = _dev_unlimited_speaking_attempts(db, module)
+        retake_avail = module.id in available_retake_module_ids or dev_unlimited_speaking
         is_exh = has_att and not retake_avail
         latest = mod_atts[0] if mod_atts else None
         return {
@@ -737,7 +751,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 # Free only while the trial allows it.
                 "is_locked": module.id not in demo_ids,
                 "is_demo": module.id in demo_ids,
-                **_module_attempt_info(module.id),
+                **_module_attempt_info(module),
             }
             for module in all_published_modules
         ]
@@ -806,7 +820,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 "duration_minutes": module.duration_minutes,
                 "is_locked": False,
                 "is_demo": False,
-                **_module_attempt_info(module.id),
+                **_module_attempt_info(module),
             })
     else:
         for module in all_published_modules:
@@ -819,7 +833,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 # affordance disappears once a plan is active.
                 "is_locked": module.id not in unlocked_ids,
                 "is_demo": False,
-                **_module_attempt_info(module.id),
+                **_module_attempt_info(module),
             })
         modules_list.sort(key=lambda m: (m["is_locked"], m["title"]))
 

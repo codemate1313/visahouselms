@@ -660,9 +660,16 @@ async def get_speaking_avatar_for_attempt_part(
     questions = part_view.get("questions", [])
 
     prompt_text = part_data.get("instructions") or part_data.get("title") or "Listen to the examiner prompt and record your response."
-    selected_question = next(
-        (question for question in questions if question.get("id") == question_id),
-        questions[0] if questions else None,
+    # No question_id is the part introduction, and it must stay the part's own
+    # instructions. Falling back to questions[0] here made the introduction
+    # speak the first prompt instead - and because prompt audio is cached by a
+    # hash of its text, the first question then resolved to the very same file.
+    # The player saw an unchanged URL, never replayed it, and the examiner went
+    # silent for that question and every one after it.
+    selected_question = (
+        next((question for question in questions if question.get("id") == question_id), None)
+        if question_id is not None
+        else None
     )
     if selected_question and selected_question.get("prompt"):
         prompt_text = selected_question["prompt"]

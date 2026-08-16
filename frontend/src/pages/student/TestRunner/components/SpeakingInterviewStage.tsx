@@ -38,7 +38,12 @@ export function SpeakingInterviewStage({
 }: SpeakingInterviewStageProps) {
   const firstOpenQuestion = useMemo(() => {
     const index = currentPart.questions.findIndex((question) => !hasAttemptResponse(question));
-    return index >= 0 ? index : 0;
+    if (index >= 0) return index;
+    // Every prompt in this part is answered, so stay on the last one and let the
+    // part hand over to the next. Returning 0 here sent the interview back to
+    // the first prompt the instant the final answer saved: the examiner re-asked
+    // question one and the part never completed.
+    return Math.max(currentPart.questions.length - 1, 0);
   }, [currentPart.questions]);
   const [questionIndex, setQuestionIndex] = useState(firstOpenQuestion);
   const question = currentPart.questions[questionIndex];
@@ -66,16 +71,22 @@ export function SpeakingInterviewStage({
   const introText = currentPart.instructions?.trim() ?? "";
   const introStorageKey = introText ? `speaking-part-intro-played:${attemptId}:${currentPart.id}:${introText}` : "";
   const shouldShowIntro = Boolean(introText) && currentPart.answered_count === 0;
-  const [introComplete, setIntroComplete] = useState(() => {
-    if (!introStorageKey || !shouldShowIntro) return true;
-    return sessionStorage.getItem(introStorageKey) === "true";
-  });
-  const preparationSeconds = question?.interaction?.preparation_seconds
-    ?? currentPart.answer_constraints.preparation_seconds
-    ?? 5;
-  const responseSeconds = question?.interaction?.response_seconds
-    ?? currentPart.answer_constraints.response_seconds
-    ?? 60;
+  const [introState, setIntroState] = useState(() => ({
+    key: introStorageKey,
+    complete: !introStorageKey || !shouldShowIntro || sessionStorage.getItem(introStorageKey) === "true",
+  }));
+  const introComplete = !shouldShowIntro || (introState.key === introStorageKey && introState.complete);
+  // Each prompt carries its own timing; the part has none to fall back on and
+  // nothing here invents one. Zero preparation means exactly that - recording
+  // starts as the examiner finishes, with no countdown and no button to press.
+  const preparationSeconds = question?.interaction?.preparation_seconds ?? 0;
+  const responseSeconds = question?.interaction?.response_seconds ?? 0;
+  const hasPreparation = preparationSeconds > 0;
+  // With no preparation there is no Start button: the examiner finishing is the
+  // cue. If that cue never arrives - the prompt audio failed, or the browser
+  // refused to play it - the candidate would have no way to begin at all, so a
+  // manual control appears rather than leaving them stranded.
+  const [manualStartOffered, setManualStartOffered] = useState(false);
   const isLastQuestion = questionIndex >= currentPart.questions.length - 1;
 
   useEffect(() => {
@@ -88,10 +99,10 @@ export function SpeakingInterviewStage({
 
   useEffect(() => {
     if (!introStorageKey || !shouldShowIntro) {
-      setIntroComplete(true);
+      setIntroState({ key: introStorageKey, complete: true });
       return;
     }
-    setIntroComplete(sessionStorage.getItem(introStorageKey) === "true");
+    setIntroState({ key: introStorageKey, complete: sessionStorage.getItem(introStorageKey) === "true" });
   }, [introStorageKey, shouldShowIntro]);
 
   useEffect(() => {
@@ -104,6 +115,15 @@ export function SpeakingInterviewStage({
       startingRef.current = false;
     }
   }, [attemptId, question?.id, recorded]);
+
+  useEffect(() => {
+    if (hasPreparation || mode !== "ready") {
+      setManualStartOffered(false);
+      return undefined;
+    }
+    const rescue = window.setTimeout(() => setManualStartOffered(true), 12000);
+    return () => window.clearTimeout(rescue);
+  }, [hasPreparation, mode, question?.id]);
 
   useEffect(() => {
     if (mode !== "preparing" || preparationLeft <= 0) return undefined;
@@ -170,7 +190,7 @@ export function SpeakingInterviewStage({
 
   const finishIntro = () => {
     if (introStorageKey) sessionStorage.setItem(introStorageKey, "true");
-    setIntroComplete(true);
+    setIntroState({ key: introStorageKey, complete: true });
   };
 
   const beginPreparation = () => {
@@ -226,7 +246,6 @@ export function SpeakingInterviewStage({
   return (
     <div className="speaking-interview-stage">
       <div className="speaking-interview-layout">
-
         <section className="speaking-interview-workspace">
           <div className="speaking-interview-progress">
             <span>{t.partProgress(speakingPartNumber, speakingPartCount)}</span>
@@ -301,12 +320,16 @@ export function SpeakingInterviewStage({
                       ? t.saving
                       : mode === "complete"
                         ? t.saved
-                        : t.ready(preparationSeconds)}
+                        : hasPreparation
+                          ? t.ready(preparationSeconds)
+                          : "Recording starts when the examiner finishes"}
               </small>
             </div>
 
             <div className="speaking-interview-actions">
-              {mode === "ready" && <Button leftIcon={<Icon name="play" />} onClick={beginPreparation} size="lg">{t.startResponse}</Button>}
+              {mode === "ready" && (hasPreparation || manualStartOffered) && (
+                <Button leftIcon={<Icon name="play" />} onClick={beginPreparation} size="lg">{t.startResponse}</Button>
+              )}
               {mode === "preparing" && (
                 <Button leftIcon={<Icon name="microphone" />} onClick={beginRecordingFromPreparation} size="lg">
                   {t.startAnsweringNow}
@@ -327,6 +350,7 @@ export function SpeakingInterviewStage({
         <aside className="speaking-interview-examiner">
           <div className="speaking-interview-avatar">
             <SpeakingAvatar
+              key={`${currentPart.id}:${introComplete ? question.id : "intro"}`}
               attemptId={attemptId}
               avatarOnly
               isCandidateRecording={mode === "recording"}

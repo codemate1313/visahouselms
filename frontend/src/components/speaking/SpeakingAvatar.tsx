@@ -3,6 +3,7 @@ import { API_BASE_URL, apiClient } from "../../api/client";
 import { ExaminerAvatarSvg } from "./ExaminerAvatarSvg";
 import { PhotoExaminerAvatar } from "./PhotoExaminerAvatar";
 import { getExaminerPhotoSet } from "./examinerPhotoSets";
+
 import "./SpeakingAvatar.css";
 
 interface Examiner {
@@ -62,6 +63,10 @@ export function SpeakingAvatar({
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [hasPlayedPrompt, setHasPlayedPrompt] = useState<boolean>(false);
   const [currentViseme, setCurrentViseme] = useState<number>(0);
+  // Set if the photographic examiner cannot load its frames. The vector
+  // examiner is then used instead: it animates from the viseme timeline, so a
+  // missing photo costs fidelity rather than leaving a motionless face.
+  const [photoUnavailable, setPhotoUnavailable] = useState<boolean>(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -71,6 +76,7 @@ export function SpeakingAvatar({
   useEffect(() => {
     let isMounted = true;
     async function loadAvatar() {
+      audioRef.current?.pause();
       setLoading(true);
       setIsPlaying(false);
       setCurrentViseme(0);
@@ -146,10 +152,14 @@ export function SpeakingAvatar({
 
   const examiner = avatarData?.examiner || SONIA;
   // Photo avatar when this examiner has a frame set; vector avatar otherwise.
-  const photoSet = getExaminerPhotoSet(examiner?.id);
+  const photoSet = photoUnavailable ? null : getExaminerPhotoSet(examiner?.id);
   const audioFullUrl = avatarData?.audio_url ? `${API_BASE_URL}${avatarData.audio_url}` : "";
+  // Keyed on the question, not on the words. Two prompts can legitimately share
+  // wording - and prompt audio is cached by a hash of its text, so they would
+  // share a URL too. Keying on the text alone meant the second one counted as
+  // already played and was never spoken.
   const promptPlayKey = avatarData
-    ? `speaking-avatar-played:${attemptId}:${partId}:${SONIA.id}:${avatarData.prompt_text}`
+    ? `speaking-avatar-played:${attemptId}:${partId}:${questionId ?? "intro"}:${SONIA.id}`
     : "";
 
   useEffect(() => {
@@ -224,6 +234,7 @@ export function SpeakingAvatar({
                   audioRef={audioRef}
                   isPlaying={isPlaying}
                   visemes={avatarData?.visemes}
+                  onUnavailable={() => setPhotoUnavailable(true)}
                 />
               ) : (
                 <ExaminerAvatarSvg
@@ -286,6 +297,7 @@ export function SpeakingAvatar({
                 audioRef={audioRef}
                 isPlaying={isPlaying}
                 visemes={avatarData?.visemes}
+                onUnavailable={() => setPhotoUnavailable(true)}
               />
             ) : (
               <ExaminerAvatarSvg

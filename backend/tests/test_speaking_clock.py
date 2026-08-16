@@ -1,6 +1,9 @@
+import asyncio
 import tempfile, unittest
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from types import SimpleNamespace
+from unittest.mock import patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -12,6 +15,7 @@ from app.models.attempt import CourseModule
 from app.models.course import COURSE_PUBLISHED, Course
 from app.models.role import SA_INSTRUCTOR, STUDENT, Role
 from app.models.user import User
+from app.routers.student_portal import get_speaking_avatar_for_attempt_part
 from app.services import attempt_service, module_authoring_service as mas
 
 
@@ -103,6 +107,40 @@ class ClockCreditTest(unittest.TestCase):
         self.assertEqual(budget_after - budget_before, credited)
         # And the candidate's full answering allowance still fits inside it.
         self.assertGreaterEqual(budget_after - credited, allowed)
+
+    def test_segment_intro_avatar_uses_part_instructions_not_first_question(self):
+        a = self._speaking_attempt()
+        part = next(item for item in a.module.parts if item.part_code == "speaking_1")
+        first_question = sorted(part.questions, key=lambda item: item.sort_order)[0]
+
+        async def fake_audio(text, voice):
+            return f"/fake/{text[:8]}.mp3", [], 1.0
+
+        with patch("app.routers.student_portal.avatar_service.get_or_create_prompt_audio", side_effect=fake_audio):
+            intro = asyncio.run(get_speaking_avatar_for_attempt_part(
+                a.id,
+                part.id,
+                examiner_id=None,
+                question_id=None,
+                db=self.db,
+                user=self.s,
+                session=SimpleNamespace(device_id=None),
+                x_attempt_token=None,
+            ))
+            prompt = asyncio.run(get_speaking_avatar_for_attempt_part(
+                a.id,
+                part.id,
+                examiner_id=None,
+                question_id=first_question.id,
+                db=self.db,
+                user=self.s,
+                session=SimpleNamespace(device_id=None),
+                x_attempt_token=None,
+            ))
+
+        self.assertEqual(intro["prompt_text"], part.instructions)
+        self.assertEqual(prompt["prompt_text"], first_question.prompt)
+        self.assertNotEqual(intro["prompt_text"], prompt["prompt_text"])
 
 
 if __name__ == "__main__":

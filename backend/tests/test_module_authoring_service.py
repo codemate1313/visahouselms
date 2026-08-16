@@ -176,14 +176,20 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertEqual((len(blueprints["listening"]["parts"]), blueprints["listening"]["duration_minutes"]), (4, 40))
         self.assertEqual((len(blueprints["writing"]["parts"]), blueprints["writing"]["duration_minutes"]), (2, 50))
         self.assertEqual((len(blueprints["speaking"]["parts"]), blueprints["speaking"]["duration_minutes"]), (4, 14))
+        # Timing lives on each prompt. The part keeps the LanguageCert figures
+        # only as an authoring suggestion - nothing reads them at exam time, and
+        # a part no longer carries a live default a prompt could inherit.
         speaking_timings = [
             (
-                part["answer_constraints"]["preparation_seconds"],
-                part["answer_constraints"]["response_seconds"],
+                part["answer_constraints"]["suggested_preparation_seconds"],
+                part["answer_constraints"]["suggested_response_seconds"],
             )
             for part in blueprints["speaking"]["parts"]
         ]
         self.assertEqual(speaking_timings, [(0, 45), (0, 60), (20, 90), (60, 120)])
+        for part in blueprints["speaking"]["parts"]:
+            self.assertNotIn("preparation_seconds", part["answer_constraints"])
+            self.assertNotIn("response_seconds", part["answer_constraints"])
         self.assertEqual((len(blueprints["full_mock"]["parts"]), blueprints["full_mock"]["duration_minutes"]), (15, 154))
         self.assertEqual(len(blueprints["final_test"]["parts"]), 15)
 
@@ -246,7 +252,10 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         )
         self.assertEqual(speaking_3["answer_constraints"]["allowed_turn_types"], ["read_aloud"])
 
-    def test_speaking_duration_is_derived_and_part_timing_remains_configurable(self) -> None:
+    def test_speaking_duration_is_derived_from_each_prompts_own_timing(self) -> None:
+        """A Speaking module's duration is the sum of its prompts and nothing
+        else: it cannot be typed in, there is no part-level default to inherit,
+        and it moves as prompts are added, edited and removed."""
         created = self._create("speaking")
         updated = module_authoring_service.update_module(
             self.db,
@@ -256,21 +265,19 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             {"duration_minutes"},
             "127.0.0.1",
         )
-        self.assertEqual(updated["duration_minutes"], 14)
+        self.assertEqual(updated["duration_minutes"], 14, "typed duration is ignored")
 
         first_part = updated["parts"][0]
-        updated = module_authoring_service.update_speaking_part_timing(
-            self.db,
-            self.instructor,
-            created["id"],
-            first_part["id"],
-            preparation_seconds=15,
-            response_seconds=75,
-            ip="127.0.0.1",
-        )
-        constraints = updated["parts"][0]["answer_constraints"]
-        self.assertEqual(constraints["preparation_seconds"], 15)
-        self.assertEqual(constraints["response_seconds"], 75)
+
+        # A prompt with no recording time cannot be saved - it is what the
+        # candidate's clock is built from.
+        naked = _question("speaking_prompt", "Tell me about yourself")
+        naked["interaction"] = {"turn_type": "identity"}
+        with self.assertRaises(HTTPException) as missing:
+            module_authoring_service.add_question(
+                self.db, self.instructor, created["id"], first_part["id"], naked, None
+            )
+        self.assertEqual(missing.exception.status_code, 400)
 
         prompt = _question("speaking_prompt", "Tell me about yourself")
         prompt["interaction"] = {
@@ -279,61 +286,63 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             "response_seconds": 75,
         }
         question = module_authoring_service.add_question(
-            self.db,
-            self.instructor,
-            created["id"],
-            first_part["id"],
-            prompt,
-            None,
+            self.db, self.instructor, created["id"], first_part["id"], prompt, None
         )
         recalculated = module_authoring_service.serialize_module(
-            module_authoring_service.get_module_or_404(self.db, created["id"]),
-            detailed=True,
+            module_authoring_service.get_module_or_404(self.db, created["id"]), detailed=True
         )
-        self.assertEqual(recalculated["duration_minutes"], 2)
+        self.assertEqual(recalculated["duration_minutes"], 2)      # 15 + 75 = 90s
         self.assertEqual(recalculated["parts"][0]["duration_minutes"], 2)
 
         prompt["interaction"]["response_seconds"] = 125
         module_authoring_service.update_question(
-            self.db,
-            self.instructor,
-            created["id"],
-            first_part["id"],
-            question["id"],
-            prompt,
-            None,
+            self.db, self.instructor, created["id"], first_part["id"], question["id"], prompt, None
         )
         recalculated = module_authoring_service.serialize_module(
-            module_authoring_service.get_module_or_404(self.db, created["id"]),
-            detailed=True,
+            module_authoring_service.get_module_or_404(self.db, created["id"]), detailed=True
         )
-        self.assertEqual(recalculated["duration_minutes"], 3)
+        self.assertEqual(recalculated["duration_minutes"], 3)      # 15 + 125 = 140s
+
+        # Zero preparation is a real setting, not a missing one: the candidate
+        # starts speaking as the examiner finishes, and only the recording time
+        # counts toward the module.
+        prompt["interaction"]["preparation_seconds"] = 0
+        prompt["interaction"]["response_seconds"] = 60
+        module_authoring_service.update_question(
+            self.db, self.instructor, created["id"], first_part["id"], question["id"], prompt, None
+        )
+        recalculated = module_authoring_service.serialize_module(
+            module_authoring_service.get_module_or_404(self.db, created["id"]), detailed=True
+        )
+        self.assertEqual(recalculated["duration_minutes"], 1)      # 0 + 60 = 60s
+
+        # Very short answers are valid when the instructor intentionally sets
+        # them. The old 5-second floor made follow-up response time feel stuck
+        # in the authoring UI.
+        prompt["interaction"]["response_seconds"] = 1
+        module_authoring_service.update_question(
+            self.db, self.instructor, created["id"], first_part["id"], question["id"], prompt, None
+        )
+        recalculated = module_authoring_service.serialize_module(
+            module_authoring_service.get_module_or_404(self.db, created["id"]), detailed=True
+        )
+        self.assertEqual(recalculated["duration_minutes"], 1)      # 0 + 1 = 1s, rounded up
+
+        prompt["interaction"]["response_seconds"] = 0
+        with self.assertRaises(HTTPException) as too_short:
+            module_authoring_service.update_question(
+                self.db, self.instructor, created["id"], first_part["id"], question["id"], prompt, None
+            )
+        self.assertEqual(too_short.exception.status_code, 400)
+        self.assertIn("at least 1 second", too_short.exception.detail)
 
         module_authoring_service.delete_question(
-            self.db,
-            self.instructor,
-            created["id"],
-            first_part["id"],
-            question["id"],
-            None,
+            self.db, self.instructor, created["id"], first_part["id"], question["id"], None
         )
         reset = module_authoring_service.serialize_module(
-            module_authoring_service.get_module_or_404(self.db, created["id"]),
-            detailed=True,
+            module_authoring_service.get_module_or_404(self.db, created["id"]), detailed=True
         )
-        self.assertEqual(reset["duration_minutes"], 14)
-
-        reading = self._create("reading")
-        with self.assertRaises(HTTPException):
-            module_authoring_service.update_speaking_part_timing(
-                self.db,
-                self.instructor,
-                reading["id"],
-                reading["parts"][0]["id"],
-                preparation_seconds=5,
-                response_seconds=60,
-                ip=None,
-            )
+        self.assertEqual(reset["duration_minutes"], 14, "an empty module falls back to the blueprint figure")
 
     def test_examiner_preview_resolves_speaking_parts_only(self) -> None:
         speaking = self._create("speaking")

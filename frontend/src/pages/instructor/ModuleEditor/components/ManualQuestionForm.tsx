@@ -212,6 +212,11 @@ export function ManualQuestionForm({
                 <strong>{turnLabels[manual.interaction.turn_type]}</strong>
               </div>
             )}
+            {/* This prompt's own timing. There is no part-level default to
+                inherit from: the part's duration, and the module's, are the sum
+                of these numbers, so a prompt without a recording time cannot be
+                saved. Zero preparation is a real choice - the candidate starts
+                speaking the moment the examiner finishes. */}
             <div className="form-grid">
               <MinuteSecondInput
                 id="module-question-preparation"
@@ -227,15 +232,20 @@ export function ManualQuestionForm({
               <MinuteSecondInput
                 id="module-question-response"
                 label={t.responseSecondsLabel}
-                minSeconds={5}
+                minSeconds={1}
                 maxSeconds={600}
-                value={manual.interaction?.response_seconds ?? 60}
+                value={manual.interaction?.response_seconds ?? 0}
                 onChange={(responseSeconds) => onManualChange({
                   ...manual,
                   interaction: { ...manual.interaction, response_seconds: responseSeconds },
                 })}
               />
             </div>
+            <p className="vh-speaking-timing-hint">
+              {(manual.interaction?.preparation_seconds ?? 0) > 0
+                ? "The candidate prepares, then recording starts on its own."
+                : "No preparation: recording starts as soon as the examiner finishes speaking."}
+            </p>
             {manual.interaction?.turn_type === "follow_up" && (
               <label className="checkbox-row" htmlFor="module-question-adaptive">
                 <input

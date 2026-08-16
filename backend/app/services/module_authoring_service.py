@@ -124,15 +124,19 @@ DERIVED_DURATION_MODULE_TYPES = {"speaking", "full_mock", "final_test"}
 
 
 def _effective_speaking_question_seconds(part: ExamModulePart, question: ExamModuleQuestion) -> int:
-    constraints = dict(part.answer_constraints or {})
+    """Seconds this prompt costs the candidate: its own preparation plus its own
+    response time.
+
+    There is no part-level fallback and no invented default. Every Speaking
+    prompt carries its own timing, set when it is authored, and a part's
+    duration is the sum of its prompts. A prompt with no preparation is a real
+    answer - the candidate starts speaking as the examiner finishes - not a
+    missing value to be filled in with a guess.
+    """
     interaction = dict(question.interaction or {})
-    preparation = interaction.get("preparation_seconds")
-    response = interaction.get("response_seconds")
-    if preparation is None:
-        preparation = constraints.get("preparation_seconds", 0)
-    if response is None:
-        response = constraints.get("response_seconds", 0)
-    return max(0, int(preparation or 0)) + max(0, int(response or 0))
+    preparation = interaction.get("preparation_seconds") or 0
+    response = interaction.get("response_seconds") or 0
+    return max(0, int(preparation)) + max(0, int(response))
 
 
 def _questions_used_for_duration(
@@ -674,41 +678,6 @@ def update_module(
     return serialize_module(get_module_or_404(db, module.id), detailed=True)
 
 
-def update_speaking_part_timing(
-    db: Session,
-    actor: User,
-    module_id: int,
-    part_id: int,
-    preparation_seconds: int,
-    response_seconds: int,
-    ip: Optional[str],
-) -> dict:
-    module, part = get_editable_part(db, actor, module_id, part_id)
-    if part.section_type != "speaking":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Timing can only be configured for Speaking parts")
-
-    constraints = dict(part.answer_constraints or {})
-    constraints["preparation_seconds"] = preparation_seconds
-    constraints["response_seconds"] = response_seconds
-    part.answer_constraints = constraints
-    db.flush()
-    _refresh_speaking_duration(db, module)
-    _audit(
-        db,
-        actor,
-        "exam_module.speaking_timing.update",
-        module.id,
-        ip,
-        {
-            "part_id": part.id,
-            "preparation_seconds": preparation_seconds,
-            "response_seconds": response_seconds,
-        },
-    )
-    db.commit()
-    return serialize_module(get_module_or_404(db, module.id), detailed=True)
-
-
 def update_part_ai_evaluation(
     db: Session,
     actor: User,
@@ -768,6 +737,26 @@ def _validate_question_for_part(part: ExamModulePart, data: dict, current_count:
     # not unbounded: every extra prompt adds its own preparation and response
     # time to the module's derived duration, so an unchecked part can silently
     # turn a 12-minute test into a 40-minute one.
+    if part.section_type == "speaking":
+        interaction_data = data.get("interaction") or {}
+        response_seconds = interaction_data.get("response_seconds")
+        if response_seconds is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Set a recording time for this {part.title} prompt - it is what the candidate's clock is built from",
+            )
+        if int(response_seconds) < 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A prompt needs at least 1 second of recording time",
+            )
+        preparation_seconds = interaction_data.get("preparation_seconds")
+        if preparation_seconds is not None and int(preparation_seconds) < 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Preparation time cannot be negative",
+            )
+
     maximum_questions = (part.answer_constraints or {}).get("maximum_questions")
     if part.question_limit is None and maximum_questions and current_count >= maximum_questions:
         raise HTTPException(
@@ -901,15 +890,10 @@ def import_questions(
     # message instead of committing the rows that happened to fit.
     ceiling = part.question_limit or (part.answer_constraints or {}).get("maximum_questions")
     if ceiling is not None and len(part.questions) + len(questions) > ceiling:
-        limit_phrase = (
-            f"exactly {part.question_limit}"
-            if part.question_limit is not None
-            else f"at most {ceiling}"
-        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
-                f"{part.title} takes {limit_phrase} "
+                f"{part.title} takes at most {ceiling} "
                 f"question{'s' if ceiling != 1 else ''} and already has {len(part.questions)}. "
                 f"Importing {len(questions)} more would exceed it - import at most "
                 f"{ceiling - len(part.questions)}."

@@ -26,7 +26,6 @@ import { ModuleReadinessPanel } from "./components/ModuleReadinessPanel";
 import { ModuleDetailsForm, type ModuleDetailsState } from "./components/ModuleDetailsForm";
 import { PartSpecPanel } from "./components/PartSpecPanel";
 import { ListeningAudioPanel } from "./components/ListeningAudioPanel";
-import { SpeakingTimingPanel } from "./components/SpeakingTimingPanel";
 import { SONIA_EXAMINER } from "./speakingExaminer";
 import { SharedPassagePanel } from "./components/SharedPassagePanel";
 import { GapTaskComposer, type GapTaskDraft } from "./components/GapTaskComposer";
@@ -528,8 +527,11 @@ export function ModuleEditor() {
             group_label: question.interaction?.group_label
               ?? (selectedPart.answer_constraints.group_label_required ? `Conversation ${Math.floor(index / groupSize) + 1}` : null),
             turn_type: turnType,
-            preparation_seconds: question.interaction?.preparation_seconds ?? selectedPart.answer_constraints.preparation_seconds ?? null,
-            response_seconds: question.interaction?.response_seconds ?? selectedPart.answer_constraints.response_seconds ?? null,
+            // Timing is per prompt and has no part-level default to inherit.
+            // An import that carries none leaves these null, and the prompt
+            // cannot be saved until the author sets them.
+            preparation_seconds: question.interaction?.preparation_seconds ?? null,
+            response_seconds: question.interaction?.response_seconds ?? null,
             adaptive_follow_up: question.interaction?.adaptive_follow_up ?? turnType === "follow_up",
           },
         };
@@ -572,27 +574,6 @@ export function ModuleEditor() {
       setAudioFile(null); await loadModule(selectedPart.id); showSuccess(strings.listeningAudio.notices.uploaded(selectedPart.title));
     } catch (err: unknown) { showError(extractErrorMessage(err, strings.listeningAudio.errors.upload)); }
     finally { setBusy(false); }
-  }
-
-  async function saveSpeakingTiming(preparationSeconds: number, responseSeconds: number) {
-    if (!module || !selectedPart) return;
-    setBusy(true); setError(null);
-    try {
-      const { data } = await apiClient.patch<ExamModule>(
-        `/instructor/modules/${module.id}/parts/${selectedPart.id}/speaking-timing`,
-        { preparation_seconds: preparationSeconds, response_seconds: responseSeconds },
-      );
-      setModule(data);
-      setDetails((current) => ({ ...current, duration_minutes: data.duration_minutes }));
-      if (serverDetailsRef.current) {
-        serverDetailsRef.current = { ...serverDetailsRef.current, duration_minutes: data.duration_minutes };
-      }
-      showSuccess(strings.speakingTiming.saved(selectedPart.title));
-    } catch (err: unknown) {
-      showError(extractErrorMessage(err, strings.speakingTiming.error));
-    } finally {
-      setBusy(false);
-    }
   }
 
   async function togglePartAiEvaluation(enabled: boolean) {
@@ -1012,17 +993,6 @@ export function ModuleEditor() {
                 audioFile={audioFile}
                 onDeleteAudio={deleteAudio}
               />
-            )}
-
-            {selectedPart.section_type === "speaking" && (
-              <>
-                <SpeakingTimingPanel
-                  part={selectedPart}
-                  isEditable={isEditable}
-                  busy={busy}
-                  onSave={saveSpeakingTiming}
-                />
-              </>
             )}
 
             {selectedPart.answer_constraints.layout === "source_text_matching" ? (

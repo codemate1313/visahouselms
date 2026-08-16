@@ -168,10 +168,30 @@ ALREADY_ATTEMPTED_DETAIL = (
 )
 
 
+def _dev_unlimited_speaking_attempts(db: Session, module: ExamModule) -> bool:
+    """Local QA escape hatch for repeatedly exercising the Speaking runner.
+
+    This is intentionally disabled outside development and scoped to Speaking
+    modules. The flag lives in the local DB so production plans/subscriptions
+    and retake policy stay unchanged.
+    """
+    if settings.app_environment != "development" or module.module_type != "speaking":
+        return False
+    try:
+        from app.services import settings_service
+
+        value = settings_service.get_setting(db, "dev.unlimited_speaking_attempts")
+    except Exception:
+        logger.exception("Failed to read dev.unlimited_speaking_attempts")
+        return False
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
     from app.services import retake_service
 
     is_final = module.module_type == "final_test"
+    dev_unlimited_speaking = _dev_unlimited_speaking_attempts(db, module)
 
     existing_in_progress = (
         db.query(TestAttempt)
@@ -183,9 +203,12 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         .first()
     )
     if existing_in_progress is not None:
-        if existing_in_progress.expires_at > _now():
+        if dev_unlimited_speaking:
+            _auto_expire(db, existing_in_progress)
+        elif existing_in_progress.expires_at > _now():
             return get_student_view(db, get_attempt_or_404(db, user, existing_in_progress.id))
-        _auto_expire(db, existing_in_progress)
+        else:
+            _auto_expire(db, existing_in_progress)
 
     # Every module type allows exactly one original sitting; an approved,
     # unconsumed RetakeRequest is the only way to earn another (except final tests).
@@ -205,8 +228,9 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
                 status_code=status.HTTP_409_CONFLICT,
                 detail="You have already attempted the final test. Final tests cannot be retaken.",
             )
-        retake_request = retake_service.get_available_retake(db, user.id, module.id)
-        if retake_request is None:
+        if not dev_unlimited_speaking:
+            retake_request = retake_service.get_available_retake(db, user.id, module.id)
+        if retake_request is None and not dev_unlimited_speaking:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ALREADY_ATTEMPTED_DETAIL)
 
     now = _now()
@@ -216,7 +240,7 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         module_id=module.id,
         status=ATTEMPT_READY if is_final else ATTEMPT_IN_PROGRESS,
         is_final=is_final,
-        is_retake=retake_request is not None,
+        is_retake=retake_request is not None or (dev_unlimited_speaking and original_attempt is not None),
         retake_request_id=retake_request.id if retake_request is not None else None,
         security_required=is_final,
         started_at=now,

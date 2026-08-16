@@ -108,11 +108,13 @@ def wipe(db) -> None:
 # authoring helpers - build a publishable module of each type
 # ---------------------------------------------------------------------------
 
+# turn type -> (preparation seconds, response seconds). Timing lives on the
+# prompt now, so the seed sets it the same way an author would.
 SPEAKING_TURNS = {
-    "speaking_1": ["identity", "topic_question"],
-    "speaking_2": ["roleplay_response", "roleplay_initiate"],
-    "speaking_3": ["read_aloud"],
-    "speaking_4": ["presentation", "follow_up"],
+    "speaking_1": [("identity", 0, 45), ("topic_question", 0, 45)],
+    "speaking_2": [("roleplay_response", 0, 60), ("roleplay_initiate", 0, 60)],
+    "speaking_3": [("read_aloud", 20, 90)],
+    "speaking_4": [("presentation", 60, 120), ("follow_up", 0, 60)],
 }
 
 READ_ALOUD_TEXT = (
@@ -172,7 +174,7 @@ def author_module(db, instructor, module_type: str, title: str) -> object:
 
     for part in module.parts:
         if part.section_type == "speaking":
-            for index, turn in enumerate(SPEAKING_TURNS[part.part_code]):
+            for index, (turn, prep, response) in enumerate(SPEAKING_TURNS[part.part_code]):
                 payload = {
                     "question_type": "speaking_prompt",
                     "prompt": f"{part.title}: {turn.replace('_', ' ')} prompt",
@@ -180,7 +182,11 @@ def author_module(db, instructor, module_type: str, title: str) -> object:
                     "passage": READ_ALOUD_TEXT if turn == "read_aloud" else None,
                     "options": [], "correct_answers": [], "explanation": None,
                     "points": Decimal("1"), "difficulty": "medium",
-                    "interaction": {"turn_type": turn},
+                    "interaction": {
+                        "turn_type": turn,
+                        "preparation_seconds": prep,
+                        "response_seconds": response,
+                    },
                 }
                 module_authoring_service.add_question(db, instructor, module.id, part.id, payload, IP)
             continue
@@ -330,7 +336,7 @@ def main() -> None:
         step("Creating the platform owner")
         note("In real life this is you, created once when the platform is installed.")
         owner = User(
-            email="owner@visahouse.test", password_hash=hash_password(PASSWORD),
+            email="owner@visahouse.example.com", password_hash=hash_password(PASSWORD),
             role_id=db.query(Role).filter(Role.name == SUPER_ADMIN).one().id,
             first_name="Tarundeep", last_name="Singh", is_active=True, is_owner=True,
             can_view_monetary_analytics=True, force_password_reset=False,
@@ -345,7 +351,7 @@ def main() -> None:
         note("Instructors author the exam content. The owner creates the account;")
         note("the system issues a temporary password the instructor must change.")
         instructor = User(
-            email="examiner@visahouse.test", password_hash=hash_password(PASSWORD),
+            email="examiner@visahouse.example.com", password_hash=hash_password(PASSWORD),
             role_id=db.query(Role).filter(Role.name == SA_INSTRUCTOR).one().id,
             first_name="Priya", last_name="Menon", is_active=True, force_password_reset=False,
         )
@@ -394,8 +400,8 @@ def main() -> None:
         note("the institute admin's login.")
         institutes = []
         for name, slug_admin, seats, staff, colors, paid in [
-            ("Bright Future Academy", "admin@brightfuture.test", 60, 6, ("#B3122F", "#1F2937"), True),
-            ("Global Pathways Institute", "admin@globalpathways.test", 25, 3, ("#0F766E", "#111827"), False),
+            ("Bright Future Academy", "admin@brightfuture.example.com", 60, 6, ("#B3122F", "#1F2937"), True),
+            ("Global Pathways Institute", "admin@globalpathways.example.com", 25, 3, ("#0F766E", "#111827"), False),
         ]:
             draft = onboarding_service.create_draft(db, owner, {
                 "name": name, "contact_email": slug_admin, "admin_email": slug_admin,
@@ -433,15 +439,20 @@ def main() -> None:
                 db.query(User).join(Role, User.role_id == Role.id)
                 .filter(User.institute_id == institute.id, Role.name == "INSTITUTE_ADMIN").first()
             )
-            institute_admin_service.create_member(
-                db, admin, email=f"teacher@{institute.slug}.test", first_name="Anjali", last_name="Rao",
+            created_teacher = institute_admin_service.create_member(
+                db, admin, email=f"teacher@{institute.slug}.example.com", first_name="Anjali", last_name="Rao",
                 role_name=INST_INSTRUCTOR, phone_number=None, address=None, ip=IP,
             )
+            teacher = db.get(User, created_teacher["id"])
+            teacher.password_hash = hash_password(PASSWORD)
+            teacher.force_password_reset = False
+            db.add(teacher)
+            db.commit()
             roster = []
             share = first_names[index * 7: index * 7 + (7 if index == 0 else 5)]
             for n, first in enumerate(share):
                 created = institute_admin_service.create_member(
-                    db, admin, email=f"{first.lower()}@{institute.slug}.test",
+                    db, admin, email=f"{first.lower()}@{institute.slug}.example.com",
                     first_name=first, last_name="Sharma", role_name=STUDENT,
                     phone_number=f"98{index}{n:07d}", address="Amritsar, Punjab", ip=IP,
                 )
@@ -457,7 +468,7 @@ def main() -> None:
         # -- 8. a direct student buys online -----------------------------------
         step("A direct student signs up and buys a plan")
         direct = User(
-            email="ananya@gmail.test", password_hash=hash_password(PASSWORD),
+            email="ananya@gmail.example.com", password_hash=hash_password(PASSWORD),
             role_id=db.query(Role).filter(Role.name == STUDENT).one().id,
             first_name="Ananya", last_name="Kapoor", is_active=True, force_password_reset=False,
         )
@@ -536,17 +547,17 @@ def main() -> None:
             print(f"   {key:<24} {value}")
 
         print(f"\n   Every account below uses the password: {PASSWORD}\n")
-        print("   Owner / Super Admin   owner@visahouse.test")
-        print("   SA Instructor         examiner@visahouse.test")
+        print("   Owner / Super Admin   owner@visahouse.example.com")
+        print("   SA Instructor         examiner@visahouse.example.com")
         for institute in institutes:
             admin = (
                 db.query(User).join(Role, User.role_id == Role.id)
                 .filter(User.institute_id == institute.id, Role.name == "INSTITUTE_ADMIN").first()
             )
             print(f"   Institute Admin       {admin.email}   ({institute.name})")
-            print(f"   Institute Instructor  teacher@{institute.slug}.test")
-        print("   Institute Student     aarav@bright-future-academy.test")
-        print("   Direct Student        ananya@gmail.test")
+            print(f"   Institute Instructor  teacher@{institute.slug}.example.com")
+        print("   Institute Student     aarav@bright-future-academy.example.com")
+        print("   Direct Student        ananya@gmail.example.com")
     finally:
         db.close()
 

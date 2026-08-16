@@ -84,11 +84,6 @@ class ModuleUpdate(BaseModel):
         return value
 
 
-class SpeakingPartTimingUpdate(BaseModel):
-    preparation_seconds: int = Field(ge=0, le=600)
-    response_seconds: int = Field(ge=5, le=1800)
-
-
 class PartAiEvaluationUpdate(BaseModel):
     ai_evaluation_enabled: bool
 
