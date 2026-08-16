@@ -12,7 +12,7 @@ interface StudentValidityCardProps {
 
 export function StudentValidityCard({ plan, isInstituteStudent }: StudentValidityCardProps) {
   const t = strings.validity;
-  const isTrial = !isInstituteStudent && (plan.access_type === "trial" || (plan.demo?.state === "active" && !plan.starts_at));
+  const isTrial = !isInstituteStudent && ((plan.access_type as string) === "trial" || (plan.demo?.state === "active" && !plan.starts_at));
   const isGrace = plan.state === "grace";
   const isExpired = plan.state === "expired" || (plan.demo?.state === "locked" && plan.state !== "active");
 
@@ -54,7 +54,7 @@ export function StudentValidityCard({ plan, isInstituteStudent }: StudentValidit
     badgeTone = isGrace ? "amber" : "blue";
   } else if (isTrial) {
     title = "Free Trial & Practice Access";
-    subtitle = plan.demo ? t.trialNotice(plan.demo.tests_taken, plan.demo.test_limit) : "Limited free practice access.";
+    subtitle = plan.demo ? t.trialNotice(plan.demo.tests_taken, plan.demo.module_ids?.length || 0) : "Limited free practice access.";
     badgeLabel = t.trialEyebrow;
     badgeTone = "purple";
   } else if (isExpired) {

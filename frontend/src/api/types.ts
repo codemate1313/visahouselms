@@ -356,6 +356,7 @@ export interface ExamModulePart {
     interaction_mode?: "ai_interlocutor";
     required_turn_types?: SpeakingTurnType[];
     allowed_turn_types?: SpeakingTurnType[];
+    audio_mode?: "single" | "per_question";
   };
   rubric: ModuleRubricCriterion[];
   sort_order: number;
@@ -519,6 +520,8 @@ export interface StudentCurrentPlan {
   } | null;
   state: "none" | "active" | "grace" | "expired" | "scheduled";
   expires_at: string | null;
+  starts_at?: string | null;
+  institute_name?: string | null;
   access_type: "institute" | "direct";
   ai_evaluations?: StudentAiQuotaSummary;
   demo?: {
@@ -529,6 +532,7 @@ export interface StudentCurrentPlan {
     tests_taken: number;
     course_limit: number;
     locked_reason: string | null;
+    module_ids?: number[];
   };
 }
 
@@ -729,6 +733,7 @@ export interface AttemptPart {
     interaction_mode?: "ai_interlocutor";
     required_turn_types?: SpeakingTurnType[];
     allowed_turn_types?: SpeakingTurnType[];
+    audio_mode?: "single" | "per_question";
   };
   cefr_scale: CefrScaleAnchor[];
   sort_order: number;
