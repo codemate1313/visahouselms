@@ -7956,6 +7956,17 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   cursor: not-allowed;
 }
 
+[data-theme="dark"] .plan-feature-remove {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: #d1d5db;
+}
+
+[data-theme="dark"] .plan-feature-add {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #f3f4f6;
+}
+
 /* ---------- Institute portal: AI evaluation quota ---------- */
 
 

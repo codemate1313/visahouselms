@@ -15,6 +15,7 @@ class ModuleCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=2000)
     instructions: Optional[str] = Field(default=None, max_length=20000)
+    duration_minutes: Optional[int] = Field(default=None, ge=1, le=600)
     show_onboarding_instructions: bool = Field(default=True)
     onboarding_instructions: Optional[list] = Field(default=None)
     source_module_ids: list[int] = Field(default_factory=list, max_length=4)

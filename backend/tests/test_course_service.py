@@ -141,7 +141,7 @@ class CourseServiceTests(unittest.TestCase):
         attached = course_service.attach_module(
             self.db, self.instructor, course_id, self._published_module_id(), "127.0.0.1"
         )
-        self.assertEqual(attached["estimated_duration_minutes"], 50)
+        self.assertEqual(attached["estimated_duration_minutes"], 100)
         published = course_service.set_status(
             self.db, self.instructor, course_id, COURSE_PUBLISHED, "127.0.0.1"
         )

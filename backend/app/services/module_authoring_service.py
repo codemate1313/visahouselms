@@ -487,6 +487,7 @@ def _composite_sources(
 def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> dict:
     payload = dict(data)
     source_module_ids = list(payload.pop("source_module_ids", []))
+    req_duration = payload.pop("duration_minutes", None)
     module_type = payload["module_type"]
     blueprint = get_blueprint(module_type)
     composite = module_type in {"full_mock", "final_test"}
@@ -496,7 +497,7 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
     calculated_duration = (
         sum(source.duration_minutes for source in sources.values())
         if composite
-        else blueprint["duration_minutes"]
+        else (req_duration if req_duration is not None else blueprint["duration_minutes"])
     )
     module = ExamModule(
         **payload,

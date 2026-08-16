@@ -146,7 +146,7 @@
 [data-theme="dark"] select,
 [data-theme="dark"] textarea {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.2);
   color: #f2f2f5;
 }
 
@@ -333,7 +333,7 @@ textarea:focus::-moz-placeholder,
   --surface-muted: #1f1f24;
   --text: #f3f4f6;
   --text-muted: #9ca3af;
-  --border: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.18);
   --info: #93c5fd;
   --nav-bg: rgba(22, 22, 26, 0.92);
   --glass-border: rgba(255, 255, 255, 0.1);

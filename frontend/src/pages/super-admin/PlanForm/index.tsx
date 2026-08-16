@@ -59,9 +59,11 @@ export function PlanForm() {
       ...(isNew ? [] : [apiClient.get(`/super-admin/plans/${id}`)]),
     ])
       .then((responses) => {
-        setModules(responses[0].data);
+        const availableModules = responses[0].data;
+        setModules(availableModules);
         setGstRates(responses[1].data);
         if (isNew) {
+          setSelected(new Set(availableModules.map((module) => module.id)));
           const defaultGst = responses[1].data.find((r) => r.is_default);
           if (defaultGst) {
             setForm((prev) => ({ ...prev, gst_rate_id: String(defaultGst.id) }));
