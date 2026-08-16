@@ -380,6 +380,8 @@ export const router = createBrowserRouter([
           // catalogue and their own account; everything else redirects.
           { path: "dashboard", element: <RequireActivePlan><StudentDashboard /></RequireActivePlan> },
           { path: "courses", element: <StudentCourseCatalog /> },
+          { path: "course-catalog", element: <Navigate to="/student/courses" replace /> },
+          { path: "plans", element: <Navigate to="/student/courses" replace /> },
           { path: "my-courses", element: <MyCourses /> },
           // A demo student must be able to see the score they just earned.
           { path: "attempts", element: <StudentAttempts /> },

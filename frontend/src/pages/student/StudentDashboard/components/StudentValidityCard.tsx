@@ -145,17 +145,17 @@ export function StudentValidityCard({ plan, isInstituteStudent }: StudentValidit
                 <Icon name="arrowRight" />
               </Link>
             ) : isExpired || isGrace ? (
-              <Link to="/student/course-catalog" className="sd-validity-cta-btn btn-primary">
+              <Link to="/student/courses" className="sd-validity-cta-btn btn-primary">
                 <Icon name="plan" />
                 <span>{t.renewBtn}</span>
               </Link>
             ) : isTrial ? (
-              <Link to="/student/course-catalog" className="sd-validity-cta-btn btn-primary">
+              <Link to="/student/courses" className="sd-validity-cta-btn btn-primary">
                 <Icon name="plan" />
                 <span>{t.exploreBtn}</span>
               </Link>
             ) : (
-              <Link to="/student/course-catalog" className="sd-validity-cta-btn btn-outline">
+              <Link to="/student/courses" className="sd-validity-cta-btn btn-outline">
                 <span>{t.renewBtn}</span>
                 <Icon name="arrowRight" />
               </Link>
