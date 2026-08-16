@@ -4,7 +4,7 @@ import { apiClient } from "@/api/client";
 import type { StudentNotification } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { PinList, type PinListItem } from "@/components/PinList";
-import { PageHeader, SearchableSelect } from "@/components/ui";
+import { PageHeader, SearchableSelect, SegmentedControl } from "@/components/ui";
 import { destinationFor, notificationTime, scoreLabel } from "@/utils/notificationHelpers";
 import { notificationsInboxStrings as strings } from "./NotificationsInbox.strings";
 import "./NotificationsInbox.css";
@@ -156,29 +156,40 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
       <section className="workspace-panel notifications-inbox-panel">
         {!loading && !error && notifications.length > 0 && (
           <div className="notifications-inbox-filter-bar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "18px", padding: "10px 16px", background: "var(--surface-muted, #f8fafc)", borderRadius: "14px", border: "1px solid var(--border)" }}>
-            <div className="student-notification-tabs" style={{ padding: 0, background: "transparent", border: "none" }}>
-              <button
-                type="button"
-                className={`student-notification-tab${filterTab === "all" ? " is-active" : ""}`}
-                onClick={() => setFilterTab("all")}
-              >
-                All ({notifications.length})
-              </button>
-              <button
-                type="button"
-                className={`student-notification-tab${filterTab === "unread" ? " is-active" : ""}`}
-                onClick={() => setFilterTab("unread")}
-              >
-                Unread ({unread.length})
-              </button>
-              <button
-                type="button"
-                className={`student-notification-tab${filterTab === "read" ? " is-active" : ""}`}
-                onClick={() => setFilterTab("read")}
-              >
-                Read ({read.length})
-              </button>
-            </div>
+            <SegmentedControl<"all" | "unread" | "read">
+              ariaLabel="Notification status filter"
+              onChange={setFilterTab}
+              value={filterTab}
+              options={[
+                {
+                  label: (
+                    <span className="segmented-tab-label">
+                      <span>All</span>
+                      <span className="segmented-tab-count">{notifications.length}</span>
+                    </span>
+                  ),
+                  value: "all",
+                },
+                {
+                  label: (
+                    <span className="segmented-tab-label">
+                      <span>Unread</span>
+                      <span className="segmented-tab-count">{unread.length}</span>
+                    </span>
+                  ),
+                  value: "unread",
+                },
+                {
+                  label: (
+                    <span className="segmented-tab-label">
+                      <span>Read</span>
+                      <span className="segmented-tab-count">{read.length}</span>
+                    </span>
+                  ),
+                  value: "read",
+                },
+              ]}
+            />
 
             <div className="notifications-time-filter" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap", flexShrink: 0 }}>
