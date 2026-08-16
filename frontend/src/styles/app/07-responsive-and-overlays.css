@@ -3516,3 +3516,11 @@ body {
   border-color: var(--success);
   color: var(--success);
 }
+
+/* A purchased plan card says when it runs out, so "purchased" tells the
+   student what to do next rather than only what is true today. */
+.uui-purchased-until {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}

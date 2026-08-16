@@ -70,6 +70,16 @@ def _serialize(payment: Payment) -> dict:
             "grace_days": payment.subscription.grace_days,
             "status": subscription_service.state_of_subscription(payment.subscription),
         }
+        # What this purchase handed over. A student buying the same plan a
+        # second time sees only a repeated row otherwise, with no sign of the
+        # extra days or the extra attempt they paid for.
+        plan = payment.subscription.plan
+        if plan is not None:
+            from app.services import entitlement_service
+
+            module_count = len(entitlement_service.plan_module_ids(plan))
+            sub_data["days_added"] = plan.duration_days
+            sub_data["attempts_added"] = module_count
     return {
         "id": payment.id,
         "source": payment.source,

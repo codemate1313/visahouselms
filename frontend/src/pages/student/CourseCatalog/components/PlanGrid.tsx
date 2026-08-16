@@ -38,7 +38,14 @@ export function PlanGrid({
               <div className="uui-card-title-row">
                 <h3 className="uui-plan-name">{plan.name}</h3>
                 {plan.entitled ? (
-                  <span className="uui-purchased-badge">
+                  <span
+                    className="uui-purchased-badge"
+                    title={
+                      plan.entitled_until
+                        ? strings.purchasedUntilTooltip(formatPlanDay(plan.entitled_until))
+                        : undefined
+                    }
+                  >
                     <span className="uui-purchased-dot" />
                     PURCHASED
                   </span>
@@ -59,6 +66,15 @@ export function PlanGrid({
               {/* Description */}
               <p className="uui-plan-desc">{plan.description || strings.defaultDescription}</p>
 
+              {/* Says when it runs out, so "purchased" is actionable rather
+                  than just a state. Without it a student has no idea when they
+                  can buy it again. */}
+              {plan.entitled && plan.entitled_until && (
+                <p className="uui-purchased-until">
+                  {strings.purchasedUntil(formatPlanDay(plan.entitled_until))}
+                </p>
+              )}
+
               {(display.usesInternationalPrice || display.isConverted) && (
                 <span className="uui-stripe-tag">
                   {display.usesInternationalPrice
@@ -70,15 +86,29 @@ export function PlanGrid({
               {/* Action Button */}
               <div className="uui-action-group">
                 {plan.entitled ? (
-                  <Button
-                    variant="primary"
-                    fullWidth
-                    rightIcon={<Icon name="arrowRight" />}
-                    onClick={onGoToCourse}
-                    className="uui-btn-primary"
-                  >
-                    {strings.goToCourse}
-                  </Button>
+                  <>
+                    <Button
+                      variant="primary"
+                      fullWidth
+                      rightIcon={<Icon name="arrowRight" />}
+                      onClick={onGoToCourse}
+                      className="uui-btn-primary"
+                    >
+                      {strings.goToCourse}
+                    </Button>
+                    {/* Buying again is allowed and always adds - the days stack
+                        onto every module in the plan and each purchase hands
+                        over another attempt. The badge above is information,
+                        not a gate. */}
+                    <Button
+                      variant="outline"
+                      fullWidth
+                      onClick={() => onChoosePlan(plan)}
+                      className="uui-btn-buy-again"
+                    >
+                      {strings.buyAgain}
+                    </Button>
+                  </>
                 ) : (
                   <Button
                     variant="primary"
@@ -128,4 +158,10 @@ export function PlanGrid({
       })}
     </div>
   );
+}
+
+function formatPlanDay(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }

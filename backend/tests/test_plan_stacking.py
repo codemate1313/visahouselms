@@ -202,21 +202,49 @@ class PlanStackingTests(unittest.TestCase):
 
     # ------------------------------------------------------ term stacking
 
-    def test_the_second_term_starts_where_the_first_ends(self):
+    def test_a_purchase_is_live_immediately_and_reports_the_access_it_bought(self):
+        """No student should be told their purchase is "scheduled" for October.
+
+        The term used to begin where the running one ended, which was correct
+        arithmetic and a terrible message: the purchase history showed a plan
+        paid for that morning as SCHEDULED, reading as "you do not have this
+        yet". The stacking lives in the entitlement now; the term starts today
+        and its end date reports the access the purchase resulted in.
+        """
         a = self._plan("Plan A", 180, [self.reading])
         b = self._plan("Plan B", 90, [self.reading])
 
         first = self._buy(a)
         second = self._buy(b)
 
+        self.assertAlmostEqual(
+            (second.starts_at - _now()).total_seconds(), 0, delta=5,
+            msg="a purchase is live the day it is paid for",
+        )
         self.assertEqual(
-            second.starts_at, first.expires_at,
-            "a term bought mid-run must extend, not overlap and waste days",
+            subscription_service.state_of_subscription(second), "active",
+            "and must never render as 'scheduled'",
         )
         self.assertAlmostEqual(
             (second.expires_at - _now()).days, 269, delta=1,
-            msg="the two terms together cover 270 days",
+            msg="its end date reports the combined 270 days, not just its own 90",
         )
+        self.assertGreater(
+            second.expires_at, first.expires_at,
+            "the second purchase visibly extends the first",
+        )
+
+    def test_no_purchase_ever_shows_as_scheduled(self):
+        plan = self._plan("Monthly", 30, [self.reading])
+        for _ in range(3):
+            self._buy(plan)
+        states = {
+            subscription_service.state_of_subscription(row)
+            for row in self.db.query(Subscription)
+            .filter(Subscription.user_id == self.student.id)
+            .all()
+        }
+        self.assertNotIn("scheduled", states, f"got {states}")
 
     def test_buying_after_everything_lapsed_starts_today(self):
         plan = self._plan("Plan A", 30, [self.reading])
@@ -519,3 +547,122 @@ class SittingsTests(unittest.TestCase):
             "a card must not say Attempt Exhausted over a test Start would open",
         )
         self.assertEqual(row["sittings_remaining"], 1)
+
+
+class AlreadyPurchasedTests(unittest.TestCase):
+    """A plan the student already holds must read as purchased, and refuse a
+    second sale.
+
+    The catalogue computed "have I bought this" from terms that had already
+    STARTED. Stacking pushes a second purchase's term into the future, so a plan
+    paid for seconds earlier came back as not-entitled and kept rendering a
+    Choose plan button - the student could buy the same plan over and over.
+    """
+
+    def setUp(self) -> None:
+        from app.services import plan_service
+
+        self.engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(self.engine)
+        self.db = sessionmaker(bind=self.engine)()
+        self.plan_service = plan_service
+
+        role = Role(name=STUDENT)
+        self.db.add(role)
+        self.db.flush()
+        self.student = User(
+            email="priya@example.com", password_hash="x", role_id=role.id,
+            first_name="Priya", last_name="R",
+        )
+        self.db.add(self.student)
+        self.db.flush()
+        self.module = ExamModule(
+            title="Reading", module_type="reading", duration_minutes=60,
+            created_by_id=self.student.id, status="published", is_visible=True,
+        )
+        self.db.add(self.module)
+        self.db.flush()
+
+    def tearDown(self) -> None:
+        self.db.close()
+
+    def _plan(self, name, days):
+        plan = Plan(
+            name=name, price=1000, currency="INR", duration_days=days,
+            student_limit=0, staff_limit=0, grace_days=0, is_active=True,
+            audience=AUDIENCE_DIRECT, is_published=True,
+        )
+        plan.modules = [self.module]
+        self.db.add(plan)
+        self.db.flush()
+        return plan
+
+    def _catalogue(self):
+        return {row["name"]: row for row in self.plan_service.list_public_plans(self.db, self.student)}
+
+    def test_a_plan_reads_as_purchased_the_moment_it_is_bought(self):
+        a = self._plan("Plan A", 90)
+        b = self._plan("Plan B", 30)
+
+        self.assertFalse(self._catalogue()["Plan A"]["entitled"])
+
+        subscription_service.subscribe_user(self.db, self.student.id, a.id, None)
+        self.assertTrue(self._catalogue()["Plan A"]["entitled"])
+
+        # Plan B's term is SCHEDULED - it begins when Plan A ends. It must still
+        # read as purchased, or the student can buy it again immediately.
+        subscription_service.subscribe_user(self.db, self.student.id, b.id, None)
+        self.assertTrue(
+            self._catalogue()["Plan B"]["entitled"],
+            "a plan whose term starts later is still bought and paid for",
+        )
+
+    def test_a_purchased_card_says_when_it_runs_out(self):
+        a = self._plan("Plan A", 90)
+        subscription_service.subscribe_user(self.db, self.student.id, a.id, None)
+        card = self._catalogue()["Plan A"]
+        self.assertIsNotNone(
+            card["entitled_until"],
+            "a student who cannot see an end date has no idea when to renew",
+        )
+
+    def test_buying_a_held_plan_again_is_refused_before_payment(self):
+        from fastapi import HTTPException
+
+        a = self._plan("Plan A", 90)
+        subscription_service.subscribe_user(self.db, self.student.id, a.id, None)
+
+        with self.assertRaises(HTTPException) as raised:
+            self.plan_service.assert_plan_not_already_held(self.db, self.student.id, a.id)
+        self.assertEqual(raised.exception.status_code, 409)
+        self.assertIn("already purchased", raised.exception.detail.lower())
+
+    def test_a_lapsed_plan_can_be_bought_again(self):
+        a = self._plan("Plan A", 30)
+        old = Subscription(
+            user_id=self.student.id, plan_id=a.id,
+            starts_at=_now() - timedelta(days=400),
+            expires_at=_now() - timedelta(days=370), grace_days=0,
+        )
+        self.db.add(old)
+        self.db.commit()
+
+        self.assertFalse(self._catalogue()["Plan A"]["entitled"])
+        # Must not raise - renewing after it ends is the whole point.
+        self.plan_service.assert_plan_not_already_held(self.db, self.student.id, a.id)
+
+    def test_a_plan_in_its_grace_period_still_counts_as_held(self):
+        a = self._plan("Plan A", 30)
+        a.grace_days = 7
+        self.db.add(
+            Subscription(
+                user_id=self.student.id, plan_id=a.id,
+                starts_at=_now() - timedelta(days=32),
+                expires_at=_now() - timedelta(days=2), grace_days=7,
+            )
+        )
+        self.db.commit()
+        self.assertTrue(
+            self._catalogue()["Plan A"]["entitled"],
+            "the term is still theirs while a renewal clears",
+        )

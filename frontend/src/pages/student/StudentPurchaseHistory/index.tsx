@@ -40,6 +40,11 @@ interface StudentPayment {
     expires_at: string;
     grace_days: number;
     status: string;
+    /** What this purchase handed over. Buying the same plan twice otherwise
+     *  shows two identical rows with no sign of the extra days or the extra
+     *  attempt that were paid for. */
+    days_added?: number | null;
+    attempts_added?: number | null;
   } | null;
 }
 
@@ -380,6 +385,14 @@ export function StudentPurchaseHistory() {
                 {formatDateShared(p.subscription.starts_at)} – {formatDateShared(p.subscription.expires_at)}
               </small>
             )}
+            {p.subscription?.days_added ? (
+              <small className="purchase-added-subtext">
+                {strings.table.added(
+                  p.subscription.days_added,
+                  p.subscription.attempts_added ?? 0,
+                )}
+              </small>
+            ) : null}
           </div>
         </td>
 

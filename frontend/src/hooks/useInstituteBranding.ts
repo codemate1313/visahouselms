@@ -43,7 +43,7 @@ function readCachedBranding(slug: string | null | undefined) {
   }
 }
 
-function writeCachedBranding(slug: string, branding: InstituteBrandingTheme) {
+export function writeCachedBranding(slug: string, branding: InstituteBrandingTheme) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(brandingCacheKey(slug), JSON.stringify(branding));
@@ -52,7 +52,7 @@ function writeCachedBranding(slug: string, branding: InstituteBrandingTheme) {
   }
 }
 
-function applyBrandingVariables(branding: InstituteBrandingTheme) {
+export function applyBrandingVariables(branding: InstituteBrandingTheme) {
   const root = document.documentElement;
   let primary = branding.primary_color;
   let secondary = branding.secondary_color;

@@ -520,13 +520,16 @@ def _landing_group(db: Session, audience: str, counts: dict) -> List[dict]:
     return result
 
 
-def _live_user_plan_ids(db: Session, user_id: int) -> set[int]:
-    """Plan ids this student holds an active-or-in-grace subscription for.
+def held_plan_ids(db: Session, user_id: int) -> set:
+    """Plan ids this student has paid for and not yet used up.
 
-    A student can legitimately hold several at once (an early renewal, or a
-    second plan bought alongside the first), so entitlement is a set rather than
-    one winning term. Access windows still come from subscription_service; this
-    only answers "have I bought this plan".
+    Deliberately includes a term that has not started yet. Buying a plan while
+    another is running stacks the new term onto the end of the old one, so it
+    sits in the future - and skipping those meant a plan the student had paid
+    for seconds earlier still rendered a "Choose plan" button. They could buy
+    the same plan over and over and the catalogue would never notice.
+
+    Grace is counted as held: the term is still theirs while a renewal clears.
     """
     now = datetime.utcnow()
     rows = (
@@ -534,13 +537,49 @@ def _live_user_plan_ids(db: Session, user_id: int) -> set[int]:
         .filter(Subscription.user_id == user_id, Subscription.cancelled_at.is_(None))
         .all()
     )
-    live: set[int] = set()
+    return {
+        row.plan_id
+        for row in rows
+        if now <= row.expires_at + timedelta(days=row.grace_days or 0)
+    }
+
+
+def held_plan_expiry(db: Session, user_id: int) -> dict:
+    """When each held plan runs out, so a card can say "active until 14 Nov"."""
+    now = datetime.utcnow()
+    rows = (
+        db.query(Subscription)
+        .filter(Subscription.user_id == user_id, Subscription.cancelled_at.is_(None))
+        .all()
+    )
+    ends: dict = {}
     for row in rows:
-        if row.starts_at > now:
-            continue  # scheduled, not yet started
-        if now <= row.expires_at + timedelta(days=row.grace_days or 0):
-            live.add(row.plan_id)
-    return live
+        cutoff = row.expires_at + timedelta(days=row.grace_days or 0)
+        if now > cutoff:
+            continue
+        current = ends.get(row.plan_id)
+        if current is None or row.expires_at > current:
+            ends[row.plan_id] = row.expires_at
+    return ends
+
+
+# Kept as the old name so nothing else has to change; the meaning is now
+# "held", which is what every caller actually wanted.
+_live_user_plan_ids = held_plan_ids
+
+
+def assert_plan_not_already_held(db: Session, user_id: int, plan_id: int) -> None:
+    """Deliberately a no-op.
+
+    Buying a plan again is allowed and always adds: its days stack onto every
+    module it contains, and each purchase hands over another sitting. Blocking
+    the repeat sale would have meant a student who wanted 30 more days and one
+    more attempt had no way to pay for them.
+
+    The catalogue still marks a held plan as PURCHASED with its end date - that
+    is information, not a gate.
+    """
+    return None
 
 
 def list_public_plans(db: Session, user: User) -> List[dict]:
@@ -557,6 +596,10 @@ def list_public_plans(db: Session, user: User) -> List[dict]:
     if not visibility.get(AUDIENCE_DIRECT, True):
         return []
 
+    held_expiry = (
+        held_plan_expiry(db, user.id) if user.institute_id is None else {}
+    )
+
     if user.institute_id is not None:
         subscription, state = current_subscription(db, user.institute_id)
         entitled_plan_ids = (
@@ -572,7 +615,7 @@ def list_public_plans(db: Session, user: User) -> List[dict]:
         # long institute-style term alongside a short direct plan had the long
         # one win, so the plan they had just paid for came back as not entitled
         # and still showed a "Choose plan" button.
-        entitled_plan_ids = _live_user_plan_ids(db, user.id)
+        entitled_plan_ids = held_plan_ids(db, user.id)
 
     plans = (
         db.query(Plan)
@@ -591,5 +634,9 @@ def list_public_plans(db: Session, user: User) -> List[dict]:
         data["modules"] = [module for module in data["modules"] if module["status"] == "published" and module["is_visible"]]
         data["module_count"] = len(data["modules"])
         data["entitled"] = plan.id in entitled_plan_ids
+        # So the card can say when it runs out rather than only that it is held -
+        # a student who cannot see an end date has no idea when to renew.
+        expiry = held_expiry.get(plan.id)
+        data["entitled_until"] = expiry.isoformat() if expiry is not None else None
         result.append(data)
     return result

@@ -559,3 +559,14 @@
   background: rgba(255, 255, 255, 0.08) !important;
   color: #9ca3af !important;
 }
+
+/* What a purchase handed over, under its date range. Two identical rows for
+   the same plan otherwise give a student no way to see the second lot of days
+   and the second attempt they paid for. */
+.purchase-added-subtext {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--success);
+}

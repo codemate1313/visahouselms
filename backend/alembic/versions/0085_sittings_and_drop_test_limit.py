@@ -28,7 +28,6 @@ Create Date: 2026-08-16
 """
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy import inspect
 
 revision = "0085"
 down_revision = "0084"
@@ -37,16 +36,10 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Check if sittings_granted column already exists before adding it
-    conn = op.get_bind()
-    inspector = inspect(conn)
-    columns = [c['name'] for c in inspector.get_columns('module_entitlements')]
-    
-    if 'sittings_granted' not in columns:
-        with op.batch_alter_table("module_entitlements") as batch:
-            batch.add_column(
-                sa.Column("sittings_granted", sa.Integer(), nullable=False, server_default="1")
-            )
+    with op.batch_alter_table("module_entitlements") as batch:
+        batch.add_column(
+            sa.Column("sittings_granted", sa.Integer(), nullable=False, server_default="1")
+        )
 
     bind = op.get_bind()
 
@@ -94,36 +87,26 @@ def upgrade() -> None:
     # actually be started however the service layer ruled. Numbering the sitting
     # keeps the index doing its real job - stopping a double-clicked Start from
     # creating two attempts - without capping the total.
-    
-    # Check if sitting_number column already exists
-    columns = [c['name'] for c in inspector.get_columns('test_attempts')]
-    if 'sitting_number' not in columns:
-        with op.batch_alter_table("test_attempts") as batch:
-            batch.add_column(
-                sa.Column("sitting_number", sa.Integer(), nullable=False, server_default="1")
-            )
-
-        op.drop_index("uq_test_attempt_original_user_module", table_name="test_attempts")
-        op.create_index(
-            "uq_test_attempt_original_user_module",
-            "test_attempts",
-            ["user_id", "module_id", "sitting_number"],
-            unique=True,
-            sqlite_where=sa.text("is_retake = 0"),
-            postgresql_where=sa.text("is_retake = false"),
+    with op.batch_alter_table("test_attempts") as batch:
+        batch.add_column(
+            sa.Column("sitting_number", sa.Integer(), nullable=False, server_default="1")
         )
 
+    op.drop_index("uq_test_attempt_original_user_module", table_name="test_attempts")
+    op.create_index(
+        "uq_test_attempt_original_user_module",
+        "test_attempts",
+        ["user_id", "module_id", "sitting_number"],
+        unique=True,
+        sqlite_where=sa.text("is_retake = 0"),
+        postgresql_where=sa.text("is_retake = false"),
+    )
+
     # ---- drop the column nothing reads --------------------------------
-    # Check if test_limit column exists before dropping
-    columns = [c['name'] for c in inspector.get_columns('plans')]
-    if 'test_limit' in columns:
-        with op.batch_alter_table("plans") as batch:
-            batch.drop_column("test_limit")
-    
-    columns = [c['name'] for c in inspector.get_columns('institutes')]
-    if 'test_limit' in columns:
-        with op.batch_alter_table("institutes") as batch:
-            batch.drop_column("test_limit")
+    with op.batch_alter_table("plans") as batch:
+        batch.drop_column("test_limit")
+    with op.batch_alter_table("institutes") as batch:
+        batch.drop_column("test_limit")
 
 
 def downgrade() -> None:

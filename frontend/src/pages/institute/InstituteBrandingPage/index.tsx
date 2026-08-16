@@ -4,6 +4,8 @@ import { extractErrorMessage } from "@/api/errors";
 import { Button, PageHeader } from "@/components/ui";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
+import { useAuthStore } from "@/store/authStore";
+import { writeCachedBranding, applyBrandingVariables } from "@/hooks/useInstituteBranding";
 import { isEqual } from "@/utils/isEqual";
 import { instituteBrandingStrings as strings } from "./InstituteBranding.strings";
 
@@ -26,6 +28,7 @@ interface Branding {
  * subscription - an institute with no plan has no students to show a logo to.
  */
 export function InstituteBrandingPage() {
+  const user = useAuthStore((state) => state.user);
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
   const showInfo = useToastStore((state) => state.showInfo);
@@ -83,6 +86,10 @@ export function InstituteBrandingPage() {
       const { data } = await apiClient.put<Branding>("/institute/branding", payload);
       setBranding(data);
       originalRef.current = data;
+      if (user?.institute_slug) {
+        writeCachedBranding(user.institute_slug, data);
+        applyBrandingVariables(data);
+      }
       showSuccess(strings.saved);
     } catch (err: unknown) {
       showError(extractErrorMessage(err, strings.errors.save));
@@ -98,6 +105,10 @@ export function InstituteBrandingPage() {
       body.append("file", file);
       const { data } = await apiClient.post<Branding>("/institute/branding/logo", body);
       setBranding(data);
+      if (user?.institute_slug) {
+        writeCachedBranding(user.institute_slug, data);
+        applyBrandingVariables(data);
+      }
     } catch (err: unknown) {
       showError(extractErrorMessage(err, strings.errors.logo));
     } finally {

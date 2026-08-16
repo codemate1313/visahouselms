@@ -764,12 +764,22 @@ def subscribe_user(
             detail="This plan is deactivated and cannot be subscribed to",
         )
 
-    # A term bought while one is still running begins where that one ends, so
-    # the student gets the days they paid for instead of two terms covering the
-    # same fortnight. Their MODULE access does not wait for that date - the
-    # entitlement ledger below opens every module in the new plan immediately,
-    # and adds this plan's days on top of anything they already held.
-    start = next_term_start(db, user_id=user_id)
+    # A direct student's term ALWAYS starts the day they pay.
+    #
+    # It used to begin where the running term ended, so the days would not
+    # overlap. The arithmetic was right and the experience was wrong: a student
+    # who had just paid saw their purchase listed as "SCHEDULED - starts 15
+    # October", which reads as "you do not have this yet". They did have it -
+    # every module opened the moment the payment cleared - but nothing on the
+    # screen said so.
+    #
+    # The stacking belongs to the ENTITLEMENT, not to the term. The ledger below
+    # adds this plan's days to every module it contains and hands over another
+    # sitting of each; `expires_at` is then set to the furthest of those, so the
+    # row reports the access this purchase actually resulted in. Buy a 30-day
+    # plan twice and the second row reads 60 days, which is what happened.
+    start = _now()
+
     subscription = Subscription(
         user_id=user_id,
         plan_id=plan.id,
@@ -785,6 +795,13 @@ def subscribe_user(
     granted = entitlement_service.grant_plan(
         db, user_id, plan, subscription_id=subscription.id
     )
+    # The row now says what the student ended up with rather than what this one
+    # payment bought in isolation. A plan with no modules keeps its own dates -
+    # there is nothing to stack onto.
+    if granted:
+        subscription.expires_at = max(change["to"] for change in granted.values())
+        db.add(subscription)
+        db.flush()
     db.add(
         AuditLog(
             user_id=user_id,
@@ -816,13 +833,28 @@ def subscribe_user(
 def user_subscription_history(db: Session, user_id: int) -> List[dict]:
     rows = (
         db.query(Subscription)
-        .options(joinedload(Subscription.plan))
+        .options(joinedload(Subscription.plan).joinedload(Plan.modules))
         .filter(Subscription.user_id == user_id)
         .order_by(Subscription.created_at.desc(), Subscription.id.desc())
         .all()
     )
     now = _now()
-    return [_serialize(row, _state_of(row, now)) for row in rows]
+    from app.services import entitlement_service
+
+    history = []
+    for row in rows:
+        item = _serialize(row, _state_of(row, now))
+        # What this purchase handed over, so the history answers "what did I
+        # get for this?" rather than only "when does it end?". A student who
+        # buys the same plan twice should be able to see the second attempt
+        # they paid for.
+        item["days_added"] = row.plan.duration_days if row.plan else None
+        item["modules_included"] = len(
+            entitlement_service.plan_module_ids(row.plan)
+        ) if row.plan else 0
+        item["attempts_added"] = item["modules_included"]
+        history.append(item)
+    return history
 
 
 def my_current_plan_view(db: Session, user: User) -> dict:

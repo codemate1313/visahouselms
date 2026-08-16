@@ -22,6 +22,10 @@ export const studentPurchaseHistoryStrings = {
     clearFilters: "Clear Filters",
   },
   table: {
+    added: (days: number, attempts: number) =>
+      attempts > 0
+        ? `+${days} days · +${attempts} attempt${attempts === 1 ? "" : "s"}`
+        : `+${days} days`,
     invoice: "Invoice #",
     plan: "Plan Details",
     amount: "Amount Billed",

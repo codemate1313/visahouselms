@@ -468,6 +468,10 @@ export interface StudentPlanCatalogItem {
   modules: StudentPlanModule[];
   features?: string[];
   entitled: boolean;
+  /** When a held plan runs out. Null when the plan is not held. A purchased
+   *  card that cannot say when it ends leaves the student guessing about
+   *  when they may renew. */
+  entitled_until?: string | null;
   is_international_enabled?: boolean;
   usd_price?: string | null;
   gst_rate_id?: number | null;

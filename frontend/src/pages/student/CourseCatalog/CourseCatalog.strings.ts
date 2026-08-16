@@ -12,6 +12,10 @@ export const courseCatalogStrings = {
   durationSuffix: (days: number) => `${days} days`,
   testsCount: (count: number) => `${count} test${count === 1 ? "" : "s"}`,
   goToCourse: "Go to course",
+  purchasedUntil: (day: string) => `Active until ${day}`,
+  buyAgain: "Buy again — adds time & an attempt",
+  purchasedUntilTooltip: (day: string) =>
+    `You own this plan until ${day}. Buying it again adds its days on top and gives you another attempt at each of its tests.`,
   choosePlan: "Choose plan",
   checkout: {
     gatewayUnavailableTitle: "Payments unavailable",
