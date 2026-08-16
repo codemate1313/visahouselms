@@ -79,25 +79,27 @@ function PracticeActivity({ activity }: { activity: ChallengeActivity[] }) {
   const t = strings.dailyEnglish;
   return (
     <aside className="daily-activity-area">
-      <div className="daily-activity-heading">
-        <h3>{t.activityHeading}</h3>
-        <span>{t.weeks}</span>
-      </div>
-      <div className="daily-activity-grid" aria-label={t.activityHeading}>
-        {activity.map((day) => (
-          <span
-            className={`daily-activity-day${day.completed ? " is-complete" : day.answered_count ? " is-partial" : ""}`}
-            data-tooltip={t.activityTooltip(day.date, day.answered_count, day.score)}
-            key={day.date}
-          />
-        ))}
-      </div>
-      <div className="daily-activity-legend">
-        <span>{t.less}</span>
-        <i />
-        <i className="is-partial" />
-        <i className="is-complete" />
-        <span>{t.more}</span>
+      <div className="daily-activity-box">
+        <div className="daily-activity-heading">
+          <h3>{t.activityHeading}</h3>
+          <span>{t.weeks}</span>
+        </div>
+        <div className="daily-activity-grid" aria-label={t.activityHeading}>
+          {activity.map((day) => (
+            <span
+              className={`daily-activity-day${day.completed ? " is-complete" : day.answered_count ? " is-partial" : ""}`}
+              data-tooltip={t.activityTooltip(day.date, day.answered_count, day.score)}
+              key={day.date}
+            />
+          ))}
+        </div>
+        <div className="daily-activity-legend">
+          <span>{t.less}</span>
+          <i />
+          <i className="is-partial" />
+          <i className="is-complete" />
+          <span>{t.more}</span>
+        </div>
       </div>
     </aside>
   );
