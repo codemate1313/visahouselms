@@ -63,20 +63,29 @@ export function ListeningHeaderPlayer({
   const resumedRef = useRef(false);
 
   // Determine audio tracks
-  // 1) Part-level media asset (concatenated MP3)
+  // 1) Part-level media asset (Heading MP3 or full continuous MP3)
   const partAsset = currentPart.assets?.find((a) => a.url);
+  const partAssetUrl = partAsset?.url
+    ? (partAsset.url.startsWith("http") ? partAsset.url : `${API_BASE_URL}${partAsset.url}`)
+    : null;
 
   // 2) Per-question audio assets / audio_path clips
   const questionTracks = currentPart.questions
-    .map((q) => q.audio_path)
+    .map((q) => {
+      const raw = (q.interaction as any)?.audio_url || (q.interaction as any)?.audio_path || q.audio_path;
+      if (!raw) return null;
+      return raw.startsWith("http") ? raw : `${API_BASE_URL}${raw.startsWith("/") ? "" : "/"}${raw}`;
+    })
     .filter((url): url is string => Boolean(url));
 
-  const isPlaylist = !partAsset && questionTracks.length > 0;
-  const currentAudioUrl = partAsset
-    ? `${API_BASE_URL}${partAsset.url}`
-    : isPlaylist && questionTracks[playlistIndex]
-      ? `${API_BASE_URL}${questionTracks[playlistIndex]}`
-      : null;
+  const isPerQuestion = currentPart.answer_constraints?.audio_mode === "per_question" || questionTracks.length > 0;
+
+  // In Option 2, playlist starts with Heading Audio (if uploaded), then plays each question track
+  const playlist: string[] = isPerQuestion
+    ? [...(partAssetUrl ? [partAssetUrl] : []), ...questionTracks]
+    : [...(partAssetUrl ? [partAssetUrl] : [])];
+
+  const currentAudioUrl = playlist[playlistIndex] ?? null;
   const storageKey = positionKey(attemptId, currentPart.id, playlistIndex);
   /* Latched once per track. Reading storage on every render would change this
      value as playback writes to it, restarting the effect below - and with it
@@ -162,7 +171,7 @@ export function ListeningHeaderPlayer({
   };
 
   const handleEnded = () => {
-    if (isPlaylist && playlistIndex < questionTracks.length - 1) {
+    if (playlistIndex < playlist.length - 1) {
       setPlaylistIndex((prev) => prev + 1);
       return;
     }

@@ -173,6 +173,8 @@ class PartUpdate(BaseModel):
     # capped like a paragraph rather than like a name.
     title: Optional[str] = Field(default=None, min_length=1, max_length=2000)
     instructions: Optional[str] = Field(default=None, max_length=20000)
+    audio_mode: Optional[str] = Field(default=None, max_length=50)
+    answer_constraints: Optional[dict] = Field(default=None)
 
     @field_validator("title")
     @classmethod
@@ -183,3 +185,4 @@ class PartUpdate(BaseModel):
     @classmethod
     def clean_instructions(cls, value: Optional[str]) -> Optional[str]:
         return _optional_text(value)
+

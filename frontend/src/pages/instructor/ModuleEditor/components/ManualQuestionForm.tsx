@@ -21,6 +21,7 @@ interface ManualQuestionFormProps {
   uploadingImage: boolean;
   uploadingSpeakingPdf?: boolean;
   uploadingAudio?: boolean;
+  isListeningPerQuestion?: boolean;
   onAddOption: () => void;
   onRemoveOption: (index: number) => void;
   onUpdateOption: (index: number, text: string) => void;
@@ -46,6 +47,7 @@ export function ManualQuestionForm({
   uploadingImage,
   uploadingSpeakingPdf = false,
   uploadingAudio = false,
+  isListeningPerQuestion = false,
   onAddOption,
   onRemoveOption,
   onUpdateOption,
@@ -62,7 +64,9 @@ export function ManualQuestionForm({
 }: ManualQuestionFormProps) {
   const t = strings.manualQuestion;
   const isReading = part.section_type === "reading";
+  const isListening = part.section_type === "listening";
   const isListening1 = part.part_code === "listening_1";
+  const showQuestionAudio = isListeningPerQuestion || (isListening && Boolean(manual.interaction?.audio_path || manual.interaction?.audio_url));
   const isSpeaking = part.section_type === "speaking";
   const isSpeakingQuestionOnly = part.part_code === "speaking_1" || part.part_code === "speaking_2";
   const isSpeakingReadAloud = part.part_code === "speaking_3";
@@ -514,7 +518,7 @@ export function ManualQuestionForm({
         )}
 
         {/* 2. Sleek Interactive Image Dropzone Pill for non-speaking questions. */}
-        {!isReading && !isListening1 && !isSpeaking && (
+        {!isReading && !isListening && !isSpeaking && (
           <div className="vh-dropzone-pill-container">
             {!manual.image_url ? (
               <label className={`vh-dropzone-pill${uploadingImage ? " is-busy" : ""}`}>
@@ -559,8 +563,8 @@ export function ManualQuestionForm({
           </div>
         )}
 
-        {/* 2b. Question Audio Dropzone Pill (For Listening Part 1) */}
-        {isListening1 && (
+        {/* 2b. Question Audio Dropzone Pill (When in Option 2 / Per-question audio mode) */}
+        {showQuestionAudio && (
           <div className="vh-dropzone-pill-container">
             {!manual.interaction?.audio_url && !manual.interaction?.audio_path ? (
               <label className={`vh-dropzone-pill${uploadingAudio ? " is-busy" : ""}`}>
@@ -580,7 +584,7 @@ export function ManualQuestionForm({
                 </div>
                 <div className="vh-dropzone-text">
                   <span className="vh-dropzone-main">
-                    {uploadingAudio ? "Uploading audio clip..." : "Attach Question Audio Clip (Optional)"}
+                    {uploadingAudio ? "Uploading audio clip..." : "Attach Question Audio Clip (Option 2)"}
                   </span>
                   <span className="vh-dropzone-sub">
                     Drag & drop MP3 audio file here or click to browse

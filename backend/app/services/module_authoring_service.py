@@ -322,8 +322,24 @@ def validation_errors(module: ExamModule) -> list[str]:
                 total = sum((Decimal(question.points) for question in part.questions), Decimal("0"))
                 if total != Decimal(part.max_marks):
                     errors.append(f"{part.title} must total {part.max_marks:g} marks; it currently totals {total:g}.")
-        if (part.answer_constraints or {}).get("audio_required") and not part.assets:
-            errors.append(f"{part.title} requires an MP3 upload or browser-narrated transcript.")
+        if (part.answer_constraints or {}).get("audio_required"):
+            audio_mode = (part.answer_constraints or {}).get("audio_mode", "single")
+            if audio_mode == "per_question":
+                missing_audio = [
+                    q for q in part.questions
+                    if not (q.interaction or {}).get("audio_path") and not (q.interaction or {}).get("audio_url")
+                ]
+                if not part.assets:
+                    errors.append(
+                        f"{part.title} is in per-question audio mode: please attach the heading/instructions audio clip."
+                    )
+                if missing_audio:
+                    errors.append(
+                        f"{part.title} is in per-question audio mode: all questions require an attached audio clip ({len(missing_audio)} missing)."
+                    )
+            else:
+                if not part.assets:
+                    errors.append(f"{part.title} requires an MP3 upload or browser-narrated transcript.")
     return errors
 
 
@@ -1561,6 +1577,14 @@ def update_part(
         part.title = title
     if "instructions" in fields_set:
         part.instructions = data["instructions"]
+    if "audio_mode" in fields_set and data.get("audio_mode") is not None:
+        merged = dict(part.answer_constraints or {})
+        merged["audio_mode"] = data["audio_mode"]
+        part.answer_constraints = merged
+    elif "answer_constraints" in fields_set and data.get("answer_constraints") is not None:
+        merged = dict(part.answer_constraints or {})
+        merged.update(data["answer_constraints"])
+        part.answer_constraints = merged
 
     db.add(part)
     _audit(db, actor, "exam_module.part_update", module.id, ip, {"part_id": part.id})

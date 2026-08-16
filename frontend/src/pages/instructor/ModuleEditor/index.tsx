@@ -211,6 +211,39 @@ export function ModuleEditor() {
     }
   }
 
+  const audioMode: "single" | "per_question" = useMemo(() => {
+    if (!selectedPart) return "single";
+    if (selectedPart.answer_constraints?.audio_mode) {
+      return selectedPart.answer_constraints.audio_mode;
+    }
+    if (selectedPart.assets && selectedPart.assets.length > 0) return "single";
+    if (selectedPart.questions?.some((q) => q.interaction?.audio_path || q.interaction?.audio_url)) {
+      return "per_question";
+    }
+    return "single";
+  }, [selectedPart]);
+
+  async function updatePartAudioMode(mode: "single" | "per_question") {
+    if (!module || !selectedPart) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await apiClient.patch(`/instructor/modules/${module.id}/parts/${selectedPart.id}`, {
+        audio_mode: mode,
+      });
+      await loadModule(selectedPart.id);
+      showSuccess(
+        mode === "single"
+          ? "Switched to Option 1: Single Audio per Part"
+          : "Switched to Option 2: Audio per Question"
+      );
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, "Failed to update audio mode."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const detectedTtsSpeakers = useMemo(() => detectConversationSpeakers(tts.conversation), [tts.conversation]);
   const isEditable = module?.status !== "archived";
   const moduleWorkspacePath = useMemo(() => {
@@ -982,6 +1015,8 @@ export function ModuleEditor() {
               <ListeningAudioPanel
                 part={selectedPart}
                 isEditable={isEditable}
+                audioMode={audioMode}
+                onAudioModeChange={updatePartAudioMode}
                 audioTitle={audioTitle}
                 onAudioTitleChange={setAudioTitle}
                 onAudioFileChange={setAudioFile}
@@ -1057,6 +1092,7 @@ export function ModuleEditor() {
                       uploadingImage={uploadingImage}
                       uploadingSpeakingPdf={uploadingSpeakingPdf}
                       uploadingAudio={uploadingAudio}
+                      isListeningPerQuestion={audioMode === "per_question"}
                       onAddOption={addOption}
                       onRemoveOption={removeOption}
                       onUpdateOption={updateOption}
@@ -1116,6 +1152,7 @@ export function ModuleEditor() {
               uploadingImage={uploadingImage}
               uploadingSpeakingPdf={uploadingSpeakingPdf}
               uploadingAudio={uploadingAudio}
+              isListeningPerQuestion={audioMode === "per_question"}
               onAddOption={addOption}
               onRemoveOption={removeOption}
               onUpdateOption={updateOption}

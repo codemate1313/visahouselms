@@ -335,6 +335,9 @@ def _redacted_question(
         # the same way the candidate's own recording is handled below, so the
         # material cannot be copied out and passed to the next candidate.
         interaction["candidate_material_url"] = sign_path(material_path)
+    q_audio_path = interaction.get("audio_path")
+    if q_audio_path and not interaction.get("audio_url"):
+        interaction["audio_url"] = f"/storage/{q_audio_path}"
     return {
         "id": question.id,
         "question_type": source.get("question_type", question.question_type),

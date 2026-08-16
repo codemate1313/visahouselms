@@ -335,6 +335,7 @@ export interface ExamModulePart {
     maximum_words?: number;
     audio_plays?: number;
     audio_required?: boolean;
+    audio_mode?: "single" | "per_question";
     preparation_seconds?: number;
     response_seconds?: number;
     option_count?: number;
@@ -713,6 +714,8 @@ export interface AttemptPart {
     response_seconds?: number;
     option_count?: number;
     score_weight?: number;
+    audio_mode?: "single" | "per_question";
+    audio_required?: boolean;
     notes_allowed?: boolean;
     layout?: "shared_cloze" | "conversation_groups" | "notepad_gaps" | "inline_matching_blanks" | "source_text_matching";
     group_count?: number;
