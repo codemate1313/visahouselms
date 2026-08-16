@@ -155,11 +155,28 @@ def _auto_grade_attempt(db: Session, payload: Optional[dict]) -> str:
     return f"AI-graded {graded}/{total} part(s) for attempt {attempt.id}{suffix}."
 
 
+def _expire_student_access(db: Session, payload: Optional[dict]) -> str:
+    """Lock out students whose access window has closed.
+
+    Runs nightly. It never releases a seat - that stays with the student until
+    an admin deliberately frees it - and it never touches anyone with a test in
+    progress, because access is re-checked on every request and flipping the
+    flag mid-exam would 401 their next autosave and lose the sitting.
+    """
+    from app.services import access_window_service
+
+    result = access_window_service.expire_due_students(db)
+    skipped = result["skipped_in_exam"]
+    suffix = f", {skipped} skipped (test in progress)" if skipped else ""
+    return f"Expired {result['expired']} student access window(s){suffix}."
+
+
 HANDLERS: Dict[str, Callable[[Session, Optional[dict]], str]] = {
     "migrate": _run_migrations,
     "backup": _run_backup,
     "purge_logs": _purge_logs,
     "ai_auto_grade": _auto_grade_attempt,
+    "expire_student_access": _expire_student_access,
 }
 
 
@@ -284,6 +301,19 @@ def _scheduler_tick() -> None:
         # institute is what disables every downline account under it
         from app.services import subscription_service
         subscription_service.suspend_expired_institutes(db)
+
+        # students whose own access window has closed. Runs hourly rather than
+        # daily so a window ending at 23:59 local is enforced within the hour
+        # wherever the institute is, instead of whenever the UTC day happens to
+        # roll over. Cheap: an indexed scan of `access_ends_at` that matches
+        # nothing on almost every tick.
+        last_sweep_raw = get_setting(db, "internal.last_access_sweep")
+        last_sweep = datetime.fromisoformat(last_sweep_raw) if last_sweep_raw else None
+        if last_sweep is None or now - last_sweep >= timedelta(hours=1):
+            from app.services import access_window_service
+
+            access_window_service.expire_due_students(db)
+            set_setting(db, "internal.last_access_sweep", now.isoformat())
     finally:
         db.close()
 

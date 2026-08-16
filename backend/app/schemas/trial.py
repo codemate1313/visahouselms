@@ -6,7 +6,6 @@ from pydantic import BaseModel, EmailStr, Field
 class TrialConfigUpdate(BaseModel):
     trial_duration_days: Optional[int] = Field(default=None, gt=0)
     course_limit: Optional[int] = Field(default=None, ge=0)
-    test_limit: Optional[int] = Field(default=None, ge=0)
     is_enabled: Optional[bool] = None
 
 

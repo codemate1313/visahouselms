@@ -10,7 +10,7 @@ from app.models.user import User
 from app.models.user_session import UserSession
 from app.schemas.auth import CurrentUser
 from app.schemas.institute import BrandingUpdate
-from app.schemas.institute_admin import InstituteMemberCreate, InstituteMemberUpdate
+from app.schemas.institute_admin import AccessWindow, InstituteMemberCreate, InstituteMemberUpdate
 from app.schemas.payment import InstituteRenewalOrderRequest, InstituteRenewalVerifyRequest
 from app.schemas.user import ChangePasswordRequest, ProfileUpdateRequest, SessionOut
 from app.services import (
@@ -148,7 +148,7 @@ def list_members(
     role: Optional[str] = None,
     search: Optional[str] = Query(default=None, max_length=200),
     active: Optional[bool] = None,
-    status: Optional[str] = Query(default=None, pattern="^(active|inactive|deleted|password_reset)$"),
+    status: Optional[str] = Query(default=None, pattern="^(active|inactive|expired|released|reclaimable|deleted|password_reset)$"),
     has_attempts: Optional[bool] = None,
     has_devices: Optional[bool] = None,
     has_active_sessions: Optional[bool] = None,
@@ -210,6 +210,8 @@ def create_member(
         role_name=payload.role,
         phone_number=payload.phone_number,
         address=payload.address,
+        access_starts_on=payload.access_starts_on,
+        access_ends_on=payload.access_ends_on,
         ip=_ip(request),
     )
 
@@ -328,6 +330,62 @@ def reactivate_member(
         actor, "manage_students" if member.role.name == "STUDENT" else "manage_staff"
     )
     return institute_admin_service.set_member_active(db, actor, member_id, True, _ip(request))
+
+
+@router.post("/members/{member_id}/release-seat", dependencies=[Depends(require_password_change_complete)])
+def release_member_seat(
+    member_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Give a seat back without losing the student.
+
+    The only action that reduces the seat count while keeping the record, the
+    email and the results - so a returning student can be found and reactivated.
+    """
+    institute_admin_service.require_admin_permission(actor, "manage_students")
+    return institute_admin_service.release_seat(db, actor, member_id, _ip(request))
+
+
+@router.post("/members/{member_id}/reactivate-seat", dependencies=[Depends(require_password_change_complete)])
+def reactivate_member_seat(
+    member_id: int,
+    payload: AccessWindow,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Bring a past student back into a seat. Refused when the institute is full."""
+    institute_admin_service.require_admin_permission(actor, "manage_students")
+    return institute_admin_service.reactivate_seat(
+        db,
+        actor,
+        member_id,
+        access_starts_on=payload.access_starts_on,
+        access_ends_on=payload.access_ends_on,
+        ip=_ip(request),
+    )
+
+
+@router.put("/members/{member_id}/access-window", dependencies=[Depends(require_password_change_complete)])
+def set_member_access_window(
+    member_id: int,
+    payload: AccessWindow,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Change a seated student's dates. Never frees or takes a seat."""
+    institute_admin_service.require_admin_permission(actor, "manage_students")
+    return institute_admin_service.set_member_window(
+        db,
+        actor,
+        member_id,
+        access_starts_on=payload.access_starts_on,
+        access_ends_on=payload.access_ends_on,
+        ip=_ip(request),
+    )
 
 
 @router.post("/members/{member_id}/reset-password", dependencies=[Depends(require_password_change_complete)])

@@ -3219,3 +3219,241 @@ body {
   font-weight: 500;
 }
 
+
+/* ------------------------------------------------------------------
+   Student seats: the panel above the roster, the access column inside
+   it, and the date pickers that grant a window.
+
+   All colour goes through tokens so the institute portal's own brand
+   remap and both themes pick these up without a second stylesheet.
+   ------------------------------------------------------------------ */
+
+.seat-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-color, var(--border));
+  border-radius: var(--radius-lg, 14px);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.seat-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.seat-panel-eyebrow {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.seat-panel-count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 2px 0 0;
+  font-size: 1.45rem;
+  line-height: 1.2;
+  color: var(--text-primary, var(--text));
+}
+
+.seat-panel-count .badge {
+  align-self: center;
+}
+
+.seat-panel-subscription {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.seat-panel-bar {
+  overflow: hidden;
+  width: 100%;
+  height: 8px;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface-muted);
+}
+
+.seat-panel-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+  transition: width 240ms ease;
+}
+
+.seat-panel-bar-fill[data-tone="amber"] { background: var(--warning); }
+.seat-panel-bar-fill[data-tone="red"] { background: var(--danger); }
+
+.seat-panel-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 0.85rem;
+  color: var(--text-secondary, var(--text-muted));
+}
+
+.seat-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+/* Reads as a link, behaves as a button - it filters the roster in place
+   rather than navigating, so it must not be an anchor. */
+.seat-panel-actions .link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.seat-panel-actions .link-button:hover {
+  text-decoration: underline;
+}
+
+.seat-panel-actions .link-button:focus-visible {
+  outline: 2px solid var(--focus-ring, var(--primary));
+  outline-offset: 2px;
+  border-radius: var(--radius-xs, 4px);
+}
+
+/* Status and access columns ------------------------------------------------ */
+
+.institute-members-table .member-status-cell,
+.institute-members-table .member-access-cell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.institute-members-table .member-status-cell .muted-text,
+.institute-members-table .member-access-cell .muted-text {
+  font-size: 0.76rem;
+}
+
+/* Date pickers ------------------------------------------------------------- */
+
+.access-window-fieldset {
+  margin: 6px 0 2px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color, var(--border));
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface-subtle);
+}
+
+.access-window-fieldset legend {
+  padding: 0 6px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.window-quick-picks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.window-quick-picks .muted-text {
+  font-size: 0.82rem;
+}
+
+.chip-button {
+  padding: 4px 12px;
+  border: 1px solid var(--border-color, var(--border));
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface);
+  color: var(--text-secondary, var(--text));
+  font-size: 0.82rem;
+  line-height: 1.6;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.chip-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.chip-button:focus-visible {
+  outline: 2px solid var(--focus-ring, var(--primary));
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .seat-panel-head {
+    flex-direction: column;
+  }
+
+  .seat-panel-count {
+    font-size: 1.25rem;
+  }
+}
+
+/* The status and access columns carry two short lines each, so they need a
+   floor - without one the header clips to "ACCESS U..." and a status badge
+   ellipsises to "Not St...", which tells an admin nothing. */
+.institute-members-table th:nth-last-child(3),
+.institute-members-table th:nth-last-child(2) {
+  white-space: nowrap;
+}
+
+.institute-members-table .member-status-cell .badge,
+.institute-members-table .member-access-cell span {
+  overflow: visible;
+  max-width: none;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+/* `.badge` capitalises every word, which is right for one-word statuses and
+   wrong for a sentence - "93 Days Of Access" reads as a headline. These two
+   badges carry prose, so they opt out. */
+.access-window-fieldset .badge,
+.access-window-modal .badge {
+  text-transform: none;
+}
+
+/* The quick-pick chips sit inside a form, where the app's own button styling
+   (solid primary fill, light text) wins on :focus and leaves the label almost
+   invisible against the fill. These are chips in every state. */
+.window-quick-picks .chip-button,
+.window-quick-picks .chip-button:focus,
+.window-quick-picks .chip-button:focus-visible,
+.window-quick-picks .chip-button:active {
+  background: var(--surface);
+  color: var(--text-secondary, var(--text));
+  border-color: var(--border-color, var(--border));
+  box-shadow: none;
+}
+
+.window-quick-picks .chip-button:hover,
+.window-quick-picks .chip-button:focus-visible {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.window-quick-picks .chip-button:focus-visible {
+  outline: 2px solid var(--focus-ring, var(--primary));
+  outline-offset: 2px;
+}

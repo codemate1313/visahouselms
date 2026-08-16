@@ -12,7 +12,7 @@ from app.models.institute import Institute
 from app.models.plan import AUDIENCE_DIRECT, AUDIENCE_INSTITUTES, Plan
 from app.models.role import DEVELOPER, INSTITUTE_ADMIN, INST_INSTRUCTOR, STUDENT, SUPER_ADMIN, Role
 from app.models.subscription import Subscription
-from app.models.user import User
+from app.models.user import User, seat_holder_filter
 from app.services.plan_service import assert_audience, get_plan_or_404
 
 STATE_NONE = "none"
@@ -292,12 +292,14 @@ def usage(db: Session, institute_id: int) -> dict:
         role.name: role.id
         for role in db.query(Role).filter(Role.name.in_([STUDENT, INST_INSTRUCTOR])).all()
     }
+    # Same predicate the creation check uses, so the number on the admin's
+    # screen and the number that blocks them are the same number.
     students = (
         db.query(User)
         .filter(
             User.institute_id == institute_id,
             User.role_id == role_ids.get(STUDENT, -1),
-            User.deleted_at.is_(None),
+            seat_holder_filter(),
         )
         .count()
     )
@@ -306,7 +308,7 @@ def usage(db: Session, institute_id: int) -> dict:
         .filter(
             User.institute_id == institute_id,
             User.role_id == role_ids.get(INST_INSTRUCTOR, -1),
-            User.deleted_at.is_(None),
+            seat_holder_filter(),
         )
         .count()
     )

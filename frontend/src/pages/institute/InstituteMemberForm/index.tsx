@@ -28,7 +28,17 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
     ? isStudent ? "/institute-portal/students" : "/institute-portal/staff"
     : `/super-admin/institutes/${instituteId}/accounts`);
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "", first_name: "", last_name: "", phone_number: "", address: "" });
+  const [form, setForm] = useState({
+    email: "",
+    first_name: "",
+    last_name: "",
+    phone_number: "",
+    address: "",
+    // Deliberately blank. A pre-filled window is how a student ends up
+    // outliving the subscription that paid for them - the admin has to choose.
+    access_starts_on: "",
+    access_ends_on: "",
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,12 +48,22 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
   const originalRef = useRef<Record<string, unknown> | null>(null);
 
   useEffect(() => {
-    if (!isNew) return;
+    // Fetched on edit as well as create: the date inputs cap themselves at the
+    // subscription end, and that ceiling has to be known on both screens.
     apiClient.get<MemberCapacity>(`${apiBase}/member-capacity`)
       .then(({ data }) => setCapacity(data))
-      .catch((err: unknown) => setError(extractErrorMessage(err, strings.errors.loadCapacity)))
-      .finally(() => setLoading(false));
+      .catch((err: unknown) => {
+        if (isNew) setError(extractErrorMessage(err, strings.errors.loadCapacity));
+      })
+      .finally(() => { if (isNew) setLoading(false); });
   }, [apiBase, isNew]);
+
+  // A new student starts today by default; only the end date is left blank,
+  // because that is the decision the institute actually has to make.
+  useEffect(() => {
+    if (!isNew || !isStudent) return;
+    setForm((current) => (current.access_starts_on ? current : { ...current, access_starts_on: todayIso() }));
+  }, [isNew, isStudent]);
 
   useEffect(() => {
     if (isNew) return;
@@ -59,6 +79,8 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
           last_name: data.last_name,
           phone_number: data.phone_number ?? "",
           address: data.address ?? "",
+          access_starts_on: data.access_starts_on ?? "",
+          access_ends_on: data.access_ends_on ?? "",
         });
         originalRef.current = {
           email: data.email,
@@ -77,9 +99,32 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
     return (event: React.ChangeEvent<HTMLInputElement>) => setForm((current) => ({ ...current, [field]: event.target.value }));
   }
 
+  function setEndDate(value: string) {
+    setForm((current) => ({ ...current, access_ends_on: value }));
+  }
+
+  function todayIso() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const payload = { ...form, role, phone_number: form.phone_number || null, address: form.address || null };
+    const { access_starts_on, access_ends_on, ...rest } = form;
+    // The window rides along only when creating a student. Editing a member
+    // goes through PATCH /members/{id}, which never touches the dates - moving
+    // a window is its own endpoint precisely so it can be audited and so it can
+    // never be an accidental side effect of fixing a typo in someone's name.
+    const payload: Record<string, unknown> = {
+      ...rest,
+      role,
+      phone_number: form.phone_number || null,
+      address: form.address || null,
+    };
+    if (isNew && isStudent) {
+      payload.access_starts_on = access_starts_on;
+      payload.access_ends_on = access_ends_on;
+    }
     if (originalRef.current && isEqual(originalRef.current, payload)) {
       showInfo(noChangesMessage);
       return;
@@ -137,9 +182,12 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
       isNew={isNew}
       label={label}
       form={form}
+      showAccessWindow={isStudent && isNew}
+      subscriptionEndsOn={capacity?.subscription_ends_on ?? null}
       saving={saving}
       error={error}
       onFieldChange={set}
+      onSetEndDate={setEndDate}
       onSubmit={submit}
       onCancel={() => navigate(basePath)}
     />

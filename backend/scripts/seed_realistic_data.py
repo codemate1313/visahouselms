@@ -17,7 +17,7 @@ from __future__ import annotations
 import argparse
 import random
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 
@@ -48,6 +48,7 @@ from app.models.role import (  # noqa: E402
 )
 from app.models.user import User  # noqa: E402
 from app.services import (  # noqa: E402
+    access_window_service,
     achievement_service,
     attempt_service,
     grading_service,
@@ -451,10 +452,16 @@ def main() -> None:
             roster = []
             share = first_names[index * 7: index * 7 + (7 if index == 0 else 5)]
             for n, first in enumerate(share):
+                # Real institutes give a cohort a term, not open-ended access.
+                # One student per institute starts a week from now, so the
+                # roster shows a "not started" row as well as live ones.
+                starts_on = date.today() + timedelta(days=7) if n == 1 else date.today()
+                ends_on = starts_on + timedelta(days=150)
                 created = institute_admin_service.create_member(
                     db, admin, email=f"{first.lower()}@{institute.slug}.example.com",
                     first_name=first, last_name="Sharma", role_name=STUDENT,
                     phone_number=f"98{index}{n:07d}", address="Amritsar, Punjab", ip=IP,
+                    access_starts_on=starts_on, access_ends_on=ends_on,
                 )
                 student = db.get(User, created["id"])
                 student.password_hash = hash_password(PASSWORD)
@@ -462,8 +469,23 @@ def main() -> None:
                 db.add(student)
                 roster.append(student)
             db.commit()
+
+            # The first student's course finished last month. Backdate the
+            # window and let the nightly sweep do what it does in production,
+            # rather than writing the "expired" state in by hand - that way the
+            # seeded data is reachable by the real code path.
+            finished = roster[0]
+            finished.access_starts_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=210)
+            finished.access_ends_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=3)
+            db.add(finished)
+            db.commit()
+            access_window_service.expire_due_students(db)
+
             students_by_institute[institute.id] = roster
-            note(f"{institute.name}: 1 instructor + {len(roster)} students")
+            note(
+                f"{institute.name}: 1 instructor + {len(roster)} students "
+                f"({finished.first_name}'s access has ended - their seat is still held)"
+            )
 
         # -- 8. a direct student buys online -----------------------------------
         step("A direct student signs up and buys a plan")

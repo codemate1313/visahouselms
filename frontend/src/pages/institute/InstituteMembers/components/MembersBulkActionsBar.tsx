@@ -5,8 +5,13 @@ interface MembersBulkActionsBarProps {
   selectedCount: number;
   busy: boolean;
   hasInactiveSelected: boolean;
+  /** How many of the selected rows are students whose seat can be freed -
+   *  expired or deactivated. Zero hides the button rather than showing one
+   *  that would only ever return an error. */
+  reclaimableCount: number;
   onActivate: () => void;
   onDeactivate: () => void;
+  onFreeSeats: () => void;
   onDelete: () => void;
   onClear: () => void;
 }
@@ -15,8 +20,10 @@ export function MembersBulkActionsBar({
   selectedCount,
   busy,
   hasInactiveSelected,
+  reclaimableCount,
   onActivate,
   onDeactivate,
+  onFreeSeats,
   onDelete,
   onClear,
 }: MembersBulkActionsBarProps) {
@@ -34,6 +41,11 @@ export function MembersBulkActionsBar({
         ) : (
           <Button variant="secondary" size="sm" disabled={busy} onClick={onDeactivate}>
             {t.deactivate}
+          </Button>
+        )}
+        {reclaimableCount > 0 && (
+          <Button variant="secondary" size="sm" disabled={busy} onClick={onFreeSeats}>
+            {t.freeSeats} ({reclaimableCount})
           </Button>
         )}
         <Button variant="danger" size="sm" disabled={busy} onClick={onDelete}>

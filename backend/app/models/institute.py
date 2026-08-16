@@ -48,6 +48,10 @@ class Institute(Base):
     # platform-wide default monthly limit.
     ai_student_monthly_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     session_duration_hours: Mapped[int] = mapped_column(Integer, nullable=False, default=24)
+    # Student access windows are calendar dates to an admin ("ends 31 March"),
+    # so they have to be resolved in the institute's own timezone. Stored as UTC
+    # midnight, "31 March" would cut a Delhi institute off at 05:30 that morning.
+    timezone: Mapped[str] = mapped_column(String(64), nullable=False, default="Asia/Kolkata", server_default="Asia/Kolkata")
     published_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())

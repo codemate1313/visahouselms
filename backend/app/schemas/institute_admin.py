@@ -1,8 +1,24 @@
+from datetime import date
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 from app.models.role import INST_INSTRUCTOR, STUDENT
+
+
+class AccessWindow(BaseModel):
+    """The dates an institute admin types. Deliberately dates, not datetimes -
+    the admin thinks in calendar days and the service resolves them to instants
+    in the institute's own timezone."""
+
+    access_starts_on: date
+    access_ends_on: date
+
+    @model_validator(mode="after")
+    def check_order(self) -> "AccessWindow":
+        if self.access_ends_on < self.access_starts_on:
+            raise ValueError("The access end date cannot be before the start date")
+        return self
 
 
 class InstituteMemberCreate(BaseModel):
@@ -12,6 +28,19 @@ class InstituteMemberCreate(BaseModel):
     role: str
     phone_number: str = Field(max_length=50)
     address: Optional[str] = Field(default=None, max_length=255)
+    # Required for students, ignored for staff. No default: a defaulted window
+    # is how a student outlives the subscription that paid for them.
+    access_starts_on: Optional[date] = None
+    access_ends_on: Optional[date] = None
+
+    @model_validator(mode="after")
+    def students_need_a_window(self) -> "InstituteMemberCreate":
+        if self.role == STUDENT:
+            if self.access_starts_on is None or self.access_ends_on is None:
+                raise ValueError("A student needs an access start and end date")
+            if self.access_ends_on < self.access_starts_on:
+                raise ValueError("The access end date cannot be before the start date")
+        return self
 
     @field_validator("role")
     @classmethod

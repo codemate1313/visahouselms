@@ -79,7 +79,7 @@ def _serialize_linked_session(session: UserSession) -> dict:
 def list_directory_users(
     role: Optional[str] = Query(default=None, max_length=40),
     q: Optional[str] = Query(default=None, max_length=200),
-    status: Optional[str] = Query(default=None, pattern="^(active|inactive|deleted)$"),
+    status: Optional[str] = Query(default=None, pattern="^(active|inactive|expired|released|reclaimable|deleted)$"),
     institute_id: Optional[int] = Query(default=None, ge=1),
     direct: Optional[bool] = Query(default=None),
     page: int = Query(default=1, ge=1),

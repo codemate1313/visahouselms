@@ -13,6 +13,8 @@ import { MembersFeatureLocked } from "./components/MembersFeatureLocked";
 import { MembersTable } from "./components/MembersTable";
 import { CredentialModal } from "./components/CredentialModal";
 import { ImportResultModal } from "./components/ImportResultModal";
+import { SeatPanel } from "./components/SeatPanel";
+import { AccessWindowModal, type WindowModalMode } from "./components/AccessWindowModal";
 
 export type { InstituteMember, MemberCapacity } from "./types";
 
@@ -52,8 +54,19 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [resettingId, setResettingId] = useState<number | null>(null);
+  const [windowModal, setWindowModal] = useState<{ mode: WindowModalMode; member: InstituteMember } | null>(null);
+  const [windowBusy, setWindowBusy] = useState(false);
+  const [windowError, setWindowError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const selectableMembers = members.filter((member) => !member.deleted_at);
+  // A seat can only be reclaimed from a student who is already locked out.
+  const canFreeSeat = (member: InstituteMember) =>
+    member.role === "STUDENT" &&
+    !member.deleted_at &&
+    (member.access_state === "expired" || member.access_state === "suspended");
+  const selectedReclaimable = selectableMembers.filter(
+    (member) => selectedIds.has(member.id) && canFreeSeat(member),
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -121,6 +134,74 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
       setError(extractErrorMessage(err, strings.errors.resetPassword));
     } finally {
       setResettingId(null);
+    }
+  }
+
+  async function freeSeat(member: InstituteMember) {
+    const confirmed = await confirmAction(
+      strings.confirm.freeSeat(`${member.first_name} ${member.last_name}`, member.email),
+      {
+        title: strings.confirm.freeSeatTitle,
+        confirmText: strings.confirm.freeSeatConfirm,
+        variant: "warning",
+      },
+    );
+    if (!confirmed) return;
+    try {
+      await apiClient.post(`${apiBase}/members/${member.id}/release-seat`);
+      await load();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.errors.freeSeat));
+    }
+  }
+
+  async function bulkFreeSeats() {
+    const targets = selectedReclaimable;
+    if (!targets.length) return;
+    const confirmed = await confirmAction(strings.confirm.freeSeatMany(targets.length), {
+      title: strings.confirm.freeSeatManyTitle,
+      confirmText: strings.confirm.freeSeatConfirm,
+      variant: "warning",
+    });
+    if (!confirmed) return;
+    setBulkBusy(true);
+    setError(null);
+    const results = await Promise.allSettled(
+      targets.map((member) => apiClient.post(`${apiBase}/members/${member.id}/release-seat`)),
+    );
+    const failed = results.filter((result) => result.status === "rejected").length;
+    if (failed) setError(strings.errors.bulkFreeSeats(failed, targets.length));
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+    await load();
+  }
+
+  async function submitWindow(startsOn: string, endsOn: string) {
+    if (!windowModal) return;
+    const { mode, member } = windowModal;
+    setWindowBusy(true);
+    setWindowError(null);
+    try {
+      const body = { access_starts_on: startsOn, access_ends_on: endsOn };
+      if (mode === "reactivate") {
+        await apiClient.post(`${apiBase}/members/${member.id}/reactivate-seat`, body);
+      } else {
+        await apiClient.put(`${apiBase}/members/${member.id}/access-window`, body);
+      }
+      setWindowModal(null);
+      await load();
+    } catch (err: unknown) {
+      // Stays open with the server's own reason - "past the subscription end
+      // date", "every seat is in use" - so the admin can fix the date in place
+      // rather than losing what they typed to a toast.
+      setWindowError(
+        extractErrorMessage(
+          err,
+          mode === "reactivate" ? strings.errors.reactivateSeat : strings.errors.setWindow,
+        ),
+      );
+    } finally {
+      setWindowBusy(false);
     }
   }
 
@@ -199,7 +280,13 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
   }
 
   function downloadTemplate() {
-    const csv = "first_name,last_name,email,phone_number,address\nAarav,Sharma,aarav@example.com,+919000000000,Delhi\n";
+    // Access dates are columns now, not an afterthought - the importer rejects
+    // a row without them, so the template has to teach the format.
+    const start = todayIso();
+    const end = capacity?.subscription_ends_on ?? addYearIso(start);
+    const csv =
+      "first_name,last_name,email,phone_number,address,access_start,access_end\n" +
+      `Aarav,Sharma,aarav@example.com,+919000000000,Delhi,${start},${end}\n`;
     downloadCsv(csv, "student-import-template.csv");
   }
 
@@ -210,6 +297,18 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
       [item.first_name, item.last_name, item.email, item.temporary_password].map(escape).join(","),
     );
     downloadCsv(["first_name,last_name,email,temporary_password", ...rows].join("\n"), "student-credentials.csv");
+  }
+
+  // Bare YYYY-MM-DD throughout: `new Date(iso)` would parse as midnight UTC
+  // and shift the day for anyone west of Greenwich.
+  function todayIso() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  }
+
+  function addYearIso(iso: string) {
+    const [year, month, day] = iso.split("-").map(Number);
+    return `${year + 1}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   }
 
   function downloadCsv(content: string, filename: string) {
@@ -238,10 +337,19 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
         fileInputRef={fileInput}
       />
 
+      {!staffFeatureLocked && isStudent && capacity && (
+        <SeatPanel
+          capacity={capacity}
+          onShowReclaimable={() => setStatusFilter("reclaimable")}
+          onShowPastStudents={() => setStatusFilter("released")}
+        />
+      )}
+
       {!staffFeatureLocked && (
         <MembersFilterBar
           label={label}
           isAllAccounts={isAllAccounts}
+          showAccessStates={isStudent || isAllAccounts}
           search={search}
           onSearchChange={setSearch}
           roleFilter={roleFilter}
@@ -261,8 +369,10 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
           selectedCount={selectedIds.size}
           busy={bulkBusy}
           hasInactiveSelected={selectableMembers.some((member) => selectedIds.has(member.id) && !member.is_active)}
+          reclaimableCount={selectedReclaimable.length}
           onActivate={() => bulkSetActive(true)}
           onDeactivate={() => bulkSetActive(false)}
+          onFreeSeats={bulkFreeSeats}
           onDelete={bulkRemove}
           onClear={() => setSelectedIds(new Set())}
         />
@@ -289,9 +399,31 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
               onResetPassword={resetPassword}
               onToggleActive={toggle}
               onRemove={remove}
+              onChangeWindow={(member) => {
+                setWindowError(null);
+                setWindowModal({ mode: "extend", member });
+              }}
+              onFreeSeat={freeSeat}
+              onReactivateSeat={(member) => {
+                setWindowError(null);
+                setWindowModal({ mode: "reactivate", member });
+              }}
             />
           )}
         </>
+      )}
+
+      {windowModal && (
+        <AccessWindowModal
+          mode={windowModal.mode}
+          member={windowModal.member}
+          subscriptionEndsOn={capacity?.subscription_ends_on ?? null}
+          seatsFree={capacity?.seats.free ?? null}
+          busy={windowBusy}
+          error={windowError}
+          onSubmit={submitWindow}
+          onClose={() => setWindowModal(null)}
+        />
       )}
 
       {credential && <CredentialModal credential={credential} onClose={() => setCredential(null)} />}

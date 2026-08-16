@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { DirectoryRole, DirectoryUser } from "@/api/types";
-import { MemberFormFields } from "@/pages/institute/InstituteMemberForm/components/MemberFormFields";
+import { MemberFormFields, type MemberFormField } from "@/pages/institute/InstituteMemberForm/components/MemberFormFields";
 import { usersStrings as strings } from "./Users.strings";
 
 const ROLE_LABELS: Partial<Record<DirectoryRole, string>> = {
@@ -53,7 +53,11 @@ export function DirectStudentForm({ portalBasePath = "/super-admin" }: { portalB
   const roleLabel = user?.role_name ? ROLE_LABELS[user.role_name] ?? "user" : "user";
   const basePath = `${portalBasePath}/users/${user?.role_name ? ROLE_SLUGS[user.role_name] ?? "students" : "students"}`;
 
-  function set(field: keyof typeof form) {
+  // Typed against the shared component's field union rather than this form's
+  // own keys. A direct student has no institute and therefore no access window,
+  // so the two access fields never render here - but the shared props type has
+  // to admit them, and spreading by key stays correct either way.
+  function set(field: MemberFormField) {
     return (event: ChangeEvent<HTMLInputElement>) => {
       setForm((current) => ({ ...current, [field]: event.target.value }));
     };

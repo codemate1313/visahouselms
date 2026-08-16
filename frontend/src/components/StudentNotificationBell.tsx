@@ -55,7 +55,7 @@ function getNotificationVisual(notification: StudentNotification) {
   }
   if (k.includes("institute") || t.includes("institute") || t.includes("application")) {
     return {
-      gradient: "linear-gradient(135deg, #ec4899 0%, #e11d2e 100%)",
+      gradient: "linear-gradient(135deg, #c52232 0%, #8f1420 100%)",
       iconName: "building" as const,
       badge: "arrow",
     };

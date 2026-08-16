@@ -1,4 +1,5 @@
 import unittest
+from datetime import date, timedelta
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
@@ -95,6 +96,7 @@ class InstituteOnboardingServiceTests(unittest.TestCase):
         student = institute_admin_service.create_member(
             self.db, self.super_admin, email="student@physical.test", first_name="Draft",
             last_name="Student", role_name=STUDENT, phone_number=None, address=None, ip=None,
+            access_starts_on=date.today(), access_ends_on=date.today() + timedelta(days=90),
             scoped_institute_id=institute_id,
         )
         student_user = self.db.get(User, student["id"])

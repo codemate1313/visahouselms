@@ -21,6 +21,34 @@ interface MembersTableProps {
   onResetPassword: (member: InstituteMember) => void;
   onToggleActive: (member: InstituteMember) => void;
   onRemove: (member: InstituteMember) => void;
+  onChangeWindow: (member: InstituteMember) => void;
+  onFreeSeat: (member: InstituteMember) => void;
+  onReactivateSeat: (member: InstituteMember) => void;
+}
+
+/** Status is derived from `access_state`, not `is_active`, because one boolean
+ *  cannot tell "deactivated by the institute" from "their course ended" from
+ *  "we gave the seat back" - and those three need different buttons. */
+function statusOf(member: InstituteMember): { label: string; tone: "gray" | "green" | "amber" | "red" | "inactive" } {
+  const t = strings.table;
+  if (member.deleted_at) return { label: t.statusDeleted, tone: "gray" };
+  if (member.role !== "STUDENT") {
+    return member.is_active
+      ? { label: t.statusActive, tone: "green" }
+      : { label: t.statusSuspended, tone: "inactive" };
+  }
+  switch (member.access_state) {
+    case "released":
+      return { label: t.statusReleased, tone: "gray" };
+    case "expired":
+      return { label: t.statusExpired, tone: "red" };
+    case "suspended":
+      return { label: t.statusSuspended, tone: "inactive" };
+    default:
+      return member.window_open
+        ? { label: t.statusActive, tone: "green" }
+        : { label: t.statusNotStarted, tone: "amber" };
+  }
 }
 
 export function MembersTable({
@@ -37,9 +65,12 @@ export function MembersTable({
   onResetPassword,
   onToggleActive,
   onRemove,
+  onChangeWindow,
+  onFreeSeat,
+  onReactivateSeat,
 }: MembersTableProps) {
   const t = strings.table;
-  const columnCount = 8 + (canManage ? 1 : 0) + (isAllAccounts ? 1 : 0);
+  const columnCount = 9 + (canManage ? 1 : 0) + (isAllAccounts ? 1 : 0);
 
   function rowActions(member: InstituteMember): ReactElement[] {
     const actions: ReactElement[] = [];
@@ -70,7 +101,59 @@ export function MembersTable({
         </Link>,
       );
     }
-    if (!member.deleted_at && canManage) {
+    const isStudent = member.role === "STUDENT";
+    const isReleased = isStudent && member.access_state === "released";
+
+    if (!member.deleted_at && canManage && isStudent) {
+      if (isReleased) {
+        // A past student. The only thing to do is bring them back - and that
+        // costs a seat, which the modal spells out before it is spent.
+        actions.push(
+          <button
+            key="reactivate-seat"
+            type="button"
+            onClick={() => onReactivateSeat(member)}
+            aria-label={strings.actionTooltips.reactivateSeat}
+            role="menuitem"
+          >
+            <Icon name="restore" />
+            <span>{strings.actionTooltips.reactivateSeat}</span>
+          </button>,
+        );
+      } else {
+        actions.push(
+          <button
+            key="change-window"
+            type="button"
+            onClick={() => onChangeWindow(member)}
+            aria-label={strings.actionTooltips.changeWindow}
+            role="menuitem"
+          >
+            <Icon name="history" />
+            <span>{strings.actionTooltips.changeWindow}</span>
+          </button>,
+        );
+        // Only offered once the student is already locked out. Freeing a seat
+        // from under someone mid-course should take two deliberate steps -
+        // deactivate, then free - not one misclick on a roster row.
+        if (member.access_state === "expired" || member.access_state === "suspended") {
+          actions.push(
+            <button
+              key="free-seat"
+              type="button"
+              onClick={() => onFreeSeat(member)}
+              aria-label={strings.actionTooltips.freeSeat}
+              role="menuitem"
+            >
+              <Icon name="revoke" />
+              <span>{strings.actionTooltips.freeSeat}</span>
+            </button>,
+          );
+        }
+      }
+    }
+
+    if (!member.deleted_at && canManage && !isReleased) {
       actions.push(
         <button
           key="reset-password"
@@ -82,6 +165,22 @@ export function MembersTable({
           <Icon name="lock" />
           <span>{strings.actionTooltips.resetPassword}</span>
         </button>,
+      );
+    }
+
+    // Reactivate is hidden once the window has closed, because it cannot work:
+    // the service refuses to switch a student back on into a date that has
+    // already passed. Offering the button anyway would give an admin one click
+    // whose only possible outcome is an error message. Their route back is
+    // Change access dates, which is right above it.
+    const canToggleActive =
+      !member.deleted_at &&
+      canManage &&
+      !isReleased &&
+      (member.is_active || !isStudent || member.access_state !== "expired");
+
+    if (canToggleActive) {
+      actions.push(
         <button
           key="toggle-active"
           type="button"
@@ -92,6 +191,11 @@ export function MembersTable({
           <Icon name={member.is_active ? "toggleOff" : "toggleOn"} />
           <span>{member.is_active ? strings.actionTooltips.deactivate : strings.actionTooltips.reactivate}</span>
         </button>,
+      );
+    }
+
+    if (!member.deleted_at && canManage && !isReleased) {
+      actions.push(
         <button
           key="delete"
           type="button"
@@ -131,6 +235,7 @@ export function MembersTable({
             <th>{t.devices}</th>
             <th>{t.contact}</th>
             <th>{t.status}</th>
+            <th>{t.access}</th>
             <th>{t.created}</th>
             <th className="table-actions-heading">{t.actions}</th>
           </tr>
@@ -175,10 +280,29 @@ export function MembersTable({
               </td>
               <td data-label={t.contact}>{member.phone_number ?? "-"}</td>
               <td data-label={t.status}>
-                <Badge tone={member.deleted_at ? "gray" : member.is_active ? "green" : "inactive"}
-                >
-                  {member.deleted_at ? "Deleted" : member.is_active ? "Active" : "Inactive"}
-                </Badge>
+                {(() => {
+                  const status = statusOf(member);
+                  return (
+                    <div className="member-status-cell">
+                      <Badge tone={status.tone}>{status.label}</Badge>
+                      {member.role === "STUDENT" && !member.holds_seat && !member.deleted_at && (
+                        <span className="muted-text">{t.noSeatHint}</span>
+                      )}
+                    </div>
+                  );
+                })()}
+              </td>
+              <td data-label={t.access}>
+                {member.role === "STUDENT" && member.access_ends_on ? (
+                  <div className="member-access-cell">
+                    <span>{formatDay(member.access_ends_on)}</span>
+                    {member.access_state === "active" && member.days_remaining !== null && (
+                      <span className="muted-text">{t.daysLeft(member.days_remaining)}</span>
+                    )}
+                  </div>
+                ) : (
+                  t.noWindow
+                )}
               </td>
               <td data-label={t.created}>{formatDate(member.created_at)}</td>
               <td className="table-actions institute-row-actions" data-label={t.actions}>
@@ -195,4 +319,18 @@ export function MembersTable({
       </table>
     </div>
   );
+}
+
+/** Renders a bare YYYY-MM-DD as a calendar date.
+ *
+ *  `new Date("2027-03-31")` parses as midnight UTC and prints as 30 March for
+ *  anyone west of Greenwich - an access window would appear to end a day early
+ *  for exactly the users this feature is meant to protect. */
+function formatDay(iso: string): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }

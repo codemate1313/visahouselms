@@ -1,9 +1,10 @@
 export const trialConfigStrings = {
   title: "Direct-Student Trial",
   description:
-    "Governs the free trial for students who sign up directly (not through an institute). The trial runs for the number of days set here and covers the demo courses ticked below - each can be sat once.",
+    "Governs the free trial for students who sign up directly (not through an institute). Whichever limit is hit first locks the rest of the trial.",
   trialEnabled: "Trial enabled",
   durationLabel: "Trial duration (days)",
+  testLimitLabel: "Tests allowed",
   demo: {
     heading: "Demo courses",
     description:

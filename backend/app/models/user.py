@@ -1,10 +1,47 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, and_, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+# Seat states. `is_active` answers "may this account log in"; these answer "does
+# it still occupy one of the institute's paid seats", which is a different
+# question and was the reason expiry and deletion kept colliding.
+ACCESS_ACTIVE = "active"        # logs in, holds a seat
+ACCESS_SUSPENDED = "suspended"  # admin turned them off, still holds a seat
+ACCESS_EXPIRED = "expired"      # window closed, still holds a seat
+ACCESS_RELEASED = "released"    # seat handed back; record, email and results kept
+
+# The only states that occupy a seat. Every seat count in the codebase must be
+# built from this one tuple - four hand-written copies of the rule is how the
+# roster ends up reporting 84/100 while creation refuses at 100/100.
+SEAT_HOLDING_STATES = (ACCESS_ACTIVE, ACCESS_SUSPENDED, ACCESS_EXPIRED)
+
+ACCESS_STATES = SEAT_HOLDING_STATES + (ACCESS_RELEASED,)
+
+
+def seat_holder_filter():
+    """THE definition of an occupied seat. Every seat count must be built from
+    this, and none may re-implement it.
+
+    The rule used to be written out five times - in limits.py, in
+    subscription_service.usage, and three times inside institute_admin_service -
+    and they only agreed by luck. The moment one of them learned about access
+    windows and the others did not, the roster would report 84/100 while
+    creating a student refused at 100/100, and neither screen would be wrong
+    from where it was standing.
+
+    Expired and suspended students still hold their seats. Only an explicit
+    release by the institute admin gives one back; a date passing never does,
+    because if it did, editing an end date backwards and then forwards again
+    would mint seats out of nothing.
+    """
+    return and_(
+        User.deleted_at.is_(None),
+        User.access_state.in_(SEAT_HOLDING_STATES),
+    )
 
 
 class User(Base):
@@ -31,6 +68,16 @@ class User(Base):
     address: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     gender: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+
+    # The student's own access window inside the institute's subscription, and
+    # the seat state that `is_active` alone could not express. See migration
+    # 0082: only ACCESS_RELEASED gives a seat back, and only a deliberate admin
+    # action produces it - a date passing never does.
+    access_starts_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    access_ends_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+    access_state: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="active", server_default="active", index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
 

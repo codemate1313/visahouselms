@@ -38,7 +38,6 @@ def update_trial_config(
         actor,
         payload.trial_duration_days,
         payload.course_limit,
-        payload.test_limit,
         payload.is_enabled,
         _client_ip(request),
     )

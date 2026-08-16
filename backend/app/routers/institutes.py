@@ -94,7 +94,7 @@ def list_institute_members(
     role: Optional[str] = None,
     search: Optional[str] = Query(default=None, max_length=200),
     active: Optional[bool] = None,
-    status: Optional[str] = Query(default=None, pattern="^(active|inactive|deleted|password_reset)$"),
+    status: Optional[str] = Query(default=None, pattern="^(active|inactive|expired|released|reclaimable|deleted|password_reset)$"),
     has_attempts: Optional[bool] = None,
     has_devices: Optional[bool] = None,
     has_active_sessions: Optional[bool] = None,

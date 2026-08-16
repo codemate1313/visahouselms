@@ -1,6 +1,6 @@
 import unittest
 from io import BytesIO
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 from fastapi import HTTPException
@@ -129,6 +129,8 @@ class InstituteAdminServiceTests(unittest.TestCase):
             phone_number=None,
             address=None,
             ip="127.0.0.1",
+            access_starts_on=date.today(),
+            access_ends_on=date.today() + timedelta(days=20),
         )
 
     def test_member_creation_enforces_plan_limits_and_returns_password(self):
@@ -151,6 +153,8 @@ class InstituteAdminServiceTests(unittest.TestCase):
                 phone_number=None,
                 address=None,
                 ip=None,
+                access_starts_on=date.today(),
+                access_ends_on=date.today() + timedelta(days=20),
             )
         self.assertEqual(raised.exception.status_code, 402)
 
@@ -190,6 +194,8 @@ class InstituteAdminServiceTests(unittest.TestCase):
             address=None,
             ip=None,
             scoped_institute_id=self.institute.id,
+            access_starts_on=date.today(),
+            access_ends_on=date.today() + timedelta(days=20),
         )
 
         member = institute_admin_service.get_member_or_404(
@@ -333,13 +339,15 @@ class InstituteAdminServiceTests(unittest.TestCase):
         plan = self.db.query(Plan).filter(Plan.name == "Institute Plan").one()
         plan.student_limit = 2
         self.db.commit()
+        start = date.today().isoformat()
+        end = (date.today() + timedelta(days=20)).isoformat()
         content = (
-            "first_name,last_name,email,phone_number\n"
-            "Asha,Patel,asha.north@example.com,+919100000001\n"
-            "Duplicate,Patel,asha.north@example.com,+919100000002\n"
-            "Bad,Email,not-an-email,+919100000003\n"
-            "Mira,Singh,mira.north@example.com,+919100000004\n"
-            "Over,Limit,over.north@example.com,+919100000005\n"
+            "first_name,last_name,email,phone_number,access_start,access_end\n"
+            f"Asha,Patel,asha.north@example.com,+919100000001,{start},{end}\n"
+            f"Duplicate,Patel,asha.north@example.com,+919100000002,{start},{end}\n"
+            f"Bad,Email,not-an-email,+919100000003,{start},{end}\n"
+            f"Mira,Singh,mira.north@example.com,+919100000004,{start},{end}\n"
+            f"Over,Limit,over.north@example.com,+919100000005,{start},{end}\n"
         ).encode()
 
         result = institute_admin_service.import_students(
@@ -363,8 +371,11 @@ class InstituteAdminServiceTests(unittest.TestCase):
         self.db.commit()
         workbook = Workbook()
         sheet = workbook.active
-        sheet.append(["Full Name", "Email", "Mobile"])
-        sheet.append(["Nina Kapoor", "nina.north@example.com", "+919100000010"])
+        sheet.append(["Full Name", "Email", "Mobile", "Access Start", "Access End"])
+        sheet.append([
+            "Nina Kapoor", "nina.north@example.com", "+919100000010",
+            date.today().isoformat(), (date.today() + timedelta(days=20)).isoformat(),
+        ])
         buffer = BytesIO()
         workbook.save(buffer)
 

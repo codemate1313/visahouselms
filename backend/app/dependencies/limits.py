@@ -16,7 +16,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.role import INST_INSTRUCTOR, STUDENT, Role
-from app.models.user import User
+from app.models.user import User, seat_holder_filter
 from app.services.subscription_service import (
     STATE_ACTIVE,
     STATE_GRACE,
@@ -37,7 +37,7 @@ def _count_users_with_roles(db: Session, institute_id: int, role_names) -> int:
         .filter(
             User.institute_id == institute_id,
             User.role_id.in_(role_ids),
-            User.deleted_at.is_(None),
+            seat_holder_filter(),
         )
         .count()
     )
@@ -98,12 +98,11 @@ def enforce_limit(db: Session, institute_id: int, resource: str) -> None:
             status_code=HTTP_402_PAYMENT_REQUIRED,
             detail=(
                 f"Plan limit reached: {count}/{limit} {resource}. "
-                # A seat is held by the account, not by its activity, so
-                # deactivating does not return one. Saying so here matters:
-                # elsewhere the API recommends deactivating instead of
-                # deleting, and an admin at their cap who follows that advice
-                # would otherwise try it and be left no better off.
-                "Deactivating an account does not free its seat - delete it, "
+                # Deactivating still does not free a seat, but the way out is no
+                # longer "delete it" - that was the advice that forced an admin
+                # to destroy a student's record to reclaim their seat. Freeing a
+                # seat keeps the student searchable and reactivatable.
+                "Free a seat from a student whose access has ended, "
                 "or upgrade the plan to add more."
             ),
         )

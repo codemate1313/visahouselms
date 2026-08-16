@@ -3,7 +3,7 @@ import io
 import secrets
 import string
 from zipfile import BadZipFile
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Optional
 
 from fastapi import HTTPException, status
@@ -19,10 +19,24 @@ from app.models.attempt import AttemptPartGrade, TestAttempt
 from app.models.audit_log import AuditLog
 from app.models.institute import Institute
 from app.models.role import DEVELOPER, INST_INSTRUCTOR, INSTITUTE_ADMIN, STUDENT, SUPER_ADMIN, Role
-from app.models.user import User
+from app.models.user import (
+    ACCESS_ACTIVE,
+    ACCESS_EXPIRED,
+    ACCESS_RELEASED,
+    ACCESS_SUSPENDED,
+    SEAT_HOLDING_STATES,
+    User,
+    seat_holder_filter,
+)
 from app.models.user_device import UserDevice
 from app.models.user_session import UserSession
-from app.services import account_service, institute_service, notification_service, subscription_service
+from app.services import (
+    access_window_service,
+    account_service,
+    institute_service,
+    notification_service,
+    subscription_service,
+)
 
 MANAGED_ROLES = (INST_INSTRUCTOR, STUDENT)
 MAX_IMPORT_ROWS = 1000
@@ -134,6 +148,10 @@ def serialize_member(user: User, metrics: Optional[dict] = None) -> dict:
         "device_count": metrics.get("device_count", 0),
         "active_session_count": metrics.get("active_session_count", 0),
         "created_at": user.created_at,
+        # The window and the seat. `is_active` above still answers "can they log
+        # in"; these answer "until when" and "does this cost a seat", which the
+        # roster needs to show and the old boolean could not express.
+        **access_window_service.serialize_access(user),
     }
 
 
@@ -208,6 +226,19 @@ def list_members(
             query = query.filter(User.deleted_at.is_not(None))
         elif status_filter == "password_reset":
             query = query.filter(User.force_password_reset.is_(True), User.deleted_at.is_(None))
+        elif status_filter == "expired":
+            query = query.filter(User.access_state == ACCESS_EXPIRED, User.deleted_at.is_(None))
+        elif status_filter == "released":
+            # "Past students" - the returning-student list. Their records and
+            # emails are intact; they simply hold no seat.
+            query = query.filter(User.access_state == ACCESS_RELEASED, User.deleted_at.is_(None))
+        elif status_filter == "reclaimable":
+            # Everyone whose seat could be freed right now: the admin's shortlist
+            # when they are at their cap.
+            query = query.filter(
+                User.access_state.in_((ACCESS_EXPIRED, ACCESS_SUSPENDED)),
+                User.deleted_at.is_(None),
+            )
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid member status filter")
     users = query.order_by(User.created_at.desc()).all()
@@ -250,6 +281,32 @@ def member_capacity(db: Session, actor: User, scoped_institute_id: Optional[int]
             for resource, limit in limits.items()
         }
 
+    # A breakdown of who is holding the seats, so the admin can see at a glance
+    # how many are reclaimable without reading the whole roster.
+    seat_states = dict(
+        db.query(User.access_state, func.count(User.id))
+        .join(Role, User.role_id == Role.id)
+        .filter(
+            User.institute_id == institute_id,
+            Role.name == STUDENT,
+            seat_holder_filter(),
+        )
+        .group_by(User.access_state)
+        .all()
+    )
+    released_students = (
+        db.query(User)
+        .join(Role, User.role_id == Role.id)
+        .filter(
+            User.institute_id == institute_id,
+            Role.name == STUDENT,
+            User.access_state == ACCESS_RELEASED,
+            User.deleted_at.is_(None),
+        )
+        .count()
+    )
+
+    student_limit = limits["students"]
     return {
         "usage": {
             "students": counts["students"],
@@ -257,6 +314,25 @@ def member_capacity(db: Session, actor: User, scoped_institute_id: Optional[int]
         },
         "limits": limits,
         "can_add": can_add,
+        "seats": {
+            "used": counts["students"],
+            "total": student_limit,
+            "free": max(0, student_limit - counts["students"]) if student_limit is not None else None,
+            "active": seat_states.get(ACCESS_ACTIVE, 0),
+            "suspended": seat_states.get(ACCESS_SUSPENDED, 0),
+            # Holding a seat but unable to log in - the ones worth reclaiming.
+            "expired": seat_states.get(ACCESS_EXPIRED, 0),
+            "reclaimable": seat_states.get(ACCESS_EXPIRED, 0) + seat_states.get(ACCESS_SUSPENDED, 0),
+            "past_students": released_students,
+        },
+        "subscription_ends_on": (
+            access_window_service.to_local_date(
+                access_window_service.subscription_ceiling(db, institute_id),
+                access_window_service.institute_timezone(institute),
+            ).isoformat()
+            if access_window_service.subscription_ceiling(db, institute_id) is not None
+            else None
+        ),
     }
 
 
@@ -272,6 +348,26 @@ def get_member_or_404(
     return user
 
 
+def _lock_institute_seats(db: Session, institute_id: int) -> None:
+    """Hold the seat count still between counting it and inserting a row.
+
+    `enforce_limit` counts, returns, and only then does the caller insert. With
+    nothing held in between, two admins clicking Add student in the same second
+    - or one double-clicking - both read 99 of 100, both pass the check, and
+    both insert. 101 seats on a 100-seat plan, and no error anywhere.
+
+    Locking the institute row serialises the whole count-then-insert, so the
+    second request waits, re-counts 100, and is refused. On SQLite the
+    connection-level write lock already gives this for free and FOR UPDATE is
+    not supported, so it is skipped there.
+    """
+    if db.bind is None or db.bind.dialect.name == "sqlite":
+        return
+    from app.models.institute import Institute
+
+    db.query(Institute).filter(Institute.id == institute_id).with_for_update().first()
+
+
 def create_member(
     db: Session,
     actor: User,
@@ -283,6 +379,8 @@ def create_member(
     phone_number: Optional[str],
     address: Optional[str],
     ip: Optional[str],
+    access_starts_on: Optional[date] = None,
+    access_ends_on: Optional[date] = None,
     scoped_institute_id: Optional[int] = None,
 ) -> dict:
     institute_id = _require_institute(actor, scoped_institute_id)
@@ -291,6 +389,20 @@ def create_member(
 
     normalized_email = account_service.ensure_user_credentials_available(db, email)
 
+    # Students carry an access window and it is never defaulted. A default is
+    # how a student ends up outliving the subscription that paid for them.
+    access_starts_at = access_ends_at = None
+    if role_name == STUDENT:
+        if access_starts_on is None or access_ends_on is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A student needs an access start and end date.",
+            )
+        access_starts_at, access_ends_at = access_window_service.resolve_window(
+            db, institute_id, access_starts_on, access_ends_on
+        )
+
+    _lock_institute_seats(db, institute_id)
     enforce_limit(db, institute_id, "students" if role_name == STUDENT else "staff")
     role = db.query(Role).filter(Role.name == role_name).first()
     if role is None:
@@ -313,10 +425,25 @@ def create_member(
         address=address,
         is_active=institute is None or institute.onboarding_status != "draft",
         force_password_reset=True,
+        access_starts_at=access_starts_at,
+        access_ends_at=access_ends_at,
+        access_state=ACCESS_ACTIVE,
     )
     db.add(user)
     db.flush()
-    _audit(db, actor, "institute_member.create", user.id, ip, {"email": user.email, "role": role_name})
+    _audit(
+        db,
+        actor,
+        "institute_member.create",
+        user.id,
+        ip,
+        {
+            "email": user.email,
+            "role": role_name,
+            "access_starts_on": access_starts_on.isoformat() if access_starts_on else None,
+            "access_ends_on": access_ends_on.isoformat() if access_ends_on else None,
+        },
+    )
     db.commit()
     account_service.send_account_credentials_email(
         db, user, temporary_password, role_label=role_name.replace("_", " ").title()
@@ -386,7 +513,31 @@ def set_member_active(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
     if user.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Archived members cannot be reactivated")
+
+    # Deactivating never releases a seat - that is a separate, deliberate action
+    # (`release_seat`). Turning someone back on therefore costs nothing and
+    # needs no limit check: they never stopped holding their seat.
+    if user.access_state == ACCESS_RELEASED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "This student's seat has been released. Use Reactivate to give "
+                "them a new access window and a seat."
+            ),
+        )
+
+    if active and user.role.name == STUDENT and not access_window_service.is_window_open(user):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "This student's access window has ended. Extend the window to "
+                "let them back in."
+            ),
+        )
+
     user.is_active = active
+    if user.role.name == STUDENT:
+        user.access_state = ACCESS_ACTIVE if active else ACCESS_SUSPENDED
     revoked = account_service.revoke_all_sessions(db, user.id) if not active else 0
     db.add(user)
     _audit(
@@ -417,6 +568,229 @@ def set_member_active(
             message="Your account was deactivated and active sessions were revoked.",
             link_url="/notifications",
         )
+    return serialize_member(get_member_or_404(db, actor, user.id, scoped_institute_id))
+
+
+def release_seat(
+    db: Session,
+    actor: User,
+    member_id: int,
+    ip: Optional[str],
+    scoped_institute_id: Optional[int] = None,
+) -> dict:
+    """Hand a student's seat back to the institute, keeping everything else.
+
+    This is the only action that reduces the seat count without destroying the
+    student. Their row, email, attempts, results and history all stay exactly
+    where they are, and they remain searchable, so a returner can be found and
+    reactivated. Deleting is still available and still does what it always did;
+    this exists so an admin never has to choose between reclaiming a seat and
+    keeping the record of the student who had it.
+
+    Refused while the student can still log in. Freeing a seat from under
+    someone mid-course should take two deliberate steps, not one misclick on a
+    roster row - so they must be expired or deactivated first.
+    """
+    institute_id = _require_institute(actor, scoped_institute_id)
+    user = _member_query(db, institute_id).filter(User.id == member_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
+    if user.role.name != STUDENT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only student seats can be released.",
+        )
+    if user.access_state == ACCESS_RELEASED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This student's seat has already been released.",
+        )
+    if user.access_state == ACCESS_ACTIVE:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "This student still has access. Deactivate them, or wait for "
+                "their access window to end, before releasing the seat."
+            ),
+        )
+
+    # A student mid-exam keeps their seat until the sitting is over; releasing
+    # would log them out on their next autosave and lose the recording.
+    if access_window_service.students_with_live_attempts(db, [user.id]):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This student has a test in progress. Try again once it is submitted.",
+        )
+
+    previous_state = user.access_state
+    user.access_state = ACCESS_RELEASED
+    user.is_active = False
+    revoked = account_service.revoke_all_sessions(db, user.id)
+    db.add(user)
+    _audit(
+        db,
+        actor,
+        "institute_member.seat_released",
+        user.id,
+        ip,
+        {"previous_state": previous_state, "sessions_revoked": revoked},
+    )
+    db.commit()
+    if actor.role.name != DEVELOPER:
+        notification_service.notify_roles(
+            db,
+            {INSTITUTE_ADMIN},
+            kind="institute_seat_released",
+            title="Student seat released",
+            message=f"{actor.email} released the seat held by {user.email}.",
+            link_url="/institute-portal/students",
+            institute_id=institute_id,
+        )
+    return serialize_member(get_member_or_404(db, actor, user.id, scoped_institute_id))
+
+
+def reactivate_seat(
+    db: Session,
+    actor: User,
+    member_id: int,
+    *,
+    access_starts_on: date,
+    access_ends_on: date,
+    ip: Optional[str],
+    scoped_institute_id: Optional[int] = None,
+) -> dict:
+    """Bring a past student back into a seat, with a new access window.
+
+    Reactivating costs a seat, so it goes through exactly the same limit check
+    as creating a student. Without that check an admin could deactivate ten
+    students, create ten more, then reactivate the original ten and sit at 110
+    on a 100-seat plan.
+
+    A new window is required rather than optional. Restoring the old one would
+    reactivate a student straight back into a date that has already passed - the
+    admin sees a success message, the roster shows them as active, and the
+    student still cannot log in.
+    """
+    institute_id = _require_institute(actor, scoped_institute_id)
+    user = _member_query(db, institute_id).filter(User.id == member_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
+    if user.role.name != STUDENT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only students hold seats that can be reactivated.",
+        )
+    if user.access_state != ACCESS_RELEASED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "This student still holds a seat. Use Extend access to change "
+                "their dates instead."
+            ),
+        )
+
+    starts_at, ends_at = access_window_service.resolve_window(
+        db, institute_id, access_starts_on, access_ends_on
+    )
+
+    # Taking a seat back out of the pool - same gate as creating a student.
+    _lock_institute_seats(db, institute_id)
+    enforce_limit(db, institute_id, "students")
+
+    user.access_starts_at = starts_at
+    user.access_ends_at = ends_at
+    user.access_state = ACCESS_ACTIVE
+    user.is_active = True
+    db.add(user)
+    _audit(
+        db,
+        actor,
+        "institute_member.seat_reactivated",
+        user.id,
+        ip,
+        {
+            "access_starts_on": access_starts_on.isoformat(),
+            "access_ends_on": access_ends_on.isoformat(),
+        },
+    )
+    db.commit()
+    if actor.role.name != DEVELOPER:
+        notification_service.notify_roles(
+            db,
+            {INSTITUTE_ADMIN},
+            kind="institute_seat_reactivated",
+            title="Past student reactivated",
+            message=f"{actor.email} reactivated {user.email}.",
+            link_url="/institute-portal/students",
+            institute_id=institute_id,
+        )
+    return serialize_member(get_member_or_404(db, actor, user.id, scoped_institute_id))
+
+
+def set_member_window(
+    db: Session,
+    actor: User,
+    member_id: int,
+    *,
+    access_starts_on: date,
+    access_ends_on: date,
+    ip: Optional[str],
+    scoped_institute_id: Optional[int] = None,
+) -> dict:
+    """Change a seated student's access dates.
+
+    Costs nothing, because the student never gave the seat up - which is exactly
+    why moving a date must never be able to free one. If an expired end date
+    released a seat, this function would be a seat printer: shorten the window,
+    let the sweep free the seat, fill it, then lengthen the window again.
+    """
+    institute_id = _require_institute(actor, scoped_institute_id)
+    user = _member_query(db, institute_id).filter(User.id == member_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
+    if user.role.name != STUDENT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only students have access windows.",
+        )
+    if user.access_state == ACCESS_RELEASED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This student holds no seat. Reactivate them to grant access again.",
+        )
+
+    starts_at, ends_at = access_window_service.resolve_window(
+        db, institute_id, access_starts_on, access_ends_on, allow_past_start=True
+    )
+
+    previous = {
+        "access_starts_at": user.access_starts_at.isoformat() if user.access_starts_at else None,
+        "access_ends_at": user.access_ends_at.isoformat() if user.access_ends_at else None,
+        "access_state": user.access_state,
+    }
+    user.access_starts_at = starts_at
+    user.access_ends_at = ends_at
+
+    # An extension puts an expired student straight back to work; a suspension
+    # is an admin decision and is left alone.
+    if user.access_state == ACCESS_EXPIRED and access_window_service.is_window_open(user):
+        user.access_state = ACCESS_ACTIVE
+        user.is_active = True
+
+    db.add(user)
+    _audit(
+        db,
+        actor,
+        "institute_member.window_changed",
+        user.id,
+        ip,
+        {
+            "from": previous,
+            "access_starts_on": access_starts_on.isoformat(),
+            "access_ends_on": access_ends_on.isoformat(),
+        },
+    )
+    db.commit()
     return serialize_member(get_member_or_404(db, actor, user.id, scoped_institute_id))
 
 
@@ -570,6 +944,50 @@ def _value(row: dict, *keys: str) -> str:
     return ""
 
 
+# Accepted date spellings in an uploaded file. ISO first because it is
+# unambiguous; the day-first forms are what an Indian institute's spreadsheet
+# actually produces. Month-first is deliberately absent - 03/04/2027 cannot be
+# both April 3rd and March 4th, and guessing wrong grants or denies a month of
+# access silently.
+_IMPORT_DATE_FORMATS = ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%d %b %Y", "%d %B %Y")
+
+
+def _parse_import_date(value: object) -> Optional[date]:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    text = str(value).strip()
+    if not text:
+        return None
+    # openpyxl hands back datetimes for real date cells, strings for text cells.
+    for fmt in _IMPORT_DATE_FORMATS:
+        try:
+            return datetime.strptime(text, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
+def _import_window(row: dict) -> tuple[Optional[date], Optional[date], Optional[str]]:
+    """The access dates on one import row, or a reason the row cannot be used."""
+    raw_start = _value(row, "access_start", "access_starts_on", "start_date", "access_from")
+    raw_end = _value(row, "access_end", "access_ends_on", "end_date", "access_to")
+    if not raw_start or not raw_end:
+        return None, None, "Access start and end dates are required"
+    starts_on = _parse_import_date(raw_start)
+    ends_on = _parse_import_date(raw_end)
+    if starts_on is None:
+        return None, None, f"Could not read the access start date '{raw_start}' (use YYYY-MM-DD)"
+    if ends_on is None:
+        return None, None, f"Could not read the access end date '{raw_end}' (use YYYY-MM-DD)"
+    if ends_on < starts_on:
+        return None, None, "Access end date is before the start date"
+    return starts_on, ends_on, None
+
+
 def _import_identity(row: dict) -> tuple[str, str, str, Optional[str], Optional[str]]:
     email = _value(row, "email", "email_address").lower()
     first_name = _value(row, "first_name", "firstname", "given_name")
@@ -595,7 +1013,7 @@ def _available_student_slots(db: Session, institute_id: int) -> int:
             .join(Role, User.role_id == Role.id)
             .filter(
                 User.institute_id == institute_id,
-                User.deleted_at.is_(None),
+                seat_holder_filter(),
                 Role.name == STUDENT,
             )
             .count()
@@ -632,6 +1050,9 @@ def import_students(
     if role is None:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="STUDENT role is not seeded")
 
+    # One lock for the whole import, so a concurrent Add student cannot slip
+    # a row in between our count and our last insert.
+    _lock_institute_seats(db, institute_id)
     available = _available_student_slots(db, institute_id)
     seen: set[str] = set()
     created: list[dict] = []
@@ -653,6 +1074,21 @@ def import_students(
         seen.add(email)
         if reason is None and db.query(User).filter(func.lower(User.email) == email).first() is not None:
             reason = account_service.USER_CREDENTIALS_CONFLICT_DETAIL
+
+        starts_on = ends_on = None
+        if reason is None:
+            starts_on, ends_on, window_error = _import_window(row)
+            reason = window_error
+        if reason is None:
+            try:
+                access_starts_at, access_ends_at = access_window_service.resolve_window(
+                    db, institute_id, starts_on, ends_on
+                )
+            except HTTPException as exc:
+                # A window the institute cannot grant - past its subscription,
+                # already expired. Skip the row and say exactly why, rather than
+                # failing the whole upload on one bad date.
+                reason = exc.detail
         if reason is None and len(created) >= available:
             reason = "Student plan limit reached"
         if reason is not None:
@@ -671,10 +1107,24 @@ def import_students(
             address=address[:255] if address else None,
             is_active=institute is None or institute.onboarding_status != "draft",
             force_password_reset=True,
+            access_starts_at=access_starts_at,
+            access_ends_at=access_ends_at,
+            access_state=ACCESS_ACTIVE,
         )
         db.add(user)
         db.flush()
-        _audit(db, actor, "institute_member.import", user.id, ip, {"row": row_number})
+        _audit(
+            db,
+            actor,
+            "institute_member.import",
+            user.id,
+            ip,
+            {
+                "row": row_number,
+                "access_starts_on": starts_on.isoformat(),
+                "access_ends_on": ends_on.isoformat(),
+            },
+        )
         created.append(
             {
                 "id": user.id,
@@ -683,6 +1133,8 @@ def import_students(
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "temporary_password": temporary_password,
+                "access_starts_on": starts_on.isoformat(),
+                "access_ends_on": ends_on.isoformat(),
             }
         )
         created_users.append((user, temporary_password))

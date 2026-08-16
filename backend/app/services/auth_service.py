@@ -160,6 +160,34 @@ def issue_token_pair(
     return access_token, refresh_token
 
 
+def _require_open_access_window(db: Session, user: User, ip_address: Optional[str]) -> None:
+    """Refuse a login whose access window has closed, and say so.
+
+    Unlike an institute suspension - which is deliberately hidden behind the
+    generic message so a blocked user learns nothing - an expired window is the
+    student's own business and the fix is theirs to chase: their institute
+    extends it. Telling them "invalid email or password" would send them round
+    a password-reset loop that cannot possibly work.
+    """
+    from app.services import access_window_service
+
+    denied = access_window_service.access_denied_reason(user)
+    if denied is None:
+        return
+    db.add(
+        AuditLog(
+            user_id=user.id,
+            action="student_access.login_blocked",
+            entity_type="user",
+            entity_id=user.id,
+            details={"reason": denied, "access_state": user.access_state},
+            ip_address=ip_address,
+        )
+    )
+    db.commit()
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=denied)
+
+
 def authenticate_login_user(
     db: Session,
     email: str,
@@ -169,10 +197,26 @@ def authenticate_login_user(
 ) -> User:
     normalized_email = email.strip().lower()
     user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
-    if user is None or not user.is_active or not verify_password(password, user.password_hash):
+
+    # The password is checked FIRST, and `is_active` after, so that a student
+    # whose window has closed can be given a reason they can act on without
+    # that reason ever reaching someone who does not know their password.
+    #
+    # The old single condition made this impossible: `not user.is_active` short
+    # -circuited before the access check, so every expired student was told
+    # "invalid email or password" and sent round a password-reset loop that
+    # could not possibly work.
+    if user is None or not verify_password(password, user.password_hash):
         raise INVALID_CREDENTIALS
 
     if role and (not user.role or user.role.name != role):
+        raise INVALID_CREDENTIALS
+
+    _require_open_access_window(db, user, ip_address)
+
+    if not user.is_active:
+        # Disabled for a reason the account holder is not entitled to hear -
+        # a staff account switched off, an account under review.
         raise INVALID_CREDENTIALS
 
     if user.institute_id is not None and not user.institute.is_active:
@@ -200,10 +244,15 @@ def get_otp_login_user(
 ) -> User:
     normalized_email = email.strip().lower()
     user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
-    if user is None or not user.is_active:
+    if user is None:
         raise INVALID_CREDENTIALS
 
     if role and (not user.role or user.role.name != role):
+        raise INVALID_CREDENTIALS
+
+    _require_open_access_window(db, user, ip_address)
+
+    if not user.is_active:
         raise INVALID_CREDENTIALS
 
     if user.institute_id is not None and not user.institute.is_active:
@@ -218,6 +267,8 @@ def get_otp_login_user(
         )
         db.commit()
         raise INVALID_CREDENTIALS
+
+    _require_open_access_window(db, user, ip_address)
 
     return user
 

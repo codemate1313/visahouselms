@@ -13,7 +13,6 @@ STATE_LOCKED = "locked"
 REASON_DISABLED = "disabled"
 REASON_DURATION_EXPIRED = "duration_expired"
 REASON_COURSE_LIMIT = "course_limit"
-REASON_TEST_LIMIT = "test_limit"
 
 
 def _now() -> datetime:
@@ -35,7 +34,6 @@ def _serialize_config(config: TrialConfig) -> dict:
         "id": config.id,
         "trial_duration_days": config.trial_duration_days,
         "course_limit": config.course_limit,
-        "test_limit": config.test_limit,
         "is_enabled": config.is_enabled,
         "updated_at": config.updated_at,
     }
@@ -50,7 +48,6 @@ def update_config(
     actor: User,
     trial_duration_days: Optional[int],
     course_limit: Optional[int],
-    test_limit: Optional[int],
     is_enabled: Optional[bool],
     ip: Optional[str],
 ) -> dict:
@@ -59,8 +56,6 @@ def update_config(
         config.trial_duration_days = trial_duration_days
     if course_limit is not None:
         config.course_limit = course_limit
-    if test_limit is not None:
-        config.test_limit = test_limit
     if is_enabled is not None:
         config.is_enabled = is_enabled
 
@@ -97,8 +92,8 @@ def demo_modules(db: Session) -> list:
 
 
 def demo_tests_taken(db: Session, user: User) -> int:
-    """Attempts this student has started on demo modules - the counter behind
-    the 'tests allowed' limit."""
+    """Attempts this student has started on demo modules. Reported so the trial
+    banner can say how much has been used; it is no longer a cap of its own."""
     from app.models.attempt import TestAttempt
     from app.models.exam_module import ExamModule
 
@@ -127,7 +122,6 @@ def demo_state(db: Session, user: User) -> dict:
         "module_ids": allowed_ids,
         "course_limit": config.course_limit,
         "tests_taken": tests_taken,
-        "test_limit": config.test_limit,
         "duration_days": config.trial_duration_days,
         "days_remaining": None,
         "state": STATE_ACTIVE,
@@ -146,8 +140,6 @@ def demo_state(db: Session, user: User) -> dict:
         result.update(state=STATE_LOCKED, locked_reason=REASON_DURATION_EXPIRED)
     elif not allowed_ids:
         result.update(state=STATE_LOCKED, locked_reason=REASON_COURSE_LIMIT)
-    elif tests_taken >= config.test_limit:
-        result.update(state=STATE_LOCKED, locked_reason=REASON_TEST_LIMIT)
     return result
 
 
@@ -252,7 +244,5 @@ def get_trial_state(db: Session, user: User, courses_viewed: int = 0, tests_take
         return {"state": STATE_LOCKED, "locked_reason": REASON_DURATION_EXPIRED, "days_remaining": 0}
     if courses_viewed >= config.course_limit:
         return {"state": STATE_LOCKED, "locked_reason": REASON_COURSE_LIMIT, "days_remaining": days_remaining}
-    if tests_taken >= config.test_limit:
-        return {"state": STATE_LOCKED, "locked_reason": REASON_TEST_LIMIT, "days_remaining": days_remaining}
 
     return {"state": STATE_ACTIVE, "locked_reason": None, "days_remaining": days_remaining}

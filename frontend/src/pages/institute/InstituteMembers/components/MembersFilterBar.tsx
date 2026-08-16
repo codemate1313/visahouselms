@@ -4,6 +4,9 @@ import { instituteMembersStrings as strings } from "../InstituteMembers.strings"
 interface MembersFilterBarProps {
   label: string;
   isAllAccounts: boolean;
+  /** Access states only exist for students, so the extra options are hidden
+   *  on the staff roster where they would never match anything. */
+  showAccessStates?: boolean;
   search: string;
   onSearchChange: (value: string) => void;
   roleFilter: string;
@@ -19,6 +22,7 @@ interface MembersFilterBarProps {
 export function MembersFilterBar({
   label,
   isAllAccounts,
+  showAccessStates = false,
   search,
   onSearchChange,
   roleFilter,
@@ -57,6 +61,13 @@ export function MembersFilterBar({
           { value: "", label: f.status.placeholder },
           { value: "active", label: f.status.active },
           { value: "inactive", label: f.status.inactive },
+          ...(showAccessStates
+            ? [
+                { value: "expired", label: f.status.expired },
+                { value: "reclaimable", label: f.status.reclaimable },
+                { value: "released", label: f.status.released },
+              ]
+            : []),
           { value: "deleted", label: f.status.deleted },
           { value: "password_reset", label: f.status.passwordResetPending },
         ]}

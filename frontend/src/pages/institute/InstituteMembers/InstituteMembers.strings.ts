@@ -16,7 +16,10 @@ export const instituteMembersStrings = {
     status: {
       placeholder: "Any status",
       active: "Active",
-      inactive: "Inactive",
+      inactive: "Deactivated",
+      expired: "Access expired",
+      released: "Past students",
+      reclaimable: "Seat can be freed",
       deleted: "Deleted",
       passwordResetPending: "Password reset pending",
     },
@@ -36,8 +39,46 @@ export const instituteMembersStrings = {
     selectedSuffix: "selected",
     activate: "Activate",
     deactivate: "Deactivate",
+    freeSeats: "Free seats",
     delete: "Delete",
     clear: "Clear",
+  },
+
+  seats: {
+    ariaLabel: "Student seats",
+    eyebrow: "Student seats",
+    free: (free: number) => (free === 0 ? "None free" : `${free} free`),
+    barLabel: (used: number, total: number) => `${used} of ${total} seats in use`,
+    subscriptionEnds: (day: string) => `Subscription runs to ${day}`,
+    activeCount: (count: number) => `${count} with access`,
+    suspendedCount: (count: number) => `${count} deactivated`,
+    expiredCount: (count: number) => `${count} expired`,
+    reclaimableLink: (count: number) =>
+      `${count} ${count === 1 ? "student is" : "students are"} holding a seat without access - free ${count === 1 ? "it" : "them"}`,
+    pastStudentsLink: (count: number) =>
+      `${count} past ${count === 1 ? "student" : "students"} you can bring back`,
+  },
+
+  windowModal: {
+    title: (mode: string) => (mode === "reactivate" ? "Bring this student back" : "Change access dates"),
+    forStudent: (name: string, email: string) => `${name} (${email})`,
+    startsOn: "Access starts",
+    endsOn: "Access ends",
+    quickPick: "Quick pick:",
+    months: (count: number) => `${count} month${count === 1 ? "" : "s"}`,
+    length: (days: number) => `${days} day${days === 1 ? "" : "s"} of access`,
+    ceiling: (day: string) => `Cannot run past ${day}, when the institute's subscription ends.`,
+    orderWrong: "The end date cannot be before the start date.",
+    pastSubscription: "That is past the institute's subscription end date.",
+    takesASeat: (free: number | null) =>
+      free === null
+        ? "This takes one of the institute's seats."
+        : `This takes one of the institute's seats. ${free} free right now.`,
+    noSeatWarning:
+      "Every seat is in use. Free a seat from a student whose access has ended before bringing this one back.",
+    confirm: (mode: string) => (mode === "reactivate" ? "Reactivate" : "Save dates"),
+    saving: "Saving...",
+    cancel: "Cancel",
   },
   featureLocked: {
     eyebrow: "Feature locked",
@@ -56,10 +97,21 @@ export const instituteMembersStrings = {
     devices: "Devices",
     contact: "Contact",
     status: "Status",
+    access: "Access",
     created: "Created",
     actions: "Actions",
     emptyRow: (label: string) => `No ${label.toLowerCase()} found.`,
     passwordResetBadge: "password reset",
+    statusActive: "Active",
+    statusSuspended: "Deactivated",
+    statusExpired: "Expired",
+    statusReleased: "Past student",
+    statusDeleted: "Deleted",
+    statusNotStarted: "Upcoming",
+    noSeatHint: "no seat",
+    daysLeft: (days: number) =>
+      days <= 0 ? "ends today" : `${days} day${days === 1 ? "" : "s"} left`,
+    noWindow: "-",
   },
   actionTooltips: {
     view: "View member",
@@ -67,6 +119,9 @@ export const instituteMembersStrings = {
     resetPassword: "Reset password",
     deactivate: "Deactivate member",
     reactivate: "Reactivate member",
+    changeWindow: "Change access dates",
+    freeSeat: "Free seat",
+    reactivateSeat: "Reactivate (takes a seat)",
     delete: "Delete member",
   },
   credentialModal: {
@@ -105,6 +160,19 @@ export const instituteMembersStrings = {
     toggleMany: (action: string, count: number) => `Are you sure you want to ${action} ${count} selected member${count === 1 ? "" : "s"}?`,
     activateManyTitle: "Activate Members",
     deactivateManyTitle: "Deactivate Members",
+    freeSeat: (name: string, email: string) =>
+      `Free the seat held by "${name}" (${email})?\n\n` +
+      "They keep their records, results and sign-in email, and stay searchable - " +
+      "you can bring them back later. But reactivating takes a seat, and you will " +
+      "need a free one at the time.",
+    freeSeatTitle: "Free This Seat",
+    freeSeatConfirm: "Free seat",
+    freeSeatMany: (count: number) =>
+      `Free ${count} seat${count === 1 ? "" : "s"}?\n\n` +
+      "These students keep their records, results and sign-in emails, and stay " +
+      "searchable - you can bring them back later. But reactivating takes a seat, " +
+      "and you will need free ones at the time.",
+    freeSeatManyTitle: "Free Seats",
   },
   errors: {
     load: (label: string) => `Failed to load ${label.toLowerCase()}.`,
@@ -115,5 +183,9 @@ export const instituteMembersStrings = {
     bulkToggle: (action: string, failed: number, total: number) =>
       `Failed to ${action} ${failed} of ${total}.`,
     bulkDelete: (failed: number, total: number) => `Failed to delete ${failed} of ${total} members.`,
+    freeSeat: "Failed to free the seat.",
+    bulkFreeSeats: (failed: number, total: number) => `Failed to free ${failed} of ${total} seats.`,
+    setWindow: "Failed to save the access dates.",
+    reactivateSeat: "Failed to reactivate the student.",
   },
 } as const;

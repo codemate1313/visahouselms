@@ -39,6 +39,16 @@ def get_current_user(
     if user is None or not user.is_active:
         raise unauthorized
 
+    # A student whose access window has closed is locked out entirely, and told
+    # why. Falling through to the generic 401 above would show them "could not
+    # validate credentials", which reads as a broken login and sends them to
+    # support instead of to their institute.
+    from app.services import access_window_service
+
+    denied = access_window_service.access_denied_reason(user)
+    if denied is not None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=denied)
+
     # Impersonation tokens carry an `imp` claim and no session. They are
     # short-lived and read-only, so they skip the session lookup but are flagged
     # on the request for the write-guard, which refuses every state change while
