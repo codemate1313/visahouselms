@@ -291,6 +291,45 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
     return get_student_view(db, get_attempt_or_404(db, user, attempt.id))
 
 
+def commence_attempt(db: Session, user: User, attempt: TestAttempt) -> dict:
+    """Commence the attempt: starts the timer fresh and transitions from READY to IN_PROGRESS."""
+    if attempt.status == ATTEMPT_READY:
+        now = _now()
+        attempt.status = ATTEMPT_IN_PROGRESS
+        attempt.started_at = now
+        attempt.expires_at = now + timedelta(
+            minutes=attempt.module.duration_minutes + EXPIRY_BUFFER_MINUTES
+        )
+        if attempt.is_final and attempt.security_required:
+            attempt.security_started_at = now
+            attempt.security_last_heartbeat_at = now
+        db.add(attempt)
+        db.commit()
+        attempt = get_attempt_or_404(db, user, attempt.id)
+    elif attempt.status != ATTEMPT_IN_PROGRESS:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This test cannot be commenced")
+    return get_student_view(db, attempt, security_authorized=True)
+
+
+def cancel_onboarding_attempt(db: Session, user: User, attempt_id: int) -> dict:
+    """If a candidate exits during pre-onboarding without commencing, discard the READY attempt so limits are not consumed."""
+    attempt = db.query(TestAttempt).filter(TestAttempt.id == attempt_id, TestAttempt.user_id == user.id).first()
+    if attempt is None:
+        return {"cancelled": False, "message": "Attempt not found"}
+    if attempt.status == ATTEMPT_READY and not attempt.answers:
+        if attempt.retake_request_id:
+            from app.models.retake_request import RetakeRequest
+
+            retake = db.get(RetakeRequest, attempt.retake_request_id)
+            if retake is not None:
+                retake.consumed_at = None
+                db.add(retake)
+        db.delete(attempt)
+        db.commit()
+        return {"cancelled": True, "message": "Onboarding cancelled. Attempt quota preserved."}
+    return {"cancelled": False, "message": "Attempt is already commenced or completed."}
+
+
 def credit_clock(db: Session, attempt: TestAttempt, key: str, seconds: float) -> bool:
     """Give the candidate back time that was never theirs to spend.
 
@@ -907,6 +946,12 @@ def get_attempt_part_view(attempt: TestAttempt, part_id: int) -> dict:
 
 
 def _require_in_progress(attempt: TestAttempt) -> None:
+    if attempt.status == ATTEMPT_READY:
+        now = _now()
+        attempt.status = ATTEMPT_IN_PROGRESS
+        attempt.started_at = now
+        duration = attempt.module.duration_minutes if attempt.module and attempt.module.duration_minutes else 15
+        attempt.expires_at = now + timedelta(minutes=duration + EXPIRY_BUFFER_MINUTES)
     if attempt.status != ATTEMPT_IN_PROGRESS:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This attempt is no longer in progress")
     if attempt.expires_at <= _now():
@@ -1078,6 +1123,12 @@ def submit_attempt(
     *,
     require_complete_speaking: bool = True,
 ) -> dict:
+    if attempt.status == ATTEMPT_READY:
+        attempt.status = ATTEMPT_IN_PROGRESS
+        now = _now()
+        attempt.started_at = now
+        duration = attempt.module.duration_minutes if attempt.module and attempt.module.duration_minutes else 15
+        attempt.expires_at = now + timedelta(minutes=duration + EXPIRY_BUFFER_MINUTES)
     if attempt.status != ATTEMPT_IN_PROGRESS:
         # idempotent: a retried submit just returns the current state
         return get_student_view(db, attempt)
