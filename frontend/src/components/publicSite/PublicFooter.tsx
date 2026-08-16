@@ -66,33 +66,6 @@ export function PublicFooter({ socialLinks = [] }: { socialLinks?: PublicSocialL
                 </li>
               ))}
             </ul>
-
-            <div className="vh-footer-back-to-top-wrap">
-              <button
-                type="button"
-                className="vh-footer-back-to-top"
-                onClick={scrollToTop}
-                aria-label="Back to top"
-                title="Scroll to top"
-              >
-                <svg
-                  className="vh-footer-back-to-top-icon"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <polyline points="18 15 12 9 6 15" />
-                  <polyline points="18 9 12 3 6 9" />
-                </svg>
-                <span>BACK TO TOP</span>
-              </button>
-            </div>
           </div>
         </div>
 
@@ -110,6 +83,34 @@ export function PublicFooter({ socialLinks = [] }: { socialLinks?: PublicSocialL
                 </Link>
               ))}
             </div>
+            {col.title === "Partnerships" && (
+              <div className="vh-footer-back-to-top-wrap">
+                <button
+                  type="button"
+                  className="vh-footer-back-to-top"
+                  onClick={scrollToTop}
+                  aria-label="Back to top"
+                  title="Scroll to top"
+                >
+                  <svg
+                    className="vh-footer-back-to-top-icon"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="18 15 12 9 6 15" />
+                    <polyline points="18 9 12 3 6 9" />
+                  </svg>
+                  <span>BACK TO TOP</span>
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>
