@@ -115,6 +115,20 @@ export function ManualQuestionForm({
     : isSpeakingPresentation
       ? "Example: Look at the image and prepare a short presentation. You have one minute to prepare."
       : "Enter Sonia's question or instruction for this turn";
+
+  const questionNumber = editingQuestionId
+    ? (part.questions.findIndex((q) => q.id === editingQuestionId) + 1)
+    : (part.questions.length + 1);
+
+  const placeholderPrompt = isSpeaking
+    ? speakingPromptPlaceholder
+    : isListening1
+      ? `Question ${questionNumber}`
+      : isReading1b
+        ? `Gap ${questionNumber}`
+        : part.answer_constraints.inline_marker_required
+          ? t.inlinePromptPlaceholder
+          : t.promptPlaceholder;
   const candidateTextLabel = isSpeakingReadAloud
     ? "Read-aloud text"
     : isSpeakingPresentation
@@ -330,7 +344,7 @@ export function ManualQuestionForm({
                     setBoldError(false);
                   }
                 }}
-                placeholder={isSpeaking ? speakingPromptPlaceholder : isListening1 ? "Question 1" : (part.answer_constraints.inline_marker_required ? t.inlinePromptPlaceholder : t.promptPlaceholder)}
+                placeholder={placeholderPrompt}
                 style={boldError ? { borderColor: "var(--danger, #ef4444)", boxShadow: "0 0 0 1px var(--danger, #ef4444)" } : undefined}
                 required
               />
