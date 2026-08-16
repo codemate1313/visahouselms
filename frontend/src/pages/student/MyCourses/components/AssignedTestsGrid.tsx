@@ -23,7 +23,6 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
         const isLocked = Boolean(module.is_locked);
         const isDemo = Boolean(module.is_demo);
         const isExhausted = Boolean(module.is_exhausted);
-        const hasAttempted = Boolean(module.has_attempted);
         const retakeAvailable = Boolean(module.retake_available);
         const moduleTypeClass = `type-${module.module_type || "default"}`;
 
@@ -82,7 +81,7 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                 <span className="premium-meta-pill text-muted">
                   Academic Practice
                 </span>
-                {!isLocked && (module.sittings_remaining ?? 0) > 0 && hasAttempted && (
+                {!isLocked && (module.sittings_remaining ?? 0) > 0 && (
                   <span className="premium-meta-pill is-sitting" title={strings.sittings.tooltip}>
                     {strings.sittings.left(module.sittings_remaining ?? 0)}
                   </span>

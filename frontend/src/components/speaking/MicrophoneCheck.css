@@ -1,12 +1,16 @@
 .microphone-check-page {
   position: fixed;
-  z-index: 1200;
+  z-index: 999999;
   inset: 0;
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(8, 11, 18, 0.92);
+  background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .microphone-check-page {
+  background: rgba(8, 11, 18, 0.85);
 }
 
 .microphone-check-card {
@@ -15,12 +19,19 @@
   justify-items: center;
   gap: 14px;
   padding: 38px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid #e2e8f0;
   border-radius: 24px;
-  background: #171b25;
-  color: #f8fafc;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
   text-align: center;
+}
+
+[data-theme="dark"] .microphone-check-card {
+  background: #101522;
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
 }
 
 .microphone-check-icon {
@@ -41,8 +52,12 @@
 
 .microphone-check-card > p {
   max-width: 470px;
-  color: #aeb6c5;
+  color: #475569;
   line-height: 1.6;
+}
+
+[data-theme="dark"] .microphone-check-card > p {
+  color: #aeb6c5;
 }
 
 .microphone-level {
@@ -50,6 +65,10 @@
   height: 12px;
   overflow: hidden;
   border-radius: 999px;
+  background: #e2e8f0;
+}
+
+[data-theme="dark"] .microphone-level {
   background: rgba(255, 255, 255, 0.09);
 }
 
@@ -67,14 +86,26 @@
 
 .microphone-check-status {
   font-size: 15px;
+  color: #0f172a;
+}
+
+[data-theme="dark"] .microphone-check-status {
+  color: #f8fafc;
 }
 
 .microphone-check-error {
   padding: 10px 12px;
   border-radius: var(--radius-md);
+  background: #fef2f2;
+  color: #b91c2c;
+  border: 1px solid #fecdd3;
+  font-size: 13px;
+}
+
+[data-theme="dark"] .microphone-check-error {
   background: rgba(239, 68, 68, 0.1);
   color: #fca5a5;
-  font-size: 13px;
+  border: none;
 }
 
 .microphone-sample {

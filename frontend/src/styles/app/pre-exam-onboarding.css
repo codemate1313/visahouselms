@@ -2,7 +2,7 @@
    Pre-Exam Onboarding Styles - Ultra-Premium Glassmorphism & HUD Theme
    ========================================================================== */
 
-.student-portal .onboarding-wrapper {
+.onboarding-wrapper {
   --pre-exam-primary: var(--institute-primary, #e11d2e);
   --pre-exam-primary-strong: color-mix(in srgb, var(--pre-exam-primary) 85%, #000000);
   --pre-exam-primary-soft: color-mix(in srgb, var(--pre-exam-primary) 14%, transparent);
@@ -27,11 +27,11 @@
   --pre-exam-dark-subtle: #94a3b8;
 }
 
-[data-theme="dark"] .student-portal .onboarding-wrapper {
+[data-theme="dark"] .onboarding-wrapper {
   color: var(--pre-exam-dark-text);
 }
 
-[data-theme="dark"] .student-portal .onboarding-wrapper :where(.onboarding-sidebar, .onboarding-card-body, .stage-top-header, .onboarding-rule-item, .onboarding-part-card, .equipment-row, .onboarding-summary-banner, .onboarding-mic-tester-container, .stat-box, .onboarding-consent-card, .onboarding-instructor-notes-box) {
+[data-theme="dark"] .onboarding-wrapper :where(.onboarding-sidebar, .onboarding-card-body, .stage-top-header, .onboarding-rule-item, .onboarding-part-card, .equipment-row, .onboarding-summary-banner, .onboarding-mic-tester-container, .stat-box, .onboarding-consent-card, .onboarding-instructor-notes-box) {
   border-color: var(--pre-exam-dark-border-soft);
 }
 
