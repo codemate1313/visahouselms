@@ -603,3 +603,122 @@ reply to this email or apply again.
         """,
     )
     return subject, plain, html
+
+
+def render_payment_invoice_email(
+    invoice_number: str,
+    customer_name: str,
+    plan_name: str,
+    final_amount: str,
+    amount_paid: str,
+    due_amount: str,
+    currency: str,
+    status_label: str,
+    gateway_ref: str | None,
+    issue_date: str,
+    custom_message: str | None = None,
+) -> tuple[str, str, str]:
+    """Generates an official, luxury branded payment receipt email without external online links."""
+    subject = f"Invoice & Payment Receipt #{invoice_number} - Visa House"
+    curr_symbol = "₹" if currency.upper() in ["INR", "₹"] else f"{currency} "
+    
+    plain_custom = f"\nNote from Visa House:\n{custom_message}\n" if custom_message else ""
+    plain = f"""Hi {customer_name},
+
+Thank you for your payment to Visa House LMS. Here is your official invoice and payment receipt.
+
+Invoice Number: {invoice_number}
+Issue Date: {issue_date}
+Item / Plan: {plan_name}
+Total Amount: {curr_symbol}{final_amount}
+Amount Paid: {curr_symbol}{amount_paid}
+Balance Due: {curr_symbol}{due_amount}
+Status: {status_label.upper()}
+{f"Reference: {gateway_ref}" if gateway_ref else ""}
+{plain_custom}
+If you have any billing questions, please contact support@visahouse.com.
+
+- Visa House LMS Billing Team
+"""
+
+    custom_block_html = ""
+    if custom_message:
+        custom_block_html = f"""
+        <div style="margin: 0 0 24px 0; padding: 14px 18px; background-color: #fff8f8; border-left: 3.5px solid #a31c28; border-radius: 6px;">
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #a31c28; margin-bottom: 4px;">Message from Visa House</div>
+          <div style="font-size: 14px; line-height: 1.6; color: #334155;">{custom_message}</div>
+        </div>
+        """
+
+    content_html = f"""
+      <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6;">Hi {customer_name},</p>
+      <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; color: #475569;">
+        Thank you for your business. Please find below the details of your official invoice and payment receipt.
+      </p>
+
+      {custom_block_html}
+
+      <!-- Receipt Summary Card -->
+      <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 24px; overflow: hidden;">
+        <tr>
+          <td style="padding: 14px 18px; border-bottom: 1px solid #e2e8f0; background-color: #f1f5f9;">
+            <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="font-size: 13px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Invoice Summary</td>
+                <td align="right" style="font-size: 12px; font-weight: 800; color: #a31c28; font-family: monospace;">{invoice_number}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 16px 18px;">
+            <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b;">Description:</td>
+                <td align="right" style="padding: 6px 0; font-size: 13px; font-weight: 600; color: #0f172a;">{plan_name}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b;">Issue Date:</td>
+                <td align="right" style="padding: 6px 0; font-size: 13px; color: #0f172a;">{issue_date}</td>
+              </tr>
+              {f'<tr><td style="padding: 6px 0; font-size: 13px; color: #64748b;">Transaction Reference:</td><td align="right" style="padding: 6px 0; font-size: 12px; font-family: monospace; color: #0f172a;">{gateway_ref}</td></tr>' if gateway_ref else ''}
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b;">Payment Status:</td>
+                <td align="right" style="padding: 6px 0; font-size: 12px; font-weight: 800; color: #059669; text-transform: uppercase;">{status_label}</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding-top: 12px; border-top: 1.5px dashed #cbd5e1;"></td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; font-size: 13px; color: #64748b;">Total Amount:</td>
+                <td align="right" style="padding: 4px 0; font-size: 13px; font-weight: 700; color: #0f172a;">{curr_symbol}{final_amount}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; font-size: 13px; color: #64748b;">Amount Paid:</td>
+                <td align="right" style="padding: 4px 0; font-size: 13px; font-weight: 700; color: #059669;">{curr_symbol}{amount_paid}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0 0 0; font-size: 14px; font-weight: 800; color: #0f172a;">Balance Outstanding:</td>
+                <td align="right" style="padding: 8px 0 0 0; font-size: 15px; font-weight: 800; color: {'#dc2626' if float(due_amount or 0) > 0 else '#0f172a'};">{curr_symbol}{due_amount}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #64748b;">
+        If you have any questions regarding this invoice, please reach out to our billing team at <a href="mailto:support@visahouse.com" style="color: #a31c28; text-decoration: none; font-weight: 600;">support@visahouse.com</a>.
+      </p>
+    """
+
+    html = render_base_email(
+        badge_label="OFFICIAL RECEIPT",
+        title=f"Invoice {invoice_number}",
+        subtitle=f"Payment Receipt for {plan_name}",
+        badge_color="#a31c28",
+        content_html=content_html,
+        action_url=None,
+        action_text=None,
+    )
+    return subject, plain, html
+

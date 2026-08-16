@@ -33,7 +33,15 @@ DEFAULT_CONTACT_INFO = {
     "support_url": "support.visahouse.com (to be created)",
     "support_note": "Existing partners only",
     "office_name": "Visa House Immigration",
-    "office_address": "Gali lakeer Sahib wali, Amritsar bypass Road\nTarntaran, 143401",
+    "office_address": "Mezzanine floor, Sco-21, B-Block, Ranjit Avenue, Amritsar, Punjab 143001",
+    "head_office_name": "Amritsar Office (Head Office)",
+    "head_office_address": "Mezzanine floor, Sco-21, B-Block, Ranjit Avenue, Amritsar, Punjab 143001",
+    "head_office_map_link": "https://www.google.com/maps/place/VISA+HOUSE+immigration/@31.65075,74.8629167,17z",
+    "head_office_map_embed": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3692.6816320116436!2d74.8629167!3d31.65075!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3919650028ff0af9%3A0x7c60b7408534d94d!2sVISA%20HOUSE%20immigration!5e0!3m2!1sen!2sin!4v1786779632431!5m2!1sen!2sin",
+    "branch_office_name": "Tarn Taran Office (Branch Office)",
+    "branch_office_address": "Gali Lakeer Sahib Wali, Amritsar Bypass Road, Tarn Taran, Punjab 143401",
+    "branch_office_map_link": "https://maps.app.goo.gl/9DfwXmJcfyzQnwC67",
+    "branch_office_map_embed": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3403.475908208477!2d74.9170435!3d31.4638482!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39197f991e05cd0f%3A0x64c8d99f3ec4c656!2sVisa%20House!5e0!3m2!1sen!2sin!4v1786779800000!5m2!1sen!2sin",
 }
 
 
@@ -48,10 +56,20 @@ def _get_contact_info(db: Session) -> Optional[ContactSettings]:
 def _get_or_create_contact_info(db: Session) -> ContactSettings:
     info = _get_contact_info(db)
     if not info:
-        info = ContactSettings()
+        info = ContactSettings(**DEFAULT_CONTACT_INFO)
         db.add(info)
         db.commit()
         db.refresh(info)
+    else:
+        updated = False
+        for field, default_val in DEFAULT_CONTACT_INFO.items():
+            curr = getattr(info, field, None)
+            if curr is None or (isinstance(curr, str) and not curr.strip() and default_val):
+                setattr(info, field, default_val)
+                updated = True
+        if updated:
+            db.commit()
+            db.refresh(info)
     return info
 
 

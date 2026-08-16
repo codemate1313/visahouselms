@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { RequiredMark } from "@/components/ui";
+import { Button, RequiredMark } from "@/components/ui";
 import { paymentMethodsStrings as strings } from "../PaymentMethods.strings";
 
 interface AddMethodFormProps {
@@ -20,9 +20,9 @@ export function AddMethodForm({ name, onNameChange, saving, error, onSubmit }: A
           <label htmlFor="name">{t.nameLabel}<RequiredMark /></label>
           <input id="name" value={name} onChange={(e) => onNameChange(e.target.value)} placeholder={t.namePlaceholder} required />
         </div>
-        <button type="submit" className="primary-submit-btn" disabled={saving} style={{ height: 42, padding: "0 22px" }}>
+        <Button type="submit" variant="primary" loading={saving}>
           {saving ? t.adding : t.addMethod}
-        </button>
+        </Button>
       </div>
       {error && <p className="error-text" style={{ marginTop: 10 }}>{error}</p>}
     </form>

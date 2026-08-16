@@ -4,7 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { Icon, type IconName } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
-import { RequiredMark } from "@/components/ui";
+import { Button, RequiredMark } from "@/components/ui";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
@@ -33,6 +33,14 @@ interface ContactForm {
   support_note: string;
   office_name: string;
   office_address: string;
+  head_office_name: string;
+  head_office_address: string;
+  head_office_map_link: string;
+  head_office_map_embed: string;
+  branch_office_name: string;
+  branch_office_address: string;
+  branch_office_map_link: string;
+  branch_office_map_embed: string;
 }
 
 const EMPTY_FORM: ContactForm = {
@@ -44,24 +52,42 @@ const EMPTY_FORM: ContactForm = {
   support_note: "",
   office_name: "",
   office_address: "",
+  head_office_name: "",
+  head_office_address: "",
+  head_office_map_link: "",
+  head_office_map_embed: "",
+  branch_office_name: "",
+  branch_office_address: "",
+  branch_office_map_link: "",
+  branch_office_map_embed: "",
 };
 
 function toForm(contact: ContactInfo): ContactForm {
   return {
-    email: contact.email,
+    email: contact.email || "enquiry.langugaecert@gmail.com",
     email_note: contact.email_note ?? "",
-    phone: contact.phone,
-    phone_note: contact.phone_note ?? "",
-    support_url: contact.support_url,
+    phone: contact.phone || "+91 9779047164",
+    phone_note: contact.phone_note || "Mon–Fri · 9am to 5pm IST",
+    support_url: contact.support_url || "support.visahouse.com (to be created)",
     support_note: contact.support_note ?? "",
-    office_name: contact.office_name,
-    office_address: contact.office_address,
+    office_name: contact.office_name || "Visa House Immigration",
+    office_address: contact.office_address || "Mezzanine floor, Sco-21, B-Block, Ranjit Avenue, Amritsar, Punjab 143001",
+    head_office_name: contact.head_office_name || "Amritsar Office (Head Office)",
+    head_office_address: contact.head_office_address || "Mezzanine floor, Sco-21, B-Block, Ranjit Avenue, Amritsar, Punjab 143001",
+    head_office_map_link: contact.head_office_map_link || "https://www.google.com/maps/place/VISA+HOUSE+immigration/@31.65075,74.8629167,17z",
+    head_office_map_embed: contact.head_office_map_embed || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3692.6816320116436!2d74.8629167!3d31.65075!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3919650028ff0af9%3A0x7c60b7408534d94d!2sVISA%20HOUSE%20immigration!5e0!3m2!1sen!2sin!4v1786779632431!5m2!1sen!2sin",
+    branch_office_name: contact.branch_office_name || "Tarn Taran Office (Branch Office)",
+    branch_office_address: contact.branch_office_address || "Gali Lakeer Sahib Wali, Amritsar Bypass Road, Tarn Taran, Punjab 143401",
+    branch_office_map_link: contact.branch_office_map_link || "https://maps.app.goo.gl/9DfwXmJcfyzQnwC67",
+    branch_office_map_embed: contact.branch_office_map_embed || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3403.475908208477!2d74.9170435!3d31.4638482!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39197f991e05cd0f%3A0x64c8d99f3ec4c656!2sVisa%20House!5e0!3m2!1sen!2sin!4v1786779800000!5m2!1sen!2sin",
   };
 }
 
 export function ContactSocialTab() {
   const t = strings.contact;
   const showInfo = useToastStore((state) => state.showInfo);
+  const showSuccess = useToastStore((state) => state.showSuccess);
+  const showError = useToastStore((state) => state.showError);
 
   const [form, setForm] = useState<ContactForm>(EMPTY_FORM);
   const originalRef = useRef<ContactForm | null>(null);
@@ -117,8 +143,11 @@ export function ContactSocialTab() {
       setForm(nextForm);
       originalRef.current = nextForm;
       setNotice(t.saveInfoSuccess);
+      showSuccess(t.saveInfoSuccess);
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, t.saveInfoError));
+      const msg = extractErrorMessage(err, t.saveInfoError);
+      setError(msg);
+      showError(msg);
     } finally {
       setSaving(false);
     }
@@ -186,6 +215,9 @@ export function ContactSocialTab() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <form onSubmit={saveContact} className="form-card wide collapsible-form-card">
         <CollapsiblePanel className="form-card-collapsible" title={t.infoTitle} description={t.infoDescription}>
+          <h3 style={{ fontSize: "0.875rem", fontWeight: 700, marginBottom: "0.75rem", color: "var(--primary)" }}>
+            Communication Channels
+          </h3>
           <div className="form-grid">
             <div>
               <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>{t.emailLabel}<RequiredMark /></label>
@@ -213,7 +245,7 @@ export function ContactSocialTab() {
               />
             </div>
             <div>
-              <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>Note</label>
+              <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>Note / Hours</label>
               <input
                 value={form.phone_note}
                 onChange={(e) => setForm({ ...form, phone_note: e.target.value })}
@@ -246,25 +278,110 @@ export function ContactSocialTab() {
             </div>
           </div>
 
-          <div style={{ marginTop: "1rem" }}>
-            <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>{t.officeAddressLabel}<RequiredMark /></label>
+          <hr style={{ margin: "1.5rem 0", borderColor: "var(--border, rgba(255, 255, 255, 0.1))" }} />
+
+          {/* Head Office (Amritsar) */}
+          <h3 style={{ fontSize: "0.875rem", fontWeight: 700, marginBottom: "0.75rem", color: "var(--primary)" }}>
+            {t.headOfficeTitle}
+          </h3>
+          <div className="form-grid">
+            <div>
+              <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>{t.headOfficeNameLabel}<RequiredMark /></label>
+              <input
+                value={form.head_office_name}
+                onChange={(e) => setForm({ ...form, head_office_name: e.target.value })}
+                placeholder="Amritsar Office (Head Office)"
+                required
+              />
+            </div>
+            <div>
+              <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>{t.headOfficeMapLinkLabel}<RequiredMark /></label>
+              <input
+                type="url"
+                value={form.head_office_map_link}
+                onChange={(e) => setForm({ ...form, head_office_map_link: e.target.value })}
+                placeholder="https://www.google.com/maps/place/..."
+                required
+              />
+            </div>
+          </div>
+          <div style={{ marginTop: "0.75rem" }}>
+            <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>{t.headOfficeAddressLabel}<RequiredMark /></label>
             <textarea
-              rows={3}
-              value={form.office_address}
-              onChange={(e) => setForm({ ...form, office_address: e.target.value })}
-              placeholder={t.officeAddressPlaceholder}
+              rows={2}
+              value={form.head_office_address}
+              onChange={(e) => setForm({ ...form, head_office_address: e.target.value })}
+              placeholder="Full address of Amritsar Head Office"
               required
             />
           </div>
+          <div style={{ marginTop: "0.75rem" }}>
+            <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>{t.headOfficeMapEmbedLabel}</label>
+            <input
+              value={form.head_office_map_embed}
+              onChange={(e) => setForm({ ...form, head_office_map_embed: e.target.value })}
+              placeholder="https://www.google.com/maps/embed?pb=..."
+            />
+          </div>
 
-          {error && <p className="error-text">{error}</p>}
-          {notice && <p className="success-text">{notice}</p>}
+          <hr style={{ margin: "1.5rem 0", borderColor: "var(--border, rgba(255, 255, 255, 0.1))" }} />
+
+          {/* Branch Office (Tarn Taran) */}
+          <h3 style={{ fontSize: "0.875rem", fontWeight: 700, marginBottom: "0.75rem", color: "var(--primary)" }}>
+            {t.branchOfficeTitle}
+          </h3>
+          <div className="form-grid">
+            <div>
+              <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>{t.branchOfficeNameLabel}<RequiredMark /></label>
+              <input
+                value={form.branch_office_name}
+                onChange={(e) => setForm({ ...form, branch_office_name: e.target.value })}
+                placeholder="Tarn Taran Office (Branch Office)"
+                required
+              />
+            </div>
+            <div>
+              <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>{t.branchOfficeMapLinkLabel}<RequiredMark /></label>
+              <input
+                type="url"
+                value={form.branch_office_map_link}
+                onChange={(e) => setForm({ ...form, branch_office_map_link: e.target.value })}
+                placeholder="https://maps.app.goo.gl/..."
+                required
+              />
+            </div>
+          </div>
+          <div style={{ marginTop: "0.75rem" }}>
+            <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>{t.branchOfficeAddressLabel}<RequiredMark /></label>
+            <textarea
+              rows={2}
+              value={form.branch_office_address}
+              onChange={(e) => setForm({ ...form, branch_office_address: e.target.value })}
+              placeholder="Full address of Tarn Taran Branch Office"
+              required
+            />
+          </div>
+          <div style={{ marginTop: "0.75rem" }}>
+            <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>{t.branchOfficeMapEmbedLabel}</label>
+            <input
+              value={form.branch_office_map_embed}
+              onChange={(e) => setForm({ ...form, branch_office_map_embed: e.target.value })}
+              placeholder="https://www.google.com/maps/embed?pb=..."
+            />
+          </div>
+
+          {error && <p className="error-text" style={{ marginTop: "1rem" }}>{error}</p>}
+          {notice && <p className="success-text" style={{ marginTop: "1rem" }}>{notice}</p>}
 
           <div className="form-actions" style={{ marginTop: "1.25rem" }}>
-            <button type="submit" disabled={saving} className="btn-primary">
-              <Icon name="check" style={{ fontSize: "16px" }} />
+            <Button
+              type="submit"
+              variant="primary"
+              loading={saving}
+              leftIcon={<Icon name="check" />}
+            >
               {saving ? "Saving..." : t.saveInfoLabel}
-            </button>
+            </Button>
           </div>
         </CollapsiblePanel>
       </form>
@@ -371,9 +488,15 @@ export function ContactSocialTab() {
                 </div>
                 {addError && <p className="error-text">{addError}</p>}
                 <div style={{ paddingTop: 8 }}>
-                  <button type="submit" className="button primary" style={{ width: "100%" }} disabled={addBusy}>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    fullWidth
+                    loading={addBusy}
+                    leftIcon={<Icon name="plus" />}
+                  >
                     {addBusy ? "Adding..." : t.addLabel}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </CollapsiblePanel>

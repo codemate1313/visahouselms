@@ -2,26 +2,179 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { Badge, Button, SegmentedControl, Textarea } from "@/components/ui";
+import { Button, SegmentedControl, Textarea } from "@/components/ui";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useToastStore } from "@/store/toastStore";
 import { formatDate } from "@/utils/date";
 import { instituteSignupsStrings as strings } from "./InstituteSignups.strings";
 import type { InstituteSignupRequest, SignupStatus } from "./types";
+import "./InstituteSignups.css";
 
-const STATUS_TONE: Record<SignupStatus, "amber" | "green" | "gray"> = {
-  pending: "amber",
-  approved: "green",
-  rejected: "gray",
-};
+/* --------------------------------------------------------------------------
+   Inline SVG Icons for Crisp, Dependency-Free Visuals
+   -------------------------------------------------------------------------- */
+
+function BuildingIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="16" height="20" x="4" y="2" rx="2" ry="2" />
+      <path d="M9 22v-4h6v4" />
+      <path d="M8 6h.01" />
+      <path d="M16 6h.01" />
+      <path d="M8 10h.01" />
+      <path d="M16 10h.01" />
+      <path d="M8 14h.01" />
+      <path d="M16 14h.01" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 2v4" />
+      <path d="M16 2v4" />
+      <rect width="18" height="18" x="3" y="4" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M8 14h.01" />
+      <path d="M12 14h.01" />
+      <path d="M16 14h.01" />
+      <path d="M8 18h.01" />
+      <path d="M12 18h.01" />
+      <path d="M16 18h.01" />
+    </svg>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="20" height="16" x="2" y="4" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  );
+}
+
+function MapPinIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
+function GlobeIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+      <path d="M2 12h20" />
+    </svg>
+  );
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    </svg>
+  );
+}
+
+function UsersIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function GraduationCapIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
+      <path d="M22 10v6" />
+      <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+    </svg>
+  );
+}
+
+function SparklesIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    </svg>
+  );
+}
+
+function MessageSquareIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
+  );
+}
+
+function ArrowRightIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </svg>
+  );
+}
+
+function ShieldCheckIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  );
+}
 
 /**
- * The Super Admin queue for public institute applications.
- *
- * Approving runs the normal institute-creation path and emails the applicant a
- * temporary password; the institute exists but has no subscription, so its
- * admin lands in the setup wizard rather than a working portal. Rejecting keeps
- * the row and emails the reviewer's own reason.
+ * Super Admin review queue for incoming public institute applications.
  */
 export function InstituteSignups() {
   const showError = useToastStore((state) => state.showError);
@@ -79,10 +232,10 @@ export function InstituteSignups() {
   const f = strings.fields;
 
   return (
-    <div>
+    <div className="vh-signups-page">
       {loadError && <p className="error-text">{loadError}</p>}
 
-      <div className="plan-audience-tabs">
+      <div className="vh-signups-tabs-container">
         <SegmentedControl<SignupStatus>
           ariaLabel="Application status"
           options={strings.tabs.map((tab) => ({ value: tab.value, label: tab.label }))}
@@ -92,108 +245,208 @@ export function InstituteSignups() {
       </div>
 
       {loading ? (
-        <p>{strings.loading}</p>
+        <div className="vh-signups-empty">
+          <span className="vh-recaptcha-spinner" style={{ width: 24, height: 24 }} />
+          <p>{strings.loading}</p>
+        </div>
       ) : rows.length === 0 ? (
-        <p className="empty-message">{strings.empty}</p>
+        <div className="vh-signups-empty">
+          <div className="vh-signups-empty-icon">
+            <BuildingIcon />
+          </div>
+          <h4>{strings.empty}</h4>
+          <p>There are no {status} institute applications to display at this time.</p>
+        </div>
       ) : (
-        <div className="signup-request-list">
-          {rows.map((row) => (
-            <article className="form-card wide signup-request-card" key={row.id}>
-              <header className="signup-request-head">
-                <div>
-                  <h3>{row.institute_name}</h3>
-                  <span className="hint">
-                    {f.submitted} {formatDate(row.created_at)}
-                  </span>
-                </div>
-                <Badge tone={STATUS_TONE[row.status]}>{row.status}</Badge>
-              </header>
+        <div className="vh-signups-list">
+          {rows.map((row) => {
+            const formattedWebsite = row.website
+              ? row.website.startsWith("http://") || row.website.startsWith("https://")
+                ? row.website
+                : `https://${row.website}`
+              : null;
 
-              <dl className="signup-request-facts">
-                <div>
-                  <dt>{f.admin}</dt>
-                  <dd>
-                    {row.admin_first_name} {row.admin_last_name} · {row.admin_email}
-                  </dd>
-                </div>
-                <div>
-                  <dt>{f.contact}</dt>
-                  <dd>{[row.contact_email, row.contact_phone].filter(Boolean).join(" · ")}</dd>
-                </div>
-                <div>
-                  <dt>{f.location}</dt>
-                  <dd>{[row.city, row.country].filter(Boolean).join(", ") || f.none}</dd>
-                </div>
-                <div>
-                  <dt>{f.website}</dt>
-                  <dd>{row.website || f.none}</dd>
-                </div>
-                <div>
-                  <dt>{f.expected}</dt>
-                  <dd>{row.expected_students != null ? `${row.expected_students}` : f.none}</dd>
-                </div>
-                <div>
-                  <dt>{f.expectedInstructors}</dt>
-                  <dd>{row.expected_instructors != null ? `${row.expected_instructors}` : f.none}</dd>
-                </div>
-                <div>
-                  <dt>{f.interested}</dt>
-                  <dd>{row.interested_plan_name || f.none}</dd>
-                </div>
-              </dl>
+            return (
+              <article className="vh-app-card" key={row.id}>
+                {/* Header Row */}
+                <header className="vh-app-card-header">
+                  <div className="vh-app-institute-info">
+                    <div className="vh-app-institute-avatar">
+                      <BuildingIcon />
+                    </div>
+                    <div className="vh-app-institute-details">
+                      <div className="vh-app-institute-title-row">
+                        <h3 className="vh-app-institute-title">{row.institute_name}</h3>
+                        <span className="vh-app-id-pill">#APP-{row.id}</span>
+                        {row.interested_plan_name && (
+                          <span className="vh-app-plan-tag">
+                            <SparklesIcon /> {row.interested_plan_name}
+                          </span>
+                        )}
+                      </div>
+                      <div className="vh-app-meta-row">
+                        <span className="vh-app-meta-item">
+                          <CalendarIcon /> {f.submitted} {formatDate(row.created_at)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-              {row.message && (
-                <>
-                  <span className="signup-field-label">{f.message}</span>
-                  <p className="signup-request-message">{row.message}</p>
-                </>
-              )}
+                  {/* Status Badge */}
+                  <div className={`vh-app-status-badge status-${row.status}`}>
+                    {row.status === "pending" && <span className="vh-app-pulse-dot" />}
+                    {row.status}
+                  </div>
+                </header>
 
-              {row.status === "rejected" && row.rejection_reason && (
-                <>
-                  <span className="signup-field-label">{f.reason}</span>
-                  <p className="signup-request-message">{row.rejection_reason}</p>
-                </>
-              )}
+                {/* Structured 3-Tile Info Grid */}
+                <div className="vh-app-grid">
+                  {/* Tile 1: Primary Administrator */}
+                  <div className="vh-app-info-tile">
+                    <div className="vh-app-tile-header">
+                      <UserIcon /> Primary Administrator
+                    </div>
+                    <div className="vh-app-tile-body">
+                      <div className="vh-app-detail-row" style={{ fontWeight: 600 }}>
+                        {row.admin_first_name} {row.admin_last_name}
+                      </div>
+                      <div className="vh-app-detail-row">
+                        <MailIcon />
+                        <span>{row.admin_email}</span>
+                      </div>
+                      {row.contact_phone && (
+                        <div className="vh-app-detail-row">
+                          <PhoneIcon />
+                          <span>{row.contact_phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-              {row.reviewed_by && (
-                <p className="hint">
-                  {f.reviewedBy} {row.reviewed_by}
-                  {row.reviewed_at ? ` · ${formatDate(row.reviewed_at)}` : ""}
-                </p>
-              )}
+                  {/* Tile 2: Location & Contact */}
+                  <div className="vh-app-info-tile">
+                    <div className="vh-app-tile-header">
+                      <MapPinIcon /> Location & Contact
+                    </div>
+                    <div className="vh-app-tile-body">
+                      <div className="vh-app-detail-row">
+                        <MapPinIcon />
+                        <span>{[row.city, row.country].filter(Boolean).join(", ") || f.none}</span>
+                      </div>
+                      {row.contact_email && row.contact_email !== row.admin_email && (
+                        <div className="vh-app-detail-row">
+                          <MailIcon />
+                          <span>{row.contact_email}</span>
+                        </div>
+                      )}
+                      <div className="vh-app-detail-row">
+                        <GlobeIcon />
+                        {formattedWebsite ? (
+                          <a href={formattedWebsite} target="_blank" rel="noopener noreferrer">
+                            {row.website} <ExternalLinkIcon />
+                          </a>
+                        ) : (
+                          <span>{f.none}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-              {row.status === "pending" ? (
-                <div className="form-actions">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    disabled={busyId !== null}
-                    onClick={() => approveAndOnboard(row)}
-                  >
-                    {strings.approve}
-                  </Button>
-                  <button
-                    type="button"
-                    disabled={busyId !== null}
-                    onClick={() => {
-                      setRejecting(row);
-                      setReason("");
-                    }}
-                  >
-                    {strings.reject}
-                  </button>
+                  {/* Tile 3: Scale & Estimated Size */}
+                  <div className="vh-app-info-tile">
+                    <div className="vh-app-tile-header">
+                      <UsersIcon /> Scale & Requirements
+                    </div>
+                    <div className="vh-app-tile-body">
+                      <div className="vh-app-scale-chips">
+                        <span className="vh-app-metric-chip" title="Expected Students">
+                          <UsersIcon /> {row.expected_students != null ? `${row.expected_students} Students` : `0 Students`}
+                        </span>
+                        <span className="vh-app-metric-chip" title="Expected Instructors">
+                          <GraduationCapIcon /> {row.expected_instructors != null ? `${row.expected_instructors} Instructors` : `0 Instructors`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              ) : row.created_institute_id ? (
-                <div className="form-actions">
-                  <Link to={`/super-admin/institutes/${row.created_institute_id}`}>{strings.viewInstitute}</Link>
-                </div>
-              ) : null}
-            </article>
-          ))}
+
+                {/* Applicant Note Message */}
+                {row.message && (
+                  <div className="vh-app-message-box">
+                    <div className="vh-app-message-header">
+                      <MessageSquareIcon /> {f.message}
+                    </div>
+                    <p className="vh-app-message-content">{row.message}</p>
+                  </div>
+                )}
+
+                {/* Rejection Details */}
+                {row.status === "rejected" && row.rejection_reason && (
+                  <div className="vh-app-rejected-box">
+                    <div className="vh-app-rejected-header">
+                      <XIcon /> {f.reason}
+                    </div>
+                    <p className="vh-app-rejected-content">{row.rejection_reason}</p>
+                  </div>
+                )}
+
+                {/* Footer Bar with Review Audit & Action Buttons */}
+                <footer className="vh-app-card-footer">
+                  <div className="vh-app-footer-meta">
+                    {row.reviewed_by ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                        <ShieldCheckIcon /> {f.reviewedBy} <strong>{row.reviewed_by}</strong>
+                        {row.reviewed_at ? ` · ${formatDate(row.reviewed_at)}` : ""}
+                      </span>
+                    ) : (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--text-muted)" }}>
+                        <span className="vh-app-pulse-dot" style={{ color: "#d97706" }} /> Awaiting Super Admin review
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="vh-app-footer-actions">
+                    {row.status === "pending" ? (
+                      <>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="vh-app-btn-reject"
+                          disabled={busyId !== null}
+                          leftIcon={<XIcon />}
+                          onClick={() => {
+                            setRejecting(row);
+                            setReason("");
+                          }}
+                        >
+                          {strings.reject}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="primary"
+                          disabled={busyId !== null}
+                          leftIcon={<CheckIcon />}
+                          onClick={() => approveAndOnboard(row)}
+                        >
+                          {strings.approve}
+                        </Button>
+                      </>
+                    ) : row.created_institute_id ? (
+                      <Link to={`/super-admin/institutes/${row.created_institute_id}`} style={{ textDecoration: "none" }}>
+                        <Button type="button" variant="primary" rightIcon={<ArrowRightIcon />}>
+                          {strings.viewInstitute}
+                        </Button>
+                      </Link>
+                    ) : null}
+                  </div>
+                </footer>
+              </article>
+            );
+          })}
         </div>
       )}
 
+      {/* Reject Confirmation Modal */}
       <ConfirmModal
         isOpen={Boolean(rejecting)}
         title={strings.rejectModal.title}

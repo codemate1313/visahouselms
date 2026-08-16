@@ -39,6 +39,7 @@ export function Invoice() {
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const showToast = useToastStore((s) => s.showSuccess);
+  const showError = useToastStore((s) => s.showError);
 
   // Modals state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -48,6 +49,7 @@ export function Invoice() {
   const [payRef, setPayRef] = useState<string>("");
   const [emailRecipient, setEmailRecipient] = useState<string>("");
   const [emailNote, setEmailNote] = useState<string>("");
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   useEffect(() => {
     apiClient
@@ -55,7 +57,6 @@ export function Invoice() {
       .then(({ data }) => {
         setPayment(data);
         setPayAmount(data.due_amount || "0");
-        setEmailRecipient(data.institute_name ? `${data.institute_name.toLowerCase().replace(/\s+/g, "")}@example.com` : "billing@customer.com");
       })
       .catch(() => setError(strings.errors.load));
   }, [id]);
@@ -194,10 +195,24 @@ export function Invoice() {
     showToast(strings.toasts.paymentRecorded);
   };
 
-  const handleSendEmailSubmit = (e: React.FormEvent) => {
+  const handleSendEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowEmailModal(false);
-    showToast(strings.toasts.emailSent);
+    if (!payment || !emailRecipient.trim()) return;
+
+    setIsSendingEmail(true);
+    try {
+      await apiClient.post(`/super-admin/payments/${payment.id}/send-email`, {
+        recipient_email: emailRecipient.trim(),
+        custom_message: emailNote.trim() || undefined,
+      });
+      setShowEmailModal(false);
+      showToast(strings.toasts.emailSent);
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || err?.message || "Failed to send email receipt";
+      showError(typeof msg === "string" ? msg : "Failed to send email receipt");
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
   if (error) {
@@ -563,6 +578,7 @@ export function Invoice() {
                 <label>{strings.modals.recipientEmail}</label>
                 <input
                   type="email"
+                  placeholder="billing@customer.com"
                   value={emailRecipient}
                   onChange={(e) => setEmailRecipient(e.target.value)}
                   required
@@ -583,8 +599,8 @@ export function Invoice() {
                 <button type="button" className="invoice-btn invoice-btn-secondary" onClick={() => setShowEmailModal(false)}>
                   {strings.modals.cancel}
                 </button>
-                <button type="submit" className="invoice-btn invoice-btn-primary">
-                  {strings.modals.sendEmail}
+                <button type="submit" className="invoice-btn invoice-btn-primary" disabled={isSendingEmail}>
+                  {isSendingEmail ? "Sending..." : strings.modals.sendEmail}
                 </button>
               </div>
             </form>

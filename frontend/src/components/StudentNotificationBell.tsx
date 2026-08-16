@@ -511,7 +511,7 @@ export function NotificationBell({
 
                         <div className="student-notification-item-content">
                           <div className="student-notification-headline">
-                            <strong className="student-notification-title-highlight">“{notification.title}”</strong>{" "}
+                            <strong className="student-notification-title-highlight">“{notification.title}”</strong>
                             <span className="student-notification-message-body">{notification.message}</span>
                           </div>
 

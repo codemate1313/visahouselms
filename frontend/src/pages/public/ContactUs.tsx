@@ -110,37 +110,11 @@ interface OfficeBranch {
   phone: string;
 }
 
-const OFFICE_BRANCHES: OfficeBranch[] = [
-  {
-    id: "amritsar",
-    city: "Amritsar",
-    name: "Amritsar Office",
-    tag: "Head Office",
-    address: "Mezzanine floor, Sco-21, B-Block, Ranjit Avenue, Amritsar, Punjab 143001",
-    addressShort: "Sco-21, B-Block, Ranjit Avenue, Amritsar",
-    mapEmbedUrl:
-      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3692.6816320116436!2d74.8629167!3d31.65075!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3919650028ff0af9%3A0x7c60b7408534d94d!2sVISA%20HOUSE%20immigration!5e0!3m2!1sen!2sin!4v1786779632431!5m2!1sen!2sin",
-    mapLink: "https://www.google.com/maps/place/VISA+HOUSE+immigration/@31.65075,74.8629167,17z",
-    phone: "+91 9779047164",
-  },
-  {
-    id: "tarntaran",
-    city: "Tarn Taran",
-    name: "Tarn Taran Office",
-    tag: "Branch Office",
-    address: "Gali Lakeer Sahib Wali, Amritsar Bypass Road, Tarn Taran, Punjab 143401",
-    addressShort: "Gali Lakeer Sahib Wali, Bypass Rd, Tarn Taran",
-    mapEmbedUrl:
-      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3403.475908208477!2d74.9170435!3d31.4638482!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39197f991e05cd0f%3A0x64c8d99f3ec4c656!2sVisa%20House!5e0!3m2!1sen!2sin!4v1786779800000!5m2!1sen!2sin",
-    mapLink: "https://maps.app.goo.gl/9DfwXmJcfyzQnwC67",
-    phone: "+91 9779047164",
-  },
-];
-
 export function ContactUs() {
   useSEO({ title: "Contact Us", description: "Email, call or contact Visa House for LanguageCert LMS support and institute demos." });
   const location = useLocation();
   const contactSettings = useContactSettings();
+  const contact = contactSettings?.contact;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const formSectionRef = useRef<HTMLElement | null>(null);
 
@@ -151,7 +125,37 @@ export function ContactUs() {
   const [selectedBranchId, setSelectedBranchId] = useState<string>("amritsar");
 
   const officeStatus = getOfficeStatus();
-  const activeBranch = OFFICE_BRANCHES.find((b) => b.id === selectedBranchId) ?? OFFICE_BRANCHES[0];
+
+  const officeBranches: OfficeBranch[] = [
+    {
+      id: "amritsar",
+      city: "Amritsar",
+      name: contact?.head_office_name || "Amritsar Office (Head Office)",
+      tag: "Head Office",
+      address: contact?.head_office_address || "Mezzanine floor, Sco-21, B-Block, Ranjit Avenue, Amritsar, Punjab 143001",
+      addressShort: "Sco-21, B-Block, Ranjit Avenue, Amritsar",
+      mapEmbedUrl:
+        contact?.head_office_map_embed ||
+        "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3692.6816320116436!2d74.8629167!3d31.65075!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3919650028ff0af9%3A0x7c60b7408534d94d!2sVISA%20HOUSE%20immigration!5e0!3m2!1sen!2sin!4v1786779632431!5m2!1sen!2sin",
+      mapLink: contact?.head_office_map_link || "https://www.google.com/maps/place/VISA+HOUSE+immigration/@31.65075,74.8629167,17z",
+      phone: contact?.phone || "+91 9779047164",
+    },
+    {
+      id: "tarntaran",
+      city: "Tarn Taran",
+      name: contact?.branch_office_name || "Tarn Taran Office (Branch Office)",
+      tag: "Branch Office",
+      address: contact?.branch_office_address || "Gali Lakeer Sahib Wali, Amritsar Bypass Road, Tarn Taran, Punjab 143401",
+      addressShort: "Gali Lakeer Sahib Wali, Bypass Rd, Tarn Taran",
+      mapEmbedUrl:
+        contact?.branch_office_map_embed ||
+        "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3403.475908208477!2d74.9170435!3d31.4638482!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39197f991e05cd0f%3A0x64c8d99f3ec4c656!2sVisa%20House!5e0!3m2!1sen!2sin!4v1786779800000!5m2!1sen!2sin",
+      mapLink: contact?.branch_office_map_link || "https://maps.app.goo.gl/9DfwXmJcfyzQnwC67",
+      phone: contact?.phone || "+91 9779047164",
+    },
+  ];
+
+  const activeBranch = officeBranches.find((b) => b.id === selectedBranchId) ?? officeBranches[0];
 
   useEffect(() => {
     setFormType(getInitialFormType(location.search));
@@ -307,8 +311,6 @@ export function ContactUs() {
     }
   }
 
-  const contact = contactSettings?.contact;
-
   return (
     <div className="vh-public vh-contact-page" ref={rootRef}>
       <div className="vh-page-content">
@@ -328,12 +330,12 @@ export function ContactUs() {
             <section className="vh-contact-company" aria-labelledby="company-information-title">
               <h2 id="company-information-title">Company information</h2>
               <div className="vh-contact-details-grid">
-                <a className="vh-contact-detail" href={`tel:${contact?.phone ?? "+919779047164"}`}>
+                <a className="vh-contact-detail" href={`tel:${(contact?.phone ?? "+919779047164").replace(/\s+/g, "")}`}>
                   <ContactInfoIcon type="phone" />
                   <span className="vh-contact-detail-copy">
                     <strong>Phone</strong>
                     <span>{contact?.phone ?? "+91 9779047164"}</span>
-                    <small>{officeStatus.text}</small>
+                    <small>{contact?.phone_note || officeStatus.text}</small>
                   </span>
                 </a>
 
@@ -346,7 +348,7 @@ export function ContactUs() {
                   </span>
                 </a>
 
-                {OFFICE_BRANCHES.map((b) => (
+                {officeBranches.map((b) => (
                   <a
                     key={b.id}
                     className="vh-contact-detail"
@@ -359,7 +361,7 @@ export function ContactUs() {
                   >
                     <ContactInfoIcon type="location" />
                     <span className="vh-contact-detail-copy">
-                      <strong>{b.name} ({b.tag})</strong>
+                      <strong>{b.name}</strong>
                       <span>{b.address}</span>
                       <small>Open in Google Maps ↗</small>
                     </span>
@@ -537,7 +539,7 @@ export function ContactUs() {
                   <div className="vh-contact-map-title-row">
                     <h2 id="visit-office-title">Visit our offices</h2>
                     <div className="vh-branch-toggle-pills" role="tablist" aria-label="Select office branch">
-                      {OFFICE_BRANCHES.map((b) => (
+                      {officeBranches.map((b) => (
                         <button
                           key={b.id}
                           type="button"

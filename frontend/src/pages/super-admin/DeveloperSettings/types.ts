@@ -39,5 +39,13 @@ export interface ContactInfo {
   support_note: string | null;
   office_name: string;
   office_address: string;
+  head_office_name?: string | null;
+  head_office_address?: string | null;
+  head_office_map_link?: string | null;
+  head_office_map_embed?: string | null;
+  branch_office_name?: string | null;
+  branch_office_address?: string | null;
+  branch_office_map_link?: string | null;
+  branch_office_map_embed?: string | null;
   updated_at: string | null;
 }

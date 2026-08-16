@@ -758,6 +758,7 @@
   max-width: 580px;
 }
 .vh-cta-copy h2 {
+  color: #ffffff !important;
   font-size: 34px;
   font-weight: 600;
   letter-spacing: -1.5px;
@@ -766,7 +767,7 @@
   color: #ffffff;
 }
 .vh-cta-copy p {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.88) !important;
   font-size: 16px;
   line-height: 1.5;
   margin: 0;
@@ -790,13 +791,15 @@
 }
 .vh-cta-btn-solid {
   border: none;
-  background: #fff;
-  color: var(--ac);
+  background: #ffffff !important;
+  color: var(--ac) !important;
 }
-.vh-cta-btn-solid:hover {
+.vh-cta-btn-solid:hover,
+.vh-cta-btn-solid:focus {
   transform: translateY(-3px);
   box-shadow: 0 16px 32px -10px rgba(0, 0, 0, 0.3);
-  color: #fff;
+  background: #ffffff !important;
+  color: var(--ac) !important;
 }
 .vh-cta-btn-outline {
   font-weight: 600;

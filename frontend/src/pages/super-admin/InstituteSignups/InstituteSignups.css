@@ -1,0 +1,493 @@
+/* ==========================================================================
+   Super Admin - Institute Signups & Applications Queue
+   ========================================================================== */
+
+.vh-signups-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.vh-signups-tabs-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.vh-signups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Empty State */
+.vh-signups-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  text-align: center;
+  gap: 12px;
+}
+
+.vh-signups-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vh-signups-empty h4 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.vh-signups-empty p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 400px;
+}
+
+/* Application Card */
+.vh-app-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.vh-app-card:hover {
+  border-color: var(--border-hover, #cbd5e1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .vh-app-card {
+  background: #181920;
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .vh-app-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+}
+
+/* Card Header */
+.vh-app-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.vh-app-institute-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.vh-app-institute-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 22px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.vh-app-institute-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vh-app-institute-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.vh-app-institute-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.vh-app-id-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.vh-app-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.vh-app-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+
+.vh-app-meta-item svg {
+  color: var(--text-muted);
+  opacity: 1;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .vh-app-meta-item {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .vh-app-meta-item svg {
+  color: #cbd5e1;
+}
+
+.vh-app-plan-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+[data-theme="dark"] .vh-app-plan-tag {
+  background: rgba(225, 29, 46, 0.18);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+/* Status Pill */
+.vh-app-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+  letter-spacing: 0.01em;
+}
+
+.vh-app-status-badge.status-pending {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.vh-app-status-badge.status-approved {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.vh-app-status-badge.status-rejected {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="dark"] .vh-app-status-badge.status-pending {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+[data-theme="dark"] .vh-app-status-badge.status-approved {
+  background: rgba(34, 197, 94, 0.16);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+[data-theme="dark"] .vh-app-status-badge.status-rejected {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+.vh-app-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  animation: vhPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes vhPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Info Grid (3 Columns) */
+.vh-app-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 980px) {
+  .vh-app-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vh-app-info-tile {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+[data-theme="dark"] .vh-app-info-tile {
+  background: #1f212b;
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.vh-app-tile-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+[data-theme="dark"] .vh-app-tile-header {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.vh-app-tile-header svg {
+  color: var(--primary);
+  opacity: 0.9;
+}
+
+.vh-app-tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13.5px;
+}
+
+.vh-app-detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.vh-app-detail-row svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.vh-app-detail-row a {
+  color: var(--primary);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.vh-app-detail-row a:hover {
+  text-decoration: underline;
+}
+
+.vh-app-scale-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.vh-app-metric-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+[data-theme="dark"] .vh-app-metric-chip {
+  background: #252834;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.vh-app-metric-chip svg {
+  color: var(--primary);
+}
+
+/* Applicant Note / Message Box */
+.vh-app-message-box {
+  background: var(--surface-muted);
+  border-left: 3.5px solid var(--primary);
+  border-radius: 0 10px 10px 0;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+[data-theme="dark"] .vh-app-message-box {
+  background: #1f212b;
+}
+
+.vh-app-message-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+}
+
+.vh-app-message-content {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.55;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* Rejection Callout */
+.vh-app-rejected-box {
+  background: color-mix(in srgb, var(--danger, #e11d2e) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--danger, #e11d2e) 22%, transparent);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vh-app-rejected-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--danger, #e11d2e);
+}
+
+.vh-app-rejected-content {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Footer / Action Bar */
+.vh-app-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+[data-theme="dark"] .vh-app-card-footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.vh-app-footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.vh-app-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vh-app-btn-reject {
+  color: #dc2626 !important;
+  border-color: color-mix(in srgb, #dc2626 25%, var(--border)) !important;
+}
+
+.vh-app-btn-reject:hover:not(:disabled) {
+  background: color-mix(in srgb, #dc2626 10%, var(--surface)) !important;
+  border-color: #dc2626 !important;
+  color: #dc2626 !important;
+}
+
+[data-theme="dark"] .vh-app-btn-reject {
+  color: #f87171 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+[data-theme="dark"] .vh-app-btn-reject:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+}

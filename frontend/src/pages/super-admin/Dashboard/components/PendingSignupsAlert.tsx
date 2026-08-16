@@ -23,7 +23,7 @@ export function PendingSignupsAlert({ count }: { count: number }) {
           <span>{t.body}</span>
         </div>
       </div>
-      <DashboardButton to="/super-admin/institute-signups" size="lg">
+      <DashboardButton to="/super-admin/institute-signups" size="sm">
         {t.cta}
       </DashboardButton>
     </div>

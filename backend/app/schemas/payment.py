@@ -56,3 +56,9 @@ class InstituteRenewalVerifyRequest(BaseModel):
     razorpay_payment_id: str
     razorpay_order_id: str
     razorpay_signature: str
+
+
+class SendInvoiceEmailRequest(BaseModel):
+    recipient_email: str = Field(min_length=3, max_length=255)
+    custom_message: Optional[str] = None
+

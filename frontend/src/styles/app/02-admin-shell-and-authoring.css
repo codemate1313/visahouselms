@@ -4978,6 +4978,7 @@ button {
 
 button:hover:not(:disabled) {
   background: var(--primary-hover);
+  color: #ffffff;
   box-shadow: 0 7px 18px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
@@ -5001,8 +5002,8 @@ button:disabled {
 button.close,
 button.close-btn,
 button.modal-close,
-button[aria-label*="close" i]:not(.dashboard-detail-close),
-button[aria-label*="Close" i]:not(.dashboard-detail-close) {
+button[aria-label*="close" i]:not(.dashboard-detail-close):not(.invoice-modal-close),
+button[aria-label*="Close" i]:not(.dashboard-detail-close):not(.invoice-modal-close) {
   width: 32px !important;
   height: 32px !important;
   min-width: 32px !important;
@@ -5041,8 +5042,8 @@ button[aria-label*="Close" i]:not(.dashboard-detail-close):disabled {
 button.close:hover:not(:disabled),
 button.close-btn:hover:not(:disabled),
 button.modal-close:hover:not(:disabled),
-button[aria-label*="close" i]:not(.dashboard-detail-close):hover:not(:disabled),
-button[aria-label*="Close" i]:not(.dashboard-detail-close):hover:not(:disabled) {
+button[aria-label*="close" i]:not(.dashboard-detail-close):not(.invoice-modal-close):hover:not(:disabled),
+button[aria-label*="Close" i]:not(.dashboard-detail-close):not(.invoice-modal-close):hover:not(:disabled) {
   background: var(--surface-muted) !important;
   color: var(--text) !important;
   opacity: 1 !important;
@@ -5303,13 +5304,13 @@ button.danger:hover:not(:disabled) {
   margin-top: 24px;
 }
 
-.form-actions button[type="button"] {
+.form-actions button[type="button"]:not(.ui-btn):not([class*="btn-"]):not(.primary-btn):not(.secondary-btn) {
   background: transparent;
   color: var(--text-muted);
   border: 1px solid var(--border);
 }
 
-.form-actions button[type="button"]:hover {
+.form-actions button[type="button"]:not(.ui-btn):not([class*="btn-"]):not(.primary-btn):not(.secondary-btn):hover {
   background: rgba(255, 255, 255, 0.58);
   color: var(--text);
 }

@@ -9,7 +9,7 @@ from app.database import get_db
 from app.dependencies.auth import get_current_user, require_monetary_analytics_access, require_role
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
-from app.schemas.payment import AddInstallmentRequest, RecordPaymentRequest
+from app.schemas.payment import AddInstallmentRequest, RecordPaymentRequest, SendInvoiceEmailRequest
 from app.services import payment_service
 
 router = APIRouter(
@@ -72,3 +72,17 @@ def add_installment(
     return payment_service.add_installment(
         db, actor, payment_id, Decimal(str(payload.amount)), payload.payment_method_id, payload.reference, _client_ip(request)
     )
+
+
+@router.post("/{payment_id}/send-email")
+def send_invoice_email(
+    payment_id: int,
+    payload: SendInvoiceEmailRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return payment_service.send_invoice_email(
+        db, actor, payment_id, payload.recipient_email, payload.custom_message, _client_ip(request)
+    )
+

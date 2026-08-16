@@ -2,7 +2,7 @@ import { useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
-import { useLoaderStore } from "@/store/loaderStore";
+import { Button } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 
@@ -28,28 +28,12 @@ export function SeedTab() {
     }
   }
 
-  function testLoader() {
-    const store = useLoaderStore.getState();
-    store.showLoader(t.loaderInitMessage);
-    setOutput(t.loaderTestingOutput);
-
-    setTimeout(() => store.setMessage(t.loaderStep1), 1500);
-    setTimeout(() => store.setMessage(t.loaderStep2), 3000);
-    setTimeout(() => {
-      store.hideLoader();
-      setOutput(t.loaderDoneOutput);
-    }, 4500);
-  }
-
   return (
     <CollapsiblePanel className="form-card wide" title={t.title} description={t.description}>
       <div className="form-actions" style={{ display: "flex", gap: "12px" }}>
-        <button type="button" disabled={busy} onClick={runSeed}>
+        <Button type="button" variant="primary" loading={busy} onClick={runSeed}>
           {busy ? t.populateBusy : t.populateIdle}
-        </button>
-        <button type="button" className="secondary-button" onClick={testLoader}>
-          {t.testLoaderLabel}
-        </button>
+        </Button>
       </div>
 
       <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border)" }}>

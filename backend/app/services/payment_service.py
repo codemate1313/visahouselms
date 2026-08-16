@@ -1212,3 +1212,75 @@ def _notify_renewal(db: Session, payment: Payment) -> None:
         db.commit()
     except Exception:
         db.rollback()
+
+
+def send_invoice_email(
+    db: Session,
+    actor: Optional[User],
+    payment_id: int,
+    recipient_email: str,
+    custom_message: Optional[str] = None,
+    ip_address: Optional[str] = None,
+) -> dict:
+    payment = (
+        db.query(Payment)
+        .options(
+            joinedload(Payment.institute),
+            joinedload(Payment.plan),
+            joinedload(Payment.payment_method),
+            joinedload(Payment.coupon),
+            joinedload(Payment.subscription),
+        )
+        .filter(Payment.id == payment_id)
+        .first()
+    )
+    if not payment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
+
+    from app.config import settings
+    from app.services import email_template_service, smtp_service
+
+    inv_num = payment.invoice_number or f"INV-{payment.id:06d}"
+    customer_name = (
+        payment.institute.name
+        if payment.institute
+        else (payment.institute_name_snapshot or "Valued Customer")
+    )
+    plan_name = payment.plan.name if payment.plan else "Direct Plan / Service"
+    final_amount = str(payment.final_amount)
+    amount_paid = str(payment.amount_paid)
+    due = payment.final_amount - payment.amount_paid
+    due_amount = str(due if due > 0 else Decimal("0"))
+    currency = payment.currency or "INR"
+    status_label = payment.status or ("paid" if due <= 0 else "partial")
+    gateway_ref = payment.gateway_reference
+    issue_date = payment.created_at.strftime("%d %b %Y") if payment.created_at else datetime.now().strftime("%d %b %Y")
+
+    subject, plain, html = email_template_service.render_payment_invoice_email(
+        invoice_number=inv_num,
+        customer_name=customer_name,
+        plan_name=plan_name,
+        final_amount=final_amount,
+        amount_paid=amount_paid,
+        due_amount=due_amount,
+        currency=currency,
+        status_label=status_label,
+        gateway_ref=gateway_ref,
+        issue_date=issue_date,
+        custom_message=custom_message,
+    )
+
+    smtp_service.send_email(db, recipient_email.strip(), subject, plain, html)
+
+    _audit(
+        db,
+        actor,
+        "payment_invoice_email_sent",
+        payment.id,
+        ip_address,
+        {"recipient": recipient_email.strip(), "invoice_number": inv_num},
+    )
+    db.commit()
+
+    return {"message": "Invoice email sent successfully", "recipient": recipient_email.strip()}
+

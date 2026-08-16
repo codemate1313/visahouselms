@@ -31,35 +31,78 @@
   gap: 12px;
 }
 
-.vh-recaptcha-checkbox {
-  width: 28px;
-  height: 28px;
-  border: 2px solid #c1c1c1;
-  border-radius: 2px;
-  background: #ffffff;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  padding: 0;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+.vh-recaptcha-checkbox,
+button.vh-recaptcha-checkbox {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  border: 2px solid #c1c1c1 !important;
+  border-radius: 2px !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+  display: grid !important;
+  place-items: center !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transform: none !important;
+  transition: border-color 0.15s ease, background-color 0.15s ease !important;
 }
 
-[data-theme="dark"] .vh-recaptcha-checkbox {
-  background: #252733;
-  border-color: #4a4d5d;
+[data-theme="dark"] .vh-recaptcha-checkbox,
+[data-theme="dark"] button.vh-recaptcha-checkbox {
+  background: #252733 !important;
+  border-color: #4a4d5d !important;
 }
 
-.vh-recaptcha-checkbox:hover:not(:disabled) {
-  border-color: #b2b2b2;
+.vh-recaptcha-checkbox:hover:not(:disabled),
+button.vh-recaptcha-checkbox:hover:not(:disabled) {
+  background: #ffffff !important;
+  border-color: #b2b2b2 !important;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.12) !important;
+  transform: none !important;
 }
 
-.vh-recaptcha-card.is-verified .vh-recaptcha-checkbox {
-  border-color: #00a651;
-  background: #ffffff;
+[data-theme="dark"] .vh-recaptcha-checkbox:hover:not(:disabled),
+[data-theme="dark"] button.vh-recaptcha-checkbox:hover:not(:disabled) {
+  background: #252733 !important;
+  border-color: #64748b !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
-[data-theme="dark"] .vh-recaptcha-card.is-verified .vh-recaptcha-checkbox {
-  background: #1c1d26;
+.vh-recaptcha-checkbox:active:not(:disabled),
+button.vh-recaptcha-checkbox:active:not(:disabled) {
+  background: #ffffff !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .vh-recaptcha-checkbox:active:not(:disabled),
+[data-theme="dark"] button.vh-recaptcha-checkbox:active:not(:disabled) {
+  background: #252733 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.vh-recaptcha-checkbox:focus-visible,
+button.vh-recaptcha-checkbox:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.3) !important;
+}
+
+.vh-recaptcha-card.is-verified .vh-recaptcha-checkbox,
+.vh-recaptcha-card.is-verified button.vh-recaptcha-checkbox {
+  border-color: #00a651 !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+[data-theme="dark"] .vh-recaptcha-card.is-verified .vh-recaptcha-checkbox,
+[data-theme="dark"] .vh-recaptcha-card.is-verified button.vh-recaptcha-checkbox {
+  background: #1c1d26 !important;
+  border-color: #00a651 !important;
 }
 
 .vh-recaptcha-label {

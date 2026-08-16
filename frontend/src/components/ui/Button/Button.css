@@ -49,6 +49,7 @@
 
 /* Variants */
 .ui-btn-primary,
+button.ui-btn-primary,
 a.ui-btn-primary {
   background: var(--primary);
   color: #ffffff !important;
@@ -56,11 +57,13 @@ a.ui-btn-primary {
   box-shadow: 0 4px 14px var(--primary-soft);
 }
 
-.ui-btn-primary:focus-visible {
+.ui-btn-primary:focus-visible,
+button.ui-btn-primary:focus-visible {
   box-shadow: 0 6px 18px var(--primary-soft), 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
 .ui-btn-primary:hover:not(:disabled),
+button.ui-btn-primary:hover:not(:disabled),
 a.ui-btn-primary:hover {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
@@ -68,7 +71,8 @@ a.ui-btn-primary:hover {
   box-shadow: 0 6px 18px var(--primary-soft);
 }
 
-.ui-btn-primary:disabled {
+.ui-btn-primary:disabled,
+button.ui-btn-primary:disabled {
   /* Derived from --primary so a disabled button stays recognisably the
      portal's color instead of the old hardcoded brand red. */
   background: color-mix(in srgb, var(--primary) 22%, transparent);
@@ -78,26 +82,30 @@ a.ui-btn-primary:hover {
   opacity: 0.8;
 }
 
-.ui-btn-secondary {
+.ui-btn-secondary,
+button.ui-btn-secondary {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
 }
 
-.ui-btn-secondary:hover:not(:disabled) {
+.ui-btn-secondary:hover:not(:disabled),
+button.ui-btn-secondary:hover:not(:disabled) {
   background: var(--surface-muted);
   color: var(--text);
   border-color: var(--primary);
   box-shadow: 0 4px 14px var(--primary-soft);
 }
 
-.ui-btn-danger {
+.ui-btn-danger,
+button.ui-btn-danger {
   background: var(--danger);
   border: 1px solid var(--danger);
   color: #ffffff;
 }
 
-.ui-btn-danger:hover:not(:disabled) {
+.ui-btn-danger:hover:not(:disabled),
+button.ui-btn-danger:hover:not(:disabled) {
   background: var(--danger-hover);
 }
 
