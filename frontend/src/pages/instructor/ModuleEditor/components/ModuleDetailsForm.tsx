@@ -190,26 +190,18 @@ export function ModuleDetailsForm({
 
             </div>
           ) : (
-            <div className="vh-studio-card">
-              <div className="vh-card-header">
-                <h2>Candidate Instructions</h2>
-                <p>Instructions displayed to students on screen before the test begins.</p>
-              </div>
-
-              {/* Onboarding Instructions Manager */}
-              <OnboardingInstructionsEditor
-                showInstructions={details.show_onboarding_instructions ?? true}
-                onToggleShowInstructions={(enabled) => onDetailsChange({ ...details, show_onboarding_instructions: enabled })}
-                instructions={details.onboarding_instructions ?? []}
-                onInstructionsChange={(items) => onDetailsChange({ ...details, onboarding_instructions: items })}
-                isEditable={isEditable}
-              />
-            </div>
+            <OnboardingInstructionsEditor
+              showInstructions={details.show_onboarding_instructions ?? true}
+              onToggleShowInstructions={(enabled) => onDetailsChange({ ...details, show_onboarding_instructions: enabled })}
+              instructions={details.onboarding_instructions ?? []}
+              onInstructionsChange={(items) => onDetailsChange({ ...details, onboarding_instructions: items })}
+              isEditable={isEditable}
+            />
           )}
 
           {/* Bottom Action Bar inside Main Form Column */}
           {activeTab === "config" ? (
-            <div className="vh-main-col-actions" style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
+            <div className="vh-main-col-actions is-end">
               <button
                 type="button"
                 className="vh-btn-primary-brand"
@@ -220,7 +212,7 @@ export function ModuleDetailsForm({
               </button>
             </div>
           ) : (
-            <div className="vh-main-col-actions" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, gap: 16, flexWrap: "wrap" }}>
+            <div className="vh-main-col-actions is-between">
               <button
                 type="button"
                 className="button secondary"

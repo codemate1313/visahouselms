@@ -106,7 +106,7 @@ export function NewModuleForm({
     <div className="new-module-studio-container">
       {error && <p className="error-text notice-line">{error}</p>}
 
-      {/* 2. Hero Header Banner in Visa House Crimson Brand Theme */}
+      {/* 2. Compact & Elegant Hero Header Banner */}
       <div className="vh-brand-hero-banner">
         <div className="vh-hero-header-top">
           <div className="vh-hero-title-group">
@@ -115,8 +115,9 @@ export function NewModuleForm({
             </div>
             <h1 className="vh-hero-title">Author New {typeLabel} Test</h1>
           </div>
-          <div className="vh-hero-icon-box">
-            <Icon name={meta.icon} />
+          <div className="vh-duration-quick-badge">
+            <Icon name="history" />
+            <span>{durationIsCalculated ? "Calculated" : "Target"}: <strong>{displayedDuration} mins</strong></span>
           </div>
         </div>
 
@@ -129,14 +130,10 @@ export function NewModuleForm({
               </span>
             ))}
           </div>
-          <div className="vh-duration-quick-badge">
-            <Icon name="history" />
-            <span>{durationIsCalculated ? "Calculated Duration" : "Target Duration"}: <strong>{displayedDuration} mins</strong></span>
-          </div>
         </div>
       </div>
 
-      {/* 3. Horizontal Authoring Stepper Bar (Positioned below the red hero card) */}
+      {/* 3. Concise Horizontal Authoring Stepper Bar */}
       <HorizontalAuthoringStepper
         activeTab={activeTab}
         onTabChange={(tab) => {
@@ -159,7 +156,7 @@ export function NewModuleForm({
             <div className="vh-studio-card">
               <div className="vh-card-header">
                 <h2>Module Basic Details</h2>
-                <p>Define the title, duration, and summary of this assessment.</p>
+                <p>Define the title and exam duration for this assessment.</p>
               </div>
 
               {/* Title Field */}
@@ -237,18 +234,20 @@ export function NewModuleForm({
                     </button>
                   </div>
 
-                  {!durationIsCalculated && <div className="vh-duration-preset-pills">
-                    {meta.durationPresets.map((val) => (
-                      <button
-                        key={val}
-                        type="button"
-                        className={`vh-duration-pill ${(details.duration_minutes || meta.defaultDuration) === val ? "is-active" : ""}`}
-                        onClick={() => setDurationPreset(val)}
-                      >
-                        {val}m
-                      </button>
-                    ))}
-                  </div>}
+                  {!durationIsCalculated && (
+                    <div className="vh-duration-preset-pills">
+                      {meta.durationPresets.map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          className={`vh-duration-pill ${(details.duration_minutes || meta.defaultDuration) === val ? "is-active" : ""}`}
+                          onClick={() => setDurationPreset(val)}
+                        >
+                          {val}m
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {durationIsCalculated && (
                   <p className="field-hint">
@@ -258,21 +257,13 @@ export function NewModuleForm({
               </div>
             </div>
           ) : (
-            <div className="vh-studio-card">
-              <div className="vh-card-header">
-                <h2>Candidate Instructions</h2>
-                <p>Instructions displayed to students on screen before the test begins.</p>
-              </div>
-
-              {/* Candidate Pre-Exam Guidelines Manager */}
-              <OnboardingInstructionsEditor
-                showInstructions={details.show_onboarding_instructions ?? true}
-                onToggleShowInstructions={(enabled) => onDetailsChange({ ...details, show_onboarding_instructions: enabled })}
-                instructions={details.onboarding_instructions ?? []}
-                onInstructionsChange={(items) => onDetailsChange({ ...details, onboarding_instructions: items })}
-                isEditable={true}
-              />
-            </div>
+            <OnboardingInstructionsEditor
+              showInstructions={details.show_onboarding_instructions ?? true}
+              onToggleShowInstructions={(enabled) => onDetailsChange({ ...details, show_onboarding_instructions: enabled })}
+              instructions={details.onboarding_instructions ?? []}
+              onInstructionsChange={(items) => onDetailsChange({ ...details, onboarding_instructions: items })}
+              isEditable={true}
+            />
           )}
 
           {/* Composite Source Modules Selection (for full_mock and final_test) */}

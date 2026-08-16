@@ -30,16 +30,8 @@ export function HorizontalAuthoringStepper({
               <span className="vh-step-num">1</span>
             )}
           </div>
-          <div className="vh-step-content">
-            <span className="vh-step-title">1. Test Configuration</span>
-            <span className="vh-step-subtitle">Title, duration & details</span>
-          </div>
+          <span className="vh-step-title">1. Test Configuration</span>
         </button>
-
-        {/* Connecting Progress Line */}
-        <div className={`vh-stepper-progress-line ${activeTab === "instructions" ? "is-active" : ""}`}>
-          <div className="vh-stepper-progress-fill" />
-        </div>
 
         {/* Step 2: Instructions & Notes */}
         <button
@@ -51,10 +43,7 @@ export function HorizontalAuthoringStepper({
           <div className="vh-step-icon-badge">
             <span className="vh-step-num">2</span>
           </div>
-          <div className="vh-step-content">
-            <span className="vh-step-title">2. Instructions & Notes</span>
-            <span className="vh-step-subtitle">Candidate instructions & guidelines</span>
-          </div>
+          <span className="vh-step-title">2. Instructions & Notes</span>
         </button>
       </div>
     </div>
