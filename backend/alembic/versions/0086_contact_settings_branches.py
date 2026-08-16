@@ -1,14 +1,14 @@
 """contact_settings head and branch office fields
 
-Revision ID: 0084
-Revises: 0083
+Revision ID: 0086
+Revises: 0085
 Create Date: 2026-08-17
 """
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0084"
-down_revision = "0083"
+revision = "0086"
+down_revision = "0085"
 branch_labels = None
 depends_on = None
 
