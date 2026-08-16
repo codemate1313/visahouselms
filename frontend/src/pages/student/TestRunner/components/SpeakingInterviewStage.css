@@ -488,3 +488,74 @@
     min-width: 0;
   }
 }
+
+/* =========================================================================
+   Dark Mode Overrides
+   ========================================================================= */
+[data-theme="dark"] .speaking-interview-stage {
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .speaking-interview-examiner {
+  border-left-color: rgba(255, 255, 255, 0.1);
+  background: var(--surface-muted, #1f1f24);
+}
+
+[data-theme="dark"] .speaking-interview-examiner-copy strong {
+  color: var(--text, #f3f4f6);
+}
+
+[data-theme="dark"] .speaking-interview-examiner-copy span {
+  color: var(--text-muted, #9ca3af);
+}
+
+[data-theme="dark"] .speaking-segment-intro-card strong {
+  color: var(--text, #f7f7fa);
+}
+
+[data-theme="dark"] .speaking-segment-intro-card p {
+  color: var(--text-muted, #9ca3af);
+}
+
+[data-theme="dark"] .speaking-candidate-empty strong {
+  color: var(--text, #f7f7fa);
+}
+
+[data-theme="dark"] .speaking-candidate-empty span {
+  color: var(--text-muted, #9ca3af);
+}
+
+[data-theme="dark"] .speaking-interview-notes span {
+  color: var(--text-muted, #9ca3af);
+}
+
+[data-theme="dark"] .speaking-interview-notes textarea {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--text, #f3f4f6);
+}
+
+[data-theme="dark"] .speaking-interview-timer {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .speaking-interview-timer strong {
+  color: var(--text, #f7f7fa);
+}
+
+[data-theme="dark"] .speaking-interview-timer span {
+  color: var(--text-muted, #9ca3af);
+}
+
+[data-theme="dark"] .speaking-interview-timer small {
+  color: var(--text-muted, #9ca3af);
+}
+
+@media (max-width: 900px) {
+  [data-theme="dark"] .speaking-interview-examiner {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
