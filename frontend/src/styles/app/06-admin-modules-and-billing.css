@@ -3764,7 +3764,7 @@
   font-family: var(--app-font-family);
   color: var(--slate-900);
   overflow-x: hidden;
-  background: var(--surface-muted);
+  background: var(--bg);
   min-height: 100vh;
   min-height: 100dvh;
 }
