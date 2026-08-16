@@ -71,6 +71,7 @@ export const plansStrings = {
   table: {
     planName: "Plan Name",
     priceAndDuration: "Price & Duration",
+    limits: "Limits (std / stf / tst)",
     status: "Status",
     actions: "Actions",
     empty: "No subscription plans found.",
