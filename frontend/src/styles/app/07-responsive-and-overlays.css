@@ -3332,14 +3332,6 @@ body {
   border-radius: var(--radius-xs, 4px);
 }
 
-[data-theme="dark"] .seat-panel-actions .link-button {
-  color: color-mix(in srgb, var(--primary) 70%, #ffffff);
-}
-
-[data-theme="dark"] .seat-panel-actions .link-button:hover {
-  color: color-mix(in srgb, var(--primary) 90%, #ffffff);
-}
-
 /* Status and access columns ------------------------------------------------ */
 
 .institute-members-table .member-status-cell,
@@ -3439,9 +3431,6 @@ body {
 .access-window-fieldset .badge,
 .access-window-modal .badge {
   text-transform: none;
-  background: color-mix(in srgb, var(--primary) 10%, transparent) !important;
-  color: var(--primary) !important;
-  border-color: color-mix(in srgb, var(--primary) 28%, transparent) !important;
 }
 
 /* The quick-pick chips sit inside a form, where the app's own button styling
@@ -3467,4 +3456,63 @@ body {
 .window-quick-picks .chip-button:focus-visible {
   outline: 2px solid var(--focus-ring, var(--primary));
   outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------
+   Stacked subscription terms on institute billing, and the per-module
+   validity pill on a student's test card.
+   ------------------------------------------------------------------ */
+
+.term-stack {
+  margin: 12px 0 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color, var(--border));
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface-subtle);
+}
+
+.term-stack-heading {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary, var(--text));
+}
+
+.term-stack-list {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+
+.term-stack-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.term-stack-warning {
+  margin: 8px 0 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--warning-soft);
+  font-size: 0.86rem;
+  color: var(--text-secondary, var(--text));
+}
+
+/* A module about to lapse should read as a deadline, not decoration. */
+.premium-meta-pill.is-expiring {
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+/* A sitting bought by a repeat purchase - the reason a test the student has
+   already taken is open again. */
+.premium-meta-pill.is-sitting {
+  border-color: var(--success);
+  color: var(--success);
 }

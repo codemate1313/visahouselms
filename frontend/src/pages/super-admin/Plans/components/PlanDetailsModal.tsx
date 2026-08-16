@@ -82,18 +82,6 @@ export function PlanDetailsModal({ plan, onClose }: PlanDetailsModalProps) {
               </div>
             </div>
 
-            <div className="plan-metric-card metric-tests">
-              <div className="plan-metric-icon">
-                <Icon name="session" />
-              </div>
-              <div className="plan-metric-info">
-                <span className="plan-metric-label">{t.testLimit}</span>
-                <strong className="plan-metric-val">
-                  {plan.test_limit.toLocaleString()} {t.testsSuffix}
-                </strong>
-              </div>
-            </div>
-
             <div className="plan-metric-card metric-grace">
               <div className="plan-metric-icon">
                 <Icon name="due" />

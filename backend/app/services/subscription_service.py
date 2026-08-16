@@ -145,6 +145,104 @@ def current_user_subscription(db: Session, user_id: int) -> Tuple[Optional[Subsc
     return _pick_current(rows, _now())
 
 
+def live_subscriptions(
+    db: Session, *, institute_id: Optional[int] = None, user_id: Optional[int] = None
+) -> List[Subscription]:
+    """Every non-cancelled term for one owner that is active or in grace.
+
+    Entitlement and capacity are unions across all of these. `_pick_current`
+    answers a different question - "which single row should a billing screen
+    name?" - and must not be used to decide what someone may open or how many
+    seats they hold.
+    """
+    query = db.query(Subscription).options(joinedload(Subscription.plan)).filter(
+        Subscription.cancelled_at.is_(None)
+    )
+    if institute_id is not None:
+        query = query.filter(Subscription.institute_id == institute_id)
+    if user_id is not None:
+        query = query.filter(Subscription.user_id == user_id)
+    now = _now()
+    return [row for row in query.all() if _state_of(row, now) in (STATE_ACTIVE, STATE_GRACE)]
+
+
+def paid_subscriptions(
+    db: Session, *, institute_id: Optional[int] = None, user_id: Optional[int] = None
+) -> List[Subscription]:
+    """Every term that has been paid for and not yet used up.
+
+    Wider than `live_subscriptions` on purpose: it includes a term that is
+    scheduled to begin later. Buying a second plan mid-year stacks its DATES
+    onto the end of the running one, so that term reads as scheduled - but the
+    capacity was bought today, and an institute that buys a second plan to
+    onboard a new batch needs those seats today, not next year.
+
+    Cancelled and fully-expired terms are excluded; they are neither.
+    """
+    query = db.query(Subscription).options(joinedload(Subscription.plan)).filter(
+        Subscription.cancelled_at.is_(None)
+    )
+    if institute_id is not None:
+        query = query.filter(Subscription.institute_id == institute_id)
+    if user_id is not None:
+        query = query.filter(Subscription.user_id == user_id)
+    now = _now()
+    return [
+        row for row in query.all()
+        if _access_ends_at(row) > now
+    ]
+
+
+def capacity_timeline(db: Session, institute_id: int, limit_attr: str) -> List[dict]:
+    """When the seat count changes, and to what.
+
+    Two 25-seat plans bought back to back are 50 seats now and 25 once the first
+    term ends. That step down is a real event an admin should be able to see
+    coming rather than discover on the day they cannot add a student, so the
+    billing screen renders this.
+    """
+    rows = paid_subscriptions(db, institute_id=institute_id)
+    if not rows:
+        return []
+    boundaries = sorted({_access_ends_at(row) for row in rows})
+    timeline = []
+    now = _now()
+    cursor = now
+    for boundary in boundaries:
+        seats = sum(
+            getattr(row.plan, limit_attr, 0) or 0
+            for row in rows
+            if row.plan is not None and _access_ends_at(row) > cursor
+        )
+        timeline.append({"from": cursor, "until": boundary, "seats": seats})
+        cursor = boundary
+    return timeline
+
+
+def next_term_start(
+    db: Session, *, institute_id: Optional[int] = None, user_id: Optional[int] = None
+) -> datetime:
+    """When a newly bought term should begin.
+
+    Buying while a term is still running extends rather than overlaps: the new
+    term starts the moment the furthest-running one ends. Two terms covering the
+    same fortnight would mean the buyer paid twice for that fortnight and got
+    one fortnight, which is the complaint this whole change exists to answer.
+
+    Grace days are excluded on purpose. Grace is a courtesy while a renewal
+    clears, not time anybody bought, so stacking on top of it would hand out
+    free days every renewal cycle.
+    """
+    now = _now()
+    query = db.query(Subscription).filter(Subscription.cancelled_at.is_(None))
+    if institute_id is not None:
+        query = query.filter(Subscription.institute_id == institute_id)
+    if user_id is not None:
+        query = query.filter(Subscription.user_id == user_id)
+    expiries = [row.expires_at for row in query.all() if row.expires_at > now]
+    return max(expiries) if expiries else now
+
+
 def _access_ends_at(subscription: Subscription) -> datetime:
     """The hard cut-off: grace days are still full access, so the institute and
     every account under it only lose access once grace has run out too."""
@@ -384,9 +482,13 @@ def subscription_status(db: Session, institute_id: int) -> dict:
     counts = usage(db, institute_id)
     limits = None
     if subscription is not None and subscription.plan is not None:
+        # Summed across live terms: a second plan bought mid-term adds seats
+        # rather than replacing the first plan's.
+        from app.dependencies.limits import plan_limit_total
+
         limits = {
-            "students": subscription.plan.student_limit,
-            "staff": subscription.plan.staff_limit,
+            "students": plan_limit_total(db, institute_id, "student_limit"),
+            "staff": plan_limit_total(db, institute_id, "staff_limit"),
             # Sittings are not metered - a student may take every test their
             # institute has been given, as many times as the module allows.
             # NULL reads as "unlimited" everywhere this is rendered.
@@ -400,6 +502,26 @@ def subscription_status(db: Session, institute_id: int) -> dict:
         "state": state,
         "usage": counts,
         "limits": limits,
+        # Every term the institute has paid for and not yet used up, so billing
+        # can show "2 plans running" rather than naming one and hiding the
+        # other - which is what made a stacked purchase look like it vanished.
+        "terms": [
+            _serialize(row, _state_of(row, _now()))
+            for row in sorted(
+                paid_subscriptions(db, institute_id=institute_id),
+                key=lambda r: r.starts_at,
+            )
+        ],
+        # When the seat count steps down, so an admin sees it coming instead of
+        # discovering it on the day they cannot add a student.
+        "seat_timeline": [
+            {
+                "from": step["from"].isoformat(),
+                "until": step["until"].isoformat(),
+                "seats": step["seats"],
+            }
+            for step in capacity_timeline(db, institute_id, "student_limit")
+        ],
     }
 
 
@@ -436,7 +558,16 @@ def assign(
             detail="This plan is deactivated and cannot be assigned",
         )
 
-    start = starts_at.replace(tzinfo=None) if starts_at and starts_at.tzinfo else (starts_at or _now())
+    # An explicit start date from a Super Admin always wins - they may be
+    # backdating a signed agreement. Left to itself, a plan bought while one is
+    # still running stacks onto the end of it rather than overlapping, so the
+    # institute gets the full term they paid for. Seat limits are summed across
+    # every live term separately (see dependencies/limits.py), so a second plan
+    # adds capacity straight away even though its dates begin later.
+    if starts_at is not None:
+        start = starts_at.replace(tzinfo=None) if starts_at.tzinfo else starts_at
+    else:
+        start = next_term_start(db, institute_id=institute_id)
     subscription = Subscription(
         institute_id=institute_id,
         plan_id=plan.id,
@@ -633,7 +764,12 @@ def subscribe_user(
             detail="This plan is deactivated and cannot be subscribed to",
         )
 
-    start = _now()
+    # A term bought while one is still running begins where that one ends, so
+    # the student gets the days they paid for instead of two terms covering the
+    # same fortnight. Their MODULE access does not wait for that date - the
+    # entitlement ledger below opens every module in the new plan immediately,
+    # and adds this plan's days on top of anything they already held.
+    start = next_term_start(db, user_id=user_id)
     subscription = Subscription(
         user_id=user_id,
         plan_id=plan.id,
@@ -643,13 +779,29 @@ def subscribe_user(
     )
     db.add(subscription)
     db.flush()
+
+    from app.services import entitlement_service
+
+    granted = entitlement_service.grant_plan(
+        db, user_id, plan, subscription_id=subscription.id
+    )
     db.add(
         AuditLog(
             user_id=user_id,
             action="subscription.subscribe",
             entity_type="subscription",
             entity_id=subscription.id,
-            details={"plan": plan.name},
+            details={
+                "plan": plan.name,
+                "starts_at": start.isoformat(),
+                "modules_extended": len(granted),
+                # Enough to answer "why does Writing run to September?" from the
+                # audit trail alone, without replaying anything.
+                "module_expiry": {
+                    str(module_id): change["to"].isoformat()
+                    for module_id, change in granted.items()
+                },
+            },
             ip_address=ip,
         )
     )
@@ -723,12 +875,23 @@ def my_current_plan_view(db: Session, user: User) -> dict:
         .all()
     )
 
+    from app.services import entitlement_service as _entitlements
+
     def _module_attempt_info(module: ExamModule) -> dict:
         mod_atts = attempts_by_module.get(module.id, [])
         has_att = len(mod_atts) > 0
         dev_unlimited_speaking = _dev_unlimited_speaking_attempts(db, module)
         retake_avail = module.id in available_retake_module_ids or dev_unlimited_speaking
-        is_exh = has_att and not retake_avail
+        # Sittings bought and not yet used. A direct student who bought the plan
+        # again has another go, and the card has to say so - otherwise it reads
+        # "Attempt Exhausted" over a test the Start button would happily open,
+        # which is the same display-versus-gate mismatch that made a second plan
+        # look like it had done nothing.
+        sittings_left = (
+            _entitlements.sittings_remaining(db, user.id, module.id)
+            if user.institute_id is None else 0
+        )
+        is_exh = has_att and not retake_avail and sittings_left <= 0
         latest = mod_atts[0] if mod_atts else None
         return {
             "has_attempted": has_att,
@@ -736,6 +899,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
             "latest_attempt_id": latest["id"] if latest else None,
             "latest_attempt_status": latest["status"] if latest else None,
             "retake_available": retake_avail,
+            "sittings_remaining": sittings_left,
         }
 
     if subscription is None or state not in (STATE_ACTIVE, STATE_GRACE):
@@ -759,35 +923,6 @@ def my_current_plan_view(db: Session, user: User) -> dict:
         ]
         modules_payload.sort(key=lambda m: (m["is_locked"], m["title"]))
 
-        institute_name = None
-        if user.institute_id is not None:
-            if getattr(user, "institute", None):
-                institute_name = user.institute.name
-
-        # Calculate dates for trial / demo or previous subscription
-        trial_starts_at = user.created_at or _now()
-        trial_duration = demo.get("duration_days") or 7
-        trial_expires_at = trial_starts_at + timedelta(days=trial_duration)
-
-        latest_sub = None
-        if user.institute_id is not None:
-            latest_sub = (
-                db.query(Subscription)
-                .filter(Subscription.institute_id == user.institute_id)
-                .order_by(Subscription.expires_at.desc())
-                .first()
-            )
-        else:
-            latest_sub = (
-                db.query(Subscription)
-                .filter(Subscription.user_id == user.id)
-                .order_by(Subscription.expires_at.desc())
-                .first()
-            )
-
-        effective_starts_at = getattr(user, "access_starts_at", None) or (latest_sub.starts_at if latest_sub else (trial_starts_at if demo["state"] == "active" else user.created_at))
-        effective_expires_at = getattr(user, "access_ends_at", None) or (latest_sub.expires_at if latest_sub else (trial_expires_at if demo["state"] == "active" else None))
-
         return {
             "plan": {
                 "id": 0,
@@ -797,11 +932,8 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 "modules": modules_payload,
             },
             "state": state,
-            "starts_at": effective_starts_at,
-            "expires_at": effective_expires_at,
-            "grace_days": latest_sub.grace_days if latest_sub else 0,
-            "access_type": "institute" if user.institute_id is not None else ("trial" if (demo["state"] == "active" and not latest_sub) else "direct"),
-            "institute_name": institute_name,
+            "expires_at": None,
+            "access_type": "institute" if user.institute_id is not None else "direct",
             "ai_evaluations": ai_quota,
             "demo": demo,
         }
@@ -843,6 +975,19 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                     if m.status == "published" and m.is_visible and m.deleted_at is None
                 )
 
+        # The ledger is what actually gates starting a test, so the page must
+        # read from it too - otherwise a module can render unlocked and then
+        # refuse on the Start button, which reads as a broken product rather
+        # than an expired entitlement. It also carries course-bundled modules,
+        # which the plan-modules loop above never saw.
+        from app.services import entitlement_service
+
+        module_expiry = {
+            row["module_id"]: row
+            for row in entitlement_service.entitlements_for(db, user.id)
+        }
+        unlocked_ids.update(mid for mid, row in module_expiry.items() if row["is_live"])
+
     # For direct students, return all published modules with is_locked status
     modules_list = []
     if user.institute_id is not None:
@@ -867,19 +1012,20 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 # affordance disappears once a plan is active.
                 "is_locked": module.id not in unlocked_ids,
                 "is_demo": False,
+                # Per-module validity, because plans stack: two plans that both
+                # contain Writing leave it running longer than either alone, and
+                # a single plan-level expiry date cannot express that.
+                "access_expires_at": (
+                    module_expiry[module.id]["expires_at"]
+                    if module.id in module_expiry else None
+                ),
+                "access_days_remaining": (
+                    module_expiry[module.id]["days_remaining"]
+                    if module.id in module_expiry else None
+                ),
                 **_module_attempt_info(module),
             })
         modules_list.sort(key=lambda m: (m["is_locked"], m["title"]))
-
-    institute_name = None
-    if user.institute_id is not None:
-        if getattr(user, "institute", None):
-            institute_name = user.institute.name
-        elif subscription.institute_name_snapshot:
-            institute_name = subscription.institute_name_snapshot
-
-    starts_at = getattr(user, "access_starts_at", None) or subscription.starts_at
-    expires_at = getattr(user, "access_ends_at", None) or subscription.expires_at
 
     return {
         "plan": {
@@ -894,10 +1040,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
             "modules": modules_list,
         },
         "state": state,
-        "starts_at": starts_at,
-        "expires_at": expires_at,
-        "grace_days": subscription.grace_days,
+        "expires_at": subscription.expires_at,
         "access_type": "institute" if user.institute_id is not None else "direct",
-        "institute_name": institute_name,
         "ai_evaluations": ai_quota,
     }

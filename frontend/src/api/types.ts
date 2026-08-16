@@ -335,7 +335,6 @@ export interface ExamModulePart {
     maximum_words?: number;
     audio_plays?: number;
     audio_required?: boolean;
-    audio_mode?: "single" | "per_question";
     preparation_seconds?: number;
     response_seconds?: number;
     option_count?: number;
@@ -447,6 +446,14 @@ export interface StudentPlanModule {
   latest_attempt_id?: number | null;
   latest_attempt_status?: string | null;
   retake_available?: boolean;
+  /** Per-module validity. Plans stack, so two plans that both contain Writing
+   *  leave it running longer than either alone - a single plan-level expiry
+   *  cannot express that, which is why this is on the module. */
+  access_expires_at?: string | null;
+  access_days_remaining?: number | null;
+  /** Sittings bought and not yet used. Buying a plan again buys another go, so
+   *  a card must not say "Attempt Exhausted" over a test Start would open. */
+  sittings_remaining?: number;
 }
 
 export interface StudentPlanCatalogItem {
@@ -511,18 +518,14 @@ export interface StudentCurrentPlan {
     modules: StudentPlanModule[];
   } | null;
   state: "none" | "active" | "grace" | "expired" | "scheduled";
-  starts_at?: string | null;
   expires_at: string | null;
-  grace_days?: number | null;
-  access_type: "institute" | "direct" | "trial";
-  institute_name?: string | null;
+  access_type: "institute" | "direct";
   ai_evaluations?: StudentAiQuotaSummary;
   demo?: {
     state: "active" | "locked";
     is_enabled: boolean;
     days_remaining: number | null;
     duration_days: number;
-    test_limit: number;
     tests_taken: number;
     course_limit: number;
     locked_reason: string | null;
@@ -717,8 +720,6 @@ export interface AttemptPart {
     response_seconds?: number;
     option_count?: number;
     score_weight?: number;
-    audio_mode?: "single" | "per_question";
-    audio_required?: boolean;
     notes_allowed?: boolean;
     layout?: "shared_cloze" | "conversation_groups" | "notepad_gaps" | "inline_matching_blanks" | "source_text_matching";
     group_count?: number;

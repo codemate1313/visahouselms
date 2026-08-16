@@ -380,14 +380,14 @@ def main() -> None:
         institute_plan = plan_service.create_plan(db, owner, {
             "name": "Institute Standard (60 seats)", "description": "One academic year for a mid-size centre.",
             "price": 96000, "currency": "INR", "duration_days": 365, "student_limit": 60,
-            "staff_limit": 6, "test_limit": 0, "grace_days": 14, "audience": "institutes",
+            "staff_limit": 6, "grace_days": 14, "audience": "institutes",
             "is_published": True, "module_ids": module_ids,
             "features": ["All four skills", "Examiner-marked Writing and Speaking", "Institute leaderboard"],
         }, IP)
         direct_plan = plan_service.create_plan(db, owner, {
             "name": "Student 3-Month", "description": "Full access for an individual candidate.",
             "price": 4999, "currency": "INR", "duration_days": 90, "student_limit": 1,
-            "staff_limit": 0, "test_limit": 0, "grace_days": 7, "audience": "direct_students",
+            "staff_limit": 0, "grace_days": 7, "audience": "direct_students",
             "is_published": True, "module_ids": module_ids,
             "features": ["All four skills", "CEFR profile", "Retake requests"],
         }, IP)

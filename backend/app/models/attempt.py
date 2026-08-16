@@ -147,10 +147,24 @@ class TestAttempt(Base):
         # Every module type allows exactly one original sitting per student -
         # an approved, unconsumed RetakeRequest is the only way to add another
         # (see attempt_service.start_attempt / retake_service).
+        # One row per PURCHASED sitting, not one row per module for all time.
+        #
+        # This used to be unique on (user_id, module_id) alone, which made "you
+        # may sit this test exactly once, ever" a database fact rather than a
+        # product decision - a student who bought the same plan again could not
+        # be given the second sitting they had paid for no matter what the
+        # service layer decided.
+        #
+        # Keeping it unique on the sitting number preserves what the index was
+        # really for: two concurrent Start clicks both compute the same next
+        # number, and the loser hits this constraint instead of creating a
+        # duplicate attempt. The IntegrityError handler in start_attempt already
+        # turns that into "you already have this open".
         Index(
             "uq_test_attempt_original_user_module",
             "user_id",
             "module_id",
+            "sitting_number",
             unique=True,
             sqlite_where=text("is_retake = 0"),
             postgresql_where=text("is_retake = false"),
@@ -176,6 +190,10 @@ class TestAttempt(Base):
     # True for the extra sitting granted by an approved RetakeRequest; false
     # for the one original attempt every student gets on every module.
     is_retake: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Which purchased sitting this is: 1 for the first, 2 after buying the plan
+    # again, and so on. Retakes leave it at their original attempt's number -
+    # a goodwill re-sit is not a sitting the student bought.
+    sitting_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     retake_request_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("retake_requests.id", ondelete="SET NULL"), nullable=True, unique=True
     )

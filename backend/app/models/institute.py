@@ -32,7 +32,6 @@ class Institute(Base):
     agreement_currency: Mapped[str] = mapped_column(String(8), nullable=False, default="INR")
     student_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     staff_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    test_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     access_duration_days: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     # The institute plan the agreement was sold on, picked (or authored) during
     # onboarding. Publish turns it into the institute's first subscription.

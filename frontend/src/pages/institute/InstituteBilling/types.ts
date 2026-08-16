@@ -8,11 +8,31 @@ export interface Payment {
   created_at: string;
 }
 
+/** One term the institute has paid for and not yet used up. */
+export interface SubscriptionTerm {
+  plan_name: string;
+  state: string;
+  starts_at: string;
+  expires_at: string;
+  days_remaining: number | null;
+}
+
+/** Seats are the SUM across live terms, so a second plan adds capacity - and
+ *  that capacity steps back down when the first term runs out. This is that
+ *  step, so an admin sees it coming. */
+export interface SeatStep {
+  from: string;
+  until: string;
+  seats: number;
+}
+
 export interface SubscriptionStatus {
   state: string;
   usage: { students: number; staff: number; tests: number };
   limits: { students: number; staff: number; tests: number | null } | null;
   subscription: { plan_name: string; expires_at: string; days_remaining: number | null } | null;
+  terms?: SubscriptionTerm[];
+  seat_timeline?: SeatStep[];
 }
 
 /** One plan an institute may buy its next term on, priced server-side. */

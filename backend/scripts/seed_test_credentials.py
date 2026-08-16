@@ -140,7 +140,6 @@ def main() -> None:
                 duration_days=365,
                 student_limit=50,
                 staff_limit=10,
-                test_limit=200,
                 grace_days=7,
                 is_active=True,
             )

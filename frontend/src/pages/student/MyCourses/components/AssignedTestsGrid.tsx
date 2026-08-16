@@ -23,6 +23,7 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
         const isLocked = Boolean(module.is_locked);
         const isDemo = Boolean(module.is_demo);
         const isExhausted = Boolean(module.is_exhausted);
+        const hasAttempted = Boolean(module.has_attempted);
         const retakeAvailable = Boolean(module.retake_available);
         const moduleTypeClass = `type-${module.module_type || "default"}`;
 
@@ -81,6 +82,19 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                 <span className="premium-meta-pill text-muted">
                   Academic Practice
                 </span>
+                {!isLocked && (module.sittings_remaining ?? 0) > 0 && hasAttempted && (
+                  <span className="premium-meta-pill is-sitting" title={strings.sittings.tooltip}>
+                    {strings.sittings.left(module.sittings_remaining ?? 0)}
+                  </span>
+                )}
+                {!isLocked && module.access_days_remaining != null && (
+                  <span
+                    className={`premium-meta-pill${module.access_days_remaining <= 14 ? " is-expiring" : ""}`}
+                    title={strings.access.tooltip(formatDay(module.access_expires_at))}
+                  >
+                    <ClockIcon /> {strings.access.daysLeft(module.access_days_remaining)}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -142,4 +156,14 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
       })}
     </div>
   );
+}
+
+/** Renders a stored timestamp as a plain calendar date.
+ *  Kept local so the card never has to care whether the API sent a date or a
+ *  full timestamp. */
+function formatDay(value: string | null | undefined): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }

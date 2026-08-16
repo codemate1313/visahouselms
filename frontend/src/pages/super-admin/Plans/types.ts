@@ -12,7 +12,6 @@ export interface PlanRow {
   currency: string;
   duration_days: number;
   student_limit: number;
-  test_limit: number;
   staff_limit: number;
   grace_days: number;
   is_active: boolean;

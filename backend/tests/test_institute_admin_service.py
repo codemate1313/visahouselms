@@ -96,7 +96,6 @@ class InstituteAdminServiceTests(unittest.TestCase):
             duration_days=30,
             student_limit=1,
             staff_limit=2,
-            test_limit=20,
             grace_days=7,
             is_active=True,
         )

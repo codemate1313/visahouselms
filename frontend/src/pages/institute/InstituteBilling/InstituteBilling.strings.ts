@@ -1,4 +1,13 @@
 export const instituteBillingStrings = {
+  terms: {
+    ariaLabel: "Subscription terms",
+    heading: (count: number) => `${count} plans running — their time adds up`,
+    range: (from: string, to: string) => ` ${from} → ${to} `,
+    combined: (until: string) => `Combined access runs to ${until}.`,
+    stepDown: (before: number, after: number, on: string) =>
+      `Student seats drop from ${before} to ${after} on ${on}, when your earlier term ends.`,
+  },
+
   eyebrow: "Subscription",
   title: "Subscription & Payments",
   subtitle: "Review the access assigned by the Super Admin.",

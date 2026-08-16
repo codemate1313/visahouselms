@@ -132,11 +132,11 @@ class InstituteAllocationTests(unittest.TestCase):
         self._allocate(institute)
 
         self.db.refresh(institute)
-        plan = self.db.get(Plan, institute.onboarding_plan_id)
-        self.assertEqual(plan.test_limit, 0)
-        # NULL on the institute and None in the subscription quota both mean
-        # "not metered" - nothing anywhere caps attempts.
-        self.assertIsNone(institute.test_limit)
+        self.db.get(Plan, institute.onboarding_plan_id)
+        # Sittings are counted per module and per purchase now, not as a
+        # per-cycle plan quota - the old `test_limit` column was stored, shown
+        # to buyers, and enforced by nothing, so it has gone.
+        self.assertFalse(hasattr(institute, "test_limit"))
         status = subscription_service.subscription_status(self.db, institute.id)
         self.assertIsNone(status["limits"]["tests"])
 
@@ -227,7 +227,7 @@ class InstituteAllocationTests(unittest.TestCase):
         institute = self._institute("Legacy Academy")
         legacy = Plan(
             name=f"Agreement {institute.slug} {institute.id}", price=0, currency="INR", duration_days=365,
-            student_limit=5, staff_limit=1, test_limit=0, grace_days=0,
+            student_limit=5, staff_limit=1, grace_days=0,
             audience=AUDIENCE_INSTITUTES, is_active=True, is_internal=True, modules=[self.module],
         )
         self.db.add(legacy)

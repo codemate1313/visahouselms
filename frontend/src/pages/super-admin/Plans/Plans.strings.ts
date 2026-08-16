@@ -89,7 +89,6 @@ export const plansStrings = {
     studentsSuffix: "Students",
     staffLimit: "Staff Limit",
     staffSuffix: "Staff Members",
-    testLimit: "Test Limit",
     testsSuffix: "Mock Tests",
     gracePeriod: "Grace Period",
     graceSuffix: "Days Extension",
@@ -124,10 +123,10 @@ export const plansStrings = {
   pdf: {
     header: "Language CERT — Subscription Plans Report",
     generatedPrefix: "Generated:",
-    columns: ["#", "Plan Name", "Price", "Duration", "Limits (Students/Staff/Tests)", "Grace", "Courses", "Subs", "Status"],
+    columns: ["#", "Plan Name", "Price", "Duration", "Limits (Students/Staff)", "Grace", "Courses", "Subs", "Status"],
   },
   excel: {
     sheetName: "Subscription Plans",
-    columns: ["#", "Plan Name", "Description", "Price", "Currency", "Duration (Days)", "Student Limit", "Staff Limit", "Test Limit", "Grace Days", "Courses Count", "Active Subscriptions", "Status"],
+    columns: ["#", "Plan Name", "Description", "Price", "Currency", "Duration (Days)", "Student Limit", "Staff Limit", "Grace Days", "Courses Count", "Active Subscriptions", "Status"],
   },
 } as const;

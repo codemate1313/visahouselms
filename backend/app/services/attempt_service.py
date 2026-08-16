@@ -193,20 +193,6 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
     is_final = module.module_type == "final_test"
     dev_unlimited_speaking = _dev_unlimited_speaking_attempts(db, module)
 
-    # 1. Existing READY attempt (e.g. candidate is still on onboarding or refreshed)
-    existing_ready = (
-        db.query(TestAttempt)
-        .filter(
-            TestAttempt.user_id == user.id,
-            TestAttempt.module_id == module.id,
-            TestAttempt.status == ATTEMPT_READY,
-        )
-        .first()
-    )
-    if existing_ready is not None:
-        return get_student_view(db, get_attempt_or_404(db, user, existing_ready.id))
-
-    # 2. Existing IN_PROGRESS attempt
     existing_in_progress = (
         db.query(TestAttempt)
         .filter(
@@ -224,27 +210,44 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         else:
             _auto_expire(db, existing_in_progress)
 
-    # 3. Check if an original attempt has already been commenced/completed
-    original_attempt = (
+    # Every module type allows exactly one original sitting; an approved,
+    # unconsumed RetakeRequest is the only way to earn another (except final tests).
+    prior_sittings = (
         db.query(TestAttempt)
         .filter(
             TestAttempt.user_id == user.id,
             TestAttempt.module_id == module.id,
             TestAttempt.is_retake.is_(False),
-            TestAttempt.status != ATTEMPT_READY,
         )
-        .first()
+        .count()
     )
+    original_attempt = prior_sittings > 0
     retake_request = None
-    if original_attempt is not None:
+    if original_attempt:
         if is_final:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="You have already attempted the final test. Final tests cannot be retaken.",
             )
-        if not dev_unlimited_speaking:
+
+        # A direct student who bought the plan again bought another go at it.
+        # Before this, a repeat purchase bought only more days to look at a
+        # paper they had already sat - full price for no further sitting - and
+        # the only way back in was a Retake Request, which is a goodwill
+        # workflow for when something went wrong, not something money buys.
+        #
+        # Institute students are unaffected: they do not buy their own plans,
+        # so a second institute plan must not silently reset every student's
+        # sittings. Their route to another go remains the Retake Request.
+        has_paid_sitting = False
+        if user.institute_id is None:
+            from app.services import entitlement_service
+
+            has_paid_sitting = entitlement_service.sittings_remaining(db, user.id, module.id) > 0
+
+        if not has_paid_sitting and not dev_unlimited_speaking:
             retake_request = retake_service.get_available_retake(db, user.id, module.id)
-        if retake_request is None and not dev_unlimited_speaking:
+        if retake_request is None and not has_paid_sitting and not dev_unlimited_speaking:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ALREADY_ATTEMPTED_DETAIL)
 
     now = _now()
@@ -252,7 +255,7 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
     attempt = TestAttempt(
         user_id=user.id,
         module_id=module.id,
-        status=ATTEMPT_READY,
+        status=ATTEMPT_READY if is_final else ATTEMPT_IN_PROGRESS,
         is_final=is_final,
         is_retake=retake_request is not None or (dev_unlimited_speaking and original_attempt is not None),
         retake_request_id=retake_request.id if retake_request is not None else None,
@@ -260,6 +263,10 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         started_at=now,
         expires_at=expires_at,
         content_snapshot=_build_content_snapshot(module, randomize=True),
+        # A retake re-sits the sitting it was granted against; a purchased
+        # sitting is a new one. Numbering them is what lets the unique index
+        # keep guarding against double-clicks without capping the total.
+        sitting_number=prior_sittings if retake_request is not None else prior_sittings + 1,
     )
     db.add(attempt)
     if retake_request is not None:
@@ -269,58 +276,19 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         db.commit()
     except IntegrityError:
         db.rollback()
-        existing_attempt = (
+        existing_in_progress = (
             db.query(TestAttempt)
             .filter(
                 TestAttempt.user_id == user.id,
                 TestAttempt.module_id == module.id,
-                TestAttempt.status.in_((ATTEMPT_READY, ATTEMPT_IN_PROGRESS)),
+                TestAttempt.status == ATTEMPT_IN_PROGRESS,
             )
             .first()
         )
-        if existing_attempt is not None:
-            return get_student_view(db, get_attempt_or_404(db, user, existing_attempt.id))
+        if existing_in_progress is not None:
+            return get_student_view(db, get_attempt_or_404(db, user, existing_in_progress.id))
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ALREADY_ATTEMPTED_DETAIL) from None
     return get_student_view(db, get_attempt_or_404(db, user, attempt.id))
-
-
-def commence_attempt(db: Session, user: User, attempt: TestAttempt) -> dict:
-    """Commence the attempt: starts the timer fresh and transitions from READY to IN_PROGRESS."""
-    if attempt.status == ATTEMPT_READY:
-        now = _now()
-        attempt.status = ATTEMPT_IN_PROGRESS
-        attempt.started_at = now
-        attempt.expires_at = now + timedelta(
-            minutes=attempt.module.duration_minutes + EXPIRY_BUFFER_MINUTES
-        )
-        if attempt.is_final and attempt.security_required:
-            attempt.security_started_at = now
-            attempt.security_last_heartbeat_at = now
-        db.add(attempt)
-        db.commit()
-        attempt = get_attempt_or_404(db, user, attempt.id)
-    elif attempt.status != ATTEMPT_IN_PROGRESS:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This test cannot be commenced")
-    return get_student_view(db, attempt, security_authorized=True)
-
-
-def cancel_onboarding_attempt(db: Session, user: User, attempt_id: int) -> dict:
-    """If a candidate exits during pre-onboarding without commencing, discard the READY attempt so limits are not consumed."""
-    attempt = db.query(TestAttempt).filter(TestAttempt.id == attempt_id, TestAttempt.user_id == user.id).first()
-    if attempt is None:
-        return {"cancelled": False, "message": "Attempt not found"}
-    if attempt.status == ATTEMPT_READY and not attempt.answers:
-        if attempt.retake_request_id:
-            from app.models.retake_request import RetakeRequest
-
-            retake = db.get(RetakeRequest, attempt.retake_request_id)
-            if retake is not None:
-                retake.consumed_at = None
-                db.add(retake)
-        db.delete(attempt)
-        db.commit()
-        return {"cancelled": True, "message": "Onboarding cancelled. Attempt quota preserved."}
-    return {"cancelled": False, "message": "Attempt is already commenced or completed."}
 
 
 def credit_clock(db: Session, attempt: TestAttempt, key: str, seconds: float) -> bool:
@@ -330,7 +298,7 @@ def credit_clock(db: Session, attempt: TestAttempt, key: str, seconds: float) ->
     same examiner prompt or the same upload can never be credited twice, however
     many times the client asks for it. Returns True when the clock moved.
     """
-    if attempt.status not in (ATTEMPT_IN_PROGRESS, ATTEMPT_READY):
+    if attempt.status != ATTEMPT_IN_PROGRESS:
         return False
     seconds = int(max(0, min(seconds, MAX_CLOCK_CREDIT_SECONDS)))
     if seconds <= 0:
@@ -388,9 +356,6 @@ def _redacted_question(
         # the same way the candidate's own recording is handled below, so the
         # material cannot be copied out and passed to the next candidate.
         interaction["candidate_material_url"] = sign_path(material_path)
-    q_audio_path = interaction.get("audio_path")
-    if q_audio_path and not interaction.get("audio_url"):
-        interaction["audio_url"] = f"/storage/{q_audio_path}"
     return {
         "id": question.id,
         "question_type": source.get("question_type", question.question_type),
@@ -942,12 +907,6 @@ def get_attempt_part_view(attempt: TestAttempt, part_id: int) -> dict:
 
 
 def _require_in_progress(attempt: TestAttempt) -> None:
-    if attempt.status == ATTEMPT_READY:
-        now = _now()
-        attempt.status = ATTEMPT_IN_PROGRESS
-        attempt.started_at = now
-        duration = attempt.module.duration_minutes if attempt.module and attempt.module.duration_minutes else 15
-        attempt.expires_at = now + timedelta(minutes=duration + EXPIRY_BUFFER_MINUTES)
     if attempt.status != ATTEMPT_IN_PROGRESS:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This attempt is no longer in progress")
     if attempt.expires_at <= _now():
@@ -1119,12 +1078,6 @@ def submit_attempt(
     *,
     require_complete_speaking: bool = True,
 ) -> dict:
-    if attempt.status == ATTEMPT_READY:
-        attempt.status = ATTEMPT_IN_PROGRESS
-        now = _now()
-        attempt.started_at = now
-        duration = attempt.module.duration_minutes if attempt.module and attempt.module.duration_minutes else 15
-        attempt.expires_at = now + timedelta(minutes=duration + EXPIRY_BUFFER_MINUTES)
     if attempt.status != ATTEMPT_IN_PROGRESS:
         # idempotent: a retried submit just returns the current state
         return get_student_view(db, attempt)

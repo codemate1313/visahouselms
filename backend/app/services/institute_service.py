@@ -437,7 +437,6 @@ def _sync_agreement_plan(
         "is_published": False,
         "is_internal": True,
         # Institute students take as many tests as they like.
-        "test_limit": 0,
     }
     if existing is not None:
         return plan_service.apply_plan_terms(db, actor, existing, terms, ip), existing.id != institute.onboarding_plan_id
@@ -533,7 +532,6 @@ def update_institute(
     if plan is not None:
         institute.onboarding_plan_id = plan.id
         # NULL means unmetered: an institute's students take unlimited tests.
-        institute.test_limit = None
         # Seats and courses are read from the plan, but a running term carries
         # its own grace_days and plan_id - so re-term it in place.
         subscription_service.sync_open_terms_to_plan(db, institute.id, plan)

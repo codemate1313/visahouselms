@@ -1,4 +1,16 @@
 export const myCoursesStrings = {
+  sittings: {
+    left: (count: number) => `${count} more ${count === 1 ? "sitting" : "sittings"}`,
+    tooltip: "You bought this test again, so you can sit it another time.",
+  },
+
+  access: {
+    daysLeft: (days: number) =>
+      days <= 0 ? "Expires today" : `${days} day${days === 1 ? "" : "s"} left`,
+    tooltip: (day: string) =>
+      day ? `Your access to this test runs until ${day}.` : "Your access to this test is active.",
+  },
+
   eyebrow: "Learning",
   loadError: "Failed to load your learning plan.",
   titles: {

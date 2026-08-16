@@ -30,6 +30,7 @@ from app.models.institute_branding import InstituteBranding
 from app.models.institute_signup import InstituteSignupRequest
 from app.models.instructor_profile import InstructorProfile
 from app.models.job import Job
+from app.models.module_entitlement import ModuleEntitlement
 from app.models.notification import Announcement, StudentNotification
 from app.models.payment import Payment
 from app.models.payment_method import PaymentMethod
@@ -54,6 +55,7 @@ from app.models.grammar_content import GrammarContent
 
 
 __all__ = [
+    "ModuleEntitlement",
     "Base",
     "GstRate",
     "Role",

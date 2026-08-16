@@ -59,6 +59,36 @@ RESOURCE_REGISTRY: Dict[str, tuple] = {
 }
 
 
+def plan_limit_total(db: Session, institute_id: int, limit_attr: str) -> int:
+    """Seats an institute holds, summed across every live term.
+
+    An institute that buys a second plan mid-term has bought more capacity, not
+    a replacement for the first: two 25-seat plans running together are 50
+    seats. Reading the limit off one "current" subscription silently discarded
+    the plan they had just paid for.
+
+    Summed over active and grace terms only. A term bought for next year is not
+    capacity yet, and counting it would let an institute fill seats months
+    before the plan covering them begins.
+    """
+    from app.services.subscription_service import paid_subscriptions
+
+    # Paid-for rather than currently-running. A second plan bought mid-year
+    # stacks its dates onto the end of the first, so it reads as scheduled - but
+    # the institute paid for that capacity today and needs it today. Terms that
+    # have fully expired are excluded, so the seat count steps back down when a
+    # term runs out rather than accumulating forever.
+    rows = paid_subscriptions(db, institute_id=institute_id)
+    total = 0
+    for row in rows:
+        if row.plan is None:
+            continue
+        value = getattr(row.plan, limit_attr, None)
+        if value:
+            total += value
+    return total
+
+
 def enforce_limit(db: Session, institute_id: int, resource: str) -> None:
     """Raises HTTP 402 when the institute's plan is missing/expired or the
     resource is at its limit. Grace period keeps the institute fully working;
@@ -91,7 +121,7 @@ def enforce_limit(db: Session, institute_id: int, resource: str) -> None:
         )
 
     counter, limit_attr = RESOURCE_REGISTRY[resource]
-    limit = getattr(subscription.plan, limit_attr)
+    limit = plan_limit_total(db, institute_id, limit_attr)
     count = counter(db, institute_id)
     if count >= limit:
         raise HTTPException(

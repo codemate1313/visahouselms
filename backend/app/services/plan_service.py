@@ -79,7 +79,6 @@ def _serialize(plan: Plan, subscription_count: Optional[int] = None) -> dict:
         "currency": plan.currency,
         "duration_days": plan.duration_days,
         "student_limit": plan.student_limit,
-        "test_limit": plan.test_limit,
         "staff_limit": plan.staff_limit,
         "grace_days": plan.grace_days,
         "is_active": plan.is_active,
@@ -243,7 +242,6 @@ def build_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> Plan:
         currency=data.get("currency") or "INR",
         duration_days=data["duration_days"],
         student_limit=data["student_limit"],
-        test_limit=data["test_limit"],
         staff_limit=data["staff_limit"],
         grace_days=data.get("grace_days", 7),
         is_active=True,
@@ -445,7 +443,9 @@ def _landing_features(plan: Plan, modules: List[dict]) -> List[str]:
     if len(modules) > 4:
         features.append(f"+{len(modules) - 4} more modules")
     features.append("Unlimited students" if plan.student_limit == 0 else f"Up to {plan.student_limit:,} students")
-    features.append("Unlimited mock tests" if plan.test_limit == 0 else f"{plan.test_limit:,} mock tests per cycle")
+    # Sittings are per module and per purchase, not a per-cycle allowance, so
+    # the old "Unlimited mock tests" line was a claim the product never kept.
+    features.append(f"{len(modules)} test{'' if len(modules) == 1 else 's'} included")
     if plan.staff_limit:
         features.append(f"{plan.staff_limit:,} staff seats")
     if plan.grace_days:

@@ -93,7 +93,7 @@ class EnrollmentEntitlementTests(unittest.TestCase):
         self.db.flush()
         plan = Plan(
             name="Plan", price=Decimal("0"), currency="INR", duration_days=30,
-            student_limit=100, test_limit=100, staff_limit=10,
+            student_limit=100, staff_limit=10,
         )
         self.db.add(plan)
         self.db.flush()
@@ -124,7 +124,7 @@ class EnrollmentEntitlementTests(unittest.TestCase):
         self.db.flush()
         plan = Plan(
             name="Plan2", price=Decimal("0"), currency="INR", duration_days=30,
-            student_limit=100, test_limit=100, staff_limit=10,
+            student_limit=100, staff_limit=10,
         )
         self.db.add(plan)
         self.db.flush()

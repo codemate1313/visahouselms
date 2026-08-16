@@ -60,7 +60,6 @@ def main() -> None:
         # Limits come from the plan, so these stay empty until one is bought.
         institute.student_limit = None
         institute.staff_limit = None
-        institute.test_limit = None
         db.flush()
 
         if db.query(InstituteBranding).filter(InstituteBranding.institute_id == institute.id).first() is None:

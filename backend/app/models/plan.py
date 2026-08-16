@@ -42,7 +42,6 @@ class Plan(Base):
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="INR")
     duration_days: Mapped[int] = mapped_column(Integer, nullable=False)
     student_limit: Mapped[int] = mapped_column(Integer, nullable=False)
-    test_limit: Mapped[int] = mapped_column(Integer, nullable=False)
     staff_limit: Mapped[int] = mapped_column(Integer, nullable=False)
     grace_days: Mapped[int] = mapped_column(Integer, nullable=False, default=7)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

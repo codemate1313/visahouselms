@@ -64,7 +64,6 @@ class SeatAccountingTests(unittest.TestCase):
             currency="INR",
             duration_days=365,
             student_limit=10,
-            test_limit=0,
             staff_limit=5,
             grace_days=7,
             is_active=True,

@@ -12,7 +12,7 @@ The ladder is built around seats, which is the only thing these plans meter:
     Premium  200 students, 15 instructors   - a multi-branch institute
     Elite    600 students, 50 instructors   - a chain
 
-Test attempts are deliberately unmetered on every tier (test_limit=0 reads as
+Sittings are counted per module and per purchase, not as a per-tier quota (
 "unlimited" in the plan feature list). Lite carries no instructor seats at all,
 so its students get auto-marked Listening and Reading plus AI evaluation on
 Writing and Speaking - there is nobody on staff to hand-grade for them.
@@ -118,7 +118,6 @@ def seed() -> None:
             plan.student_limit = tier["student_limit"]
             plan.staff_limit = tier["staff_limit"]
             # 0 renders as "Unlimited mock tests" - attempts are never capped.
-            plan.test_limit = 0
             plan.grace_days = GRACE_DAYS
             plan.is_active = True
             plan.audience = AUDIENCE_INSTITUTES

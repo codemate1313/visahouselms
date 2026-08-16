@@ -78,7 +78,6 @@ class SubscriptionExpirySuspensionTests(unittest.TestCase):
             duration_days=30,
             student_limit=50,
             staff_limit=5,
-            test_limit=100,
             grace_days=7,
             is_active=True,
         )

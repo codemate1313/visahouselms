@@ -124,6 +124,13 @@ def subscription_ceiling(db: Session, institute_id: int) -> Optional[datetime]:
         days = institute.access_duration_days or 365
         return now_utc() + timedelta(days=days)
 
+    # The furthest-running live term, not the one a billing screen calls
+    # "current". An institute that stacked a second plan has paid for access to
+    # that later date, and a student window must be allowed to reach it.
+    live = subscription_service.live_subscriptions(db, institute_id=institute_id)
+    if live:
+        return max(row.expires_at for row in live)
+
     subscription, _state = subscription_service.current_subscription(db, institute_id)
     if subscription is None:
         return None

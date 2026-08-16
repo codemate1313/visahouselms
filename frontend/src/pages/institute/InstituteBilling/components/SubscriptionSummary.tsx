@@ -10,6 +10,18 @@ interface SubscriptionSummaryProps {
 
 export function SubscriptionSummary({ subscription }: SubscriptionSummaryProps) {
   const t = strings.stats;
+  const terms = subscription.terms ?? [];
+  const timeline = subscription.seat_timeline ?? [];
+  const lastEnd = terms.length ? terms[terms.length - 1].expires_at : null;
+  // The first point at which capacity drops. Only worth surfacing if it
+  // actually falls - a timeline that only ever holds steady is noise.
+  const stepDownIndex = timeline.findIndex(
+    (step, index) => index > 0 && step.seats < timeline[index - 1].seats,
+  );
+  const stepDown =
+    stepDownIndex > 0
+      ? { from: timeline[stepDownIndex - 1], to: timeline[stepDownIndex] }
+      : null;
   return (
     <>
       <div className="banner">
@@ -17,6 +29,37 @@ export function SubscriptionSummary({ subscription }: SubscriptionSummaryProps) 
         <Badge tone={STATE_CLASS[subscription.state] ?? "gray"}>{subscription.state}</Badge>
         {subscription.subscription && ` ${strings.validUntil(formatDate(subscription.subscription.expires_at))}`}
       </div>
+
+      {/* More than one term running means a plan was bought while another was
+          still live. Naming only one of them is what made a stacked purchase
+          look like it had vanished, so every paid term is listed. */}
+      {terms.length > 1 && (
+        <section className="term-stack" aria-label={strings.terms.ariaLabel}>
+          <p className="term-stack-heading">{strings.terms.heading(terms.length)}</p>
+          <ol className="term-stack-list">
+            {terms.map((term, index) => (
+              <li key={`${term.plan_name}-${term.starts_at}-${index}`}>
+                <strong>{term.plan_name}</strong>
+                <span className="muted-text">
+                  {strings.terms.range(formatDate(term.starts_at), formatDate(term.expires_at))}
+                </span>
+                <Badge tone={STATE_CLASS[term.state] ?? "gray"}>{term.state}</Badge>
+              </li>
+            ))}
+          </ol>
+          <p className="muted-text">{strings.terms.combined(formatDate(lastEnd))}</p>
+        </section>
+      )}
+
+      {stepDown && (
+        <p className="term-stack-warning">
+          {strings.terms.stepDown(
+            stepDown.from.seats,
+            stepDown.to.seats,
+            formatDate(stepDown.to.from),
+          )}
+        </p>
+      )}
 
       {subscription.limits && (
         <div className="metric-grid">

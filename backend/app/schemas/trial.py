@@ -20,4 +20,3 @@ class DemoAccountCreate(BaseModel):
     admin_last_name: str = Field(min_length=1, max_length=100)
     duration_days: int = Field(gt=0, default=14)
     course_limit: int = Field(ge=0, default=2)
-    test_limit: int = Field(ge=0, default=5)

@@ -49,7 +49,6 @@ def _serialize(db: Session, institute: Institute) -> dict:
         "agreement_currency": institute.agreement_currency,
         "student_limit": institute.student_limit,
         "staff_limit": institute.staff_limit,
-        "test_limit": institute.test_limit,
         "access_duration_days": institute.access_duration_days,
         "published_at": institute.published_at,
         "payment": ({
@@ -102,7 +101,6 @@ def create_draft(db: Session, actor: User, data: dict, ip: Optional[str]) -> dic
     institute.student_limit = data["student_limit"]
     institute.staff_limit = data["staff_limit"]
     # Negotiated institute agreements do not meter test attempts.
-    institute.test_limit = None
     institute.access_duration_days = data["access_duration_days"]
     if data.get("ai_student_monthly_limit") is not None:
         institute.ai_student_monthly_limit = (
@@ -146,7 +144,7 @@ def publish(db: Session, actor: User, institute_id: int, ip: Optional[str]) -> d
         name=f"Agreement {institute.slug} {institute.id}", description="Internal negotiated institute agreement",
         price=institute.agreed_amount or 0, currency=institute.agreement_currency,
         duration_days=institute.access_duration_days or 365, student_limit=institute.student_limit or 0,
-        staff_limit=institute.staff_limit or 0, test_limit=0,
+        staff_limit=institute.staff_limit or 0,
         grace_days=0, is_active=True, audience="institutes", is_published=False, is_internal=True,
         modules=[link.module for link in module_links],
     )

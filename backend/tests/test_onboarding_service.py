@@ -114,7 +114,6 @@ class InstituteOnboardingServiceTests(unittest.TestCase):
         self.assertTrue(plan.is_internal)
         self.assertEqual(plan.student_limit, 2)
         self.assertEqual(plan.staff_limit, 0)
-        self.assertEqual(plan.test_limit, 0)
         self.assertEqual(plan.modules[0].id, self.module.id)
         self.assertNotIn(plan.id, {row["id"] for row in plan_service.list_plans(self.db)})
 

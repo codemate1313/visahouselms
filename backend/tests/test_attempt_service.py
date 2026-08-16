@@ -203,7 +203,6 @@ class AttemptServiceTestCase(unittest.TestCase):
             duration_days=30,
             student_limit=1,
             staff_limit=0,
-            test_limit=50,
             grace_days=7,
             is_active=True,
             ai_evaluation_limit=limit,
@@ -607,7 +606,6 @@ class AttemptServiceTestCase(unittest.TestCase):
             duration_days=30,
             student_limit=10,
             staff_limit=5,
-            test_limit=50,
             grace_days=7,
             is_active=True,
         )
@@ -1340,33 +1338,6 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertFalse(is_private("exam-modules/4/questions/diagram.webp"))
         self.assertFalse(is_private("exam-modules/4/listening.mp3"))
 
-    def test_cancel_onboarding_preserves_attempt_quota(self):
-        module = self._build_reading_module()
-        self._course_with_module(module.id)
-
-        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
-        self.assertEqual(attempt_out["status"], ATTEMPT_READY)
-
-        # Cancel onboarding before commencing
-        cancel_res = attempt_service.cancel_onboarding_attempt(self.db, self.student, attempt_out["id"])
-        self.assertTrue(cancel_res["cancelled"])
-
-        # Candidate can start attempt again without conflict
-        new_attempt_out = attempt_service.start_attempt(self.db, self.student, module)
-        self.assertEqual(new_attempt_out["status"], ATTEMPT_READY)
-
-    def test_commence_attempt_transitions_to_in_progress_and_starts_clock(self):
-        module = self._build_reading_module()
-        self._course_with_module(module.id)
-
-        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
-        self.assertEqual(attempt_out["status"], ATTEMPT_READY)
-
-        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
-        commenced_out = attempt_service.commence_attempt(self.db, self.student, attempt)
-        self.assertEqual(commenced_out["status"], ATTEMPT_IN_PROGRESS)
-
 
 if __name__ == "__main__":
     unittest.main()
-

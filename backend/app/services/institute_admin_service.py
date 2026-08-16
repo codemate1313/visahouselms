@@ -17,7 +17,6 @@ from app.core.security import hash_password
 from app.dependencies.limits import enforce_limit
 from app.models.attempt import AttemptPartGrade, TestAttempt
 from app.models.audit_log import AuditLog
-from app.models.course import Course, InstituteCourse
 from app.models.institute import Institute
 from app.models.role import DEVELOPER, INST_INSTRUCTOR, INSTITUTE_ADMIN, STUDENT, SUPER_ADMIN, Role
 from app.models.user import (
@@ -267,9 +266,15 @@ def member_capacity(db: Session, actor: User, scoped_institute_id: Optional[int]
     }
     subscription, state = subscription_service.current_subscription(db, institute_id)
     if institute.onboarding_status != "draft" and subscription is not None and subscription.plan is not None:
+        # Summed across every live term, not read off the one "current" row, so
+        # an institute running two plans sees the capacity of both. Same helper
+        # `enforce_limit` uses, so the number on this screen and the number that
+        # blocks Add student are the same number.
+        from app.dependencies.limits import plan_limit_total
+
         limits = {
-            "students": subscription.plan.student_limit,
-            "staff": subscription.plan.staff_limit,
+            "students": plan_limit_total(db, institute_id, "student_limit"),
+            "staff": plan_limit_total(db, institute_id, "staff_limit"),
         }
 
     can_add = {
@@ -1026,7 +1031,12 @@ def _available_student_slots(db: Session, institute_id: int) -> int:
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail="This institute has no active subscription. Purchase or renew a plan to add students.",
         )
-    return max(0, subscription["limits"]["students"] - subscription["usage"]["students"])
+    # Capacity is the sum across live terms - a second plan adds seats. Usage
+    # comes from the shared seat rule, so import, creation and the roster panel
+    # cannot disagree.
+    from app.dependencies.limits import _count_students, plan_limit_total
+
+    return max(0, plan_limit_total(db, institute_id, "student_limit") - _count_students(db, institute_id))
 
 
 def import_students(
@@ -1284,17 +1294,6 @@ def dashboard_summary(db: Session, actor: User) -> dict:
         if permissions["view_billing"]
         else None
     )
-    assigned_courses = (
-        db.query(Course)
-        .join(InstituteCourse, InstituteCourse.course_id == Course.id)
-        .filter(
-            InstituteCourse.institute_id == institute_id,
-            InstituteCourse.is_active.is_(True),
-            Course.deleted_at.is_(None),
-        )
-        .all()
-    )
-
     return {
         "institute": {
             "id": institute.id,
@@ -1314,15 +1313,4 @@ def dashboard_summary(db: Session, actor: User) -> dict:
         "access": subscription_service.access_window(db, institute_id),
         "permissions": permissions,
         "recent_members": visible_members[:6],
-        "assigned_courses": [
-            {
-                "id": course.id,
-                "title": course.title,
-                "slug": course.slug,
-                "summary": course.summary,
-                "level": course.level,
-                "estimated_duration_minutes": course.estimated_duration_minutes,
-            }
-            for course in assigned_courses
-        ],
     }

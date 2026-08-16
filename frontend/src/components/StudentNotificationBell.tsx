@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
@@ -21,6 +21,20 @@ interface NotificationBellProps {
   title?: string;
 }
 
+/**
+ * The tile colour behind each notification.
+ *
+ * Four of these are semantic and stay fixed, because the colour is the
+ * information: red means something failed, amber means marking, green means
+ * money, orange means a retake. An admin scanning the list reads those before
+ * they read the words.
+ *
+ * The last two carried no meaning at all - a pink institute tile and an indigo
+ * catch-all matched nothing in the product - so they follow the portal's own
+ * brand instead. Inside a teal institute portal they are teal; inside super
+ * admin they are its red. `--primary` resolves here because the bell copies it
+ * onto the portalled drawer (see the `brand` state below).
+ */
 function getNotificationVisual(notification: StudentNotification) {
   const k = (notification.kind || "").toLowerCase();
   const t = (notification.title || "").toLowerCase();
@@ -55,13 +69,13 @@ function getNotificationVisual(notification: StudentNotification) {
   }
   if (k.includes("institute") || t.includes("institute") || t.includes("application")) {
     return {
-      gradient: "var(--institute-primary, linear-gradient(135deg, #c52232 0%, #8f1420 100%))",
+      gradient: "linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%)",
       iconName: "building" as const,
       badge: "arrow",
     };
   }
   return {
-    gradient: "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)",
+    gradient: "linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%)",
     iconName: "notifications" as const,
     badge: "arrow",
   };
@@ -87,6 +101,12 @@ export function NotificationBell({
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // The drawer below is portalled to document.body, so it sits OUTSIDE
+  // `.institute-branded-portal` / `.super-admin-portal` and inherits none of
+  // their `--primary` remap - which is why it stayed the global red inside a
+  // teal institute portal. The bell itself IS inside the wrapper, so we read
+  // the resolved colour off it and carry it onto the portalled subtree.
+  const [brand, setBrand] = useState<{ primary: string; hover: string } | null>(null);
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -107,6 +127,19 @@ export function NotificationBell({
     const interval = window.setInterval(() => void loadNotifications(), 30_000);
     return () => window.clearInterval(interval);
   }, [loadNotifications]);
+
+  useLayoutEffect(() => {
+    if (!isOpen || !shellRef.current) return;
+    const styles = getComputedStyle(shellRef.current);
+    const primary = styles.getPropertyValue("--primary").trim();
+    if (!primary) return;
+    const hover = styles.getPropertyValue("--primary-hover").trim();
+    setBrand({
+      primary,
+      // Portals that only define --primary still get a sane pressed state.
+      hover: hover || `color-mix(in srgb, ${primary} 82%, #111113)`,
+    });
+  }, [isOpen]);
 
   const unread = useMemo(() => notifications.filter((n) => !n.read_at), [notifications]);
   const read = useMemo(() => notifications.filter((n) => Boolean(n.read_at)), [notifications]);
@@ -319,7 +352,17 @@ export function NotificationBell({
         <div
           ref={containerRef}
           className="student-notification-drawer-wrapper"
-          style={{ visibility: "hidden", pointerEvents: "none" }}
+          style={{
+            visibility: "hidden",
+            pointerEvents: "none",
+            ...(brand
+              ? ({
+                  "--primary": brand.primary,
+                  "--primary-hover": brand.hover,
+                  "--primary-soft": `color-mix(in srgb, ${brand.primary} 14%, transparent)`,
+                } as CSSProperties)
+              : {}),
+          }}
         >
           <div
             ref={backdropRef}

@@ -150,7 +150,6 @@ def seed_sample_courses():
                 currency="INR",
                 duration_days=30,
                 student_limit=1000,
-                test_limit=100,
                 staff_limit=10,
                 grace_days=7,
                 is_active=True,
