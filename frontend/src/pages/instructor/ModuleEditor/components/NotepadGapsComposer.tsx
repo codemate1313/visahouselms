@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import type { ExamModulePart } from "@/api/types";
 import { Button, RequiredMark, RichTextEditor } from "@/components/ui";
 import { Icon } from "@/components/icons";
@@ -59,6 +59,39 @@ export function NotepadGapsComposer({ part, isEditable, busy, onSubmit, onDelete
   const answered = blanks.filter((blank) => splitAlternatives(answers[blank] ?? "").length > 0);
   const overLong = blanks.filter((blank) =>
     splitAlternatives(answers[blank] ?? "").some((answer) => answer.split(/\s+/).length > maxWords));
+
+  const existingGaps = useMemo(() => new Set(blanks), [blanks]);
+
+  const nextGapNumber = useMemo(() => {
+    for (let i = 1; i <= expectedBlanks; i++) {
+      if (!existingGaps.has(i)) return i;
+    }
+    return (existingGaps.size > 0 ? Math.max(...Array.from(existingGaps)) : 0) + 1;
+  }, [existingGaps, expectedBlanks]);
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function insertBlank(gapNum?: number) {
+    if (!isEditing) setIsEditing(true);
+    const el = textareaRef.current;
+    const targetGap = gapNum ?? nextGapNumber;
+    const blankTag = `{{blank:${targetGap}}}`;
+    if (!el) {
+      setNotepad((prev) => (prev ? `${prev} ${blankTag}` : blankTag));
+      return;
+    }
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? el.value.length;
+    const before = el.value.slice(0, start);
+    const after = el.value.slice(end);
+    const newText = `${before}${blankTag}${after}`;
+    setNotepad(newText);
+    requestAnimationFrame(() => {
+      el.focus();
+      const newPos = start + blankTag.length;
+      el.setSelectionRange(newPos, newPos);
+    });
+  }
 
   const problems: string[] = [];
   if (!notepad.trim()) problems.push(t.errors.noNotepad);
@@ -148,8 +181,55 @@ export function NotepadGapsComposer({ part, isEditable, busy, onSubmit, onDelete
         </div>
       )}
 
+      {isEditing && isEditable && (
+        <div className="vh-passage-blank-toolbar" style={{ marginTop: "12px", marginBottom: "14px" }}>
+          <div className="vh-passage-blank-main-actions">
+            <button
+              type="button"
+              className="vh-insert-blank-btn"
+              onClick={() => insertBlank(nextGapNumber)}
+              title="Click where you want the blank in the notepad, then click here to insert it."
+            >
+              <Icon name="plus" className="vh-btn-icon" style={{ width: "15px", height: "15px", strokeWidth: 2.5 }} />
+              <span>Insert Gap {nextGapNumber <= expectedBlanks ? `(${nextGapNumber})` : ""}</span>
+            </button>
+            <span className="vh-passage-blank-hint">
+              Position cursor in the notepad and click <strong>Insert Gap</strong> (or click a gap pill below)
+            </span>
+          </div>
+
+          <div className="vh-gap-pill-list" aria-label="Notepad gaps status">
+            {Array.from({ length: expectedBlanks }, (_, i) => i + 1).map((gapNum) => {
+              const present = existingGaps.has(gapNum);
+              return (
+                <button
+                  key={gapNum}
+                  type="button"
+                  className={`vh-gap-pill ${present ? "is-present" : "is-missing"}`}
+                  onClick={() => insertBlank(gapNum)}
+                  title={present ? `Gap ${gapNum} is in notepad. Click to insert another marker.` : `Click to insert Gap ${gapNum} at cursor`}
+                >
+                  {present ? (
+                    <>
+                      <Icon name="check" className="vh-btn-icon" style={{ width: "11px", height: "11px", strokeWidth: 3 }} />
+                      <span>Gap {gapNum}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="plus" className="vh-btn-icon" style={{ width: "11px", height: "11px", strokeWidth: 3 }} />
+                      <span>Gap {gapNum}</span>
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <label htmlFor="notepad-task-text">{t.notepadLabel}<RequiredMark /></label>
       <RichTextEditor
+        ref={textareaRef}
         id="notepad-task-text"
         className="gap-task-passage"
         rows={14}
