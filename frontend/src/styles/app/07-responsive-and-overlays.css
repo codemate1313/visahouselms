@@ -3332,6 +3332,14 @@ body {
   border-radius: var(--radius-xs, 4px);
 }
 
+[data-theme="dark"] .seat-panel-actions .link-button {
+  color: color-mix(in srgb, var(--primary) 70%, #ffffff);
+}
+
+[data-theme="dark"] .seat-panel-actions .link-button:hover {
+  color: color-mix(in srgb, var(--primary) 90%, #ffffff);
+}
+
 /* Status and access columns ------------------------------------------------ */
 
 .institute-members-table .member-status-cell,
