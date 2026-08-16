@@ -209,29 +209,12 @@
   right: 0;
   z-index: 50;
   width: 100%;
-  --ink: #ffffff;
-  --ink2: rgba(255, 255, 255, 0.8);
-  --line: rgba(255, 255, 255, 0.15);
-  --ac: #ffffff;
-  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 65%),
-              linear-gradient(135deg, rgba(153, 13, 31, 0.86) 0%, rgba(133, 9, 26, 0.86) 45%, rgba(100, 4, 18, 0.86) 100%) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2) !important;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   transform: translateY(0);
   transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.28s ease;
   will-change: transform;
-}
-
-.vh-header .vh-desktop-auth {
-  background: #ffffff !important;
-  color: #85091a !important;
-}
-
-.vh-header .vh-desktop-auth:hover {
-  background: rgba(255, 255, 255, 0.9) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
 }
 
 .vh-header.vh-header-hidden {
@@ -250,6 +233,11 @@
 }
 .vh-header-reveal-zone.vh-active {
   pointer-events: auto;
+}
+[data-theme="dark"] .vh-header {
+  background: #0a0a0f;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
 @media (prefers-reduced-motion: reduce) {
