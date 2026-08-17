@@ -4177,14 +4177,9 @@
 }
 
 .speaking-timing-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.speaking-timing-fields > div {
-  display: grid;
-  gap: 0.45rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
 }
 
 .vh-minute-second-field {
@@ -8354,4 +8349,12 @@ textarea:focus {
     height: 44px;
     font-size: 14px;
   }
+}
+
+.module-part-editor.is-speaking-editor {
+  gap: 10px !important;
+}
+
+.module-part-editor.is-speaking-editor .vh-unified-part-header-bar {
+  margin-bottom: 0 !important;
 }

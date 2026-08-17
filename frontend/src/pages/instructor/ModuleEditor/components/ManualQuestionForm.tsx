@@ -3,7 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { RequiredMark, RichTextEditor } from "@/components/ui";
-import type { ExamModulePart, QuestionDraft, SpeakingTurnType } from "@/api/types";
+import type { ExamModulePart, QuestionDraft } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { ANSWER_FREE_TYPES, CHOICE_TYPES } from "../helpers";
 import type { SpeakingExaminer } from "../speakingExaminer";
@@ -99,15 +99,6 @@ export function ManualQuestionForm({
   const reading1bGapIndex = editingQuestionId
     ? (part.questions.findIndex((q) => q.id === editingQuestionId) + 1 || 1)
     : (part.questions.length + 1);
-  const turnLabels: Record<SpeakingTurnType, string> = {
-    identity: "Identity and origin",
-    topic_question: "Familiar-topic question",
-    roleplay_response: "Candidate responds in role play",
-    roleplay_initiate: "Candidate initiates role play",
-    read_aloud: "Read aloud",
-    follow_up: "Follow-up question",
-    presentation: "Extended presentation",
-  };
   const candidateAttachmentType = manual.interaction?.candidate_material_path
     ? "pdf"
     : manual.image_path
@@ -237,18 +228,13 @@ export function ManualQuestionForm({
         )}
         {allowedTurns.length > 0 && (
           <>
-            {isSpeaking && manual.interaction?.turn_type && (
-              <div className="vh-speaking-auto-type">
-                <span>Prompt type</span>
-                <strong>{turnLabels[manual.interaction.turn_type]}</strong>
-              </div>
-            )}
+
             {/* This prompt's own timing. There is no part-level default to
                 inherit from: the part's duration, and the module's, are the sum
                 of these numbers, so a prompt without a recording time cannot be
                 saved. Zero preparation is a real choice - the candidate starts
                 speaking the moment the examiner finishes. */}
-            <div className="form-grid">
+            <div className="speaking-timing-fields">
               <MinuteSecondInput
                 id="module-question-preparation"
                 label={t.preparationSecondsLabel}
