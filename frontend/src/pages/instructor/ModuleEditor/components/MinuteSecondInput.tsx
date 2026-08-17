@@ -66,7 +66,7 @@ export function MinuteSecondInput({
   });
 
   return (
-    <div className="vh-timepicker-container" ref={containerRef} style={{ position: "relative", minWidth: 0, flex: 1 }}>
+    <div className="vh-timepicker-container" ref={containerRef} style={{ position: "relative", minWidth: 0, width: "fit-content" }}>
       <label
         className="vh-timepicker-label"
         htmlFor={`${id}-btn`}
@@ -92,7 +92,7 @@ export function MinuteSecondInput({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          width: "100%",
+          width: "160px",
           padding: "11px 14px",
           background: "var(--surface, #ffffff)",
           border: "1px solid var(--border, #cbd5e1)",
