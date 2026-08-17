@@ -75,7 +75,7 @@ export function ModulePartNav({ parts, selectedPartId, onChoosePart }: ModulePar
                 title={`${part.title} — ${part.section_type} · ${part.auto_marked ? t.autoMarked : t.examinerMarked} · ${part.ai_evaluation_enabled ? t.aiEnabled : t.manualOnly}`}
               >
                 <span className="mps-badge">
-                  {complete && !active
+                  {complete
                     ? <Icon name="check" className="mps-badge-icon" />
                     : <span className="mps-num">{index + 1}</span>}
                 </span>

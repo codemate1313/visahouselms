@@ -3876,13 +3876,60 @@
   stroke-width: 2.6;
 }
 
-.mps-step.is-complete:not(.is-active) .mps-badge {
+.mps-step.is-complete:not(.is-active) {
   background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #065f46;
+}
+
+.mps-step.is-complete:not(.is-active) .mps-title {
+  color: #065f46 !important;
+}
+
+.mps-step.is-complete:not(.is-active) .mps-meta {
+  color: #047857 !important;
+}
+
+.mps-step.is-complete:not(.is-active) .mps-badge {
+  background: rgba(16, 185, 129, 0.22);
   border-color: #10b981;
 }
 
 .mps-step.is-complete:not(.is-active) .mps-badge-icon {
-  stroke: #10b981;
+  stroke: #059669;
+}
+
+.mps-step.is-complete:hover:not(.is-active) {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10b981;
+}
+
+[data-theme="dark"] .mps-step.is-complete:not(.is-active) {
+  background: rgba(16, 185, 129, 0.18) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: #6ee7b7 !important;
+}
+
+[data-theme="dark"] .mps-step.is-complete:not(.is-active) .mps-title {
+  color: #6ee7b7 !important;
+}
+
+[data-theme="dark"] .mps-step.is-complete:not(.is-active) .mps-meta {
+  color: #34d399 !important;
+}
+
+[data-theme="dark"] .mps-step.is-complete:not(.is-active) .mps-badge {
+  background: rgba(16, 185, 129, 0.25) !important;
+  border-color: #34d399 !important;
+}
+
+[data-theme="dark"] .mps-step.is-complete:not(.is-active) .mps-badge-icon {
+  stroke: #34d399 !important;
+}
+
+[data-theme="dark"] .mps-step.is-complete:hover:not(.is-active) {
+  background: rgba(16, 185, 129, 0.28) !important;
+  border-color: #34d399 !important;
 }
 
 .mps-step.is-active .mps-badge {
