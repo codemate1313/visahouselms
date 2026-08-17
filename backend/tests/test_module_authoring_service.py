@@ -172,9 +172,9 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
     def test_all_six_blueprints_have_fixed_parts_and_timing(self) -> None:
         blueprints = {item["module_type"]: item for item in module_blueprint_service.list_blueprints()}
         self.assertEqual(set(blueprints), {"reading", "speaking", "writing", "listening", "full_mock", "final_test"})
-        self.assertEqual((len(blueprints["reading"]["parts"]), blueprints["reading"]["duration_minutes"]), (5, 40))
+        self.assertEqual((len(blueprints["reading"]["parts"]), blueprints["reading"]["duration_minutes"]), (5, 50))
         self.assertEqual((len(blueprints["listening"]["parts"]), blueprints["listening"]["duration_minutes"]), (4, 40))
-        self.assertEqual((len(blueprints["writing"]["parts"]), blueprints["writing"]["duration_minutes"]), (2, 100))
+        self.assertEqual((len(blueprints["writing"]["parts"]), blueprints["writing"]["duration_minutes"]), (2, 50))
         self.assertEqual((len(blueprints["speaking"]["parts"]), blueprints["speaking"]["duration_minutes"]), (4, 14))
         # Timing lives on each prompt. The part keeps the LanguageCert figures
         # only as an authoring suggestion - nothing reads them at exam time, and
@@ -190,7 +190,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         for part in blueprints["speaking"]["parts"]:
             self.assertNotIn("preparation_seconds", part["answer_constraints"])
             self.assertNotIn("response_seconds", part["answer_constraints"])
-        self.assertEqual((len(blueprints["full_mock"]["parts"]), blueprints["full_mock"]["duration_minutes"]), (15, 194))
+        self.assertEqual((len(blueprints["full_mock"]["parts"]), blueprints["full_mock"]["duration_minutes"]), (15, 154))
         self.assertEqual(len(blueprints["final_test"]["parts"]), 15)
 
     def test_languagecert_blueprints_define_every_task_contract(self) -> None:

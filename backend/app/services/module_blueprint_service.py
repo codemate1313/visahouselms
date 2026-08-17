@@ -360,7 +360,7 @@ for _part in SPEAKING_PARTS:
 SECTION_BLUEPRINTS = {
     "reading": {
         "label": "Reading",
-        "duration_minutes": 40,
+        "duration_minutes": 50,
         "parts": READING_PARTS,
         "assessment": {
             "method": "auto_marked",
@@ -387,7 +387,7 @@ SECTION_BLUEPRINTS = {
     },
     "writing": {
         "label": "Writing",
-        "duration_minutes": 100,
+        "duration_minutes": 50,
         "parts": WRITING_PARTS,
         "assessment": {"method": "examiner_marked", "raw_marks_per_task": 32, "criteria_marks": 8, "task_weights": [40, 60]},
     },
@@ -434,7 +434,7 @@ def get_blueprint(module_type: str) -> dict:
     return {
         "module_type": module_type,
         "label": "Full Mock Test" if module_type == "full_mock" else "Final Test",
-        "duration_minutes": 194,
+        "duration_minutes": sum(SECTION_BLUEPRINTS[s]["duration_minutes"] for s in ("listening", "reading", "writing", "speaking")),
         "parts": _with_defaults(parts),
         "assessment": assessment,
     }
