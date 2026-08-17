@@ -254,7 +254,7 @@ export function SpeakingInterviewStage({
 
           {!introComplete ? (
             <div className="speaking-segment-intro-card">
-              <span>Listen to Sonia</span>
+              <span>Listen to Instructor</span>
               <strong>{currentPart.title}</strong>
               <p>{introText}</p>
               <Button rightIcon={<Icon name="arrowRight" />} onClick={finishIntro} size="lg">
@@ -282,7 +282,7 @@ export function SpeakingInterviewStage({
             {!hasCandidateText && !hasCandidateAttachment ? (
               <div className="speaking-candidate-empty">
                 <Icon name="microphone" />
-                <strong>Listen to Sonia</strong>
+                <strong>Listen to Instructor</strong>
                 <span>The examiner will give the instructions and ask the question aloud.</span>
               </div>
             ) : null}
@@ -360,7 +360,7 @@ export function SpeakingInterviewStage({
             />
           </div>
           <div className="speaking-interview-examiner-copy">
-            <strong>Sonia Radcliffe</strong>
+            <strong>Instructor</strong>
             <span>{mode === "recording" ? "Listening to your response" : "Speaking examiner"}</span>
           </div>
         </aside>

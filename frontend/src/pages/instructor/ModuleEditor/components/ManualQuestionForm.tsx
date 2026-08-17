@@ -105,20 +105,20 @@ export function ManualQuestionForm({
       ? "image"
       : "none";
   const speakingPromptLabel = isSpeakingReadAloud
-    ? "What Sonia says before read aloud"
+    ? "What Instructor says before read aloud"
     : isSpeakingPresentation
-      ? "What Sonia says before the presentation"
-      : "What Sonia asks";
+      ? "What Instructor says before the presentation"
+      : "What Instructor asks";
   const speakingPromptHint = isSpeakingReadAloud
-    ? "Private examiner instruction. Sonia says this first; the student reads the candidate-visible text aloud."
+    ? "Private examiner instruction. Instructor says this first; the student reads the candidate-visible text aloud."
     : isSpeakingPresentation
-      ? "Private examiner instruction. Sonia gives these instructions before the student sees and presents the material."
-      : "Private examiner script. Sonia asks this aloud; it is not printed in the candidate workspace.";
+      ? "Private examiner instruction. Instructor gives these instructions before the student sees and presents the material."
+      : "Private examiner script. Instructor asks this aloud; it is not printed in the candidate workspace.";
   const speakingPromptPlaceholder = isSpeakingReadAloud
     ? "Example: You will now read the text aloud. You have 20 seconds to prepare."
     : isSpeakingPresentation
       ? "Example: Look at the image and prepare a short presentation. You have one minute to prepare."
-      : "Enter Sonia's question or instruction for this turn";
+      : "Enter Instructor's question or instruction for this turn";
 
   const questionNumber = editingQuestionId
     ? (part.questions.findIndex((q) => q.id === editingQuestionId) + 1)
@@ -144,20 +144,20 @@ export function ManualQuestionForm({
       ? "Add any labels, demographics, context, or written notes that should appear with the uploaded image"
       : "Optional text shown to the candidate, if this turn needs a visible card";
   const candidateWorkspaceHint = isSpeakingReadAloud
-    ? "Add the exact text the student reads aloud. Sonia's instruction stays separate."
+    ? "Add the exact text the student reads aloud. Instructor's instruction stays separate."
     : isSpeakingPresentation
-      ? "Add the image/demographic material and optional text the student presents from. Sonia gives the custom instructions first."
-      : "For Parts 1 and 2, Sonia normally asks the question and the student answers. Add visible text only if this turn needs a card.";
+      ? "Add the image/demographic material and optional text the student presents from. Instructor gives the custom instructions first."
+      : "For Parts 1 and 2, Instructor normally asks the question and the student answers. Add visible text only if this turn needs a card.";
   const speakingFlowTitle = isSpeakingReadAloud
     ? "Read-aloud setup"
     : isSpeakingPresentation
       ? "Presentation setup"
       : "Question-and-answer setup";
   const speakingFlowSteps = isSpeakingReadAloud
-    ? ["Sonia gives the instruction", "Candidate reads the text", "Recording is saved"]
+    ? ["Instructor gives the instruction", "Candidate reads the text", "Recording is saved"]
     : isSpeakingPresentation
-      ? ["Sonia gives instructions", "Candidate views material", "Candidate presents"]
-      : ["Sonia asks the question", "Candidate answers", "Recording is saved"];
+      ? ["Instructor gives instructions", "Candidate views material", "Candidate presents"]
+      : ["Instructor asks the question", "Candidate answers", "Recording is saved"];
   const hasVisibleCandidateMaterial = Boolean(manual.passage?.trim() || manual.image_url || manual.interaction?.candidate_material_url);
 
   function toggleBoldSelection() {
@@ -378,7 +378,7 @@ export function ManualQuestionForm({
               <div>
                 <span className="vh-speaking-material-kicker">Optional card</span>
                 <h3 id="candidate-material-heading">Student-visible support</h3>
-                <p>Leave empty for the normal Part 1/2 flow where Sonia asks and the student answers.</p>
+                <p>Leave empty for the normal Part 1/2 flow where Instructor asks and the student answers.</p>
               </div>
               <span className="vh-speaking-material-optional">Optional</span>
             </div>
@@ -531,7 +531,7 @@ export function ManualQuestionForm({
             )}
 
             {candidateAttachmentType === "none" && !manual.passage?.trim() && (
-              <p className="vh-speaking-material-empty">Leave this blank when the candidate should only see Sonia and the response controls.</p>
+              <p className="vh-speaking-material-empty">Leave this blank when the candidate should only see Instructor and the response controls.</p>
             )}
           </section>
         )}

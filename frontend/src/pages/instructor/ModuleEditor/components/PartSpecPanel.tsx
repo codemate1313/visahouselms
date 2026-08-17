@@ -58,20 +58,13 @@ export function PartSpecPanel({
   const defaultInstruction = DEFAULT_INSTRUCTIONS[part.part_code] ?? "";
   const effectiveInstruction = savedInstruction || defaultInstruction;
   const isMandatoryInstruction = MANDATORY_INSTRUCTIONS_PARTS.has(part.part_code);
-  const canEditPartInstructions = Boolean(effectiveInstruction) || part.section_type === "reading" || part.section_type === "listening" || isSpeaking;
-  const instructionsLabel = isSpeaking ? "Sonia segment intro" : t.instructionsLabel;
-  const instructionsPlaceholder = isSpeaking
-    ? "Example: In this part, I will ask you some questions about yourself. Answer each question clearly."
-    : DEFAULT_INSTRUCTIONS[part.part_code]
+  const canEditPartInstructions = (Boolean(effectiveInstruction) || part.section_type === "reading" || part.section_type === "listening") && !isSpeaking;
+  const instructionsLabel = t.instructionsLabel;
+  const instructionsPlaceholder = DEFAULT_INSTRUCTIONS[part.part_code]
     ? `e.g. ${DEFAULT_INSTRUCTIONS[part.part_code]}`
     : t.instructionsPlaceholder;
-  const instructionsEditLabel = isSpeaking ? "Edit intro" : t.instructionsEdit;
-  const instructionsSaveLabel = isSpeaking ? "Save intro" : t.instructionsSave;
-  const instructionsEmpty = isSpeaking
-    ? "No intro set yet — Sonia will start with the first question."
-    : isMandatoryInstruction
-    ? "⚠ A heading is required — click \"Edit heading\" to enter one before authoring questions."
-    : t.instructionsEmpty;
+  const instructionsEditLabel = t.instructionsEdit;
+  const instructionsSaveLabel = t.instructionsSave;
   // Mandatory parts auto-open the editor when no instruction has been saved yet.
   const [isEditingInstructions, setIsEditingInstructions] = useState(
     () => isMandatoryInstruction && !savedInstruction
@@ -232,18 +225,9 @@ export function PartSpecPanel({
             </div>
           ) : (
             <>
-              {isSpeaking ? (
-                <div className="vh-part-instructions-preview-block">
-                  <span>{instructionsLabel}</span>
-                  <p className="vh-part-instructions-preview">
-                    {part.instructions || instructionsEmpty}
-                  </p>
-                </div>
-              ) : (
-                <p className="vh-part-instructions-preview">
-                  {effectiveInstruction || t.instructionsEmpty}
-                </p>
-              )}
+              <p className="vh-part-instructions-preview">
+                {effectiveInstruction || t.instructionsEmpty}
+              </p>
               {isEditable && (
                 <button type="button" className="secondary-button" onClick={() => setIsEditingInstructions(true)}>
                   {instructionsEditLabel}

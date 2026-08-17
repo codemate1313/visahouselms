@@ -33,7 +33,7 @@ interface AvatarData {
 
 const SONIA: Examiner = {
   id: "sonia",
-  name: "Sonia Radcliffe",
+  name: "Instructor",
   title: "Senior Language CERT Speaking Examiner",
   gender: "female",
   voice: "en-GB-SoniaNeural",
@@ -341,7 +341,7 @@ export function SpeakingAvatar({
           </h3>
 
           <p className="prompt-text-display">
-            {loading ? "Preparing Sonia's audio..." : "Listen carefully to Sonia, then record your answer."}
+            {loading ? "Preparing Instructor's audio..." : "Listen carefully to Instructor, then record your answer."}
           </p>
 
           {/* Avatar Audio Controls */}

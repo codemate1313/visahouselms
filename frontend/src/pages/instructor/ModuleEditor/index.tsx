@@ -1020,7 +1020,7 @@ export function ModuleEditor() {
             onChoosePart={choosePart}
           />
         </div>
-        <main className="module-part-editor" id="module-part-editor">
+        <main className={`module-part-editor ${selectedPart?.section_type === "speaking" ? "is-speaking-editor" : ""}`} id="module-part-editor">
           {!selectedPart ? (
             <ModuleDetailsForm
               module={module}
