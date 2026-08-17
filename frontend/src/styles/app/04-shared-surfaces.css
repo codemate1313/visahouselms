@@ -1113,7 +1113,13 @@
 .question-body strong,
 .vh-bold-target {
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text, #0f172a);
+}
+
+[data-theme="dark"] .question-body h3 strong,
+[data-theme="dark"] .question-body strong,
+[data-theme="dark"] .vh-bold-target {
+  color: #ffffff !important;
 }
 
 .highlighted-word {
