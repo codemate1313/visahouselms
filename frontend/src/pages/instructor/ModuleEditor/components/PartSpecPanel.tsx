@@ -23,7 +23,20 @@ const DEFAULT_INSTRUCTIONS: Record<string, string> = {
   reading_2: "Read the text. Six sentences have been removed. Choose the sentence that best fits each gap. One sentence is a distractor.",
   reading_3: "Read texts A–D. For questions 18–24, decide which text answers the question.",
   reading_4: "Read the text and choose the correct answer for each question.",
+  listening_1: "You will hear some short conversations. You will hear each conversation twice. Choose the correct answer to complete each conversation.",
+  listening_2: "You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.",
 };
+
+/** Old blueprint strings seeded into the DB before heading requirements were updated. If part.instructions matches one of these exactly we treat it as "not set" so the new defaults / mandatory flow kicks in. */
+const LEGACY_INSTRUCTIONS: Record<string, string> = {
+  listening_1: "Seven three-option multiple-choice questions. Play the audio twice.",
+  listening_2: "Two three-option multiple-choice questions per conversation. Play the audio twice.",
+  listening_3: "Seven gap answers of no more than three words. Play the audio twice.",
+  listening_4: "Six three-option multiple-choice questions. Play the audio twice.",
+};
+
+/** Part codes that require the instructor to enter a heading before authoring questions. */
+const MANDATORY_INSTRUCTIONS_PARTS = new Set(["listening_3", "listening_4"]);
 
 export function PartSpecPanel({
   part,
@@ -40,9 +53,12 @@ export function PartSpecPanel({
   const t = strings.partSpec;
   const canUseAiEvaluation = !part.auto_marked && ["writing", "speaking"].includes(part.section_type);
   const isSpeaking = part.section_type === "speaking";
-  const defaultInstruction = DEFAULT_INSTRUCTIONS[part.part_code] ?? (part.instructions ?? "");
-  const effectiveInstruction = part.instructions || defaultInstruction;
-  const canEditPartInstructions = Boolean(effectiveInstruction) || Boolean(part.instructions) || part.section_type === "reading" || isSpeaking;
+  const isLegacy = part.instructions !== undefined && part.instructions === LEGACY_INSTRUCTIONS[part.part_code];
+  const savedInstruction = isLegacy ? "" : (part.instructions ?? "");
+  const defaultInstruction = DEFAULT_INSTRUCTIONS[part.part_code] ?? "";
+  const effectiveInstruction = savedInstruction || defaultInstruction;
+  const isMandatoryInstruction = MANDATORY_INSTRUCTIONS_PARTS.has(part.part_code);
+  const canEditPartInstructions = Boolean(effectiveInstruction) || part.section_type === "reading" || part.section_type === "listening" || isSpeaking;
   const instructionsLabel = isSpeaking ? "Sonia segment intro" : t.instructionsLabel;
   const instructionsPlaceholder = isSpeaking
     ? "Example: In this part, I will ask you some questions about yourself. Answer each question clearly."
@@ -53,21 +69,30 @@ export function PartSpecPanel({
   const instructionsSaveLabel = isSpeaking ? "Save intro" : t.instructionsSave;
   const instructionsEmpty = isSpeaking
     ? "No intro set yet — Sonia will start with the first question."
+    : isMandatoryInstruction
+    ? "⚠ A heading is required — click \"Edit heading\" to enter one before authoring questions."
     : t.instructionsEmpty;
-  const [isEditingInstructions, setIsEditingInstructions] = useState(false);
+  // Mandatory parts auto-open the editor when no instruction has been saved yet.
+  const [isEditingInstructions, setIsEditingInstructions] = useState(
+    () => isMandatoryInstruction && !savedInstruction
+  );
   const [instructionsDraft, setInstructionsDraft] = useState(effectiveInstruction);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   useEffect(() => {
-    setInstructionsDraft(part.instructions || defaultInstruction);
-    setIsEditingInstructions(false);
-  }, [part.id, part.instructions, defaultInstruction]);
+    const draft = savedInstruction || defaultInstruction;
+    setInstructionsDraft(draft);
+    // Re-open editor automatically if this part requires a heading and none is saved.
+    setIsEditingInstructions(isMandatoryInstruction && !savedInstruction);
+  }, [part.id, part.instructions, defaultInstruction, isMandatoryInstruction, savedInstruction]);
 
   useEffect(() => {
     setIsEditingTitle(false);
   }, [part.id]);
 
   function saveInstructions() {
+    // Block save for mandatory-instruction parts when the draft is empty.
+    if (isMandatoryInstruction && !instructionsDraft.trim()) return;
     onUpdateInstructions(instructionsDraft);
     setIsEditingInstructions(false);
   }
@@ -176,20 +201,33 @@ export function PartSpecPanel({
                 onChange={setInstructionsDraft}
                 placeholder={instructionsPlaceholder}
               />
-              <div className="vh-part-instructions-actions">
-                <button type="button" disabled={busy} onClick={saveInstructions}>
-                  {instructionsSaveLabel}
-                </button>
+              {isMandatoryInstruction && !instructionsDraft.trim() && (
+                <p className="error-text" style={{ marginTop: "8px", marginBottom: "8px", fontSize: "12.5px", fontWeight: 550 }}>
+                  A heading is required before you can author questions for this part.
+                </p>
+              )}
+              <div className="vh-part-instructions-actions" style={{ marginTop: "6px" }}>
                 <button
                   type="button"
-                  className="secondary-button"
-                  onClick={() => {
-                    setInstructionsDraft(effectiveInstruction);
-                    setIsEditingInstructions(false);
-                  }}
+                  disabled={busy || (isMandatoryInstruction && !instructionsDraft.trim())}
+                  onClick={saveInstructions}
+                  title={isMandatoryInstruction && !instructionsDraft.trim() ? "A heading is required for this part" : undefined}
                 >
-                  {t.instructionsCancel}
+                  {instructionsSaveLabel}
                 </button>
+                {/* Hide cancel for mandatory parts that have no saved heading yet */}
+                {(!isMandatoryInstruction || Boolean(savedInstruction)) && (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => {
+                      setInstructionsDraft(effectiveInstruction);
+                      setIsEditingInstructions(false);
+                    }}
+                  >
+                    {t.instructionsCancel}
+                  </button>
+                )}
               </div>
             </div>
           ) : (
