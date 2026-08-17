@@ -123,21 +123,42 @@
   resize: vertical;
 }
 
+.vh-rte-preview-wrapper {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vh-rte-preview-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary, #b91c2b);
+}
+
 .vh-rte-preview {
-  padding: 12px 14px;
+  padding: 12px 16px;
   border: 1px solid var(--border, #e2e4ea);
   border-radius: 8px;
-  background: var(--surface, #fff);
+  background: var(--surface, #ffffff);
   overflow-y: auto;
   font-size: 14px;
   line-height: 1.65;
-  color: var(--text-main, #23252b);
+  color: var(--text, #0f172a);
 }
 
 .vh-rte-preview-empty {
   margin: 0;
   color: var(--text-muted, #8b8d95);
   font-style: italic;
+}
+
+[data-theme="dark"] .vh-rte-preview,
+[data-theme="dark"] .vh-rte-preview * {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .vh-rte.is-readonly .vh-rte-toolbar {

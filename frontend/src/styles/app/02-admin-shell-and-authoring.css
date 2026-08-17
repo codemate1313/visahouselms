@@ -2041,8 +2041,12 @@
   margin: 0;
   font-size: 14px;
   line-height: 1.45;
-  color: var(--text-dark);
+  color: var(--text, #0f172a);
   flex: 1;
+}
+
+[data-theme="dark"] .vh-part-instructions-preview {
+  color: #ffffff !important;
 }
 
 .vh-part-instructions-preview-block {

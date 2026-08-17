@@ -346,27 +346,31 @@ export const RichTextEditor = forwardRef<HTMLTextAreaElement, RichTextEditorProp
         </div>
       )}
 
-      {showPreview ? (
-        <div className="vh-rte-preview" style={{ minHeight: `${rows * 1.6}em`, ...style }}>
-          {value.trim()
-            ? <RichTextContent text={value} />
-            : <p className="vh-rte-preview-empty">Nothing to preview yet.</p>}
+      <textarea
+        {...rest}
+        ref={attachRef}
+        id={id}
+        className={`vh-rte-textarea ${className}`.trim()}
+        rows={rows}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        readOnly={readOnly}
+        required={required}
+        style={style}
+      />
+      {showPreview && (
+        <div className="vh-rte-preview-wrapper">
+          <div className="vh-rte-preview-label">Live Preview</div>
+          <div className="vh-rte-preview" style={{ minHeight: "60px", ...style }}>
+            {value.trim() ? (
+              <RichTextContent text={value} />
+            ) : (
+              <p className="vh-rte-preview-empty">Nothing to preview yet.</p>
+            )}
+          </div>
         </div>
-      ) : (
-        <textarea
-          {...rest}
-          ref={attachRef}
-          id={id}
-          className={`vh-rte-textarea ${className}`.trim()}
-          rows={rows}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          readOnly={readOnly}
-          required={required}
-          style={style}
-        />
       )}
     </div>
   );
