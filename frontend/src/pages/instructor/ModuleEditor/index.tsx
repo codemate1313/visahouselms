@@ -51,6 +51,9 @@ export function ModuleEditor() {
   const [sourceModules, setSourceModules] = useState<ExamModule[]>([]);
   const [selectedSources, setSelectedSources] = useState<Record<ExamSection, string>>({ listening: "", reading: "", writing: "", speaking: "" });
   const [loadingSources, setLoadingSources] = useState(false);
+  // All composite (full_mock / final_test) modules the instructor has authored,
+  // used by the Shuffle button to detect which source modules are already in use.
+  const [existingMockModules, setExistingMockModules] = useState<ExamModule[]>([]);
   const [manual, setManual] = useState<QuestionDraft | null>(null);
   // Which part the current draft belongs to, so a reload can tell "same part,
   // keep what is typed" from "different part, start fresh".
@@ -154,10 +157,45 @@ export function ModuleEditor() {
     if (!isNew || !requestedType || !COMPOSITE_TYPES.has(requestedType)) return;
     setLoadingSources(true);
     apiClient.get<ExamModule[]>("/instructor/modules")
-      .then(({ data }) => setSourceModules(data.filter((item) => SOURCE_SECTIONS.includes(item.module_type as ExamSection) && item.status !== "archived" && item.ready_to_publish)))
+      .then(({ data }) => {
+        setSourceModules(data.filter((item) => SOURCE_SECTIONS.includes(item.module_type as ExamSection) && item.status !== "archived" && item.ready_to_publish));
+        setExistingMockModules(data.filter((item) => COMPOSITE_TYPES.has(item.module_type)));
+      })
       .catch((err: unknown) => setError(extractErrorMessage(err, "Failed to load completed source modules.")))
       .finally(() => setLoadingSources(false));
   }, [isNew, requestedType]);
+
+  /**
+   * Shuffle: for each section, pick a random source module that hasn't been
+   * used in any existing full_mock / final_test. If none are "fresh", fall
+   * back to picking a random one from all available modules in that section
+   * (the caller is told about exhausted sections via the returned set).
+   */
+  function handleShuffle(): { exhaustedSections: ExamSection[] } {
+    // Build the set of source module IDs already used across existing mocks.
+    const usedIds = new Set<number>(
+      existingMockModules.flatMap((m) => m.source_module_ids ?? [])
+    );
+
+    const next: Record<ExamSection, string> = { listening: "", reading: "", writing: "", speaking: "" };
+    const exhaustedSections: ExamSection[] = [];
+
+    for (const section of SOURCE_SECTIONS) {
+      const all = sourceModules.filter((m) => m.module_type === section);
+      if (!all.length) continue;
+
+      const fresh = all.filter((m) => !usedIds.has(m.id));
+      const pool = fresh.length > 0 ? fresh : all;
+
+      if (fresh.length === 0) exhaustedSections.push(section);
+
+      const picked = pool[Math.floor(Math.random() * pool.length)];
+      next[section] = String(picked.id);
+    }
+
+    setSelectedSources(next);
+    return { exhaustedSections };
+  }
 
   useEffect(() => {
     if (!editingQuestionId) return;
@@ -954,6 +992,7 @@ export function ModuleEditor() {
         error={error}
         moduleWorkspacePath={moduleWorkspacePath}
         onSubmit={createModule}
+        onShuffle={handleShuffle}
       />
     );
   }

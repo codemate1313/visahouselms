@@ -22,6 +22,8 @@ interface NewModuleFormProps {
   error: string | null;
   moduleWorkspacePath: string;
   onSubmit: (event: FormEvent) => void;
+  /** Called when the user clicks Shuffle. Returns which sections had no fresh modules. */
+  onShuffle?: () => { exhaustedSections: ExamSection[] };
 }
 export function NewModuleForm({
   requestedType,
@@ -35,11 +37,13 @@ export function NewModuleForm({
   error,
   moduleWorkspacePath,
   onSubmit,
+  onShuffle,
 }: NewModuleFormProps) {
   const t = strings.newModule;
   const typeLabels = strings.typeLabels;
   const [activeTab, setActiveTab] = useState<"config" | "instructions">("config");
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [exhaustedSections, setExhaustedSections] = useState<ExamSection[]>([]);
   const setCustomBreadcrumbs = usePageTitleStore((state) => state.setCustomBreadcrumbs);
 
   const typeLabel = requestedType ? typeLabels[requestedType] : "";
@@ -270,9 +274,49 @@ export function NewModuleForm({
           {isComposite && (
             <div className="vh-studio-card vh-composite-card">
               <div className="vh-card-header">
-                <h2>{t.compositeHeading}</h2>
-                <p>{t.compositeDescription(typeLabel)}</p>
+                <div className="vh-composite-header-row">
+                  <div>
+                    <h2>{t.compositeHeading}</h2>
+                    <p>{t.compositeDescription(typeLabel)}</p>
+                  </div>
+                  {onShuffle && (
+                    <button
+                      type="button"
+                      className="vh-btn-shuffle"
+                      onClick={() => {
+                        const result = onShuffle();
+                        setExhaustedSections(result.exhaustedSections);
+                      }}
+                      disabled={loadingSources || sourceModules.length === 0}
+                      title={t.shuffleTitle}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <polyline points="16 3 21 3 21 8" />
+                        <line x1="4" y1="20" x2="21" y2="3" />
+                        <polyline points="21 16 21 21 16 21" />
+                        <line x1="15" y1="15" x2="21" y2="21" />
+                      </svg>
+                      {t.shuffle}
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Exhaustion warning – only shown after a shuffle reveals no fresh modules for a section */}
+              {exhaustedSections.length > 0 && (
+                <div className="vh-shuffle-warn-banner" role="alert">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  <span>
+                    {t.shuffleExhaustedWarning(
+                      exhaustedSections.map((s) => typeLabels[s]).join(", ")
+                    )}
+                  </span>
+                </div>
+              )}
 
               {loadingSources && <p className="source-loading">{t.loadingSources}</p>}
 
@@ -281,9 +325,10 @@ export function NewModuleForm({
                   const choices = sourceModules.filter((item) => item.module_type === section);
                   const sectionLabel = typeLabels[section];
                   const isSelected = Boolean(selectedSources[section]);
+                  const isExhausted = exhaustedSections.includes(section);
 
                   return (
-                    <div className={`vh-source-box ${isSelected ? "is-selected" : ""}`} key={section}>
+                    <div className={`vh-source-box ${isSelected ? "is-selected" : ""} ${isExhausted ? "is-exhausted" : ""}`} key={section}>
                       <div className="vh-source-header">
                         <span className={`section-chip section-${section}`}>{sectionLabel}</span>
                         <span className="vh-source-badge">{isSelected ? "✓ Attached" : "Required"}</span>
@@ -299,10 +344,19 @@ export function NewModuleForm({
                           })),
                         ]}
                         value={selectedSources[section]}
-                        onChange={(value) => onSelectedSourcesChange({ ...selectedSources, [section]: String(value) })}
+                        onChange={(value) => {
+                          setExhaustedSections((prev) => prev.filter((s) => s !== section));
+                          onSelectedSourcesChange({ ...selectedSources, [section]: String(value) });
+                        }}
                         searchPlaceholder={t.searchSourcePlaceholder(sectionLabel)}
                         className="form-dropdown-select"
                       />
+
+                      {isExhausted && (
+                        <small className="vh-source-exhausted-hint">
+                          {t.shuffleExhaustedSectionHint}
+                        </small>
+                      )}
 
                       {!loadingSources && !choices.length && (
                         <small className="vh-no-source">

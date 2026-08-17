@@ -1838,6 +1838,7 @@
   font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.2;
+  color: #ffffff;
 }
 
 .vh-hero-icon-box {
@@ -2740,6 +2741,127 @@
   margin: 0;
   text-align: center;
   font-weight: 600;
+}
+
+/* ── Composite card header row (heading + Shuffle button) ── */
+.vh-composite-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ── Shuffle button ── */
+.vh-btn-shuffle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 2px solid var(--primary, #b91c2b);
+  color: var(--primary, #b91c2b);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.vh-btn-shuffle:hover:not(:disabled) {
+  background: var(--primary, #b91c2b);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(185, 28, 43, 0.28);
+}
+
+.vh-btn-shuffle:hover:not(:disabled) svg {
+  animation: shuffle-spin 0.4s ease;
+}
+
+.vh-btn-shuffle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@keyframes shuffle-spin {
+  0%   { transform: rotate(0deg); }
+  50%  { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ── Exhaustion warning banner (amber) ── */
+.vh-shuffle-warn-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(245, 158, 11, 0.10);
+  border: 1.5px solid rgba(245, 158, 11, 0.50);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  animation: banner-appear 0.25s ease;
+}
+
+.vh-shuffle-warn-banner svg {
+  flex-shrink: 0;
+  color: #d97706;
+  margin-top: 1px;
+}
+
+@keyframes banner-appear {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Source box exhausted state ── */
+.vh-source-box.is-exhausted {
+  border-color: rgba(245, 158, 11, 0.50);
+  background: rgba(255, 251, 235, 0.80);
+}
+
+.vh-source-exhausted-hint {
+  display: block;
+  font-size: 11.5px;
+  color: #b45309;
+  font-weight: 500;
+  margin-top: 6px;
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .vh-btn-shuffle {
+  border-color: rgba(255, 110, 120, 0.70);
+  color: #ff8a94;
+}
+
+[data-theme="dark"] .vh-btn-shuffle:hover:not(:disabled) {
+  background: rgba(185, 28, 43, 0.75);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .vh-shuffle-warn-banner {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .vh-shuffle-warn-banner svg {
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .vh-source-box.is-exhausted {
+  border-color: rgba(245, 158, 11, 0.40);
+  background: rgba(120, 80, 0, 0.10);
+}
+
+[data-theme="dark"] .vh-source-exhausted-hint {
+  color: #fbbf24;
 }
 
 .btn-create-module-submit:disabled {

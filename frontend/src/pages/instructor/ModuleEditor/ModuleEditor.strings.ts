@@ -50,6 +50,11 @@ export const moduleEditorStrings = {
     calculatedDurationLabel: "Calculated exam duration",
     calculatedSpeakingDurationHint: "The duration updates automatically from the preparation and recording time of the Speaking prompts you add.",
     calculatedCompositeDurationHint: "The duration is the total of the four selected source modules.",
+    shuffle: "Shuffle",
+    shuffleTitle: "Randomly pick unused source modules for each section",
+    shuffleExhaustedWarning: (sections: string) =>
+      `No unique modules left for: ${sections}. All available modules for these sections are already used in existing mock tests — the best available option has been selected instead.`,
+    shuffleExhaustedSectionHint: "All modules for this section are already used in an existing mock test. You may still pick any available module below.",
   },
   loading: "Loading...",
   notFound: "Module not found.",
