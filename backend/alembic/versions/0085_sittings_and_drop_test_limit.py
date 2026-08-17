@@ -36,12 +36,15 @@ depends_on = None
 
 
 def upgrade() -> None:
-    with op.batch_alter_table("module_entitlements") as batch:
-        batch.add_column(
-            sa.Column("sittings_granted", sa.Integer(), nullable=False, server_default="1")
-        )
-
     bind = op.get_bind()
+    insp = sa.inspect(bind)
+
+    me_cols = {c["name"] for c in insp.get_columns("module_entitlements")} if "module_entitlements" in insp.get_table_names() else set()
+    if "sittings_granted" not in me_cols:
+        with op.batch_alter_table("module_entitlements") as batch:
+            batch.add_column(
+                sa.Column("sittings_granted", sa.Integer(), nullable=False, server_default="1")
+            )
 
     # One sitting per purchase that included the module. Counted from the same
     # plan->module mapping the entitlement backfill used, courses included, so
@@ -81,32 +84,35 @@ def upgrade() -> None:
                 )
 
     # ---- one row per purchased sitting --------------------------------
-    #
-    # The unique index on (user_id, module_id) for non-retakes made "one sitting
-    # ever" a database fact, so the paid-for second sitting above could not
-    # actually be started however the service layer ruled. Numbering the sitting
-    # keeps the index doing its real job - stopping a double-clicked Start from
-    # creating two attempts - without capping the total.
-    with op.batch_alter_table("test_attempts") as batch:
-        batch.add_column(
-            sa.Column("sitting_number", sa.Integer(), nullable=False, server_default="1")
+    ta_cols = {c["name"] for c in insp.get_columns("test_attempts")} if "test_attempts" in insp.get_table_names() else set()
+    if "sitting_number" not in ta_cols:
+        with op.batch_alter_table("test_attempts") as batch:
+            batch.add_column(
+                sa.Column("sitting_number", sa.Integer(), nullable=False, server_default="1")
+            )
+
+    indexes = [idx["name"] for idx in insp.get_indexes("test_attempts")] if "test_attempts" in insp.get_table_names() else []
+    if "uq_test_attempt_original_user_module" in indexes:
+        op.drop_index("uq_test_attempt_original_user_module", table_name="test_attempts")
+        op.create_index(
+            "uq_test_attempt_original_user_module",
+            "test_attempts",
+            ["user_id", "module_id", "sitting_number"],
+            unique=True,
+            sqlite_where=sa.text("is_retake = 0"),
+            postgresql_where=sa.text("is_retake = false"),
         )
 
-    op.drop_index("uq_test_attempt_original_user_module", table_name="test_attempts")
-    op.create_index(
-        "uq_test_attempt_original_user_module",
-        "test_attempts",
-        ["user_id", "module_id", "sitting_number"],
-        unique=True,
-        sqlite_where=sa.text("is_retake = 0"),
-        postgresql_where=sa.text("is_retake = false"),
-    )
-
     # ---- drop the column nothing reads --------------------------------
-    with op.batch_alter_table("plans") as batch:
-        batch.drop_column("test_limit")
-    with op.batch_alter_table("institutes") as batch:
-        batch.drop_column("test_limit")
+    plan_cols = {c["name"] for c in insp.get_columns("plans")} if "plans" in insp.get_table_names() else set()
+    if "test_limit" in plan_cols:
+        with op.batch_alter_table("plans") as batch:
+            batch.drop_column("test_limit")
+
+    inst_cols = {c["name"] for c in insp.get_columns("institutes")} if "institutes" in insp.get_table_names() else set()
+    if "test_limit" in inst_cols:
+        with op.batch_alter_table("institutes") as batch:
+            batch.drop_column("test_limit")
 
 
 def downgrade() -> None:
