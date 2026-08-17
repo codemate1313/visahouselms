@@ -104,30 +104,33 @@ export function GapTaskComposer({
     return [...new Set(found)].sort((a, b) => a - b);
   }, [passage]);
 
-  const expectedGaps = part.question_limit ?? gaps.length;
   const filledAnswers = gaps.filter((gap) => answers[gap]).length;
   const duplicateKeys = uniqueAnswers
     ? Object.values(answers).filter(Boolean).filter((key, index, all) => all.indexOf(key) !== index)
     : [];
   const filledOptions = options.filter((option) => option.text.trim());
+  const minOptionsRequired = gaps.length + 2;
 
   const problems: string[] = [];
   if (!passage.trim()) problems.push(t.errors.noPassage);
-  if (gaps.length !== expectedGaps) problems.push(t.errors.gapCount(gaps.length, expectedGaps));
+  if (gaps.length === 0) problems.push("Add at least 1 gap marker (e.g. {{blank:1}}) in the passage text.");
   if (gaps.some((gap, index) => gap !== index + 1)) problems.push(t.errors.gapSequence);
-  if (filledOptions.length !== optionCount) problems.push(t.errors.optionCount(filledOptions.length, optionCount));
+  if (filledOptions.length < minOptionsRequired) {
+    problems.push(
+      `Number of options (${filledOptions.length}) must be at least 2 greater than number of gaps (${gaps.length}). Please add at least ${minOptionsRequired - filledOptions.length} more option(s).`
+    );
+  }
+  if (options.some((opt) => !opt.text.trim())) {
+    problems.push("Please fill in option text for all option fields (or delete unused option rows).");
+  }
   if (filledAnswers !== gaps.length) problems.push(t.errors.missingAnswers(gaps.length - filledAnswers));
   if (duplicateKeys.length) problems.push(t.errors.duplicateAnswers);
 
   const ready = problems.length === 0;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const existingGaps = useMemo(() => new Set(gaps), [gaps]);
-  const nextGapNumber = useMemo(() => {
-    for (let i = 1; i <= expectedGaps; i++) {
-      if (!existingGaps.has(i)) return i;
-    }
-    return (existingGaps.size > 0 ? Math.max(...Array.from(existingGaps)) : 0) + 1;
-  }, [existingGaps, expectedGaps]);
+  const maxGapNum = gaps.length > 0 ? Math.max(...gaps) : 0;
+  const nextGapNumber = maxGapNum + 1;
 
   function insertBlank(gapNum?: number) {
     if (!isEditingPassage) setIsEditingPassage(true);
@@ -149,6 +152,28 @@ export function GapTaskComposer({
       const newPos = start + blankTag.length;
       el.setSelectionRange(newPos, newPos);
     });
+  }
+
+  function handleDeleteOption(indexToRemove: number) {
+    const removedKey = options[indexToRemove]?.key;
+    const filtered = options.filter((_, idx) => idx !== indexToRemove);
+    const rekeyed = filtered.map((opt, idx) => ({
+      ...opt,
+      key: LETTERS[idx],
+    }));
+    setOptions(rekeyed);
+
+    if (removedKey) {
+      setAnswers((prev) => {
+        const next: Record<number, string> = {};
+        for (const [gapStr, val] of Object.entries(prev)) {
+          if (val !== removedKey) {
+            next[Number(gapStr)] = val;
+          }
+        }
+        return next;
+      });
+    }
   }
 
   function handleSavePassage() {
@@ -187,7 +212,7 @@ export function GapTaskComposer({
         <div>
           {part.part_code !== "reading_2" && <span className="phase-chip">{t.eyebrow}</span>}
           {part.part_code !== "reading_2" && <h2>{t.heading(part.title)}</h2>}
-          <p style={{ margin: "0" }}>{t.description(expectedGaps, optionCount)}</p>
+          <p style={{ margin: "0" }}>{t.description(gaps.length, options.length)}</p>
         </div>
       </div>
 
@@ -206,7 +231,7 @@ export function GapTaskComposer({
               title="Click where you want the blank in the text, then click here to insert it."
             >
               <Icon name="plus" className="vh-btn-icon" style={{ width: "15px", height: "15px", strokeWidth: 2.5 }} />
-              <span>Insert Gap {nextGapNumber <= expectedGaps ? `(${nextGapNumber})` : ""}</span>
+              <span>Insert Gap ({nextGapNumber})</span>
             </button>
             <span className="vh-passage-blank-hint">
               Position cursor in the text and click <strong>Insert Gap</strong> (or click a gap pill below)
@@ -214,7 +239,7 @@ export function GapTaskComposer({
           </div>
 
           <div className="vh-gap-pill-list" aria-label="Passage gaps status">
-            {Array.from({ length: expectedGaps }, (_, i) => i + 1).map((gapNum) => {
+            {Array.from({ length: Math.max(gaps.length, 1) }, (_, i) => i + 1).map((gapNum) => {
               const present = existingGaps.has(gapNum);
               return (
                 <button
@@ -306,7 +331,7 @@ export function GapTaskComposer({
         )}
       </div>
 
-      <h3 className="gap-task-subheading">{t.optionsHeading(optionCount)}</h3>
+      <h3 className="gap-task-subheading">{t.optionsHeading(options.length)}</h3>
       <div className="gap-task-options">
         {options.map((option, index) => (
           <div className="gap-task-option-row" key={option.key}>
@@ -320,6 +345,17 @@ export function GapTaskComposer({
               placeholder={t.optionPlaceholder(option.key)}
               readOnly={!isEditable}
             />
+            {isEditable && options.length > 2 && (
+              <button
+                type="button"
+                className="option-remove-button"
+                onClick={() => handleDeleteOption(index)}
+                title={`Delete option ${option.key}`}
+                aria-label={`Delete option ${option.key}`}
+              >
+                <Icon name="cross" />
+              </button>
+            )}
           </div>
         ))}
       </div>
