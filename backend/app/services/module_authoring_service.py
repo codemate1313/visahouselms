@@ -731,10 +731,10 @@ def update_part_instructions(
     ip: Optional[str],
 ) -> dict:
     module, part = get_editable_part(db, actor, module_id, part_id)
-    if part.part_code != "reading_1a":
+    if part.part_code not in ("reading_1a", "listening_3", "listening_4"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A custom heading can only be set for Reading 1A",
+            detail="A custom heading can only be set for Reading 1A, Listening 3, or Listening 4",
         )
     part.instructions = instructions
     _audit(
