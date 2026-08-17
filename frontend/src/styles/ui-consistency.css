@@ -1176,3 +1176,10 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* Automatically adjust height of all textareas to fit content entered */
+textarea {
+  field-sizing: content;
+  overflow-y: hidden;
+  box-sizing: border-box;
+}

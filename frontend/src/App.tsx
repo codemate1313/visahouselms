@@ -67,9 +67,58 @@ function App() {
     };
     window.addEventListener("wheel", handleWheel, { passive: true });
 
+    // Auto-adjust height for all textareas according to content entered
+    const autoResize = (el: HTMLTextAreaElement) => {
+      if (el.dataset.noAutoResize === "true") return;
+      const scrollPos = window.scrollY;
+      const style = window.getComputedStyle(el);
+      const minHeight = parseFloat(style.minHeight) || 0;
+      el.style.height = "auto";
+      const newHeight = Math.max(el.scrollHeight, minHeight);
+      if (newHeight > 0) {
+        el.style.height = `${newHeight}px`;
+      }
+      if (window.scrollY !== scrollPos) {
+        window.scrollTo(window.scrollX, scrollPos);
+      }
+    };
+
+    const handleTextareaInput = (e: Event) => {
+      if (e.target instanceof HTMLTextAreaElement) {
+        autoResize(e.target);
+      }
+    };
+
+    const handleTextareaFocus = (e: FocusEvent) => {
+      if (e.target instanceof HTMLTextAreaElement) {
+        autoResize(e.target);
+      }
+    };
+
+    document.addEventListener("input", handleTextareaInput, true);
+    document.addEventListener("focusin", handleTextareaFocus, true);
+
+    const resizeAll = () => {
+      document.querySelectorAll("textarea").forEach((ta) => autoResize(ta));
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.addedNodes.length > 0) {
+          resizeAll();
+          break;
+        }
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    resizeAll();
+
     return () => {
       document.removeEventListener("play", handlePlay, true);
       window.removeEventListener("wheel", handleWheel);
+      document.removeEventListener("input", handleTextareaInput, true);
+      document.removeEventListener("focusin", handleTextareaFocus, true);
+      observer.disconnect();
     };
   }, []);
 
