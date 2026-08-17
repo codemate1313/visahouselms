@@ -227,6 +227,8 @@ export function ModuleEditor() {
     } else {
       setPartTitle("");
     }
+    setAudioFile(null);
+    setAudioTitle("Listening audio");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPart?.id, selectedPart?.title]);
 

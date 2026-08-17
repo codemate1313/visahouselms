@@ -80,6 +80,7 @@ export function ListeningAudioPanel(props: ListeningAudioPanelProps) {
                 <RequiredMark />
               </label>
               <input
+                key={part.id + (audioFile ? "-loaded" : "-empty")}
                 id="audio-file"
                 type="file"
                 accept=".mp3,audio/mpeg"
