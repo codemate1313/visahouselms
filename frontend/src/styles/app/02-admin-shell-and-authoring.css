@@ -1986,6 +1986,43 @@
   margin-bottom: 16px;
 }
 
+.vh-method-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface-muted, #f1f5f9);
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 12px;
+}
+
+.vh-method-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 15px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #475569);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.vh-method-tab:hover:not(.is-active) {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text, #0f172a);
+}
+
+.vh-method-tab.is-active {
+  background: var(--primary, #b91c2b);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(185, 28, 43, 0.25);
+}
+
 .vh-unified-part-header-bar .vh-method-tabs {
   margin-bottom: 0 !important;
 }
@@ -3775,6 +3812,16 @@
 
 .mps-step:hover:not(.is-active) {
   background: rgba(185, 28, 43, 0.08);
+  color: #000000 !important;
+}
+
+.mps-step:hover:not(.is-active) .mps-title,
+.mps-step:hover:not(.is-active) .mps-num {
+  color: #000000 !important;
+}
+
+.mps-step:hover:not(.is-active) .mps-meta {
+  color: #475569 !important;
 }
 
 .mps-step:active:not(.is-active) {
@@ -3870,7 +3917,17 @@
 }
 
 [data-theme="dark"] .mps-step:hover:not(.is-active) {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .mps-step:hover:not(.is-active) .mps-title,
+[data-theme="dark"] .mps-step:hover:not(.is-active) .mps-num {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .mps-step:hover:not(.is-active) .mps-meta {
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 
 [data-theme="dark"] .mps-badge {
@@ -7805,14 +7862,16 @@ textarea:focus {
 
 [data-theme="dark"] .vh-method-tabs {
   background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 [data-theme="dark"] .vh-method-tab {
   color: #a1a1aa !important;
 }
 
-[data-theme="dark"] .vh-method-tab:hover {
-  color: #f2f2f5 !important;
+[data-theme="dark"] .vh-method-tab:hover:not(.is-active) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .vh-method-tab.is-active {
