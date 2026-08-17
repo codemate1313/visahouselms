@@ -5721,10 +5721,18 @@ button.danger:hover:not(:disabled) {
   color: inherit;
 }
 
+.authoring-panel p.error-text,
+.authoring-panel .error-text,
 .error-text {
-  color: var(--danger);
+  color: var(--danger, #ef4444) !important;
   font-size: 13px;
   margin: 10px 0 0;
+}
+
+[data-theme="dark"] .authoring-panel p.error-text,
+[data-theme="dark"] .authoring-panel .error-text,
+[data-theme="dark"] .error-text {
+  color: #f87171 !important;
 }
 
 .success-text {
@@ -7950,7 +7958,7 @@ textarea:focus {
   color: #f2f2f5 !important;
 }
 
-[data-theme="dark"] .authoring-panel p,
+[data-theme="dark"] .authoring-panel p:not(.error-text):not(.success-text),
 [data-theme="dark"] .panel-title p,
 [data-theme="dark"] .hint {
   color: #a1a1aa !important;
