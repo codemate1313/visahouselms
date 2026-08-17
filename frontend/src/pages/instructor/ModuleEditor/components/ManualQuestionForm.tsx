@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { RequiredMark, RichTextEditor } from "@/components/ui";
@@ -78,6 +78,19 @@ export function ManualQuestionForm({
   const allowedTurns = part.answer_constraints.allowed_turn_types ?? [];
   const isChoiceQuestion = CHOICE_TYPES.has(manual.question_type);
   const canRemoveOption = manual.options.length > 2;
+
+  const questionIndex = editingQuestionId
+    ? (part.questions.findIndex((q) => q.id === editingQuestionId) + 1 || 1)
+    : (part.questions.length + 1);
+
+  useEffect(() => {
+    if (isListening1) {
+      const targetPrompt = `Question ${questionIndex}`;
+      if (manual.prompt !== targetPrompt) {
+        onManualChange({ ...manual, prompt: targetPrompt });
+      }
+    }
+  }, [isListening1, questionIndex, manual.prompt, onManualChange]);
   const showsBlankGuidance =
     (manual.question_type === "fill_blank" ||
       part.answer_constraints.inline_marker_required ||
@@ -297,7 +310,13 @@ export function ManualQuestionForm({
           </div>
         )}
         {/* 1. Question or task prompt */}
-        {isReading1b ? (
+        {isListening1 ? (
+          <div className="vh-listening-1-header" style={{ marginBottom: "20px" }}>
+            <span style={{ fontSize: "15px", fontWeight: 700, color: "var(--text, #0f172a)" }}>
+              Question {questionIndex}
+            </span>
+          </div>
+        ) : isReading1b ? (
           <div className="vh-reading-1b-gap-header" style={{ marginBottom: "16px", padding: "10px 14px", background: "rgba(185, 28, 43, 0.04)", borderRadius: "8px", border: "1px solid rgba(185, 28, 43, 0.15)" }}>
             <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--sa-sidebar-red, #b91c2b)" }}>
               Options for Gap {reading1bGapIndex}
@@ -309,7 +328,7 @@ export function ManualQuestionForm({
         ) : (
           <>
             <div className="vh-prompt-label-row">
-              <label htmlFor="module-question-prompt">{isSpeaking ? speakingPromptLabel : isListening1 ? "Question" : t.promptLabel}<RequiredMark /></label>
+              <label htmlFor="module-question-prompt">{isSpeaking ? speakingPromptLabel : t.promptLabel}<RequiredMark /></label>
               {isReading1a && (
                 <button
                   type="button"
@@ -336,7 +355,7 @@ export function ManualQuestionForm({
               <textarea
                 id="module-question-prompt"
                 ref={promptRef}
-                rows={isListening1 ? 2 : 4}
+                rows={4}
                 value={manual.prompt}
                 onChange={(event) => {
                   onManualChange({ ...manual, prompt: event.target.value });

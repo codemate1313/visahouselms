@@ -68,7 +68,11 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
                   {question.interaction?.group_label && <span>{question.interaction.group_label}</span>}
                   {question.interaction?.turn_type && <span>{question.interaction.turn_type.replaceAll("_", " ")}</span>}
                 </div>
-                {!isSharedCloze && <h3>{renderBoldText(question.prompt)}</h3>}
+                {!isSharedCloze && (
+                  <h3>
+                    {part.part_code === "listening_1" ? `Question ${index + 1}` : renderBoldText(question.prompt)}
+                  </h3>
+                )}
                 {!isSharedCloze && !usesSharedPassage && part.section_type !== "writing" && question.passage && <RichTextContent text={question.passage} />}
                 {question.image_url && (
                   <img className="saved-question-image" src={`${API_BASE_URL}${question.image_url}`} alt="" />

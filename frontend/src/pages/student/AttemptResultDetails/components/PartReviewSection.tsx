@@ -59,7 +59,7 @@ export function PartReviewSection({ part }: PartReviewSectionProps) {
                 return (
                   <tr key={question.id} className={`is-${outcome.label.toLowerCase().replace(" ", "-")}`}>
                     <td>
-                      {index + 1}. {renderRichText(question.prompt)}
+                      {part.part_code === "listening_1" ? `Question ${index + 1}` : `${index + 1}. ${renderRichText(question.prompt)}`}
                     </td>
                     <td>{formatAttemptAnswer(question)}</td>
                     <td>{question.correct_answers?.join(", ") ?? "-"}</td>
