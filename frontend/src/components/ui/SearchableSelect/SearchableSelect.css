@@ -56,6 +56,15 @@
 .searchable-select-trigger:hover:not(:disabled) {
   border-color: var(--slate-400);
   background: var(--surface-muted);
+  color: #000000;
+}
+
+.searchable-select-trigger:hover:not(:disabled) .selected-value-label:not(.is-placeholder) {
+  color: #000000;
+}
+
+.searchable-select-trigger:hover:not(:disabled) .select-chevron-icon {
+  color: #000000;
 }
 
 .searchable-select-container.is-open .searchable-select-trigger {
@@ -273,7 +282,7 @@
 .select-option-item:hover,
 .select-option-item.is-highlighted {
   background: var(--surface-muted);
-  color: var(--text);
+  color: #000000;
 }
 
 .select-option-item.is-disabled {
@@ -291,6 +300,14 @@
 .select-option-item.is-selected .option-main-label,
 .select-option-item.is-selected .option-check-icon {
   color: var(--primary);
+}
+
+[data-theme="dark"] .searchable-select-trigger:hover:not(:disabled),
+[data-theme="dark"] .searchable-select-trigger:hover:not(:disabled) .selected-value-label:not(.is-placeholder),
+[data-theme="dark"] .searchable-select-trigger:hover:not(:disabled) .select-chevron-icon,
+[data-theme="dark"] .select-option-item:hover,
+[data-theme="dark"] .select-option-item.is-highlighted {
+  color: #ffffff;
 }
 
 [data-theme="dark"] .select-search-icon {

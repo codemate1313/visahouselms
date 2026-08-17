@@ -1183,3 +1183,13 @@ textarea {
   overflow-y: hidden;
   box-sizing: border-box;
 }
+
+/* Ensure text color for select triggers and option rows on hover in light mode is crisp black */
+body:not([data-theme="dark"]) .searchable-select-trigger:hover:not(:disabled),
+body:not([data-theme="dark"]) .searchable-select-trigger:hover:not(:disabled) .selected-value-label:not(.is-placeholder),
+body:not([data-theme="dark"]) .searchable-select-trigger:hover:not(:disabled) .select-chevron-icon,
+body:not([data-theme="dark"]) .select-option-item:hover,
+body:not([data-theme="dark"]) .select-option-item.is-highlighted,
+body:not([data-theme="dark"]) select:hover:not(:disabled) {
+  color: #000000 !important;
+}
