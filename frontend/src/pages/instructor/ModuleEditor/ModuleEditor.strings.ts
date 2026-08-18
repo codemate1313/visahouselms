@@ -241,6 +241,7 @@ export const moduleEditorStrings = {
   },
   avatarPreview: {
     title: "Examiner avatar preview",
+    headingTitle: "Heading preview",
     defaultExaminer: "Language CERT Senior Examiner",
     hint: "Play the question in the examiner voice to check it before saving.",
     generate: "Play examiner preview",
@@ -361,6 +362,13 @@ export const moduleEditorStrings = {
     turnTypeLabel: "Speaking turn",
     preparationSecondsLabel: "Preparation time",
     responseSecondsLabel: "Response time",
+    headingLabel: "Spoken heading",
+    headingHint: "Instructor announces this first, pauses, then asks the question below. Leave it empty to go straight to the question.",
+    headingPlaceholder: "Example: Situation 1. You are at a hotel reception and your room key does not work.",
+    headingGapLabel: "Pause after the heading",
+    headingGapHint: (seconds: number) => seconds > 0
+      ? `Instructor waits ${seconds} second${seconds === 1 ? "" : "s"} after the heading before asking the question.`
+      : "No pause: the question follows the heading immediately.",
     adaptiveFollowUpLabel: "Generate this follow-up from the previous response",
     optionsLegend: "Options and correct answer",
     addOption: "Add option",

@@ -121,6 +121,13 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
       preparation_seconds: turnTiming.preparation_seconds,
       response_seconds: turnTiming.response_seconds,
       adaptive_follow_up: part.answer_constraints.interaction_mode === "ai_interlocutor" && turnType === "follow_up",
+      // Wording is the author's; only the pause after it starts from the part's
+      // default, so a heading typed in without touching the timing still plays
+      // with a deliberate gap.
+      heading: null,
+      heading_gap_seconds: part.answer_constraints.spoken_heading
+        ? part.answer_constraints.default_heading_gap_seconds ?? null
+        : null,
       candidate_material_type: "none",
       candidate_material_path: null,
       candidate_material_url: null,
@@ -143,6 +150,11 @@ export function questionPayload(question: QuestionDraft) {
           : "none"
     : question.interaction?.candidate_material_type || "none";
 
+  // The heading Instructor speaks before the question, and the pause after it.
+  // A prompt without a heading carries neither: an orphan pause would be a
+  // number the exam never reaches.
+  const heading = question.interaction?.heading?.trim() || null;
+
   return {
     question_type: question.question_type,
     prompt: question.prompt.trim(),
@@ -157,6 +169,8 @@ export function questionPayload(question: QuestionDraft) {
       preparation_seconds: question.interaction?.preparation_seconds ?? null,
       response_seconds: question.interaction?.response_seconds ?? null,
       adaptive_follow_up: Boolean(question.interaction?.adaptive_follow_up),
+      heading,
+      heading_gap_seconds: heading ? question.interaction?.heading_gap_seconds ?? null : null,
       candidate_material_type: candidateMaterialType,
       candidate_material_path: question.interaction?.candidate_material_path || null,
       candidate_material_name: question.interaction?.candidate_material_name?.trim() || null,

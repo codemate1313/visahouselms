@@ -680,3 +680,49 @@
     grid-column: 1 / -1;
   }
 }
+
+/* Speaking 2 heading: the line Instructor announces before the question, its
+   pause, and its own preview. Boxed with the same treatment as the candidate
+   material builder so the form reads as heading -> pause -> question. */
+.vh-speaking-heading-block {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 16px;
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.vh-speaking-heading-block > label {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.vh-speaking-heading-block > .hint {
+  margin: 0;
+}
+
+.vh-speaking-heading-block textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+
+[data-theme="dark"] .vh-speaking-heading-block {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+[data-theme="dark"] .vh-speaking-heading-block textarea {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f1f5f9;
+}

@@ -36,7 +36,7 @@ class ClockCreditTest(unittest.TestCase):
         self.db.close(); self.engine.dispose()
         settings.storage_dir = self.orig; self.storage.cleanup()
 
-    def _speaking_attempt(self):
+    def _speaking_attempt(self, *, speaking_two_heading=None, heading_gap_seconds=None):
         created = mas.create_module(self.db, self.i, {"module_type": "speaking", "title": "S", "description": None, "instructions": None}, "127.0.0.1")
         m = mas.get_module_or_404(self.db, created["id"])
         plan = {"speaking_1": ["identity", "topic_question"], "speaking_2": ["roleplay_response", "roleplay_initiate"],
@@ -50,6 +50,17 @@ class ClockCreditTest(unittest.TestCase):
                     difficulty="medium", interaction={"turn_type": turn},
                     source_type="manual", source_filename=None, sort_order=n, created_by_id=self.i.id))
         self.db.commit()
+        if speaking_two_heading is not None:
+            # Stamped before the attempt starts: a sitting reads the snapshot
+            # frozen at that moment, so a heading added later is not in it.
+            part = next(item for item in m.parts if item.part_code == "speaking_2")
+            question = sorted(part.questions, key=lambda item: item.sort_order)[0]
+            question.interaction = {
+                **(question.interaction or {}),
+                "heading": speaking_two_heading,
+                "heading_gap_seconds": heading_gap_seconds,
+            }
+            self.db.commit()
         c = Course(title="B", slug="b", price=Decimal("0"), currency="INR", status=COURSE_PUBLISHED, created_by_id=self.i.id)
         self.db.add(c); self.db.flush()
         self.db.add(CourseModule(course_id=c.id, module_id=m.id, sort_order=0)); self.db.commit()
@@ -141,6 +152,64 @@ class ClockCreditTest(unittest.TestCase):
         self.assertEqual(intro["prompt_text"], part.instructions)
         self.assertEqual(prompt["prompt_text"], first_question.prompt)
         self.assertNotEqual(intro["prompt_text"], prompt["prompt_text"])
+
+    def test_a_speaking_two_heading_is_voiced_before_its_question(self):
+        """The heading is a clip of its own with the authored pause after it, so
+        the candidate hears the situation, then a silence, then the question -
+        and the whole of that examiner time is credited back to their clock."""
+        a = self._speaking_attempt(
+            speaking_two_heading="Situation 1. You are at a hotel reception.",
+            heading_gap_seconds=6,
+        )
+        part = next(item for item in a.module.parts if item.part_code == "speaking_2")
+        question = sorted(part.questions, key=lambda item: item.sort_order)[0]
+        before = a.expires_at
+
+        async def fake_audio(text, voice):
+            return f"/fake/{abs(hash(text))}.mp3", [], 4.0
+
+        with patch("app.routers.student_portal.avatar_service.get_or_create_prompt_audio", side_effect=fake_audio):
+            payload = asyncio.run(get_speaking_avatar_for_attempt_part(
+                a.id,
+                part.id,
+                examiner_id=None,
+                question_id=question.id,
+                db=self.db,
+                user=self.s,
+                session=SimpleNamespace(device_id=None),
+                x_attempt_token=None,
+            ))
+
+        self.assertEqual(payload["heading_text"], "Situation 1. You are at a hotel reception.")
+        self.assertEqual(payload["heading_gap_seconds"], 6)
+        self.assertNotEqual(payload["heading_audio_url"], payload["audio_url"])
+        credited = (attempt_service.get_attempt_or_404(self.db, self.s, a.id).expires_at - before).total_seconds()
+        # Both clips (4s each) plus the 6s pause plus the transition allowance.
+        self.assertEqual(credited, 4 + 4 + 6 + attempt_service.CLOCK_TRANSITION_ALLOWANCE_SECONDS)
+
+    def test_a_prompt_without_a_heading_is_unchanged(self):
+        a = self._speaking_attempt()
+        part = next(item for item in a.module.parts if item.part_code == "speaking_2")
+        question = sorted(part.questions, key=lambda item: item.sort_order)[0]
+
+        async def fake_audio(text, voice):
+            return f"/fake/{abs(hash(text))}.mp3", [], 4.0
+
+        with patch("app.routers.student_portal.avatar_service.get_or_create_prompt_audio", side_effect=fake_audio):
+            payload = asyncio.run(get_speaking_avatar_for_attempt_part(
+                a.id,
+                part.id,
+                examiner_id=None,
+                question_id=question.id,
+                db=self.db,
+                user=self.s,
+                session=SimpleNamespace(device_id=None),
+                x_attempt_token=None,
+            ))
+
+        self.assertIsNone(payload["heading_text"])
+        self.assertIsNone(payload["heading_audio_url"])
+        self.assertEqual(payload["heading_gap_seconds"], 0)
 
 
 if __name__ == "__main__":

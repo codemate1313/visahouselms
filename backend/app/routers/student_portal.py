@@ -39,6 +39,7 @@ from app.services import (
     coupon_service,
     currency_conversion_service,
     grading_service,
+    module_blueprint_service,
     notification_service,
     payment_service,
     plan_service,
@@ -737,15 +738,39 @@ async def get_speaking_avatar_for_attempt_part(
     examiner = avatar_service.get_examiner()
     audio_url, visemes, duration = await avatar_service.get_or_create_prompt_audio(prompt_text, examiner["voice"])
 
+    # A Speaking 2 prompt can carry a heading the examiner announces first - the
+    # role-play situation - and pauses after before asking. It is voiced as its
+    # own clip rather than glued to the front of the prompt: the pause between
+    # them is authored in seconds, and a single clip would have to bake it into
+    # the audio, so changing it would mean re-synthesising the whole prompt.
+    heading_text = str((interaction or {}).get("heading") or "").strip()
+    heading_audio_url = None
+    heading_visemes: list = []
+    heading_duration = 0.0
+    heading_gap_seconds = 0
+    if heading_text:
+        heading_audio_url, heading_visemes, heading_duration = await avatar_service.get_or_create_prompt_audio(
+            heading_text, examiner["voice"]
+        )
+        part_constraints = part_data.get("answer_constraints") or {}
+        configured_gap = interaction.get("heading_gap_seconds")
+        heading_gap_seconds = int(
+            configured_gap
+            if configured_gap is not None
+            else part_constraints.get("default_heading_gap_seconds", module_blueprint_service.DEFAULT_HEADING_GAP_SECONDS)
+        )
+
     # The candidate cannot answer until the examiner has finished speaking, so
-    # that time is credited back to the countdown. Keyed on the question, so
-    # replaying this request cannot buy more than the one prompt's worth.
+    # that time is credited back to the countdown - the heading and the pause
+    # after it included, since neither is time the candidate can use. Keyed on
+    # the question, so replaying this request cannot buy more than the one
+    # prompt's worth.
     credit_key = f"prompt:{selected_question['id']}" if selected_question else f"part-intro:{part_id}"
     attempt_service.credit_clock(
         db,
         attempt,
         credit_key,
-        duration + attempt_service.CLOCK_TRANSITION_ALLOWANCE_SECONDS,
+        duration + heading_duration + heading_gap_seconds + attempt_service.CLOCK_TRANSITION_ALLOWANCE_SECONDS,
     )
 
     return {
@@ -756,4 +781,9 @@ async def get_speaking_avatar_for_attempt_part(
         "expires_at": attempt.expires_at,
         "duration": duration,
         "visemes": visemes,
+        "heading_text": heading_text or None,
+        "heading_audio_url": heading_audio_url,
+        "heading_duration": heading_duration,
+        "heading_visemes": heading_visemes,
+        "heading_gap_seconds": heading_gap_seconds,
     }

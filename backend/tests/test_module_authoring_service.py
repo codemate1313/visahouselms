@@ -849,13 +849,56 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         module = module_authoring_service.get_module_or_404(self.db, created["id"])
         return module, next(item for item in module.parts if item.part_code == part_code)
 
-    def _speaking_draft(self, prompt: str, turn_type: str, *, passage=None) -> dict:
+    def _speaking_draft(self, prompt: str, turn_type: str, *, passage=None, heading=None, heading_gap_seconds=None) -> dict:
+        interaction = {"turn_type": turn_type, "preparation_seconds": 0, "response_seconds": 40}
+        if heading is not None:
+            interaction["heading"] = heading
+        if heading_gap_seconds is not None:
+            interaction["heading_gap_seconds"] = heading_gap_seconds
         return QuestionCreate(
             question_type="speaking_prompt",
             prompt=prompt,
             passage=passage,
-            interaction={"turn_type": turn_type, "preparation_seconds": 0, "response_seconds": 40},
+            interaction=interaction,
         ).model_dump()
+
+    def test_a_speaking_two_prompt_carries_a_spoken_heading_and_its_pause(self) -> None:
+        """A role play is announced before it is asked. The announcement is its
+        own field, not the first line of the question, because the examiner
+        pauses between the two and a pause cannot live inside one spoken line."""
+        module, part = self._speaking_part("speaking_2")
+        self.assertTrue(part.answer_constraints["spoken_heading"])
+        saved = module_authoring_service.add_question(
+            self.db, self.instructor, module.id, part.id,
+            self._speaking_draft(
+                "How would you ask for a different room?",
+                "roleplay_response",
+                heading="Situation 1. You are at a hotel reception.",
+                heading_gap_seconds=5,
+            ),
+            None,
+        )
+        self.assertEqual(saved["interaction"]["heading"], "Situation 1. You are at a hotel reception.")
+        self.assertEqual(saved["interaction"]["heading_gap_seconds"], 5)
+
+    def test_only_speaking_two_takes_a_spoken_heading(self) -> None:
+        """Elsewhere a heading would be a second, invisible prompt that nothing
+        in the part's flow speaks, so it is refused rather than saved unheard."""
+        module, part = self._speaking_part("speaking_1")
+        self.assertFalse(part.answer_constraints["spoken_heading"])
+
+        with self.assertRaises(HTTPException) as ctx:
+            module_authoring_service.add_question(
+                self.db, self.instructor, module.id, part.id,
+                self._speaking_draft(
+                    "What is your name?",
+                    "identity",
+                    heading="Situation 1. You are at a hotel reception.",
+                ),
+                None,
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("no spoken heading", ctx.exception.detail)
 
     def test_speaking_three_takes_follow_up_questions_after_the_text(self) -> None:
         """The read-aloud and its follow-ups share the part. A follow-up is a

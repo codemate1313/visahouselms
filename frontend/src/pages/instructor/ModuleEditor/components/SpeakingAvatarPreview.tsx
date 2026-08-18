@@ -28,12 +28,16 @@ interface SpeakingAvatarPreviewProps {
   prompt: string;
   /** Fixed Sonia profile supplied by the module editor. */
   examiner: SpeakingExaminer | null;
+  /** Card heading. A turn can be voiced in two pieces - a spoken heading and
+      the question after it - and two cards titled the same would leave the
+      author guessing which one they are about to hear. */
+  title?: string;
 }
 
 /** Authoring-side rehearsal of a speaking prompt: the same examiner voice and
     viseme timeline the candidate gets, so the author can hear the question
     before it is saved rather than discovering a mangled prompt in a live sitting. */
-export function SpeakingAvatarPreview({ moduleId, partId, prompt, examiner }: SpeakingAvatarPreviewProps) {
+export function SpeakingAvatarPreview({ moduleId, partId, prompt, examiner, title }: SpeakingAvatarPreviewProps) {
   const t = strings.avatarPreview;
   const examinerId = examiner?.id ?? DEFAULT_EXAMINER_ID;
   const [payload, setPayload] = useState<PreviewPayload | null>(null);
@@ -127,7 +131,7 @@ export function SpeakingAvatarPreview({ moduleId, partId, prompt, examiner }: Sp
   return (
     <div className="vh-avatar-preview-card">
       <div className="vh-avatar-preview-header">
-        <span className="vh-avatar-preview-title">{t.title}</span>
+        <span className="vh-avatar-preview-title">{title ?? t.title}</span>
       </div>
 
       <div className="vh-avatar-preview-body">

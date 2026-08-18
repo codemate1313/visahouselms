@@ -108,11 +108,18 @@ class QuestionInteraction(BaseModel):
     preparation_seconds: Optional[int] = Field(default=None, ge=0, le=300)
     response_seconds: Optional[int] = Field(default=None, ge=5, le=600)
     adaptive_follow_up: bool = False
+    # The examiner's framing line - a Speaking 2 role-play situation - spoken
+    # before the prompt itself. It is a separate field rather than the first
+    # sentence of the prompt because the examiner pauses between the two, and
+    # that pause is `heading_gap_seconds`: the candidate has to take in the
+    # situation before the question lands on top of it.
+    heading: Optional[str] = Field(default=None, max_length=2000)
+    heading_gap_seconds: Optional[int] = Field(default=None, ge=0, le=120)
     candidate_material_type: Optional[str] = Field(default="none", max_length=10)
     candidate_material_path: Optional[str] = Field(default=None, max_length=500)
     candidate_material_name: Optional[str] = Field(default=None, max_length=255)
 
-    @field_validator("group_label", "turn_type", "candidate_material_name")
+    @field_validator("group_label", "turn_type", "candidate_material_name", "heading")
     @classmethod
     def clean_text(cls, value: Optional[str]) -> Optional[str]:
         return _optional_text(value)

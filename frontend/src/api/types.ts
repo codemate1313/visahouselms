@@ -193,6 +193,11 @@ export interface QuestionInteraction {
   preparation_seconds?: number | null;
   response_seconds?: number | null;
   adaptive_follow_up?: boolean;
+  /* Speaking 2 only: the situation the examiner announces before she asks the
+     question, and the pause she leaves between the two. Kept apart from the
+     prompt because a single spoken line cannot hold a pause. */
+  heading?: string | null;
+  heading_gap_seconds?: number | null;
   audio_path?: string | null;
   audio_url?: string | null;
   candidate_material_type?: "none" | "text" | "image" | "pdf" | null;
@@ -362,6 +367,10 @@ export interface ExamModulePart {
        no speaking part carries a `maximum_questions` ceiling. */
     singleton_turn_types?: SpeakingTurnType[];
     maximum_questions?: number;
+    /* Whether this part's prompts may carry a heading the examiner speaks
+       before the question, and the pause used when a prompt sets none. */
+    spoken_heading?: boolean;
+    default_heading_gap_seconds?: number;
     /* Per-turn preparation/response defaults the authoring form pre-fills. A
        Speaking 3 read-aloud and its follow-ups share a part but not a clock, so
        the default cannot live on the part itself. */

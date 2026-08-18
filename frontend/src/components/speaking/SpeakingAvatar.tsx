@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE_URL, apiClient } from "../../api/client";
 import { ExaminerAvatarSvg } from "./ExaminerAvatarSvg";
 import { PhotoExaminerAvatar } from "./PhotoExaminerAvatar";
@@ -29,6 +29,21 @@ interface AvatarData {
   video_url?: string | null;
   duration: number;
   visemes: VisemeFrame[];
+  /* A Speaking 2 prompt is announced before it is asked: the examiner speaks
+     the role-play situation, pauses, then asks. The heading arrives as its own
+     clip so the authored pause stays a number rather than baked-in silence. */
+  heading_text?: string | null;
+  heading_audio_url?: string | null;
+  heading_duration?: number;
+  heading_visemes?: VisemeFrame[];
+  heading_gap_seconds?: number;
+}
+
+interface PromptSegment {
+  url: string;
+  visemes: VisemeFrame[];
+  /** Seconds the examiner waits before the next segment. */
+  gapAfter: number;
 }
 
 const SONIA: Examiner = {
@@ -48,6 +63,10 @@ interface SpeakingAvatarProps {
   isCandidateRecording?: boolean;
   avatarOnly?: boolean;
   onAudioEnded?: () => void;
+  /** True while the examiner is speaking or holding the pause between a
+      heading and its question - the stretch in which the candidate is meant to
+      be listening rather than answering. */
+  onExaminerBusyChange?: (busy: boolean) => void;
 }
 
 export function SpeakingAvatar({
@@ -57,6 +76,7 @@ export function SpeakingAvatar({
   isCandidateRecording = false,
   avatarOnly = true,
   onAudioEnded,
+  onExaminerBusyChange,
 }: SpeakingAvatarProps) {
   const [avatarData, setAvatarData] = useState<AvatarData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -67,9 +87,14 @@ export function SpeakingAvatar({
   // examiner is then used instead: it animates from the viseme timeline, so a
   // missing photo costs fidelity rather than leaving a motionless face.
   const [photoUnavailable, setPhotoUnavailable] = useState<boolean>(false);
+  // Which clip of this prompt is loaded, and whether the examiner is currently
+  // in the authored pause between two of them.
+  const [segmentIndex, setSegmentIndex] = useState<number>(0);
+  const [inGap, setInGap] = useState<boolean>(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sonia is the fixed examiner. Authors control only what she says, never the
   // candidate-facing examiner identity or voice.
@@ -111,9 +136,43 @@ export function SpeakingAvatar({
     return () => audio?.pause();
   }, [avatarData]);
 
+  // The prompt plays as one clip or two: a spoken heading, the authored pause,
+  // then the question. Two clips rather than one so the pause stays a number
+  // the author can change without re-synthesising the whole prompt.
+  const segments = useMemo<PromptSegment[]>(() => {
+    if (!avatarData?.audio_url) return [];
+    const list: PromptSegment[] = [];
+    if (avatarData.heading_audio_url) {
+      list.push({
+        url: avatarData.heading_audio_url,
+        visemes: avatarData.heading_visemes ?? [],
+        gapAfter: Math.max(0, avatarData.heading_gap_seconds ?? 0),
+      });
+    }
+    list.push({ url: avatarData.audio_url, visemes: avatarData.visemes, gapAfter: 0 });
+    return list;
+  }, [avatarData]);
+
+  useEffect(() => {
+    // A new prompt starts from its first clip, and any pause still counting
+    // down belongs to the prompt that was just replaced.
+    if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
+    setSegmentIndex(0);
+    setInGap(false);
+  }, [segments]);
+
+  useEffect(() => () => { if (gapTimerRef.current) clearTimeout(gapTimerRef.current); }, []);
+
+  const currentSegment = segments[segmentIndex] ?? null;
+  const isLastSegment = segmentIndex >= segments.length - 1;
+
+  useEffect(() => {
+    onExaminerBusyChange?.(isPlaying || inGap);
+  }, [isPlaying, inGap, onExaminerBusyChange]);
+
   // Handle viseme animation ticker during audio playback
   useEffect(() => {
-    if (!isPlaying || !avatarData || !avatarData.visemes.length || !audioRef.current) {
+    if (!isPlaying || !currentSegment?.visemes.length || !audioRef.current) {
       setCurrentViseme(0);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       return;
@@ -127,7 +186,7 @@ export function SpeakingAvatar({
       }
 
       const currentTime = audioRef.current.currentTime;
-      const visemes = avatarData.visemes;
+      const visemes = currentSegment.visemes;
 
       // Find active viseme for currentTime
       let activeViseme = 0;
@@ -148,12 +207,12 @@ export function SpeakingAvatar({
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [isPlaying, avatarData]);
+  }, [isPlaying, currentSegment]);
 
   const examiner = avatarData?.examiner || SONIA;
   // Photo avatar when this examiner has a frame set; vector avatar otherwise.
   const photoSet = photoUnavailable ? null : getExaminerPhotoSet(examiner?.id);
-  const audioFullUrl = avatarData?.audio_url ? `${API_BASE_URL}${avatarData.audio_url}` : "";
+  const audioFullUrl = currentSegment ? `${API_BASE_URL}${currentSegment.url}` : "";
   // Keyed on the question, not on the words. Two prompts can legitimately share
   // wording - and prompt audio is cached by a hash of its text, so they would
   // share a URL too. Keying on the text alone meant the second one counted as
@@ -172,7 +231,11 @@ export function SpeakingAvatar({
 
   useEffect(() => {
     if (audioRef.current && audioFullUrl && promptPlayKey) {
-      const alreadyPlayed = sessionStorage.getItem(promptPlayKey) === "true";
+      // Past the first clip the candidate has already heard the examiner start,
+      // so the question after the pause plays regardless of what the prompt's
+      // "already played" flag says - that flag is only set once the whole
+      // prompt has been spoken.
+      const alreadyPlayed = segmentIndex === 0 && sessionStorage.getItem(promptPlayKey) === "true";
       if (!alreadyPlayed) {
         audioRef.current.currentTime = 0;
         audioRef.current.play()
@@ -183,7 +246,7 @@ export function SpeakingAvatar({
           });
       }
     }
-  }, [audioFullUrl, promptPlayKey]);
+  }, [audioFullUrl, promptPlayKey, segmentIndex]);
 
   const togglePlay = () => {
     if (!audioRef.current || !audioFullUrl) return;
@@ -200,6 +263,19 @@ export function SpeakingAvatar({
   const handleAudioEnded = () => {
     setIsPlaying(false);
     setCurrentViseme(0);
+    // The heading has finished, not the prompt. Hold for the authored pause,
+    // then play the question - and leave the prompt unmarked until it has
+    // actually been asked, or a refresh during the pause would skip it.
+    if (!isLastSegment) {
+      const gapMs = Math.max(0, currentSegment?.gapAfter ?? 0) * 1000;
+      setInGap(true);
+      if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
+      gapTimerRef.current = setTimeout(() => {
+        setInGap(false);
+        setSegmentIndex((index) => index + 1);
+      }, gapMs);
+      return;
+    }
     setHasPlayedPrompt(true);
     if (promptPlayKey) {
       sessionStorage.setItem(promptPlayKey, "true");
@@ -233,7 +309,7 @@ export function SpeakingAvatar({
                   set={photoSet}
                   audioRef={audioRef}
                   isPlaying={isPlaying}
-                  visemes={avatarData?.visemes}
+                  visemes={currentSegment?.visemes}
                   onUnavailable={() => setPhotoUnavailable(true)}
                 />
               ) : (
@@ -266,7 +342,7 @@ export function SpeakingAvatar({
             ) : (
               <span className="examiner-status-badge">
                 <span className="status-dot-pulse" />
-                {hasPlayedPrompt ? "Examiner Audio Played" : audioFullUrl ? "Click Avatar to Listen" : "Language CERT Examiner Ready"}
+                {inGap ? "Examiner Pausing..." : hasPlayedPrompt ? "Examiner Audio Played" : audioFullUrl ? "Click Avatar to Listen" : "Language CERT Examiner Ready"}
               </span>
             )}
           </div>
@@ -296,7 +372,7 @@ export function SpeakingAvatar({
                 set={photoSet}
                 audioRef={audioRef}
                 isPlaying={isPlaying}
-                visemes={avatarData?.visemes}
+                visemes={currentSegment?.visemes}
                 onUnavailable={() => setPhotoUnavailable(true)}
               />
             ) : (

@@ -165,6 +165,14 @@ export function ManualQuestionForm({
       ? ["Instructor gives instructions", "Candidate views material", "Candidate presents"]
       : ["Instructor asks the question", "Candidate answers", "Recording is saved"];
   const hasVisibleCandidateMaterial = Boolean(manual.passage?.trim() || manual.image_url || manual.interaction?.candidate_material_url);
+  /* Speaking 2 announces each role play before asking about it. The heading is
+     its own field rather than the first line of the prompt because Instructor
+     pauses between the two, and a pause cannot live inside one spoken line. */
+  const allowsSpokenHeading = isSpeaking && Boolean(part.answer_constraints.spoken_heading);
+  const headingText = manual.interaction?.heading ?? "";
+  const headingGapSeconds = manual.interaction?.heading_gap_seconds
+    ?? part.answer_constraints.default_heading_gap_seconds
+    ?? 3;
 
   function toggleBoldSelection() {
     const el = promptRef.current;
@@ -299,6 +307,48 @@ export function ManualQuestionForm({
                 </li>
               ))}
             </ol>
+          </div>
+        )}
+        {allowsSpokenHeading && (
+          <div className="vh-speaking-heading-block">
+            <label htmlFor="module-question-heading">{t.headingLabel}</label>
+            <p className="hint">{t.headingHint}</p>
+            <textarea
+              id="module-question-heading"
+              rows={2}
+              value={headingText}
+              maxLength={2000}
+              placeholder={t.headingPlaceholder}
+              onChange={(event) => onManualChange({
+                ...manual,
+                interaction: { ...manual.interaction, heading: event.target.value },
+              })}
+            />
+            {headingText.trim().length > 0 && (
+              <>
+                <div className="speaking-timing-fields">
+                  <MinuteSecondInput
+                    id="module-question-heading-gap"
+                    label={t.headingGapLabel}
+                    minSeconds={0}
+                    maxSeconds={120}
+                    value={headingGapSeconds}
+                    onChange={(gapSeconds) => onManualChange({
+                      ...manual,
+                      interaction: { ...manual.interaction, heading_gap_seconds: gapSeconds },
+                    })}
+                  />
+                </div>
+                <p className="vh-speaking-timing-hint">{t.headingGapHint(headingGapSeconds)}</p>
+                <SpeakingAvatarPreview
+                  moduleId={moduleId}
+                  partId={part.id}
+                  prompt={headingText}
+                  examiner={examiner}
+                  title={strings.avatarPreview.headingTitle}
+                />
+              </>
+            )}
           </div>
         )}
         {/* 1. Question or task prompt */}

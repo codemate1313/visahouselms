@@ -885,6 +885,15 @@ def _validate_question_for_part(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"{part.title} requires one of these speaking turns: {', '.join(sorted(allowed_turn_types))}",
         )
+    # A spoken heading is the examiner announcing the situation before she asks
+    # about it, which is a Speaking 2 device. Elsewhere it would be a second,
+    # invisible prompt that nothing in the part's flow accounts for, so it is
+    # refused rather than silently dropped on save.
+    if str(interaction.get("heading") or "").strip() and not constraints.get("spoken_heading"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{part.title} prompts have no spoken heading - put the wording in the question itself",
+        )
     # Some turns are the part's single headline task - one read-aloud text, one
     # presentation stimulus, one identity exchange - while the rest are banks
     # the examiner draws from. A ceiling alone cannot tell them apart: it would

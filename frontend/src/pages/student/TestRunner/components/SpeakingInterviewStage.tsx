@@ -87,6 +87,10 @@ export function SpeakingInterviewStage({
   // refused to play it - the candidate would have no way to begin at all, so a
   // manual control appears rather than leaving them stranded.
   const [manualStartOffered, setManualStartOffered] = useState(false);
+  // A prompt can be spoken in two pieces with a pause between them, so silence
+  // on its own is not evidence that the audio failed. The rescue only counts
+  // while the examiner is neither speaking nor mid-pause.
+  const [examinerBusy, setExaminerBusy] = useState(false);
   const isLastQuestion = questionIndex >= currentPart.questions.length - 1;
 
   useEffect(() => {
@@ -121,9 +125,10 @@ export function SpeakingInterviewStage({
       setManualStartOffered(false);
       return undefined;
     }
+    if (examinerBusy) return undefined;
     const rescue = window.setTimeout(() => setManualStartOffered(true), 12000);
     return () => window.clearTimeout(rescue);
-  }, [hasPreparation, mode, question?.id]);
+  }, [hasPreparation, mode, question?.id, examinerBusy]);
 
   useEffect(() => {
     if (mode !== "preparing" || preparationLeft <= 0) return undefined;
@@ -357,6 +362,7 @@ export function SpeakingInterviewStage({
               partId={currentPart.id}
               questionId={introComplete ? question.id : undefined}
               onAudioEnded={introComplete ? beginPreparation : finishIntro}
+              onExaminerBusyChange={setExaminerBusy}
             />
           </div>
           <div className="speaking-interview-examiner-copy">

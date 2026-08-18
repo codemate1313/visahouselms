@@ -177,6 +177,33 @@ The published format fixes **no number** of follow-ups for Parts 3 and 4 — the
 interlocutor asks "one or more as time allows" — so the module stores a bank the
 author sizes and the examiner draws from it.
 
+### The spoken heading (Speaking 2)
+
+A role play is announced before it is asked — *"Situation 1. You are at a hotel
+reception and your room key does not work."* — and the examiner pauses after the
+announcement so the candidate can take the situation in before the question
+lands on top of it.
+
+Speaking 2 prompts therefore carry two extra fields, and only Speaking 2 does:
+`answer_constraints.spoken_heading` is true for that part alone, and authoring
+refuses a heading anywhere else rather than saving wording nothing would speak.
+
+| Field | Where | What it does |
+|---|---|---|
+| `interaction.heading` | on the prompt | The line Instructor speaks **before** the question. Optional — leave it empty and the question is asked straight away. |
+| `interaction.heading_gap_seconds` | on the prompt | The pause between the two, 0–120s. Falls back to `answer_constraints.default_heading_gap_seconds` (3s). |
+
+The heading is a field of its own rather than the first sentence of the prompt
+because the pause cannot exist inside a single spoken line. At exam time it is
+voiced as its own clip: the avatar speaks the heading, holds for the authored
+pause, then asks the question — and the heading, the pause and the question are
+all credited back to the candidate's clock, since none of it is time they can
+use. The authoring form previews the heading in the examiner voice next to the
+question's own preview.
+
+Headings reach a sitting through its frozen `content_snapshot`, so adding one
+changes sittings started afterwards, never one in flight.
+
 ### Prep and response timing
 
 Timing belongs to the **turn**, not the part: Speaking 3 sets a 20-second-

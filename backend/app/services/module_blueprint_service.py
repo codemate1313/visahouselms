@@ -329,6 +329,11 @@ SPEAKING_TURN_TIMINGS: dict[str, tuple[int, int]] = {
 # than breaking it. What each part does fix is its shape: the headline turn -
 # the identity exchange, the read-aloud text, the presentation stimulus - is
 # authored once, and everything after it is a bank the examiner draws from.
+# The examiner's pause between a spoken heading and the question that follows
+# it. Long enough for the situation to land, short enough not to read as a
+# fault in the audio. The author can change it per prompt.
+DEFAULT_HEADING_GAP_SECONDS = 3
+
 _SPEAKING_STRUCTURES = {
     "speaking_1": {
         "minimum_questions": 2,
@@ -340,11 +345,14 @@ _SPEAKING_STRUCTURES = {
     },
     # Two role-play directions, each of which may be authored more than once:
     # the examiner opens some situations and the candidate opens the others.
+    # Each role play is announced before it is asked - "Situation 1: you are at
+    # a hotel reception" - so its prompts carry a spoken heading of their own.
     "speaking_2": {
         "minimum_questions": 2,
         "required_turn_types": ["roleplay_response", "roleplay_initiate"],
         "allowed_turn_types": ["roleplay_response", "roleplay_initiate"],
         "singleton_turn_types": [],
+        "spoken_heading": True,
     },
     # One read-aloud text plus the follow-up questions the examiner asks about
     # it. The published format states that follow-up questions are asked but
@@ -404,6 +412,11 @@ for _part in SPEAKING_PARTS:
                 # the allowed turns are banks and may repeat as often as the
                 # author needs.
                 "singleton_turn_types": _structure["singleton_turn_types"],
+                # Whether a prompt may carry a heading the examiner speaks
+                # before the question, and how long she waits between the two
+                # when the author does not set the pause herself.
+                "spoken_heading": _structure.get("spoken_heading", False),
+                "default_heading_gap_seconds": DEFAULT_HEADING_GAP_SECONDS,
                 "preserve_question_order": True,
             },
             "rubric": SPEAKING_RUBRIC,
