@@ -73,6 +73,9 @@ export function PreExamOnboarding({
   const micStreamRef = useRef<MediaStream | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const countdownIntervalRef = useRef<number | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
+  const [micAudibilityAsked, setMicAudibilityAsked] = useState(false);
 
   // Calculate dynamic metadata
   const totalQuestions = useMemo(() => {
@@ -140,9 +143,15 @@ export function PreExamOnboarding({
     }
   }, [attempt.module_type]);
 
-  // Microphone tester with real RMS and voice detection
   const handleTestMic = async () => {
     if (micTesting) return;
+    // Reset previous results
+    if (recordedAudioUrl) {
+      URL.revokeObjectURL(recordedAudioUrl);
+      setRecordedAudioUrl(null);
+    }
+    setMicAudibilityAsked(false);
+    setMicTested(false);
     setMicTesting(true);
     setMicError(null);
     setTestCountdown(3);
@@ -163,6 +172,20 @@ export function PreExamOnboarding({
 
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
+      // Start recording
+      const chunks: BlobPart[] = [];
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg";
+      const recorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = recorder;
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: mimeType });
+        if (blob.size > 1024) {
+          setRecordedAudioUrl(URL.createObjectURL(blob));
+        }
+      };
+      recorder.start();
+
       const updateVolume = () => {
         analyser.getByteFrequencyData(dataArray);
         const sum = dataArray.reduce((a, b) => a + b, 0);
@@ -182,11 +205,12 @@ export function PreExamOnboarding({
 
       await new Promise((resolve) => setTimeout(resolve, 3200));
 
+      if (recorder.state === "recording") recorder.stop();
       stopMicTest();
 
       // Check if sound/voice was detected (threshold check)
       if (peakVolume >= 4 || stream.getAudioTracks().length > 0) {
-        setMicTested(true);
+        setMicAudibilityAsked(true);
         setMicError(null);
       } else {
         setMicTested(false);
@@ -220,6 +244,10 @@ export function PreExamOnboarding({
       void audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
     }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+    mediaRecorderRef.current = null;
     setMicTesting(false);
     setVolumeLevel(0);
   };
@@ -570,6 +598,48 @@ export function PreExamOnboarding({
                       <div className="eq-bar" style={{ height: `${Math.max(30, volumeLevel * 1.3)}%` }} />
                       <div className="eq-bar" style={{ height: `${Math.max(25, volumeLevel * 0.9)}%` }} />
                       <div className="eq-bar" style={{ height: `${Math.max(18, volumeLevel * 1.2)}%` }} />
+                    </div>
+                  )}
+
+                  {/* Playback + audibility confirmation */}
+                  {!micTesting && micAudibilityAsked && !micTested && recordedAudioUrl && (
+                    <div className="mic-playback-confirm">
+                      <p className="mic-playback-label">🎧 Play back your recording:</p>
+                      <audio
+                        controls
+                        src={recordedAudioUrl}
+                        className="mic-playback-audio"
+                      />
+                      <p className="mic-audibility-question">Is your audio clearly audible to you?</p>
+                      <div className="mic-audibility-actions">
+                        <button
+                          type="button"
+                          className="mic-audibility-btn mic-audibility-yes"
+                          onClick={() => setMicTested(true)}
+                        >
+                          ✓ Yes, it's clear
+                        </button>
+                        <button
+                          type="button"
+                          className="mic-audibility-btn mic-audibility-no"
+                          onClick={() => {
+                            setMicAudibilityAsked(false);
+                            if (recordedAudioUrl) URL.revokeObjectURL(recordedAudioUrl);
+                            setRecordedAudioUrl(null);
+                            setMicError("Please check your headphones or speakers and run the test again.");
+                          }}
+                        >
+                          ✗ No, re-test
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show playback-only after confirmed */}
+                  {micTested && recordedAudioUrl && (
+                    <div className="mic-playback-confirm mic-playback-verified">
+                      <p className="mic-playback-label">✅ Audio verified — your recording:</p>
+                      <audio controls src={recordedAudioUrl} className="mic-playback-audio" />
                     </div>
                   )}
 

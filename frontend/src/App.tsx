@@ -1,6 +1,7 @@
 import { Suspense, useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
 import { initializeSession } from "./api/client";
+import { ConnectivityNotice } from "./components/ConnectivityNotice";
 import { GlobalConfirmModal } from "./components/ConfirmModal";
 import { GlobalDialog } from "./components/GlobalDialog";
 import { GlobalLoader } from "./components/GlobalLoader";
@@ -134,6 +135,7 @@ function App() {
       <SessionHeartbeat />
       <ImpersonationBanner />
       <MaintenanceNotice />
+      <ConnectivityNotice />
       {initialized && (
         <Suspense
           fallback={
