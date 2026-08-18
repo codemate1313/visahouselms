@@ -94,14 +94,23 @@ def upgrade() -> None:
     indexes = [idx["name"] for idx in insp.get_indexes("test_attempts")] if "test_attempts" in insp.get_table_names() else []
     if "uq_test_attempt_original_user_module" in indexes:
         op.drop_index("uq_test_attempt_original_user_module", table_name="test_attempts")
-        op.create_index(
-            "uq_test_attempt_original_user_module",
-            "test_attempts",
-            ["user_id", "module_id", "sitting_number"],
-            unique=True,
-            sqlite_where=sa.text("is_retake = 0"),
-            postgresql_where=sa.text("is_retake = false"),
-        )
+        dialect = bind.dialect.name
+        if dialect in ("sqlite", "postgresql"):
+            op.create_index(
+                "uq_test_attempt_original_user_module",
+                "test_attempts",
+                ["user_id", "module_id", "sitting_number"],
+                unique=True,
+                sqlite_where=sa.text("is_retake = 0"),
+                postgresql_where=sa.text("is_retake = false"),
+            )
+        else:
+            op.create_index(
+                "uq_test_attempt_original_user_module",
+                "test_attempts",
+                ["user_id", "module_id", "sitting_number"],
+                unique=False,
+            )
 
     # ---- drop the column nothing reads --------------------------------
     plan_cols = {c["name"] for c in insp.get_columns("plans")} if "plans" in insp.get_table_names() else set()
