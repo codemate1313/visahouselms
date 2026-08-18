@@ -261,8 +261,8 @@ SPEAKING_PARTS = [
         "part_code": "speaking_1",
         "section_type": "speaking",
         "title": "Speaking 1",
-        "skill_focus": "Give personal information and answer up to five questions on familiar topics.",
-        "instructions": "Ask the candidate's name and country, then up to five questions.",
+        "skill_focus": "Give personal information and answer questions on familiar topics.",
+        "instructions": "Ask the candidate's name and country, then the topic questions.",
     },
     {
         "part_code": "speaking_2",
@@ -301,12 +301,15 @@ SPEAKING_PARTS = [
 # follow-ups in Speaking 4 would cost nine minutes on their own - so each turn
 # type carries its own (preparation, response) pair instead.
 #
-# Authored to the ceiling the structures below allow, the parts total:
+# Authored to the reference shape of the format, the parts total:
 #     Part 1   identity + 5 topic questions   =  180s  (~3 min)
 #     Part 2   2 role plays                   =  120s  (~2 min)
 #     Part 3   read aloud + 3 follow-ups      =  230s  (~4 min)
 #     Part 4   presentation + 3 follow-ups    =  300s  (~5 min)
 #                                       total =  830s  (13.8 min)
+#
+# Nothing holds a part to that shape - prompts are the author's to add - so the
+# figures are a reference point rather than a budget.
 #
 # These are the defaults an author starts from, not a cap: a part's real
 # duration is always the sum of the times actually authored on its prompts.
@@ -320,12 +323,14 @@ SPEAKING_TURN_TIMINGS: dict[str, tuple[int, int]] = {
     "follow_up": (0, 40),
 }
 
+# No Speaking part caps how many prompts it holds. An examiner decides how long
+# a part runs, and the module's duration is summed from each prompt's own
+# preparation and response time, so a longer part lengthens the test rather
+# than breaking it. What each part does fix is its shape: the headline turn -
+# the identity exchange, the read-aloud text, the presentation stimulus - is
+# authored once, and everything after it is a bank the examiner draws from.
 _SPEAKING_STRUCTURES = {
     "speaking_1": {
-        # Identity turn plus "up to five questions" (see the part instructions),
-        # so six prompts is the ceiling. Without a ceiling the derived duration
-        # grows unbounded: every extra prompt adds its own response time.
-        "maximum_questions": 6,
         "minimum_questions": 2,
         "required_turn_types": ["identity", "topic_question"],
         "allowed_turn_types": ["identity", "topic_question", "follow_up"],
@@ -333,22 +338,20 @@ _SPEAKING_STRUCTURES = {
         # question, so only the identity turn is capped at one.
         "singleton_turn_types": ["identity"],
     },
+    # Two role-play directions, each of which may be authored more than once:
+    # the examiner opens some situations and the candidate opens the others.
     "speaking_2": {
-        "question_limit": 2,
         "minimum_questions": 2,
         "required_turn_types": ["roleplay_response", "roleplay_initiate"],
         "allowed_turn_types": ["roleplay_response", "roleplay_initiate"],
-        # Exactly two situations, one of each direction - the examiner opens
-        # one and the candidate opens the other.
-        "singleton_turn_types": ["roleplay_response", "roleplay_initiate"],
+        "singleton_turn_types": [],
     },
     # One read-aloud text plus the follow-up questions the examiner asks about
     # it. The published format states that follow-up questions are asked but
     # fixes no number - the interlocutor asks "one or more as time allows" - so
-    # the module stores a bank of up to three and at least one. The read-aloud
-    # itself is capped at one: a second text would be a second task.
+    # the bank is the author's to size. The read-aloud itself is capped at one:
+    # a second text would be a second task.
     "speaking_3": {
-        "maximum_questions": 4,
         "minimum_questions": 2,
         "required_turn_types": ["read_aloud", "follow_up"],
         "allowed_turn_types": ["read_aloud", "follow_up"],
@@ -357,7 +360,6 @@ _SPEAKING_STRUCTURES = {
     # One presentation stimulus and its follow-up bank, on the same
     # "one or more as time allows" rule as Speaking 3.
     "speaking_4": {
-        "maximum_questions": 4,
         "minimum_questions": 2,
         "required_turn_types": ["presentation", "follow_up"],
         "allowed_turn_types": ["presentation", "follow_up"],
@@ -372,13 +374,12 @@ for _part in SPEAKING_PARTS:
     _preparation_seconds, _response_seconds = SPEAKING_TURN_TIMINGS[_primary_turn]
     _part.update(
         {
-            "question_limit": _structure.get("question_limit"),
+            "question_limit": None,
             "minimum_questions": _structure["minimum_questions"],
             "max_marks": None,
             "auto_marked": False,
             "answer_constraints": {
                 "allowed_question_types": ["speaking_prompt"],
-                "maximum_questions": _structure.get("maximum_questions"),
                 # Timing belongs to the prompt, not the part: a two-minute
                 # presentation and a short follow-up sit in the same part. The
                 # part's duration is the sum of its prompts, never a figure of
@@ -400,7 +401,8 @@ for _part in SPEAKING_PARTS:
                 "required_turn_types": _structure["required_turn_types"],
                 "allowed_turn_types": _structure["allowed_turn_types"],
                 # Turns that may appear at most once in the part. The rest of
-                # the allowed turns are banks and may repeat up to the ceiling.
+                # the allowed turns are banks and may repeat as often as the
+                # author needs.
                 "singleton_turn_types": _structure["singleton_turn_types"],
                 "preserve_question_order": True,
             },

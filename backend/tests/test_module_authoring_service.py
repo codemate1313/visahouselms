@@ -186,7 +186,9 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             )
             for part in blueprints["speaking"]["parts"]
         ]
-        self.assertEqual(speaking_timings, [(0, 45), (0, 60), (20, 90), (60, 120)])
+        # Speaking 1 opens on the identity turn, so its legacy pair is that
+        # turn's (0, 30) rather than a part-wide figure of its own.
+        self.assertEqual(speaking_timings, [(0, 30), (0, 60), (20, 90), (60, 120)])
         for part in blueprints["speaking"]["parts"]:
             self.assertNotIn("preparation_seconds", part["answer_constraints"])
             self.assertNotIn("response_seconds", part["answer_constraints"])
@@ -245,46 +247,52 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         ))
         # Speaking 3 is one read-aloud text and the questions asked about it.
         # The published format fixes no number of follow-ups - the interlocutor
-        # asks "one or more as time allows" - so the part stores a bank of up to
-        # three beside the single text.
+        # asks "one or more as time allows" - so the bank beside the single text
+        # is the author's to size.
         speaking_3 = speaking["parts"][2]
-        self.assertEqual(
-            (speaking_3["question_limit"], speaking_3["minimum_questions"]),
-            (None, 2),
-        )
+        self.assertEqual(speaking_3["minimum_questions"], 2)
         self.assertEqual(
             speaking_3["answer_constraints"]["allowed_turn_types"],
             ["read_aloud", "follow_up"],
         )
-        self.assertEqual(speaking_3["answer_constraints"]["maximum_questions"], 4)
         self.assertEqual(speaking_3["answer_constraints"]["singleton_turn_types"], ["read_aloud"])
-        # Speaking 4 carries the same bank size beside its single presentation.
+        # Speaking 4 has the same shape beside its single presentation.
         speaking_4 = speaking["parts"][3]
-        self.assertEqual(speaking_4["answer_constraints"]["maximum_questions"], 4)
         self.assertEqual(speaking_4["answer_constraints"]["singleton_turn_types"], ["presentation"])
+        # No Speaking part caps how many prompts it holds: an examiner decides
+        # how long a part runs, and the module's duration follows the prompts.
+        for part in speaking["parts"]:
+            self.assertIsNone(part["question_limit"], part["part_code"])
+            self.assertIsNone(
+                part["answer_constraints"].get("maximum_questions"), part["part_code"]
+            )
 
     def test_speaking_turn_timings_keep_the_paper_at_about_fourteen_minutes(self) -> None:
         """Each turn type carries its own clock, and the four parts authored to
-        their ceiling total the ~14 minutes the published format specifies.
+        the reference shape of the format total the ~14 minutes it specifies.
 
         A single per-part default would hand a Part 4 follow-up the
         presentation's 60s + 120s, putting three follow-ups at nine minutes on
-        their own and the paper at well over twenty.
+        their own and the paper at well over twenty. Nothing caps a part, so
+        this is the shape an author starts from rather than a ceiling.
         """
         speaking = module_blueprint_service.get_blueprint("speaking")
         timings = module_blueprint_service.SPEAKING_TURN_TIMINGS
+        # The reference sitting: identity + 5 topic questions, 2 role plays,
+        # read-aloud + 3 follow-ups, presentation + 3 follow-ups.
+        reference = {
+            "speaking_1": {"identity": 1, "topic_question": 5},
+            "speaking_2": {"roleplay_response": 1, "roleplay_initiate": 1},
+            "speaking_3": {"read_aloud": 1, "follow_up": 3},
+            "speaking_4": {"presentation": 1, "follow_up": 3},
+        }
 
         total = 0
         for part in speaking["parts"]:
             constraints = part["answer_constraints"]
-            ceiling = constraints.get("maximum_questions") or part["question_limit"]
-            singletons = constraints["singleton_turn_types"]
-            # Worst case: every singleton once, every remaining slot the bank turn.
-            seconds = sum(sum(timings[turn]) for turn in singletons)
-            bank = [turn for turn in constraints["allowed_turn_types"] if turn not in singletons]
-            if bank:
-                seconds += sum(timings[bank[0]]) * (ceiling - len(singletons))
-            total += seconds
+            turns = reference[part["part_code"]]
+            self.assertTrue(set(turns) <= set(constraints["allowed_turn_types"]), part["part_code"])
+            total += sum(sum(timings[turn]) * count for turn, count in turns.items())
             # Every allowed turn must have a default, or the form has nothing to
             # pre-fill and the author is left guessing the clock.
             self.assertEqual(
@@ -877,26 +885,33 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             ["read_aloud", "follow_up", "follow_up", "follow_up"],
         )
 
-    def test_speaking_three_refuses_a_fifth_prompt(self) -> None:
+    def test_a_speaking_follow_up_bank_has_no_ceiling(self) -> None:
+        """How many follow-ups a part holds is the author's call: the format
+        says the interlocutor asks "one or more as time allows" and fixes no
+        number, and the extra prompt simply lengthens the derived duration."""
         module, part = self._speaking_part("speaking_3")
         module_authoring_service.add_question(
             self.db, self.instructor, module.id, part.id,
             self._speaking_draft("Please read this aloud.", "read_aloud", passage="An academic text."),
             None,
         )
-        for index in range(3):
+        for index in range(6):
             module_authoring_service.add_question(
                 self.db, self.instructor, module.id, part.id,
                 self._speaking_draft(f"Follow up {index}", "follow_up"), None,
             )
 
-        with self.assertRaises(HTTPException) as ctx:
-            module_authoring_service.add_question(
-                self.db, self.instructor, module.id, part.id,
-                self._speaking_draft("One too many", "follow_up"), None,
-            )
-        self.assertEqual(ctx.exception.status_code, 400)
-        self.assertIn("at most 4", ctx.exception.detail)
+        self.db.expire_all()
+        saved = next(
+            item
+            for item in module_authoring_service.get_module_or_404(self.db, module.id).parts
+            if item.part_code == "speaking_3"
+        )
+        self.assertEqual(len(saved.questions), 7)
+        errors = module_authoring_service.validation_errors(
+            module_authoring_service.get_module_or_404(self.db, module.id)
+        )
+        self.assertEqual([error for error in errors if error.startswith("Speaking 3")], [])
 
     def test_a_speaking_part_takes_only_one_headline_turn(self) -> None:
         """A ceiling alone cannot tell "one text plus three questions" from

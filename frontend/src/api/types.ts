@@ -358,7 +358,8 @@ export interface ExamModulePart {
     allowed_turn_types?: SpeakingTurnType[];
     /* Turns that may appear at most once in the part - the single read-aloud
        text, the single presentation stimulus. Every other allowed turn is a
-       bank the examiner draws from, repeatable up to `maximum_questions`. */
+       bank the examiner draws from, repeatable as often as the author needs:
+       no speaking part carries a `maximum_questions` ceiling. */
     singleton_turn_types?: SpeakingTurnType[];
     maximum_questions?: number;
     /* Per-turn preparation/response defaults the authoring form pre-fills. A

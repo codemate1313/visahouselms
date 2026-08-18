@@ -119,17 +119,19 @@ Unlike every other section, Speaking parts have **no `max_marks`** — marks com
 from the rubric applied across the section, and all four parts carry
 **equal weight** (`parts_equal_weight: true`).
 
-| Part | Min prompts | Max prompts | Required turn types | At the ceiling |
+| Part | Min prompts | Max prompts | Required turn types | Reference shape |
 |---|---|---|---|---|
-| Speaking 1 | 2 | 6 | `identity`, `topic_question` | 180s (~3 min) |
-| Speaking 2 | 2 | **exactly 2** | `roleplay_response`, `roleplay_initiate` | 120s (~2 min) |
-| Speaking 3 | 2 | 4 | `read_aloud`, `follow_up` | 230s (~4 min) |
-| Speaking 4 | 2 | 4 | `presentation`, `follow_up` | 300s (~5 min) |
+| Speaking 1 | 2 | — | `identity`, `topic_question` | identity + 5 topic questions, 180s (~3 min) |
+| Speaking 2 | 2 | — | `roleplay_response`, `roleplay_initiate` | 2 role plays, 120s (~2 min) |
+| Speaking 3 | 2 | — | `read_aloud`, `follow_up` | read-aloud + 3 follow-ups, 230s (~4 min) |
+| Speaking 4 | 2 | — | `presentation`, `follow_up` | presentation + 3 follow-ups, 300s (~5 min) |
 
-Authored to those ceilings the paper runs 830s — 13.8 minutes, against the
-approximately 14 the published format specifies. A part's real duration is
-always the sum of the times actually authored on its prompts, never a figure of
-its own.
+**No speaking part caps how many prompts it holds.** How long a part runs is the
+author's call. Authored to the reference shape above the paper runs 830s — 13.8
+minutes, against the approximately 14 the published format specifies — but that
+is a reference point, not a budget: a part's real duration is always the sum of
+the times actually authored on its prompts, never a figure of its own, so extra
+prompts lengthen the paper rather than being refused.
 
 ### Turn types
 
@@ -139,41 +141,41 @@ list. The *required* types must all be present or the part fails validation:
 
 So Speaking 2 must contain one prompt where the examiner starts the role play
 (`roleplay_response`) **and** one where the candidate starts it
-(`roleplay_initiate`) — it is capped at exactly two prompts.
+(`roleplay_initiate`) — and either direction may be authored more than once.
 
-Speaking 1, 3 and 4 have no fixed `question_limit`, but they are **not**
-unbounded: `maximum_questions` caps them at 6, 4 and 4. Every extra prompt adds
-its own preparation and response time to the module's derived duration, so an
-uncapped part would quietly turn a 14-minute paper into a 40-minute one.
+No part carries a `question_limit` or a `maximum_questions` ceiling. Every extra
+prompt adds its own preparation and response time to the module's derived
+duration, so a longer part makes a longer paper — which is the author's decision
+to make, and visible in the duration the editor shows.
 
 ### One headline turn per part
 
 `singleton_turn_types` marks the turns a part may hold only **once** — the
 single read-aloud text, the single presentation stimulus, the one identity
 exchange. Everything else in `allowed_turn_types` is a *bank* the examiner draws
-from, repeatable up to the ceiling:
+from, repeatable as often as the author needs:
 
 | Part | Headline turn (once) | Bank turn (repeats) |
 |---|---|---|
 | Speaking 1 | `identity` | `topic_question` |
-| Speaking 2 | both role plays | — |
+| Speaking 2 | — | both role plays |
 | Speaking 3 | `read_aloud` | `follow_up` |
 | Speaking 4 | `presentation` | `follow_up` |
 
-A ceiling on its own cannot tell "one text plus three questions" from "four
-texts", which is why the two rules are separate. Adding a second read-aloud is
-refused at authoring time, and a part that reaches publish holding two — a
+One text plus its questions is not the same part as four texts, which is why the
+headline turn is pinned even though nothing caps the bank. Adding a second
+read-aloud is refused at authoring time, and a part that reaches publish holding two — a
 part migrated from an older revision, or filled by import — reports
 *"… takes one read aloud turn; it currently has 2."*
 
 Parts 3 and 4 keep their headline turn at `sort_order` 0 automatically, so a
 read-aloud rewritten after being deleted is not appended after its own
-follow-ups. Speaking 2 has no bank, and the format does not say which role play
-comes first, so its order is left to the author.
+follow-ups. Speaking 2 has no headline turn, and the format does not say which
+role play comes first, so its order is left to the author.
 
 The published format fixes **no number** of follow-ups for Parts 3 and 4 — the
-interlocutor asks "one or more as time allows" — so the module stores a bank of
-up to three and the examiner draws from it.
+interlocutor asks "one or more as time allows" — so the module stores a bank the
+author sizes and the examiner draws from it.
 
 ### Prep and response timing
 
