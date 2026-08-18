@@ -883,9 +883,16 @@ def my_current_plan_view(db: Session, user: User) -> dict:
     ai_quota = ai_evaluation_service.get_student_ai_quota_summary(db, user)
 
     # Fetch attempts and retake statuses for this student
+    # `ready` is an attempt sitting at pre-exam onboarding and `cancelled` one
+    # that never began, so neither has spent a sitting. Counting them made a
+    # card read "Attempt Exhausted" over a test the Start button would happily
+    # open - the candidate had opened onboarding once and backed out.
     attempt_rows = (
         db.query(TestAttempt.module_id, TestAttempt.id, TestAttempt.status)
-        .filter(TestAttempt.user_id == user.id)
+        .filter(
+            TestAttempt.user_id == user.id,
+            TestAttempt.status.notin_(["cancelled", "ready"]),
+        )
         .order_by(TestAttempt.id.desc())
         .all()
     )

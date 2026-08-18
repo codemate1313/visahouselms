@@ -28,6 +28,8 @@ from app.models.attempt import (
     ReevaluationRequest,
     AttemptFlag,
 )
+# Aliased: pytest tries to collect any module-level name starting with "Test".
+from app.models.attempt import TestAttempt as AttemptRow
 from app.models.course import COURSE_PUBLISHED, Course
 from app.models.job import Job
 from app.models.institute import Institute
@@ -1337,6 +1339,72 @@ class AttemptServiceTestCase(unittest.TestCase):
         # Listening audio and question images stay public - unchanged.
         self.assertFalse(is_private("exam-modules/4/questions/diagram.webp"))
         self.assertFalse(is_private("exam-modules/4/listening.mp3"))
+
+    def test_a_practice_attempt_waits_at_onboarding_before_it_costs_anything(self):
+        """Pressing Start opens pre-exam onboarding, not the paper. Until the
+        candidate commences, no sitting is spent and no clock runs - backing out
+        of onboarding has to leave them exactly where they were."""
+        module = self._build_reading_module()
+        self._course_with_module(module.id)
+
+        created = attempt_service.start_attempt(self.db, self.student, module)
+        self.assertEqual(created["status"], ATTEMPT_READY)
+        # Nothing in the student's history yet, and nothing counted as used.
+        self.assertEqual(attempt_service.list_my_attempts(self.db, self.student), [])
+
+        # Backing out returns the sitting, and the next Start is a clean one.
+        cancelled = attempt_service.cancel_onboarding_attempt(self.db, self.student, created["id"])
+        self.assertTrue(cancelled["cancelled"])
+        second = attempt_service.start_attempt(self.db, self.student, module)
+        self.assertEqual(second["status"], ATTEMPT_READY)
+        # One attempt row, still unspent: the cancelled one was discarded rather
+        # than left behind to count against the student.
+        remaining = (
+            self.db.query(AttemptRow)
+            .filter(AttemptRow.user_id == self.student.id, AttemptRow.module_id == module.id)
+            .all()
+        )
+        self.assertEqual([item.status for item in remaining], [ATTEMPT_READY])
+        self.assertEqual(remaining[0].sitting_number, 1)
+
+    def test_the_clock_starts_when_the_candidate_enters_the_paper(self):
+        """The timer is the paper's, not the onboarding screen's: it is set when
+        the attempt commences, however long the candidate spent reading the
+        instructions first."""
+        module = self._build_reading_module()
+        self._course_with_module(module.id)
+
+        created = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, created["id"])
+        provisional_expiry = attempt.expires_at
+        # Time spent at onboarding, which must not come out of the paper.
+        attempt.started_at = attempt.started_at - timedelta(minutes=10)
+        attempt.expires_at = attempt.expires_at - timedelta(minutes=10)
+        self.db.commit()
+
+        commenced = attempt_service.commence_attempt(self.db, self.student, attempt)
+
+        self.assertEqual(commenced["status"], ATTEMPT_IN_PROGRESS)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, created["id"])
+        self.assertGreaterEqual(attempt.expires_at, provisional_expiry - timedelta(seconds=5))
+        self.assertAlmostEqual(
+            (attempt.expires_at - attempt.started_at).total_seconds(),
+            (module.duration_minutes + attempt_service.EXPIRY_BUFFER_MINUTES) * 60,
+            delta=5,
+        )
+
+    def test_a_second_start_returns_the_attempt_already_at_onboarding(self):
+        """A double-click, or a candidate who reopened the tab, is the same
+        start - not a second sitting, and not a collision with the unique index
+        that would tell them they had already attempted the test."""
+        module = self._build_reading_module()
+        self._course_with_module(module.id)
+
+        first = attempt_service.start_attempt(self.db, self.student, module)
+        second = attempt_service.start_attempt(self.db, self.student, module)
+
+        self.assertEqual(first["id"], second["id"])
+        self.assertEqual(second["status"], ATTEMPT_READY)
 
 
 if __name__ == "__main__":

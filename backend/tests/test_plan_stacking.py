@@ -531,6 +531,26 @@ class SittingsTests(unittest.TestCase):
         self.assertEqual(refused.exception.status_code, 409,
                          "two purchases buy two sittings, not unlimited")
 
+    def test_opening_onboarding_and_backing_out_leaves_the_card_alone(self):
+        """The card is driven by sittings spent, not by rows that exist. A
+        candidate who pressed Start, read the instructions and went back has
+        spent nothing - the card used to read "Attempt Exhausted" over a test
+        the Start button would still open."""
+        from app.services import attempt_service
+
+        self._buy()
+        waiting = attempt_service.start_attempt(self.db, self.student, self.reading)
+
+        view = subscription_service.my_current_plan_view(self.db, self.student)
+        row = next(m for m in view["plan"]["modules"] if m["module_id"] == self.reading.id)
+        self.assertFalse(row["is_exhausted"])
+        self.assertFalse(row["has_attempted"])
+        self.assertEqual(row["sittings_remaining"], 1)
+        self.assertIsNone(row["latest_attempt_id"])
+
+        attempt_service.cancel_onboarding_attempt(self.db, self.student, waiting["id"])
+        self.assertEqual(self._remaining(), 1, "backing out returns the sitting")
+
     def test_the_plan_screen_stops_saying_exhausted_after_a_repeat_purchase(self):
         self._buy()
         self._sit()

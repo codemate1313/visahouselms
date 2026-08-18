@@ -210,6 +210,24 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         else:
             _auto_expire(db, existing_in_progress)
 
+    # An attempt already waiting at onboarding is that same start, pressed
+    # again: a second Start click, a reopened tab, a candidate who backed out
+    # and came straight back. Handing it back rather than opening another keeps
+    # one onboarding per sitting - and a second row would take the sitting
+    # number this one already holds and be refused by the unique index.
+    waiting_at_onboarding = (
+        db.query(TestAttempt)
+        .filter(
+            TestAttempt.user_id == user.id,
+            TestAttempt.module_id == module.id,
+            TestAttempt.status == ATTEMPT_READY,
+        )
+        .order_by(TestAttempt.id.desc())
+        .first()
+    )
+    if waiting_at_onboarding is not None and not waiting_at_onboarding.answers:
+        return get_student_view(db, get_attempt_or_404(db, user, waiting_at_onboarding.id))
+
     # Every module type allows exactly one original sitting; an approved,
     # unconsumed RetakeRequest is the only way to earn another (except final tests).
     prior_sittings = (
@@ -252,11 +270,15 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ALREADY_ATTEMPTED_DETAIL)
 
     now = _now()
+    # Provisional only. The attempt is created READY - the candidate is at the
+    # pre-exam onboarding, not in the paper - and `commence_attempt` sets both
+    # of these again from the moment they actually enter it. Until then nothing
+    # is counting down and no sitting has been spent.
     expires_at = now + timedelta(minutes=module.duration_minutes + EXPIRY_BUFFER_MINUTES)
     attempt = TestAttempt(
         user_id=user.id,
         module_id=module.id,
-        status=ATTEMPT_READY if is_final else ATTEMPT_IN_PROGRESS,
+        status=ATTEMPT_READY,
         is_final=is_final,
         is_retake=retake_request is not None or (dev_unlimited_speaking and original_attempt is not None),
         retake_request_id=retake_request.id if retake_request is not None else None,
@@ -1493,9 +1515,12 @@ def submit_grading(db: Session, actor: User, attempt_id: int) -> dict:
 
 
 def list_my_attempts(db: Session, user: User) -> list[dict]:
+    # A READY attempt is a candidate standing at pre-exam onboarding. It has no
+    # answers, no score and no elapsed time, and it may still be walked away
+    # from without spending the sitting, so it is not part of their history.
     attempts = (
         _attempt_query(db)
-        .filter(TestAttempt.user_id == user.id)
+        .filter(TestAttempt.user_id == user.id, TestAttempt.status != ATTEMPT_READY)
         .order_by(TestAttempt.started_at.desc())
         .all()
     )

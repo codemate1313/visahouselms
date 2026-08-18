@@ -67,6 +67,11 @@ class ClockCreditTest(unittest.TestCase):
         self.db.expire_all()
         m = mas.get_module_or_404(self.db, m.id)
         out = attempt_service.start_attempt(self.db, self.s, m)
+        # An attempt is created at pre-exam onboarding, where no clock runs.
+        # Commencing it is the candidate entering the paper, which is what
+        # starts the timer these tests credit against.
+        attempt = attempt_service.get_attempt_or_404(self.db, self.s, out["id"])
+        attempt_service.commence_attempt(self.db, self.s, attempt)
         return attempt_service.get_attempt_or_404(self.db, self.s, out["id"])
 
     def test_examiner_speech_is_credited_back_once(self):

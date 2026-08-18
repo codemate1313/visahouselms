@@ -189,6 +189,29 @@ export function TestRunner() {
     setSecurityAuthorized(false);
   }, [id]);
 
+  /* An attempt is created waiting at onboarding, and commencing it is what
+     starts the clock. A module whose instructor turned the onboarding screen
+     off has no screen to press Start on, so entering the runner is that moment
+     and the attempt commences here instead - otherwise the paper would open
+     with a timer that never began. */
+  const autoCommencedRef = useRef(false);
+  useEffect(() => {
+    if (!attempt || attempt.status !== "ready" || attempt.security_required) return;
+    if (attempt.show_onboarding_instructions ?? true) return;
+    if (autoCommencedRef.current) return;
+    autoCommencedRef.current = true;
+    apiClient.post<Attempt>(`/student/attempts/${id}/commence`)
+      .then(({ data }) => {
+        setAttempt(data);
+        setSecurityAuthorized(true);
+      })
+      .catch((err: unknown) => {
+        autoCommencedRef.current = false;
+        showError(extractErrorMessage(err, "Failed to start assessment session"));
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt?.id, attempt?.status, id]);
+
   useEffect(() => {
     apiClient
       .get<Attempt>(`/student/attempts/${id}`, { headers: securityHeaders() })
