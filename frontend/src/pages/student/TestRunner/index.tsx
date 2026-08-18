@@ -1142,7 +1142,7 @@ export function TestRunner() {
                 // Ignore network errors on cancel
               }
             }
-            navigate("/student/courses");
+            navigate("/student/my-courses");
           }}
         />
         {violationModal}
