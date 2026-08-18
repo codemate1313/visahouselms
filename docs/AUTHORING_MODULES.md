@@ -177,20 +177,21 @@ The published format fixes **no number** of follow-ups for Parts 3 and 4 — the
 interlocutor asks "one or more as time allows" — so the module stores a bank the
 author sizes and the examiner draws from it.
 
-### The spoken heading (Speaking 2)
+### The spoken heading (all four parts)
 
-A role play is announced before it is asked — *"Situation 1. You are at a hotel
-reception and your room key does not work."* — and the examiner pauses after the
-announcement so the candidate can take the situation in before the question
-lands on top of it.
+A prompt is announced before it is asked — *"Situation 1. You are at a hotel
+reception and your room key does not work."*, *"Now I am going to ask you about
+your studies."* — and the examiner pauses after the announcement so the
+candidate can take it in before the question lands on top of it.
 
-Speaking 2 prompts therefore carry two extra fields, and only Speaking 2 does:
-`answer_constraints.spoken_heading` is true for that part alone, and authoring
-refuses a heading anywhere else rather than saving wording nothing would speak.
+Every speaking prompt therefore carries two extra fields:
+`answer_constraints.spoken_heading` is true on all four parts. Outside speaking
+it is false and authoring refuses a heading rather than saving wording nothing
+would speak.
 
 | Field | Where | What it does |
 |---|---|---|
-| `interaction.heading` | on the prompt | The line Instructor speaks **before** the question. Optional — leave it empty and the question is asked straight away. |
+| `interaction.heading` | on the prompt | The line Instructor speaks **before** the question. Optional on every part — leave it empty and the question is asked straight away. |
 | `interaction.heading_gap_seconds` | on the prompt | The pause between the two, 0–120s. Falls back to `answer_constraints.default_heading_gap_seconds` (3s). |
 
 The heading is a field of its own rather than the first sentence of the prompt
@@ -203,6 +204,23 @@ question's own preview.
 
 Headings reach a sitting through its frozen `content_snapshot`, so adding one
 changes sittings started afterwards, never one in flight.
+
+### How a speaking part is sat
+
+Authoring decides what the candidate meets; the interview stage decides how. It
+is worth knowing while authoring:
+
+- **The parts run 1 → 2 → 3 → 4, in order.** Entering the speaking section locks
+  every navigation control - the part tabs, Previous and Next - and the stage
+  hands over to the next part itself when the last prompt of one is recorded. A
+  candidate cannot skip a part, retake one, or return to an earlier section.
+- **Preparation runs its full length.** The candidate cannot cut it short;
+  recording begins on its own when the allowance reaches zero. So preparation
+  time authored on a prompt is time the sitting will actually spend.
+- **The last prompt of the last part submits the test.** Nothing is left to
+  review - every answer is a recording already uploaded - so no confirmation is
+  asked. In a Full Mock or Final Test speaking is the last section, so the same
+  applies there.
 
 ### Prep and response timing
 

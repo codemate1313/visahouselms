@@ -13,10 +13,12 @@ interface PartsNavProps {
   sectionGroups: SectionGroup[];
   partIndex: number;
   onSelectPart: (index: number) => void;
-  isListeningLocked?: boolean;
+  /** Set while the candidate must stay on the current part: listening audio is
+      playing, or the speaking interview is running. */
+  isNavigationLocked?: boolean;
 }
 
-export function PartsNav({ answeredCount, totalQuestions, sectionGroups, partIndex, onSelectPart, isListeningLocked = false }: PartsNavProps) {
+export function PartsNav({ answeredCount, totalQuestions, sectionGroups, partIndex, onSelectPart, isNavigationLocked = false }: PartsNavProps) {
   const t = strings.nav;
   return (
     <nav className="test-runner-parts" aria-label={t.testSectionsAriaLabel}>
@@ -35,11 +37,11 @@ export function PartsNav({ answeredCount, totalQuestions, sectionGroups, partInd
               <button
                 type="button"
                 key={part.id}
-                disabled={isListeningLocked && index !== partIndex}
-                className={`test-runner-part-tab${index === partIndex ? " is-active" : ""}${complete ? " is-complete" : ""}${isListeningLocked && index !== partIndex ? " is-disabled" : ""}`}
-                onClick={() => !isListeningLocked && onSelectPart(index)}
+                disabled={isNavigationLocked && index !== partIndex}
+                className={`test-runner-part-tab${index === partIndex ? " is-active" : ""}${complete ? " is-complete" : ""}${isNavigationLocked && index !== partIndex ? " is-disabled" : ""}`}
+                onClick={() => !isNavigationLocked && onSelectPart(index)}
                 aria-current={index === partIndex ? "step" : undefined}
-                title={isListeningLocked && index !== partIndex ? "Navigation locked during listening section audio" : undefined}
+                title={isNavigationLocked && index !== partIndex ? strings.nav.navigationLocked : undefined}
               >
                 <span>{part.title}</span>
                 <span className="test-runner-part-progress">

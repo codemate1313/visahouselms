@@ -14,7 +14,7 @@ interface TestRunnerHeaderProps {
   onSelectPart: (index: number) => void;
   /** Jumps to the next part even while audio holds the part locked. */
   onSkipPart?: () => void;
-  isListeningLocked?: boolean;
+  isNavigationLocked?: boolean;
   isImmersiveAttempt: boolean;
   fullscreenActive: boolean;
   onExitDeveloperFullscreen: () => void;
@@ -30,7 +30,7 @@ export function TestRunnerHeader({
   partIndex,
   onSelectPart,
   onSkipPart,
-  isListeningLocked = false,
+  isNavigationLocked = false,
   isImmersiveAttempt,
   fullscreenActive,
   onExitDeveloperFullscreen,
@@ -65,17 +65,17 @@ export function TestRunnerHeader({
           <button
             type="button"
             className="secondary-button"
-            disabled={partIndex === 0 || isListeningLocked}
+            disabled={partIndex === 0 || isNavigationLocked}
             onClick={() => onSelectPart(partIndex - 1)}
-            title={isListeningLocked ? t.navigationLocked : undefined}
+            title={isNavigationLocked ? t.navigationLocked : undefined}
           >
             {t.previous}
           </button>
           <button
             type="button"
-            disabled={partIndex === attempt.parts.length - 1 || isListeningLocked}
+            disabled={partIndex === attempt.parts.length - 1 || isNavigationLocked}
             onClick={() => onSelectPart(partIndex + 1)}
-            title={isListeningLocked ? t.navigationLocked : undefined}
+            title={isNavigationLocked ? t.navigationLocked : undefined}
           >
             {t.next}
           </button>

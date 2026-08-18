@@ -57,6 +57,21 @@ interface ViolationNotice {
   autoSubmitted: boolean;
 }
 
+/** Where a candidate resumes when the part they are pointed at is a speaking
+    part. Speaking is sat in order, so any speaking target - a saved index, a
+    hand-edited `?part=` - resolves to the first speaking part still owed a
+    recording rather than the one asked for. Parts outside speaking, and a
+    speaking section already finished, are left exactly as they were. */
+function speakingEntryIndex(parts: Attempt["parts"], candidateIndex: number): number {
+  if (parts[candidateIndex]?.section_type !== "speaking") return candidateIndex;
+  const firstUnfinished = parts.findIndex(
+    (part) => part.section_type === "speaking"
+      && part.question_count > 0
+      && part.answered_count < part.question_count,
+  );
+  return firstUnfinished >= 0 ? firstUnfinished : candidateIndex;
+}
+
 export function TestRunner() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -158,6 +173,13 @@ export function TestRunner() {
   const activeHeartbeatPartId = attempt?.parts[partIndex]?.id ?? null;
   const currentPart = attempt?.parts[partIndex];
   const isListeningPart = currentPart?.section_type === "listening";
+  /* Speaking runs as an interview: the parts are sat in order, one at a time,
+     and the stage itself hands over when a part is finished. Once it starts
+     there is nothing to navigate back to - a recording cannot be retaken, and
+     an earlier section reopened mid-interview would leave the examiner waiting
+     - so every navigation control is locked for its duration. */
+  const isSpeakingPart = currentPart?.section_type === "speaking";
+  const isNavigationLocked = isListeningLocked || isSpeakingPart;
   const currentPartRef = useRef(currentPart);
   useEffect(() => {
     currentPartRef.current = currentPart;
@@ -185,7 +207,8 @@ export function TestRunner() {
         const savedPartParam = searchParams.get("part");
         const savedPartStorage = sessionStorage.getItem(`test-runner-part:${id}`);
         const candidateIndex = savedPartParam !== null ? parseInt(savedPartParam, 10) : (savedPartStorage !== null ? parseInt(savedPartStorage, 10) : 0);
-        const resolvedPartIndex = (!Number.isNaN(candidateIndex) && candidateIndex >= 0 && candidateIndex < data.parts.length) ? candidateIndex : 0;
+        const restoredIndex = (!Number.isNaN(candidateIndex) && candidateIndex >= 0 && candidateIndex < data.parts.length) ? candidateIndex : 0;
+        const resolvedPartIndex = speakingEntryIndex(data.parts, restoredIndex);
         setPartIndex(resolvedPartIndex);
 
         const targetPart = data.parts[resolvedPartIndex];
@@ -1032,7 +1055,7 @@ export function TestRunner() {
   }, [partIndex, totalParts]);
 
   async function selectPart(index: number, force = false) {
-    if (isListeningLocked && !force && index !== partIndex) return;
+    if (isNavigationLocked && !force && index !== partIndex) return;
     const selectedPart = attempt?.parts[index];
     if (
       attempt?.is_final
@@ -1156,7 +1179,7 @@ export function TestRunner() {
         partIndex={partIndex}
         onSelectPart={selectPart}
         onSkipPart={() => void selectPart(partIndex + 1, true)}
-        isListeningLocked={isListeningLocked}
+        isNavigationLocked={isNavigationLocked}
         isImmersiveAttempt={isImmersiveAttempt}
         fullscreenActive={fullscreenActive}
         onExitDeveloperFullscreen={exitDeveloperFullscreen}
@@ -1180,7 +1203,7 @@ export function TestRunner() {
           sectionGroups={sectionGroups}
           partIndex={partIndex}
           onSelectPart={selectPart}
-          isListeningLocked={isListeningLocked}
+          isNavigationLocked={isNavigationLocked}
         />
 
         {/* Listening, Speaking, and standalone MCQ parts without separate source text span
@@ -1201,9 +1224,14 @@ export function TestRunner() {
               isLastTestPart={partIndex >= attempt.parts.length - 1}
               onContinuePart={() => {
                 if (partIndex < attempt.parts.length - 1) {
-                  void selectPart(partIndex + 1);
+                  // `force`: the stage is the one control allowed past the lock
+                  // that stops the candidate moving themselves.
+                  void selectPart(partIndex + 1, true);
                 } else {
-                  setConfirmSubmit(true);
+                  // The last speaking part is the end of the test. Nothing is
+                  // left to review - every answer is a recording already
+                  // uploaded - so it submits itself rather than asking.
+                  void submit();
                 }
               }}
               onRecord={recordSpeakingAnswer}

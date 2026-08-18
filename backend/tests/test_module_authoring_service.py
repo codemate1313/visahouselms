@@ -881,20 +881,46 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertEqual(saved["interaction"]["heading"], "Situation 1. You are at a hotel reception.")
         self.assertEqual(saved["interaction"]["heading_gap_seconds"], 5)
 
-    def test_only_speaking_two_takes_a_spoken_heading(self) -> None:
-        """Elsewhere a heading would be a second, invisible prompt that nothing
-        in the part's flow speaks, so it is refused rather than saved unheard."""
-        module, part = self._speaking_part("speaking_1")
-        self.assertFalse(part.answer_constraints["spoken_heading"])
+    def test_every_speaking_part_takes_a_spoken_heading(self) -> None:
+        """Part 1 opens a topic, Part 3 introduces the text, Part 4 sets up the
+        presentation - each is announced before it is asked, so the heading is
+        not Speaking 2's alone."""
+        for part_code, turn_type in (
+            ("speaking_1", "identity"),
+            ("speaking_3", "read_aloud"),
+            ("speaking_4", "presentation"),
+        ):
+            module, part = self._speaking_part(part_code)
+            self.assertTrue(part.answer_constraints["spoken_heading"], part_code)
+            saved = module_authoring_service.add_question(
+                self.db, self.instructor, module.id, part.id,
+                self._speaking_draft(
+                    "Tell me about that.",
+                    turn_type,
+                    passage="A text to read." if turn_type == "read_aloud" else None,
+                    heading=f"Now I am going to ask you about {part_code}.",
+                    heading_gap_seconds=4,
+                ),
+                None,
+            )
+            self.assertEqual(saved["interaction"]["heading"], f"Now I am going to ask you about {part_code}.")
+            self.assertEqual(saved["interaction"]["heading_gap_seconds"], 4)
+
+    def test_a_written_part_refuses_a_spoken_heading(self) -> None:
+        """Nothing speaks in a Writing part, so a heading there would be wording
+        no candidate ever hears - refused rather than saved unheard."""
+        created = self._create("writing")
+        part = created["parts"][0]
 
         with self.assertRaises(HTTPException) as ctx:
             module_authoring_service.add_question(
-                self.db, self.instructor, module.id, part.id,
-                self._speaking_draft(
-                    "What is your name?",
-                    "identity",
-                    heading="Situation 1. You are at a hotel reception.",
-                ),
+                self.db, self.instructor, created["id"], part["id"],
+                QuestionCreate(
+                    question_type="essay",
+                    prompt="Write about a place you know well.",
+                    points=Decimal(part["max_marks"]),
+                    interaction={"heading": "Situation 1. You are at a hotel reception."},
+                ).model_dump(),
                 None,
             )
         self.assertEqual(ctx.exception.status_code, 400)

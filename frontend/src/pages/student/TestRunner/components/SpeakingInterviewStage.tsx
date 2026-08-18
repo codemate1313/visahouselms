@@ -9,7 +9,16 @@ import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { formatTime } from "../helpers";
 import "./SpeakingInterviewStage.css";
 
-type InterviewMode = "ready" | "preparing" | "recording" | "uploading" | "complete";
+/* `starting` is the microphone spinning up between preparation and recording.
+   It used to be spent in `preparing`, which left the panel reading
+   "Preparation time 0:00" while the candidate waited - preparation shown at a
+   moment when preparation was already over. */
+type InterviewMode = "ready" | "preparing" | "starting" | "recording" | "uploading" | "complete";
+
+/** Whole seconds left until a deadline, floored at zero. */
+function secondsUntil(deadline: number): number {
+  return Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+}
 
 interface SpeakingInterviewStageProps {
   attemptId: number;
@@ -65,6 +74,12 @@ export function SpeakingInterviewStage({
     }
   }, [notesStorageKey]);
   const startingRef = useRef(false);
+  /* Both countdowns run off a deadline rather than by subtracting one from the
+     display every second. A chain of timeouts drifts - and stalls outright
+     while the tab is backgrounded - so preparation would quietly run longer
+     than the allowance it is showing, and the response clock longer still. */
+  const preparationDeadlineRef = useRef<number>(0);
+  const responseDeadlineRef = useRef<number>(0);
   const onContinuePartRef = useRef(onContinuePart);
   const previousQuestionIdRef = useRef<number | null>(question?.id ?? null);
   const t = strings.speakingInterview;
@@ -131,18 +146,23 @@ export function SpeakingInterviewStage({
   }, [hasPreparation, mode, question?.id, examinerBusy]);
 
   useEffect(() => {
-    if (mode !== "preparing" || preparationLeft <= 0) return undefined;
-    const timer = window.setTimeout(() => setPreparationLeft((value) => value - 1), 1000);
-    return () => window.clearTimeout(timer);
-  }, [mode, preparationLeft]);
+    if (mode !== "preparing") return undefined;
+    const tick = () => setPreparationLeft(secondsUntil(preparationDeadlineRef.current));
+    tick();
+    const timer = window.setInterval(tick, 200);
+    return () => window.clearInterval(timer);
+  }, [mode]);
 
   const startRecording = useCallback(() => {
     if (!question || startingRef.current) return;
     startingRef.current = true;
-    setMode("preparing");
+    setMode("starting");
     void onRecord(question.id).then((started) => {
       startingRef.current = false;
       if (started) {
+        // The response allowance starts when the recorder does, never when the
+        // prompt was drawn: the microphone can take a moment to open.
+        responseDeadlineRef.current = Date.now() + responseSeconds * 1000;
         setResponseLeft(responseSeconds);
         setMode("recording");
       } else {
@@ -157,10 +177,12 @@ export function SpeakingInterviewStage({
   }, [mode, preparationLeft, startRecording]);
 
   useEffect(() => {
-    if (mode !== "recording" || responseLeft <= 0) return undefined;
-    const timer = window.setTimeout(() => setResponseLeft((value) => value - 1), 1000);
-    return () => window.clearTimeout(timer);
-  }, [mode, responseLeft]);
+    if (mode !== "recording") return undefined;
+    const tick = () => setResponseLeft(secondsUntil(responseDeadlineRef.current));
+    tick();
+    const timer = window.setInterval(tick, 200);
+    return () => window.clearInterval(timer);
+  }, [mode]);
 
   useEffect(() => {
     if (mode !== "recording" || responseLeft !== 0 || !question) return;
@@ -210,14 +232,9 @@ export function SpeakingInterviewStage({
       startRecording();
       return;
     }
+    preparationDeadlineRef.current = Date.now() + preparationSeconds * 1000;
     setPreparationLeft(preparationSeconds);
     setMode("preparing");
-  };
-
-  const beginRecordingFromPreparation = () => {
-    if (mode !== "preparing") return;
-    setPreparationLeft(0);
-    startRecording();
   };
 
   const submitResponse = () => {
@@ -234,8 +251,26 @@ export function SpeakingInterviewStage({
     onContinuePart();
   };
 
-  const timerValue = mode === "preparing" ? preparationLeft : mode === "recording" ? responseLeft : responseSeconds;
-  const timerLabel = mode === "preparing" ? t.preparation : mode === "recording" ? t.recording : t.responseLimit;
+  /* One clock per mode, chosen explicitly. Preparation counts the preparation
+     allowance and nothing else; recording counts the response allowance and
+     nothing else; before either starts the panel shows whichever of the two
+     comes next for this prompt. */
+  const timer = (() => {
+    switch (mode) {
+      case "preparing":
+        return { label: t.preparation, value: preparationLeft };
+      case "recording":
+        return { label: t.recording, value: responseLeft };
+      case "starting":
+        return { label: t.responseLimit, value: responseSeconds };
+      case "ready":
+        return hasPreparation
+          ? { label: t.preparation, value: preparationSeconds }
+          : { label: t.responseLimit, value: responseSeconds };
+      default:
+        return { label: t.responseLimit, value: responseSeconds };
+    }
+  })();
   const hasCandidateText = Boolean(question.passage?.trim());
   const candidatePdfUrl = question.interaction?.candidate_material_url
     ? `${API_BASE_URL}${question.interaction.candidate_material_url}`
@@ -314,20 +349,22 @@ export function SpeakingInterviewStage({
           {introComplete && (
           <div className="speaking-interview-control-dock">
             <div className={`speaking-interview-timer is-${mode}`}>
-              <span>{timerLabel}</span>
-              <strong>{formatTime(timerValue)}</strong>
+              <span>{timer.label}</span>
+              <strong>{formatTime(timer.value)}</strong>
               <small>
                 {mode === "preparing"
                   ? t.recordingStartsAutomatically
-                  : mode === "recording"
-                    ? t.recordingNow
-                    : mode === "uploading"
-                      ? t.saving
-                      : mode === "complete"
-                        ? t.saved
-                        : hasPreparation
-                          ? t.ready(preparationSeconds)
-                          : "Recording starts when the examiner finishes"}
+                  : mode === "starting"
+                    ? t.startingRecording
+                    : mode === "recording"
+                      ? t.recordingNow
+                      : mode === "uploading"
+                        ? t.saving
+                        : mode === "complete"
+                          ? t.saved
+                          : hasPreparation
+                            ? t.ready(preparationSeconds)
+                            : "Recording starts when the examiner finishes"}
               </small>
             </div>
 
@@ -335,18 +372,27 @@ export function SpeakingInterviewStage({
               {mode === "ready" && (hasPreparation || manualStartOffered) && (
                 <Button leftIcon={<Icon name="play" />} onClick={beginPreparation} size="lg">{t.startResponse}</Button>
               )}
-              {mode === "preparing" && (
-                <Button leftIcon={<Icon name="microphone" />} onClick={beginRecordingFromPreparation} size="lg">
-                  {t.startAnsweringNow}
+              {/* Preparation is an allowance, not an offer: the candidate gets
+                  all of it and recording begins on its own when it runs out.
+                  The button stays on screen, disabled, so the wait reads as
+                  part of the exam rather than a page that stopped responding. */}
+              {(mode === "preparing" || mode === "starting") && (
+                <Button leftIcon={<Icon name="microphone" />} size="lg" disabled>
+                  {mode === "starting" ? t.startingRecording : t.preparingNow(preparationLeft)}
                 </Button>
               )}
               {mode === "recording" && recordingQuestionId === question.id && <Button leftIcon={<Icon name="check" />} onClick={submitResponse} size="lg">{t.submitResponse}</Button>}
               {mode === "uploading" && <Button disabled loading size="lg">{t.savingResponse}</Button>}
-              {mode === "complete" && (
+              {/* The last prompt of the last part ends the test: the stage
+                  submits it a moment later on its own, so this reports what is
+                  happening instead of offering a button that would race it. */}
+              {mode === "complete" && (isLastQuestion && isLastTestPart ? (
+                <Button disabled loading size="lg">{t.submittingTest}</Button>
+              ) : (
                 <Button rightIcon={<Icon name="arrowRight" />} onClick={continueInterview} size="lg">
-                  {isLastQuestion ? isLastTestPart ? t.reviewAndSubmit : t.continueToNextPart : t.continueToNextQuestion}
+                  {isLastQuestion ? t.continueToNextPart : t.continueToNextQuestion}
                 </Button>
-              )}
+              ))}
             </div>
           </div>
           )}
