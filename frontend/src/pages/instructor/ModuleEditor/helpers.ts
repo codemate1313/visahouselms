@@ -46,8 +46,37 @@ export function defaultSpeakingTurn(part: ExamModulePart, pendingOffset = 0): Sp
 
   const missingRequired = requiredTurns.find((turn) => !usedTurns.has(turn));
   if (missingRequired) return missingRequired as SpeakingTurnType;
-  if (allowedTurns.includes("follow_up")) return "follow_up";
-  return (allowedTurns[0] ?? null) as SpeakingTurnType | null;
+  /* Once every required turn is present, further prompts repeat the part's bank
+     turn: the first allowed turn that is not capped at one. Speaking 1 banks
+     topic questions, Speaking 3 and 4 bank follow-ups. This used to return
+     "follow_up" for any part that allowed it, which made Part 1 prompts 3-6
+     follow-ups rather than the five topic questions the format asks for - and,
+     because follow-ups carry `adaptive_follow_up`, quietly handed them to the
+     AI interlocutor to rewrite at runtime. */
+  const singletonTurns = part.answer_constraints.singleton_turn_types ?? [];
+  const bankTurn = allowedTurns.find((turn) => !singletonTurns.includes(turn));
+  return (bankTurn ?? allowedTurns[0] ?? null) as SpeakingTurnType | null;
+}
+
+/**
+ * The preparation/response seconds a new prompt of this turn type starts from.
+ *
+ * Speaking 3 holds a read-aloud with 20 seconds of preparation next to
+ * follow-up questions with none, and Speaking 4 a two-minute presentation next
+ * to those same short follow-ups, so the default has to be chosen per turn
+ * rather than per part. `suggested_*` is the fallback for a part whose
+ * constraints predate per-turn timings; null means the author sets it, which
+ * the form requires before the prompt can be saved.
+ */
+export function speakingTurnTiming(
+  part: ExamModulePart,
+  turnType: SpeakingTurnType | null,
+): { preparation_seconds: number | null; response_seconds: number | null } {
+  const perTurn = turnType ? part.answer_constraints.turn_timings?.[turnType] : undefined;
+  return {
+    preparation_seconds: perTurn?.preparation_seconds ?? part.answer_constraints.suggested_preparation_seconds ?? null,
+    response_seconds: perTurn?.response_seconds ?? part.answer_constraints.suggested_response_seconds ?? null,
+  };
 }
 
 export function emptyQuestion(part: ExamModulePart): QuestionDraft {
@@ -73,6 +102,7 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
     ? `Conversation ${Math.floor(part.questions.length / groupSize) + 1}`
     : null;
   const turnType = defaultSpeakingTurn(part);
+  const turnTiming = speakingTurnTiming(part, turnType);
   const defaultPrompt = "";
   return {
     question_type: type,
@@ -88,8 +118,8 @@ export function emptyQuestion(part: ExamModulePart): QuestionDraft {
     interaction: {
       group_label: groupLabel,
       turn_type: turnType,
-      preparation_seconds: part.answer_constraints.preparation_seconds ?? null,
-      response_seconds: part.answer_constraints.response_seconds ?? null,
+      preparation_seconds: turnTiming.preparation_seconds,
+      response_seconds: turnTiming.response_seconds,
       adaptive_follow_up: part.answer_constraints.interaction_mode === "ai_interlocutor" && turnType === "follow_up",
       candidate_material_type: "none",
       candidate_material_path: null,

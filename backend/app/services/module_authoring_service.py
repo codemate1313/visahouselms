@@ -158,6 +158,47 @@ def _questions_used_for_duration(
     )[:limit]
 
 
+def _resequence_questions(part: ExamModulePart) -> None:
+    """Renumber a part's questions 0..n-1, keeping any headline speaking turn first.
+
+    Two problems meet here. `add_question` numbered a new question
+    `len(part.questions)`, which collides with an existing row as soon as an
+    earlier question has been deleted - deleting never renumbered, so the gap
+    persisted and two prompts ended up sharing a `sort_order`. Every part sets
+    `preserve_question_order`, so the candidate's order then became whatever the
+    database happened to return.
+
+    On top of that, Speaking 3 and 4 open with a single read-aloud or
+    presentation and follow it with questions about it. The editor has no
+    reorder control, so a read-aloud deleted and written again would be appended
+    after its own follow-ups and the candidate would be asked about a text they
+    had not been given. The part's leading required turn is pulled back to the
+    front when it is one the part may only hold once and the part also holds a
+    bank of repeatable turns; everything else keeps its relative order.
+
+    Only draft modules can be edited, and a sitting reads its frozen
+    `content_snapshot`, so renumbering here cannot disturb an attempt in flight.
+    """
+    constraints = part.answer_constraints or {}
+    required = constraints.get("required_turn_types") or []
+    allowed = constraints.get("allowed_turn_types") or []
+    singletons = set(constraints.get("singleton_turn_types") or [])
+    # Only a part that pairs one headline turn with a bank has an order worth
+    # enforcing - the text has to come before the questions about it. Speaking 2
+    # is two role plays and nothing else, and the format does not say which
+    # comes first, so its order stays the author's to choose.
+    has_bank = any(turn not in singletons for turn in allowed)
+    leading = required[0] if has_bank and required and required[0] in singletons else None
+
+    def key(question: ExamModuleQuestion) -> tuple:
+        is_leading = leading is not None and (question.interaction or {}).get("turn_type") == leading
+        return (0 if is_leading else 1, question.sort_order, question.id or 0)
+
+    for index, question in enumerate(sorted(part.questions, key=key)):
+        if question.sort_order != index:
+            question.sort_order = index
+
+
 def _refresh_speaking_duration(db: Session, module: ExamModule) -> None:
     """Persist the maximum candidate time represented by speaking prompts."""
     total_seconds = 0
@@ -208,7 +249,8 @@ def validation_errors(module: ExamModule) -> list[str]:
     for part in module.parts:
         count = len(part.questions)
         # A part with a fixed limit must hold exactly that many questions; only
-        # the open-ended parts (Speaking 1 and 4) fall back to a lower bound.
+        # the open-ended parts (Speaking 1, 3 and 4) fall back to a lower bound
+        # plus the `maximum_questions` ceiling checked below.
         if part.question_limit is not None:
             if count != part.question_limit:
                 errors.append(
@@ -291,6 +333,20 @@ def validation_errors(module: ExamModule) -> list[str]:
             missing_turn_types = sorted(required_turn_types - authored_turn_types)
             if missing_turn_types:
                 errors.append(f"{part.title} is missing required speaking turns: {', '.join(missing_turn_types)}.")
+        singleton_turn_types = constraints.get("singleton_turn_types", [])
+        if singleton_turn_types:
+            # Mirrors the authoring-time rule so a part that predates it, or was
+            # filled by an import, cannot reach publish with two read-alouds.
+            for singleton in singleton_turn_types:
+                authored = sum(
+                    1
+                    for question in part.questions
+                    if (question.interaction or {}).get("turn_type") == singleton
+                )
+                if authored > 1:
+                    errors.append(
+                        f"{part.title} takes one {singleton.replace('_', ' ')} turn; it currently has {authored}."
+                    )
         minimum_inference = constraints.get("minimum_inference_questions", 0)
         if minimum_inference:
             inference_terms = (
@@ -749,11 +805,17 @@ def update_part_instructions(
     return serialize_module(get_module_or_404(db, module.id), detailed=True)
 
 
-def _validate_question_for_part(part: ExamModulePart, data: dict, current_count: int) -> None:
-    # Parts with no fixed question_limit (Speaking 1 and 4) are open-ended, but
-    # not unbounded: every extra prompt adds its own preparation and response
-    # time to the module's derived duration, so an unchecked part can silently
-    # turn a 12-minute test into a 40-minute one.
+def _validate_question_for_part(
+    part: ExamModulePart,
+    data: dict,
+    current_count: int,
+    editing_question_id: Optional[int] = None,
+    pending_turn_types: tuple[str, ...] = (),
+) -> None:
+    # Parts with no fixed question_limit (Speaking 1, 3 and 4) are open-ended,
+    # but not unbounded: every extra prompt adds its own preparation and
+    # response time to the module's derived duration, so an unchecked part can
+    # silently turn a 14-minute test into a 40-minute one.
     if part.section_type == "speaking":
         interaction_data = data.get("interaction") or {}
         response_seconds = interaction_data.get("response_seconds")
@@ -823,6 +885,31 @@ def _validate_question_for_part(part: ExamModulePart, data: dict, current_count:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"{part.title} requires one of these speaking turns: {', '.join(sorted(allowed_turn_types))}",
         )
+    # Some turns are the part's single headline task - one read-aloud text, one
+    # presentation stimulus, one identity exchange - while the rest are banks
+    # the examiner draws from. A ceiling alone cannot tell them apart: it would
+    # happily accept four read-alouds in Speaking 3. Editing the existing turn
+    # is not a duplicate, so the question under edit is excluded from the count.
+    singleton_turn_types = set(constraints.get("singleton_turn_types", []))
+    turn_type = interaction.get("turn_type")
+    if turn_type in singleton_turn_types:
+        already = sum(
+            1
+            for existing in part.questions
+            if existing.id != editing_question_id
+            and (existing.interaction or {}).get("turn_type") == turn_type
+        ) + sum(1 for pending in pending_turn_types if pending == turn_type)
+        if already:
+            label = turn_type.replace("_", " ")
+            detail = f"{part.title} takes one {label} turn and already has one."
+            bank_turns = [
+                candidate
+                for candidate in constraints.get("allowed_turn_types", [])
+                if candidate not in singleton_turn_types
+            ]
+            if bank_turns:
+                detail += f" Add further prompts as {bank_turns[0].replace('_', ' ')} turns."
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
     if part.part_code == "speaking_3" and interaction.get("turn_type") == "read_aloud" and not (data.get("passage") or "").strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -882,6 +969,9 @@ def add_question(
     question = _new_question(part, actor, data, "manual", None, len(part.questions))
     db.add(question)
     db.flush()
+    db.refresh(part)
+    _resequence_questions(part)
+    db.flush()
     _refresh_speaking_duration(db, module)
     _audit(db, actor, "exam_module.question.create", module.id, ip, {"part_id": part.id, "question_id": question.id})
     db.commit()
@@ -917,12 +1007,23 @@ def import_questions(
             ),
         )
     for offset, question in enumerate(questions):
-        _validate_question_for_part(part, question, len(part.questions) + offset)
+        _validate_question_for_part(
+            part,
+            question,
+            len(part.questions) + offset,
+            pending_turn_types=tuple(
+                str((earlier.get('interaction') or {}).get('turn_type') or '')
+                for earlier in questions[:offset]
+            ),
+        )
     records = [
         _new_question(part, actor, question, source_type, source_filename, len(part.questions) + index)
         for index, question in enumerate(questions)
     ]
     db.add_all(records)
+    db.flush()
+    db.refresh(part)
+    _resequence_questions(part)
     db.flush()
     _refresh_speaking_duration(db, module)
     _audit(db, actor, "exam_module.question.import", module.id, ip, {"part_id": part.id, "count": len(records), "source_type": source_type, "source_filename": source_filename})
@@ -953,7 +1054,7 @@ def update_question(
     _require_draft(module)
     part = _part_or_404(module, part_id)
     question = _question_or_404(part, question_id)
-    _validate_question_for_part(part, data, max(0, len(part.questions) - 1))
+    _validate_question_for_part(part, data, max(0, len(part.questions) - 1), editing_question_id=question_id)
     previous_image_path = question.image_path
     previous_material_path = (question.interaction or {}).get("candidate_material_path")
     for field in ("question_type", "prompt", "instructions", "passage", "image_path", "correct_answers", "interaction", "explanation", "points", "difficulty"):
@@ -985,6 +1086,9 @@ def delete_question(
     _audit(db, actor, "exam_module.question.delete", module.id, ip, {"part_id": part.id, "question_id": question.id})
     db.query(AttemptAnswer).filter(AttemptAnswer.question_id == question.id).delete(synchronize_session=False)
     db.delete(question)
+    db.flush()
+    db.refresh(part)
+    _resequence_questions(part)
     db.flush()
     _refresh_speaking_duration(db, module)
     db.commit()

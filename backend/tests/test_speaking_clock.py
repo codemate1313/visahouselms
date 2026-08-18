@@ -40,7 +40,7 @@ class ClockCreditTest(unittest.TestCase):
         created = mas.create_module(self.db, self.i, {"module_type": "speaking", "title": "S", "description": None, "instructions": None}, "127.0.0.1")
         m = mas.get_module_or_404(self.db, created["id"])
         plan = {"speaking_1": ["identity", "topic_question"], "speaking_2": ["roleplay_response", "roleplay_initiate"],
-                "speaking_3": ["read_aloud"], "speaking_4": ["presentation", "follow_up"]}
+                "speaking_3": ["read_aloud", "follow_up"], "speaking_4": ["presentation", "follow_up"]}
         for p in m.parts:
             for n, turn in enumerate(plan[p.part_code]):
                 self.db.add(ExamModuleQuestion(

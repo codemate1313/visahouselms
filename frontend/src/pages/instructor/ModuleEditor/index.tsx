@@ -19,7 +19,7 @@ import type {
   QuestionImportPreview,
 } from "@/api/types";
 import { moduleEditorStrings as strings } from "./ModuleEditor.strings";
-import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSED_TASK_LAYOUTS, COMPOSITE_TYPES, DERIVED_DURATION_MODULE_TYPES, MODULE_TYPES, MODULE_TYPE_META, SOURCE_SECTIONS, defaultSpeakingTurn, detectConversationSpeakers, emptyQuestion, notepadPromptForBlank, questionPayload } from "./helpers";
+import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSED_TASK_LAYOUTS, COMPOSITE_TYPES, DERIVED_DURATION_MODULE_TYPES, MODULE_TYPES, MODULE_TYPE_META, SOURCE_SECTIONS, defaultSpeakingTurn, detectConversationSpeakers, emptyQuestion, notepadPromptForBlank, questionPayload, speakingTurnTiming } from "./helpers";
 import { NewModuleForm } from "./components/NewModuleForm";
 import { ModulePartNav } from "./components/ModulePartNav";
 import { ModuleReadinessPanel } from "./components/ModuleReadinessPanel";
@@ -601,11 +601,13 @@ export function ModuleEditor() {
             group_label: question.interaction?.group_label
               ?? (selectedPart.answer_constraints.group_label_required ? `Conversation ${Math.floor(index / groupSize) + 1}` : null),
             turn_type: turnType,
-            // Timing is per prompt and has no part-level default to inherit.
-            // An import that carries none leaves these null, and the prompt
-            // cannot be saved until the author sets them.
-            preparation_seconds: question.interaction?.preparation_seconds ?? null,
-            response_seconds: question.interaction?.response_seconds ?? null,
+            // Timing is per prompt. An import carrying its own times keeps them;
+            // otherwise the prompt starts from the default for its turn type,
+            // the same one the manual form pre-fills.
+            preparation_seconds: question.interaction?.preparation_seconds
+              ?? speakingTurnTiming(selectedPart, turnType).preparation_seconds,
+            response_seconds: question.interaction?.response_seconds
+              ?? speakingTurnTiming(selectedPart, turnType).response_seconds,
             adaptive_follow_up: question.interaction?.adaptive_follow_up ?? turnType === "follow_up",
           },
         };

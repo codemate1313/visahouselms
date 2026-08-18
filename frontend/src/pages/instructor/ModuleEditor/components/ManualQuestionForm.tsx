@@ -68,9 +68,15 @@ export function ManualQuestionForm({
   const isListening1 = part.part_code === "listening_1";
   const showQuestionAudio = isListeningPerQuestion || (isListening && Boolean(manual.interaction?.audio_path || manual.interaction?.audio_url));
   const isSpeaking = part.section_type === "speaking";
-  const isSpeakingQuestionOnly = part.part_code === "speaking_1" || part.part_code === "speaking_2";
-  const isSpeakingReadAloud = part.part_code === "speaking_3";
-  const isSpeakingPresentation = part.part_code === "speaking_4";
+  /* Speaking 3 and 4 each pair a headline task with a bank of follow-up
+     questions, so this form follows the turn being authored rather than the
+     part it sits in. A Part 3 follow-up is a spoken question like Part 1's -
+     it needs no read-aloud text - and keying off `part_code` would demand one
+     and label the whole screen "read aloud". */
+  const speakingTurn = manual.interaction?.turn_type ?? null;
+  const isSpeakingReadAloud = speakingTurn === "read_aloud";
+  const isSpeakingPresentation = speakingTurn === "presentation";
+  const isSpeakingQuestionOnly = isSpeaking && !isSpeakingReadAloud && !isSpeakingPresentation;
   const isReading1a = part.part_code === "reading_1a";
   const isReading1b = part.part_code === "reading_1b";
   const promptRef = useRef<HTMLTextAreaElement>(null);
@@ -147,7 +153,7 @@ export function ManualQuestionForm({
     ? "Add the exact text the student reads aloud. Instructor's instruction stays separate."
     : isSpeakingPresentation
       ? "Add the image/demographic material and optional text the student presents from. Instructor gives the custom instructions first."
-      : "For Parts 1 and 2, Instructor normally asks the question and the student answers. Add visible text only if this turn needs a card.";
+      : "Instructor asks the question and the student answers. Add visible text only if this turn needs a card.";
   const speakingFlowTitle = isSpeakingReadAloud
     ? "Read-aloud setup"
     : isSpeakingPresentation
@@ -378,7 +384,7 @@ export function ManualQuestionForm({
               <div>
                 <span className="vh-speaking-material-kicker">Optional card</span>
                 <h3 id="candidate-material-heading">Student-visible support</h3>
-                <p>Leave empty for the normal Part 1/2 flow where Instructor asks and the student answers.</p>
+                <p>Leave empty for the normal flow where Instructor asks and the student answers.</p>
               </div>
               <span className="vh-speaking-material-optional">Optional</span>
             </div>

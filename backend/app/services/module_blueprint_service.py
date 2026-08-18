@@ -275,23 +275,51 @@ SPEAKING_PARTS = [
         "part_code": "speaking_3",
         "section_type": "speaking",
         "title": "Speaking 3",
-        "skill_focus": "Read a text aloud.",
-        "instructions": "Allow 20 seconds of preparation, then ask the candidate to read the text aloud.",
+        "skill_focus": "Read a text aloud, then discuss it.",
+        "instructions": (
+            "Allow 20 seconds of preparation and ask the candidate to read the text aloud, "
+            "then ask one or more of the follow-up questions as time allows."
+        ),
     },
     {
         "part_code": "speaking_4",
         "section_type": "speaking",
         "title": "Speaking 4",
         "skill_focus": "Plan and deliver an extended presentation and answer follow-up questions.",
-        "instructions": "Allow one minute to prepare and up to two minutes to present.",
+        "instructions": (
+            "Allow one minute to prepare and up to two minutes to present, "
+            "then ask one or more of the follow-up questions as time allows."
+        ),
     },
 ]
-_SPEAKING_TIMINGS = {
-    "speaking_1": (0, 45),
-    "speaking_2": (0, 60),
-    "speaking_3": (20, 90),
-    "speaking_4": (60, 120),
+
+# LanguageCert Academic Speaking runs to approximately 14 minutes across four
+# parts. Timing is a property of the *turn*, not of the part: Speaking 3 sets a
+# 20-second-preparation read-aloud beside short follow-up questions, and
+# Speaking 4 a two-minute presentation beside the same short follow-ups. One
+# per-part default would hand every follow-up the headline task's clock - three
+# follow-ups in Speaking 4 would cost nine minutes on their own - so each turn
+# type carries its own (preparation, response) pair instead.
+#
+# Authored to the ceiling the structures below allow, the parts total:
+#     Part 1   identity + 5 topic questions   =  180s  (~3 min)
+#     Part 2   2 role plays                   =  120s  (~2 min)
+#     Part 3   read aloud + 3 follow-ups      =  230s  (~4 min)
+#     Part 4   presentation + 3 follow-ups    =  300s  (~5 min)
+#                                       total =  830s  (13.8 min)
+#
+# These are the defaults an author starts from, not a cap: a part's real
+# duration is always the sum of the times actually authored on its prompts.
+SPEAKING_TURN_TIMINGS: dict[str, tuple[int, int]] = {
+    "identity": (0, 30),
+    "topic_question": (0, 30),
+    "roleplay_response": (0, 60),
+    "roleplay_initiate": (0, 60),
+    "read_aloud": (20, 90),
+    "presentation": (60, 120),
+    "follow_up": (0, 40),
 }
+
 _SPEAKING_STRUCTURES = {
     "speaking_1": {
         # Identity turn plus "up to five questions" (see the part instructions),
@@ -301,36 +329,47 @@ _SPEAKING_STRUCTURES = {
         "minimum_questions": 2,
         "required_turn_types": ["identity", "topic_question"],
         "allowed_turn_types": ["identity", "topic_question", "follow_up"],
+        # The candidate is identified once. Everything after it is a topic
+        # question, so only the identity turn is capped at one.
+        "singleton_turn_types": ["identity"],
     },
     "speaking_2": {
         "question_limit": 2,
         "minimum_questions": 2,
         "required_turn_types": ["roleplay_response", "roleplay_initiate"],
         "allowed_turn_types": ["roleplay_response", "roleplay_initiate"],
+        # Exactly two situations, one of each direction - the examiner opens
+        # one and the candidate opens the other.
+        "singleton_turn_types": ["roleplay_response", "roleplay_initiate"],
     },
-    # Speaking 3 is a single read-aloud turn: the candidate gets one text and
-    # reads it, with no follow-up questions after it. The part holds exactly one
-    # text - authoring refuses a second, and publishing refuses a part that has
-    # more or fewer than `question_limit`.
+    # One read-aloud text plus the follow-up questions the examiner asks about
+    # it. The published format states that follow-up questions are asked but
+    # fixes no number - the interlocutor asks "one or more as time allows" - so
+    # the module stores a bank of up to three and at least one. The read-aloud
+    # itself is capped at one: a second text would be a second task.
     "speaking_3": {
-        "question_limit": 1,
-        "minimum_questions": 1,
-        "required_turn_types": ["read_aloud"],
-        "allowed_turn_types": ["read_aloud"],
+        "maximum_questions": 4,
+        "minimum_questions": 2,
+        "required_turn_types": ["read_aloud", "follow_up"],
+        "allowed_turn_types": ["read_aloud", "follow_up"],
+        "singleton_turn_types": ["read_aloud"],
     },
+    # One presentation stimulus and its follow-up bank, on the same
+    # "one or more as time allows" rule as Speaking 3.
     "speaking_4": {
-        # One presentation plus follow-up questions. Each prompt here costs
-        # three minutes of derived duration (60s preparation + 120s response),
-        # so the ceiling matters more than anywhere else.
-        "maximum_questions": 3,
+        "maximum_questions": 4,
         "minimum_questions": 2,
         "required_turn_types": ["presentation", "follow_up"],
         "allowed_turn_types": ["presentation", "follow_up"],
+        "singleton_turn_types": ["presentation"],
     },
 }
 for _part in SPEAKING_PARTS:
-    _preparation_seconds, _response_seconds = _SPEAKING_TIMINGS[_part["part_code"]]
     _structure = _SPEAKING_STRUCTURES[_part["part_code"]]
+    # The part's headline turn - the read-aloud, the presentation, the first
+    # role play - is the one a legacy client's single timing pair described.
+    _primary_turn = _structure["required_turn_types"][0]
+    _preparation_seconds, _response_seconds = SPEAKING_TURN_TIMINGS[_primary_turn]
     _part.update(
         {
             "question_limit": _structure.get("question_limit"),
@@ -343,13 +382,26 @@ for _part in SPEAKING_PARTS:
                 # Timing belongs to the prompt, not the part: a two-minute
                 # presentation and a short follow-up sit in the same part. The
                 # part's duration is the sum of its prompts, never a figure of
-                # its own, so there is nothing to default here.
+                # its own. These are the per-turn defaults the authoring form
+                # pre-fills; the author can change any of them.
+                "turn_timings": {
+                    _turn: {
+                        "preparation_seconds": SPEAKING_TURN_TIMINGS[_turn][0],
+                        "response_seconds": SPEAKING_TURN_TIMINGS[_turn][1],
+                    }
+                    for _turn in _structure["allowed_turn_types"]
+                },
+                # Retained for clients written before per-turn timings existed:
+                # the headline turn's pair, which is what they already received.
                 "suggested_preparation_seconds": _preparation_seconds,
                 "suggested_response_seconds": _response_seconds,
                 "notes_allowed": _part["part_code"] == "speaking_4",
                 "interaction_mode": "ai_interlocutor",
                 "required_turn_types": _structure["required_turn_types"],
                 "allowed_turn_types": _structure["allowed_turn_types"],
+                # Turns that may appear at most once in the part. The rest of
+                # the allowed turns are banks and may repeat up to the ceiling.
+                "singleton_turn_types": _structure["singleton_turn_types"],
                 "preserve_question_order": True,
             },
             "rubric": SPEAKING_RUBRIC,

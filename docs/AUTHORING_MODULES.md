@@ -19,7 +19,7 @@ total.
 | Reading | 50 min | 5 | 30 | 30 | auto |
 | Listening | 40 min | 4 | 30 | 30 | auto |
 | Writing | 50 min | 2 | 2 tasks | 32 + 32 | examiner |
-| Speaking | 14 min | 4 | ≥2 prompts each | 5 × 8 | examiner |
+| Speaking | ~14 min | 4 | 2–6 prompts per part | 5 × 8 | examiner |
 | Full Mock | 154 min | 15 | all four sections | per section | mixed |
 | Final Test | 154 min | 15 | all four sections | per section | mixed |
 
@@ -119,12 +119,17 @@ Unlike every other section, Speaking parts have **no `max_marks`** — marks com
 from the rubric applied across the section, and all four parts carry
 **equal weight** (`parts_equal_weight: true`).
 
-| Part | Min prompts | Limit | Prep | Response | Required turn types |
-|---|---|---|---|---|---|
-| Speaking 1 | 2 | — | 0s | 45s | `identity`, `topic_question` |
-| Speaking 2 | 2 | **2** | 0s | 60s | `roleplay_response`, `roleplay_initiate` |
-| Speaking 3 | 2 | — | **20s** | 90s | `read_aloud`, `follow_up` |
-| Speaking 4 | 2 | — | **60s** | 120s | `presentation`, `follow_up` |
+| Part | Min prompts | Max prompts | Required turn types | At the ceiling |
+|---|---|---|---|---|
+| Speaking 1 | 2 | 6 | `identity`, `topic_question` | 180s (~3 min) |
+| Speaking 2 | 2 | **exactly 2** | `roleplay_response`, `roleplay_initiate` | 120s (~2 min) |
+| Speaking 3 | 2 | 4 | `read_aloud`, `follow_up` | 230s (~4 min) |
+| Speaking 4 | 2 | 4 | `presentation`, `follow_up` | 300s (~5 min) |
+
+Authored to those ceilings the paper runs 830s — 13.8 minutes, against the
+approximately 14 the published format specifies. A part's real duration is
+always the sum of the times actually authored on its prompts, never a figure of
+its own.
 
 ### Turn types
 
@@ -136,15 +141,64 @@ So Speaking 2 must contain one prompt where the examiner starts the role play
 (`roleplay_response`) **and** one where the candidate starts it
 (`roleplay_initiate`) — it is capped at exactly two prompts.
 
-Speaking 1, 3 and 4 have a minimum of 2 prompts but **no upper limit**, so you
-can add follow-up questions freely (`follow_up` is allowed in 1, 3 and 4 — not
-in 2).
+Speaking 1, 3 and 4 have no fixed `question_limit`, but they are **not**
+unbounded: `maximum_questions` caps them at 6, 4 and 4. Every extra prompt adds
+its own preparation and response time to the module's derived duration, so an
+uncapped part would quietly turn a 14-minute paper into a 40-minute one.
+
+### One headline turn per part
+
+`singleton_turn_types` marks the turns a part may hold only **once** — the
+single read-aloud text, the single presentation stimulus, the one identity
+exchange. Everything else in `allowed_turn_types` is a *bank* the examiner draws
+from, repeatable up to the ceiling:
+
+| Part | Headline turn (once) | Bank turn (repeats) |
+|---|---|---|
+| Speaking 1 | `identity` | `topic_question` |
+| Speaking 2 | both role plays | — |
+| Speaking 3 | `read_aloud` | `follow_up` |
+| Speaking 4 | `presentation` | `follow_up` |
+
+A ceiling on its own cannot tell "one text plus three questions" from "four
+texts", which is why the two rules are separate. Adding a second read-aloud is
+refused at authoring time, and a part that reaches publish holding two — a
+part migrated from an older revision, or filled by import — reports
+*"… takes one read aloud turn; it currently has 2."*
+
+Parts 3 and 4 keep their headline turn at `sort_order` 0 automatically, so a
+read-aloud rewritten after being deleted is not appended after its own
+follow-ups. Speaking 2 has no bank, and the format does not say which role play
+comes first, so its order is left to the author.
+
+The published format fixes **no number** of follow-ups for Parts 3 and 4 — the
+interlocutor asks "one or more as time allows" — so the module stores a bank of
+up to three and the examiner draws from it.
 
 ### Prep and response timing
 
-Preparation and response seconds are **defaults from the blueprint**, shown
-per-prompt in the authoring form and editable there. Only Speaking 4 sets
-`notes_allowed: true` — candidates may write notes during its 60s preparation.
+Timing belongs to the **turn**, not the part: Speaking 3 sets a 20-second-
+preparation read-aloud beside follow-up questions with no preparation at all,
+and Speaking 4 a two-minute presentation beside those same short follow-ups. One
+default per part would hand every follow-up the headline task's clock — three
+follow-ups in Speaking 4 would cost nine minutes on their own.
+
+`answer_constraints.turn_timings` therefore carries a pair per turn type, which
+the authoring form pre-fills and the author can change on any prompt:
+
+| Turn type | Preparation | Response |
+|---|---|---|
+| `identity`, `topic_question` | 0s | 30s |
+| `roleplay_response`, `roleplay_initiate` | 0s | 60s |
+| `read_aloud` | **20s** | 90s |
+| `presentation` | **60s** | 120s |
+| `follow_up` | 0s | 40s |
+
+`suggested_preparation_seconds` / `suggested_response_seconds` remain on the
+part as the headline turn's pair, for clients written before `turn_timings`.
+
+Only Speaking 4 sets `notes_allowed: true` — candidates may write notes during
+its 60s preparation.
 
 ### The rubric (5 criteria, 8 marks each)
 

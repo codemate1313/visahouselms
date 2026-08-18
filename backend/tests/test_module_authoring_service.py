@@ -235,7 +235,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             [
                 ["identity", "topic_question"],
                 ["roleplay_response", "roleplay_initiate"],
-                ["read_aloud"],
+                ["read_aloud", "follow_up"],
                 ["presentation", "follow_up"],
             ],
         )
@@ -243,14 +243,58 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             part["answer_constraints"]["interaction_mode"] == "ai_interlocutor"
             for part in speaking["parts"]
         ))
-        # Speaking 3 is one read-aloud turn: a sitting draws a single text from
-        # the pool, and no follow-up question is asked after it.
+        # Speaking 3 is one read-aloud text and the questions asked about it.
+        # The published format fixes no number of follow-ups - the interlocutor
+        # asks "one or more as time allows" - so the part stores a bank of up to
+        # three beside the single text.
         speaking_3 = speaking["parts"][2]
         self.assertEqual(
             (speaking_3["question_limit"], speaking_3["minimum_questions"]),
-            (1, 1),
+            (None, 2),
         )
-        self.assertEqual(speaking_3["answer_constraints"]["allowed_turn_types"], ["read_aloud"])
+        self.assertEqual(
+            speaking_3["answer_constraints"]["allowed_turn_types"],
+            ["read_aloud", "follow_up"],
+        )
+        self.assertEqual(speaking_3["answer_constraints"]["maximum_questions"], 4)
+        self.assertEqual(speaking_3["answer_constraints"]["singleton_turn_types"], ["read_aloud"])
+        # Speaking 4 carries the same bank size beside its single presentation.
+        speaking_4 = speaking["parts"][3]
+        self.assertEqual(speaking_4["answer_constraints"]["maximum_questions"], 4)
+        self.assertEqual(speaking_4["answer_constraints"]["singleton_turn_types"], ["presentation"])
+
+    def test_speaking_turn_timings_keep_the_paper_at_about_fourteen_minutes(self) -> None:
+        """Each turn type carries its own clock, and the four parts authored to
+        their ceiling total the ~14 minutes the published format specifies.
+
+        A single per-part default would hand a Part 4 follow-up the
+        presentation's 60s + 120s, putting three follow-ups at nine minutes on
+        their own and the paper at well over twenty.
+        """
+        speaking = module_blueprint_service.get_blueprint("speaking")
+        timings = module_blueprint_service.SPEAKING_TURN_TIMINGS
+
+        total = 0
+        for part in speaking["parts"]:
+            constraints = part["answer_constraints"]
+            ceiling = constraints.get("maximum_questions") or part["question_limit"]
+            singletons = constraints["singleton_turn_types"]
+            # Worst case: every singleton once, every remaining slot the bank turn.
+            seconds = sum(sum(timings[turn]) for turn in singletons)
+            bank = [turn for turn in constraints["allowed_turn_types"] if turn not in singletons]
+            if bank:
+                seconds += sum(timings[bank[0]]) * (ceiling - len(singletons))
+            total += seconds
+            # Every allowed turn must have a default, or the form has nothing to
+            # pre-fill and the author is left guessing the clock.
+            self.assertEqual(
+                sorted(constraints["turn_timings"]),
+                sorted(constraints["allowed_turn_types"]),
+            )
+
+        self.assertEqual(total, 830)
+        self.assertLessEqual(total / 60, speaking["duration_minutes"])
+        self.assertGreater(total / 60, speaking["duration_minutes"] - 1)
 
     def test_speaking_duration_is_derived_from_each_prompts_own_timing(self) -> None:
         """A Speaking module's duration is the sum of its prompts and nothing
@@ -791,6 +835,204 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
 
         self.assertEqual(ctx.exception.status_code, 400)
         self.assertIn("read-aloud", ctx.exception.detail)
+
+    def _speaking_part(self, part_code: str):
+        created = self._create("speaking")
+        module = module_authoring_service.get_module_or_404(self.db, created["id"])
+        return module, next(item for item in module.parts if item.part_code == part_code)
+
+    def _speaking_draft(self, prompt: str, turn_type: str, *, passage=None) -> dict:
+        return QuestionCreate(
+            question_type="speaking_prompt",
+            prompt=prompt,
+            passage=passage,
+            interaction={"turn_type": turn_type, "preparation_seconds": 0, "response_seconds": 40},
+        ).model_dump()
+
+    def test_speaking_three_takes_follow_up_questions_after_the_text(self) -> None:
+        """The read-aloud and its follow-ups share the part. A follow-up is a
+        spoken question, so it must not be asked for a text of its own."""
+        module, part = self._speaking_part("speaking_3")
+        module_authoring_service.add_question(
+            self.db, self.instructor, module.id, part.id,
+            self._speaking_draft("Please read this aloud.", "read_aloud", passage="An academic text."),
+            None,
+        )
+        for index in range(3):
+            module_authoring_service.add_question(
+                self.db, self.instructor, module.id, part.id,
+                self._speaking_draft(f"What is the writer's main point? ({index})", "follow_up"),
+                None,
+            )
+
+        self.db.expire_all()
+        part = next(
+            item
+            for item in module_authoring_service.get_module_or_404(self.db, module.id).parts
+            if item.part_code == "speaking_3"
+        )
+        self.assertEqual(len(part.questions), 4)
+        self.assertEqual(
+            [(question.interaction or {}).get("turn_type") for question in sorted(part.questions, key=lambda q: q.sort_order)],
+            ["read_aloud", "follow_up", "follow_up", "follow_up"],
+        )
+
+    def test_speaking_three_refuses_a_fifth_prompt(self) -> None:
+        module, part = self._speaking_part("speaking_3")
+        module_authoring_service.add_question(
+            self.db, self.instructor, module.id, part.id,
+            self._speaking_draft("Please read this aloud.", "read_aloud", passage="An academic text."),
+            None,
+        )
+        for index in range(3):
+            module_authoring_service.add_question(
+                self.db, self.instructor, module.id, part.id,
+                self._speaking_draft(f"Follow up {index}", "follow_up"), None,
+            )
+
+        with self.assertRaises(HTTPException) as ctx:
+            module_authoring_service.add_question(
+                self.db, self.instructor, module.id, part.id,
+                self._speaking_draft("One too many", "follow_up"), None,
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("at most 4", ctx.exception.detail)
+
+    def test_a_speaking_part_takes_only_one_headline_turn(self) -> None:
+        """A ceiling alone cannot tell "one text plus three questions" from
+        "four texts", so the headline turn is capped at one on its own."""
+        module, part = self._speaking_part("speaking_3")
+        module_authoring_service.add_question(
+            self.db, self.instructor, module.id, part.id,
+            self._speaking_draft("Please read this aloud.", "read_aloud", passage="An academic text."),
+            None,
+        )
+
+        with self.assertRaises(HTTPException) as ctx:
+            module_authoring_service.add_question(
+                self.db, self.instructor, module.id, part.id,
+                self._speaking_draft("Read this one too.", "read_aloud", passage="A second text."),
+                None,
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("one read aloud", ctx.exception.detail)
+        self.assertIn("follow up", ctx.exception.detail)
+
+    def test_editing_the_read_aloud_is_not_a_duplicate(self) -> None:
+        """The singleton rule counts the other prompts, not the one being saved,
+        or a read-aloud could never be corrected after it was written."""
+        module, part = self._speaking_part("speaking_3")
+        # add_question and update_question both return the single question,
+        # not the module.
+        created = module_authoring_service.add_question(
+            self.db, self.instructor, module.id, part.id,
+            self._speaking_draft("Please read this aloud.", "read_aloud", passage="An academic text."),
+            None,
+        )
+
+        updated = module_authoring_service.update_question(
+            self.db, self.instructor, module.id, part.id, created["id"],
+            self._speaking_draft("Please read this text aloud now.", "read_aloud", passage="A corrected text."),
+            None,
+        )
+        self.assertEqual(updated["id"], created["id"])
+        self.assertEqual(updated["prompt"], "Please read this text aloud now.")
+
+    def test_deleting_and_rewriting_the_read_aloud_keeps_it_first(self) -> None:
+        """`add_question` numbers a new prompt `len(part.questions)`, and delete
+        never renumbered, so a read-aloud written again after being deleted was
+        appended after its own follow-ups - with a `sort_order` already in use.
+        The candidate would have been asked about a text they had not read."""
+        module, part = self._speaking_part("speaking_3")
+        first = module_authoring_service.add_question(
+            self.db, self.instructor, module.id, part.id,
+            self._speaking_draft("Read this aloud.", "read_aloud", passage="An academic text."),
+            None,
+        )
+        for index in range(3):
+            module_authoring_service.add_question(
+                self.db, self.instructor, module.id, part.id,
+                self._speaking_draft(f"Follow up {index}", "follow_up"), None,
+            )
+
+        module_authoring_service.delete_question(
+            self.db, self.instructor, module.id, part.id, first["id"], None
+        )
+        module_authoring_service.add_question(
+            self.db, self.instructor, module.id, part.id,
+            self._speaking_draft("Read this aloud instead.", "read_aloud", passage="A replacement text."),
+            None,
+        )
+
+        self.db.expire_all()
+        part = next(
+            item
+            for item in module_authoring_service.get_module_or_404(self.db, module.id).parts
+            if item.part_code == "speaking_3"
+        )
+        ordered = sorted(part.questions, key=lambda question: question.sort_order)
+        self.assertEqual(
+            [(question.interaction or {}).get("turn_type") for question in ordered],
+            ["read_aloud", "follow_up", "follow_up", "follow_up"],
+        )
+        self.assertEqual(ordered[0].prompt, "Read this aloud instead.")
+        # and no two prompts share a position
+        orders = [question.sort_order for question in ordered]
+        self.assertEqual(orders, [0, 1, 2, 3])
+
+    def test_speaking_two_keeps_the_order_the_author_chose(self) -> None:
+        """Part 2 is two role plays and nothing else. The format does not say
+        which comes first, so the leading-turn rule must not reorder it."""
+        module, part = self._speaking_part("speaking_2")
+        for turn in ("roleplay_initiate", "roleplay_response"):
+            module_authoring_service.add_question(
+                self.db, self.instructor, module.id, part.id,
+                self._speaking_draft(f"{turn} situation", turn), None,
+            )
+
+        self.db.expire_all()
+        part = next(
+            item
+            for item in module_authoring_service.get_module_or_404(self.db, module.id).parts
+            if item.part_code == "speaking_2"
+        )
+        self.assertEqual(
+            [(q.interaction or {}).get("turn_type") for q in sorted(part.questions, key=lambda q: q.sort_order)],
+            ["roleplay_initiate", "roleplay_response"],
+        )
+
+    def test_publish_reports_a_part_carrying_two_headline_turns(self) -> None:
+        """Revision 0076 left spare read-aloud texts in the pool, so a migrated
+        part can hold two. Publish has to say so rather than pick one."""
+        module, part = self._speaking_part("speaking_3")
+        for index in range(2):
+            self.db.add(
+                ExamModuleQuestion(
+                    part_id=part.id,
+                    **_question("speaking_prompt", f"Read text {index}", Decimal("1")),
+                    source_type="manual",
+                    source_filename=None,
+                    sort_order=index,
+                    created_by_id=self.instructor.id,
+                )
+            )
+        self.db.commit()
+        self.db.expire_all()
+        for question in next(
+            item for item in module_authoring_service.get_module_or_404(self.db, module.id).parts
+            if item.part_code == "speaking_3"
+        ).questions:
+            question.interaction = {"turn_type": "read_aloud", "preparation_seconds": 20, "response_seconds": 90}
+        self.db.commit()
+        self.db.expire_all()
+
+        errors = module_authoring_service.validation_errors(
+            module_authoring_service.get_module_or_404(self.db, module.id)
+        )
+        self.assertTrue(
+            any("takes one read aloud turn; it currently has 2" in error for error in errors),
+            errors,
+        )
 
 
 if __name__ == "__main__":

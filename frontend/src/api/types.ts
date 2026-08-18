@@ -356,6 +356,17 @@ export interface ExamModulePart {
     interaction_mode?: "ai_interlocutor";
     required_turn_types?: SpeakingTurnType[];
     allowed_turn_types?: SpeakingTurnType[];
+    /* Turns that may appear at most once in the part - the single read-aloud
+       text, the single presentation stimulus. Every other allowed turn is a
+       bank the examiner draws from, repeatable up to `maximum_questions`. */
+    singleton_turn_types?: SpeakingTurnType[];
+    maximum_questions?: number;
+    /* Per-turn preparation/response defaults the authoring form pre-fills. A
+       Speaking 3 read-aloud and its follow-ups share a part but not a clock, so
+       the default cannot live on the part itself. */
+    turn_timings?: Partial<Record<SpeakingTurnType, { preparation_seconds: number; response_seconds: number }>>;
+    suggested_preparation_seconds?: number;
+    suggested_response_seconds?: number;
     audio_mode?: "single" | "per_question";
   };
   rubric: ModuleRubricCriterion[];
