@@ -35,12 +35,11 @@ import { DesktopRequiredNotice } from "./components/DesktopRequiredNotice";
 import { ViolationPolicyModal } from "./components/ViolationPolicyModal";
 import { SpeakingInterviewStage } from "./components/SpeakingInterviewStage";
 import { DraggableCameraPreview } from "./components/DraggableCameraPreview";
-import { MicrophoneCheck } from "@/components/speaking/MicrophoneCheck";
+
 import {
   cloneSpeakingMicrophoneStream,
   createSpeakingMediaRecorder,
   getSpeakingMicrophoneStream,
-  hasVerifiedSpeakingMicrophone,
   releaseSpeakingMicrophone,
 } from "@/media/speakingMicrophone";
 
@@ -122,7 +121,7 @@ export function TestRunner() {
   const [recordingQuestionId, setRecordingQuestionId] = useState<number | null>(null);
   const recordingQuestionIdRef = useRef(recordingQuestionId);
   const [recordingFailedQuestionId, setRecordingFailedQuestionId] = useState<number | null>(null);
-  const [speakingMicrophoneReady, setSpeakingMicrophoneReady] = useState(hasVerifiedSpeakingMicrophone);
+
   const [fullscreenActive, setFullscreenActive] = useState(() => Boolean(document.fullscreenElement));
   const [securityAuthorized, setSecurityAuthorized] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
@@ -890,7 +889,6 @@ export function TestRunner() {
         stream.getTracks().forEach((track) => track.stop());
         if (!isFinalAttempt) {
           releaseSpeakingMicrophone();
-          setSpeakingMicrophoneReady(false);
         }
         recordingStreamRef.current = null;
         recorderRef.current = null;
@@ -912,7 +910,6 @@ export function TestRunner() {
         if (blob.size < 4096) {
           if (!isFinalAttempt) {
             releaseSpeakingMicrophone();
-            setSpeakingMicrophoneReady(false);
           }
           setRecordingFailedQuestionId(questionId);
           showError(strings.errors.emptyRecording, strings.errors.recordingUploadTitle);
@@ -972,7 +969,6 @@ export function TestRunner() {
       recordingQuestionIdRef.current = null;
       if (!isFinalAttempt) {
         releaseSpeakingMicrophone();
-        setSpeakingMicrophoneReady(false);
       }
       showError(strings.errors.microphoneBlocked, strings.errors.microphoneBlockedTitle);
       return false;
@@ -1156,14 +1152,6 @@ export function TestRunner() {
 
   if (!currentPart) return <div className="test-runner-loading">{strings.loading}</div>;
 
-  if (currentPart.section_type === "speaking" && !isFinalAttempt && !speakingMicrophoneReady) {
-    return (
-      <MicrophoneCheck
-        testTitle={attempt.module_title}
-        onReady={() => setSpeakingMicrophoneReady(true)}
-      />
-    );
-  }
 
   const speakingParts = attempt.parts.filter((part) => part.section_type === "speaking");
   const speakingPartNumber = speakingParts.findIndex((part) => part.id === currentPart.id) + 1;
