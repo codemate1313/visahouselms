@@ -348,7 +348,10 @@ export function ListeningHeaderPlayer({
             <div className="lc-audio-track-fill" style={{ width: `${elapsed * 100}%` }} />
           </div>
         </div>
-        {statusText && <p className="lc-audio-status" role="status">{statusText}</p>}
+        {/* Rendered unconditionally - see `.lc-audio-status`. The element
+            holds its line whether or not there is anything to announce, so the
+            paper below does not shift when the message changes. */}
+        <p className="lc-audio-status" role="status">{statusText}</p>
       </div>
     );
   }

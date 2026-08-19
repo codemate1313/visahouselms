@@ -11,6 +11,8 @@ import { testRunnerStrings as strings } from "./TestRunner.strings";
 import {
   EMPTY_MEDIA_STATE,
   IMMERSIVE_MODULE_TYPES,
+  combinedTimedSectionMinutes,
+  COMBINED_TIMER_MODULE_TYPES,
   PROCTOR_SETTLE_MS,
   TAB_LEASE_MS,
   HEARTBEAT_MS,
@@ -27,6 +29,7 @@ import { useExamLightTheme } from "./useExamLightTheme";
 import "@/styles/app/pre-exam-onboarding.css";
 import "@/styles/app/final-test-languagecert.css";
 import { PreExamOnboarding } from "./components/PreExamOnboarding";
+import { FinalTestOnboarding } from "./components/FinalTestOnboarding";
 import { TestRunnerHeader } from "./components/TestRunnerHeader";
 import { ListeningHeaderPlayer } from "./components/ListeningHeaderPlayer";
 import { PartsNav } from "./components/PartsNav";
@@ -113,6 +116,13 @@ export function TestRunner() {
     return 0;
   });
   const [secondsLeft, setSecondsLeft] = useState(0);
+  /* When the candidate first opened a Reading or Writing part. The block's
+     allowance is counted from here, and it is kept in session storage so a
+     reload resumes the same countdown instead of handing out a fresh one. */
+  const [readingWritingStartedAt, setReadingWritingStartedAt] = useState<number | null>(() => {
+    const stored = Number(sessionStorage.getItem(securityStorageKey(id, "rw-started-at")));
+    return Number.isFinite(stored) && stored > 0 ? stored : null;
+  });
   const [submitting, setSubmitting] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [isListeningLocked, setIsListeningLocked] = useState(false);
@@ -336,20 +346,36 @@ export function TestRunner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, updateSecurityMedia]);
 
-  // Countdown timer, driven by the server's expires_at - purely a display,
-  // the server rejects writes past its own clock independently.
+  /* On a Final Test or Full Mock the countdown is the Reading and Writing
+     block's own allowance - the parts' durations added together - counted from
+     the moment that block is entered. Anything else drifts: showing what is
+     left of the whole attempt makes the number depend on how long Listening
+     took, which is not time the candidate spends on these sections. */
+  const combinedBlockSeconds = useMemo(() => {
+    if (!attempt || !COMBINED_TIMER_MODULE_TYPES.has(attempt.module_type)) return null;
+    const minutes = combinedTimedSectionMinutes(attempt.parts);
+    return minutes === null ? null : minutes * 60;
+  }, [attempt]);
+
+  // Countdown timer. The server's expires_at is the outer bound - it rejects
+  // writes past its own clock independently - and the block allowance, where
+  // there is one, is the inner bound. Whichever runs out first ends the sitting.
   useEffect(() => {
     if (!attempt || attempt.status !== "in_progress") return;
     function tick() {
       if (!attempt) return;
-      const remaining = (parseServerTimestamp(attempt.expires_at) - Date.now()) / 1000;
+      const attemptRemaining = (parseServerTimestamp(attempt.expires_at) - Date.now()) / 1000;
+      const blockRemaining = combinedBlockSeconds !== null && readingWritingStartedAt !== null
+        ? combinedBlockSeconds - (Date.now() - readingWritingStartedAt) / 1000
+        : Number.POSITIVE_INFINITY;
+      const remaining = Math.min(attemptRemaining, blockRemaining);
       setSecondsLeft(remaining);
       if (remaining <= 0) submit(true);
     }
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [attempt, submit]);
+  }, [attempt, submit, combinedBlockSeconds, readingWritingStartedAt]);
 
   // Keep the display awake throughout a live Speaking test. Unsupported or
   // power-restricted browsers simply continue without a wake lock.
@@ -425,6 +451,18 @@ export function TestRunner() {
      Decided here so the header, and the gate that can cover it, cannot drift
      apart on what the candidate is allowed to see. */
   const timerVisible = currentPart ? showsSectionTimer(attempt?.module_type, currentPart.section_type) : false;
+
+  /* The block clock starts the first time a Reading or Writing part is opened,
+     not when the attempt does - Listening comes first and is paced by its own
+     recordings. Stamped once and then left alone. */
+  useEffect(() => {
+    if (!timerVisible || combinedBlockSeconds === null) return;
+    if (attempt?.status !== "in_progress") return;
+    if (readingWritingStartedAt !== null) return;
+    const startedAt = Date.now();
+    sessionStorage.setItem(securityStorageKey(id, "rw-started-at"), String(startedAt));
+    setReadingWritingStartedAt(startedAt);
+  }, [attempt?.status, combinedBlockSeconds, id, readingWritingStartedAt, timerVisible]);
   const attemptStatus = attempt?.status;
 
   /* Armed off `securityAuthorized` rather than from inside `startSecureSession`,
@@ -1214,6 +1252,38 @@ export function TestRunner() {
       || (attempt.security_required && !securityAuthorized)
       || isFreshAttempt
     );
+
+  /* The Final Test runs its own pre-exam sequence, and it is not optional the
+     way the engine's is: "Start Exam" on the last screen is what opens the
+     secure session, so skipping it would put a candidate into the paper with
+     no camera, no screen share and no attempt token. It therefore shows
+     whenever the session is not yet authorised, regardless of the module's
+     `show_onboarding_instructions` setting. */
+  if (languageCertSkin && (attempt.status === "ready" || !securityAuthorized)) {
+    return (
+      <>
+        <FinalTestOnboarding
+          attempt={attempt}
+          user={user}
+          securityError={securityError}
+          securityStarting={securityStarting}
+          concurrentTab={concurrentTab}
+          onStartSecureSession={startSecureSession}
+          onCancel={async () => {
+            if (attempt.status === "ready") {
+              try {
+                await apiClient.post(`/student/attempts/${id}/cancel-onboarding`);
+              } catch {
+                // Ignore network errors on cancel
+              }
+            }
+            navigate("/student/my-courses");
+          }}
+        />
+        {violationModal}
+      </>
+    );
+  }
 
   if (shouldShowPreExamOnboarding) {
     return (

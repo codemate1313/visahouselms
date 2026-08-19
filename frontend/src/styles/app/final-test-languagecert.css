@@ -275,6 +275,17 @@
   font-size: 11px;
 }
 
+/* The shared sheet styles every <button> on hover -
+   `button:hover:not(:disabled) { background: var(--primary-hover); box-shadow: ... }`
+   at element level, which outranks a single class. That is where the sidebar's
+   dark crimson wash and the red halo around a chosen answer were both coming
+   from. The shadow is removed skin-wide here; the controls that need to keep
+   their own resting colour on hover restate it where they are defined. */
+.lc-exam button:hover:not(:disabled),
+.lc-exam button:focus-visible {
+  box-shadow: none;
+}
+
 /* -------------------------------------------------------------------------
    Layout + section rail
    ------------------------------------------------------------------------- */
@@ -355,6 +366,31 @@
 .lc-rail-tab:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+/* No hover on the rail, in any state. Each of these simply restates what the
+   tab already looks like, at a specificity high enough to beat the global
+   `button:hover` rule that was repainting it. */
+.lc-exam .lc-rail-tab:hover:not(:disabled) {
+  border-color: #9a9a9a;
+  background: #ffffff;
+  color: var(--lc-ink);
+  box-shadow: none;
+  transform: none;
+}
+
+.lc-exam .lc-rail-tab.is-active:hover:not(:disabled) {
+  border-color: var(--lc-ink);
+  background: var(--lc-ink);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.lc-exam .lc-rail-tab.is-complete:hover:not(:disabled) {
+  border-color: var(--lc-red);
+  background: var(--lc-red);
+  color: #ffffff;
+  box-shadow: none;
 }
 
 .lc-rail-tab.is-active {
@@ -783,8 +819,14 @@
   background: #fbfbfb;
 }
 
-.lc-exam .lca-option-row:hover {
+/* The row is a <button>, so the global hover rule was washing it in the brand
+   colour and dropping a shadow under it - the halo around a chosen answer.
+   Specific enough here to win, and it restates the row's resting state. */
+.lc-exam .lca-option-row:hover:not(:disabled) {
   background: transparent;
+  color: var(--lc-ink);
+  box-shadow: none;
+  transform: none;
 }
 
 /* Selection is a filled letter cell and a tinted field -- the same two-part
@@ -801,6 +843,25 @@
   border-color: var(--lc-red);
   background: var(--lc-peach-mute);
   color: var(--lc-ink);
+  /* The base sheet bolds a chosen answer. Listening 4 renders through a
+     different component that never did, so the same choice looked like two
+     different states depending on which part you were in. Weight is not a
+     readout here - the filled letter cell and the tint already are. */
+  font-weight: 400;
+}
+
+/* The tint belongs to the answer field, not to the strip behind the letter -
+   the base sheet paints the row itself, which showed through the gap between
+   the two cells and made the selection read as one wide block. */
+.lc-exam .lca-option-row.is-selected {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.lc-exam .lca-option-row.is-selected:hover:not(:disabled) {
+  background: transparent;
+  box-shadow: none;
 }
 
 .lc-exam .test-runner-option:has(input:focus-visible),
@@ -1730,10 +1791,16 @@
   transition: width 0.3s linear;
 }
 
+/* Always laid out, whether or not it has anything to say. The line only
+   carries text while the recording is counting in or has just finished, and
+   letting it come and go changed the height of the whole header block - so the
+   instruction banner and every question below it jumped as the audio started. */
 .lc-audio-status {
-  margin: 7px 0 0;
+  min-height: 16px;
+  margin: 6px 0 0;
   color: var(--lc-muted);
   font-size: 12px;
+  line-height: 16px;
 }
 
 /* -------------------------------------------------------------------------
@@ -2072,6 +2139,160 @@
   color: #dd8a72;
   cursor: not-allowed;
   opacity: 1;
+}
+
+/* -------------------------------------------------------------------------
+   Pre-exam sequence  (verify details / instructions / ready)
+   ------------------------------------------------------------------------- */
+
+.lc-exam.lc-onboard {
+  overflow-y: auto;
+  background: #ffffff;
+}
+
+.lc-onb-page {
+  padding: 26px 0 60px;
+  background: #ffffff;
+}
+
+.lc-onb-block {
+  max-width: 1880px;
+  margin: 0 auto;
+  padding: 0 30px;
+}
+
+/* The heading sits over the panel's inner text column, not over its edge. */
+.lc-onb-heading {
+  margin: 0 0 10px 27px;
+  color: var(--lc-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.lc-onb-panel {
+  padding: 24px 27px 26px;
+  border: 1px solid #d0d0d0;
+  background: #efefef;
+  color: var(--lc-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.lc-onb-strong {
+  margin: 0 0 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.lc-onb-subheading {
+  margin-bottom: 16px;
+}
+
+/* The instruction sheet rules off its title. */
+.lc-onb-panel-title {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #c9c9c9;
+}
+
+.lc-onb-line {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.lc-onb-line:last-child {
+  margin-bottom: 0;
+}
+
+.lc-onb-line strong {
+  font-weight: 700;
+}
+
+.lc-onb-fields {
+  margin: 0;
+}
+
+.lc-onb-field {
+  margin-bottom: 16px;
+}
+
+.lc-onb-field:last-child {
+  margin-bottom: 0;
+}
+
+.lc-onb-field dt {
+  color: var(--lc-ink);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* The parenthetical rides small and grey beside its label, as on the paper. */
+.lc-onb-hint {
+  margin-left: 5px;
+  color: #6d6e71;
+  font-size: 10.5px;
+}
+
+.lc-onb-field dd {
+  margin: 1px 0 0;
+  color: var(--lc-ink);
+  font-size: 14px;
+}
+
+.lc-onb-button {
+  min-width: 140px;
+  margin-top: 24px;
+  padding: 5px 18px;
+  border: 0;
+  border-radius: 2px;
+  background: #ff3d0f;
+  box-shadow: none;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.lc-exam .lc-onb-button:hover:not(:disabled) {
+  background: #e83507;
+  box-shadow: none;
+  color: #ffffff;
+  transform: none;
+}
+
+.lc-onb-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.lc-onb-exit {
+  display: block;
+  margin-top: 16px;
+  font-weight: 400;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--lc-muted);
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.lc-exam .lc-onb-exit:hover:not(:disabled) {
+  background: none;
+  box-shadow: none;
+  color: var(--lc-ink);
+}
+
+.lc-onb-error {
+  max-width: 720px;
+  margin: 16px 0 0;
+  padding: 9px 12px;
+  border: 1px solid var(--lc-red);
+  background: #fdecea;
+  color: #9a1b12;
+  font-size: 13px;
 }
 
 /* -------------------------------------------------------------------------
