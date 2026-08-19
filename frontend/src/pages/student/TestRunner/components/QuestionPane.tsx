@@ -65,6 +65,7 @@ export function QuestionPane({
           questionNumberOffset={questionNumberOffset}
           savingIds={savingIds}
           grouped={usesConversationGroups}
+          languageCertSkin={languageCertSkin}
           onChangeResponse={(questionId, response) => onChangeResponse(questionId, response)}
         />
       ) : usesNotepadGaps ? (

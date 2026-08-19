@@ -610,7 +610,6 @@
    run the full width.                                                       */
 
 .lc-exam .test-runner-question,
-.lc-exam .lca-listening-q-card,
 .lc-exam .test-runner-cloze-gap {
   position: relative;
   display: grid;
@@ -625,7 +624,6 @@
 }
 
 .lc-exam .test-runner-question::before,
-.lc-exam .lca-listening-q-card::before,
 .lc-exam .test-runner-cloze-gap::before {
   content: "";
   border: 1px solid var(--lc-line);
@@ -634,8 +632,7 @@
   grid-row: 1;
 }
 
-.lc-exam .test-runner-question-head,
-.lc-exam .lca-listening-q-number {
+.lc-exam .test-runner-question-head {
   display: flex;
   min-height: 54px;
   align-items: center;
@@ -669,8 +666,7 @@
 
 /* The engine's "Saving..." flag has no home in a two-cell strip, and the exam
    client shows no per-answer save state. Persistence is unchanged. */
-.lc-exam .test-runner-question-head .hint,
-.lc-exam .lca-listening-q-card > .hint {
+.lc-exam .test-runner-question-head .hint {
   display: none;
 }
 
@@ -678,8 +674,7 @@
    <strong> into separate anonymous items and drops the spaces between them,
    so a stem with a bolded word would read "habits ofpastcivilizations".
    The stem is centred in the strip by the grid instead. */
-.lc-exam .test-runner-prompt,
-.lc-exam .lca-listening-q-prompt {
+.lc-exam .test-runner-prompt {
   display: block;
   align-self: center;
   margin: 0;
@@ -710,8 +705,7 @@
 
 /* Answers */
 
-.lc-exam .test-runner-options,
-.lc-exam .lca-listening-options {
+.lc-exam .test-runner-options {
   display: flex;
   flex-direction: column;
   margin: 21px 0 0;
@@ -721,8 +715,7 @@
   counter-reset: lcopt;
 }
 
-.lc-exam .test-runner-option,
-.lc-exam .lca-option-row {
+.lc-exam .test-runner-option {
   display: flex;
   align-items: stretch;
   min-height: 32px;
@@ -777,10 +770,6 @@
   top: -1px;
   bottom: -1px;
   left: -40px;
-}
-
-.lc-exam .test-runner-option::before,
-.lc-exam .lca-option-badge {
   display: flex;
   width: 36px;
   min-width: 36px;
@@ -796,86 +785,31 @@
   font-weight: 400;
 }
 
-.lc-exam .lca-option-badge {
-  flex: 0 0 36px;
-}
-
-.lc-exam .lca-option-label {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  padding: 7px 12px;
-  border: 1px solid #dcdcdc;
-  background: var(--lc-field);
-  color: var(--lc-ink);
-  font-size: var(--lc-text);
-  font-weight: 400;
-  line-height: 1.4;
-}
-
-.lc-exam .test-runner-option:hover,
-.lc-exam .lca-option-row:hover .lca-option-label {
+.lc-exam .test-runner-option:hover {
   border-color: #b5b5b5;
   background: #fbfbfb;
 }
 
-/* The row is a <button>, so the global hover rule was washing it in the brand
-   colour and dropping a shadow under it - the halo around a chosen answer.
-   Specific enough here to win, and it restates the row's resting state. */
-.lc-exam .lca-option-row:hover:not(:disabled) {
-  background: transparent;
-  color: var(--lc-ink);
-  box-shadow: none;
-  transform: none;
-}
-
 /* Selection is a filled letter cell and a tinted field -- the same two-part
    readout the exam client gives, so a candidate can scan answered rows. */
-.lc-exam .test-runner-option:has(input:checked)::before,
-.lc-exam .lca-option-row.is-selected .lca-option-badge {
+.lc-exam .test-runner-option:has(input:checked)::before {
   border-color: var(--lc-red);
   background: var(--lc-red);
   color: #ffffff;
 }
 
-.lc-exam .test-runner-option:has(input:checked),
-.lc-exam .lca-option-row.is-selected .lca-option-label {
+.lc-exam .test-runner-option:has(input:checked) {
   border-color: var(--lc-red);
   background: var(--lc-peach-mute);
   color: var(--lc-ink);
-  /* The base sheet bolds a chosen answer. Listening 4 renders through a
-     different component that never did, so the same choice looked like two
-     different states depending on which part you were in. Weight is not a
-     readout here - the filled letter cell and the tint already are. */
+  /* The base sheet bolds a chosen answer; the exam client does not. Weight is
+     not a readout here - the filled letter cell and the tint already are. */
   font-weight: 400;
 }
 
-/* The tint belongs to the answer field, not to the strip behind the letter -
-   the base sheet paints the row itself, which showed through the gap between
-   the two cells and made the selection read as one wide block. */
-.lc-exam .lca-option-row.is-selected {
-  background: transparent;
-  border-color: transparent;
-  box-shadow: none;
-}
-
-.lc-exam .lca-option-row.is-selected:hover:not(:disabled) {
-  background: transparent;
-  box-shadow: none;
-}
-
-.lc-exam .test-runner-option:has(input:focus-visible),
-.lc-exam .lca-option-row:focus-visible .lca-option-label {
+.lc-exam .test-runner-option:has(input:focus-visible) {
   outline: 2px solid var(--lc-red);
   outline-offset: 1px;
-}
-
-.lc-exam .lca-option-row:focus-visible {
-  outline: none;
-}
-
-.lc-exam .lca-listening-q-card.is-saving {
-  opacity: 1;
 }
 
 .lc-exam .lca-listening-questions-list {

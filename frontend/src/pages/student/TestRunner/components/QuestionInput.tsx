@@ -67,7 +67,10 @@ export function QuestionInput({
           </span>
         </div>
       )}
-      {!hidePrompt && !hasInlineBlank && (
+      {/* Listening 1 carries its stem in the audio, not on the page, so the
+          strip is a number and nothing else - an empty paragraph would still
+          take its padding. */}
+      {!hidePrompt && !hasInlineBlank && question.prompt && (
         <p className="test-runner-prompt">{allowBoldMarkup ? renderBoldText(question.prompt) : question.prompt}</p>
       )}
       {!hidePrompt && hasInlineBlank && (
