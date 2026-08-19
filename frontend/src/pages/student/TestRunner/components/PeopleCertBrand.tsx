@@ -43,11 +43,11 @@ export function LcFlagIcon() {
     <svg
       className="lc-rail-flag"
       viewBox="0 0 16 16"
-      width="13"
-      height="15"
+      width="16"
+      height="18"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.15"
+      strokeWidth="1.25"
       aria-hidden="true"
       focusable="false"
     >

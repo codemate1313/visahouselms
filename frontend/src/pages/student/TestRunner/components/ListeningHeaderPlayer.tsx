@@ -48,24 +48,31 @@ function VolumeIcon() {
   );
 }
 
-/** The filled pause disc the exam transport shows while a recording runs.
- *  It is indication only - the candidate cannot pause an exam recording. */
-function LcPauseIcon() {
+/* The transport disc: a red ring with the glyph drawn inside it, not a filled
+   disc. Indication only - an exam recording cannot be paused or restarted, so
+   the glyph reports what the audio is doing rather than offering a control. */
+function LcTransportIcon({ playing }: { playing: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-      <circle cx="12" cy="12" r="11" fill="currentColor" />
-      <rect x="8.75" y="7.5" width="2.2" height="9" rx="0.6" fill="#fff" />
-      <rect x="13.05" y="7.5" width="2.2" height="9" rx="0.6" fill="#fff" />
+    <svg viewBox="0 0 26 26" width="26" height="26" aria-hidden="true">
+      <circle cx="13" cy="13" r="11.5" fill="#ffffff" stroke="currentColor" strokeWidth="2.2" />
+      {playing ? (
+        <>
+          <rect x="9.5" y="8.2" width="2.7" height="9.6" rx="0.4" fill="currentColor" />
+          <rect x="13.8" y="8.2" width="2.7" height="9.6" rx="0.4" fill="currentColor" />
+        </>
+      ) : (
+        <path d="M10.5 8.1 18 13l-7.5 4.9z" fill="currentColor" />
+      )}
     </svg>
   );
 }
 
 function LcSpeakerIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
-      <path d="M4 9.5v5h3.2L12 18.6V5.4L7.2 9.5H4z" />
-      <path d="M14.6 8.4a.85.85 0 0 1 1.2.06 5.2 5.2 0 0 1 0 7.08.85.85 0 1 1-1.26-1.14 3.5 3.5 0 0 0 0-4.8.85.85 0 0 1 .06-1.2z" />
-      <path d="M17.1 5.7a.85.85 0 0 1 1.2.02 8.9 8.9 0 0 1 0 12.56.85.85 0 1 1-1.22-1.18 7.2 7.2 0 0 0 0-10.2.85.85 0 0 1 .02-1.2z" />
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+      <path d="M3.6 9.3v5.4h3.4L12.2 19V5L7 9.3H3.6z" />
+      <path d="M14.8 8.1a.95.95 0 0 1 1.34.07 5.8 5.8 0 0 1 0 7.66.95.95 0 1 1-1.41-1.27 3.9 3.9 0 0 0 0-5.12.95.95 0 0 1 .07-1.34z" />
+      <path d="M17.5 5.3a.95.95 0 0 1 1.34.02 9.9 9.9 0 0 1 0 13.36.95.95 0 1 1-1.36-1.32 8 8 0 0 0 0-10.72.95.95 0 0 1 .02-1.34z" />
     </svg>
   );
 }
@@ -243,17 +250,34 @@ export function ListeningHeaderPlayer({
     sessionStorage.removeItem(storageKey);
     sessionStorage.setItem(completedKey, "true");
     setPhase("finished");
-    onAudioLockChange?.(false);
+    /* The lock deliberately stays on here. Releasing it the moment the
+       recording ended opened a five-second hole - the settle before the part
+       hands over - in which the candidate could jump to another part, and on
+       a paper where each recording plays once that is a way back into a
+       section they have already heard. It is released below, at the point the
+       part actually hands over. */
   };
 
   /* Once the recording is over the part is done, so the candidate is moved on
      after a short pause rather than being left on a section they can no longer
-     answer. */
+     answer. Navigation stays locked for the whole of that pause and is only
+     released as the handover happens, so there is no moment between the last
+     note and the next part in which the rail is live. */
   useEffect(() => {
-    if (phase !== "finished" || !onAudioComplete || wasCompletedOnMountRef.current) return;
-    const timer = window.setTimeout(() => onAudioComplete(), END_DELAY_SECONDS * 1000);
+    if (phase !== "finished") return;
+    /* A part whose recording had already finished before this mount is one the
+       candidate is revisiting. Nothing is about to play, so nothing should
+       hold them on it. */
+    if (wasCompletedOnMountRef.current) {
+      onAudioLockChange?.(false);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      onAudioLockChange?.(false);
+      onAudioComplete?.();
+    }, END_DELAY_SECONDS * 1000);
     return () => window.clearTimeout(timer);
-  }, [phase, onAudioComplete]);
+  }, [phase, onAudioComplete, onAudioLockChange]);
 
   if (!currentAudioUrl) return null;
 
@@ -283,18 +307,29 @@ export function ListeningHeaderPlayer({
 
   /* The exam transport is deliberately tiny and inert: a pause disc that
      reports state without accepting a click, and a volume slider. Elapsed
-     time is shown as a hairline under the disc rather than a full scrubber,
-     because knowing how much recording is left is itself an advantage the
-     real exam does not hand out. */
+     time runs as a bar along the foot of the box. */
   if (languageCertSkin) {
-    const elapsed = phase === "finished" ? 1 : (duration > 0 ? Math.min(1, currentTime / duration) : 0);
+    /* Progress through the whole part, not through the clip currently loaded.
+       A per-question part is a playlist, and measuring only the active track
+       sent the bar back to zero at every clip boundary - filling, snapping
+       back, filling again, which is what read as the bar sticking. Each track
+       is treated as an equal share of the part, so the value only ever
+       increases and still lands exactly on 100% at the end. Track lengths are
+       not known until each one loads, so equal shares is the only division
+       available up front; for the single-track parts that are the common case
+       it is exact. */
+    const trackFraction = duration > 0 ? Math.min(1, currentTime / duration) : 0;
+    const trackCount = Math.max(1, playlist.length);
+    const elapsed = phase === "finished"
+      ? 1
+      : Math.min(1, (playlistIndex + trackFraction) / trackCount);
     return (
       <div className="lc-audio" aria-label="Listening Master Audio Track">
         {audioElement}
         <div className="lc-audio-box">
           <div className={`lc-audio-transport${phase === "playing" ? " is-playing" : ""}`}>
             <span className="lc-audio-pause" role="img" aria-label={phase === "playing" ? "Audio playing" : "Audio stopped"}>
-              <LcPauseIcon />
+              <LcTransportIcon playing={phase === "playing"} />
             </span>
           </div>
           <div className="lc-audio-volume">

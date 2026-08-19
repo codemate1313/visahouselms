@@ -22,6 +22,8 @@ interface TestRunnerHeaderProps {
   secondsLeft?: number;
   /** Final Test only: the PeopleCert exam header replaces the standard one. */
   languageCertSkin?: boolean;
+  /** Whether this part is one the countdown is shown on (Reading / Writing). */
+  timerVisible?: boolean;
 }
 
 export function TestRunnerHeader({
@@ -39,6 +41,7 @@ export function TestRunnerHeader({
   onExitDeveloperFullscreen,
   secondsLeft,
   languageCertSkin = false,
+  timerVisible = true,
 }: TestRunnerHeaderProps) {
   const t = strings.header;
   const sectionLabels = strings.sectionLabels;
@@ -68,12 +71,13 @@ export function TestRunnerHeader({
   /* The exam header is a fixed three-column lockup - brand, centred test name,
      countdown - with no part navigation in it: on this platform the candidate
      moves between parts from the sidebar and the in-page Previous/Next pair.
-     Listening carries no countdown at all; the recording sets the pace. */
+     Whether the countdown appears at all is decided by the runner - see
+     `showsSectionTimer` - not by this component. */
   if (languageCertSkin) {
     const showTimer = attempt.status === "in_progress"
       && secondsLeft !== undefined
       && secondsLeft > 0
-      && currentPart.section_type !== "listening";
+      && timerVisible;
 
     return (
       <header className="test-runner-header lc-header">
@@ -110,7 +114,7 @@ export function TestRunnerHeader({
       </div>
       <div className="test-runner-header-actions">
         <ThemeToggle className="test-runner-theme-toggle" />
-        {attempt.status === "in_progress" && secondsLeft !== undefined && secondsLeft > 0 && (
+        {attempt.status === "in_progress" && secondsLeft !== undefined && secondsLeft > 0 && timerVisible && (
           <div className={`test-runner-timer${secondsLeft < 300 ? " is-urgent" : ""}`} role="timer" aria-live="polite">
             <span>{t.timeLeft || "Time Left"}</span>
             <strong>{formatTime(secondsLeft)}</strong>

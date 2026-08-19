@@ -318,14 +318,22 @@
   gap: 9px;
 }
 
+/* Sized against the 26px tab rather than left at icon-default, so the flag
+   reads as part of the row instead of a speck floating beside it. */
 .lc-rail-flag {
   flex: 0 0 auto;
+  width: 16px;
+  height: 18px;
   color: #7c7c7c;
 }
 
 /* Each tab is a tag: a rectangle with a triangular point on its trailing edge.
    The point is only drawn on the tab in view, which is how the exam client
-   marks position -- there is no highlight, underline or counter anywhere. */
+   marks position -- there is no highlight, underline or counter anywhere.
+
+   And no hover state either. A tab's colour reports where the candidate is and
+   what they have finished; letting the pointer repaint it puts a fourth
+   appearance on a control that is only allowed to say three things. */
 .lc-rail-tab {
   position: relative;
   display: block;
@@ -344,13 +352,6 @@
   white-space: nowrap;
 }
 
-.lc-rail-tab:hover:not(:disabled) {
-  border-color: var(--lc-ink);
-  background: #f3f3f3;
-  color: var(--lc-ink);
-  transform: none;
-}
-
 .lc-rail-tab:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -361,19 +362,6 @@
   background: var(--lc-ink);
   box-shadow: none;
   color: #ffffff;
-}
-
-/* The plain hover rule outranks `.is-active`, so hovering the tab already in
-   view bleached it to the inactive grey while its arrow stayed black. The
-   active tab gets its own, darker, hover instead. */
-.lc-rail-tab.is-active:hover:not(:disabled) {
-  border-color: #000000;
-  background: #3d3d3d;
-  color: #ffffff;
-}
-
-.lc-rail-tab.is-active:hover:not(:disabled)::after {
-  border-left-color: #3d3d3d;
 }
 
 .lc-rail-tab.is-active::after {
@@ -396,72 +384,6 @@
   border-color: var(--lc-red);
   background: var(--lc-red);
   color: #ffffff;
-}
-
-.lc-rail-tab.is-complete:hover:not(:disabled) {
-  border-color: var(--lc-red-hover);
-  background: var(--lc-red-hover);
-  color: #ffffff;
-}
-
-.lc-rail-group[data-section="speaking"] .lc-rail-tab.is-active.is-complete {
-  border-color: var(--lc-ink);
-  background: var(--lc-ink);
-  color: #ffffff;
-}
-
-.lc-rail-group[data-section="speaking"] .lc-rail-tabs {
-  padding-left: 71px;
-}
-
-.lc-rail-group[data-section="speaking"] .lc-rail-tab::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: -30px;
-  width: 13px;
-  height: 11px;
-  border: 1px solid #9a9a9a;
-  background: #ffffff;
-  transform: translateY(-50%);
-}
-
-.lc-rail-group[data-section="speaking"] .lc-rail-tab.is-complete::before {
-  content: "✓";
-  color: #ffffff;
-  background: var(--lc-red);
-  border-color: var(--lc-red);
-  font-family: Arial, sans-serif;
-  font-size: 10px;
-  font-weight: bold;
-  line-height: 10px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.lc-rail-group[data-section="speaking"] .lc-rail-tab::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: -31px;
-  width: 1px;
-  height: 15px;
-  background: #6f7075;
-  transform: translateY(-50%);
-}
-
-.lc-rail-group[data-section="speaking"] .lc-rail-tab.is-active::after {
-  top: 50%;
-  right: -14px;
-  left: auto;
-  width: 0;
-  height: 0;
-  border-top: 14px solid transparent;
-  border-bottom: 14px solid transparent;
-  border-left: 14px solid var(--lc-ink);
-  background: none;
 }
 
 /* -------------------------------------------------------------------------
@@ -940,6 +862,14 @@
   white-space: pre-wrap;
 }
 
+/* Emphasised words and passage titles come through `RichTextContent` as
+   `.highlighted-word`, which the shared sheet paints `var(--primary)` with
+   `!important` - the app's crimson, a different red from the one the exam skin
+   uses on Previous, Next and End Exam. Realigned so the paper has one red. */
+.lc-exam .highlighted-word {
+  color: var(--lc-red) !important;
+}
+
 .lc-exam .test-runner-passage > strong {
   display: block;
   margin-bottom: 14px;
@@ -1177,12 +1107,14 @@
 
 /* A card already placed is spent, not hidden: the exam client leaves it in the
    bank so the candidate can see what they have used. */
+/* A card already placed stays on the paper and fades, rather than turning into
+   a grey block - the candidate still has to be able to read what they used. */
 .lc-exam .test-runner-inline-options > button:disabled,
 .lc-exam .test-runner-source-text-options > button:disabled,
 .lc-exam .test-runner-option-bank > button:disabled {
-  border-color: #dcdcdc;
-  background: #f0f0f0;
-  color: #9a9a9a;
+  border-color: #f0cdb8;
+  background: #fdf1e7;
+  color: #b0b0b0;
   cursor: default;
 }
 
@@ -1202,34 +1134,31 @@
   font-weight: 700;
 }
 
-/* One row is one target. The exam client shows a single band per statement
-   and the letter simply lands in it, so the prompt and the drop zone are
-   drawn as one box with the letter parked at its trailing edge rather than as
-   a statement plus a separate well beside it. */
+/* One card per statement, stacked: the question reads across the top and the
+   answer well sits underneath it running the full width, with the letter
+   centred in the well and the clear control at its trailing edge. The well was
+   previously a narrow column beside the question, which left the letter
+   crammed into 52px against a statement that ran the rest of the row. */
 .lc-exam .test-runner-source-text-target {
-  display: flex;
-  align-items: stretch;
-  min-height: 42px;
-  padding: 0;
-  border: 1px solid #dcdcdc;
+  display: block;
+  min-height: 0;
+  padding: 0 0 8px;
+  border: 1px solid #d5d5d5;
   border-radius: 4px;
-  background: var(--lc-cell);
+  background: #f7f7f7;
   box-shadow: none;
-  gap: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .lc-exam .test-runner-source-text-target.is-filled {
-  border-color: var(--lc-peach-line);
-  background: var(--lc-peach-mute);
+  border-color: #d5d5d5;
+  background: #f7f7f7;
 }
 
 .lc-exam .test-runner-source-text-prompt {
-  display: flex;
-  flex: 1;
-  align-items: center;
+  display: block;
   margin: 0;
-  padding: 10px 14px;
+  padding: 9px 12px 8px;
   border: 0;
   background: transparent;
   color: var(--lc-ink);
@@ -1239,34 +1168,83 @@
 }
 
 .lc-exam .test-runner-source-text-slot {
+  position: relative;
   display: flex;
-  flex: 0 0 52px;
+  flex: none;
+  min-height: 31px;
   align-items: center;
   justify-content: center;
-  border-left: 1px dashed #b8b8b8;
-  background: transparent;
+  margin: 0 9px;
+  padding: 4px 30px;
+  border: 1.5px dashed #dcb49b;
+  border-radius: 6px;
+  background: #ffffff;
 }
 
 .lc-exam .test-runner-source-text-target.is-filled .test-runner-source-text-slot {
-  border-left-style: solid;
-  background: var(--lc-peach);
+  border-style: solid;
+  border-color: var(--lc-peach-line);
+  background: #fdf1e7;
 }
 
 .lc-exam .test-runner-source-text-chips {
   display: flex;
+  width: 100%;
   margin: 0;
   padding: 0;
-  gap: 4px;
+  gap: 6px;
   list-style: none;
 }
 
+/* The well is the box. The base sheet gives the chip a border and surface of
+   its own, which nested a second outline inside the peach one. */
 .lc-exam .test-runner-source-text-chips li {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   align-items: center;
-  gap: 2px;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  gap: 0;
   color: var(--lc-ink);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
+}
+
+/* The letter is read back as it is labelled on the passage cards - "B." */
+.lc-exam .test-runner-source-text-chips li > span::after {
+  content: ".";
+}
+
+/* Boxed glyph at the trailing edge, clear of the centred letter whatever its
+   width. */
+.lc-exam .test-runner-source-text-chips li > button {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  display: flex;
+  width: 17px;
+  height: 17px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1.2px solid #3a3a3a;
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: none;
+  color: #3a3a3a;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.lc-exam .test-runner-source-text-chips li > button:hover {
+  background: transparent;
+  color: #3a3a3a;
+  transform: translateY(-50%);
 }
 
 /* An empty well on the exam paper is just that: an empty well. The picker the
@@ -1274,7 +1252,7 @@
 .lc-exam .test-runner-source-text-dropzone {
   display: block;
   width: 100%;
-  height: 100%;
+  min-height: 21px;
 }
 
 .lc-exam .test-runner-source-text-place {
@@ -1628,14 +1606,13 @@
 .lc-audio-box {
   position: relative;
   display: flex;
-  width: 204px;
+  width: 268px;
   align-items: center;
-  justify-content: space-between;
-  padding: 4px 10px 6px;
+  padding: 9px 14px 17px;
   border: 1px solid #c9c9c9;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
-  gap: 10px;
+  box-shadow: none;
+  gap: 13px;
 }
 
 .lc-audio-transport {
@@ -1671,9 +1648,10 @@
 .lc-audio-volume {
   display: flex;
   flex: 1;
+  min-width: 0;
   align-items: center;
-  gap: 7px;
-  color: #3d3d3d;
+  gap: 11px;
+  color: #2f2f2f;
 }
 
 /* Scoped to `.lc-exam` to match the specificity of the global
@@ -1731,19 +1709,25 @@
   outline-offset: 3px;
 }
 
+/* A full-width grey rail along the foot of the box with the elapsed portion
+   filled in red. It was pinned to `width: 20px` at a fixed offset, so the red
+   mark could not travel however far the recording had got - the bar looked
+   stuck because it physically was. */
 .lc-audio-track {
   position: absolute;
-  left: 10px;
+  right: 0;
   bottom: 0;
-  width: 20px;
-  height: 3px;
-  background: transparent;
+  left: 0;
+  width: auto;
+  height: 8px;
+  background: #d6d6d6;
+  overflow: hidden;
 }
 
 .lc-audio-track-fill {
   height: 100%;
   background: var(--lc-red);
-  transition: width 0.25s linear;
+  transition: width 0.3s linear;
 }
 
 .lc-audio-status {

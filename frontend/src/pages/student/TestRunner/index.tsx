@@ -18,6 +18,7 @@ import {
   parseServerTimestamp,
   randomId,
   securityStorageKey,
+  showsSectionTimer,
   storedClientId,
   usesLanguageCertSkin,
   type SecurityMediaState,
@@ -420,6 +421,10 @@ export function TestRunner() {
   /* The exam client has no dark mode, so the Final Test sits the whole attempt
      on the light surface and hands the candidate's preference back on exit. */
   useExamLightTheme(languageCertSkin);
+  /* Reading and Writing share one countdown; Listening and Speaking show none.
+     Decided here so the header, and the gate that can cover it, cannot drift
+     apart on what the candidate is allowed to see. */
+  const timerVisible = currentPart ? showsSectionTimer(attempt?.module_type, currentPart.section_type) : false;
   const attemptStatus = attempt?.status;
 
   /* Armed off `securityAuthorized` rather than from inside `startSecureSession`,
@@ -1262,6 +1267,7 @@ export function TestRunner() {
         onExitDeveloperFullscreen={exitDeveloperFullscreen}
         secondsLeft={secondsLeft}
         languageCertSkin={languageCertSkin}
+        timerVisible={timerVisible}
       />
 
       {isListeningPart && (
@@ -1386,7 +1392,7 @@ export function TestRunner() {
       {violationModal}
 
       {isImmersiveAttempt && !fullscreenActive && !developerFullscreenBypass.current && !violationNotice && (
-        <FullscreenGate isFinal={attempt.is_final} secondsLeft={secondsLeft} onEnterFullscreen={enterFullscreen} />
+        <FullscreenGate isFinal={attempt.is_final} secondsLeft={secondsLeft} onEnterFullscreen={enterFullscreen} timerVisible={timerVisible} />
       )}
     </div>
   );

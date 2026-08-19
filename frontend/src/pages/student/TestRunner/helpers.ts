@@ -77,3 +77,31 @@ export function languageCertHeaderTitle(sectionType: string): string {
     ? "LanguageCert Academic Speaking"
     : `LanguageCert Academic Test (${label})`;
 }
+
+/**
+ * Modules that sit Reading and Writing against one shared countdown.
+ *
+ * Both composite papers work the same way: the attempt carries a single
+ * server-side deadline, and Reading and Writing are worked through under it as
+ * one block rather than getting an allowance each.
+ */
+export const COMBINED_TIMER_MODULE_TYPES = new Set(["final_test", "full_mock"]);
+
+/** The only sections that display that countdown. */
+const TIMED_SECTION_TYPES = new Set(["reading", "writing"]);
+
+/**
+ * Whether the countdown is shown while this part is open.
+ *
+ * Listening is paced by its recording and Speaking by the examiner, so on those
+ * papers a clock tells the candidate nothing they can act on and only invites
+ * them to rush an answer they do not control the timing of. It stays hidden
+ * there and appears across Reading and Writing, which are the sections the
+ * candidate actually paces themselves.
+ *
+ * Every other module type is unaffected and keeps its timer throughout.
+ */
+export function showsSectionTimer(moduleType: string | null | undefined, sectionType: string): boolean {
+  if (!moduleType || !COMBINED_TIMER_MODULE_TYPES.has(moduleType)) return true;
+  return TIMED_SECTION_TYPES.has(sectionType);
+}
