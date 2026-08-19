@@ -29,3 +29,30 @@ export function LcClockIcon() {
     </svg>
   );
 }
+
+/**
+ * The outline flag that sits beside every part in the exam rail.
+ *
+ * Presentational only. On the delivery platform this is the candidate's
+ * mark-for-review control; nothing in this runner stores that state, so it is
+ * drawn as decoration and hidden from assistive tech rather than shipped as a
+ * button that would look operable and do nothing.
+ */
+export function LcFlagIcon() {
+  return (
+    <svg
+      className="lc-rail-flag"
+      viewBox="0 0 16 16"
+      width="13"
+      height="15"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.15"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M4.05 1.7v12.6" strokeLinecap="round" />
+      <path d="M4.05 2.5h8.5l-2.05 2.65 2.05 2.65h-8.5z" strokeLinejoin="round" />
+    </svg>
+  );
+}

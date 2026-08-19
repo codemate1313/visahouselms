@@ -11,6 +11,7 @@ import { testRunnerStrings as strings } from "./TestRunner.strings";
 import {
   EMPTY_MEDIA_STATE,
   IMMERSIVE_MODULE_TYPES,
+  PROCTOR_SETTLE_MS,
   TAB_LEASE_MS,
   HEARTBEAT_MS,
   DEBOUNCE_MS,
@@ -21,6 +22,7 @@ import {
   usesLanguageCertSkin,
   type SecurityMediaState,
 } from "./helpers";
+import { useExamLightTheme } from "./useExamLightTheme";
 import "@/styles/app/pre-exam-onboarding.css";
 import "@/styles/app/final-test-languagecert.css";
 import { PreExamOnboarding } from "./components/PreExamOnboarding";
@@ -150,6 +152,14 @@ export function TestRunner() {
   const mediaStateRef = useRef<SecurityMediaState>(EMPTY_MEDIA_STATE);
   const tabInstanceIdRef = useRef(randomId());
   const concurrentFlaggedRef = useRef(false);
+  /* Proctoring is disarmed until the secure session is actually live. The
+     browser blurs the page while it shows the camera and screen-share prompts,
+     and again when the sharing notification takes focus once sharing starts -
+     none of which is the candidate leaving the exam. Flagging those was
+     greeting people with "Security warning 1 of 3" before they had answered
+     anything. */
+  const securityHandshakeRef = useRef(false);
+  const proctorArmedAtRef = useRef(Number.POSITIVE_INFINITY);
   const lastViolationNoticeCountRef = useRef(0);
 
   const securityHeaders = useCallback(() => (
@@ -407,7 +417,25 @@ export function TestRunner() {
   /* Strictly the Final Test module type - a full mock stays on the standard
      engine skin even though it shares the immersive/fullscreen behaviour. */
   const languageCertSkin = usesLanguageCertSkin(attempt?.module_type);
+  /* The exam client has no dark mode, so the Final Test sits the whole attempt
+     on the light surface and hands the candidate's preference back on exit. */
+  useExamLightTheme(languageCertSkin);
   const attemptStatus = attempt?.status;
+
+  /* Armed off `securityAuthorized` rather than from inside `startSecureSession`,
+     because a resumed attempt comes back already authorised from the server and
+     never runs the handshake - keying off the flag covers both routes. */
+  useEffect(() => {
+    proctorArmedAtRef.current = securityAuthorized
+      ? Date.now() + PROCTOR_SETTLE_MS
+      : Number.POSITIVE_INFINITY;
+  }, [securityAuthorized]);
+
+  /** Whether a browser event should count against the candidate yet. */
+  const proctorArmed = useCallback(
+    () => !securityHandshakeRef.current && Date.now() >= proctorArmedAtRef.current,
+    [],
+  );
 
   const onRequiredTrackEnded = useCallback((kind: "camera" | "microphone" | "screen") => {
     updateSecurityMedia({ [kind]: false });
@@ -430,34 +458,45 @@ export function TestRunner() {
       const isActive = Boolean(document.fullscreenElement);
       setFullscreenActive(isActive);
       updateSecurityMedia({ fullscreen: isActive });
-      if (!isActive && isFinalAttempt && !submittedRef.current && !developerFullscreenBypass.current) {
+      if (!isActive && isFinalAttempt && !submittedRef.current && !developerFullscreenBypass.current && proctorArmed()) {
         recordFlag("fullscreen_exit");
       }
     }
     function onVisibilityChange() {
-      if (isFinalAttempt && document.hidden && !submittedRef.current) recordFlag("visibility_change");
+      if (isFinalAttempt && document.hidden && !submittedRef.current && proctorArmed()) recordFlag("visibility_change");
     }
     function onBlur() {
-      if (isFinalAttempt && !submittedRef.current) recordFlag("blur");
+      if (isFinalAttempt && !submittedRef.current && proctorArmed()) recordFlag("blur");
     }
     function onBeforeUnload(event: BeforeUnloadEvent) {
       if (!isFinalAttempt || submittedRef.current) return;
       event.preventDefault();
       event.returnValue = "";
     }
-    function onClipboard(event: ClipboardEvent) {
+    /* The engine lets a writing task keep the clipboard, on the grounds that
+       composing an essay legitimately involves moving text around. The Final
+       Test does not: the response has to be typed, and a candidate who can
+       paste can bring prepared prose in from anywhere. So the exemption is
+       withdrawn for this one module type and copy, cut and paste are blocked
+       across every section, writing included. */
+    function isClipboardExemptPart() {
+      if (languageCertSkin) return false;
       const activePart = currentPartRef.current;
-      const isWritingTask = activePart?.section_type === "writing" || activePart?.questions?.some((q) => q.question_type === "essay");
-      if (isWritingTask) return;
+      return activePart?.section_type === "writing"
+        || Boolean(activePart?.questions?.some((q) => q.question_type === "essay"));
+    }
+    function onClipboard(event: ClipboardEvent) {
+      if (isClipboardExemptPart()) return;
       event.preventDefault();
       if (isFinalAttempt && !submittedRef.current) {
         recordFlag("clipboard", { operation: event.type });
       }
     }
+    /* Blocked alongside the clipboard events: leaving the menu open while its
+       Paste item silently does nothing reads as a broken page rather than a
+       rule, and right-click is the other route to the same thing. */
     function onContextMenu(event: MouseEvent) {
-      const activePart = currentPartRef.current;
-      const isWritingTask = activePart?.section_type === "writing" || activePart?.questions?.some((q) => q.question_type === "essay");
-      if (isWritingTask) return;
+      if (isClipboardExemptPart()) return;
       event.preventDefault();
       if (isFinalAttempt && !submittedRef.current) recordFlag("context_menu");
     }
@@ -465,9 +504,7 @@ export function TestRunner() {
       const command = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
       if (command && ["c", "x", "v"].includes(key)) {
-        const activePart = currentPartRef.current;
-        const isWritingTask = activePart?.section_type === "writing" || activePart?.questions?.some((q) => q.question_type === "essay");
-        if (isWritingTask) return;
+        if (isClipboardExemptPart()) return;
         event.preventDefault();
         if (isFinalAttempt && !submittedRef.current) {
           recordFlag("clipboard", { operation: key === "c" ? "copy" : key === "x" ? "cut" : "paste", source: "keyboard" });
@@ -502,7 +539,7 @@ export function TestRunner() {
       window.removeEventListener("keydown", onKeyDown, true);
       if (immersiveAttemptId && document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     };
-  }, [attemptStatus, immersiveAttemptId, isFinalAttempt, recordFlag, updateSecurityMedia]);
+  }, [attemptStatus, immersiveAttemptId, isFinalAttempt, languageCertSkin, proctorArmed, recordFlag, updateSecurityMedia]);
 
   async function enterFullscreen() {
     developerFullscreenBypass.current = false;
@@ -571,6 +608,7 @@ export function TestRunner() {
     setSecurityStarting(true);
     setSecurityError(null);
     setConcurrentTab(false);
+    securityHandshakeRef.current = true;
 
     if (!attempt.security_required) {
       try {
@@ -591,10 +629,28 @@ export function TestRunner() {
     let screenStream = screenStreamRef.current;
     let keepMediaActive = false;
 
+    /* `requestFullscreen` needs transient user activation, and the camera and
+       screen-share prompts each consume the activation this click arrived with
+       - so asking for full screen only after both had resolved was asking with
+       nothing left to spend. It goes first now, while the click is still warm,
+       and is re-asserted below because a permission prompt or the sharing
+       notification can drop the page back out of it. */
+    const requestExamFullscreen = async () => {
+      if (document.fullscreenElement) return true;
+      try {
+        await document.documentElement.requestFullscreen();
+      } catch {
+        return false;
+      }
+      return Boolean(document.fullscreenElement);
+    };
+
     try {
       if (!navigator.mediaDevices?.getUserMedia || !navigator.mediaDevices?.getDisplayMedia) {
         throw new Error(strings.security.errors.browserUnsupported);
       }
+
+      await requestExamFullscreen();
 
       let cameraTrack = cameraStream?.getVideoTracks()[0];
       let microphoneTrack = cameraStream?.getAudioTracks()[0];
@@ -661,14 +717,10 @@ export function TestRunner() {
         displaySurface,
       });
 
-      if (!document.fullscreenElement) {
-        try {
-          await document.documentElement.requestFullscreen();
-        } catch {
-          throw new Error(strings.security.errors.fullscreenAfterMedia);
-        }
-      }
-      if (!document.fullscreenElement) {
+      /* Second attempt: granting camera or picking a screen can collapse full
+         screen, and the click on the picker's Share button leaves a fresh
+         activation to spend on getting it back. */
+      if (!(await requestExamFullscreen())) {
         throw new Error(strings.security.errors.fullscreenAfterMedia);
       }
       setFullscreenActive(true);
@@ -703,7 +755,14 @@ export function TestRunner() {
       sessionStorage.setItem(`onboarding_completed_${id}`, "true");
       setOnboardingCompleted(true);
       setSecurityAuthorized(true);
-      setFullscreenActive(true);
+      /* Re-checked, not asserted. Preflight and begin are two network round
+         trips, and full screen can be lost while they are in flight - the old
+         unconditional `true` here then hid the gate and opened the paper in a
+         windowed browser, which is the state the candidate was being warned
+         about. Ask for it back, and report whatever is actually true. */
+      const fullscreenOnHandover = await requestExamFullscreen();
+      setFullscreenActive(fullscreenOnHandover);
+      updateSecurityMedia({ fullscreen: fullscreenOnHandover });
     } catch (err: unknown) {
       if (!keepMediaActive) {
         cameraStream?.getTracks().forEach((track) => track.stop());
@@ -724,6 +783,10 @@ export function TestRunner() {
       setSecurityAuthorized(false);
       setSecurityError(extractErrorMessage(err, err instanceof Error ? err.message : strings.security.errors.generic));
     } finally {
+      /* Closed on both routes. The settle window that actually arms proctoring
+         is set by the `securityAuthorized` effect, so a failed handshake leaves
+         it disarmed rather than counting the retry as a violation. */
+      securityHandshakeRef.current = false;
       setSecurityStarting(false);
     }
   }

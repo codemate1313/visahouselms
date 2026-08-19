@@ -100,6 +100,7 @@ export function QuestionPane({
           reusable={matchingType === "matching_reusable"}
           mode="targets"
           onChangeResponse={(questionId, response) => onChangeResponse(questionId, response)}
+          languageCertSkin={languageCertSkin}
         />
       ) : isMatchingPart ? (
         <MatchingQuestionGroup

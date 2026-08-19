@@ -10,6 +10,8 @@ interface SourceTextMatchingGroupProps {
   reusable: boolean;
   mode: "source" | "targets";
   onChangeResponse: (questionId: number, response: AttemptResponse) => void;
+  /** Final Test only: the exam paper accepts drag-and-drop, not a picker. */
+  languageCertSkin?: boolean;
 }
 
 function optionLabel(option: QuestionOption | undefined, key: string) {
@@ -23,6 +25,7 @@ export function SourceTextMatchingGroup({
   reusable,
   mode,
   onChangeResponse,
+  languageCertSkin = false,
 }: SourceTextMatchingGroupProps) {
   const options = questions[0]?.options ?? [];
   const [pickedKey, setPickedKey] = useState<string | null>(null);
@@ -108,9 +111,11 @@ export function SourceTextMatchingGroup({
   }
 
   /* Question on top, drop zone directly beneath it - the shape candidates meet
-     in the real test. The <select> stays as the accessible control but is
-     styled to *be* the drop zone, so pointer, keyboard and touch all drive the
-     same target rather than the drag being the only way in. */
+     in the real test. Outside the exam skin the <select> stays as the
+     accessible control, styled to *be* the drop zone, so pointer, keyboard and
+     touch all drive the same target rather than the drag being the only way
+     in. The Final Test drops the picker (see below) and relies on drag plus
+     the pick-then-place buttons. */
   return (
     <div className="test-runner-source-text-targets" aria-label="Matching targets">
       {questions.map((question, index) => {
@@ -146,7 +151,13 @@ export function SourceTextMatchingGroup({
                 </ul>
               )}
 
-              {canAddMore && (
+              {/* The exam paper is drag-and-drop only. Offering the list of
+                  texts as a picker beside the well turns a matching task into
+                  a multiple-choice one - the candidate can read every option
+                  from the well without ever going back to the passages. The
+                  well stays a labelled drop target, and the pick-then-place
+                  flow below still covers pointers that cannot drag. */}
+              {canAddMore && !languageCertSkin && (
                 <label className="test-runner-source-text-slot-control">
                   <span className="sr-only">
                     {multi ? `Add a text to question ${questionNumber}` : `Answer for question ${questionNumber}`}
@@ -172,6 +183,12 @@ export function SourceTextMatchingGroup({
                     ))}
                   </select>
                 </label>
+              )}
+              {canAddMore && languageCertSkin && selected.length === 0 && (
+                <span
+                  className="test-runner-source-text-dropzone"
+                  aria-label={`Drop the correct text here for question ${questionNumber}`}
+                />
               )}
 
               {/* Tap flow: pick a text on the left, then place it here. */}

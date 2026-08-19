@@ -203,11 +203,33 @@ export function ListeningHeaderPlayer({
     localStorage.setItem(VOLUME_KEY, String(volume));
   }, [volume, currentAudioUrl]);
 
+  /* Duration arrives on its own event, not with the first time update. Reading
+     it only inside `timeupdate` left it at 0 for the opening seconds - and for
+     any encoding that reports it late, permanently - so the progress bar had no
+     denominator and never moved off zero. `Infinity` is what a stream reports
+     and is no more usable than 0, so both are treated as "not known yet". */
+  const readDuration = (audioEl: HTMLAudioElement) => {
+    setDuration(Number.isFinite(audioEl.duration) && audioEl.duration > 0 ? audioEl.duration : 0);
+  };
+
+  const handleDurationChange = () => {
+    const audioEl = audioRef.current;
+    if (audioEl) readDuration(audioEl);
+  };
+
+  /* A playlist part swaps the source under the same element, and the readout
+     has to start over with it - otherwise the bar keeps the finished track's
+     fill until the new one reports its first update. */
+  useEffect(() => {
+    setCurrentTime(0);
+    setDuration(0);
+  }, [currentAudioUrl]);
+
   const handleTimeUpdate = () => {
     const audioEl = audioRef.current;
     if (!audioEl) return;
     setCurrentTime(audioEl.currentTime);
-    setDuration(audioEl.duration || 0);
+    readDuration(audioEl);
     sessionStorage.setItem(storageKey, String(Math.floor(audioEl.currentTime)));
   };
 
@@ -249,6 +271,8 @@ export function ListeningHeaderPlayer({
       ref={audioRef}
       src={currentAudioUrl}
       onTimeUpdate={handleTimeUpdate}
+      onLoadedMetadata={handleDurationChange}
+      onDurationChange={handleDurationChange}
       onEnded={handleEnded}
       onPlay={() => {
         setPhase("playing");
@@ -300,6 +324,8 @@ export function ListeningHeaderPlayer({
         ref={audioRef}
         src={currentAudioUrl}
         onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleDurationChange}
+        onDurationChange={handleDurationChange}
         onEnded={handleEnded}
         onPlay={() => {
           setPhase("playing");

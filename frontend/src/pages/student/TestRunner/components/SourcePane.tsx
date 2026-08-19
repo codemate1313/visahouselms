@@ -123,6 +123,7 @@ export function SourcePane({
           reusable={matchingType === "matching_reusable"}
           mode="source"
           onChangeResponse={onChangeResponse}
+          languageCertSkin={languageCertSkin}
         />
       ) : sourcePassages.length > 0 ? (
         sourcePassages.map((passage, index) => (

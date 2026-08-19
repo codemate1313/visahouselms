@@ -45,9 +45,12 @@
   font-family: var(--lc-font);
 }
 
-/* The exam client is one fixed light surface. Dark mode is a study-tool
-   feature; carrying it into the Final Test would mean sitting an exam that
-   looks nothing like the real one, so the skin pins its own palette. */
+/* The exam client is one fixed light surface, so the Final Test never renders
+   dark. That is enforced in `useExamLightTheme`, which holds `data-theme` at
+   light for the length of the attempt - the runner's dark rules are `!important`
+   declarations in 06-admin-modules-and-billing.css and no scoped CSS here can
+   outrank them, so they are stopped from matching instead. This only settles
+   the parts CSS still owns: native controls and scrollbars. */
 .lc-exam,
 .lc-exam * {
   color-scheme: light;
@@ -64,7 +67,7 @@
 /* The app sizes every text field at a 42px tap target. Exam fields are set in
    the line of type and have to sit on the baseline like print, so the reset is
    written to the same specificity as that global rule and simply lands later. */
-.lc-exam input:not([type="radio"]):not([type="checkbox"]) {
+.lc-exam input:not([type="radio"]):not([type="checkbox"]):not([type="range"]) {
   width: auto;
   min-height: 0;
   padding: 4px 8px;
@@ -74,6 +77,36 @@
   color: var(--lc-ink);
   font-size: 13px;
   transition: none;
+}
+
+/* The app rings a focused field in the brand colour. An exam field is part of
+   the paper: it looks the same whether or not the caret is in it, so the ring
+   goes rather than gets restyled - including the global `input:focus`
+   box-shadow, which is what drew the heavy red outline. */
+.lc-exam input:focus,
+.lc-exam input:focus-visible,
+.lc-exam textarea:focus,
+.lc-exam textarea:focus-visible {
+  border-color: #6f6f6f;
+  box-shadow: none;
+  outline: none;
+}
+
+/* Visually-hidden text has no global rule in this codebase, so every
+   `.sr-only` label renders as ordinary copy - which is why empty answer wells
+   read "Answer for question 48". Scoped here rather than fixed globally,
+   since that reaches screens outside the Final Test. */
+.lc-exam .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 /* The base sheet styles headings by element, which beats inheritance however
@@ -276,7 +309,18 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-left: 41px;
+  padding-left: 20px;
+}
+
+.lc-rail-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.lc-rail-flag {
+  flex: 0 0 auto;
+  color: #7c7c7c;
 }
 
 /* Each tab is a tag: a rectangle with a triangular point on its trailing edge.
@@ -285,7 +329,7 @@
 .lc-rail-tab {
   position: relative;
   display: block;
-  width: 114px;
+  width: 138px;
   min-height: 26px;
   margin: 0;
   padding: 5px 8px;
@@ -319,6 +363,19 @@
   color: #ffffff;
 }
 
+/* The plain hover rule outranks `.is-active`, so hovering the tab already in
+   view bleached it to the inactive grey while its arrow stayed black. The
+   active tab gets its own, darker, hover instead. */
+.lc-rail-tab.is-active:hover:not(:disabled) {
+  border-color: #000000;
+  background: #3d3d3d;
+  color: #ffffff;
+}
+
+.lc-rail-tab.is-active:hover:not(:disabled)::after {
+  border-left-color: #3d3d3d;
+}
+
 .lc-rail-tab.is-active::after {
   content: "";
   position: absolute;
@@ -332,11 +389,18 @@
   transform: translateY(-50%);
 }
 
-/* Speaking is delivered through the interview client, which fills in the parts
-   already recorded. The written papers show no completion state at all. */
-.lc-rail-group[data-section="speaking"] .lc-rail-tab.is-complete {
+/* A finished part fills in, in every section - the rail is how a candidate
+   sees at a glance what is left, and that reading should not depend on which
+   paper they happen to be sitting. */
+.lc-rail-tab.is-complete {
   border-color: var(--lc-red);
   background: var(--lc-red);
+  color: #ffffff;
+}
+
+.lc-rail-tab.is-complete:hover:not(:disabled) {
+  border-color: var(--lc-red-hover);
+  background: var(--lc-red-hover);
   color: #ffffff;
 }
 
@@ -404,13 +468,17 @@
    Body
    ------------------------------------------------------------------------- */
 
+/* The two-column reading papers do not scroll as one sheet: the passage is
+   reference material and has to stay put while the candidate works down the
+   questions beside it, so the body is fixed to the viewport and each pane
+   carries its own scrollbar. */
 .lc-exam .test-runner-body {
   padding: 14px 32px 26px;
   align-content: start;
   gap: 0 26px;
   grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .lc-exam .test-runner-body--writing {
@@ -452,11 +520,29 @@
 .lc-exam .test-runner-source-pane {
   grid-column: 1;
   grid-row: 2;
+  min-height: 0;
+  padding-right: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .lc-exam .test-runner-question-pane {
   grid-column: 3;
   grid-row: 2;
+  min-height: 0;
+  padding-right: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Single-column and writing papers are one continuous sheet and keep scrolling
+   as a whole. */
+.lc-exam .test-runner-body--listening .test-runner-question-pane,
+.lc-exam .test-runner-body--single-column .test-runner-question-pane,
+.lc-exam .test-runner-body--writing .test-runner-source-pane,
+.lc-exam .test-runner-body--writing .test-runner-question-pane {
+  padding-right: 0;
+  overflow: visible;
 }
 
 .lc-exam .test-runner-body--listening .test-runner-question-pane,
@@ -913,6 +999,7 @@
 .lc-exam .test-runner-inline-blank {
   display: inline-flex;
   min-width: 155px;
+  max-width: 100%;
   min-height: 21px;
   align-items: center;
   justify-content: center;
@@ -927,25 +1014,55 @@
   vertical-align: middle;
 }
 
+/* An empty gap keeps its single-line height; a filled one grows to whatever
+   was dropped in. The base sheet clips the sentence to one line with an
+   ellipsis, which on this paper means the candidate cannot read back the
+   answer they placed. */
 .lc-exam .test-runner-inline-blank > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  text-align: left;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .lc-exam .test-runner-inline-blank.is-filled {
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-height: 0;
+  padding: 3px 6px;
   border-color: var(--lc-peach-line);
   background: var(--lc-peach-mute);
+  line-height: 1.4;
+  text-align: left;
 }
 
+/* In flow, not absolutely positioned: the base sheet parks the clear button
+   over the right-hand end of the field, which lands it on top of the sentence
+   as soon as the text is long enough to reach it. */
 .lc-exam .test-runner-inline-blank-clear {
-  margin-left: 6px;
-  padding: 0 3px;
+  position: static;
+  width: auto;
+  height: auto;
+  flex: 0 0 auto;
+  align-self: center;
+  margin-left: 8px;
+  padding: 0 2px;
   border: 0;
+  border-radius: 0;
   background: transparent;
   color: var(--lc-red);
   font-size: 12px;
   font-weight: 700;
+  transform: none;
+}
+
+/* No hover treatment on the clear control - the base sheet swells it into a
+   filled red disc that covers the last word of the answer. */
+.lc-exam .test-runner-inline-blank-clear:hover,
+.lc-exam .test-runner-inline-blank-clear:focus-visible {
+  background: transparent;
+  color: var(--lc-red);
+  outline: none;
 }
 
 /* -------------------------------------------------------------------------
@@ -1152,26 +1269,12 @@
   font-weight: 700;
 }
 
-/* The select is the accessible drop target. It is sized to the well and shows
-   no chrome, so pointer, keyboard and drag all land on the same control. */
-.lc-exam .test-runner-source-text-slot-control {
-  display: flex;
+/* An empty well on the exam paper is just that: an empty well. The picker the
+   standard engine puts here is not rendered under this skin. */
+.lc-exam .test-runner-source-text-dropzone {
+  display: block;
   width: 100%;
   height: 100%;
-}
-
-.lc-exam .test-runner-source-text-slot-control select {
-  width: 100%;
-  height: 100%;
-  padding: 0 4px;
-  border: 0;
-  appearance: none;
-  -webkit-appearance: none;
-  background: transparent;
-  color: var(--lc-muted);
-  font-size: 12px;
-  text-align: center;
-  text-align-last: center;
 }
 
 .lc-exam .test-runner-source-text-place {
@@ -1300,11 +1403,6 @@
 
 .lc-exam .test-runner-notepad .test-runner-notepad-blank .test-runner-text-input.is-error {
   border-color: var(--lc-red);
-}
-
-.lc-exam .test-runner-text-input:focus-visible {
-  outline: 2px solid var(--lc-red);
-  outline-offset: 0;
 }
 
 /* -------------------------------------------------------------------------
@@ -1578,29 +1676,38 @@
   color: #3d3d3d;
 }
 
-.lc-audio-volume input[type="range"] {
+/* Scoped to `.lc-exam` to match the specificity of the global
+   `input:not([type="radio"]):not([type="checkbox"])` rule, which is what was
+   drawing a box around the slider. Excluding range from this file's own field
+   reset was not enough on its own - it only stopped overriding that border,
+   it did not remove it. */
+.lc-exam .lc-audio-volume input[type="range"] {
   width: 100%;
   min-width: 0;
+  min-height: 0;
   height: 12px;
   margin: 0;
   padding: 0;
   appearance: none;
   -webkit-appearance: none;
+  border: 0;
+  border-radius: 0;
   background: transparent;
+  box-shadow: none;
   cursor: pointer;
 }
 
-.lc-audio-volume input[type="range"]::-webkit-slider-runnable-track {
+.lc-exam .lc-audio-volume input[type="range"]::-webkit-slider-runnable-track {
   height: 1px;
   background: #8a8a8a;
 }
 
-.lc-audio-volume input[type="range"]::-moz-range-track {
+.lc-exam .lc-audio-volume input[type="range"]::-moz-range-track {
   height: 1px;
   background: #8a8a8a;
 }
 
-.lc-audio-volume input[type="range"]::-webkit-slider-thumb {
+.lc-exam .lc-audio-volume input[type="range"]::-webkit-slider-thumb {
   width: 11px;
   height: 11px;
   margin-top: -5px;
@@ -1611,7 +1718,7 @@
   background: #ffffff;
 }
 
-.lc-audio-volume input[type="range"]::-moz-range-thumb {
+.lc-exam .lc-audio-volume input[type="range"]::-moz-range-thumb {
   width: 11px;
   height: 11px;
   border: 1px solid #7b7b7b;
@@ -1619,7 +1726,7 @@
   background: #ffffff;
 }
 
-.lc-audio-volume input[type="range"]:focus-visible {
+.lc-exam .lc-audio-volume input[type="range"]:focus-visible {
   outline: 2px solid var(--lc-red);
   outline-offset: 3px;
 }
