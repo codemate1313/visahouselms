@@ -2395,6 +2395,7 @@
 .test-violation-modal h2 {
   margin: 16px 0 8px;
   font-size: 24px;
+  color: #ffffff;
 }
 
 .test-violation-modal p {

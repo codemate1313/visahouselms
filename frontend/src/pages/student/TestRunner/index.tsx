@@ -1134,7 +1134,10 @@ export function TestRunner() {
       count={violationNotice.count}
       limit={violationNotice.limit}
       autoSubmitted={violationNotice.autoSubmitted}
-      onContinue={() => setViolationNotice(null)}
+      onContinue={async () => {
+        setViolationNotice(null);
+        await enterFullscreen();
+      }}
       onViewResult={() => navigate(`/student/attempts/${attempt.id}/result`, { replace: true })}
     />
   ) : null;
@@ -1333,7 +1336,7 @@ export function TestRunner() {
 
       {violationModal}
 
-      {isImmersiveAttempt && !fullscreenActive && !developerFullscreenBypass.current && !violationNotice?.autoSubmitted && (
+      {isImmersiveAttempt && !fullscreenActive && !developerFullscreenBypass.current && !violationNotice && (
         <FullscreenGate isFinal={attempt.is_final} secondsLeft={secondsLeft} onEnterFullscreen={enterFullscreen} />
       )}
     </div>
