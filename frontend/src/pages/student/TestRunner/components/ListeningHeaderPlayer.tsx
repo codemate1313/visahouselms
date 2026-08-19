@@ -70,6 +70,10 @@ function LcSpeakerIcon() {
   );
 }
 
+function audioCompletedKey(attemptId: number, partId: number) {
+  return `vh:listening:completed:${attemptId}:${partId}`;
+}
+
 export function ListeningHeaderPlayer({
   attemptId,
   currentPart,
@@ -79,7 +83,14 @@ export function ListeningHeaderPlayer({
   languageCertSkin = false,
 }: ListeningHeaderPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [phase, setPhase] = useState<"waiting" | "playing" | "finished">("waiting");
+
+  const completedKey = audioCompletedKey(attemptId, currentPart.id);
+  const isCompletedInitial = typeof window !== "undefined" && sessionStorage.getItem(completedKey) === "true";
+  const wasCompletedOnMountRef = useRef(isCompletedInitial);
+
+  const [phase, setPhase] = useState<"waiting" | "playing" | "finished">(
+    isCompletedInitial ? "finished" : "waiting"
+  );
   const [countdown, setCountdown] = useState(START_DELAY_SECONDS);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -130,6 +141,11 @@ export function ListeningHeaderPlayer({
      nobody can skip ahead during the silence. */
   useEffect(() => {
     if (!currentAudioUrl) {
+      onAudioLockChange?.(false);
+      return;
+    }
+
+    if (isCompletedInitial) {
       onAudioLockChange?.(false);
       return;
     }
@@ -203,6 +219,7 @@ export function ListeningHeaderPlayer({
     // Keeping the end position would resume a finished part at its last second
     // and immediately end it again.
     sessionStorage.removeItem(storageKey);
+    sessionStorage.setItem(completedKey, "true");
     setPhase("finished");
     onAudioLockChange?.(false);
   };
@@ -211,7 +228,7 @@ export function ListeningHeaderPlayer({
      after a short pause rather than being left on a section they can no longer
      answer. */
   useEffect(() => {
-    if (phase !== "finished" || !onAudioComplete) return;
+    if (phase !== "finished" || !onAudioComplete || wasCompletedOnMountRef.current) return;
     const timer = window.setTimeout(() => onAudioComplete(), END_DELAY_SECONDS * 1000);
     return () => window.clearTimeout(timer);
   }, [phase, onAudioComplete]);
@@ -246,7 +263,7 @@ export function ListeningHeaderPlayer({
      because knowing how much recording is left is itself an advantage the
      real exam does not hand out. */
   if (languageCertSkin) {
-    const elapsed = duration > 0 ? Math.min(1, currentTime / duration) : 0;
+    const elapsed = phase === "finished" ? 1 : (duration > 0 ? Math.min(1, currentTime / duration) : 0);
     return (
       <div className="lc-audio" aria-label="Listening Master Audio Track">
         {audioElement}
@@ -301,7 +318,7 @@ export function ListeningHeaderPlayer({
           <div className="lca-listening-progress-bar">
             <div
               className="lca-listening-progress-fill"
-              style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+              style={{ width: `${phase === "finished" ? 100 : (duration > 0 ? (currentTime / duration) * 100 : 0)}%` }}
             />
           </div>
         </div>

@@ -990,16 +990,51 @@
 .lc-exam .test-runner-inline-options > button:hover:not(:disabled),
 .lc-exam .test-runner-source-text-options > button:hover:not(:disabled),
 .lc-exam .test-runner-option-bank > button:hover:not(:disabled) {
-  border-color: #c4703f;
-  background: #f4a77f;
+  border-color: #c4703f !important;
+  background: #f4a77f !important;
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
   transform: none;
+}
+
+.lc-exam .test-runner-inline-options > button:hover:not(:disabled) strong,
+.lc-exam .test-runner-source-text-options > button:hover:not(:disabled) strong,
+.lc-exam .test-runner-option-bank > button:hover:not(:disabled) strong {
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+.lc-exam .test-runner-inline-options > button:hover:not(:disabled) span,
+.lc-exam .test-runner-source-text-options > button:hover:not(:disabled) span,
+.lc-exam .test-runner-option-bank > button:hover:not(:disabled) span {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
 }
 
 .lc-exam .test-runner-inline-options > button.is-picked,
 .lc-exam .test-runner-source-text-options > button.is-picked,
 .lc-exam .test-runner-option-bank > button.is-picked {
-  border-color: var(--lc-red);
-  box-shadow: 0 0 0 2px rgba(238, 49, 36, 0.35);
+  border-color: var(--lc-red) !important;
+  background: #ffffff !important;
+  color: #1a1a1a !important;
+  -webkit-text-fill-color: #1a1a1a !important;
+  box-shadow: 0 0 0 2px rgba(238, 49, 36, 0.35) !important;
+}
+
+.lc-exam .test-runner-inline-options > button.is-picked strong,
+.lc-exam .test-runner-source-text-options > button.is-picked strong,
+.lc-exam .test-runner-option-bank > button.is-picked strong {
+  background: #f0f0f0 !important;
+  color: #1a1a1a !important;
+  -webkit-text-fill-color: #1a1a1a !important;
+}
+
+.lc-exam .test-runner-inline-options > button.is-picked span,
+.lc-exam .test-runner-source-text-options > button.is-picked span,
+.lc-exam .test-runner-option-bank > button.is-picked span {
+  color: #1a1a1a !important;
+  -webkit-text-fill-color: #1a1a1a !important;
 }
 
 /* A card already placed is spent, not hidden: the exam client leaves it in the
