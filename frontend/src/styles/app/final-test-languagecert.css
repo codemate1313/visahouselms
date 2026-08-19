@@ -340,6 +340,12 @@
   color: #ffffff;
 }
 
+.lc-rail-group[data-section="speaking"] .lc-rail-tab.is-active.is-complete {
+  border-color: var(--lc-ink);
+  background: var(--lc-ink);
+  color: #ffffff;
+}
+
 .lc-rail-group[data-section="speaking"] .lc-rail-tabs {
   padding-left: 71px;
 }
@@ -354,6 +360,21 @@
   border: 1px solid #9a9a9a;
   background: #ffffff;
   transform: translateY(-50%);
+}
+
+.lc-rail-group[data-section="speaking"] .lc-rail-tab.is-complete::before {
+  content: "✓";
+  color: #ffffff;
+  background: var(--lc-red);
+  border-color: var(--lc-red);
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: bold;
+  line-height: 10px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .lc-rail-group[data-section="speaking"] .lc-rail-tab::after {
@@ -1605,9 +1626,9 @@
 
 .lc-audio-track {
   position: absolute;
-  right: 1px;
+  left: 10px;
   bottom: 0;
-  left: 1px;
+  width: 20px;
   height: 3px;
   background: transparent;
 }

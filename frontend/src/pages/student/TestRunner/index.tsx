@@ -33,7 +33,6 @@ import { QuestionPane } from "./components/QuestionPane";
 import { TestRunnerFooter } from "./components/TestRunnerFooter";
 import { SubmitConfirmModal } from "./components/SubmitConfirmModal";
 import { FullscreenGate } from "./components/FullscreenGate";
-import { SecurityWatermark } from "./components/SecurityWatermark";
 import { DesktopRequiredNotice } from "./components/DesktopRequiredNotice";
 import { ViolationPolicyModal } from "./components/ViolationPolicyModal";
 import { SpeakingInterviewStage } from "./components/SpeakingInterviewStage";
@@ -135,7 +134,6 @@ export function TestRunner() {
   const [concurrentTab, setConcurrentTab] = useState(false);
   const [rulesAccepted] = useState(true);
   const [violationNotice, setViolationNotice] = useState<ViolationNotice | null>(null);
-  const [watermarkTime, setWatermarkTime] = useState(() => new Date());
   const submittedRef = useRef(false);
   const developerFullscreenBypass = useRef(false);
   const sourcePaneRef = useRef<HTMLElement | null>(null);
@@ -837,11 +835,7 @@ export function TestRunner() {
     };
   }, [attempt?.id, attempt?.is_final, attempt?.status, recordFlag]);
 
-  useEffect(() => {
-    if (!attempt?.is_final || attempt.status !== "in_progress") return;
-    const interval = window.setInterval(() => setWatermarkTime(new Date()), 30_000);
-    return () => window.clearInterval(interval);
-  }, [attempt?.id, attempt?.is_final, attempt?.status]);
+
 
   async function persist(questionId: number, response: AttemptResponse, revision: number) {
     setSavingIds((prev) => new Set(prev).add(questionId));
@@ -1304,15 +1298,7 @@ export function TestRunner() {
         </main>
       </div>
 
-      {isFinalAttempt && (
-        <SecurityWatermark
-          firstName={user?.first_name}
-          lastName={user?.last_name}
-          userId={user?.id}
-          attemptId={attempt.id}
-          watermarkTime={watermarkTime}
-        />
-      )}
+
       {cameraPreview}
 
       <TestRunnerFooter

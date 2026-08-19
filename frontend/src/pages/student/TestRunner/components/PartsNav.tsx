@@ -58,7 +58,7 @@ export function PartsNav({
                     type="button"
                     key={part.id}
                     disabled={locked}
-                    className={`lc-rail-tab${index === partIndex ? " is-active" : ""}${complete && index !== partIndex ? " is-complete" : ""}`}
+                    className={`lc-rail-tab${index === partIndex ? " is-active" : ""}${complete ? " is-complete" : ""}`}
                     onClick={() => !isNavigationLocked && onSelectPart(index)}
                     aria-current={index === partIndex ? "step" : undefined}
                     title={locked ? t.navigationLocked : undefined}
