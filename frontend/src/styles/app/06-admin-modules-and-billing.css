@@ -6635,6 +6635,10 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
   color: #ffffff !important;
 }
 
+[data-theme="dark"] .test-runner-part-tab.is-active::after {
+  border-left-color: var(--test-accent, var(--primary)) !important;
+}
+
 [data-theme="dark"] .test-runner-timer {
   background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
   border-color: color-mix(in srgb, var(--primary) 26%, transparent) !important;

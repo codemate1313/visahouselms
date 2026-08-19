@@ -1,0 +1,151 @@
+.custom-audio-player-container {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  margin: 12px auto;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 4px;
+  padding: 16px 20px 20px 20px;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-audio-player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+/* Play/Pause Button */
+.custom-audio-play-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface, #ffffff);
+  border: 3px solid var(--test-accent, var(--primary, #e85d3f));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.custom-audio-play-btn:hover {
+  transform: scale(1.05);
+  border-color: color-mix(in srgb, var(--test-accent, var(--primary, #e85d3f)) 80%, #000);
+}
+
+.custom-audio-play-btn:active {
+  transform: scale(0.95);
+}
+
+.custom-audio-icon-play {
+  width: 15px;
+  height: 15px;
+  color: var(--test-accent, var(--primary, #e85d3f));
+  margin-left: 3px; /* Optically center triangle */
+}
+
+.custom-audio-icon-pause {
+  width: 13px;
+  height: 13px;
+  color: var(--test-accent, var(--primary, #e85d3f));
+}
+
+/* Volume Section */
+.custom-audio-volume-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.custom-audio-icon-volume {
+  width: 18px;
+  height: 18px;
+  color: var(--text, #1e293b);
+  flex-shrink: 0;
+}
+
+/* Volume Slider Input Range */
+.custom-audio-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  width: 100px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+/* Webkit Track & Thumb */
+.custom-audio-volume-slider::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--text, #1e293b);
+  border-radius: 1px;
+}
+
+.custom-audio-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  border: 1px solid #1e293b;
+  margin-top: -5px; /* Center thumb vertically on track */
+  box-shadow: none;
+  transition: background-color 0.15s ease;
+}
+
+.custom-audio-volume-slider:hover::-webkit-slider-thumb {
+  background: #cbd5e1;
+}
+
+/* Mozilla Track & Thumb */
+.custom-audio-volume-slider::-moz-range-track {
+  height: 2px;
+  background: var(--text, #1e293b);
+  border-radius: 1px;
+}
+
+.custom-audio-volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  border: 1px solid #1e293b;
+  box-shadow: none;
+  transition: background-color 0.15s ease;
+}
+
+.custom-audio-volume-slider:hover::-moz-range-thumb {
+  background: #cbd5e1;
+}
+
+/* Full-width bottom progress bar */
+.custom-audio-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--border, #cbd5e1);
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+}
+
+.custom-audio-progress-fill {
+  height: 100%;
+  background: var(--test-accent, var(--primary, #e85d3f));
+  width: 0;
+}

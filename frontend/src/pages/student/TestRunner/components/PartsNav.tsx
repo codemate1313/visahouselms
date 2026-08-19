@@ -20,6 +20,15 @@ interface PartsNavProps {
   languageCertSkin?: boolean;
 }
 
+function formatPartTitle(title: string) {
+  const match = title.match(/^([A-Za-z\s]+)\s+(\d+)$/);
+  if (match) {
+    const sectionName = match[1].trim();
+    return `${sectionName} Part ${match[2]}`;
+  }
+  return title;
+}
+
 export function PartsNav({
   answeredCount,
   totalQuestions,
@@ -54,7 +63,7 @@ export function PartsNav({
                     aria-current={index === partIndex ? "step" : undefined}
                     title={locked ? t.navigationLocked : undefined}
                   >
-                    {part.title}
+                    {formatPartTitle(part.title)}
                   </button>
                 );
               })}
@@ -88,7 +97,7 @@ export function PartsNav({
                 aria-current={index === partIndex ? "step" : undefined}
                 title={isNavigationLocked && index !== partIndex ? strings.nav.navigationLocked : undefined}
               >
-                <span>{part.title}</span>
+                <span>{formatPartTitle(part.title)}</span>
                 <span className="test-runner-part-progress">
                   {part.answered_count}/{part.question_count}
                 </span>

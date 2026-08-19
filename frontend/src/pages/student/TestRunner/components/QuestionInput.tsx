@@ -3,6 +3,7 @@ import type { AttemptQuestion, AttemptResponse } from "@/api/types";
 import { Checkbox, RichTextEditor } from "@/components/ui";
 import { renderBoldText } from "@/utils/boldText";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
+import { CustomAudioPlayer } from "./CustomAudioPlayer";
 
 interface QuestionInputProps {
   index: number;
@@ -156,7 +157,7 @@ export function QuestionInput({
           <button type="button" className={recording ? "danger" : ""} onClick={onRecord}>
             {recording ? t.stopRecording : question.audio_path ? t.reRecordAnswer : t.recordAnswer}
           </button>
-          {question.audio_path && !recording && <audio controls src={`${API_BASE_URL}${question.audio_path}`} />}
+          {question.audio_path && !recording && <CustomAudioPlayer src={`${API_BASE_URL}${question.audio_path}`} />}
         </div>
       )}
     </div>

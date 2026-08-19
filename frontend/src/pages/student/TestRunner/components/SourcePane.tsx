@@ -6,6 +6,7 @@ import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { InlineMatchingBlankGroup } from "./InlineMatchingBlankGroup";
 import { SourceTextMatchingGroup } from "./SourceTextMatchingGroup";
 import { SharedClozeGroup } from "./SharedClozeGroup";
+import { CustomAudioPlayer } from "./CustomAudioPlayer";
 
 interface SourcePaneProps {
   currentPart: Attempt["parts"][number];
@@ -93,7 +94,7 @@ export function SourcePane({
           {asset.asset_type === "avatar_mp4" && asset.url ? (
             <video controls src={`${API_BASE_URL}${asset.url}`} />
           ) : asset.url ? (
-            <audio controls src={`${API_BASE_URL}${asset.url}`} />
+            <CustomAudioPlayer src={`${API_BASE_URL}${asset.url}`} />
           ) : null}
         </div>
       ))}
