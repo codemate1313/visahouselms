@@ -15,6 +15,8 @@ interface SourcePaneProps {
   questionNumberOffset: number;
   savingIds: Set<number>;
   onChangeResponse: (questionId: number, response: AttemptResponse) => void;
+  /** Final Test only: the exam skin titles writing tasks "Writing Part 1". */
+  languageCertSkin?: boolean;
 }
 
 export function SourcePane({
@@ -25,6 +27,7 @@ export function SourcePane({
   questionNumberOffset,
   savingIds,
   onChangeResponse,
+  languageCertSkin = false,
 }: SourcePaneProps) {
   const t = strings.sourcePane;
   const sectionLabels = strings.sectionLabels;
@@ -48,8 +51,10 @@ export function SourcePane({
     <section className="test-runner-source-pane" ref={sourcePaneRef}>
       <div className="test-runner-pane-heading">
         {isWriting ? (
-          <h2 style={{ fontSize: 18, fontWeight: 800, textTransform: "uppercase", color: "color-mix(in srgb, var(--test-accent, var(--primary)) 88%, #111113)", margin: 0 }}>
-            {currentPart.part_code.replaceAll("_", " ")}
+          <h2 style={languageCertSkin ? undefined : { fontSize: 18, fontWeight: 800, textTransform: "uppercase", color: "color-mix(in srgb, var(--test-accent, var(--primary)) 88%, #111113)", margin: 0 }}>
+            {/* The exam prints the task's own name - "Writing Part 1" - which
+                is the same label the section rail carries. */}
+            {languageCertSkin ? currentPart.title : currentPart.part_code.replaceAll("_", " ")}
           </h2>
         ) : (
           <>

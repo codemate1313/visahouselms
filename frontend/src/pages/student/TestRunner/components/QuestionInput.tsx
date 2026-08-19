@@ -14,6 +14,8 @@ interface QuestionInputProps {
   recording: boolean;
   onChange: (response: AttemptResponse, debounce?: boolean) => void;
   onRecord: () => void;
+  /** Final Test only: shows the exam toolbar's undo/redo pair. */
+  languageCertSkin?: boolean;
 }
 
 export function QuestionInput({
@@ -26,6 +28,7 @@ export function QuestionInput({
   recording,
   onChange,
   onRecord,
+  languageCertSkin = false,
 }: QuestionInputProps) {
   const selected = question.response?.selected;
   const t = strings.question;
@@ -50,7 +53,14 @@ export function QuestionInput({
     <div className="test-runner-question">
       {!hidePrompt && (
         <div className="test-runner-question-head">
-          <span>{t.label(index)}</span>
+          {/* Both forms ship: the standard engine reads "Question 5", while the
+              Final Test's exam skin shows the bare numeral in its own cell.
+              Keeping the full label in the DOM means assistive tech still
+              announces the word either way. */}
+          <span className="test-runner-question-label">
+            <span className="test-runner-question-label-full">{t.label(index)}</span>
+            <span className="test-runner-question-label-number" aria-hidden="true">{index}</span>
+          </span>
           <span className="hint" style={{ visibility: saving ? "visible" : "hidden", opacity: saving ? 1 : 0, transition: "opacity 0.2s ease" }}>
             {t.saving}
           </span>
@@ -125,6 +135,7 @@ export function QuestionInput({
           <RichTextEditor
             className="test-runner-essay"
             rows={16}
+            showHistoryControls={languageCertSkin}
             placeholder="Write your response here..."
             value={textResponse}
             onChange={(nextText) => onChange({ text: nextText }, true)}
@@ -135,7 +146,7 @@ export function QuestionInput({
             }
           />
           <div className="test-runner-essay-footer">
-            <p className="hint">{wordCount} {t.wordsSuffix}</p>
+            <p className="hint"><span className="test-runner-word-count">{wordCount}</span> {t.wordsSuffix}</p>
           </div>
         </div>
       )}

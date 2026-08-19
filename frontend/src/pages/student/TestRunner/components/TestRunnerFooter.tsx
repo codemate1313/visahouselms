@@ -5,6 +5,8 @@ interface TestRunnerFooterProps {
   totalQuestions: number;
   submitting: boolean;
   onRequestSubmit: () => void;
+  /** Final Test only: the PeopleCert footer is a rule and one End Exam button. */
+  languageCertSkin?: boolean;
 }
 
 export function TestRunnerFooter({
@@ -12,8 +14,23 @@ export function TestRunnerFooter({
   totalQuestions,
   submitting,
   onRequestSubmit,
+  languageCertSkin = false,
 }: TestRunnerFooterProps) {
   const t = strings.footer;
+
+  /* No answered count on the exam skin: the official platform never shows one,
+     and it is the clearest tell that a candidate is not in the real delivery
+     client. The confirmation modal still reports it before submission. */
+  if (languageCertSkin) {
+    return (
+      <footer className="test-runner-footer lc-footer">
+        <button className="lc-end-exam" onClick={onRequestSubmit} disabled={submitting}>
+          {submitting ? t.submitting : t.endExam}
+        </button>
+      </footer>
+    );
+  }
+
   return (
     <footer className="test-runner-footer">
       <span>{t.answeredOf(answeredCount, totalQuestions)}</span>

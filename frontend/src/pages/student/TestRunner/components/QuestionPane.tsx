@@ -17,6 +17,8 @@ interface QuestionPaneProps {
   recordingQuestionId: number | null;
   onChangeResponse: (questionId: number, response: AttemptResponse, debounce?: boolean) => void;
   onRecord: (questionId: number) => void;
+  /** Final Test only: the exam skin's writing toolbar carries undo/redo. */
+  languageCertSkin?: boolean;
 }
 
 export function QuestionPane({
@@ -27,6 +29,7 @@ export function QuestionPane({
   recordingQuestionId,
   onChangeResponse,
   onRecord,
+  languageCertSkin = false,
 }: QuestionPaneProps) {
   const t = strings.questionPane;
   const isReading1a = currentPart.part_code === "reading_1a";
@@ -116,6 +119,7 @@ export function QuestionPane({
           maxAnswerWords={currentPart.answer_constraints.max_answer_words}
           saving={savingIds.has(question.id)}
           recording={recordingQuestionId === question.id}
+          languageCertSkin={languageCertSkin}
           onChange={(response, debounce) => onChangeResponse(question.id, response, debounce)}
           onRecord={() => onRecord(question.id)}
         />

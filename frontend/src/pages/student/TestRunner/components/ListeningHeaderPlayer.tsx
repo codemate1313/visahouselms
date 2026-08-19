@@ -10,6 +10,8 @@ interface ListeningHeaderPlayerProps {
   onAudioComplete?: () => void;
   /** Whether finishing this part moves the candidate on by itself. */
   autoAdvance?: boolean;
+  /** Final Test only: the compact PeopleCert transport replaces the wide bar. */
+  languageCertSkin?: boolean;
 }
 
 /** Seconds of silence before the recording starts, so the candidate can read
@@ -46,12 +48,35 @@ function VolumeIcon() {
   );
 }
 
+/** The filled pause disc the exam transport shows while a recording runs.
+ *  It is indication only - the candidate cannot pause an exam recording. */
+function LcPauseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <circle cx="12" cy="12" r="11" fill="currentColor" />
+      <rect x="8.75" y="7.5" width="2.2" height="9" rx="0.6" fill="#fff" />
+      <rect x="13.05" y="7.5" width="2.2" height="9" rx="0.6" fill="#fff" />
+    </svg>
+  );
+}
+
+function LcSpeakerIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+      <path d="M4 9.5v5h3.2L12 18.6V5.4L7.2 9.5H4z" />
+      <path d="M14.6 8.4a.85.85 0 0 1 1.2.06 5.2 5.2 0 0 1 0 7.08.85.85 0 1 1-1.26-1.14 3.5 3.5 0 0 0 0-4.8.85.85 0 0 1 .06-1.2z" />
+      <path d="M17.1 5.7a.85.85 0 0 1 1.2.02 8.9 8.9 0 0 1 0 12.56.85.85 0 1 1-1.22-1.18 7.2 7.2 0 0 0 0-10.2.85.85 0 0 1 .02-1.2z" />
+    </svg>
+  );
+}
+
 export function ListeningHeaderPlayer({
   attemptId,
   currentPart,
   onAudioLockChange,
   onAudioComplete,
   autoAdvance = false,
+  languageCertSkin = false,
 }: ListeningHeaderPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [phase, setPhase] = useState<"waiting" | "playing" | "finished">("waiting");
@@ -201,6 +226,56 @@ export function ListeningHeaderPlayer({
     : phase === "finished"
       ? autoAdvance ? "Audio complete — moving to the next part" : "Audio complete"
       : "";
+
+  const audioElement = (
+    <audio
+      ref={audioRef}
+      src={currentAudioUrl}
+      onTimeUpdate={handleTimeUpdate}
+      onEnded={handleEnded}
+      onPlay={() => {
+        setPhase("playing");
+        onAudioLockChange?.(true);
+      }}
+    />
+  );
+
+  /* The exam transport is deliberately tiny and inert: a pause disc that
+     reports state without accepting a click, and a volume slider. Elapsed
+     time is shown as a hairline under the disc rather than a full scrubber,
+     because knowing how much recording is left is itself an advantage the
+     real exam does not hand out. */
+  if (languageCertSkin) {
+    const elapsed = duration > 0 ? Math.min(1, currentTime / duration) : 0;
+    return (
+      <div className="lc-audio" aria-label="Listening Master Audio Track">
+        {audioElement}
+        <div className="lc-audio-box">
+          <div className={`lc-audio-transport${phase === "playing" ? " is-playing" : ""}`}>
+            <span className="lc-audio-pause" role="img" aria-label={phase === "playing" ? "Audio playing" : "Audio stopped"}>
+              <LcPauseIcon />
+            </span>
+          </div>
+          <div className="lc-audio-volume">
+            <LcSpeakerIcon />
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={volume}
+              aria-label="Audio volume"
+              onChange={(event) => setVolume(Number(event.target.value))}
+            />
+          </div>
+          <div className="lc-audio-track" aria-hidden="true">
+            <div className="lc-audio-track-fill" style={{ width: `${elapsed * 100}%` }} />
+          </div>
+        </div>
+        {statusText && <p className="lc-audio-status" role="status">{statusText}</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="lca-listening-header-player" aria-label="Listening Master Audio Track">

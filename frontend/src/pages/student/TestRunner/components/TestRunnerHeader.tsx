@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import type { Attempt } from "@/api/types";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
-import { formatTime } from "../helpers";
+import { formatTime, languageCertHeaderTitle } from "../helpers";
+import { LcClockIcon, PeopleCertBrand } from "./PeopleCertBrand";
 
 interface TestRunnerHeaderProps {
   attempt: Attempt;
@@ -19,6 +20,8 @@ interface TestRunnerHeaderProps {
   fullscreenActive: boolean;
   onExitDeveloperFullscreen: () => void;
   secondsLeft?: number;
+  /** Final Test only: the PeopleCert exam header replaces the standard one. */
+  languageCertSkin?: boolean;
 }
 
 export function TestRunnerHeader({
@@ -35,9 +38,66 @@ export function TestRunnerHeader({
   fullscreenActive,
   onExitDeveloperFullscreen,
   secondsLeft,
+  languageCertSkin = false,
 }: TestRunnerHeaderProps) {
   const t = strings.header;
   const sectionLabels = strings.sectionLabels;
+
+  const developerTools = (
+    <>
+      {/* Testing aid: the lock exists so a candidate cannot skip a recording,
+          so this deliberately overrides it - and only in development. */}
+      {import.meta.env.DEV && onSkipPart && (
+        <button
+          type="button"
+          className="test-runner-dev-exit"
+          onClick={onSkipPart}
+          disabled={partIndex >= attempt.parts.length - 1}
+        >
+          {t.devSkipPart}
+        </button>
+      )}
+      {import.meta.env.DEV && isImmersiveAttempt && fullscreenActive && (
+        <button type="button" className="test-runner-dev-exit" onClick={onExitDeveloperFullscreen}>
+          {t.devExitFullscreen}
+        </button>
+      )}
+    </>
+  );
+
+  /* The exam header is a fixed three-column lockup - brand, centred test name,
+     countdown - with no part navigation in it: on this platform the candidate
+     moves between parts from the sidebar and the in-page Previous/Next pair.
+     Listening carries no countdown at all; the recording sets the pace. */
+  if (languageCertSkin) {
+    const showTimer = attempt.status === "in_progress"
+      && secondsLeft !== undefined
+      && secondsLeft > 0
+      && currentPart.section_type !== "listening";
+
+    return (
+      <header className="test-runner-header lc-header">
+        <div className="lc-header-inner">
+          <PeopleCertBrand />
+          <h1 className="lc-header-title">{languageCertHeaderTitle(currentPart.section_type)}</h1>
+          <div className="lc-header-right">
+            {showTimer && (
+              <div
+                className={`lc-timer${secondsLeft < 300 ? " is-urgent" : ""}`}
+                role="timer"
+                aria-live="polite"
+                aria-label={t.timeLeft || "Time Left"}
+              >
+                <span>{formatTime(secondsLeft)}</span>
+                <LcClockIcon />
+              </div>
+            )}
+            {developerTools}
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="test-runner-header">
@@ -80,23 +140,7 @@ export function TestRunnerHeader({
             {t.next}
           </button>
         </div>
-        {/* Testing aid: the lock exists so a candidate cannot skip a recording,
-            so this deliberately overrides it - and only in development. */}
-        {import.meta.env.DEV && onSkipPart && (
-          <button
-            type="button"
-            className="test-runner-dev-exit"
-            onClick={onSkipPart}
-            disabled={partIndex >= attempt.parts.length - 1}
-          >
-            {t.devSkipPart}
-          </button>
-        )}
-        {import.meta.env.DEV && isImmersiveAttempt && fullscreenActive && (
-          <button type="button" className="test-runner-dev-exit" onClick={onExitDeveloperFullscreen}>
-            {t.devExitFullscreen}
-          </button>
-        )}
+        {developerTools}
       </div>
     </header>
   );

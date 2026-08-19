@@ -18,13 +18,16 @@ import {
   randomId,
   securityStorageKey,
   storedClientId,
+  usesLanguageCertSkin,
   type SecurityMediaState,
 } from "./helpers";
 import "@/styles/app/pre-exam-onboarding.css";
+import "@/styles/app/final-test-languagecert.css";
 import { PreExamOnboarding } from "./components/PreExamOnboarding";
 import { TestRunnerHeader } from "./components/TestRunnerHeader";
 import { ListeningHeaderPlayer } from "./components/ListeningHeaderPlayer";
 import { PartsNav } from "./components/PartsNav";
+import { LcPartPager } from "./components/LcPartPager";
 import { SourcePane } from "./components/SourcePane";
 import { QuestionPane } from "./components/QuestionPane";
 import { TestRunnerFooter } from "./components/TestRunnerFooter";
@@ -403,6 +406,9 @@ export function TestRunner() {
   const isImmersiveAttempt = attempt ? IMMERSIVE_MODULE_TYPES.has(attempt.module_type) : false;
   const immersiveAttemptId = isImmersiveAttempt ? attempt?.id : null;
   const isFinalAttempt = attempt?.is_final ?? false;
+  /* Strictly the Final Test module type - a full mock stays on the standard
+     engine skin even though it shares the immersive/fullscreen behaviour. */
+  const languageCertSkin = usesLanguageCertSkin(attempt?.module_type);
   const attemptStatus = attempt?.status;
 
   const onRequiredTrackEnded = useCallback((kind: "camera" | "microphone" | "screen") => {
@@ -1180,7 +1186,7 @@ export function TestRunner() {
   const speakingPartNumber = speakingParts.findIndex((part) => part.id === currentPart.id) + 1;
 
   return (
-    <div className={`test-runner-shell${brandedTestClass}`}>
+    <div className={`test-runner-shell${brandedTestClass}${languageCertSkin ? " lc-exam" : ""}`}>
       <TestRunnerHeader
         attempt={attempt}
         currentPart={currentPart}
@@ -1195,6 +1201,7 @@ export function TestRunner() {
         fullscreenActive={fullscreenActive}
         onExitDeveloperFullscreen={exitDeveloperFullscreen}
         secondsLeft={secondsLeft}
+        languageCertSkin={languageCertSkin}
       />
 
       {isListeningPart && (
@@ -1204,6 +1211,7 @@ export function TestRunner() {
           onAudioLockChange={setIsListeningLocked}
           autoAdvance={partIndex < attempt.parts.length - 1}
           onAudioComplete={handleListeningPartComplete}
+          languageCertSkin={languageCertSkin}
         />
       )}
 
@@ -1215,6 +1223,7 @@ export function TestRunner() {
           partIndex={partIndex}
           onSelectPart={selectPart}
           isNavigationLocked={isNavigationLocked}
+          languageCertSkin={languageCertSkin}
         />
 
         {/* Listening, Speaking, and standalone MCQ parts without separate source text span
@@ -1228,6 +1237,17 @@ export function TestRunner() {
               : ""
           }`}
         >
+          {/* The exam platform pages parts from inside the page body, above
+              the question area. Listening and Speaking are paced by their own
+              audio, so neither offers it. */}
+          {languageCertSkin && !isListeningPart && currentPart.section_type !== "speaking" && (
+            <LcPartPager
+              partIndex={partIndex}
+              partCount={attempt.parts.length}
+              onSelectPart={selectPart}
+              isNavigationLocked={isNavigationLocked}
+            />
+          )}
           {currentPart.section_type === "speaking" ? (
             <SpeakingInterviewStage
               attemptId={attempt.id}
@@ -1263,6 +1283,7 @@ export function TestRunner() {
                   questionNumberOffset={questionNumberOffset}
                   savingIds={savingIds}
                   onChangeResponse={(questionId, response) => updateResponse(questionId, response)}
+                  languageCertSkin={languageCertSkin}
                 />
               )}
               <QuestionPane
@@ -1273,6 +1294,7 @@ export function TestRunner() {
                 recordingQuestionId={recordingQuestionId}
                 onChangeResponse={updateResponse}
                 onRecord={recordSpeakingAnswer}
+                languageCertSkin={languageCertSkin}
               />
             </>
           )}
@@ -1295,6 +1317,7 @@ export function TestRunner() {
         totalQuestions={totalQuestions}
         submitting={submitting}
         onRequestSubmit={() => setConfirmSubmit(true)}
+        languageCertSkin={languageCertSkin}
       />
 
       {confirmSubmit && (

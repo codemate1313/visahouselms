@@ -49,3 +49,27 @@ export function storedClientId(attemptId: string | undefined): string {
   sessionStorage.setItem(key, value);
   return value;
 }
+
+/**
+ * The Final Test is sat in the official LanguageCert / PeopleCert exam skin,
+ * so its runner chrome is rebuilt to match the live delivery platform. Every
+ * other module type keeps the standard engine look, which is why this is keyed
+ * strictly on `final_test` rather than on `is_final` or the immersive set.
+ */
+export function usesLanguageCertSkin(moduleType?: string | null): boolean {
+  return moduleType === "final_test";
+}
+
+/** Title shown in the middle of the exam header, e.g. "LanguageCert Academic Test (Reading)". */
+export function languageCertHeaderTitle(sectionType: string): string {
+  const labels: Record<string, string> = {
+    listening: "Listening",
+    reading: "Reading",
+    writing: "Writing",
+    speaking: "Speaking",
+  };
+  const label = labels[sectionType] ?? sectionType;
+  return sectionType === "speaking"
+    ? "LanguageCert Academic Speaking"
+    : `LanguageCert Academic Test (${label})`;
+}

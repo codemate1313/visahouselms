@@ -1,0 +1,1974 @@
+/* =========================================================================
+   Final Test — LanguageCert / PeopleCert exam skin
+   =========================================================================
+
+   Everything here is scoped to `.lc-exam`, which the runner only puts on the
+   shell when the attempt's module type is `final_test`. Practice modules, full
+   mocks and institute-assigned tests keep the standard engine styling in
+   05-student-test-engine.css untouched.
+
+   The Final Test is the one attempt that must look like the delivery platform
+   a candidate will actually meet on exam day, so this file rebuilds the chrome
+   -- header, section rail, question cards, notepad, drag surfaces, writing
+   editor and speaking stage -- to match it rather than restyling around the
+   edges. It loads after the engine sheet and wins on scope alone.
+   ========================================================================= */
+
+.lc-exam {
+  --lc-red: #ee3124;
+  --lc-red-hover: #d3261a;
+  --lc-ink: #231f20;
+  --lc-title: #4d4d4d;
+  --lc-muted: #6d6e71;
+
+  --lc-line: #cfcfcf;
+  --lc-line-strong: #8f8f8f;
+  --lc-line-dark: #4a4a4a;
+
+  --lc-band: #eaeaea;
+  --lc-cell: #f5f5f5;
+  --lc-field: #ffffff;
+
+  --lc-peach: #f6b393;
+  --lc-peach-line: #dd8a5f;
+  --lc-peach-mute: #fbdccb;
+
+  --lc-pad: #e2e2e2;
+  --lc-pad-back: #4b4b4b;
+
+  --lc-font: Arial, "Liberation Sans", "Helvetica Neue", Helvetica, sans-serif;
+  --lc-serif: Georgia, "Times New Roman", Times, serif;
+  --lc-text: 14px;
+
+  background: #ffffff;
+  color: var(--lc-ink);
+  font-family: var(--lc-font);
+}
+
+/* The exam client is one fixed light surface. Dark mode is a study-tool
+   feature; carrying it into the Final Test would mean sitting an exam that
+   looks nothing like the real one, so the skin pins its own palette. */
+.lc-exam,
+.lc-exam * {
+  color-scheme: light;
+  letter-spacing: 0;
+}
+
+.lc-exam button,
+.lc-exam input,
+.lc-exam select,
+.lc-exam textarea {
+  font-family: inherit;
+}
+
+/* The app sizes every text field at a 42px tap target. Exam fields are set in
+   the line of type and have to sit on the baseline like print, so the reset is
+   written to the same specificity as that global rule and simply lands later. */
+.lc-exam input:not([type="radio"]):not([type="checkbox"]) {
+  width: auto;
+  min-height: 0;
+  padding: 4px 8px;
+  border: 1px solid #6f6f6f;
+  border-radius: 0;
+  background: #ffffff;
+  color: var(--lc-ink);
+  font-size: 13px;
+  transition: none;
+}
+
+/* The base sheet styles headings by element, which beats inheritance however
+   the shell is scoped - so the exam face has to be asserted on them directly,
+   along with the tracking and weight the app's display font carries. */
+.lc-exam h1,
+.lc-exam h2,
+.lc-exam h3,
+.lc-exam h4,
+.lc-exam h5,
+.lc-exam h6 {
+  color: var(--lc-ink);
+  font-family: var(--lc-font);
+  letter-spacing: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Header
+   ------------------------------------------------------------------------- */
+
+.lc-exam .test-runner-header.lc-header {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 10px 16px 0;
+  border: 0;
+  background: #ffffff;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* The engine paints an accent stripe across the top of every runner header.
+   The exam client has none. */
+.lc-exam .test-runner-header.lc-header::before {
+  content: none;
+}
+
+.lc-header-inner {
+  display: grid;
+  align-items: center;
+  min-height: 70px;
+  padding: 8px 18px;
+  border: 1px solid #e6e6e6;
+  background: #ffffff;
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.13);
+  gap: 16px;
+  grid-template-columns: minmax(180px, 1fr) minmax(0, 2fr) minmax(180px, 1fr);
+}
+
+.lc-brand {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1;
+}
+
+.lc-brand-wordmark {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1;
+}
+
+.lc-brand-people {
+  color: var(--lc-ink);
+}
+
+.lc-brand-cert {
+  color: var(--lc-red);
+}
+
+.lc-brand-sub {
+  display: flex;
+  gap: 4px;
+  font-size: 10.5px;
+  line-height: 1;
+}
+
+.lc-brand-passport {
+  color: var(--lc-ink);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.lc-brand-ates {
+  color: #8a8b8f;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+}
+
+.lc-header-title {
+  margin: 0;
+  overflow: hidden;
+  max-width: none;
+  color: var(--lc-title);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lc-header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.lc-timer {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 5px 11px;
+  border: 0;
+  border-radius: 0;
+  background: var(--lc-red);
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.lc-timer > span {
+  color: #ffffff;
+  font-size: inherit;
+  font-weight: inherit;
+  text-transform: none;
+}
+
+.lc-clock-icon {
+  flex: 0 0 auto;
+  opacity: 0.95;
+}
+
+/* Under five minutes the badge pulses. The colour never changes: it is already
+   the alarm colour, and swapping it would read as a different control. */
+.lc-timer.is-urgent {
+  animation: lcTimerPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes lcTimerPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.lc-exam .test-runner-dev-exit {
+  min-height: 26px;
+  padding: 4px 9px;
+  border: 1px solid var(--lc-line);
+  border-radius: 2px;
+  background: #ffffff;
+  color: var(--lc-muted);
+  font-size: 11px;
+}
+
+/* -------------------------------------------------------------------------
+   Layout + section rail
+   ------------------------------------------------------------------------- */
+
+.lc-exam .test-runner-layout {
+  background: #ffffff;
+}
+
+.lc-exam .test-runner-parts.lc-rail {
+  width: 230px;
+  flex: 0 0 230px;
+  padding: 14px 0 24px;
+  border-right: 1px solid #d5d5d5;
+  border-bottom: 0;
+  background: #ffffff;
+}
+
+.lc-rail-group + .lc-rail-group {
+  margin-top: 22px;
+}
+
+.lc-rail-heading {
+  margin: 0 0 8px 31px;
+  color: var(--lc-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.lc-rail-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 41px;
+}
+
+/* Each tab is a tag: a rectangle with a triangular point on its trailing edge.
+   The point is only drawn on the tab in view, which is how the exam client
+   marks position -- there is no highlight, underline or counter anywhere. */
+.lc-rail-tab {
+  position: relative;
+  display: block;
+  width: 114px;
+  min-height: 26px;
+  margin: 0;
+  padding: 5px 8px;
+  border: 1px solid #9a9a9a;
+  border-radius: 2px;
+  background: #ffffff;
+  box-shadow: none;
+  color: var(--lc-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.lc-rail-tab:hover:not(:disabled) {
+  border-color: var(--lc-ink);
+  background: #f3f3f3;
+  color: var(--lc-ink);
+  transform: none;
+}
+
+.lc-rail-tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.lc-rail-tab.is-active {
+  border-color: var(--lc-ink);
+  background: var(--lc-ink);
+  box-shadow: none;
+  color: #ffffff;
+}
+
+.lc-rail-tab.is-active::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -14px;
+  width: 0;
+  height: 0;
+  border-top: 14px solid transparent;
+  border-bottom: 14px solid transparent;
+  border-left: 14px solid var(--lc-ink);
+  transform: translateY(-50%);
+}
+
+/* Speaking is delivered through the interview client, which fills in the parts
+   already recorded. The written papers show no completion state at all. */
+.lc-rail-group[data-section="speaking"] .lc-rail-tab.is-complete {
+  border-color: var(--lc-red);
+  background: var(--lc-red);
+  color: #ffffff;
+}
+
+.lc-rail-group[data-section="speaking"] .lc-rail-tabs {
+  padding-left: 71px;
+}
+
+.lc-rail-group[data-section="speaking"] .lc-rail-tab::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -30px;
+  width: 13px;
+  height: 11px;
+  border: 1px solid #9a9a9a;
+  background: #ffffff;
+  transform: translateY(-50%);
+}
+
+.lc-rail-group[data-section="speaking"] .lc-rail-tab::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -31px;
+  width: 1px;
+  height: 15px;
+  background: #6f7075;
+  transform: translateY(-50%);
+}
+
+.lc-rail-group[data-section="speaking"] .lc-rail-tab.is-active::after {
+  top: 50%;
+  right: -14px;
+  left: auto;
+  width: 0;
+  height: 0;
+  border-top: 14px solid transparent;
+  border-bottom: 14px solid transparent;
+  border-left: 14px solid var(--lc-ink);
+  background: none;
+}
+
+/* -------------------------------------------------------------------------
+   Body
+   ------------------------------------------------------------------------- */
+
+.lc-exam .test-runner-body {
+  padding: 14px 32px 26px;
+  align-content: start;
+  gap: 0 26px;
+  grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow-y: auto;
+}
+
+.lc-exam .test-runner-body--writing {
+  display: block;
+  padding: 14px 32px 26px;
+  overflow-y: auto;
+}
+
+.lc-exam .test-runner-body--listening,
+.lc-exam .test-runner-body--single-column {
+  display: block;
+  padding: 14px 32px 26px;
+  overflow-y: auto;
+}
+
+/* The two-column reading papers are split by a solid rule, not by whitespace:
+   the middle grid track exists purely to carry it. */
+.lc-exam .test-runner-body:not(.test-runner-body--single-column):not(.test-runner-body--listening):not(.test-runner-body--writing)::before {
+  content: "";
+  width: 5px;
+  align-self: stretch;
+  justify-self: center;
+  background: #9a9a9a;
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.lc-exam .test-runner-source-pane,
+.lc-exam .test-runner-question-pane {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.lc-exam .test-runner-source-pane {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.lc-exam .test-runner-question-pane {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.lc-exam .test-runner-body--listening .test-runner-question-pane,
+.lc-exam .test-runner-body--single-column .test-runner-question-pane {
+  padding: 0;
+}
+
+/* The engine's pane headings ("Source material", "Part instructions", the part
+   title and a question count) have no counterpart on the exam client, where
+   the instruction band alone introduces the task. */
+.lc-exam .test-runner-pane-heading {
+  display: none;
+}
+
+.lc-exam .test-runner-body--writing .test-runner-pane-heading {
+  display: block;
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+}
+
+.lc-exam .test-runner-source-placeholder {
+  display: none;
+}
+
+/* Previous / Next */
+
+.lc-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+  gap: 10px;
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.lc-pager-button {
+  min-width: 124px;
+  height: 26px;
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--lc-red);
+  box-shadow: none;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 400;
+}
+
+.lc-pager-button:hover:not(:disabled) {
+  background: var(--lc-red-hover);
+  transform: none;
+}
+
+.lc-pager-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* -------------------------------------------------------------------------
+   Instruction band
+   ------------------------------------------------------------------------- */
+
+.lc-exam .lca-listening-instruction-banner,
+.lc-exam .test-runner-instructions {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 22px;
+  padding: 14px 12px !important;
+  border: 1px solid var(--lc-line-strong) !important;
+  border-radius: 0 !important;
+  background: var(--lc-band) !important;
+  color: var(--lc-ink) !important;
+  font-size: var(--lc-text);
+  font-weight: 400;
+  line-height: 1.45;
+  box-shadow: none !important;
+  white-space: normal;
+}
+
+/* The engine badges the band with a section initial. The exam client does not. */
+.lc-exam .lca-listening-instruction-badge {
+  display: none;
+}
+
+.lc-exam .lca-listening-instruction-text {
+  font-size: var(--lc-text);
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.lc-exam .lca-listening-part1-container {
+  --lca-accent: var(--lc-red);
+  padding: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Question cards  (shared by every multiple-choice paper)
+   -------------------------------------------------------------------------
+
+   One bordered strip carries the number in its own cell and the stem beside
+   it; the answers sit underneath, indented. The strip is painted by a grid
+   pseudo-element so it survives a stem-less question -- Listening 1 and the
+   Reading 1b gaps have a number and nothing else, and the band still has to
+   run the full width.                                                       */
+
+.lc-exam .test-runner-question,
+.lc-exam .lca-listening-q-card,
+.lc-exam .test-runner-cloze-gap {
+  position: relative;
+  display: grid;
+  margin: 0 0 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: 0;
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+
+.lc-exam .test-runner-question::before,
+.lc-exam .lca-listening-q-card::before,
+.lc-exam .test-runner-cloze-gap::before {
+  content: "";
+  border: 1px solid var(--lc-line);
+  background: var(--lc-cell);
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.lc-exam .test-runner-question-head,
+.lc-exam .lca-listening-q-number {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 6px;
+  border-right: 1px solid var(--lc-line);
+  background: transparent;
+  color: var(--lc-ink);
+  font-size: 27px;
+  font-weight: 400;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* `QuestionInput` emits the label twice so either skin can pick one. The bare
+   numeral exists only for this file, so it is switched off globally here and
+   turned back on inside the exam scope -- otherwise the standard engine would
+   read "Question 5 5". */
+.test-runner-question-label-number {
+  display: none;
+}
+
+.lc-exam .test-runner-question-label-full {
+  display: none;
+}
+
+.lc-exam .test-runner-question-label-number {
+  display: inline;
+}
+
+/* The engine's "Saving..." flag has no home in a two-cell strip, and the exam
+   client shows no per-answer save state. Persistence is unchanged. */
+.lc-exam .test-runner-question-head .hint,
+.lc-exam .lca-listening-q-card > .hint {
+  display: none;
+}
+
+/* Block, never flex: a flex container turns the text around an inline
+   <strong> into separate anonymous items and drops the spaces between them,
+   so a stem with a bolded word would read "habits ofpastcivilizations".
+   The stem is centred in the strip by the grid instead. */
+.lc-exam .test-runner-prompt,
+.lc-exam .lca-listening-q-prompt {
+  display: block;
+  align-self: center;
+  margin: 0;
+  padding: 8px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--lc-ink);
+  font-size: var(--lc-text);
+  font-weight: 400;
+  line-height: 1.45;
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.lc-exam .test-runner-prompt strong,
+.lc-exam .test-runner-prompt .vh-bold-target {
+  color: inherit;
+  font-weight: 700;
+}
+
+.lc-exam .test-runner-question > .hint,
+.lc-exam .test-runner-question > p.hint {
+  margin: 6px 0 0;
+  color: var(--lc-muted);
+  font-size: 12px;
+  grid-column: 1 / -1;
+}
+
+/* Answers */
+
+.lc-exam .test-runner-options,
+.lc-exam .lca-listening-options {
+  display: flex;
+  flex-direction: column;
+  margin: 21px 0 0;
+  padding: 0 0 0 42px;
+  gap: 14px;
+  grid-column: 1 / -1;
+  counter-reset: lcopt;
+}
+
+.lc-exam .test-runner-option,
+.lc-exam .lca-option-row {
+  display: flex;
+  align-items: stretch;
+  min-height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--lc-ink);
+  counter-increment: lcopt;
+  font-size: var(--lc-text);
+  font-weight: 400;
+  gap: 4px;
+  text-align: left;
+}
+
+/* The engine draws a radio; the exam client's control is the row itself, with
+   the letter in a shaded cell beside it. The input stays in the DOM and keeps
+   its keyboard behaviour - it is moved out of sight, not removed. */
+.lc-exam .test-runner-option input[type="radio"],
+.lc-exam .test-runner-option input[type="checkbox"],
+.lc-exam .test-runner-option .vh-checkbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* `.test-runner-option` wraps a bare text node, so the answer field has to be
+   the element's own box - painting it with a positioned pseudo-element would
+   stack the box on top of the very text it is meant to hold. Only the letter
+   cell, which has no text of its own to cover, is drawn as one. */
+.lc-exam .test-runner-option {
+  position: relative;
+  display: block;
+  margin-left: 40px;
+  padding: 7px 12px;
+  border: 1px solid #dcdcdc;
+  background: var(--lc-field);
+  line-height: 1.4;
+}
+
+.lc-exam .test-runner-option::before {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: -40px;
+}
+
+.lc-exam .test-runner-option::before,
+.lc-exam .lca-option-badge {
+  display: flex;
+  width: 36px;
+  min-width: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #dcdcdc;
+  border-radius: 0;
+  background: var(--lc-cell);
+  color: var(--lc-ink);
+  content: counter(lcopt, upper-alpha);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.lc-exam .lca-option-badge {
+  flex: 0 0 36px;
+}
+
+.lc-exam .lca-option-label {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  padding: 7px 12px;
+  border: 1px solid #dcdcdc;
+  background: var(--lc-field);
+  color: var(--lc-ink);
+  font-size: var(--lc-text);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.lc-exam .test-runner-option:hover,
+.lc-exam .lca-option-row:hover .lca-option-label {
+  border-color: #b5b5b5;
+  background: #fbfbfb;
+}
+
+.lc-exam .lca-option-row:hover {
+  background: transparent;
+}
+
+/* Selection is a filled letter cell and a tinted field -- the same two-part
+   readout the exam client gives, so a candidate can scan answered rows. */
+.lc-exam .test-runner-option:has(input:checked)::before,
+.lc-exam .lca-option-row.is-selected .lca-option-badge {
+  border-color: var(--lc-red);
+  background: var(--lc-red);
+  color: #ffffff;
+}
+
+.lc-exam .test-runner-option:has(input:checked),
+.lc-exam .lca-option-row.is-selected .lca-option-label {
+  border-color: var(--lc-red);
+  background: var(--lc-peach-mute);
+  color: var(--lc-ink);
+}
+
+.lc-exam .test-runner-option:has(input:focus-visible),
+.lc-exam .lca-option-row:focus-visible .lca-option-label {
+  outline: 2px solid var(--lc-red);
+  outline-offset: 1px;
+}
+
+.lc-exam .lca-option-row:focus-visible {
+  outline: none;
+}
+
+.lc-exam .lca-listening-q-card.is-saving {
+  opacity: 1;
+}
+
+.lc-exam .lca-listening-questions-list {
+  display: block;
+}
+
+/* Conversation groups (Listening 2) */
+
+.lc-exam .lca-listening-group + .lca-listening-group {
+  margin-top: 30px;
+}
+
+/* Only Listening 2 splits into conversations, and only there does the rule
+   appear. An unlabelled group is the plain answer sheet and takes no gutter. */
+.lc-exam .lca-listening-group:has(.lca-listening-group-label) {
+  padding-left: 18px;
+  border-left: 4px solid #a9a9a9;
+}
+
+.lc-exam .lca-listening-group-label {
+  margin: 0 0 14px;
+  color: var(--lc-ink);
+  font-size: var(--lc-text);
+  font-weight: 400;
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Reading passages and the shared-cloze paper
+   ------------------------------------------------------------------------- */
+
+.lc-exam .test-runner-passage,
+.lc-exam .test-runner-inline-passage,
+.lc-exam .test-runner-cloze-passage {
+  margin: 0;
+  padding: 20px 22px;
+  border: 1px solid #6f6f6f;
+  border-radius: 0;
+  background: var(--lc-band);
+  color: var(--lc-ink);
+  font-size: var(--lc-text);
+  line-height: 1.72;
+  white-space: pre-wrap;
+}
+
+.lc-exam .test-runner-passage > strong {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--lc-ink);
+  font-size: var(--lc-text);
+  font-weight: 700;
+  text-align: left;
+}
+
+.lc-exam .test-runner-passage + .test-runner-passage {
+  margin-top: 18px;
+  padding-top: 20px;
+  border-top: 1px solid #6f6f6f;
+}
+
+/* Reading 2's article is set in a serif face on the exam client -- it is
+   presented as a magazine extract, and the change of voice is part of it. */
+.lc-exam .test-runner-inline-passage {
+  font-family: var(--lc-serif);
+  font-size: 14.5px;
+}
+
+.lc-exam .test-runner-inline-passage p,
+.lc-exam .test-runner-passage p,
+.lc-exam .test-runner-cloze-passage p {
+  margin: 0 0 14px;
+}
+
+.lc-exam .test-runner-passage p:last-child,
+.lc-exam .test-runner-inline-passage p:last-child,
+.lc-exam .test-runner-cloze-passage p:last-child {
+  margin-bottom: 0;
+}
+
+.lc-exam .test-runner-blank-dots {
+  color: var(--lc-ink);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.lc-exam .test-runner-cloze-blank {
+  font-weight: 700;
+}
+
+.lc-exam .test-runner-cloze-gap-number {
+  color: var(--lc-ink);
+  font-size: 27px;
+  font-weight: 400;
+}
+
+.lc-exam .test-runner-cloze-options,
+.lc-exam .test-runner-shared-cloze {
+  display: block;
+}
+
+/* Reading 2's in-text gaps are plain fields sitting in the line of type. */
+.lc-exam .test-runner-inline-blank {
+  display: inline-flex;
+  min-width: 155px;
+  min-height: 21px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 3px;
+  padding: 1px 6px;
+  border: 1px solid #6f6f6f;
+  border-radius: 0;
+  background: #ffffff;
+  color: var(--lc-ink);
+  font-family: var(--lc-font);
+  font-size: 12.5px;
+  vertical-align: middle;
+}
+
+.lc-exam .test-runner-inline-blank > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lc-exam .test-runner-inline-blank.is-filled {
+  border-color: var(--lc-peach-line);
+  background: var(--lc-peach-mute);
+}
+
+.lc-exam .test-runner-inline-blank-clear {
+  margin-left: 6px;
+  padding: 0 3px;
+  border: 0;
+  background: transparent;
+  color: var(--lc-red);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------
+   Drag-and-drop cards  (Reading 2 sentence bank, Reading 3 source texts)
+   ------------------------------------------------------------------------- */
+
+.lc-exam .test-runner-inline-options,
+.lc-exam .test-runner-source-text-options,
+.lc-exam .test-runner-option-bank {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  gap: 12px;
+}
+
+.lc-exam .test-runner-inline-options > button,
+.lc-exam .test-runner-source-text-options > button,
+.lc-exam .test-runner-option-bank > button {
+  display: block;
+  width: 100%;
+  padding: 7px 14px 9px;
+  border: 1.5px solid var(--lc-peach-line);
+  border-radius: 9px;
+  background: var(--lc-peach);
+  box-shadow: none;
+  color: var(--lc-ink);
+  cursor: grab;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.lc-exam .test-runner-inline-options > button > strong,
+.lc-exam .test-runner-source-text-options > button > strong,
+.lc-exam .test-runner-option-bank > button > strong {
+  display: block;
+  margin-bottom: 1px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--lc-ink);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.lc-exam .test-runner-inline-options > button > strong::after,
+.lc-exam .test-runner-source-text-options > button > strong::after,
+.lc-exam .test-runner-option-bank > button > strong::after {
+  content: ".";
+}
+
+.lc-exam .test-runner-inline-options > button > span,
+.lc-exam .test-runner-source-text-options > button > span,
+.lc-exam .test-runner-option-bank > button > span {
+  display: block;
+}
+
+.lc-exam .test-runner-inline-options > button:hover:not(:disabled),
+.lc-exam .test-runner-source-text-options > button:hover:not(:disabled),
+.lc-exam .test-runner-option-bank > button:hover:not(:disabled) {
+  border-color: #c4703f;
+  background: #f4a77f;
+  transform: none;
+}
+
+.lc-exam .test-runner-inline-options > button.is-picked,
+.lc-exam .test-runner-source-text-options > button.is-picked,
+.lc-exam .test-runner-option-bank > button.is-picked {
+  border-color: var(--lc-red);
+  box-shadow: 0 0 0 2px rgba(238, 49, 36, 0.35);
+}
+
+/* A card already placed is spent, not hidden: the exam client leaves it in the
+   bank so the candidate can see what they have used. */
+.lc-exam .test-runner-inline-options > button:disabled,
+.lc-exam .test-runner-source-text-options > button:disabled,
+.lc-exam .test-runner-option-bank > button:disabled {
+  border-color: #dcdcdc;
+  background: #f0f0f0;
+  color: #9a9a9a;
+  cursor: default;
+}
+
+/* Reading 3's drop targets */
+
+.lc-exam .test-runner-source-text-targets {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.lc-exam .test-runner-source-text-targets::before {
+  content: "In which text does the writer say the following :";
+  margin-bottom: 4px;
+  color: var(--lc-ink);
+  font-size: var(--lc-text);
+  font-weight: 700;
+}
+
+/* One row is one target. The exam client shows a single band per statement
+   and the letter simply lands in it, so the prompt and the drop zone are
+   drawn as one box with the letter parked at its trailing edge rather than as
+   a statement plus a separate well beside it. */
+.lc-exam .test-runner-source-text-target {
+  display: flex;
+  align-items: stretch;
+  min-height: 42px;
+  padding: 0;
+  border: 1px solid #dcdcdc;
+  border-radius: 4px;
+  background: var(--lc-cell);
+  box-shadow: none;
+  gap: 0;
+  overflow: hidden;
+}
+
+.lc-exam .test-runner-source-text-target.is-filled {
+  border-color: var(--lc-peach-line);
+  background: var(--lc-peach-mute);
+}
+
+.lc-exam .test-runner-source-text-prompt {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  margin: 0;
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--lc-ink);
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.lc-exam .test-runner-source-text-slot {
+  display: flex;
+  flex: 0 0 52px;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px dashed #b8b8b8;
+  background: transparent;
+}
+
+.lc-exam .test-runner-source-text-target.is-filled .test-runner-source-text-slot {
+  border-left-style: solid;
+  background: var(--lc-peach);
+}
+
+.lc-exam .test-runner-source-text-chips {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  gap: 4px;
+  list-style: none;
+}
+
+.lc-exam .test-runner-source-text-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--lc-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* The select is the accessible drop target. It is sized to the well and shows
+   no chrome, so pointer, keyboard and drag all land on the same control. */
+.lc-exam .test-runner-source-text-slot-control {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.lc-exam .test-runner-source-text-slot-control select {
+  width: 100%;
+  height: 100%;
+  padding: 0 4px;
+  border: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  color: var(--lc-muted);
+  font-size: 12px;
+  text-align: center;
+  text-align-last: center;
+}
+
+.lc-exam .test-runner-source-text-place {
+  border: 0;
+  background: transparent;
+  color: var(--lc-red);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.lc-exam .test-runner-source-text-saving {
+  display: none;
+}
+
+/* Reading 1a's matching fallback keeps the same bank/target vocabulary. */
+.lc-exam .test-runner-matching {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lc-exam .test-runner-match-target {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* -------------------------------------------------------------------------
+   Listening 3 — the notepad
+   ------------------------------------------------------------------------- */
+
+.lc-exam .test-runner-notepad {
+  position: relative;
+  max-width: 925px;
+  margin: 44px 0 34px;
+  padding: 52px 76px 44px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--lc-pad);
+  box-shadow: 9px 9px 0 0 var(--lc-pad-back);
+}
+
+/* The fold at the trailing corner. Drawn over the pad rather than clipped out
+   of it, because a clip-path would take the offset backing board with it. */
+.lc-exam .test-runner-notepad::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 62px;
+  height: 62px;
+  border-bottom-right-radius: 12px;
+  background: linear-gradient(315deg, #b6b6b6 0 46px, transparent 46px);
+}
+
+.lc-exam .test-runner-notepad-rings {
+  top: 14px;
+  gap: 44px;
+}
+
+.lc-exam .test-runner-notepad-rings i {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #3d3d3d;
+  box-shadow: none;
+}
+
+.lc-exam .test-runner-notepad-rings i::before {
+  content: "";
+  position: absolute;
+  bottom: 13px;
+  left: 50%;
+  width: 9px;
+  height: 32px;
+  border-radius: 4px 4px 0 0;
+  background: #3d3d3d;
+  transform: translateX(-50%);
+}
+
+.lc-exam .test-runner-notepad-heading {
+  margin: 0 0 26px;
+  color: var(--lc-ink);
+  font-size: var(--lc-text);
+  font-weight: 700;
+}
+
+.lc-exam .test-runner-notepad-lines {
+  padding-left: 18px;
+  gap: 11px;
+  color: var(--lc-ink);
+  font-size: var(--lc-text);
+  line-height: 1.5;
+  list-style: disc;
+}
+
+.lc-exam .test-runner-notepad-lines li {
+  padding-left: 2px;
+}
+
+.lc-exam .test-runner-notepad-blank {
+  gap: 5px;
+}
+
+.lc-exam .test-runner-notepad-number {
+  color: var(--lc-ink);
+  font-weight: 400;
+}
+
+/* A fixed height keeps every gapped line the same depth as the plain ones --
+   an auto-sized field pushes its line taller and the notes stop looking like
+   a printed page. */
+.lc-exam .test-runner-notepad .test-runner-notepad-blank .test-runner-text-input {
+  width: 200px;
+  min-width: 0;
+  height: 21px;
+  padding: 0 6px;
+  border: 1px solid #6f6f6f;
+  border-radius: 0;
+  background: #ffffff;
+  color: var(--lc-ink);
+  font-size: 12.5px;
+  line-height: 19px;
+}
+
+.lc-exam .test-runner-notepad .test-runner-notepad-blank .test-runner-text-input.is-error {
+  border-color: var(--lc-red);
+}
+
+.lc-exam .test-runner-text-input:focus-visible {
+  outline: 2px solid var(--lc-red);
+  outline-offset: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Writing
+   ------------------------------------------------------------------------- */
+
+.lc-exam .test-runner-body--writing .test-runner-source-pane {
+  margin-bottom: 0;
+  padding: 22px 24px;
+  border: 1px solid #6f6f6f;
+  background: var(--lc-band);
+}
+
+.lc-exam .test-runner-body--writing .test-runner-pane-heading h2 {
+  margin: 0 0 14px;
+  color: var(--lc-ink);
+  font-size: 20px;
+  font-weight: 700;
+  text-transform: none;
+}
+
+.lc-exam .test-runner-writing-prompt {
+  margin-bottom: 14px !important;
+}
+
+/* The engine numbers each writing prompt. A writing part on the exam client is
+   one task; the number is engine bookkeeping, not part of the paper. */
+.lc-exam .test-runner-writing-prompt > div:first-child {
+  display: none;
+}
+
+.lc-exam .test-runner-writing-prompt .test-runner-prompt {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  color: var(--lc-ink) !important;
+  font-size: var(--lc-text) !important;
+  font-weight: 400 !important;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.lc-exam .test-runner-writing-prompt .hint {
+  color: var(--lc-ink) !important;
+  font-size: var(--lc-text) !important;
+  line-height: 1.55;
+}
+
+.lc-exam .test-runner-body--writing .test-runner-question-image {
+  margin: 18px 0;
+  padding: 14px;
+  background: #ffffff;
+}
+
+.lc-exam .test-runner-body--writing .test-runner-question-image img {
+  margin: 0 auto;
+  border: 0;
+  border-radius: 0;
+  width: auto;
+  max-width: 100%;
+}
+
+.lc-exam .test-runner-body--writing .test-runner-question-pane {
+  margin-top: 0;
+}
+
+/* A writing task renders a question with its prompt hidden, so the numbered
+   strip has nothing to carry. Left as a grid it would paint an empty grey band
+   above the editor. */
+.lc-exam .test-runner-body--writing .test-runner-question {
+  display: block;
+  margin: 0;
+}
+
+.lc-exam .test-runner-body--writing .test-runner-question::before {
+  content: none;
+}
+
+.lc-exam .test-runner-essay-wrapper {
+  position: relative;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.lc-exam .test-runner-essay-wrapper .vh-rte {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: 0;
+}
+
+.lc-exam .test-runner-essay-wrapper .vh-rte-toolbar {
+  min-height: 34px;
+  margin: 0;
+  padding: 4px 8px;
+  border: 1px solid #b5b5b5;
+  border-bottom: 0;
+  border-radius: 0;
+  background: linear-gradient(180deg, #fbfbfb 0%, #e9e9e9 100%);
+  gap: 10px;
+}
+
+/* Only the three character styles the exam toolbar offers, plus the history
+   pair. Headings, lists, quotes and the preview toggle are authoring tools;
+   they are not on the candidate's toolbar and would score nothing. */
+.lc-exam .test-runner-essay-wrapper .vh-rte-group:not(.vh-rte-history) ~ .vh-rte-group,
+.lc-exam .test-runner-essay-wrapper .vh-rte-preview-toggle {
+  display: none;
+}
+
+.lc-exam .test-runner-essay-wrapper .vh-rte-group {
+  gap: 3px;
+}
+
+.lc-exam .test-runner-essay-wrapper .vh-rte-history {
+  padding-right: 10px;
+  border-right: 1px solid #c6c6c6;
+}
+
+.lc-exam .test-runner-essay-wrapper .vh-rte-button {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 5px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: none;
+  color: #3d3d3d;
+}
+
+.lc-exam .test-runner-essay-wrapper .vh-rte-button:hover {
+  border-color: #b5b5b5;
+  background: #ffffff;
+  transform: none;
+}
+
+.lc-exam .test-runner-essay-wrapper .vh-rte-glyph {
+  color: #1c1c1c;
+  font-family: var(--lc-serif);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.lc-exam .test-runner-essay-wrapper .vh-rte-textarea,
+.lc-exam .test-runner-essay-wrapper .test-runner-essay {
+  min-height: 210px;
+  padding: 12px 14px;
+  border: 1px solid #b5b5b5;
+  border-radius: 0;
+  background: #ffffff;
+  color: var(--lc-ink);
+  font-family: var(--lc-font);
+  font-size: var(--lc-text);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* The grab strip under the field, which is where the platform puts the resize
+   affordance. */
+.lc-exam .test-runner-essay-wrapper::after {
+  content: "";
+  display: block;
+  height: 15px;
+  border: 1px solid #b5b5b5;
+  border-top: 0;
+  background: linear-gradient(180deg, #e4e4e4 0%, #d2d2d2 100%);
+}
+
+/* Word count rides in the toolbar's trailing corner, reading "Words: 12".
+   Zeroing the font on the paragraph swallows the engine's " words" suffix
+   without needing a second string. */
+.lc-exam .test-runner-essay-footer {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 12px;
+  display: flex;
+  height: 34px;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.lc-exam .test-runner-essay-footer .hint {
+  margin: 0;
+  color: #3d3d3d;
+  font-size: 0;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.lc-exam .test-runner-essay-footer .hint::before {
+  content: "Words: ";
+  font-size: 12.5px;
+}
+
+.lc-exam .test-runner-essay-footer .test-runner-word-count {
+  font-size: 12.5px;
+}
+
+.lc-exam .test-runner-essay-wrapper .vh-rte-toolbar .hint {
+  display: none;
+}
+
+/* -------------------------------------------------------------------------
+   Listening transport
+   ------------------------------------------------------------------------- */
+
+.lc-audio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 7px 32px 0;
+  background: #ffffff;
+}
+
+.lc-audio-box {
+  position: relative;
+  display: flex;
+  width: 204px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px 6px;
+  border: 1px solid #c9c9c9;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
+  gap: 10px;
+}
+
+.lc-audio-transport {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.lc-audio-pause {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lc-red);
+}
+
+/* Nothing here is clickable: an exam recording plays once, on the exam's
+   schedule. The disc reports; it does not control. */
+.lc-audio-transport.is-playing .lc-audio-pause {
+  animation: lcAudioBreathe 2.2s ease-in-out infinite;
+}
+
+@keyframes lcAudioBreathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.72;
+  }
+}
+
+.lc-audio-volume {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 7px;
+  color: #3d3d3d;
+}
+
+.lc-audio-volume input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  height: 12px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.lc-audio-volume input[type="range"]::-webkit-slider-runnable-track {
+  height: 1px;
+  background: #8a8a8a;
+}
+
+.lc-audio-volume input[type="range"]::-moz-range-track {
+  height: 1px;
+  background: #8a8a8a;
+}
+
+.lc-audio-volume input[type="range"]::-webkit-slider-thumb {
+  width: 11px;
+  height: 11px;
+  margin-top: -5px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid #7b7b7b;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.lc-audio-volume input[type="range"]::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border: 1px solid #7b7b7b;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.lc-audio-volume input[type="range"]:focus-visible {
+  outline: 2px solid var(--lc-red);
+  outline-offset: 3px;
+}
+
+.lc-audio-track {
+  position: absolute;
+  right: 1px;
+  bottom: 0;
+  left: 1px;
+  height: 3px;
+  background: transparent;
+}
+
+.lc-audio-track-fill {
+  height: 100%;
+  background: var(--lc-red);
+  transition: width 0.25s linear;
+}
+
+.lc-audio-status {
+  margin: 7px 0 0;
+  color: var(--lc-muted);
+  font-size: 12px;
+}
+
+/* -------------------------------------------------------------------------
+   Footer
+   ------------------------------------------------------------------------- */
+
+.lc-exam .test-runner-footer.lc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 14px 26px 16px;
+  border-top: 1px solid #d5d5d5;
+  background: #ffffff;
+}
+
+.lc-end-exam {
+  min-width: 126px;
+  padding: 5px 18px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--lc-red);
+  box-shadow: none;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 400;
+}
+
+.lc-end-exam:hover:not(:disabled) {
+  background: var(--lc-red-hover);
+  transform: none;
+}
+
+.lc-end-exam:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* -------------------------------------------------------------------------
+   Speaking interview
+   -------------------------------------------------------------------------
+
+   The interview client is a full-bleed page, not a card: the candidate's
+   material fills the middle, the examiner sits in a fixed window at the top
+   right, and one action bar runs along the bottom. `SpeakingInterviewStage.css`
+   is bundled after this file, so its own selectors are out-specified here
+   rather than merely re-declared.                                          */
+
+.lc-exam .speaking-interview-stage {
+  position: relative;
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  border: 0;
+  border-radius: 0;
+  background: #ffffff;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.lc-exam .speaking-interview-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  padding: 0;
+  background: transparent;
+  grid-template-columns: none;
+}
+
+.lc-exam .speaking-interview-workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: 0;
+  grid-template-rows: none;
+}
+
+/* The examiner's window is pinned to the top-right corner of the page and the
+   material flows underneath it, which is why the workspace keeps clear of that
+   band rather than the two sharing a row. */
+.lc-exam .speaking-interview-examiner {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  display: block;
+  width: 340px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.lc-exam .speaking-interview-avatar {
+  width: 340px;
+  height: 220px;
+  border: 1px solid #d5d5d5;
+  border-radius: 0;
+  background: #dcdcdc;
+  overflow: hidden;
+}
+
+.lc-exam .speaking-interview-avatar img,
+.lc-exam .speaking-interview-avatar video,
+.lc-exam .speaking-interview-avatar canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lc-exam .speaking-interview-examiner-copy,
+.lc-exam .speaking-interview-progress {
+  display: none;
+}
+
+.lc-exam .speaking-candidate-material {
+  display: flex;
+  flex: 1;
+  min-height: 340px;
+  flex-direction: column;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
+  padding: 34px 360px 34px 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: 20px;
+  grid-template-rows: none;
+  overflow: visible;
+}
+
+.lc-exam .speaking-candidate-material.has-text.has-attachment {
+  align-content: center;
+}
+
+/* The candidate's text sits in a bordered card in the middle of the page,
+   justified, exactly as the interview client presents it. */
+.lc-exam .speaking-candidate-material .speaking-interview-passage {
+  width: min(830px, 100%);
+  margin: 0 auto;
+  padding: 22px 26px;
+  border: 1px solid var(--lc-peach-line);
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--lc-ink);
+  font-family: var(--lc-font);
+  font-size: var(--lc-text);
+  line-height: 1.72;
+  text-align: justify;
+  overflow: visible;
+  white-space: normal;
+}
+
+.lc-exam .speaking-candidate-attachment {
+  display: flex;
+  width: 100%;
+  max-width: 900px;
+  height: auto;
+  margin: 0 auto;
+  justify-content: center;
+}
+
+.lc-exam .speaking-candidate-attachment img {
+  max-width: 100%;
+  height: auto;
+  border: 0;
+}
+
+/* Nothing to show yet is the LanguageCert wordmark on white -- the client's
+   idle card, and what a candidate sees while the examiner speaks. */
+.lc-exam .speaking-candidate-empty {
+  display: flex;
+  min-height: 320px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: 0;
+}
+
+.lc-exam .speaking-candidate-empty svg,
+.lc-exam .speaking-candidate-empty span {
+  display: none;
+}
+
+/* Two pseudo-elements rather than one string with a newline in it: the mark is
+   two colours, and `content` cannot carry more than one. */
+.lc-exam .speaking-candidate-empty strong {
+  display: block;
+  color: transparent;
+  font-size: 0;
+}
+
+.lc-exam .speaking-candidate-empty strong::before,
+.lc-exam .speaking-candidate-empty strong::after {
+  display: block;
+  font-family: var(--lc-font);
+  font-size: 82px;
+  font-weight: 400;
+  line-height: 0.96;
+  text-align: center;
+}
+
+.lc-exam .speaking-candidate-empty strong::before {
+  content: "Language";
+  color: #f0522a;
+}
+
+.lc-exam .speaking-candidate-empty strong::after {
+  content: "Cert";
+  color: var(--lc-ink);
+}
+
+.lc-exam .speaking-segment-intro-card {
+  width: min(830px, 100%);
+  margin: 60px auto 0;
+  padding: 26px;
+  border: 1px solid var(--lc-peach-line);
+  border-radius: 4px;
+  background: #ffffff;
+  text-align: center;
+}
+
+.lc-exam .speaking-interview-notes {
+  display: block;
+  width: min(830px, 100%);
+  margin: 0 auto;
+}
+
+.lc-exam .speaking-interview-notes textarea {
+  border: 1px solid #b5b5b5;
+  border-radius: 0;
+  font-family: var(--lc-font);
+  font-size: var(--lc-text);
+}
+
+/* The action bar.
+
+   `display: contents` on the timer drops its own box so the clock, its caption
+   and the status line become items of the bar's own grid. That is what puts
+   the status line in the wide middle field instead of leaving it as small
+   print beneath the clock, without the engine having to emit a second shape
+   for this one skin. */
+.lc-exam .speaking-interview-control-dock {
+  display: grid;
+  align-items: center;
+  margin-top: auto;
+  padding: 12px 0 4px;
+  border: 0;
+  border-top: 1px solid #e4e4e4;
+  background: #ffffff;
+  box-shadow: none;
+  gap: 0 16px;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+}
+
+.lc-exam .speaking-interview-timer {
+  display: contents;
+}
+
+.lc-exam .speaking-interview-timer strong {
+  align-self: end;
+  color: var(--lc-ink);
+  font-size: 21px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  grid-column: 1;
+  grid-row: 1;
+  line-height: 1;
+  text-align: center;
+}
+
+.lc-exam .speaking-interview-timer span {
+  align-self: start;
+  margin-top: 2px;
+  color: var(--lc-muted);
+  font-size: 9px;
+  font-weight: 400;
+  grid-column: 1;
+  grid-row: 2;
+  letter-spacing: 0.6px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.lc-exam .speaking-interview-timer small {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  padding: 6px 14px;
+  border: 1px dashed var(--lc-peach-line);
+  color: var(--lc-muted);
+  font-size: 12.5px;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.lc-exam .speaking-interview-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+
+.lc-exam .speaking-interview-actions button {
+  min-width: 168px;
+  min-height: 40px;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--lc-red);
+  box-shadow: none;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 400;
+}
+
+.lc-exam .speaking-interview-actions button:hover:not(:disabled) {
+  background: var(--lc-red-hover);
+  transform: none;
+}
+
+.lc-exam .speaking-interview-actions button:disabled {
+  background: var(--lc-peach-mute);
+  color: #dd8a72;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* -------------------------------------------------------------------------
+   Overlays the exam skin inherits unchanged in behaviour, restyled to match
+   ------------------------------------------------------------------------- */
+
+.lc-exam .test-runner-loading {
+  background: #ffffff;
+  color: var(--lc-muted);
+  font-family: var(--lc-font);
+}
+
+.lc-exam .test-security-live {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .lc-exam .test-runner-parts.lc-rail {
+    width: 190px;
+    flex: 0 0 190px;
+  }
+
+  .lc-rail-tabs {
+    padding-left: 22px;
+  }
+
+  .lc-rail-heading {
+    margin-left: 14px;
+  }
+
+  .lc-exam .test-runner-body,
+  .lc-exam .test-runner-body--writing,
+  .lc-exam .test-runner-body--listening,
+  .lc-exam .test-runner-body--single-column {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .lc-exam .speaking-interview-examiner {
+    width: 250px;
+  }
+
+  .lc-exam .speaking-interview-avatar {
+    width: 250px;
+    height: 162px;
+  }
+}

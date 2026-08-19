@@ -16,10 +16,55 @@ interface PartsNavProps {
   /** Set while the candidate must stay on the current part: listening audio is
       playing, or the speaking interview is running. */
   isNavigationLocked?: boolean;
+  /** Final Test only: the PeopleCert section rail replaces the standard nav. */
+  languageCertSkin?: boolean;
 }
 
-export function PartsNav({ answeredCount, totalQuestions, sectionGroups, partIndex, onSelectPart, isNavigationLocked = false }: PartsNavProps) {
+export function PartsNav({
+  answeredCount,
+  totalQuestions,
+  sectionGroups,
+  partIndex,
+  onSelectPart,
+  isNavigationLocked = false,
+  languageCertSkin = false,
+}: PartsNavProps) {
   const t = strings.nav;
+
+  /* The exam rail carries no counters: the official platform shows the part
+     names only, and a per-part "3/7" beside them is the giveaway that this is
+     a practice engine. Completion is still signalled, by the tab filling in. */
+  if (languageCertSkin) {
+    return (
+      <nav className="test-runner-parts lc-rail" aria-label={t.testSectionsAriaLabel}>
+        {sectionGroups.map((group) => (
+          <section className="lc-rail-group" data-section={group.section} key={group.section}>
+            <h2 className="lc-rail-heading">{group.label}</h2>
+            <div className="lc-rail-tabs">
+              {group.parts.map(({ part, index }) => {
+                const complete = part.question_count > 0 && part.answered_count === part.question_count;
+                const locked = isNavigationLocked && index !== partIndex;
+                return (
+                  <button
+                    type="button"
+                    key={part.id}
+                    disabled={locked}
+                    className={`lc-rail-tab${index === partIndex ? " is-active" : ""}${complete && index !== partIndex ? " is-complete" : ""}`}
+                    onClick={() => !isNavigationLocked && onSelectPart(index)}
+                    aria-current={index === partIndex ? "step" : undefined}
+                    title={locked ? t.navigationLocked : undefined}
+                  >
+                    {part.title}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </nav>
+    );
+  }
+
   return (
     <nav className="test-runner-parts" aria-label={t.testSectionsAriaLabel}>
       <div className="test-runner-progress-summary">

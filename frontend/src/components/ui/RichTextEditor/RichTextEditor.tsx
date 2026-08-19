@@ -39,7 +39,30 @@ export interface RichTextEditorProps {
   toolbarExtras?: ReactNode;
   /** Hides the toolbar for fields that only want the preview affordance. */
   hideToolbar?: boolean;
+  /** Adds an undo/redo pair ahead of the format controls. Opt-in: only the
+      Final Test's exam-skin writing tasks show them, mirroring the delivery
+      platform's toolbar. They drive the textarea's own history, so Ctrl+Z
+      keeps working identically for every other caller. */
+  showHistoryControls?: boolean;
   style?: CSSProperties;
+}
+
+function UndoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 9h11a5 5 0 0 1 0 10h-5" />
+      <path d="M8 5 4 9l4 4" />
+    </svg>
+  );
+}
+
+function RedoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 9H9a5 5 0 0 0 0 10h5" />
+      <path d="M16 5l4 4-4 4" />
+    </svg>
+  );
 }
 
 type Wrap = { marker: string; label: string; title: string; glyph: ReactNode };
@@ -98,6 +121,7 @@ export const RichTextEditor = forwardRef<HTMLTextAreaElement, RichTextEditorProp
     required = false,
     toolbarExtras,
     hideToolbar = false,
+    showHistoryControls = false,
     style,
     ...rest
   },
@@ -117,6 +141,16 @@ export const RichTextEditor = forwardRef<HTMLTextAreaElement, RichTextEditorProp
     },
     [ref],
   );
+
+  /* The browser owns the textarea's undo stack, so the buttons ask it to step
+     rather than keeping a second history that would drift out of sync with
+     what Ctrl+Z does. `onChange` still fires, so the value stays controlled. */
+  const runHistoryCommand = useCallback((command: "undo" | "redo") => {
+    const el = innerRef.current;
+    if (!el) return;
+    el.focus();
+    document.execCommand(command);
+  }, []);
 
   /* Every control writes through here so the caret always lands where the author
      expects it to - React re-renders from `value`, which otherwise drops the
@@ -251,6 +285,30 @@ export const RichTextEditor = forwardRef<HTMLTextAreaElement, RichTextEditorProp
     <div className={`vh-rte ${readOnly ? "is-readonly" : ""}`.trim()}>
       {(controlsVisible || toolbarExtras) && (
         <div className="vh-rte-toolbar" role="toolbar" aria-label="Text formatting">
+          {controlsVisible && showHistoryControls && (
+            <div className="vh-rte-group vh-rte-history">
+              <button
+                type="button"
+                className="vh-rte-button"
+                title="Undo (Ctrl+Z)"
+                aria-label="Undo"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => runHistoryCommand("undo")}
+              >
+                <UndoIcon />
+              </button>
+              <button
+                type="button"
+                className="vh-rte-button"
+                title="Redo (Ctrl+Shift+Z)"
+                aria-label="Redo"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => runHistoryCommand("redo")}
+              >
+                <RedoIcon />
+              </button>
+            </div>
+          )}
           {controlsVisible && (
             <>
               <div className="vh-rte-group">
