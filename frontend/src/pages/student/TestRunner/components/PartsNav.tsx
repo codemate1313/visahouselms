@@ -1,5 +1,6 @@
 import type { Attempt } from "@/api/types";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
+import { LcFlagIcon } from "./PeopleCertBrand";
 
 interface SectionGroup {
   section: string;
@@ -54,17 +55,22 @@ export function PartsNav({
                 const complete = part.question_count > 0 && part.answered_count === part.question_count;
                 const locked = isNavigationLocked && index !== partIndex;
                 return (
-                  <button
-                    type="button"
-                    key={part.id}
-                    disabled={locked}
-                    className={`lc-rail-tab${index === partIndex ? " is-active" : ""}${complete ? " is-complete" : ""}`}
-                    onClick={() => !isNavigationLocked && onSelectPart(index)}
-                    aria-current={index === partIndex ? "step" : undefined}
-                    title={locked ? t.navigationLocked : undefined}
-                  >
-                    {formatPartTitle(part.title)}
-                  </button>
+                  /* The flag is a sibling of the tab rather than something
+                     drawn on it, so it keeps its own column and the tabs stay
+                     aligned whatever their label length. */
+                  <div className="lc-rail-row" key={part.id}>
+                    <LcFlagIcon />
+                    <button
+                      type="button"
+                      disabled={locked}
+                      className={`lc-rail-tab${index === partIndex ? " is-active" : ""}${complete && index !== partIndex ? " is-complete" : ""}`}
+                      onClick={() => !isNavigationLocked && onSelectPart(index)}
+                      aria-current={index === partIndex ? "step" : undefined}
+                      title={locked ? t.navigationLocked : undefined}
+                    >
+                      {part.title}
+                    </button>
+                  </div>
                 );
               })}
             </div>
