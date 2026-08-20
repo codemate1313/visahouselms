@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-// @ts-expect-error - plain JS engine, no type declarations
 import { TalkingAvatar } from "@/lib/talking-avatar.js";
 import {
   type ExaminerPhotoSet,

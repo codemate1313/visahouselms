@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Attempt, ExamModuleType } from "@/api/types";
 import { Icon } from "@/components/icons";
+import { unlockSharedAudioContext } from "@/lib/talking-avatar.js";
 import {
   Button,
   Stepper,
@@ -158,6 +159,7 @@ export function PreExamOnboarding({
     try {
       const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA");
       audio.play().catch(() => {});
+      unlockSharedAudioContext();
     } catch (e) {
       console.warn("Audio unlock failed:", e);
     }

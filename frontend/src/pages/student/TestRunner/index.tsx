@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { Attempt, AttemptResponse, ProctorFlagType } from "@/api/types";
 import { useInstituteBranding } from "@/hooks/useInstituteBranding";
+import { unlockSharedAudioContext } from "@/lib/talking-avatar.js";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { hasAttemptResponse } from "@/pages/student/attemptMetrics";
@@ -644,6 +645,7 @@ export function TestRunner() {
     try {
       const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA");
       audio.play().catch(() => {});
+      unlockSharedAudioContext();
     } catch (e) {
       console.warn("Audio unlock failed:", e);
     }

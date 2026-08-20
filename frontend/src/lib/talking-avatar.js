@@ -160,6 +160,27 @@ function merge(base, over) {
 const elementSources = new WeakMap();
 let sharedCtx = null;
 
+/** Create (if needed) and resume the shared AudioContext.
+ *
+ * `attachMediaElement` reroutes the prompt's <audio> element through this
+ * context via `createMediaElementSource` - once that happens, whether
+ * anything is heard (and whether the analyser has anything to drive the
+ * mouth from) depends entirely on `ctx.state === 'running'`. A context is
+ * born suspended unless it is created or resumed during a real user gesture,
+ * and `attachMediaElement` itself never runs inside one - it fires from a
+ * React effect or the audio element's own `playing` event, both after the
+ * fact. Call this directly from an onClick (or similar) handler, before the
+ * avatar's audio would start, so the resume happens while the browser still
+ * considers the call "user-initiated". Safari in particular ignores
+ * `resume()` calls made outside that window. */
+export function unlockSharedAudioContext() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  if (!sharedCtx) sharedCtx = new AC();
+  if (sharedCtx.state === 'suspended') sharedCtx.resume().catch(() => {});
+  return sharedCtx;
+}
+
 /* ========================================================================= */
 export class TalkingAvatar {
   constructor(mount, options = {}) {

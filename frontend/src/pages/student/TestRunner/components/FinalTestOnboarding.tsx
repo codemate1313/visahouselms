@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Attempt } from "@/api/types";
 import type { AuthUser } from "@/store/authStore";
 import { buildExamUrn, formatExamBirthDate } from "../helpers";
+import { unlockSharedAudioContext } from "@/lib/talking-avatar.js";
 import { PeopleCertBrand } from "./PeopleCertBrand";
 
 interface FinalTestOnboardingProps {
@@ -112,6 +113,13 @@ export function FinalTestOnboarding({
               type="button"
               className="lc-onb-button"
               onClick={async () => {
+                // The exam's own AudioContext (driving the examiner's lip-sync
+                // and voice) is born suspended in every browser unless it is
+                // resumed during a real user gesture - and Safari in particular
+                // will not resume it any later than that. This is the first
+                // click of the sitting, so it is the one guaranteed chance to
+                // unlock it before the Speaking section needs it.
+                unlockSharedAudioContext();
                 try {
                   if (navigator.mediaDevices?.getUserMedia) {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });

@@ -5,6 +5,7 @@ import { Icon } from "@/components/icons";
 import { SpeakingAvatar } from "@/components/speaking/SpeakingAvatar";
 import { Button, RichTextContent } from "@/components/ui";
 import { hasAttemptResponse } from "@/pages/student/attemptMetrics";
+import { unlockSharedAudioContext } from "@/lib/talking-avatar.js";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { formatTime } from "../helpers";
 import "./SpeakingInterviewStage.css";
@@ -223,6 +224,7 @@ export function SpeakingInterviewStage({
     try {
       const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA");
       audio.play().catch(() => {});
+      unlockSharedAudioContext();
     } catch (e) {
       console.warn("Audio unlock failed:", e);
     }
@@ -234,6 +236,7 @@ export function SpeakingInterviewStage({
     try {
       const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA");
       audio.play().catch(() => {});
+      unlockSharedAudioContext();
     } catch (e) {
       console.warn("Audio unlock failed:", e);
     }
