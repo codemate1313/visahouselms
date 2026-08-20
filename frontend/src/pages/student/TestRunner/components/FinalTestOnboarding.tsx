@@ -108,7 +108,23 @@ export function FinalTestOnboarding({
                 ))}
               </dl>
             </div>
-            <button type="button" className="lc-onb-button" onClick={() => goToStep(2)}>Next</button>
+            <button
+              type="button"
+              className="lc-onb-button"
+              onClick={async () => {
+                try {
+                  if (navigator.mediaDevices?.getUserMedia) {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                    stream.getTracks().forEach((track) => track.stop());
+                  }
+                } catch (e) {
+                  console.warn("Permission priming rejected/failed:", e);
+                }
+                goToStep(2);
+              }}
+            >
+              Next
+            </button>
             {/* Not on the delivery platform, which is entered through an
                 invigilator. A candidate who opened the wrong paper here has no
                 other way out that does not burn the sitting. */}

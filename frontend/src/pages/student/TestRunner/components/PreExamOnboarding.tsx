@@ -169,7 +169,10 @@ export function PreExamOnboarding({
     let peakVolume = 0;
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+      // Stop video tracks immediately so the camera indicator doesn't stay active,
+      // but this primes the permission context!
+      stream.getVideoTracks().forEach((track) => track.stop());
       micStreamRef.current = stream;
 
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
