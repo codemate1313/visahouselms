@@ -82,6 +82,11 @@ export function TestRunnerHeader({
     return (
       <header className="test-runner-header lc-header">
         <div className="lc-header-inner">
+          {/* Matches the width of the section rail below the header, so the
+              title centres over the content pane the rail leaves - the same
+              area the listening transport centres over - instead of the full
+              header width, which used to leave the two looking unaligned. */}
+          <div className="lc-header-rail-spacer" aria-hidden="true" />
           <PeopleCertBrand />
           <h1 className="lc-header-title">{languageCertHeaderTitle(currentPart.section_type)}</h1>
           <div className="lc-header-right">

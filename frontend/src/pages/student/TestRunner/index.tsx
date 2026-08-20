@@ -447,6 +447,14 @@ export function TestRunner() {
   /* The exam client has no dark mode, so the Final Test sits the whole attempt
      on the light surface and hands the candidate's preference back on exit. */
   useExamLightTheme(languageCertSkin);
+  /* The global toast stack renders outside this component's own tree, above
+     the `.lc-exam` wrapper, so a body class is what lets its stylesheet tell
+     a Final Test notification (e.g. "Submit Failed") apart from an ordinary
+     app one and give it the exam's own look instead of the generic app card. */
+  useEffect(() => {
+    document.body.classList.toggle("lc-final-test-active", languageCertSkin);
+    return () => document.body.classList.remove("lc-final-test-active");
+  }, [languageCertSkin]);
   /* Reading and Writing share one countdown; Listening and Speaking show none.
      Decided here so the header, and the gate that can cover it, cannot drift
      apart on what the candidate is allowed to see. */
@@ -587,6 +595,14 @@ export function TestRunner() {
   async function enterFullscreen() {
     developerFullscreenBypass.current = false;
     setSecurityError(null);
+    /* Re-entering full screen - whether from the gate or from "Continue test"
+       on a violation notice - goes through the same brief transition the
+       initial handshake does (the request can bounce the page out of full
+       screen before it settles back in). Disarming proctoring for that
+       transition, the same way `startSecureSession` does, stops that bounce
+       from being read as a second exit and burning another warning on top of
+       the one that just brought the candidate here. */
+    securityHandshakeRef.current = true;
     try {
       if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
       setFullscreenActive(Boolean(document.fullscreenElement));
@@ -595,6 +611,9 @@ export function TestRunner() {
       const message = strings.errors.fullscreenRequired;
       setSecurityError(message);
       showError(message, strings.errors.fullscreenRequiredTitle);
+    } finally {
+      securityHandshakeRef.current = false;
+      proctorArmedAtRef.current = Date.now() + PROCTOR_SETTLE_MS;
     }
   }
 

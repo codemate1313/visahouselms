@@ -21,6 +21,10 @@
   --lc-title: #4d4d4d;
   --lc-muted: #6d6e71;
 
+  /* Shared between the section rail and the header spacer that reserves its
+     width, so the two can never drift apart. */
+  --lc-rail-width: 230px;
+
   --lc-line: #cfcfcf;
   --lc-line-strong: #8f8f8f;
   --lc-line-dark: #4a4a4a;
@@ -155,7 +159,14 @@
   background: #ffffff;
   box-shadow: 0 3px 7px rgba(0, 0, 0, 0.13);
   gap: 16px;
-  grid-template-columns: minmax(180px, 1fr) minmax(0, 2fr) minmax(180px, 1fr);
+  /* Leading track reserves the rail's width so the title and timer that
+     follow sit over the content pane, not the full header - see
+     `.lc-header-rail-spacer`. */
+  grid-template-columns: var(--lc-rail-width) minmax(140px, 1fr) minmax(0, 2fr) minmax(140px, 1fr);
+}
+
+.lc-header-rail-spacer {
+  min-width: 0;
 }
 
 .lc-brand {
@@ -295,8 +306,8 @@
 }
 
 .lc-exam .test-runner-parts.lc-rail {
-  width: 230px;
-  flex: 0 0 230px;
+  width: var(--lc-rail-width);
+  flex: 0 0 var(--lc-rail-width);
   padding: 14px 0 24px;
   border-right: 1px solid #d5d5d5;
   border-bottom: 0;
@@ -2244,9 +2255,13 @@
 }
 
 @media (max-width: 1180px) {
+  .lc-exam {
+    --lc-rail-width: 190px;
+  }
+
   .lc-exam .test-runner-parts.lc-rail {
-    width: 190px;
-    flex: 0 0 190px;
+    width: var(--lc-rail-width);
+    flex: 0 0 var(--lc-rail-width);
   }
 
   .lc-rail-tabs {
@@ -2273,4 +2288,183 @@
     width: 250px;
     height: 162px;
   }
+}
+
+/* -------------------------------------------------------------------------
+   Security warning + submit dialogs
+   -------------------------------------------------------------------------
+
+   `ViolationPolicyModal` and `SubmitConfirmModal` are shared with every other
+   test type, so their base rules in 05-student-test-engine.css and
+   04-shared-surfaces.css stay generic - a dark glass card for one, the app's
+   default light glass card for the other. Both render inside the `.lc-exam`
+   shell for a Final Test, though, so out-specifying them here swaps in the
+   exam's own white-card, red-accent look without touching how they render
+   anywhere else. */
+
+.lc-exam .test-violation-modal-backdrop {
+  background: rgba(35, 31, 32, 0.6);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.lc-exam .test-violation-modal {
+  position: relative;
+  width: min(100%, 420px);
+  padding: 30px 28px 26px;
+  border: 1px solid var(--lc-line);
+  border-radius: 4px;
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+}
+
+/* The one red note in the whole exam face this can afford to strike, since
+   it is reporting something has actually gone wrong - matches the timer's
+   accent block rather than borrowing the app's danger red. */
+.lc-exam .test-violation-modal::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: var(--lc-red);
+}
+
+.lc-exam .test-violation-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 4px;
+  background: var(--lc-red);
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.lc-exam .test-violation-modal h2 {
+  margin: 16px 0 8px;
+  color: var(--lc-ink);
+  font-size: 20px;
+}
+
+.lc-exam .test-violation-modal p {
+  color: var(--lc-muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.lc-exam .test-violation-modal button {
+  min-height: 44px;
+  margin-top: 22px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--lc-red);
+  box-shadow: none;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.lc-exam .test-violation-modal button:hover:not(:disabled) {
+  background: var(--lc-red-hover);
+}
+
+.lc-exam .modal-backdrop {
+  background: rgba(35, 31, 32, 0.5);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.lc-exam .modal-card {
+  width: min(440px, 100%);
+  padding: 26px 26px 24px;
+  border: 1px solid var(--lc-line);
+  border-radius: 4px;
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.lc-exam .modal-card h2 {
+  margin: 0 0 8px;
+  color: var(--lc-ink);
+  font-size: 19px;
+}
+
+.lc-exam .modal-card p {
+  color: var(--lc-muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.lc-exam .modal-card .form-actions button {
+  min-height: 42px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--lc-red);
+  box-shadow: none;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.lc-exam .modal-card .form-actions button:hover:not(:disabled) {
+  background: var(--lc-red-hover);
+}
+
+.lc-exam .modal-card .form-actions .secondary-button {
+  border: 1px solid var(--lc-line-strong);
+  background: #ffffff;
+  color: var(--lc-ink);
+}
+
+.lc-exam .modal-card .form-actions .secondary-button:hover:not(:disabled) {
+  border-color: var(--lc-line-dark);
+  background: #ffffff;
+  color: var(--lc-ink);
+}
+
+/* -------------------------------------------------------------------------
+   Toasts (Submit Failed, save errors, etc.)
+   -------------------------------------------------------------------------
+
+   The toast stack (`GlobalSnackbar`) mounts once at the app root, above the
+   `.lc-exam` wrapper, so it cannot be reached by descendant selectors on that
+   class the way the dialogs above are. The runner instead toggles
+   `lc-final-test-active` on `<body>` for the length of a Final Test attempt,
+   which this scopes against - see the effect next to `useExamLightTheme` in
+   TestRunner/index.tsx. */
+
+body.lc-final-test-active .snackbar-item {
+  border-radius: 4px;
+  border: 1px solid var(--lc-line, #cfcfcf);
+  background: #ffffff;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.lc-final-test-active .snackbar-icon-badge {
+  border-radius: 4px;
+}
+
+body.lc-final-test-active .snackbar-type-error .snackbar-icon-badge {
+  background: var(--lc-red, #ee3124);
+  color: #ffffff;
+}
+
+body.lc-final-test-active .snackbar-type-error .snackbar-progress-bar {
+  background: var(--lc-red, #ee3124);
+}
+
+body.lc-final-test-active .snackbar-title {
+  color: var(--lc-ink, #231f20);
+  font-family: var(--lc-font, Arial, "Liberation Sans", "Helvetica Neue", Helvetica, sans-serif);
+}
+
+body.lc-final-test-active .snackbar-message {
+  color: var(--lc-muted, #6d6e71);
+  font-family: var(--lc-font, Arial, "Liberation Sans", "Helvetica Neue", Helvetica, sans-serif);
 }
