@@ -75,6 +75,16 @@ export function PhotoExaminerAvatar({
     // Hang the engine off its own node - no global - so the mouth can be
     // inspected live in DevTools when someone reports a still examiner.
     (mountRef.current as unknown as { __avatar?: unknown }).__avatar = avatar;
+
+    // Resume AudioContext synchronously on click of the avatar container to bypass browser restrictions
+    const handleContainerClick = () => {
+      if (avatarRef.current?.ctx) {
+        avatarRef.current.ctx.resume().catch(() => {});
+      }
+    };
+    const node = mountRef.current;
+    node.addEventListener("click", handleContainerClick);
+
     let alive = true;
     avatar.load().then(() => {
       if (alive && avatarRef.current === avatar) setAvatarReady(true);
@@ -88,6 +98,7 @@ export function PhotoExaminerAvatar({
     });
     return () => {
       alive = false;
+      node.removeEventListener("click", handleContainerClick);
       avatar.destroy();
       avatarRef.current = null;
       attachedTo.current = null;

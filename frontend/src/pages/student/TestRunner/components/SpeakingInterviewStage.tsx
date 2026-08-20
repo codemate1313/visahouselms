@@ -216,11 +216,23 @@ export function SpeakingInterviewStage({
   if (!question) return null;
 
   const finishIntro = () => {
+    try {
+      const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA");
+      audio.play().catch(() => {});
+    } catch (e) {
+      console.warn("Audio unlock failed:", e);
+    }
     if (introStorageKey) sessionStorage.setItem(introStorageKey, "true");
     setIntroState({ key: introStorageKey, complete: true });
   };
 
   const beginPreparation = () => {
+    try {
+      const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA");
+      audio.play().catch(() => {});
+    } catch (e) {
+      console.warn("Audio unlock failed:", e);
+    }
     // Only ever start from a standing start. The examiner avatar calls this on
     // audio end, and the Start button calls it too - without this guard, a
     // candidate who pressed Start while the examiner was still speaking was

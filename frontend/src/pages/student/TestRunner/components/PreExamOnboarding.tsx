@@ -155,6 +155,12 @@ export function PreExamOnboarding({
   }, [attempt.module_type]);
 
   const handleTestMic = async () => {
+    try {
+      const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA");
+      audio.play().catch(() => {});
+    } catch (e) {
+      console.warn("Audio unlock failed:", e);
+    }
     if (micTesting) return;
     // Reset previous results
     if (recordedAudioUrl) {
