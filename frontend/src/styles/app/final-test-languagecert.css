@@ -217,7 +217,7 @@
 .lc-header-title {
   position: absolute;
   top: 50%;
-  left: var(--lc-rail-width);
+  left: 0;
   right: 0;
   overflow: hidden;
   margin: 0;

@@ -94,7 +94,11 @@ export function ListeningHeaderPlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const completedKey = audioCompletedKey(attemptId, currentPart.id);
-  const isCompletedInitial = typeof window !== "undefined" && sessionStorage.getItem(completedKey) === "true";
+  const allCompletedKey = `vh:listening:all_completed:${attemptId}`;
+  const isCompletedInitial = typeof window !== "undefined" && (
+    localStorage.getItem(completedKey) === "true" ||
+    localStorage.getItem(allCompletedKey) === "true"
+  );
   const wasCompletedOnMountRef = useRef(isCompletedInitial);
 
   const [phase, setPhase] = useState<"waiting" | "playing" | "finished">(
@@ -250,7 +254,7 @@ export function ListeningHeaderPlayer({
     // Keeping the end position would resume a finished part at its last second
     // and immediately end it again.
     sessionStorage.removeItem(storageKey);
-    sessionStorage.setItem(completedKey, "true");
+    localStorage.setItem(completedKey, "true");
     setPhase("finished");
     /* The lock deliberately stays on here. Releasing it the moment the
        recording ended opened a five-second hole - the settle before the part
@@ -264,7 +268,7 @@ export function ListeningHeaderPlayer({
     playlist.forEach((_, idx) => {
       sessionStorage.removeItem(positionKey(attemptId, currentPart.id, idx));
     });
-    sessionStorage.setItem(completedKey, "true");
+    localStorage.setItem(completedKey, "true");
     setPlaylistIndex(playlist.length - 1);
     setPhase("finished");
     onAudioLockChange?.(false);

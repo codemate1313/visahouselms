@@ -470,6 +470,13 @@ export function TestRunner() {
   }, [attempt?.status, combinedBlockSeconds, id, readingWritingStartedAt, timerVisible]);
   const attemptStatus = attempt?.status;
 
+  const isReadingOrWriting = currentPart?.section_type === "reading" || currentPart?.section_type === "writing";
+  useEffect(() => {
+    if (attempt?.id && isReadingOrWriting) {
+      localStorage.setItem(`vh:listening:all_completed:${attempt.id}`, "true");
+    }
+  }, [attempt?.id, isReadingOrWriting]);
+
   /* Armed off `securityAuthorized` rather than from inside `startSecureSession`,
      because a resumed attempt comes back already authorised from the server and
      never runs the handshake - keying off the flag covers both routes. */
@@ -1322,6 +1329,7 @@ export function TestRunner() {
 
       {isListeningPart && (
         <ListeningHeaderPlayer
+          key={currentPart.id}
           attemptId={attempt.id}
           currentPart={currentPart}
           onAudioLockChange={setIsListeningLocked}
