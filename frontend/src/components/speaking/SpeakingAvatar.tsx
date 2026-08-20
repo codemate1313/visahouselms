@@ -67,6 +67,10 @@ interface SpeakingAvatarProps {
       heading and its question - the stretch in which the candidate is meant to
       be listening rather than answering. */
   onExaminerBusyChange?: (busy: boolean) => void;
+  /** 0-1 playback position of the current clip, for a progress bar. Resets to
+      0 at the start of every segment rather than tracking across the whole
+      prompt, since a heading and its question are separate clips. */
+  onAudioProgress?: (ratio: number) => void;
 }
 
 export function SpeakingAvatar({
@@ -77,6 +81,7 @@ export function SpeakingAvatar({
   avatarOnly = true,
   onAudioEnded,
   onExaminerBusyChange,
+  onAudioProgress,
 }: SpeakingAvatarProps) {
   const [avatarData, setAvatarData] = useState<AvatarData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -169,6 +174,25 @@ export function SpeakingAvatar({
   useEffect(() => {
     onExaminerBusyChange?.(isPlaying || inGap);
   }, [isPlaying, inGap, onExaminerBusyChange]);
+
+  // Drives the progress bar in the control dock. Reset on every new clip so a
+  // heading that finished at 100% does not flash as "already played" progress
+  // on the question clip that follows it.
+  useEffect(() => {
+    onAudioProgress?.(0);
+  }, [currentSegment?.url, onAudioProgress]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !onAudioProgress) return undefined;
+    const reportProgress = () => {
+      const duration = audio.duration;
+      if (!duration || !Number.isFinite(duration)) return;
+      onAudioProgress(Math.min(1, audio.currentTime / duration));
+    };
+    audio.addEventListener("timeupdate", reportProgress);
+    return () => audio.removeEventListener("timeupdate", reportProgress);
+  }, [onAudioProgress, currentSegment?.url]);
 
   // Handle viseme animation ticker during audio playback
   useEffect(() => {
@@ -263,6 +287,7 @@ export function SpeakingAvatar({
   const handleAudioEnded = () => {
     setIsPlaying(false);
     setCurrentViseme(0);
+    onAudioProgress?.(1);
     // The heading has finished, not the prompt. Hold for the authored pause,
     // then play the question - and leave the prompt unmarked until it has
     // actually been asked, or a refresh during the pause would skip it.

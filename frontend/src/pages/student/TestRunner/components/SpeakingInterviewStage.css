@@ -258,12 +258,29 @@
   font-size: 11px;
 }
 
+.speaking-interview-audio-progress {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(148, 44, 58, 0.18);
+}
+
+.speaking-interview-audio-progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: var(--primary, #ef3340);
+  transition: width 0.15s linear;
+}
+
 .speaking-interview-control-dock {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding-top: 2px;
+  padding-top: 10px;
 }
 
 .speaking-interview-content {

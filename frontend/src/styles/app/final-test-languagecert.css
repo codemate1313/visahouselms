@@ -2066,10 +2066,31 @@
    the status line in the wide middle field instead of leaving it as small
    print beneath the clock, without the engine having to emit a second shape
    for this one skin. */
+/* The dashed rule the exam client draws across the full page width while the
+   examiner's prompt plays - filled left-to-right with the clip's own playback
+   position, not just a static divider. Sits directly above the action bar and
+   shares its `margin-top: auto`, so the pair are pushed down together rather
+   than each fighting the workspace's flex gap on its own. */
+.lc-exam .speaking-interview-audio-progress {
+  position: relative;
+  width: 100%;
+  height: 2px;
+  margin-top: auto;
+  background-image: repeating-linear-gradient(to right, var(--lc-peach-line) 0 6px, transparent 6px 12px);
+  border-radius: 0;
+}
+
+.lc-exam .speaking-interview-audio-progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: var(--lc-red);
+}
+
 .lc-exam .speaking-interview-control-dock {
   display: grid;
   align-items: center;
-  margin-top: auto;
+  margin-top: 0;
   padding: 12px 0 4px;
   border: 0;
   border-top: 1px solid #e4e4e4;

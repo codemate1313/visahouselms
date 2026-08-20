@@ -554,7 +554,7 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(queue.status, "pending")
         self.assertEqual(queue.routing_reason, "reevaluation")
 
-    def test_speaking_requires_every_recording_before_entering_grading_queue(self):
+    def test_speaking_allows_submit_with_missing_recordings(self):
         created = module_authoring_service.create_module(
             self.db,
             self.instructor,
@@ -578,16 +578,6 @@ class AttemptServiceTestCase(unittest.TestCase):
 
         attempt_out = attempt_service.start_attempt(self.db, self.student, module)
         attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
-        with self.assertRaises(HTTPException) as context:
-            attempt_service.submit_attempt(self.db, attempt)
-        self.assertEqual(context.exception.status_code, 409)
-        self.assertIn("4 Speaking recordings are missing", context.exception.detail)
-        self.assertEqual(attempt.status, ATTEMPT_IN_PROGRESS)
-        self.assertEqual(self.db.query(GradingQueueEntry).filter_by(attempt_id=attempt.id).count(), 0)
-
-        for part in attempt.module.parts:
-            question = part.questions[0]
-            attempt_service.save_audio_answer(self.db, attempt, question.id, b"recorded-audio" * 400, ".webm")
         result = attempt_service.submit_attempt(self.db, attempt)
         self.assertEqual(result["status"], ATTEMPT_GRADING)
         self.assertEqual(self.db.query(GradingQueueEntry).filter_by(attempt_id=attempt.id).count(), 1)

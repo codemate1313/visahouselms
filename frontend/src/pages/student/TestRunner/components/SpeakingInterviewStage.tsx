@@ -106,6 +106,9 @@ export function SpeakingInterviewStage({
   // on its own is not evidence that the audio failed. The rescue only counts
   // while the examiner is neither speaking nor mid-pause.
   const [examinerBusy, setExaminerBusy] = useState(false);
+  // Drives the audio progress bar in the control dock - 0-1 through whichever
+  // clip the examiner is currently playing.
+  const [examinerProgress, setExaminerProgress] = useState(0);
   const isLastQuestion = questionIndex >= currentPart.questions.length - 1;
 
   useEffect(() => {
@@ -130,6 +133,7 @@ export function SpeakingInterviewStage({
       setMode(recorded ? "complete" : "ready");
       setPreparationLeft(0);
       setResponseLeft(0);
+      setExaminerProgress(0);
       setNotesState(sessionStorage.getItem(`speaking-notes:${attemptId}:${question?.id ?? "none"}`) ?? "");
       startingRef.current = false;
     }
@@ -359,12 +363,23 @@ export function SpeakingInterviewStage({
           )}
 
           {introComplete && (
+          <div className="speaking-interview-audio-progress" aria-hidden="true">
+            <div
+              className="speaking-interview-audio-progress-fill"
+              style={{ width: `${Math.round((mode === "ready" && examinerBusy ? examinerProgress : mode === "ready" ? 0 : 1) * 100)}%` }}
+            />
+          </div>
+          )}
+
+          {introComplete && (
           <div className="speaking-interview-control-dock">
             <div className={`speaking-interview-timer is-${mode}`}>
               <span>{timer.label}</span>
               <strong>{formatTime(timer.value)}</strong>
               <small>
-                {mode === "preparing"
+                {mode === "ready" && examinerBusy
+                  ? t.playingQuestion
+                  : mode === "preparing"
                   ? t.recordingStartsAutomatically
                   : mode === "starting"
                     ? t.startingRecording
@@ -421,6 +436,7 @@ export function SpeakingInterviewStage({
               questionId={introComplete ? question.id : undefined}
               onAudioEnded={introComplete ? beginPreparation : finishIntro}
               onExaminerBusyChange={setExaminerBusy}
+              onAudioProgress={setExaminerProgress}
             />
           </div>
           <div className="speaking-interview-examiner-copy">

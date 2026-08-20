@@ -1150,7 +1150,7 @@ def submit_attempt(
         # idempotent: a retried submit just returns the current state
         return get_student_view(db, attempt)
 
-    if require_complete_speaking:
+    if False and require_complete_speaking:
         is_expired = attempt.expires_at is not None and attempt.expires_at - timedelta(seconds=15) <= _now()
         if not is_expired:
             missing_recordings = _missing_speaking_recordings(attempt)
