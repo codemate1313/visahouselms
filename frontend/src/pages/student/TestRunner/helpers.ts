@@ -4,7 +4,7 @@ export const TAB_LEASE_MS = 12_000;
 /** Grace after the secure session goes live before browser events count as
  *  violations. The screen-sharing notification takes focus as sharing starts,
  *  which blurs the page through no fault of the candidate. */
-export const PROCTOR_SETTLE_MS = 1_500;
+export const PROCTOR_SETTLE_MS = 10_000;
 export const IMMERSIVE_MODULE_TYPES = new Set(["full_mock", "final_test"]);
 
 export function formatTime(seconds: number): string {

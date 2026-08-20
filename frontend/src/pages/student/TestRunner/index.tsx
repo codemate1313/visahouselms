@@ -820,16 +820,17 @@ export function TestRunner() {
       heartbeatSequenceRef.current += 1;
       const state = mediaStateRef.current;
       try {
+        const isArmed = proctorArmed();
         const { data } = await apiClient.post<ViolationPolicyResponse>(
           `/student/attempts/${id}/security/heartbeat`,
           {
             sequence: heartbeatSequenceRef.current,
             client_id: securityClientIdRef.current,
-            camera_active: state.camera,
-            microphone_active: state.microphone,
-            fullscreen_active: Boolean(document.fullscreenElement),
-            visible: !document.hidden,
-            focused: document.hasFocus(),
+            camera_active: isArmed ? state.camera : true,
+            microphone_active: isArmed ? state.microphone : true,
+            fullscreen_active: isArmed ? Boolean(document.fullscreenElement) : true,
+            visible: isArmed ? !document.hidden : true,
+            focused: isArmed ? document.hasFocus() : true,
             current_part_id: activeHeartbeatPartId,
             client_at: new Date().toISOString(),
           },
