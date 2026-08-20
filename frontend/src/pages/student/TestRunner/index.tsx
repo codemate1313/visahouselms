@@ -1310,6 +1310,7 @@ export function TestRunner() {
         secondsLeft={secondsLeft}
         languageCertSkin={languageCertSkin}
         timerVisible={timerVisible}
+        userEmail={user?.email}
       />
 
       {isListeningPart && (
@@ -1320,6 +1321,7 @@ export function TestRunner() {
           autoAdvance={partIndex < attempt.parts.length - 1}
           onAudioComplete={handleListeningPartComplete}
           languageCertSkin={languageCertSkin}
+          userEmail={user?.email}
         />
       )}
 
