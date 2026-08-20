@@ -49,6 +49,17 @@ export function FinalTestOnboarding({
 }: FinalTestOnboardingProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
+  const goToStep = (targetStep: 1 | 2 | 3) => {
+    try {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch {
+      // Ignore fallback issues
+    }
+    setStep(targetStep);
+  };
+
   const urn = buildExamUrn(attempt, user?.id);
   const authored = (attempt.onboarding_instructions ?? [])
     .map((item) => item.description?.trim())
@@ -97,7 +108,7 @@ export function FinalTestOnboarding({
                 ))}
               </dl>
             </div>
-            <button type="button" className="lc-onb-button" onClick={() => setStep(2)}>Next</button>
+            <button type="button" className="lc-onb-button" onClick={() => goToStep(2)}>Next</button>
             {/* Not on the delivery platform, which is entered through an
                 invigilator. A candidate who opened the wrong paper here has no
                 other way out that does not burn the sitting. */}
@@ -114,7 +125,7 @@ export function FinalTestOnboarding({
                 <p className="lc-onb-line" key={index}>{line}</p>
               ))}
             </div>
-            <button type="button" className="lc-onb-button" onClick={() => setStep(3)}>Next</button>
+            <button type="button" className="lc-onb-button" onClick={() => goToStep(3)}>Next</button>
           </section>
         )}
 

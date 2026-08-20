@@ -61,6 +61,17 @@ export function PreExamOnboarding({
   onCancel,
 }: PreExamOnboardingProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+
+  const goToStep = (targetStep: 1 | 2 | 3 | 4) => {
+    try {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch {
+      // Ignore
+    }
+    setStep(targetStep);
+  };
   const [confirmed, setConfirmed] = useState(false);
 
   // Audio / Mic testing state
@@ -260,10 +271,10 @@ export function PreExamOnboarding({
 
   const handleStepSelect = (targetStep: 1 | 2 | 3 | 4) => {
     if (targetStep === 4 && !micTested) {
-      setStep(3);
+      goToStep(3);
       return;
     }
-    setStep(targetStep);
+    goToStep(targetStep);
   };
 
   const progressPercent = Math.round((step / 4) * 100);
@@ -444,7 +455,7 @@ export function PreExamOnboarding({
                 )}
 
                 <div className="onboarding-actions-row flex-end">
-                  <Button variant="primary" size="lg" onClick={() => setStep(2)} rightIcon={<Icon name="chevronDown" style={{ transform: "rotate(-90deg)" }} />}>
+                  <Button variant="primary" size="lg" onClick={() => goToStep(2)} rightIcon={<Icon name="chevronDown" style={{ transform: "rotate(-90deg)" }} />}>
                     Proceed: Assessment Structure
                   </Button>
                 </div>
@@ -498,10 +509,10 @@ export function PreExamOnboarding({
                 </div>
 
                 <div className="onboarding-actions-row space-between">
-                  <Button variant="secondary" size="lg" onClick={() => setStep(1)} leftIcon={<span style={{ paddingRight: 4 }}>←</span>}>
+                  <Button variant="secondary" size="lg" onClick={() => goToStep(1)} leftIcon={<span style={{ paddingRight: 4 }}>←</span>}>
                     Guidelines
                   </Button>
-                  <Button variant="primary" size="lg" onClick={() => setStep(3)} rightIcon={<Icon name="chevronDown" style={{ transform: "rotate(-90deg)" }} />}>
+                  <Button variant="primary" size="lg" onClick={() => goToStep(3)} rightIcon={<Icon name="chevronDown" style={{ transform: "rotate(-90deg)" }} />}>
                     Proceed: Hardware Audit
                   </Button>
                 </div>
@@ -652,7 +663,7 @@ export function PreExamOnboarding({
                 </div>
 
                 <div className="onboarding-actions-row space-between">
-                  <Button variant="secondary" size="lg" onClick={() => setStep(2)} leftIcon={<span style={{ paddingRight: 4 }}>←</span>}>
+                  <Button variant="secondary" size="lg" onClick={() => goToStep(2)} leftIcon={<span style={{ paddingRight: 4 }}>←</span>}>
                     Architecture
                   </Button>
                   <div className="onboarding-proceed-wrap">
@@ -660,7 +671,7 @@ export function PreExamOnboarding({
                       variant="primary"
                       size="lg"
                       disabled={!micTested || micTesting}
-                      onClick={() => setStep(4)}
+                      onClick={() => goToStep(4)}
                       rightIcon={<Icon name="chevronDown" style={{ transform: "rotate(-90deg)" }} />}
                     >
                       {micTested ? "Proceed: Final Authorization" : "Test Microphone to Proceed"}
@@ -709,7 +720,7 @@ export function PreExamOnboarding({
                       <strong>Microphone Diagnostic Incomplete</strong>
                       <p>You must perform the microphone check before commencing the exam.</p>
                     </div>
-                    <Button variant="secondary" size="sm" onClick={() => setStep(3)}>
+                    <Button variant="secondary" size="sm" onClick={() => goToStep(3)}>
                       Test Mic in Diagnostics
                     </Button>
                   </div>
@@ -746,7 +757,7 @@ export function PreExamOnboarding({
                 <p className="onboarding-good-luck">Maintain focus and manage your time effectively. Good luck!</p>
 
                 <div className="onboarding-actions-row space-between" style={{ marginTop: 28 }}>
-                  <Button variant="secondary" size="lg" onClick={() => setStep(3)} leftIcon={<span style={{ paddingRight: 4 }}>←</span>}>
+                  <Button variant="secondary" size="lg" onClick={() => goToStep(3)} leftIcon={<span style={{ paddingRight: 4 }}>←</span>}>
                     Diagnostics
                   </Button>
                 </div>
