@@ -581,7 +581,6 @@ export function TestRunner() {
       document.removeEventListener("paste", onClipboard, true);
       document.removeEventListener("contextmenu", onContextMenu, true);
       window.removeEventListener("keydown", onKeyDown, true);
-      if (immersiveAttemptId && document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     };
   }, [attemptStatus, immersiveAttemptId, isFinalAttempt, languageCertSkin, proctorArmed, recordFlag, updateSecurityMedia]);
 
@@ -808,7 +807,14 @@ export function TestRunner() {
     }
   }
 
-  useEffect(() => () => stopSecurityMedia(), []);
+  useEffect(() => {
+    return () => {
+      stopSecurityMedia();
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!attempt?.is_final || attempt.status !== "in_progress" || !securityAuthorized || !attemptTokenRef.current) return;
