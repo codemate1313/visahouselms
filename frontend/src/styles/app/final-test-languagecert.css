@@ -1084,7 +1084,7 @@
 .lc-exam .test-runner-inline-options > button:hover:not(:disabled) strong,
 .lc-exam .test-runner-source-text-options > button:hover:not(:disabled) strong,
 .lc-exam .test-runner-option-bank > button:hover:not(:disabled) strong {
-  background: rgba(0, 0, 0, 0.08) !important;
+  background: transparent !important;
   color: #000000 !important;
   -webkit-text-fill-color: #000000 !important;
 }
@@ -1099,11 +1099,11 @@
 .lc-exam .test-runner-inline-options > button.is-picked,
 .lc-exam .test-runner-source-text-options > button.is-picked,
 .lc-exam .test-runner-option-bank > button.is-picked {
-  border-color: var(--lc-red) !important;
+  border-color: #dcdcdc !important;
   background: #ffffff !important;
   color: #1a1a1a !important;
   -webkit-text-fill-color: #1a1a1a !important;
-  box-shadow: 0 0 0 2px rgba(238, 49, 36, 0.35) !important;
+  box-shadow: none !important;
 }
 
 .lc-exam .test-runner-inline-options > button.is-picked strong,
