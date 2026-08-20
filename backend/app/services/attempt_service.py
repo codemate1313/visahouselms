@@ -703,8 +703,8 @@ def require_live_security(attempt: TestAttempt) -> None:
     state = attempt.security_media_state or {}
     required_active = all(
         state.get(key)
-        for key in ("camera_active", "microphone_active", "screen_share_active", "fullscreen_active")
-    ) and state.get("display_surface") == "monitor"
+        for key in ("camera_active", "microphone_active", "fullscreen_active")
+    )
     heartbeat_fresh = (
         attempt.security_last_heartbeat_at is not None
         and (_now() - attempt.security_last_heartbeat_at).total_seconds() <= FINAL_TEST_HEARTBEAT_GRACE_SECONDS
@@ -712,7 +712,7 @@ def require_live_security(attempt: TestAttempt) -> None:
     if not required_active or not heartbeat_fresh:
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,
-            detail="Restore camera, microphone, entire-screen sharing, and full screen before continuing",
+            detail="Restore camera, microphone, and full screen before continuing",
         )
 
 
@@ -806,11 +806,11 @@ def secure_preflight(
         )
     if not all(
         payload.get(key)
-        for key in ("camera_active", "microphone_active", "screen_share_active", "fullscreen_active")
-    ) or payload.get("display_surface") != "monitor":
+        for key in ("camera_active", "microphone_active", "fullscreen_active")
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Camera, microphone, full screen, and entire-screen sharing must all be active",
+            detail="Camera, microphone, and full screen must all be active",
         )
     if attempt.security_device_id is not None and attempt.security_device_id != session.device_id:
         raise HTTPException(
@@ -850,11 +850,9 @@ def secure_preflight(
     attempt.security_media_state = {
         "camera_active": True,
         "microphone_active": True,
-        "screen_share_active": True,
         "fullscreen_active": True,
         "visible": True,
         "focused": True,
-        "display_surface": "monitor",
         "rules_consent": True,
         "rules_consented_at": _now().isoformat(),
     }
@@ -877,8 +875,8 @@ def begin_secure_attempt(
     state = attempt.security_media_state or {}
     if not all(
         state.get(key)
-        for key in ("camera_active", "microphone_active", "screen_share_active", "fullscreen_active")
-    ) or state.get("display_surface") != "monitor":
+        for key in ("camera_active", "microphone_active", "fullscreen_active")
+    ):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The security preflight is incomplete")
     if attempt.status == ATTEMPT_READY:
         now = _now()
@@ -918,14 +916,11 @@ def record_heartbeat(
     transitions = (
         ("camera_active", "camera_stopped"),
         ("microphone_active", "microphone_stopped"),
-        ("screen_share_active", "screen_share_stopped"),
         ("fullscreen_active", "fullscreen_exit"),
     )
     for key, flag_type in transitions:
         if previous.get(key, True) and not payload.get(key):
             _add_security_flag(db, attempt, flag_type, {"source": "heartbeat"})
-    if payload.get("display_surface") != "monitor":
-        _add_security_flag(db, attempt, "screen_surface_invalid", {"surface": payload.get("display_surface")})
     if attempt.security_ip_address and ip_address and attempt.security_ip_address != ip_address:
         _add_security_flag(
             db,
@@ -942,11 +937,9 @@ def record_heartbeat(
         for key in (
             "camera_active",
             "microphone_active",
-            "screen_share_active",
             "fullscreen_active",
             "visible",
             "focused",
-            "display_surface",
             "current_part_id",
         )
     }
@@ -1075,7 +1068,6 @@ def record_flag(
     state_key = {
         "camera_stopped": "camera_active",
         "microphone_stopped": "microphone_active",
-        "screen_share_stopped": "screen_share_active",
         "fullscreen_exit": "fullscreen_active",
     }.get(flag_type)
     if state_key and attempt.security_media_state:

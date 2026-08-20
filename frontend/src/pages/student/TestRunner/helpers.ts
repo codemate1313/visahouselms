@@ -24,17 +24,13 @@ export function parseServerTimestamp(value: string): number {
 export type SecurityMediaState = {
   camera: boolean;
   microphone: boolean;
-  screen: boolean;
   fullscreen: boolean;
-  displaySurface: string | null;
 };
 
 export const EMPTY_MEDIA_STATE: SecurityMediaState = {
   camera: false,
   microphone: false,
-  screen: false,
   fullscreen: false,
-  displaySurface: null,
 };
 
 export function randomId(): string {

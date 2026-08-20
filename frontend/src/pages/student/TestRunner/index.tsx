@@ -152,7 +152,6 @@ export function TestRunner() {
   const sourcePaneRef = useRef<HTMLElement | null>(null);
   const questionPaneRef = useRef<HTMLElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
-  const screenStreamRef = useRef<MediaStream | null>(null);
   const cameraPreviewRef = useRef<HTMLVideoElement | null>(null);
   const attemptTokenRef = useRef(sessionStorage.getItem(securityStorageKey(id, "token")));
   const securityClientIdRef = useRef(storedClientId(id));
@@ -164,11 +163,9 @@ export function TestRunner() {
   const tabInstanceIdRef = useRef(randomId());
   const concurrentFlaggedRef = useRef(false);
   /* Proctoring is disarmed until the secure session is actually live. The
-     browser blurs the page while it shows the camera and screen-share prompts,
-     and again when the sharing notification takes focus once sharing starts -
-     none of which is the candidate leaving the exam. Flagging those was
-     greeting people with "Security warning 1 of 3" before they had answered
-     anything. */
+     browser blurs the page while it shows the camera permission prompt -
+     which is not the candidate leaving the exam. Flagging that was greeting
+     people with "Security warning 1 of 3" before they had answered anything. */
   const securityHandshakeRef = useRef(false);
   const proctorArmedAtRef = useRef(Number.POSITIVE_INFINITY);
   const lastViolationNoticeCountRef = useRef(0);
@@ -488,13 +485,9 @@ export function TestRunner() {
     [],
   );
 
-  const onRequiredTrackEnded = useCallback((kind: "camera" | "microphone" | "screen") => {
+  const onRequiredTrackEnded = useCallback((kind: "camera" | "microphone") => {
     updateSecurityMedia({ [kind]: false });
-    const flag: ProctorFlagType = kind === "camera"
-      ? "camera_stopped"
-      : kind === "microphone"
-        ? "microphone_stopped"
-        : "screen_share_stopped";
+    const flag: ProctorFlagType = kind === "camera" ? "camera_stopped" : "microphone_stopped";
     recordFlag(flag, { ready_state: "ended" });
   }, [recordFlag, updateSecurityMedia]);
 
@@ -633,13 +626,7 @@ export function TestRunner() {
       track.onmute = null;
       track.stop();
     });
-    screenStreamRef.current?.getTracks().forEach((track) => {
-      track.onended = null;
-      track.onmute = null;
-      track.stop();
-    });
     cameraStreamRef.current = null;
-    screenStreamRef.current = null;
     setLiveCameraStream(null);
     if (cameraPreviewRef.current) cameraPreviewRef.current.srcObject = null;
     mediaStateRef.current = EMPTY_MEDIA_STATE;
@@ -688,15 +675,14 @@ export function TestRunner() {
     }
 
     let cameraStream = cameraStreamRef.current;
-    let screenStream = screenStreamRef.current;
     let keepMediaActive = false;
 
-    /* `requestFullscreen` needs transient user activation, and the camera and
-       screen-share prompts each consume the activation this click arrived with
-       - so asking for full screen only after both had resolved was asking with
-       nothing left to spend. It goes first now, while the click is still warm,
-       and is re-asserted below because a permission prompt or the sharing
-       notification can drop the page back out of it. */
+    /* `requestFullscreen` needs transient user activation, and the camera
+       prompt consumes the activation this click arrived with - so asking for
+       full screen only after it resolved was asking with nothing left to
+       spend. It goes first now, while the click is still warm, and is
+       re-asserted below because the permission prompt can drop the page back
+       out of it. */
     const requestExamFullscreen = async () => {
       if (document.fullscreenElement) return true;
       try {
@@ -708,7 +694,7 @@ export function TestRunner() {
     };
 
     try {
-      if (!navigator.mediaDevices?.getUserMedia || !navigator.mediaDevices?.getDisplayMedia) {
+      if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error(strings.security.errors.browserUnsupported);
       }
 
@@ -716,12 +702,8 @@ export function TestRunner() {
 
       let cameraTrack = cameraStream?.getVideoTracks()[0];
       let microphoneTrack = cameraStream?.getAudioTracks()[0];
-      let screenTrack = screenStream?.getVideoTracks()[0];
-      let displaySurface = (screenTrack?.getSettings() as MediaTrackSettings & { displaySurface?: string })?.displaySurface;
       const existingMediaActive = cameraTrack?.readyState === "live"
-        && microphoneTrack?.readyState === "live"
-        && screenTrack?.readyState === "live"
-        && displaySurface === "monitor";
+        && microphoneTrack?.readyState === "live";
 
       if (!existingMediaActive) {
         stopSecurityMedia();
@@ -735,33 +717,14 @@ export function TestRunner() {
           throw new Error(strings.security.errors.cameraMicRequired);
         }
 
-        screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            displaySurface: "monitor",
-          },
-          audio: false,
-          monitorTypeSurfaces: "include",
-          selfBrowserSurface: "exclude",
-          surfaceSwitching: "exclude",
-        } as DisplayMediaStreamOptions);
-        screenTrack = screenStream.getVideoTracks()[0];
-        displaySurface = (screenTrack?.getSettings() as MediaTrackSettings & { displaySurface?: string })?.displaySurface;
-        if (!screenTrack || displaySurface !== "monitor") {
-          recordFlag("screen_surface_invalid", { surface: displaySurface ?? "unknown" });
-          throw new Error(strings.security.errors.screenSurfaceInvalid);
-        }
-
         cameraStreamRef.current = cameraStream;
-        screenStreamRef.current = screenStream;
         cameraTrack.onended = () => onRequiredTrackEnded("camera");
         cameraTrack.onmute = () => onRequiredTrackEnded("camera");
         microphoneTrack.onended = () => onRequiredTrackEnded("microphone");
         microphoneTrack.onmute = () => onRequiredTrackEnded("microphone");
-        screenTrack.onended = () => onRequiredTrackEnded("screen");
-        screenTrack.onmute = () => onRequiredTrackEnded("screen");
       }
 
-      if (!cameraStream || !screenStream || !cameraTrack || !microphoneTrack || !screenTrack) {
+      if (!cameraStream || !cameraTrack || !microphoneTrack) {
         throw new Error(strings.security.errors.mediaMustRemainActive);
       }
 
@@ -774,14 +737,12 @@ export function TestRunner() {
       updateSecurityMedia({
         camera: cameraTrack.readyState === "live" && cameraTrack.enabled,
         microphone: microphoneTrack.readyState === "live" && microphoneTrack.enabled,
-        screen: screenTrack.readyState === "live" && screenTrack.enabled,
         fullscreen: Boolean(document.fullscreenElement),
-        displaySurface,
       });
 
-      /* Second attempt: granting camera or picking a screen can collapse full
-         screen, and the click on the picker's Share button leaves a fresh
-         activation to spend on getting it back. */
+      /* Second attempt: granting the camera can collapse full screen, and the
+         click on the permission prompt leaves a fresh activation to spend on
+         getting it back. */
       if (!(await requestExamFullscreen())) {
         throw new Error(strings.security.errors.fullscreenAfterMedia);
       }
@@ -795,9 +756,7 @@ export function TestRunner() {
           rules_consent: true,
           camera_active: true,
           microphone_active: true,
-          screen_share_active: true,
           fullscreen_active: true,
-          display_surface: "monitor",
         },
         { headers: { "X-Skip-Loader": "1" } },
       );
@@ -828,18 +787,14 @@ export function TestRunner() {
     } catch (err: unknown) {
       if (!keepMediaActive) {
         cameraStream?.getTracks().forEach((track) => track.stop());
-        screenStream?.getTracks().forEach((track) => track.stop());
         stopSecurityMedia();
       } else {
         const cameraTrack = cameraStreamRef.current?.getVideoTracks()[0];
         const microphoneTrack = cameraStreamRef.current?.getAudioTracks()[0];
-        const screenTrack = screenStreamRef.current?.getVideoTracks()[0];
         updateSecurityMedia({
           camera: cameraTrack?.readyState === "live" && cameraTrack.enabled,
           microphone: microphoneTrack?.readyState === "live" && microphoneTrack.enabled,
-          screen: screenTrack?.readyState === "live" && screenTrack.enabled,
           fullscreen: Boolean(document.fullscreenElement),
-          displaySurface: (screenTrack?.getSettings() as MediaTrackSettings & { displaySurface?: string })?.displaySurface ?? null,
         });
       }
       setSecurityAuthorized(false);
@@ -872,11 +827,9 @@ export function TestRunner() {
             client_id: securityClientIdRef.current,
             camera_active: state.camera,
             microphone_active: state.microphone,
-            screen_share_active: state.screen,
             fullscreen_active: Boolean(document.fullscreenElement),
             visible: !document.hidden,
             focused: document.hasFocus(),
-            display_surface: state.displaySurface,
             current_part_id: activeHeartbeatPartId,
             client_at: new Date().toISOString(),
           },
@@ -1275,7 +1228,7 @@ export function TestRunner() {
   /* The Final Test runs its own pre-exam sequence, and it is not optional the
      way the engine's is: "Start Exam" on the last screen is what opens the
      secure session, so skipping it would put a candidate into the paper with
-     no camera, no screen share and no attempt token. It therefore shows
+     no camera and no attempt token. It therefore shows
      whenever the session is not yet authorised, regardless of the module's
      `show_onboarding_instructions` setting. */
   if (languageCertSkin && (attempt.status === "ready" || !securityAuthorized)) {

@@ -35,8 +35,8 @@ const DEFAULT_INSTRUCTIONS = [
  *
  * This replaces the standard onboarding for `final_test` only. It is not purely
  * informational - "Start Exam" is what triggers the secure session, so the
- * camera, microphone, screen-share and full-screen handshake still runs exactly
- * as before, just behind this sequence rather than the engine's own.
+ * camera, microphone and full-screen handshake still runs exactly as before,
+ * just behind this sequence rather than the engine's own.
  */
 export function FinalTestOnboarding({
   attempt,

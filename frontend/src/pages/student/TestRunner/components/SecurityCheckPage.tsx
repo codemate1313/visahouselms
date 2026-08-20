@@ -77,7 +77,6 @@ export function SecurityCheckPage({
             <div className="test-security-checks" aria-label={t.checksAriaLabel}>
               <SecurityCheck label={t.camera} active={mediaState.camera} />
               <SecurityCheck label={t.microphone} active={mediaState.microphone} />
-              <SecurityCheck label={t.entireScreen} active={mediaState.screen && mediaState.displaySurface === "monitor"} />
               <SecurityCheck label={t.fullScreen} active={mediaState.fullscreen} />
             </div>
           </div>
