@@ -483,6 +483,19 @@ def _with_defaults(parts: list[dict]) -> list[dict]:
     return result
 
 
+# On a Final Test or Full Mock the candidate's Reading+Writing countdown is
+# the two sections' allowances added together (see `combinedTimedSectionMinutes`
+# in the frontend's TestRunner/helpers.ts) - it sums whatever `duration_minutes`
+# it finds on the Reading and Writing parts. Every individual part here
+# defaults that field to `None` (`_with_defaults`), since none of
+# READING_PARTS/WRITING_PARTS sets its own, so summing across an untouched
+# section's parts comes to 0. Stamping the section's total onto the first
+# part of that section, rather than every part, is what makes the sum land on
+# the intended 50 + 50 = 100 minutes instead of either 0 (nothing set) or a
+# multiple of 50 (every sub-task carrying the whole section's allowance).
+_COMBINED_BLOCK_SECTIONS = {"reading", "writing"}
+
+
 def get_blueprint(module_type: str) -> dict:
     if module_type not in MODULE_TYPES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown assessment module type")
@@ -496,7 +509,10 @@ def get_blueprint(module_type: str) -> dict:
     assessment: dict[str, dict] = {}
     for section in ("listening", "reading", "writing", "speaking"):
         section_blueprint = SECTION_BLUEPRINTS[section]
-        parts.extend(deepcopy(section_blueprint["parts"]))
+        section_parts = deepcopy(section_blueprint["parts"])
+        if section in _COMBINED_BLOCK_SECTIONS and section_parts:
+            section_parts[0]["duration_minutes"] = section_blueprint["duration_minutes"]
+        parts.extend(section_parts)
         assessment[section] = deepcopy(section_blueprint["assessment"])
     return {
         "module_type": module_type,
