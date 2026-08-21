@@ -217,19 +217,18 @@
 .lc-header-title {
   position: absolute;
   top: 50%;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 45%;
   overflow: hidden;
   margin: 0;
-  padding: 0 16px;
-  max-width: none;
+  padding: 0;
   color: var(--lc-title);
   font-size: 15px;
   font-weight: 700;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transform: translateY(-50%);
   pointer-events: none;
 }
 
@@ -1900,14 +1899,14 @@
 }
 
 .lc-exam .avatar-portrait-container {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  border-radius: 0;
-  padding: 0;
-  background: none;
-  box-shadow: none;
-  transition: none;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  transition: none !important;
 }
 
 .lc-exam .avatar-portrait-container:hover {
