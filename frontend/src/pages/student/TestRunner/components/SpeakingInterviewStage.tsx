@@ -21,7 +21,7 @@ function secondsUntil(deadline: number): number {
   return Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
 }
 
-const VOICE_DOT_COUNT = 25;
+const VOICE_DOT_COUNT = 160;
 
 function VoiceActivityDots({ active, stream }: { active: boolean; stream: MediaStream | null }) {
   const dotsRef = useRef<HTMLDivElement | null>(null);
@@ -56,22 +56,25 @@ function VoiceActivityDots({ active, stream }: { active: boolean; stream: MediaS
         sumOfSquares += centred * centred;
       }
       const rms = Math.sqrt(sumOfSquares / samples.length);
-      const inputLevel = Math.min(1, Math.max(0, (rms - 0.012) * 9));
+      /* Normal laptop microphones often report speech around 0.02-0.05 RMS.
+         Use a small noise floor and a stronger gain so ordinary speech is
+         visibly different from silence without clipping louder answers. */
+      const inputLevel = Math.min(1, Math.max(0, (rms - 0.008) * 24));
 
       /* New microphone levels enter on the left and move across the row. A
          natural decay keeps the right side as the dotted tail shown in the
          reference instead of turning the whole indicator into equal bars. */
-      if (timestamp - lastLevelSample >= 55) {
+      if (timestamp - lastLevelSample >= 45) {
         recentLevels.pop();
         recentLevels.unshift(inputLevel);
         lastLevelSample = timestamp;
-      }
 
-      const dotElements = dots.children;
-      for (let index = 0; index < dotElements.length; index += 1) {
-        const tailDecay = Math.exp(-index / 8);
-        const height = 4 + Math.min(22, recentLevels[index] * 24 * tailDecay);
-        (dotElements[index] as HTMLElement).style.height = `${height.toFixed(1)}px`;
+        const dotElements = dots.children;
+        for (let index = 0; index < dotElements.length; index += 1) {
+          const tailDecay = Math.exp(-index / 34);
+          const height = 3 + Math.min(29, recentLevels[index] * 30 * tailDecay);
+          (dotElements[index] as HTMLElement).style.height = `${height.toFixed(1)}px`;
+        }
       }
       animationFrame = window.requestAnimationFrame(updateDots);
     };
@@ -93,7 +96,7 @@ function VoiceActivityDots({ active, stream }: { active: boolean; stream: MediaS
       aria-label={active ? "Live microphone input level" : "Microphone input"}
     >
       {Array.from({ length: VOICE_DOT_COUNT }, (_, index) => (
-        <span key={index} style={{ animationDelay: `${index * -45}ms` }} />
+        <span key={index} />
       ))}
     </div>
   );
