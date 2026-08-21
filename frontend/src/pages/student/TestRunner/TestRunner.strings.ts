@@ -117,7 +117,7 @@ export const testRunnerStrings = {
     recording: "Recording time left",
     responseLimit: "Response limit",
     playingQuestion: "Playing Question...",
-    recordingStartsAutomatically: "Recording starts automatically when this reaches zero.",
+    recordingStartsAutomatically: "Preparation — recording starts automatically",
     preparingNow: (seconds: number) => `Preparation - recording starts in ${seconds}s`,
     startingRecording: "Starting your recording...",
     recordingNow: "Your answer is being recorded.",

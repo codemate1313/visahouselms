@@ -2152,14 +2152,21 @@
 .lc-exam .speaking-interview-status {
   display: flex;
   min-height: 40px;
-  align-items: stretch;
+  align-items: flex-start;
   justify-content: center;
   flex-direction: column;
-  gap: 5px;
+  gap: 0;
   padding: 6px 14px;
-  border: 1px dashed var(--lc-peach-line);
+  border: 1px solid var(--lc-peach-line);
+  background: #fbfbfc;
   grid-column: 2;
   grid-row: 1 / span 2;
+}
+
+.lc-exam .speaking-interview-timer.is-recording .speaking-interview-status {
+  align-items: stretch;
+  gap: 5px;
+  border-style: dashed;
 }
 
 .lc-exam .speaking-interview-timer small {

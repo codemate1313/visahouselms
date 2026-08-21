@@ -468,10 +468,9 @@ export function SpeakingInterviewStage({
                               ? t.ready(preparationSeconds)
                               : "Recording starts when the examiner finishes"}
                 </small>
-                <VoiceActivityDots
-                  active={mode === "preparing" || mode === "starting" || mode === "recording"}
-                  stream={audioInputStream}
-                />
+                {mode === "recording" && (
+                  <VoiceActivityDots active stream={audioInputStream} />
+                )}
               </div>
             </div>
 
