@@ -21,6 +21,68 @@ function secondsUntil(deadline: number): number {
   return Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
 }
 
+const VOICE_DOT_COUNT = 25;
+
+function VoiceActivityDots({ active, stream }: { active: boolean; stream: MediaStream | null }) {
+  const dotsRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const dots = dotsRef.current;
+    if (!dots || !active || !stream || stream.getAudioTracks().every((track) => track.readyState !== "live")) {
+      return undefined;
+    }
+
+    const AudioContextConstructor = window.AudioContext
+      ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextConstructor) return undefined;
+
+    const context = new AudioContextConstructor();
+    const analyser = context.createAnalyser();
+    const source = context.createMediaStreamSource(stream);
+    analyser.fftSize = 128;
+    analyser.smoothingTimeConstant = 0.78;
+    const frequencies = new Uint8Array(analyser.frequencyBinCount);
+    let animationFrame = 0;
+    source.connect(analyser);
+    void context.resume().catch(() => {});
+
+    const updateDots = () => {
+      analyser.getByteFrequencyData(frequencies);
+      const dotElements = dots.children;
+      const usableBins = Math.max(1, Math.floor(frequencies.length * 0.65));
+      for (let index = 0; index < dotElements.length; index += 1) {
+        const bin = Math.min(usableBins - 1, Math.floor((index / dotElements.length) * usableBins));
+        const strength = Math.max(0, frequencies[bin] / 255 - 0.04);
+        const centreEnvelope = 0.5 + 0.5 * Math.sin(((index + 0.5) / dotElements.length) * Math.PI);
+        const height = 4 + Math.min(24, strength * 34 * centreEnvelope);
+        (dotElements[index] as HTMLElement).style.height = `${height.toFixed(1)}px`;
+      }
+      animationFrame = window.requestAnimationFrame(updateDots);
+    };
+    updateDots();
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      source.disconnect();
+      void context.close().catch(() => {});
+      Array.from(dots.children).forEach((dot) => (dot as HTMLElement).style.removeProperty("height"));
+    };
+  }, [active, stream]);
+
+  return (
+    <div
+      ref={dotsRef}
+      className={`speaking-voice-dots${active ? " is-active" : ""}`}
+      role="img"
+      aria-label={active ? "Live microphone input level" : "Microphone input"}
+    >
+      {Array.from({ length: VOICE_DOT_COUNT }, (_, index) => (
+        <span key={index} style={{ animationDelay: `${index * -45}ms` }} />
+      ))}
+    </div>
+  );
+}
+
 interface SpeakingInterviewStageProps {
   attemptId: number;
   currentPart: Attempt["parts"][number];
@@ -28,6 +90,7 @@ interface SpeakingInterviewStageProps {
   speakingPartCount: number;
   isLastTestPart: boolean;
   savingIds: Set<number>;
+  audioInputStream: MediaStream | null;
   recordingQuestionId: number | null;
   recordingFailedQuestionId: number | null;
   onRecord: (questionId: number) => Promise<boolean>;
@@ -41,6 +104,7 @@ export function SpeakingInterviewStage({
   speakingPartCount,
   isLastTestPart,
   savingIds,
+  audioInputStream,
   recordingQuestionId,
   recordingFailedQuestionId,
   onRecord,
@@ -311,16 +375,7 @@ export function SpeakingInterviewStage({
             <span>{!introComplete ? "Segment intro" : question.interaction?.turn_type?.replaceAll("_", " ") || t.questionProgress(questionIndex + 1, currentPart.questions.length)}</span>
           </div>
 
-          {!introComplete ? (
-            <div className="speaking-segment-intro-card">
-              <span>Listen to Instructor</span>
-              <strong>{currentPart.title}</strong>
-              <p>{introText}</p>
-              <Button rightIcon={<Icon name="arrowRight" />} onClick={finishIntro} size="lg">
-                Start questions
-              </Button>
-            </div>
-          ) : (
+          {introComplete && (
           <div className={materialClassName}>
             {hasCandidateText && question.passage ? (
               <article className="speaking-interview-passage">
@@ -379,23 +434,29 @@ export function SpeakingInterviewStage({
             <div className={`speaking-interview-timer is-${mode}`}>
               <span>{timer.label}</span>
               <strong>{formatTime(timer.value)}</strong>
-              <small>
-                {mode === "ready" && examinerBusy
-                  ? t.playingQuestion
-                  : mode === "preparing"
-                  ? t.recordingStartsAutomatically
-                  : mode === "starting"
-                    ? t.startingRecording
-                    : mode === "recording"
-                      ? t.recordingNow
-                      : mode === "uploading"
-                        ? t.saving
-                        : mode === "complete"
-                          ? t.saved
-                          : hasPreparation
-                            ? t.ready(preparationSeconds)
-                            : "Recording starts when the examiner finishes"}
-              </small>
+              <div className="speaking-interview-status">
+                <small>
+                  {mode === "ready" && examinerBusy
+                    ? t.playingQuestion
+                    : mode === "preparing"
+                    ? t.recordingStartsAutomatically
+                    : mode === "starting"
+                      ? t.startingRecording
+                      : mode === "recording"
+                        ? t.recordingNow
+                        : mode === "uploading"
+                          ? t.saving
+                          : mode === "complete"
+                            ? t.saved
+                            : hasPreparation
+                              ? t.ready(preparationSeconds)
+                              : "Recording starts when the examiner finishes"}
+                </small>
+                <VoiceActivityDots
+                  active={mode === "preparing" || mode === "starting" || mode === "recording"}
+                  stream={audioInputStream}
+                />
+              </div>
             </div>
 
             <div className="speaking-interview-actions">

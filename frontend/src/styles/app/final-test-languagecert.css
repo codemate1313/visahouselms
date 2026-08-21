@@ -2065,16 +2065,6 @@
   color: var(--lc-ink);
 }
 
-.lc-exam .speaking-segment-intro-card {
-  width: min(830px, 100%);
-  margin: 60px auto 0;
-  padding: 26px;
-  border: 1px solid var(--lc-peach-line);
-  border-radius: 4px;
-  background: #ffffff;
-  text-align: center;
-}
-
 .lc-exam .speaking-interview-notes {
   display: block;
   width: min(830px, 100%);
@@ -2159,16 +2149,35 @@
   text-transform: uppercase;
 }
 
-.lc-exam .speaking-interview-timer small {
+.lc-exam .speaking-interview-status {
   display: flex;
   min-height: 40px;
-  align-items: center;
+  align-items: stretch;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
   padding: 6px 14px;
   border: 1px dashed var(--lc-peach-line);
-  color: var(--lc-muted);
-  font-size: 12.5px;
   grid-column: 2;
   grid-row: 1 / span 2;
+}
+
+.lc-exam .speaking-interview-timer small {
+  color: var(--lc-muted);
+  font-size: 12.5px;
+}
+
+.lc-exam .speaking-voice-dots {
+  min-height: 24px;
+  justify-content: center;
+}
+
+.lc-exam .speaking-voice-dots span {
+  background: #9b9b9b;
+}
+
+.lc-exam .speaking-voice-dots.is-active span {
+  background: var(--lc-red);
 }
 
 .lc-exam .speaking-interview-actions {

@@ -136,6 +136,7 @@ export function TestRunner() {
   const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
+  const [recordingStream, setRecordingStream] = useState<MediaStream | null>(null);
   const [recordingQuestionId, setRecordingQuestionId] = useState<number | null>(null);
   const recordingQuestionIdRef = useRef(recordingQuestionId);
   const [recordingFailedQuestionId, setRecordingFailedQuestionId] = useState<number | null>(null);
@@ -1038,6 +1039,7 @@ export function TestRunner() {
       }
       const stream = cloneSpeakingMicrophoneStream(secureStream);
       recordingStreamRef.current = stream;
+      setRecordingStream(stream);
       const recorder = createSpeakingMediaRecorder(stream);
       const chunks: BlobPart[] = [];
       let recorderFailed = false;
@@ -1051,6 +1053,7 @@ export function TestRunner() {
           releaseSpeakingMicrophone();
         }
         recordingStreamRef.current = null;
+        setRecordingStream(null);
         recorderRef.current = null;
         recordingQuestionIdRef.current = null;
         setRecordingQuestionId(null);
@@ -1060,6 +1063,7 @@ export function TestRunner() {
       recorder.onstop = async () => {
         stream.getTracks().forEach((track) => track.stop());
         recordingStreamRef.current = null;
+        setRecordingStream(null);
         recorderRef.current = null;
         recordingQuestionIdRef.current = null;
         setRecordingQuestionId(null);
@@ -1125,6 +1129,7 @@ export function TestRunner() {
     } catch {
       recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
       recordingStreamRef.current = null;
+      setRecordingStream(null);
       recorderRef.current = null;
       recordingQuestionIdRef.current = null;
       if (!isFinalAttempt) {
@@ -1489,6 +1494,7 @@ export function TestRunner() {
               speakingPartNumber={speakingPartNumber}
               recordingFailedQuestionId={recordingFailedQuestionId}
               recordingQuestionId={recordingQuestionId}
+              audioInputStream={recordingStream ?? liveCameraStream}
               savingIds={savingIds}
             />
           ) : (

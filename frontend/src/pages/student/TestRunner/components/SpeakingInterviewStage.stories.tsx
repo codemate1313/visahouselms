@@ -56,6 +56,7 @@ const meta = {
     isLastTestPart: false,
     secondsLeft: 927,
     savingIds: new Set<number>(),
+    audioInputStream: null,
     recordingQuestionId: null,
     recordingFailedQuestionId: null,
     onRecord: async () => true,
