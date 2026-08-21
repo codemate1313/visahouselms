@@ -1856,11 +1856,15 @@
 }
 
 .lc-exam .speaking-interview-avatar {
+  --lc-examiner-photo-background: #dcd4cf;
+  display: flex;
   width: 340px;
   height: 220px;
+  align-items: center;
+  justify-content: center;
   border: 1px solid #d5d5d5;
   border-radius: 0;
-  background: #dcdcdc;
+  background: var(--lc-examiner-photo-background);
   overflow: hidden;
 }
 
@@ -1916,9 +1920,35 @@
 }
 
 .lc-exam .avatar-portrait-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 0;
-  background: #dcdcdc;
+  background: var(--lc-examiner-photo-background);
   box-shadow: none;
+}
+
+/* The supplied examiner frames are square. Keep that square centred inside
+   the delivery client's rectangular video window rather than stretching or
+   cropping it to the frame. The side gutters use the average edge colour
+   sampled from the source portrait, so they read as one continuous backdrop. */
+.lc-exam .photo-examiner-avatar {
+  width: auto;
+  height: 100%;
+  flex: 0 0 auto;
+  aspect-ratio: 1;
+  background: var(--lc-examiner-photo-background);
+}
+
+.lc-exam .photo-examiner-avatar .ta-stage {
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.lc-exam .speaking-interview-avatar .photo-examiner-avatar img {
+  object-fit: contain;
 }
 
 /* The pill's own state text ("Examiner Speaking...") has no counterpart in

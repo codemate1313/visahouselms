@@ -5,7 +5,6 @@ import { LcFlagIcon } from "./PeopleCertBrand";
 interface SectionGroup {
   section: string;
   label: string;
-  durationMinutes?: number;
   parts: Array<{ part: Attempt["parts"][number]; index: number }>;
 }
 
@@ -50,10 +49,7 @@ export function PartsNav({
       <nav className="test-runner-parts lc-rail" aria-label={t.testSectionsAriaLabel}>
         {sectionGroups.map((group) => (
           <section className="lc-rail-group" data-section={group.section} key={group.section}>
-            <h2 className="lc-rail-heading">
-              {group.label}
-              {group.durationMinutes ? <span> · {group.durationMinutes} min</span> : null}
-            </h2>
+            <h2 className="lc-rail-heading">{group.label}</h2>
             <div className="lc-rail-tabs">
               {group.parts.map(({ part, index }) => {
                 const complete = part.question_count > 0 && part.answered_count === part.question_count;
@@ -94,10 +90,7 @@ export function PartsNav({
       </div>
       {sectionGroups.map((group) => (
         <section className="test-runner-section-group" key={group.section}>
-          <h2>
-            {group.label}
-            {group.durationMinutes ? <span> · {group.durationMinutes} min</span> : null}
-          </h2>
+          <h2>{group.label}</h2>
           {group.parts.map(({ part, index }) => {
             const complete = part.question_count > 0 && part.answered_count === part.question_count;
             return (

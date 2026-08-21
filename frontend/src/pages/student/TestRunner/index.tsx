@@ -14,7 +14,6 @@ import {
   IMMERSIVE_MODULE_TYPES,
   MAIN_TEST_SECTION_TYPES,
   combinedTimedSectionMinutes,
-  compositeSectionDurationMinutes,
   COMBINED_TIMER_MODULE_TYPES,
   PROCTOR_SETTLE_MS,
   TAB_LEASE_MS,
@@ -1156,7 +1155,6 @@ export function TestRunner() {
     const groups: Array<{
       section: string;
       label: string;
-      durationMinutes?: number;
       parts: Array<{ part: Attempt["parts"][number]; index: number }>;
     }> = [];
     phasePartEntries.forEach(({ part, index }) => {
@@ -1165,9 +1163,6 @@ export function TestRunner() {
         group = {
           section: part.section_type,
           label: sectionLabels[part.section_type] ?? part.section_type,
-          durationMinutes: isSplitCompositeAttempt && !isSpeakingPhase
-            ? compositeSectionDurationMinutes(attempt?.parts ?? [], part.section_type)
-            : undefined,
           parts: [],
         };
         groups.push(group);
@@ -1175,7 +1170,7 @@ export function TestRunner() {
       group.parts.push({ part, index });
     });
     return groups;
-  }, [attempt?.parts, isSpeakingPhase, isSplitCompositeAttempt, phasePartEntries]);
+  }, [phasePartEntries]);
   const passages = useMemo(
     () => Array.from(new Set((currentPart?.questions ?? []).map((question) => question.passage?.trim()).filter(Boolean))) as string[],
     [currentPart],
