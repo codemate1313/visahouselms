@@ -1435,7 +1435,7 @@ export function TestRunner() {
       )}
 
       <div className="test-runner-layout">
-        {!isSpeakingPhase && (
+        {!isSpeakingPart && (
           <PartsNav
             answeredCount={answeredCount}
             totalQuestions={totalQuestions}
@@ -1529,7 +1529,7 @@ export function TestRunner() {
 
       {cameraPreview}
 
-      {!isSpeakingPhase && (
+      {!isSpeakingPart && (
         <TestRunnerFooter
           answeredCount={answeredCount}
           totalQuestions={totalQuestions}

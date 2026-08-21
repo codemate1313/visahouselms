@@ -379,13 +379,6 @@ export function SpeakingInterviewStage({
                 </object>
               </div>
             ) : null}
-            {!hasCandidateText && !hasCandidateAttachment ? (
-              <div className="speaking-candidate-empty">
-                <Icon name="microphone" />
-                <strong>Listen to Instructor</strong>
-                <span>The examiner will give the instructions and ask the question aloud.</span>
-              </div>
-            ) : null}
           </div>
 
           {currentPart.answer_constraints.notes_allowed && (

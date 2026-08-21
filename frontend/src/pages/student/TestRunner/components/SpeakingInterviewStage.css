@@ -168,27 +168,6 @@
   min-height: 430px;
 }
 
-.speaking-candidate-empty {
-  display: grid;
-  max-width: 390px;
-  place-items: center;
-  gap: 8px;
-  padding: 32px;
-  color: #667085;
-  text-align: center;
-}
-
-.speaking-candidate-empty svg {
-  width: 36px;
-  height: 36px;
-  color: #c51f32;
-}
-
-.speaking-candidate-empty strong {
-  color: #25272e;
-  font-size: 18px;
-}
-
 .speaking-interview-examiner {
   display: flex;
   flex-direction: column;
@@ -573,14 +552,6 @@
 }
 
 [data-theme="dark"] .speaking-interview-examiner-copy span {
-  color: var(--text-muted, #9ca3af);
-}
-
-[data-theme="dark"] .speaking-candidate-empty strong {
-  color: var(--text, #f7f7fa);
-}
-
-[data-theme="dark"] .speaking-candidate-empty span {
   color: var(--text-muted, #9ca3af);
 }
 

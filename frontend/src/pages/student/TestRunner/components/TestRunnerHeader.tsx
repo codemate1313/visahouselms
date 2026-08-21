@@ -95,11 +95,8 @@ export function TestRunnerHeader({
       <header className="test-runner-header lc-header">
         <div className="lc-header-inner">
           <PeopleCertBrand />
-          {/* Positioned by `.lc-header-title` against the header itself, not
-              this flex row, so it centres over the content pane the section
-              rail leaves below - the same area the listening transport
-              centres over - regardless of how wide the brand mark or the
-              timer next to it happen to be. */}
+          {/* The equal outer grid columns keep this title centred without
+              allowing it to overlap the brand or the optional timer. */}
           <h1 className="lc-header-title">{languageCertHeaderTitle(currentPart.section_type)}</h1>
           <div className="lc-header-right">
             {showTimer && (
