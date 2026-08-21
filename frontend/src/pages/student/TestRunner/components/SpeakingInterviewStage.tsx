@@ -164,24 +164,15 @@ export function SpeakingInterviewStage({
   const onContinuePartRef = useRef(onContinuePart);
   const previousQuestionIdRef = useRef<number | null>(question?.id ?? null);
   const t = strings.speakingInterview;
-  const introText = currentPart.instructions?.trim() ?? "";
-  const introStorageKey = introText ? `speaking-part-intro-played:${attemptId}:${currentPart.id}:${introText}` : "";
-  const shouldShowIntro = Boolean(introText) && currentPart.answered_count === 0;
-  const [introState, setIntroState] = useState(() => ({
-    key: introStorageKey,
-    complete: !introStorageKey || !shouldShowIntro || sessionStorage.getItem(introStorageKey) === "true",
-  }));
-  const introComplete = !shouldShowIntro || (introState.key === introStorageKey && introState.complete);
   // Each prompt carries its own timing; the part has none to fall back on and
   // nothing here invents one. Zero preparation means exactly that - recording
   // starts as the examiner finishes, with no countdown and no button to press.
   const preparationSeconds = question?.interaction?.preparation_seconds ?? 0;
   const responseSeconds = question?.interaction?.response_seconds ?? 0;
   const hasPreparation = preparationSeconds > 0;
-  // With no preparation there is no Start button: the examiner finishing is the
-  // cue. If that cue never arrives - the prompt audio failed, or the browser
-  // refused to play it - the candidate would have no way to begin at all, so a
-  // manual control appears rather than leaving them stranded.
+  // Examiner audio is the cue for every prompt, including prompts with a
+  // preparation allowance. If that cue never arrives because playback failed,
+  // a delayed recovery control appears rather than leaving the candidate stuck.
   const [manualStartOffered, setManualStartOffered] = useState(false);
   // A prompt can be spoken in two pieces with a pause between them, so silence
   // on its own is not evidence that the audio failed. The rescue only counts
@@ -201,14 +192,6 @@ export function SpeakingInterviewStage({
   }, [currentPart.id, firstOpenQuestion]);
 
   useEffect(() => {
-    if (!introStorageKey || !shouldShowIntro) {
-      setIntroState({ key: introStorageKey, complete: true });
-      return;
-    }
-    setIntroState({ key: introStorageKey, complete: sessionStorage.getItem(introStorageKey) === "true" });
-  }, [introStorageKey, shouldShowIntro]);
-
-  useEffect(() => {
     if (previousQuestionIdRef.current !== (question?.id ?? null)) {
       previousQuestionIdRef.current = question?.id ?? null;
       setMode(recorded ? "complete" : "ready");
@@ -221,14 +204,14 @@ export function SpeakingInterviewStage({
   }, [attemptId, question?.id, recorded]);
 
   useEffect(() => {
-    if (hasPreparation || mode !== "ready") {
+    if (mode !== "ready") {
       setManualStartOffered(false);
       return undefined;
     }
     if (examinerBusy) return undefined;
     const rescue = window.setTimeout(() => setManualStartOffered(true), 12000);
     return () => window.clearTimeout(rescue);
-  }, [hasPreparation, mode, question?.id, examinerBusy]);
+  }, [mode, question?.id, examinerBusy]);
 
   useEffect(() => {
     if (mode !== "preparing") return undefined;
@@ -299,18 +282,6 @@ export function SpeakingInterviewStage({
   }, [isLastQuestion, mode]);
 
   if (!question) return null;
-
-  const finishIntro = () => {
-    try {
-      const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA");
-      audio.play().catch(() => {});
-      unlockSharedAudioContext();
-    } catch (e) {
-      console.warn("Audio unlock failed:", e);
-    }
-    if (introStorageKey) sessionStorage.setItem(introStorageKey, "true");
-    setIntroState({ key: introStorageKey, complete: true });
-  };
 
   const beginPreparation = () => {
     try {
@@ -388,10 +359,9 @@ export function SpeakingInterviewStage({
         <section className="speaking-interview-workspace">
           <div className="speaking-interview-progress">
             <span>{t.partProgress(speakingPartNumber, speakingPartCount)}</span>
-            <span>{!introComplete ? "Segment intro" : question.interaction?.turn_type?.replaceAll("_", " ") || t.questionProgress(questionIndex + 1, currentPart.questions.length)}</span>
+            <span>{question.interaction?.turn_type?.replaceAll("_", " ") || t.questionProgress(questionIndex + 1, currentPart.questions.length)}</span>
           </div>
 
-          {introComplete && (
           <div className={materialClassName}>
             {hasCandidateText && question.passage ? (
               <article className="speaking-interview-passage">
@@ -417,9 +387,8 @@ export function SpeakingInterviewStage({
               </div>
             ) : null}
           </div>
-          )}
 
-          {introComplete && currentPart.answer_constraints.notes_allowed && (
+          {currentPart.answer_constraints.notes_allowed && (
             <label className="speaking-interview-notes">
               <span>Preparation notes</span>
               {/* Stay visible while recording: these notes exist to be spoken
@@ -436,16 +405,13 @@ export function SpeakingInterviewStage({
             </label>
           )}
 
-          {introComplete && (
           <div className="speaking-interview-audio-progress" aria-hidden="true">
             <div
               className="speaking-interview-audio-progress-fill"
               style={{ width: `${Math.round((mode === "ready" && examinerBusy ? examinerProgress : mode === "ready" ? 0 : 1) * 100)}%` }}
             />
           </div>
-          )}
 
-          {introComplete && (
           <div className="speaking-interview-control-dock">
             <div className={`speaking-interview-timer is-${mode}`}>
               <span>{timer.label}</span>
@@ -475,7 +441,7 @@ export function SpeakingInterviewStage({
             </div>
 
             <div className="speaking-interview-actions">
-              {mode === "ready" && (hasPreparation || manualStartOffered) && (
+              {mode === "ready" && manualStartOffered && (
                 <Button leftIcon={<Icon name="play" />} onClick={beginPreparation} size="lg">{t.startResponse}</Button>
               )}
               {/* Preparation is an allowance, not an offer: the candidate gets
@@ -501,19 +467,18 @@ export function SpeakingInterviewStage({
               ))}
             </div>
           </div>
-          )}
         </section>
 
         <aside className="speaking-interview-examiner">
           <div className="speaking-interview-avatar">
             <SpeakingAvatar
-              key={`${currentPart.id}:${introComplete ? question.id : "intro"}`}
+              key={`${currentPart.id}:${question.id}`}
               attemptId={attemptId}
               avatarOnly
               isCandidateRecording={mode === "recording"}
               partId={currentPart.id}
-              questionId={introComplete ? question.id : undefined}
-              onAudioEnded={introComplete ? beginPreparation : finishIntro}
+              questionId={question.id}
+              onAudioEnded={beginPreparation}
               onExaminerBusyChange={setExaminerBusy}
               onAudioProgress={setExaminerProgress}
             />
