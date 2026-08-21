@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Attempt, ExamModuleType } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { unlockSharedAudioContext } from "@/lib/talking-avatar.js";
+import { isSplitCompositeModule, mainTestDurationMinutes } from "../helpers";
 import {
   Button,
   Stepper,
@@ -90,11 +91,20 @@ export function PreExamOnboarding({
   const [micAudibilityAsked, setMicAudibilityAsked] = useState(false);
 
   // Calculate dynamic metadata
+  const displayParts = useMemo(
+    () => isSplitCompositeModule(attempt.module_type)
+      ? attempt.parts.filter((part) => part.section_type !== "speaking")
+      : attempt.parts,
+    [attempt.module_type, attempt.parts],
+  );
   const totalQuestions = useMemo(() => {
-    return attempt.parts.reduce((sum, p) => sum + (p.questions?.length || p.question_count || 0), 0);
-  }, [attempt.parts]);
+    return displayParts.reduce((sum, p) => sum + (p.questions?.length || p.question_count || 0), 0);
+  }, [displayParts]);
 
   const totalDurationMinutes = useMemo(() => {
+    if (isSplitCompositeModule(attempt.module_type)) {
+      return mainTestDurationMinutes(attempt.parts);
+    }
     if (attempt.duration_minutes && attempt.duration_minutes > 0) {
       return attempt.duration_minutes;
     }
@@ -109,7 +119,7 @@ export function PreExamOnboarding({
     }
     if (secondsLeft > 0) return Math.ceil(secondsLeft / 60);
     return 15;
-  }, [attempt.duration_minutes, attempt.parts, attempt.started_at, attempt.expires_at, secondsLeft]);
+  }, [attempt.duration_minutes, attempt.expires_at, attempt.module_type, attempt.parts, attempt.started_at, secondsLeft]);
 
   // Skill theme styling
   const skillMeta = useMemo(() => {
@@ -314,7 +324,7 @@ export function PreExamOnboarding({
               </div>
               <div className="sidebar-meta-item">
                 <Icon name="help" />
-                <span>{totalQuestions} Questions · {attempt.parts.length} {attempt.parts.length === 1 ? "Section" : "Sections"}</span>
+                <span>{totalQuestions} Questions · {displayParts.length} {displayParts.length === 1 ? "Section" : "Sections"}</span>
               </div>
               <div className="sidebar-meta-item">
                 <Icon name="user" />
@@ -481,15 +491,15 @@ export function PreExamOnboarding({
                     <Icon name="overview" />
                   </div>
                   <div>
-                    <h2>Assessment Architecture — {attempt.parts.length} {attempt.parts.length === 1 ? "Section" : "Sections"}</h2>
+                    <h2>Assessment Architecture — {displayParts.length} {displayParts.length === 1 ? "Section" : "Sections"}</h2>
                     <p className="header-subtitle">Comprehensive breakdown of section allocations, question volume, and formats</p>
                   </div>
                 </div>
 
                 <div className="onboarding-parts-grid">
-                  {attempt.parts.map((part, index) => {
+                  {displayParts.map((part, index) => {
                     const qCount = part.questions?.length || part.question_count || 0;
-                    const duration = part.duration_minutes || Math.round(totalDurationMinutes / attempt.parts.length);
+                    const duration = part.duration_minutes || Math.round(totalDurationMinutes / displayParts.length);
                     const percentShare = Math.round((duration / totalDurationMinutes) * 100);
 
                     return (
@@ -515,7 +525,7 @@ export function PreExamOnboarding({
                 <div className="onboarding-summary-banner">
                   <Icon name="help" />
                   <span>
-                    Assessment Summary: <strong>{totalQuestions} questions</strong> across <strong>{attempt.parts.length} sections</strong>. Total examination window: <strong>{totalDurationMinutes} minutes</strong>.
+                    Assessment Summary: <strong>{totalQuestions} questions</strong> across <strong>{displayParts.length} sections</strong>. Total examination window: <strong>{totalDurationMinutes} minutes</strong>. Speaking follows on its own interview screen.
                   </span>
                 </div>
 
@@ -719,8 +729,8 @@ export function PreExamOnboarding({
                     <span>Questions</span>
                   </div>
                   <div className="stat-box">
-                    <strong>{attempt.parts.length}</strong>
-                    <span>{attempt.parts.length === 1 ? "Section" : "Sections"}</span>
+                    <strong>{displayParts.length}</strong>
+                    <span>{displayParts.length === 1 ? "Section" : "Sections"}</span>
                   </div>
                 </div>
 

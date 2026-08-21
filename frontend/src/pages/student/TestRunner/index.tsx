@@ -12,7 +12,9 @@ import { testRunnerStrings as strings } from "./TestRunner.strings";
 import {
   EMPTY_MEDIA_STATE,
   IMMERSIVE_MODULE_TYPES,
+  MAIN_TEST_SECTION_TYPES,
   combinedTimedSectionMinutes,
+  compositeSectionDurationMinutes,
   COMBINED_TIMER_MODULE_TYPES,
   PROCTOR_SETTLE_MS,
   TAB_LEASE_MS,
@@ -22,6 +24,7 @@ import {
   randomId,
   securityStorageKey,
   showsSectionTimer,
+  isSplitCompositeModule,
   storedClientId,
   usesLanguageCertSkin,
   type SecurityMediaState,
@@ -149,6 +152,7 @@ export function TestRunner() {
   const [rulesAccepted] = useState(true);
   const [violationNotice, setViolationNotice] = useState<ViolationNotice | null>(null);
   const submittedRef = useRef(false);
+  const speakingTransitionRef = useRef(false);
   const developerFullscreenBypass = useRef(false);
   const sourcePaneRef = useRef<HTMLElement | null>(null);
   const questionPaneRef = useRef<HTMLElement | null>(null);
@@ -250,7 +254,21 @@ export function TestRunner() {
         const savedPartStorage = sessionStorage.getItem(`test-runner-part:${id}`);
         const candidateIndex = savedPartParam !== null ? parseInt(savedPartParam, 10) : (savedPartStorage !== null ? parseInt(savedPartStorage, 10) : 0);
         const restoredIndex = (!Number.isNaN(candidateIndex) && candidateIndex >= 0 && candidateIndex < data.parts.length) ? candidateIndex : 0;
-        const resolvedPartIndex = speakingEntryIndex(data.parts, restoredIndex);
+        const splitComposite = isSplitCompositeModule(data.module_type)
+          && data.parts.some((part) => part.section_type === "speaking");
+        const speakingStarted = sessionStorage.getItem(securityStorageKey(id, "speaking-started")) === "true"
+          || data.parts.some((part) => part.section_type === "speaking" && part.answered_count > 0);
+        const mainPaperComplete = data.parts
+          .filter((part) => MAIN_TEST_SECTION_TYPES.has(part.section_type))
+          .every((part) => part.question_count === 0 || part.answered_count >= part.question_count);
+        const requestedSpeaking = data.parts[restoredIndex]?.section_type === "speaking";
+        const firstSpeakingIndex = data.parts.findIndex((part) => part.section_type === "speaking");
+        const phaseIndex = splitComposite && speakingStarted && firstSpeakingIndex >= 0
+          ? firstSpeakingIndex
+          : splitComposite && requestedSpeaking && !mainPaperComplete
+            ? 0
+            : restoredIndex;
+        const resolvedPartIndex = speakingEntryIndex(data.parts, phaseIndex);
         setPartIndex(resolvedPartIndex);
 
         const targetPart = data.parts[resolvedPartIndex];
@@ -355,6 +373,13 @@ export function TestRunner() {
     return minutes === null ? null : minutes * 60;
   }, [attempt]);
 
+  const isSplitCompositeAttempt = Boolean(
+    attempt
+      && isSplitCompositeModule(attempt.module_type)
+      && attempt.parts.some((part) => part.section_type === "speaking"),
+  );
+  const isSpeakingPhase = isSplitCompositeAttempt && currentPart?.section_type === "speaking";
+
   // Countdown timer. The server's expires_at is the outer bound - it rejects
   // writes past its own clock independently - and the block allowance, where
   // there is one, is the inner bound. Whichever runs out first ends the sitting.
@@ -363,17 +388,28 @@ export function TestRunner() {
     function tick() {
       if (!attempt) return;
       const attemptRemaining = (parseServerTimestamp(attempt.expires_at) - Date.now()) / 1000;
-      const blockRemaining = combinedBlockSeconds !== null && readingWritingStartedAt !== null
+      const blockRemaining = !isSpeakingPhase && combinedBlockSeconds !== null && readingWritingStartedAt !== null
         ? combinedBlockSeconds - (Date.now() - readingWritingStartedAt) / 1000
         : Number.POSITIVE_INFINITY;
       const remaining = Math.min(attemptRemaining, blockRemaining);
       setSecondsLeft(remaining);
-      if (remaining <= 0) submit(true);
+      if (remaining <= 0) {
+        if (attemptRemaining <= 0) {
+          submit(true);
+        } else if (isSplitCompositeAttempt && !isSpeakingPhase) {
+          void enterSpeakingPhase();
+        } else {
+          submit(true);
+        }
+      }
     }
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [attempt, submit, combinedBlockSeconds, readingWritingStartedAt]);
+  // `enterSpeakingPhase` is declared below the hooks and intentionally reads
+  // the latest attempt when the interval fires.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt, submit, combinedBlockSeconds, readingWritingStartedAt, isSpeakingPhase, isSplitCompositeAttempt]);
 
   // Keep the display awake throughout a live Speaking test. Unsupported or
   // power-restricted browsers simply continue without a wake lock.
@@ -1100,24 +1136,38 @@ export function TestRunner() {
     }
   }
 
+  const phasePartEntries = useMemo(() => {
+    if (!attempt) return [];
+    return attempt.parts
+      .map((part, index) => ({ part, index }))
+      .filter(({ part }) => !isSplitCompositeAttempt
+        || (isSpeakingPhase ? part.section_type === "speaking" : MAIN_TEST_SECTION_TYPES.has(part.section_type)));
+  }, [attempt, isSpeakingPhase, isSplitCompositeAttempt]);
   const answeredCount = useMemo(
-    () => attempt?.parts.reduce((sum, part) => sum + part.answered_count, 0) ?? 0,
-    [attempt],
+    () => phasePartEntries.reduce((sum, { part }) => sum + part.answered_count, 0),
+    [phasePartEntries],
   );
-  const totalQuestions = useMemo(() => attempt?.parts.reduce((sum, part) => sum + part.question_count, 0) ?? 0, [attempt]);
+  const totalQuestions = useMemo(
+    () => phasePartEntries.reduce((sum, { part }) => sum + part.question_count, 0),
+    [phasePartEntries],
+  );
   const sectionGroups = useMemo(() => {
     const sectionLabels: Record<string, string> = strings.sectionLabels;
     const groups: Array<{
       section: string;
       label: string;
+      durationMinutes?: number;
       parts: Array<{ part: Attempt["parts"][number]; index: number }>;
     }> = [];
-    attempt?.parts.forEach((part, index) => {
+    phasePartEntries.forEach(({ part, index }) => {
       let group = groups.find((item) => item.section === part.section_type);
       if (!group) {
         group = {
           section: part.section_type,
           label: sectionLabels[part.section_type] ?? part.section_type,
+          durationMinutes: isSplitCompositeAttempt && !isSpeakingPhase
+            ? compositeSectionDurationMinutes(attempt?.parts ?? [], part.section_type)
+            : undefined,
           parts: [],
         };
         groups.push(group);
@@ -1125,7 +1175,7 @@ export function TestRunner() {
       group.parts.push({ part, index });
     });
     return groups;
-  }, [attempt]);
+  }, [attempt?.parts, isSpeakingPhase, isSplitCompositeAttempt, phasePartEntries]);
   const passages = useMemo(
     () => Array.from(new Set((currentPart?.questions ?? []).map((question) => question.passage?.trim()).filter(Boolean))) as string[],
     [currentPart],
@@ -1178,6 +1228,11 @@ export function TestRunner() {
   async function selectPart(index: number, force = false) {
     if (isNavigationLocked && !force && index !== partIndex) return;
     const selectedPart = attempt?.parts[index];
+    if (isSplitCompositeAttempt && selectedPart && currentPart) {
+      const targetIsSpeaking = selectedPart.section_type === "speaking";
+      if (isSpeakingPhase && !targetIsSpeaking) return;
+      if (!isSpeakingPhase && targetIsSpeaking && !force) return;
+    }
     if (
       attempt?.is_final
       && selectedPart
@@ -1206,6 +1261,28 @@ export function TestRunner() {
       sourcePaneRef.current?.scrollTo({ top: 0 });
       questionPaneRef.current?.scrollTo({ top: 0 });
     });
+  }
+
+  async function enterSpeakingPhase() {
+    if (!attempt || speakingTransitionRef.current) return;
+    const firstSpeakingIndex = attempt.parts.findIndex((part) => part.section_type === "speaking");
+    if (firstSpeakingIndex < 0) {
+      await submit();
+      return;
+    }
+    speakingTransitionRef.current = true;
+    // Let any active or just-debounced Writing save finish before its editor is
+    // unmounted. The local response is already updated, but this keeps the
+    // server copy caught up before the paper becomes inaccessible.
+    await new Promise((resolve) => setTimeout(resolve, DEBOUNCE_MS + 50));
+    const flushDeadline = Date.now() + 8000;
+    while (savingIdsRef.current.size > 0 && Date.now() < flushDeadline) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+    sessionStorage.setItem(securityStorageKey(id, "speaking-started"), "true");
+    setConfirmSubmit(false);
+    await selectPart(speakingEntryIndex(attempt.parts, firstSpeakingIndex), true);
+    speakingTransitionRef.current = false;
   }
 
   // Declared after every hook: this branch flips on window resize, so returning
@@ -1315,6 +1392,11 @@ export function TestRunner() {
 
   const speakingParts = attempt.parts.filter((part) => part.section_type === "speaking");
   const speakingPartNumber = speakingParts.findIndex((part) => part.id === currentPart.id) + 1;
+  const phasePartPosition = phasePartEntries.findIndex(({ index }) => index === partIndex);
+  const previousPhasePartIndex = phasePartPosition > 0 ? phasePartEntries[phasePartPosition - 1]?.index ?? null : null;
+  const nextPhasePartIndex = phasePartPosition >= 0 && phasePartPosition < phasePartEntries.length - 1
+    ? phasePartEntries[phasePartPosition + 1]?.index ?? null
+    : null;
 
   return (
     <div className={`test-runner-shell${brandedTestClass}${languageCertSkin ? " lc-exam" : ""}`}>
@@ -1326,6 +1408,8 @@ export function TestRunner() {
         isFinalAttempt={isFinalAttempt}
         partIndex={partIndex}
         onSelectPart={selectPart}
+        previousPartIndex={previousPhasePartIndex}
+        nextPartIndex={nextPhasePartIndex}
         onSkipPart={() => void selectPart(partIndex + 1, true)}
         isNavigationLocked={isNavigationLocked}
         isImmersiveAttempt={isImmersiveAttempt}
@@ -1343,7 +1427,7 @@ export function TestRunner() {
           attemptId={attempt.id}
           currentPart={currentPart}
           onAudioLockChange={setIsListeningLocked}
-          autoAdvance={partIndex < attempt.parts.length - 1}
+          autoAdvance={nextPhasePartIndex !== null}
           onAudioComplete={handleListeningPartComplete}
           languageCertSkin={languageCertSkin}
           userEmail={user?.email}
@@ -1351,15 +1435,17 @@ export function TestRunner() {
       )}
 
       <div className="test-runner-layout">
-        <PartsNav
-          answeredCount={answeredCount}
-          totalQuestions={totalQuestions}
-          sectionGroups={sectionGroups}
-          partIndex={partIndex}
-          onSelectPart={selectPart}
-          isNavigationLocked={isNavigationLocked}
-          languageCertSkin={languageCertSkin}
-        />
+        {!isSpeakingPhase && (
+          <PartsNav
+            answeredCount={answeredCount}
+            totalQuestions={totalQuestions}
+            sectionGroups={sectionGroups}
+            partIndex={partIndex}
+            onSelectPart={selectPart}
+            isNavigationLocked={isNavigationLocked}
+            languageCertSkin={languageCertSkin}
+          />
+        )}
 
         {/* Listening, Speaking, and standalone MCQ parts without separate source text span
             the screen as one full-width column, matching the standard engine layout. */}
@@ -1377,9 +1463,12 @@ export function TestRunner() {
               audio, so neither offers it. */}
           {languageCertSkin && !isListeningPart && currentPart.section_type !== "speaking" && (
             <LcPartPager
-              partIndex={partIndex}
-              partCount={attempt.parts.length}
-              onSelectPart={selectPart}
+              partIndex={phasePartPosition}
+              partCount={phasePartEntries.length}
+              onSelectPart={(index) => {
+                const target = phasePartEntries[index];
+                if (target) void selectPart(target.index);
+              }}
               isNavigationLocked={isNavigationLocked}
             />
           )}
@@ -1439,13 +1528,16 @@ export function TestRunner() {
 
       {cameraPreview}
 
-      <TestRunnerFooter
-        answeredCount={answeredCount}
-        totalQuestions={totalQuestions}
-        submitting={submitting}
-        onRequestSubmit={() => setConfirmSubmit(true)}
-        languageCertSkin={languageCertSkin}
-      />
+      {!isSpeakingPhase && (
+        <TestRunnerFooter
+          answeredCount={answeredCount}
+          totalQuestions={totalQuestions}
+          submitting={submitting}
+          onRequestSubmit={() => setConfirmSubmit(true)}
+          continueToSpeaking={isSplitCompositeAttempt}
+          languageCertSkin={languageCertSkin}
+        />
+      )}
 
       {confirmSubmit && (
         <SubmitConfirmModal
@@ -1454,7 +1546,8 @@ export function TestRunner() {
           isFinal={attempt.is_final}
           submitting={submitting}
           onClose={() => setConfirmSubmit(false)}
-          onConfirm={submit}
+          onConfirm={isSplitCompositeAttempt && !isSpeakingPhase ? enterSpeakingPhase : submit}
+          continueToSpeaking={isSplitCompositeAttempt && !isSpeakingPhase}
         />
       )}
 

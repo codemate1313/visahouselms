@@ -5,6 +5,7 @@ interface TestRunnerFooterProps {
   totalQuestions: number;
   submitting: boolean;
   onRequestSubmit: () => void;
+  continueToSpeaking?: boolean;
   /** Final Test only: the PeopleCert footer is a rule and one End Exam button. */
   languageCertSkin?: boolean;
 }
@@ -14,6 +15,7 @@ export function TestRunnerFooter({
   totalQuestions,
   submitting,
   onRequestSubmit,
+  continueToSpeaking = false,
   languageCertSkin = false,
 }: TestRunnerFooterProps) {
   const t = strings.footer;
@@ -25,7 +27,7 @@ export function TestRunnerFooter({
     return (
       <footer className="test-runner-footer lc-footer">
         <button className="lc-end-exam" onClick={onRequestSubmit} disabled={submitting}>
-          {submitting ? t.submitting : t.endExam}
+          {submitting ? t.submitting : continueToSpeaking ? t.continueToSpeaking : t.endExam}
         </button>
       </footer>
     );
@@ -35,11 +37,11 @@ export function TestRunnerFooter({
     <footer className="test-runner-footer">
       <span>{t.answeredOf(answeredCount, totalQuestions)}</span>
       <div>
-        {/* Moving between parts is done from the header. The one action down
-            here ends the attempt, and it still goes through the confirmation
-            modal - this button submits the whole test. */}
+        {/* Moving between parts is done from the header. This action either
+            closes the main paper and opens Speaking, or submits a standalone
+            assessment; both paths retain a confirmation step. */}
         <button className="test-runner-end-exam" onClick={onRequestSubmit} disabled={submitting}>
-          {submitting ? t.submitting : t.endExam}
+          {submitting ? t.submitting : continueToSpeaking ? t.continueToSpeaking : t.endExam}
         </button>
       </div>
     </footer>

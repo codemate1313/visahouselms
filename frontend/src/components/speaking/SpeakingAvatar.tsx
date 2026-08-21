@@ -111,9 +111,17 @@ export function SpeakingAvatar({
       setIsPlaying(false);
       setCurrentViseme(0);
       try {
+        const headers: Record<string, string> = {};
+        const attemptToken = sessionStorage.getItem(`final-test:${attemptId}:token`);
+        if (attemptToken) {
+          headers["X-Attempt-Token"] = attemptToken;
+        }
         const { data } = await apiClient.get<AvatarData>(
           `/student/attempts/${attemptId}/speaking-avatar/${partId}`,
-          { params: { examiner_id: SONIA.id, question_id: questionId } }
+          {
+            params: { examiner_id: SONIA.id, question_id: questionId },
+            headers,
+          }
         );
         if (isMounted) {
           setAvatarData(data);

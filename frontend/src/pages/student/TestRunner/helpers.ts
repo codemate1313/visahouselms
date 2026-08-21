@@ -83,6 +83,41 @@ export function languageCertHeaderTitle(sectionType: string): string {
  */
 export const COMBINED_TIMER_MODULE_TYPES = new Set(["final_test", "full_mock"]);
 
+/** Sections sat in the first screen of a composite assessment. Speaking uses
+ *  its own interview screen after this paper is ended. */
+export const MAIN_TEST_SECTION_TYPES = new Set(["listening", "reading", "writing"]);
+
+/** Official section allocations used when legacy composite parts do not carry
+ *  their source module's duration. Reading and Writing normally do; Listening
+ *  is audio-paced and historically stored no part-level duration. */
+const COMPOSITE_SECTION_FALLBACK_MINUTES: Record<string, number> = {
+  listening: 40,
+  reading: 50,
+  writing: 50,
+  speaking: 14,
+};
+
+export function isSplitCompositeModule(moduleType: string | null | undefined): boolean {
+  return Boolean(moduleType && COMBINED_TIMER_MODULE_TYPES.has(moduleType));
+}
+
+export function compositeSectionDurationMinutes(
+  parts: Array<{ section_type: string; duration_minutes: number | null }>,
+  sectionType: string,
+): number {
+  const authoredTotal = parts
+    .filter((part) => part.section_type === sectionType)
+    .reduce((sum, part) => sum + (part.duration_minutes ?? 0), 0);
+  return authoredTotal > 0 ? authoredTotal : (COMPOSITE_SECTION_FALLBACK_MINUTES[sectionType] ?? 0);
+}
+
+export function mainTestDurationMinutes(
+  parts: Array<{ section_type: string; duration_minutes: number | null }>,
+): number {
+  return Array.from(MAIN_TEST_SECTION_TYPES)
+    .reduce((sum, section) => sum + compositeSectionDurationMinutes(parts, section), 0);
+}
+
 /** The only sections that display that countdown. */
 const TIMED_SECTION_TYPES = new Set(["reading", "writing"]);
 

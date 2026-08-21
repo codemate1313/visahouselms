@@ -13,6 +13,8 @@ interface TestRunnerHeaderProps {
   isFinalAttempt: boolean;
   partIndex: number;
   onSelectPart: (index: number) => void;
+  previousPartIndex?: number | null;
+  nextPartIndex?: number | null;
   /** Jumps to the next part even while audio holds the part locked. */
   onSkipPart?: () => void;
   isNavigationLocked?: boolean;
@@ -35,6 +37,8 @@ export function TestRunnerHeader({
   isFinalAttempt,
   partIndex,
   onSelectPart,
+  previousPartIndex,
+  nextPartIndex,
   onSkipPart,
   isNavigationLocked = false,
   isImmersiveAttempt,
@@ -47,6 +51,12 @@ export function TestRunnerHeader({
 }: TestRunnerHeaderProps) {
   const t = strings.header;
   const sectionLabels = strings.sectionLabels;
+  const previousTarget = previousPartIndex !== undefined
+    ? previousPartIndex
+    : (partIndex > 0 ? partIndex - 1 : null);
+  const nextTarget = nextPartIndex !== undefined
+    ? nextPartIndex
+    : (partIndex < attempt.parts.length - 1 ? partIndex + 1 : null);
 
   const developerTools = (
     <>
@@ -136,16 +146,20 @@ export function TestRunnerHeader({
           <button
             type="button"
             className="secondary-button"
-            disabled={partIndex === 0 || isNavigationLocked}
-            onClick={() => onSelectPart(partIndex - 1)}
+            disabled={previousTarget === null || isNavigationLocked}
+            onClick={() => {
+              if (previousTarget !== null) onSelectPart(previousTarget);
+            }}
             title={isNavigationLocked ? t.navigationLocked : undefined}
           >
             {t.previous}
           </button>
           <button
             type="button"
-            disabled={partIndex === attempt.parts.length - 1 || isNavigationLocked}
-            onClick={() => onSelectPart(partIndex + 1)}
+            disabled={nextTarget === null || isNavigationLocked}
+            onClick={() => {
+              if (nextTarget !== null) onSelectPart(nextTarget);
+            }}
             title={isNavigationLocked ? t.navigationLocked : undefined}
           >
             {t.next}

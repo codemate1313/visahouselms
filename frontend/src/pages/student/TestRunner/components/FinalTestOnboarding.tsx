@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Attempt } from "@/api/types";
 import type { AuthUser } from "@/store/authStore";
-import { buildExamUrn, formatExamBirthDate } from "../helpers";
+import { buildExamUrn, formatExamBirthDate, mainTestDurationMinutes } from "../helpers";
 import { unlockSharedAudioContext } from "@/lib/talking-avatar.js";
 import { PeopleCertBrand } from "./PeopleCertBrand";
 
@@ -66,7 +66,7 @@ export function FinalTestOnboarding({
     .map((item) => item.description?.trim())
     .filter((line): line is string => Boolean(line));
   const instructions = authored.length > 0 ? authored : DEFAULT_INSTRUCTIONS;
-  const minutes = attempt.duration_minutes;
+  const minutes = mainTestDurationMinutes(attempt.parts);
 
   const fields: Array<{ label: string; hint?: string; value: string }> = [
     { label: "First / Middle Name(s)", hint: "(Latin)", value: user?.first_name || "—" },
@@ -158,7 +158,7 @@ export function FinalTestOnboarding({
             <h2 className="lc-onb-heading" id="lc-onb-title-3">Ready for the Exam</h2>
             <div className="lc-onb-panel">
               <p className="lc-onb-line">
-                You have approximately <strong>{minutes ?? "—"}</strong> minutes to complete this exam.
+                You have approximately <strong>{minutes}</strong> minutes to complete the Listening, Reading and Writing paper.
               </p>
               <p className="lc-onb-line">Once you click &lsquo;Start Exam&rsquo; the exam time will start.</p>
             </div>

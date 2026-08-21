@@ -134,16 +134,20 @@ export const testRunnerStrings = {
   footer: {
     answeredOf: (answered: number, total: number) => `${answered} of ${total} answered`,
     endExam: "End exam",
+    continueToSpeaking: "Continue to Speaking",
     submitting: "Submitting...",
     submitTest: "Submit test",
   },
   submitModal: {
     heading: "Submit this test?",
+    speakingHeading: "Continue to Speaking?",
     summary: (answered: number, total: number) => `You've answered ${answered} of ${total} questions.`,
     finalWarning: "The Final Test cannot be resumed once left.",
     standardWarning: "You won't be able to change your answers after submitting.",
+    speakingWarning: "The Listening, Reading and Writing paper will close, and you won't be able to return after the Speaking interview starts.",
     keepWorking: "Keep working",
     submitNow: "Submit now",
+    continueToSpeaking: "Continue to Speaking",
   },
   fullscreenGate: {
     finalTest: "Final Test",
