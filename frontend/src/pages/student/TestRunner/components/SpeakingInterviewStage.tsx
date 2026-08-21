@@ -40,21 +40,37 @@ function VoiceActivityDots({ active, stream }: { active: boolean; stream: MediaS
     const analyser = context.createAnalyser();
     const source = context.createMediaStreamSource(stream);
     analyser.fftSize = 128;
-    analyser.smoothingTimeConstant = 0.78;
-    const frequencies = new Uint8Array(analyser.frequencyBinCount);
+    analyser.smoothingTimeConstant = 0.72;
+    const samples = new Uint8Array(analyser.fftSize);
+    const recentLevels = Array.from({ length: VOICE_DOT_COUNT }, () => 0);
     let animationFrame = 0;
+    let lastLevelSample = 0;
     source.connect(analyser);
     void context.resume().catch(() => {});
 
-    const updateDots = () => {
-      analyser.getByteFrequencyData(frequencies);
+    const updateDots = (timestamp = 0) => {
+      analyser.getByteTimeDomainData(samples);
+      let sumOfSquares = 0;
+      for (const sample of samples) {
+        const centred = (sample - 128) / 128;
+        sumOfSquares += centred * centred;
+      }
+      const rms = Math.sqrt(sumOfSquares / samples.length);
+      const inputLevel = Math.min(1, Math.max(0, (rms - 0.012) * 9));
+
+      /* New microphone levels enter on the left and move across the row. A
+         natural decay keeps the right side as the dotted tail shown in the
+         reference instead of turning the whole indicator into equal bars. */
+      if (timestamp - lastLevelSample >= 55) {
+        recentLevels.pop();
+        recentLevels.unshift(inputLevel);
+        lastLevelSample = timestamp;
+      }
+
       const dotElements = dots.children;
-      const usableBins = Math.max(1, Math.floor(frequencies.length * 0.65));
       for (let index = 0; index < dotElements.length; index += 1) {
-        const bin = Math.min(usableBins - 1, Math.floor((index / dotElements.length) * usableBins));
-        const strength = Math.max(0, frequencies[bin] / 255 - 0.04);
-        const centreEnvelope = 0.5 + 0.5 * Math.sin(((index + 0.5) / dotElements.length) * Math.PI);
-        const height = 4 + Math.min(24, strength * 34 * centreEnvelope);
+        const tailDecay = Math.exp(-index / 8);
+        const height = 4 + Math.min(22, recentLevels[index] * 24 * tailDecay);
         (dotElements[index] as HTMLElement).style.height = `${height.toFixed(1)}px`;
       }
       animationFrame = window.requestAnimationFrame(updateDots);

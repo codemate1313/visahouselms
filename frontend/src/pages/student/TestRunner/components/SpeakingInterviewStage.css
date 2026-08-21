@@ -346,9 +346,12 @@
 
 .speaking-voice-dots {
   display: flex;
+  width: min(200px, 100%);
   min-height: 30px;
   align-items: center;
+  justify-content: flex-start;
   gap: 4px;
+  margin-inline: auto;
 }
 
 .speaking-voice-dots span {

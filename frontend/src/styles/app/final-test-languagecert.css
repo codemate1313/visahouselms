@@ -2168,8 +2168,9 @@
 }
 
 .lc-exam .speaking-voice-dots {
+  width: min(200px, 100%);
   min-height: 24px;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .lc-exam .speaking-voice-dots span {
