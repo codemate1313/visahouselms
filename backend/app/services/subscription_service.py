@@ -931,8 +931,6 @@ def my_current_plan_view(db: Session, user: User) -> dict:
             if user.institute_id is None else 0
         )
         is_exh = has_att and not retake_avail and sittings_left <= 0
-        if user.email == "mehtanavish60@gmail.com":
-            is_exh = False
         latest = mod_atts[0] if mod_atts else None
         return {
             "has_attempted": has_att,

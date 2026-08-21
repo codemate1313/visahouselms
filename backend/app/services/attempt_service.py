@@ -242,9 +242,7 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
     )
     original_attempt = prior_sittings > 0
     retake_request = None
-    is_testing_account = user.email == "mehtanavish60@gmail.com"
-
-    if original_attempt and not is_testing_account:
+    if original_attempt:
         if is_final:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
