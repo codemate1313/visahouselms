@@ -44,6 +44,7 @@ export function DashboardLayout() {
 
     return [
       {
+        key: "overview",
         title: m.overview,
         items: [
           {
@@ -55,7 +56,9 @@ export function DashboardLayout() {
         ],
       },
       {
+        key: "people-access",
         title: m.peopleAccess,
+        collapsible: true,
         items: [
           {
             key: "users",
@@ -74,7 +77,9 @@ export function DashboardLayout() {
         ],
       },
       {
+        key: "academics",
         title: m.academics,
+        collapsible: true,
         items: [
           {
             key: "courses",
@@ -97,11 +102,15 @@ export function DashboardLayout() {
         ],
       },
       {
+        key: "billing-business",
         title: m.billingBusiness,
+        collapsible: true,
         items: billingItems,
       },
       {
+        key: "communication",
         title: m.communication,
+        collapsible: true,
         items: [
           {
             key: "notifications",
@@ -118,7 +127,9 @@ export function DashboardLayout() {
         ],
       },
       {
+        key: "cms-content",
         title: m.cmsContent,
+        collapsible: true,
         items: [
           {
             key: "testimonials",
@@ -147,7 +158,9 @@ export function DashboardLayout() {
         ],
       },
       {
+        key: "system",
         title: m.systemSection,
+        collapsible: true,
         items: [
           {
             key: "system_dev",
@@ -160,7 +173,9 @@ export function DashboardLayout() {
         ],
       },
       {
+        key: "account",
         title: m.accountSection,
+        collapsible: true,
         items: [
           {
             key: "profile",

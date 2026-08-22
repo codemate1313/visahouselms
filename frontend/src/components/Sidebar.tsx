@@ -23,7 +23,9 @@ export interface MenuItem {
 }
 
 export interface MenuSection {
+  key?: string;
   title?: string;
+  collapsible?: boolean;
   items: MenuItem[];
 }
 
@@ -82,6 +84,19 @@ function getActiveItemKey(sections: MenuSection[], pathname: string): string | n
   return bestKey;
 }
 
+function getActiveSectionKey(sections: MenuSection[], activeKey: string | null): string | null {
+  if (!activeKey) return null;
+
+  const activeSection = sections.find((section) =>
+    section.collapsible &&
+    section.items.some(
+      (item) => item.key === activeKey || item.children?.some((child) => child.key === activeKey)
+    )
+  );
+
+  return activeSection?.key ?? null;
+}
+
 export function Sidebar({
   brandTitle = "Language CERT",
   brandSubtitle,
@@ -96,8 +111,12 @@ export function Sidebar({
 
   // Determine the SINGLE active item key
   const activeKey = getActiveItemKey(sections, location.pathname);
+  const activeSectionKey = getActiveSectionKey(sections, activeKey);
 
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
+  const [expandedSectionKeys, setExpandedSectionKeys] = useState<Record<string, boolean>>(
+    () => (activeSectionKey ? { [activeSectionKey]: true } : {})
+  );
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isOpenOnMobile, setIsOpenOnMobile] = useState(false);
   const [isMobileScreen, setIsMobileScreen] = useState(() => window.innerWidth <= 768);
@@ -159,6 +178,16 @@ export function Sidebar({
     });
   }, [activeKey, sections]);
 
+  // Keep the section for the current route visible. Opening another section
+  // behaves like an accordion so the long admin navigation remains compact.
+  useEffect(() => {
+    if (!activeSectionKey) return;
+    setExpandedSectionKeys((current) => {
+      if (current[activeSectionKey] && Object.keys(current).length === 1) return current;
+      return { [activeSectionKey]: true };
+    });
+  }, [activeKey, activeSectionKey]);
+
   const navRef = useRef<HTMLElement | null>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<{ top: number; left: number; width: number; height: number; opacity: number }>({
     top: 0,
@@ -207,7 +236,7 @@ export function Sidebar({
         parentSidebar.removeEventListener("transitionend", updateIndicator);
       }
     };
-  }, [activeKey, location.pathname, expandedKeys, isCollapsed]);
+  }, [activeKey, location.pathname, expandedKeys, expandedSectionKeys, isCollapsed]);
 
   const toggleAccordion = (item: MenuItem) => {
     if (isCollapsed) {
@@ -219,6 +248,13 @@ export function Sidebar({
     }
     setExpandedKeys((prev) => ({
       [item.key]: !prev[item.key],
+    }));
+  };
+
+  const toggleSection = (sectionKey: string) => {
+    if (isCollapsed) return;
+    setExpandedSectionKeys((current) => ({
+      [sectionKey]: !current[sectionKey],
     }));
   };
 
@@ -296,14 +332,41 @@ export function Sidebar({
             opacity: indicatorStyle.opacity,
           }}
         />
-        {sections.map((section, sIndex) => (
-          <div key={sIndex} className="sidebar-section">
-            {section.title && (
+        {sections.map((section, sIndex) => {
+          const sectionKey = section.key ?? section.title ?? String(sIndex);
+          const isSectionOpen = !section.collapsible || isCollapsed || !!expandedSectionKeys[sectionKey];
+          const hasActiveItem = section.items.some(
+            (item) => item.key === activeKey || item.children?.some((child) => child.key === activeKey)
+          );
+          const sectionContentId = `sidebar-section-${sectionKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+
+          return (
+          <div key={sectionKey} className={`sidebar-section ${hasActiveItem ? "has-active-item" : ""}`}>
+            {section.title && (section.collapsible ? (
+              <div className="sidebar-section-header">
+                <button
+                  type="button"
+                  className={`sidebar-section-toggle ${isSectionOpen ? "is-open" : ""}`}
+                  onClick={() => toggleSection(sectionKey)}
+                  aria-expanded={isSectionOpen}
+                  aria-controls={sectionContentId}
+                  tabIndex={isCollapsed ? -1 : 0}
+                >
+                  <span className="sidebar-section-title">{section.title}</span>
+                  <Icon name="chevronDown" className="sidebar-section-toggle-icon" />
+                </button>
+              </div>
+            ) : (
               <div className="sidebar-section-header">
                 <span className="sidebar-section-title">{section.title}</span>
               </div>
-            )}
-            <ul className="sidebar-menu-list">
+            ))}
+            <div
+              id={sectionContentId}
+              className={`sidebar-section-content ${isSectionOpen ? "is-open" : ""}`}
+            >
+              <div className="sidebar-section-content-inner">
+              <ul className="sidebar-menu-list">
               {section.items.map((item) => {
                 const isAccordion = !!(item.children && item.children.length > 0);
                 const isExpanded = !!expandedKeys[item.key] || isCollapsed;
@@ -417,9 +480,12 @@ export function Sidebar({
                   </li>
                 );
               })}
-            </ul>
+              </ul>
+              </div>
+            </div>
           </div>
-        ))}
+          );
+        })}
       </nav>
 
       {/* 4. Footer Section (Visit Website + Logout) */}

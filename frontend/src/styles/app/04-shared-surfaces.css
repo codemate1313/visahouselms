@@ -2210,6 +2210,8 @@
   .sidebar-brand-text,
   .sidebar-section-title,
   .sidebar-section-header,
+  .sidebar-section-content,
+  .sidebar-section-toggle-icon,
   .sidebar-brand-container {
     transition: none;
   }
@@ -2318,6 +2320,50 @@
   text-transform: uppercase;
 }
 
+.sidebar-section-toggle {
+  width: 100%;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar-section-toggle-icon {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  color: var(--sidebar-text-muted);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), color 160ms ease;
+}
+
+.sidebar-section-toggle.is-open .sidebar-section-toggle-icon {
+  transform: rotate(180deg);
+}
+
+.sidebar-section-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 240ms cubic-bezier(0.16, 1, 0.3, 1), opacity 160ms ease;
+}
+
+.sidebar-section-content.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.sidebar-section-content-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* A 68px rail cannot hold "CMS & CONTENT" on one line. Shrinking the heading to
    9px only made it wrap to two lines, so the gap above each group differed from
    the gap above the next and the icon column lost its rhythm. Collapsed, the
@@ -2329,6 +2375,10 @@
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+.huge-sidebar.is-collapsed .sidebar-section-toggle-icon {
+  display: none;
 }
 
 .huge-sidebar.is-collapsed .sidebar-section-header {
@@ -2828,6 +2878,17 @@
 .super-admin-portal .huge-sidebar .sidebar-section-title {
   font-size: 10px;
   letter-spacing: 0.1em;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-section-toggle {
+  border-radius: 8px;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-section-toggle:hover .sidebar-section-title,
+.super-admin-portal .huge-sidebar .sidebar-section.has-active-item .sidebar-section-title,
+.super-admin-portal .huge-sidebar .sidebar-section-toggle:hover .sidebar-section-toggle-icon,
+.super-admin-portal .huge-sidebar .sidebar-section.has-active-item .sidebar-section-toggle-icon {
+  color: #ffffff;
 }
 
 .super-admin-portal .huge-sidebar .sidebar-item-link,
