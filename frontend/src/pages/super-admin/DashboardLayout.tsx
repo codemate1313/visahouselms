@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "@/auth/logout";
 import { GsapRouteAnimator } from "@/components/GsapRouteAnimator";
@@ -25,150 +25,156 @@ export function DashboardLayout() {
   }
 
   const m = strings.menu;
-  const moneyMenuItems: MenuItem[] = canViewMoney
-    ? [
-        {
-          key: "vouchers",
-          label: m.vouchers,
-          icon: "transactions",
-          to: "/super-admin/vouchers",
-        },
-      ]
-    : [];
-  const saasItems = [
-    { key: "saas_institutes", label: m.saasInstitutes, to: "/super-admin/institutes" },
-    { key: "saas_institute_signups", label: m.saasInstituteSignups, to: "/super-admin/institute-signups" },
-    { key: "saas_plans", label: m.saasPlans, to: "/super-admin/plans" },
-    { key: "saas_subscriptions", label: m.saasSubscriptions, to: "/super-admin/subscriptions" },
-    { key: "saas_trial", label: m.saasTrial, to: "/super-admin/trial-config" },
-    ...(canViewMoney
-      ? [
-          { key: "saas_coupons", label: m.saasCoupons, to: "/super-admin/coupons" },
-          { key: "saas_payments", label: m.saasPayments, to: "/super-admin/payments" },
-          { key: "saas_payment_methods", label: m.saasPaymentMethods, to: "/super-admin/payment-methods" },
-          { key: "saas_gst_rates", label: m.saasGstRates, to: "/super-admin/gst-rates" },
-          { key: "saas_revenue", label: m.saasRevenue, to: "/super-admin/revenue" },
-        ]
-      : []),
-  ];
+  const sections = useMemo<MenuSection[]>(() => {
+    const billingItems: MenuItem[] = [
+      { key: "saas_plans", label: m.saasPlans, icon: "plan", to: "/super-admin/plans" },
+      { key: "saas_subscriptions", label: m.saasSubscriptions, icon: "subscription", to: "/super-admin/subscriptions" },
+      ...(canViewMoney
+        ? [
+            { key: "vouchers", label: m.vouchers, icon: "transactions" as const, to: "/super-admin/vouchers" },
+            { key: "saas_coupons", label: m.saasCoupons, icon: "coupon" as const, to: "/super-admin/coupons" },
+            { key: "saas_payments", label: m.saasPayments, icon: "payment" as const, to: "/super-admin/payments" },
+            { key: "saas_payment_methods", label: m.saasPaymentMethods, icon: "wallet" as const, to: "/super-admin/payment-methods" },
+            { key: "saas_gst_rates", label: m.saasGstRates, icon: "billings" as const, to: "/super-admin/gst-rates" },
+            { key: "saas_revenue", label: m.saasRevenue, icon: "revenue" as const, to: "/super-admin/revenue" },
+          ]
+        : []),
+      { key: "saas_trial", label: m.saasTrial, icon: "trial", to: "/super-admin/trial-config" },
+    ];
 
-  const sections: MenuSection[] = [
-    {
-      title: m.mainMenu,
-      items: [
-        {
-          key: "dashboard",
-          label: m.dashboard,
-          icon: "dashboard",
-          to: "/super-admin/dashboard",
-        },
-        {
-          key: "users",
-          label: m.users,
-          icon: "admin",
-          children: [
-            { key: "users_super_admins", label: m.usersSuperAdmins, to: "/super-admin/users/super-admins" },
-            { key: "users_sa_instructors", label: m.usersSaInstructors, to: "/super-admin/users/sa-instructors" },
-            { key: "users_institute_admins", label: m.usersInstituteAdmins, to: "/super-admin/users/institute-admins" },
-            { key: "users_institute_staff", label: m.usersInstituteStaff, to: "/super-admin/users/institute-staff" },
-            { key: "users_students", label: m.usersStudents, to: "/super-admin/users/students" },
-          ],
-        },
-        {
-          key: "courses",
-          label: m.courseControl,
-          icon: "module",
-          to: "/super-admin/modules",
-        },
-        {
-          key: "grading-oversight",
-          label: m.gradingOversight,
-          icon: "grading",
-          to: "/super-admin/grading",
-        },
-        {
-          key: "retake-requests",
-          label: m.retakeRequests,
-          icon: "restore",
-          to: "/super-admin/retake-requests",
-        },
-        {
-          key: "notifications",
-          label: m.notifications,
-          icon: "notifications",
-          to: "/super-admin/notifications",
-        },
-        {
-          key: "support-tickets",
-          label: m.supportTickets,
-          icon: "help",
-          to: "/super-admin/support-tickets",
-        },
-        ...moneyMenuItems,
-        {
-          key: "saas",
-          label: m.saas,
-          icon: "building",
-          children: saasItems,
-        },
-      ],
-    },
-    {
-      title: m.cmsContent,
-      items: [
-        {
-          key: "testimonials",
-          label: m.testimonials,
-          icon: "user",
-          to: "/super-admin/testimonials",
-        },
-        {
-          key: "blogs",
-          label: m.blogsCms,
-          icon: "module",
-          to: "/super-admin/blogs",
-        },
-        {
-          key: "seo_settings",
-          label: m.seoSettings,
-          icon: "settings",
-          to: "/super-admin/seo-settings",
-        },
-        {
-          key: "instagram_settings",
-          label: m.instagramFeed,
-          icon: "play",
-          to: "/super-admin/instagram-settings",
-        },
-      ],
-    },
-    {
-      title: m.settings,
-      items: [
-        {
-          key: "system",
-          label: m.system,
-          icon: "settings",
-          children: [
-            { key: "system_dev", label: m.systemDev, to: "/super-admin/platform-settings" },
-            { key: "system_logs", label: m.systemLogs, to: "/super-admin/logs" },
-            { key: "system_terminal", label: m.systemTerminal, to: "/super-admin/terminal" },
-          ],
-        },
-        {
-          key: "account",
-          label: "Account",
-          icon: "user",
-          children: [
-            { key: "profile", label: m.myProfile, to: "/super-admin/profile" },
-            { key: "sessions", label: m.activeSessions, to: "/super-admin/sessions" },
-            { key: "all_sessions", label: m.allSessions, to: "/super-admin/all-sessions" },
-            { key: "change_password", label: m.changePassword, to: "/super-admin/change-password" },
-          ],
-        },
-      ],
-    },
-  ];
+    return [
+      {
+        title: m.overview,
+        items: [
+          {
+            key: "dashboard",
+            label: m.dashboard,
+            icon: "dashboard",
+            to: "/super-admin/dashboard",
+          },
+        ],
+      },
+      {
+        title: m.peopleAccess,
+        items: [
+          {
+            key: "users",
+            label: m.users,
+            icon: "admin",
+            children: [
+              { key: "users_super_admins", label: m.usersSuperAdmins, to: "/super-admin/users/super-admins" },
+              { key: "users_sa_instructors", label: m.usersSaInstructors, to: "/super-admin/users/sa-instructors" },
+              { key: "users_institute_admins", label: m.usersInstituteAdmins, to: "/super-admin/users/institute-admins" },
+              { key: "users_institute_staff", label: m.usersInstituteStaff, to: "/super-admin/users/institute-staff" },
+              { key: "users_students", label: m.usersStudents, to: "/super-admin/users/students" },
+            ],
+          },
+          { key: "saas_institutes", label: m.saasInstitutes, icon: "building", to: "/super-admin/institutes" },
+          { key: "saas_institute_signups", label: m.saasInstituteSignups, icon: "instructors", to: "/super-admin/institute-signups" },
+        ],
+      },
+      {
+        title: m.academics,
+        items: [
+          {
+            key: "courses",
+            label: m.courseControl,
+            icon: "module",
+            to: "/super-admin/modules",
+          },
+          {
+            key: "grading-oversight",
+            label: m.gradingOversight,
+            icon: "grading",
+            to: "/super-admin/grading",
+          },
+          {
+            key: "retake-requests",
+            label: m.retakeRequests,
+            icon: "restore",
+            to: "/super-admin/retake-requests",
+          },
+        ],
+      },
+      {
+        title: m.billingBusiness,
+        items: billingItems,
+      },
+      {
+        title: m.communication,
+        items: [
+          {
+            key: "notifications",
+            label: m.notifications,
+            icon: "notifications",
+            to: "/super-admin/notifications",
+          },
+          {
+            key: "support-tickets",
+            label: m.supportTickets,
+            icon: "help",
+            to: "/super-admin/support-tickets",
+          },
+        ],
+      },
+      {
+        title: m.cmsContent,
+        items: [
+          {
+            key: "testimonials",
+            label: m.testimonials,
+            icon: "user",
+            to: "/super-admin/testimonials",
+          },
+          {
+            key: "blogs",
+            label: m.blogsCms,
+            icon: "module",
+            to: "/super-admin/blogs",
+          },
+          {
+            key: "seo_settings",
+            label: m.seoSettings,
+            icon: "settings",
+            to: "/super-admin/seo-settings",
+          },
+          {
+            key: "instagram_settings",
+            label: m.instagramFeed,
+            icon: "play",
+            to: "/super-admin/instagram-settings",
+          },
+        ],
+      },
+      {
+        title: m.systemSection,
+        items: [
+          {
+            key: "system_dev",
+            label: m.systemDev,
+            icon: "settings",
+            to: "/super-admin/platform-settings",
+          },
+          { key: "system_logs", label: m.systemLogs, icon: "logs", to: "/super-admin/logs" },
+          { key: "system_terminal", label: m.systemTerminal, icon: "terminal", to: "/super-admin/terminal" },
+        ],
+      },
+      {
+        title: m.accountSection,
+        items: [
+          {
+            key: "profile",
+            label: m.myProfile,
+            icon: "user",
+            to: "/super-admin/profile",
+          },
+          { key: "sessions", label: m.activeSessions, icon: "session", to: "/super-admin/sessions" },
+          { key: "all_sessions", label: m.allSessions, icon: "history", to: "/super-admin/all-sessions" },
+          { key: "change_password", label: m.changePassword, icon: "lock", to: "/super-admin/change-password" },
+        ],
+      },
+    ];
+  }, [canViewMoney, m]);
 
   return (
     <div className="dashboard super-admin-portal">

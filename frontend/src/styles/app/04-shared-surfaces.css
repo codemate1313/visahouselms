@@ -2270,6 +2270,7 @@
 /* 3. Navigation Scrolling Area */
 .sidebar-nav-scroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   margin-right: -2px;
@@ -2792,6 +2793,53 @@
 
 .super-admin-portal .huge-sidebar .sidebar-brand-container {
   gap: 10px;
+  margin-bottom: 18px;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-nav-scroll {
+  margin-right: -8px;
+  padding: 2px 8px 12px 0;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-nav-scroll::-webkit-scrollbar {
+  width: 3px;
+}
+
+.super-admin-portal .huge-sidebar.is-collapsed .sidebar-nav-scroll {
+  margin-right: 0;
+  padding-right: 0;
+  scrollbar-gutter: auto;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-section {
+  margin-bottom: 14px;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-section:last-child {
+  margin-bottom: 4px;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-section-header {
+  margin-bottom: 6px;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-section-title {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-item-link,
+.super-admin-portal .huge-sidebar .sidebar-item-btn {
+  min-height: 44px;
+  padding: 9px 12px;
+  border-radius: 12px;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-subitem-link {
+  min-height: 38px;
+  box-sizing: border-box;
 }
 
 .super-admin-portal .huge-sidebar .sidebar-brand-subtitle,
@@ -2802,6 +2850,16 @@
 .super-admin-portal .huge-sidebar .sidebar-item-link,
 .super-admin-portal .huge-sidebar .sidebar-item-btn {
   color: rgba(255, 255, 255, 0.82);
+}
+
+.super-admin-portal .huge-sidebar .accordion-item.parent-active > .sidebar-item-btn {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.super-admin-portal .huge-sidebar .accordion-item.parent-active > .sidebar-item-btn .sidebar-icon,
+.super-admin-portal .huge-sidebar .accordion-item.parent-active > .sidebar-item-btn .sidebar-accordion-arrow {
+  color: #ffffff;
 }
 
 .super-admin-portal .huge-sidebar .sidebar-item-link:hover:not(:disabled),
@@ -2981,6 +3039,8 @@
 
 .super-admin-portal .huge-sidebar .sidebar-footer {
   border-top-color: rgba(255, 255, 255, 0.16);
+  flex: 0 0 auto;
+  padding-top: 10px;
 }
 
 .super-admin-portal .huge-sidebar .is-red,

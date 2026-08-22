@@ -145,20 +145,17 @@ export function Sidebar({
   useEffect(() => {
     if (!activeKey) return;
     setExpandedKeys((current) => {
-      const next = { ...current };
-      let changed = false;
+      let activeParentKey: string | null = null;
       sections.forEach((section) => {
         section.items.forEach((item) => {
-          if (item.children?.length) {
-            const isChildActive = item.children.some((child) => child.key === activeKey);
-            if (isChildActive && !next[item.key]) {
-              next[item.key] = true;
-              changed = true;
-            }
+          if (item.children?.some((child) => child.key === activeKey)) {
+            activeParentKey = item.key;
           }
         });
       });
-      return changed ? next : current;
+      if (!activeParentKey) return current;
+      if (current[activeParentKey] && Object.keys(current).length === 1) return current;
+      return { [activeParentKey]: true };
     });
   }, [activeKey, sections]);
 
@@ -221,7 +218,6 @@ export function Sidebar({
       return;
     }
     setExpandedKeys((prev) => ({
-      ...prev,
       [item.key]: !prev[item.key],
     }));
   };
