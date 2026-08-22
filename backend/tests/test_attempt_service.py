@@ -1241,6 +1241,10 @@ class AttemptServiceTestCase(unittest.TestCase):
             self.db, attempt, session, preflight["attempt_token"], heartbeat, "127.0.0.1"
         )
         self.assertGreaterEqual(result["risk_score"], 3)
+        resumed_view = attempt_service.get_student_view(
+            self.db, attempt, security_authorized=True
+        )
+        self.assertEqual(resumed_view["security_heartbeat_sequence"], 1)
         self.assertEqual(
             self.db.query(AttemptFlag).filter_by(attempt_id=attempt.id, flag_type="camera_stopped").count(),
             1,

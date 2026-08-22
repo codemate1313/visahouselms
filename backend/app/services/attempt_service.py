@@ -639,6 +639,7 @@ def get_student_view(
         "security_authorized": security_authorized or not attempt.security_required or reveal,
         "security_started_at": _utc_out(attempt.security_started_at),
         "security_last_heartbeat_at": _utc_out(attempt.security_last_heartbeat_at),
+        "security_heartbeat_sequence": attempt.security_heartbeat_sequence,
         "security_risk_score": attempt.security_risk_score,
         "started_at": _utc_out(attempt.started_at),
         "expires_at": _utc_out(effective_expires_at),

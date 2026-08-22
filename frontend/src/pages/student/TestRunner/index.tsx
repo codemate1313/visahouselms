@@ -247,6 +247,14 @@ export function TestRunner() {
         data.parts.forEach((part) => part.questions.forEach((question) => {
           revisionByQuestionRef.current[question.id] = question.revision;
         }));
+        /* The backend keeps this counter across reloads, while React refs start
+           from zero. Resume from the server value before authorising the
+           heartbeat effect so a refresh/HMR reload cannot send sequence 1
+           after the server has already accepted a later heartbeat. */
+        heartbeatSequenceRef.current = Math.max(
+          heartbeatSequenceRef.current,
+          data.security_heartbeat_sequence,
+        );
         setSecurityAuthorized(data.status === "in_progress" ? data.security_authorized : false);
 
         // Restore active part from URL or sessionStorage

@@ -784,6 +784,7 @@ export interface Attempt {
   security_authorized: boolean;
   security_started_at: string | null;
   security_last_heartbeat_at: string | null;
+  security_heartbeat_sequence: number;
   security_risk_score: number;
   started_at: string;
   expires_at: string;
