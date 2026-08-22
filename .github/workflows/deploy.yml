@@ -14,22 +14,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate Secrets
+        env:
+          DEPLOY_HOST: ${{ secrets.VPS_HOST || secrets.VPS_IP }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+          if [ -z "$SSH_PRIVATE_KEY" ]; then
             echo "❌ Error: SSH_PRIVATE_KEY secret is not configured"
             echo "Please add SSH_PRIVATE_KEY to repository secrets"
             exit 1
           fi
-          if [ -z "${{ secrets.VPS_HOST }}" ]; then
-            echo "❌ Error: VPS_HOST secret is not configured"
-            echo "Please add VPS_HOST to repository secrets"
+          if [ -z "$DEPLOY_HOST" ]; then
+            echo "❌ Error: VPS_HOST or VPS_IP secret is not configured"
+            echo "Please add VPS_HOST, or keep the existing VPS_IP repository secret"
             exit 1
           fi
           echo "✅ All required secrets are configured"
 
       - name: Deploy to Hostinger VPS via SSH with Retry
         env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_HOST: ${{ secrets.VPS_HOST || secrets.VPS_IP }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
