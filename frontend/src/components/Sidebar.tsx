@@ -204,7 +204,11 @@ export function Sidebar({
       const activeEl = navRef.current.querySelector<HTMLElement>(
         ".sidebar-item-link.is-active, .sidebar-item-btn.is-active, .sidebar-subitem-link.is-sub-active"
       );
-      if (activeEl) {
+      const activeSectionContent = activeEl?.closest(".sidebar-section-content");
+      const isInsideClosedSection =
+        activeSectionContent && !activeSectionContent.classList.contains("is-open");
+
+      if (activeEl && !isInsideClosedSection) {
         const navRect = navRef.current.getBoundingClientRect();
         const activeRect = activeEl.getBoundingClientRect();
         setIndicatorStyle({
