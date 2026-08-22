@@ -129,7 +129,7 @@ jobs:
             systemctl reload nginx
 
             echo "✨ Deployment successful!"
-EOF
+          EOF
             then
               echo "✅ SSH Deployment completed successfully."
               exit 0
