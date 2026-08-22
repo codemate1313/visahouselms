@@ -13,18 +13,36 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Validate Secrets
+        run: |
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "❌ Error: SSH_PRIVATE_KEY secret is not configured"
+            echo "Please add SSH_PRIVATE_KEY to repository secrets"
+            exit 1
+          fi
+          if [ -z "${{ secrets.VPS_HOST }}" ]; then
+            echo "❌ Error: VPS_HOST secret is not configured"
+            echo "Please add VPS_HOST to repository secrets"
+            exit 1
+          fi
+          echo "✅ All required secrets are configured"
+
       - name: Deploy to Hostinger VPS via SSH with Retry
         env:
-          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p "$VPS_PORT" "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
           TARGET_PORT="${VPS_PORT:-22}"
 
           for attempt in {1..10}; do
             echo "🚀 SSH Connection Attempt $attempt/10 to VPS (Port $TARGET_PORT)..."
-            if ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -p "$TARGET_PORT" root@${{ secrets.VPS_IP }} "bash -s" << 'EOF'
+            if ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=~/.ssh/known_hosts -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -p "$TARGET_PORT" root@"$VPS_HOST" "bash -s" << 'EOF'
               set -Eeuo pipefail
               trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
 
@@ -108,14 +126,14 @@ jobs:
               systemctl reload nginx
 
               echo "✨ Deployment successful!"
-          EOF
-          then
-            echo "✅ SSH Deployment completed successfully."
-            exit 0
-          fi
+            EOF
+            then
+              echo "✅ SSH Deployment completed successfully."
+              exit 0
+            fi
 
-          echo "⚠️ Connection attempt $attempt failed. Waiting 12 seconds before retry..."
-          sleep 12
+            echo "⚠️ Connection attempt $attempt failed. Waiting 12 seconds before retry..."
+            sleep 12
           done
 
           echo "❌ All 10 SSH connection attempts failed."
