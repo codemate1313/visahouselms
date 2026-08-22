@@ -75,8 +75,8 @@ function VoiceActivityDots({ active, stream }: { active: boolean; stream: MediaS
         const dotElements = dots.children;
         for (let index = 0; index < dotElements.length; index += 1) {
           const level = recentLevels[index];
-          const height = 3 + Math.min(31, level * 34);
-          const opacity = 0.34 + Math.min(0.56, level * 0.56);
+          const height = 4 + Math.min(46, level * 52);
+          const opacity = 0.44 + Math.min(0.56, level * 0.56);
           (dotElements[index] as HTMLElement).style.height = `${height.toFixed(1)}px`;
           (dotElements[index] as HTMLElement).style.opacity = opacity.toFixed(2);
         }

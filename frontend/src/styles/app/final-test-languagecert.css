@@ -2148,13 +2148,13 @@
 .lc-exam .speaking-voice-dots span {
   width: 100%;
   max-width: 1.5px;
-  max-height: 4px;
-  height: 1px;
-  background: rgba(238, 49, 36, 0.22);
+  max-height: 50px;
+  height: 3px;
+  background: rgba(238, 49, 36, 0.38);
 }
 
 .lc-exam .speaking-voice-dots.is-active span {
-  background: rgba(238, 49, 36, 0.34);
+  background: rgba(238, 49, 36, 0.72);
 }
 
 .lc-exam .speaking-interview-actions {
