@@ -1442,8 +1442,8 @@ export function TestRunner() {
         />
       )}
 
-      <div className="test-runner-layout">
-        {!isSpeakingPart && (
+      <div className={`test-runner-layout${currentPart.section_type === "speaking" ? " test-runner-layout--speaking" : ""}`}>
+        {(!isSpeakingPart || languageCertSkin) && (
           <PartsNav
             answeredCount={answeredCount}
             totalQuestions={totalQuestions}
@@ -1464,6 +1464,8 @@ export function TestRunner() {
             isListeningPart || !hasSourcePane || currentPart.section_type === "speaking"
               ? " test-runner-body--listening test-runner-body--single-column"
               : ""
+          }${
+            currentPart.section_type === "speaking" ? " test-runner-body--speaking" : ""
           }`}
         >
           {/* The exam platform pages parts from inside the page body, above

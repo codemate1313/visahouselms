@@ -125,6 +125,8 @@ export const testRunnerStrings = {
     saved: "Response saved",
     ready: (seconds: number) => `${seconds} seconds of preparation before recording begins.`,
     startResponse: "Start response",
+    recordAnswer: "Record Answer",
+    submitAnswer: "Submit Answer",
     submittingTest: "All speaking parts complete - submitting your test...",
     submitResponse: "Submit response",
     savingResponse: "Saving response...",

@@ -52,6 +52,7 @@ ACCOUNTS = (
     ("qa.institute.admin@example.com", INSTITUTE_ADMIN, INSTITUTE_SLUG, "QA", "Institute Admin"),
     ("qa.student@example.com", STUDENT, INSTITUTE_SLUG, "QA", "Student"),
     ("qa.institute.instructor@example.com", INST_INSTRUCTOR, INSTITUTE_SLUG, "QA", "Institute Instructor"),
+    ("mehtanavish60@gmail.com", STUDENT, INSTITUTE_SLUG, "Navish", "Mehta"),
 )
 
 

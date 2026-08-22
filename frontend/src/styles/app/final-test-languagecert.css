@@ -311,6 +311,22 @@
   background: #ffffff;
 }
 
+.lc-exam .test-runner-layout--speaking .test-runner-parts.lc-rail {
+  position: relative;
+  border-right: 0;
+}
+
+.lc-exam .test-runner-layout--speaking .test-runner-parts.lc-rail::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 88px;
+  width: 1px;
+  background: #d5d5d5;
+  pointer-events: none;
+}
+
 .lc-rail-group + .lc-rail-group {
   margin-top: 22px;
 }
@@ -458,6 +474,10 @@
   display: block;
   padding: 14px 32px 26px;
   overflow-y: auto;
+}
+
+.lc-exam .test-runner-body--speaking {
+  overflow: visible;
 }
 
 /* The two-column reading papers are split by a solid rule, not by whitespace:
@@ -2018,134 +2038,137 @@
   font-size: var(--lc-text);
 }
 
-/* The action bar.
-
-   `display: contents` on the timer drops its own box so the clock, its caption
-   and the status line become items of the bar's own grid. That is what puts
-   the status line in the wide middle field instead of leaving it as small
-   print beneath the clock, without the engine having to emit a second shape
-   for this one skin. */
-/* The dashed rule the exam client draws across the full page width while the
-   examiner's prompt plays - filled left-to-right with the clip's own playback
-   position, not just a static divider. Sits directly above the action bar and
-   shares its `margin-top: auto`, so the pair are pushed down together rather
-   than each fighting the workspace's flex gap on its own. */
-.lc-exam .speaking-interview-audio-progress {
-  position: relative;
-  width: 100%;
-  height: 2px;
-  margin-top: auto;
-  background-image: repeating-linear-gradient(to right, var(--lc-peach-line) 0 6px, transparent 6px 12px);
-  border-radius: 0;
-}
-
-.lc-exam .speaking-interview-audio-progress-fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 0%;
-  background: var(--lc-red);
-}
+/* The action bar mirrors the delivery client: one long waveform field on the
+   left and the compact action buttons on the right. */
 
 .lc-exam .speaking-interview-control-dock {
+  position: relative;
+  z-index: 4;
   display: grid;
   align-items: center;
-  margin-top: 0;
-  padding: 12px 0 4px;
+  margin-top: auto;
+  width: calc(100% + var(--lc-rail-width));
+  margin-left: calc(-1 * var(--lc-rail-width));
+  padding: 12px 42px 0;
   border: 0;
   border-top: 1px solid #e4e4e4;
   background: #ffffff;
   box-shadow: none;
+  gap: 0 14px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: 62px;
+}
+
+.lc-exam .speaking-interview-control-dock::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--lc-rail-width) - 1px);
+  width: 3px;
+  background: #ffffff;
+  pointer-events: none;
+}
+
+.lc-exam .speaking-interview-control-dock.is-prep {
   gap: 0 16px;
-  grid-template-columns: 84px minmax(0, 1fr) auto;
-  grid-template-rows: auto auto;
+  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-rows: 60px;
 }
 
-.lc-exam .speaking-interview-timer {
-  display: contents;
+.lc-exam .speaking-prep-timer {
+  display: grid;
+  height: 60px;
+  align-content: center;
+  justify-items: center;
+  padding-top: 2px;
 }
 
-.lc-exam .speaking-interview-timer strong {
-  align-self: end;
+.lc-exam .speaking-prep-timer strong {
   color: var(--lc-ink);
-  font-size: 21px;
-  font-weight: 400;
-  font-variant-numeric: tabular-nums;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.lc-exam .speaking-prep-timer span {
+  margin-top: 7px;
+  color: #9b9b9b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+  line-height: 1;
+}
+
+.lc-exam .speaking-prep-status {
+  display: flex;
+  min-width: 0;
+  height: 46px;
+  align-items: center;
+  align-self: center;
+  padding: 0 20px;
+  border: 1px solid #fde1dd;
+  background: #fbfbfc;
+  color: #667085;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.lc-exam .speaking-waveform-lane {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: auto;
+  min-width: 0;
+  height: 62px;
+  align-items: center;
+  padding: 0 4px;
+  border: 0;
+  background: #fff7f7;
   grid-column: 1;
   grid-row: 1;
-  line-height: 1;
-  text-align: center;
-}
-
-.lc-exam .speaking-interview-timer span {
-  align-self: start;
-  margin-top: 2px;
-  color: var(--lc-muted);
-  font-size: 9px;
-  font-weight: 400;
-  grid-column: 1;
-  grid-row: 2;
-  letter-spacing: 0.6px;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.lc-exam .speaking-interview-status {
-  display: flex;
-  min-height: 40px;
-  align-items: flex-start;
-  justify-content: center;
-  flex-direction: column;
-  gap: 0;
-  padding: 6px 14px;
-  border: 1px solid var(--lc-peach-line);
-  background: #fbfbfc;
-  grid-column: 2;
-  grid-row: 1 / span 2;
-}
-
-.lc-exam .speaking-interview-timer.is-recording .speaking-interview-status {
-  align-items: stretch;
-  gap: 5px;
-  border-style: dashed;
-}
-
-.lc-exam .speaking-interview-timer small {
-  color: var(--lc-muted);
-  font-size: 12.5px;
 }
 
 .lc-exam .speaking-voice-dots {
   width: 100%;
-  min-height: 30px;
+  height: 100%;
+  grid-template-columns: repeat(160, minmax(1px, 1.5px));
 }
 
 .lc-exam .speaking-voice-dots span {
-  background: #9b9b9b;
+  width: 100%;
+  max-width: 1.5px;
+  max-height: 4px;
+  height: 1px;
+  background: rgba(238, 49, 36, 0.22);
 }
 
 .lc-exam .speaking-voice-dots.is-active span {
-  background: var(--lc-red);
+  background: rgba(238, 49, 36, 0.34);
 }
 
 .lc-exam .speaking-interview-actions {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 10px;
-  grid-column: 3;
-  grid-row: 1 / span 2;
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .lc-exam .speaking-interview-actions button {
   min-width: 168px;
-  min-height: 40px;
+  height: 40px;
   padding: 8px 18px;
-  border: 0;
-  border-radius: 4px;
-  background: var(--lc-red);
+  border: 1px solid #ffd6d0;
+  border-radius: 2px;
+  background: #ffc7bf;
   box-shadow: none;
   color: #ffffff;
   font-size: 13.5px;
-  font-weight: 400;
+  font-weight: 700;
 }
 
 .lc-exam .speaking-interview-actions button:hover:not(:disabled) {
@@ -2154,8 +2177,8 @@
 }
 
 .lc-exam .speaking-interview-actions button:disabled {
-  background: var(--lc-peach-mute);
-  color: #dd8a72;
+  background: #ffe4e0;
+  color: rgba(255, 255, 255, 0.78);
   cursor: not-allowed;
   opacity: 1;
 }

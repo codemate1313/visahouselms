@@ -172,7 +172,6 @@ export function SpeakingInterviewStage({
   // starts as the examiner finishes, with no countdown and no button to press.
   const preparationSeconds = question?.interaction?.preparation_seconds ?? 0;
   const responseSeconds = question?.interaction?.response_seconds ?? 0;
-  const hasPreparation = preparationSeconds > 0;
   // Examiner audio is the cue for every prompt, including prompts with a
   // preparation allowance. If that cue never arrives because playback failed,
   // a delayed recovery control appears rather than leaving the candidate stuck.
@@ -181,9 +180,6 @@ export function SpeakingInterviewStage({
   // on its own is not evidence that the audio failed. The rescue only counts
   // while the examiner is neither speaking nor mid-pause.
   const [examinerBusy, setExaminerBusy] = useState(false);
-  // Drives the audio progress bar in the control dock - 0-1 through whichever
-  // clip the examiner is currently playing.
-  const [examinerProgress, setExaminerProgress] = useState(0);
   const isLastQuestion = questionIndex >= currentPart.questions.length - 1;
 
   useEffect(() => {
@@ -200,7 +196,6 @@ export function SpeakingInterviewStage({
       setMode(recorded ? "complete" : "ready");
       setPreparationLeft(0);
       setResponseLeft(0);
-      setExaminerProgress(0);
       setNotesState(sessionStorage.getItem(`speaking-notes:${attemptId}:${question?.id ?? "none"}`) ?? "");
       startingRef.current = false;
     }
@@ -324,32 +319,27 @@ export function SpeakingInterviewStage({
     onContinuePart();
   };
 
-  /* One clock per mode, chosen explicitly. Preparation counts the preparation
-     allowance and nothing else; recording counts the response allowance and
-     nothing else; before either starts the panel shows whichever of the two
-     comes next for this prompt. */
-  const timer = (() => {
-    switch (mode) {
-      case "preparing":
-        return { label: t.preparation, value: preparationLeft };
-      case "recording":
-        return { label: t.recording, value: responseLeft };
-      case "starting":
-        return { label: t.responseLimit, value: responseSeconds };
-      case "ready":
-        return hasPreparation
-          ? { label: t.preparation, value: preparationSeconds }
-          : { label: t.responseLimit, value: responseSeconds };
-      default:
-        return { label: t.responseLimit, value: responseSeconds };
-    }
-  })();
   const hasCandidateText = Boolean(question.passage?.trim());
   const candidatePdfUrl = question.interaction?.candidate_material_url
     ? `${API_BASE_URL}${question.interaction.candidate_material_url}`
     : null;
   const candidateImageUrl = question.image_url ? `${API_BASE_URL}${question.image_url}` : null;
   const hasCandidateAttachment = Boolean(candidateImageUrl || candidatePdfUrl);
+  const canStartManually = mode === "ready" && manualStartOffered;
+  const isSubmittingAnswer = mode === "uploading" || (mode === "complete" && isLastQuestion && isLastTestPart);
+  const dockStatusLabel = mode === "ready"
+    ? t.playingQuestion
+    : mode === "preparing"
+      ? t.preparingNow(preparationLeft)
+      : mode === "starting"
+        ? t.startingRecording
+        : mode === "recording"
+          ? t.recordingNow
+          : mode === "uploading"
+            ? t.saving
+            : mode === "complete"
+              ? t.saved
+              : t.playingQuestion;
   const materialClassName = [
     "speaking-candidate-material",
     hasCandidateText ? "has-text" : "",
@@ -401,68 +391,48 @@ export function SpeakingInterviewStage({
             </label>
           )}
 
-          <div className="speaking-interview-audio-progress" aria-hidden="true">
-            <div
-              className="speaking-interview-audio-progress-fill"
-              style={{ width: `${Math.round((mode === "ready" && examinerBusy ? examinerProgress : mode === "ready" ? 0 : 1) * 100)}%` }}
-            />
-          </div>
+          {mode === "preparing" ? (
+            <div className="speaking-interview-control-dock is-prep">
+              <div className="speaking-prep-timer" aria-label={`${t.preparation} ${formatTime(preparationLeft)}`}>
+                <strong>{formatTime(preparationLeft)}</strong>
+                <span>READING PREP</span>
+              </div>
+              <div className="speaking-prep-status">{t.recordingStartsAutomatically}</div>
+            </div>
+          ) : (
+            <div className="speaking-interview-control-dock">
+              <div className="speaking-waveform-lane">
+                <VoiceActivityDots active={mode === "recording"} stream={audioInputStream} />
+              </div>
 
-          <div className="speaking-interview-control-dock">
-            <div className={`speaking-interview-timer is-${mode}`}>
-              <span>{timer.label}</span>
-              <strong>{formatTime(timer.value)}</strong>
-              <div className="speaking-interview-status">
-                <small>
-                  {mode === "ready" && examinerBusy
-                    ? t.playingQuestion
-                    : mode === "preparing"
-                    ? t.recordingStartsAutomatically
-                    : mode === "starting"
-                      ? t.startingRecording
-                      : mode === "recording"
-                        ? t.recordingNow
-                        : mode === "uploading"
-                          ? t.saving
-                          : mode === "complete"
-                            ? t.saved
-                            : hasPreparation
-                              ? t.ready(preparationSeconds)
-                              : "Recording starts when the examiner finishes"}
-                </small>
-                {mode === "recording" && (
-                  <VoiceActivityDots active stream={audioInputStream} />
-                )}
+              <div className="speaking-interview-actions">
+                <Button className="speaking-control-button is-status" disabled leftIcon={<span className="speaking-status-spinner" aria-hidden="true" />}>
+                  {dockStatusLabel}
+                </Button>
+                <Button
+                  className="speaking-control-button"
+                  disabled={!canStartManually}
+                  leftIcon={<Icon name="microphone" />}
+                  onClick={beginPreparation}
+                >
+                  {t.recordAnswer}
+                </Button>
+                <Button
+                  className="speaking-control-button"
+                  disabled={mode !== "recording" || recordingQuestionId !== question.id}
+                  loading={isSubmittingAnswer}
+                  onClick={submitResponse}
+                >
+                  {t.submitAnswer}
+                </Button>
+                {mode === "complete" && !(isLastQuestion && isLastTestPart) ? (
+                  <Button className="speaking-control-button is-next" rightIcon={<Icon name="arrowRight" />} onClick={continueInterview}>
+                    {isLastQuestion ? t.continueToNextPart : t.continueToNextQuestion}
+                  </Button>
+                ) : null}
               </div>
             </div>
-
-            <div className="speaking-interview-actions">
-              {mode === "ready" && manualStartOffered && (
-                <Button leftIcon={<Icon name="play" />} onClick={beginPreparation} size="lg">{t.startResponse}</Button>
-              )}
-              {/* Preparation is an allowance, not an offer: the candidate gets
-                  all of it and recording begins on its own when it runs out.
-                  The button stays on screen, disabled, so the wait reads as
-                  part of the exam rather than a page that stopped responding. */}
-              {(mode === "preparing" || mode === "starting") && (
-                <Button leftIcon={<Icon name="microphone" />} size="lg" disabled>
-                  {mode === "starting" ? t.startingRecording : t.preparingNow(preparationLeft)}
-                </Button>
-              )}
-              {mode === "recording" && recordingQuestionId === question.id && <Button leftIcon={<Icon name="check" />} onClick={submitResponse} size="lg">{t.submitResponse}</Button>}
-              {mode === "uploading" && <Button disabled loading size="lg">{t.savingResponse}</Button>}
-              {/* The last prompt of the last part ends the test: the stage
-                  submits it a moment later on its own, so this reports what is
-                  happening instead of offering a button that would race it. */}
-              {mode === "complete" && (isLastQuestion && isLastTestPart ? (
-                <Button disabled loading size="lg">{t.submittingTest}</Button>
-              ) : (
-                <Button rightIcon={<Icon name="arrowRight" />} onClick={continueInterview} size="lg">
-                  {isLastQuestion ? t.continueToNextPart : t.continueToNextQuestion}
-                </Button>
-              ))}
-            </div>
-          </div>
+          )}
         </section>
 
         <aside className="speaking-interview-examiner">
@@ -476,7 +446,6 @@ export function SpeakingInterviewStage({
               questionId={question.id}
               onAudioEnded={beginPreparation}
               onExaminerBusyChange={setExaminerBusy}
-              onAudioProgress={setExaminerProgress}
             />
           </div>
           <div className="speaking-interview-examiner-copy">
