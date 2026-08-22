@@ -189,12 +189,24 @@ export function GstRates() {
                     </td>
                     <td className="table-actions">
                       <div className="ui-consistency-actions">
-                        <Button variant="secondary" size="small" onClick={() => openEditModal(rate)}>
-                          {strings.editBtn}
-                        </Button>
-                        <Button variant="secondary" size="small" onClick={() => handleDelete(rate)}>
-                          {strings.deleteBtn}
-                        </Button>
+                        <button
+                          type="button"
+                          className="action-btn-icon action-edit"
+                          onClick={() => openEditModal(rate)}
+                          data-tooltip={strings.editBtn}
+                          aria-label={`${strings.editBtn} ${rate.name}`}
+                        >
+                          <Icon name="edit" />
+                        </button>
+                        <button
+                          type="button"
+                          className="action-btn-icon action-delete"
+                          onClick={() => handleDelete(rate)}
+                          data-tooltip={strings.deleteBtn}
+                          aria-label={`${strings.deleteBtn} ${rate.name}`}
+                        >
+                          <Icon name="trash" />
+                        </button>
                       </div>
                     </td>
                   </tr>

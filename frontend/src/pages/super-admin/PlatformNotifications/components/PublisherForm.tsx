@@ -35,6 +35,7 @@ interface PublisherFormProps {
   onScheduledAtChange: (value: string) => void;
   busy: boolean;
   onSubmit: (event: FormEvent) => void;
+  showHeader?: boolean;
 }
 
 export function PublisherForm({
@@ -64,6 +65,7 @@ export function PublisherForm({
   onScheduledAtChange,
   busy,
   onSubmit,
+  showHeader = true,
 }: PublisherFormProps) {
   const t = strings.publisher;
   const submitLabel = busy
@@ -76,12 +78,14 @@ export function PublisherForm({
 
   return (
     <div className="pn-card pn-publisher-card">
-      <div className="pn-card-header">
-        <div>
-          <h2 className="pn-card-title">{t.title}</h2>
-          <p className="pn-card-subtitle">{t.subtitle}</p>
+      {showHeader && (
+        <div className="pn-card-header">
+          <div>
+            <h2 className="pn-card-title">{t.title}</h2>
+            <p className="pn-card-subtitle">{t.subtitle}</p>
+          </div>
         </div>
-      </div>
+      )}
 
       <form onSubmit={onSubmit} className="pn-form">
         <div className="pn-form-group">

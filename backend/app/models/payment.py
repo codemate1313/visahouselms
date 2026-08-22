@@ -45,11 +45,11 @@ class Payment(Base):
     paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     institute: Mapped[Optional["Institute"]] = relationship()  # noqa: F821
+    user: Mapped[Optional["User"]] = relationship()  # noqa: F821
     plan: Mapped[Optional["Plan"]] = relationship()  # noqa: F821
     course: Mapped[Optional["Course"]] = relationship()  # noqa: F821
     coupon: Mapped[Optional["Coupon"]] = relationship()  # noqa: F821
     payment_method: Mapped[Optional["PaymentMethod"]] = relationship()  # noqa: F821
     subscription: Mapped[Optional["Subscription"]] = relationship()  # noqa: F821
     gst_rate: Mapped[Optional["GstRate"]] = relationship()  # noqa: F821
-
 

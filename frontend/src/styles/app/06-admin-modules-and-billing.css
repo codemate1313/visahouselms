@@ -2009,6 +2009,38 @@
   min-width: 0 !important;
 }
 
+.portal-primary-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 40px !important;
+  padding: 0 16px !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, transparent) !important;
+  border-radius: 999px !important;
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 20%, transparent) !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease !important;
+}
+
+.portal-primary-action-btn:hover:not(:disabled) {
+  background: var(--primary-hover, var(--primary)) !important;
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--primary) 28%, transparent) !important;
+  transform: translateY(-1px) !important;
+}
+
+.portal-primary-action-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex: 0 0 16px !important;
+}
+
 
 .portal-user-chip {
   display: inline-flex !important;
@@ -7316,6 +7348,18 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
     margin-top: 0 !important;
     margin-left: 0 !important;
     min-width: 0 !important;
+  }
+
+  .portal-primary-action-btn {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+  }
+
+  .portal-primary-action-btn span {
+    display: none !important;
   }
 
   .portal-topbar-theme-toggle,

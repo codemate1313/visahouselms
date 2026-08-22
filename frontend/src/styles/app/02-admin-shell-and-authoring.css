@@ -45,8 +45,65 @@
   align-items: start !important;
 }
 
+.announcement-admin-history-shell {
+  width: 100% !important;
+}
+
+.announcement-admin-history-shell .pn-history-card {
+  min-height: min(720px, calc(100dvh - 210px)) !important;
+}
+
+.announcement-admin-history-shell .pn-history-list {
+  max-height: none !important;
+}
+
 @media (max-width: 1024px) {
   .announcement-admin-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.pn-publisher-modal {
+  width: min(100%, 960px) !important;
+}
+
+.pn-modal-title-block {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.pn-modal-title-block span {
+  color: var(--text) !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+}
+
+.pn-modal-title-block small {
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+}
+
+.pn-publisher-modal .ui-modal-body {
+  padding-right: 2px !important;
+}
+
+.pn-publisher-modal .pn-publisher-card {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.pn-publisher-modal .pn-audience-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+@media (max-width: 760px) {
+  .pn-publisher-modal .pn-audience-grid {
     grid-template-columns: 1fr !important;
   }
 }
@@ -6486,6 +6543,21 @@ td:hover,
   word-break: normal !important;
 }
 
+.sleek-logs-table .log-row-clickable {
+  cursor: pointer !important;
+  transition: background 160ms ease, box-shadow 160ms ease !important;
+}
+
+.sleek-logs-table .log-row-clickable:hover {
+  background: color-mix(in srgb, var(--primary) 6%, transparent) !important;
+}
+
+.sleek-logs-table .log-row-clickable:focus-visible {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: -2px !important;
+  background: color-mix(in srgb, var(--primary) 8%, transparent) !important;
+}
+
 .super-admin-portal .sleek-logs-table td.col-id,
 .super-admin-portal .sleek-logs-table th.col-id,
 .sleek-logs-table td.col-id,
@@ -6572,6 +6644,100 @@ td:hover,
   text-align: center !important;
   font-family: monospace;
   font-size: 12px;
+}
+
+.log-detail-modal {
+  width: min(100%, 980px) !important;
+}
+
+.log-detail-dialog {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+
+.log-detail-summary {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  padding: 12px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  background: var(--surface-muted) !important;
+}
+
+.log-detail-summary-item {
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.log-detail-summary-item.is-wide {
+  grid-column: span 3 !important;
+}
+
+.log-detail-summary-item span,
+.log-detail-section h3 {
+  margin: 0 !important;
+  color: var(--text-muted) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.log-detail-summary-item code {
+  display: block !important;
+  overflow-wrap: anywhere !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+}
+
+.log-detail-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  padding: 12px 14px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  background: var(--surface) !important;
+}
+
+.log-detail-section p,
+.log-detail-section pre {
+  margin: 0 !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+}
+
+.log-detail-section p {
+  overflow-wrap: anywhere !important;
+}
+
+.log-detail-section pre {
+  max-height: 360px !important;
+  overflow: auto !important;
+  padding: 12px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
+  font-size: 12px !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+
+@media (max-width: 720px) {
+  .log-detail-summary {
+    grid-template-columns: 1fr !important;
+  }
+
+  .log-detail-summary-item.is-wide {
+    grid-column: auto !important;
+  }
 }
 
 /* Sleek Plans Table Layout & Vertical Centering */

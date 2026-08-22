@@ -16,6 +16,7 @@ interface PaymentDetail {
   id: number;
   source: string;
   institute_name: string | null;
+  customer_email: string | null;
   plan_name: string | null;
   amount: string;
   discount_amount: string;
@@ -31,6 +32,66 @@ interface PaymentDetail {
   invoice_number: string | null;
   created_at: string;
   paid_at: string | null;
+}
+
+function formatPdfAmountValue(amount: string | number | null | undefined, currency?: string | null): string {
+  const numeric = Number(amount ?? 0);
+  const code = (currency || "INR").trim().toUpperCase();
+  const locale = code === "INR" ? "en-IN" : "en-US";
+  return Number.isFinite(numeric)
+    ? numeric.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : String(amount ?? 0);
+}
+
+function getPdfCurrencyMarkWidth(doc: jsPDF, currency?: string | null): number {
+  const code = (currency || "INR").trim().toUpperCase();
+  if (code === "INR") return 4.8;
+  if (code === "USD") return doc.getTextWidth("$");
+  return doc.getTextWidth(code);
+}
+
+function drawPdfCurrencyMark(doc: jsPDF, currency: string | null | undefined, x: number, y: number, fontSize = 10) {
+  const code = (currency || "INR").trim().toUpperCase();
+
+  if (code === "INR") {
+    const height = fontSize * 0.3528;
+    doc.setFont("helvetica", "bold");
+    doc.text("R", x, y);
+    doc.setLineWidth(0.28);
+    doc.line(x + 0.45, y - height * 0.62, x + 3.9, y - height * 0.62);
+    doc.line(x + 0.45, y - height * 0.43, x + 3.55, y - height * 0.43);
+    return;
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.text(code === "USD" ? "$" : code, x, y);
+}
+
+function drawPdfMoney(
+  doc: jsPDF,
+  amount: string | number | null | undefined,
+  currency: string | null | undefined,
+  x: number,
+  y: number,
+  options: { align?: "left" | "right"; fontSize?: number; color?: [number, number, number] } = {},
+) {
+  const fontSize = options.fontSize ?? 10;
+  const color = options.color ?? [15, 23, 42];
+  const amountText = formatPdfAmountValue(amount, currency);
+  const gap = 1.5;
+
+  doc.setFontSize(fontSize);
+  doc.setTextColor(...color);
+  doc.setFont("helvetica", "normal");
+
+  const amountWidth = doc.getTextWidth(amountText);
+  const markWidth = getPdfCurrencyMarkWidth(doc, currency);
+  const totalWidth = markWidth + gap + amountWidth;
+  const startX = options.align === "right" ? x - totalWidth : x;
+
+  drawPdfCurrencyMark(doc, currency, startX, y, fontSize);
+  doc.setFont("helvetica", "normal");
+  doc.text(amountText, startX + markWidth + gap, y);
 }
 
 export function Invoice() {
@@ -57,6 +118,7 @@ export function Invoice() {
       .then(({ data }) => {
         setPayment(data);
         setPayAmount(data.due_amount || "0");
+        setEmailRecipient(data.customer_email || "");
       })
       .catch(() => setError(strings.errors.load));
   }, [id]);
@@ -64,6 +126,13 @@ export function Invoice() {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     showToast(strings.toasts.copied);
+  };
+
+  const handleOpenEmailModal = () => {
+    if (payment?.customer_email) {
+      setEmailRecipient(payment.customer_email);
+    }
+    setShowEmailModal(true);
   };
 
   const handlePrint = () => {
@@ -120,17 +189,21 @@ export function Invoice() {
     doc.text(payment.payment_method_name || payment.gateway || "Card", 120, 68);
 
     // Line Items Table
+    const tableAmounts: Array<{ amount: string; isDiscount?: boolean }> = [
+      { amount: payment.amount },
+    ];
     const tableBody = [
       [
         `${payment.plan_name || "Subscription Plan"} (${payment.source.toUpperCase()})`,
-        formatCurrencyAmount(payment.amount, payment.currency)
-      ]
+        "",
+      ],
     ];
     if (Number(payment.discount_amount) > 0) {
       tableBody.push([
         `Discount Applied ${payment.coupon_code ? `(${payment.coupon_code})` : ""}`,
-        `- ${formatCurrencyAmount(payment.discount_amount, payment.currency)}`
+        "",
       ]);
+      tableAmounts.push({ amount: payment.discount_amount, isDiscount: true });
     }
 
     autoTable(doc, {
@@ -140,6 +213,24 @@ export function Invoice() {
       styles: { fontSize: 10, cellPadding: 6, textColor: [15, 23, 42] },
       headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: "bold" },
       columnStyles: { 0: { cellWidth: 130 }, 1: { cellWidth: 52, halign: "right" } },
+      didDrawCell: (data) => {
+        if (data.section !== "body" || data.column.index !== 1) return;
+        const rowAmount = tableAmounts[data.row.index];
+        if (!rowAmount) return;
+        const amount = rowAmount.isDiscount ? `-${rowAmount.amount}` : rowAmount.amount;
+        drawPdfMoney(
+          doc,
+          amount,
+          payment.currency,
+          data.cell.x + data.cell.width - 6,
+          data.cell.y + data.cell.height / 2 + 1.6,
+          {
+            align: "right",
+            fontSize: 10,
+            color: rowAmount.isDiscount ? [22, 163, 74] : [15, 23, 42],
+          },
+        );
+      },
     });
 
     const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
@@ -148,17 +239,20 @@ export function Invoice() {
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text(`${strings.table.total}:`, 130, finalY);
-    doc.setFont("helvetica", "bold");
-    doc.text(formatCurrencyAmount(payment.final_amount, payment.currency), 196, finalY, { align: "right" });
+    drawPdfMoney(doc, payment.final_amount, payment.currency, 196, finalY, { align: "right", fontSize: 10 });
 
     doc.setFont("helvetica", "normal");
     doc.text(`${strings.table.amountPaid}:`, 130, finalY + 7);
-    doc.text(formatCurrencyAmount(payment.amount_paid, payment.currency), 196, finalY + 7, { align: "right" });
+    drawPdfMoney(doc, payment.amount_paid, payment.currency, 196, finalY + 7, { align: "right", fontSize: 10 });
 
     doc.setFont("helvetica", "bold");
     doc.setTextColor(220, 38, 38);
     doc.text(`${strings.table.balanceDue}:`, 130, finalY + 14);
-    doc.text(formatCurrencyAmount(payment.due_amount, payment.currency), 196, finalY + 14, { align: "right" });
+    drawPdfMoney(doc, payment.due_amount, payment.currency, 196, finalY + 14, {
+      align: "right",
+      fontSize: 10,
+      color: [220, 38, 38],
+    });
 
     // Footer
     doc.setTextColor(100, 116, 139);
@@ -271,7 +365,7 @@ export function Invoice() {
             {strings.shareLink}
           </button>
 
-          <button className="invoice-btn invoice-btn-secondary" onClick={() => setShowEmailModal(true)} title="Email Receipt">
+          <button className="invoice-btn invoice-btn-secondary" onClick={handleOpenEmailModal} title="Email Receipt">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
               <polyline points="22,6 12,13 2,6" />

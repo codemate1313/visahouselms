@@ -2,6 +2,8 @@ import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { Announcement } from "@/api/types";
 import { confirmDelete } from "@/components/confirmDialog";
+import { Icon } from "@/components/icons";
+import { Modal } from "@/components/ui";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { normalizeSearch } from "./helpers";
 import { platformNotificationsStrings as strings } from "./PlatformNotifications.strings";
@@ -27,9 +29,11 @@ export function PlatformNotifications() {
   const [historySearch, setHistorySearch] = useState("");
   const [historyStatusFilter, setHistoryStatusFilter] = useState<HistoryStatusFilter>("ALL");
 
+  const [isPublisherOpen, setIsPublisherOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
+  const setTopBarAction = usePageTitleStore((state) => state.setTopBarAction);
 
   async function loadData() {
     try {
@@ -53,6 +57,20 @@ export function PlatformNotifications() {
     setItemCount(announcements.length);
     return () => setItemCount(null);
   }, [announcements.length, setItemCount]);
+
+  useEffect(() => {
+    setTopBarAction(
+      <button
+        type="button"
+        className="portal-primary-action-btn"
+        onClick={() => setIsPublisherOpen(true)}
+      >
+        <Icon name="notifications" />
+        <span>New Notification</span>
+      </button>,
+    );
+    return () => setTopBarAction(null);
+  }, [setTopBarAction]);
 
   function toggleAudienceCard(key: string) {
     if (key === "all") {
@@ -153,6 +171,7 @@ export function PlatformNotifications() {
       setSelectedUserIds([]);
       setStatus("published");
       setScheduledAt("");
+      setIsPublisherOpen(false);
       await loadData();
     } catch {
       setError(strings.saveError);
@@ -198,7 +217,30 @@ export function PlatformNotifications() {
         </p>
       )}
 
-      <div className="announcement-admin-grid">
+      <div className="announcement-admin-history-shell">
+        <NotificationHistory
+          announcements={announcements}
+          filteredAnnouncements={filteredAnnouncements}
+          search={historySearch}
+          onSearchChange={setHistorySearch}
+          statusFilter={historyStatusFilter}
+          onStatusFilterChange={setHistoryStatusFilter}
+          onDelete={(id) => void deleteAnnouncement(id)}
+        />
+      </div>
+
+      <Modal
+        open={isPublisherOpen}
+        onClose={() => setIsPublisherOpen(false)}
+        size="lg"
+        className="pn-publisher-modal"
+        title={(
+          <div className="pn-modal-title-block">
+            <span>{strings.publisher.title}</span>
+            <small>{strings.publisher.subtitle}</small>
+          </div>
+        )}
+      >
         <PublisherForm
           title={title}
           onTitleChange={setTitle}
@@ -228,18 +270,9 @@ export function PlatformNotifications() {
           onScheduledAtChange={setScheduledAt}
           busy={busy}
           onSubmit={(event) => void publish(event)}
+          showHeader={false}
         />
-
-        <NotificationHistory
-          announcements={announcements}
-          filteredAnnouncements={filteredAnnouncements}
-          search={historySearch}
-          onSearchChange={setHistorySearch}
-          statusFilter={historyStatusFilter}
-          onStatusFilterChange={setHistoryStatusFilter}
-          onDelete={(id) => void deleteAnnouncement(id)}
-        />
-      </div>
+      </Modal>
     </div>
   );
 }

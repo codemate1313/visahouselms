@@ -61,6 +61,12 @@ def _status_for_amount(amount_paid: Decimal, final_amount: Decimal) -> str:
 
 def _serialize(payment: Payment) -> dict:
     due = payment.final_amount - payment.amount_paid
+    customer_email = None
+    if payment.institute and payment.institute.contact_email:
+        customer_email = payment.institute.contact_email
+    elif payment.user:
+        customer_email = payment.user.email
+
     sub_data = None
     if payment.subscription:
         sub_data = {
@@ -87,6 +93,7 @@ def _serialize(payment: Payment) -> dict:
         "institute_name": (
             payment.institute.name if payment.institute else payment.institute_name_snapshot
         ),
+        "customer_email": customer_email,
         "user_id": payment.user_id,
         "plan_id": payment.plan_id,
         "plan_name": payment.plan.name if payment.plan else None,
@@ -201,6 +208,7 @@ def calculate_gst_and_totals(plan, discount: Decimal = Decimal("0.00")) -> dict:
 def _query_with_relations(db: Session):
     return db.query(Payment).options(
         joinedload(Payment.institute),
+        joinedload(Payment.user),
         joinedload(Payment.plan),
         joinedload(Payment.coupon),
         joinedload(Payment.payment_method),
@@ -1283,4 +1291,3 @@ def send_invoice_email(
     db.commit()
 
     return {"message": "Invoice email sent successfully", "recipient": recipient_email.strip()}
-

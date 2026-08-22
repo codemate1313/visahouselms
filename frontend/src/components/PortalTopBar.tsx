@@ -431,6 +431,7 @@ export function PortalTopBar({
   }
 
   const itemCount = usePageTitleStore((state) => state.itemCount);
+  const topBarAction = usePageTitleStore((state) => state.topBarAction);
   const currentPath = location.pathname.replace(/\/+$/, "");
   const portalHomePath = fallbackRoute.replace(/\/+$/, "");
   // An institute held in setup has nowhere to go back to - every other portal
@@ -492,6 +493,7 @@ export function PortalTopBar({
         {(location.pathname === "/super-admin/dashboard" || location.pathname === "/super-admin/revenue") && (
           <DashboardRangeAndThemeToggle />
         )}
+        {topBarAction}
         <ThemeToggle className="portal-topbar-theme-toggle" />
         <NotificationBell eyebrow={notificationEyebrow} fallbackRoute={fallbackRoute} notificationsPath={notificationsPath} notificationsHref={notificationsHref} />
         <div className="portal-user-menu" ref={menuRef}>

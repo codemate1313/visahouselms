@@ -154,6 +154,7 @@ export function TestRunner() {
   const submittedRef = useRef(false);
   const speakingTransitionRef = useRef(false);
   const developerFullscreenBypass = useRef(false);
+  const runnerBodyRef = useRef<HTMLElement | null>(null);
   const sourcePaneRef = useRef<HTMLElement | null>(null);
   const questionPaneRef = useRef<HTMLElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
@@ -207,6 +208,15 @@ export function TestRunner() {
   useEffect(() => {
     currentPartRef.current = currentPart;
   }, [currentPart]);
+
+  /* Navigation can move between layouts with different scroll owners:
+     LanguageCert Listening/Writing scrolls the main body, two-column Reading
+     scrolls each pane, and the browser/document can still hold a page offset
+     after fullscreen or auto-advance. Reset all candidate-visible containers
+     whenever a part changes so returning to Listening starts at the top. */
+  useEffect(() => {
+    resetRunnerScroll();
+  }, [currentPart?.id]);
 
   useEffect(() => {
     setOnboardingCompleted(sessionStorage.getItem(`onboarding_completed_${id}`) === "true");
@@ -1265,9 +1275,25 @@ export function TestRunner() {
       }
     }
     setPartIndex(index);
+    resetRunnerScroll();
+  }
+
+  function resetRunnerScroll() {
+    const scrollToTop = (node: Element | null | undefined) => {
+      node?.scrollTo({ top: 0, left: 0 });
+    };
+    const reset = () => {
+      scrollToTop(runnerBodyRef.current);
+      scrollToTop(sourcePaneRef.current);
+      scrollToTop(questionPaneRef.current);
+      scrollToTop(document.scrollingElement);
+      scrollToTop(document.documentElement);
+      scrollToTop(document.body);
+      window.scrollTo({ top: 0, left: 0 });
+    };
     requestAnimationFrame(() => {
-      sourcePaneRef.current?.scrollTo({ top: 0 });
-      questionPaneRef.current?.scrollTo({ top: 0 });
+      reset();
+      requestAnimationFrame(reset);
     });
   }
 
@@ -1458,6 +1484,7 @@ export function TestRunner() {
         {/* Listening, Speaking, and standalone MCQ parts without separate source text span
             the screen as one full-width column, matching the standard engine layout. */}
         <main
+          ref={runnerBodyRef}
           className={`test-runner-body${
             currentPart.section_type === "writing" ? " test-runner-body--writing" : ""
           }${

@@ -22,6 +22,7 @@ function secondsUntil(deadline: number): number {
 }
 
 const VOICE_DOT_COUNT = 160;
+const VOICE_DOT_SAMPLE_INTERVAL_MS = 38;
 
 function VoiceActivityDots({ active, stream }: { active: boolean; stream: MediaStream | null }) {
   const dotsRef = useRef<HTMLDivElement | null>(null);
@@ -39,8 +40,8 @@ function VoiceActivityDots({ active, stream }: { active: boolean; stream: MediaS
     const context = new AudioContextConstructor();
     const analyser = context.createAnalyser();
     const source = context.createMediaStreamSource(stream);
-    analyser.fftSize = 128;
-    analyser.smoothingTimeConstant = 0.72;
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.58;
     const samples = new Uint8Array(analyser.fftSize);
     const recentLevels = Array.from({ length: VOICE_DOT_COUNT }, () => 0);
     let animationFrame = 0;
@@ -56,24 +57,28 @@ function VoiceActivityDots({ active, stream }: { active: boolean; stream: MediaS
         sumOfSquares += centred * centred;
       }
       const rms = Math.sqrt(sumOfSquares / samples.length);
-      /* Normal laptop microphones often report speech around 0.02-0.05 RMS.
-         Use a small noise floor and a stronger gain so ordinary speech is
-         visibly different from silence without clipping louder answers. */
-      const inputLevel = Math.min(1, Math.max(0, (rms - 0.008) * 24));
+      /* Browser echo/noise suppression can leave ordinary speech with a very
+         small RMS value. A low floor plus a curved gain makes quiet speech
+         visibly rise and fall while still keeping silence close to a dotted
+         baseline. */
+      const speechEnergy = Math.max(0, rms - 0.003);
+      const inputLevel = Math.min(1, Math.pow(speechEnergy * 46, 0.72));
 
-      /* New microphone levels enter on the left and move across the row. A
-         natural decay keeps the right side as the dotted tail shown in the
-         reference instead of turning the whole indicator into equal bars. */
-      if (timestamp - lastLevelSample >= 45) {
-        recentLevels.pop();
-        recentLevels.unshift(inputLevel);
+      /* WhatsApp-style recording waveform: the newest microphone level is
+         drawn at the right edge; older samples travel left until they leave
+         the lane. */
+      if (timestamp - lastLevelSample >= VOICE_DOT_SAMPLE_INTERVAL_MS) {
+        recentLevels.shift();
+        recentLevels.push(inputLevel);
         lastLevelSample = timestamp;
 
         const dotElements = dots.children;
         for (let index = 0; index < dotElements.length; index += 1) {
-          const tailDecay = Math.exp(-index / 34);
-          const height = 3 + Math.min(29, recentLevels[index] * 30 * tailDecay);
+          const level = recentLevels[index];
+          const height = 3 + Math.min(31, level * 34);
+          const opacity = 0.34 + Math.min(0.56, level * 0.56);
           (dotElements[index] as HTMLElement).style.height = `${height.toFixed(1)}px`;
+          (dotElements[index] as HTMLElement).style.opacity = opacity.toFixed(2);
         }
       }
       animationFrame = window.requestAnimationFrame(updateDots);
@@ -84,7 +89,10 @@ function VoiceActivityDots({ active, stream }: { active: boolean; stream: MediaS
       window.cancelAnimationFrame(animationFrame);
       source.disconnect();
       void context.close().catch(() => {});
-      Array.from(dots.children).forEach((dot) => (dot as HTMLElement).style.removeProperty("height"));
+      Array.from(dots.children).forEach((dot) => {
+        (dot as HTMLElement).style.removeProperty("height");
+        (dot as HTMLElement).style.removeProperty("opacity");
+      });
     };
   }, [active, stream]);
 
