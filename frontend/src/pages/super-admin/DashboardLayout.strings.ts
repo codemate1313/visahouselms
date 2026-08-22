@@ -15,6 +15,7 @@ export const dashboardLayoutStrings = {
     usersInstituteAdmins: "Institute Admins",
     usersInstituteStaff: "Institute Staff",
     usersStudents: "Students",
+    usersAll: "All Users",
     courseControl: "Course Control",
     gradingOversight: "Grading Oversight",
     retakeRequests: "Retake Requests",

@@ -18,6 +18,7 @@ export const usersStrings = {
     actions: "ACTIONS",
   },
   tabs: {
+    ALL: "All Users",
     SUPER_ADMIN: "Super Admins",
     SA_INSTRUCTOR: "SA Instructors",
     INSTITUTE_ADMIN: "Institute Admins",

@@ -24,6 +24,8 @@ import { exportUsersExcel, exportUsersPDF } from "./exportHelpers";
 
 const PAGE_SIZE = 25;
 const DEFAULT_ROLE: DirectoryRole = "SUPER_ADMIN";
+const ALL_USERS_SLUG = "all-users";
+type UserDirectoryView = DirectoryRole | "ALL";
 
 /** URL slug <-> role, so each sidebar child owns a real, linkable address. */
 const ROLE_BY_SLUG: Record<string, DirectoryRole> = {
@@ -85,7 +87,9 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
   const currentUser = useAuthStore((state) => state.user);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
-  const activeRole: DirectoryRole = (roleSlug && ROLE_BY_SLUG[roleSlug]) || DEFAULT_ROLE;
+  const activeView: UserDirectoryView =
+    roleSlug === ALL_USERS_SLUG ? "ALL" : (roleSlug && ROLE_BY_SLUG[roleSlug]) || DEFAULT_ROLE;
+  const activeRole = activeView === "ALL" ? null : activeView;
   const viewerIsOwner = Boolean(currentUser?.is_owner);
   // This screen is reused by the developer portal under its own slug. There, the
   // elevated revoke/restore controls apply to accounts the Super Admin cannot
@@ -138,13 +142,13 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
     setPage(1);
     setSelectedIds(new Set());
     setPasswordNotice(null);
-  }, [activeRole]);
+  }, [activeView]);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
       const params: any = {
-        role: activeRole,
+        role: activeRole ?? undefined,
         q: search.trim() || undefined,
         status: statusFilter || undefined,
         page,
@@ -177,7 +181,7 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
     } finally {
       setLoading(false);
     }
-  }, [activeRole, search, statusFilter, studentFilter, selectedInstituteId, page]);
+  }, [activeRole, search, statusFilter, studentFilter, selectedInstituteId, page, isDeveloperPortal]);
 
   // Debounced so typing in the search box does not fire a request per keystroke.
   useEffect(() => {
@@ -422,32 +426,43 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
   }
 
   async function handleExport(format: "pdf" | "excel") {
-    if (!(await confirmExport(format, strings.tabs[activeRole]))) return;
-    if (format === "pdf") exportUsersPDF(rows, activeRole, showInstitute);
-    else exportUsersExcel(rows, activeRole, showInstitute);
+    const title = strings.tabs[activeView];
+    if (!(await confirmExport(format, title))) return;
+    if (format === "pdf") exportUsersPDF(rows, title, showInstitute);
+    else exportUsersExcel(rows, title, showInstitute);
   }
 
   const total = data?.total ?? 0;
   const visibleCount = data?.items.length ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const newRoute =
-    activeRole === "SUPER_ADMIN" && !viewerIsOwner ? undefined : NEW_ROUTE[activeRole]?.(basePath);
-  const showInstitute = activeRole !== "SUPER_ADMIN" && activeRole !== "SA_INSTRUCTOR";
+    activeRole === "SUPER_ADMIN" && !viewerIsOwner
+      ? undefined
+      : activeRole
+        ? NEW_ROUTE[activeRole]?.(basePath)
+        : undefined;
+  const showInstitute = activeRole === null || (activeRole !== "SUPER_ADMIN" && activeRole !== "SA_INSTRUCTOR");
 
   return (
     <div className="page">
       <SegmentedControl
         ariaLabel="User directory role"
         className="user-directory-tabs"
-        onChange={(role) => navigate(`${basePath}/users/${SLUG_BY_ROLE[role]}`)}
-        options={DIRECTORY_ROLES.map((role) => {
-          const count = data?.role_counts?.[role];
-          return {
-            label: `${strings.tabs[role]}${count !== undefined ? ` (${count})` : ""}`,
-            value: role,
-          };
-        })}
-        value={activeRole}
+        onChange={(view) => navigate(`${basePath}/users/${view === "ALL" ? ALL_USERS_SLUG : SLUG_BY_ROLE[view]}`)}
+        options={[
+          ...DIRECTORY_ROLES.map((role) => {
+            const count = data?.role_counts?.[role];
+            return {
+              label: `${strings.tabs[role]}${count !== undefined ? ` (${count})` : ""}`,
+              value: role,
+            };
+          }),
+          {
+            label: strings.tabs.ALL,
+            value: "ALL" as const,
+          },
+        ]}
+        value={activeView}
       />
 
       <div className="filter-bar institutes-filter-bar">
@@ -542,7 +557,7 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
           excelLabel={strings.exportExcel}
         />
 
-        {(newRoute || TENANT_NEW_PATH[activeRole]) && (
+        {activeRole && (newRoute || TENANT_NEW_PATH[activeRole]) && (
           <CreateActionButton
             label={strings.newLabel[activeRole as keyof typeof strings.newLabel]}
             to={newRoute}
@@ -679,7 +694,7 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
         cancelText={strings.selectInstituteModal.cancel}
         variant="primary"
         onConfirm={() => {
-          const buildPath = TENANT_NEW_PATH[activeRole];
+          const buildPath = activeRole ? TENANT_NEW_PATH[activeRole] : undefined;
           if (newStudentInstituteId && buildPath) navigate(buildPath(newStudentInstituteId, basePath));
         }}
         onClose={() => {

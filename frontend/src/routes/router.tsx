@@ -168,7 +168,7 @@ export const router = createBrowserRouter([
           { path: "ai-settings", element: <Navigate to="/super-admin/platform-settings?tab=ai" replace /> },
           // Unified cross-role directory. The per-role create/edit forms below
           // remain the place accounts are actually managed.
-          { path: "users", element: <Navigate to="/super-admin/users/super-admins" replace /> },
+          { path: "users", element: <Navigate to="/super-admin/users/all-users" replace /> },
           { path: "users/:role", element: <Users /> },
           { path: "users/:id/edit", element: <DirectStudentForm /> },
           // The old single-role list screens now live as tabs of the directory.

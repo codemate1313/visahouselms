@@ -61,6 +61,7 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/users/institute-admins", eyebrow: "USER MANAGEMENT", title: "Institute Admins" },
   { match: "/super-admin/users/institute-staff", eyebrow: "USER MANAGEMENT", title: "Institute Staff" },
   { match: "/super-admin/users/students", eyebrow: "USER MANAGEMENT", title: "Students" },
+  { match: "/super-admin/users/all-users", eyebrow: "USER MANAGEMENT", title: "All Users" },
   { match: "/super-admin/users", eyebrow: "USER MANAGEMENT", title: "Users" },
   { match: "/super-admin/accounts/new", eyebrow: "SYSTEM MANAGEMENT", title: "Create Admin Account" },
   { match: /\/super-admin\/accounts\/\d+/, eyebrow: "SYSTEM MANAGEMENT", title: "Edit Admin Account" },

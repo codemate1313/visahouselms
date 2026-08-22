@@ -70,6 +70,7 @@ export function DashboardLayout() {
               { key: "users_institute_admins", label: m.usersInstituteAdmins, to: "/super-admin/users/institute-admins" },
               { key: "users_institute_staff", label: m.usersInstituteStaff, to: "/super-admin/users/institute-staff" },
               { key: "users_students", label: m.usersStudents, to: "/super-admin/users/students" },
+              { key: "users_all", label: m.usersAll, to: "/super-admin/users/all-users" },
             ],
           },
           { key: "saas_institutes", label: m.saasInstitutes, icon: "building", to: "/super-admin/institutes" },
