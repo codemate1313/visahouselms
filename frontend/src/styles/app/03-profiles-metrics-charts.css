@@ -771,7 +771,7 @@ button.secondary-button {
   font-weight: 750;
 }
 
-.account-form-panel input {
+.account-form-panel input:not([type="checkbox"]):not([type="radio"]) {
   width: 100%;
   min-height: 46px;
 }
