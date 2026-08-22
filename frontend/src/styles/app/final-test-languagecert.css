@@ -2032,10 +2032,15 @@
 }
 
 .lc-exam .speaking-interview-notes textarea {
+  box-sizing: border-box;
+  min-height: 78px;
+  max-height: 78px;
   border: 1px solid #b5b5b5;
   border-radius: 0;
   font-family: var(--lc-font);
   font-size: var(--lc-text);
+  overflow-y: auto;
+  resize: none;
 }
 
 /* The action bar mirrors the delivery client: one long waveform field on the
@@ -2069,6 +2074,10 @@
   width: 3px;
   background: #ffffff;
   pointer-events: none;
+}
+
+.lc-exam .speaking-interview-control-dock.is-prep::before {
+  display: none;
 }
 
 .lc-exam .speaking-interview-control-dock.is-prep {
