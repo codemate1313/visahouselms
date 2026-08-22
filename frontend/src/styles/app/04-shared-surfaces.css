@@ -2882,6 +2882,19 @@
 
 .super-admin-portal .huge-sidebar .sidebar-section-toggle {
   border-radius: 8px;
+  padding: 0 10px;
+  transition: background-color 160ms ease, box-shadow 160ms ease, color 160ms ease;
+}
+
+.super-admin-portal .huge-sidebar .sidebar-section-toggle:hover,
+.super-admin-portal .huge-sidebar .sidebar-section.has-active-item .sidebar-section-toggle {
+  background: rgba(121, 18, 29, 0.48);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.super-admin-portal .huge-sidebar .sidebar-section-toggle:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 2px;
 }
 
 .super-admin-portal .huge-sidebar .sidebar-section-toggle:hover .sidebar-section-title,
