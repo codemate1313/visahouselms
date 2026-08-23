@@ -43,7 +43,13 @@ export function InstituteDashboard() {
         subtitle={strings.subtitle}
       />
 
-      {summary.access && <AccessCountdownCard access={summary.access} canSeeBilling={canSeeBilling} />}
+      {summary.access && (
+        <AccessCountdownCard
+          access={summary.access}
+          subscription={subscriptionSummary}
+          canSeeBilling={canSeeBilling}
+        />
+      )}
 
       <DashboardStats
         counts={summary.counts}
