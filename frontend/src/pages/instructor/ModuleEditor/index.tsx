@@ -1127,19 +1127,18 @@ export function ModuleEditor() {
         </div>
         <main className={`module-part-editor ${selectedPart?.section_type === "speaking" ? "is-speaking-editor" : ""}`} id="module-part-editor">
           {!selectedPart ? (
-            <ModuleDetailsForm
-              module={module}
-              details={details}
-              onDetailsChange={setDetails}
-              isEditable={isEditable}
-              busy={busy}
-              onSubmit={saveDetails}
-              onDelete={deleteModule}
-            />
-          ) : (
             <>
+              <ModuleDetailsForm
+                module={module}
+                details={details}
+                onDetailsChange={setDetails}
+                isEditable={isEditable}
+                busy={busy}
+                onSubmit={saveDetails}
+                onDelete={deleteModule}
+              />
               {isEditable && (
-                <section className="authoring-panel">
+                <section className="authoring-panel" style={{ marginTop: 24 }}>
                   <div className="panel-title">
                     <div>
                       <h2>{strings.moduleImport.heading}</h2>
@@ -1154,6 +1153,9 @@ export function ModuleEditor() {
                   </form>
                 </section>
               )}
+            </>
+          ) : (
+            <>
 
               <Modal
                 className="module-import-modal"
