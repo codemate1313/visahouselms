@@ -63,6 +63,16 @@ export function PublisherPanel({
   return (
     <CollapsiblePanel className="workspace-panel announcement-publisher-panel" title={t.title} description={t.description}>
       <form onSubmit={onSubmit}>
+        <div className="announcement-publish-toolbar">
+          <div>
+            <strong>{submitLabel}</strong>
+            <span>{status === "published" ? t.actionHintPublished : status === "scheduled" ? t.actionHintScheduled : t.actionHintDraft}</span>
+          </div>
+          <button type="submit" disabled={busy}>
+            {submitLabel}
+          </button>
+        </div>
+
         <label htmlFor="institute-announcement-title">{t.titleLabel}<RequiredMark /></label>
         <input
           id="institute-announcement-title"
@@ -98,10 +108,6 @@ export function PublisherPanel({
         )}
 
         <PublishTimingSelector status={status} onStatusChange={onStatusChange} scheduledAt={scheduledAt} onScheduledAtChange={onScheduledAtChange} />
-
-        <button disabled={busy} style={{ marginTop: 12 }}>
-          {submitLabel}
-        </button>
       </form>
     </CollapsiblePanel>
   );

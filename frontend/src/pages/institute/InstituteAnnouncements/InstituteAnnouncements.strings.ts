@@ -10,11 +10,13 @@ export const audienceCards: AudienceCardOption[] = [
 export const instituteAnnouncementsStrings = {
   eyebrow: "Institute notifications",
   title: "Announcements",
+  publishNew: "Publish new",
   loadError: "Announcements or student list could not be loaded.",
   scheduleRequiredError: "Please select a date and time for scheduled announcement.",
   studentRequiredError: "Please select at least one target student.",
   saveError: "Announcement could not be saved or published.",
   publisher: {
+    dialogTitle: "Publish new announcement",
     title: "New announcement",
     description: "Notify students, staff, or specific individual students with scheduling options.",
     titleLabel: "Title",
@@ -35,6 +37,9 @@ export const instituteAnnouncementsStrings = {
     },
     scheduleLabel: "Schedule Date & Time",
     scheduleHint: "Announcement will automatically publish at this date and time.",
+    actionHintPublished: "Sends immediately after required fields are complete.",
+    actionHintScheduled: "Queues the announcement for the selected time.",
+    actionHintDraft: "Stores this announcement without notifying anyone.",
     submitLabels: {
       busy: "Processing...",
       scheduled: "Schedule announcement",
@@ -44,9 +49,9 @@ export const instituteAnnouncementsStrings = {
   },
   history: {
     title: "Announcement history",
-    description: "Review published, scheduled, and draft institute announcements.",
+    description: "Review published notifications and drafts.",
     emptyTitle: "No announcements yet",
-    emptyDescription: "Published, scheduled, and draft announcements will appear here.",
+    emptyDescription: "Published notifications and drafts will appear here.",
     audiencePrefix: "Audience",
     scheduledForPrefix: "Scheduled for",
     publishedPrefix: "Published",

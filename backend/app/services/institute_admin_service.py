@@ -17,6 +17,7 @@ from app.core.security import hash_password
 from app.dependencies.limits import enforce_limit
 from app.models.attempt import AttemptPartGrade, TestAttempt
 from app.models.audit_log import AuditLog
+from app.models.exam_module import ExamModule, InstituteModule
 from app.models.institute import Institute
 from app.models.role import DEVELOPER, INST_INSTRUCTOR, INSTITUTE_ADMIN, STUDENT, SUPER_ADMIN, Role
 from app.models.user import (
@@ -1294,6 +1295,18 @@ def dashboard_summary(db: Session, actor: User) -> dict:
         if permissions["view_billing"]
         else None
     )
+    assigned_courses = (
+        db.query(ExamModule)
+        .join(InstituteModule, InstituteModule.module_id == ExamModule.id)
+        .filter(
+            InstituteModule.institute_id == institute_id,
+            InstituteModule.is_active.is_(True),
+            ExamModule.deleted_at.is_(None),
+        )
+        .order_by(InstituteModule.assigned_at.desc(), ExamModule.id.desc())
+        .limit(6)
+        .all()
+    )
     return {
         "institute": {
             "id": institute.id,
@@ -1313,4 +1326,15 @@ def dashboard_summary(db: Session, actor: User) -> dict:
         "access": subscription_service.access_window(db, institute_id),
         "permissions": permissions,
         "recent_members": visible_members[:6],
+        "assigned_courses": [
+            {
+                "id": module.id,
+                "title": module.title,
+                "slug": f"module-{module.id}",
+                "summary": module.description,
+                "level": module.module_type,
+                "estimated_duration_minutes": module.duration_minutes,
+            }
+            for module in assigned_courses
+        ],
     }

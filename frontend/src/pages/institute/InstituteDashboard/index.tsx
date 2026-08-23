@@ -58,7 +58,7 @@ export function InstituteDashboard() {
 
         {(canSeeStudents || canSeeStaff) && <RecentMembersPanel members={summary.recent_members} />}
 
-        <AssignedCoursesPanel courses={summary.assigned_courses} />
+        <AssignedCoursesPanel courses={summary.assigned_courses ?? []} />
 
         {!canSeeStudents && !canSeeStaff && !canSeeBilling && (
           <section className="workspace-panel">

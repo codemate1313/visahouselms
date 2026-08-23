@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { Announcement } from "@/api/types";
-import { PageHeader } from "@/components/ui";
+import { Button, Modal, PageHeader } from "@/components/ui";
 import { normalizeSearch } from "./helpers";
 import { instituteAnnouncementsStrings as strings } from "./InstituteAnnouncements.strings";
 import type { AnnouncementStatus, TargetOptions } from "./types";
@@ -21,6 +21,7 @@ export function InstituteAnnouncements() {
 
   const [studentSearch, setStudentSearch] = useState("");
 
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -113,6 +114,7 @@ export function InstituteAnnouncements() {
       setSelectedUserIds([]);
       setStatus("published");
       setScheduledAt("");
+      setIsCreateOpen(false);
       await loadData();
     } catch {
       setError(strings.saveError);
@@ -128,12 +130,30 @@ export function InstituteAnnouncements() {
       return !studentQuery || haystack.includes(studentQuery);
     })
     .sort((a, b) => Number(selectedUserIds.includes(b.id)) - Number(selectedUserIds.includes(a.id)) || a.name.localeCompare(b.name));
+  const visibleAnnouncements = announcements.filter((item) => item.status === "published" || item.status === "draft");
 
   return (
     <div className="announcement-admin-page">
-      <PageHeader eyebrow={strings.eyebrow} title={strings.title} />
+      <PageHeader
+        eyebrow={strings.eyebrow}
+        title={strings.title}
+        actions={
+          <Button onClick={() => setIsCreateOpen(true)}>
+            {strings.publishNew}
+          </Button>
+        }
+      />
       {error && <p className="error-text">{error}</p>}
-      <div className="announcement-admin-grid">
+      <div className="announcement-admin-grid is-history-only">
+        <AnnouncementHistoryPanel announcements={visibleAnnouncements} />
+      </div>
+
+      <Modal
+        open={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        title={strings.publisher.dialogTitle}
+        size="lg"
+      >
         <PublisherPanel
           title={title}
           onTitleChange={setTitle}
@@ -155,9 +175,7 @@ export function InstituteAnnouncements() {
           busy={busy}
           onSubmit={(event) => void publish(event)}
         />
-
-        <AnnouncementHistoryPanel announcements={announcements} />
-      </div>
+      </Modal>
     </div>
   );
 }

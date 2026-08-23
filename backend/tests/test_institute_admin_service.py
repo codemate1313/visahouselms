@@ -11,7 +11,7 @@ from app.core.security import hash_password, verify_password
 from app.models import Base
 from app.models.institute import Institute
 from app.models.attempt import AttemptPartGrade, TestAttempt
-from app.models.exam_module import ExamModule, ExamModulePart
+from app.models.exam_module import ExamModule, ExamModulePart, InstituteModule
 from app.models.plan import AUDIENCE_INSTITUTES, Plan
 from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, SA_INSTRUCTOR, STUDENT, SUPER_ADMIN, Role
 from app.models.subscription import Subscription
@@ -484,12 +484,33 @@ class InstituteAdminServiceTests(unittest.TestCase):
 
     def test_dashboard_reports_subscription_and_tenant_counts(self):
         self._create_student()
+        module = ExamModule(
+            module_type="reading",
+            title="Assigned Reading Test",
+            description="Reading module assigned to the institute.",
+            status="published",
+            duration_minutes=45,
+            created_by_id=self.super_actor.id,
+        )
+        self.db.add(module)
+        self.db.flush()
+        self.db.add(
+            InstituteModule(
+                institute_id=self.institute.id,
+                module_id=module.id,
+                assigned_by_id=self.super_actor.id,
+                is_active=True,
+            )
+        )
+        self.db.commit()
+
         summary = institute_admin_service.dashboard_summary(self.db, self.actor)
         self.assertEqual(summary["institute"]["name"], "North Academy")
         self.assertEqual(summary["counts"]["students"], 1)
         self.assertEqual(summary["counts"]["instructors"], 0)
         self.assertEqual(summary["subscription"]["state"], "active")
         self.assertEqual(summary["subscription"]["limits"]["students"], 1)
+        self.assertEqual(summary["assigned_courses"][0]["title"], "Assigned Reading Test")
 
     def test_self_service_checkout_creates_scoped_paid_invoice(self):
         plan = self.db.query(Plan).filter(Plan.name == "Institute Plan").one()

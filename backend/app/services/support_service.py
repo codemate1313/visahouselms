@@ -376,6 +376,7 @@ def list_portal_tickets(db: Session, user: User) -> list[dict]:
             "admin_note": ticket.admin_note,
             "queue": ticket.queue,
             "escalated_at": ticket.escalated_at,
+            "closed_by_role": ticket.closed_by_role,
             "created_at": ticket.created_at,
             "updated_at": ticket.updated_at,
             "resolved_at": ticket.resolved_at,
@@ -591,25 +592,23 @@ def add_ticket_message(
     name = sender_name or (f"{sender.first_name} {sender.last_name}" if sender else "Support Team")
     role_label = sender_role
     if sender and sender.role:
-        if sender.role.name in (SUPER_ADMIN, INSTITUTE_ADMIN, INST_INSTRUCTOR):
+        if sender_role == "customer":
+            role_label = "customer"
+        elif sender.role.name in (SUPER_ADMIN, INSTITUTE_ADMIN, INST_INSTRUCTOR):
             role_label = "admin"
         else:
             role_label = "customer"
 
-    if ticket.status == SUPPORT_STATUS_CLOSED:
-        last_msg = ticket.messages[-1] if ticket.messages else None
-        is_closed_by_customer = ticket.closed_by_role == "customer" or (
-            not ticket.closed_by_role and last_msg and last_msg.sender_role == "customer"
+    if role_label == "customer" and ticket.status in {SUPPORT_STATUS_CLOSED, SUPPORT_STATUS_RESOLVED}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This support ticket is closed. Only the support team can reopen it.",
         )
-        # If customer is replying and ticket was NOT closed by customer (closed by admin/staff), auto-reopen!
-        if role_label == "customer" and not is_closed_by_customer:
-            ticket.status = SUPPORT_STATUS_OPEN
-            ticket.closed_by_role = None
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This support ticket is closed. Reopen the chat to send new messages.",
-            )
+    if ticket.status == SUPPORT_STATUS_CLOSED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This support ticket is closed. Reopen the chat to send new messages.",
+        )
 
     attachments_json: Optional[str] = None
     if attachments:
@@ -629,9 +628,6 @@ def add_ticket_message(
     # Auto transition 'new' -> 'open' if staff replies
     if role_label == "admin" and ticket.status == SUPPORT_STATUS_NEW:
         ticket.status = SUPPORT_STATUS_OPEN
-    elif role_label == "customer" and ticket.status == SUPPORT_STATUS_RESOLVED:
-        ticket.status = SUPPORT_STATUS_OPEN
-
     ticket.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(ticket)
@@ -765,23 +761,9 @@ def reopen_portal_ticket(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Support ticket not found.",
         )
-    last_msg = ticket.messages[-1] if ticket.messages else None
-    is_closed_by_customer = ticket.closed_by_role == "customer" or (
-        not ticket.closed_by_role and last_msg and last_msg.sender_role == "customer"
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Only the support team can reopen a closed ticket.",
     )
-    if is_closed_by_customer:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You closed this ticket. Please raise a new query if you have a new issue.",
-        )
-
-    ticket.status = SUPPORT_STATUS_OPEN
-    ticket.closed_by_role = None
-    ticket.updated_at = datetime.now(timezone.utc)
-    db.commit()
-    db.refresh(ticket)
-    _notify_status_changed(db, ticket, changed_by_role="customer", new_status=SUPPORT_STATUS_OPEN)
-    return ticket
-
 
 

@@ -11,6 +11,8 @@ from app.models.role import INSTITUTE_ADMIN, INST_INSTRUCTOR, STUDENT, SUPER_ADM
 from app.models.support_ticket import (
     SUPPORT_QUEUE_INSTITUTE,
     SUPPORT_QUEUE_SUPER_ADMIN,
+    SUPPORT_STATUS_CLOSED,
+    SUPPORT_STATUS_OPEN,
     SUPPORT_STATUS_RESOLVED,
 )
 from app.models.user import User
@@ -164,6 +166,74 @@ class SupportServiceTests(unittest.TestCase):
         self.assertIsNotNone(forwarded.escalated_at)
         result = support_service.list_tickets(self.db)
         self.assertEqual([item["id"] for item in result["items"]], [ticket.id])
+
+    def test_portal_requester_cannot_reopen_support_closed_ticket(self) -> None:
+        ticket = self._create_portal_ticket(self.student)
+        support_service.close_ticket(
+            self.db,
+            ticket.id,
+            queue=SUPPORT_QUEUE_INSTITUTE,
+            institute_id=self.institute.id,
+        )
+
+        with self.assertRaises(HTTPException) as context:
+            support_service.reopen_portal_ticket(self.db, ticket.id, self.student)
+
+        self.assertEqual(context.exception.status_code, 403)
+        self.db.refresh(ticket)
+        self.assertEqual(ticket.status, SUPPORT_STATUS_CLOSED)
+
+    def test_portal_requester_reply_does_not_reopen_support_closed_ticket(self) -> None:
+        ticket = self._create_portal_ticket(self.student)
+        support_service.close_ticket(
+            self.db,
+            ticket.id,
+            queue=SUPPORT_QUEUE_INSTITUTE,
+            institute_id=self.institute.id,
+        )
+
+        with self.assertRaises(HTTPException) as context:
+            support_service.add_ticket_message(
+                self.db,
+                ticket.id,
+                "I still need help with this ticket.",
+                sender=self.student,
+                sender_role="customer",
+            )
+
+        self.assertEqual(context.exception.status_code, 403)
+        self.db.refresh(ticket)
+        self.assertEqual(ticket.status, SUPPORT_STATUS_CLOSED)
+
+    def test_institute_admin_request_to_super_admin_cannot_be_reopened_by_requester(self) -> None:
+        ticket = self._create_portal_ticket(self.institute_admin)
+        support_service.close_ticket(self.db, ticket.id, queue=SUPPORT_QUEUE_SUPER_ADMIN)
+
+        with self.assertRaises(HTTPException) as context:
+            support_service.reopen_portal_ticket(self.db, ticket.id, self.institute_admin)
+
+        self.assertEqual(context.exception.status_code, 403)
+        self.db.refresh(ticket)
+        self.assertEqual(ticket.status, SUPPORT_STATUS_CLOSED)
+
+    def test_higher_official_can_reopen_ticket_from_owned_queue(self) -> None:
+        ticket = self._create_portal_ticket(self.student)
+        support_service.close_ticket(
+            self.db,
+            ticket.id,
+            queue=SUPPORT_QUEUE_INSTITUTE,
+            institute_id=self.institute.id,
+        )
+
+        reopened = support_service.reopen_ticket(
+            self.db,
+            ticket.id,
+            queue=SUPPORT_QUEUE_INSTITUTE,
+            institute_id=self.institute.id,
+        )
+
+        self.assertEqual(reopened.status, SUPPORT_STATUS_OPEN)
+        self.assertIsNone(reopened.closed_by_role)
 
     def test_list_tickets_filters_searches_and_returns_counts(self) -> None:
         self._create_ticket(subject="Need onboarding", name="Priya Nair")

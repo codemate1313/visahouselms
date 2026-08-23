@@ -45,6 +45,10 @@
   align-items: start !important;
 }
 
+.announcement-admin-grid.is-history-only {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
 .announcement-admin-history-shell {
   width: 100% !important;
 }
@@ -55,6 +59,73 @@
 
 .announcement-admin-history-shell .pn-history-list {
   max-height: none !important;
+}
+
+.announcement-publisher-panel form {
+  position: relative;
+}
+
+.announcement-publish-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--institute-primary, var(--primary)) 28%, var(--border));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 7%, var(--surface-muted));
+}
+
+.announcement-publish-toolbar {
+  margin-bottom: 18px;
+}
+
+.announcement-publish-toolbar div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.announcement-publish-toolbar strong {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.announcement-publish-toolbar span {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.announcement-publish-toolbar button {
+  min-height: 42px;
+  flex: 0 0 auto;
+  padding: 0 18px;
+  border: 1px solid var(--institute-primary, var(--primary));
+  border-radius: var(--radius-sm);
+  background: var(--institute-primary, var(--primary));
+  color: var(--institute-on-primary, #ffffff);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.announcement-publish-toolbar button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 85%, #000000);
+  border-color: color-mix(in srgb, var(--institute-primary, var(--primary)) 85%, #000000);
+  box-shadow: 0 7px 18px color-mix(in srgb, var(--institute-primary, var(--primary)) 18%, transparent);
+}
+
+.announcement-publish-toolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.announcement-publisher-panel .ui-required-mark {
+  color: var(--institute-primary, var(--primary));
 }
 
 @media (max-width: 1024px) {
@@ -567,6 +638,12 @@
   min-width: 0;
 }
 
+.announcement-publisher-panel {
+  --primary: var(--institute-primary, #0b2388);
+  --ui-segment-accent: var(--institute-primary, #0b2388);
+  --ui-segment-on-accent: var(--institute-on-primary, #ffffff);
+}
+
 .announcement-publisher-panel.workspace-panel,
 .announcement-history-panel.workspace-panel {
   padding: clamp(20px, 2.2vw, 34px);
@@ -664,12 +741,91 @@
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
-.announcement-publisher-panel button:not(.searchable-select-trigger) {
+.announcement-publisher-panel form > button:not(.searchable-select-trigger) {
   width: fit-content;
   min-height: 48px;
   margin-top: 8px;
   padding: 0 18px;
   border-radius: 14px;
+}
+
+.announcement-publisher-panel .audience-cards-grid {
+  gap: 16px;
+  margin: 4px 0 22px;
+}
+
+.announcement-publisher-panel .audience-checkbox-card {
+  min-height: 106px;
+  border-color: color-mix(in srgb, var(--institute-primary, var(--primary)) 26%, rgba(255, 255, 255, 0.16)) !important;
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 8%, #17181f) !important;
+  box-shadow: none !important;
+}
+
+.announcement-publisher-panel .audience-card-title {
+  color: var(--text) !important;
+}
+
+.announcement-publisher-panel .audience-card-description {
+  color: var(--text-muted) !important;
+}
+
+.announcement-publisher-panel .audience-card-checkbox-custom {
+  background: #2a2b31 !important;
+  border-color: rgba(255, 255, 255, 0.42) !important;
+}
+
+.announcement-publisher-panel .audience-checkbox-card:hover,
+.announcement-publisher-panel .audience-checkbox-card:focus-visible {
+  border-color: color-mix(in srgb, var(--institute-primary, var(--primary)) 44%, var(--border));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--institute-primary, var(--primary)) 12%, transparent);
+}
+
+.announcement-publisher-panel .audience-checkbox-card.selected {
+  border-color: var(--institute-primary, var(--primary)) !important;
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 10%, var(--surface)) !important;
+  box-shadow: 0 14px 32px color-mix(in srgb, var(--institute-primary, var(--primary)) 13%, transparent);
+}
+
+.announcement-publisher-panel .audience-checkbox-card.selected .audience-card-checkbox-custom {
+  background: var(--institute-primary, var(--primary)) !important;
+  border-color: var(--institute-primary, var(--primary)) !important;
+  color: var(--institute-on-primary, #ffffff) !important;
+}
+
+.announcement-publisher-panel .audience-card-icon {
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 16%, transparent) !important;
+  color: var(--institute-primary, var(--primary)) !important;
+}
+
+.announcement-publisher-panel .audience-checkbox-card.selected .audience-card-title,
+.announcement-publisher-panel label {
+  color: color-mix(in srgb, var(--institute-primary, var(--primary)) 78%, var(--text)) !important;
+}
+
+.announcement-publisher-panel .schedule-timing-group {
+  margin-top: 18px;
+}
+
+.announcement-publisher-panel .schedule-timing-group .ui-segmented-control {
+  --ui-segment-accent: var(--institute-primary, var(--primary));
+  --ui-segment-on-accent: var(--institute-on-primary, #ffffff);
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px !important;
+  border-color: color-mix(in srgb, var(--institute-primary, var(--primary)) 24%, rgba(255, 255, 255, 0.16)) !important;
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 7%, rgba(17, 18, 24, 0.86)) !important;
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--institute-primary, var(--primary)) 10%, transparent) !important;
+}
+
+.announcement-publisher-panel .schedule-timing-group .ui-segmented-option {
+  min-height: 58px;
+  margin-top: 0 !important;
+  border-radius: 999px !important;
+  color: var(--text-muted) !important;
+}
+
+.announcement-publisher-panel .schedule-timing-group .ui-segmented-option.is-active {
+  color: var(--institute-on-primary, #ffffff) !important;
 }
 
 .announcement-history-list {
@@ -778,7 +934,7 @@
     min-height: 82px;
   }
 
-  .announcement-publisher-panel button:not(.searchable-select-trigger) {
+  .announcement-publisher-panel form > button:not(.searchable-select-trigger) {
     width: 100%;
   }
 }
