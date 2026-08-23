@@ -44,8 +44,7 @@ export function ModuleImportReviewPanel({
     <section className="import-review">
       <div className="import-review-header">
         <div>
-          <h2>{t.reviewHeading}</h2>
-          <p>{t.reviewSummary(preview.question_count, preview.source_filename, moduleTitle)}</p>
+          <p style={{ margin: 0 }}>{t.reviewSummary(preview.question_count, preview.source_filename, moduleTitle)}</p>
         </div>
         <div className="review-actions">
           <button

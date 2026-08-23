@@ -939,9 +939,10 @@
 .module-import-modal .import-review-header {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 30000;
   padding-bottom: 14px;
   background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 
 .import-review-header {
