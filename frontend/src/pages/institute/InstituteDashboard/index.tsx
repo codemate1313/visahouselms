@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/ui";
 import { instituteDashboardStrings as strings } from "./InstituteDashboard.strings";
 import type { DashboardSummary } from "./types";
 import { DashboardStats } from "./components/DashboardStats";
-import { SubscriptionUsagePanel } from "./components/SubscriptionUsagePanel";
 import { RecentMembersPanel } from "./components/RecentMembersPanel";
 import { AccessCountdownCard } from "./components/AccessCountdownCard";
 import { AssignedCoursesPanel } from "./components/AssignedCoursesPanel";
@@ -60,7 +59,7 @@ export function InstituteDashboard() {
       />
 
       <div className="workspace-grid">
-        {canSeeBilling && subscriptionSummary && <SubscriptionUsagePanel subscriptionSummary={subscriptionSummary} />}
+
 
         {(canSeeStudents || canSeeStaff) && <RecentMembersPanel members={summary.recent_members} />}
 
