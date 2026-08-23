@@ -15,12 +15,8 @@ import { usePageTitleStore } from "@/store/pageTitleStore";
 import { useToastStore } from "@/store/toastStore";
 import { supportTicketsStrings as strings } from "./SupportTickets.strings";
 
-// The API now returns signed, time-limited URLs for attachments (they live in
-// a private storage folder), so we only prefix the API origin.
-const MEDIA_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
-
 function AttachmentPreview({ path, isLight }: { path: string; isLight?: boolean }) {
-  const url = path.startsWith("http") ? path : MEDIA_ORIGIN + path;
+  const url = path.startsWith("http") ? path : API_BASE_URL + path;
   // Signed URLs carry ?exp=&sig=, so strip the query before sniffing the
   // extension or deriving a display name.
   const bare = path.split("?")[0];
