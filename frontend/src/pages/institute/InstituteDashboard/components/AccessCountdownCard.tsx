@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { instituteDashboardStrings as strings } from "../InstituteDashboard.strings";
 import type { AccessWindow, DashboardSummary } from "../types";
-import { DashboardButton } from "@/components/ui";
 import { formatDate } from "@/utils/date";
 
 interface AccessCountdownCardProps {
@@ -13,11 +11,9 @@ interface AccessCountdownCardProps {
 const URGENT_SECONDS = 7 * 24 * 60 * 60;
 
 /** Counts down to the moment the institute loses access (plan expiry plus its
- *  grace days) and spells out that every downline account goes with it. The
- *  countdown starts from the server's seconds_remaining rather than the local
- *  clock, so a skewed device cannot show a deadline that has not arrived. */
-export function AccessCountdownCard({ access, subscription, canSeeBilling }: AccessCountdownCardProps) {
-  const t = strings.accessCountdown;
+ *  grace days). Shows three beautiful gauges (Students, Staff, Subscription)
+ *  centered in the card layout. */
+export function AccessCountdownCard({ access, subscription }: AccessCountdownCardProps) {
   const [secondsLeft, setSecondsLeft] = useState(access.seconds_remaining ?? 0);
 
   useEffect(() => {
@@ -98,13 +94,13 @@ export function AccessCountdownCard({ access, subscription, canSeeBilling }: Acc
   const staffStrokeOffset = arcCircumference - (arcCircumference * staffPercent) / 100;
 
   return (
-    <div className={`access-countdown-card is-${tone}`} style={{ maxWidth: showUsageDials ? "880px" : "620px" }} role="alert">
-      {/* Sleek Radial Dial Gauges (replacing default text countdown meter) */}
-      <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap", paddingRight: "18px", borderRight: "1px solid var(--border)" }}>
+    <div className={`access-countdown-card is-${tone}`} style={{ maxWidth: "100%", justifyContent: "center", padding: "24px 20px" }} role="alert">
+      {/* Sleek Radial Dial Gauges */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "32px", flexWrap: "wrap", width: "100%" }}>
         
         {/* 1. Student Utilization Dial */}
         {showUsageDials && (
-          <div className="sd-sleek-dial-wrapper">
+          <div className="sd-sleek-dial-wrapper" style={{ width: "160px", height: "160px" }}>
             <svg
               className="sd-sleek-dial-svg"
               viewBox="0 0 170 170"
@@ -152,12 +148,12 @@ export function AccessCountdownCard({ access, subscription, canSeeBilling }: Acc
               <circle cx="85" cy="85" r="50" fill="var(--surface, #ffffff)" className="sd-sleek-center-circle" />
             </svg>
 
-            <div className="sd-sleek-center-text-wrap">
-              <span className="sd-sleek-eyebrow" style={{ fontSize: "7.5px" }}>Students</span>
-              <strong className="sd-sleek-metric-val" style={{ fontSize: "11.5px" }}>
+            <div className="sd-sleek-center-text-wrap" style={{ width: "110px" }}>
+              <span className="sd-sleek-eyebrow" style={{ fontSize: "9px" }}>Students</span>
+              <strong className="sd-sleek-metric-val" style={{ fontSize: "14px" }}>
                 {studentUsage}/{studentLimit}
               </strong>
-              <span className="sd-sleek-expires-note" style={{ fontSize: "7.5px" }}>
+              <span className="sd-sleek-expires-note" style={{ fontSize: "9px" }}>
                 {Math.round(studentPercent)}% used
               </span>
             </div>
@@ -166,7 +162,7 @@ export function AccessCountdownCard({ access, subscription, canSeeBilling }: Acc
 
         {/* 2. Staff Utilization Dial */}
         {showUsageDials && (
-          <div className="sd-sleek-dial-wrapper">
+          <div className="sd-sleek-dial-wrapper" style={{ width: "160px", height: "160px" }}>
             <svg
               className="sd-sleek-dial-svg"
               viewBox="0 0 170 170"
@@ -214,12 +210,12 @@ export function AccessCountdownCard({ access, subscription, canSeeBilling }: Acc
               <circle cx="85" cy="85" r="50" fill="var(--surface, #ffffff)" className="sd-sleek-center-circle" />
             </svg>
 
-            <div className="sd-sleek-center-text-wrap">
-              <span className="sd-sleek-eyebrow" style={{ fontSize: "7.5px" }}>Staff</span>
-              <strong className="sd-sleek-metric-val" style={{ fontSize: "11.5px" }}>
+            <div className="sd-sleek-center-text-wrap" style={{ width: "110px" }}>
+              <span className="sd-sleek-eyebrow" style={{ fontSize: "9px" }}>Staff</span>
+              <strong className="sd-sleek-metric-val" style={{ fontSize: "14px" }}>
                 {staffUsage}/{staffLimit}
               </strong>
-              <span className="sd-sleek-expires-note" style={{ fontSize: "7.5px" }}>
+              <span className="sd-sleek-expires-note" style={{ fontSize: "9px" }}>
                 {Math.round(staffPercent)}% used
               </span>
             </div>
@@ -227,7 +223,7 @@ export function AccessCountdownCard({ access, subscription, canSeeBilling }: Acc
         )}
 
         {/* 3. Subscription (Time Left) Dial */}
-        <div className="sd-sleek-dial-wrapper">
+        <div className="sd-sleek-dial-wrapper" style={{ width: "160px", height: "160px" }}>
           <svg
             className="sd-sleek-dial-svg"
             viewBox="0 0 170 170"
@@ -275,28 +271,17 @@ export function AccessCountdownCard({ access, subscription, canSeeBilling }: Acc
             <circle cx="85" cy="85" r="50" fill="var(--surface, #ffffff)" className="sd-sleek-center-circle" />
           </svg>
 
-          <div className="sd-sleek-center-text-wrap">
-            <span className="sd-sleek-eyebrow" style={{ fontSize: "7.5px" }}>{centerEyebrowText}</span>
-            <strong className={`sd-sleek-metric-val ${ended ? "text-danger" : tone === "warning" ? "text-warning" : ""}`} style={{ fontSize: "11.5px" }}>
+          <div className="sd-sleek-center-text-wrap" style={{ width: "110px" }}>
+            <span className="sd-sleek-eyebrow" style={{ fontSize: "9px" }}>{centerEyebrowText}</span>
+            <strong className={`sd-sleek-metric-val ${ended ? "text-danger" : tone === "warning" ? "text-warning" : ""}`} style={{ fontSize: "14px" }}>
               {centerMainText}
             </strong>
-            <span className="sd-sleek-expires-note" style={{ fontSize: "7.5px" }}>
+            <span className="sd-sleek-expires-note" style={{ fontSize: "9px" }}>
               {ended ? "Suspended" : deadline}
             </span>
           </div>
         </div>
 
-      </div>
-
-      <div className="access-countdown-body">
-        <span className="access-countdown-plan">{t.plan(access.plan_name)}</span>
-        <p className="access-countdown-warning">{ended ? t.endedWarning : t.warning}</p>
-        {!ended && access.grace_days > 0 && <p className="access-countdown-note">{t.graceNote(access.grace_days)}</p>}
-        {canSeeBilling && (
-          <DashboardButton to="/institute-portal/billing">
-            {t.renew}
-          </DashboardButton>
-        )}
       </div>
     </div>
   );
