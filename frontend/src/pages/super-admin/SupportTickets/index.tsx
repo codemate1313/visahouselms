@@ -19,6 +19,7 @@ function AttachmentPreview({ path, isLight }: { path: string; isLight?: boolean 
   const url = path.startsWith("http") ? path : API_BASE_URL + path;
   // Signed URLs carry ?exp=&sig=, so strip the query before sniffing the
   // extension or deriving a display name.
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const bare = path.split("?")[0];
   const isImage = /\.(png|jpg|jpeg|webp|gif)$/i.test(bare);
   const isPdf = /\.pdf$/i.test(bare);
@@ -27,50 +28,159 @@ function AttachmentPreview({ path, isLight }: { path: string; isLight?: boolean 
 
   if (isImage) {
     return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          display: "inline-block",
-          position: "relative",
-          borderRadius: "12px",
-          overflow: "hidden",
-          border: isLight ? "1px solid rgba(255,255,255,0.3)" : "1px solid var(--border)",
-          boxShadow: "0 4px 14px rgba(0, 0, 0, 0.12)",
-          textDecoration: "none",
-        }}
-      >
-        <img
-          src={url}
-          alt={filename}
-          style={{
-            maxWidth: "220px",
-            maxHeight: "160px",
-            display: "block",
-            objectFit: "cover",
-          }}
-        />
+      <>
         <div
+          onClick={() => setIsPreviewOpen(true)}
           style={{
-            position: "absolute",
-            bottom: "6px",
-            right: "6px",
-            background: "rgba(0, 0, 0, 0.65)",
-            backdropFilter: "blur(6px)",
-            color: "#ffffff",
-            padding: "3px 8px",
-            borderRadius: "8px",
-            fontSize: "0.7rem",
-            fontWeight: 600,
-            display: "flex",
-            alignItems: "center",
-            gap: "4px",
+            display: "inline-block",
+            position: "relative",
+            borderRadius: "12px",
+            overflow: "hidden",
+            border: isLight ? "1px solid rgba(255,255,255,0.3)" : "1px solid var(--border)",
+            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.12)",
+            cursor: "pointer",
           }}
         >
-          <Icon name="eye" style={{ width: "12px", height: "12px" }} /> Preview
+          <img
+            src={url}
+            alt={filename}
+            style={{
+              maxWidth: "220px",
+              maxHeight: "160px",
+              display: "block",
+              objectFit: "cover",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "6px",
+              right: "6px",
+              background: "rgba(0, 0, 0, 0.65)",
+              backdropFilter: "blur(6px)",
+              color: "#ffffff",
+              padding: "3px 8px",
+              borderRadius: "8px",
+              fontSize: "0.7rem",
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <Icon name="eye" style={{ width: "12px", height: "12px" }} /> Preview
+          </div>
         </div>
-      </a>
+
+        {isPreviewOpen && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0, 0, 0, 0.85)",
+              backdropFilter: "blur(8px)",
+              zIndex: 999999,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "24px",
+            }}
+            onClick={() => setIsPreviewOpen(false)}
+          >
+            {/* Header Actions */}
+            <div
+              style={{
+                position: "absolute",
+                top: "20px",
+                right: "20px",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                zIndex: 10,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Download Button */}
+              <a
+                href={url}
+                download={filename}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 18px",
+                  borderRadius: "10px",
+                  background: "rgba(255, 255, 255, 0.15)",
+                  border: "1px solid rgba(255, 255, 255, 0.25)",
+                  color: "#ffffff",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  cursor: "pointer",
+                }}
+              >
+                <Icon name="download" style={{ width: "16px", height: "16px" }} />
+                <span>Download</span>
+              </a>
+
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setIsPreviewOpen(false)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  background: "rgba(255, 255, 255, 0.15)",
+                  border: "1px solid rgba(255, 255, 255, 0.25)",
+                  color: "#ffffff",
+                  cursor: "pointer",
+                  fontSize: "1.25rem",
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Main Image Container */}
+            <div
+              style={{
+                position: "relative",
+                maxWidth: "90%",
+                maxHeight: "80%",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={url}
+                alt={filename}
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  borderRadius: "8px",
+                  boxShadow: "0 10px 30px rgba(0, 0, 0, 0.5)",
+                  objectFit: "contain",
+                }}
+              />
+            </div>
+
+            {/* Bottom Filename */}
+            <div style={{ marginTop: "16px", color: "rgba(255, 255, 255, 0.7)", fontSize: "0.85rem", fontWeight: 500 }}>
+              {filename}
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
