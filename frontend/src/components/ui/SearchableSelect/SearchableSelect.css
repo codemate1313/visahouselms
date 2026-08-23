@@ -19,6 +19,9 @@
  */
 
 .searchable-select-container {
+  --primary: var(--institute-primary, #e11d2e);
+  --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
   position: relative;
   width: 100%;
   max-width: 400px;
@@ -131,6 +134,8 @@
    `min-width: 100%` in particular resolves against the viewport once the panel
    is portalled to <body>. */
 .searchable-select-portal-dropdown {
+  --primary: var(--institute-primary, #e11d2e);
+  --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
   position: fixed !important;
   display: flex;
   flex-direction: column;
