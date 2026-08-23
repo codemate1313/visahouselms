@@ -94,13 +94,13 @@ export function AccessCountdownCard({ access, subscription }: AccessCountdownCar
   const staffStrokeOffset = arcCircumference - (arcCircumference * staffPercent) / 100;
 
   return (
-    <div className={`access-countdown-card is-${tone}`} style={{ maxWidth: "100%", justifyContent: "center", padding: "24px 20px" }} role="alert">
+    <div className={`access-countdown-card is-${tone}`} style={{ maxWidth: "100%", justifyContent: "center", padding: "32px 20px" }} role="alert">
       {/* Sleek Radial Dial Gauges */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "32px", flexWrap: "wrap", width: "100%" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "40px", flexWrap: "wrap", width: "100%" }}>
         
         {/* 1. Student Utilization Dial */}
         {showUsageDials && (
-          <div className="sd-sleek-dial-wrapper" style={{ width: "160px", height: "160px" }}>
+          <div className="sd-sleek-dial-wrapper" style={{ width: "190px", height: "190px" }}>
             <svg
               className="sd-sleek-dial-svg"
               viewBox="0 0 170 170"
@@ -114,7 +114,7 @@ export function AccessCountdownCard({ access, subscription }: AccessCountdownCar
                 </linearGradient>
               </defs>
 
-              <circle cx="85" cy="85" r={arcRadius} fill="none" stroke="rgba(0, 0, 0, 0.05)" strokeWidth="10" />
+              <circle cx="85" cy="85" r={arcRadius} fill="none" stroke="color-mix(in srgb, var(--text) 12%, transparent)" strokeWidth="10" />
               <circle
                 cx="85"
                 cy="85"
@@ -148,12 +148,12 @@ export function AccessCountdownCard({ access, subscription }: AccessCountdownCar
               <circle cx="85" cy="85" r="50" fill="var(--surface, #ffffff)" className="sd-sleek-center-circle" />
             </svg>
 
-            <div className="sd-sleek-center-text-wrap" style={{ width: "110px" }}>
-              <span className="sd-sleek-eyebrow" style={{ fontSize: "9px" }}>Students</span>
-              <strong className="sd-sleek-metric-val" style={{ fontSize: "14px" }}>
+            <div className="sd-sleek-center-text-wrap" style={{ width: "130px" }}>
+              <span className="sd-sleek-eyebrow" style={{ fontSize: "11px" }}>Students</span>
+              <strong className="sd-sleek-metric-val" style={{ fontSize: "18px" }}>
                 {studentUsage}/{studentLimit}
               </strong>
-              <span className="sd-sleek-expires-note" style={{ fontSize: "9px" }}>
+              <span className="sd-sleek-expires-note" style={{ fontSize: "10.5px" }}>
                 {Math.round(studentPercent)}% used
               </span>
             </div>
@@ -162,7 +162,7 @@ export function AccessCountdownCard({ access, subscription }: AccessCountdownCar
 
         {/* 2. Staff Utilization Dial */}
         {showUsageDials && (
-          <div className="sd-sleek-dial-wrapper" style={{ width: "160px", height: "160px" }}>
+          <div className="sd-sleek-dial-wrapper" style={{ width: "190px", height: "190px" }}>
             <svg
               className="sd-sleek-dial-svg"
               viewBox="0 0 170 170"
@@ -176,7 +176,7 @@ export function AccessCountdownCard({ access, subscription }: AccessCountdownCar
                 </linearGradient>
               </defs>
 
-              <circle cx="85" cy="85" r={arcRadius} fill="none" stroke="rgba(0, 0, 0, 0.05)" strokeWidth="10" />
+              <circle cx="85" cy="85" r={arcRadius} fill="none" stroke="color-mix(in srgb, var(--text) 12%, transparent)" strokeWidth="10" />
               <circle
                 cx="85"
                 cy="85"
@@ -210,12 +210,12 @@ export function AccessCountdownCard({ access, subscription }: AccessCountdownCar
               <circle cx="85" cy="85" r="50" fill="var(--surface, #ffffff)" className="sd-sleek-center-circle" />
             </svg>
 
-            <div className="sd-sleek-center-text-wrap" style={{ width: "110px" }}>
-              <span className="sd-sleek-eyebrow" style={{ fontSize: "9px" }}>Staff</span>
-              <strong className="sd-sleek-metric-val" style={{ fontSize: "14px" }}>
+            <div className="sd-sleek-center-text-wrap" style={{ width: "130px" }}>
+              <span className="sd-sleek-eyebrow" style={{ fontSize: "11px" }}>Staff</span>
+              <strong className="sd-sleek-metric-val" style={{ fontSize: "18px" }}>
                 {staffUsage}/{staffLimit}
               </strong>
-              <span className="sd-sleek-expires-note" style={{ fontSize: "9px" }}>
+              <span className="sd-sleek-expires-note" style={{ fontSize: "10.5px" }}>
                 {Math.round(staffPercent)}% used
               </span>
             </div>
@@ -223,7 +223,7 @@ export function AccessCountdownCard({ access, subscription }: AccessCountdownCar
         )}
 
         {/* 3. Subscription (Time Left) Dial */}
-        <div className="sd-sleek-dial-wrapper" style={{ width: "160px", height: "160px" }}>
+        <div className="sd-sleek-dial-wrapper" style={{ width: "190px", height: "190px" }}>
           <svg
             className="sd-sleek-dial-svg"
             viewBox="0 0 170 170"
@@ -237,7 +237,7 @@ export function AccessCountdownCard({ access, subscription }: AccessCountdownCar
               </linearGradient>
             </defs>
 
-            <circle cx="85" cy="85" r={arcRadius} fill="none" stroke="rgba(0, 0, 0, 0.05)" strokeWidth="10" />
+            <circle cx="85" cy="85" r={arcRadius} fill="none" stroke="color-mix(in srgb, var(--text) 12%, transparent)" strokeWidth="10" />
             <circle
               cx="85"
               cy="85"
@@ -271,7 +271,7 @@ export function AccessCountdownCard({ access, subscription }: AccessCountdownCar
             <circle cx="85" cy="85" r="50" fill="var(--surface, #ffffff)" className="sd-sleek-center-circle" />
           </svg>
 
-          <div className="sd-sleek-center-text-wrap" style={{ width: "110px" }}>
+          <div className="sd-sleek-center-text-wrap" style={{ width: "130px" }}>
             <span className="sd-sleek-eyebrow" style={{ fontSize: "9px" }}>{centerEyebrowText}</span>
             <strong className={`sd-sleek-metric-val ${ended ? "text-danger" : tone === "warning" ? "text-warning" : ""}`} style={{ fontSize: "14px" }}>
               {centerMainText}
