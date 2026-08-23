@@ -265,17 +265,20 @@ def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
     warnings: list[str] = []
     current: Optional[dict] = None
     current_part = ""
+    current_passage = []
     mode = "prompt"
 
     def finish() -> None:
         nonlocal current
         if not current:
             return
+        passage_text = "\n".join(current_passage).strip()
         preview = _question_preview(
             prompt=" ".join(current["prompt"]),
             options=current["options"],
             correct_answers=current["answers"] or answer_map.get(current["number"], []),
             explanation=" ".join(current["explanation"]),
+            passage=passage_text or None,
             target_part=current.get("target_part", ""),
         )
         if preview["warnings"]:
@@ -294,6 +297,7 @@ def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
         if part_match:
             finish()
             current_part = part_match.group(1)
+            current_passage = []
             mode = "prompt"
         elif question_match:
             finish()
@@ -323,6 +327,10 @@ def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
             current["explanation"].append(line)
         elif current and mode != "answer":
             current["prompt"].append(line)
+        elif not current and current_part:
+            clean_line = line.strip()
+            if not re.match(r"^(?:reading\s+)?passage(?:\s+\d+)?\s*:?$", clean_line, re.IGNORECASE):
+                current_passage.append(line)
     finish()
 
     if not questions:
