@@ -77,6 +77,7 @@ export function ModuleImportReviewPanel({
       <div className="preview-list">
         {preview.parts.map((part) => {
           const allowedTypes = part.allowed_question_types ?? [];
+          const passageRequired = part.section_type === "reading" && part.part_code !== "reading_1a";
           return (
             <section className="authoring-panel" key={part.part_id}>
               <div className="panel-title">
@@ -88,6 +89,24 @@ export function ModuleImportReviewPanel({
                   {t.openPart(part.part_title)}
                 </button>
               </div>
+              {passageRequired && (
+                <div className="passage-editor-section" style={{ marginBottom: 18 }}>
+                  <label style={{ fontWeight: 700, fontSize: "13px", display: "block", marginBottom: 6, color: "var(--text)" }}>Shared Passage Text</label>
+                  <textarea
+                    rows={5}
+                    placeholder="Type or paste the reading passage here..."
+                    value={part.questions[0]?.passage ?? ""}
+                    onChange={(event) => {
+                      const text = event.target.value;
+                      part.questions.forEach((_, idx) => {
+                        onUpdatePreview(part.part_id, idx, { passage: text });
+                      });
+                    }}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--surface)", fontFamily: "inherit" }}
+                  />
+                  <span className="field-hint" style={{ display: "block", marginTop: 4 }}>This part requires a passage. The text entered here will be saved to all questions.</span>
+                </div>
+              )}
               {part.questions.map((question, index) => {
                 const selectedKey = keyFor(part.part_id, index);
                 return (

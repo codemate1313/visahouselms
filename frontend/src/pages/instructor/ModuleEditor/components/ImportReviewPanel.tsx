@@ -74,6 +74,27 @@ export function ImportReviewPanel({
         </div>
       )}
 
+      {part.answer_constraints?.passage_required && (
+        <div className="authoring-panel" style={{ marginBottom: 18 }}>
+          <div className="panel-title" style={{ marginBottom: 10 }}>
+            <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700 }}>Shared Passage Text</h3>
+          </div>
+          <textarea
+            rows={5}
+            placeholder="Type or paste the reading passage here..."
+            value={preview.questions[0]?.passage ?? ""}
+            onChange={(event) => {
+              const text = event.target.value;
+              preview.questions.forEach((_, idx) => {
+                onUpdatePreview(idx, { passage: text });
+              });
+            }}
+            style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--surface)", fontFamily: "inherit" }}
+          />
+          <span className="field-hint" style={{ display: "block", marginTop: 4 }}>This part requires a passage. The text entered here will be saved to all questions.</span>
+        </div>
+      )}
+
       <div className="preview-list">
         {preview.questions.map((question, index) => (
           <article className={`preview-question${selectedImports.has(index) ? " selected" : ""}`} key={index}>
