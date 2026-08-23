@@ -1,0 +1,8 @@
+prompt,correct_answer,question_type,points
+"The tour begins at {{blank}} in the morning.",nine|9,fill_blank,1
+"Students must bring a {{blank}} for identification.",passport,fill_blank,1
+"The first stop is the {{blank}} building.",science,fill_blank,1
+"Lunch will be served in the {{blank}}.",garden,fill_blank,1
+"The afternoon activity is a {{blank}} workshop.",writing,fill_blank,1
+"Questions should be sent by {{blank}}.",email,fill_blank,1
+"The visit ends near the main {{blank}}.",gate,fill_blank,1

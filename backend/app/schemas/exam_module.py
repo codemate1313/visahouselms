@@ -136,6 +136,25 @@ class ModuleQuestionBatchCreate(BaseModel):
         return value
 
 
+class ModulePartQuestionBatch(BaseModel):
+    part_id: int = Field(gt=0)
+    questions: list[QuestionCreate] = Field(default_factory=list, max_length=500)
+
+
+class ModuleWideQuestionBatchCreate(BaseModel):
+    source_type: str
+    source_filename: Optional[str] = Field(default=None, max_length=255)
+    parts: list[ModulePartQuestionBatch] = Field(min_length=1, max_length=20)
+
+    @field_validator("source_type")
+    @classmethod
+    def valid_source(cls, value: str) -> str:
+        value = value.strip().lower()
+        if value not in {"pdf", "csv"}:
+            raise ValueError("source_type must be pdf or csv")
+        return value
+
+
 class TTSCreate(BaseModel):
     title: str = Field(default="Generated conversation", min_length=1, max_length=2000)
     conversation: str = Field(min_length=1, max_length=20000)
@@ -185,4 +204,3 @@ class PartUpdate(BaseModel):
     @classmethod
     def clean_instructions(cls, value: Optional[str]) -> Optional[str]:
         return _optional_text(value)
-

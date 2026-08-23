@@ -3742,6 +3742,22 @@
   color: var(--text-muted, #64748b);
 }
 
+.vh-step-icon {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.5;
+  color: var(--text-muted, #64748b);
+  transition: all 0.15s ease;
+}
+
+[data-theme="dark"] .vh-step-icon {
+  color: #a1a1aa !important;
+}
+
+.vh-stepper-step.is-active .vh-step-icon {
+  color: #ffffff !important;
+}
+
 .vh-step-check-icon {
   width: 13px;
   height: 13px;
@@ -3767,6 +3783,10 @@
 
 .vh-stepper-step.is-completed:not(.is-active) .vh-step-title {
   color: #10b981;
+}
+
+.vh-stepper-step.is-completed:not(.is-active) .vh-step-icon {
+  color: #10b981 !important;
 }
 
 [data-theme="dark"] .vh-horizontal-stepper-card {

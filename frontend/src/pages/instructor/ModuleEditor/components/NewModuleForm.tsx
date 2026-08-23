@@ -22,6 +22,8 @@ interface NewModuleFormProps {
   error: string | null;
   moduleWorkspacePath: string;
   onSubmit: (event: FormEvent) => void;
+  moduleImportFile: File | null;
+  onModuleImportFileChange: (file: File | null) => void;
   /** Called when the user clicks Shuffle. Returns which sections had no fresh modules. */
   onShuffle?: () => { exhaustedSections: ExamSection[] };
 }
@@ -38,6 +40,8 @@ export function NewModuleForm({
   moduleWorkspacePath,
   onSubmit,
   onShuffle,
+  moduleImportFile,
+  onModuleImportFileChange,
 }: NewModuleFormProps) {
   const t = strings.newModule;
   const typeLabels = strings.typeLabels;
@@ -97,6 +101,15 @@ export function NewModuleForm({
     window.scrollTo({ top: 120, behavior: "smooth" });
   };
 
+  const handleSubmit = (event: FormEvent) => {
+    if (activeTab === "config") {
+      event.preventDefault();
+      handleNextStep();
+    } else {
+      onSubmit(event);
+    }
+  };
+
   const adjustDuration = (delta: number) => {
     const next = Math.max(1, Math.min(600, (details.duration_minutes || meta.defaultDuration) + delta));
     onDetailsChange({ ...details, duration_minutes: next });
@@ -150,10 +163,11 @@ export function NewModuleForm({
           setActiveTab(tab);
         }}
         hasTitle={!!details.title.trim()}
+        hasInstructions={(details.show_onboarding_instructions ?? true) ? (details.onboarding_instructions && details.onboarding_instructions.length > 0) : true}
       />
 
       {/* 4. Interactive Studio Form */}
-      <form onSubmit={onSubmit} className="vh-studio-grid">
+      <form onSubmit={handleSubmit} className="vh-studio-grid">
         {/* Main Column: Form Controls with Stage Animation */}
         <div className="vh-studio-main-col stage-fade-in" key={activeTab}>
           {activeTab === "config" ? (
@@ -259,6 +273,22 @@ export function NewModuleForm({
                   </p>
                 )}
               </div>
+
+              {!isComposite && (
+                <div className="vh-form-group">
+                  <div className="vh-label-row">
+                    <label htmlFor="new-module-full-upload">{strings.moduleImport.fileLabel}</label>
+                  </div>
+                  <p className="field-hint">{strings.moduleImport.createHint(typeLabel)}</p>
+                  <input
+                    id="new-module-full-upload"
+                    type="file"
+                    accept=".pdf,.csv,application/pdf,text/csv"
+                    onChange={(event) => onModuleImportFileChange(event.target.files?.[0] ?? null)}
+                  />
+                  {moduleImportFile && <p className="field-hint">Selected: {moduleImportFile.name}</p>}
+                </div>
+              )}
             </div>
           ) : (
             <OnboardingInstructionsEditor

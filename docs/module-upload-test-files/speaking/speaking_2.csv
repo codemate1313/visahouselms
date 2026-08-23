@@ -1,0 +1,3 @@
+prompt,question_type,points,turn_type,preparation_seconds,response_seconds
+"You are at a hotel reception. Ask the receptionist to change your room because it is noisy.",speaking_prompt,1,roleplay_initiate,0,60
+"I am the receptionist. I will ask you about a booking problem. Respond politely and ask for a solution.",speaking_prompt,1,roleplay_response,0,60

@@ -417,6 +417,28 @@ export const moduleEditorStrings = {
       imported: (count: number, partTitle: string) => `${count} questions imported into ${partTitle}.`,
     },
   },
+  moduleImport: {
+    heading: "Full test upload",
+    createHint: (type: string) =>
+      `Optional: upload one full ${type} PDF or CSV. After the draft is created, the system sorts the questions into parts for review before saving.`,
+    editorHint: "Upload one full PDF or CSV for this module. The extracted questions are sorted into parts for review before saving.",
+    fileLabel: "Full module file",
+    extract: "Extract full file",
+    extracting: "Extracting...",
+    reviewHeading: "Review auto-sorted upload",
+    reviewSummary: (count: number, filename: string, moduleTitle: string) =>
+      `${count} detected from ${filename} and sorted into ${moduleTitle}`,
+    partSummary: (count: number, partTitle: string) => `${count} item${count === 1 ? "" : "s"} for ${partTitle}`,
+    import: (count: number) => `Import ${count} selected`,
+    notices: {
+      imported: (count: number) => `${count} questions imported into this module.`,
+    },
+    errors: {
+      preview: "Could not extract and sort this full module file.",
+      commit: "Could not import the selected full module questions.",
+      selectOne: "Select at least one question to import.",
+    },
+  },
   importReview: {
     heading: "Review extracted content",
     summary: (count: number, filename: string, moduleTitle: string, partTitle: string) =>

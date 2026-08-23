@@ -13,13 +13,14 @@ from app.schemas.assessment import QuestionCreate
 from app.schemas.exam_module import (
     ModuleCreate,
     ModuleQuestionBatchCreate,
+    ModuleWideQuestionBatchCreate,
     ModuleStatusUpdate,
     ModuleUpdate,
     PartAiEvaluationUpdate,
     PartInstructionsUpdate,
     PartUpdate,
     SpeakingAvatarPreview,
-        TTSCreate,
+    TTSCreate,
 )
 from app.services import (
     avatar_service,
@@ -99,6 +100,40 @@ def get_module(
 
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This module belongs to another instructor")
     return module_authoring_service.serialize_module(module, detailed=True)
+
+
+@router.post("/{module_id}/import-preview")
+async def preview_module_import(
+    module_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    module_authoring_service.get_editable_module(db, actor, module_id)
+    preview = await question_import_service.preview_upload(file)
+    return module_authoring_service.preview_module_import(db, actor, module_id, preview)
+
+
+@router.post("/{module_id}/import", status_code=status.HTTP_201_CREATED)
+def commit_module_import(
+    module_id: int,
+    payload: ModuleWideQuestionBatchCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return module_authoring_service.import_module_questions(
+        db,
+        actor,
+        module_id,
+        [
+            {"part_id": part.part_id, "questions": [question.model_dump() for question in part.questions]}
+            for part in payload.parts
+        ],
+        payload.source_type,
+        payload.source_filename,
+        _ip(request),
+    )
 
 
 @router.patch("/{module_id}")

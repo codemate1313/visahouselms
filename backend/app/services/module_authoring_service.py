@@ -92,6 +92,13 @@ def get_editable_part(
     return module, _part_or_404(module, part_id)
 
 
+def get_editable_module(db: Session, actor: User, module_id: int) -> ExamModule:
+    module = get_module_or_404(db, module_id)
+    _require_owner(module, actor)
+    _require_draft(module)
+    return module
+
+
 def _question_out(question: ExamModuleQuestion) -> dict:
     interaction = dict(question.interaction or {})
     material_path = interaction.get("candidate_material_path")
@@ -1040,6 +1047,257 @@ def import_questions(
     for record in records:
         db.refresh(record)
     return [_question_out(record) for record in records]
+
+
+def _part_key(value: object) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(value or "").strip().lower())
+
+
+def _part_hint(question: dict) -> str:
+    return str(
+        question.get("target_part")
+        or (question.get("interaction") or {}).get("target_part")
+        or ""
+    ).strip()
+
+
+def _default_turn_type(part: ExamModulePart, index: int) -> Optional[str]:
+    constraints = part.answer_constraints or {}
+    required = constraints.get("required_turn_types") or []
+    allowed = constraints.get("allowed_turn_types") or []
+    part_code = part.part_code
+    if part_code == "speaking_1":
+        return "identity" if index == 0 else "topic_question"
+    if part_code == "speaking_2":
+        return required[index % len(required)] if required else (allowed[0] if allowed else None)
+    if part_code == "speaking_3":
+        return "read_aloud" if index == 0 else "follow_up"
+    if part_code == "speaking_4":
+        return "presentation" if index == 0 else "follow_up"
+    return required[0] if required else (allowed[0] if allowed else None)
+
+
+def _turn_timing(part: ExamModulePart, turn_type: Optional[str]) -> tuple[int, int]:
+    constraints = part.answer_constraints or {}
+    timing = (constraints.get("turn_timings") or {}).get(turn_type or "") or {}
+    return (
+        int(timing.get("preparation_seconds", constraints.get("suggested_preparation_seconds", 0)) or 0),
+        int(timing.get("response_seconds", constraints.get("suggested_response_seconds", 30)) or 30),
+    )
+
+
+def _normalize_import_question_for_part(part: ExamModulePart, question: dict, index: int) -> dict:
+    data = dict(question)
+    data.pop("target_part", None)
+    constraints = part.answer_constraints or {}
+    allowed = constraints.get("allowed_question_types") or []
+    if allowed and data.get("question_type") not in allowed:
+        data["question_type"] = allowed[0]
+
+    question_type = data.get("question_type")
+    if question_type not in OPTION_BASED_QUESTION_TYPES:
+        data["options"] = []
+    if question_type in {"essay", "speaking_prompt"}:
+        data["correct_answers"] = []
+
+    if constraints.get("inline_marker_required") and "{{blank}}" not in data.get("prompt", ""):
+        data["prompt"] = f"{data.get('prompt', '').strip()} {{{{blank}}}}".strip()
+
+    if part.part_code == "reading_1a" and not re.search(r"\*\*(.+?)\*\*", data.get("prompt", "")):
+        prompt = data.get("prompt", "")
+        data["prompt"] = re.sub(r"\b([A-Za-z][A-Za-z'-]*)\b", r"**\1**", prompt, count=1)
+
+    if part.max_marks is not None and part.question_limit:
+        data["points"] = Decimal(part.max_marks) / Decimal(part.question_limit)
+
+    interaction = dict(data.get("interaction") or {})
+    if constraints.get("group_label_required") and not str(interaction.get("group_label") or "").strip():
+        group_size = int(constraints.get("questions_per_group") or 1)
+        interaction["group_label"] = f"Conversation {(index // group_size) + 1}"
+
+    if part.section_type == "speaking":
+        turn_type = interaction.get("turn_type")
+        allowed_turns = constraints.get("allowed_turn_types") or []
+        if turn_type not in allowed_turns:
+            turn_type = _default_turn_type(part, index)
+        interaction["turn_type"] = turn_type
+        preparation, response = _turn_timing(part, turn_type)
+        interaction["preparation_seconds"] = interaction.get("preparation_seconds") if interaction.get("preparation_seconds") is not None else preparation
+        interaction["response_seconds"] = interaction.get("response_seconds") if interaction.get("response_seconds") is not None else response
+        interaction["adaptive_follow_up"] = bool(interaction.get("adaptive_follow_up", turn_type == "follow_up"))
+        if part.part_code == "speaking_3" and turn_type == "read_aloud" and not (data.get("passage") or "").strip():
+            data["passage"] = data.get("prompt")
+
+    data["interaction"] = interaction
+    return data
+
+
+def _module_import_capacity(part: ExamModulePart) -> Optional[int]:
+    return part.question_limit or (part.answer_constraints or {}).get("maximum_questions")
+
+
+def _assign_module_import_questions(module: ExamModule, questions: list[dict]) -> tuple[list[dict], list[str]]:
+    parts = sorted(module.parts, key=lambda item: item.sort_order)
+    by_hint = {}
+    for part in parts:
+        by_hint[_part_key(part.part_code)] = part
+        by_hint[_part_key(part.title)] = part
+        by_hint[_part_key(part.title.replace(" ", "_"))] = part
+
+    grouped: dict[int, list[dict]] = {part.id: [] for part in parts}
+    warnings: list[str] = []
+    cursor = 0
+
+    def next_part_for(question: dict) -> Optional[ExamModulePart]:
+        nonlocal cursor
+        hint = _part_hint(question)
+        if hint:
+            part = by_hint.get(_part_key(hint))
+            if part:
+                return part
+            warnings.append(f"Could not match part '{hint}' for: {str(question.get('prompt') or '')[:60]}")
+
+        q_type = question.get("question_type")
+        turn_type = (question.get("interaction") or {}).get("turn_type")
+        if turn_type == "follow_up":
+            for part in reversed(parts):
+                allowed_turns = (part.answer_constraints or {}).get("allowed_turn_types") or []
+                if "follow_up" in allowed_turns and grouped[part.id]:
+                    return part
+
+        if turn_type and turn_type != "follow_up":
+            exact = [
+                part for part in parts
+                if turn_type in ((part.answer_constraints or {}).get("allowed_turn_types") or [])
+            ]
+            if turn_type in {"identity", "topic_question"}:
+                exact = [part for part in exact if part.part_code == "speaking_1"]
+            elif turn_type in {"roleplay_response", "roleplay_initiate"}:
+                exact = [part for part in exact if part.part_code == "speaking_2"]
+            elif turn_type == "read_aloud":
+                exact = [part for part in exact if part.part_code == "speaking_3"]
+            elif turn_type == "presentation":
+                exact = [part for part in exact if part.part_code == "speaking_4"]
+            if exact:
+                return exact[0]
+
+        while cursor < len(parts):
+            part = parts[cursor]
+            ceiling = _module_import_capacity(part)
+            if ceiling is None and cursor < len(parts) - 1:
+                ceiling = part.minimum_questions
+            current = len(part.questions) + len(grouped[part.id])
+            allowed = (part.answer_constraints or {}).get("allowed_question_types") or []
+            if (ceiling is None or current < ceiling) and (not allowed or q_type in allowed or part.section_type in {"writing", "speaking"}):
+                return part
+            cursor += 1
+        return None
+
+    for question in questions:
+        part = next_part_for(question)
+        if part is None:
+            warnings.append(f"No available part could accept: {str(question.get('prompt') or '')[:60]}")
+            continue
+        local_index = len(part.questions) + len(grouped[part.id])
+        grouped[part.id].append(_normalize_import_question_for_part(part, question, local_index))
+
+    result = []
+    for part in parts:
+        assigned = grouped[part.id]
+        if not assigned:
+            continue
+        ceiling = _module_import_capacity(part)
+        remaining = None if ceiling is None else max(0, ceiling - len(part.questions))
+        result.append(
+            {
+                "part_id": part.id,
+                "part_code": part.part_code,
+                "part_title": part.title,
+                "section_type": part.section_type,
+                "allowed_question_types": list((part.answer_constraints or {}).get("allowed_question_types") or []),
+                "existing_count": len(part.questions),
+                "remaining_slots": remaining,
+                "questions": assigned,
+                "question_count": len(assigned),
+            }
+        )
+    return result, warnings
+
+
+def preview_module_import(db: Session, actor: User, module_id: int, preview: dict) -> dict:
+    module = get_editable_module(db, actor, module_id)
+    parts, warnings = _assign_module_import_questions(module, preview.get("questions", []))
+    return {
+        "source_type": preview["source_type"],
+        "source_filename": preview["source_filename"],
+        "source_text": preview["source_text"],
+        "parts": parts,
+        "question_count": sum(part["question_count"] for part in parts),
+        "warning_count": len(preview.get("warnings", [])) + len(warnings),
+        "warnings": list(preview.get("warnings", [])) + warnings,
+    }
+
+
+def import_module_questions(
+    db: Session,
+    actor: User,
+    module_id: int,
+    part_batches: list[dict],
+    source_type: str,
+    source_filename: Optional[str],
+    ip: Optional[str],
+) -> dict:
+    module = get_module_or_404(db, module_id)
+    _require_owner(module, actor)
+    _require_draft(module)
+    parts_by_id = {part.id: part for part in module.parts}
+    records: list[ExamModuleQuestion] = []
+    for batch in part_batches:
+        part = parts_by_id.get(batch["part_id"])
+        if part is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Import target part was not found in this module")
+        questions = batch.get("questions") or []
+        ceiling = _module_import_capacity(part)
+        if ceiling is not None and len(part.questions) + len(questions) > ceiling:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"{part.title} takes at most {ceiling} "
+                    f"question{'s' if ceiling != 1 else ''} and already has {len(part.questions)}. "
+                    f"Importing {len(questions)} more would exceed it."
+                ),
+            )
+        for offset, question in enumerate(questions):
+            normalized = _normalize_import_question_for_part(part, question, len(part.questions) + offset)
+            _validate_question_for_part(
+                part,
+                normalized,
+                len(part.questions) + offset,
+                pending_turn_types=tuple(
+                    str((earlier.get("interaction") or {}).get("turn_type") or "")
+                    for earlier in questions[:offset]
+                ),
+            )
+            records.append(
+                _new_question(part, actor, normalized, source_type, source_filename, len(part.questions) + offset)
+            )
+
+    db.add_all(records)
+    db.flush()
+    for part in parts_by_id.values():
+        _resequence_questions(part)
+    db.flush()
+    _refresh_speaking_duration(db, module)
+    _audit(
+        db,
+        actor,
+        "exam_module.question.import_all",
+        module.id,
+        ip,
+        {"count": len(records), "source_type": source_type, "source_filename": source_filename},
+    )
+    db.commit()
+    return serialize_module(get_module_or_404(db, module.id), detailed=True)
 
 
 def _question_or_404(part: ExamModulePart, question_id: int) -> ExamModuleQuestion:

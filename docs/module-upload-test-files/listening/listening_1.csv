@@ -1,0 +1,8 @@
+prompt,option_a,option_b,option_c,correct_answer,question_type,points,group_label
+"What does the student need to bring to the appointment?",Passport,Notebook,Calculator,A,mcq_single,1,
+"Why is the library closing early today?",Staff training,Building repairs,A public holiday,A,mcq_single,1,
+"Where will the meeting take place?",Room 12,The cafe,The main hall,C,mcq_single,1,
+"What time does the workshop begin?",9:15,9:30,10:00,B,mcq_single,1,
+"What is the speaker's main concern?",The price,The deadline,The location,B,mcq_single,1,
+"Which item has already been paid for?",Textbook,Exam fee,Bus pass,B,mcq_single,1,
+"What will the tutor send by email?",A reading list,A timetable,A feedback form,A,mcq_single,1,

@@ -17,6 +17,7 @@ import type {
   ExamSection,
   QuestionDraft,
   QuestionImportPreview,
+  ModuleImportPreview,
 } from "@/api/types";
 import { moduleEditorStrings as strings } from "./ModuleEditor.strings";
 import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSED_TASK_LAYOUTS, COMPOSITE_TYPES, DERIVED_DURATION_MODULE_TYPES, MODULE_TYPES, MODULE_TYPE_META, SOURCE_SECTIONS, defaultSpeakingTurn, detectConversationSpeakers, emptyQuestion, notepadPromptForBlank, questionPayload, speakingTurnTiming } from "./helpers";
@@ -34,6 +35,7 @@ import { SourceTextComposer, type SourceTextDraft } from "./components/SourceTex
 import { ManualQuestionForm } from "./components/ManualQuestionForm";
 import { BulkImportForm } from "./components/BulkImportForm";
 import { ImportReviewPanel } from "./components/ImportReviewPanel";
+import { ModuleImportReviewPanel } from "./components/ModuleImportReviewPanel";
 import { SavedQuestionsList } from "./components/SavedQuestionsList";
 import { Badge } from "@/components/ui";
 
@@ -65,6 +67,9 @@ export function ModuleEditor() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<QuestionImportPreview | null>(null);
   const [selectedImports, setSelectedImports] = useState<Set<number>>(new Set());
+  const [moduleImportFile, setModuleImportFile] = useState<File | null>(null);
+  const [modulePreview, setModulePreview] = useState<ModuleImportPreview | null>(null);
+  const [selectedModuleImports, setSelectedModuleImports] = useState<Set<string>>(new Set());
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioTitle, setAudioTitle] = useState("Listening audio");
   const [tts, setTts] = useState({ title: "Generated conversation", conversation: "", rate: "+0%" });
@@ -153,6 +158,19 @@ export function ModuleEditor() {
   const setCustomBreadcrumbs = usePageTitleStore((state) => state.setCustomBreadcrumbs);
 
   useEffect(() => { loadModule(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  useEffect(() => {
+    const state = location.state as { moduleImportPreview?: ModuleImportPreview } | null;
+    if (!state?.moduleImportPreview) return;
+    setModulePreview(state.moduleImportPreview);
+    setSelectedModuleImports(
+      new Set(
+        state.moduleImportPreview.parts.flatMap((part) =>
+          part.questions.map((_, index) => `${part.part_id}:${index}`),
+        ),
+      ),
+    );
+    navigate(location.pathname + location.search, { replace: true, state: null });
+  }, [location.pathname, location.search, location.state, navigate]);
   useEffect(() => {
     if (!isNew || !requestedType || !COMPOSITE_TYPES.has(requestedType)) return;
     setLoadingSources(true);
@@ -311,6 +329,8 @@ export function ModuleEditor() {
       setEditingQuestionId(null);
       setPreview(null);
       setImportFile(null);
+      setModulePreview(null);
+      setModuleImportFile(null);
       setError(null);
       document.getElementById("module-part-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
@@ -327,6 +347,8 @@ export function ModuleEditor() {
     setEditingQuestionId(null);
     setPreview(null);
     setImportFile(null);
+    setModulePreview(null);
+    setModuleImportFile(null);
     setError(null);
     document.getElementById("module-part-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -352,7 +374,17 @@ export function ModuleEditor() {
         onboarding_instructions: details.onboarding_instructions || null,
         source_module_ids: isComposite ? sourceModuleIds : [],
       });
-      navigate(`${moduleWorkspacePath}/${data.id}`, { replace: true });
+      if (moduleImportFile && !isComposite) {
+        const form = new FormData();
+        form.append("file", moduleImportFile);
+        const { data: importPreview } = await apiClient.post<ModuleImportPreview>(
+          `/instructor/modules/${data.id}/import-preview`,
+          form,
+        );
+        navigate(`${moduleWorkspacePath}/${data.id}`, { replace: true, state: { moduleImportPreview: importPreview } });
+      } else {
+        navigate(`${moduleWorkspacePath}/${data.id}`, { replace: true });
+      }
     } catch (err: unknown) { setError(extractErrorMessage(err, strings.newModule.errors.create)); }
     finally { setBusy(false); }
   }
@@ -639,6 +671,70 @@ export function ModuleEditor() {
       setPreview(null); setImportFile(null); await loadModule(selectedPart.id); showSuccess(strings.bulkImport.notices.imported(questions.length, selectedPart.title));
     } catch (err: unknown) { showError(extractErrorMessage(err, strings.bulkImport.errors.commit)); }
     finally { setBusy(false); }
+  }
+
+  async function previewModuleImport(event: FormEvent) {
+    event.preventDefault();
+    if (!module || !moduleImportFile) return;
+    setBusy(true); setError(null); setModulePreview(null);
+    try {
+      const form = new FormData();
+      form.append("file", moduleImportFile);
+      const { data } = await apiClient.post<ModuleImportPreview>(`/instructor/modules/${module.id}/import-preview`, form);
+      setModulePreview(data);
+      setSelectedModuleImports(new Set(data.parts.flatMap((part) => part.questions.map((_, index) => `${part.part_id}:${index}`))));
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, strings.moduleImport.errors.preview));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function updateModulePreview(partId: number, index: number, changes: Partial<QuestionDraft>) {
+    setModulePreview((current) => current ? {
+      ...current,
+      parts: current.parts.map((part) => part.part_id === partId
+        ? {
+            ...part,
+            questions: part.questions.map((question, currentIndex) =>
+              currentIndex === index ? { ...question, ...changes } : question
+            ),
+          }
+        : part),
+    } : current);
+  }
+
+  async function commitModuleImport() {
+    if (!module || !modulePreview) return;
+    const batches = modulePreview.parts
+      .map((part) => ({
+        part_id: part.part_id,
+        questions: part.questions
+          .filter((_, index) => selectedModuleImports.has(`${part.part_id}:${index}`))
+          .map(questionPayload),
+      }))
+      .filter((part) => part.questions.length > 0);
+    const count = batches.reduce((total, part) => total + part.questions.length, 0);
+    if (!count) {
+      showError(strings.moduleImport.errors.selectOne);
+      return;
+    }
+    setBusy(true); setError(null);
+    try {
+      const { data } = await apiClient.post<ExamModule>(`/instructor/modules/${module.id}/import`, {
+        source_type: modulePreview.source_type,
+        source_filename: modulePreview.source_filename,
+        parts: batches,
+      });
+      setModule(data);
+      setModulePreview(null);
+      setModuleImportFile(null);
+      showSuccess(strings.moduleImport.notices.imported(count));
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, strings.moduleImport.errors.commit));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function uploadAudio(event: FormEvent) {
@@ -997,6 +1093,8 @@ export function ModuleEditor() {
         moduleWorkspacePath={moduleWorkspacePath}
         onSubmit={createModule}
         onShuffle={handleShuffle}
+        moduleImportFile={moduleImportFile}
+        onModuleImportFileChange={setModuleImportFile}
       />
     );
   }
@@ -1035,6 +1133,36 @@ export function ModuleEditor() {
             />
           ) : (
             <>
+              {isEditable && (
+                <section className="authoring-panel">
+                  <div className="panel-title">
+                    <div>
+                      <h2>{strings.moduleImport.heading}</h2>
+                      <p>{strings.moduleImport.editorHint}</p>
+                    </div>
+                  </div>
+                  <form className="import-upload" onSubmit={previewModuleImport}>
+                    <input type="file" accept=".pdf,.csv,application/pdf,text/csv" onChange={(event) => setModuleImportFile(event.target.files?.[0] ?? null)} />
+                    <button type="submit" disabled={busy || !moduleImportFile}>
+                      {busy ? strings.moduleImport.extracting : strings.moduleImport.extract}
+                    </button>
+                  </form>
+                </section>
+              )}
+
+              {modulePreview && (
+                <ModuleImportReviewPanel
+                  preview={modulePreview}
+                  moduleTitle={module.title}
+                  selectedImports={selectedModuleImports}
+                  onSelectedImportsChange={setSelectedModuleImports}
+                  onUpdatePreview={updateModulePreview}
+                  onDiscard={() => { setModulePreview(null); setModuleImportFile(null); }}
+                  onCommit={commitModuleImport}
+                  busy={busy}
+                />
+              )}
+
               {/* The section heading is edited inline in this header. Candidate
                   instructions live here too - having them in two places meant
                   two fields writing the same column, where whichever you saved

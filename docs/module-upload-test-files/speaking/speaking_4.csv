@@ -1,0 +1,4 @@
+prompt,question_type,points,turn_type,preparation_seconds,response_seconds
+"Give a short presentation about a useful skill you learned recently. Explain what the skill is, how you learned it, and why it is useful.",speaking_prompt,1,presentation,60,120
+"Would you prefer to learn practical skills online or in person?",speaking_prompt,1,follow_up,0,40
+"How can schools encourage students to keep learning after graduation?",speaking_prompt,1,follow_up,0,40

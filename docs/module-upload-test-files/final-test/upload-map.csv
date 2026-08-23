@@ -1,0 +1,16 @@
+section,part,file
+Listening,Listening 1,../listening/listening_1.csv
+Listening,Listening 2,../listening/listening_2.csv
+Listening,Listening 3,../listening/listening_3.csv
+Listening,Listening 4,../listening/listening_4.csv
+Reading,Reading 1A,../reading/reading_1a.csv
+Reading,Reading 1B,../reading/reading_1b.csv
+Reading,Reading 2,../reading/reading_2.csv
+Reading,Reading 3,../reading/reading_3.csv
+Reading,Reading 4,../reading/reading_4.csv
+Writing,Writing 1,../writing/writing_1.csv
+Writing,Writing 2,../writing/writing_2.csv
+Speaking,Speaking 1,../speaking/speaking_1.csv
+Speaking,Speaking 2,../speaking/speaking_2.csv
+Speaking,Speaking 3,../speaking/speaking_3.csv
+Speaking,Speaking 4,../speaking/speaking_4.csv

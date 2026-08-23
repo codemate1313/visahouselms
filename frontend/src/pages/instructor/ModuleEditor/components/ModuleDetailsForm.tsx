@@ -56,6 +56,15 @@ export function ModuleDetailsForm({
     window.scrollTo({ top: 120, behavior: "smooth" });
   };
 
+  const handleSubmit = (event: FormEvent) => {
+    if (activeTab === "config") {
+      event.preventDefault();
+      handleNextStep();
+    } else {
+      onSubmit(event);
+    }
+  };
+
   const adjustDuration = (delta: number) => {
     if (!isEditable) return;
     const next = Math.max(1, Math.min(600, (details.duration_minutes || meta.defaultDuration) + delta));
@@ -82,10 +91,11 @@ export function ModuleDetailsForm({
           setActiveTab(tab);
         }}
         hasTitle={!!details.title.trim()}
+        hasInstructions={(details.show_onboarding_instructions ?? true) ? (details.onboarding_instructions && details.onboarding_instructions.length > 0) : true}
       />
 
       {/* 2. Interactive Studio Grid */}
-      <form onSubmit={onSubmit} className="vh-studio-grid">
+      <form onSubmit={handleSubmit} className="vh-studio-grid">
         {/* Left Column: Form Controls */}
         <div className="vh-studio-main-col">
           {activeTab === "config" ? (

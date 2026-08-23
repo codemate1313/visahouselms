@@ -91,6 +91,7 @@ def _question_preview(
     preparation_seconds: object = None,
     response_seconds: object = None,
     adaptive_follow_up: object = False,
+    target_part: str = "",
 ) -> dict:
     normalized_options = []
     for index, option in enumerate(options):
@@ -140,7 +141,7 @@ def _question_preview(
                 warnings.append(f"Invalid {field.replace('_', ' ')} value was ignored")
     interaction["adaptive_follow_up"] = str(adaptive_follow_up).strip().lower() in {"1", "true", "yes", "on"}
 
-    return {
+    result = {
         "question_type": kind,
         "prompt": _clean(prompt),
         "instructions": _clean(instructions) or None,
@@ -153,6 +154,9 @@ def _question_preview(
         "difficulty": difficulty,
         "warnings": warnings,
     }
+    if _clean(target_part):
+        result["target_part"] = _clean(target_part)
+    return result
 
 
 def parse_csv(content: bytes) -> tuple[str, list[dict], list[str]]:
@@ -211,6 +215,13 @@ def parse_csv(content: bytes) -> tuple[str, list[dict], list[str]]:
             preparation_seconds=row.get("preparation_seconds"),
             response_seconds=row.get("response_seconds"),
             adaptive_follow_up=row.get("adaptive_follow_up") or False,
+            target_part=(
+                row.get("part_code")
+                or row.get("part")
+                or row.get("part_title")
+                or row.get("module_part")
+                or ""
+            ),
         )
         if preview["warnings"]:
             warnings.append(f"Row {row_number}: {'; '.join(preview['warnings'])}")
