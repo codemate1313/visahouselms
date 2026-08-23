@@ -37,7 +37,7 @@ import { BulkImportForm } from "./components/BulkImportForm";
 import { ImportReviewPanel } from "./components/ImportReviewPanel";
 import { ModuleImportReviewPanel } from "./components/ModuleImportReviewPanel";
 import { SavedQuestionsList } from "./components/SavedQuestionsList";
-import { Badge } from "@/components/ui";
+import { Badge, Modal } from "@/components/ui";
 
 export function ModuleEditor() {
   const { id, type: rawType } = useParams();
@@ -737,6 +737,11 @@ export function ModuleEditor() {
     }
   }
 
+  function openModulePreviewPart(partId: number) {
+    const part = module?.parts?.find((item) => item.id === partId) ?? null;
+    if (part) choosePart(part);
+  }
+
   async function uploadAudio(event: FormEvent) {
     event.preventDefault(); if (!module || !selectedPart || !audioFile) return;
     setBusy(true); setError(null);
@@ -1150,18 +1155,27 @@ export function ModuleEditor() {
                 </section>
               )}
 
-              {modulePreview && (
-                <ModuleImportReviewPanel
-                  preview={modulePreview}
-                  moduleTitle={module.title}
-                  selectedImports={selectedModuleImports}
-                  onSelectedImportsChange={setSelectedModuleImports}
-                  onUpdatePreview={updateModulePreview}
-                  onDiscard={() => { setModulePreview(null); setModuleImportFile(null); }}
-                  onCommit={commitModuleImport}
-                  busy={busy}
-                />
-              )}
+              <Modal
+                className="module-import-modal"
+                open={Boolean(modulePreview)}
+                onClose={() => { setModulePreview(null); setModuleImportFile(null); }}
+                title={strings.moduleImport.reviewHeading}
+                size="lg"
+              >
+                {modulePreview && (
+                  <ModuleImportReviewPanel
+                    preview={modulePreview}
+                    moduleTitle={module.title}
+                    selectedImports={selectedModuleImports}
+                    onSelectedImportsChange={setSelectedModuleImports}
+                    onUpdatePreview={updateModulePreview}
+                    onDiscard={() => { setModulePreview(null); setModuleImportFile(null); }}
+                    onCommit={commitModuleImport}
+                    onOpenPart={openModulePreviewPart}
+                    busy={busy}
+                  />
+                )}
+              </Modal>
 
               {/* The section heading is edited inline in this header. Candidate
                   instructions live here too - having them in two places meant

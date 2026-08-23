@@ -16,6 +16,7 @@ QUESTION_RE = re.compile(r"^(?:q(?:uestion)?\s*)?(\d{1,4})\s*[.)\-:]\s*(.+)$", r
 OPTION_RE = re.compile(r"^\(?([A-Z])\)?\s*[.)\-:]\s*(.+)$", re.IGNORECASE)
 ANSWER_RE = re.compile(r"^(?:correct\s+)?answer(?:s)?\s*[:\-]\s*(.+)$", re.IGNORECASE)
 EXPLANATION_RE = re.compile(r"^(?:explanation|rationale)\s*[:\-]\s*(.+)$", re.IGNORECASE)
+PART_HEADER_RE = re.compile(r"^(?:part|section)\s*[:\-]\s*(.+)$", re.IGNORECASE)
 ANSWER_KEY_HEADER_RE = re.compile(r"^(?:answers?|answer\s+key)\s*:?$", re.IGNORECASE)
 ANSWER_KEY_ENTRY_RE = re.compile(
     r"^(\d{1,4})\s*[.)\-:]?\s*(?:answer\s*[:\-]\s*)?([A-Z](?:\s*(?:,|;|/|&|\band\b)\s*[A-Z])*)$",
@@ -263,6 +264,7 @@ def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
     questions: list[dict] = []
     warnings: list[str] = []
     current: Optional[dict] = None
+    current_part = ""
     mode = "prompt"
 
     def finish() -> None:
@@ -274,6 +276,7 @@ def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
             options=current["options"],
             correct_answers=current["answers"] or answer_map.get(current["number"], []),
             explanation=" ".join(current["explanation"]),
+            target_part=current.get("target_part", ""),
         )
         if preview["warnings"]:
             warnings.append(
@@ -287,9 +290,21 @@ def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
         option_match = OPTION_RE.match(line)
         answer_match = ANSWER_RE.match(line)
         explanation_match = EXPLANATION_RE.match(line)
-        if question_match:
+        part_match = PART_HEADER_RE.match(line)
+        if part_match:
             finish()
-            current = {"number": int(question_match.group(1)), "prompt": [question_match.group(2)], "options": [], "answers": [], "explanation": []}
+            current_part = part_match.group(1)
+            mode = "prompt"
+        elif question_match:
+            finish()
+            current = {
+                "number": int(question_match.group(1)),
+                "prompt": [question_match.group(2)],
+                "options": [],
+                "answers": [],
+                "explanation": [],
+                "target_part": current_part,
+            }
             mode = "prompt"
         elif current and answer_match:
             current["answers"] = _split_answers(answer_match.group(1))

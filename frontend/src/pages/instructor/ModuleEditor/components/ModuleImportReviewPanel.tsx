@@ -11,6 +11,7 @@ interface ModuleImportReviewPanelProps {
   onUpdatePreview: (partId: number, index: number, changes: Partial<QuestionDraft>) => void;
   onDiscard: () => void;
   onCommit: () => void;
+  onOpenPart: (partId: number) => void;
   busy: boolean;
 }
 
@@ -24,6 +25,7 @@ export function ModuleImportReviewPanel({
   onUpdatePreview,
   onDiscard,
   onCommit,
+  onOpenPart,
   busy,
 }: ModuleImportReviewPanelProps) {
   const t = strings.moduleImport;
@@ -83,6 +85,9 @@ export function ModuleImportReviewPanel({
                   <h3>{part.part_title}</h3>
                   <p>{t.partSummary(part.questions.length, part.part_title)}</p>
                 </div>
+                <button type="button" className="secondary-button" onClick={() => onOpenPart(part.part_id)}>
+                  {t.openPart(part.part_title)}
+                </button>
               </div>
               {part.questions.map((question, index) => {
                 const selectedKey = keyFor(part.part_id, index);

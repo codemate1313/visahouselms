@@ -918,6 +918,32 @@
   border-color: #99d5ce;
 }
 
+.module-import-modal {
+  width: min(1180px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+}
+
+.module-import-modal .ui-modal-body {
+  max-height: calc(100vh - 170px);
+  overflow-y: auto;
+}
+
+.module-import-modal .import-review {
+  margin-bottom: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.module-import-modal .import-review-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding-bottom: 14px;
+  background: var(--surface);
+}
+
 .import-review-header {
   align-items: flex-start;
   margin-bottom: 18px;

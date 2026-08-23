@@ -429,6 +429,7 @@ export const moduleEditorStrings = {
     reviewSummary: (count: number, filename: string, moduleTitle: string) =>
       `${count} detected from ${filename} and sorted into ${moduleTitle}`,
     partSummary: (count: number, partTitle: string) => `${count} item${count === 1 ? "" : "s"} for ${partTitle}`,
+    openPart: (partTitle: string) => `Open ${partTitle}`,
     import: (count: number) => `Import ${count} selected`,
     notices: {
       imported: (count: number) => `${count} questions imported into this module.`,
