@@ -381,6 +381,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
   filter: drop-shadow(0 5px 12px rgba(220, 38, 38, 0.35));
   animation: daily-flame-flicker 1.6s ease-in-out infinite alternate;
   transform-origin: bottom center;
+  transform: scale(1.25, 1); /* Made 25% wider by default */
 }
 
 .flame-outer {
@@ -427,12 +428,21 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
   display: none;
 }
 
-@keyframes daily-fire-sway {
+@keyframes daily-flame-sway {
   from {
     transform: rotate(-3deg) scaleY(0.96);
   }
   to {
     transform: rotate(3deg) scaleY(1.05);
+  }
+}
+
+@keyframes daily-flame-flicker {
+  0% {
+    transform: scale(1.25, 0.95);
+  }
+  100% {
+    transform: scale(1.28, 1.05);
   }
 }
 
