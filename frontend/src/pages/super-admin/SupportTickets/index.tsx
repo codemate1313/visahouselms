@@ -151,6 +151,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
   const [saving, setSaving] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [dragCounter, setDragCounter] = useState(0);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seenTicketMsgCounts, setSeenTicketMsgCounts] = useState<Record<number, number>>(() => {
@@ -233,6 +234,26 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
       chatStreamRef.current.scrollTop = chatStreamRef.current.scrollHeight;
     }
   }, [selectedTicket?.messages, selectedTicket?.id, isChatOpen]);
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragCounter((prev) => prev + 1);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragCounter((prev) => prev - 1);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragCounter(0);
+    if (!selectedTicket || selectedTicket.status === "closed") return;
+    const files = Array.from(e.dataTransfer.files ?? []);
+    if (files.length > 0) {
+      setAttachedFiles((prev) => [...prev, ...files].slice(0, 5));
+    }
+  }, [selectedTicket]);
 
   async function handleSendMessage(e?: FormEvent) {
     if (e) e.preventDefault();
@@ -678,7 +699,37 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
         }
       >
         {selectedTicket && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div
+            onDragEnter={handleDragEnter}
+            onDragOver={(e) => e.preventDefault()}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            style={{ display: "flex", flexDirection: "column", gap: "16px", position: "relative" }}
+          >
+            {dragCounter > 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: -8,
+                  background: "var(--background-overlay, rgba(185, 28, 43, 0.08))",
+                  backdropFilter: "blur(4px)",
+                  border: "2px dashed var(--primary, #b91c2b)",
+                  borderRadius: "16px",
+                  zIndex: 20000,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "12px",
+                  color: "var(--primary, #b91c2b)",
+                  pointerEvents: "none",
+                }}
+              >
+                <div style={{ fontSize: "3rem" }}>📥</div>
+                <strong style={{ fontSize: "1.1rem" }}>Drop your screenshots or files here to attach</strong>
+                <span style={{ fontSize: "0.85rem", opacity: 0.8 }}>Images, PDFs, Word, Excel (Max 5 files)</span>
+              </div>
+            )}
             {/* Top Bar: Customer Details Header */}
             <div
               style={{
