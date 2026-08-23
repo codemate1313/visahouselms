@@ -1824,21 +1824,21 @@
 }
 
 .portal-back-button:hover {
-  color: #e11d2e !important;
-  background: rgba(225, 29, 46, 0.06) !important;
-  border-color: rgba(225, 29, 46, 0.25) !important;
+  color: var(--primary, #e11d2e) !important;
+  background: color-mix(in srgb, var(--primary, #e11d2e) 10%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary, #e11d2e) 34%, transparent) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
   transform: translateX(-1px) !important;
 }
 
 [data-theme="dark"] .portal-back-button:hover {
-  color: #f87171 !important;
-  background: rgba(225, 29, 46, 0.15) !important;
-  border-color: rgba(225, 29, 46, 0.4) !important;
+  color: var(--primary, #f87171) !important;
+  background: color-mix(in srgb, var(--primary, #e11d2e) 16%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary, #e11d2e) 42%, transparent) !important;
 }
 
 .portal-back-button:focus-visible {
-  outline: 2px solid #e11d2e;
+  outline: 2px solid var(--primary, #e11d2e);
   outline-offset: 2px;
 }
 

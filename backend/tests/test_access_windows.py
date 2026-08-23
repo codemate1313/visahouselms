@@ -28,7 +28,7 @@ from app.models.user import (
     ACCESS_SUSPENDED,
     User,
 )
-from app.services import access_window_service, institute_admin_service
+from app.services import access_window_service, institute_admin_service, subscription_service
 
 
 def _now() -> datetime:
@@ -204,6 +204,19 @@ class AccessWindowTests(unittest.TestCase):
         self.assertEqual(result["access_state"], ACCESS_ACTIVE)
         self.assertIsNone(access_window_service.access_denied_reason(self._user("ext@gp.example.com")))
         self.assertEqual(self._seats_used(), 1, "an extension costs nothing")
+
+    def test_student_plan_view_uses_personal_window_not_institute_subscription(self):
+        student = self._user(self._create("window@gp.example.com", days=30)["email"])
+
+        view = subscription_service.my_current_plan_view(self.db, student)
+
+        self.assertEqual(view["starts_at"], student.access_starts_at)
+        self.assertEqual(view["expires_at"], student.access_ends_at)
+        self.assertNotEqual(
+            view["expires_at"],
+            self.subscription_ends,
+            "student dashboard must show the student's allotted window, not the institute subscription expiry",
+        )
 
     # -------------------------------------------------------- loophole 4
 

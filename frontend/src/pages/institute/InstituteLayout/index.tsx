@@ -47,6 +47,7 @@ export function InstituteLayout() {
       instituteItems.push({ key: "students", label: m.students, icon: "user", to: "/institute-portal/students" });
       instituteItems.push({ key: "announcements", label: m.announcements, icon: "notifications", to: "/institute-portal/announcements" });
     }
+    instituteItems.push({ key: "notifications", label: m.notifications, icon: "notifications", to: "/institute-portal/notifications" });
     if (permissions.manage_staff) {
       instituteItems.push({ key: "staff", label: m.instructors, icon: "instructors", to: "/institute-portal/staff" });
     }

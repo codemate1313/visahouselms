@@ -861,8 +861,12 @@ def my_current_plan_view(db: Session, user: User) -> dict:
     """What a student's 'My Plan' page renders: their current (institute or
     personal) subscription's plan and its modules, ready for a 'Start test'
     button, plus locked indicators for modules outside their active plan."""
+    student_access_starts_at = None
+    student_access_ends_at = None
     if user.institute_id is not None:
         subscription, state = current_subscription(db, user.institute_id)
+        student_access_starts_at = user.access_starts_at
+        student_access_ends_at = user.access_ends_at
     else:
         subscription, state = current_user_subscription(db, user.id)
 
@@ -1094,7 +1098,8 @@ def my_current_plan_view(db: Session, user: User) -> dict:
             "modules": modules_list,
         },
         "state": state,
-        "expires_at": subscription.expires_at,
+        "starts_at": student_access_starts_at if user.institute_id is not None else subscription.starts_at,
+        "expires_at": student_access_ends_at if user.institute_id is not None else subscription.expires_at,
         "access_type": "institute" if user.institute_id is not None else "direct",
         "ai_evaluations": ai_quota,
     }

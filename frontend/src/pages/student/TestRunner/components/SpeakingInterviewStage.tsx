@@ -112,10 +112,13 @@ function VoiceActivityDots({ active, stream }: { active: boolean; stream: MediaS
 
 interface SpeakingInterviewStageProps {
   attemptId: number;
+  moduleTitle: string;
   currentPart: Attempt["parts"][number];
   speakingPartNumber: number;
   speakingPartCount: number;
   isLastTestPart: boolean;
+  secondsLeft: number;
+  languageCertSkin?: boolean;
   savingIds: Set<number>;
   audioInputStream: MediaStream | null;
   recordingQuestionId: number | null;
@@ -126,10 +129,13 @@ interface SpeakingInterviewStageProps {
 
 export function SpeakingInterviewStage({
   attemptId,
+  moduleTitle,
   currentPart,
   speakingPartNumber,
   speakingPartCount,
   isLastTestPart,
+  secondsLeft,
+  languageCertSkin = false,
   savingIds,
   audioInputStream,
   recordingQuestionId,
@@ -353,9 +359,12 @@ export function SpeakingInterviewStage({
     hasCandidateText ? "has-text" : "",
     hasCandidateAttachment ? "has-attachment" : "",
   ].filter(Boolean).join(" ");
+  const timerValue = mode === "preparing" ? preparationLeft : mode === "recording" ? responseLeft : responseSeconds;
+  const timerLabel = mode === "preparing" ? t.preparation : mode === "recording" ? t.recording : t.responseLimit;
 
-  return (
-    <div className="speaking-interview-stage">
+  if (languageCertSkin) {
+    return (
+      <div className="speaking-interview-stage speaking-interview-stage--lc">
       <div className="speaking-interview-layout">
         <section className="speaking-interview-workspace">
           <div className="speaking-interview-progress">
@@ -463,5 +472,156 @@ export function SpeakingInterviewStage({
         </aside>
       </div>
     </div>
+  );
+  }
+
+  return (
+    <main className="speaking-interview-stage speaking-interview-stage--classic">
+      <header className="speaking-interview-header">
+        <div>
+          <span>Speaking interview</span>
+          <strong>{moduleTitle}</strong>
+        </div>
+        <div className="speaking-interview-overall-time" role="timer" aria-live="polite">
+          <span>{t.testTime}</span>
+          <strong>{formatTime(secondsLeft)}</strong>
+        </div>
+      </header>
+
+      <div className="speaking-interview-layout">
+        <aside className="speaking-interview-parts" aria-label="Speaking parts">
+          <span className="speaking-interview-parts-label">Parts</span>
+          {Array.from({ length: speakingPartCount }, (_, index) => {
+            const partNumber = index + 1;
+            const stateClass = partNumber < speakingPartNumber
+              ? "is-complete"
+              : partNumber === speakingPartNumber
+                ? "is-current"
+                : "";
+            return (
+              <div key={partNumber} className={`speaking-interview-part ${stateClass}`.trim()}>
+                <span>{partNumber}</span>
+                <strong>Part {partNumber}</strong>
+              </div>
+            );
+          })}
+        </aside>
+
+        <section className="speaking-interview-workspace">
+          <div className="speaking-interview-progress">
+            <span>{t.partProgress(speakingPartNumber, speakingPartCount)}</span>
+            <span>{question.interaction?.turn_type?.replaceAll("_", " ") || t.questionProgress(questionIndex + 1, currentPart.questions.length)}</span>
+          </div>
+
+          <div className={materialClassName}>
+            {hasCandidateText && question.passage ? (
+              <article className="speaking-interview-passage">
+                <RichTextContent text={question.passage} />
+              </article>
+            ) : null}
+            {candidateImageUrl ? (
+              <figure className="speaking-candidate-attachment">
+                <img src={candidateImageUrl} alt="Speaking task material" />
+              </figure>
+            ) : candidatePdfUrl ? (
+              <div className="speaking-candidate-attachment">
+                <object data={candidatePdfUrl} type="application/pdf" aria-label="Speaking task PDF">
+                  <a href={candidatePdfUrl} target="_blank" rel="noreferrer">Open the speaking task PDF</a>
+                </object>
+              </div>
+            ) : !hasCandidateText ? (
+              <div className="speaking-candidate-empty">
+                <Icon name="microphone" />
+                <strong>Listen to Sonia</strong>
+                <span>The examiner will give the instructions and ask the question aloud.</span>
+              </div>
+            ) : null}
+          </div>
+
+          {currentPart.answer_constraints.notes_allowed && (
+            <label className="speaking-interview-notes">
+              <span>Preparation notes</span>
+              <textarea
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                readOnly={mode === "recording" || mode === "uploading"}
+                rows={4}
+                maxLength={1200}
+                placeholder="Notes are available in Speaking Part 4 only."
+              />
+            </label>
+          )}
+
+          <div className="speaking-interview-control-dock">
+            <div className={`speaking-interview-timer is-${mode}`}>
+              <span>{timerLabel}</span>
+              <strong>{formatTime(timerValue)}</strong>
+              <small>
+                {mode === "ready"
+                  ? manualStartOffered ? "Examiner audio did not finish. You can start manually." : t.playingQuestion
+                : mode === "preparing"
+                    ? t.recordingStartsAutomatically
+                    : mode === "starting"
+                      ? t.startingRecording
+                      : mode === "recording"
+                        ? t.recordingNow
+                        : mode === "uploading"
+                          ? t.savingResponse
+                          : t.saved}
+              </small>
+            </div>
+
+            <div className="speaking-interview-classic-waveform">
+              <VoiceActivityDots active={mode === "recording"} stream={audioInputStream} />
+            </div>
+
+            <div className="speaking-interview-actions">
+              <Button
+                variant="secondary"
+                size="lg"
+                disabled={!canStartManually}
+                leftIcon={<Icon name="microphone" />}
+                onClick={beginPreparation}
+              >
+                {manualStartOffered ? t.startResponse : t.playingQuestion}
+              </Button>
+              <Button
+                variant="primary"
+                size="lg"
+                disabled={mode !== "recording" || recordingQuestionId !== question.id}
+                loading={isSubmittingAnswer}
+                onClick={submitResponse}
+              >
+                {t.submitResponse}
+              </Button>
+              {mode === "complete" && !(isLastQuestion && isLastTestPart) ? (
+                <Button variant="primary" size="lg" rightIcon={<Icon name="arrowRight" />} onClick={continueInterview}>
+                  {isLastQuestion ? t.continueToNextPart : t.continueToNextQuestion}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </section>
+
+        <aside className="speaking-interview-examiner">
+          <div className="speaking-interview-avatar">
+            <SpeakingAvatar
+              key={`${currentPart.id}:${question.id}`}
+              attemptId={attemptId}
+              avatarOnly
+              isCandidateRecording={mode === "recording"}
+              partId={currentPart.id}
+              questionId={question.id}
+              onAudioEnded={beginPreparation}
+              onExaminerBusyChange={setExaminerBusy}
+            />
+          </div>
+          <div className="speaking-interview-examiner-copy">
+            <strong>Instructor</strong>
+            <span>{mode === "recording" ? "Listening to your response" : "Speaking examiner"}</span>
+          </div>
+        </aside>
+      </div>
+    </main>
   );
 }

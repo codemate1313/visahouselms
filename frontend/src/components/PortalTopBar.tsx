@@ -74,6 +74,7 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/grading", eyebrow: "ACADEMICS", title: "Grading Oversight" },
   { match: "/super-admin/notifications", eyebrow: "NOTIFICATIONS", title: "Platform Notifications" },
   { match: "/super-admin/inbox", eyebrow: "NOTIFICATIONS", title: "Notifications Inbox" },
+  { match: "/institute-portal/notifications", eyebrow: "NOTIFICATIONS", title: "Notifications Inbox" },
   { match: "/super-admin/testimonials", eyebrow: "CMS & CONTENT", title: "Student Testimonials" },
   { match: "/super-admin/blogs/new", eyebrow: "CMS & CONTENT", title: "Create Article" },
   { match: /\/super-admin\/blogs\/.+/, eyebrow: "CMS & CONTENT", title: "Edit Article" },

@@ -1512,8 +1512,11 @@ export function TestRunner() {
           {currentPart.section_type === "speaking" ? (
             <SpeakingInterviewStage
               attemptId={attempt.id}
+              moduleTitle={attempt.module_title}
               currentPart={currentPart}
               isLastTestPart={partIndex >= attempt.parts.length - 1}
+              secondsLeft={secondsLeft}
+              languageCertSkin={languageCertSkin}
               onContinuePart={() => {
                 if (partIndex < attempt.parts.length - 1) {
                   // `force`: the stage is the one control allowed past the lock

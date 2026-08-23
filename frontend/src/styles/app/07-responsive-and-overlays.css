@@ -3458,6 +3458,60 @@ body {
   outline-offset: 2px;
 }
 
+.access-window-modal {
+  --primary: var(--institute-primary, #0b2388);
+  --primary-soft: color-mix(in srgb, var(--institute-primary, #0b2388) 12%, transparent);
+  --focus-ring: color-mix(in srgb, var(--institute-primary, #0b2388) 38%, transparent);
+}
+
+.access-window-modal .btn-primary {
+  border-color: var(--institute-primary, var(--primary)) !important;
+  background: var(--institute-primary, var(--primary)) !important;
+  color: var(--institute-on-primary, #ffffff) !important;
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--institute-primary, var(--primary)) 18%, transparent) !important;
+}
+
+.access-window-modal .btn-primary:hover:not(:disabled),
+.access-window-modal .btn-primary:focus-visible:not(:disabled) {
+  border-color: color-mix(in srgb, var(--institute-primary, var(--primary)) 86%, #000000) !important;
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 88%, #000000) !important;
+}
+
+.access-window-modal .btn-primary:disabled {
+  border-color: color-mix(in srgb, var(--institute-primary, var(--primary)) 56%, transparent) !important;
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 56%, #111113) !important;
+  color: color-mix(in srgb, var(--institute-on-primary, #ffffff) 62%, transparent) !important;
+  box-shadow: none !important;
+}
+
+.access-window-modal .btn-secondary {
+  border-color: color-mix(in srgb, var(--institute-primary, var(--primary)) 28%, var(--border)) !important;
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 9%, var(--surface)) !important;
+  color: var(--institute-primary, var(--primary)) !important;
+}
+
+.access-window-modal .btn-secondary:hover:not(:disabled),
+.access-window-modal .btn-secondary:focus-visible:not(:disabled) {
+  border-color: color-mix(in srgb, var(--institute-primary, var(--primary)) 48%, var(--border)) !important;
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 15%, var(--surface)) !important;
+}
+
+.access-window-modal .window-quick-picks .chip-button,
+.access-window-modal .window-quick-picks .chip-button:focus,
+.access-window-modal .window-quick-picks .chip-button:active {
+  border-color: color-mix(in srgb, var(--institute-primary, var(--primary)) 26%, var(--border)) !important;
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 7%, var(--surface)) !important;
+  color: color-mix(in srgb, var(--institute-primary, var(--primary)) 76%, var(--text)) !important;
+}
+
+.access-window-modal .window-quick-picks .chip-button:hover,
+.access-window-modal .window-quick-picks .chip-button:focus-visible {
+  border-color: var(--institute-primary, var(--primary)) !important;
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 13%, var(--surface)) !important;
+  color: var(--institute-primary, var(--primary)) !important;
+  outline-color: color-mix(in srgb, var(--institute-primary, var(--primary)) 42%, transparent) !important;
+}
+
 /* ------------------------------------------------------------------
    Stacked subscription terms on institute billing, and the per-module
    validity pill on a student's test card.
