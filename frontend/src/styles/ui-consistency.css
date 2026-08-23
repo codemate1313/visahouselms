@@ -774,8 +774,14 @@ html {
   background: var(--surface-muted);
 }
 
-/* Prev / position / Next row sits below Save, so grading a part and moving to
-   the next question is one panel. */
+.rubric-autosave-status {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Prev / position / Next row stays with the rubric so saving and moving to the
+   next question is one action. */
 .rubric-floater-nav {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -812,6 +818,92 @@ html {
 /* The submit-full-test panel now sits at the bottom - give it separation. */
 .submit-full-test-panel {
   margin-top: 24px;
+}
+
+.parts-scored-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 34px;
+  padding: 6px 16px;
+  border: 1px solid color-mix(in srgb, #f59e0b 58%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  color: #fbbf24;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.parts-scored-chip:hover,
+.parts-scored-chip:focus-visible {
+  border-color: #fbbf24;
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+  outline: none;
+}
+
+.parts-scored-chip span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #f59e0b;
+}
+
+.missing-graded-parts-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.missing-graded-parts-dialog > p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.missing-graded-parts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.missing-graded-parts-list button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.missing-graded-parts-list button:hover,
+.missing-graded-parts-list button:focus-visible {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  outline: none;
+}
+
+.missing-graded-parts-list strong,
+.missing-graded-parts-list span {
+  display: block;
+}
+
+.missing-graded-parts-list span {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.missing-graded-parts-list small {
+  color: #f59e0b;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 /* Rubric floater is only ~380px wide, so the two-column grid squashes text

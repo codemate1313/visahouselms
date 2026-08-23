@@ -24,12 +24,12 @@ interface FloatingRubricPanelProps {
   isOpen: boolean;
   onToggleOpen: (open: boolean) => void;
   saving: boolean;
-  onSave: () => void;
-  saveDisabled: boolean;
-  saveLabel: string;
+  autosaveStatus: string;
   positionLabel: string;
   canPrev: boolean;
   canNext: boolean;
+  nextDisabled: boolean;
+  nextLabel: string;
   onPrev: () => void;
   onNext: () => void;
 }
@@ -47,12 +47,12 @@ export function FloatingRubricPanel({
   isOpen,
   onToggleOpen,
   saving,
-  onSave,
-  saveDisabled,
-  saveLabel,
+  autosaveStatus,
   positionLabel,
   canPrev,
   canNext,
+  nextDisabled,
+  nextLabel,
   onPrev,
   onNext,
 }: FloatingRubricPanelProps) {
@@ -154,18 +154,14 @@ export function FloatingRubricPanel({
       </div>
 
       <div className="rubric-floater-foot">
-        {canEdit && (
-          <Button onClick={onSave} disabled={saveDisabled || saving} fullWidth>
-            {saving ? t.saving : saveLabel}
-          </Button>
-        )}
+        {canEdit && <span className="rubric-autosave-status" aria-live="polite">{saving ? t.saving : autosaveStatus}</span>}
         <div className="rubric-floater-nav">
           <Button variant="secondary" size="sm" disabled={!canPrev} onClick={onPrev}>
             {t.rubricNav.prev}
           </Button>
           <span className="rubric-floater-position" aria-live="polite">{positionLabel}</span>
-          <Button variant="secondary" size="sm" disabled={!canNext} onClick={onNext}>
-            {t.rubricNav.next}
+          <Button variant="secondary" size="sm" disabled={!canNext || nextDisabled || saving} onClick={onNext}>
+            {saving ? t.saving : nextLabel}
           </Button>
         </div>
       </div>

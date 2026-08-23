@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { AttemptPart, GradingDetail as GradingDetailType, GradingQueueItem, GradingQueueMetadata } from "@/api/types";
-import { Badge, Button, LinkButton, PageHeader } from "@/components/ui";
+import { Badge, Button, LinkButton, Modal, PageHeader } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { gradingDetailStrings as strings } from "./GradingDetail.strings";
@@ -120,6 +120,10 @@ export function GradingDetail() {
   // Schema section closed by default; the instructor opens it to score.
   const [rubricOpen, setRubricOpen] = useState(false);
   const [savingPartId, setSavingPartId] = useState<number | null>(null);
+  const [autosavePartId, setAutosavePartId] = useState<number | null>(null);
+  const [autosaveStatus, setAutosaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [missingPartsOpen, setMissingPartsOpen] = useState(false);
+  const autosaveTimerRef = useRef<number | null>(null);
 
   // Seed the local scoring state from whatever the server already has whenever
   // the attempt loads or reloads.
@@ -162,46 +166,144 @@ export function GradingDetail() {
     setPartComments((current) => ({ ...current, [partId]: comment }));
   }, []);
 
-  async function savePart(part: AttemptPart) {
-    setSavingPartId(part.id);
+  function isScoreFilled(value: string | undefined) {
+    return value !== undefined && value !== "" && Number.isFinite(Number(value));
+  }
+
+  function partHasCompleteScores(part: AttemptPart) {
+    const marks = partMarks[part.id] ?? {};
+    return part.rubric.every((criterion) => isScoreFilled(marks[criterion.criterion]));
+  }
+
+  function partHasProgress(part: AttemptPart) {
+    const marks = partMarks[part.id] ?? {};
+    return (
+      Object.values(marks).some((value) => isScoreFilled(value)) ||
+      (partComments[part.id] ?? "").trim() !== ""
+    );
+  }
+
+  function buildPartPayload(part: AttemptPart, includeAllCriteria = false) {
     const isPublished = part.grade?.status === "graded" || part.grade?.status === "ai_graded";
     const marks = partMarks[part.id] ?? {};
     const comment = partComments[part.id] ?? "";
+    const criteria = part.rubric
+      .filter((criterion) => includeAllCriteria || isPublished || isScoreFilled(marks[criterion.criterion]))
+      .map((criterion) => ({ criterion: criterion.criterion, marks_awarded: Number(marks[criterion.criterion]) }));
+    return { criteria, comment: comment.trim() ? comment : undefined };
+  }
+
+  function payloadKey(payload: ReturnType<typeof buildPartPayload>) {
+    return JSON.stringify({ criteria: payload.criteria, comment: payload.comment ?? "" });
+  }
+
+  function serverPartKey(part: AttemptPart) {
+    const criteria = part.rubric
+      .map((criterion) => {
+        const saved = part.grade?.criteria.find((item) => item.criterion === criterion.criterion);
+        return saved ? { criterion: criterion.criterion, marks_awarded: Number(saved.marks_awarded) } : null;
+      })
+      .filter((item): item is { criterion: string; marks_awarded: number } => item !== null);
+    return JSON.stringify({ criteria, comment: part.grade?.comment ?? "" });
+  }
+
+  async function savePart(part: AttemptPart, options: { silent?: boolean; requireComplete?: boolean } = {}) {
+    if (options.requireComplete && !partHasCompleteScores(part)) {
+      showError(strings.part.completeBeforeNextMessage, strings.part.completeBeforeNextTitle);
+      return false;
+    }
+    if (autosaveTimerRef.current !== null) {
+      window.clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+    setSavingPartId(part.id);
     try {
-      const criteria = part.rubric
-        .filter((criterion) => isPublished || marks[criterion.criterion] !== "" && marks[criterion.criterion] !== undefined)
-        .map((criterion) => ({ criterion: criterion.criterion, marks_awarded: Number(marks[criterion.criterion] || 0) }));
       const { data } = await apiClient.post<GradingDetailType>(
         `/instructor/grading/${id}/parts/${part.id}`,
-        { criteria, comment: comment || undefined },
+        buildPartPayload(part, options.requireComplete),
       );
       setDetail(data);
-      const t = strings.part;
-      if (isPublished) {
-        showSuccess(t.gradedMessage(part.title), t.savedTitle);
-      } else {
-        showSuccess(t.draftSavedMessage(part.title), t.savedTitle);
+      setAutosaveStatus("saved");
+      if (!options.silent) {
+        showSuccess(strings.part.gradedMessage(part.title), strings.part.savedTitle);
       }
+      return true;
     } catch (err: unknown) {
       showError(extractErrorMessage(err, strings.part.saveErrorMessage), strings.part.saveErrorTitle);
+      setAutosaveStatus("error");
+      return false;
     } finally {
       setSavingPartId(null);
     }
   }
 
+  const subjectiveParts = detail?.parts.filter((part) => !part.auto_marked) ?? [];
+  const boundedActiveIndex = subjectiveParts.length ? Math.min(Math.max(0, activeIndex), subjectiveParts.length - 1) : 0;
+  const activeSubjectivePart = subjectiveParts[boundedActiveIndex] ?? null;
+  const activeAllScored = activeSubjectivePart ? partHasCompleteScores(activeSubjectivePart) : false;
+  const claimedByMe = detail?.queue.assigned_to_id === user?.id;
+  const claimedByOther = detail?.queue.assigned_to_id != null && !claimedByMe;
+  const hasOpenReevaluation = detail?.reevaluation && ["pending", "in_review"].includes(detail.reevaluation.status);
+  const canEdit = Boolean(detail) && !claimedByOther && (detail!.queue.status !== "completed" || Boolean(hasOpenReevaluation));
+
+  useEffect(() => {
+    if (!activeSubjectivePart || !canEdit || !id || savingPartId === activeSubjectivePart.id) return;
+    if (!partHasProgress(activeSubjectivePart)) {
+      setAutosaveStatus("idle");
+      return;
+    }
+
+    const payload = buildPartPayload(activeSubjectivePart);
+    if (!payload.criteria.length && !payload.comment) return;
+    if (payloadKey(payload) === serverPartKey(activeSubjectivePart)) {
+      setAutosaveStatus("saved");
+      return;
+    }
+
+    setAutosaveStatus("idle");
+    if (autosaveTimerRef.current !== null) window.clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = window.setTimeout(() => {
+      setAutosavePartId(activeSubjectivePart.id);
+      setAutosaveStatus("saving");
+      apiClient
+        .post<GradingDetailType>(`/instructor/grading/${id}/parts/${activeSubjectivePart.id}`, payload)
+        .then(({ data }) => {
+          setDetail(data);
+          setAutosaveStatus("saved");
+        })
+        .catch(() => setAutosaveStatus("error"))
+        .finally(() => setAutosavePartId(null));
+    }, 900);
+
+    return () => {
+      if (autosaveTimerRef.current !== null) {
+        window.clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+    };
+  }, [activeSubjectivePart, activeIndex, canEdit, id, partMarks, partComments, savingPartId]);
 
   if (error && !detail) return <p className="error-text">{error}</p>;
   if (!detail) return <p>{strings.loading}</p>;
-  const subjectiveParts = detail.parts.filter((part) => !part.auto_marked);
   const allSubjectivePartsGraded = subjectiveParts.length > 0 && subjectiveParts.every((part) => part.grade?.status === "graded");
   const readyPartsCount = subjectiveParts.filter(
     (part) => part.grade && part.rubric.every((criterion) => part.grade!.criteria.some((item) => item.criterion === criterion.criterion)),
   ).length;
+  const incompleteSubjectiveParts = subjectiveParts.filter(
+    (part) => !part.grade || !part.rubric.every((criterion) => part.grade!.criteria.some((item) => item.criterion === criterion.criterion)),
+  );
   const allPartsReady = subjectiveParts.length > 0 && readyPartsCount === subjectiveParts.length;
-  const claimedByMe = detail.queue.assigned_to_id === user?.id;
-  const claimedByOther = detail.queue.assigned_to_id != null && !claimedByMe;
-  const hasOpenReevaluation = detail.reevaluation && ["pending", "in_review"].includes(detail.reevaluation.status);
-  const canEdit = !claimedByOther && (detail.queue.status !== "completed" || Boolean(hasOpenReevaluation));
+
+  function goToPart(partId: number) {
+    const index = subjectiveParts.findIndex((part) => part.id === partId);
+    if (index < 0) return;
+    setActiveIndex(index);
+    setRubricOpen(true);
+    setMissingPartsOpen(false);
+    window.requestAnimationFrame(() => {
+      document.getElementById(`part-card-${partId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 
   return (
     <div>
@@ -306,14 +408,27 @@ export function GradingDetail() {
       {(() => {
         const total = subjectiveParts.length;
         if (!total) return null;
-        const boundedIndex = Math.min(Math.max(0, activeIndex), total - 1);
-        const active = subjectiveParts[boundedIndex];
+        const boundedIndex = boundedActiveIndex;
+        const active = activeSubjectivePart!;
         const marks = partMarks[active.id] ?? {};
-        const activeIsPublished = active.grade?.status === "graded" || active.grade?.status === "ai_graded";
-        const allScored = active.rubric.every((c) => (marks[c.criterion] ?? "") !== "");
-        const hasProgress = Object.values(marks).some((v) => v !== "") || (partComments[active.id] ?? "").trim() !== "";
-        const saveDisabled = activeIsPublished ? !allScored : !hasProgress;
-        const saveLabel = activeIsPublished ? strings.part.confirmEvaluation : strings.part.saveDraft;
+        const isLastPart = boundedIndex >= total - 1;
+        const nextLabel = isLastPart ? strings.part.rubricNav.finish : strings.part.rubricNav.next;
+        const autosaveText = autosaveStatus === "saving" || autosavePartId === active.id
+          ? strings.part.autosave.saving
+          : autosaveStatus === "saved"
+            ? strings.part.autosave.saved
+            : autosaveStatus === "error"
+              ? strings.part.autosave.error
+              : strings.part.autosave.idle;
+        const handleNext = async () => {
+          if (!canEdit) {
+            if (!isLastPart) setActiveIndex(Math.min(total - 1, boundedIndex + 1));
+            return;
+          }
+          const saved = await savePart(active, { silent: true, requireComplete: true });
+          if (!saved) return;
+          if (!isLastPart) setActiveIndex(Math.min(total - 1, boundedIndex + 1));
+        };
         return (
           <div className="grading-workspace">
             {/* Only the active part renders on the left; the rubric panel is
@@ -338,15 +453,15 @@ export function GradingDetail() {
               canEdit={canEdit}
               isOpen={rubricOpen}
               onToggleOpen={setRubricOpen}
-              saving={savingPartId === active.id}
-              onSave={() => savePart(active)}
-              saveDisabled={saveDisabled}
-              saveLabel={saveLabel}
+              saving={savingPartId === active.id || autosavePartId === active.id}
+              autosaveStatus={autosaveText}
               positionLabel={`${boundedIndex + 1} / ${total}`}
               canPrev={boundedIndex > 0}
-              canNext={boundedIndex < total - 1}
+              canNext={!isLastPart || canEdit}
+              nextDisabled={canEdit && !activeAllScored}
+              nextLabel={nextLabel}
               onPrev={() => setActiveIndex(Math.max(0, boundedIndex - 1))}
-              onNext={() => setActiveIndex(Math.min(total - 1, boundedIndex + 1))}
+              onNext={handleNext}
             />
           </div>
         );
@@ -360,7 +475,15 @@ export function GradingDetail() {
               <h2>{strings.submitFullTest.title}</h2>
               <p>{strings.submitFullTest.description}</p>
             </div>
-            <Badge tone="amber">{strings.submitFullTest.readyCount(readyPartsCount, subjectiveParts.length)}</Badge>
+            <button
+              type="button"
+              className="parts-scored-chip"
+              onClick={() => setMissingPartsOpen(true)}
+              aria-label={strings.submitFullTest.openMissingDialog}
+            >
+              <span aria-hidden="true" />
+              {strings.submitFullTest.readyCount(readyPartsCount, subjectiveParts.length)}
+            </button>
           </div>
           {canEdit && (
             <div className="form-actions">
@@ -369,6 +492,36 @@ export function GradingDetail() {
               </Button>
             </div>
           )}
+          <Modal
+            open={missingPartsOpen}
+            onClose={() => setMissingPartsOpen(false)}
+            title={strings.submitFullTest.missingDialogTitle}
+            size="md"
+          >
+            <div className="missing-graded-parts-dialog">
+              <p>{strings.submitFullTest.missingDialogBody}</p>
+              {incompleteSubjectiveParts.length > 0 ? (
+                <div className="missing-graded-parts-list">
+                  {incompleteSubjectiveParts.map((part) => {
+                    const completed = part.grade
+                      ? part.rubric.filter((criterion) => part.grade!.criteria.some((item) => item.criterion === criterion.criterion)).length
+                      : 0;
+                    return (
+                      <button type="button" key={part.id} onClick={() => goToPart(part.id)}>
+                        <div>
+                          <strong>{part.title}</strong>
+                          <span>{part.skill_focus}</span>
+                        </div>
+                        <small>{strings.submitFullTest.criteriaProgress(completed, part.rubric.length)}</small>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="hint">{strings.submitFullTest.allReady}</p>
+              )}
+            </div>
+          </Modal>
         </section>
       )}
     </div>
