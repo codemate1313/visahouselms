@@ -26,6 +26,7 @@ export interface MenuSection {
   key?: string;
   title?: string;
   collapsible?: boolean;
+  icon?: IconName;
   items: MenuItem[];
 }
 
@@ -347,21 +348,33 @@ export function Sidebar({
           return (
           <div key={sectionKey} className={`sidebar-section ${hasActiveItem ? "has-active-item" : ""}`}>
             {section.title && (section.collapsible ? (
-              <div className="sidebar-section-header">
+              <div className="sidebar-section-header sidebar-collapsible-header">
                 <button
                   type="button"
-                  className={`sidebar-section-toggle ${isSectionOpen ? "is-open" : ""}`}
+                  className={`sidebar-item-btn sidebar-section-toggle-btn ${
+                    hasActiveItem && (isCollapsed || !isSectionOpen) ? "is-active" : ""
+                  }`}
                   onClick={() => toggleSection(sectionKey)}
+                  onMouseEnter={(e) => handleMouseEnterTooltip(e, section.title || "")}
+                  onMouseLeave={handleMouseLeaveTooltip}
                   aria-expanded={isSectionOpen}
                   aria-controls={sectionContentId}
                   tabIndex={isCollapsed ? -1 : 0}
                 >
-                  <span className="sidebar-section-title">{section.title}</span>
-                  <Icon name="chevronDown" className="sidebar-section-toggle-icon" />
+                  {section.icon && (
+                    <div className="sidebar-item-icon-wrap">
+                      <Icon name={section.icon} className="sidebar-icon" />
+                    </div>
+                  )}
+                  <span className="sidebar-item-label">{section.title}</span>
+                  <Icon
+                    name="chevronDown"
+                    className={`sidebar-accordion-arrow ${isSectionOpen ? "arrow-up" : ""}`}
+                  />
                 </button>
               </div>
             ) : (
-              <div className="sidebar-section-header">
+              <div className="sidebar-section-header is-label-only">
                 <span className="sidebar-section-title">{section.title}</span>
               </div>
             ))}

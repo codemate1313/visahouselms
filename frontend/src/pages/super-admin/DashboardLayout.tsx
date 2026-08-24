@@ -45,7 +45,6 @@ export function DashboardLayout() {
     return [
       {
         key: "overview",
-        title: m.overview,
         items: [
           {
             key: "dashboard",
@@ -58,12 +57,13 @@ export function DashboardLayout() {
       {
         key: "people-access",
         title: m.peopleAccess,
+        icon: "admin",
         collapsible: true,
         items: [
           {
             key: "users",
             label: m.users,
-            icon: "admin",
+            icon: "user",
             children: [
               { key: "users_super_admins", label: m.usersSuperAdmins, to: "/super-admin/users/super-admins" },
               { key: "users_sa_instructors", label: m.usersSaInstructors, to: "/super-admin/users/sa-instructors" },
@@ -80,6 +80,7 @@ export function DashboardLayout() {
       {
         key: "academics",
         title: m.academics,
+        icon: "courses",
         collapsible: true,
         items: [
           {
@@ -105,12 +106,14 @@ export function DashboardLayout() {
       {
         key: "billing-business",
         title: m.billingBusiness,
+        icon: "transactions",
         collapsible: true,
         items: billingItems,
       },
       {
         key: "communication",
         title: m.communication,
+        icon: "notifications",
         collapsible: true,
         items: [
           {
@@ -130,6 +133,7 @@ export function DashboardLayout() {
       {
         key: "cms-content",
         title: m.cmsContent,
+        icon: "module",
         collapsible: true,
         items: [
           {
@@ -161,6 +165,7 @@ export function DashboardLayout() {
       {
         key: "system",
         title: m.systemSection,
+        icon: "settings",
         collapsible: true,
         items: [
           {
@@ -176,6 +181,7 @@ export function DashboardLayout() {
       {
         key: "account",
         title: m.accountSection,
+        icon: "user",
         collapsible: true,
         items: [
           {
