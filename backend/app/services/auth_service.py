@@ -401,6 +401,11 @@ def register(
     except Exception as exc:
         import logging
         from app.services.notification_service import record_send_failure
+        from app.services.smtp_service import is_configuration_error
+
+        if is_configuration_error(exc):
+            logging.getLogger(__name__).info("Welcome email skipped because SMTP is not configured")
+            return user
 
         logging.getLogger(__name__).warning("Failed to send welcome email for %s: %s", user.email, exc)
         record_send_failure(db, f"Welcome email to {user.email} failed: {exc}", user_id=user.id)
@@ -447,6 +452,11 @@ def request_password_reset(db: Session, email: str) -> None:
     except Exception as exc:
         import logging
         from app.services.notification_service import record_send_failure
+        from app.services.smtp_service import is_configuration_error
+
+        if is_configuration_error(exc):
+            logging.getLogger(__name__).info("Password reset email skipped because SMTP is not configured")
+            return
 
         logging.getLogger(__name__).exception("Failed to send forgot password email for %s: %s", user.email, exc)
         record_send_failure(db, f"Password reset email to {user.email} failed: {exc}", user_id=user.id)

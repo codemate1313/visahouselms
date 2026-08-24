@@ -399,7 +399,7 @@ export class TalkingAvatar {
       src = ctx.createMediaElementSource(el);
       elementSources.set(el, src);
     }
-    try { src.disconnect(); } catch (_) {}
+    try { src.disconnect(); } catch {}
     src.connect(this.analyser);
     src.connect(ctx.destination);   // so you can actually hear it
     this.media = el;
@@ -412,7 +412,7 @@ export class TalkingAvatar {
   /** Drive the mouth from a MediaStream (microphone, WebRTC, ...). */
   attachStream(stream) {
     const ctx = this._ensureContext();
-    if (this.streamSrc) { try { this.streamSrc.disconnect(); } catch (_) {} }
+    if (this.streamSrc) { try { this.streamSrc.disconnect(); } catch {} }
     this.streamSrc = ctx.createMediaStreamSource(stream);
     this.streamSrc.connect(this.analyser);   // deliberately NOT to destination (feedback)
     this.audioDriven = true;
@@ -475,11 +475,11 @@ export class TalkingAvatar {
   stopAudio() {
     this.audioDriven = false;
     if (this._ownedMedia) {
-      try { this._ownedMedia.pause(); this._ownedMedia.currentTime = 0; } catch (_) {}
+      try { this._ownedMedia.pause(); this._ownedMedia.currentTime = 0; } catch {}
       this._ownedMedia = null;
     }
-    if (this.streamSrc) { try { this.streamSrc.disconnect(); } catch (_) {} this.streamSrc = null; }
-    if (this._bufferSrc) { try { this._bufferSrc.onended = null; this._bufferSrc.stop(); } catch (_) {} this._bufferSrc = null; }
+    if (this.streamSrc) { try { this.streamSrc.disconnect(); } catch {} this.streamSrc = null; }
+    if (this._bufferSrc) { try { this._bufferSrc.onended = null; this._bufferSrc.stop(); } catch {} this._bufferSrc = null; }
     return this;
   }
 
@@ -509,7 +509,7 @@ export class TalkingAvatar {
   destroy() {
     this.stop();
     this.stopAudio();
-    if (this.analyser) { try { this.analyser.disconnect(); } catch (_) {} }
+    if (this.analyser) { try { this.analyser.disconnect(); } catch {} }
     this.ctx = null;
     this.analyser = null;
     this.mount.innerHTML = '';

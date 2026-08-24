@@ -166,24 +166,24 @@ export function GradingDetail() {
     setPartComments((current) => ({ ...current, [partId]: comment }));
   }, []);
 
-  function isScoreFilled(value: string | undefined) {
+  const isScoreFilled = useCallback((value: string | undefined) => {
     return value !== undefined && value !== "" && Number.isFinite(Number(value));
-  }
+  }, []);
 
-  function partHasCompleteScores(part: AttemptPart) {
+  const partHasCompleteScores = useCallback((part: AttemptPart) => {
     const marks = partMarks[part.id] ?? {};
     return part.rubric.every((criterion) => isScoreFilled(marks[criterion.criterion]));
-  }
+  }, [isScoreFilled, partMarks]);
 
-  function partHasProgress(part: AttemptPart) {
+  const partHasProgress = useCallback((part: AttemptPart) => {
     const marks = partMarks[part.id] ?? {};
     return (
       Object.values(marks).some((value) => isScoreFilled(value)) ||
       (partComments[part.id] ?? "").trim() !== ""
     );
-  }
+  }, [isScoreFilled, partComments, partMarks]);
 
-  function buildPartPayload(part: AttemptPart, includeAllCriteria = false) {
+  const buildPartPayload = useCallback((part: AttemptPart, includeAllCriteria = false) => {
     const isPublished = part.grade?.status === "graded" || part.grade?.status === "ai_graded";
     const marks = partMarks[part.id] ?? {};
     const comment = partComments[part.id] ?? "";
@@ -191,7 +191,7 @@ export function GradingDetail() {
       .filter((criterion) => includeAllCriteria || isPublished || isScoreFilled(marks[criterion.criterion]))
       .map((criterion) => ({ criterion: criterion.criterion, marks_awarded: Number(marks[criterion.criterion]) }));
     return { criteria, comment: comment.trim() ? comment : undefined };
-  }
+  }, [isScoreFilled, partComments, partMarks]);
 
   function payloadKey(payload: ReturnType<typeof buildPartPayload>) {
     return JSON.stringify({ criteria: payload.criteria, comment: payload.comment ?? "" });
@@ -281,7 +281,7 @@ export function GradingDetail() {
         autosaveTimerRef.current = null;
       }
     };
-  }, [activeSubjectivePart, activeIndex, canEdit, id, partMarks, partComments, savingPartId]);
+  }, [activeSubjectivePart, activeIndex, buildPartPayload, canEdit, id, partComments, partHasProgress, partMarks, savingPartId]);
 
   if (error && !detail) return <p className="error-text">{error}</p>;
   if (!detail) return <p>{strings.loading}</p>;

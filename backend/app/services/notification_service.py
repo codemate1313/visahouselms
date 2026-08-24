@@ -95,6 +95,9 @@ def send_notification_email(db: Session, to_address: str, subject: str, body: st
     try:
         smtp_service.send_email(db, to_address, subject, body)
     except Exception as exc:
+        if smtp_service.is_configuration_error(exc):
+            logger.info("Notification email skipped because SMTP is not configured")
+            return
         logger.exception("Failed to send notification email to %s", to_address)
         record_send_failure(db, f"Notification email to {to_address} failed: {exc}", user_id=user_id)
 
@@ -631,6 +634,9 @@ def send_grade_released_email(db: Session, attempt: TestAttempt) -> None:
         lines += ["", "Log in to the student portal to see the full breakdown."]
         smtp_service.send_email(db, user.email, f'Your "{module.title}" result is ready', "\n".join(lines))
     except Exception as exc:
+        if smtp_service.is_configuration_error(exc):
+            logger.info("Grade-released email skipped because SMTP is not configured")
+            return
         logger.exception("Failed to send grade-released email for attempt %s", attempt.id)
         record_send_failure(
             db,

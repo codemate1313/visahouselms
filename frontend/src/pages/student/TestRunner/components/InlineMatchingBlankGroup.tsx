@@ -16,6 +16,7 @@ type PassageToken =
   | { type: "blank"; question: AttemptQuestion; index: number; key: string };
 
 const BLANK_MARKER = /\{\{blank:(\d+)\}\}/g;
+const EMPTY_OPTIONS: QuestionOption[] = [];
 
 function optionLabel(option: QuestionOption | undefined, key: string) {
   return option ? `${option.key}. ${option.text}` : key;
@@ -35,7 +36,7 @@ export function InlineMatchingBlankGroup({
   mode = "combined",
   onChangeResponse,
 }: InlineMatchingBlankGroupProps) {
-  const options = questions[0]?.options ?? [];
+  const options = questions[0]?.options ?? EMPTY_OPTIONS;
   const optionByKey = useMemo(() => new Map(options.map((option) => [option.key, option])), [options]);
   const [pickedKey, setPickedKey] = useState<string | null>(null);
   const selectedByQuestion = useMemo(

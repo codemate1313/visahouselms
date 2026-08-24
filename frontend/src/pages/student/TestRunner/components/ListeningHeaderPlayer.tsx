@@ -30,13 +30,45 @@ function positionKey(attemptId: number, partId: number, trackIndex: number) {
   return `vh:listening:position:${attemptId}:${partId}:${trackIndex}`;
 }
 
+function readStorage(storage: Storage | undefined, key: string) {
+  try {
+    return storage?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(storage: Storage | undefined, key: string, value: string) {
+  try {
+    storage?.setItem(key, value);
+  } catch {
+    /* storage is best-effort during exams */
+  }
+}
+
+function removeStorage(storage: Storage | undefined, key: string) {
+  try {
+    storage?.removeItem(key);
+  } catch {
+    /* storage is best-effort during exams */
+  }
+}
+
+function getLocalStorage() {
+  return typeof window === "undefined" ? undefined : window.localStorage;
+}
+
+function getSessionStorage() {
+  return typeof window === "undefined" ? undefined : window.sessionStorage;
+}
+
 function readStoredVolume() {
-  const stored = Number(localStorage.getItem(VOLUME_KEY));
+  const stored = Number(readStorage(getLocalStorage(), VOLUME_KEY));
   return Number.isFinite(stored) && stored >= 0 && stored <= 1 ? stored : 1;
 }
 
 function readStoredPosition(key: string) {
-  const stored = Number(sessionStorage.getItem(key));
+  const stored = Number(readStorage(getSessionStorage(), key));
   return Number.isFinite(stored) && stored > 0 ? stored : 0;
 }
 
@@ -95,10 +127,9 @@ export function ListeningHeaderPlayer({
 
   const completedKey = audioCompletedKey(attemptId, currentPart.id);
   const allCompletedKey = `vh:listening:all_completed:${attemptId}`;
-  const isCompletedInitial = typeof window !== "undefined" && (
-    localStorage.getItem(completedKey) === "true" ||
-    localStorage.getItem(allCompletedKey) === "true"
-  );
+  const isCompletedInitial =
+    readStorage(getLocalStorage(), completedKey) === "true" ||
+    readStorage(getLocalStorage(), allCompletedKey) === "true";
   const wasCompletedOnMountRef = useRef(isCompletedInitial);
 
   const [phase, setPhase] = useState<"waiting" | "playing" | "finished">(
@@ -206,14 +237,14 @@ export function ListeningHeaderPlayer({
       window.clearTimeout(starter);
       onAudioLockChange?.(false);
     };
-  }, [currentAudioUrl, waitsBeforeStart, resumeFrom, onAudioLockChange]);
+  }, [currentAudioUrl, waitsBeforeStart, resumeFrom, isCompletedInitial, onAudioLockChange]);
 
   // A new track gets its own single resume.
   useEffect(() => { resumedRef.current = false; }, [storageKey]);
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume;
-    localStorage.setItem(VOLUME_KEY, String(volume));
+    writeStorage(getLocalStorage(), VOLUME_KEY, String(volume));
   }, [volume, currentAudioUrl]);
 
   /* Duration arrives on its own event, not with the first time update. Reading
@@ -243,7 +274,7 @@ export function ListeningHeaderPlayer({
     if (!audioEl) return;
     setCurrentTime(audioEl.currentTime);
     readDuration(audioEl);
-    sessionStorage.setItem(storageKey, String(Math.floor(audioEl.currentTime)));
+    writeStorage(getSessionStorage(), storageKey, String(Math.floor(audioEl.currentTime)));
   };
 
   const handleEnded = () => {
@@ -253,8 +284,8 @@ export function ListeningHeaderPlayer({
     }
     // Keeping the end position would resume a finished part at its last second
     // and immediately end it again.
-    sessionStorage.removeItem(storageKey);
-    localStorage.setItem(completedKey, "true");
+    removeStorage(getSessionStorage(), storageKey);
+    writeStorage(getLocalStorage(), completedKey, "true");
     setPhase("finished");
     /* The lock deliberately stays on here. Releasing it the moment the
        recording ended opened a five-second hole - the settle before the part
@@ -266,9 +297,9 @@ export function ListeningHeaderPlayer({
 
   const handleSkipAudio = () => {
     playlist.forEach((_, idx) => {
-      sessionStorage.removeItem(positionKey(attemptId, currentPart.id, idx));
+      removeStorage(getSessionStorage(), positionKey(attemptId, currentPart.id, idx));
     });
-    localStorage.setItem(completedKey, "true");
+    writeStorage(getLocalStorage(), completedKey, "true");
     setPlaylistIndex(playlist.length - 1);
     setPhase("finished");
     onAudioLockChange?.(false);

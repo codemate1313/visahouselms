@@ -78,6 +78,11 @@ def send_account_credentials_email(
         import logging
 
         from app.services.notification_service import record_send_failure
+        from app.services.smtp_service import is_configuration_error
+
+        if is_configuration_error(exc):
+            logging.getLogger(__name__).info("Account credentials email skipped because SMTP is not configured")
+            return
 
         logging.getLogger(__name__).warning(
             "Failed to send account credentials email for %s: %s", user.email, exc

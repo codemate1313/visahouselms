@@ -4,12 +4,48 @@ interface BlogMarkdownBodyProps {
   markdown: string;
 }
 
-function formatInlineMarkdown(text: string): string {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.*?)\*/g, "<em>$1</em>")
-    .replace(/`([^`]+)`/g, "<code>$1</code>")
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+const INLINE_MARKDOWN = /(\*\*([^*]+)\*\*|`([^`]+)`|\[([^\]]+)\]\(([^)]+)\)|\*([^*]+)\*)/g;
+
+function safeHref(href: string) {
+  const trimmed = href.trim();
+  if (/^(https?:|mailto:|tel:|\/)/i.test(trimmed)) return trimmed;
+  return "#";
+}
+
+function renderInlineMarkdown(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  INLINE_MARKDOWN.lastIndex = 0;
+
+  while ((match = INLINE_MARKDOWN.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
+
+    const key = `${match.index}-${match[0]}`;
+    if (match[2]) {
+      nodes.push(<strong key={key}>{match[2]}</strong>);
+    } else if (match[3]) {
+      nodes.push(<code key={key}>{match[3]}</code>);
+    } else if (match[4] && match[5]) {
+      nodes.push(
+        <a key={key} href={safeHref(match[5])} target="_blank" rel="noopener noreferrer">
+          {match[4]}
+        </a>,
+      );
+    } else if (match[6]) {
+      nodes.push(<em key={key}>{match[6]}</em>);
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes;
 }
 
 function renderMarkdownLines(markdown: string) {
@@ -25,7 +61,7 @@ function renderMarkdownLines(markdown: string) {
       elements.push(
         <ul key={`ul-${elements.length}`} className="vh-blog-prose-ul">
           {currentBulletList.map((it, i) => (
-            <li key={i} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(it) }} />
+            <li key={i}>{renderInlineMarkdown(it)}</li>
           ))}
         </ul>
       );
@@ -38,7 +74,7 @@ function renderMarkdownLines(markdown: string) {
       elements.push(
         <ol key={`ol-${elements.length}`} className="vh-blog-prose-ol">
           {currentNumberedList.map((it, i) => (
-            <li key={i} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(it) }} />
+            <li key={i}>{renderInlineMarkdown(it)}</li>
           ))}
         </ol>
       );
@@ -51,7 +87,7 @@ function renderMarkdownLines(markdown: string) {
       elements.push(
         <blockquote key={`quote-${elements.length}`} className="vh-blog-prose-blockquote">
           {currentQuote.map((it, i) => (
-            <p key={i} dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(it) }} />
+            <p key={i}>{renderInlineMarkdown(it)}</p>
           ))}
         </blockquote>
       );
@@ -87,15 +123,15 @@ function renderMarkdownLines(markdown: string) {
     } else {
       flushAll();
       if (trimmed.startsWith("# ")) {
-        elements.push(<h1 key={index} className="vh-blog-prose-h1" dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^#\s+/, "")) }} />);
+        elements.push(<h1 key={index} className="vh-blog-prose-h1">{renderInlineMarkdown(trimmed.replace(/^#\s+/, ""))}</h1>);
       } else if (trimmed.startsWith("## ")) {
-        elements.push(<h2 key={index} className="vh-blog-prose-h2" dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^##\s+/, "")) }} />);
+        elements.push(<h2 key={index} className="vh-blog-prose-h2">{renderInlineMarkdown(trimmed.replace(/^##\s+/, ""))}</h2>);
       } else if (trimmed.startsWith("### ")) {
-        elements.push(<h3 key={index} className="vh-blog-prose-h3" dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^###\s+/, "")) }} />);
+        elements.push(<h3 key={index} className="vh-blog-prose-h3">{renderInlineMarkdown(trimmed.replace(/^###\s+/, ""))}</h3>);
       } else if (trimmed.startsWith("#### ")) {
-        elements.push(<h4 key={index} className="vh-blog-prose-h4" dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed.replace(/^####\s+/, "")) }} />);
+        elements.push(<h4 key={index} className="vh-blog-prose-h4">{renderInlineMarkdown(trimmed.replace(/^####\s+/, ""))}</h4>);
       } else {
-        elements.push(<p key={index} className="vh-blog-prose-p" dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(trimmed) }} />);
+        elements.push(<p key={index} className="vh-blog-prose-p">{renderInlineMarkdown(trimmed)}</p>);
       }
     }
   });

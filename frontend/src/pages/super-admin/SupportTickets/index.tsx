@@ -643,11 +643,11 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                                     padding: "2px 8px",
                                     borderRadius: "12px",
                                     background: "var(--primary, #b91c2b)",
-                                    color: "#ffffff",
+                                    color: "var(--white)",
                                     boxShadow: "0 1px 4px rgba(185, 28, 43, 0.25)",
                                   }}
                                 >
-                                  <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff" }} />
+                                  <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "currentColor" }} />
                                   {unreadMsgCount > 1 ? `${unreadMsgCount} Msgs` : "Unread"}
                                 </span>
                               )}
@@ -733,7 +733,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                   loading={saving}
                   leftIcon={<Icon name="check" />}
                   onClick={() => void reopenChat()}
-                  style={{ background: "#10b981", color: "#ffffff", borderColor: "#10b981" }}
+                  style={{ background: "var(--success)", color: "var(--white)", borderColor: "var(--success)" }}
                 >
                   Reopen Ticket
                 </Button>
@@ -774,7 +774,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                     <Icon name="download" style={{ width: "15px", height: "15px", transform: "rotate(180deg)" }} />
                     <span>Attach</span>
                     {attachedFiles.length > 0 && (
-                      <span style={{ fontSize: "0.725rem", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", background: "var(--primary, #b91c2b)", color: "#ffffff" }}>
+                      <span style={{ fontSize: "0.725rem", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", background: "var(--primary, #b91c2b)", color: "var(--white)" }}>
                         {attachedFiles.length}
                       </span>
                     )}
@@ -1080,4 +1080,3 @@ export function SupportTickets() {
 export function InstituteSupportTickets() {
   return <SupportTicketInbox scope="institute" />;
 }
-

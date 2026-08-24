@@ -85,8 +85,8 @@ export function PlanForm() {
             usd_price: data.usd_price ? String(Number(data.usd_price)) : "",
           };
           setForm(loadedForm);
-          const loadedAudience: PlanAudience = data.audience === "institutes" ? "institutes" : audience;
-          if (data.audience === "institutes") setAudience("institutes");
+          const loadedAudience: PlanAudience = data.audience === "institutes" ? "institutes" : "direct_students";
+          setAudience(loadedAudience);
           const loadedSelected = new Set<number>((data.modules || []).map((module: PlanModule) => module.id));
           setSelected(loadedSelected);
           // Features are required; start with one blank row so plans saved

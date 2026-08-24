@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
@@ -104,11 +104,7 @@ export function ContactSocialTab() {
   const [addBusy, setAddBusy] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await apiClient.get<{ contact: ContactInfo; social_links: SocialLinkRow[] }>(
@@ -123,7 +119,11 @@ export function ContactSocialTab() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [t.loadError]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   async function saveContact(event: FormEvent) {
     event.preventDefault();

@@ -1,8 +1,9 @@
 import { type ChangeEvent, type FormEvent, useState } from "react";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { fromDateInputValue, toDateInputValue } from "@/components/profileContactFieldsUtils";
+import { ProfileContactFields } from "@/components/ProfileContactFields";
 import { ProfileEditorShell } from "@/components/ProfileEditorShell";
-import { fromDateInputValue, ProfileContactFields, toDateInputValue } from "@/components/ProfileContactFields";
 import { RequiredMark } from "@/components/ui";
 import { noChangesMessage } from "@/content/common.strings";
 import { useAuthStore } from "@/store/authStore";

@@ -24,7 +24,12 @@ interface SharedPassagePanelProps {
 export function SharedPassagePanel({ part, isEditable, busy, onSave, onDelete }: SharedPassagePanelProps) {
   const t = strings.sharedPassage;
   const storedPassage = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`vh.passage.${part.id}`) || "" : "";
-  const saved = (part.questions[0]?.passage ?? storedPassage).trim();
+  const savedQuestionPassage = part.questions[0]?.passage;
+  const saved = (savedQuestionPassage ?? storedPassage).trim();
+  const savedSignature = useMemo(
+    () => part.questions.map((question) => `${question.id}:${question.passage ?? ""}`).join("|"),
+    [part.questions],
+  );
   const [draft, setDraft] = useState(saved);
   const [isEditing, setIsEditing] = useState(saved.length === 0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -32,14 +37,14 @@ export function SharedPassagePanel({ part, isEditable, busy, onSave, onDelete }:
   // Re-sync when the part changes or the module reloads after a save.
   useEffect(() => {
     const currentStored = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`vh.passage.${part.id}`) || "" : "";
-    const effective = (part.questions[0]?.passage ?? currentStored).trim();
+    const effective = (savedQuestionPassage ?? currentStored).trim();
     setDraft(effective);
     setIsEditing(effective.length === 0);
-  }, [part.id]);
+  }, [part.id, savedQuestionPassage, savedSignature]);
 
   useEffect(() => {
-    if (saved.length > 0 && !draft.trim()) {
-      setDraft(saved);
+    if (saved.length > 0) {
+      setDraft((current) => current.trim() ? current : saved);
     }
   }, [saved]);
 

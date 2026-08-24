@@ -90,8 +90,8 @@ export function GapTaskComposer({
   }, [part.id, savedSignature, optionCount]);
 
   useEffect(() => {
-    if (savedPassage.length > 0 && !passage.trim()) {
-      setPassage(savedPassage);
+    if (savedPassage.length > 0) {
+      setPassage((current) => current.trim() ? current : savedPassage);
     }
   }, [savedPassage]);
 

@@ -23,6 +23,17 @@ def _require(db: Session, key: str) -> str:
     return value
 
 
+def is_configuration_error(exc: Exception) -> bool:
+    """True when email is disabled/incomplete by configuration, not a send failure."""
+    if not isinstance(exc, HTTPException) or exc.status_code != status.HTTP_400_BAD_REQUEST:
+        return False
+    detail = str(exc.detail)
+    return (
+        detail.startswith("SMTP is not fully configured")
+        or detail == "Stored SMTP password cannot be decrypted. Re-enter and save the SMTP password."
+    )
+
+
 def _get_ssl_context() -> ssl.SSLContext:
     try:
         import certifi

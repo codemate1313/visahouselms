@@ -1,7 +1,8 @@
 import type { Attempt } from "@/api/types";
 import type { AttemptMetrics } from "@/pages/student/attemptMetrics";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
-import { RADIAL_COLORS, ResultRadial } from "./ResultRadial";
+import { ResultRadial } from "./ResultRadial";
+import { RADIAL_COLORS } from "./resultRadialColors";
 import { LinkButton } from "@/components/ui";
 import { formatDate } from "@/utils/date";
 

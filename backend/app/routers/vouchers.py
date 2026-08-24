@@ -1,9 +1,12 @@
+import uuid
 from decimal import Decimal
 from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.config import settings
+from app.core.uploads import read_validated_image
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.role import SUPER_ADMIN
@@ -11,6 +14,8 @@ from app.models.user import User
 from app.services import voucher_import_service, voucher_service
 
 router = APIRouter(prefix="/vouchers", tags=["vouchers"])
+MAX_VOUCHER_IMAGE_BYTES = 2 * 1024 * 1024
+MAX_VOUCHER_IMPORT_BYTES = 5 * 1024 * 1024
 
 
 # Pydantic Schemas
@@ -165,7 +170,7 @@ def get_student_vouchers(
 # ==========================================
 
 def _require_super_admin(current_user: User = Depends(get_current_user)):
-    if current_user.role != SUPER_ADMIN and not getattr(current_user, "is_owner", False):
+    if current_user.role.name != SUPER_ADMIN and not getattr(current_user, "is_owner", False):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Super Admin access required")
     return current_user
 
@@ -262,21 +267,16 @@ async def admin_upload_voucher_image(
     file: UploadFile = File(...),
     admin: User = Depends(_require_super_admin),
 ):
-    import uuid
-    from app.config import settings
-    ext = ".jpg"
-    if file.filename:
-        ext = f".{file.filename.split('.')[-1].lower()}"
-    
+    ext, content = await read_validated_image(file, MAX_VOUCHER_IMAGE_BYTES, "Voucher image")
+
     images_dir = settings.storage_path / "vouchers"
     images_dir.mkdir(parents=True, exist_ok=True)
-    
+
     filename = f"offering_{uuid.uuid4().hex}{ext}"
     relative_path = f"vouchers/{filename}"
-    
-    content = await file.read()
+
     (settings.storage_path / relative_path).write_bytes(content)
-    
+
     return {
         "image_path": relative_path,
         "url": f"/storage/{relative_path}",
@@ -294,7 +294,12 @@ async def admin_bulk_upload_voucher_codes(
     if not file or not file.filename:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is required")
 
-    content = await file.read()
+    content = await file.read(MAX_VOUCHER_IMPORT_BYTES + 1)
+    if len(content) > MAX_VOUCHER_IMPORT_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Voucher import files must be {MAX_VOUCHER_IMPORT_BYTES // 1024 // 1024} MB or smaller",
+        )
     extracted_codes = voucher_import_service.extract_voucher_codes_from_bytes(file.filename, content)
 
     if not extracted_codes:

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { PublicHeader } from "@/components/publicSite/PublicHeader";
@@ -249,8 +249,8 @@ export function Plans() {
 
   const showStudentPlans = payload?.show_direct ?? false;
   const showInstitutePlans = payload?.show_institutes ?? false;
-  const studentPlans = payload?.direct_students ?? [];
-  const institutePlans = payload?.institutes ?? [];
+  const studentPlans = useMemo(() => payload?.direct_students ?? [], [payload?.direct_students]);
+  const institutePlans = useMemo(() => payload?.institutes ?? [], [payload?.institutes]);
   const anyCatalogueShown = showStudentPlans || showInstitutePlans;
 
   const audienceOptions = [

@@ -930,7 +930,7 @@ export function TestRunner() {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [attempt?.id, attempt?.is_final, attempt?.status, activeHeartbeatPartId, handleViolationPolicy, securityAuthorized, id, securityHeaders, user?.email]);
+  }, [attempt?.id, attempt?.is_final, attempt?.status, activeHeartbeatPartId, handleViolationPolicy, proctorArmed, securityAuthorized, id, securityHeaders, user?.email]);
 
   useEffect(() => {
     if (!attempt?.is_final || attempt.status !== "in_progress") return;

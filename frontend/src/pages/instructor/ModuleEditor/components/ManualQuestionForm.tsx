@@ -96,7 +96,7 @@ export function ManualQuestionForm({
         onManualChange({ ...manual, prompt: targetPrompt });
       }
     }
-  }, [isListening1, questionIndex, manual.prompt, onManualChange]);
+  }, [isListening1, questionIndex, manual, manual.prompt, onManualChange]);
   const showsBlankGuidance =
     (manual.question_type === "fill_blank" ||
       part.answer_constraints.inline_marker_required ||

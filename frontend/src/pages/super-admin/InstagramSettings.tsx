@@ -39,6 +39,12 @@ const LIMIT_OPTIONS = [
   { value: 16, label: "16 items", sublabel: "Maximum" },
 ];
 
+const modalText = "var(--text)";
+const modalMutedText = "var(--text-muted)";
+const modalFieldText = "var(--text)";
+const modalOptionBg = "var(--surface-muted)";
+const modalRequired = "var(--danger)";
+
 export function InstagramSettings() {
   const [data, setData] = useState<InstagramSettingsData | null>(null);
   const [isEnabled, setIsEnabled] = useState(true);
@@ -950,7 +956,7 @@ export function InstagramSettings() {
                     background: "linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
                     display: "grid",
                     placeItems: "center",
-                    color: "#fff",
+                    color: "var(--white)",
                     boxShadow: "0 4px 14px rgba(220, 39, 67, 0.35)",
                     flexShrink: 0,
                   }}
@@ -962,8 +968,8 @@ export function InstagramSettings() {
                   </svg>
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.01em" }}>Add Reel / Post by URL</h3>
-                  <p style={{ margin: "2px 0 0", fontSize: 12.5, color: "#94a3b8" }}>Import any public Instagram Reel or Post directly</p>
+                  <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: modalText, letterSpacing: "-0.01em" }}>Add Reel / Post by URL</h3>
+                  <p style={{ margin: "2px 0 0", fontSize: 12.5, color: modalMutedText }}>Import any public Instagram Reel or Post directly</p>
                 </div>
               </div>
 
@@ -992,8 +998,8 @@ export function InstagramSettings() {
             <form onSubmit={handleAddReelByUrl}>
               {/* URL Input */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
-                  <span>Instagram URL <span style={{ color: "#f43f5e" }}>*</span></span>
+                <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>
+                  <span>Instagram URL <span style={{ color: modalRequired }}>*</span></span>
                   <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 6, background: reelMediaType === "REEL" ? "rgba(225, 48, 108, 0.18)" : "rgba(59, 130, 246, 0.18)", color: reelMediaType === "REEL" ? "#ff6b8b" : "#60a5fa", border: `1px solid ${reelMediaType === "REEL" ? "rgba(225, 48, 108, 0.3)" : "rgba(59, 130, 246, 0.3)"}` }}>
                     {reelMediaType === "REEL" ? "▶ REEL DETECTED" : "🖼 POST DETECTED"}
                   </span>
@@ -1011,21 +1017,21 @@ export function InstagramSettings() {
                     borderRadius: 10,
                     background: "rgba(255, 255, 255, 0.08)",
                     border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                    color: "#ffffff",
+                    color: modalFieldText,
                     outline: "none",
                     boxSizing: "border-box",
                   }}
                   autoFocus
                 />
-                <p style={{ marginTop: 6, marginBottom: 0, fontSize: 12, color: "#94a3b8" }}>
+                <p style={{ marginTop: 6, marginBottom: 0, fontSize: 12, color: modalMutedText }}>
                   Paste any Instagram Reel or Post link.
                 </p>
               </div>
 
               {/* Thumbnail URL Input */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
-                  Thumbnail / Cover Image URL <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8" }}>(Optional)</span>
+                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>
+                  Thumbnail / Cover Image URL <span style={{ fontSize: 12, fontWeight: 500, color: modalMutedText }}>(Optional)</span>
                 </label>
                 <input
                   type="url"
@@ -1039,20 +1045,20 @@ export function InstagramSettings() {
                     borderRadius: 10,
                     background: "rgba(255, 255, 255, 0.08)",
                     border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                    color: "#ffffff",
+                    color: modalFieldText,
                     outline: "none",
                     boxSizing: "border-box",
                   }}
                 />
-                <p style={{ marginTop: 6, marginBottom: 0, fontSize: 12, color: "#94a3b8" }}>
+                <p style={{ marginTop: 6, marginBottom: 0, fontSize: 12, color: modalMutedText }}>
                   Leave blank to use our high-res education cover.
                 </p>
               </div>
 
               {/* Caption */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
-                  Caption / Description <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8" }}>(Optional)</span>
+                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>
+                  Caption / Description <span style={{ fontSize: 12, fontWeight: 500, color: modalMutedText }}>(Optional)</span>
                 </label>
                 <textarea
                   rows={3}
@@ -1066,7 +1072,7 @@ export function InstagramSettings() {
                     borderRadius: 10,
                     background: "rgba(255, 255, 255, 0.08)",
                     border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                    color: "#ffffff",
+                    color: modalFieldText,
                     outline: "none",
                     resize: "vertical",
                     boxSizing: "border-box",
@@ -1078,7 +1084,7 @@ export function InstagramSettings() {
               {/* Stats */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>Like Count</label>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>Like Count</label>
                   <input
                     type="number"
                     min="0"
@@ -1091,14 +1097,14 @@ export function InstagramSettings() {
                       borderRadius: 10,
                       background: "rgba(255, 255, 255, 0.08)",
                       border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                      color: "#ffffff",
+                      color: modalFieldText,
                       outline: "none",
                       boxSizing: "border-box",
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>View Count</label>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>View Count</label>
                   <input
                     type="number"
                     min="0"
@@ -1111,7 +1117,7 @@ export function InstagramSettings() {
                       borderRadius: 10,
                       background: "rgba(255, 255, 255, 0.08)",
                       border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                      color: "#ffffff",
+                      color: modalFieldText,
                       outline: "none",
                       boxSizing: "border-box",
                     }}
@@ -1128,7 +1134,7 @@ export function InstagramSettings() {
                   style={{
                     background: "rgba(255, 255, 255, 0.08)",
                     border: "1px solid rgba(255, 255, 255, 0.16)",
-                    color: "#ffffff",
+                    color: modalText,
                     padding: "10px 20px",
                     borderRadius: 10,
                     fontWeight: 650,
@@ -1144,7 +1150,7 @@ export function InstagramSettings() {
                   style={{
                     background: "linear-gradient(135deg, #E1306C, #C13584, #833AB4)",
                     border: "none",
-                    color: "#ffffff",
+                    color: "var(--white)",
                     padding: "10px 24px",
                     borderRadius: 10,
                     fontWeight: 750,
@@ -1192,7 +1198,7 @@ export function InstagramSettings() {
               maxWidth: 540,
               padding: "28px",
               position: "relative",
-              color: "#ffffff",
+              color: modalText,
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1207,7 +1213,7 @@ export function InstagramSettings() {
                     background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)",
                     display: "grid",
                     placeItems: "center",
-                    color: "#fff",
+                    color: "var(--white)",
                     boxShadow: "0 4px 14px rgba(99, 102, 241, 0.35)",
                     flexShrink: 0,
                   }}
@@ -1218,8 +1224,8 @@ export function InstagramSettings() {
                   </svg>
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.01em" }}>Edit Reel / Post</h3>
-                  <p style={{ margin: "2px 0 0", fontSize: 12.5, color: "#94a3b8" }}>Modify thumbnail, caption, or engagement metrics</p>
+                  <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: modalText, letterSpacing: "-0.01em" }}>Edit Reel / Post</h3>
+                  <p style={{ margin: "2px 0 0", fontSize: 12.5, color: modalMutedText }}>Modify thumbnail, caption, or engagement metrics</p>
                 </div>
               </div>
 
@@ -1249,7 +1255,7 @@ export function InstagramSettings() {
               {/* Type Selection & Permalink */}
               <div style={{ display: "grid", gridTemplateColumns: "130px 1fr", gap: 12, marginBottom: 18 }}>
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>Type</label>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>Type</label>
                   <select
                     value={editMediaType}
                     onChange={(e) => setEditMediaType(e.target.value as "REEL" | "POST")}
@@ -1260,18 +1266,18 @@ export function InstagramSettings() {
                       borderRadius: 10,
                       background: "rgba(255, 255, 255, 0.08)",
                       border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                      color: "#ffffff",
+                      color: modalFieldText,
                       outline: "none",
                       boxSizing: "border-box",
                     }}
                   >
-                    <option value="REEL" style={{ background: "#1e293b", color: "#fff" }}>▶ Reel</option>
-                    <option value="POST" style={{ background: "#1e293b", color: "#fff" }}>🖼 Post</option>
+                    <option value="REEL" style={{ background: modalOptionBg, color: modalFieldText }}>▶ Reel</option>
+                    <option value="POST" style={{ background: modalOptionBg, color: modalFieldText }}>🖼 Post</option>
                   </select>
                 </div>
 
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>Instagram URL</label>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>Instagram URL</label>
                   <input
                     type="url"
                     required
@@ -1285,7 +1291,7 @@ export function InstagramSettings() {
                       borderRadius: 10,
                       background: "rgba(255, 255, 255, 0.08)",
                       border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                      color: "#ffffff",
+                      color: modalFieldText,
                       outline: "none",
                       boxSizing: "border-box",
                     }}
@@ -1295,7 +1301,7 @@ export function InstagramSettings() {
 
               {/* Thumbnail URL Input */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>
                   Thumbnail / Cover Image URL
                 </label>
                 <input
@@ -1310,7 +1316,7 @@ export function InstagramSettings() {
                     borderRadius: 10,
                     background: "rgba(255, 255, 255, 0.08)",
                     border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                    color: "#ffffff",
+                    color: modalFieldText,
                     outline: "none",
                     boxSizing: "border-box",
                   }}
@@ -1319,7 +1325,7 @@ export function InstagramSettings() {
 
               {/* Caption */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>
                   Caption / Description
                 </label>
                 <textarea
@@ -1334,7 +1340,7 @@ export function InstagramSettings() {
                     borderRadius: 10,
                     background: "rgba(255, 255, 255, 0.08)",
                     border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                    color: "#ffffff",
+                    color: modalFieldText,
                     outline: "none",
                     resize: "vertical",
                     boxSizing: "border-box",
@@ -1346,7 +1352,7 @@ export function InstagramSettings() {
               {/* Stats */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>Like Count</label>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>Like Count</label>
                   <input
                     type="number"
                     min="0"
@@ -1359,14 +1365,14 @@ export function InstagramSettings() {
                       borderRadius: 10,
                       background: "rgba(255, 255, 255, 0.08)",
                       border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                      color: "#ffffff",
+                      color: modalFieldText,
                       outline: "none",
                       boxSizing: "border-box",
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>View Count</label>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>View Count</label>
                   <input
                     type="number"
                     min="0"
@@ -1379,7 +1385,7 @@ export function InstagramSettings() {
                       borderRadius: 10,
                       background: "rgba(255, 255, 255, 0.08)",
                       border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                      color: "#ffffff",
+                      color: modalFieldText,
                       outline: "none",
                       boxSizing: "border-box",
                     }}
@@ -1396,7 +1402,7 @@ export function InstagramSettings() {
                   style={{
                     background: "rgba(255, 255, 255, 0.08)",
                     border: "1px solid rgba(255, 255, 255, 0.16)",
-                    color: "#ffffff",
+                    color: modalText,
                     padding: "10px 20px",
                     borderRadius: 10,
                     fontWeight: 650,
@@ -1412,7 +1418,7 @@ export function InstagramSettings() {
                   style={{
                     background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
                     border: "none",
-                    color: "#ffffff",
+                    color: "var(--white)",
                     padding: "10px 24px",
                     borderRadius: 10,
                     fontWeight: 750,
