@@ -7841,7 +7841,7 @@ textarea:focus {
  * own themed appearance — this rule hardcodes a rose fill that does not follow
  * the portal's sidebar color, and must not win over the design system.
  */
-.filter-bar button:not(.searchable-select-trigger):not(.export-btn):not(.ui-btn) {
+.filter-bar button:not(.searchable-select-trigger):not(.export-btn):not(.ui-btn):not(.ui-search-input-clear) {
   height: 44px;
   padding: 0 24px;
   font-size: 14px;
@@ -7859,13 +7859,13 @@ textarea:focus {
   justify-content: center;
   gap: 8px;
 }
-.filter-bar button:not(.searchable-select-trigger):not(.export-btn):not(.ui-btn):hover {
+.filter-bar button:not(.searchable-select-trigger):not(.export-btn):not(.ui-btn):not(.ui-search-input-clear):hover {
   background: #be123c;
   box-shadow: 0 6px 20px rgba(225, 29, 72, 0.35);
   transform: translateY(-1px);
 }
 
-.filter-bar button:not(.searchable-select-trigger):not(.export-btn):not(.ui-btn):active {
+.filter-bar button:not(.searchable-select-trigger):not(.export-btn):not(.ui-btn):not(.ui-search-input-clear):active {
   transform: translateY(0);
 }
 

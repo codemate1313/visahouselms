@@ -1721,11 +1721,11 @@
 
   .super-admin-portal .filter-bar input,
   .super-admin-portal .filter-bar select,
-  .super-admin-portal .filter-bar button:not(.export-btn),
+  .super-admin-portal .filter-bar button:not(.export-btn):not(.ui-search-input-clear),
   .super-admin-portal .filter-bar .searchable-select-container,
   .super-admin-portal .course-filter-bar input,
   .super-admin-portal .course-filter-bar select,
-  .super-admin-portal .course-filter-bar button:not(.export-btn),
+  .super-admin-portal .course-filter-bar button:not(.export-btn):not(.ui-search-input-clear),
   .super-admin-portal .course-filter-bar .searchable-select-container {
     width: 100% !important;
     max-width: 100% !important;
