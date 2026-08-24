@@ -980,7 +980,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 }
 
 [data-theme="dark"] .daily-fact-card {
-  background: #202636;
+  background: #16161a;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
@@ -1097,7 +1097,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 }
 
 [data-theme="dark"] .daily-fact-nav-btn {
-  background: rgba(30, 41, 59, 0.85);
+  background: rgba(22, 22, 26, 0.85);
   color: #f1f5f9;
   border-color: rgba(255, 255, 255, 0.06);
 }
@@ -1123,7 +1123,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 }
 
 [data-theme="dark"] .daily-fact-image-link {
-  background: #181d28;
+  background: #16161a;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -1181,7 +1181,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 }
 
 [data-theme="dark"] .daily-completion-card {
-  background: rgba(30, 41, 59, 0.45);
+  background: rgba(22, 22, 26, 0.45);
   border-color: rgba(255, 255, 255, 0.08);
 }
 

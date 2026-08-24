@@ -49,7 +49,7 @@
 }
 
 [data-theme="dark"] .exam-news-filters .ui-segmented-control {
-  background: rgba(30, 41, 59, 0.7) !important;
+  background: rgba(22, 22, 26, 0.7) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
 }
@@ -111,7 +111,7 @@
 }
 
 [data-theme="dark"] .exam-news-clean-card {
-  background: rgba(30, 41, 59, 0.6);
+  background: rgba(22, 22, 26, 0.6);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
 }
@@ -360,7 +360,7 @@
 }
 
 [data-theme="dark"] .exam-news-sidebar {
-  background: rgba(30, 41, 59, 0.6);
+  background: rgba(22, 22, 26, 0.6);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
