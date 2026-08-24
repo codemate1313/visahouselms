@@ -197,10 +197,10 @@ def update_instructor(
     ip: Optional[str],
 ) -> dict:
     user = get_instructor_or_404(db, instructor_id)
-    if email is not None and email != user.email:
-        if db.query(User).filter(User.email == email, User.id != user.id).first() is not None:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
-        user.email = email
+    if email is not None and account_service.normalize_email(email) != account_service.normalize_email(user.email):
+        user.email = account_service.ensure_user_credentials_available(
+            db, email, exclude_user_id=user.id
+        )
     if first_name is not None:
         user.first_name = first_name
     if last_name is not None:

@@ -986,9 +986,6 @@ button.secondary-button {
 
 .import-result-modal {
   width: min(920px, 100%);
-  max-height: calc(100vh - 40px);
-  max-height: calc(100dvh - 40px);
-  overflow-y: auto;
 }
 
 .import-result-modal h3 {
@@ -998,6 +995,42 @@ button.secondary-button {
 
 .import-result-section {
   margin-top: 24px;
+}
+
+.import-result-summary {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.import-invalid-email-notice {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--warning) 52%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
+}
+
+.import-invalid-email-heading {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  color: var(--warning);
+}
+
+.import-invalid-email-heading > svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+
+.import-invalid-email-heading h3 {
+  color: var(--text);
+}
+
+.import-invalid-email-heading p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
 }
 
 .compact-table-wrap {

@@ -296,10 +296,10 @@ def update_super_admin(
     _require_owner(actor)
     _assert_owner_not_mutated(actor, user, "changed")
 
-    if email is not None and email != user.email:
-        if db.query(User).filter(User.email == email, User.id != user.id).first() is not None:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
-        user.email = email
+    if email is not None and account_service.normalize_email(email) != account_service.normalize_email(user.email):
+        user.email = account_service.ensure_user_credentials_available(
+            db, email, exclude_user_id=user.id
+        )
     if first_name is not None:
         user.first_name = first_name
     if last_name is not None:
@@ -621,10 +621,10 @@ def update_developer_account(
     user = get_developer_managed_account_or_404(db, account_id)
     _assert_owner_not_mutated(actor, user, "changed")
 
-    if email is not None and email != user.email:
-        if db.query(User).filter(User.email == email, User.id != user.id).first() is not None:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
-        user.email = email
+    if email is not None and account_service.normalize_email(email) != account_service.normalize_email(user.email):
+        user.email = account_service.ensure_user_credentials_available(
+            db, email, exclude_user_id=user.id
+        )
     if first_name is not None:
         user.first_name = first_name
     if last_name is not None:
@@ -973,10 +973,10 @@ def update_direct_student(
     avatar_path: Optional[str] = None,
 ) -> User:
     user = get_direct_student_or_404(db, user_id)
-    if email is not None and email != user.email:
-        if db.query(User).filter(func.lower(User.email) == email.lower(), User.id != user.id).first() is not None:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
-        user.email = email
+    if email is not None and account_service.normalize_email(email) != account_service.normalize_email(user.email):
+        user.email = account_service.ensure_user_credentials_available(
+            db, email, exclude_user_id=user.id
+        )
     if first_name is not None:
         user.first_name = first_name
     if last_name is not None:
@@ -1017,10 +1017,10 @@ def update_directory_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Use the role-specific editor for this account",
         )
-    if email is not None and email != user.email:
-        if db.query(User).filter(func.lower(User.email) == email.lower(), User.id != user.id).first() is not None:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
-        user.email = email
+    if email is not None and account_service.normalize_email(email) != account_service.normalize_email(user.email):
+        user.email = account_service.ensure_user_credentials_available(
+            db, email, exclude_user_id=user.id
+        )
     if first_name is not None:
         user.first_name = first_name
     if last_name is not None:

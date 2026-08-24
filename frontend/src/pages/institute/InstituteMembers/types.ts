@@ -32,7 +32,13 @@ export interface InstituteMember {
 }
 
 export interface ImportResult {
-  summary: { total_rows: number; created: number; skipped: number; remaining_slots: number };
+  summary: {
+    total_rows: number;
+    created: number;
+    skipped: number;
+    invalid_emails?: number;
+    remaining_slots: number;
+  };
   created: Array<{
     id: number;
     email: string;
@@ -42,7 +48,8 @@ export interface ImportResult {
     access_starts_on: string;
     access_ends_on: string;
   }>;
-  skipped: Array<{ row: number; email: string | null; reason: string }>;
+  skipped: Array<{ row: number; email: string | null; reason: string; invalid_email?: boolean }>;
+  invalid_emails?: Array<{ row: number; email: string | null; reason: string }>;
 }
 
 export interface MemberCapacity {

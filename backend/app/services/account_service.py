@@ -12,13 +12,18 @@ from app.core.uploads import read_compressed_profile_image
 from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.models.user_session import UserSession
-from app.services import geoip_service
+from app.services import email_validation_service, geoip_service
 
 USER_CREDENTIALS_CONFLICT_DETAIL = "These creds belong to a user"
+INVALID_ACCOUNT_EMAIL_DETAIL = email_validation_service.INVALID_ACCOUNT_EMAIL_DETAIL
 
 
 def normalize_email(email: str) -> str:
     return email.strip().lower()
+
+
+def validate_account_email(email: str) -> str:
+    return email_validation_service.validate_account_email(email)
 
 
 def ensure_user_credentials_available(
@@ -27,7 +32,7 @@ def ensure_user_credentials_available(
     *,
     exclude_user_id: Optional[int] = None,
 ) -> str:
-    normalized_email = normalize_email(email)
+    normalized_email = validate_account_email(email)
     query = db.query(User).filter(func.lower(User.email) == normalized_email)
     if exclude_user_id is not None:
         query = query.filter(User.id != exclude_user_id)
@@ -102,10 +107,8 @@ def update_profile(
     address: Optional[str] = None,
     gender: Optional[str] = None,
 ) -> User:
-    if email is not None and email != actor.email:
-        if db.query(User).filter(User.email == email, User.id != actor.id).first() is not None:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
-        actor.email = email
+    if email is not None and normalize_email(email) != normalize_email(actor.email):
+        actor.email = ensure_user_credentials_available(db, email, exclude_user_id=actor.id)
     if first_name is not None:
         actor.first_name = first_name
     if last_name is not None:

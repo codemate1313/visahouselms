@@ -140,9 +140,14 @@ export const instituteMembersStrings = {
     student: "Student",
     email: "Email",
     temporaryPassword: "Temporary password",
+    invalidEmailsHeading: "Invalid email accounts were discarded",
+    invalidEmailsMessage:
+      "These email addresses were invalid or could not receive email. Please check them and try creating the accounts again.",
     skippedRowsHeading: "Skipped rows",
+    otherSkippedRowsHeading: "Other skipped rows",
     row: "Row",
     reason: "Reason",
+    done: "Done",
   },
   confirm: {
     deleteOne: (email: string) =>

@@ -18,7 +18,7 @@ from app.models.subscription import Subscription
 from app.models.user import User
 from app.models.user_device import UserDevice
 from app.models.user_session import UserSession
-from app.services import institute_admin_service, payment_service
+from app.services import account_service, institute_admin_service, payment_service
 from openpyxl import Workbook
 
 
@@ -156,6 +156,28 @@ class InstituteAdminServiceTests(unittest.TestCase):
                 access_ends_on=date.today() + timedelta(days=20),
             )
         self.assertEqual(raised.exception.status_code, 402)
+
+    def test_member_creation_discards_an_invalid_email_without_adding_a_user(self):
+        before_count = self.db.query(User).count()
+
+        with self.assertRaises(HTTPException) as raised:
+            institute_admin_service.create_member(
+                self.db,
+                self.actor,
+                email="student@definitely-not-an-email-domain.invalid",
+                first_name="Invalid",
+                last_name="Email",
+                role_name=STUDENT,
+                phone_number=None,
+                address=None,
+                ip=None,
+                access_starts_on=date.today(),
+                access_ends_on=date.today() + timedelta(days=20),
+            )
+
+        self.assertEqual(raised.exception.status_code, 422)
+        self.assertEqual(raised.exception.detail, account_service.INVALID_ACCOUNT_EMAIL_DETAIL)
+        self.assertEqual(self.db.query(User).count(), before_count)
 
     def test_member_capacity_reports_zero_staff_limit(self):
         plan = self.db.query(Plan).filter(Plan.name == "Institute Plan").one()
@@ -361,8 +383,10 @@ class InstituteAdminServiceTests(unittest.TestCase):
         self.assertEqual(result["summary"]["skipped"], 3)
         reasons = {row["reason"] for row in result["skipped"]}
         self.assertIn("Duplicate email in file", reasons)
-        self.assertIn("Invalid email address", reasons)
+        self.assertIn(account_service.INVALID_ACCOUNT_EMAIL_DETAIL, reasons)
         self.assertIn("Student plan limit reached", reasons)
+        self.assertEqual(result["summary"]["invalid_emails"], 1)
+        self.assertEqual(result["invalid_emails"][0]["email"], "not-an-email")
 
     def test_xlsx_import_accepts_full_name_column(self):
         plan = self.db.query(Plan).filter(Plan.name == "Institute Plan").one()

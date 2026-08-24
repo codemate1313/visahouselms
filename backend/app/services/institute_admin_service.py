@@ -483,10 +483,11 @@ def update_member(
     if user.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Archived members cannot be edited")
     if "email" in fields_set and data.get("email") is not None:
-        normalized_email = str(data["email"]).strip().lower()
-        if db.query(User).filter(User.email == normalized_email, User.id != user.id).first() is not None:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
-        user.email = normalized_email
+        candidate_email = str(data["email"])
+        if account_service.normalize_email(candidate_email) != account_service.normalize_email(user.email):
+            user.email = account_service.ensure_user_credentials_available(
+                db, candidate_email, exclude_user_id=user.id
+            )
     for field in ("first_name", "last_name", "phone_number", "address"):
         if field in fields_set:
             setattr(user, field, data.get(field))
@@ -1074,13 +1075,17 @@ def import_students(
     for row_number, row in enumerate(rows, start=2):
         email, first_name, last_name, phone, address = _import_identity(row)
         reason = None
+        invalid_email = False
         if not email or not first_name or not last_name:
             reason = "Email and student name are required"
+            invalid_email = not email
         else:
             try:
                 email = str(EMAIL_ADAPTER.validate_python(email)).lower()
-            except ValidationError:
-                reason = "Invalid email address"
+                email = account_service.validate_account_email(email)
+            except (ValidationError, HTTPException):
+                reason = account_service.INVALID_ACCOUNT_EMAIL_DETAIL
+                invalid_email = True
         if reason is None and email in seen:
             reason = "Duplicate email in file"
         seen.add(email)
@@ -1104,7 +1109,14 @@ def import_students(
         if reason is None and len(created) >= available:
             reason = "Student plan limit reached"
         if reason is not None:
-            skipped.append({"row": row_number, "email": email or None, "reason": reason})
+            skipped.append(
+                {
+                    "row": row_number,
+                    "email": email or None,
+                    "reason": reason,
+                    "invalid_email": invalid_email,
+                }
+            )
             continue
 
         temporary_password = _temporary_password()
@@ -1164,15 +1176,22 @@ def import_students(
             link_url="/institute-portal/students",
             institute_id=institute_id,
         )
+    invalid_emails = [
+        {"row": item["row"], "email": item["email"], "reason": item["reason"]}
+        for item in skipped
+        if item.get("invalid_email")
+    ]
     return {
         "summary": {
             "total_rows": len(rows),
             "created": len(created),
             "skipped": len(skipped),
+            "invalid_emails": len(invalid_emails),
             "remaining_slots": max(0, available - len(created)),
         },
         "created": created,
         "skipped": skipped,
+        "invalid_emails": invalid_emails,
     }
 
 
