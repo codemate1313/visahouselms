@@ -2622,8 +2622,7 @@
   font-size: 18px;
 }
 
-.result-overview-meta .ui-link-btn,
-.result-overview-meta .ui-link-btn .ui-btn-label {
+.result-overview-meta .ui-link-btn {
   align-self: flex-start;
   padding: 10px 14px;
   border-radius: var(--radius-xs);
@@ -2632,6 +2631,13 @@
   background: var(--primary) !important;
   border-color: var(--primary) !important;
   box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 28%, transparent) !important;
+}
+
+.result-overview-meta .ui-link-btn .ui-btn-label {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
 }
 
 .result-overview-meta .ui-link-btn:hover,
