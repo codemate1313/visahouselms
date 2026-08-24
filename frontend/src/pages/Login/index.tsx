@@ -51,6 +51,7 @@ export function Login({
   const setSession = useAuthStore((state) => state.setSession);
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
+  const clearToasts = useToastStore((state) => state.clearToasts);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -221,6 +222,7 @@ export function Login({
       return;
     }
     setSession(accessToken, user);
+    clearToasts();
     showSuccess(strings.welcomeToast(roleLabel(user.role)), strings.signedInTitle);
     navigate(destination);
   }

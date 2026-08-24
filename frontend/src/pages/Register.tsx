@@ -20,6 +20,7 @@ export function Register() {
   const setSession = useAuthStore((state) => state.setSession);
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
+  const clearToasts = useToastStore((state) => state.clearToasts);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -52,6 +53,7 @@ export function Register() {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     setSession(accessToken, user);
+    clearToasts();
     navigate("/student/dashboard");
   }
 
