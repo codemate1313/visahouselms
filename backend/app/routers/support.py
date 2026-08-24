@@ -149,15 +149,16 @@ async def post_my_ticket_message(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # Enforce ticket ownership before saving files or adding messages
+    support_service.get_portal_ticket_for_user(db, ticket_id, user)
     attachments: List[str] = []
     if files:
         attachments = await _save_support_attachments(ticket_id, [f for f in files if f and f.filename])
-    ticket = support_service.add_ticket_message(
+    ticket = support_service.add_portal_ticket_message(
         db,
         ticket_id,
+        user=user,
         message_text=message,
-        sender=user,
-        sender_role="customer",
         attachments=attachments or None,
     )
     return support_service.serialize_ticket(ticket)

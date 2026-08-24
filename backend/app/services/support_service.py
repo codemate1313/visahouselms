@@ -713,7 +713,7 @@ def reopen_ticket(
     return ticket
 
 
-def close_portal_ticket(
+def get_portal_ticket_for_user(
     db: Session,
     ticket_id: int,
     user: User,
@@ -732,6 +732,33 @@ def close_portal_ticket(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Support ticket not found.",
         )
+    return ticket
+
+
+def add_portal_ticket_message(
+    db: Session,
+    ticket_id: int,
+    user: User,
+    message_text: str,
+    attachments: Optional[List[str]] = None,
+) -> SupportTicket:
+    ticket = get_portal_ticket_for_user(db, ticket_id, user)
+    return add_ticket_message(
+        db,
+        ticket.id,
+        message_text=message_text,
+        sender=user,
+        sender_role="customer",
+        attachments=attachments,
+    )
+
+
+def close_portal_ticket(
+    db: Session,
+    ticket_id: int,
+    user: User,
+) -> SupportTicket:
+    ticket = get_portal_ticket_for_user(db, ticket_id, user)
     ticket.status = SUPPORT_STATUS_CLOSED
     ticket.closed_by_role = "customer"
     ticket.resolved_at = datetime.now(timezone.utc)
@@ -747,20 +774,7 @@ def reopen_portal_ticket(
     ticket_id: int,
     user: User,
 ) -> SupportTicket:
-    ticket = db.scalar(
-        select(SupportTicket).where(
-            SupportTicket.id == ticket_id,
-            or_(
-                SupportTicket.requester_id == user.id,
-                func.lower(SupportTicket.email) == user.email.strip().lower(),
-            ),
-        )
-    )
-    if not ticket:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Support ticket not found.",
-        )
+    get_portal_ticket_for_user(db, ticket_id, user)
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Only the support team can reopen a closed ticket.",

@@ -342,6 +342,51 @@ class SupportServiceTests(unittest.TestCase):
             user,
         )
 
+    def test_user_cannot_access_or_post_messages_to_other_users_ticket(self) -> None:
+        # Student creates ticket
+        ticket = self._create_portal_ticket(self.student)
+
+        # Other user (instructor from another institute) tries to send message
+        with self.assertRaises(HTTPException) as ctx:
+            support_service.add_portal_ticket_message(
+                self.db,
+                ticket.id,
+                self.other_instructor,
+                "Unauthorized intrusion attempt",
+            )
+        self.assertEqual(ctx.exception.status_code, 404)
+
+        # Other user tries to close the ticket
+        with self.assertRaises(HTTPException) as ctx_close:
+            support_service.close_portal_ticket(
+                self.db,
+                ticket.id,
+                self.other_instructor,
+            )
+        self.assertEqual(ctx_close.exception.status_code, 404)
+
+        # Other user tries to reopen the ticket
+        with self.assertRaises(HTTPException) as ctx_reopen:
+            support_service.reopen_portal_ticket(
+                self.db,
+                ticket.id,
+                self.other_instructor,
+            )
+        self.assertEqual(ctx_reopen.exception.status_code, 404)
+
+    def test_owner_can_post_messages_to_own_ticket(self) -> None:
+        ticket = self._create_portal_ticket(self.student)
+        updated = support_service.add_portal_ticket_message(
+            self.db,
+            ticket.id,
+            self.student,
+            "Here is the additional detail you requested.",
+        )
+        self.assertEqual(updated.id, ticket.id)
+        messages = [m for m in updated.messages if m.message == "Here is the additional detail you requested."]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0].sender_role, "customer")
+
 
 if __name__ == "__main__":
     unittest.main()
