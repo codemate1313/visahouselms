@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Button, Modal } from "@/components/ui";
 import { useDialogStore } from "../store/dialogStore";
 
 export function GlobalDialog() {
@@ -52,34 +53,30 @@ export function GlobalDialog() {
   };
 
   return (
-    <div className="custom-dialog-backdrop" onClick={hideDialog} role="dialog" aria-modal="true">
-      <div className={`custom-dialog-card dialog-type-${type}`} onClick={(e) => e.stopPropagation()}>
-        <div className={`custom-dialog-icon-wrapper icon-theme-${type}`}>
-          {icons[type]}
-        </div>
-
-        <div className="custom-dialog-content">
-          <h3 className="custom-dialog-title">{title || type.toUpperCase()}</h3>
-          <p className="custom-dialog-message">{message}</p>
-        </div>
-
-        <div className="custom-dialog-actions">
-          <button
-            type="button"
-            className={`custom-dialog-btn btn-theme-${type}`}
-            onClick={handleConfirm}
-          >
-            {confirmText}
-          </button>
-        </div>
-
-        {options.autoCloseMs && (
-          <div
-            className="custom-dialog-progress"
-            style={{ animationDuration: `${options.autoCloseMs}ms` }}
-          />
-        )}
+    <Modal
+      open
+      onClose={hideDialog}
+      title={title || type.toUpperCase()}
+      size="sm"
+      className={`custom-dialog-modal dialog-type-${type}`}
+      actions={
+        <Button type="button" className={`custom-dialog-btn btn-theme-${type}`} onClick={handleConfirm}>
+          {confirmText}
+        </Button>
+      }
+    >
+      <div className={`custom-dialog-icon-wrapper icon-theme-${type}`}>
+        {icons[type]}
       </div>
-    </div>
+      <div className="custom-dialog-content">
+        <p className="custom-dialog-message">{message}</p>
+      </div>
+      {options.autoCloseMs && (
+        <div
+          className="custom-dialog-progress"
+          style={{ animationDuration: `${options.autoCloseMs}ms` }}
+        />
+      )}
+    </Modal>
   );
 }

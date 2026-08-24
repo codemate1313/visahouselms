@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { Navigate } from "react-router-dom";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { useStudentAccess } from "@/hooks/useStudentAccess";
 
 /**
@@ -11,7 +12,7 @@ import { useStudentAccess } from "@/hooks/useStudentAccess";
  */
 export function RequireActivePlan({ children }: { children: ReactElement }): ReactElement | null {
   const { loading, hasActivePlan } = useStudentAccess();
-  if (loading) return null;
+  if (loading) return <RouteLoadingState label="Checking student access..." />;
   if (!hasActivePlan) return <Navigate replace to="/student/my-courses" />;
   return children;
 }

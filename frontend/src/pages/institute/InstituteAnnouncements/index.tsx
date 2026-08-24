@@ -8,6 +8,8 @@ import type { AnnouncementStatus, TargetOptions } from "./types";
 import { PublisherPanel } from "./components/PublisherPanel";
 import { AnnouncementHistoryPanel } from "./components/AnnouncementHistoryPanel";
 
+const PUBLISH_FORM_ID = "institute-announcement-publish-form";
+
 export function InstituteAnnouncements() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [targetOptions, setTargetOptions] = useState<TargetOptions>({ students: [] });
@@ -130,7 +132,14 @@ export function InstituteAnnouncements() {
       return !studentQuery || haystack.includes(studentQuery);
     })
     .sort((a, b) => Number(selectedUserIds.includes(b.id)) - Number(selectedUserIds.includes(a.id)) || a.name.localeCompare(b.name));
-  const visibleAnnouncements = announcements.filter((item) => item.status === "published" || item.status === "draft");
+  const visibleAnnouncements = announcements.filter((item) => item.status === "published" || item.status === "scheduled" || item.status === "draft");
+  const submitLabel = busy
+    ? strings.publisher.submitLabels.busy
+    : status === "scheduled"
+      ? strings.publisher.submitLabels.scheduled
+      : status === "draft"
+        ? strings.publisher.submitLabels.draft
+        : strings.publisher.submitLabels.published;
 
   return (
     <div className="announcement-admin-page">
@@ -153,8 +162,14 @@ export function InstituteAnnouncements() {
         onClose={() => setIsCreateOpen(false)}
         title={strings.publisher.dialogTitle}
         size="lg"
+        actions={
+          <Button type="submit" form={PUBLISH_FORM_ID} loading={busy}>
+            {submitLabel}
+          </Button>
+        }
       >
         <PublisherPanel
+          formId={PUBLISH_FORM_ID}
           title={title}
           onTitleChange={setTitle}
           message={message}

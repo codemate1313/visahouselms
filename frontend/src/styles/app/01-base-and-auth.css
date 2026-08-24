@@ -690,6 +690,106 @@ h3 {
   opacity: 0.85;
 }
 
+.forgot-password-state {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.forgot-password-state p,
+.forgot-password-form p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.forgot-password-icon {
+  width: 64px;
+  height: 64px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--success);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--success) 8%, transparent);
+}
+
+.forgot-password-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.forgot-password-form {
+  display: grid;
+  gap: 16px;
+}
+
+.forgot-password-form label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: 4px 0 -6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.forgot-password-input-wrap {
+  position: relative;
+}
+
+.forgot-password-input-wrap svg {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.forgot-password-input-wrap input {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 16px 0 44px;
+  color: var(--text);
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font: inherit;
+  outline: none;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.forgot-password-input-wrap input:focus {
+  background: var(--surface);
+  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
+}
+
+.forgot-password-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  border-left: 4px solid var(--danger);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.forgot-password-error svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
 .form-group input {
   width: 100%;
   padding: 11px 14px;

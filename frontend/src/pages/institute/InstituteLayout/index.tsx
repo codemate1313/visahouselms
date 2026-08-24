@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "@/auth/logout";
 import { GsapRouteAnimator } from "@/components/GsapRouteAnimator";
 import { PortalTopBar } from "@/components/PortalTopBar";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { Sidebar, type MenuItem, type MenuSection } from "@/components/Sidebar";
 import { useInstituteBranding } from "@/hooks/useInstituteBranding";
 import { useInstituteSetup } from "@/hooks/useInstituteSetup";
@@ -34,7 +35,7 @@ export function InstituteLayout() {
     await logoutAndRedirectHome();
   }
 
-  if (setupLoading) return null;
+  if (setupLoading) return <RouteLoadingState label="Loading institute workspace..." />;
 
   const m = strings.menu;
   const instituteItems: MenuItem[] = [];

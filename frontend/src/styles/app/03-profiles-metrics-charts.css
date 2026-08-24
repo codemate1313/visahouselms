@@ -2173,6 +2173,20 @@ button.danger-text:hover,
   animation: dialogPopIn 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.custom-dialog-modal .ui-modal-body {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.custom-dialog-modal .ui-modal-actions {
+  justify-content: stretch;
+}
+
+.custom-dialog-modal .custom-dialog-btn {
+  width: 100%;
+}
+
 @keyframes dialogPopIn {
   from {
     opacity: 0;
@@ -3439,4 +3453,3 @@ button.danger-text:hover,
     transition: none;
   }
 }
-

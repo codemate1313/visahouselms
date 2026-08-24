@@ -145,7 +145,7 @@ function App() {
                 alignItems: "center",
                 justifyContent: "center",
                 minHeight: "100vh",
-                width: "100vw",
+                width: "100%",
                 background: "var(--surface, #ffffff)",
               }}
             >

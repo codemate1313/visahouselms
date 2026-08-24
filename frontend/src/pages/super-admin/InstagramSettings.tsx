@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
+import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { Icon } from "@/components/icons";
 import { SearchableSelect } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
@@ -340,8 +341,8 @@ export function InstagramSettings() {
       });
   };
 
-  const handleClearAllFeedItems = () => {
-    if (!window.confirm(strings.preview.confirmClear)) return;
+  const handleClearAllFeedItems = async () => {
+    if (!(await confirmDelete(strings.preview.confirmClear, "Clear Instagram feed?"))) return;
     setClearingFeed(true);
     apiClient
       .delete<InstagramSettingsData>("/super-admin/instagram-settings/feed-items")
@@ -358,8 +359,12 @@ export function InstagramSettings() {
       });
   };
 
-  const handleDeleteSingleItem = (itemId: string) => {
-    if (!window.confirm(strings.preview.confirmDelete)) return;
+  const handleDeleteSingleItem = async (itemId: string) => {
+    if (!(await confirmAction(strings.preview.confirmDelete, {
+      title: "Delete Instagram item?",
+      confirmText: "Delete item",
+      variant: "danger",
+    }))) return;
     setDeletingItemId(itemId);
     apiClient
       .delete<InstagramSettingsData>(`/super-admin/instagram-settings/feed-items/${itemId}`)

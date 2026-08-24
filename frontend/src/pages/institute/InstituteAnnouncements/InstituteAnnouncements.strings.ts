@@ -49,9 +49,9 @@ export const instituteAnnouncementsStrings = {
   },
   history: {
     title: "Announcement history",
-    description: "Review published notifications and drafts.",
+    description: "Review published, scheduled, and draft notifications.",
     emptyTitle: "No announcements yet",
-    emptyDescription: "Published notifications and drafts will appear here.",
+    emptyDescription: "Published, scheduled, and draft notifications will appear here.",
     audiencePrefix: "Audience",
     scheduledForPrefix: "Scheduled for",
     publishedPrefix: "Published",

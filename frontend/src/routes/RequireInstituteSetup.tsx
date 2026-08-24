@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { useInstituteSetup } from "@/hooks/useInstituteSetup";
 
 const SETUP_PATH = "/institute-portal/setup";
@@ -18,7 +19,7 @@ export function RequireInstituteSetup({ children }: { children: ReactElement }):
   const { loading, needsSetup } = useInstituteSetup();
   const { pathname } = useLocation();
 
-  if (loading) return null;
+  if (loading) return <RouteLoadingState label="Checking institute access..." />;
   if (needsSetup && !ALWAYS_ALLOWED.some((path) => pathname.startsWith(path))) {
     return <Navigate replace to={SETUP_PATH} />;
   }

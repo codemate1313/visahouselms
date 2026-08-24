@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { SuperAdminAccount } from "@/api/types";
+import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Button, Card } from "@/components/ui";
 import { startImpersonation } from "@/utils/impersonate";
@@ -175,8 +176,13 @@ export function DeveloperPanel() {
 
   async function changeRole(account: SuperAdminAccount, roleName: string) {
     if ((account.role_name ?? "SUPER_ADMIN") === roleName) return;
-    const confirmed = window.confirm(
-      `Change ${account.email} to ${roleName}? They will be signed out and must sign in again with the new role.`
+    const confirmed = await confirmAction(
+      `Change ${account.email} to ${roleName}? They will be signed out and must sign in again with the new role.`,
+      {
+        title: "Change account role?",
+        confirmText: "Change role",
+        variant: "warning",
+      },
     );
     if (!confirmed) return;
 
@@ -197,8 +203,9 @@ export function DeveloperPanel() {
   }
 
   async function deleteAccount(account: SuperAdminAccount) {
-    const confirmed = window.confirm(
-      `Move ${account.email} to Deleted Users? Account data, history, payments, attempts, and audit records will be preserved.`
+    const confirmed = await confirmDelete(
+      `Move ${account.email} to Deleted Users? Account data, history, payments, attempts, and audit records will be preserved.`,
+      "Move account to Deleted Users?",
     );
     if (!confirmed) return;
 

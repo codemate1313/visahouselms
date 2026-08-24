@@ -9,8 +9,18 @@ interface PublishTimingSelectorProps {
   onScheduledAtChange: (value: string) => void;
 }
 
+function toDatetimeLocalMinute(value: Date) {
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return [
+    value.getFullYear(),
+    pad(value.getMonth() + 1),
+    pad(value.getDate()),
+  ].join("-") + `T${pad(value.getHours())}:${pad(value.getMinutes())}`;
+}
+
 export function PublishTimingSelector({ status, onStatusChange, scheduledAt, onScheduledAtChange }: PublishTimingSelectorProps) {
   const t = strings.publisher;
+  const minimumScheduleTime = toDatetimeLocalMinute(new Date());
   return (
     <div className="schedule-timing-group">
       <label>{t.timingLabel}</label>
@@ -35,7 +45,7 @@ export function PublishTimingSelector({ status, onStatusChange, scheduledAt, onS
             className="datetime-picker-input"
             value={scheduledAt}
             onChange={(e) => onScheduledAtChange(e.target.value)}
-            min={new Date().toISOString().slice(0, 16)}
+            min={minimumScheduleTime}
             required
           />
           <small className="help-text">{t.scheduleHint}</small>

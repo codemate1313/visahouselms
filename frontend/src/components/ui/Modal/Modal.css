@@ -78,11 +78,21 @@
   overflow-y: auto;
   color: var(--text-muted);
   overscroll-behavior: contain;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--primary) 45%, var(--border)) transparent;
 }
 
 .ui-modal-body::-webkit-scrollbar {
-  display: none;
+  width: 8px;
+}
+
+.ui-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ui-modal-body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--primary) 45%, var(--border));
+  border-radius: 999px;
 }
 
 .ui-modal-actions {
