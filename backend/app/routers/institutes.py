@@ -9,7 +9,7 @@ from app.dependencies.auth import get_current_user, require_super_admin_or_verif
 from app.models.role import STUDENT
 from app.models.user import User
 from app.schemas.institute import BrandingUpdate, InstituteCreate, InstituteUpdate
-from app.schemas.institute_admin import InstituteMemberCreate, InstituteMemberUpdate
+from app.schemas.institute_admin import AccessWindow, InstituteMemberCreate, InstituteMemberUpdate
 from app.services import institute_admin_service, institute_service, institute_signup_service
 
 router = APIRouter(
@@ -146,6 +146,8 @@ def create_institute_student(
         role_name=payload.role,
         phone_number=payload.phone_number,
         address=payload.address,
+        access_starts_on=payload.access_starts_on,
+        access_ends_on=payload.access_ends_on,
         ip=_client_ip(request),
         scoped_institute_id=institute_id,
     )
@@ -242,6 +244,59 @@ def reactivate_institute_member(
 ):
     return institute_admin_service.set_member_active(
         db, actor, member_id, True, _client_ip(request), scoped_institute_id=institute_id
+    )
+
+
+@router.post("/{institute_id}/members/{member_id}/release-seat")
+def release_institute_member_seat(
+    institute_id: int,
+    member_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return institute_admin_service.release_seat(
+        db, actor, member_id, _client_ip(request), scoped_institute_id=institute_id
+    )
+
+
+@router.post("/{institute_id}/members/{member_id}/reactivate-seat")
+def reactivate_institute_member_seat(
+    institute_id: int,
+    member_id: int,
+    payload: AccessWindow,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return institute_admin_service.reactivate_seat(
+        db,
+        actor,
+        member_id,
+        access_starts_on=payload.access_starts_on,
+        access_ends_on=payload.access_ends_on,
+        ip=_client_ip(request),
+        scoped_institute_id=institute_id,
+    )
+
+
+@router.put("/{institute_id}/members/{member_id}/access-window")
+def set_institute_member_access_window(
+    institute_id: int,
+    member_id: int,
+    payload: AccessWindow,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    return institute_admin_service.set_member_window(
+        db,
+        actor,
+        member_id,
+        access_starts_on=payload.access_starts_on,
+        access_ends_on=payload.access_ends_on,
+        ip=_client_ip(request),
+        scoped_institute_id=institute_id,
     )
 
 

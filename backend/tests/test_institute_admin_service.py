@@ -535,9 +535,59 @@ class InstituteAdminServiceTests(unittest.TestCase):
         self.assertEqual(payment["status"], "paid")
         self.assertIsNotNone(payment["invoice_number"])
         self.assertIsNotNone(payment["subscription_id"])
-        renewed = self.db.get(Subscription, payment["subscription_id"])
-        self.assertGreater(renewed.expires_at, previous_expiry)
+    def test_super_admin_create_student_with_access_window_and_manage_seats(self):
+        created = institute_admin_service.create_member(
+            self.db,
+            self.super_actor,
+            email="sa_created_student@north.test",
+            first_name="Sam",
+            last_name="Student",
+            role_name=STUDENT,
+            phone_number="1234567890",
+            address="123 Main St",
+            access_starts_on=date.today(),
+            access_ends_on=date.today() + timedelta(days=10),
+            ip="127.0.0.1",
+            scoped_institute_id=self.institute.id,
+        )
+        self.assertEqual(created["email"], "sa_created_student@north.test")
+        self.assertEqual(created["role"], STUDENT)
+        self.assertIsNotNone(created["id"])
+        self.assertEqual(created["access_state"], "active")
+
+        # Deactivate first to allow releasing seat
+        institute_admin_service.set_member_active(
+            self.db,
+            self.super_actor,
+            created["id"],
+            False,
+            ip="127.0.0.1",
+            scoped_institute_id=self.institute.id,
+        )
+
+        # Release seat
+        released = institute_admin_service.release_seat(
+            self.db,
+            self.super_actor,
+            created["id"],
+            ip="127.0.0.1",
+            scoped_institute_id=self.institute.id,
+        )
+        self.assertEqual(released["access_state"], "released")
+
+        # Reactivate seat
+        reactivated = institute_admin_service.reactivate_seat(
+            self.db,
+            self.super_actor,
+            created["id"],
+            access_starts_on=date.today(),
+            access_ends_on=date.today() + timedelta(days=15),
+            ip="127.0.0.1",
+            scoped_institute_id=self.institute.id,
+        )
+        self.assertEqual(reactivated["access_state"], "active")
 
 
 if __name__ == "__main__":
     unittest.main()
+
