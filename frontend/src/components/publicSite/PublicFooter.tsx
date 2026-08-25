@@ -11,18 +11,11 @@ export interface PublicSocialLink {
   url: string;
 }
 
-const DEFAULT_SOCIAL_LINKS: PublicSocialLink[] = [
-  { id: "linkedin", platform: "linkedin", url: "https://linkedin.com" },
-  { id: "github", platform: "github", url: "https://github.com" },
-  { id: "instagram", platform: "instagram", url: "https://instagram.com" },
-  { id: "youtube", platform: "youtube", url: "https://youtube.com" },
-];
-
 export function PublicFooter({ socialLinks = [] }: { socialLinks?: PublicSocialLink[] }) {
   const footerRef = useRef<HTMLElement | null>(null);
   useFooterParallax(footerRef);
 
-  const displaySocialLinks = socialLinks.length > 0 ? socialLinks : DEFAULT_SOCIAL_LINKS;
+  const displaySocialLinks = socialLinks;
 
   const scrollToTop = () => {
     window.scrollTo({
