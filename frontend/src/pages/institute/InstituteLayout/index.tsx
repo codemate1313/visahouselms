@@ -46,7 +46,7 @@ export function InstituteLayout() {
     instituteItems.push({ key: "dashboard", label: m.dashboard, icon: "dashboard", to: "/institute-portal/dashboard" });
     if (canSeeStudents) {
       instituteItems.push({ key: "students", label: m.students, icon: "user", to: "/institute-portal/students" });
-      instituteItems.push({ key: "announcements", label: m.announcements, icon: "notifications", to: "/institute-portal/announcements" });
+      instituteItems.push({ key: "announcements", label: m.announcements, icon: "megaphone", to: "/institute-portal/announcements" });
     }
     instituteItems.push({ key: "notifications", label: m.notifications, icon: "notifications", to: "/institute-portal/notifications" });
     if (permissions.manage_staff) {
@@ -73,7 +73,7 @@ export function InstituteLayout() {
       {
         title: m.supportSection,
         items: [
-          { key: "support-tickets", label: m.supportTickets, icon: "notifications", to: "/institute-portal/support-tickets" },
+          { key: "support-tickets", label: m.supportTickets, icon: "message", to: "/institute-portal/support-tickets" },
           { key: "support", label: m.support, icon: "help", to: "/institute-portal/support" },
         ],
       },

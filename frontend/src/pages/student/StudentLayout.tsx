@@ -48,7 +48,7 @@ export function StudentLayout() {
     mainItems.push(
       { key: "study-material", label: menu.studyMaterial, icon: "filePdf", to: "/student/study-material" },
       { key: "progress", label: menu.progress, icon: "analytics", to: "/student/progress" },
-      { key: "news", label: menu.news, icon: "notifications", to: "/student/news" },
+      { key: "news", label: menu.news, icon: "megaphone", to: "/student/news" },
       { key: "vouchers", label: menu.vouchers, icon: "transactions", to: "/student/vouchers" },
     );
     if (!isInstituteStudent) {

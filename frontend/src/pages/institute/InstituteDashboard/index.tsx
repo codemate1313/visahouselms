@@ -8,6 +8,7 @@ import { DashboardStats } from "./components/DashboardStats";
 import { RecentMembersPanel } from "./components/RecentMembersPanel";
 import { AccessCountdownCard } from "./components/AccessCountdownCard";
 import { AssignedCoursesPanel } from "./components/AssignedCoursesPanel";
+import { InstituteDashboardVisuals } from "./components/InstituteDashboardVisuals";
 
 export function InstituteDashboard() {
   const user = useAuthStore((state) => state.user);
@@ -58,9 +59,16 @@ export function InstituteDashboard() {
         canSeeBilling={canSeeBilling}
       />
 
+      {(canSeeStudents || canSeeStaff || canSeeBilling) && (
+        <InstituteDashboardVisuals
+          summary={summary}
+          canSeeStudents={canSeeStudents}
+          canSeeStaff={canSeeStaff}
+          canSeeBilling={canSeeBilling}
+        />
+      )}
+
       <div className="workspace-grid">
-
-
         {(canSeeStudents || canSeeStaff) && <RecentMembersPanel members={summary.recent_members} />}
 
         <AssignedCoursesPanel courses={summary.assigned_courses ?? []} />

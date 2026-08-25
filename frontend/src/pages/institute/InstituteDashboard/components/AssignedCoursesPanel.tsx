@@ -1,71 +1,132 @@
+import { useState } from "react";
 import type { AssignedCourseSummary } from "../types";
-import { Icon } from "@/components/icons";
+import { Icon, type IconName } from "@/components/icons";
+import { Modal } from "@/components/ui";
 
 interface AssignedCoursesPanelProps {
   courses: AssignedCourseSummary[];
 }
 
 export function AssignedCoursesPanel({ courses }: AssignedCoursesPanelProps) {
+  const [selectedCourse, setSelectedCourse] = useState<AssignedCourseSummary | null>(null);
+
+  function formatDuration(minutes: number | null) {
+    if (!minutes) return "Self-paced";
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (hours > 0 && remainingMinutes > 0) return `${hours}h ${remainingMinutes}m`;
+    if (hours > 0) return `${hours}h`;
+    return `${minutes}m`;
+  }
+
+  function formatLevel(level: string) {
+    return level.replace("_", " ").toLowerCase();
+  }
+
+  function getCourseIcon(level: string): IconName {
+    const normalizedLevel = level.toLowerCase();
+    if (normalizedLevel.includes("listening")) return "headphones";
+    if (normalizedLevel.includes("speaking")) return "microphone";
+    if (normalizedLevel.includes("writing")) return "clipboard";
+    return "book";
+  }
+
   return (
     <section className="workspace-panel assigned-courses-panel">
-      <div className="panel-heading">
+      <div className="panel-heading assigned-courses-heading">
         <div>
           <h2>Assigned Courses</h2>
           <p>Courses licensed and assigned to your institute students.</p>
         </div>
+        {courses.length > 0 && <span className="assigned-courses-count">{courses.length} active</span>}
       </div>
       {courses.length ? (
-        <div className="courses-simple-list" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        <div className="assigned-course-list">
           {courses.map((course) => (
-            <div 
-              key={course.id} 
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                padding: "12px 16px",
-                background: "var(--surface-muted)",
-                border: "1px solid var(--border)",
-                borderRadius: "8px",
-                gap: "12px"
+            <article
+              aria-label={`View details for ${course.title}`}
+              className="assigned-course-card"
+              key={course.id}
+              onClick={() => setSelectedCourse(course)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                setSelectedCourse(course);
               }}
+              role="button"
+              tabIndex={0}
             >
-              <div style={{ flex: 1 }}>
-                <h4 style={{ margin: "0 0 4px", fontSize: "14px", fontWeight: 700, color: "var(--text)" }}>
-                  {course.title}
-                </h4>
-                {course.summary && (
-                  <p style={{ margin: "0 0 6px", fontSize: "12px", color: "var(--text)", opacity: 0.7, lineBreak: "anywhere" }}>
-                    {course.summary}
-                  </p>
-                )}
-                <div style={{ display: "flex", gap: "10px", alignItems: "center", fontSize: "11px", color: "var(--text)", opacity: 0.6 }}>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                    <Icon name="clock" style={{ width: "12px", height: "12px" }} />
-                    {course.estimated_duration_minutes ? `${Math.round(course.estimated_duration_minutes / 60)}h` : "Self-paced"}
-                  </span>
-                  <span>•</span>
-                  <span style={{ textTransform: "capitalize" }}>
-                    {course.level.replace("_", " ")}
-                  </span>
-                </div>
-              </div>
-              <span 
-                className="badge"
-                style={{
-                  background: "color-mix(in srgb, var(--primary) 10%, transparent)",
-                  color: "var(--primary)",
-                  borderColor: "color-mix(in srgb, var(--primary) 20%, transparent)"
-                }}
-              >
-                Licensed
+              <span className="assigned-course-icon">
+                <Icon name={getCourseIcon(course.level)} />
               </span>
-            </div>
+              <span className="assigned-course-main">
+                <span className="assigned-course-title-row">
+                  <strong>{course.title}</strong>
+                  <span className="assigned-course-license"><i /> Licensed</span>
+                </span>
+                {course.summary && <span className="assigned-course-summary">{course.summary}</span>}
+                <span className="assigned-course-meta">
+                  <span>
+                    <Icon name="clock" />
+                    {formatDuration(course.estimated_duration_minutes)}
+                  </span>
+                  <span>
+                    <Icon name="award" />
+                    {formatLevel(course.level)}
+                  </span>
+                </span>
+              </span>
+              <span className="assigned-course-open">
+                <Icon name="arrowRight" />
+              </span>
+            </article>
           ))}
         </div>
       ) : (
         <p className="empty-message">No courses have been assigned to your institute yet.</p>
       )}
+
+      <Modal
+        className="course-detail-modal"
+        onClose={() => setSelectedCourse(null)}
+        open={selectedCourse !== null}
+        size="md"
+        title={selectedCourse?.title ?? "Course details"}
+      >
+        {selectedCourse && (
+          <div className="course-detail-content">
+            <div className="course-detail-hero">
+              <span className="course-detail-icon">
+                <Icon name={getCourseIcon(selectedCourse.level)} />
+              </span>
+              <div>
+                <span className="course-detail-kicker">Licensed course</span>
+                <p>{selectedCourse.summary || "This course is licensed to your institute and available for assigned students."}</p>
+              </div>
+            </div>
+
+            <div className="course-detail-grid">
+              <div>
+                <span>Duration</span>
+                <strong>{formatDuration(selectedCourse.estimated_duration_minutes)}</strong>
+              </div>
+              <div>
+                <span>Skill area</span>
+                <strong>{formatLevel(selectedCourse.level)}</strong>
+              </div>
+              <div>
+                <span>Course slug</span>
+                <strong>{selectedCourse.slug}</strong>
+              </div>
+            </div>
+
+            <div className="course-detail-note">
+              <Icon name="clipboard" />
+              <span>Students can access this course while your institute subscription and course license remain active.</span>
+            </div>
+          </div>
+        )}
+      </Modal>
     </section>
   );
 }
