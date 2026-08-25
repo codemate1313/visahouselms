@@ -4,10 +4,10 @@ export const instructorLayoutStrings = {
   notificationEyebrow: "Author updates",
   roleLabel: "SA Instructor",
   sections: {
-    mainMenu: "MAIN MENU",
-    authoring: "AUTHORING",
-    support: "SUPPORT",
-    settings: "SETTINGS",
+    mainMenu: "Main Menu",
+    authoring: "Authoring",
+    support: "Support",
+    settings: "Settings",
   },
   items: {
     dashboard: "Dashboard",

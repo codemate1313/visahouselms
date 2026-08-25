@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
-import { Badge, Button, PageHeader } from "@/components/ui";
+import { Badge, Button, IconButton, PageHeader } from "@/components/ui";
 import { sessionsStrings as strings } from "./Sessions.strings";
 
 interface SessionInfo {
@@ -116,8 +116,10 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
             {sessions.map((session) => (
               <tr key={session.id}>
                 <td>
-                  {describeAgent(session.user_agent)}
-                  {session.is_current && <Badge tone="green">{strings.thisSession}</Badge>}
+                  <div className="session-device-wrap">
+                    <span className="session-device-name">{describeAgent(session.user_agent)}</span>
+                    {session.is_current && <Badge tone="green">{strings.thisSession}</Badge>}
+                  </div>
                 </td>
                 <td>{session.ip_address ?? "—"}</td>
                 <td>
@@ -130,15 +132,14 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
                 <td className="table-actions">
                   <div className="table-actions sessions-table-actions">
                     {!session.is_current && (
-                      <button
-                        type="button"
+                      <IconButton
+                        icon={<Icon name="logout" />}
+                        variant="danger"
+                        size="sm"
                         onClick={() => handleRevoke(session)}
-                        className="danger"
-                        aria-label={strings.revokeSession}
-                        data-tooltip={strings.revokeSession}
-                      >
-                        <Icon name="revoke" />
-                      </button>
+                        label={strings.revokeSession}
+                        className="session-signout-btn"
+                      />
                     )}
                   </div>
                 </td>

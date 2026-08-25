@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
-import { Badge, Button, PageHeader, SearchInput } from "@/components/ui";
+import { Badge, Button, FilterBar, PageHeader, SearchInput, SearchableSelect } from "@/components/ui";
 import { useToastStore } from "@/store/toastStore";
 import { formatDate } from "@/utils/date";
 import "./AllSessions.css";
@@ -126,29 +126,39 @@ export function AllSessions() {
         subtitle="Every signed-in device across every institute, with an approximate location for each."
       />
 
-      <div className="all-sessions-filters">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search name or email…" />
-        <select value={role} onChange={(event) => setRole(event.target.value)} aria-label="Filter by role">
-          {ROLE_FILTERS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <select
+      <FilterBar
+        className="all-sessions-filters"
+        resultCount={`${total.toLocaleString("en-IN")} sessions`}
+      >
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search name or email…"
+          width={380}
+        />
+        <SearchableSelect
+          options={ROLE_FILTERS}
+          value={role}
+          onChange={(val) => setRole(String(val))}
+          placeholder="All roles"
+          searchable={false}
+          className="all-sessions-role-select"
+        />
+        <SearchableSelect
+          options={[
+            { value: "", label: "All institutes" },
+            ...institutes.map((institute) => ({
+              value: String(institute.id),
+              label: institute.name,
+            })),
+          ]}
           value={instituteId}
-          onChange={(event) => setInstituteId(event.target.value)}
-          aria-label="Filter by institute"
-        >
-          <option value="">All institutes</option>
-          {institutes.map((institute) => (
-            <option key={institute.id} value={institute.id}>
-              {institute.name}
-            </option>
-          ))}
-        </select>
-        <span className="hint all-sessions-count">{total.toLocaleString("en-IN")} sessions</span>
-      </div>
+          onChange={(val) => setInstituteId(String(val))}
+          placeholder="All institutes"
+          searchable={true}
+          className="all-sessions-institute-select"
+        />
+      </FilterBar>
 
       {loading ? (
         <p>Loading…</p>
@@ -159,13 +169,13 @@ export function AllSessions() {
           <table className="data-table responsive-data-table">
             <thead>
               <tr>
-                <th>User</th>
-                <th>Role</th>
-                <th>Institute</th>
-                <th>Device</th>
-                <th>Location</th>
-                <th>Signed in</th>
-                <th>Actions</th>
+                <th className="th-session-user">User</th>
+                <th className="th-session-role">Role</th>
+                <th className="th-session-institute">Institute</th>
+                <th className="th-session-device">Device</th>
+                <th className="th-session-location">Location</th>
+                <th className="th-session-time">Signed in</th>
+                <th className="th-session-actions">Actions</th>
               </tr>
             </thead>
             <tbody>

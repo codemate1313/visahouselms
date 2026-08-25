@@ -563,10 +563,22 @@ html {
   transition: all 0.2s ease;
 }
 
+.action-btn-icon svg,
+.action-btn-icon * {
+  color: inherit;
+  stroke: currentColor;
+}
+
 .action-btn-icon:hover:not(:disabled) {
   background: var(--primary-soft, rgba(225, 29, 46, 0.08));
-  color: var(--primary, #e11d2e);
+  color: var(--primary, #e11d2e) !important;
   border-color: color-mix(in srgb, var(--primary, #e11d2e) 30%, var(--border, #e2e8f0));
+}
+
+.action-btn-icon:hover:not(:disabled) svg,
+.action-btn-icon:hover:not(:disabled) * {
+  color: var(--primary, #e11d2e) !important;
+  stroke: var(--primary, #e11d2e) !important;
 }
 
 /* iOS zooms the whole page when focusing an input whose font-size is

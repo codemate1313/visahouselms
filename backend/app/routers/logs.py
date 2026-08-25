@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies.auth import require_role
 from app.models.role import SUPER_ADMIN
+from app.models.user import User
 from app.services import log_service
 
 router = APIRouter(
@@ -17,22 +18,29 @@ router = APIRouter(
 )
 
 ROW_SERIALIZERS = {
-    "error": lambda r: {
+    "error": lambda r, users_map: {
         "id": r.id, "level": r.level, "message": r.message, "stack_trace": r.stack_trace,
         "path": r.path, "method": r.method, "user_id": r.user_id,
+        "user_name": users_map.get(r.user_id, {}).get("name") if r.user_id else None,
+        "user_email": users_map.get(r.user_id, {}).get("email") if r.user_id else None,
         "ip_address": r.ip_address, "created_at": r.created_at,
     },
-    "api": lambda r: {
+    "api": lambda r, users_map: {
         "id": r.id, "method": r.method, "path": r.path, "status_code": r.status_code,
         "latency_ms": r.latency_ms, "user_id": r.user_id,
+        "user_name": users_map.get(r.user_id, {}).get("name") if r.user_id else None,
+        "user_email": users_map.get(r.user_id, {}).get("email") if r.user_id else None,
         "ip_address": r.ip_address, "created_at": r.created_at,
     },
-    "crash": lambda r: {
+    "crash": lambda r, _users_map: {
         "id": r.id, "kind": r.kind, "detail": r.detail, "detected_at": r.detected_at,
     },
-    "request": lambda r: {
+    "request": lambda r, users_map: {
         "id": r.id, "method": r.method, "path": r.path, "status_code": r.status_code,
-        "latency_ms": r.latency_ms, "user_id": r.user_id, "ip_address": r.ip_address,
+        "latency_ms": r.latency_ms, "user_id": r.user_id,
+        "user_name": users_map.get(r.user_id, {}).get("name") if r.user_id else None,
+        "user_email": users_map.get(r.user_id, {}).get("email") if r.user_id else None,
+        "ip_address": r.ip_address,
         "user_agent": r.user_agent, "request_bytes": r.request_bytes,
         "response_bytes": r.response_bytes, "headers": r.headers, "created_at": r.created_at,
     },
@@ -85,5 +93,22 @@ def list_logs(
         date_from=date_from, date_to=date_to,
         level=level, search=search,
     )
+
+    user_ids = {getattr(item, "user_id", None) for item in items if getattr(item, "user_id", None) is not None}
+    users_map = {}
+    if user_ids:
+        users = db.query(User).filter(User.id.in_(user_ids)).all()
+        for u in users:
+            name = f"{u.first_name} {u.last_name}".strip()
+            users_map[u.id] = {
+                "name": name if name else u.email,
+                "email": u.email,
+            }
+
     serialize = ROW_SERIALIZERS[log_type]
-    return {"items": [serialize(item) for item in items], "total": total, "page": page, "page_size": page_size}
+    return {
+        "items": [serialize(item, users_map) for item in items],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }

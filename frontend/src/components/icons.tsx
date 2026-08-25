@@ -327,10 +327,9 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
   ),
   revoke: (
     <>
-      <path d="M4 7v6a7 7 0 0 0 11.95 4.95L20 13.9" />
-      <path d="M20 18v-4.1h-4.1" />
-      <path d="M20 7V4h-3" />
-      <path d="M4 4l16 16" />
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
     </>
   ),
   download: (

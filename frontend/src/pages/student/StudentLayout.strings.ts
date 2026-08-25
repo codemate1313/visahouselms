@@ -4,8 +4,8 @@ export const studentLayoutStrings = {
   instituteStudent: "Institute Student",
   directStudent: "Direct Student",
   menu: {
-    mainMenu: "MAIN MENU",
-    settings: "SETTINGS",
+    mainMenu: "Main Menu",
+    settings: "Settings",
     dashboard: "Dashboard",
     plansAndUpgrades: "Plans & Upgrades",
     myTests: "My Tests",
@@ -14,7 +14,7 @@ export const studentLayoutStrings = {
     studyMaterial: "Study Material",
     progress: "Progress",
 
-    supportSection: "SUPPORT",
+    supportSection: "Support",
     support: "Raise a Query",
     myProfile: "My Profile",
     vouchers: "Exam Vouchers",

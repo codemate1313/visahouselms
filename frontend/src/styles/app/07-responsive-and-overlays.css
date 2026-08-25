@@ -1588,11 +1588,27 @@ body {
   box-shadow: none !important;
 }
 
+.sleek-users-table.responsive-data-table .action-neutral svg,
+.sleek-users-table.responsive-data-table .action-neutral *,
+.sleek-users-table.responsive-data-table .action-menu-trigger svg,
+.sleek-users-table.responsive-data-table .action-menu-trigger * {
+  color: inherit !important;
+  stroke: currentColor !important;
+}
+
 .sleek-users-table.responsive-data-table .action-neutral:hover,
 .sleek-users-table.responsive-data-table .action-menu-trigger:hover {
   color: var(--primary) !important;
   border-color: color-mix(in srgb, var(--primary) 32%, var(--border)) !important;
   background: var(--primary-soft) !important;
+}
+
+.sleek-users-table.responsive-data-table .action-neutral:hover svg,
+.sleek-users-table.responsive-data-table .action-neutral:hover *,
+.sleek-users-table.responsive-data-table .action-menu-trigger:hover svg,
+.sleek-users-table.responsive-data-table .action-menu-trigger:hover * {
+  color: var(--primary) !important;
+  stroke: var(--primary) !important;
 }
 
 .sleek-users-table.responsive-data-table .row-action-menu {
