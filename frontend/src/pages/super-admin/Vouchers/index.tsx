@@ -1366,9 +1366,19 @@ export function Vouchers() {
       >
         {selectedInvoice && (
           <div className="voucher-invoice-modal">
+            {/* Watermark Logo */}
+            <div className="voucher-invoice-watermark">
+              <img src="/brand/vh-mark-96.png" alt="Visa House Watermark" />
+            </div>
+
             <div className="voucher-invoice-print-header">
-              <h2>VISA HOUSE</h2>
-              <p>Official Exam Voucher Purchase Receipt</p>
+              <div className="voucher-invoice-brand-row">
+                <img src="/brand/vh-mark-96.png" alt="Visa House Logo" className="voucher-invoice-logo" />
+                <div className="voucher-invoice-brand-text">
+                  <h2>VISA HOUSE</h2>
+                  <p>Official Exam Voucher Purchase Receipt</p>
+                </div>
+              </div>
             </div>
             <div className="voucher-invoice-card">
               <div className="voucher-invoice-row">

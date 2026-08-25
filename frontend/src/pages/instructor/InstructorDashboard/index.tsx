@@ -9,20 +9,33 @@ import { RecentActivityPanel } from "./components/RecentActivityPanel";
 import { InstructorImpactPanel } from "./components/InstructorImpactPanel";
 import { InstructorAnalytics } from "./components/InstructorAnalytics";
 import { CourseUsagePanel } from "./components/CourseUsagePanel";
+import { InstituteInstructorDashboardView } from "./components/InstituteInstructorDashboardView";
 import { PageHeader } from "@/components/ui";
 import type { InstructorDashboardSummary } from "./types";
 
-export function InstructorDashboard() {
+interface InstructorDashboardProps {
+  apiPath?: string;
+  profilePath?: string;
+  variant?: "sa" | "institute";
+  showAuthoringPanel?: boolean;
+}
+
+export function InstructorDashboard({
+  apiPath = "/instructor/dashboard/summary",
+  profilePath = "/super-admin/instructor/profile",
+  variant = "sa",
+  showAuthoringPanel = true,
+}: InstructorDashboardProps) {
   const user = useAuthStore((state) => state.user);
   const [summary, setSummary] = useState<InstructorDashboardSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     apiClient
-      .get<InstructorDashboardSummary>("/instructor/dashboard/summary")
+      .get<InstructorDashboardSummary>(apiPath)
       .then(({ data }) => setSummary(data))
       .catch(() => setError(strings.errors.load));
-  }, []);
+  }, [apiPath]);
 
   if (error) return <p className="error-text">{error}</p>;
   if (!summary) return <p>{strings.loading}</p>;
@@ -35,6 +48,10 @@ export function InstructorDashboard() {
         subtitle={strings.subtitle}
       />
 
+      {variant === "institute" ? (
+        <InstituteInstructorDashboardView summary={summary} profilePath={profilePath} />
+      ) : (
+        <>
       <DashboardStats
         gradings={summary.grading.completed_total}
         learners={summary.engagement.unique_learners}
@@ -57,18 +74,22 @@ export function InstructorDashboard() {
       <CourseUsagePanel courses={summary.course_usage} />
 
       <div className="workspace-grid">
-        <ModuleAuthoringPanel
-          readingCount={summary.content.reading}
-          listeningCount={summary.content.listening}
-          writingCount={summary.content.writing}
-          speakingCount={summary.content.speaking}
-          fullMockCount={summary.content.full_mock}
-          finalTestCount={summary.content.final_test}
-          audioCount={summary.content.audio}
-        />
-        <ProfileReadinessPanel completion={summary.profile_completion} />
+        {showAuthoringPanel && (
+          <ModuleAuthoringPanel
+            readingCount={summary.content.reading}
+            listeningCount={summary.content.listening}
+            writingCount={summary.content.writing}
+            speakingCount={summary.content.speaking}
+            fullMockCount={summary.content.full_mock}
+            finalTestCount={summary.content.final_test}
+            audioCount={summary.content.audio}
+          />
+        )}
+        <ProfileReadinessPanel completion={summary.profile_completion} profilePath={profilePath} />
         <RecentActivityPanel activity={summary.recent_activity} />
       </div>
+        </>
+      )}
     </div>
   );
 }

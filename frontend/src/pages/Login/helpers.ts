@@ -19,7 +19,7 @@ export function destinationFor(user: { role: string; force_password_reset: boole
   if (user.role === "SA_INSTRUCTOR") return user.force_password_reset ? "/super-admin/instructor/change-password" : "/super-admin/instructor/dashboard";
   if (user.role === "DEVELOPER") return user.force_password_reset ? `/${DEVELOPER_ACCESS_SLUG}/change-password` : `/${DEVELOPER_ACCESS_SLUG}/panel`;
   if (user.role === "INSTITUTE_ADMIN") return "/institute-portal";
-  if (user.role === "INST_INSTRUCTOR") return user.force_password_reset ? "/institute-instructor/change-password" : "/institute-instructor/grading";
+  if (user.role === "INST_INSTRUCTOR") return user.force_password_reset ? "/institute-instructor/change-password" : "/institute-instructor/dashboard";
   if (user.role === "STUDENT") return "/student/dashboard";
   return null;
 }

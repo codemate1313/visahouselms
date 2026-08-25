@@ -100,6 +100,7 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/payment-methods", eyebrow: "SaaS Management", title: "Payment Methods" },
   { match: "/super-admin/gst-rates", eyebrow: "SaaS Management", title: "GST Master" },
   { match: "/super-admin/revenue", eyebrow: "SaaS Management", title: "Revenue Dashboard" },
+  { match: "/institute-instructor/dashboard", eyebrow: "Instructor workspace", title: "Dashboard" },
   { match: /\/super-admin\/institutes\/\d+\/branding/, eyebrow: "SaaS Management", title: "Institute Branding" },
   { match: /\/super-admin\/institutes\/\d+\/accounts/, eyebrow: "SaaS Management", title: "Institute Accounts" },
   { match: /\/super-admin\/institutes\/\d+\/students/, eyebrow: "SaaS Management", title: "Institute Students" },
@@ -336,7 +337,8 @@ function getBreadcrumbs(pathname: string, eyebrow: string, title: string): Bread
     pathname === "/super-admin" ||
     pathname === "/institute-portal/dashboard" ||
     pathname === "/student/dashboard" ||
-    pathname === "/instructor-portal/dashboard"
+    pathname === "/instructor-portal/dashboard" ||
+    pathname === "/institute-instructor/dashboard"
   ) {
     return [{ label: eyebrow }];
   }

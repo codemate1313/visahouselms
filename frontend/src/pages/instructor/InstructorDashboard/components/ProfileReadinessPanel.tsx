@@ -4,9 +4,10 @@ import { Icon } from "@/components/icons";
 
 interface ProfileReadinessPanelProps {
   completion: number;
+  profilePath?: string;
 }
 
-export function ProfileReadinessPanel({ completion }: ProfileReadinessPanelProps) {
+export function ProfileReadinessPanel({ completion, profilePath = "/super-admin/instructor/profile" }: ProfileReadinessPanelProps) {
   const t = strings.profileReadiness;
   return (
     <section className="workspace-panel">
@@ -20,7 +21,7 @@ export function ProfileReadinessPanel({ completion }: ProfileReadinessPanelProps
       <div className="progress-track">
         <span style={{ width: `${completion}%` }} />
       </div>
-      {completion < 100 && <Link to="/super-admin/instructor/profile">
+      {completion < 100 && <Link to={profilePath}>
           {t.completeYourProfile} <Icon name="arrowRight" />
         </Link>}
     </section>

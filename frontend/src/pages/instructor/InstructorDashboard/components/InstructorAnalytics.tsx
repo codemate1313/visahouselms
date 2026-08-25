@@ -17,6 +17,7 @@ function AnalyticsEmpty({ title, message }: { title: string; message: string }) 
 interface InstructorAnalyticsProps {
   courseUsage: InstructorCourseUsage[];
   gradingTrend: InstructorTrendPoint[];
+  showLearnerUsage?: boolean;
 }
 
 function compactCourseLabel(course: InstructorCourseUsage): string {
@@ -27,7 +28,7 @@ function compactCourseLabel(course: InstructorCourseUsage): string {
   return course.title;
 }
 
-export function InstructorAnalytics({ courseUsage, gradingTrend }: InstructorAnalyticsProps) {
+export function InstructorAnalytics({ courseUsage, gradingTrend, showLearnerUsage = true }: InstructorAnalyticsProps) {
   const learnerData = courseUsage
     .filter((course) => course.learners > 0)
     .slice(0, 8)
@@ -40,14 +41,16 @@ export function InstructorAnalytics({ courseUsage, gradingTrend }: InstructorAna
 
   return (
     <div className="instructor-analytics-grid">
-      {learnerData.length > 0 ? (
-        <BarChart
-          data={learnerData}
-          title={strings.analytics.learnersTitle}
-          ariaLabel={strings.analytics.learnersAriaLabel}
-        />
-      ) : (
-        <AnalyticsEmpty title={strings.analytics.learnersTitle} message={strings.analytics.learnersEmpty} />
+      {showLearnerUsage && (
+        learnerData.length > 0 ? (
+          <BarChart
+            data={learnerData}
+            title={strings.analytics.learnersTitle}
+            ariaLabel={strings.analytics.learnersAriaLabel}
+          />
+        ) : (
+          <AnalyticsEmpty title={strings.analytics.learnersTitle} message={strings.analytics.learnersEmpty} />
+        )
       )}
 
       {hasGradingTrend ? (

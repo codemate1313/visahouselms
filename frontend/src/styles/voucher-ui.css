@@ -473,12 +473,46 @@
 
 [data-theme="light"] .voucher-ui-scope .voucher-tab-btn:hover {
   color: var(--text) !important;
-}
-
-/* Voucher Invoice Modal Styling */
+}/* Voucher Invoice Modal Styling */
 .voucher-invoice-modal {
+  position: relative;
   padding: 4px;
   color: var(--text);
+}
+
+.voucher-invoice-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 0;
+  display: none;
+}
+
+.voucher-invoice-watermark img {
+  width: 260px;
+  height: 260px;
+  object-fit: contain;
+}
+
+.voucher-invoice-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.voucher-invoice-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.voucher-invoice-brand-text {
+  text-align: left;
 }
 
 .voucher-invoice-card {
@@ -490,6 +524,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 .voucher-invoice-row {
@@ -518,41 +554,49 @@
   padding: 16px;
   margin-bottom: 16px;
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .voucher-invoice-code-title {
   font-size: 11px;
-  font-weight: 800;
-  color: var(--primary);
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 4px;
+  color: var(--primary);
+  margin-bottom: 6px;
 }
 
 .voucher-invoice-code-text {
-  font-family: monospace;
+  font-family: var(--font-mono, monospace);
   font-size: 20px;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--text);
+  letter-spacing: 0.05em;
 }
 
 .voucher-invoice-summary {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 0 4px;
+  position: relative;
+  z-index: 1;
 }
 
 .voucher-invoice-total-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
   font-size: 15px;
   font-weight: 800;
   color: var(--text);
-  margin-top: 8px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--border);
 }
 
 .voucher-invoice-actions {
@@ -568,9 +612,26 @@
 }
 
 @media print {
+  @page {
+    size: auto;
+    margin: 0;
+  }
+
   html, body {
     background: #ffffff !important;
     color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body {
+    padding: 2.5cm 2.5cm !important;
+  }
+
+  .voucher-invoice-watermark {
+    display: block !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Hide the entire app, sidebars, modal frames and backdrop */
@@ -584,9 +645,9 @@
     visibility: visible !important;
   }
 
-  /* Position the invoice at the top-left of the page */
+  /* Position the invoice relative so watermark centers perfectly */
   .voucher-invoice-modal {
-    position: absolute !important;
+    position: relative !important;
     left: 0 !important;
     top: 0 !important;
     width: 100% !important;
@@ -614,7 +675,7 @@
   .voucher-invoice-print-header h2 {
     font-size: 24px !important;
     font-weight: 800 !important;
-    margin: 0 0 4px 0 !important;
+    margin: 0 0 2px 0 !important;
     color: #000000 !important;
   }
 

@@ -4,13 +4,19 @@ from fastapi import APIRouter, Depends, File, Request, status, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_session, get_current_user, require_role
+from app.dependencies.auth import (
+    get_current_session,
+    get_current_user,
+    require_password_change_complete,
+    require_role,
+)
 from app.models.role import INST_INSTRUCTOR
 from app.models.user import User
 from app.models.user_session import UserSession
 from app.schemas.auth import CurrentUser
+from app.schemas.instructor import InstructorDashboardOut
 from app.schemas.user import ChangePasswordRequest, ProfileUpdateRequest, SessionOut
-from app.services import account_service
+from app.services import account_service, instructor_service
 
 router = APIRouter(
     prefix="/institute-instructor",
@@ -41,6 +47,17 @@ def _current_user_out(user: User) -> CurrentUser:
         address=user.address,
         gender=user.gender,
     )
+
+
+@router.get(
+    "/dashboard/summary",
+    response_model=InstructorDashboardOut,
+    dependencies=[Depends(require_password_change_complete)],
+)
+def dashboard_summary(
+    db: Session = Depends(get_db), actor: User = Depends(get_current_user)
+):
+    return instructor_service.dashboard_summary(db, actor)
 
 
 @router.get("/me/profile", response_model=CurrentUser)

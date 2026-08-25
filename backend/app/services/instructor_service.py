@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.security import hash_password
 from app.models.audit_log import AuditLog
 from app.models.instructor_profile import InstructorProfile
-from app.models.role import SA_INSTRUCTOR, Role
+from app.models.role import INST_INSTRUCTOR, SA_INSTRUCTOR, Role
 from app.models.user import User
 from app.services import account_service
 
@@ -299,10 +299,16 @@ def dashboard_summary(db: Session, actor: User) -> dict:
         ATTEMPT_GRADED,
         PART_GRADE_GRADED,
         QUEUE_CLAIMED,
+        QUEUE_COMPLETED,
+        QUEUE_PENDING,
+        REEVALUATION_IN_REVIEW,
+        REEVALUATION_PENDING,
         AttemptPartGrade,
         GradingQueueEntry,
         TestAttempt,
+        ReevaluationRequest,
     )
+    from app.services import grading_service
 
     profile = actor.instructor_profile
     completion_parts = [
@@ -419,6 +425,30 @@ def dashboard_summary(db: Session, actor: User) -> dict:
         )
         .count()
     )
+    queue_summary = {"pending": 0, "claimed": in_progress, "reevaluations": 0, "due_soon": 0}
+    if actor.role.name == INST_INSTRUCTOR:
+        queue_rows = grading_service.list_queue(db, actor)
+        queue_summary = {
+            "pending": sum(1 for item in queue_rows if item["queue"]["status"] == QUEUE_PENDING),
+            "claimed": sum(1 for item in queue_rows if item["queue"]["status"] == QUEUE_CLAIMED and item["queue"]["assigned_to_id"] == actor.id),
+            "reevaluations": sum(1 for item in queue_rows if item["is_reevaluation"]),
+            "due_soon": sum(
+                1
+                for item in queue_rows
+                if item["queue"]["due_at"] is not None
+                and item["queue"]["status"] != QUEUE_COMPLETED
+                and item["queue"]["due_at"] <= now.replace(tzinfo=None)
+            ),
+        }
+    else:
+        queue_summary["reevaluations"] = (
+            db.query(ReevaluationRequest)
+            .filter(
+                ReevaluationRequest.assigned_to_id == actor.id,
+                ReevaluationRequest.status.in_((REEVALUATION_PENDING, REEVALUATION_IN_REVIEW)),
+            )
+            .count()
+        )
 
     return {
         "profile_completion": completion,
@@ -465,6 +495,7 @@ def dashboard_summary(db: Session, actor: User) -> dict:
             "completed_this_month": completed_this_month,
             "completed_total": len(graded_events),
         },
+        "queue": queue_summary,
         "engagement": {
             "unique_learners": int(unique_learners),
             "total_attempts": total_attempts,

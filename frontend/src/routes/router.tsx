@@ -366,10 +366,20 @@ export const router = createBrowserRouter([
         path: "/institute-instructor",
         element: <InstituteInstructorLayout />,
         children: [
-          { index: true, element: <Navigate to="grading" replace /> },
+          { index: true, element: <Navigate to="dashboard" replace /> },
+          {
+            path: "dashboard",
+            element: (
+              <InstructorDashboard
+                apiPath="/institute-instructor/dashboard/summary"
+                profilePath="/institute-instructor/profile"
+                variant="institute"
+              />
+            ),
+          },
           { path: "grading", element: <GradingQueue /> },
           { path: "grading/:id", element: <GradingDetail /> },
-          { path: "notifications", element: <NotificationsInbox fallbackRoute="/institute-instructor/grading" /> },
+          { path: "notifications", element: <NotificationsInbox fallbackRoute="/institute-instructor/dashboard" /> },
           { path: "support", element: <SupportCenter /> },
           { path: "profile", element: <InstituteInstructorProfile /> },
           { path: "sessions", element: <Sessions apiBase="/institute-instructor" /> },

@@ -22,7 +22,13 @@ export function InstituteInstructorLayout() {
   }
 
   const sections: MenuSection[] = [
-    { title: strings.menu.evaluation, items: [{ key: "grading", label: strings.menu.grading, icon: "grading", to: "/institute-instructor/grading" }] },
+    {
+      title: strings.menu.evaluation,
+      items: [
+        { key: "dashboard", label: strings.menu.dashboard, icon: "dashboard", to: "/institute-instructor/dashboard" },
+        { key: "grading", label: strings.menu.grading, icon: "grading", to: "/institute-instructor/grading" },
+      ],
+    },
     {
       title: strings.menu.supportSection,
       items: [
@@ -56,7 +62,7 @@ export function InstituteInstructorLayout() {
       <main className="dashboard-content" style={{ flex: 1, padding: "20px" }}>
         <PortalTopBar
           notificationEyebrow={strings.notificationEyebrow}
-          fallbackRoute="/institute-instructor/grading"
+          fallbackRoute="/institute-instructor/dashboard"
           notificationsHref="/institute-instructor/notifications"
           roleLabel={strings.roleLabel}
         />

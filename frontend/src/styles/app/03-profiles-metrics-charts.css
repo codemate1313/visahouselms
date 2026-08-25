@@ -2298,6 +2298,95 @@ button.secondary-button {
   line-height: 1.5;
 }
 
+.institute-instructor-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.4fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.institute-instructor-layout .instructor-analytics-grid {
+  grid-template-columns: 1fr;
+}
+
+.institute-instructor-workload {
+  min-width: 0;
+}
+
+.institute-instructor-workload-bar {
+  display: flex;
+  height: 22px;
+  margin: 26px 0 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.institute-instructor-workload-bar span {
+  min-width: 4px;
+}
+
+.institute-instructor-workload-bar .is-pending {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+}
+
+.institute-instructor-workload-bar .is-claimed {
+  background: linear-gradient(90deg, #3155c8, #8b5cf6);
+}
+
+.institute-instructor-workload-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.institute-instructor-workload-grid div {
+  display: grid;
+  gap: 6px;
+  min-height: 84px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-muted) 76%, var(--surface));
+}
+
+.institute-instructor-workload-grid span {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.institute-instructor-workload-grid strong {
+  color: var(--text);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.institute-instructor-queue-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 18px;
+  color: var(--primary);
+  font-size: 13.5px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.institute-instructor-queue-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+.institute-instructor-secondary-grid {
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+}
+
+[data-theme="dark"] .institute-instructor-workload-grid div {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 .instructor-course-usage {
   margin-bottom: 20px;
 }
@@ -2400,7 +2489,8 @@ button.secondary-button {
 }
 
 @media (max-width: 1380px) {
-  .instructor-impact-layout {
+  .instructor-impact-layout,
+  .institute-instructor-layout {
     grid-template-columns: 1fr;
   }
 
@@ -2434,6 +2524,11 @@ button.secondary-button {
   .instructor-course-usage .panel-heading {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .institute-instructor-workload-grid,
+  .institute-instructor-secondary-grid {
+    grid-template-columns: 1fr;
   }
 
   .instructor-course-title {

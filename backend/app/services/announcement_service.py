@@ -21,7 +21,7 @@ ANNOUNCEMENT_LINKS = {
     SUPER_ADMIN: "/super-admin/notifications",
     SA_INSTRUCTOR: "/super-admin/instructor/dashboard",
     INSTITUTE_ADMIN: "/institute-portal/announcements",
-    INST_INSTRUCTOR: "/institute-instructor/grading",
+    INST_INSTRUCTOR: "/institute-instructor/dashboard",
     STUDENT: "/student/announcements",
 }
 

@@ -237,7 +237,7 @@ def _student_name(attempt: TestAttempt) -> str:
 
 def _grading_link_for_role(role_name: str) -> str:
     if role_name == INST_INSTRUCTOR:
-        return "/institute-instructor/grading"
+        return "/institute-instructor/dashboard"
     if role_name == SA_INSTRUCTOR:
         return "/super-admin/instructor/grading"
     if role_name == INSTITUTE_ADMIN:

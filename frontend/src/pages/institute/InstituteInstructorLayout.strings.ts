@@ -4,6 +4,7 @@ export const instituteInstructorLayoutStrings = {
   roleLabel: "Institute Instructor",
   notificationEyebrow: "Instructor updates",
   menu: {
+    dashboard: "Dashboard",
     evaluation: "EVALUATION",
     grading: "Grading Queue",
     supportSection: "SUPPORT",

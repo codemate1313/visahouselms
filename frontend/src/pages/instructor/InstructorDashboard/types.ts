@@ -36,6 +36,12 @@ export interface InstructorDashboardSummary {
     completed_this_month: number;
     completed_total: number;
   };
+  queue: {
+    pending: number;
+    claimed: number;
+    reevaluations: number;
+    due_soon: number;
+  };
   engagement: {
     unique_learners: number;
     total_attempts: number;

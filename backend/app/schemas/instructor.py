@@ -107,6 +107,7 @@ class InstructorDashboardOut(BaseModel):
     profile_completion: int
     content: dict[str, int]
     grading: dict[str, int]
+    queue: dict[str, int]
     engagement: dict[str, int]
     course_usage: list[InstructorCourseUsageOut]
     grading_trend: list[InstructorTrendPointOut]
