@@ -302,11 +302,16 @@ class AuthApiTestCase(unittest.TestCase):
 
         user = self._make_user("reset_expiry_test@example.com", STUDENT)
 
-        # 1. Valid token (generated now, expires in 10 minutes)
+        # 1. Valid token (generated now, expires in 10 minutes). Its jti has to
+        # be the one recorded on the user - that's what makes it "the" live
+        # reset link rather than some other signed-and-valid JWT.
+        user.password_reset_token_id = "valid-jti"
+        self.db.commit()
         valid_payload = {
             "sub": str(user.id),
             "email": user.email,
             "type": "password_reset",
+            "jti": "valid-jti",
             "exp": datetime.now(timezone.utc) + timedelta(minutes=10),
         }
         valid_token = jwt.encode(valid_payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
@@ -332,6 +337,64 @@ class AuthApiTestCase(unittest.TestCase):
         )
         self.assertEqual(res_expired.status_code, 400)
         self.assertIn("Invalid or expired reset link", res_expired.json().get("detail", ""))
+
+    def test_password_reset_token_is_single_use(self):
+        import jwt
+        from datetime import datetime, timezone, timedelta
+
+        user = self._make_user("reset_single_use_test@example.com", STUDENT)
+        user.password_reset_token_id = "single-use-jti"
+        self.db.commit()
+        payload = {
+            "sub": str(user.id),
+            "email": user.email,
+            "type": "password_reset",
+            "jti": "single-use-jti",
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=10),
+        }
+        token = jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+        first_use = self.client.post(
+            "/auth/reset-password",
+            json={"token": token, "new_password": "FirstNewPassword123!"},
+        )
+        self.assertEqual(first_use.status_code, 200)
+
+        # Replaying the exact same still-unexpired link must be refused - its
+        # jti was cleared off the user the moment it succeeded.
+        second_use = self.client.post(
+            "/auth/reset-password",
+            json={"token": token, "new_password": "SecondNewPassword123!"},
+        )
+        self.assertEqual(second_use.status_code, 400)
+        self.assertIn("Invalid or expired reset link", second_use.json().get("detail", ""))
+
+    def test_new_reset_request_invalidates_earlier_link(self):
+        import jwt
+        from datetime import datetime, timezone, timedelta
+
+        user = self._make_user("reset_superseded_test@example.com", STUDENT)
+        user.password_reset_token_id = "first-jti"
+        self.db.commit()
+        stale_payload = {
+            "sub": str(user.id),
+            "email": user.email,
+            "type": "password_reset",
+            "jti": "first-jti",
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=10),
+        }
+        stale_token = jwt.encode(stale_payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+        # A second request supersedes the first, even though the first token
+        # hasn't expired yet.
+        auth_service.request_password_reset(self.db, user.email)
+
+        stale_use = self.client.post(
+            "/auth/reset-password",
+            json={"token": stale_token, "new_password": "ShouldNotApply123!"},
+        )
+        self.assertEqual(stale_use.status_code, 400)
+        self.assertIn("Invalid or expired reset link", stale_use.json().get("detail", ""))
 
     def test_resend_otp_generates_new_challenge(self):
         user = self._make_user("resend_otp_user@example.com", STUDENT)

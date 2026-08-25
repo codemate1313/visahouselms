@@ -56,6 +56,13 @@ class User(Base):
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     force_password_reset: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # The jti of the one outstanding self-service reset email, if any. The reset
+    # link is a stateless JWT so this is the only server-side record of it -
+    # cleared the moment it's redeemed, and overwritten (not appended to) by
+    # every new "forgot password" request, so a replayed or superseded link
+    # stops matching and confirm_password_reset rejects it even though the
+    # token itself hasn't expired yet.
+    password_reset_token_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     # NULL until the password is changed for the first time, i.e. the account is
     # still on the password it was created with. audit_logs keeps the full trail.
     password_changed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

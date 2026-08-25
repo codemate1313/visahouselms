@@ -453,13 +453,19 @@ def request_password_reset(db: Session, email: str) -> None:
 
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(minutes=settings.password_reset_expiry_minutes)
+    reset_jti = uuid4().hex
     reset_payload = {
         "sub": str(user.id),
         "email": user.email,
         "type": "password_reset",
+        "jti": reset_jti,
         "exp": expires_at,
     }
     reset_token = jwt.encode(reset_payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+    # Overwrites any still-outstanding jti from an earlier request, so this new
+    # link is the only one that can succeed from here on.
+    user.password_reset_token_id = reset_jti
+    db.commit()
 
     try:
         from app.services import email_template_service, smtp_service
@@ -497,10 +503,18 @@ def confirm_password_reset(db: Session, token: str, new_password: str) -> None:
     if user.is_owner:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Owner password cannot be reset")
 
+    token_jti = payload.get("jti")
+    if not token_jti or token_jti != user.password_reset_token_id:
+        # Either already redeemed, or superseded by a later reset request -
+        # the JWT signature and exp are still valid, but it's no longer THE
+        # outstanding link for this account.
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset link")
+
     now = datetime.now(timezone.utc)
     user.password_hash = hash_password(new_password)
     user.force_password_reset = False
     user.password_changed_at = now
+    user.password_reset_token_id = None
 
     active_sessions = (
         db.query(UserSession)

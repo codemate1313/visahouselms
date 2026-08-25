@@ -946,8 +946,17 @@
 }
 
 .import-review-header {
-  align-items: flex-start;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.import-review-header > div:first-child {
+  flex: 1 1 260px;
+  min-width: 0;
 }
 
 .import-review-header p,
@@ -955,11 +964,55 @@
   margin: 0;
   color: var(--text-muted);
   font-size: 13px;
+  line-height: 1.45;
 }
 
 .review-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.review-actions button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  border-radius: 8px !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-shadow: none !important;
+}
+
+.review-actions button.secondary-button {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+.review-actions button.secondary-button:hover:not(:disabled) {
+  background: var(--surface-muted) !important;
+  border-color: var(--border-hover, var(--border)) !important;
+  color: var(--text) !important;
+}
+
+[data-theme="dark"] .review-actions button.secondary-button {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .review-actions button.secondary-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
 }
 
 .import-warning {
