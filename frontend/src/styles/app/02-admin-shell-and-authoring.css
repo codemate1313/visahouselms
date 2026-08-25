@@ -1074,10 +1074,22 @@
   flex-shrink: 0;
 }
 
+.module-type-icon svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 2.2px;
+  display: block;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .module-type-card:hover .module-type-icon {
   background: var(--card-accent);
   border-color: var(--card-accent);
   color: #ffffff;
+}
+
+.module-type-card:hover .module-type-icon svg {
+  transform: scale(1.08);
 }
 
 .module-type-card-footer {

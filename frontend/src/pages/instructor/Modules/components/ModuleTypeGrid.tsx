@@ -20,7 +20,7 @@ export function ModuleTypeGrid({ blueprints }: ModuleTypeGridProps) {
           >
             <div className="module-type-card-header">
               <span className="module-type-icon" aria-hidden="true">
-                {strings.typeIcons[blueprint.module_type]}
+                <Icon name={strings.typeIcons[blueprint.module_type]} />
               </span>
               <h2>{blueprint.label}</h2>
             </div>

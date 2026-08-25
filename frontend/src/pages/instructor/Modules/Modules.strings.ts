@@ -1,4 +1,6 @@
 import type { ExamModuleType } from "@/api/types";
+import type { IconName } from "@/components/icons";
+
 
 export const modulesStrings = {
   title: "Modules",
@@ -46,7 +48,7 @@ export const modulesStrings = {
   partsLabel: "parts",
   questionsLabel: "questions",
   minutesLabel: "min",
-  typeIcons: { reading: "R", speaking: "S", writing: "W", listening: "L", full_mock: "FM", final_test: "FT" } satisfies Record<ExamModuleType, string>,
+  typeIcons: { reading: "book", speaking: "microphone", writing: "edit", listening: "headphones", full_mock: "clipboard", final_test: "award" } satisfies Record<ExamModuleType, IconName>,
   typeDetail: {
     reading: "5 parts · 30 auto-marked questions · 50 minutes",
     speaking: "4 equal-weight parts · five examiner criteria · 14 minutes",
