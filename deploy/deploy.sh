@@ -59,24 +59,49 @@ cd ..
 # 4. Rebuild Frontend static files
 echo "⚛️ Building Vite/React frontend..."
 cd frontend
-if [ ! -f .env.production ]; then
-  developer_slug=""
-  if [ -f "$APP_DIR/backend/.env" ]; then
-    developer_slug="$(grep -E '^DEVELOPER_ACCESS_SLUG=' "$APP_DIR/backend/.env" 2>/dev/null | tail -n 1 | cut -d= -f2- || true)"
-  fi
-  if [ -z "$developer_slug" ]; then
-    echo "❌ DEVELOPER_ACCESS_SLUG is required in backend/.env before building the frontend."
-    exit 1
-  fi
-  if [ "$developer_slug" = "vh-control-9f4c2a" ]; then
-    echo "❌ DEVELOPER_ACCESS_SLUG must be changed from the local development default before production deployment."
-    exit 1
-  fi
-  {
-    printf "VITE_API_BASE_URL=/api\n"
-    printf "VITE_DEVELOPER_ACCESS_SLUG=%s\n" "$developer_slug"
-  } > .env.production
+
+# Generate or update DEVELOPER_ACCESS_SLUG in backend/.env if missing or default
+python3 -c "
+import os, secrets
+env_path = '$APP_DIR/backend/.env'
+if not os.path.exists(env_path):
+    print('⚠️ backend/.env does not exist yet. Creating it...')
+    with open(env_path, 'w') as f:
+        f.write('DEVELOPER_ACCESS_SLUG=vh-prod-' + secrets.token_hex(12) + '\n')
+else:
+    with open(env_path, 'r') as f:
+        lines = f.read().splitlines()
+    slug_found = False
+    for i, line in enumerate(lines):
+        if line.startswith('DEVELOPER_ACCESS_SLUG='):
+            slug_found = True
+            val = line.split('=', 1)[1].strip()
+            if not val or val == 'vh-control-9f4c2a':
+                new_val = 'vh-prod-' + secrets.token_hex(12)
+                lines[i] = f'DEVELOPER_ACCESS_SLUG={new_val}'
+                print(f'✅ Updated DEVELOPER_ACCESS_SLUG from \"{val}\" to a new secure production slug.')
+            break
+    if not slug_found:
+        new_val = 'vh-prod-' + secrets.token_hex(12)
+        lines.append(f'DEVELOPER_ACCESS_SLUG={new_val}')
+        print('✅ Appended new secure DEVELOPER_ACCESS_SLUG to backend/.env.')
+    with open(env_path, 'w') as f:
+        f.write('\n'.join(lines) + '\n')
+"
+
+# Extract the slug to write to frontend/.env.production
+developer_slug="$(grep -E '^DEVELOPER_ACCESS_SLUG=' "$APP_DIR/backend/.env" 2>/dev/null | tail -n 1 | cut -d= -f2- || true)"
+if [ -z "$developer_slug" ] || [ "$developer_slug" = "vh-control-9f4c2a" ]; then
+  echo "❌ Failed to set a production-safe DEVELOPER_ACCESS_SLUG in backend/.env."
+  exit 1
 fi
+
+# Always write/override .env.production to ensure it contains the correct slug
+{
+  printf "VITE_API_BASE_URL=/api\n"
+  printf "VITE_DEVELOPER_ACCESS_SLUG=%s\n" "$developer_slug"
+} > .env.production
+
 npm ci
 npm run build
 cd ..

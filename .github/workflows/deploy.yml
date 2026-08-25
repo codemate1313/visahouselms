@@ -52,8 +52,10 @@ jobs:
 
           for attempt in {1..10}; do
             echo "🚀 SSH Connection Attempt $attempt/10 to VPS (Port $TARGET_PORT)..."
-            if ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=~/.ssh/known_hosts -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -p "$TARGET_PORT" root@"$VPS_HOST" 'bash -s' << 'EOF'
+            if ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=~/.ssh/known_hosts -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -p "$TARGET_PORT" root@"$VPS_HOST" 'bash -s' "$DEVELOPER_ACCESS_SLUG" << 'EOF'
             set -Eeuo pipefail
+            DEVELOPER_ACCESS_SLUG="$1"
+            export DEVELOPER_ACCESS_SLUG
             trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
 
             echo "🚀 Starting automatic deployment on VPS..."
@@ -100,14 +102,39 @@ jobs:
             python -m pip install --upgrade pip
             python -m pip install -r requirements.txt
             
-            # Export DEVELOPER_ACCESS_SLUG for the deployment environment
-            export DEVELOPER_ACCESS_SLUG="${DEVELOPER_ACCESS_SLUG}"
+            # Write/update DEVELOPER_ACCESS_SLUG in backend/.env
+            python3 -c "
+import os
+slug = os.environ.get('DEVELOPER_ACCESS_SLUG')
+if slug:
+    path = '.env'
+    lines = []
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            lines = f.read().splitlines()
+    updated = False
+    for i, line in enumerate(lines):
+        if line.startswith('DEVELOPER_ACCESS_SLUG='):
+            lines[i] = f'DEVELOPER_ACCESS_SLUG={slug}'
+            updated = True
+            break
+    if not updated:
+        lines.append(f'DEVELOPER_ACCESS_SLUG={slug}')
+    with open(path, 'w') as f:
+        f.write('\n'.join(lines) + '\n')
+    print('✅ Configured DEVELOPER_ACCESS_SLUG in backend/.env')
+"
             
             python -m alembic upgrade head
             cd ..
 
             # 3. Frontend clean install & build
             cd frontend
+            
+            # Generate or update .env.production with the developer access slug
+            echo "VITE_API_BASE_URL=/api" > .env.production
+            echo "VITE_DEVELOPER_ACCESS_SLUG=${DEVELOPER_ACCESS_SLUG}" >> .env.production
+            
             rm -rf node_modules
             npm ci || (rm -rf node_modules && npm install)
             npm run build
