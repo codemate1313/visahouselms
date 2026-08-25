@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from decimal import Decimal
 from pathlib import Path
@@ -11,6 +12,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 LOCAL_HOSTNAMES = {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
+DEFAULT_DEVELOPER_ACCESS_SLUG = "vh-control-9f4c2a"
 
 
 def _is_local_hostname(value: Optional[str]) -> bool:
@@ -85,7 +87,7 @@ class Settings(BaseSettings):
     super_admin_password: Optional[str] = None
     super_admin_first_name: str = "Super"
     super_admin_last_name: str = "Admin"
-    developer_access_slug: str = "vh-control-9f4c2a"
+    developer_access_slug: str = DEFAULT_DEVELOPER_ACCESS_SLUG
 
     @model_validator(mode="after")
     def validate_production_secrets(self) -> "Settings":
@@ -104,7 +106,11 @@ class Settings(BaseSettings):
             raise ValueError("ALLOWED_HOSTS must be explicitly configured in production")
         if self.refresh_cookie_samesite == "none" and self.app_environment != "production":
             raise ValueError("SameSite=None refresh cookies are only allowed in production")
+        if not re.fullmatch(r"[A-Za-z0-9_-]{8,80}", self.developer_access_slug):
+            raise ValueError("DEVELOPER_ACCESS_SLUG must be 8-80 URL-safe characters")
         if self.app_environment == "production":
+            if self.developer_access_slug == DEFAULT_DEVELOPER_ACCESS_SLUG:
+                raise ValueError("DEVELOPER_ACCESS_SLUG must be changed from the local development default in production")
             is_alembic = any("alembic" in arg for arg in sys.argv)
             is_testing = "pytest" in sys.modules or any("pytest" in arg for arg in sys.argv) or "unittest" in sys.modules
             if is_alembic or os.environ.get("SKIP_SETTINGS_VALIDATION") == "1":

@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
@@ -216,7 +217,7 @@ export function SuperAdminInstructorForm() {
   return <InstituteMemberForm role="INST_INSTRUCTOR" instituteId={Number(id)} returnPath={`/super-admin/institutes/${id}/accounts`} />;
 }
 
-const developerAccessSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+const developerAccessSlug = DEVELOPER_ACCESS_SLUG;
 
 export function DeveloperStudentForm() {
   const { id } = useParams();

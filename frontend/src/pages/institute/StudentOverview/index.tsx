@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
+import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { useAuthStore } from "@/store/authStore";
 import { studentOverviewStrings as strings } from "./StudentOverview.strings";
 import type { StudentOverviewData } from "./types";
@@ -162,7 +163,7 @@ export function SuperAdminStudentOverview() {
   return <StudentOverview instituteId={Number(id)} />;
 }
 
-const developerAccessSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+const developerAccessSlug = DEVELOPER_ACCESS_SLUG;
 
 export function DeveloperStudentOverview() {
   const { id } = useParams();

@@ -61,7 +61,12 @@ from app.routers import (
 )
 
 
-app = FastAPI(title="Language CERT API")
+app = FastAPI(
+    title="Language CERT API",
+    docs_url=None if settings.app_environment == "production" else "/docs",
+    redoc_url=None if settings.app_environment == "production" else "/redoc",
+    openapi_url=None if settings.app_environment == "production" else "/openapi.json",
+)
 
 settings.storage_path.mkdir(parents=True, exist_ok=True)
 

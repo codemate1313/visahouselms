@@ -221,7 +221,12 @@ export function UsersTable({
       return (
         <div className="row-actions-inline users-row-actions">
           {link && (
-            <Link className="action-btn-icon action-neutral" to={link} data-tooltip={editPath ? a.edit : a.manage}>
+            <Link
+              className="action-btn-icon action-neutral"
+              to={link}
+              data-tooltip={editPath ? a.edit : a.manage}
+              aria-label={editPath ? a.edit : a.manage}
+            >
               <Icon name="edit" />
             </Link>
           )}
@@ -235,7 +240,7 @@ export function UsersTable({
 
     return (
       <div className="row-actions-inline users-row-actions">
-        <Link className="action-btn-icon action-neutral" to={actions.editPath(user, basePath)} data-tooltip={a.edit}>
+        <Link className="action-btn-icon action-neutral" to={actions.editPath(user, basePath)} data-tooltip={a.edit} aria-label={a.edit}>
           <Icon name="edit" />
         </Link>
         {renderOverflowMenu([

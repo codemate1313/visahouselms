@@ -60,7 +60,22 @@ cd ..
 echo "⚛️ Building Vite/React frontend..."
 cd frontend
 if [ ! -f .env.production ]; then
-  printf "VITE_API_BASE_URL=/api\n" > .env.production
+  developer_slug=""
+  if [ -f "$APP_DIR/backend/.env" ]; then
+    developer_slug="$(grep -E '^DEVELOPER_ACCESS_SLUG=' "$APP_DIR/backend/.env" 2>/dev/null | tail -n 1 | cut -d= -f2- || true)"
+  fi
+  if [ -z "$developer_slug" ]; then
+    echo "❌ DEVELOPER_ACCESS_SLUG is required in backend/.env before building the frontend."
+    exit 1
+  fi
+  if [ "$developer_slug" = "vh-control-9f4c2a" ]; then
+    echo "❌ DEVELOPER_ACCESS_SLUG must be changed from the local development default before production deployment."
+    exit 1
+  fi
+  {
+    printf "VITE_API_BASE_URL=/api\n"
+    printf "VITE_DEVELOPER_ACCESS_SLUG=%s\n" "$developer_slug"
+  } > .env.production
 fi
 npm ci
 npm run build

@@ -1682,9 +1682,10 @@
   }
 
   .super-admin-portal .action-btn-icon {
-    width: 28px !important;
-    height: 28px !important;
-    min-width: 28px !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
   }
 
   .super-admin-portal .modern-donut-grid {
@@ -2330,6 +2331,12 @@
   display: flex;
   justify-content: flex-end;
   pointer-events: auto;
+  overflow: hidden;
+  max-width: 100vw;
+}
+
+.student-notification-drawer-wrapper[style*="visibility: hidden"] {
+  display: none !important;
 }
 
 .student-notification-drawer-backdrop {
@@ -2348,7 +2355,7 @@
 .student-notification-drawer-panel {
   position: relative;
   z-index: 2;
-  width: min(520px, 100vw);
+  width: min(520px, calc(100vw - 24px));
   height: 100vh;
   height: 100dvh;
   background: var(--surface, #ffffff);

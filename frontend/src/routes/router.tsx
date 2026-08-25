@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { LandingLayout } from "../components/landing/LandingLayout";
+import { DEVELOPER_ACCESS_SLUG } from "../config/developerAccess";
 import { RequireActivePlan } from "./RequireActivePlan";
 import { RequireInstituteSetup } from "./RequireInstituteSetup";
 import { InstituteSignupRedirect } from "./InstituteSignupRedirect";
@@ -103,7 +104,6 @@ import {
   SuperAdminTestimonials,
   Terminal,
   TestRunner,
-  TestingLoginSelector,
   TrialConfig,
   Users,
   Vouchers,
@@ -113,7 +113,17 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import { MonetaryAnalyticsRoute } from "./MonetaryAnalyticsRoute";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
 
-const developerAccessSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+const developerAccessSlug = DEVELOPER_ACCESS_SLUG;
+const testingLoginRoutes = import.meta.env.DEV
+  ? [{
+      path: "/testing-login",
+      lazy: async () => {
+        const { TestingLoginSelector } = await import("../pages/TestingLoginSelector");
+        return { Component: TestingLoginSelector };
+      },
+      errorElement: <RouteErrorBoundary />,
+    }]
+  : [];
 
 export const router = createBrowserRouter([
   {
@@ -139,7 +149,7 @@ export const router = createBrowserRouter([
       { path: "/vouchers", element: <PublicVouchersPage /> },
     ],
   },
-  { path: "/testing-login", element: <TestingLoginSelector />, errorElement: <RouteErrorBoundary /> },
+  ...testingLoginRoutes,
   { path: "/super-admin/login", element: <Navigate to="/login?role=SUPER_ADMIN" replace /> },
   { path: `/${developerAccessSlug}/login`, element: <Login allowedRoles={["DEVELOPER"]} title="Developer Control" subtitle="Verified developer access only" /> },
   { path: "/sa-instructor/login", element: <Navigate to="/login?role=SA_INSTRUCTOR" replace /> },
@@ -376,6 +386,7 @@ export const router = createBrowserRouter([
         path: "/student",
         element: <StudentLayout />,
         children: [
+          { index: true, element: <Navigate to="dashboard" replace /> },
           // Demo students (no active plan) only get My Tests, the plan
           // catalogue and their own account; everything else redirects.
           { path: "dashboard", element: <RequireActivePlan><StudentDashboard /></RequireActivePlan> },

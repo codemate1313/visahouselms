@@ -5,6 +5,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { Button, ExportButtons, LinkButton, SearchInput, SearchableSelect, SegmentedControl } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { usePageTitleStore } from "@/store/pageTitleStore";
@@ -79,7 +80,7 @@ interface UsersProps {
   basePath?: string;
 }
 
-const developerSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+const developerSlug = DEVELOPER_ACCESS_SLUG;
 
 export function Users({ basePath = "/super-admin" }: UsersProps) {
   const { role: roleSlug } = useParams();

@@ -275,22 +275,37 @@ a.vh-hero-cta-alt:hover {
 
 .vh-hero-dots-inner {
   display: flex;
-  gap: 8px;
+  gap: 2px;
   align-items: center;
 }
 
 .vh-hero-dots-inner .vh-dot {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vh-hero-dots-inner .vh-dot::before {
+  content: "";
   width: 8px;
   height: 8px;
   background: rgba(255, 255, 255, 0.35);
   border-radius: 4px;
-  border: none;
-  cursor: pointer;
   transition: all 0.3s ease;
-  padding: 0;
 }
 
 .vh-hero-dots-inner .vh-dot.vh-dot-active {
+  width: 32px;
+}
+
+.vh-hero-dots-inner .vh-dot.vh-dot-active::before {
   width: 24px;
   background: #b80f28;
   box-shadow: 0 0 10px rgba(184, 15, 40, 0.6);

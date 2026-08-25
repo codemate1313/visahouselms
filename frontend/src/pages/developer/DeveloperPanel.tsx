@@ -4,11 +4,12 @@ import { extractErrorMessage } from "@/api/errors";
 import type { SuperAdminAccount } from "@/api/types";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { PasswordInput } from "@/components/PasswordInput";
+import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { Button, Card } from "@/components/ui";
 import { startImpersonation } from "@/utils/impersonate";
 import "./DeveloperPanel.css";
 
-const developerSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+const developerSlug = DEVELOPER_ACCESS_SLUG;
 const developerApiBase = `/developer/${developerSlug}`;
 type ElevatedAccountType = "developer" | "super_admin_owner";
 const ROLE_OPTIONS = [

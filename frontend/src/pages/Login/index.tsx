@@ -391,7 +391,7 @@ export function Login({
 
                 <div className="form-group">
                   <label htmlFor="password">{strings.passwordLabel}</label>
-                  <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} placeholder={strings.passwordPlaceholder} autoComplete="current-password" />
+                  <PasswordInput id="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={strings.passwordPlaceholder} autoComplete="current-password" />
                   <div className="below-password-row">
                     <a
                       href="#forgot"
@@ -465,8 +465,8 @@ export function Login({
                     {strings.institutePortalPrompt}
                     <button
                       type="button"
+                      className="auth-inline-action"
                       onClick={() => handleSwitchPortalMode("INSTITUTE_ADMIN")}
-                      style={{ background: "none", border: "none", color: "#e11d2e", fontWeight: 700, cursor: "pointer", padding: 0, fontSize: "inherit", textDecoration: "underline" }}
                     >
                       {strings.institutePortalLink}
                     </button>
@@ -476,8 +476,8 @@ export function Login({
                     {strings.superAdminPrompt}
                     <button
                       type="button"
+                      className="auth-inline-action"
                       onClick={() => handleSwitchPortalMode("SUPER_ADMIN")}
-                      style={{ background: "none", border: "none", color: "#e11d2e", fontWeight: 750, cursor: "pointer", padding: 0, fontSize: "inherit", textDecoration: "underline" }}
                     >
                       {strings.superAdminLink}
                     </button>

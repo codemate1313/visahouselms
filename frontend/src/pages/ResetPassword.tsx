@@ -134,7 +134,7 @@ export function ResetPassword() {
             </button>
 
             <div style={{ textAlign: "center", marginTop: 20 }}>
-              <Link to="/login" style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>
+              <Link to="/login" className="auth-inline-action is-muted">
                 {strings.returnToSignIn}
               </Link>
             </div>

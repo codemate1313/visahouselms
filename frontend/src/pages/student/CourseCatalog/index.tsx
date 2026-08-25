@@ -7,53 +7,10 @@ import { PageHeader } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
+import { loadRazorpayScript, openRazorpayCheckout } from "@/utils/razorpay";
 import { courseCatalogStrings as strings } from "./CourseCatalog.strings";
 import { PlanGrid } from "./components/PlanGrid";
 import { CheckoutModal } from "./components/CheckoutModal";
-
-async function loadRazorpayScript(): Promise<boolean> {
-  if (typeof window !== "undefined" && (window as unknown as { Razorpay?: unknown }).Razorpay) return true;
-
-  const urls = [
-    "https://checkout.razorpay.com/v1/checkout.js",
-    "https://checkout-static.razorpay.com/v1/checkout.js",
-  ];
-
-  for (const url of urls) {
-    let scriptEl = document.querySelector(`script[src="${url}"]`) as HTMLScriptElement | null;
-
-    if (scriptEl) {
-      for (let i = 0; i < 15; i += 1) {
-        if ((window as unknown as { Razorpay?: unknown }).Razorpay) return true;
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-      if (!(window as unknown as { Razorpay?: unknown }).Razorpay) {
-        scriptEl.remove();
-        scriptEl = null;
-      }
-    }
-
-    if (!scriptEl) {
-      const loaded = await new Promise<boolean>((resolve) => {
-        const script = document.createElement("script");
-        script.src = url;
-        script.onload = () => resolve(true);
-        script.onerror = () => resolve(false);
-        document.head.appendChild(script);
-      });
-
-      if (loaded && (window as unknown as { Razorpay?: unknown }).Razorpay) {
-        return true;
-      }
-    }
-  }
-
-  return Boolean((window as unknown as { Razorpay?: unknown }).Razorpay);
-}
-
-
-
-
 
 
 export function CourseCatalog() {
@@ -87,7 +44,6 @@ export function CourseCatalog() {
   useEffect(() => {
     if (!isInstituteStudent) {
       load();
-      loadRazorpayScript();
       apiClient.get<{ default_currency: string; conversion?: { rate: number } }>("/student/detect-location")
         .then((res) => {
           if (res.data?.default_currency === "USD") {
@@ -165,19 +121,15 @@ export function CourseCatalog() {
 
       // 2. Razorpay Checkout Flow
       if (data.online_payment && data.gateway === "razorpay" && data.order_id && data.key_id && data.payment_id) {
-        const options = {
-          key: data.key_id,
-          amount: data.amount,
+        openRazorpayCheckout({
+          keyId: data.key_id,
+          orderId: data.order_id,
+          amount: data.amount ?? 0,
           currency: data.currency || "INR",
-          name: "Visa House Language CERT",
           description: `${data.plan_name} Purchase`,
-          image: "/brand/vh-mark-96.png",
-          order_id: data.order_id,
-          handler: async function (response: {
-            razorpay_payment_id: string;
-            razorpay_order_id: string;
-            razorpay_signature: string;
-          }) {
+          prefillName: `${user?.first_name || ""} ${user?.last_name || ""}`.trim(),
+          prefillEmail: user?.email || "",
+          onSuccess: async (response) => {
             try {
               await apiClient.post(`/student/payments/${data.payment_id}/verify-razorpay`, {
                 razorpay_payment_id: response.razorpay_payment_id,
@@ -191,28 +143,14 @@ export function CourseCatalog() {
               setBuying(false);
             }
           },
-          modal: {
-            ondismiss: function () {
-              setBuying(false);
-            },
+          onDismiss: () => {
+            setBuying(false);
           },
-          prefill: {
-            name: `${user?.first_name || ""} ${user?.last_name || ""}`.trim(),
-            email: user?.email || "",
+          onFailure: (message) => {
+            showError(message, "Payment Failed");
+            setBuying(false);
           },
-          theme: {
-            color: "#dc2626",
-          },
-        };
-
-        const RazorpayCtor = (window as unknown as { Razorpay: new (opts: typeof options) => { open: () => void; on: (evt: string, fn: (res: unknown) => void) => void } }).Razorpay;
-        const razorpay = new RazorpayCtor(options);
-        razorpay.on("payment.failed", function (response: unknown) {
-          const errRes = response as { error?: { description?: string } };
-          showError(errRes.error?.description || "Payment failed", "Payment Failed");
-          setBuying(false);
         });
-        razorpay.open();
       } else {
         /* No usable gateway came back from create-order, which means payments
            are not configured. This branch used to call handlePurchaseSuccess()

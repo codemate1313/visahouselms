@@ -89,7 +89,7 @@
   flex: 1;
   min-width: 0;
   max-width: 100%;
-  padding-right: 48px !important;
+  padding-right: 56px !important;
 }
 
 .pin-list-pin {
@@ -98,8 +98,8 @@
   top: 12px !important;
   transform: none !important;
   z-index: 5 !important;
-  width: 28px !important;
-  height: 28px !important;
+  width: 36px !important;
+  height: 36px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -114,8 +114,8 @@
 }
 
 .pin-list-pin svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
 .pin-list-row:hover .pin-list-pin,

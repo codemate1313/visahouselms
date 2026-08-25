@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 @import '../tokens.css';
 @import '../dashboard-shared.css';
 
@@ -559,22 +558,37 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 2px;
   z-index: 20;
 }
 
 .slider-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slider-dot::before {
+  content: "";
   width: 8px;
   height: 8px;
   border-radius: 4px;
   background: rgba(100, 116, 139, 0.35);
-  border: none;
-  cursor: pointer;
-  padding: 0;
   transition: all 300ms ease;
 }
 
 .slider-dot.active {
+  width: 32px;
+}
+
+.slider-dot.active::before {
   width: 24px;
   background: var(--color-primary, var(--primary));
   border-radius: 4px;
@@ -1300,6 +1314,7 @@ h3 {
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
+  min-height: 32px;
   border-radius: 999px;
   background: rgba(148, 163, 184, 0.12);
   border: 1px solid rgba(148, 163, 184, 0.2);
@@ -1430,6 +1445,28 @@ h3 {
   gap: 8px;
   margin-top: 24px;
   text-align: center;
+}
+
+.auth-inline-action {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  border: none;
+  background: none;
+  color: #e11d2e;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.auth-inline-action.is-muted {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .form-legal-note {

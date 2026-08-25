@@ -27,6 +27,9 @@ def _upload(content_type: str, content: bytes) -> UploadFile:
     )
 
 
+VALID_DEVELOPER_ACCESS_SLUG = "prod-developer-panel"
+
+
 class RegistrationRateLimitTests(unittest.TestCase):
     def tearDown(self) -> None:
         reset_rate_limits()
@@ -61,6 +64,7 @@ class ProductionConfigurationTests(unittest.TestCase):
             frontend_url="https://app.example.com",
             cors_origins="https://app.example.com",
             allowed_hosts="api.example.com",
+            developer_access_slug=VALID_DEVELOPER_ACCESS_SLUG,
         )
         self.assertEqual(configured.cors_origin_list, ["https://app.example.com"])
         self.assertIsNone(configured.cors_origin_regex)
@@ -97,6 +101,7 @@ class ProductionConfigurationTests(unittest.TestCase):
                 frontend_url="http://localhost:5173",
                 cors_origins="https://app.example.com",
                 allowed_hosts="api.example.com",
+                developer_access_slug=VALID_DEVELOPER_ACCESS_SLUG,
             )
 
     def test_production_rejects_local_cors_origin(self) -> None:
@@ -110,6 +115,7 @@ class ProductionConfigurationTests(unittest.TestCase):
                 frontend_url="https://app.example.com",
                 cors_origins="http://localhost:5173",
                 allowed_hosts="api.example.com",
+                developer_access_slug=VALID_DEVELOPER_ACCESS_SLUG,
             )
 
     def test_production_rejects_plain_http_cors_origin(self) -> None:
@@ -123,6 +129,7 @@ class ProductionConfigurationTests(unittest.TestCase):
                 frontend_url="https://app.example.com",
                 cors_origins="http://app.example.com",
                 allowed_hosts="api.example.com",
+                developer_access_slug=VALID_DEVELOPER_ACCESS_SLUG,
             )
 
     def test_production_rejects_local_allowed_hosts(self) -> None:
@@ -136,6 +143,7 @@ class ProductionConfigurationTests(unittest.TestCase):
                 frontend_url="https://app.example.com",
                 cors_origins="https://app.example.com",
                 allowed_hosts="api.example.com,localhost",
+                developer_access_slug=VALID_DEVELOPER_ACCESS_SLUG,
             )
 
     def test_production_rejects_local_google_redirect_uri(self) -> None:
@@ -150,6 +158,29 @@ class ProductionConfigurationTests(unittest.TestCase):
                 cors_origins="https://app.example.com",
                 allowed_hosts="api.example.com",
                 google_redirect_uri="http://localhost:8000/auth/google/callback",
+                developer_access_slug=VALID_DEVELOPER_ACCESS_SLUG,
+            )
+
+    def test_production_rejects_default_developer_access_slug(self) -> None:
+        with self.assertRaises(ValueError):
+            Settings(
+                _env_file=None,
+                database_url="sqlite://",
+                jwt_secret_key="test-secret",
+                app_environment="production",
+                settings_encryption_key=Fernet.generate_key().decode("utf-8"),
+                frontend_url="https://app.example.com",
+                cors_origins="https://app.example.com",
+                allowed_hosts="api.example.com",
+            )
+
+    def test_developer_access_slug_must_be_url_safe(self) -> None:
+        with self.assertRaises(ValueError):
+            Settings(
+                _env_file=None,
+                database_url="sqlite://",
+                jwt_secret_key="test-secret",
+                developer_access_slug="../bad",
             )
 
     def test_development_allows_temporary_demo_hosts(self) -> None:
@@ -223,6 +254,7 @@ class LoginOtpSecurityTests(unittest.TestCase):
                 frontend_url="https://app.example.com",
                 allowed_hosts="api.example.com",
                 dev_static_otp_code="123456",
+                developer_access_slug=VALID_DEVELOPER_ACCESS_SLUG,
             )
 
 

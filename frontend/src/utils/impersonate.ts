@@ -1,9 +1,10 @@
 import { apiClient } from "@/api/client";
+import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { destinationFor } from "@/pages/Login/helpers";
 import { useAuthStore } from "@/store/authStore";
 import { useImpersonationStore } from "@/store/impersonationStore";
 
-const slug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+const slug = DEVELOPER_ACCESS_SLUG;
 
 interface ImpersonateResponse {
   access_token: string;

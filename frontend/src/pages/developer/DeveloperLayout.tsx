@@ -3,10 +3,11 @@ import { Outlet } from "react-router-dom";
 import { logoutAndRedirectHome } from "@/auth/logout";
 import { GsapRouteAnimator } from "@/components/GsapRouteAnimator";
 import { PortalTopBar } from "@/components/PortalTopBar";
+import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { Sidebar, type MenuSection } from "@/components/Sidebar";
 
 const COLLAPSE_STORAGE_KEY = "developer-lms-sidebar-collapsed";
-const developerAccessSlug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+const developerAccessSlug = DEVELOPER_ACCESS_SLUG;
 
 export function DeveloperLayout() {
   const [collapsed, setCollapsed] = useState(

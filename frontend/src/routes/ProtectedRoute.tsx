@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { consumeLogoutRedirect } from "../auth/logoutRedirect";
+import { DEVELOPER_ACCESS_SLUG } from "../config/developerAccess";
 import { useAuthStore } from "../store/authStore";
 
 interface ProtectedRouteProps {
@@ -9,7 +10,7 @@ interface ProtectedRouteProps {
 function loginPathForRole(role?: string) {
   if (role === "SUPER_ADMIN") return "/login?role=SUPER_ADMIN";
   if (role === "SA_INSTRUCTOR") return "/login?role=SA_INSTRUCTOR";
-  if (role === "DEVELOPER") return `/${import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a"}/login`;
+  if (role === "DEVELOPER") return `/${DEVELOPER_ACCESS_SLUG}/login`;
   return "/login";
 }
 
@@ -33,7 +34,7 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const passwordRoutes: Record<string, string> = {
     SUPER_ADMIN: "/super-admin/change-password",
     SA_INSTRUCTOR: "/super-admin/instructor/change-password",
-    DEVELOPER: `/${import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a"}/change-password`,
+    DEVELOPER: `/${DEVELOPER_ACCESS_SLUG}/change-password`,
     INSTITUTE_ADMIN: "/institute-portal/change-password",
     INST_INSTRUCTOR: "/institute-instructor/change-password",
     STUDENT: "/student/change-password",

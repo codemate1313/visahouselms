@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { AttemptSummary, StudentCurrentPlan } from "@/api/types";
 import { PageHeader } from "@/components/ui";
+import { getCachedStudentCurrentPlan } from "@/hooks/useStudentAccess";
 import { useAuthStore } from "@/store/authStore";
 import { studentDashboardStrings as strings } from "./StudentDashboard.strings";
 import { COMPLETED_STATUSES, attemptTime, progressForStatus, statusLabel } from "./helpers";
@@ -15,22 +16,27 @@ import { DailyEnglishChallenge } from "./components/DailyEnglishChallenge";
 
 export function StudentDashboard() {
   const user = useAuthStore((state) => state.user);
+  const accessToken = useAuthStore((state) => state.accessToken);
   const [attempts, setAttempts] = useState<AttemptSummary[] | null>(null);
   const [myPlan, setMyPlan] = useState<StudentCurrentPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const planRequest = user?.id && accessToken
+      ? getCachedStudentCurrentPlan(`${user.id}:${accessToken}`)
+      : apiClient.get<StudentCurrentPlan>("/student/my-plan").then(({ data }) => data);
+
     Promise.all([
       apiClient.get<AttemptSummary[]>("/student/attempts"),
-      apiClient.get<StudentCurrentPlan>("/student/my-plan"),
+      planRequest,
     ])
-      .then(([attemptsRes, coursesRes]) => {
+      .then(([attemptsRes, plan]) => {
         setAttempts(attemptsRes.data);
-        setMyPlan(coursesRes.data);
+        setMyPlan(plan);
       })
       .catch(() => setError(strings.loadError));
-  }, []);
+  }, [accessToken, user?.id]);
 
   useDashboardAnimations(containerRef, Boolean(attempts && myPlan));
 

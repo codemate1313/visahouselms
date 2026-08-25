@@ -125,9 +125,9 @@ curl -fsS http://127.0.0.1:8000/health/db
    ```bash
    cd ../frontend
    ```
-2. Set up the production API origin. For single-domain Nginx deployment, keep the same-origin default:
+2. Set up the production API origin and mirror the backend developer slug. For single-domain Nginx deployment, keep the same-origin default:
    ```bash
-   echo "VITE_API_BASE_URL=/api" > .env.production
+   printf "VITE_API_BASE_URL=/api\nVITE_DEVELOPER_ACCESS_SLUG=<same value as backend DEVELOPER_ACCESS_SLUG>\n" > .env.production
    ```
    Use a full public HTTPS backend URL only if the API is hosted on a separate domain.
 3. Install packages and compile static files:

@@ -3,12 +3,13 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Badge, Button, Input, PageHeader } from "@/components/ui";
 import { confirmAction } from "@/components/confirmDialog";
+import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { useToastStore } from "@/store/toastStore";
 import { formatDate } from "@/utils/date";
 import { startImpersonation } from "@/utils/impersonate";
 import "./DeveloperOps.css";
 
-const slug = import.meta.env.VITE_DEVELOPER_ACCESS_SLUG || "vh-control-9f4c2a";
+const slug = DEVELOPER_ACCESS_SLUG;
 const base = `/developer/${slug}`;
 
 interface Health {

@@ -103,11 +103,20 @@ function App() {
       document.querySelectorAll("textarea").forEach((ta) => autoResize(ta));
     };
 
+    const resizeTextareasIn = (node: Node) => {
+      if (node instanceof HTMLTextAreaElement) {
+        autoResize(node);
+        return;
+      }
+      if (node instanceof HTMLElement) {
+        node.querySelectorAll("textarea").forEach((ta) => autoResize(ta));
+      }
+    };
+
     const observer = new MutationObserver((mutations) => {
       for (const m of mutations) {
-        if (m.addedNodes.length > 0) {
-          resizeAll();
-          break;
+        for (const node of m.addedNodes) {
+          resizeTextareasIn(node);
         }
       }
     });
