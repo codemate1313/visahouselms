@@ -230,7 +230,7 @@ export function BarChart({
                 left: `${((paddingLeft + gap + hoveredIndex * (barWidth + (count > 1 ? gap : 0)) + barWidth / 2) / width) * 100}%`,
                 top: `${((paddingTop + chartHeight - (rows[hoveredIndex].value / gridMax) * chartHeight) / height) * 100}%`,
                 transform: "translate(-50%, -130%)",
-                background: "var(--tooltip-bg, var(--text))",
+                background: "var(--tooltip-bg, #1e293b)",
                 color: "#ffffff",
                 border: "1px solid rgba(255,255,255,0.15)",
                 borderRadius: "var(--radius-md)",

@@ -242,7 +242,7 @@ export function LineChart({
                 left: rows.length === 1 ? "50%" : `${(displayPoints[hoveredIndex]?.x ?? 0) / width * 100}%`,
                 top: rows.length === 1 ? "35%" : `${(displayPoints[hoveredIndex]?.y ?? 0) / height * 100}%`,
                 transform: "translate(-50%, -130%)",
-                background: "var(--tooltip-bg, var(--text))",
+                background: "var(--tooltip-bg, #1e293b)",
                 color: "#ffffff",
                 border: "1px solid rgba(255,255,255,0.15)",
                 borderRadius: "var(--radius-md)",
