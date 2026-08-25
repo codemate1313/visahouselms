@@ -482,7 +482,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
             onChange={(value) => setSource(value as "" | "portal" | "customer")}
           />
         ) : <div />}
-        <Button variant="secondary" leftIcon={<Icon name="notifications" />} onClick={() => void load()}>
+        <Button variant="secondary" leftIcon={<Icon name="refresh" />} onClick={() => void load()}>
           Refresh
         </Button>
       </div>

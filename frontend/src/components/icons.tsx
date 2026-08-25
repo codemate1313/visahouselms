@@ -80,9 +80,16 @@ export type IconName =
   | "award"
   | "clipboard"
   | "megaphone"
-  | "message";
+  | "message"
+  | "refresh";
 
 const ICON_PATHS: Record<IconName, ReactNode> = {
+  refresh: (
+    <>
+      <polyline points="23 4 23 10 17 10" />
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+    </>
+  ),
   warning: (
     <>
       <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />

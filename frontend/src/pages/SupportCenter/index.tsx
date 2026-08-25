@@ -434,7 +434,7 @@ export function SupportCenter() {
             </Button>
             <Button
               variant="secondary"
-              leftIcon={<Icon name="notifications" />}
+              leftIcon={<Icon name="refresh" />}
               onClick={() => void loadTickets()}
             >
               Refresh
