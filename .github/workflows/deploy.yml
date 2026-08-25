@@ -17,7 +17,6 @@ jobs:
         env:
           DEPLOY_HOST: ${{ secrets.VPS_HOST || secrets.VPS_IP }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          DEVELOPER_ACCESS_SLUG: ${{ secrets.DEVELOPER_ACCESS_SLUG }}
         run: |
           if [ -z "$SSH_PRIVATE_KEY" ]; then
             echo "❌ Error: SSH_PRIVATE_KEY secret is not configured"
@@ -29,11 +28,6 @@ jobs:
             echo "Please add VPS_HOST, or keep the existing VPS_IP repository secret"
             exit 1
           fi
-          if [ -z "$DEVELOPER_ACCESS_SLUG" ]; then
-            echo "❌ Error: DEVELOPER_ACCESS_SLUG secret is not configured"
-            echo "Please add DEVELOPER_ACCESS_SLUG to repository secrets"
-            exit 1
-          fi
           echo "✅ All required secrets are configured"
 
       - name: Deploy to Hostinger VPS via SSH with Retry
@@ -41,7 +35,6 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST || secrets.VPS_IP }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          DEVELOPER_ACCESS_SLUG: ${{ secrets.DEVELOPER_ACCESS_SLUG }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
@@ -52,10 +45,8 @@ jobs:
 
           for attempt in {1..10}; do
             echo "🚀 SSH Connection Attempt $attempt/10 to VPS (Port $TARGET_PORT)..."
-            if ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=~/.ssh/known_hosts -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -p "$TARGET_PORT" root@"$VPS_HOST" 'bash -s' "$DEVELOPER_ACCESS_SLUG" << 'EOF'
+            if ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=~/.ssh/known_hosts -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -p "$TARGET_PORT" root@"$VPS_HOST" 'bash -s' << 'EOF'
             set -Eeuo pipefail
-            DEVELOPER_ACCESS_SLUG="$1"
-            export DEVELOPER_ACCESS_SLUG
             trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
 
             echo "🚀 Starting automatic deployment on VPS..."
@@ -98,24 +89,26 @@ jobs:
             if [ ! -d ".venv" ]; then
               python3 -m venv .venv
             fi
+
+            # Reuse the production slug already stored on the VPS. Generate and
+            # persist a safe value on first deployment or when an old default is found.
+            developer_slug="$(grep -E '^DEVELOPER_ACCESS_SLUG=' .env 2>/dev/null | tail -n 1 | cut -d= -f2- || true)"
+            if [[ ! "$developer_slug" =~ ^[A-Za-z0-9_-]{8,80}$ ]] || [ "$developer_slug" = "vh-control-9f4c2a" ] || [ "$developer_slug" = "developer" ]; then
+              developer_slug="vh-prod-$(python3 -c 'import secrets; print(secrets.token_hex(16))')"
+              if [ -f .env ] && grep -q '^DEVELOPER_ACCESS_SLUG=' .env; then
+                sed -i "s|^DEVELOPER_ACCESS_SLUG=.*$|DEVELOPER_ACCESS_SLUG=${developer_slug}|" .env
+              else
+                printf 'DEVELOPER_ACCESS_SLUG=%s\n' "$developer_slug" >> .env
+              fi
+              echo "✅ Generated and persisted a production developer access slug."
+            else
+              echo "✅ Reusing the existing production developer access slug."
+            fi
+
             source .venv/bin/activate
             python -m pip install --upgrade pip
             python -m pip install -r requirements.txt
-            
-            # Write/update DEVELOPER_ACCESS_SLUG in backend/.env
-            if [ -n "${DEVELOPER_ACCESS_SLUG}" ]; then
-              if [ ! -f .env ]; then
-                echo "DEVELOPER_ACCESS_SLUG=${DEVELOPER_ACCESS_SLUG}" > .env
-              else
-                if grep -q "^DEVELOPER_ACCESS_SLUG=" .env; then
-                  python3 -c "import os; slug=os.environ['DEVELOPER_ACCESS_SLUG']; lines=[(f'DEVELOPER_ACCESS_SLUG={slug}' if l.startswith('DEVELOPER_ACCESS_SLUG=') else l) for l in open('.env').read().splitlines()]; open('.env','w').write('\n'.join(lines)+'\n')"
-                else
-                  echo "DEVELOPER_ACCESS_SLUG=${DEVELOPER_ACCESS_SLUG}" >> .env
-                fi
-              fi
-              echo "✅ Configured DEVELOPER_ACCESS_SLUG in backend/.env"
-            fi
-            
+
             python -m alembic upgrade head
             cd ..
 
@@ -123,8 +116,7 @@ jobs:
             cd frontend
             
             # Generate or update .env.production with the developer access slug
-            echo "VITE_API_BASE_URL=/api" > .env.production
-            echo "VITE_DEVELOPER_ACCESS_SLUG=${DEVELOPER_ACCESS_SLUG}" >> .env.production
+            printf 'VITE_API_BASE_URL=/api\nVITE_DEVELOPER_ACCESS_SLUG=%s\n' "$developer_slug" > .env.production
             
             rm -rf node_modules
             npm ci || (rm -rf node_modules && npm install)
