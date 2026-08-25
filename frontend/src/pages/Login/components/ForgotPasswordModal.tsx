@@ -59,7 +59,6 @@ export function ForgotPasswordModal({
             <RequiredMark />
           </label>
           <div className="forgot-password-input-wrap">
-            <Icon name="lock" />
             <input
               id="forgot-email"
               type="email"

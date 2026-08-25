@@ -11,11 +11,11 @@ export const resetPasswordStrings = {
   confirmPasswordLabel: "Confirm New Password",
   confirmPasswordPlaceholder: "Re-enter new password",
   submitBusy: "Resetting password...",
-  submitLabel: "Update Password &rarr;",
-  returnToSignIn: "&larr; Return to Sign in",
+  submitLabel: "Update Password →",
+  returnToSignIn: "← Return to Sign in",
   success: {
     title: "Password Reset Successfully!",
     description: "Your password has been updated. You can now sign in with your new credentials.",
-    signInLink: "Sign in to Account &rarr;",
+    signInLink: "Sign in to Account →",
   },
 };

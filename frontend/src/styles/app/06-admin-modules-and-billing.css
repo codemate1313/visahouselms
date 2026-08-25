@@ -6972,7 +6972,11 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 
 [data-theme="dark"] .role-profile-avatar-frame {
   border-color: rgba(255, 255, 255, 0.14) !important;
-  background: #242933 !important;
+  background: #181924 !important;
+}
+
+[data-theme="dark"] .role-profile-avatar-frame img {
+  background: #181924 !important;
 }
 
 [data-theme="dark"] .role-profile-badge-pill {

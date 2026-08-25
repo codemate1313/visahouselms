@@ -1,4 +1,4 @@
-import { useEffect, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, type FormEvent } from "react";
 import { RequiredMark } from "@/components/ui";
 import { API_BASE_URL } from "@/api/client";
 import type { ExamModuleAsset, ExamModulePart } from "@/api/types";
@@ -37,12 +37,33 @@ export function ListeningAudioPanel(props: ListeningAudioPanelProps) {
     onDeleteAudio,
   } = props;
   const t = strings.listeningAudio;
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (audioMode !== "single") {
       onAudioModeChange("single");
     }
   }, [audioMode, onAudioModeChange]);
+
+  // Reset file input element when part changes or when audioFile is cleared
+  useEffect(() => {
+    if (!audioFile && fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, [audioFile, part.id]);
+
+  const previewUrl = useMemo(() => {
+    if (!audioFile) return "";
+    return URL.createObjectURL(audioFile);
+  }, [audioFile]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   return (
     <section className="listening-audio-panel vh-simple-audio-panel">
@@ -80,18 +101,34 @@ export function ListeningAudioPanel(props: ListeningAudioPanelProps) {
                 <RequiredMark />
               </label>
               <input
-                key={part.id + (audioFile ? "-loaded" : "-empty")}
+                key={part.id}
+                ref={fileInputRef}
                 id="audio-file"
                 type="file"
-                accept=".mp3,audio/mpeg"
+                accept=".mp3,audio/mpeg,audio/*"
                 onChange={(event) => onAudioFileChange(event.target.files?.[0] ?? null)}
-                required
+                required={!audioFile}
               />
+              {audioFile && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "12px", color: "var(--ink2)", marginTop: "4px" }}>
+                  <span>Selected: <strong>{audioFile.name}</strong> ({(audioFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                  <button
+                    type="button"
+                    style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "12px", padding: 0 }}
+                    onClick={() => {
+                      onAudioFileChange(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
             </div>
 
-            {audioFile && (
+            {previewUrl && (
               <div className="audio-preview-container" style={{ margin: "4px 0" }}>
-                <audio controls src={URL.createObjectURL(audioFile)} style={{ width: "100%", height: "36px" }} />
+                <audio controls src={previewUrl} style={{ width: "100%", height: "36px" }} />
               </div>
             )}
 
