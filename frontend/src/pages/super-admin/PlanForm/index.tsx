@@ -211,12 +211,12 @@ export function PlanForm() {
       if (isNew) {
         await apiClient.post("/super-admin/plans", payload);
         showSuccess("Plan created successfully");
+        navigate(catalogue.basePath);
       } else {
         await apiClient.patch(`/super-admin/plans/${id}`, payload);
         originalRef.current = payload;
         showSuccess("Plan updated successfully");
       }
-      navigate(catalogue.basePath);
     } catch (err) {
       setError(extractErrorMessage(err, strings.errors.save));
     } finally {
