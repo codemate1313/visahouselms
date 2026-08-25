@@ -21,7 +21,7 @@ const DEFAULT_TIMELINE_ITEMS: TimelinePanelItem[] = [
     year: "2019",
     number: "1",
     title: "Visa House Begins",
-    desc: "Started with a vision to help students navigate international education and immigration with greater confidence.",
+    desc: "Started with a vision to help students navigate international education and test preparation with greater confidence.",
     bgColor: "#f2f7ef",
     textColor: "#142814",
     accentColor: "#264826",

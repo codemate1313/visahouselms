@@ -137,18 +137,17 @@
   border: none !important;
   padding: 0 !important;
   box-shadow: none !important;
-  margin-bottom: 16px;
-  min-height: 32px;
+  margin-bottom: 14px;
 }
 
 .vh-public-hero-title {
   font-size: clamp(24px, 3.2vw, 38px);
-  line-height: 1.15;
+  line-height: 1.18;
   letter-spacing: -0.025em;
   font-weight: 600;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   color: #ffffff;
-  min-height: 3.2em;
+  min-height: 2.4em;
   white-space: pre-line;
   overflow-wrap: break-word;
 }
@@ -166,11 +165,11 @@
 
 .vh-hero-desc {
   font-size: clamp(14px, 1.15vw, 16px);
-  line-height: 1.6;
+  line-height: 1.55;
   color: rgba(241, 245, 249, 0.82);
   max-width: 32em;
-  margin-bottom: 32px;
-  min-height: 3.4em;
+  margin-bottom: 28px;
+  min-height: 2.8em;
 }
 
 .vh-hero-actions {

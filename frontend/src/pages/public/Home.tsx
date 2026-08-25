@@ -24,7 +24,7 @@ import "@/styles/public/home.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const HERO_INTERVAL_MS = 4000;
+const HERO_INTERVAL_MS = 5000;
 
 interface RawTestimonial {
   quote?: string;
@@ -755,11 +755,11 @@ export function Home() {
           <div className="vh-modules-ambient-glow right" aria-hidden="true" />
 
           <div className="vh-section-intro">
-            <span className="vh-section-kicker">Everything in one place</span>
+            <span className="vh-section-kicker">What you get</span>
             <h2>
-              Everything you need to <span className="vh-accent">prepare with confidence</span>.
+              Everything you need to <span className="vh-accent">be exam-ready</span>.
             </h2>
-            <p>From realistic mock tests and skill-based practice to detailed performance tracking and feedback — everything is brought together in one place.</p>
+            <p>Take realistic computer-based mock tests, practise individual skills and track your performance — all in one platform.</p>
           </div>
 
           <div className="vh-modules-grid">
@@ -810,14 +810,14 @@ export function Home() {
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
                   </svg>
-                  3 SIMPLE STEPS
+                  HOW IT WORKS
                 </span>
                 <h2>
-                  From first mock to<br />
-                  <span className="vh-gradient-text-light">target band in 3 steps</span>
+                  Practise. Analyse.<br />
+                  <span className="vh-gradient-text-light">Improve.</span>
                 </h2>
                 <p className="vh-steps-subtitle">
-                  Follow a structured, exam-realistic preparation flow designed to maximize your LanguageCert score.
+                  We don't just give you questions. We reproduce the experience of the exam and use your performance to tell you what to improve. That's a learning system, not a question bank.
                 </p>
 
                 <div className="vh-steps-nav">
@@ -1019,10 +1019,10 @@ export function Home() {
 
         <div id="plans">
           <PublicCtaBanner
-            heading="Ready to elevate your LanguageCert preparation?"
-            body="Give your institute a LanguageCert advantage. A purpose-built LMS for institutes that want more than worksheets and practice tests — with digital assessments, performance insights and a better way to prepare students."
-            primary={{ label: "Book a Platform Demo →", onClick: () => navigate("/contact?tab=partner") }}
-            secondary={{ label: "See plans and vouchers", href: "/plans" }}
+            heading="Prepare. Book. Take the Exam."
+            body="Realistic mock tests with instant AI scoring for students, and cohort management for institutes."
+            primary={{ label: "Start Practising →", onClick: () => navigate("/register") }}
+            secondary={{ label: "Talk to Partnerships", href: "/contact?tab=partner" }}
           />
         </div>
 

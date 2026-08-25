@@ -136,7 +136,7 @@ function PlanCard({ plan, featured, location, onSelect, onChoose }: { plan: Land
 
   return (
     <div className="vh-plan-card vh-reveal" style={{ background: cardBg, color: cardInk, borderColor: cardBorder, boxShadow: cardShadow }} onClick={onSelect}>
-      {featured && <div className="vh-plan-badge">Most popular</div>}
+      {featured && <div className="vh-plan-badge">Popular Choice</div>}
       <div className="vh-plan-name" style={{ color: mutedInk }}>
         {plan.name}
       </div>

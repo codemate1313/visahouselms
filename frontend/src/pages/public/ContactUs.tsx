@@ -369,11 +369,11 @@ export function ContactUs() {
                   </span>
                 </a>
 
-                <a className="vh-contact-detail" href={`mailto:${contact?.email ?? "enquiry.langugaecert@gmail.com"}`}>
+                <a className="vh-contact-detail vh-contact-detail-email" href={`mailto:${contact?.email ?? "enquiry.langugaecert@gmail.com"}`}>
                   <ContactInfoIcon type="email" />
                   <span className="vh-contact-detail-copy">
                     <strong>Email</strong>
-                    <span>{contact?.email ?? "enquiry.langugaecert@gmail.com"}</span>
+                    <span className="vh-contact-email-val">{contact?.email ?? "enquiry.langugaecert@gmail.com"}</span>
                     <small>{contact?.email_note ?? "Replies within 1 working day"}</small>
                   </span>
                 </a>
@@ -425,8 +425,12 @@ export function ContactUs() {
             <section className="vh-contact-form-card" aria-labelledby="partner-form-heading">
               <div className="vh-contact-form-header">
                 <div className="vh-contact-form-title-wrap">
-                  <h2 id="partner-form-heading">{formType === "partner" ? "Partner information" : "Send us a message"}</h2>
-                  <p>{formType === "partner" ? "Tell us about your centre and the person who will manage it." : "We're here to help answer questions and get you started."}</p>
+                  <h2 id="partner-form-heading">{formType === "partner" ? "Institute Partnerships" : "Student Support"}</h2>
+                  <p>
+                    {formType === "partner"
+                      ? "Looking to equip your institute? Talk to us about student management, analytics, question banks and institute licensing."
+                      : "Need help with your preparation? Questions about plans, mock tests, access or your account?"}
+                  </p>
                 </div>
                 
                 <div className="vh-form-horizontal-tabs" role="tablist" aria-label="Contact form options">
@@ -437,7 +441,7 @@ export function ContactUs() {
                     className={`vh-form-tab-btn ${formType === "query" ? "is-active" : ""}`}
                     onClick={() => switchForm("query")}
                   >
-                    Contact Us
+                    Student Support
                   </button>
                   <button
                     type="button"
@@ -446,7 +450,7 @@ export function ContactUs() {
                     className={`vh-form-tab-btn ${formType === "partner" ? "is-active" : ""}`}
                     onClick={() => switchForm("partner")}
                   >
-                    Become a Partner
+                    Institute Partnerships
                   </button>
                 </div>
               </div>
@@ -467,7 +471,7 @@ export function ContactUs() {
                         className={`vh-form-input ${partnerErrors.instName ? "vh-form-input-error" : ""}`}
                         type="text"
                         required
-                        placeholder="Meridian Institute"
+                        placeholder="Institute or organization name"
                         value={partner.instName}
                         onChange={(e) => updatePartner("instName", e.target.value)}
                         aria-invalid={partnerErrors.instName ? true : undefined}
@@ -480,7 +484,7 @@ export function ContactUs() {
                         className={`vh-form-input ${partnerErrors.email ? "vh-form-input-error" : ""}`}
                         type="email"
                         required
-                        placeholder="info@meridian.com"
+                        placeholder="contact@example.com"
                         value={partner.email}
                         onChange={(e) => updatePartner("email", e.target.value)}
                         aria-invalid={partnerErrors.email ? true : undefined}
@@ -493,7 +497,7 @@ export function ContactUs() {
                         className={`vh-form-input ${partnerErrors.phone ? "vh-form-input-error" : ""}`}
                         type="tel"
                         required
-                        placeholder="+91 99999 99999"
+                        placeholder="+1 (555) 000-0000"
                         value={partner.phone}
                         onChange={(e) => updatePartner("phone", e.target.value)}
                         aria-invalid={partnerErrors.phone ? true : undefined}
@@ -502,15 +506,15 @@ export function ContactUs() {
                     </div>
                     <div>
                       <label className="vh-form-label">City</label>
-                      <input className="vh-form-input" type="text" placeholder="Bangalore" value={partner.city} onChange={(e) => updatePartner("city", e.target.value)} />
+                      <input className="vh-form-input" type="text" placeholder="City" value={partner.city} onChange={(e) => updatePartner("city", e.target.value)} />
                     </div>
                     <div>
                       <label className="vh-form-label">Country</label>
-                      <input className="vh-form-input" type="text" placeholder="India" value={partner.country} onChange={(e) => updatePartner("country", e.target.value)} />
+                      <input className="vh-form-input" type="text" placeholder="Country" value={partner.country} onChange={(e) => updatePartner("country", e.target.value)} />
                     </div>
                     <div className="vh-form-field-span2">
                       <label className="vh-form-label">Website</label>
-                      <input className="vh-form-input" type="text" placeholder="https://meridian.com" value={partner.website} onChange={(e) => updatePartner("website", e.target.value)} />
+                      <input className="vh-form-input" type="text" placeholder="https://example.com" value={partner.website} onChange={(e) => updatePartner("website", e.target.value)} />
                     </div>
                   </div>
 
@@ -522,7 +526,7 @@ export function ContactUs() {
                         className={`vh-form-input ${partnerErrors.first ? "vh-form-input-error" : ""}`}
                         type="text"
                         required
-                        placeholder="Priya"
+                        placeholder="First name"
                         value={partner.first}
                         onChange={(e) => updatePartner("first", e.target.value)}
                         aria-invalid={partnerErrors.first ? true : undefined}
@@ -535,7 +539,7 @@ export function ContactUs() {
                         className={`vh-form-input ${partnerErrors.last ? "vh-form-input-error" : ""}`}
                         type="text"
                         required
-                        placeholder="Nair"
+                        placeholder="Last name"
                         value={partner.last}
                         onChange={(e) => updatePartner("last", e.target.value)}
                         aria-invalid={partnerErrors.last ? true : undefined}
@@ -548,7 +552,7 @@ export function ContactUs() {
                         className={`vh-form-input ${partnerErrors.adminEmail ? "vh-form-input-error" : ""}`}
                         type="email"
                         required
-                        placeholder="priya@meridian.com"
+                        placeholder="admin@example.com"
                         value={partner.adminEmail}
                         onChange={(e) => updatePartner("adminEmail", e.target.value)}
                         aria-invalid={partnerErrors.adminEmail ? true : undefined}
@@ -561,15 +565,15 @@ export function ContactUs() {
                   <div className="vh-form-grid">
                     <div>
                       <label className="vh-form-label">Approx. students</label>
-                      <input className="vh-form-input" type="number" min="0" placeholder="150" value={partner.students} onChange={(e) => updatePartner("students", e.target.value)} />
+                      <input className="vh-form-input" type="number" min="0" placeholder="e.g. 100" value={partner.students} onChange={(e) => updatePartner("students", e.target.value)} />
                     </div>
                     <div>
                       <label className="vh-form-label">Approx. instructors</label>
-                      <input className="vh-form-input" type="number" min="0" placeholder="5" value={partner.instructors} onChange={(e) => updatePartner("instructors", e.target.value)} />
+                      <input className="vh-form-input" type="number" min="0" placeholder="e.g. 10" value={partner.instructors} onChange={(e) => updatePartner("instructors", e.target.value)} />
                     </div>
                     <div className="vh-form-field-span2">
                       <label className="vh-form-label">Tell us about your centre</label>
-                      <textarea className="vh-form-textarea" rows={4} placeholder="How long you've been running and which exams you prepare students for." value={partner.message} onChange={(e) => updatePartner("message", e.target.value)} />
+                      <textarea className="vh-form-textarea" rows={4} placeholder="Tell us about your organization and requirements..." value={partner.message} onChange={(e) => updatePartner("message", e.target.value)} />
                     </div>
                   </div>
 
@@ -611,7 +615,7 @@ export function ContactUs() {
                         className={`vh-form-input ${queryErrors.name ? "vh-form-input-error" : ""}`}
                         type="text"
                         required
-                        placeholder="Priya Nair"
+                        placeholder="Your full name"
                         value={query.name}
                         onChange={(e) => updateQuery("name", e.target.value)}
                         aria-invalid={queryErrors.name ? true : undefined}
@@ -624,7 +628,7 @@ export function ContactUs() {
                         className={`vh-form-input ${queryErrors.email ? "vh-form-input-error" : ""}`}
                         type="email"
                         required
-                        placeholder="priya@example.com"
+                        placeholder="name@example.com"
                         value={query.email}
                         onChange={(e) => updateQuery("email", e.target.value)}
                         aria-invalid={queryErrors.email ? true : undefined}

@@ -17,13 +17,13 @@ const STATS = [
   {
     value: "10+",
     label: "Years of Experience",
-    sublabel: "Immigration & Education Consulting",
+    sublabel: "Student Training & Exam Preparation",
     icon: "award",
   },
   {
     value: "20K+",
     label: "Students Prepared",
-    sublabel: "Across IELTS & LanguageCert Mocks",
+    sublabel: "Across Full-Length Mock Tests",
     icon: "users",
   },
   {
@@ -40,7 +40,12 @@ const STATS = [
   },
 ];
 
-const MISSION_POINTS = ["Examiner-authored question banks", "CEFR-aligned proficiency profile", "Institute-only leaderboards & branding"];
+const MISSION_POINTS = [
+  "Realistic task architecture & exam-style distractors",
+  "Timed computer-based experience & full mock simulations",
+  "Skill-specific & progressive practice",
+  "CEFR-aligned difficulty with detailed performance analysis",
+];
 
 function StatIcon({ name }: { name: string }) {
   if (name === "award") {
@@ -138,7 +143,6 @@ function StatCard({ stat }: { stat: typeof STATS[number] }) {
         <span className="vh-stat-icon-badge">
           <StatIcon name={stat.icon} />
         </span>
-        <span className="vh-stat-trend">Verified Metric</span>
       </div>
       <div className="vh-stat-value">
         {prefix}{display}{suffix}
@@ -150,7 +154,7 @@ function StatCard({ stat }: { stat: typeof STATS[number] }) {
 }
 
 export function AboutUs() {
-  useSEO({ title: "About Us", description: "A smarter way to deliver LanguageCert preparation, backed by 10+ years of Visa House immigration and education expertise." });
+  useSEO({ title: "About Us", description: "A smarter way to deliver LanguageCert preparation, backed by 10+ years of Visa House student training and education expertise." });
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const contactSettings = useContactSettings();
@@ -195,7 +199,6 @@ export function AboutUs() {
               <h2>
                 Test day should feel like <span className="vh-accent">just another mock</span>.
               </h2>
-              <p>We build the environment, the audio, the timer and the marking pipeline that lets students walk into the real LanguageCert having already sat forty of them.</p>
               <div className="vh-mission-checklist">
                 {MISSION_POINTS.map((point) => (
                   <div className="vh-mission-checklist-item" key={point}>
@@ -214,10 +217,10 @@ export function AboutUs() {
         <StackedTimelinePanels />
 
         <PublicCtaBanner
-          heading="One platform. Your entire LanguageCert ecosystem."
-          body="From the first lesson to the final mock test, LanguageCert LMS gives your institute the infrastructure to deliver a more structured, measurable and scalable preparation experience."
+          heading="One platform. Complete preparation."
+          body="Structured mock tests, instant AI feedback, and student tracking in one powerful ecosystem."
           primary={{ label: authCtaLabel, onClick: goAuth }}
-          secondary={{ label: "Book a Private Demo →", href: "/contact?form=partner" }}
+          secondary={{ label: "Book a Demo →", href: "/contact?tab=partner" }}
         />
 
         <PublicFooter socialLinks={contactSettings?.social_links} />
