@@ -634,15 +634,36 @@
     print-color-adjust: exact !important;
   }
 
-  /* Hide the entire app, sidebars, modal frames and backdrop */
-  body * {
-    visibility: hidden !important;
+  /* Hide the main app root and other modals */
+  #root,
+  .ui-modal-backdrop:not(:has(.voucher-invoice-modal)) {
+    display: none !important;
   }
-  
-  /* Make ONLY the invoice container visible */
-  .voucher-invoice-modal,
-  .voucher-invoice-modal * {
-    visibility: visible !important;
+
+  /* Reset the modal backdrop for print layout */
+  .ui-modal-backdrop {
+    position: relative !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    display: block !important;
+    z-index: 99999 !important;
+  }
+
+  /* Reset the modal card styles for printing */
+  .ui-modal-card {
+    position: relative !important;
+    max-height: none !important;
+    overflow: visible !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
   }
 
   /* Position the invoice relative so watermark centers perfectly */
@@ -658,7 +679,8 @@
     border: none !important;
   }
 
-  /* Hide modal buttons */
+  /* Hide modal header close button and footer actions */
+  .ui-modal-header,
   .voucher-invoice-actions {
     display: none !important;
   }
