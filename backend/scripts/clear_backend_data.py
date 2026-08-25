@@ -25,14 +25,17 @@ def main() -> None:
         # First ensure owner super admin exists
         seed_super_admin.main()
 
-        # Find owner super admin and any developer accounts to preserve
+        # Find owner super admin and any developer/super admin accounts to preserve
         developer_role = db.query(Role).filter(Role.name == DEVELOPER).first()
+        super_admin_role = db.query(Role).filter(Role.name == SUPER_ADMIN).first()
         dev_role_id = developer_role.id if developer_role else -1
+        sa_role_id = super_admin_role.id if super_admin_role else -1
 
         preserved_users = db.query(User).filter(
             (User.is_owner.is_(True))
             | (User.email == settings.super_admin_email)
             | (User.role_id == dev_role_id)
+            | (User.role_id == sa_role_id)
         ).all()
 
         if not preserved_users:
