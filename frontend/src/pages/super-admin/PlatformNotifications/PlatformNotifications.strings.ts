@@ -26,6 +26,11 @@ export const platformNotificationsStrings = {
   deleteConfirm: (title: string) => `Are you sure you want to delete notification "${title}"? This action cannot be undone.`,
   deleteConfirmTitle: "Delete Notification",
   deleteFallbackTitle: "notification",
+  everyoneConfirmTitle: "Notify Everyone",
+  everyoneConfirm: (count: number) =>
+    `This will notify approximately ${count} user${count === 1 ? "" : "s"} across the entire platform, including every institute, staff member, and student. This cannot be undone once sent. Are you sure you want to continue?`,
+  everyoneConfirmNoCount:
+    "This will notify every single user on the platform, including all institutes, staff, and students. This cannot be undone once sent. Are you sure you want to continue?",
   publisher: {
     title: "New Platform Notification",
     subtitle: "Publish a targeted or scheduled announcement with custom audience selection.",

@@ -419,6 +419,22 @@
   color: #b91c1c;
 }
 
+/* The toast for a rejected fullscreen request fades on its own timer, which
+   leaves a candidate stuck on this gate - stuck because the button keeps
+   asking for something the browser already refused - with no explanation
+   left on screen for why. This stays until the request succeeds. */
+.test-runner-gate-error {
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--danger, #ef4444) 32%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--danger, #ef4444) 10%, transparent);
+  color: var(--danger, #ef4444);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
 @media (max-width: 640px) {
   .test-runner-header {
     align-items: flex-start;

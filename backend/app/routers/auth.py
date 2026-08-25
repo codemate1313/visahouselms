@@ -404,15 +404,6 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
     return _otp_challenge_for(db, user, payload, "password")
 
 
-@router.post("/google/request-otp", response_model=TokenResponse)
-def google_request_otp(payload: GoogleOtpRequest, request: Request, response: Response, db: Session = Depends(get_db)):
-    _limit_login_attempt(request, payload.email)
-    device_identifier = _device_identifier(request, response, payload.device_id)
-    user = auth_service.get_otp_login_user(db, payload.email, _client_ip(request), role=payload.role)
-    payload.device_id = device_identifier
-    return _otp_challenge_for(db, user, payload, "google_otp")
-
-
 @router.post("/verify-otp", response_model=TokenResponse)
 def verify_otp(payload: VerifyOtpRequest, request: Request, response: Response, db: Session = Depends(get_db)):
     try:
@@ -629,7 +620,12 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Sessio
         settings.password_reset_rate_window_seconds,
         "Too many password reset requests. Please try again later.",
     )
-    auth_service.request_password_reset(db, payload.email)
+    try:
+        auth_service.request_password_reset(db, payload.email)
+    except HTTPException:
+        # Deliberately swallowed: the response must not reveal whether the
+        # email is registered, active, or an owner account (enumeration).
+        pass
     return {"message": "If an active account exists for this email, a password reset link has been sent."}
 
 

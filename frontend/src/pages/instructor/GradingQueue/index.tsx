@@ -53,8 +53,8 @@ export function GradingQueue() {
       if (search.trim()) {
         const query = search.toLowerCase();
         const matchesStudent = item.student_name.toLowerCase().includes(query);
-        const matchesCourse = item.module_title.toLowerCase().includes(query);
-        if (!matchesStudent && !matchesCourse) {
+        const matchesModule = item.module_title.toLowerCase().includes(query);
+        if (!matchesStudent && !matchesModule) {
           return false;
         }
       }

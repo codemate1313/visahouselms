@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import re
@@ -235,7 +236,7 @@ def add_item_by_url(db: Session, request: InstagramAddUrlItemRequest) -> List[In
     # Select thumbnail
     thumbnail = (request.thumbnail_url or "").strip()
     if not thumbnail:
-        idx = abs(hash(shortcode)) % len(DEFAULT_THUMBNAILS)
+        idx = int(hashlib.sha256(shortcode.encode()).hexdigest(), 16) % len(DEFAULT_THUMBNAILS)
         thumbnail = DEFAULT_THUMBNAILS[idx]
 
     caption = (request.caption or "").strip()

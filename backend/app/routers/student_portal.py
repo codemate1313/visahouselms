@@ -300,8 +300,11 @@ def validate_plan_coupon(
     requested_currency = (payload.currency or plan.currency or "INR").upper()
     is_usd = requested_currency == "USD" and plan.is_international_enabled and plan.usd_price is not None
     effective_base_price = Decimal(str(plan.usd_price if is_usd else plan.price))
+    effective_currency = "USD" if is_usd else (plan.currency or "INR").upper()
 
-    discount, coupon = coupon_service.validate_and_price(db, payload.coupon_code, effective_base_price, "plan", plan_id, user.email)
+    discount, coupon = coupon_service.validate_and_price(
+        db, payload.coupon_code, effective_base_price, "plan", plan_id, user.email, currency=effective_currency
+    )
 
     discounted_base = max(Decimal("0.00"), effective_base_price - discount)
 

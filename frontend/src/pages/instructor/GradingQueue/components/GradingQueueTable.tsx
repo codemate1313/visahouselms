@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { GradingQueueItem } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { useAuthStore } from "@/store/authStore";
@@ -17,6 +17,7 @@ interface GradingQueueTableProps {
 export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps) {
   const t = strings.table;
   const userId = useAuthStore((state) => state.user?.id);
+  const navigate = useNavigate();
 
   const today: GradingQueueItem[] = [];
   const yesterday: GradingQueueItem[] = [];
@@ -67,7 +68,19 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
     const issuedAt = item.submitted_at || item.queue.created_at;
 
     return (
-      <tr key={item.id} className={claimedByOther ? "" : "clickable"}>
+      <tr
+        key={item.id}
+        className={claimedByOther ? "" : "clickable"}
+        onClick={
+          claimedByOther
+            ? undefined
+            : (e) => {
+                const target = e.target as HTMLElement;
+                if (target.closest("a") || target.closest("button")) return;
+                navigate(`${gradingBase}/${item.id}`);
+              }
+        }
+      >
         <td>{item.student_name}</td>
         <td>
           {item.module_title}
@@ -110,7 +123,7 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
         <thead>
           <tr>
             <th>{t.student}</th>
-            <th>{t.course}</th>
+            <th>{t.module}</th>
             <th>{t.queue}</th>
             <th>{t.owner}</th>
             <th>{t.issued}</th>

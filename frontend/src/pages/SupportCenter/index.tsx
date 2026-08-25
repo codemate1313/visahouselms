@@ -272,6 +272,8 @@ export function SupportCenter() {
   const chatStreamRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const showSuccess = useToastStore((state) => state.showSuccess);
+  const showError = useToastStore((state) => state.showError);
+  const showWarning = useToastStore((state) => state.showWarning);
   const role = useAuthStore((state) => state.user?.role);
   const usesInstituteSupport = role === "STUDENT" || role === "INST_INSTRUCTOR";
 
@@ -461,7 +463,7 @@ export function SupportCenter() {
                 <th style={{ padding: "12px 2px" }}>Routing</th>
                 <th style={{ textAlign: "center", padding: "12px 4px" }}>{strings.table?.status ?? "Status"}</th>
                 <th style={{ textAlign: "center", padding: "12px 4px" }}>Priority</th>
-                <th style={{ padding: "12px 8px" }}>Submitted On</th>
+                <th style={{ padding: "12px 8px" }}>Submitted / Updated</th>
                 <th className="table-actions-heading" style={{ textAlign: "center", padding: "12px 4px" }}>{strings.table?.actions ?? "Actions"}</th>
               </tr>
             </thead>
@@ -594,6 +596,11 @@ export function SupportCenter() {
                       <td style={{ textAlign: "center", padding: "12px 4px" }}><Badge tone={priorityTone(ticket.priority)}>{label(ticket.priority)}</Badge></td>
                       <td style={{ padding: "12px 8px" }}>
                         <span style={{ display: "block", fontSize: "0.85rem" }}>{formatDate(ticket.created_at)}</span>
+                        {ticket.updated_at && ticket.updated_at !== ticket.created_at && (
+                          <span style={{ display: "block", fontSize: "0.725rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                            Updated {formatDate(ticket.updated_at)}
+                          </span>
+                        )}
                         <span
                           style={{
                             display: "inline-block",
@@ -936,8 +943,26 @@ export function SupportCenter() {
                   accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
                   style={{ display: "none" }}
                   onChange={(e) => {
-                    const newFiles = Array.from(e.target.files ?? []);
-                    setAttachedFiles(prev => [...prev, ...newFiles].slice(0, 5));
+                    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB, matches the backend's hard limit
+                    const selectedFiles = Array.from(e.target.files ?? []);
+
+                    const oversized = selectedFiles.filter((f) => f.size > MAX_FILE_SIZE);
+                    const validFiles = selectedFiles.filter((f) => f.size <= MAX_FILE_SIZE);
+                    if (oversized.length > 0) {
+                      showError(
+                        `${oversized.map((f) => f.name).join(", ")} exceed${oversized.length === 1 ? "s" : ""} the 10MB size limit and ${oversized.length === 1 ? "was" : "were"} not attached.`,
+                        "File too large"
+                      );
+                    }
+
+                    setAttachedFiles((prev) => {
+                      const combined = [...prev, ...validFiles];
+                      if (combined.length > 5) {
+                        const droppedCount = combined.length - 5;
+                        showWarning(`Only 5 attachments allowed — ${droppedCount} file${droppedCount === 1 ? "" : "s"} were not added.`, "Attachment limit reached");
+                      }
+                      return combined.slice(0, 5);
+                    });
                     e.target.value = "";
                   }}
                 />

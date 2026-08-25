@@ -559,6 +559,10 @@ class InstituteAdminServiceTests(unittest.TestCase):
         self.assertEqual(payment["status"], "paid")
         self.assertIsNotNone(payment["invoice_number"])
         self.assertIsNotNone(payment["subscription_id"])
+
+        renewed = self.db.get(Subscription, payment["subscription_id"])
+        self.assertGreater(renewed.expires_at, previous_expiry)
+
     def test_super_admin_create_student_with_access_window_and_manage_seats(self):
         created = institute_admin_service.create_member(
             self.db,

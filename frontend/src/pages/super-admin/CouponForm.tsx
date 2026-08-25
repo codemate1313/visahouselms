@@ -76,6 +76,14 @@ export function CouponForm() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    if (form.discount_type === "percent" && Number(form.value) > 100) {
+      setError(strings.errors.percentTooHigh);
+      return;
+    }
+    if (form.valid_from && form.valid_until && form.valid_until < form.valid_from) {
+      setError(strings.errors.invalidDateRange);
+      return;
+    }
     const payload = {
       code: form.code,
       discount_type: form.discount_type,
@@ -141,7 +149,16 @@ export function CouponForm() {
           </div>
           <div>
             <label htmlFor="value">{strings.valueLabel(form.discount_type === "percent")}<RequiredMark /></label>
-            <input id="value" type="number" min="0" step="0.01" value={form.value} onChange={set("value")} required />
+            <input
+              id="value"
+              type="number"
+              min="0"
+              max={form.discount_type === "percent" ? "100" : undefined}
+              step="0.01"
+              value={form.value}
+              onChange={set("value")}
+              required
+            />
           </div>
           <div>
             <label htmlFor="scope">{strings.scopeLabel}</label>

@@ -272,6 +272,7 @@ def update_question(
 ) -> dict:
     bank = get_bank_or_404(db, bank_id)
     _require_owner(actor, bank.created_by_id)
+    _course_or_404(db, bank.course_id, editable=True)
     question = _question_or_404(db, bank_id, question_id)
     _ensure_question_not_live(db, question.id)
     for field in (

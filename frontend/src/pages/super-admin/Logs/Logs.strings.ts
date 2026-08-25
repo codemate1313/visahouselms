@@ -1,0 +1,43 @@
+export const logsStrings = {
+  title: "Logs",
+  exportCsv: "Export CSV",
+  tabs: {
+    error: "Errors",
+    api: "API",
+    crash: "Crashes",
+    request: "Requests",
+  },
+  columns: {
+    time: "Time",
+    level: "Level",
+    message: "Message",
+    path: "Path",
+    method: "Method",
+    status: "Status",
+    latency: "Latency",
+    ip: "IP",
+    detected: "Detected",
+    kind: "Kind",
+    detail: "Detail",
+    reqBytes: "Req B",
+    respBytes: "Resp B",
+  },
+  searchPlaceholder: "Search...",
+  levelFilter: {
+    allLevels: "All levels",
+    error: "ERROR",
+    warning: "WARNING",
+    critical: "CRITICAL",
+  },
+  dateSeparator: "to",
+  loading: "Loading...",
+  empty: "No log entries.",
+  pagination: {
+    prev: "Prev",
+    next: "Next",
+    pageOf: (page: number, totalPages: number, total: number) => `Page ${page} of ${totalPages} (${total} entries)`,
+  },
+  errors: {
+    load: "Failed to load logs.",
+  },
+} as const;

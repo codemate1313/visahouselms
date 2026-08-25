@@ -23,6 +23,8 @@ export const superAdminBlogFormStrings = {
   createTitle: "Create Educational Article",
   subtitle: "Draft, optimize SEO metadata, and publish learning content",
   cancel: "Cancel",
+  unsavedChangesTitle: "Unsaved Changes",
+  unsavedChangesMessage: "You have unsaved changes to this article. Leave anyway?",
   saveBusy: "Saving...",
   updateLabel: "Update Article",
   publishLabel: "Publish Article",

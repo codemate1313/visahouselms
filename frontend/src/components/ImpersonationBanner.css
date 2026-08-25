@@ -32,6 +32,11 @@ html.has-impersonation-banner body {
   font-weight: 800;
 }
 
+.impersonation-banner-note {
+  font-weight: 500;
+  opacity: 0.85;
+}
+
 .impersonation-banner-exit {
   padding: 4px 14px;
   border: 1px solid rgba(255, 255, 255, 0.6);

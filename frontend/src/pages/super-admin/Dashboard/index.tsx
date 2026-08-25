@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { lockBodyScroll } from "@/utils/scrollLock";
 import { apiClient } from "@/api/client";
-import { useDashboardRangeStore } from "@/store/dashboardRangeStore";
 import { useAuthStore } from "@/store/authStore";
 import { PageHeader } from "@/components/ui";
 import { dashboardStrings as strings } from "./Dashboard.strings";
 import type { MetricDetail, MetricKey, Summary } from "./types";
+import { computeRevenueTrend } from "./helpers";
 import { ExecutiveMetricGrid } from "./components/ExecutiveMetricGrid";
 import { DashboardCharts } from "./components/DashboardCharts";
 import { MetricDetailModal } from "./components/MetricDetailModal";
@@ -13,7 +13,6 @@ import { PendingSignupsAlert } from "./components/PendingSignupsAlert";
 import { NoLivePlanAlert } from "./components/NoLivePlanAlert";
 
 export function Dashboard() {
-  const range = useDashboardRangeStore((state) => state.range);
   const user = useAuthStore((state) => state.user);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +73,7 @@ export function Dashboard() {
   if (error) return <p className="error-text">{error}</p>;
   if (!summary) return <p>{strings.loading}</p>;
 
-  const growth = strings.growth[range] || strings.growth["7D"];
+  const revenueTrend = computeRevenueTrend(summary.revenue_by_month);
 
   return (
     <div className="dashboard-overview">
@@ -88,7 +87,7 @@ export function Dashboard() {
         <PendingSignupsAlert count={summary.counts.institute_signups_pending} />
       )}
       {summary.counts.plans_live === 0 && <NoLivePlanAlert />}
-      <ExecutiveMetricGrid summary={summary} growth={growth} onOpen={openMetric} />
+      <ExecutiveMetricGrid summary={summary} revenueTrend={revenueTrend} onOpen={openMetric} />
       {summary.permissions.can_view_monetary_analytics && summary.revenue && <DashboardCharts summary={summary} />}
 
       {selectedMetric && (

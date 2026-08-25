@@ -3630,6 +3630,10 @@
   animation: snackbarShrink linear forwards;
 }
 
+.snackbar-item:hover .snackbar-progress-bar {
+  animation-play-state: paused;
+}
+
 .snackbar-type-success .snackbar-progress-bar {
   background: #10b981;
 }

@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { confirmAction } from "@/components/confirmDialog";
 import { Checkbox, PageHeader, RequiredMark, SearchableSelect } from "@/components/ui";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
@@ -13,6 +14,13 @@ import { PlanFeatureEditor } from "./components/PlanFeatureEditor";
 
 // Mirrors MAX_FEATURES in app/schemas/plan.py.
 const MAX_FEATURES = 12;
+
+// The only currency codes formatCurrencyAmount (src/utils/currency.ts) knows
+// how to render a symbol for - keep in sync with that file. Institute
+// onboarding's AgreementPaymentPanel duplicates this list locally (a shared
+// constants file would be the cleaner home, but this component file can't
+// export it without breaking React Fast Refresh).
+const SUPPORTED_CURRENCIES = ["INR", "USD", "EUR", "GBP"] as const;
 
 const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", grace_days: "0", is_published: false, gst_rate_id: "", is_international_enabled: false, usd_price: "" };
 
@@ -48,6 +56,9 @@ export function PlanForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Subscriber count for the plan being edited, as returned alongside the
+  // rest of the plan record - used to warn before a pricing change.
+  const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
   const showInfo = useToastStore((state) => state.showInfo);
   const showSuccess = useToastStore((state) => state.showSuccess);
   const originalRef = useRef<Record<string, unknown> | null>(null);
@@ -85,6 +96,7 @@ export function PlanForm() {
             usd_price: data.usd_price ? String(Number(data.usd_price)) : "",
           };
           setForm(loadedForm);
+          setSubscriberCount(typeof data.subscription_count === "number" ? data.subscription_count : null);
           const loadedAudience: PlanAudience = data.audience === "institutes" ? "institutes" : "direct_students";
           setAudience(loadedAudience);
           const loadedSelected = new Set<number>((data.modules || []).map((module: PlanModule) => module.id));
@@ -173,6 +185,27 @@ export function PlanForm() {
       showInfo(noChangesMessage);
       return;
     }
+
+    if (!isNew && originalRef.current) {
+      const pricingChanged =
+        originalRef.current.price !== payload.price ||
+        originalRef.current.currency !== payload.currency ||
+        originalRef.current.gst_rate_id !== payload.gst_rate_id;
+      if (pricingChanged) {
+        const confirmed = await confirmAction(
+          typeof subscriberCount === "number"
+            ? strings.confirm.pricingChangeWithCount(subscriberCount)
+            : strings.confirm.pricingChangeGeneric,
+          {
+            title: strings.confirm.pricingChangeTitle,
+            confirmText: strings.confirm.pricingChangeButton,
+            variant: "warning",
+          },
+        );
+        if (!confirmed) return;
+      }
+    }
+
     setSaving(true);
     try {
       if (isNew) {
@@ -210,7 +243,13 @@ export function PlanForm() {
           </div>
           <div>
             <label>{f.currency}<RequiredMark /></label>
-            <input value={form.currency} onChange={set("currency")} required />
+            <SearchableSelect
+              value={form.currency}
+              onChange={(val) => setForm((prev) => ({ ...prev, currency: String(val) }))}
+              options={SUPPORTED_CURRENCIES.map((code) => ({ value: code, label: code }))}
+              searchable={false}
+              className="form-dropdown-select"
+            />
           </div>
           <div>
             <label>GST Tax Rate</label>

@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { Announcement } from "@/api/types";
-import { confirmDelete } from "@/components/confirmDialog";
+import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { Icon } from "@/components/icons";
 import { Modal } from "@/components/ui";
 import { usePageTitleStore } from "@/store/pageTitleStore";
@@ -74,11 +74,12 @@ export function PlatformNotifications() {
 
   function toggleAudienceCard(key: string) {
     if (key === "all") {
-      if (selectedAudiences.includes("all")) {
-        setSelectedAudiences(["students"]);
-      } else {
-        setSelectedAudiences(["all"]);
-      }
+      const next = selectedAudiences.includes("all") ? ["students"] : ["all"];
+      // Neither "students" nor "all" carries an id list, so any institute/
+      // student picks made under a previous audience must not ride along.
+      setSelectedInstituteIds([]);
+      setSelectedUserIds([]);
+      setSelectedAudiences(next);
       return;
     }
 
@@ -100,6 +101,17 @@ export function PlatformNotifications() {
     if (next.length === 0) {
       next = ["students"];
     }
+
+    // Whenever an audience is deselected (dropped out of `next`), clear the
+    // id selections that belong to it so stale institute/student picks can't
+    // silently ride along to a different audience.
+    if (!next.includes("institutes")) {
+      setSelectedInstituteIds([]);
+    }
+    if (!next.includes("specific_students")) {
+      setSelectedUserIds([]);
+    }
+
     setSelectedAudiences(next);
   }
 
@@ -150,6 +162,17 @@ export function PlatformNotifications() {
       setError(strings.studentRequiredError);
       setBusy(false);
       return;
+    }
+
+    if (selectedAudiences.includes("all")) {
+      const approxCount = targetOptions.students.length;
+      const confirmMessage = approxCount > 0
+        ? strings.everyoneConfirm(approxCount)
+        : strings.everyoneConfirmNoCount;
+      if (!(await confirmAction(confirmMessage, { title: strings.everyoneConfirmTitle, confirmText: "Notify Everyone", variant: "danger" }))) {
+        setBusy(false);
+        return;
+      }
     }
 
     const payload = {

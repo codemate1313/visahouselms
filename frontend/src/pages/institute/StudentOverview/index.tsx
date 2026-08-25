@@ -53,7 +53,13 @@ export function StudentOverview({ instituteId, portalBasePath = "/super-admin" }
       variant: isDeactivating ? "warning" : "primary",
     });
     if (!confirmed) return;
-    await apiClient.post(`${apiBase}/members/${id}/${isDeactivating ? "deactivate" : "reactivate"}`);
+    try {
+      await apiClient.post(`${apiBase}/members/${id}/${isDeactivating ? "deactivate" : "reactivate"}`);
+      setError(null);
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, strings.errors.updateStatus));
+      return;
+    }
     await load();
   }
 

@@ -30,5 +30,7 @@ export const couponFormStrings = {
   errors: {
     load: "Failed to load coupon.",
     save: "Failed to save coupon.",
+    percentTooHigh: "Percentage discount cannot exceed 100%.",
+    invalidDateRange: "End date must be after start date.",
   },
 } as const;

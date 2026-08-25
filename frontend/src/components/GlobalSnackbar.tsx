@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { type ToastItem, useToastStore } from "../store/toastStore";
 import { Icon } from "@/components/icons";
 
@@ -6,12 +6,36 @@ function SnackbarCard({ toast }: { toast: ToastItem }) {
   const removeToast = useToastStore((s) => s.removeToast);
   const duration = toast.durationMs ?? 4000;
 
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const remainingRef = useRef(duration);
+  const startedAtRef = useRef(Date.now());
+
   useEffect(() => {
-    const timer = setTimeout(() => {
+    remainingRef.current = duration;
+    startedAtRef.current = Date.now();
+    timerRef.current = setTimeout(() => {
       removeToast(toast.id);
     }, duration);
-    return () => clearTimeout(timer);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [toast.id, duration, removeToast]);
+
+  const handleMouseEnter = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    const elapsed = Date.now() - startedAtRef.current;
+    remainingRef.current = Math.max(remainingRef.current - elapsed, 0);
+  };
+
+  const handleMouseLeave = () => {
+    startedAtRef.current = Date.now();
+    timerRef.current = setTimeout(() => {
+      removeToast(toast.id);
+    }, remainingRef.current);
+  };
 
   const icons = {
     success: (
@@ -44,7 +68,11 @@ function SnackbarCard({ toast }: { toast: ToastItem }) {
   };
 
   return (
-    <div className={`snackbar-item snackbar-type-${toast.type}`}>
+    <div
+      className={`snackbar-item snackbar-type-${toast.type}`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <div className={`snackbar-icon-badge snackbar-icon-${toast.type}`}>
         {icons[toast.type]}
       </div>

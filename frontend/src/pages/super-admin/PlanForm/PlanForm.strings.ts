@@ -74,4 +74,14 @@ export const planFormStrings = {
     save: "Failed to save plan.",
     featuresRequired: "Add at least one pricing card feature before saving this plan.",
   },
+  confirm: {
+    pricingChangeTitle: "Confirm Pricing Change",
+    pricingChangeButton: "Save Changes",
+    pricingChangeWithCount: (count: number) =>
+      count > 0
+        ? `This plan has ${count} active subscriber${count === 1 ? "" : "s"}. Changing the price, currency, or GST rate will only affect future renewals - anyone already subscribed keeps their current term's price. Continue?`
+        : "This will change pricing for all future renewals of this plan. No institutes or students are currently subscribed. Continue?",
+    pricingChangeGeneric:
+      "This will change pricing for all future renewals of this plan. Continue?",
+  },
 } as const;

@@ -14,7 +14,15 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from app.config import settings
 from app.core.media_signing import sign_path
 from app.models.audit_log import AuditLog
-from app.models.attempt import ATTEMPT_GRADED, ATTEMPT_GRADING, ATTEMPT_SUBMITTED, AttemptAnswer, TestAttempt
+from app.models.attempt import (
+    ATTEMPT_GRADED,
+    ATTEMPT_GRADING,
+    ATTEMPT_IN_PROGRESS,
+    ATTEMPT_READY,
+    ATTEMPT_SUBMITTED,
+    AttemptAnswer,
+    TestAttempt,
+)
 from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion, InstituteModule
 from app.models.institute import Institute
 from app.models.plan import Plan
@@ -68,12 +76,33 @@ def _require_owner(module: ExamModule, actor: User) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only this module's creator can change it")
 
 
-def _require_draft(module: ExamModule) -> None:
+def _require_draft(db: Session, module: ExamModule) -> None:
     if module.status == "archived":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Archived courses cannot be edited. Restore the course first.",
         )
+    if module.status == "published":
+        # A published module is live for students. Editing its questions or
+        # assets while someone is mid-attempt (or waiting to be graded off
+        # what they saw) would silently corrupt their scoring - the frozen
+        # content_snapshot they answered against would no longer match the
+        # live question set this service edits.
+        active_attempt = (
+            db.query(TestAttempt.id)
+            .filter(
+                TestAttempt.module_id == module.id,
+                TestAttempt.status.in_(
+                    [ATTEMPT_READY, ATTEMPT_IN_PROGRESS, ATTEMPT_SUBMITTED, ATTEMPT_GRADING]
+                ),
+            )
+            .first()
+        )
+        if active_attempt is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Cannot edit a published module with active student attempts.",
+            )
 
 
 def _part_or_404(module: ExamModule, part_id: int) -> ExamModulePart:
@@ -88,14 +117,14 @@ def get_editable_part(
 ) -> tuple[ExamModule, ExamModulePart]:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     return module, _part_or_404(module, part_id)
 
 
 def get_editable_module(db: Session, actor: User, module_id: int) -> ExamModule:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     return module
 
 
@@ -747,7 +776,7 @@ def update_module(
 ) -> dict:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     for field in ("title", "description", "instructions", "duration_minutes", "show_onboarding_instructions", "onboarding_instructions"):
         if field in fields_set:
             if field == "duration_minutes" and module.module_type in DERIVED_DURATION_MODULE_TYPES:
@@ -979,7 +1008,7 @@ def add_question(
 ) -> dict:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     part = _part_or_404(module, part_id)
     _validate_question_for_part(part, data, len(part.questions))
     question = _new_question(part, actor, data, "manual", None, len(part.questions))
@@ -1007,7 +1036,7 @@ def import_questions(
 ) -> list[dict]:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     part = _part_or_404(module, part_id)
     # Reject the whole batch up front so a part-full import fails with one clear
     # message instead of committing the rows that happened to fit.
@@ -1249,7 +1278,7 @@ def import_module_questions(
 ) -> dict:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     parts_by_id = {part.id: part for part in module.parts}
     records: list[ExamModuleQuestion] = []
     for batch in part_batches:
@@ -1318,7 +1347,7 @@ def update_question(
 ) -> dict:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     part = _part_or_404(module, part_id)
     question = _question_or_404(part, question_id)
     _validate_question_for_part(part, data, max(0, len(part.questions) - 1), editing_question_id=question_id)
@@ -1345,7 +1374,7 @@ def delete_question(
 ) -> None:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     part = _part_or_404(module, part_id)
     question = _question_or_404(part, question_id)
     image_path = question.image_path
@@ -1376,7 +1405,7 @@ def save_question_image(
 ) -> dict:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     part = _part_or_404(module, part_id)
 
     relative = Path("exam-modules") / str(module.id) / "questions" / f"{uuid4().hex}.webp"
@@ -1400,7 +1429,7 @@ def save_speaking_material_pdf(
 ) -> dict:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     part = _part_or_404(module, part_id)
     if part.section_type != "speaking":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="PDF material is available only for Speaking parts")
@@ -1429,7 +1458,7 @@ def save_question_audio(
 ) -> dict:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     part = _part_or_404(module, part_id)
 
     relative = Path("exam-modules") / str(module.id) / "questions" / f"{uuid4().hex}.mp3"
@@ -1457,7 +1486,7 @@ def add_audio_asset(
 ) -> dict:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     part = _part_or_404(module, part_id)
     if part.section_type != "listening":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Audio can only be attached to a Listening part")
@@ -1507,7 +1536,7 @@ def add_tts_text_asset(
 ) -> dict:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     part = _part_or_404(module, part_id)
     if part.section_type != "listening":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Browser narration can only be attached to a Listening part")
@@ -1634,7 +1663,7 @@ def add_avatar_asset(
 def delete_asset(db: Session, actor: User, module_id: int, asset_id: int, ip: Optional[str]) -> None:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
-    _require_draft(module)
+    _require_draft(db, module)
     asset = next((item for item in module.assets if item.id == asset_id), None)
     if asset is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio asset not found in this module")

@@ -261,6 +261,7 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
                   <Icon name="notifications" />
                 </span>
                 <span className="notifications-inbox-item-content">
+                  <span className="visually-hidden">{notification.read_at ? "Read: " : "Unread: "}</span>
                   <strong>{notification.title}</strong>
                   <span className="notifications-inbox-item-message">
                     {notification.message}

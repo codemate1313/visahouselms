@@ -337,8 +337,8 @@ def update_super_admin(
     db.refresh(user)
     notification_service.notify_security_event(
         db,
-        "Super Admin account deactivated",
-        f"{actor.email} deactivated Super Admin {user.email}.",
+        "Super Admin account updated",
+        f"{actor.email} updated Super Admin {user.email}'s profile.",
         link_url="/super-admin/users/super-admins",
     )
     return user

@@ -7955,6 +7955,34 @@ textarea:focus {
   color: var(--primary);
 }
 
+.preset-palette .preset-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+}
+
+.preset-palette .preset-btn-label {
+  font-weight: 600;
+}
+
+.preset-palette .preset-btn-desc {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.preset-palette .preset-btn:hover:not(:disabled) .preset-btn-desc {
+  color: inherit;
+}
+
+.developer-settings-tab-warning-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--danger);
+}
+
 .terminal-frame {
   flex: 1;
   min-width: 0;

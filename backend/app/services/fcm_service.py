@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Optional
 
 import requests
@@ -9,6 +10,8 @@ from sqlalchemy.orm import Session
 
 from app.models.push_device_token import PushDeviceToken
 from app.services.settings_service import get_setting
+
+logger = logging.getLogger(__name__)
 
 FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
 REQUIRED_SA_FIELDS = {"type", "project_id", "private_key", "client_email", "token_uri"}
@@ -155,6 +158,18 @@ def send_to_user(db: Session, user_id: int, title: str, body: str, link_url: Opt
             response.status_code == 400 and "UNREGISTERED" in response.text
         ):
             stale.append(device)
+        elif response.status_code != 200:
+            from app.services.notification_service import record_send_failure
+
+            logger.warning(
+                "FCM send failed for user %s device %s (%s): %s",
+                user_id, device.id, response.status_code, response.text[:500],
+            )
+            record_send_failure(
+                db,
+                f"FCM push failed for user {user_id} ({response.status_code}): {response.text[:500]}",
+                user_id=user_id,
+            )
     for device in stale:
         db.delete(device)
     if stale:

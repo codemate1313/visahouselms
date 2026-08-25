@@ -168,6 +168,7 @@ def validate_and_price(
     scope: str,
     scope_id: Optional[int],
     email: str,
+    currency: str = "INR",
 ) -> Tuple[Decimal, Optional[Coupon]]:
     """Returns (discount_amount, coupon_or_none). Raises 400 on any invalid
     coupon rather than silently ignoring it, so a typo'd code never silently
@@ -176,7 +177,11 @@ def validate_and_price(
     usage_limit is a per-customer cap, checked against CouponRedemption rows
     keyed by normalized email (not a global total, and not user_id - a
     deleted-and-recreated account would get a new user_id but keeps the same
-    email, so email is what actually stops reuse)."""
+    email, so email is what actually stops reuse).
+
+    `currency` is the checkout's currency, defaulting to INR (the base
+    currency every plan is priced in). It only matters for a flat-type
+    coupon: see the discount_type branch below."""
     if not code:
         return Decimal("0"), None
 
@@ -198,8 +203,21 @@ def validate_and_price(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Coupon does not apply to this plan")
 
     if coupon.discount_type == "percent":
+        # A percentage is currency-agnostic by construction - 10% off is 10%
+        # off whether the total is in INR or USD - so it applies unchanged.
         discount = (base_amount * coupon.value / Decimal("100")).quantize(Decimal("0.01"))
     else:
+        # A flat coupon's `value` is an absolute amount denominated in the
+        # plan's base currency (INR). Subtracting it straight from a USD/
+        # international total silently applies an INR-sized discount to a
+        # much smaller USD number - large enough to zero out the payment
+        # entirely. There is no conversion rate to fall back on here, so the
+        # coupon is rejected outright rather than guessing one.
+        if (currency or "INR").upper() != "INR":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This coupon is not valid for international pricing",
+            )
         discount = coupon.value
     discount = min(discount, base_amount)
     return discount, coupon

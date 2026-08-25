@@ -16,7 +16,8 @@ export type BadgeTone =
   | "green"
   | "amber"
   | "red"
-  | "blue";
+  | "blue"
+  | "purple";
 
 const TONE_CLASS: Record<BadgeTone, string> = {
   neutral: "badge-gray",
@@ -30,6 +31,7 @@ const TONE_CLASS: Record<BadgeTone, string> = {
   info: "badge-blue",
   blue: "badge-blue",
   inactive: "badge-inactive",
+  purple: "badge-purple",
 };
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {

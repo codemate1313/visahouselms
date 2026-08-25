@@ -59,8 +59,8 @@ export function Modules() {
 
       <div className="section-heading module-list-heading">
         <div>
-          <h2>{strings.yourCourses.title}</h2>
-          <p>{strings.yourCourses.description}</p>
+          <h2>{strings.yourModules.title}</h2>
+          <p>{strings.yourModules.description}</p>
         </div>
       </div>
       <ModuleFilterBar

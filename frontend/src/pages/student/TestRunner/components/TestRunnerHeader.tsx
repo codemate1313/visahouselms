@@ -26,7 +26,6 @@ interface TestRunnerHeaderProps {
   languageCertSkin?: boolean;
   /** Whether this part is one the countdown is shown on (Reading / Writing). */
   timerVisible?: boolean;
-  userEmail?: string;
 }
 
 export function TestRunnerHeader({
@@ -47,7 +46,6 @@ export function TestRunnerHeader({
   secondsLeft,
   languageCertSkin = false,
   timerVisible = true,
-  userEmail,
 }: TestRunnerHeaderProps) {
   const t = strings.header;
   const sectionLabels = strings.sectionLabels;
@@ -62,7 +60,7 @@ export function TestRunnerHeader({
     <>
       {/* Testing aid: the lock exists so a candidate cannot skip a recording,
           so this deliberately overrides it - and only in development. */}
-      {(import.meta.env.DEV || userEmail === "mehtanavish60@gmail.com") && onSkipPart && (
+      {import.meta.env.DEV && onSkipPart && (
         <button
           type="button"
           className="test-runner-dev-exit"

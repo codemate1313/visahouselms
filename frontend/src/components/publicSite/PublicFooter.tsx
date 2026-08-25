@@ -116,17 +116,13 @@ export function PublicFooter({ socialLinks = [] }: { socialLinks?: PublicSocialL
       </div>
 
       {/* Bottom Bar */}
+      {/* Privacy Policy / Terms of Service / Security links removed: no real
+          pages exist for these yet anywhere in the app. A missing link here
+          is more honest than a dead `href="#"` — restore this row once those
+          pages exist and route them accordingly. */}
       <div className="vh-footer-bottom">
         <div className="vh-footer-bottom-copy">
           <span>© {new Date().getFullYear()} Visa House LanguageCert LMS. All rights reserved.</span>
-        </div>
-
-        <div className="vh-footer-bottom-links">
-          <a href="#">Privacy Policy</a>
-          <span className="vh-footer-dot-sep">•</span>
-          <a href="#">Terms of Service</a>
-          <span className="vh-footer-dot-sep">•</span>
-          <a href="#">Security</a>
         </div>
       </div>
 

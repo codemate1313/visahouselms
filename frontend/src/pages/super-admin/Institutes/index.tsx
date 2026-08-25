@@ -6,12 +6,15 @@ import { ConfirmModal } from "@/components/ConfirmModal";
 import { Button } from "@/components/ui";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { confirmExport } from "@/utils/confirmExport";
+import { Icon } from "@/components/icons";
 import { institutesStrings as strings } from "./Institutes.strings";
 import type { InstituteRow, SortKey } from "./types";
 import { exportInstitutesExcel, exportInstitutesPDF } from "./exportHelpers";
 import { InstitutesFilterBar } from "./components/InstitutesFilterBar";
 import { InstitutesTable } from "./components/InstitutesTable";
 import { InstituteDetailDrawer } from "./components/InstituteDetailDrawer";
+
+const PAGE_SIZE = 25;
 
 interface InstitutesProps {
   basePath?: string;
@@ -29,6 +32,7 @@ export function Institutes({ basePath = "/super-admin" }: InstitutesProps) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [selectedDrawerId, setSelectedDrawerId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   const load = useCallback(async () => {
@@ -73,6 +77,15 @@ export function Institutes({ basePath = "/super-admin" }: InstitutesProps) {
     setItemCount(filteredRows.length);
     return () => setItemCount(null);
   }, [filteredRows.length, setItemCount]);
+
+  // Filters/search/sort describe a different result set, so pagination
+  // restarts from page 1.
+  useEffect(() => {
+    setPage(1);
+  }, [search, subscriptionFilter, statusFilter, sortKey, sortDirection]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+  const pagedRows = filteredRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   useEffect(() => {
     setSelectedIds((current) => {
@@ -132,11 +145,17 @@ export function Institutes({ basePath = "/super-admin" }: InstitutesProps) {
   }
 
   const selectedRows = filteredRows.filter((row) => selectedIds.has(row.id));
+  const activeSelectedCount = selectedRows.filter((row) => row.is_active).length;
+  const inactiveSelectedCount = selectedRows.length - activeSelectedCount;
 
   async function bulkSetActive(active: boolean) {
-    if (selectedRows.length === 0) return;
+    // Only the subset of the selection actually eligible for this action -
+    // e.g. "Suspend" only touches the selected rows that are still active,
+    // so a mixed selection doesn't try to reactivate an already-active row.
+    const targetRows = selectedRows.filter((row) => row.is_active !== active);
+    if (targetRows.length === 0) return;
     const confirmed = await confirmAction(
-      `${active ? "Reactivate" : "Suspend"} ${selectedRows.length} selected institute(s)?`,
+      `${active ? "Reactivate" : "Suspend"} ${targetRows.length} selected institute(s)?`,
       {
         title: active ? strings.confirm.reactivateTitle : strings.confirm.suspendTitle,
         confirmText: active ? "Reactivate" : "Suspend",
@@ -148,7 +167,7 @@ export function Institutes({ basePath = "/super-admin" }: InstitutesProps) {
     setBulkBusy(true);
     setError(null);
     const results = await Promise.allSettled(
-      selectedRows.map((row) =>
+      targetRows.map((row) =>
         apiClient.post(`/super-admin/institutes/${row.id}/${active ? "reactivate" : "suspend"}`)
       )
     );
@@ -236,13 +255,14 @@ export function Institutes({ basePath = "/super-admin" }: InstitutesProps) {
             <strong>{selectedRows.length}</strong> selected
           </span>
           <div className="bulk-actions-buttons">
-            {selectedRows.some((row) => !row.is_active) ? (
-              <Button variant="secondary" size="sm" disabled={bulkBusy} onClick={() => void bulkSetActive(true)}>
-                Reactivate
-              </Button>
-            ) : (
+            {activeSelectedCount > 0 && (
               <Button variant="secondary" size="sm" disabled={bulkBusy} onClick={() => void bulkSetActive(false)}>
-                Suspend
+                Suspend ({activeSelectedCount})
+              </Button>
+            )}
+            {inactiveSelectedCount > 0 && (
+              <Button variant="secondary" size="sm" disabled={bulkBusy} onClick={() => void bulkSetActive(true)}>
+                Reactivate ({inactiveSelectedCount})
               </Button>
             )}
             <Button variant="danger" size="sm" disabled={bulkBusy} onClick={() => void bulkDelete()}>
@@ -258,19 +278,34 @@ export function Institutes({ basePath = "/super-admin" }: InstitutesProps) {
       {loading ? (
         <p>{strings.loading}</p>
       ) : (
-        <InstitutesTable
-          rows={filteredRows}
-          sortKey={sortKey}
-          sortDirection={sortDirection}
-          onChangeSort={changeSort}
-          onToggleActive={toggleActive}
-          onRequestDelete={setDeletingRow}
-          selectedIds={selectedIds}
-          onToggleSelect={toggleSelect}
-          onToggleSelectAll={toggleSelectAll}
-          onRowClick={setSelectedDrawerId}
-          basePath={basePath}
-        />
+        <>
+          <InstitutesTable
+            rows={pagedRows}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onChangeSort={changeSort}
+            onToggleActive={toggleActive}
+            onRequestDelete={setDeletingRow}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
+            onRowClick={setSelectedDrawerId}
+            basePath={basePath}
+          />
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                <Icon name="arrowLeft" /> Previous
+              </button>
+              <span>
+                Page {page} of {totalPages} ({filteredRows.length} total)
+              </span>
+              <button type="button" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+                Next <Icon name="arrowRight" />
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <ConfirmModal

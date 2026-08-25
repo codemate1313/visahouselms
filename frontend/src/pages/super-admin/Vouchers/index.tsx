@@ -84,6 +84,8 @@ interface GstRate {
   percentage: number;
 }
 
+const PAGE_SIZE = 25;
+
 const COLOR_PRESETS = [
   "#0284c7", // Sky Blue
   "#7c3aed", // Royal Purple
@@ -108,6 +110,8 @@ export function Vouchers() {
   const [search, setSearch] = useState("");
   const [unusedSearch, setUnusedSearch] = useState("");
   const [unusedTypeFilter, setUnusedTypeFilter] = useState("all");
+  const [purchasesPage, setPurchasesPage] = useState(1);
+  const [unusedPage, setUnusedPage] = useState(1);
   const [editingCode, setEditingCode] = useState<UnusedVoucherCode | null>(null);
   const [codeForm, setCodeForm] = useState({ code: "", voucher_type_id: 0 });
   const [showCodeModal, setShowCodeModal] = useState(false);
@@ -183,6 +187,16 @@ export function Vouchers() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // A new search or filter describes a different result set, so pagination
+  // restarts from page 1.
+  useEffect(() => {
+    setPurchasesPage(1);
+  }, [search]);
+
+  useEffect(() => {
+    setUnusedPage(1);
+  }, [unusedSearch, unusedTypeFilter]);
 
   // Type Modal Handlers
   function openTypeModal(vt?: VoucherType) {
@@ -261,6 +275,13 @@ export function Vouchers() {
 
   async function handleSaveOffering(e: React.FormEvent) {
     e.preventDefault();
+    if (
+      offeringForm.discount_price &&
+      Number(offeringForm.discount_price) >= Number(offeringForm.price)
+    ) {
+      showError("Discount price must be less than the regular price.");
+      return;
+    }
     try {
       const payload = {
         voucher_type_id: Number(offeringForm.voucher_type_id),
@@ -426,7 +447,17 @@ export function Vouchers() {
     }
   }
 
-  async function handleToggleCode(id: number, code: string) {
+  async function handleToggleCode(id: number, code: string, currentStatus: "available" | "disabled") {
+    const isDisabling = currentStatus === "available";
+    if (
+      !(await confirmDelete(
+        isDisabling
+          ? `Disable voucher code "${code}"? It will no longer be sold to students.`
+          : `Re-enable voucher code "${code}"? It will become available for sale again.`,
+        isDisabling ? "Disable Voucher Code" : "Enable Voucher Code",
+      ))
+    )
+      return;
     try {
       await api.patch(`/vouchers/admin/codes/${id}/toggle`);
       showSuccess(`Code ${code} status toggled`);
@@ -501,6 +532,11 @@ export function Vouchers() {
   const allVisibleUnusedSelected =
     filteredUnusedIds.length > 0 && filteredUnusedIds.every((id) => selectedUnusedIds.has(id));
   const selectedVisibleUnusedCount = filteredUnusedIds.filter((id) => selectedUnusedIds.has(id)).length;
+
+  const purchasesTotalPages = Math.max(1, Math.ceil(purchases.length / PAGE_SIZE));
+  const pagedPurchases = purchases.slice((purchasesPage - 1) * PAGE_SIZE, purchasesPage * PAGE_SIZE);
+  const unusedTotalPages = Math.max(1, Math.ceil(filteredUnusedCodes.length / PAGE_SIZE));
+  const pagedUnusedCodes = filteredUnusedCodes.slice((unusedPage - 1) * PAGE_SIZE, unusedPage * PAGE_SIZE);
 
   return (
     <div className="vouchers-page-wrapper voucher-ui-scope">
@@ -635,7 +671,7 @@ export function Vouchers() {
                     </td>
                   </tr>
                 ) : (
-                  purchases.map((p) => (
+                  pagedPurchases.map((p) => (
                     <tr key={p.id}>
                       <td>
                         <strong className="font-mono text-sm">{p.purchase_number}</strong>
@@ -676,6 +712,23 @@ export function Vouchers() {
               </tbody>
             </table>
           )}
+          {purchasesTotalPages > 1 && (
+            <div className="pagination">
+              <button type="button" disabled={purchasesPage <= 1} onClick={() => setPurchasesPage(purchasesPage - 1)}>
+                <Icon name="arrowLeft" /> Previous
+              </button>
+              <span>
+                Page {purchasesPage} of {purchasesTotalPages} ({purchases.length} total)
+              </span>
+              <button
+                type="button"
+                disabled={purchasesPage >= purchasesTotalPages}
+                onClick={() => setPurchasesPage(purchasesPage + 1)}
+              >
+                Next <Icon name="arrowRight" />
+              </button>
+            </div>
+          )}
         </DataTableCard>
       )}
 
@@ -711,7 +764,7 @@ export function Vouchers() {
                   </td>
                 </tr>
               ) : (
-                filteredUnusedCodes.map((uc) => (
+                pagedUnusedCodes.map((uc) => (
                   <tr key={uc.id}>
                     <td className="voucher-select-col">
                       <input
@@ -760,7 +813,7 @@ export function Vouchers() {
                       <div className="voucher-code-actions flex items-center gap-3">
                         <ToggleSwitch
                           checked={uc.status === "available"}
-                          onChange={() => handleToggleCode(uc.id, uc.code)}
+                          onChange={() => handleToggleCode(uc.id, uc.code, uc.status)}
                           tooltip={uc.status === "available" ? "Deactivate" : "Activate"}
                         />
                         <button
@@ -792,6 +845,19 @@ export function Vouchers() {
               )}
             </tbody>
           </table>
+          {unusedTotalPages > 1 && (
+            <div className="pagination">
+              <button type="button" disabled={unusedPage <= 1} onClick={() => setUnusedPage(unusedPage - 1)}>
+                <Icon name="arrowLeft" /> Previous
+              </button>
+              <span>
+                Page {unusedPage} of {unusedTotalPages} ({filteredUnusedCodes.length} total)
+              </span>
+              <button type="button" disabled={unusedPage >= unusedTotalPages} onClick={() => setUnusedPage(unusedPage + 1)}>
+                Next <Icon name="arrowRight" />
+              </button>
+            </div>
+          )}
         </DataTableCard>
       )}
 
@@ -1215,6 +1281,7 @@ export function Vouchers() {
                 <Input
                   label={s.offerings.price}
                   type="number"
+                  min="0"
                   required
                   value={offeringForm.price}
                   onChange={(e) => setOfferingForm({ ...offeringForm, price: e.target.value })}
@@ -1223,6 +1290,7 @@ export function Vouchers() {
                 <Input
                   label={s.offerings.discountPrice}
                   type="number"
+                  min="0"
                   value={offeringForm.discount_price}
                   onChange={(e) => setOfferingForm({ ...offeringForm, discount_price: e.target.value })}
                 />

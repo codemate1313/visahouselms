@@ -90,6 +90,15 @@ export function PreExamOnboarding({
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const [micAudibilityAsked, setMicAudibilityAsked] = useState(false);
 
+  /* Only a module that can actually record or play audio needs the mic
+     permission-and-test gate - matching the same module-type check the rules
+     text on Step 1 already uses to decide whether to even mention hardware
+     peripherals. A Reading or Writing candidate has no use for a microphone
+     and should not be blocked on testing one. */
+  const requiresMicTest = attempt.module_type === "speaking"
+    || attempt.module_type === "listening"
+    || attempt.module_type === "full_mock";
+
   // Calculate dynamic metadata
   const displayParts = useMemo(
     () => isSplitCompositeModule(attempt.module_type)
@@ -291,7 +300,7 @@ export function PreExamOnboarding({
   }, []);
 
   const handleStepSelect = (targetStep: 1 | 2 | 3 | 4) => {
-    if (targetStep === 4 && !micTested) {
+    if (targetStep === 4 && requiresMicTest && !micTested) {
       goToStep(3);
       return;
     }
@@ -590,98 +599,101 @@ export function PreExamOnboarding({
                         <p>High-Fidelity voice recording and listening stream audit</p>
                       </div>
                     </div>
-                    <span className={`equipment-status-badge ${micTested ? "status-green" : "status-amber"}`}>
-                      {micTested ? "✓ Verified & Ready" : "Pending Diagnostic"}
+                    <span className={`equipment-status-badge ${!requiresMicTest || micTested ? "status-green" : "status-amber"}`}>
+                      {!requiresMicTest ? "Not Required for This Test" : micTested ? "✓ Verified & Ready" : "Pending Diagnostic"}
                     </span>
                   </div>
                 </div>
 
-                {/* Interactive Microphone Equalizer Container */}
-                <div className="onboarding-mic-tester-container">
-                  <div className="mic-equalizer-icon-wrapper">
-                    <Icon name="microphone" className="mic-tester-large-icon" />
-                  </div>
-                  <h3>Microphone Decibel Diagnostic</h3>
-                  <p className="mic-tester-hint">
-                    {micTested
-                      ? "Your microphone has been verified and is ready for the examination."
-                      : "Test your voice input to verify clear audio recording before launching."}
-                  </p>
-
-                  <button
-                    type="button"
-                    className={`onboarding-test-mic-btn ${micTesting ? "is-testing" : micTested ? "is-passed" : ""}`}
-                    onClick={handleTestMic}
-                  >
-                    <Icon name="microphone" />
-                    <span>
-                      {micTesting
-                        ? `Auditing Voice... Speak now (${testCountdown}s)`
-                        : micTested
-                          ? "✓ Microphone Verified (Click to Re-Test)"
-                          : "Run Voice Input Test"}
-                    </span>
-                  </button>
-
-                  {micTesting && (
-                    <div className="mic-equalizer-visualizer">
-                      <div className="eq-bar" style={{ height: `${Math.max(20, volumeLevel * 0.8)}%` }} />
-                      <div className="eq-bar" style={{ height: `${Math.max(15, volumeLevel * 1.1)}%` }} />
-                      <div className="eq-bar" style={{ height: `${Math.max(30, volumeLevel * 1.3)}%` }} />
-                      <div className="eq-bar" style={{ height: `${Math.max(25, volumeLevel * 0.9)}%` }} />
-                      <div className="eq-bar" style={{ height: `${Math.max(18, volumeLevel * 1.2)}%` }} />
+                {/* Interactive Microphone Equalizer Container - only for module
+                    types that actually record or play audio during the exam. */}
+                {requiresMicTest && (
+                  <div className="onboarding-mic-tester-container">
+                    <div className="mic-equalizer-icon-wrapper">
+                      <Icon name="microphone" className="mic-tester-large-icon" />
                     </div>
-                  )}
+                    <h3>Microphone Decibel Diagnostic</h3>
+                    <p className="mic-tester-hint">
+                      {micTested
+                        ? "Your microphone has been verified and is ready for the examination."
+                        : "Test your voice input to verify clear audio recording before launching."}
+                    </p>
 
-                  {/* Playback + audibility confirmation */}
-                  {!micTesting && micAudibilityAsked && !micTested && recordedAudioUrl && (
-                    <div className="mic-playback-confirm">
-                      <p className="mic-playback-label">🎧 Play back your recording:</p>
-                      <audio
-                        controls
-                        src={recordedAudioUrl}
-                        className="mic-playback-audio"
-                      />
-                      <p className="mic-audibility-question">Is your audio clearly audible to you?</p>
-                      <div className="mic-audibility-actions">
-                        <button
-                          type="button"
-                          className="mic-audibility-btn mic-audibility-yes"
-                          onClick={() => setMicTested(true)}
-                        >
-                          ✓ Yes, it's clear
-                        </button>
-                        <button
-                          type="button"
-                          className="mic-audibility-btn mic-audibility-no"
-                          onClick={() => {
-                            setMicAudibilityAsked(false);
-                            if (recordedAudioUrl) URL.revokeObjectURL(recordedAudioUrl);
-                            setRecordedAudioUrl(null);
-                            setMicError("Please check your headphones or speakers and run the test again.");
-                          }}
-                        >
-                          ✗ No, re-test
-                        </button>
+                    <button
+                      type="button"
+                      className={`onboarding-test-mic-btn ${micTesting ? "is-testing" : micTested ? "is-passed" : ""}`}
+                      onClick={handleTestMic}
+                    >
+                      <Icon name="microphone" />
+                      <span>
+                        {micTesting
+                          ? `Auditing Voice... Speak now (${testCountdown}s)`
+                          : micTested
+                            ? "✓ Microphone Verified (Click to Re-Test)"
+                            : "Run Voice Input Test"}
+                      </span>
+                    </button>
+
+                    {micTesting && (
+                      <div className="mic-equalizer-visualizer">
+                        <div className="eq-bar" style={{ height: `${Math.max(20, volumeLevel * 0.8)}%` }} />
+                        <div className="eq-bar" style={{ height: `${Math.max(15, volumeLevel * 1.1)}%` }} />
+                        <div className="eq-bar" style={{ height: `${Math.max(30, volumeLevel * 1.3)}%` }} />
+                        <div className="eq-bar" style={{ height: `${Math.max(25, volumeLevel * 0.9)}%` }} />
+                        <div className="eq-bar" style={{ height: `${Math.max(18, volumeLevel * 1.2)}%` }} />
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Show playback-only after confirmed */}
-                  {micTested && recordedAudioUrl && (
-                    <div className="mic-playback-confirm mic-playback-verified">
-                      <p className="mic-playback-label">✅ Audio verified — your recording:</p>
-                      <audio controls src={recordedAudioUrl} className="mic-playback-audio" />
-                    </div>
-                  )}
+                    {/* Playback + audibility confirmation */}
+                    {!micTesting && micAudibilityAsked && !micTested && recordedAudioUrl && (
+                      <div className="mic-playback-confirm">
+                        <p className="mic-playback-label">🎧 Play back your recording:</p>
+                        <audio
+                          controls
+                          src={recordedAudioUrl}
+                          className="mic-playback-audio"
+                        />
+                        <p className="mic-audibility-question">Is your audio clearly audible to you?</p>
+                        <div className="mic-audibility-actions">
+                          <button
+                            type="button"
+                            className="mic-audibility-btn mic-audibility-yes"
+                            onClick={() => setMicTested(true)}
+                          >
+                            ✓ Yes, it's clear
+                          </button>
+                          <button
+                            type="button"
+                            className="mic-audibility-btn mic-audibility-no"
+                            onClick={() => {
+                              setMicAudibilityAsked(false);
+                              if (recordedAudioUrl) URL.revokeObjectURL(recordedAudioUrl);
+                              setRecordedAudioUrl(null);
+                              setMicError("Please check your headphones or speakers and run the test again.");
+                            }}
+                          >
+                            ✗ No, re-test
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
-                  {micError && (
-                    <div className="onboarding-mic-error-card">
-                      <Icon name="cross" />
-                      <span>{micError}</span>
-                    </div>
-                  )}
-                </div>
+                    {/* Show playback-only after confirmed */}
+                    {micTested && recordedAudioUrl && (
+                      <div className="mic-playback-confirm mic-playback-verified">
+                        <p className="mic-playback-label">✅ Audio verified — your recording:</p>
+                        <audio controls src={recordedAudioUrl} className="mic-playback-audio" />
+                      </div>
+                    )}
+
+                    {micError && (
+                      <div className="onboarding-mic-error-card">
+                        <Icon name="cross" />
+                        <span>{micError}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="onboarding-actions-row space-between">
                   <Button variant="secondary" size="lg" onClick={() => goToStep(2)} leftIcon={<span style={{ paddingRight: 4 }}>←</span>}>
@@ -691,13 +703,13 @@ export function PreExamOnboarding({
                     <Button
                       variant="primary"
                       size="lg"
-                      disabled={!micTested || micTesting}
+                      disabled={requiresMicTest && (!micTested || micTesting)}
                       onClick={() => goToStep(4)}
                       rightIcon={<Icon name="chevronDown" style={{ transform: "rotate(-90deg)" }} />}
                     >
-                      {micTested ? "Proceed: Final Authorization" : "Test Microphone to Proceed"}
+                      {!requiresMicTest || micTested ? "Proceed: Final Authorization" : "Test Microphone to Proceed"}
                     </Button>
-                    {!micTested && (
+                    {requiresMicTest && !micTested && (
                       <p className="onboarding-step-blocker-note">
                         ⚠️ Microphone test is required before you can proceed
                       </p>
@@ -734,7 +746,7 @@ export function PreExamOnboarding({
                   </div>
                 </div>
 
-                {!micTested && (
+                {requiresMicTest && !micTested && (
                   <div className="onboarding-mic-gate-warning">
                     <Icon name="microphone" />
                     <div>
@@ -765,7 +777,7 @@ export function PreExamOnboarding({
                   <Button
                     variant="primary"
                     size="lg"
-                    disabled={!confirmed || securityStarting || concurrentTab || !micTested}
+                    disabled={!confirmed || securityStarting || concurrentTab || (requiresMicTest && !micTested)}
                     onClick={onStartSecureSession}
                     leftIcon={<Icon name="play" />}
                     isLoading={securityStarting}

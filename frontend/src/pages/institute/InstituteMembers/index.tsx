@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { useAuthStore } from "@/store/authStore";
+import { useToastStore } from "@/store/toastStore";
 import { instituteMembersStrings as strings } from "./InstituteMembers.strings";
 import type { ImportResult, InstituteMember, MemberCapacity } from "./types";
 import { MembersHeader } from "./components/MembersHeader";
@@ -28,6 +29,7 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
   const isStudent = role === "STUDENT";
   const isAllAccounts = role === undefined;
   const permissions = useAuthStore((state) => state.user?.institute_permissions);
+  const showSuccess = useToastStore((state) => state.showSuccess);
   const isSuperAdmin = instituteId !== undefined;
   const label = isAllAccounts ? "Accounts" : isStudent ? "Students" : "Instructors";
   const apiBase = isSuperAdmin ? `/super-admin/institutes/${instituteId}` : "/institute";
@@ -94,7 +96,21 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
     }
   }, [activityFilter, apiBase, label, role, roleFilter, search, sessionFilter, statusFilter]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const timer = window.setTimeout(load, 300);
+    return () => window.clearTimeout(timer);
+  }, [load]);
+
+  // Keep the "selected" set honest against whatever `load()` most recently
+  // returned - a mid-selection search/refresh can drop rows out of `members`,
+  // and the selection should shrink with them rather than silently going stale.
+  useEffect(() => {
+    setSelectedIds((current) => {
+      const liveIds = new Set(members.map((member) => member.id));
+      const next = new Set([...current].filter((id) => liveIds.has(id)));
+      return next.size === current.size ? current : next;
+    });
+  }, [members]);
 
   async function toggle(member: InstituteMember) {
     const isDeactivating = member.is_active;
@@ -170,7 +186,9 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
       targets.map((member) => apiClient.post(`${apiBase}/members/${member.id}/release-seat`)),
     );
     const failed = results.filter((result) => result.status === "rejected").length;
+    const succeeded = targets.length - failed;
     if (failed) setError(strings.errors.bulkFreeSeats(failed, targets.length));
+    if (succeeded) showSuccess(strings.notices.bulkFreeSeats(succeeded, targets.length));
     setSelectedIds(new Set());
     setBulkBusy(false);
     await load();
@@ -206,7 +224,7 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
   }
 
   async function remove(member: InstituteMember) {
-    if (!await confirmDelete(strings.confirm.deleteOne(member.email), strings.confirm.deleteOneTitle)) return;
+    if (!await confirmDelete(strings.confirm.deleteOne(member.email, member.holds_seat), strings.confirm.deleteOneTitle)) return;
     try {
       await apiClient.delete(`${apiBase}/members/${member.id}`);
       await load();
@@ -244,7 +262,9 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
       targets.map((member) => apiClient.post(`${apiBase}/members/${member.id}/${active ? "reactivate" : "deactivate"}`))
     );
     const failed = results.filter((result) => result.status === "rejected").length;
+    const succeeded = targets.length - failed;
     if (failed) setError(strings.errors.bulkToggle(active ? "activate" : "deactivate", failed, targets.length));
+    if (succeeded) showSuccess(strings.notices.bulkToggle(active ? "activate" : "deactivate", succeeded, targets.length));
     setSelectedIds(new Set());
     setBulkBusy(false);
     await load();
@@ -253,12 +273,15 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
   async function bulkRemove() {
     const targets = selectableMembers.filter((member) => selectedIds.has(member.id));
     if (!targets.length) return;
-    if (!await confirmDelete(strings.confirm.deleteMany(targets.length), strings.confirm.deleteManyTitle)) return;
+    const seatCount = targets.filter((member) => member.holds_seat).length;
+    if (!await confirmDelete(strings.confirm.deleteMany(targets.length, seatCount), strings.confirm.deleteManyTitle)) return;
     setBulkBusy(true);
     setError(null);
     const results = await Promise.allSettled(targets.map((member) => apiClient.delete(`${apiBase}/members/${member.id}`)));
     const failed = results.filter((result) => result.status === "rejected").length;
+    const succeeded = targets.length - failed;
     if (failed) setError(strings.errors.bulkDelete(failed, targets.length));
+    if (succeeded) showSuccess(strings.notices.bulkDelete(succeeded, targets.length));
     setSelectedIds(new Set());
     setBulkBusy(false);
     await load();
@@ -368,7 +391,8 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
         <MembersBulkActionsBar
           selectedCount={selectedIds.size}
           busy={bulkBusy}
-          hasInactiveSelected={selectableMembers.some((member) => selectedIds.has(member.id) && !member.is_active)}
+          activatableCount={selectableMembers.filter((member) => selectedIds.has(member.id) && !member.is_active).length}
+          deactivatableCount={selectableMembers.filter((member) => selectedIds.has(member.id) && member.is_active).length}
           reclaimableCount={selectedReclaimable.length}
           onActivate={() => bulkSetActive(true)}
           onDeactivate={() => bulkSetActive(false)}

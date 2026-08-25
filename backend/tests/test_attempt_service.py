@@ -554,7 +554,7 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(queue.status, "pending")
         self.assertEqual(queue.routing_reason, "reevaluation")
 
-    def test_speaking_allows_submit_with_missing_recordings(self):
+    def _speaking_module_with_prompts(self):
         created = module_authoring_service.create_module(
             self.db,
             self.instructor,
@@ -574,10 +574,37 @@ class AttemptServiceTestCase(unittest.TestCase):
                 )
             )
         self.db.commit()
+        return module
+
+    def test_speaking_blocks_submit_with_missing_recordings(self):
+        """A live (non-expired) attempt must not be submittable while a
+        Speaking response has no recording - the candidate still has time
+        to provide one."""
+        module = self._speaking_module_with_prompts()
         self._course_with_module(module.id)
 
         attempt_out = attempt_service.start_attempt(self.db, self.student, module)
         attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        with self.assertRaises(HTTPException) as ctx:
+            attempt_service.submit_attempt(self.db, attempt)
+        self.assertEqual(ctx.exception.status_code, 409)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        self.assertNotEqual(attempt.status, ATTEMPT_GRADING)
+
+    def test_speaking_allows_submit_with_missing_recordings_once_expired(self):
+        """Once an attempt has expired, auto-submit must not be blocked by a
+        missing Speaking recording - the candidate can no longer provide one,
+        so the exam is graded on what was captured."""
+        module = self._speaking_module_with_prompts()
+        self._course_with_module(module.id)
+
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        attempt_service.commence_attempt(self.db, self.student, attempt)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        attempt.expires_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=1)
+        self.db.commit()
+
         result = attempt_service.submit_attempt(self.db, attempt)
         self.assertEqual(result["status"], ATTEMPT_GRADING)
         self.assertEqual(self.db.query(GradingQueueEntry).filter_by(attempt_id=attempt.id).count(), 1)

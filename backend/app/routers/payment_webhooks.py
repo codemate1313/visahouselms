@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.payment import Payment
+from app.models.subscription import Subscription
 from app.services import payment_service, subscription_service
 from app.services.log_service import record_error
 from app.services.settings_service import get_settings_group
@@ -65,7 +66,17 @@ async def razorpay_webhook(
         if payment_id_str:
             try:
                 payment_id = int(payment_id_str)
-                payment = db.query(Payment).filter(Payment.id == payment_id).first()
+                # Locked before the status check-and-transition below: the
+                # client's own verify call (payment_service.verify_razorpay_payment /
+                # verify_institute_renewal_payment) can land on this same
+                # payment at nearly the same moment as this webhook fires.
+                # Without a row lock both could read status != PAID and both
+                # grant a subscription. FOR UPDATE serializes them - whichever
+                # gets here second sees status == PAID and skips straight
+                # through.
+                payment = (
+                    db.query(Payment).filter(Payment.id == payment_id).with_for_update().first()
+                )
                 if payment and payment.status != payment_service.STATUS_PAID:
                     payment.status = payment_service.STATUS_PAID
                     payment.paid_at = payment_service._now()
@@ -84,8 +95,21 @@ async def razorpay_webhook(
                         )
                         payment.subscription_id = sub.id
                         db.add(payment)
-
-                    db.commit()
+                        db.commit()
+                    elif payment.institute_id:
+                        # Institute (B2B) renewal payments carry institute_id
+                        # with no user_id. This branch used to be entirely
+                        # missing, so a webhook-only completion (the admin's
+                        # browser never calling verify - tab closed, network
+                        # drop after paying) left the payment marked paid with
+                        # the institute's term never extended. Same booking
+                        # step the client-facing verify call uses, reused
+                        # rather than duplicated - it also commits.
+                        payment_service._book_paid_institute_renewal(
+                            db, None, payment.institute_id, payment, client_ip
+                        )
+                    else:
+                        db.commit()
             except Exception as exc:
                 # Answering 200 here told Razorpay the payment was handled, so
                 # it never retried, and the failure left no trace: money taken
@@ -108,5 +132,79 @@ async def razorpay_webhook(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Webhook processing failed",
                 ) from exc
+
+    elif event in ("refund.processed", "payment.refunded"):
+        # Razorpay fires `refund.processed` (and, for a full refund, also
+        # `payment.refunded`) with the refund under payload.refund.entity and
+        # the original payment - carrying the same `notes.payment_id` the
+        # capture event had - under payload.payment.entity. Nothing in this
+        # codebase ever handled either: STATUS_REFUNDED existed on the model
+        # and was documented as a valid status, but no code path ever set it,
+        # and a refunded/disputed payment kept its subscription live.
+        payload = data.get("payload", {})
+        refund_entity = payload.get("refund", {}).get("entity", {})
+        payment_entity = payload.get("payment", {}).get("entity", {})
+        notes = payment_entity.get("notes", {}) or refund_entity.get("notes", {})
+        payment_id_str = notes.get("payment_id")
+        razorpay_payment_id = refund_entity.get("payment_id") or payment_entity.get("id")
+
+        try:
+            payment = None
+            if payment_id_str:
+                payment = (
+                    db.query(Payment).filter(Payment.id == int(payment_id_str)).with_for_update().first()
+                )
+            elif razorpay_payment_id:
+                # Fallback for a payload with no notes: both the client-verify
+                # and webhook-captured paths stamp the razorpay payment id
+                # into gateway_reference (either bare or as "Order: .. |
+                # Payment: .."), so a substring match still finds the row.
+                payment = (
+                    db.query(Payment)
+                    .filter(Payment.gateway_reference.like(f"%{razorpay_payment_id}%"))
+                    .with_for_update()
+                    .first()
+                )
+
+            if payment and payment.status != payment_service.STATUS_REFUNDED:
+                payment.status = payment_service.STATUS_REFUNDED
+                db.add(payment)
+
+                subscription = None
+                if payment.subscription_id:
+                    subscription = (
+                        db.query(Subscription)
+                        .filter(Subscription.id == payment.subscription_id)
+                        .with_for_update()
+                        .first()
+                    )
+                if subscription is not None and subscription.cancelled_at is None:
+                    # Same lever Super Admin uses to end a subscription by
+                    # hand (subscriptions.py -> subscription_service.cancel):
+                    # cancelled_at is the one place a term's lifecycle is
+                    # already retired early, so a refund follows the same
+                    # convention instead of inventing a new status flag.
+                    # commits internally.
+                    subscription_service.cancel(db, None, subscription.id, client_ip)
+                else:
+                    db.commit()
+        except Exception as exc:
+            db.rollback()
+            try:
+                record_error(
+                    db,
+                    message=f"Razorpay refund webhook failed for payment {payment_id_str or razorpay_payment_id}: {exc}",
+                    stack_trace=traceback.format_exc(),
+                    path=request.url.path,
+                    method=request.method,
+                    user_id=None,
+                    ip_address=client_ip,
+                )
+            except Exception:
+                pass
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Webhook processing failed",
+            ) from exc
 
     return {"status": "ok"}

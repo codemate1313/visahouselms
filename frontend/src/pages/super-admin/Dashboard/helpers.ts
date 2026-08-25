@@ -25,6 +25,35 @@ export function formatMoney(value: number): string {
   return `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 }
 
+export interface RevenueTrend {
+  /** e.g. "+18% vs last month" - `null` when there isn't enough real history to compare. */
+  badge: string | null;
+  /** Monthly revenue totals in chronological order, for the metric card sparkline. */
+  series: number[];
+}
+
+/**
+ * Derives the revenue growth badge and sparkline series from real month-by-month
+ * revenue totals, rather than a hardcoded/fabricated percentage.
+ *
+ * There is no daily-granularity revenue history in the API, so this compares the
+ * most recent two months rather than pretending to match the dashboard's 7D/30D/90D
+ * range selector - an honest "vs last month" figure beats a fake range-specific one.
+ */
+export function computeRevenueTrend(byMonth: { month: string; total: string; count: number }[]): RevenueTrend {
+  const series = byMonth.map((entry) => Number(entry.total));
+  if (series.length < 2) return { badge: null, series };
+
+  const previous = series[series.length - 2];
+  const current = series[series.length - 1];
+  if (!(previous > 0)) return { badge: null, series };
+
+  const percentChange = ((current - previous) / previous) * 100;
+  const rounded = Math.round(percentChange);
+  const sign = rounded > 0 ? "+" : "";
+  return { badge: `${sign}${rounded}% vs last month`, series };
+}
+
 export function formatDetailValue(
   value: string | number | null,
   valueType: DetailValueType,

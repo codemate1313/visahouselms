@@ -5,6 +5,7 @@ import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { confirmExport } from "@/utils/confirmExport";
+import { Icon } from "@/components/icons";
 import { couponsStrings as strings } from "./Coupons.strings";
 import type { CouponRow } from "./types";
 import { exportCouponsExcel, exportCouponsPDF } from "./exportHelpers";
@@ -12,6 +13,8 @@ import { CouponsFilterBar } from "./components/CouponsFilterBar";
 import { CouponsTable } from "./components/CouponsTable";
 
 export type { CouponRow } from "./types";
+
+const PAGE_SIZE = 25;
 
 export function Coupons() {
   const [coupons, setCoupons] = useState<CouponRow[]>([]);
@@ -24,6 +27,7 @@ export function Coupons() {
 
   const [deletingCoupon, setDeletingCoupon] = useState<CouponRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [page, setPage] = useState(1);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
 
   const load = useCallback(async () => {
@@ -51,6 +55,15 @@ export function Coupons() {
     setItemCount(coupons.length);
     return () => setItemCount(null);
   }, [coupons.length, setItemCount]);
+
+  // A new search or filter describes a different result set, so pagination
+  // restarts from page 1.
+  useEffect(() => {
+    setPage(1);
+  }, [search, scopeFilter, activeFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(coupons.length / PAGE_SIZE));
+  const pagedCoupons = coupons.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function toggleActive(coupon: CouponRow) {
     const action = coupon.is_active ? "deactivate" : "reactivate";
@@ -119,7 +132,22 @@ export function Coupons() {
       {loading ? (
         <p>{strings.loading}</p>
       ) : (
-        <CouponsTable coupons={coupons} onToggleActive={toggleActive} onRequestDelete={setDeletingCoupon} />
+        <>
+          <CouponsTable coupons={pagedCoupons} onToggleActive={toggleActive} onRequestDelete={setDeletingCoupon} />
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                <Icon name="arrowLeft" /> Previous
+              </button>
+              <span>
+                Page {page} of {totalPages} ({coupons.length} total)
+              </span>
+              <button type="button" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+                Next <Icon name="arrowRight" />
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <ConfirmModal

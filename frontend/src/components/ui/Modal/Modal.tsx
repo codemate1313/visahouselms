@@ -10,6 +10,12 @@ export interface ModalProps {
   children: ReactNode;
   className?: string;
   closeLabel?: string;
+  /**
+   * Guard invoked before an Escape press, outside click, or the header close
+   * button take effect. Return `false` to block the close (e.g. to protect
+   * unsaved input) - anything else, including `undefined`, lets it proceed.
+   */
+  onBeforeClose?: () => boolean | void;
   onClose: () => void;
   open: boolean;
   size?: "sm" | "md" | "lg";
@@ -21,6 +27,7 @@ export function Modal({
   children,
   className = "",
   closeLabel = "Close",
+  onBeforeClose,
   onClose,
   open,
   size = "md",
@@ -29,10 +36,20 @@ export function Modal({
   const titleId = useId();
   const cardRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
+  const onBeforeCloseRef = useRef(onBeforeClose);
 
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
+
+  useEffect(() => {
+    onBeforeCloseRef.current = onBeforeClose;
+  }, [onBeforeClose]);
+
+  function attemptClose() {
+    if (onBeforeCloseRef.current?.() === false) return;
+    onCloseRef.current();
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -41,7 +58,7 @@ export function Modal({
     cardRef.current?.focus();
 
     function handleEscape(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape") onCloseRef.current();
+      if (event.key === "Escape") attemptClose();
     }
 
     document.addEventListener("keydown", handleEscape);
@@ -78,7 +95,7 @@ export function Modal({
   if (!open) return null;
 
   return createPortal(
-    <div className="ui-modal-backdrop" role="presentation" onClick={onClose}>
+    <div className="ui-modal-backdrop" role="presentation" onClick={attemptClose}>
       <section
         aria-labelledby={titleId}
         aria-modal="true"
@@ -94,7 +111,7 @@ export function Modal({
           <IconButton
             icon={<Icon name="x" />}
             label={closeLabel}
-            onClick={onClose}
+            onClick={attemptClose}
             showTooltip={false}
             size="sm"
             variant="plain"

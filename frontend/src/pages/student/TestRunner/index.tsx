@@ -133,13 +133,25 @@ export function TestRunner() {
 
   const [savingIds, setSavingIds] = useState<Set<number>>(new Set());
   const savingIdsRef = useRef(savingIds);
-  const debounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  /* Each entry pairs the pending debounce timer with the exact save call it
+     would have fired - `submit()` needs to flush these before it can trust
+     `savingIds` to reflect every unsaved edit. */
+  const debounceTimers = useRef<Record<number, { timer: ReturnType<typeof setTimeout>; run: () => Promise<void> }>>({});
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
   const [recordingStream, setRecordingStream] = useState<MediaStream | null>(null);
   const [recordingQuestionId, setRecordingQuestionId] = useState<number | null>(null);
   const recordingQuestionIdRef = useRef(recordingQuestionId);
   const [recordingFailedQuestionId, setRecordingFailedQuestionId] = useState<number | null>(null);
+  /* Paired with `recordingFailedQuestionId`: the toast for a failed recording
+     disappears on its own, which leaves no trail once a candidate looks back
+     at the record button wondering why it stopped. This is the persistent,
+     stays-visible explanation rendered alongside the button itself. */
+  const [recordingErrorMessage, setRecordingErrorMessage] = useState<string | null>(null);
+  /* Set by `submit()` just before it asks the active recorder to stop, and
+     called from `onstop` the moment that handler actually runs - so submit
+     waits on the real event instead of guessing how long it will take. */
+  const recordingStopSignalRef = useRef<(() => void) | null>(null);
 
   const [fullscreenActive, setFullscreenActive] = useState(() => Boolean(document.fullscreenElement));
   const [securityAuthorized, setSecurityAuthorized] = useState(false);
@@ -326,12 +338,28 @@ export function TestRunner() {
     submittedRef.current = true;
     setSubmitting(true);
 
+    // Flush every pending debounced save before anything else - the debounce
+    // timer for the student's most recent edit may not have fired yet, and
+    // waiting on `savingIds` alone only catches saves already in flight.
+    const pendingSaves = Object.values(debounceTimers.current).map(({ timer, run }) => {
+      clearTimeout(timer);
+      return run();
+    });
+    debounceTimers.current = {};
+    await Promise.all(pendingSaves);
+
     // Don't cut off a response the student is still recording or that's
     // still uploading - flush it first so auto-submit (timer hitting zero)
-    // can't silently drop the last answer.
-    if (recordingQuestionIdRef.current !== null) {
-      recorderRef.current?.stop();
-      await new Promise((resolve) => setTimeout(resolve, 400));
+    // can't silently drop the last answer. Wait on the recorder's actual
+    // `onstop` event (where the upload's `savingIds` entry is set) rather
+    // than a fixed delay, which a slow device or a large final chunk could
+    // outrun.
+    if (recordingQuestionIdRef.current !== null && recorderRef.current) {
+      const recorder = recorderRef.current;
+      await new Promise<void>((resolve) => {
+        recordingStopSignalRef.current = resolve;
+        recorder.stop();
+      });
     }
     const flushDeadline = Date.now() + 8000;
     while (savingIdsRef.current.size > 0 && Date.now() < flushDeadline) {
@@ -473,7 +501,6 @@ export function TestRunner() {
 
   const recordFlag = useCallback(
     (flagType: ProctorFlagType, meta?: Record<string, unknown>) => {
-      if (user?.email === "mehtanavish60@gmail.com") return;
       if (!attemptTokenRef.current) return;
       eventSequenceRef.current += 1;
       sessionStorage.setItem(securityStorageKey(id, "event-sequence"), String(eventSequenceRef.current));
@@ -488,7 +515,7 @@ export function TestRunner() {
         { headers: { ...securityHeaders(), "X-Skip-Loader": "1" } },
       ).then(({ data }) => handleViolationPolicy(data)).catch(() => {});
     },
-    [handleViolationPolicy, id, securityHeaders, user?.email],
+    [handleViolationPolicy, id, securityHeaders],
   );
 
   const isImmersiveAttempt = attempt ? IMMERSIVE_MODULE_TYPES.has(attempt.module_type) : false;
@@ -576,7 +603,10 @@ export function TestRunner() {
       if (isFinalAttempt && !submittedRef.current && proctorArmed()) recordFlag("blur");
     }
     function onBeforeUnload(event: BeforeUnloadEvent) {
-      if (!isFinalAttempt || submittedRef.current) return;
+      // Any timed attempt in progress - not only a Final Test - loses work
+      // to an accidental refresh or close, so the warning applies to every
+      // module type for as long as the clock is actually running.
+      if (attemptStatus !== "in_progress" || submittedRef.current) return;
       event.preventDefault();
       event.returnValue = "";
     }
@@ -896,8 +926,7 @@ export function TestRunner() {
       heartbeatSequenceRef.current += 1;
       const state = mediaStateRef.current;
       try {
-        const isBypass = user?.email === "mehtanavish60@gmail.com";
-        const isArmed = proctorArmed() && !isBypass;
+        const isArmed = proctorArmed();
         const { data } = await apiClient.post<ViolationPolicyResponse>(
           `/student/attempts/${id}/security/heartbeat`,
           {
@@ -930,7 +959,7 @@ export function TestRunner() {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [attempt?.id, attempt?.is_final, attempt?.status, activeHeartbeatPartId, handleViolationPolicy, proctorArmed, securityAuthorized, id, securityHeaders, user?.email]);
+  }, [attempt?.id, attempt?.is_final, attempt?.status, activeHeartbeatPartId, handleViolationPolicy, proctorArmed, securityAuthorized, id, securityHeaders]);
 
   useEffect(() => {
     if (!attempt?.is_final || attempt.status !== "in_progress") return;
@@ -1003,7 +1032,19 @@ export function TestRunner() {
       );
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status !== 409) showError(extractErrorMessage(err, strings.errors.save), strings.errors.saveTitle);
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      // A 409 with this exact detail is the benign race where a newer edit
+      // already saved over this one - nothing to tell the student. Any other
+      // 409 (e.g. the attempt is no longer in progress) or a 410 (the
+      // deadline has passed) is a real write rejection and must surface.
+      const isBenignRevisionConflict = status === 409 && detail === "A newer answer has already been saved";
+      if (isBenignRevisionConflict) {
+        // No-op: harmless revision race, nothing to tell the student.
+      } else if (status === 409 || status === 410) {
+        showError(strings.errors.attemptExpired, strings.errors.saveTitle);
+      } else {
+        showError(extractErrorMessage(err, strings.errors.save), strings.errors.saveTitle);
+      }
     } finally {
       setSavingIds((prev) => {
         const next = new Set(prev);
@@ -1028,8 +1069,13 @@ export function TestRunner() {
       return { ...current, parts };
     });
     if (debounce) {
-      clearTimeout(debounceTimers.current[questionId]);
-      debounceTimers.current[questionId] = setTimeout(() => persist(questionId, response, revision), DEBOUNCE_MS);
+      clearTimeout(debounceTimers.current[questionId]?.timer);
+      const run = () => persist(questionId, response, revision);
+      const timer = setTimeout(() => {
+        delete debounceTimers.current[questionId];
+        void run();
+      }, DEBOUNCE_MS);
+      debounceTimers.current[questionId] = { timer, run };
     } else {
       persist(questionId, response, revision);
     }
@@ -1044,6 +1090,7 @@ export function TestRunner() {
     }
     try {
       setRecordingFailedQuestionId(null);
+      setRecordingErrorMessage(null);
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
         throw new Error("Audio recording is not supported by this browser");
       }
@@ -1076,9 +1123,19 @@ export function TestRunner() {
         recordingQuestionIdRef.current = null;
         setRecordingQuestionId(null);
         setRecordingFailedQuestionId(questionId);
+        setRecordingErrorMessage(strings.errors.microphoneBlockedRecovery);
         showError(strings.errors.microphoneBlocked, strings.errors.microphoneBlockedTitle);
+        // If a submit is waiting on `onstop` to signal that the recorder has
+        // settled, an error means that event may never arrive - release it
+        // here instead of leaving submit waiting indefinitely.
+        recordingStopSignalRef.current?.();
+        recordingStopSignalRef.current = null;
       };
       recorder.onstop = async () => {
+        // Tell a waiting `submit()` that the recorder has actually stopped,
+        // before doing anything else in this handler.
+        recordingStopSignalRef.current?.();
+        recordingStopSignalRef.current = null;
         stream.getTracks().forEach((track) => track.stop());
         recordingStreamRef.current = null;
         setRecordingStream(null);
@@ -1153,6 +1210,8 @@ export function TestRunner() {
       if (!isFinalAttempt) {
         releaseSpeakingMicrophone();
       }
+      setRecordingFailedQuestionId(questionId);
+      setRecordingErrorMessage(strings.errors.microphoneBlockedRecovery);
       showError(strings.errors.microphoneBlocked, strings.errors.microphoneBlockedTitle);
       return false;
     }
@@ -1321,7 +1380,12 @@ export function TestRunner() {
 
   // Declared after every hook: this branch flips on window resize, so returning
   // above the hook calls would change hook order and crash a running attempt.
-  if (isMobileDevice) {
+  // Scoped to before the attempt is actually under way - once the attempt is
+  // `in_progress`, the exam clock is already running server-side, so resizing
+  // below the desktop threshold must not swap out the live exam view and lock
+  // the candidate out while time keeps burning. The gate still protects the
+  // pre-exam setup flow, where nothing has started yet.
+  if (isMobileDevice && attempt?.status !== "in_progress") {
     return <DesktopRequiredNotice onBackToDashboard={() => navigate("/student/dashboard")} />;
   }
 
@@ -1452,7 +1516,6 @@ export function TestRunner() {
         secondsLeft={secondsLeft}
         languageCertSkin={languageCertSkin}
         timerVisible={timerVisible}
-        userEmail={user?.email}
       />
 
       {isListeningPart && (
@@ -1464,7 +1527,6 @@ export function TestRunner() {
           autoAdvance={nextPhasePartIndex !== null}
           onAudioComplete={handleListeningPartComplete}
           languageCertSkin={languageCertSkin}
-          userEmail={user?.email}
         />
       )}
 
@@ -1533,6 +1595,7 @@ export function TestRunner() {
               speakingPartCount={speakingParts.length}
               speakingPartNumber={speakingPartNumber}
               recordingFailedQuestionId={recordingFailedQuestionId}
+              recordingErrorMessage={recordingErrorMessage}
               recordingQuestionId={recordingQuestionId}
               audioInputStream={recordingStream ?? liveCameraStream}
               savingIds={savingIds}
@@ -1595,7 +1658,7 @@ export function TestRunner() {
       {violationModal}
 
       {isImmersiveAttempt && !fullscreenActive && !developerFullscreenBypass.current && !violationNotice && (
-        <FullscreenGate isFinal={attempt.is_final} secondsLeft={secondsLeft} onEnterFullscreen={enterFullscreen} timerVisible={timerVisible} />
+        <FullscreenGate isFinal={attempt.is_final} secondsLeft={secondsLeft} onEnterFullscreen={enterFullscreen} timerVisible={timerVisible} securityError={securityError} />
       )}
     </div>
   );

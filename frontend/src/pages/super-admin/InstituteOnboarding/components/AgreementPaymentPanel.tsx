@@ -4,6 +4,13 @@ import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.st
 import { INITIAL } from "../helpers";
 import type { Method } from "../types";
 
+// Mirrors SUPPORTED_CURRENCIES in PlanForm/index.tsx - keep in sync with that
+// list (and with formatCurrencyAmount in src/utils/currency.ts, which is the
+// ultimate source of truth for which currencies the UI can render a symbol
+// for). Not imported directly: PlanForm's file only exports a component, so
+// importing a constant from it would break React Fast Refresh there.
+const SUPPORTED_CURRENCIES = ["INR", "USD", "EUR", "GBP"] as const;
+
 interface AgreementPaymentPanelProps {
   form: typeof INITIAL;
   set: (field: keyof typeof INITIAL) => (event: { target: { value: string } }) => void;
@@ -22,11 +29,19 @@ export function AgreementPaymentPanel({ form, set, methods, onPaymentMethodChang
         </div>
         <div>
           <label>{t.amountReceived}<RequiredMark /></label>
-          <input type="number" min="1" value={form.amount_received} onChange={set("amount_received")} required placeholder={t.amountPlaceholder} />
+          {/* 0 is a legitimate value here - the agreement can be signed with
+              nothing paid yet, recorded as a due balance on the Payments screen. */}
+          <input type="number" min="0" value={form.amount_received} onChange={set("amount_received")} required placeholder={t.amountPlaceholder} />
         </div>
         <div>
           <label>{t.currency}<RequiredMark /></label>
-          <input value={form.currency} onChange={set("currency")} required />
+          <SearchableSelect
+            value={form.currency}
+            onChange={(value) => set("currency")({ target: { value: String(value) } })}
+            options={SUPPORTED_CURRENCIES.map((code) => ({ value: code, label: code }))}
+            searchable={false}
+            className="form-dropdown-select"
+          />
         </div>
         <div>
           <label>{t.paymentMethod}<RequiredMark /></label>

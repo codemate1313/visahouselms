@@ -81,9 +81,4 @@ export const dashboardStrings = {
     shareOfTotal: (share: string, total: string) => `${share}% of ${total} collected`,
     barAria: (parts: string) => `Share of revenue by payment method: ${parts}`,
   },
-  growth: {
-    "7D": { rev: "+18% growth", sub: "7D Live", inst: "Active" },
-    "30D": { rev: "+34% growth", sub: "30D Live", inst: "Active" },
-    "90D": { rev: "+72% growth", sub: "90D Live", inst: "Active" },
-  },
 } as const;

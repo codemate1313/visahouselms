@@ -446,6 +446,23 @@
   color: #ffffff;
 }
 
+/* The fill alone is a colour-only signal - a checkmark rides beside the title
+   so completion still reads for a colourblind candidate, or anyone glancing
+   too quickly to register the tab going from white to red. */
+.lc-rail-tab-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.lc-rail-tab-check {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  stroke-width: 3;
+}
+
 /* -------------------------------------------------------------------------
    Body
    ------------------------------------------------------------------------- */
@@ -2457,6 +2474,19 @@
   color: var(--lc-muted);
   font-size: 13.5px;
   line-height: 1.55;
+}
+
+/* Out-specifies the generic `p` rule above - this one has to read as an
+   error, not as the gate's ordinary muted copy. */
+.lc-exam .test-runner-fullscreen-gate .test-runner-gate-error {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--lc-red) 35%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--lc-red) 10%, transparent);
+  color: var(--lc-red);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .lc-exam .test-runner-gate-timer {

@@ -66,10 +66,6 @@ def plan_limit_total(db: Session, institute_id: int, limit_attr: str) -> int:
     a replacement for the first: two 25-seat plans running together are 50
     seats. Reading the limit off one "current" subscription silently discarded
     the plan they had just paid for.
-
-    Summed over active and grace terms only. A term bought for next year is not
-    capacity yet, and counting it would let an institute fill seats months
-    before the plan covering them begins.
     """
     from app.services.subscription_service import paid_subscriptions
 

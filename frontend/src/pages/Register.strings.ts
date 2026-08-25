@@ -32,6 +32,11 @@ export const registerStrings = {
   otpInvalidResponse: "Server required OTP but did not provide a challenge ID.",
   otpSentToast: "Verification code sent to your email.",
   otpSentTitle: "Check Your Email",
-  connectionError: "Could not connect to the server.",
+  otpResendLabel: "Resend Code",
+  otpResendingLabel: "Sending...",
+  otpResendCooldown: (seconds: number) => `Resend in ${seconds}s`,
+  otpResentToast: "A new verification code has been sent to your email.",
+  otpExpiresIn: (time: string) => `Code expires in ${time}`,
+  otpExpired: "Code expired. Please request a new code.",
   genericAuthError: "An unexpected error occurred during verification.",
 };

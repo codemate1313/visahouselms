@@ -461,6 +461,24 @@
   box-shadow: 0 0 0 3.5px rgba(225, 29, 46, 0.22);
 }
 
+/* Inline field validation — same danger token / red-border-plus-caption
+   pattern as the shared `ui-input-error` / `ui-field-error` classes in
+   components/ui/Input, applied to this page's own input styling. */
+.vh-form-input-error,
+.vh-form-input-error:focus,
+.vh-form-textarea.vh-form-input-error,
+.vh-form-textarea.vh-form-input-error:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3.5px rgba(184, 15, 40, 0.12);
+}
+
+.vh-form-field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--danger);
+}
+
 .vh-plan-badge {
   display: inline-flex;
   margin: 0 0 14px;

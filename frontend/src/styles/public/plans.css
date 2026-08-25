@@ -211,6 +211,11 @@
   transform: translateY(-2px);
   box-shadow: 0 14px 30px -14px var(--ac);
 }
+button.vh-plan-empty-cta {
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
 @media (max-width: 900px) {
   .vh-plan-grid,
   .vh-plan-grid.vh-plan-grid-few {

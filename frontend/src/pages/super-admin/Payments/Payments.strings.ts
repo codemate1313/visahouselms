@@ -69,6 +69,7 @@ export const paymentsStrings = {
   dueModal: {
     heading: "Record Due Payment",
     duePrefix: "due",
+    remainingAfterPrefix: "Remaining after this payment:",
     amountLabel: "Amount",
     methodLabel: "Payment mode",
     selectMode: "Select mode...",
@@ -80,6 +81,19 @@ export const paymentsStrings = {
     load: "Failed to load payments.",
     record: "Failed to record payment.",
     recordDue: "Failed to record due payment.",
+    instituteAndPlanRequired: "Select an institute with an active plan before recording a payment.",
+    amountExceedsDue: "Amount received cannot exceed the amount due.",
+  },
+  confirm: {
+    recordTitle: "Confirm Payment",
+    recordButton: "Record Payment",
+    record: (institute: string, allocation: string, amount: string, coupon: string | null) =>
+      `Record ${amount} for ${institute}${allocation ? ` (${allocation})` : ""}${coupon ? ` with coupon "${coupon}"` : ""}? This immediately grants the subscription and cannot be undone from here.`,
+  },
+  pagination: {
+    prev: "Previous",
+    next: "Next",
+    pageOf: (page: number, totalPages: number, total: number) => `Page ${page} of ${totalPages} (${total} total)`,
   },
   pdf: {
     header: "Language CERT — Payment Transactions Report",

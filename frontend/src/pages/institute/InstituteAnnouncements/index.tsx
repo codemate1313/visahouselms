@@ -182,7 +182,10 @@ export function InstituteAnnouncements() {
           onStudentSearchChange={setStudentSearch}
           onToggleStudent={toggleStudent}
           onSelectAllStudents={() => setSelectedUserIds(Array.from(new Set([...selectedUserIds, ...filteredStudents.map((st) => st.id)])))}
-          onClearStudents={() => setSelectedUserIds([])}
+          onClearStudents={() => {
+            const visibleIds = new Set(filteredStudents.map((st) => st.id));
+            setSelectedUserIds(selectedUserIds.filter((id) => !visibleIds.has(id)));
+          }}
           status={status}
           onStatusChange={setStatus}
           scheduledAt={scheduledAt}

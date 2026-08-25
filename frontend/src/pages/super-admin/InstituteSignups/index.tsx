@@ -246,7 +246,7 @@ export function InstituteSignups() {
 
       {loading ? (
         <div className="vh-signups-empty">
-          <span className="vh-recaptcha-spinner" style={{ width: 24, height: 24 }} />
+          <span className="vh-signups-spinner" style={{ width: 24, height: 24 }} />
           <p>{strings.loading}</p>
         </div>
       ) : rows.length === 0 ? (

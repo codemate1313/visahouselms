@@ -173,7 +173,10 @@ def decode_token(token: str, verify_exp: bool = True) -> dict:
 def is_static_otp_enabled(db: Optional[Session] = None) -> bool:
     """Return whether static OTP is enabled.
 
-    Enabled by default (unless explicitly toggled off in Settings).
+    Explicit Settings toggle always wins. Absent that, this defaults to ON
+    outside production (convenient for local/dev/test) but fails closed
+    (OFF) in production, so a fresh production deploy never ships a known
+    login code before anyone has visited Settings.
     """
     if db is not None:
         try:
@@ -183,7 +186,7 @@ def is_static_otp_enabled(db: Optional[Session] = None) -> bool:
                 return val.strip().lower() in ("true", "1", "yes")
         except Exception:
             pass
-    return True
+    return settings.app_environment != "production"
 
 
 def get_static_otp_code(db: Optional[Session] = None) -> str:
@@ -206,9 +209,20 @@ def generate_login_otp_code(db: Optional[Session] = None) -> str:
     return f"{secrets.randbelow(1_000_000):06d}"
 
 
-def hash_login_otp_code(otp_code: str) -> str:
+def _otp_hash_key() -> bytes:
+    # Derived from the JWT secret with a distinguishing label rather than
+    # reusing it directly, so OTP-hash integrity doesn't depend on the exact
+    # same secret that signs session tokens.
     return hmac.new(
         settings.jwt_secret_key.encode("utf-8"),
+        b"login-otp-hash",
+        hashlib.sha256,
+    ).digest()
+
+
+def hash_login_otp_code(otp_code: str) -> str:
+    return hmac.new(
+        _otp_hash_key(),
         otp_code.strip().encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()
@@ -219,7 +233,7 @@ def verify_login_otp_code(otp_code: str, otp_hash: str, db: Optional[Session] = 
         return False
     if is_static_otp_enabled(db):
         static_code = get_static_otp_code(db)
-        if otp_code.strip() == static_code.strip():
+        if hmac.compare_digest(otp_code.strip(), static_code.strip()):
             return True
     return hmac.compare_digest(hash_login_otp_code(otp_code), otp_hash)
 

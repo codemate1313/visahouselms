@@ -14,4 +14,6 @@ export const terminalStrings = {
     selectCommand: "Select a command from the palette on the left.",
   },
   connectionClosed: "Connection closed.",
+  presetConfirmTitle: "Run Preset Command",
+  presetConfirm: (label: string) => `Run preset "${label}"? This executes a real command on the server and cannot be undone.`,
 } as const;

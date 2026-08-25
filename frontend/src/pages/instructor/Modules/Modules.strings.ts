@@ -1,16 +1,16 @@
 import type { ExamModuleType } from "@/api/types";
 
 export const modulesStrings = {
-  title: "Courses",
+  title: "Modules",
   subtitle: "Choose the assessment type, then build its questions and media inside the generated parts.",
   createAriaLabel: "Create an assessment module",
   createCta: "Create",
-  yourCourses: {
-    title: "Your courses",
-    description: "Draft, validate, publish, and update each assessment course.",
+  yourModules: {
+    title: "Your modules",
+    description: "Draft, validate, publish, and update each assessment module.",
   },
-  searchPlaceholder: "Search courses...",
-  searchAriaLabel: "Search courses",
+  searchPlaceholder: "Search modules...",
+  searchAriaLabel: "Search modules",
   typeFilter: {
     ariaLabel: "Module type",
     all: "All types",
@@ -26,7 +26,7 @@ export const modulesStrings = {
   loading: "Loading...",
   errors: {
     load: "Failed to load assessment modules.",
-    delete: "Failed to delete draft course.",
+    delete: "Failed to delete draft module.",
   },
   empty: {
     title: "No modules found",
@@ -38,7 +38,7 @@ export const modulesStrings = {
   reviewAndPublish: "Review & publish",
   confirmDelete: {
     message: (title: string) => `Are you sure you want to delete draft "${title}"?`,
-    title: "Delete Draft Course",
+    title: "Delete Draft Module",
   },
   readyToPublish: "Ready to publish",
   editModule: "Edit",

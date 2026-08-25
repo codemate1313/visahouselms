@@ -21,9 +21,10 @@ export function SuperAdminBlogForm() {
   const [loading, setLoading] = useState(false);
   const showInfo = useToastStore((state) => state.showInfo);
 
-  // Pristine, payload-shaped snapshot of the blog post as loaded, used only
-  // in edit mode to skip the PUT when nothing actually changed.
-  const pristineRef = useRef<BlogFormData | null>(null);
+  // Pristine, payload-shaped snapshot of the blog post as loaded (or the form
+  // defaults, in create mode). Used to skip the PUT when nothing changed, and
+  // to warn before navigating away with unsaved edits.
+  const pristineRef = useRef<BlogFormData>(blogFormDefaults);
 
   useEffect(() => {
     if (!isEdit || !id) return;
@@ -40,6 +41,8 @@ export function SuperAdminBlogForm() {
       })
       .catch(() => setLoading(false));
   }, [id, isEdit]);
+
+  const isDirty = !isEqual(pristineRef.current, formData);
 
   function handleFieldChange<K extends keyof BlogFormData>(field: K, value: BlogFormData[K]) {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -58,7 +61,7 @@ export function SuperAdminBlogForm() {
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if (isEdit && pristineRef.current && isEqual(pristineRef.current, formData)) {
+    if (isEdit && !isDirty) {
       showInfo(noChangesMessage);
       return;
     }
@@ -79,7 +82,7 @@ export function SuperAdminBlogForm() {
 
   return (
     <div className="sab-form-container">
-      <FormHeader isEdit={isEdit} loading={loading} />
+      <FormHeader isEdit={isEdit} loading={loading} isDirty={isDirty} />
 
       <form id="blog-article-form" onSubmit={handleSubmit}>
         <div className="sab-form-layout">

@@ -8,8 +8,15 @@ export const gstRatesStrings = {
   loading: "Loading GST rates...",
   loadError: "Failed to load GST rates. Please try again.",
   saveError: "Failed to save GST rate.",
-  deleteConfirm: "Are you sure you want to delete this GST rate?",
+  deleteConfirm: "Are you sure you want to delete this GST rate? Plans referencing this rate may be affected.",
+  deleteConfirmDefault: "This is the default GST rate used across pricing. Deleting it may affect plans that reference it. Are you sure you want to delete it?",
   deleteError: "Failed to delete GST rate.",
+  confirm: {
+    toggle: (action: string, name: string, isDefault: boolean) =>
+      `Are you sure you want to ${action} GST rate "${name}"?${isDefault ? " This is the default rate used across pricing - deactivating it may affect plans that rely on a default." : ""}`,
+    activateTitle: "Activate GST Rate",
+    deactivateTitle: "Deactivate GST Rate",
+  },
   table: {
     name: "Rate Name",
     percentage: "Percentage (%)",

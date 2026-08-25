@@ -53,6 +53,12 @@ export function DuePaymentModal({
             onChange={(e) => onDueAmountChange(e.target.value)}
             required
           />
+          <p className="hint" style={{ marginTop: 4 }}>
+            {t.remainingAfterPrefix} {formatCurrencyAmount(
+              Math.max(0, Number(dueFor.due_amount) - (Number(dueAmount) || 0)),
+              dueFor.currency,
+            )}
+          </p>
           <label htmlFor="due_method" style={{ marginTop: 12 }}>
             {t.methodLabel}
           </label>

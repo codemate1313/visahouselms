@@ -322,9 +322,13 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    void load();
+    const timer = window.setTimeout(load, 250);
+    return () => window.clearTimeout(timer);
+  }, [load]);
+
+  useEffect(() => {
     return () => setItemCount(null);
-  }, [load, setItemCount]);
+  }, [setItemCount]);
 
   useEffect(() => {
     const ticketIdParam = searchParams.get("ticketId");
@@ -341,6 +345,15 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
     }
   }, [selectedTicket?.messages, selectedTicket?.id, isChatOpen]);
 
+  // Switching to a different ticket must never carry over an in-progress
+  // reply draft — otherwise a message meant for one customer can end up
+  // being sent to another.
+  useEffect(() => {
+    setReplyText("");
+    setAttachedFiles([]);
+    setDragCounter(0);
+  }, [selectedTicket?.id]);
+
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragCounter((prev) => prev + 1);
@@ -348,7 +361,8 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setDragCounter((prev) => prev - 1);
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setDragCounter(0);
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -705,6 +719,14 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
       <Modal
         open={isChatOpen && Boolean(selectedTicket)}
         onClose={() => setIsChatOpen(false)}
+        onBeforeClose={() => {
+          // A half-typed reply or a picked attachment is real, easy-to-lose work -
+          // Escape and outside-click are natural habits, so confirm before it's gone.
+          if (replyText.trim() || attachedFiles.length > 0) {
+            return window.confirm("Discard unsent reply?");
+          }
+          return true;
+        }}
         size="lg"
         title={
           selectedTicket ? (

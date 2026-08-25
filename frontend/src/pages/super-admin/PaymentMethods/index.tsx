@@ -1,6 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { PageHeader } from "@/components/ui";
 import { usePageTitleStore } from "@/store/pageTitleStore";
@@ -70,8 +71,18 @@ export function PaymentMethods() {
   }
 
   async function toggleActive(method: MethodRow) {
-    setError(null);
     const action = method.is_active ? "deactivate" : "reactivate";
+    const confirmed = await confirmAction(
+      strings.confirm.toggle(method.is_active ? "deactivate" : "activate", method.name),
+      {
+        title: method.is_active ? strings.confirm.deactivateTitle : strings.confirm.activateTitle,
+        confirmText: method.is_active ? "Deactivate" : "Activate",
+        variant: method.is_active ? "warning" : "primary",
+      },
+    );
+    if (!confirmed) return;
+
+    setError(null);
     setMethods((current) =>
       current.map((item) => item.id === method.id ? { ...item, is_active: !method.is_active } : item)
     );

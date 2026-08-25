@@ -2,9 +2,10 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { confirmAction } from "@/components/confirmDialog";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { confirmExport } from "@/utils/confirmExport";
-import type { InstituteAllocation } from "@/pages/super-admin/InstituteForm/types";
+import { allocationSummaryLine, type InstituteAllocation } from "@/pages/super-admin/InstituteForm/types";
 import { paymentsStrings as strings } from "./Payments.strings";
 import type { InstituteRow, MethodRow, PaymentRow } from "./types";
 import { exportPaymentsExcel, exportPaymentsPDF } from "./exportHelpers";
@@ -15,12 +16,18 @@ import { DuePaymentModal } from "./components/DuePaymentModal";
 import { Button, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/icons";
 
+const PAGE_SIZE = 25;
+
 export function Payments() {
   const [rows, setRows] = useState<PaymentRow[]>([]);
   const [institutes, setInstitutes] = useState<InstituteRow[]>([]);
   // The payment is recorded against the selected institute's own agreement, so
   // its provisions are looked up rather than chosen.
   const [allocation, setAllocation] = useState<InstituteAllocation | null>(null);
+  // The institute's contracted amount, used as the ceiling for "amount
+  // received" - mirrors the agreed_amount vs amount_received check on the
+  // onboarding form.
+  const [agreedAmount, setAgreedAmount] = useState<string | null>(null);
   const [methods, setMethods] = useState<MethodRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -40,6 +47,7 @@ export function Payments() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const [dueFor, setDueFor] = useState<PaymentRow | null>(null);
   const [dueAmount, setDueAmount] = useState("");
@@ -71,6 +79,11 @@ export function Payments() {
     load();
   }, [load]);
 
+  // Filters describe a different result set, so pagination restarts from page 1.
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, instituteFilter, dateFrom, dateTo, search]);
+
   useEffect(() => {
     setItemCount(rows.length);
     return () => setItemCount(null);
@@ -87,6 +100,7 @@ export function Payments() {
     if (!instituteId) {
       setAllocation(null);
       setPlanId("");
+      setAgreedAmount(null);
       return;
     }
     let cancelled = false;
@@ -96,11 +110,13 @@ export function Payments() {
         if (cancelled) return;
         setAllocation(data.allocation ?? null);
         setPlanId(data.plan_id ? String(data.plan_id) : "");
+        setAgreedAmount(data.agreed_amount ?? null);
       })
       .catch(() => {
         if (!cancelled) {
           setAllocation(null);
           setPlanId("");
+          setAgreedAmount(null);
         }
       });
     return () => {
@@ -112,6 +128,34 @@ export function Payments() {
     event.preventDefault();
     setError(null);
     setResult(null);
+    if (!instituteId || !Number(planId)) {
+      setError(strings.errors.instituteAndPlanRequired);
+      return;
+    }
+    if (agreedAmount && amountReceived && Number(amountReceived) > Number(agreedAmount)) {
+      setError(strings.errors.amountExceedsDue);
+      return;
+    }
+
+    const selectedInstitute = institutes.find((institute) => String(institute.id) === instituteId);
+    // The currency isn't chosen on this form - it's whatever the institute's
+    // own plan is priced in - so the confirmation echoes the raw amount back
+    // rather than guessing a currency symbol for it.
+    const confirmed = await confirmAction(
+      strings.confirm.record(
+        selectedInstitute?.name ?? "",
+        allocation ? allocationSummaryLine(allocation) : "",
+        amountReceived || strings.recordForm.fullPrice,
+        couponCode || null,
+      ),
+      {
+        title: strings.confirm.recordTitle,
+        confirmText: strings.confirm.recordButton,
+        variant: "primary",
+      },
+    );
+    if (!confirmed) return;
+
     setSaving(true);
     try {
       const { data } = await apiClient.post("/super-admin/payments", {
@@ -125,6 +169,7 @@ export function Payments() {
       setResult({ invoice_number: data.invoice_number, id: data.id });
       setInstituteId("");
       setPlanId("");
+      setAgreedAmount(null);
       setCouponCode("");
       setReference("");
       setMethodId("");
@@ -176,6 +221,9 @@ export function Payments() {
     exportPaymentsExcel(rows);
   }
 
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pagedRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div>
       <PageHeader
@@ -216,6 +264,7 @@ export function Payments() {
           onReferenceChange={setReference}
           error={error}
           saving={saving}
+          submitDisabled={!instituteId || !Number(planId)}
           onSubmit={handleSubmit}
         />
       )}
@@ -237,7 +286,24 @@ export function Payments() {
         resultCount={rows.length}
       />
 
-      {loading ? <p>{strings.loading}</p> : <PaymentsTable rows={rows} onOpenDueForm={openDueForm} />}
+      {loading ? (
+        <p>{strings.loading}</p>
+      ) : (
+        <>
+          <PaymentsTable rows={pagedRows} onOpenDueForm={openDueForm} />
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                <Icon name="arrowLeft" /> {strings.pagination.prev}
+              </button>
+              <span>{strings.pagination.pageOf(page, totalPages, rows.length)}</span>
+              <button type="button" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+                {strings.pagination.next} <Icon name="arrowRight" />
+              </button>
+            </div>
+          )}
+        </>
+      )}
 
       {dueFor && (
         <DuePaymentModal

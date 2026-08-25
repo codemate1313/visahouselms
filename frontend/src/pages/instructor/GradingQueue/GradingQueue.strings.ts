@@ -26,7 +26,7 @@ export const gradingQueueStrings = {
   },
   table: {
     student: "Student",
-    course: "Course",
+    module: "Module",
     queue: "Queue",
     owner: "Owner",
     issued: "Issued",

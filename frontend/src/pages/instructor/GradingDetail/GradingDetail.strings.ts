@@ -37,6 +37,10 @@ export const gradingDetailStrings = {
     priorAiCommentHeading: "AI comment",
     priorAiAccept: "Use these values",
     priorAiChip: "AI graded",
+    /** Shown once an AI-originated grade has been reviewed and saved by an
+     *  instructor - stays visually distinct from a fully manual "Graded"
+     *  badge so the instructor can still tell it started as an AI draft. */
+    aiReviewedChip: "AI graded · reviewed",
     rubricSticky: {
       title: "CEFR criteria",
       subtitle: "Follows the part you are grading.",
@@ -77,6 +81,7 @@ export const gradingDetailStrings = {
     },
     completeBeforeNextTitle: "Complete scores first",
     completeBeforeNextMessage: "Score every criterion in this segment before moving to the next question.",
+    nextDisabledHint: (criterion: string) => `Score "${criterion}" before continuing.`,
     aiSuccessMessage: "AI draft loaded for human review.",
     aiSuccessTitle: "Draft Ready",
     aiErrorMessage: "Failed to generate an assisted evaluation.",

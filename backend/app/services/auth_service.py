@@ -268,8 +268,6 @@ def get_otp_login_user(
         db.commit()
         raise INVALID_CREDENTIALS
 
-    _require_open_access_window(db, user, ip_address)
-
     return user
 
 

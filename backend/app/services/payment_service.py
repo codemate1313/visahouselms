@@ -558,7 +558,9 @@ def create_user_plan_order(
         if not stripe_enabled or not secret_key:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Stripe payment gateway is not configured for international USD payments.")
 
-        discount, coupon = coupon_service.validate_and_price(db, coupon_code, effective_base_price, "plan", plan_id, buyer.email)
+        discount, coupon = coupon_service.validate_and_price(
+            db, coupon_code, effective_base_price, "plan", plan_id, buyer.email, currency=effective_currency
+        )
         final_amount = effective_base_price - discount
 
         payment = Payment(
@@ -752,7 +754,15 @@ def verify_razorpay_payment(
     razorpay_signature: str,
     ip: Optional[str] = None,
 ) -> dict:
-    payment = get_payment_or_404(db, payment_id)
+    # Locked before the status check-and-transition below: the client's own
+    # verify call and the razorpay webhook can both reach this payment for the
+    # same order at nearly the same moment, and without a row lock both can
+    # read status != PAID, both pass the check, and both grant a subscription.
+    # FOR UPDATE serializes them so only the first to arrive proceeds - the
+    # second sees status == PAID once it gets the lock and returns early.
+    payment = db.query(Payment).filter(Payment.id == payment_id).with_for_update().first()
+    if payment is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
     if payment.user_id != user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Payment does not belong to user")
     if payment.status == STATUS_PAID:
@@ -984,7 +994,7 @@ def _resolve_renewal_plan(db: Session, institute_id: int, plan_id: Optional[int]
 
 
 def _book_institute_term(
-    db: Session, actor: User, institute_id: int, plan_id: int, ip: Optional[str], *, commit: bool
+    db: Session, actor: Optional[User], institute_id: int, plan_id: int, ip: Optional[str], *, commit: bool
 ) -> dict:
     """Extends the running term, or grants the first one.
 
@@ -1119,6 +1129,59 @@ def create_institute_renewal_order(
     }
 
 
+def _book_paid_institute_renewal(
+    db: Session,
+    actor: Optional[User],
+    institute_id: int,
+    payment: Payment,
+    ip: Optional[str] = None,
+) -> Payment:
+    """Books the institute term and redeems any coupon for a payment that has
+    already been marked PAID (fields already set by the caller) and whose
+    gateway signature has already been checked - either by
+    `verify_institute_renewal_payment` (the client's own verify call) or by
+    the razorpay webhook, which verifies the webhook signature itself and must
+    not re-verify a per-payment signature the client never sent it.
+
+    Sharing this step is what makes a webhook-only completion (the client
+    never calling verify, e.g. the tab was closed after paying) still extend
+    the institute's term - previously only the client-facing verify path ever
+    reached this booking code, so a webhook-only completion left the payment
+    marked paid with no subscription behind it.
+
+    `actor` may be None (the webhook has no signed-in user); `_book_institute_term`
+    / `subscription_service.assign` and `.renew` only dereference it when
+    asked to commit+notify inline, and this always calls them with
+    commit=False, committing everything here in one transaction instead.
+    """
+    try:
+        if payment.coupon_id:
+            coupon = db.query(Coupon).filter(Coupon.id == payment.coupon_id).first()
+            if coupon:
+                institute = institute_service.get_institute_or_404(db, institute_id)
+                coupon_email = institute.contact_email or f"institute-{institute_id}@internal.local"
+                coupon_service.redeem(db, coupon, coupon_email, payment_id=payment.id)
+
+        subscription = _book_institute_term(
+            db, actor, institute_id, payment.plan_id, ip, commit=False
+        )
+        payment.subscription_id = subscription["id"]
+        db.add(payment)
+        _audit(
+            db, actor, "payment.renewal_paid", payment.id, ip,
+            {"institute_id": institute_id, "subscription_id": subscription["id"]},
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
+    _notify_payment_recorded(db, payment)
+    _notify_renewal(db, payment)
+    return payment
+
+
 def verify_institute_renewal_payment(
     db: Session,
     actor: User,
@@ -1137,7 +1200,13 @@ def verify_institute_renewal_payment(
     revenue reporting and Super Admin's subscription view all show the same
     renewal.
     """
-    payment = get_payment_or_404(db, payment_id)
+    # Locked before the status check-and-transition below: the razorpay
+    # webhook can book this same renewal concurrently with this client-side
+    # verify call, and without a row lock both could read status != PAID and
+    # both extend the term. FOR UPDATE serializes them.
+    payment = db.query(Payment).filter(Payment.id == payment_id).with_for_update().first()
+    if payment is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
     if payment.institute_id != institute_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Payment does not belong to your institute")
     if payment.status == STATUS_PAID:
@@ -1166,31 +1235,7 @@ def verify_institute_renewal_payment(
     payment.invoice_number = f"INV-{payment.id:06d}"
     db.add(payment)
 
-    try:
-        if payment.coupon_id:
-            coupon = db.query(Coupon).filter(Coupon.id == payment.coupon_id).first()
-            if coupon:
-                institute = institute_service.get_institute_or_404(db, institute_id)
-                coupon_email = institute.contact_email or f"institute-{institute_id}@internal.local"
-                coupon_service.redeem(db, coupon, coupon_email, payment_id=payment.id)
-
-        subscription = _book_institute_term(
-            db, actor, institute_id, payment.plan_id, ip, commit=False
-        )
-        payment.subscription_id = subscription["id"]
-        db.add(payment)
-        _audit(
-            db, actor, "payment.renewal_paid", payment.id, ip,
-            {"institute_id": institute_id, "subscription_id": subscription["id"]},
-        )
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise
-
-    payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
-    _notify_payment_recorded(db, payment)
-    _notify_renewal(db, payment)
+    payment = _book_paid_institute_renewal(db, actor, institute_id, payment, ip)
     return _serialize(payment)
 
 

@@ -150,11 +150,13 @@ export const instituteMembersStrings = {
     done: "Done",
   },
   confirm: {
-    deleteOne: (email: string) =>
-      `Are you sure you want to delete member "${email}"? The account will be signed out while test history is retained.`,
+    deleteOne: (email: string, holdsSeat: boolean) =>
+      `Are you sure you want to delete member "${email}"? The account will be signed out${holdsSeat ? " and their seat released" : ""} while test history is retained.`,
     deleteOneTitle: "Delete Member",
-    deleteMany: (count: number) =>
-      `Are you sure you want to delete ${count} member${count === 1 ? "" : "s"}? Their accounts will be signed out while test history is retained.`,
+    deleteMany: (count: number, seatCount: number) =>
+      `Are you sure you want to delete ${count} member${count === 1 ? "" : "s"}? Their accounts will be signed out${
+        seatCount > 0 ? ` (releasing ${seatCount} seat${seatCount === 1 ? "" : "s"})` : ""
+      } while test history is retained.`,
     deleteManyTitle: "Delete Members",
     resetPassword: (email: string) => `Are you sure you want to reset the password for ${email}?`,
     resetPasswordTitle: "Reset Member Password",
@@ -178,6 +180,12 @@ export const instituteMembersStrings = {
       "searchable - you can bring them back later. But reactivating takes a seat, " +
       "and you will need free ones at the time.",
     freeSeatManyTitle: "Free Seats",
+  },
+  notices: {
+    bulkToggle: (action: string, succeeded: number, total: number) =>
+      `${succeeded} of ${total} member${total === 1 ? "" : "s"} ${action}d.`,
+    bulkDelete: (succeeded: number, total: number) => `${succeeded} of ${total} member${total === 1 ? "" : "s"} deleted.`,
+    bulkFreeSeats: (succeeded: number, total: number) => `${succeeded} of ${total} seat${total === 1 ? "" : "s"} freed.`,
   },
   errors: {
     load: (label: string) => `Failed to load ${label.toLowerCase()}.`,

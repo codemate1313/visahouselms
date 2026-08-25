@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import { useLocation } from "react-router-dom";
 import { apiClient, API_BASE_URL } from "@/api/client";
 import { PublicHeader } from "@/components/publicSite/PublicHeader";
 import { PublicFooter } from "@/components/publicSite/PublicFooter";
-import { ReCaptchaWidget } from "@/components/publicSite/ReCaptchaWidget";
 import { useSEO } from "@/hooks/useSEO";
 import { useContactSettings } from "./useContactSettings";
 import type { LandingPlan, LandingPlansPayload } from "./Plans.types";
@@ -36,6 +36,11 @@ const EMPTY_PARTNER_FORM = {
 
 const EMPTY_QUERY_FORM = { name: "", email: "", subject: "", message: "" };
 
+// Basic email-format backup check. Native `type="email"` + `required` on the
+// inputs handle validation for real form submissions; this covers any path
+// where the submit handler runs without a genuine browser submit event.
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function getInitialFormType(search: string): FormType {
   const params = new URLSearchParams(search);
   const form = params.get("form") || params.get("type") || params.get("tab");
@@ -61,9 +66,9 @@ function getOfficeStatus(): { isOpen: boolean; text: string } {
   const isBusinessHours = hour >= 9 && hour < 17;
 
   if (isWeekday && isBusinessHours) {
-    return { isOpen: true, text: "Open now (9am – 5pm IST)" };
+    return { isOpen: true, text: "Open now (9am – 5pm IST — your local time may differ)" };
   }
-  return { isOpen: false, text: "Closed now · Mon–Fri 9am–5pm IST" };
+  return { isOpen: false, text: "Closed now · Mon–Fri 9am–5pm IST — your local time may differ" };
 }
 
 function ContactInfoIcon({ type }: { type: "phone" | "location" | "email" | "support" }) {
@@ -177,14 +182,19 @@ export function ContactUs() {
 
   const [partner, setPartner] = useState(EMPTY_PARTNER_FORM);
   const [partnerStatus, setPartnerStatus] = useState<FormStatus | null>(null);
+  const [partnerErrors, setPartnerErrors] = useState<Partial<Record<keyof typeof EMPTY_PARTNER_FORM, string>>>({});
   const [submittingDemo, setSubmittingDemo] = useState(false);
 
   const [query, setQuery] = useState(EMPTY_QUERY_FORM);
   const [queryStatus, setQueryStatus] = useState<FormStatus | null>(null);
+  const [queryErrors, setQueryErrors] = useState<Partial<Record<keyof typeof EMPTY_QUERY_FORM, string>>>({});
   const [submittingQuery, setSubmittingQuery] = useState(false);
 
-  const [captchaVerified, setCaptchaVerified] = useState(false);
-  const [captchaError, setCaptchaError] = useState(false);
+  // Honeypot fields: invisible to real users, but a bot filling in every
+  // input on the page will populate them. Not a substitute for real
+  // server-verified bot protection, only a lightweight frontend deterrent.
+  const [partnerHoneypot, setPartnerHoneypot] = useState("");
+  const [queryHoneypot, setQueryHoneypot] = useState("");
 
   useEffect(() => {
     apiClient
@@ -200,33 +210,46 @@ export function ContactUs() {
     setFormType(next);
     setPartnerStatus(null);
     setQueryStatus(null);
-    setCaptchaError(false);
+    setPartnerErrors({});
+    setQueryErrors({});
   }
 
   function updatePartner<K extends keyof typeof EMPTY_PARTNER_FORM>(key: K, value: string) {
     setPartner((prev) => ({ ...prev, [key]: value }));
+    setPartnerErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
   }
   function updateQuery<K extends keyof typeof EMPTY_QUERY_FORM>(key: K, value: string) {
     setQuery((prev) => ({ ...prev, [key]: value }));
+    setQueryErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
   }
 
   async function submitDemoRequest() {
     if (submittingDemo) return;
+    if (partnerHoneypot.trim()) {
+      // Honeypot field was filled in — this is almost certainly a bot.
+      // Reject silently without giving the bot any diagnostic feedback.
+      return;
+    }
     const { instName, email, phone, city, country, website, first, last, adminEmail, students, instructors, message } = partner;
-    if (!instName.trim() || !email.trim() || !phone.trim() || !first.trim() || !last.trim() || !adminEmail.trim()) {
-      const msg = "Please fill in all required fields marked with *.";
-      setPartnerStatus({ message: msg, tone: "error" });
-      useToastStore.getState().showError(msg);
-      return;
-    }
 
-    if (!captchaVerified) {
-      const msg = "Please verify that you are not a robot.";
-      setCaptchaError(true);
+    const fieldErrors: Partial<Record<keyof typeof EMPTY_PARTNER_FORM, string>> = {};
+    if (!instName.trim()) fieldErrors.instName = "Institute name is required.";
+    if (!email.trim()) fieldErrors.email = "Institute contact email is required.";
+    else if (!EMAIL_REGEX.test(email.trim())) fieldErrors.email = "Enter a valid email address.";
+    if (!phone.trim()) fieldErrors.phone = "Phone number is required.";
+    if (!first.trim()) fieldErrors.first = "First name is required.";
+    if (!last.trim()) fieldErrors.last = "Last name is required.";
+    if (!adminEmail.trim()) fieldErrors.adminEmail = "Admin login email is required.";
+    else if (!EMAIL_REGEX.test(adminEmail.trim())) fieldErrors.adminEmail = "Enter a valid email address.";
+
+    if (Object.keys(fieldErrors).length > 0) {
+      setPartnerErrors(fieldErrors);
+      const msg = "Please fix the highlighted fields below.";
       setPartnerStatus({ message: msg, tone: "error" });
       useToastStore.getState().showError(msg);
       return;
     }
+    setPartnerErrors({});
 
     setSubmittingDemo(true);
     setPartnerStatus({ message: "Submitting your application...", tone: "ok" });
@@ -259,7 +282,7 @@ export function ContactUs() {
       setPartnerStatus({ message: successMsg, tone: "ok" });
       useToastStore.getState().showSuccess(successMsg);
       setPartner(EMPTY_PARTNER_FORM);
-      setCaptchaVerified(false);
+      setPartnerHoneypot("");
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "We could not submit your application. Please email enquiry.langugaecert@gmail.com.";
       setPartnerStatus({ message: errorMsg, tone: "error" });
@@ -271,21 +294,28 @@ export function ContactUs() {
 
   async function submitQueryRequest() {
     if (submittingQuery) return;
+    if (queryHoneypot.trim()) {
+      // Honeypot field was filled in — this is almost certainly a bot.
+      // Reject silently without giving the bot any diagnostic feedback.
+      return;
+    }
     const { name, email, subject, message } = query;
-    if (!name.trim() || !email.trim() || !subject.trim() || !message.trim()) {
-      const msg = "Please fill in all fields.";
-      setQueryStatus({ message: msg, tone: "error" });
-      useToastStore.getState().showError(msg);
-      return;
-    }
 
-    if (!captchaVerified) {
-      const msg = "Please verify that you are not a robot.";
-      setCaptchaError(true);
+    const fieldErrors: Partial<Record<keyof typeof EMPTY_QUERY_FORM, string>> = {};
+    if (!name.trim()) fieldErrors.name = "Your name is required.";
+    if (!email.trim()) fieldErrors.email = "Email address is required.";
+    else if (!EMAIL_REGEX.test(email.trim())) fieldErrors.email = "Enter a valid email address.";
+    if (!subject.trim()) fieldErrors.subject = "Subject is required.";
+    if (!message.trim()) fieldErrors.message = "Message is required.";
+
+    if (Object.keys(fieldErrors).length > 0) {
+      setQueryErrors(fieldErrors);
+      const msg = "Please fix the highlighted fields below.";
       setQueryStatus({ message: msg, tone: "error" });
       useToastStore.getState().showError(msg);
       return;
     }
+    setQueryErrors({});
 
     setSubmittingQuery(true);
     setQueryStatus({ message: "Sending your message...", tone: "ok" });
@@ -301,7 +331,7 @@ export function ContactUs() {
       setQueryStatus({ message: successMsg, tone: "ok" });
       useToastStore.getState().showSuccess(successMsg);
       setQuery(EMPTY_QUERY_FORM);
-      setCaptchaVerified(false);
+      setQueryHoneypot("");
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "We could not submit your enquiry. Please email enquiry.langugaecert@gmail.com.";
       setQueryStatus({ message: errorMsg, tone: "error" });
@@ -368,14 +398,27 @@ export function ContactUs() {
                   </a>
                 ))}
 
-                <a className="vh-contact-detail vh-contact-detail-span2" href="https://support.visahouse.com" target="_blank" rel="noopener noreferrer">
-                  <ContactInfoIcon type="support" />
-                  <span className="vh-contact-detail-copy">
-                    <strong>Support portal</strong>
-                    <span>{contact?.support_url ?? "support.visahouse.com (to be created)"}</span>
-                    <small>{contact?.support_note ?? "Existing partners only"}</small>
-                  </span>
-                </a>
+                {contact?.support_url ? (
+                  <a className="vh-contact-detail vh-contact-detail-span2" href={contact.support_url} target="_blank" rel="noopener noreferrer">
+                    <ContactInfoIcon type="support" />
+                    <span className="vh-contact-detail-copy">
+                      <strong>Support portal</strong>
+                      <span>{contact.support_url}</span>
+                      <small>{contact?.support_note ?? "Existing partners only"}</small>
+                    </span>
+                  </a>
+                ) : (
+                  // Not clickable: no backend-configured support_url yet, so
+                  // there is no real destination to send visitors to.
+                  <div className="vh-contact-detail vh-contact-detail-span2" aria-disabled="true">
+                    <ContactInfoIcon type="support" />
+                    <span className="vh-contact-detail-copy">
+                      <strong>Support portal</strong>
+                      <span>Coming soon</span>
+                      <small>Existing partners only</small>
+                    </span>
+                  </div>
+                )}
               </div>
             </section>
 
@@ -409,21 +452,53 @@ export function ContactUs() {
               </div>
 
               {formType === "partner" ? (
-                <>
+                <form
+                  onSubmit={(e: FormEvent<HTMLFormElement>) => {
+                    e.preventDefault();
+                    void submitDemoRequest();
+                  }}
+                >
                   {interestedPlanName ? <div className="vh-plan-badge">Interested in: {interestedPlanName} Plan</div> : null}
                   <div className="vh-form-section-title">About your institute</div>
                   <div className="vh-form-grid">
                     <div className="vh-form-field-span2">
                       <label className="vh-form-label">Institute name *</label>
-                      <input className="vh-form-input" type="text" placeholder="Meridian Institute" value={partner.instName} onChange={(e) => updatePartner("instName", e.target.value)} />
+                      <input
+                        className={`vh-form-input ${partnerErrors.instName ? "vh-form-input-error" : ""}`}
+                        type="text"
+                        required
+                        placeholder="Meridian Institute"
+                        value={partner.instName}
+                        onChange={(e) => updatePartner("instName", e.target.value)}
+                        aria-invalid={partnerErrors.instName ? true : undefined}
+                      />
+                      {partnerErrors.instName && <span className="vh-form-field-error">{partnerErrors.instName}</span>}
                     </div>
                     <div>
                       <label className="vh-form-label">Institute contact email *</label>
-                      <input className="vh-form-input" type="email" placeholder="info@meridian.com" value={partner.email} onChange={(e) => updatePartner("email", e.target.value)} />
+                      <input
+                        className={`vh-form-input ${partnerErrors.email ? "vh-form-input-error" : ""}`}
+                        type="email"
+                        required
+                        placeholder="info@meridian.com"
+                        value={partner.email}
+                        onChange={(e) => updatePartner("email", e.target.value)}
+                        aria-invalid={partnerErrors.email ? true : undefined}
+                      />
+                      {partnerErrors.email && <span className="vh-form-field-error">{partnerErrors.email}</span>}
                     </div>
                     <div>
                       <label className="vh-form-label">Phone *</label>
-                      <input className="vh-form-input" type="tel" required placeholder="+91 99999 99999" value={partner.phone} onChange={(e) => updatePartner("phone", e.target.value)} />
+                      <input
+                        className={`vh-form-input ${partnerErrors.phone ? "vh-form-input-error" : ""}`}
+                        type="tel"
+                        required
+                        placeholder="+91 99999 99999"
+                        value={partner.phone}
+                        onChange={(e) => updatePartner("phone", e.target.value)}
+                        aria-invalid={partnerErrors.phone ? true : undefined}
+                      />
+                      {partnerErrors.phone && <span className="vh-form-field-error">{partnerErrors.phone}</span>}
                     </div>
                     <div>
                       <label className="vh-form-label">City</label>
@@ -443,15 +518,42 @@ export function ContactUs() {
                   <div className="vh-form-grid">
                     <div>
                       <label className="vh-form-label">First name *</label>
-                      <input className="vh-form-input" type="text" placeholder="Priya" value={partner.first} onChange={(e) => updatePartner("first", e.target.value)} />
+                      <input
+                        className={`vh-form-input ${partnerErrors.first ? "vh-form-input-error" : ""}`}
+                        type="text"
+                        required
+                        placeholder="Priya"
+                        value={partner.first}
+                        onChange={(e) => updatePartner("first", e.target.value)}
+                        aria-invalid={partnerErrors.first ? true : undefined}
+                      />
+                      {partnerErrors.first && <span className="vh-form-field-error">{partnerErrors.first}</span>}
                     </div>
                     <div>
                       <label className="vh-form-label">Last name *</label>
-                      <input className="vh-form-input" type="text" placeholder="Nair" value={partner.last} onChange={(e) => updatePartner("last", e.target.value)} />
+                      <input
+                        className={`vh-form-input ${partnerErrors.last ? "vh-form-input-error" : ""}`}
+                        type="text"
+                        required
+                        placeholder="Nair"
+                        value={partner.last}
+                        onChange={(e) => updatePartner("last", e.target.value)}
+                        aria-invalid={partnerErrors.last ? true : undefined}
+                      />
+                      {partnerErrors.last && <span className="vh-form-field-error">{partnerErrors.last}</span>}
                     </div>
                     <div className="vh-form-field-span2">
                       <label className="vh-form-label">Admin login email *</label>
-                      <input className="vh-form-input" type="email" placeholder="priya@meridian.com" value={partner.adminEmail} onChange={(e) => updatePartner("adminEmail", e.target.value)} />
+                      <input
+                        className={`vh-form-input ${partnerErrors.adminEmail ? "vh-form-input-error" : ""}`}
+                        type="email"
+                        required
+                        placeholder="priya@meridian.com"
+                        value={partner.adminEmail}
+                        onChange={(e) => updatePartner("adminEmail", e.target.value)}
+                        aria-invalid={partnerErrors.adminEmail ? true : undefined}
+                      />
+                      {partnerErrors.adminEmail && <span className="vh-form-field-error">{partnerErrors.adminEmail}</span>}
                     </div>
                   </div>
 
@@ -471,14 +573,19 @@ export function ContactUs() {
                     </div>
                   </div>
 
-                  <ReCaptchaWidget
-                    verified={captchaVerified}
-                    onVerify={(v) => {
-                      setCaptchaVerified(v);
-                      setCaptchaError(false);
-                    }}
-                    hasError={captchaError}
-                  />
+                  {/* Honeypot: hidden from real users, catches naive bots that fill every field. */}
+                  <div style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", overflow: "hidden" }} aria-hidden="true">
+                    <label htmlFor="partner-hp-field">Leave this field blank</label>
+                    <input
+                      id="partner-hp-field"
+                      type="text"
+                      name="company_website_url"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={partnerHoneypot}
+                      onChange={(e) => setPartnerHoneypot(e.target.value)}
+                    />
+                  </div>
 
                   {partnerStatus ? (
                     <div className={`vh-form-status vh-form-status-visible is-${partnerStatus.tone}`} aria-live="polite" role="status">
@@ -486,39 +593,85 @@ export function ContactUs() {
                     </div>
                   ) : null}
 
-                  <button type="button" className="vh-form-submit-btn" onClick={submitDemoRequest} disabled={submittingDemo}>
+                  <button type="submit" className="vh-form-submit-btn" disabled={submittingDemo}>
                     {submittingDemo ? "Submitting..." : "Apply now"}
                   </button>
-                </>
+                </form>
               ) : (
-                <>
+                <form
+                  onSubmit={(e: FormEvent<HTMLFormElement>) => {
+                    e.preventDefault();
+                    void submitQueryRequest();
+                  }}
+                >
                   <div className="vh-form-grid">
                     <div>
                       <label className="vh-form-label">Your full name *</label>
-                      <input className="vh-form-input" type="text" placeholder="Priya Nair" value={query.name} onChange={(e) => updateQuery("name", e.target.value)} />
+                      <input
+                        className={`vh-form-input ${queryErrors.name ? "vh-form-input-error" : ""}`}
+                        type="text"
+                        required
+                        placeholder="Priya Nair"
+                        value={query.name}
+                        onChange={(e) => updateQuery("name", e.target.value)}
+                        aria-invalid={queryErrors.name ? true : undefined}
+                      />
+                      {queryErrors.name && <span className="vh-form-field-error">{queryErrors.name}</span>}
                     </div>
                     <div>
                       <label className="vh-form-label">Email address *</label>
-                      <input className="vh-form-input" type="email" placeholder="priya@example.com" value={query.email} onChange={(e) => updateQuery("email", e.target.value)} />
+                      <input
+                        className={`vh-form-input ${queryErrors.email ? "vh-form-input-error" : ""}`}
+                        type="email"
+                        required
+                        placeholder="priya@example.com"
+                        value={query.email}
+                        onChange={(e) => updateQuery("email", e.target.value)}
+                        aria-invalid={queryErrors.email ? true : undefined}
+                      />
+                      {queryErrors.email && <span className="vh-form-field-error">{queryErrors.email}</span>}
                     </div>
                     <div className="vh-form-field-span2">
                       <label className="vh-form-label">Subject *</label>
-                      <input className="vh-form-input" type="text" placeholder="How can we help?" value={query.subject} onChange={(e) => updateQuery("subject", e.target.value)} />
+                      <input
+                        className={`vh-form-input ${queryErrors.subject ? "vh-form-input-error" : ""}`}
+                        type="text"
+                        required
+                        placeholder="How can we help?"
+                        value={query.subject}
+                        onChange={(e) => updateQuery("subject", e.target.value)}
+                        aria-invalid={queryErrors.subject ? true : undefined}
+                      />
+                      {queryErrors.subject && <span className="vh-form-field-error">{queryErrors.subject}</span>}
                     </div>
                     <div className="vh-form-field-span2">
                       <label className="vh-form-label">Message *</label>
-                      <textarea className="vh-form-textarea" rows={5} placeholder="Tell us what you need help with." value={query.message} onChange={(e) => updateQuery("message", e.target.value)} />
+                      <textarea
+                        className={`vh-form-textarea ${queryErrors.message ? "vh-form-input-error" : ""}`}
+                        rows={5}
+                        required
+                        placeholder="Tell us what you need help with."
+                        value={query.message}
+                        onChange={(e) => updateQuery("message", e.target.value)}
+                        aria-invalid={queryErrors.message ? true : undefined}
+                      />
+                      {queryErrors.message && <span className="vh-form-field-error">{queryErrors.message}</span>}
                     </div>
                   </div>
 
-                  <ReCaptchaWidget
-                    verified={captchaVerified}
-                    onVerify={(v) => {
-                      setCaptchaVerified(v);
-                      setCaptchaError(false);
-                    }}
-                    hasError={captchaError}
-                  />
+                  {/* Honeypot: hidden from real users, catches naive bots that fill every field. */}
+                  <div style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", overflow: "hidden" }} aria-hidden="true">
+                    <label htmlFor="query-hp-field">Leave this field blank</label>
+                    <input
+                      id="query-hp-field"
+                      type="text"
+                      name="company_website_url"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={queryHoneypot}
+                      onChange={(e) => setQueryHoneypot(e.target.value)}
+                    />
+                  </div>
 
                   {queryStatus ? (
                     <div className={`vh-form-status vh-form-status-visible is-${queryStatus.tone}`} aria-live="polite" role="status">
@@ -526,10 +679,10 @@ export function ContactUs() {
                     </div>
                   ) : null}
 
-                  <button type="button" className="vh-form-submit-btn" onClick={submitQueryRequest} disabled={submittingQuery}>
+                  <button type="submit" className="vh-form-submit-btn" disabled={submittingQuery}>
                     {submittingQuery ? "Sending..." : "Submit request"}
                   </button>
-                </>
+                </form>
               )}
             </section>
 

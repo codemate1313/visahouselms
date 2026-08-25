@@ -1,18 +1,24 @@
 import type { Tab } from "./types";
 
+// Routine, content-oriented settings first; higher-risk tabs (auth bypass,
+// database migrations, bulk seed writes) are grouped at the end and flagged
+// with a warning icon in DeveloperSettings/index.tsx - see `dangerousTabs`.
 export const tabOrder: Tab[] = [
   "typography",
-  "otp",
   "slider",
   "contact",
   "smtp",
   "fcm",
   "ai",
   "payment-gateways",
-  "maintenance",
   "backups",
+  "otp",
+  "maintenance",
   "seed",
 ];
+
+/** Tabs that can bypass auth, mutate the database in bulk, or run migrations. */
+export const dangerousTabs: Tab[] = ["otp", "maintenance", "seed"];
 
 export const tabLabels: Record<Tab, string> = {
   typography: "Typography & Weights",
@@ -43,6 +49,10 @@ export const developerSettingsStrings = {
     saveError: "Failed to update Static OTP settings.",
     statusActive: "⚡ Static Testing OTP Active",
     statusInactive: "📧 Real Email Delivery Active",
+    dangerBannerTitle: "Platform-wide authentication bypass",
+    dangerBannerBody: "When enabled, any account - Students, Instructors, Institute Admins, and Super Admins - can log in using a shared static testing code instead of a real one-time code. Do not enable this in production.",
+    enableConfirmTitle: "Enable Global Testing Mode?",
+    enableConfirmMessage: "This lets anyone log in to any account on the platform using a shared static code, bypassing real OTP verification. Only enable this on a testing or staging environment - never in production. Continue?",
   },
   typography: {
     title: "App Typography & Tag Font Weights",
@@ -169,6 +179,8 @@ export const developerSettingsStrings = {
     title: "Maintenance Actions",
     description: "Run migrations, clear cache, and check storage links.",
     migrate: { busy: "Running...", idle: "Run data migration", label: "Data migration" },
+    migrateConfirmTitle: "Run Data Migration",
+    migrateConfirmMessage: "This runs a real database migration against the live platform database. It can alter schema or data and cannot be undone. Are you sure you want to continue?",
     clearCache: { busy: "Clearing...", idle: "Clear cache", label: "Clear cache" },
     storageLink: { busy: "Checking...", idle: "Storage link", label: "Storage link" },
     jobTimeoutMessage: (jobId: number) => `Job #${jobId} did not finish in time - check again later.`,

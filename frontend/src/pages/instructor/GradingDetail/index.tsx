@@ -189,7 +189,14 @@ export function GradingDetail() {
     const comment = partComments[part.id] ?? "";
     const criteria = part.rubric
       .filter((criterion) => includeAllCriteria || isPublished || isScoreFilled(marks[criterion.criterion]))
-      .map((criterion) => ({ criterion: criterion.criterion, marks_awarded: Number(marks[criterion.criterion]) }));
+      .map((criterion) => {
+        // Defensive clamp: the input already clamps on change, but this keeps
+        // any other path into partMarks from ever producing an out-of-range
+        // payload for autosave or manual save.
+        const raw = Number(marks[criterion.criterion]);
+        const marksAwarded = Number.isFinite(raw) ? Math.min(Math.max(raw, 0), criterion.max_marks) : raw;
+        return { criterion: criterion.criterion, marks_awarded: marksAwarded };
+      });
     return { criteria, comment: comment.trim() ? comment : undefined };
   }, [isScoreFilled, partComments, partMarks]);
 
@@ -241,6 +248,13 @@ export function GradingDetail() {
   const boundedActiveIndex = subjectiveParts.length ? Math.min(Math.max(0, activeIndex), subjectiveParts.length - 1) : 0;
   const activeSubjectivePart = subjectiveParts[boundedActiveIndex] ?? null;
   const activeAllScored = activeSubjectivePart ? partHasCompleteScores(activeSubjectivePart) : false;
+  // Named so the disabled Next/Finish button can tell the instructor exactly
+  // which criterion is still blocking it, instead of only a toast that can
+  // never fire because the button is disabled.
+  const activeMarks = activeSubjectivePart ? (partMarks[activeSubjectivePart.id] ?? {}) : {};
+  const firstUnscoredCriterion = activeSubjectivePart
+    ? activeSubjectivePart.rubric.find((criterion) => !isScoreFilled(activeMarks[criterion.criterion]))?.criterion ?? null
+    : null;
   const claimedByMe = detail?.queue.assigned_to_id === user?.id;
   const claimedByOther = detail?.queue.assigned_to_id != null && !claimedByMe;
   const hasOpenReevaluation = detail?.reevaluation && ["pending", "in_review"].includes(detail.reevaluation.status);
@@ -459,6 +473,7 @@ export function GradingDetail() {
               canPrev={boundedIndex > 0}
               canNext={!isLastPart || canEdit}
               nextDisabled={canEdit && !activeAllScored}
+              nextDisabledReason={canEdit && !activeAllScored && firstUnscoredCriterion ? strings.part.nextDisabledHint(firstUnscoredCriterion) : null}
               nextLabel={nextLabel}
               onPrev={() => setActiveIndex(Math.max(0, boundedIndex - 1))}
               onNext={handleNext}

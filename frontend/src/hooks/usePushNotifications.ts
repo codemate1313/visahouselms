@@ -11,6 +11,7 @@ interface PushWebConfig {
 }
 
 let initPromise: Promise<void> | null = null;
+let initPromiseUserId: number | string | null = null;
 
 async function loadWebConfig(): Promise<PushWebConfig | null> {
   const { data } = await apiClient.get<{ config: PushWebConfig | null }>("/notifications/push/config", {
@@ -64,10 +65,27 @@ async function registerForPush(): Promise<void> {
 
 /** Registers this browser for FCM push once per session, best-effort. No-ops
  * silently if FCM isn't configured, the browser doesn't support push, or the
- * user declines/has declined the permission prompt. */
+ * user declines/has declined the permission prompt.
+ *
+ * The cached promise is scoped to the user it was created for: if a
+ * different user logs in later in the same tab (no full reload), the guard
+ * re-runs registration instead of silently skipping it. */
 export function usePushNotifications(userId: number | string | undefined): void {
   useEffect(() => {
     if (!userId) return;
-    initPromise ??= registerForPush().catch(() => undefined);
+    if (initPromise && initPromiseUserId !== userId) {
+      initPromise = null;
+    }
+    if (!initPromise) {
+      initPromiseUserId = userId;
+      initPromise = registerForPush().catch(() => undefined);
+    }
   }, [userId]);
+}
+
+/** Clears the cached registration promise so the next login (even for the
+ * same user) re-runs push registration. Called on logout. */
+export function resetPushNotificationsInit(): void {
+  initPromise = null;
+  initPromiseUserId = null;
 }

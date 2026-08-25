@@ -133,6 +133,18 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
     setError(null);
     try {
       if (isNew) {
+        // Seats can fill up elsewhere while this form stays open, so refresh
+        // the capacity snapshot right before submitting - the mount-time fetch
+        // only drives the initial gate/display, not the moment that matters.
+        // Re-fetching here just updates `capacity`; if it now shows no room,
+        // the render below falls back to CapacityLockedView on its own.
+        const resource: "students" | "staff" = isStudent ? "students" : "staff";
+        const { data: freshCapacity } = await apiClient.get<MemberCapacity>(`${apiBase}/member-capacity`);
+        setCapacity(freshCapacity);
+        if (!freshCapacity.can_add[resource]) {
+          setSaving(false);
+          return;
+        }
         const { data } = await apiClient.post(`${apiBase}/members`, payload);
         setCreatedPassword(data.temporary_password);
       } else {

@@ -29,6 +29,11 @@ interface FloatingRubricPanelProps {
   canPrev: boolean;
   canNext: boolean;
   nextDisabled: boolean;
+  /** Names the specific rubric criterion blocking Next/Finish, e.g. `Score
+   *  "Grammar" before continuing.` Null when the button isn't disabled for
+   *  that reason. Shown as both a tooltip and inline text, since a toast
+   *  can never fire from a button that's disabled. */
+  nextDisabledReason: string | null;
   nextLabel: string;
   onPrev: () => void;
   onNext: () => void;
@@ -52,6 +57,7 @@ export function FloatingRubricPanel({
   canPrev,
   canNext,
   nextDisabled,
+  nextDisabledReason,
   nextLabel,
   onPrev,
   onNext,
@@ -113,22 +119,26 @@ export function FloatingRubricPanel({
                   disabled={!canEdit}
                   onChange={(event) => {
                     const val = event.target.value.replace(/,/g, '.');
-                    if (/^\d*\.?\d*$/.test(val)) {
-                      onMarksChange(criterion.criterion, val);
+                    if (!/^\d*\.?\d*$/.test(val)) return;
+                    // Clamp as soon as the value changes - autosave can fire
+                    // long before blur, so the stored value must already be
+                    // in range rather than merely validated on blur.
+                    const num = parseFloat(val);
+                    if (!isNaN(num)) {
+                      const clamped = Math.min(Math.max(num, 0), criterion.max_marks);
+                      if (clamped !== num) {
+                        onMarksChange(criterion.criterion, clamped.toString());
+                        return;
+                      }
                     }
+                    onMarksChange(criterion.criterion, val);
                   }}
                   onBlur={(event) => {
                     const val = event.target.value;
-                    if (val) {
-                      const num = parseFloat(val);
-                      if (!isNaN(num)) {
-                        const clamped = Math.min(Math.max(num, 0), criterion.max_marks);
-                        if (clamped.toString() !== val) {
-                          onMarksChange(criterion.criterion, clamped.toString());
-                        }
-                      } else {
-                        onMarksChange(criterion.criterion, "");
-                      }
+                    // Values in range are already clamped on change; this only
+                    // cleans up a lone "." or similar left over from typing.
+                    if (val && isNaN(parseFloat(val))) {
+                      onMarksChange(criterion.criterion, "");
                     }
                   }}
                 />
@@ -160,11 +170,21 @@ export function FloatingRubricPanel({
             {t.rubricNav.prev}
           </Button>
           <span className="rubric-floater-position" aria-live="polite">{positionLabel}</span>
-          <Button variant="secondary" size="sm" disabled={!canNext || nextDisabled || saving} onClick={onNext}>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={!canNext || nextDisabled || saving}
+            onClick={onNext}
+            title={nextDisabled ? nextDisabledReason ?? undefined : undefined}
+          >
             {saving ? t.saving : nextLabel}
           </Button>
         </div>
+        {nextDisabled && nextDisabledReason && (
+          <span className="rubric-floater-next-hint" role="note">{nextDisabledReason}</span>
+        )}
       </div>
     </aside>
+
   );
 }

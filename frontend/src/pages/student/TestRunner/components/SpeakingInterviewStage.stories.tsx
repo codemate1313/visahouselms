@@ -59,6 +59,7 @@ const meta = {
     audioInputStream: null,
     recordingQuestionId: null,
     recordingFailedQuestionId: null,
+    recordingErrorMessage: null,
     onRecord: async () => true,
     onContinuePart: () => undefined,
   },

@@ -31,6 +31,11 @@ export const paymentMethodsStrings = {
     message: (name: string) => `Are you sure you want to delete payment method "${name}"?`,
     confirmText: "Delete Method",
   },
+  confirm: {
+    toggle: (action: string, name: string) => `Are you sure you want to ${action} payment method "${name}"?`,
+    activateTitle: "Activate Payment Method",
+    deactivateTitle: "Deactivate Payment Method",
+  },
   errors: {
     load: "Failed to load payment methods.",
     create: "Failed to create payment method.",

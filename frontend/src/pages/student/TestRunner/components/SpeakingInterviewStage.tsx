@@ -123,6 +123,9 @@ interface SpeakingInterviewStageProps {
   audioInputStream: MediaStream | null;
   recordingQuestionId: number | null;
   recordingFailedQuestionId: number | null;
+  /** Persistent, non-toast explanation for the current `recordingFailedQuestionId` -
+      stays on screen next to the record button instead of fading like the toast. */
+  recordingErrorMessage: string | null;
   onRecord: (questionId: number) => Promise<boolean>;
   onContinuePart: () => void;
 }
@@ -140,6 +143,7 @@ export function SpeakingInterviewStage({
   audioInputStream,
   recordingQuestionId,
   recordingFailedQuestionId,
+  recordingErrorMessage,
   onRecord,
   onContinuePart,
 }: SpeakingInterviewStageProps) {
@@ -339,10 +343,18 @@ export function SpeakingInterviewStage({
     : null;
   const candidateImageUrl = question.image_url ? `${API_BASE_URL}${question.image_url}` : null;
   const hasCandidateAttachment = Boolean(candidateImageUrl || candidatePdfUrl);
+  const recordingFailedForQuestion = recordingFailedQuestionId === question.id && Boolean(recordingErrorMessage);
   const canStartManually = mode === "ready" && manualStartOffered;
   const isSubmittingAnswer = mode === "uploading" || (mode === "complete" && isLastQuestion && isLastTestPart);
+  /* Silence is not evidence the examiner audio is still on its way - it is
+     indistinguishable, to the candidate, from playback having quietly failed.
+     The rescue timer above only counts down through this same window, so the
+     label switches to a waiting indicator for exactly as long as that timer
+     is running, rather than sitting on a static "Playing Question..." with
+     nothing on screen to show anything is happening. */
+  const isWaitingSilently = mode === "ready" && !examinerBusy && !manualStartOffered;
   const dockStatusLabel = mode === "ready"
-    ? t.playingQuestion
+    ? (isWaitingSilently ? t.waitingForExaminerAudio : t.playingQuestion)
     : mode === "preparing"
       ? t.preparingNow(preparationLeft)
       : mode === "starting"
@@ -448,6 +460,13 @@ export function SpeakingInterviewStage({
                   </Button>
                 ) : null}
               </div>
+
+              {recordingFailedForQuestion && (
+                <div className="speaking-mic-error-card" role="alert">
+                  <Icon name="cross" />
+                  <span>{recordingErrorMessage}</span>
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -558,7 +577,14 @@ export function SpeakingInterviewStage({
               <strong>{formatTime(timerValue)}</strong>
               <small>
                 {mode === "ready"
-                  ? manualStartOffered ? "Examiner audio did not finish. You can start manually." : t.playingQuestion
+                  ? manualStartOffered ? (
+                    "Examiner audio did not finish. You can start manually."
+                  ) : isWaitingSilently ? (
+                    <span className="speaking-waiting-indicator">
+                      <span className="speaking-status-spinner" aria-hidden="true" />
+                      {t.waitingForExaminerAudio}
+                    </span>
+                  ) : t.playingQuestion
                 : mode === "preparing"
                     ? t.recordingStartsAutomatically
                     : mode === "starting"
@@ -600,6 +626,13 @@ export function SpeakingInterviewStage({
                 </Button>
               ) : null}
             </div>
+
+            {recordingFailedForQuestion && (
+              <div className="speaking-mic-error-card" role="alert">
+                <Icon name="cross" />
+                <span>{recordingErrorMessage}</span>
+              </div>
+            )}
           </div>
         </section>
 

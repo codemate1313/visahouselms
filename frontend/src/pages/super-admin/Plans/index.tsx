@@ -14,8 +14,11 @@ import { PlanVisibilityBar } from "./components/PlanVisibilityBar";
 import { PlansFilterBar } from "./components/PlansFilterBar";
 import { PlansTable } from "./components/PlansTable";
 import { PlanDetailsModal } from "./components/PlanDetailsModal";
+import { Icon } from "@/components/icons";
 
 export type { PlanRow } from "./types";
+
+const PAGE_SIZE = 25;
 
 export function Plans() {
   // Two catalogues share this screen. Bespoke institute agreements are marked
@@ -34,6 +37,7 @@ export function Plans() {
   const [deletingPlan, setDeletingPlan] = useState<PlanRow | null>(null);
   const [viewingPlan, setViewingPlan] = useState<PlanRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [page, setPage] = useState(1);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
   // Failed actions are transient, so they surface as toasts rather than as a
   // banner the Super Admin has to dismiss by navigating away.
@@ -107,6 +111,15 @@ export function Plans() {
     setItemCount(filteredPlans.length);
     return () => setItemCount(null);
   }, [filteredPlans.length, setItemCount]);
+
+  // A new audience, search, or status filter describes a different result
+  // set, so pagination restarts from page 1.
+  useEffect(() => {
+    setPage(1);
+  }, [audience, search, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPlans.length / PAGE_SIZE));
+  const pagedPlans = filteredPlans.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function toggleActive(plan: PlanRow) {
     const action = plan.is_active ? "deactivate" : "reactivate";
@@ -202,7 +215,22 @@ export function Plans() {
       {loading ? (
         <p>{strings.loading}</p>
       ) : (
-        <PlansTable plans={filteredPlans} basePath={catalogue.basePath} emptyMessage={catalogue.empty} onToggleActive={toggleActive} onView={setViewingPlan} onRequestDelete={setDeletingPlan} />
+        <>
+          <PlansTable plans={pagedPlans} basePath={catalogue.basePath} emptyMessage={catalogue.empty} onToggleActive={toggleActive} onView={setViewingPlan} onRequestDelete={setDeletingPlan} />
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                <Icon name="arrowLeft" /> Previous
+              </button>
+              <span>
+                Page {page} of {totalPages} ({filteredPlans.length} total)
+              </span>
+              <button type="button" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+                Next <Icon name="arrowRight" />
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {viewingPlan && <PlanDetailsModal plan={viewingPlan} onClose={() => setViewingPlan(null)} />}

@@ -34,6 +34,12 @@ def enforce_rate_limit(
         events = _events[key]
         while events and events[0] <= cutoff:
             events.popleft()
+        if not events:
+            # Drop the now-empty deque instead of leaving a permanent entry -
+            # otherwise a flood of distinct keys (e.g. many emails/IPs) never
+            # gets cleaned up and leaks memory for the life of the process.
+            _events.pop(key, None)
+            events = _events[key]
         if len(events) >= limit:
             retry_after = max(1, int(window_seconds - (now - events[0])))
             raise HTTPException(

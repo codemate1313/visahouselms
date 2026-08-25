@@ -29,10 +29,10 @@ STATE_CANCELLED = "cancelled"
 SUSPENSION_REASON = "subscription_expired"
 
 
-def _audit(db: Session, actor: User, action: str, entity_id: Optional[int], ip: Optional[str], details=None) -> None:
+def _audit(db: Session, actor: Optional[User], action: str, entity_id: Optional[int], ip: Optional[str], details=None) -> None:
     db.add(
         AuditLog(
-            user_id=actor.id,
+            user_id=actor.id if actor else None,
             action=action,
             entity_type="subscription",
             entity_id=entity_id,
@@ -540,7 +540,7 @@ def history(db: Session, institute_id: int) -> List[dict]:
 
 def assign(
     db: Session,
-    actor: User,
+    actor: Optional[User],
     institute_id: int,
     plan_id: int,
     starts_at: Optional[datetime],
@@ -611,7 +611,7 @@ def assign(
 
 def renew(
     db: Session,
-    actor: User,
+    actor: Optional[User],
     institute_id: int,
     plan_id: Optional[int],
     ip: Optional[str],
@@ -724,7 +724,7 @@ def sync_open_terms_to_plan(db: Session, institute_id: int, plan: Plan) -> int:
     return touched
 
 
-def cancel(db: Session, actor: User, subscription_id: int, ip: Optional[str]) -> dict:
+def cancel(db: Session, actor: Optional[User], subscription_id: int, ip: Optional[str]) -> dict:
     subscription = (
         db.query(Subscription)
         .options(joinedload(Subscription.plan))
@@ -935,8 +935,6 @@ def my_current_plan_view(db: Session, user: User) -> dict:
             if user.institute_id is None else 0
         )
         is_exh = has_att and not retake_avail and sittings_left <= 0
-        if user.email == "mehtanavish60@gmail.com":
-            is_exh = False
         latest = mod_atts[0] if mod_atts else None
         return {
             "has_attempted": has_att,

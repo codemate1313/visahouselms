@@ -7,9 +7,14 @@ interface FullscreenGateProps {
   onEnterFullscreen: () => void;
   /** Matches the header: no clock on the sections that do not show one. */
   timerVisible?: boolean;
+  /** Set when the browser rejected the last fullscreen request. Rendered here,
+      persistently, rather than only as a toast - the toast fades and leaves a
+      candidate stuck on this gate with no visible reason the button isn't
+      working. */
+  securityError?: string | null;
 }
 
-export function FullscreenGate({ isFinal, secondsLeft, onEnterFullscreen, timerVisible = true }: FullscreenGateProps) {
+export function FullscreenGate({ isFinal, secondsLeft, onEnterFullscreen, timerVisible = true, securityError = null }: FullscreenGateProps) {
   const t = strings.fullscreenGate;
   return (
     <div className="test-runner-fullscreen-gate" role="dialog" aria-modal="true" aria-labelledby="fullscreen-gate-title">
@@ -22,6 +27,9 @@ export function FullscreenGate({ isFinal, secondsLeft, onEnterFullscreen, timerV
             withholding a few pixels away. */}
         {timerVisible && (
           <div className={`test-runner-gate-timer${secondsLeft < 300 ? " is-urgent" : ""}`}>{formatTime(secondsLeft)}</div>
+        )}
+        {securityError && (
+          <p className="test-runner-gate-error" role="alert">{securityError}</p>
         )}
         <button type="button" onClick={onEnterFullscreen}>
           {t.enterFullscreen}

@@ -51,7 +51,10 @@ export const PUBLIC_FOOTER_COLUMNS: PublicFooterColumn[] = [
     title: "Partnerships",
     links: [
       { label: "Request for Institute", url: "/institute-signup" },
-      { label: "For Institutes", url: "/" },
+      // Pre-selects the "Become a Partner" panel on the contact page (see
+      // getInitialFormType in ContactUs.tsx) instead of pointing at the
+      // homepage, which duplicated "Platform Home" above.
+      { label: "For Institutes", url: "/contact?form=institute" },
       { label: "Resources", url: "/blogs" },
     ],
   },

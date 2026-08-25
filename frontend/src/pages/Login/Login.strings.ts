@@ -41,7 +41,6 @@ export const loginStrings = {
   welcomeToast: (role: string) => `Welcome back, ${role}!`,
   signedInTitle: "Signed In",
   genericAuthError: "Unable to sign in. Please try again.",
-  connectionError: "Unable to connect to the login service.",
   authErrorTitle: "Authentication Error",
   registerPrompt: "New student? ",
   registerLink: "Create a student account",

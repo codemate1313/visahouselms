@@ -21,6 +21,8 @@ interface RecordPaymentFormProps {
   onReferenceChange: (value: string) => void;
   error: string | null;
   saving: boolean;
+  /** True until both an institute and its resolved plan are selected. */
+  submitDisabled?: boolean;
   onSubmit: (event: FormEvent) => void;
 }
 
@@ -40,6 +42,7 @@ export function RecordPaymentForm({
   onReferenceChange,
   error,
   saving,
+  submitDisabled,
   onSubmit,
 }: RecordPaymentFormProps) {
   const t = strings.recordForm;
@@ -111,7 +114,7 @@ export function RecordPaymentForm({
       {error && <p className="error-text" style={{ marginTop: 12 }}>{error}</p>}
 
       <div className="form-actions" style={{ marginTop: 20 }}>
-        <button type="submit" className="primary-submit-btn" disabled={saving}>
+        <button type="submit" className="primary-submit-btn" disabled={saving || submitDisabled}>
           {saving ? t.recording : t.submit}
         </button>
       </div>

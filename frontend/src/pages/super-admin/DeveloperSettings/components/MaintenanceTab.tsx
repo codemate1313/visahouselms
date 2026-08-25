@@ -2,6 +2,7 @@ import { useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { confirmAction } from "@/components/confirmDialog";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 
 export function MaintenanceTab() {
@@ -27,6 +28,16 @@ export function MaintenanceTab() {
     setError(t.jobTimeoutMessage(jobId));
   }
 
+  async function runMigration() {
+    const confirmed = await confirmAction(t.migrateConfirmMessage, {
+      title: t.migrateConfirmTitle,
+      confirmText: "Run Migration",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+    await run("migrate", t.migrate.label);
+  }
+
   async function run(action: string, label: string) {
     setError(null); setOutput(null); setBusy(action);
     try {
@@ -47,7 +58,7 @@ export function MaintenanceTab() {
   return (
     <CollapsiblePanel className="form-card wide" title={t.title} description={t.description}>
       <div className="maintenance-actions">
-        <button disabled={busy !== null} onClick={() => run("migrate", t.migrate.label)}>
+        <button disabled={busy !== null} onClick={() => void runMigration()}>
           {busy === "migrate" ? t.migrate.busy : t.migrate.idle}
         </button>
         <button disabled={busy !== null} onClick={() => run("clear-cache", t.clearCache.label)}>

@@ -3,7 +3,7 @@ import hmac
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from random import SystemRandom
 from typing import Optional
@@ -242,9 +242,8 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
     )
     original_attempt = prior_sittings > 0
     retake_request = None
-    is_testing_account = user.email == "mehtanavish60@gmail.com"
 
-    if original_attempt and not is_testing_account:
+    if original_attempt:
         if is_final:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -1151,19 +1150,18 @@ def submit_attempt(
         # idempotent: a retried submit just returns the current state
         return get_student_view(db, attempt)
 
-    if False and require_complete_speaking:
-        is_expired = attempt.expires_at is not None and attempt.expires_at - timedelta(seconds=15) <= _now()
-        if not is_expired:
-            missing_recordings = _missing_speaking_recordings(attempt)
-            if missing_recordings:
-                count = len(missing_recordings)
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail=(
-                        f"{count} Speaking recording{'s are' if count != 1 else ' is'} missing. "
-                        "Complete every Speaking response before submitting the test."
-                    ),
-                )
+    is_expired = attempt.expires_at is not None and attempt.expires_at - timedelta(seconds=15) <= _now()
+    if require_complete_speaking and not is_expired:
+        missing_recordings = _missing_speaking_recordings(attempt)
+        if missing_recordings:
+            count = len(missing_recordings)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    f"{count} Speaking recording{'s are' if count != 1 else ' is'} missing. "
+                    "Complete every Speaking response before submitting the test."
+                ),
+            )
 
     attempt.status = ATTEMPT_SUBMITTED
     attempt.submitted_at = _now()
@@ -1183,11 +1181,20 @@ def submit_attempt(
                 if answer is None:
                     answer = AttemptAnswer(attempt_id=attempt.id, question_id=question.id, part_id=part.id)
                     db.add(answer)
-                is_correct, points = _grade_answer(
-                    question,
-                    answer.response,
-                    _snapshot_question(attempt, part.id, question.id),
-                )
+                try:
+                    is_correct, points = _grade_answer(
+                        question,
+                        answer.response,
+                        _snapshot_question(attempt, part.id, question.id),
+                    )
+                except (InvalidOperation, TypeError, ValueError):
+                    logger.warning(
+                        "Failed to grade question %s on attempt %s; scoring as unanswered",
+                        question.id,
+                        attempt.id,
+                        exc_info=True,
+                    )
+                    is_correct, points = False, Decimal("0")
                 answer.is_correct = is_correct
                 answer.points_awarded = points
                 part_points += points

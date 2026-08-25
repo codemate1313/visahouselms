@@ -284,7 +284,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
               <div style={{
                 fontSize: "24px",
                 fontWeight: 900,
-                color: "#c8202e",
+                color: "var(--danger)",
                 lineHeight: 1,
               }}>
                 {formatCurrencyAmount(finalTotal, currencyCode)}
@@ -383,7 +383,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                   <span>+{formatCurrencyAmount(gstAmount, currencyCode)}</span>
                 </div>
               )}
-              <div style={{ borderTop: "1px dashed #fca5a5", paddingTop: "4px", display: "flex", justifyContent: "space-between", fontWeight: 800, color: "var(--text)" }}>
+              <div style={{ borderTop: "1px dashed color-mix(in srgb, var(--danger) 40%, transparent)", paddingTop: "4px", display: "flex", justifyContent: "space-between", fontWeight: 800, color: "var(--text)" }}>
                 <span>Total Payable:</span>
                 <span>{formatCurrencyAmount(finalTotal, currencyCode)}</span>
               </div>

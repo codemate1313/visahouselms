@@ -304,7 +304,11 @@ export function Plans() {
   const visiblePlans = showBillingToggle ? cataloguePlans.filter((p) => p.billing_period === billing || p.billing_period === "custom") : cataloguePlans;
   const pending = payload === null;
   const hasPlans = !pending && visiblePlans.length > 0;
-  const showEmptyState = !pending && (!anyCatalogueShown || visiblePlans.length === 0);
+  // Plans exist for this audience overall, but the current billing filter
+  // excludes all of them — distinct from the true "nothing published" case
+  // below, and recoverable by resetting the filter rather than emailing support.
+  const comboEmpty = !pending && !failed && cataloguePlans.length > 0 && visiblePlans.length === 0;
+  const showEmptyState = !pending && !comboEmpty && (!anyCatalogueShown || visiblePlans.length === 0);
   const planGridClass = `vh-plan-grid${visiblePlans.length < 3 ? " vh-plan-grid-few" : ""}`;
 
   const emptyTitle = failed ? "Pricing is temporarily unavailable" : anyCatalogueShown ? "Pricing is being finalised" : "Pricing is available on request";
@@ -313,6 +317,11 @@ export function Plans() {
     : anyCatalogueShown
       ? "No plans are published yet. Get in touch and our team will put together the right package for you."
       : "We do not list our pricing publicly right now. Contact our team and we will share the plan details that fit you — whether you are studying on your own or running an institute.";
+
+  function resetBillingFilter() {
+    setBilling(cataloguePlans.some((p) => p.billing_period === "monthly") ? "monthly" : "annual");
+    setSelectedPlanId(null);
+  }
 
   return (
     <div className="vh-public" ref={rootRef}>
@@ -371,6 +380,16 @@ export function Plans() {
                   />
                 );
               })}
+            </div>
+          )}
+
+          {comboEmpty && (
+            <div className="vh-plan-empty">
+              <strong>No plans found for this combination</strong>
+              <span>Try a different billing period, or reset the filter to see all available plans.</span>
+              <button type="button" className="vh-plan-empty-cta" onClick={resetBillingFilter}>
+                Reset filter
+              </button>
             </div>
           )}
 

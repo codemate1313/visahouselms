@@ -61,6 +61,19 @@
   max-width: 400px;
 }
 
+.vh-signups-spinner {
+  border: 2.5px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: vhSignupsSpin 0.75s linear infinite;
+  display: block;
+}
+
+@keyframes vhSignupsSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* Application Card */
 .vh-app-card {
   background: var(--surface);

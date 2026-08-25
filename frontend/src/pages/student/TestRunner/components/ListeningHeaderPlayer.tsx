@@ -12,7 +12,6 @@ interface ListeningHeaderPlayerProps {
   autoAdvance?: boolean;
   /** Final Test only: the compact PeopleCert transport replaces the wide bar. */
   languageCertSkin?: boolean;
-  userEmail?: string;
 }
 
 /** Seconds of silence before the recording starts, so the candidate can read
@@ -121,7 +120,6 @@ export function ListeningHeaderPlayer({
   onAudioComplete,
   autoAdvance = false,
   languageCertSkin = false,
-  userEmail,
 }: ListeningHeaderPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -295,17 +293,6 @@ export function ListeningHeaderPlayer({
        part actually hands over. */
   };
 
-  const handleSkipAudio = () => {
-    playlist.forEach((_, idx) => {
-      removeStorage(getSessionStorage(), positionKey(attemptId, currentPart.id, idx));
-    });
-    writeStorage(getLocalStorage(), completedKey, "true");
-    setPlaylistIndex(playlist.length - 1);
-    setPhase("finished");
-    onAudioLockChange?.(false);
-    onAudioComplete?.();
-  };
-
   /* Once the recording is over the part is done, so the candidate is moved on
      after a short pause rather than being left on a section they can no longer
      answer. Navigation stays locked for the whole of that pause and is only
@@ -392,28 +379,6 @@ export function ListeningHeaderPlayer({
               onChange={(event) => setVolume(Number(event.target.value))}
             />
           </div>
-          {userEmail === "mehtanavish60@gmail.com" && (
-            <button
-              type="button"
-              onClick={handleSkipAudio}
-              style={{
-                marginLeft: "12px",
-                padding: "4px 8px",
-                background: "#ee3124",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "3px",
-                fontSize: "11px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                display: "inline-flex",
-                alignItems: "center"
-              }}
-            >
-              Skip Audio
-            </button>
-          )}
           <div className="lc-audio-track" aria-hidden="true">
             <div className="lc-audio-track-fill" style={{ width: `${elapsed * 100}%` }} />
           </div>
@@ -470,26 +435,6 @@ export function ListeningHeaderPlayer({
             onChange={(event) => setVolume(Number(event.target.value))}
           />
         </div>
-        {userEmail === "mehtanavish60@gmail.com" && (
-          <button
-            type="button"
-            onClick={handleSkipAudio}
-            style={{
-              marginLeft: "12px",
-              padding: "6px 12px",
-              background: "#ee3124",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "12px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              whiteSpace: "nowrap"
-            }}
-          >
-            Skip Audio
-          </button>
-        )}
       </div>
     </div>
   );

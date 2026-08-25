@@ -429,6 +429,45 @@
   }
 }
 
+/* The classic skin's status line has no spinner of its own - the waiting
+   indicator carries a smaller one inline with the text, in the same silent
+   window the manual-start rescue timer counts through. */
+.speaking-waiting-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.speaking-waiting-indicator .speaking-status-spinner {
+  width: 11px;
+  height: 11px;
+  border-width: 1.5px;
+}
+
+/* Persistent, stays-on-screen explanation for a failed recording attempt -
+   next to the record button rather than only in the toast that fades. */
+.speaking-mic-error-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--danger, #ef4444) 32%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--danger, #ef4444) 10%, transparent);
+  color: var(--danger, #ef4444);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.speaking-mic-error-card svg {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+}
+
 .speaking-interview-notes {
   display: grid;
   width: min(680px, 100%);

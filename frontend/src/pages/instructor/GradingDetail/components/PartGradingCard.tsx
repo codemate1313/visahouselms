@@ -34,6 +34,13 @@ export function PartGradingCard({
   const isPublished = part.grade?.status === "graded" || part.grade?.status === "ai_graded";
   const isDraft = part.grade?.status === "draft";
   const priorAiGrade = part.grade?.status === "ai_graded" ? part.grade : null;
+  // Captured once, from whatever status this part had when the card first
+  // mounted for this attempt/part pairing. Once an AI-only grade is accepted
+  // and saved, `part.grade.status` moves from "ai_graded" to "graded" and
+  // looks identical to a from-scratch human grade - this keeps the AI origin
+  // visible for the rest of the session instead of only while it is still
+  // unreviewed.
+  const [wasAiOrigin] = useState(() => part.grade?.status === "ai_graded");
 
   async function requestAiSuggestion() {
     setRequestingAi(true);
@@ -80,7 +87,8 @@ export function PartGradingCard({
         </div>
         <div className="form-actions">
           {priorAiGrade && <Badge tone="info">{t.priorAiChip}</Badge>}
-          {isPublished && !priorAiGrade && <Badge tone="green">{t.graded}</Badge>}
+          {isPublished && !priorAiGrade && wasAiOrigin && <Badge tone="purple">{t.aiReviewedChip}</Badge>}
+          {isPublished && !priorAiGrade && !wasAiOrigin && <Badge tone="green">{t.graded}</Badge>}
           {isDraft && <Badge tone="amber">{t.draftSaved}</Badge>}
           {canEdit && supportsAi && (
             <Button variant="secondary" size="sm" disabled={!aiConfigured || requestingAi} onClick={requestAiSuggestion}>

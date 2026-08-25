@@ -7,6 +7,14 @@ import type { AuthUser } from "./authStore";
  * what is needed to put things back exactly as they were on exit. Persisted to
  * localStorage so a refresh mid-impersonation keeps the banner and the way out
  * rather than stranding the developer in someone else's view.
+ *
+ * The bearer tokens themselves are deliberately kept OUT of the persisted
+ * state - like authStore, they never touch localStorage, where an XSS bug
+ * could read them straight off disk. They live only in the module-level
+ * `tokens` variable below (see getOriginalToken/getImpersonatedToken), so a
+ * hard refresh clears them: initializeSession() then finds `active: true`
+ * with no in-memory token, ends the stale impersonation record, and falls
+ * back to the developer's own refresh-cookie session instead.
  */
 export interface ImpersonationTarget {
   id: number;
@@ -18,9 +26,7 @@ export interface ImpersonationTarget {
 interface ImpersonationState {
   active: boolean;
   target: ImpersonationTarget | null;
-  originalToken: string | null;
   originalUser: AuthUser | null;
-  impersonatedToken: string | null;
   impersonatedUser: AuthUser | null;
   begin: (payload: {
     target: ImpersonationTarget;
@@ -33,6 +39,21 @@ interface ImpersonationState {
 }
 
 const STORAGE_KEY = "vh-impersonation";
+
+// In-memory only, never part of the persisted/Zustand state - see the note
+// above. Reset on both begin() and end().
+let tokens: { originalToken: string | null; impersonatedToken: string | null } = {
+  originalToken: null,
+  impersonatedToken: null,
+};
+
+export function getOriginalToken(): string | null {
+  return tokens.originalToken;
+}
+
+export function getImpersonatedToken(): string | null {
+  return tokens.impersonatedToken;
+}
 
 function load(): Partial<ImpersonationState> {
   try {
@@ -51,9 +72,7 @@ function persist(state: ImpersonationState) {
         JSON.stringify({
           active: true,
           target: state.target,
-          originalToken: state.originalToken,
           originalUser: state.originalUser,
-          impersonatedToken: state.impersonatedToken,
           impersonatedUser: state.impersonatedUser,
         }),
       );
@@ -70,21 +89,19 @@ const saved = load();
 export const useImpersonationStore = create<ImpersonationState>((set, get) => ({
   active: Boolean(saved.active),
   target: saved.target ?? null,
-  originalToken: saved.originalToken ?? null,
   originalUser: saved.originalUser ?? null,
-  impersonatedToken: saved.impersonatedToken ?? null,
   impersonatedUser: saved.impersonatedUser ?? null,
   begin: ({ target, originalToken, originalUser, impersonatedToken, impersonatedUser }) => {
-    set({ active: true, target, originalToken, originalUser, impersonatedToken, impersonatedUser });
+    tokens = { originalToken, impersonatedToken };
+    set({ active: true, target, originalUser, impersonatedUser });
     persist(get());
   },
   end: () => {
+    tokens = { originalToken: null, impersonatedToken: null };
     set({
       active: false,
       target: null,
-      originalToken: null,
       originalUser: null,
-      impersonatedToken: null,
       impersonatedUser: null,
     });
     persist(get());

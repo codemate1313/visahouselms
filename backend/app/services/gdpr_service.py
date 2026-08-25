@@ -16,9 +16,12 @@ from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.models.attempt import TestAttempt
 from app.models.audit_log import AuditLog
+from app.models.notification import StudentNotification
 from app.models.payment import Payment
+from app.models.push_device_token import PushDeviceToken
 from app.models.user import User
 from app.models.user_session import UserSession
 from app.services import account_service
@@ -96,8 +99,14 @@ def erase_user(db: Session, actor: User, user_id: int, ip: Optional[str]) -> dic
     user.last_name = "User"
     user.phone_number = None
     user.address = None
-    user.avatar_path = None
+    if user.avatar_path:
+        old_avatar = settings.storage_path / user.avatar_path
+        if old_avatar.is_file():
+            old_avatar.unlink()
+        user.avatar_path = None
     db.add(user)
+    db.query(PushDeviceToken).filter(PushDeviceToken.user_id == user.id).delete()
+    db.query(StudentNotification).filter(StudentNotification.user_id == user.id).delete()
     db.add(
         AuditLog(
             user_id=actor.id,

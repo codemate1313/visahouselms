@@ -63,11 +63,12 @@ export const studentOverviewStrings = {
     toggleStatus: (action: string, name: string) => `Are you sure you want to ${action} student "${name}"?`,
     activateTitle: "Activate Student",
     deactivateTitle: "Deactivate Student",
-    deleteStudent: "Are you sure you want to delete this student account? Test and device history will be retained.",
+    deleteStudent: "Are you sure you want to delete this student account? This releases their seat and unenrolls them; test and device history will be retained.",
     deleteStudentTitle: "Delete Student Account",
   },
   errors: {
     load: "Failed to load the student record.",
+    updateStatus: "Failed to update the student status.",
     revokeSessions: "Could not sign this student out of their devices.",
     resetPassword: "Could not reset this student's password.",
     deleteStudent: "Could not delete this student.",

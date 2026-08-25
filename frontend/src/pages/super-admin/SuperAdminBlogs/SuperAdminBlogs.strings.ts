@@ -5,6 +5,8 @@ export const superAdminBlogsStrings = {
   tableViewTitle: "Table View",
   writeBlogPost: "Write Blog Post",
   loading: "Loading blogs...",
+  emptyTitle: "No blog posts found",
+  emptyHint: "Try adjusting your search or filters.",
   deleteConfirm: (title: string) => `Are you sure you want to delete the blog post "${title}"? This action cannot be undone.`,
   deleteConfirmTitle: "Delete Blog Post",
   deleteFallbackTitle: "blog post",

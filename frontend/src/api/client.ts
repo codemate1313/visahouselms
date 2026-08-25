@@ -1,7 +1,17 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "../store/authStore";
 import { useLoaderStore } from "../store/loaderStore";
-import { useImpersonationStore } from "../store/impersonationStore";
+import { getImpersonatedToken, useImpersonationStore } from "../store/impersonationStore";
+
+// Marks a request config as one that incremented the loader's counter, so the
+// response/error interceptor only decrements it for requests that actually
+// did - mirroring the same condition used on the way in. Without this, a
+// background GET (which never increments the counter) finishing while a real
+// POST/PUT save is still in flight would wrongly decrement it to 0 and hide
+// the loader early.
+interface TrackedRequestConfig extends InternalAxiosRequestConfig {
+  __loaderTracked?: boolean;
+}
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 const baseURL = API_BASE_URL;
@@ -84,6 +94,7 @@ apiClient.interceptors.request.use(
     if (method !== "get" && !config.headers.has("X-Skip-Loader")) {
       const msg = getEventMessage(config);
       useLoaderStore.getState().showLoader(msg);
+      (config as TrackedRequestConfig).__loaderTracked = true;
     }
 
     return config;
@@ -129,14 +140,22 @@ export async function initializeSession(): Promise<void> {
   if (useAuthStore.getState().initialized) return;
 
   const impersonation = useImpersonationStore.getState();
-  if (impersonation.active && impersonation.impersonatedToken && impersonation.impersonatedUser) {
-    try {
-      const { data: user } = await refreshClient.get("/auth/me", {
-        headers: { Authorization: `Bearer ${impersonation.impersonatedToken}` },
-      });
-      useAuthStore.getState().setSession(impersonation.impersonatedToken, user);
-      return;
-    } catch {
+  if (impersonation.active) {
+    const impersonatedToken = getImpersonatedToken();
+    if (impersonatedToken && impersonation.impersonatedUser) {
+      try {
+        const { data: user } = await refreshClient.get("/auth/me", {
+          headers: { Authorization: `Bearer ${impersonatedToken}` },
+        });
+        useAuthStore.getState().setSession(impersonatedToken, user);
+        return;
+      } catch {
+        impersonation.end();
+      }
+    } else {
+      // The impersonation token lives only in memory (never localStorage) and
+      // did not survive a hard refresh - end the stale record and fall back
+      // to the developer's own refresh-cookie session below.
       impersonation.end();
     }
   }
@@ -163,13 +182,16 @@ export async function validateCurrentSession(): Promise<void> {
 
 apiClient.interceptors.response.use(
   (response) => {
-    useLoaderStore.getState().hideLoader();
+    if ((response.config as TrackedRequestConfig).__loaderTracked) {
+      useLoaderStore.getState().hideLoader();
+    }
     return response;
   },
   async (error: AxiosError) => {
-    useLoaderStore.getState().hideLoader();
-
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as TrackedRequestConfig & { _retry?: boolean };
+    if (originalRequest?.__loaderTracked) {
+      useLoaderStore.getState().hideLoader();
+    }
 
     if (
       error.response?.status === 401

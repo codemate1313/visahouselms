@@ -1,12 +1,13 @@
 import { type FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import axios from "axios";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { getDeviceIdentity } from "@/auth/device";
 import { GoogleIcon } from "@/components/auth/GoogleIcon";
 import { HeroSlider } from "@/components/auth/HeroSlider";
+import { OtpEntryFields } from "@/components/auth/OtpEntryFields";
+import { useOtpVerification } from "@/components/auth/useOtpVerification";
 import { PasswordInput } from "@/components/PasswordInput";
 import { RequiredMark } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
@@ -78,55 +79,6 @@ export function Login({
   const [googleLoading, setGoogleLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [otpChallengeId, setOtpChallengeId] = useState<string | null>(null);
-  const [otpCode, setOtpCode] = useState("");
-  const [otpValues, setOtpValues] = useState<string[]>(Array(6).fill(""));
-  const [timerSeconds, setTimerSeconds] = useState(600); // 10 minutes = 600 seconds
-  const [resendCooldown, setResendCooldown] = useState(30); // 30s resend cooldown
-  const [resendLoading, setResendLoading] = useState(false);
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  useEffect(() => {
-    setOtpCode(otpValues.join(""));
-  }, [otpValues]);
-
-  useEffect(() => {
-    if (otpChallengeId) {
-      setOtpValues(Array(6).fill(""));
-      setTimerSeconds(600);
-      setResendCooldown(30);
-      // Focus first input box
-      setTimeout(() => {
-        otpRefs.current[0]?.focus();
-      }, 50);
-    }
-  }, [otpChallengeId]);
-
-  // 10-Minute Expiry Countdown Timer
-  useEffect(() => {
-    if (!otpChallengeId || timerSeconds <= 0) return;
-    const timer = setInterval(() => {
-      setTimerSeconds((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [otpChallengeId, timerSeconds]);
-
-  // Resend Cooldown Timer
-  useEffect(() => {
-    if (!otpChallengeId || resendCooldown <= 0) return;
-    const timer = setInterval(() => {
-      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [otpChallengeId, resendCooldown]);
-
-  const isExpired = timerSeconds <= 0;
-
-  function formatTimer(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  }
-
   const [totpRequired, setTotpRequired] = useState(false);
   const [totpCode, setTotpCode] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
@@ -141,6 +93,27 @@ export function Login({
   })();
 
   const [selectedRole, setSelectedRole] = useState<string>(initialRole);
+
+  const otp = useOtpVerification({
+    challengeId: otpChallengeId,
+    onResend: async () => {
+      const { data } = await apiClient.post<LoginStartResponse>("/auth/resend-otp", {
+        challenge_id: otpChallengeId,
+        email: email.trim().toLowerCase() || undefined,
+        role: selectedRole,
+      });
+      return data;
+    },
+    onChallengeIdChange: setOtpChallengeId,
+    onResendSuccess: () => {
+      setOtpError(null);
+      showSuccess(strings.otpResentToast, strings.otpSentTitle);
+    },
+    onResendError: (message) => {
+      setOtpError(message);
+      showError(message, strings.authErrorTitle);
+    },
+  });
 
   useEffect(() => {
     const requested = searchParams.get("role");
@@ -159,10 +132,7 @@ export function Login({
     const challenge = searchParams.get("google_otp_challenge");
     if (challenge) {
       setOtpChallengeId(challenge);
-      setOtpCode("");
       setOtpError(null);
-      setTimerSeconds(600);
-      setResendCooldown(30);
       showSuccess(strings.otpSentToast, strings.otpSentTitle);
       const cleanedParams = new URLSearchParams(searchParams);
       cleanedParams.delete("google_otp_challenge");
@@ -196,10 +166,7 @@ export function Login({
       throw new Error(strings.otpInvalidResponse);
     }
     setOtpChallengeId(tokens.otp_challenge_id);
-    setOtpCode("");
     setOtpError(null);
-    setTimerSeconds(600);
-    setResendCooldown(30);
     showSuccess(strings.otpSentToast, strings.otpSentTitle);
   }
 
@@ -225,17 +192,6 @@ export function Login({
     clearToasts();
     showSuccess(strings.welcomeToast(roleLabel(user.role)), strings.signedInTitle);
     navigate(destination);
-  }
-
-  function authErrorMessage(requestError: unknown) {
-    if (axios.isAxiosError(requestError)) {
-      const detail = requestError.response?.data?.detail;
-      return typeof detail === "string" ? detail : strings.connectionError;
-    }
-    if (requestError instanceof Error && requestError.message) {
-      return requestError.message;
-    }
-    return strings.genericAuthError;
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -266,7 +222,7 @@ export function Login({
       setTotpCode("");
       await completeLogin(tokens.access_token);
     } catch (requestError: unknown) {
-      const msg = authErrorMessage(requestError);
+      const msg = extractErrorMessage(requestError, strings.genericAuthError);
       setError(msg);
       showError(msg, strings.authErrorTitle);
     } finally {
@@ -293,64 +249,20 @@ export function Login({
     window.location.href = `${API_BASE_URL}/auth/google/login?${params.toString()}`;
   }
 
-  const handleOtpChange = (value: string, index: number) => {
-    const cleanValue = value.replace(/\D/g, "");
-    if (!cleanValue) {
-      const newValues = [...otpValues];
-      newValues[index] = "";
-      setOtpValues(newValues);
-      return;
-    }
-
-    const newValues = [...otpValues];
-    const val = cleanValue.substring(cleanValue.length - 1);
-    newValues[index] = val;
-    setOtpValues(newValues);
-
-    if (index < 5 && val) {
-      otpRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (e.key === "Backspace") {
-      if (!otpValues[index] && index > 0) {
-        const newValues = [...otpValues];
-        newValues[index - 1] = "";
-        setOtpValues(newValues);
-        otpRefs.current[index - 1]?.focus();
-      } else {
-        const newValues = [...otpValues];
-        newValues[index] = "";
-        setOtpValues(newValues);
-      }
-    }
-  };
-
-  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pasteData = e.clipboardData.getData("text").replace(/\D/g, "").substring(0, 6);
-    if (pasteData.length === 6) {
-      const newValues = pasteData.split("");
-      setOtpValues(newValues);
-      otpRefs.current[5]?.focus();
-    }
-  };
-
   async function handleOtpSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!otpChallengeId || isExpired) return;
+    if (!otpChallengeId || otp.isExpired) return;
     setOtpError(null);
     setOtpLoading(true);
     try {
       const { data: tokens } = await apiClient.post<LoginStartResponse>("/auth/verify-otp", {
         challenge_id: otpChallengeId,
-        otp_code: otpCode.trim(),
+        otp_code: otp.otpCode.trim(),
       });
       await completeLogin(tokens.access_token);
       setOtpChallengeId(null);
     } catch (requestError: unknown) {
-      const msg = authErrorMessage(requestError);
+      const msg = extractErrorMessage(requestError, strings.genericAuthError);
       setOtpError(msg);
       showError(msg, strings.authErrorTitle);
     } finally {
@@ -358,39 +270,10 @@ export function Login({
     }
   }
 
-  async function handleResendOtp() {
-    if (resendLoading || resendCooldown > 0) return;
-    setResendLoading(true);
-    setOtpError(null);
-    try {
-      const { data } = await apiClient.post<LoginStartResponse>("/auth/resend-otp", {
-        challenge_id: otpChallengeId,
-        email: email.trim().toLowerCase() || undefined,
-        role: selectedRole,
-      });
-      if (data.otp_challenge_id) {
-        setOtpChallengeId(data.otp_challenge_id);
-      }
-      setTimerSeconds(600);
-      setResendCooldown(30);
-      setOtpValues(Array(6).fill(""));
-      showSuccess(strings.otpResentToast, strings.otpSentTitle);
-      setTimeout(() => {
-        otpRefs.current[0]?.focus();
-      }, 50);
-    } catch (requestError: unknown) {
-      const msg = authErrorMessage(requestError);
-      setOtpError(msg);
-      showError(msg, strings.authErrorTitle);
-    } finally {
-      setResendLoading(false);
-    }
-  }
-
   function handleBackToLogin() {
     setOtpChallengeId(null);
     setOtpError(null);
-    setOtpValues(Array(6).fill(""));
+    otp.reset();
   }
 
   const isSuperAdminPortal = selectedRole === "SUPER_ADMIN" || selectedRole === "SA_INSTRUCTOR";
@@ -438,71 +321,7 @@ export function Login({
               </div>
 
               <form onSubmit={handleOtpSubmit} className="concise-form">
-                <div className="otp-inputs-wrapper">
-                  <div className="otp-inputs-container">
-                    {otpValues.map((val, idx) => (
-                      <input
-                        key={idx}
-                        ref={(el) => { otpRefs.current[idx] = el; }}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={val}
-                        onChange={(e) => handleOtpChange(e.target.value, idx)}
-                        onKeyDown={(e) => handleOtpKeyDown(e, idx)}
-                        onPaste={handleOtpPaste}
-                        className={`otp-box-input ${val ? "is-filled" : ""} ${isExpired ? "is-expired" : ""}`}
-                        autoComplete="one-time-code"
-                        disabled={otpLoading || isExpired}
-                        aria-label={`Digit ${idx + 1}`}
-                        required
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Sleek Expiry Timer Pill & Resend Action */}
-                <div className="otp-status-container">
-                  <div className={`otp-timer-pill ${timerSeconds <= 60 ? "is-warning" : ""} ${isExpired ? "is-expired" : ""}`}>
-                    <span className="otp-timer-pulse-dot" />
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <polyline points="12 6 12 12 16 14" />
-                    </svg>
-                    <span className="otp-timer-text">
-                      {isExpired ? strings.otpExpired : strings.otpExpiresIn(formatTimer(timerSeconds))}
-                    </span>
-                  </div>
-
-                  <div className="otp-resend-row">
-                    <span className="otp-resend-prompt">Didn't receive code?</span>
-                    <button
-                      type="button"
-                      onClick={handleResendOtp}
-                      disabled={resendLoading || resendCooldown > 0}
-                      className={`otp-resend-pill-btn ${resendCooldown === 0 && !resendLoading ? "is-active" : ""}`}
-                    >
-                      {resendLoading ? (
-                        <>
-                          <span className="otp-spin-dot" />
-                          <span>{strings.otpResendingLabel}</span>
-                        </>
-                      ) : resendCooldown > 0 ? (
-                        <span>{strings.otpResendCooldown(resendCooldown)}</span>
-                      ) : (
-                        <>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                            <path d="M21 3v5h-5" />
-                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                            <path d="M8 16H3v5" />
-                          </svg>
-                          <span>{strings.otpResendLabel}</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
+                <OtpEntryFields otp={otp} strings={strings} loading={otpLoading} />
 
                 {otpError && <div className="concise-error-box otp-error-box">{otpError}</div>}
 
@@ -520,8 +339,8 @@ export function Login({
                   </button>
                   <button
                     type="submit"
-                    className={`concise-submit-btn otp-btn-submit ${otpCode.length === 6 && !isExpired ? "is-ready" : ""}`}
-                    disabled={otpLoading || otpCode.length < 6 || isExpired}
+                    className={`concise-submit-btn otp-btn-submit ${otp.otpCode.length === 6 && !otp.isExpired ? "is-ready" : ""}`}
+                    disabled={otpLoading || otp.otpCode.length < 6 || otp.isExpired}
                   >
                     {otpLoading ? (
                       strings.otpVerifyBusy
@@ -572,7 +391,7 @@ export function Login({
 
                 <div className="form-group">
                   <label htmlFor="password">{strings.passwordLabel}</label>
-                  <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} placeholder={strings.passwordPlaceholder} />
+                  <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} placeholder={strings.passwordPlaceholder} autoComplete="current-password" />
                   <div className="below-password-row">
                     <a
                       href="#forgot"

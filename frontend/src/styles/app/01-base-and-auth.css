@@ -1093,6 +1093,27 @@ h3 {
   background: rgba(153, 27, 27, 0.2);
 }
 
+/* Narrow phones (~320-414px wide): the 6 boxes at 50px + 10px gaps need
+   ~350px of horizontal room, which doesn't fit once page/card/form-side
+   padding is subtracted. Shrink the form-side padding and the boxes/gap
+   together so the row stays on one line instead of overflowing/clipping. */
+@media (max-width: 520px) {
+  .login-form-side {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .otp-inputs-container {
+    gap: 6px;
+  }
+
+  .otp-box-input {
+    width: clamp(28px, 9vw, 40px);
+    height: clamp(40px, 11vw, 50px);
+    font-size: 18px;
+  }
+}
+
 /* Premium Inline OTP View Styles */
 .login-otp-inline-view {
   animation: fadeIn 0.25s ease-out;

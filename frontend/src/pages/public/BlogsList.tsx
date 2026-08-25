@@ -26,15 +26,18 @@ export function BlogsList() {
   useSEO({ title: "Blogs", description: "Band-boosting strategies, product notes and LanguageCert news — written by trainers who mark hundreds of scripts a week." });
   const contactSettings = useContactSettings();
   const [blogs, setBlogs] = useState<BlogListItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<BlogCategory>("All");
   const rootRef = useRef<HTMLDivElement | null>(null);
   useRevealOnScroll(rootRef);
 
   useEffect(() => {
+    setLoading(true);
     fetch(`${API_BASE_URL}/blogs`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setBlogs(Array.isArray(data) ? data : []))
-      .catch(() => setBlogs([]));
+      .catch(() => setBlogs([]))
+      .finally(() => setLoading(false));
   }, []);
 
   const visibleBlogs = blogs.filter(
@@ -66,7 +69,9 @@ export function BlogsList() {
         </section>
 
         <section className="vh-blog-grid-section vh-reveal">
-          {visibleBlogs.length > 0 ? (
+          {loading ? (
+            <div className="vh-blog-empty">Loading articles...</div>
+          ) : visibleBlogs.length > 0 ? (
             <div className="vh-blog-grid">
               {visibleBlogs.map((post) => (
                 <Link key={post.id} to={`/blogs/${post.slug}`} className="vh-blog-card vh-reveal">
@@ -99,17 +104,6 @@ export function BlogsList() {
               {activeCategory === "All" ? "No blog posts yet — check back soon." : `No posts in ${activeCategory} yet — try another category.`}
             </div>
           )}
-        </section>
-
-        <section className="vh-blog-newsletter-section vh-reveal">
-          <div className="vh-blog-newsletter">
-            <h2>Get one strategy every Friday</h2>
-            <p>Short, examiner-written, no fluff.</p>
-            <div className="vh-blog-newsletter-form">
-              <input type="email" placeholder="you@example.com" />
-              <button type="button">Subscribe</button>
-            </div>
-          </div>
         </section>
 
         <PublicFooter socialLinks={contactSettings?.social_links} />

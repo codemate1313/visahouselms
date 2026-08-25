@@ -1,4 +1,5 @@
 import type { Attempt } from "@/api/types";
+import { Icon } from "@/components/icons";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { LcFlagIcon } from "./PeopleCertBrand";
 
@@ -53,6 +54,11 @@ export function PartsNav({
             <div className="lc-rail-tabs">
               {group.parts.map(({ part, index }) => {
                 const complete = part.question_count > 0 && part.answered_count === part.question_count;
+                /* Completion has to survive being colourblind or a quick
+                   glance, so the fill is never the only signal - a checkmark
+                   rides alongside it, and its own screen-reader-only text
+                   says the word the icon can't. */
+                const isComplete = complete && index !== partIndex;
                 const locked = isNavigationLocked && index !== partIndex;
                 return (
                   /* The flag is a sibling of the tab rather than something
@@ -63,12 +69,16 @@ export function PartsNav({
                     <button
                       type="button"
                       disabled={locked}
-                      className={`lc-rail-tab${index === partIndex ? " is-active" : ""}${complete && index !== partIndex ? " is-complete" : ""}`}
+                      className={`lc-rail-tab${index === partIndex ? " is-active" : ""}${isComplete ? " is-complete" : ""}`}
                       onClick={() => !isNavigationLocked && onSelectPart(index)}
                       aria-current={index === partIndex ? "step" : undefined}
                       title={locked ? t.navigationLocked : undefined}
                     >
-                      {part.title}
+                      <span className="lc-rail-tab-content">
+                        {isComplete && <Icon name="check" className="lc-rail-tab-check" />}
+                        <span>{part.title}</span>
+                      </span>
+                      {isComplete && <span className="sr-only"> (Complete)</span>}
                     </button>
                   </div>
                 );

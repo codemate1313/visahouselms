@@ -53,6 +53,7 @@ export function StudentControlBar({
           )}
           {canManage && (
             <button
+              className="action-toggle"
               onClick={onToggleActive}
               aria-label={student.is_active ? tips.deactivate : tips.reactivate}
               data-tooltip={student.is_active ? tips.deactivate : tips.reactivate}

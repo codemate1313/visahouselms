@@ -94,7 +94,17 @@ export function SuperAdminBlogs() {
           <div className="sab-spinner"></div>
           <p>{strings.loading}</p>
         </div>
-      ) : filteredItems.length === 0 ? null : viewMode === "grid" ? (
+      ) : filteredItems.length === 0 ? (
+        <div className="sab-empty">
+          <div className="sab-empty-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          </div>
+          <h3>{strings.emptyTitle}</h3>
+          <p>{strings.emptyHint}</p>
+        </div>
+      ) : viewMode === "grid" ? (
         <BlogGridView items={filteredItems} onToggleActive={handleToggleActive} onDelete={handleDelete} />
       ) : (
         <BlogTableView items={filteredItems} onToggleActive={handleToggleActive} onDelete={handleDelete} />

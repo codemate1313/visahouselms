@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { SegmentedControl } from "@/components/ui";
-import { tabLabels, tabOrder } from "./DeveloperSettings.strings";
+import { Icon } from "@/components/icons";
+import { dangerousTabs, tabLabels, tabOrder } from "./DeveloperSettings.strings";
 import type { Tab } from "./types";
 import { TypographyTab } from "./components/TypographyTab";
 import { StaticOtpTab } from "./components/StaticOtpTab";
@@ -34,7 +35,12 @@ export function DeveloperSettings() {
         ariaLabel="Developer settings section"
         className="developer-settings-tabs"
         onChange={setTab}
-        options={tabOrder.map((value) => ({ label: tabLabels[value], value }))}
+        options={tabOrder.map((value) => ({
+          label: tabLabels[value],
+          value,
+          icon: dangerousTabs.includes(value) ? <Icon name="warning" className="developer-settings-tab-warning-icon" /> : undefined,
+          title: dangerousTabs.includes(value) ? "Higher-risk setting - use with care" : undefined,
+        }))}
         value={tab}
       />
       {tab === "typography" && <TypographyTab />}

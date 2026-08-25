@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
+import { confirmAction } from "@/components/confirmDialog";
 import { Badge, Checkbox } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { useToastStore } from "@/store/toastStore";
@@ -49,6 +50,18 @@ export function StaticOtpTab() {
     };
   }, [showError]);
 
+  async function handleToggle(checked: boolean) {
+    if (checked) {
+      const confirmed = await confirmAction(strings.otp.enableConfirmMessage, {
+        title: strings.otp.enableConfirmTitle,
+        confirmText: "Enable Testing Mode",
+        variant: "danger",
+      });
+      if (!confirmed) return;
+    }
+    setForm((prev) => ({ ...prev, enabled: checked }));
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -89,6 +102,22 @@ export function StaticOtpTab() {
           </Badge>
         }
       >
+        {/* Danger banner: this toggle is a platform-wide auth bypass, not a
+            cosmetic setting - it needs to read as risky at a glance, so it
+            reuses the same warning-banner treatment as the dashboard's
+            plan-status alerts rather than a plain card. */}
+        <div className="dashboard-plan-alert" role="alert" style={{ marginBottom: "1.25rem" }}>
+          <div className="dashboard-plan-alert-content">
+            <div className="dashboard-plan-alert-icon-badge">
+              <Icon name="warning" />
+            </div>
+            <div className="dashboard-plan-alert-text">
+              <strong>{strings.otp.dangerBannerTitle}</strong>
+              <span>{strings.otp.dangerBannerBody}</span>
+            </div>
+          </div>
+        </div>
+
         {/* Testing Mode Control Card */}
         <div
           style={{
@@ -117,7 +146,7 @@ export function StaticOtpTab() {
             <label className="onboarding-toggle-switch">
               <Checkbox
                 checked={form.enabled}
-                onChange={(e) => setForm((prev) => ({ ...prev, enabled: e.target.checked }))}
+                onChange={(e) => void handleToggle(e.target.checked)}
               />
               <span>{strings.otp.enabledLabel}</span>
             </label>
