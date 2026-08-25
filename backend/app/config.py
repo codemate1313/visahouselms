@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
+    # How long a refresh token stays usable after a successful rotation has
+    # replaced it. A page reload can abort the refresh request after the server
+    # has already rotated, leaving the browser with the superseded token; long
+    # enough to cover that round trip, short enough that a stolen token is
+    # almost always caught by the reuse check instead.
+    refresh_rotation_grace_seconds: int = 30
     login_otp_expire_minutes: int = 10
     google_client_id: Optional[str] = None
     google_client_secret: Optional[str] = None

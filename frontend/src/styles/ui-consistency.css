@@ -503,6 +503,104 @@ button.danger-text:disabled {
   border-color: var(--border) !important;
 }
 
+@media print {
+  [data-theme="dark"] .student-invoice-modal-backdrop,
+  [data-theme="dark"] .student-invoice-modal,
+  [data-theme="dark"] .student-invoice-body,
+  [data-theme="dark"] .student-invoice-modal-backdrop :where(*) {
+    --surface: #ffffff !important;
+    --surface-muted: #f8fafc !important;
+    --text: #0f172a !important;
+    --text-muted: #475569 !important;
+    --border: #cbd5e1 !important;
+    --background: #ffffff !important;
+  }
+
+  [data-theme="dark"] .student-invoice-modal-backdrop,
+  [data-theme="dark"] .student-invoice-modal,
+  [data-theme="dark"] .student-invoice-body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+  }
+
+  [data-theme="dark"] .student-invoice-modal-backdrop :where(
+    .invoice-meta-grid,
+    .invoice-table th,
+    .invoice-summary-box,
+    .ui-token-panel-success,
+    [style*="background: #ffffff"],
+    [style*="background-color: #ffffff"],
+    [style*="background: #fff"],
+    [style*="background-color: #fff"],
+    [style*="background: #fafafa"],
+    [style*="background-color: #fafafa"],
+    [style*="background: #f8fafc"],
+    [style*="background-color: #f8fafc"],
+    [style*="background: #f1f5f9"],
+    [style*="background-color: #f1f5f9"],
+    [style*="background: #f3f4f6"],
+    [style*="background-color: #f3f4f6"]
+  ) {
+    background: #f8fafc !important;
+    background-color: #f8fafc !important;
+  }
+
+  [data-theme="dark"] .student-invoice-modal-backdrop :where(
+    .invoice-brand-title,
+    .invoice-summary-row.total,
+    .invoice-meta-block p,
+    .invoice-table td,
+    [style*="color: #0f172a"],
+    [style*="color: #111827"],
+    [style*="color: #1e293b"],
+    [style*="color: #334155"]
+  ) {
+    color: #0f172a !important;
+  }
+
+  [data-theme="dark"] .student-invoice-modal-backdrop :where(
+    .invoice-brand-tagline,
+    .invoice-meta-block label,
+    .invoice-table th,
+    .invoice-summary-row,
+    [style*="color: #64748b"],
+    [style*="color: #475569"],
+    [style*="color: #94a3b8"]
+  ) {
+    color: #475569 !important;
+  }
+
+  [data-theme="dark"] .student-invoice-modal-backdrop :where(
+    .invoice-table,
+    .invoice-table th,
+    .invoice-table td,
+    .invoice-meta-grid,
+    .invoice-summary-box,
+    .ui-token-panel-success,
+    [style*="border: 1px solid #f1f5f9"],
+    [style*="border: 1px solid #f0f0f0"],
+    [style*="border: 1px solid #e2e8f0"],
+    [style*="border: 1px solid #cbd5e1"],
+    [style*="border-color: #f1f5f9"],
+    [style*="border-color: #f0f0f0"],
+    [style*="border-color: #e2e8f0"],
+    [style*="border-color: #cbd5e1"]
+  ) {
+    border-color: #cbd5e1 !important;
+  }
+
+  [data-theme="dark"] .student-invoice-modal-backdrop .dark-only {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  [data-theme="dark"] .student-invoice-modal-backdrop .light-only {
+    display: block !important;
+    visibility: visible !important;
+  }
+}
+
 @media (max-width: 520px) {
   :where(.modal-backdrop, .logout-modal-backdrop, .student-invoice-modal-backdrop, .sab-modal-backdrop, .sat-modal-backdrop) {
     padding: 8px;

@@ -22,8 +22,8 @@ export function useApplyTheme() {
     document.body.setAttribute("data-theme", theme);
     document.documentElement.style.colorScheme = theme;
 
-    // The favicon is deliberately not touched here — the tab icon stays the same
-    // in both themes. See the <link rel="icon"> comment in index.html.
+    // theme-init.js owns the favicon so it can follow browser chrome contrast
+    // before React mounts.
 
     // Legacy/non-React listeners key off this.
     window.dispatchEvent(new CustomEvent<Theme>(THEME_CHANGE_EVENT, { detail: theme }));

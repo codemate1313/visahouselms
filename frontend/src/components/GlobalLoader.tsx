@@ -31,13 +31,14 @@ export function GlobalLoader() {
       <div className="simple-loader-frame">
         <div className="simple-spinner-ring" />
         <img
-          src="/brand/vh-mark-96.png"
+          src={isDark ? "/brand/vh-mark-dark-96.png" : "/brand/vh-mark-96.png"}
           alt="Visa House Logo"
           className="simple-loader-logo"
           onError={(e) => {
             const target = e.currentTarget;
-            if (target.src !== window.location.origin + "/brand/vh-mark.png") {
-              target.src = "/brand/vh-mark.png";
+            const fallback = isDark ? "/brand/vh-mark-dark.png" : "/brand/vh-mark.png";
+            if (target.src !== window.location.origin + fallback) {
+              target.src = fallback;
             }
           }}
         />

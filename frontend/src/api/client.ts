@@ -106,6 +106,7 @@ apiClient.interceptors.request.use(
 );
 
 let refreshPromise: Promise<string> | null = null;
+let initPromise: Promise<void> | null = null;
 let logoutInProgress = false;
 
 function isAuthEntryRequest(url = ""): boolean {
@@ -119,7 +120,19 @@ function isAuthEntryRequest(url = ""): boolean {
   );
 }
 
+// The refresh cookie is single-use: the server rotates it away and issues a
+// replacement. Two calls carrying the same cookie therefore race, and outside
+// the server's grace window the loser is signed out. Every path that refreshes
+// - session boot and the 401 retry alike - shares this one in-flight promise so
+// only one request ever holds a given cookie value.
 async function refreshAccessToken(): Promise<string> {
+  refreshPromise ??= runRefresh().finally(() => {
+    refreshPromise = null;
+  });
+  return refreshPromise;
+}
+
+async function runRefresh(): Promise<string> {
   const { setAccessToken, clear } = useAuthStore.getState();
 
   if (useImpersonationStore.getState().active) {
@@ -131,14 +144,34 @@ async function refreshAccessToken(): Promise<string> {
     setAccessToken(data.access_token);
     return data.access_token;
   } catch (err) {
-    clear();
+    // Only a refusal from the server means the session is really gone. A
+    // dropped connection, a timeout or a 5xx says nothing about whether the
+    // cookie is still good, and clearing on those logs people out over a
+    // blip - so leave the session alone and let the caller retry.
+    if (isSessionRejection(err)) {
+      clear();
+    }
     throw err;
   }
 }
 
+function isSessionRejection(err: unknown): boolean {
+  const status = (err as AxiosError)?.response?.status;
+  return status === 401 || status === 403;
+}
+
 export async function initializeSession(): Promise<void> {
   if (useAuthStore.getState().initialized) return;
+  // `initialized` only flips once the two calls below have both come back, so
+  // it cannot fence out a second caller that arrives while they are in flight -
+  // as StrictMode's double-mounted effect does on every render in development.
+  initPromise ??= runInitializeSession().finally(() => {
+    initPromise = null;
+  });
+  return initPromise;
+}
 
+async function runInitializeSession(): Promise<void> {
   const impersonation = useImpersonationStore.getState();
   if (impersonation.active) {
     const impersonatedToken = getImpersonatedToken();
@@ -167,6 +200,9 @@ export async function initializeSession(): Promise<void> {
     });
     useAuthStore.getState().setSession(accessToken, user);
   } catch {
+    // Boot has nothing to preserve - there is no session in memory yet - and
+    // every guarded route blocks on `initialized`, so this must resolve one way
+    // or the other even when the failure was only a flaky network.
     useAuthStore.getState().clear();
   }
 }
@@ -202,17 +238,19 @@ apiClient.interceptors.response.use(
     ) {
       originalRequest._retry = true;
       try {
-        refreshPromise ??= refreshAccessToken().finally(() => {
-          refreshPromise = null;
-        });
-        const newAccessToken = await refreshPromise;
+        const newAccessToken = await refreshAccessToken();
         originalRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
         return apiClient(originalRequest);
-      } catch {
-        if (useImpersonationStore.getState().active) {
-          useImpersonationStore.getState().end();
+      } catch (refreshError) {
+        // Same rule as above: only send someone back to the logged-out home
+        // when the server actually refused the session. Bouncing the page on a
+        // dropped connection would throw away whatever they were doing.
+        if (isSessionRejection(refreshError)) {
+          if (useImpersonationStore.getState().active) {
+            useImpersonationStore.getState().end();
+          }
+          window.location.href = "/";
         }
-        window.location.href = "/";
         return Promise.reject(error);
       }
     }

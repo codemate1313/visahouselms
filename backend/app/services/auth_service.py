@@ -119,7 +119,7 @@ def _resolve_device(
     return device
 
 
-def issue_token_pair(
+def _issue_session(
     db: Session,
     user: User,
     user_agent: Optional[str],
@@ -127,7 +127,13 @@ def issue_token_pair(
     auth_method: str = "password",
     device: Optional[UserDevice] = None,
     expires_at: Optional[datetime] = None,
-) -> Tuple[str, str]:
+) -> Tuple[str, str, UserSession]:
+    """Mint a token pair and the session row that backs it.
+
+    Rotation needs the row itself so it can link the replacement back to the
+    token it superseded; every other caller only wants the two tokens and goes
+    through `issue_token_pair`.
+    """
     session_key = uuid4().hex
     now = datetime.now(timezone.utc)
     session_expires_at = expires_at or _session_expiry(user, now)
@@ -157,6 +163,21 @@ def issue_token_pair(
     db.add(session)
     db.commit()
 
+    return access_token, refresh_token, session
+
+
+def issue_token_pair(
+    db: Session,
+    user: User,
+    user_agent: Optional[str],
+    ip_address: Optional[str],
+    auth_method: str = "password",
+    device: Optional[UserDevice] = None,
+    expires_at: Optional[datetime] = None,
+) -> Tuple[str, str]:
+    access_token, refresh_token, _session = _issue_session(
+        db, user, user_agent, ip_address, auth_method, device, expires_at
+    )
     return access_token, refresh_token
 
 
@@ -504,6 +525,56 @@ def confirm_password_reset(db: Session, token: str, new_password: str) -> None:
     db.commit()
 
 
+def _within_rotation_grace(session: UserSession, now: datetime) -> bool:
+    """True while a token that a refresh rotated away is still worth honouring.
+
+    `rotated_at` is set only by rotation, so a token revoked by a logout or by a
+    takeover login has none and never qualifies however recent it is.
+    """
+    if session.rotated_at is None:
+        return False
+    rotated_at = session.rotated_at.replace(tzinfo=timezone.utc)
+    grace = timedelta(seconds=max(0, settings.refresh_rotation_grace_seconds))
+    return now - rotated_at <= grace
+
+
+def _session_lineage(db: Session, session: UserSession) -> list[UserSession]:
+    """`session` plus every session rotated out of it, directly or not.
+
+    Rotation branches when a token is replayed inside the grace window, so this
+    walks a tree rather than a chain. The seen-set bounds it in case a lineage
+    ever pointed back at itself.
+    """
+    lineage: list[UserSession] = [session]
+    seen: set[int] = {session.id}
+    queue: list[UserSession] = [session]
+    while queue:
+        current = queue.pop()
+        children = (
+            db.query(UserSession).filter(UserSession.rotated_from_id == current.id).all()
+        )
+        for child in children:
+            if child.id in seen:
+                continue
+            seen.add(child.id)
+            lineage.append(child)
+            queue.append(child)
+    return lineage
+
+
+def _revoke_session_lineage(db: Session, session: UserSession, now: datetime) -> None:
+    """Revoke `session` and every session rotated out of it.
+
+    One replayed token takes down the credentials it was rotated into as well,
+    so a stolen cookie does not leave a working session behind.
+    """
+    for member in _session_lineage(db, session):
+        if member.revoked_at is None:
+            member.revoked_at = now
+            db.add(member)
+    db.commit()
+
+
 def refresh(
     db: Session, refresh_token: str, user_agent: Optional[str], ip_address: Optional[str]
 ) -> Tuple[str, str]:
@@ -522,12 +593,30 @@ def refresh(
     session_expires_at = session.expires_at.replace(tzinfo=timezone.utc) if session else None
     if (
         session is None
-        or session.revoked_at is not None
         or session_expires_at is None
         or session_expires_at < now
         or payload.get("sid") != session.session_key
     ):
         raise INVALID_REFRESH_TOKEN
+
+    if session.revoked_at is not None:
+        # A token that was rotated away moments ago is almost always the same
+        # browser retrying: a reload aborted the first refresh before its
+        # Set-Cookie landed, or two refreshes raced on one cookie. Honour it
+        # inside the grace window rather than signing the user out.
+        if not _within_rotation_grace(session, now):
+            # Reuse well after rotation - or reuse of a token killed by logout
+            # or a takeover login - is the signature of a stolen cookie. Kill
+            # the whole lineage so the replacement in the thief's or the
+            # victim's hands stops working too.
+            _revoke_session_lineage(db, session, now)
+            raise INVALID_REFRESH_TOKEN
+        # The grace window forgives a rotation, not an ending. If a logout or a
+        # takeover login has since revoked everything this token was rotated
+        # into, a refresh still in flight from before it must not resurrect the
+        # session.
+        if all(member.revoked_at is not None for member in _session_lineage(db, session)[1:]):
+            raise INVALID_REFRESH_TOKEN
 
     user = db.get(User, session.user_id)
     if user is None or not user.is_active:
@@ -537,20 +626,14 @@ def refresh(
         # login before they can receive another token pair.
         raise INVALID_REFRESH_TOKEN
 
-    # rotate: revoke the presented refresh token, issue a fresh pair
-    session.revoked_at = now
-    db.add(session)
-    db.commit()
-
     device = session.device
     if device is not None:
         device.last_seen_at = now
         device.last_ip_address = ip_address
         device.user_agent = (user_agent or device.user_agent or "")[:255] or None
         db.add(device)
-        db.commit()
 
-    return issue_token_pair(
+    access_token, new_refresh_token, replacement = _issue_session(
         db,
         user,
         user_agent,
@@ -559,6 +642,20 @@ def refresh(
         device=device,
         expires_at=session_expires_at,
     )
+
+    # Rotate only after the replacement exists, so a failure partway through
+    # leaves the caller with a token that still works instead of none at all.
+    # A grace-window replay hangs a second replacement off the same parent; the
+    # pair issued by the racing call stays valid too, since the browser may well
+    # have kept that one.
+    replacement.rotated_from_id = session.id
+    session.revoked_at = session.revoked_at or now
+    session.rotated_at = now
+    db.add(replacement)
+    db.add(session)
+    db.commit()
+
+    return access_token, new_refresh_token
 
 
 def logout(db: Session, refresh_token: str) -> None:
@@ -580,4 +677,13 @@ def logout(db: Session, refresh_token: str) -> None:
     for active_session in sessions.all():
         active_session.revoked_at = now
         db.add(active_session)
+
+    # The cookie sent up may be one rotation behind the live token - the tab
+    # logging out never got the newest Set-Cookie. Walking the rotation tree
+    # ends the credentials that are actually current, which the query above
+    # misses for a session with no device to group by.
+    for member in _session_lineage(db, session):
+        if member.revoked_at is None:
+            member.revoked_at = now
+            db.add(member)
     db.commit()
