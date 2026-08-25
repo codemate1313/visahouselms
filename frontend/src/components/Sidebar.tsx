@@ -380,10 +380,13 @@ export function Sidebar({
             ))}
             <div
               id={sectionContentId}
-              className={`sidebar-section-content ${isSectionOpen ? "is-open" : ""}`}
+              className={`sidebar-section-content ${isSectionOpen ? "is-open" : ""} ${
+                section.collapsible ? "is-collapsible-section" : ""
+              }`}
             >
               <div className="sidebar-section-content-inner">
-              <ul className="sidebar-menu-list">
+                {section.collapsible && !isCollapsed && <div className="sidebar-tree-line" />}
+                <ul className="sidebar-menu-list">
               {section.items.map((item) => {
                 const isAccordion = !!(item.children && item.children.length > 0);
                 const isExpanded = !!expandedKeys[item.key] || isCollapsed;

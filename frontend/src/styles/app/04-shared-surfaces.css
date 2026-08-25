@@ -2598,9 +2598,6 @@
   box-shadow: none;
 }
 
-.institute-branded-portal .huge-sidebar .sidebar-tree-line {
-  background: color-mix(in srgb, var(--institute-on-primary, #ffffff) 24%, var(--institute-primary, #0b2388));
-}
 
 .institute-branded-portal .huge-sidebar .sidebar-footer {
   border-top-color: color-mix(in srgb, var(--institute-on-primary, #ffffff) 20%, var(--institute-primary, #0b2388));
@@ -2765,15 +2762,109 @@
   /* acts as margin-bottom */
 }
 
+/* Tree line theme variables */
+:root {
+  --sidebar-tree-line-color: rgba(17, 24, 39, 0.14);
+}
+
+.institute-branded-portal .huge-sidebar {
+  --sidebar-tree-line-color: color-mix(in srgb, var(--institute-on-primary, #ffffff) 24%, var(--institute-primary, #0b2388));
+}
+
+.super-admin-portal .huge-sidebar {
+  --sidebar-tree-line-color: rgba(255, 255, 255, 0.22);
+}
+
 /* Vertical guide line connector */
 .sidebar-tree-line {
   position: absolute;
   left: 21px;
   top: 4px;
-  bottom: 12px;
+  bottom: 22px;
   width: 1.5px;
-  background: #e5e7eb;
+  background: var(--sidebar-tree-line-color, rgba(255, 255, 255, 0.22));
   border-radius: 1px;
+}
+
+.sidebar-submenu-wrapper .sidebar-tree-line {
+  bottom: 19px;
+}
+
+.sidebar-section-content.is-collapsible-section .sidebar-section-content-inner {
+  position: relative;
+  padding-left: 32px;
+  isolation: isolate;
+  z-index: 3;
+}
+
+.sidebar-section-content.is-collapsible-section .sidebar-section-content-inner::before {
+  content: "";
+  display: block;
+  height: 4px;
+}
+
+.sidebar-section-content.is-collapsible-section .sidebar-section-content-inner::after {
+  content: "";
+  display: block;
+  height: 6px;
+}
+
+/* Horizontal branch for collapsible section child items */
+.sidebar-section-content.is-collapsible-section .sidebar-menu-item {
+  position: relative;
+}
+
+.sidebar-section-content.is-collapsible-section .sidebar-menu-item::before {
+  content: "";
+  position: absolute;
+  left: -11px;
+  top: 22px;
+  width: 11px;
+  height: 1.5px;
+  background: var(--sidebar-tree-line-color, rgba(255, 255, 255, 0.22));
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.sidebar-submenu-wrapper {
+  overflow: hidden;
+  position: relative;
+  /* Move margins/paddings inside the hidden overflow wrapper to avoid jumps */
+  padding-left: 32px;
+  /* Ensure submenu items always render ABOVE the sliding pill indicator */
+  isolation: isolate;
+  z-index: 3;
+}
+
+.sidebar-submenu-item {
+  position: relative;
+}
+
+/* Horizontal branch for accordion sub-menu items */
+.sidebar-submenu-item::before {
+  content: "";
+  position: absolute;
+  left: -11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 11px;
+  height: 1.5px;
+  background: var(--sidebar-tree-line-color, rgba(255, 255, 255, 0.22));
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.huge-sidebar.is-collapsed .sidebar-tree-line,
+.huge-sidebar.is-collapsed .sidebar-section-content.is-collapsible-section .sidebar-menu-item::before,
+.huge-sidebar.is-collapsed .sidebar-submenu-item::before {
+  display: none !important;
+}
+
+.huge-sidebar.is-collapsed .sidebar-section-content.is-collapsible-section .sidebar-section-content-inner,
+.huge-sidebar.is-collapsed .sidebar-submenu-wrapper {
+  padding-left: 0 !important;
 }
 
 .sidebar-submenu-list {
@@ -3095,9 +3186,6 @@
   color: var(--sidebar-active-text) !important;
 }
 
-.super-admin-portal .huge-sidebar .sidebar-tree-line {
-  background: rgba(255, 255, 255, 0.22);
-}
 
 .super-admin-portal .huge-sidebar .sidebar-footer {
   border-top-color: rgba(255, 255, 255, 0.16);
