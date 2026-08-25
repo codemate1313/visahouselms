@@ -2653,7 +2653,7 @@
   /* Width and margin carry the layout, opacity carries the eye. Opacity runs
      shorter and leads, so the text is gone before the rail finishes closing
      rather than lingering as a squashed sliver. */
-  max-width: 220px;
+  max-width: 240px;
   opacity: 1;
   /* Opening: width leads, text fades in over the back half so it arrives with
      the rail rather than after it. */
