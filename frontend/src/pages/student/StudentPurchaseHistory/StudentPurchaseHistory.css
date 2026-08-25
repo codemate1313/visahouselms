@@ -509,6 +509,13 @@
 
   html,
   body {
+    --surface: #ffffff !important;
+    --surface-muted: #f8fafc !important;
+    --text: #0f172a !important;
+    --text-muted: #475569 !important;
+    --border: #cbd5e1 !important;
+    --background: #ffffff !important;
+
     width: auto !important;
     height: auto !important;
     min-height: 0 !important;
