@@ -4,7 +4,7 @@ import string
 from typing import Optional
 
 from fastapi import HTTPException, status
-from sqlalchemy import or_
+from sqlalchemy import case, func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.security import hash_password
@@ -295,6 +295,14 @@ def delete_instructor(db: Session, actor: User, instructor_id: int, ip: Optional
 
 def dashboard_summary(db: Session, actor: User) -> dict:
     from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModuleQuestion
+    from app.models.attempt import (
+        ATTEMPT_GRADED,
+        PART_GRADE_GRADED,
+        QUEUE_CLAIMED,
+        AttemptPartGrade,
+        GradingQueueEntry,
+        TestAttempt,
+    )
 
     profile = actor.instructor_profile
     completion_parts = [
@@ -312,6 +320,106 @@ def dashboard_summary(db: Session, actor: User) -> dict:
         .limit(8)
         .all()
     )
+
+    published_filters = (
+        ExamModule.created_by_id == actor.id,
+        ExamModule.status == "published",
+        ExamModule.deleted_at.is_(None),
+    )
+    usage_rows = (
+        db.query(
+            ExamModule.id,
+            ExamModule.title,
+            ExamModule.module_type,
+            func.count(func.distinct(TestAttempt.user_id)).label("learners"),
+            func.count(TestAttempt.id).label("attempts"),
+            func.sum(case((TestAttempt.status == ATTEMPT_GRADED, 1), else_=0)).label(
+                "completed_attempts"
+            ),
+        )
+        .outerjoin(TestAttempt, TestAttempt.module_id == ExamModule.id)
+        .filter(*published_filters)
+        .group_by(ExamModule.id, ExamModule.title, ExamModule.module_type)
+        .order_by(func.count(func.distinct(TestAttempt.user_id)).desc(), ExamModule.title.asc())
+        .all()
+    )
+    course_usage = []
+    for row in usage_rows:
+        attempts = int(row.attempts or 0)
+        completed_attempts = int(row.completed_attempts or 0)
+        course_usage.append(
+            {
+                "module_id": row.id,
+                "title": row.title,
+                "module_type": row.module_type,
+                "learners": int(row.learners or 0),
+                "attempts": attempts,
+                "completed_attempts": completed_attempts,
+                "completion_rate": round(completed_attempts / attempts * 100)
+                if attempts
+                else 0,
+            }
+        )
+
+    unique_learners = (
+        db.query(func.count(func.distinct(TestAttempt.user_id)))
+        .join(ExamModule, TestAttempt.module_id == ExamModule.id)
+        .filter(*published_filters)
+        .scalar()
+        or 0
+    )
+    total_attempts = sum(item["attempts"] for item in course_usage)
+    completed_attempts = sum(item["completed_attempts"] for item in course_usage)
+    courses_with_usage = sum(1 for item in course_usage if item["attempts"] > 0)
+
+    graded_events = (
+        db.query(
+            AttemptPartGrade.attempt_id,
+            func.max(AttemptPartGrade.graded_at).label("graded_at"),
+        )
+        .filter(
+            AttemptPartGrade.grader_id == actor.id,
+            AttemptPartGrade.status == PART_GRADE_GRADED,
+            AttemptPartGrade.graded_at.is_not(None),
+        )
+        .group_by(AttemptPartGrade.attempt_id)
+        .all()
+    )
+    now = datetime.now(timezone.utc)
+    month_buckets = []
+    for months_ago in range(5, -1, -1):
+        total_months = now.year * 12 + now.month - 1 - months_ago
+        year, month_index = divmod(total_months, 12)
+        month = month_index + 1
+        month_buckets.append(
+            {
+                "key": f"{year:04d}-{month:02d}",
+                "label": datetime(year, month, 1).strftime("%b"),
+                "value": 0,
+            }
+        )
+    trend_by_key = {bucket["key"]: bucket for bucket in month_buckets}
+    for event in graded_events:
+        graded_at = event.graded_at
+        key = f"{graded_at.year:04d}-{graded_at.month:02d}"
+        if key in trend_by_key:
+            trend_by_key[key]["value"] += 1
+
+    completed_today = sum(1 for event in graded_events if event.graded_at.date() == now.date())
+    completed_this_month = sum(
+        1
+        for event in graded_events
+        if event.graded_at.year == now.year and event.graded_at.month == now.month
+    )
+    in_progress = (
+        db.query(GradingQueueEntry)
+        .filter(
+            GradingQueueEntry.assigned_to_id == actor.id,
+            GradingQueueEntry.status == QUEUE_CLAIMED,
+        )
+        .count()
+    )
+
     return {
         "profile_completion": completion,
         "content": {
@@ -350,7 +458,21 @@ def dashboard_summary(db: Session, actor: User) -> dict:
                 )
             },
         },
-        "grading": {"pending": 0, "in_progress": 0, "completed_today": 0},
+        "grading": {
+            "pending": 0,
+            "in_progress": in_progress,
+            "completed_today": completed_today,
+            "completed_this_month": completed_this_month,
+            "completed_total": len(graded_events),
+        },
+        "engagement": {
+            "unique_learners": int(unique_learners),
+            "total_attempts": total_attempts,
+            "completed_attempts": completed_attempts,
+            "courses_with_usage": courses_with_usage,
+        },
+        "course_usage": course_usage,
+        "grading_trend": month_buckets,
         "recent_activity": [
             {
                 "action": log.action,

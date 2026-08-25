@@ -6,35 +6,20 @@ import { DashboardStats } from "./components/DashboardStats";
 import { ModuleAuthoringPanel } from "./components/ModuleAuthoringPanel";
 import { ProfileReadinessPanel } from "./components/ProfileReadinessPanel";
 import { RecentActivityPanel } from "./components/RecentActivityPanel";
+import { InstructorImpactPanel } from "./components/InstructorImpactPanel";
+import { InstructorAnalytics } from "./components/InstructorAnalytics";
+import { CourseUsagePanel } from "./components/CourseUsagePanel";
 import { PageHeader } from "@/components/ui";
-
-interface Summary {
-  profile_completion: number;
-  content: {
-    modules: number;
-    drafts: number;
-    published: number;
-    questions: number;
-    audio: number;
-    reading: number;
-    speaking: number;
-    writing: number;
-    listening: number;
-    full_mock: number;
-    final_test: number;
-  };
-  grading: { pending: number; in_progress: number; completed_today: number };
-  recent_activity: { action: string; entity_type: string; entity_id: number | null; created_at: string | null }[];
-}
+import type { InstructorDashboardSummary } from "./types";
 
 export function InstructorDashboard() {
   const user = useAuthStore((state) => state.user);
-  const [summary, setSummary] = useState<Summary | null>(null);
+  const [summary, setSummary] = useState<InstructorDashboardSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     apiClient
-      .get<Summary>("/instructor/dashboard/summary")
+      .get<InstructorDashboardSummary>("/instructor/dashboard/summary")
       .then(({ data }) => setSummary(data))
       .catch(() => setError(strings.errors.load));
   }, []);
@@ -51,11 +36,25 @@ export function InstructorDashboard() {
       />
 
       <DashboardStats
-        modules={summary.content.modules}
-        drafts={summary.content.drafts}
+        gradings={summary.grading.completed_total}
+        learners={summary.engagement.unique_learners}
         published={summary.content.published}
-        questions={summary.content.questions}
+        attempts={summary.engagement.total_attempts}
       />
+
+      <div className="instructor-impact-layout">
+        <InstructorImpactPanel
+          publishedCourses={summary.content.published}
+          coursesWithUsage={summary.engagement.courses_with_usage}
+          totalAttempts={summary.engagement.total_attempts}
+          completedAttempts={summary.engagement.completed_attempts}
+          completedThisMonth={summary.grading.completed_this_month}
+          inProgressGradings={summary.grading.in_progress}
+        />
+        <InstructorAnalytics courseUsage={summary.course_usage} gradingTrend={summary.grading_trend} />
+      </div>
+
+      <CourseUsagePanel courses={summary.course_usage} />
 
       <div className="workspace-grid">
         <ModuleAuthoringPanel

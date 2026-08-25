@@ -87,8 +87,27 @@ class InstructorPasswordResetOut(BaseModel):
     temporary_password: str
 
 
+class InstructorCourseUsageOut(BaseModel):
+    module_id: int
+    title: str
+    module_type: str
+    learners: int
+    attempts: int
+    completed_attempts: int
+    completion_rate: int
+
+
+class InstructorTrendPointOut(BaseModel):
+    key: str
+    label: str
+    value: int
+
+
 class InstructorDashboardOut(BaseModel):
     profile_completion: int
     content: dict[str, int]
     grading: dict[str, int]
+    engagement: dict[str, int]
+    course_usage: list[InstructorCourseUsageOut]
+    grading_trend: list[InstructorTrendPointOut]
     recent_activity: list[dict]

@@ -1412,6 +1412,315 @@ button.secondary-button {
   white-space: nowrap;
 }
 
+.instructor-impact-layout {
+  display: grid;
+  grid-template-columns: minmax(290px, 0.72fr) minmax(0, 2fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.instructor-impact-layout > .instructor-impact-panel {
+  grid-row: auto;
+  min-width: 0;
+}
+
+.instructor-impact-icon,
+.instructor-analytics-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+
+.instructor-impact-icon svg,
+.instructor-analytics-empty-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.instructor-impact-dials {
+  display: grid;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.instructor-impact-dial {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.instructor-impact-dial strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.instructor-impact-dial p {
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.instructor-impact-ring {
+  position: relative;
+  display: grid;
+  width: 92px;
+  height: 92px;
+  place-items: center;
+}
+
+.instructor-impact-ring svg {
+  width: 92px;
+  height: 92px;
+  transform: rotate(-90deg);
+}
+
+.instructor-impact-ring circle {
+  fill: none;
+  stroke-width: 10;
+}
+
+.instructor-impact-ring-track {
+  stroke: color-mix(in srgb, var(--border) 84%, transparent);
+}
+
+.instructor-impact-ring-value {
+  stroke: var(--primary);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 500ms ease;
+}
+
+.instructor-impact-ring.is-blue .instructor-impact-ring-value {
+  stroke: var(--series-2);
+}
+
+.instructor-impact-ring > span {
+  position: absolute;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.instructor-impact-footer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.instructor-impact-footer span {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.instructor-impact-footer strong {
+  display: block;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.instructor-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  min-width: 0;
+}
+
+.instructor-analytics-grid .chart-card {
+  min-width: 0;
+  height: 100%;
+}
+
+.instructor-analytics-empty {
+  display: flex;
+  min-height: 310px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  text-align: center;
+}
+
+.instructor-analytics-empty h2 {
+  margin: 14px 0 6px;
+  font-size: 16px;
+}
+
+.instructor-analytics-empty p {
+  max-width: 310px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.instructor-course-usage {
+  margin-bottom: 20px;
+}
+
+.instructor-course-usage .phase-chip {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.instructor-course-usage-table-wrap {
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.instructor-course-usage-table {
+  margin: 0;
+}
+
+.instructor-course-usage-table th:nth-child(n + 3),
+.instructor-course-usage-table td:nth-child(n + 3) {
+  text-align: right;
+}
+
+.instructor-course-title strong,
+.instructor-course-title span {
+  display: block;
+}
+
+.instructor-course-title {
+  min-width: 0;
+}
+
+.instructor-course-title strong {
+  max-width: 360px;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.instructor-course-title span {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+
+.instructor-course-type {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 8px;
+  border: 1px solid color-mix(in srgb, var(--series-2) 24%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--series-2) 9%, transparent);
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.instructor-course-completion {
+  display: inline-grid;
+  width: min(150px, 100%);
+  gap: 6px;
+}
+
+.instructor-course-completion > span {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.instructor-course-completion-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 88%, transparent);
+}
+
+.instructor-course-completion-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.instructor-course-usage-empty {
+  padding: 34px 18px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.instructor-course-usage-empty strong {
+  color: var(--text);
+}
+
+.instructor-course-usage-empty p {
+  margin: 5px 0 0;
+}
+
+@media (max-width: 1380px) {
+  .instructor-impact-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .instructor-impact-dials {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .instructor-analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .instructor-impact-dials,
+  .instructor-impact-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .instructor-impact-dial {
+    grid-template-columns: 82px minmax(0, 1fr);
+  }
+
+  .instructor-impact-ring,
+  .instructor-impact-ring svg {
+    width: 82px;
+    height: 82px;
+  }
+
+  .instructor-course-usage .panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .instructor-course-title {
+    max-width: 100%;
+    text-align: right;
+  }
+
+  .instructor-course-title strong {
+    max-width: min(60vw, 330px);
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .instructor-course-completion {
+    width: min(180px, 50vw);
+  }
+}
+
 
 @keyframes studentProgressGrow {
   from {
