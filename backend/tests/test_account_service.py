@@ -19,6 +19,7 @@ from app.models import Base
 from app.models.role import SUPER_ADMIN, Role
 from app.models.user import User
 from app.models.user_session import UserSession
+from app.models.institute import Institute
 from app.services import account_service
 
 
@@ -134,6 +135,76 @@ class AccountSessionLocationTests(unittest.TestCase):
         locate.assert_called_once_with("8.8.8.8")
         self.assertEqual(sessions[0]["location"], location)
         self.assertTrue(sessions[0]["is_current"])
+
+
+class AccountCredentialsEmailTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(self.engine)
+        self.db = sessionmaker(bind=self.engine)()
+
+        # Set up roles
+        self.roles = {}
+        for name in ("SA_INSTRUCTOR", "INST_INSTRUCTOR", "STUDENT"):
+            role = Role(name=name)
+            self.db.add(role)
+            self.roles[name] = role
+
+        self.institute = Institute(name="Visa House Test Academy", slug="vh-test-academy", is_active=True)
+        self.db.add(self.institute)
+        self.db.flush()
+
+    def tearDown(self) -> None:
+        self.db.close()
+        self.engine.dispose()
+
+    @patch("app.services.smtp_service.send_email")
+    def test_send_credentials_super_instructor(self, mock_send) -> None:
+        user = User(
+            email="super-inst@example.test",
+            password_hash="hash",
+            role_id=self.roles["SA_INSTRUCTOR"].id,
+            first_name="Super",
+            last_name="Instructor",
+            is_active=True,
+        )
+        self.db.add(user)
+        self.db.flush()
+
+        account_service.send_account_credentials_email(self.db, user, "TempPassword123")
+
+        self.assertTrue(mock_send.called)
+        db_arg, email_arg, subject, plain = mock_send.call_args[0]
+        html = mock_send.call_args[1].get("html_body")
+        self.assertIn("Super Instructor Account is Ready", subject)
+        self.assertIn("assigned as a Super Instructor of Visa House", plain)
+        self.assertIn("assigned as a <strong style=\"color: #0f172a;\">Super Instructor</strong> of Visa House", html)
+
+    @patch("app.services.smtp_service.send_email")
+    def test_send_credentials_institute_instructor(self, mock_send) -> None:
+        user = User(
+            email="inst-inst@example.test",
+            password_hash="hash",
+            role_id=self.roles["INST_INSTRUCTOR"].id,
+            institute_id=self.institute.id,
+            first_name="Regular",
+            last_name="Instructor",
+            is_active=True,
+        )
+        self.db.add(user)
+        self.db.flush()
+
+        # Refresh to populate user.institute relation
+        self.db.refresh(user)
+
+        account_service.send_account_credentials_email(self.db, user, "TempPassword123")
+
+        self.assertTrue(mock_send.called)
+        db_arg, email_arg, subject, plain = mock_send.call_args[0]
+        html = mock_send.call_args[1].get("html_body")
+        self.assertIn("Instructor Account is Ready", subject)
+        self.assertIn("become an instructor of Visa House Test Academy", plain)
+        self.assertIn("become an instructor of <strong style=\"color: #0f172a;\">Visa House Test Academy</strong>", html)
 
 
 if __name__ == "__main__":

@@ -176,6 +176,8 @@ def render_account_credentials_email(
     temporary_password: str,
     login_url: str,
     role_label: str = "Account",
+    is_super_instructor: bool = False,
+    institute_name: Optional[str] = None,
 ) -> tuple[str, str, str]:
     """Returns (subject, plain_text, html_content).
 
@@ -185,11 +187,18 @@ def render_account_credentials_email(
     """
     subject = f"Welcome to Visa House — Your {role_label} Account is Ready"
 
+    if is_super_instructor:
+        intro_text = "Your Super Instructor account has been set up and is ready for you. You have been assigned as a Super Instructor of Visa House."
+    elif institute_name:
+        intro_text = f"Your Instructor account has been set up and is ready for you. You have become an instructor of {institute_name}."
+    else:
+        intro_text = f"Your {role_label} account has been set up and is ready for you."
+
     plain = f"""Hi {first_name},
 
 Welcome to Visa House! We're delighted to have you on board.
 
-Your {role_label} account has been set up and is ready for you. Please find your login credentials below:
+{intro_text} Please find your login credentials below:
 
   Email:              {email}
   Temporary Password: {temporary_password}
@@ -205,12 +214,19 @@ Warm regards,
 The Visa House Team
 """
 
+    if is_super_instructor:
+        welcome_paragraph = f"""Welcome to <strong style="color: #b91c2b;">Visa House</strong>! We are pleased to inform you that you have been assigned as a <strong style="color: #0f172a;">Super Instructor</strong> of Visa House. You now have full access to the Visa House platform."""
+    elif institute_name:
+        welcome_paragraph = f"""Welcome to <strong style="color: #b91c2b;">Visa House</strong>! We are pleased to inform you that you have become an instructor of <strong style="color: #0f172a;">{institute_name}</strong>. You now have full access to the Visa House platform."""
+    else:
+        welcome_paragraph = f"""Welcome to <strong style="color: #b91c2b;">Visa House</strong>! We are pleased to inform you that your <strong>{role_label}</strong> account has been successfully created. You now have full access to the Visa House platform."""
+
     content_html = f"""
     <p style="margin-top: 0; font-size: 15px; color: #334155; line-height: 1.6;">
       Dear <strong style="color: #0f172a;">{first_name}</strong>,
     </p>
     <p style="font-size: 15px; color: #334155; line-height: 1.7; margin: 0 0 20px 0;">
-      Welcome to <strong style="color: #b91c2b;">Visa House</strong>! We are pleased to inform you that your <strong>{role_label}</strong> account has been successfully created. You now have full access to the Visa House platform.
+      {welcome_paragraph}
     </p>
     <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin: 0 0 20px 0;">
       Please use the credentials below to access your account for the first time.

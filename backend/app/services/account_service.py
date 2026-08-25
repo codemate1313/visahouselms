@@ -74,9 +74,29 @@ def send_account_credentials_email(
     try:
         from app.services import email_template_service, smtp_service
 
+        is_super_instructor = False
+        institute_name = None
+
+        if user.role:
+            if user.role.name == "SA_INSTRUCTOR":
+                is_super_instructor = True
+                role_label = "Super Instructor"
+            elif user.role.name == "INST_INSTRUCTOR":
+                role_label = "Instructor"
+                if user.institute:
+                    institute_name = user.institute.name
+                else:
+                    institute_name = "your institute"
+
         login_url = f"{settings.frontend_url.rstrip('/')}/login"
         subject, plain, html = email_template_service.render_account_credentials_email(
-            user.first_name, user.email, temporary_password, login_url, role_label=role_label
+            user.first_name,
+            user.email,
+            temporary_password,
+            login_url,
+            role_label=role_label,
+            is_super_instructor=is_super_instructor,
+            institute_name=institute_name,
         )
         smtp_service.send_email(db, user.email, subject, plain, html_body=html)
     except Exception as exc:
