@@ -6,7 +6,7 @@ import { dangerousTabs, tabLabels, tabOrder } from "./DeveloperSettings.strings"
 import type { Tab } from "./types";
 import { TypographyTab } from "./components/TypographyTab";
 import { StaticOtpTab } from "./components/StaticOtpTab";
-import { LoginSliderTab } from "./components/LoginSliderTab";
+import { HeroSliderTab } from "./components/HeroSliderTab";
 import { ContactSocialTab } from "./components/ContactSocialTab";
 import { SmtpTab } from "./components/SmtpTab";
 import { FcmTab } from "./components/FcmTab";
@@ -45,7 +45,7 @@ export function DeveloperSettings() {
       />
       {tab === "typography" && <TypographyTab />}
       {tab === "otp" && <StaticOtpTab />}
-      {tab === "slider" && <LoginSliderTab />}
+      {tab === "slider" && <HeroSliderTab />}
       {tab === "contact" && <ContactSocialTab />}
       {tab === "smtp" && <SmtpTab />}
       {tab === "fcm" && <FcmTab />}

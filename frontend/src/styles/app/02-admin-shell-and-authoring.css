@@ -9543,6 +9543,100 @@ textarea:focus {
   border-color: #dc2626 !important;
 }
 
+.hero-slider-location-tabs {
+  margin-bottom: 12px;
+}
+
+.slide-item-card.is-dirty {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.slide-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.slide-field-hint {
+  font-size: 11px !important;
+  margin: 0 !important;
+}
+
+.slide-visibility-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.slide-stats-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slide-stat-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.slide-card-actions {
+  flex-direction: column;
+  gap: 8px;
+  width: 108px;
+}
+
+.slide-order-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.slide-order-btn {
+  flex: 1;
+  padding: 6px 0;
+  font-size: 13px;
+  line-height: 1;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.slide-order-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  color: var(--primary);
+}
+
+.slide-order-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.slide-remove-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+@media (max-width: 900px) {
+  .slide-field-row,
+  .slide-stat-row {
+    grid-template-columns: 1fr;
+  }
+
+  .slide-card-actions {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
 /* Modal Dialog Styles for Adding Slide */
 .add-slide-dialog-form {
   display: flex;

@@ -25,6 +25,7 @@ from app.models.crash_log import CrashLog
 from app.models.daily_english import DailyEnglishChallenge
 from app.models.error_log import ErrorLog
 from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion, InstituteModule
+from app.models.hero_slide import HeroSlide
 from app.models.institute import Institute
 from app.models.institute_branding import InstituteBranding
 from app.models.institute_signup import InstituteSignupRequest
@@ -114,5 +115,6 @@ __all__ = [
     "ReevaluationRequest",
     "RetakeRequest",
     "GrammarContent",
+    "HeroSlide",
 ]
 

@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
-import { useLoginSliderStore } from "@/store/loginSliderStore";
+import { DEFAULT_LOGIN_SLIDES } from "@/api/heroSlides";
+import { useHeroSlides } from "@/hooks/useHeroSlides";
 
 export function HeroSlider() {
-  const slides = useLoginSliderStore((state) => state.slides);
+  const slides = useHeroSlides("login", DEFAULT_LOGIN_SLIDES);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+
+  // A shorter list arriving from the API must not leave the index out of range.
+  useEffect(() => {
+    setCurrentSlideIndex((prev) => (prev < slides.length ? prev : 0));
+  }, [slides.length]);
 
   useEffect(() => {
     if (slides.length <= 1 || isPaused) return;
@@ -15,6 +21,7 @@ export function HeroSlider() {
   }, [slides.length, isPaused]);
 
   const activeSlide = slides[currentSlideIndex] ?? slides[0];
+  if (!activeSlide) return null;
 
   return (
     <div className="login-hero-slider" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
@@ -23,7 +30,7 @@ export function HeroSlider() {
         <div className="hero-slider-track" style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}>
           {slides.map((slide) => (
             <div key={slide.id} className="hero-slide-item">
-              <img src={slide.imageUrl} alt={slide.title} className="hero-slide-img" />
+              <img src={slide.image_url} alt={slide.title} className="hero-slide-img" />
               <div className="hero-slide-overlay" />
             </div>
           ))}
@@ -31,9 +38,9 @@ export function HeroSlider() {
 
         {/* Text overlay stays on top of the image */}
         <div className="hero-slide-content" key={activeSlide.id}>
-          <span className="hero-kicker-badge">{activeSlide.badge}</span>
+          {activeSlide.badge && <span className="hero-kicker-badge">{activeSlide.badge}</span>}
           <h2 className="hero-slide-title">{activeSlide.title}</h2>
-          <p className="hero-slide-subtitle">{activeSlide.subtitle}</p>
+          {activeSlide.subtitle && <p className="hero-slide-subtitle">{activeSlide.subtitle}</p>}
         </div>
         {/* Dots centered over the image, no nav arrows */}
         {slides.length > 1 && (

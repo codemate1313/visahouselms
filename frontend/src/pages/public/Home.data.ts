@@ -1,64 +1,70 @@
-export interface HeroSlide {
-  badge: string;
-  heading: string;
-  highlight: string;
-  desc: string;
-  image: string;
-  ctaText: string;
-  ctaLink: string;
-  altText: string;
-  altLink: string;
-  stats: { value: string; label: string }[];
-}
+import type { HeroSlideRecord } from "@/api/heroSlides";
 
-export const HERO_SLIDES: HeroSlide[] = [
+/** Rendered while `GET /hero-slides?location=home` is in flight and if it
+ * fails, so the hero is never blank. The backend seeds the same copy on first
+ * read, after which Super Admin owns it (Platform Settings → Hero Sliders). */
+export const HERO_SLIDES: HeroSlideRecord[] = [
   {
-    badge: "Designed for Students · Self-Paced Practice",
-    heading: "Practice Smarter with\nFull-Length Mock Tests",
+    id: -1,
+    location: "home",
+    badge: "Designed for Students \u00b7 Self-Paced Practice",
+    title: "Practice Smarter with\nFull-Length Mock Tests",
     highlight: " & Instant Scoring.",
-    desc: "Practise timed mock tests across all 4 skills with instant scoring, answer explanations, and personal progress tracking.",
-    image: "/images/hero_slide_1.png",
-    ctaText: "Start Practising Free",
-    ctaLink: "/register",
-    altText: "View Student Plans →",
-    altLink: "/plans",
+    subtitle:
+      "Practise timed mock tests across all 4 skills with instant scoring, answer explanations, and personal progress tracking.",
+    image_url: "/images/hero_slide_1.png",
+    cta_text: "Start Practising Free",
+    cta_link: "/register",
+    alt_text: "View Student Plans \u2192",
+    alt_link: "/plans",
     stats: [
       { value: "4 Skills", label: "All Exam Modules" },
       { value: "Instant", label: "AI Score & Feedback" },
       { value: "Full Mock", label: "Real Exam Simulations" },
     ],
+    is_active: true,
+    display_order: 0,
   },
   {
-    badge: "Interactive AI Practice · Real Audio",
-    heading: "Prepare Smarter with Avatar Speaking\n& Real Exam Audio",
+    id: -2,
+    location: "home",
+    badge: "Interactive AI Practice \u00b7 Real Audio",
+    title: "Prepare Smarter with Avatar Speaking\n& Real Exam Audio",
     highlight: " for Success.",
-    desc: "Authentic listening audio and interactive Avatar speaking tests with instant AI evaluations to build exam confidence.",
-    image: "/images/hero_slide_2.png",
-    ctaText: "Explore Features",
-    ctaLink: "#features",
-    altText: "See How It Works →",
-    altLink: "#steps",
+    subtitle:
+      "Authentic listening audio and interactive Avatar speaking tests with instant AI evaluations to build exam confidence.",
+    image_url: "/images/hero_slide_2.png",
+    cta_text: "Explore Features",
+    cta_link: "#features",
+    alt_text: "See How It Works \u2192",
+    alt_link: "#steps",
     stats: [
       { value: "10+", label: "Years Experience" },
       { value: "1,000+", label: "Students Prepped" },
       { value: "24/7", label: "On-Demand Access" },
     ],
+    is_active: true,
+    display_order: 1,
   },
   {
+    id: -3,
+    location: "home",
     badge: "For Institutes & Language Schools",
-    heading: "Scale Your Institute with\nAdvanced Analytics",
+    title: "Scale Your Institute with\nAdvanced Analytics",
     highlight: " & Cohort Tools.",
-    desc: "Manage cohorts, assign CEFR-aligned question banks, and track student growth in real time.",
-    image: "/images/hero_slide_3.png",
-    ctaText: "Book an Institute Demo",
-    ctaLink: "/contact?tab=partner",
-    altText: "Partner with Visa House →",
-    altLink: "/contact?tab=partner",
+    subtitle: "Manage cohorts, assign CEFR-aligned question banks, and track student growth in real time.",
+    image_url: "/images/hero_slide_3.png",
+    cta_text: "Book an Institute Demo",
+    cta_link: "/contact?tab=partner",
+    alt_text: "Partner with Visa House \u2192",
+    alt_link: "/contact?tab=partner",
     stats: [
       { value: "CEFR", label: "Aligned Question Banks" },
       { value: "Real-Time", label: "Student Diagnostics" },
       { value: "Enterprise", label: "Cohort Management" },
     ],
+    is_active: true,
+    display_order: 2,
   },
 ];
 

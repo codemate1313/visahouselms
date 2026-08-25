@@ -12,6 +12,7 @@ import { usePublicAuthAction } from "@/components/publicSite/usePublicAuthAction
 import { useRevealOnScroll } from "@/components/publicSite/useRevealOnScroll";
 import { useThemeStore } from "@/store/themeStore";
 import { useSEO } from "@/hooks/useSEO";
+import { useHeroSlides } from "@/hooks/useHeroSlides";
 import { API_BASE_URL } from "@/api/client";
 import { useContactSettings } from "./useContactSettings";
 import { EVERYTHING_CARDS, HERO_SLIDES, STEP_CARDS, type TestimonialCard } from "./Home.data";
@@ -67,6 +68,7 @@ export function Home() {
   const { authMode, setAuthMode, handleClose, user, isLoading } = usePublicAuthOverlay();
   const { handleAuth, showInstituteBanner, closeInstituteBanner, goToMyCourses } = usePublicAuthAction();
 
+  const heroSlides = useHeroSlides("home", HERO_SLIDES);
   const [heroIndex, setHeroIndex] = useState(0);
   const heroBgWrapperRef = useRef<HTMLDivElement | null>(null);
   const heroTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -343,20 +345,22 @@ export function Home() {
   };
 
   useEffect(() => {
-    HERO_SLIDES.forEach((slide) => {
+    heroSlides.forEach((slide) => {
       const img = new Image();
-      img.src = slide.image;
+      img.src = slide.image_url;
     });
-  }, []);
+  }, [heroSlides]);
 
   useEffect(() => {
+    setHeroIndex((i) => (i < heroSlides.length ? i : 0));
+    if (heroSlides.length <= 1) return;
     heroTimerRef.current = setInterval(() => {
-      setHeroIndex((i) => (i + 1) % HERO_SLIDES.length);
+      setHeroIndex((i) => (i + 1) % heroSlides.length);
     }, HERO_INTERVAL_MS);
     return () => {
       if (heroTimerRef.current) clearInterval(heroTimerRef.current);
     };
-  }, []);
+  }, [heroSlides.length]);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/testimonials`)
@@ -659,7 +663,7 @@ export function Home() {
     if (heroTimerRef.current) clearInterval(heroTimerRef.current);
     setHeroIndex(index);
     heroTimerRef.current = setInterval(() => {
-      setHeroIndex((i) => (i + 1) % HERO_SLIDES.length);
+      setHeroIndex((i) => (i + 1) % heroSlides.length);
     }, HERO_INTERVAL_MS);
   }
 
@@ -675,7 +679,7 @@ export function Home() {
     navigate(link);
   }
 
-  const activeSlide = HERO_SLIDES[heroIndex];
+  const activeSlide = heroSlides[heroIndex] ?? heroSlides[0] ?? HERO_SLIDES[0];
 
   return (
     <div className="vh-public" ref={rootRef}>
@@ -685,11 +689,11 @@ export function Home() {
 
         <section id="top" className="vh-hero-section">
           <div className="vh-hero-bg-wrapper" ref={heroBgWrapperRef}>
-            {HERO_SLIDES.map((slide, idx) => (
+            {heroSlides.map((slide, idx) => (
               <img
-                key={slide.image}
-                src={slide.image}
-                alt={slide.heading}
+                key={slide.id}
+                src={slide.image_url}
+                alt={slide.title}
                 className={`vh-hero-bg-img${idx === heroIndex ? " vh-hero-bg-img-active" : ""}`}
                 aria-hidden={idx !== heroIndex}
               />
@@ -699,32 +703,36 @@ export function Home() {
 
           <div className="vh-hero-inner-container">
             <div className="vh-hero-content" key={heroIndex}>
-              <span className="vh-hero-badge">{activeSlide.badge}</span>
+              {activeSlide.badge && <span className="vh-hero-badge">{activeSlide.badge}</span>}
               <h1 className="vh-public-hero-title">
-                {activeSlide.heading}
+                {activeSlide.title}
                 <span className="vh-public-hero-title-accent">{activeSlide.highlight}</span>
               </h1>
-              <p className="vh-hero-desc">{activeSlide.desc}</p>
+              <p className="vh-hero-desc">{activeSlide.subtitle}</p>
               <div className="vh-hero-actions">
-                <button type="button" className="vh-hero-cta-solid" onClick={() => handleHeroCta(activeSlide.ctaLink)}>
-                  {activeSlide.ctaText}
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14" />
-                    <path d="m13 6 6 6-6 6" />
-                  </svg>
-                </button>
-                {activeSlide.altLink.startsWith("#") ? (
-                  <a href={activeSlide.altLink} className="vh-hero-cta-alt">
-                    {activeSlide.altText}
-                  </a>
-                ) : (
-                  <Link to={activeSlide.altLink} className="vh-hero-cta-alt">
-                    {activeSlide.altText}
-                  </Link>
+                {activeSlide.cta_text && activeSlide.cta_link && (
+                  <button type="button" className="vh-hero-cta-solid" onClick={() => handleHeroCta(activeSlide.cta_link!)}>
+                    {activeSlide.cta_text}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14" />
+                      <path d="m13 6 6 6-6 6" />
+                    </svg>
+                  </button>
+                )}
+                {activeSlide.alt_text && activeSlide.alt_link && (
+                  activeSlide.alt_link.startsWith("#") ? (
+                    <a href={activeSlide.alt_link} className="vh-hero-cta-alt">
+                      {activeSlide.alt_text}
+                    </a>
+                  ) : (
+                    <Link to={activeSlide.alt_link} className="vh-hero-cta-alt">
+                      {activeSlide.alt_text}
+                    </Link>
+                  )
                 )}
               </div>
               <div className="vh-hero-stats">
-                {activeSlide.stats.map((stat) => (
+                {(activeSlide.stats ?? []).map((stat) => (
                   <div className="vh-hero-stat-group" key={stat.label}>
                     <div className="vh-hero-stat-value">{stat.value}</div>
                     <div className="vh-hero-stat-label">{stat.label}</div>
@@ -735,9 +743,9 @@ export function Home() {
 
             <div className="vh-hero-dots">
               <div className="vh-hero-dots-inner">
-                {HERO_SLIDES.map((slide, i) => (
+                {heroSlides.map((slide, i) => (
                   <button
-                    key={slide.heading}
+                    key={slide.id}
                     type="button"
                     className={`vh-dot${i === heroIndex ? " vh-dot-active" : ""}`}
                     aria-label={`Show slide ${i + 1}`}

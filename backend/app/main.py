@@ -27,6 +27,7 @@ from app.routers import (
     developer,
     gst_rates,
     grading_admin,
+    hero_slides_router,
     institutes,
     institute_admin,
     institute_instructor,
@@ -246,6 +247,8 @@ app.include_router(contact_settings_router.public_router)
 app.include_router(contact_settings_router.admin_router)
 app.include_router(instagram_router.public_router)
 app.include_router(instagram_router.admin_router)
+app.include_router(hero_slides_router.public_router)
+app.include_router(hero_slides_router.admin_router)
 
 
 @app.exception_handler(IntegrityError)
