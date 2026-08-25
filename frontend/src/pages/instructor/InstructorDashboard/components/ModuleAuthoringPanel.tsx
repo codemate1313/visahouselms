@@ -33,17 +33,44 @@ export function ModuleAuthoringPanel({
         <Badge tone="green">{t.badge}</Badge>
       </div>
       <div className="authoring-actions">
-        <div>
-          <strong>{t.skillModulesTitle}</strong>
-          <p>{t.skillModulesDetail({ reading: readingCount, listening: listeningCount, writing: writingCount, speaking: speakingCount })}</p>
+        <div className="authoring-card-item">
+          <div className="item-icon-wrapper">
+            <Icon name="courses" style={{ width: 18, height: 18 }} />
+          </div>
+          <div className="item-content">
+            <strong>{t.skillModulesTitle}</strong>
+            <div className="item-stats-chips">
+              <span className="stat-chip">Reading: {readingCount}</span>
+              <span className="stat-chip">Listening: {listeningCount}</span>
+              <span className="stat-chip">Writing: {writingCount}</span>
+              <span className="stat-chip">Speaking: {speakingCount}</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <strong>{t.completeTestsTitle}</strong>
-          <p>{t.completeTestsDetail(fullMockCount, finalTestCount)}</p>
+
+        <div className="authoring-card-item">
+          <div className="item-icon-wrapper">
+            <Icon name="plan" style={{ width: 18, height: 18 }} />
+          </div>
+          <div className="item-content">
+            <strong>{t.completeTestsTitle}</strong>
+            <div className="item-stats-chips">
+              <span className="stat-chip">Full Mocks: {fullMockCount}</span>
+              <span className="stat-chip">Final Tests: {finalTestCount}</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <strong>{t.listeningMediaTitle}</strong>
-          <p>{t.listeningMediaDetail(audioCount)}</p>
+
+        <div className="authoring-card-item">
+          <div className="item-icon-wrapper">
+            <Icon name="microphone" style={{ width: 18, height: 18 }} />
+          </div>
+          <div className="item-content">
+            <strong>{t.listeningMediaTitle}</strong>
+            <div className="item-stats-chips">
+              <span className="stat-chip">Audios & Transcripts: {audioCount}</span>
+            </div>
+          </div>
         </div>
       </div>
       <Link to="/super-admin/instructor/modules">
