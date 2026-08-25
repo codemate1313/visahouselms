@@ -508,7 +508,9 @@
   }
 
   html,
-  body {
+  body,
+  [data-theme="dark"],
+  [data-theme="dark"] body {
     --surface: #ffffff !important;
     --surface-muted: #f8fafc !important;
     --text: #0f172a !important;
@@ -568,7 +570,8 @@
     display: none !important;
   }
 
-  .student-invoice-modal-backdrop {
+  .student-invoice-modal-backdrop,
+  [data-theme="dark"] .student-invoice-modal-backdrop {
     position: relative !important;
     inset: auto !important;
     display: block !important;
@@ -582,7 +585,8 @@
     z-index: auto !important;
   }
 
-  .student-invoice-modal {
+  .student-invoice-modal,
+  [data-theme="dark"] .student-invoice-modal {
     position: static !important;
     display: block !important;
     width: 100% !important;
@@ -598,7 +602,8 @@
     color: #0f172a !important;
   }
 
-  .student-invoice-body {
+  .student-invoice-body,
+  [data-theme="dark"] .student-invoice-body {
     display: block !important;
     padding: 0 !important;
     overflow: visible !important;
