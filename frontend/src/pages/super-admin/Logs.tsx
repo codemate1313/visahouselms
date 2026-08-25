@@ -235,6 +235,25 @@ export function Logs() {
                   <Badge tone="gray" style={{ fontFamily: "monospace", fontSize: 11 }}>{String(selectedLog.method)}</Badge>
                 </div>
               )}
+              {(() => {
+                const timestampVal = selectedLog.created_at || selectedLog.detected_at || selectedLog.timestamp;
+                if (!timestampVal) return null;
+                let displayTime = String(timestampVal);
+                try {
+                  displayTime = new Intl.DateTimeFormat("en-IN", {
+                    dateStyle: "medium",
+                    timeStyle: "medium",
+                  }).format(new Date(String(timestampVal)));
+                } catch {
+                  // Keep fallback
+                }
+                return (
+                  <div className="log-detail-summary-item">
+                    <span>Time</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{displayTime}</span>
+                  </div>
+                );
+              })()}
               {Boolean(selectedLog.path) && (
                 <div className="log-detail-summary-item is-wide">
                   <span>Path</span>
@@ -243,7 +262,9 @@ export function Logs() {
               )}
             </div>
 
-            {getOrderedLogEntries(selectedLog).map(([key, value]) => {
+            {getOrderedLogEntries(selectedLog)
+              .filter(([key]) => !["created_at", "detected_at", "timestamp"].includes(normalizeKey(key)))
+              .map(([key, value]) => {
               const normKey = normalizeKey(key);
               const isLongText = normKey === "message" || normKey === "stack_trace" || formatDetailValue(value).length > 160;
               return (
