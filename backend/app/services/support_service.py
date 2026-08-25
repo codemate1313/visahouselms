@@ -602,7 +602,7 @@ def add_ticket_message(
     if role_label == "customer" and ticket.status in {SUPPORT_STATUS_CLOSED, SUPPORT_STATUS_RESOLVED}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="This support ticket is closed. Only the support team can reopen it.",
+            detail="This support ticket is closed. Reopen it to continue the conversation.",
         )
     if ticket.status == SUPPORT_STATUS_CLOSED:
         raise HTTPException(
@@ -774,10 +774,23 @@ def reopen_portal_ticket(
     ticket_id: int,
     user: User,
 ) -> SupportTicket:
-    get_portal_ticket_for_user(db, ticket_id, user)
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Only the support team can reopen a closed ticket.",
-    )
+    """Let the requester reopen their own ticket.
+
+    Ownership is the only condition - whoever raised the ticket can reopen it,
+    whether it was closed by them or by the support team. `get_portal_ticket_for_user`
+    404s for anyone else.
+    """
+    ticket = get_portal_ticket_for_user(db, ticket_id, user)
+    if ticket.status not in (SUPPORT_STATUS_CLOSED, SUPPORT_STATUS_RESOLVED):
+        return ticket
+
+    ticket.status = SUPPORT_STATUS_OPEN
+    ticket.closed_by_role = None
+    ticket.resolved_at = None
+    ticket.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(ticket)
+    _notify_status_changed(db, ticket, changed_by_role="customer", new_status=SUPPORT_STATUS_OPEN)
+    return ticket
 
 

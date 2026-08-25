@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.payment import Payment
 from app.models.subscription import Subscription
-from app.services import payment_service, subscription_service
+from app.services import payment_service, subscription_service, voucher_service
 from app.services.log_service import record_error
 from app.services.settings_service import get_settings_group
 
@@ -62,6 +62,39 @@ async def razorpay_webhook(
         notes = entity.get("notes", {})
         payment_id_str = notes.get("payment_id")
         razorpay_payment_id = entity.get("id")
+
+        # Voucher purchases carry `voucher_purchase_id` in their order notes
+        # (set by voucher_service.create_voucher_order) instead of `payment_id`.
+        # Nothing handled them here, so a buyer whose browser never made it back
+        # from the gateway to call /vouchers/*/verify was charged and left with a
+        # purchase stuck pending - no code, no email.
+        voucher_purchase_id_str = notes.get("voucher_purchase_id")
+        if voucher_purchase_id_str:
+            try:
+                voucher_service.complete_voucher_purchase_from_webhook(
+                    db,
+                    int(voucher_purchase_id_str),
+                    razorpay_order_id=entity.get("order_id"),
+                    razorpay_payment_id=razorpay_payment_id,
+                )
+            except Exception as exc:
+                db.rollback()
+                try:
+                    record_error(
+                        db,
+                        message=f"Razorpay webhook failed for voucher purchase {voucher_purchase_id_str}: {exc}",
+                        stack_trace=traceback.format_exc(),
+                        path=request.url.path,
+                        method=request.method,
+                        user_id=None,
+                        ip_address=client_ip,
+                    )
+                except Exception:
+                    pass  # logging must never mask the original failure
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Webhook processing failed",
+                ) from exc
 
         if payment_id_str:
             try:

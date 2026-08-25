@@ -167,7 +167,7 @@ class SupportServiceTests(unittest.TestCase):
         result = support_service.list_tickets(self.db)
         self.assertEqual([item["id"] for item in result["items"]], [ticket.id])
 
-    def test_portal_requester_cannot_reopen_support_closed_ticket(self) -> None:
+    def test_portal_requester_can_reopen_support_closed_ticket(self) -> None:
         ticket = self._create_portal_ticket(self.student)
         support_service.close_ticket(
             self.db,
@@ -176,12 +176,45 @@ class SupportServiceTests(unittest.TestCase):
             institute_id=self.institute.id,
         )
 
-        with self.assertRaises(HTTPException) as context:
-            support_service.reopen_portal_ticket(self.db, ticket.id, self.student)
+        reopened = support_service.reopen_portal_ticket(self.db, ticket.id, self.student)
 
-        self.assertEqual(context.exception.status_code, 403)
+        self.assertEqual(reopened.status, SUPPORT_STATUS_OPEN)
+        self.assertIsNone(reopened.closed_by_role)
+        self.assertIsNone(reopened.resolved_at)
+
+    def test_portal_requester_can_reopen_a_ticket_they_closed_themselves(self) -> None:
+        ticket = self._create_portal_ticket(self.student)
+        support_service.close_portal_ticket(self.db, ticket.id, self.student)
         self.db.refresh(ticket)
-        self.assertEqual(ticket.status, SUPPORT_STATUS_CLOSED)
+        self.assertEqual(ticket.closed_by_role, "customer")
+
+        reopened = support_service.reopen_portal_ticket(self.db, ticket.id, self.student)
+
+        self.assertEqual(reopened.status, SUPPORT_STATUS_OPEN)
+        self.assertIsNone(reopened.closed_by_role)
+
+    def test_reopening_a_ticket_lets_the_requester_reply_again(self) -> None:
+        ticket = self._create_portal_ticket(self.student)
+        support_service.close_portal_ticket(self.db, ticket.id, self.student)
+        support_service.reopen_portal_ticket(self.db, ticket.id, self.student)
+
+        updated = support_service.add_portal_ticket_message(
+            self.db,
+            ticket.id,
+            user=self.student,
+            message_text="Following up on this again.",
+        )
+
+        self.assertEqual(updated.status, SUPPORT_STATUS_OPEN)
+        self.assertEqual(updated.messages[-1].message, "Following up on this again.")
+
+    def test_reopening_an_already_open_ticket_is_a_no_op(self) -> None:
+        ticket = self._create_portal_ticket(self.student)
+
+        reopened = support_service.reopen_portal_ticket(self.db, ticket.id, self.student)
+
+        self.assertEqual(reopened.id, ticket.id)
+        self.assertNotEqual(reopened.status, SUPPORT_STATUS_CLOSED)
 
     def test_portal_requester_reply_does_not_reopen_support_closed_ticket(self) -> None:
         ticket = self._create_portal_ticket(self.student)
@@ -205,16 +238,14 @@ class SupportServiceTests(unittest.TestCase):
         self.db.refresh(ticket)
         self.assertEqual(ticket.status, SUPPORT_STATUS_CLOSED)
 
-    def test_institute_admin_request_to_super_admin_cannot_be_reopened_by_requester(self) -> None:
+    def test_institute_admin_can_reopen_their_own_request_to_super_admin(self) -> None:
         ticket = self._create_portal_ticket(self.institute_admin)
         support_service.close_ticket(self.db, ticket.id, queue=SUPPORT_QUEUE_SUPER_ADMIN)
 
-        with self.assertRaises(HTTPException) as context:
-            support_service.reopen_portal_ticket(self.db, ticket.id, self.institute_admin)
+        reopened = support_service.reopen_portal_ticket(self.db, ticket.id, self.institute_admin)
 
-        self.assertEqual(context.exception.status_code, 403)
-        self.db.refresh(ticket)
-        self.assertEqual(ticket.status, SUPPORT_STATUS_CLOSED)
+        self.assertEqual(reopened.status, SUPPORT_STATUS_OPEN)
+        self.assertIsNone(reopened.closed_by_role)
 
     def test_higher_official_can_reopen_ticket_from_owned_queue(self) -> None:
         ticket = self._create_portal_ticket(self.student)

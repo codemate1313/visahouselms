@@ -568,6 +568,18 @@ def _complete_purchase(db: Session, purchase: VoucherPurchase) -> dict:
     }
 
 
+def _fail_purchase_and_release_code(db: Session, purchase: VoucherPurchase) -> None:
+    """Mark an unverifiable purchase failed and put its reserved code back on the
+    shelf so it can be sold to someone else."""
+    code_row = db.get(VoucherCode, purchase.voucher_code_id) if purchase.voucher_code_id else None
+    if code_row is not None and code_row.status == "reserved":
+        code_row.status = "available"
+        code_row.purchase_id = None
+    purchase.status = "failed"
+    purchase.voucher_code_id = None
+    db.commit()
+
+
 def verify_voucher_payment(
     db: Session,
     purchase_id: int,
@@ -596,6 +608,17 @@ def verify_voucher_payment(
     if not key_secret:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Razorpay is not configured")
 
+    # The receipt has to be for the order this purchase opened in step 1. A
+    # signature is only proof that *some* payment happened, so without this a
+    # buyer could settle a cheap order of their own and present that valid
+    # receipt here to unlock an expensive voucher.
+    if not purchase.gateway_transaction_id or purchase.gateway_transaction_id != razorpay_order_id:
+        _fail_purchase_and_release_code(db, purchase)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Payment could not be verified.",
+        )
+
     expected = hmac.new(
         key_secret.encode("utf-8"),
         f"{razorpay_order_id}|{razorpay_payment_id}".encode("utf-8"),
@@ -603,14 +626,7 @@ def verify_voucher_payment(
     ).hexdigest()
 
     if not hmac.compare_digest(expected, razorpay_signature or ""):
-        # Reject and release the reserved code.
-        code_row = db.get(VoucherCode, purchase.voucher_code_id) if purchase.voucher_code_id else None
-        if code_row is not None and code_row.status == "reserved":
-            code_row.status = "available"
-            code_row.purchase_id = None
-        purchase.status = "failed"
-        purchase.voucher_code_id = None
-        db.commit()
+        _fail_purchase_and_release_code(db, purchase)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Payment could not be verified.")
 
     purchase.gateway_transaction_id = f"Order: {razorpay_order_id} | Payment: {razorpay_payment_id}"
@@ -618,7 +634,65 @@ def verify_voucher_payment(
     return _complete_purchase(db, purchase)
 
 
+def complete_voucher_purchase_from_webhook(
+    db: Session,
+    purchase_id: int,
+    razorpay_order_id: Optional[str],
+    razorpay_payment_id: Optional[str],
+) -> Optional[dict]:
+    """Complete a voucher purchase from a verified Razorpay webhook.
+
+    The client-side `verify` call only fires if the buyer's browser survives the
+    redirect back from the gateway. Without this, a buyer whose tab closed (or
+    whose network dropped) after paying was charged and got nothing, because the
+    purchase stayed pending forever. The webhook's own HMAC is checked by the
+    caller before this runs, so reaching here means the gateway really did
+    capture the payment.
+
+    Returns None when there is nothing to do; safe to call twice - `_complete_purchase`
+    will not issue a second code or send a second email.
+    """
+    query = db.query(VoucherPurchase).filter(VoucherPurchase.id == purchase_id)
+    if db.bind is not None and db.bind.dialect.name != "sqlite":
+        query = query.with_for_update()
+    purchase = query.first()
+    if purchase is None or purchase.status == "completed":
+        return None
+    if purchase.status != "pending":
+        # Money was captured for a purchase that is no longer completable - most
+        # likely its reservation went stale and was released before the webhook
+        # landed. Nothing safe to do automatically; surface it so support can
+        # refund or issue a code by hand.
+        logger.error(
+            "Razorpay captured payment %s for voucher purchase %s, but the purchase is %s",
+            razorpay_payment_id,
+            purchase_id,
+            purchase.status,
+        )
+        return None
+    # Same binding the client-facing verify enforces: the captured payment has to
+    # be for the order this purchase opened.
+    if razorpay_order_id and purchase.gateway_transaction_id != razorpay_order_id:
+        return None
+
+    purchase.gateway_transaction_id = (
+        f"Order: {razorpay_order_id} | Payment: {razorpay_payment_id}"
+        if razorpay_order_id
+        else f"Payment: {razorpay_payment_id}"
+    )
+    db.add(purchase)
+    return _complete_purchase(db, purchase)
+
+
 def get_student_purchased_vouchers(db: Session, student_id: int, student_email: Optional[str] = None) -> List[dict]:
+    """Vouchers the student actually owns.
+
+    Only completed purchases are listed. `create_voucher_order` reserves a code
+    against a *pending* purchase before the buyer pays, so listing anything but
+    completed handed the student a usable code the moment they pressed Buy -
+    payment verified or not. Pending and failed orders are checkout state, not
+    vouchers, and never appear here.
+    """
     filters = [VoucherPurchase.student_id == student_id]
     if student_email:
         filters.append(VoucherPurchase.buyer_email == student_email.lower().strip())
@@ -626,7 +700,10 @@ def get_student_purchased_vouchers(db: Session, student_id: int, student_email: 
     purchases = db.query(VoucherPurchase).options(
         joinedload(VoucherPurchase.offering).joinedload(VoucherOffering.voucher_type),
         joinedload(VoucherPurchase.voucher_code),
-    ).filter(or_(*filters)).order_by(VoucherPurchase.created_at.desc()).all()
+    ).filter(
+        VoucherPurchase.status == "completed",
+        or_(*filters),
+    ).order_by(VoucherPurchase.created_at.desc()).all()
 
     now_dt = _now()
     result = []

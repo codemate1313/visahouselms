@@ -350,6 +350,29 @@ export function SupportCenter() {
     }
   }
 
+  /** The requester can reopen a ticket they raised, whoever closed it. */
+  async function handleReopenTicket() {
+    if (!selectedTicket) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const { data: updatedTicket } = await apiClient.post<PortalSupportTicket>(
+        `/support/my-tickets/${selectedTicket.id}/reopen`
+      );
+      showSuccess("Support ticket reopened. The support team has been notified.", "Ticket Reopened");
+      if (updatedTicket) {
+        setTickets((prev) =>
+          prev.map((t) => (t.id === updatedTicket.id ? { ...t, ...updatedTicket } : t))
+        );
+      }
+      await loadTickets();
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Failed to reopen support ticket"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function submitTicket(event: FormEvent) {
     event.preventDefault();
     if (!subject.trim() || !message.trim()) return;
@@ -721,7 +744,17 @@ export function SupportCenter() {
                 >
                   Close Ticket
                 </Button>
-              ) : null}
+              ) : (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  leftIcon={<Icon name="restore" />}
+                  loading={saving}
+                  onClick={() => void handleReopenTicket()}
+                >
+                  Reopen Ticket
+                </Button>
+              )}
             </div>
           ) : (
             "Support Ticket Thread"
@@ -908,11 +941,25 @@ export function SupportCenter() {
                   fontWeight: 600,
                 }}
               >
-                {isClosedByCustomer ? (
-                  <>🔒 You closed this support ticket. If you have a new issue, please click <strong>"Raise a Query"</strong>.</>
-                ) : (
-                  <>🔒 This support ticket is closed. Only the assigned support team can reopen it.</>
-                )}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+                  <span>
+                    {isClosedByCustomer ? (
+                      <>🔒 You closed this support ticket. Reopen it to continue the conversation, or click <strong>"Raise a Query"</strong> for a new issue.</>
+                    ) : (
+                      <>🔒 This support ticket is closed. Reopen it if you still need help with this issue.</>
+                    )}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    leftIcon={<Icon name="restore" />}
+                    loading={saving}
+                    onClick={() => void handleReopenTicket()}
+                  >
+                    Reopen Ticket
+                  </Button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "@/api/client";
 import { confirmDelete } from "@/components/confirmDialog";
 import { MetricCard } from "@/components/dashboard/MetricCard";
-import { Button, DataTableCard, FilterBar, Modal, SearchInput, SearchableSelect, SegmentedControl, Input, Textarea } from "@/components/ui";
+import { Badge, Button, DataTableCard, FilterBar, Modal, SearchInput, SearchableSelect, SegmentedControl, Input, Textarea } from "@/components/ui";
+import type { BadgeTone } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { RowActionMenu } from "@/components/RowActionMenu";
@@ -96,6 +97,22 @@ const COLOR_PRESETS = [
   "#4f46e5", // Indigo
   "#1e293b", // Slate / Dark
 ];
+
+/** A purchase is only a sale once its payment was verified. Pending rows are
+ * checkout attempts holding a reserved code, and failed ones released it. */
+function purchaseStatusTone(status: string): BadgeTone {
+  if (status === "completed") return "success";
+  if (status === "pending") return "warning";
+  if (status === "refunded") return "info";
+  return "danger";
+}
+
+function purchaseStatusLabel(status: string): string {
+  if (status === "completed") return "Paid";
+  if (status === "pending") return "Awaiting payment";
+  if (status === "failed") return "Failed";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
 
 export function Vouchers() {
   const showSuccess = useToastStore((state) => state.showSuccess);
@@ -658,6 +675,7 @@ export function Vouchers() {
                   <th>{s.purchases.buyer}</th>
                   <th>{s.purchases.voucherInfo}</th>
                   <th>{s.purchases.code}</th>
+                  <th>{s.purchases.status}</th>
                   <th>{s.purchases.amount}</th>
                   <th>{s.purchases.date}</th>
                   <th className="text-right">Actions</th>
@@ -666,7 +684,7 @@ export function Vouchers() {
               <tbody>
                 {purchases.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="ui-empty-row">
+                    <td colSpan={8} className="ui-empty-row">
                       {s.purchases.noPurchases}
                     </td>
                   </tr>
@@ -688,7 +706,14 @@ export function Vouchers() {
                         <div className="text-xs text-slate-500 font-medium mt-1">{p.offering_title}</div>
                       </td>
                       <td>
-                        <code className="voucher-code-pill">{p.voucher_code || "N/A"}</code>
+                        {p.status === "completed" ? (
+                          <code className="voucher-code-pill">{p.voucher_code || "N/A"}</code>
+                        ) : (
+                          <span className="text-xs text-slate-500">Not issued</span>
+                        )}
+                      </td>
+                      <td>
+                        <Badge tone={purchaseStatusTone(p.status)}>{purchaseStatusLabel(p.status)}</Badge>
                       </td>
                       <td>
                         <strong className="text-slate-900 dark:text-white">
