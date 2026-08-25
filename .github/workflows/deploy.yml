@@ -103,27 +103,18 @@ jobs:
             python -m pip install -r requirements.txt
             
             # Write/update DEVELOPER_ACCESS_SLUG in backend/.env
-            python3 -c "
-import os
-slug = os.environ.get('DEVELOPER_ACCESS_SLUG')
-if slug:
-    path = '.env'
-    lines = []
-    if os.path.exists(path):
-        with open(path, 'r') as f:
-            lines = f.read().splitlines()
-    updated = False
-    for i, line in enumerate(lines):
-        if line.startswith('DEVELOPER_ACCESS_SLUG='):
-            lines[i] = f'DEVELOPER_ACCESS_SLUG={slug}'
-            updated = True
-            break
-    if not updated:
-        lines.append(f'DEVELOPER_ACCESS_SLUG={slug}')
-    with open(path, 'w') as f:
-        f.write('\n'.join(lines) + '\n')
-    print('✅ Configured DEVELOPER_ACCESS_SLUG in backend/.env')
-"
+            if [ -n "${DEVELOPER_ACCESS_SLUG}" ]; then
+              if [ ! -f .env ]; then
+                echo "DEVELOPER_ACCESS_SLUG=${DEVELOPER_ACCESS_SLUG}" > .env
+              else
+                if grep -q "^DEVELOPER_ACCESS_SLUG=" .env; then
+                  python3 -c "import os; slug=os.environ['DEVELOPER_ACCESS_SLUG']; lines=[(f'DEVELOPER_ACCESS_SLUG={slug}' if l.startswith('DEVELOPER_ACCESS_SLUG=') else l) for l in open('.env').read().splitlines()]; open('.env','w').write('\n'.join(lines)+'\n')"
+                else
+                  echo "DEVELOPER_ACCESS_SLUG=${DEVELOPER_ACCESS_SLUG}" >> .env
+                fi
+              fi
+              echo "✅ Configured DEVELOPER_ACCESS_SLUG in backend/.env"
+            fi
             
             python -m alembic upgrade head
             cd ..
@@ -167,7 +158,7 @@ if slug:
             systemctl reload nginx
 
             echo "✨ Deployment successful!"
-EOF
+          EOF
             then
               echo "✅ SSH Deployment completed successfully."
               exit 0
