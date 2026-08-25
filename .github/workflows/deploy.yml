@@ -110,6 +110,7 @@ jobs:
             python -m pip install -r requirements.txt
 
             python -m alembic upgrade head
+            python scripts/seed_super_admin.py
             cd ..
 
             # 3. Frontend clean install & build

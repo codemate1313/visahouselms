@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.config import settings  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.database import SessionLocal  # noqa: E402
-from app.models.role import SUPER_ADMIN, Role  # noqa: E402
+from app.models.role import DEVELOPER, SUPER_ADMIN, Role  # noqa: E402
 from app.models.user import User  # noqa: E402
 
 
@@ -22,6 +22,24 @@ def main() -> None:
 
     db = SessionLocal()
     try:
+        # Seed default Developer account if not exists
+        dev_role = db.query(Role).filter(Role.name == DEVELOPER).first()
+        if dev_role:
+            dev_user = db.query(User).filter(User.email == "developer@visahouse.example.com").first()
+            if not dev_user:
+                dev_user = User(
+                    email="developer@visahouse.example.com",
+                    password_hash=hash_password("Test@12345"),
+                    role_id=dev_role.id,
+                    first_name="VisaHouse",
+                    last_name="Developer",
+                    is_active=True,
+                    is_developer_verified=True,
+                )
+                db.add(dev_user)
+                db.commit()
+                print("Created developer 'developer@visahouse.example.com'.")
+
         existing = db.query(User).filter(User.email == settings.super_admin_email).first()
         if existing is not None:
             if not db.query(User).filter(User.is_owner.is_(True)).first():
