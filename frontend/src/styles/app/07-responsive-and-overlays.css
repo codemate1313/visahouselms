@@ -1743,6 +1743,31 @@ body {
   color: var(--danger);
 }
 
+.sleek-users-table.responsive-data-table .row-action-menu-panel button:disabled,
+.users-row-action-menu-panel button:disabled {
+  opacity: 0.55;
+  color: var(--text-muted, #64748b) !important;
+  cursor: not-allowed;
+  background: transparent !important;
+}
+
+.sleek-users-table.responsive-data-table .row-action-menu-panel button:disabled svg,
+.users-row-action-menu-panel button:disabled svg {
+  color: var(--text-muted, #64748b) !important;
+}
+
+[data-theme="dark"] .sleek-users-table.responsive-data-table .row-action-menu-panel button:disabled,
+[data-theme="dark"] .users-row-action-menu-panel button:disabled {
+  opacity: 0.45;
+  color: var(--text-muted, #9ca3af) !important;
+}
+
+[data-theme="dark"] .sleek-users-table.responsive-data-table .row-action-menu-panel button:disabled svg,
+[data-theme="dark"] .users-row-action-menu-panel button:disabled svg {
+  color: var(--text-muted, #9ca3af) !important;
+}
+
+
 [data-theme="dark"] .users-row-action-menu-panel {
   background: #16161a;
   border-color: rgba(255, 255, 255, 0.14);
