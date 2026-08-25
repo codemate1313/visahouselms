@@ -518,10 +518,15 @@
     padding: 2.5cm 2.5cm !important;
   }
 
-  /* Hide everything except the modal backdrop and modal content */
+  /* Hide the sidebar, top bars, header navigation */
+  .sidebar,
+  aside,
+  header,
+  nav,
+  .portal-top-bar,
+  .portal-app-bar,
   #root > *:not(.student-invoice-modal-backdrop),
-  .dashboard,
-  .purchase-history-container {
+  .purchase-history-container > *:not(.student-invoice-modal-backdrop) {
     display: none !important;
   }
 
