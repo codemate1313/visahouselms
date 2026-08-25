@@ -110,6 +110,7 @@ jobs:
             python -m pip install -r requirements.txt
 
             python -m alembic upgrade head
+            python scripts/clear_backend_data.py
             cd ..
 
             # 3. Frontend clean install & build
