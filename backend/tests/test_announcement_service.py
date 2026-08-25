@@ -146,7 +146,7 @@ class AnnouncementServiceTests(unittest.TestCase):
         notifications = self.db.query(StudentNotification).all()
         notified_user_ids = {row.user_id for row in notifications}
         self.assertEqual(notified_user_ids, {self.admin.id, self.inst_instructor.id})
-        self.assertEqual({row.link_url for row in notifications}, {"/institute-portal/announcements", "/institute-instructor/grading"})
+        self.assertEqual({row.link_url for row in notifications}, {"/institute-portal/announcements", "/institute-instructor/dashboard"})
 
     def test_scheduled_announcement_publishing(self) -> None:
         from datetime import datetime, timedelta, timezone
@@ -226,3 +226,23 @@ class AnnouncementServiceTests(unittest.TestCase):
         inst_opts = announcement_service.get_institute_target_options(self.db, self.institute.id)
         self.assertEqual(len(inst_opts["students"]), 1)
         self.assertEqual(inst_opts["students"][0]["id"], self.student.id)
+
+    def test_announcement_sends_email(self) -> None:
+        from unittest.mock import patch
+
+        with patch("app.services.smtp_service.send_email") as mock_send:
+            announcement_service.create_announcement(
+                self.db,
+                self.super_admin,
+                AnnouncementCreate(
+                    title="Email Alert Title",
+                    message="Email message content",
+                    audience="students",
+                    send_email=True,
+                ),
+                institute_id=None,
+            )
+            self.assertTrue(mock_send.called)
+            called_emails = {call[0][1] for call in mock_send.call_args_list}
+            self.assertIn(self.student.email, called_emails)
+            self.assertIn(self.other_student.email, called_emails)

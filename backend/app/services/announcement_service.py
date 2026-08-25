@@ -55,6 +55,7 @@ def _out(item: Announcement) -> dict:
         "expires_at": item.expires_at,
         "target_institute_ids": _parse_ids(item.target_institute_ids),
         "target_user_ids": _parse_ids(item.target_user_ids),
+        "send_email": item.send_email,
         "created_at": item.created_at,
     }
 
@@ -75,6 +76,8 @@ def process_scheduled_announcements(db: Session) -> int:
         item.status = "published"
         item.published_at = item.scheduled_at or now
         _create_user_notifications(db, item)
+        if item.send_email:
+            _send_announcement_emails(db, item)
         count += 1
     if count > 0:
         db.commit()
@@ -158,6 +161,7 @@ def create_announcement(
         expires_at=payload.expires_at,
         target_institute_ids=target_inst_json,
         target_user_ids=target_user_json,
+        send_email=payload.send_email,
         created_by_id=actor.id,
     )
     db.add(item)
@@ -165,6 +169,8 @@ def create_announcement(
 
     if item.status == "published":
         _create_user_notifications(db, item)
+        if item.send_email:
+            _send_announcement_emails(db, item)
 
     db.commit()
     db.refresh(item)
@@ -285,3 +291,58 @@ def get_institute_target_options(db: Session, institute_id: int) -> dict:
             for u in students
         ],
     }
+
+
+def _send_announcement_emails(db: Session, item: Announcement) -> None:
+    target_insts = _parse_ids(item.target_institute_ids)
+    target_users = _parse_ids(item.target_user_ids)
+
+    query = (
+        db.query(User)
+        .join(User.role)
+        .filter(
+            Role.name.in_(_audience_roles(item.audience)),
+            User.deleted_at.is_(None),
+            User.is_active.is_(True),
+        )
+    )
+
+    if item.institute_id is not None:
+        query = query.filter(User.institute_id == item.institute_id)
+    elif target_insts:
+        query = query.filter(User.institute_id.in_(target_insts))
+
+    if target_users:
+        query = query.filter(User.id.in_(target_users))
+
+    users = query.all()
+
+    from app.services import email_template_service, smtp_service
+
+    for user in users:
+        if not user.email:
+            continue
+        try:
+            subject = f"Notification: {item.title}"
+            plain = f"{item.title}\n\n{item.message}"
+            
+            formatted_message_html = "".join(
+                f'<p style="font-size: 15px; color: #334155; line-height: 1.7; margin: 0 0 16px 0;">{paragraph}</p>'
+                for paragraph in item.message.split("\n")
+                if paragraph.strip()
+            )
+            
+            html = email_template_service.render_base_email(
+                badge_label="NOTIFICATION",
+                title=item.title,
+                subtitle="Important Platform Announcement",
+                content_html=formatted_message_html,
+                badge_color="#b91c2b",
+            )
+            
+            smtp_service.send_email(db, user.email, subject, plain, html_body=html)
+        except Exception as exc:
+            logger.warning("Announcement email to %s failed: %s", user.email, exc)
+            notification_service.record_send_failure(
+                db, f"Announcement email to {user.email} failed: {exc}", user_id=user.id
+            )

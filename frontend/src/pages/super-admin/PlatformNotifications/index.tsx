@@ -22,6 +22,7 @@ export function PlatformNotifications() {
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [status, setStatus] = useState<NotificationStatus>("published");
   const [scheduledAt, setScheduledAt] = useState("");
+  const [sendEmail, setSendEmail] = useState(false);
 
   const [instituteSearch, setInstituteSearch] = useState("");
   const [studentSearch, setStudentSearch] = useState("");
@@ -183,6 +184,7 @@ export function PlatformNotifications() {
       scheduled_at: status === "scheduled" && scheduledAt ? new Date(scheduledAt).toISOString() : null,
       target_institute_ids: selectedAudiences.includes("institutes") ? selectedInstituteIds : [],
       target_user_ids: selectedAudiences.includes("specific_students") ? selectedUserIds : [],
+      send_email: sendEmail,
     };
 
     try {
@@ -194,6 +196,7 @@ export function PlatformNotifications() {
       setSelectedUserIds([]);
       setStatus("published");
       setScheduledAt("");
+      setSendEmail(false);
       setIsPublisherOpen(false);
       await loadData();
     } catch {
@@ -291,6 +294,8 @@ export function PlatformNotifications() {
           onStatusChange={setStatus}
           scheduledAt={scheduledAt}
           onScheduledAtChange={setScheduledAt}
+          sendEmail={sendEmail}
+          onSendEmailChange={setSendEmail}
           busy={busy}
           onSubmit={(event) => void publish(event)}
           showHeader={false}

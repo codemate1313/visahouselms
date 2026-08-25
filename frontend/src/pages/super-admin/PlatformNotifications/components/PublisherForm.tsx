@@ -33,6 +33,8 @@ interface PublisherFormProps {
   onStatusChange: (status: NotificationStatus) => void;
   scheduledAt: string;
   onScheduledAtChange: (value: string) => void;
+  sendEmail: boolean;
+  onSendEmailChange: (value: boolean) => void;
   busy: boolean;
   onSubmit: (event: FormEvent) => void;
   showHeader?: boolean;
@@ -63,6 +65,8 @@ export function PublisherForm({
   onStatusChange,
   scheduledAt,
   onScheduledAtChange,
+  sendEmail,
+  onSendEmailChange,
   busy,
   onSubmit,
   showHeader = true,
@@ -145,6 +149,34 @@ export function PublisherForm({
         <div className="pn-form-group">
           <label>{t.timingLabel}</label>
           <TimingControl status={status} onStatusChange={onStatusChange} scheduledAt={scheduledAt} onScheduledAtChange={onScheduledAtChange} />
+        </div>
+
+        <div className="pn-form-group" style={{ marginTop: 14, marginBottom: 18 }}>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              cursor: "pointer",
+              fontSize: "13px",
+              fontWeight: 600,
+              color: "var(--text-muted)",
+              userSelect: "none"
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={sendEmail}
+              onChange={(event) => onSendEmailChange(event.target.checked)}
+              style={{
+                width: "16px",
+                height: "16px",
+                accentColor: "var(--primary)",
+                cursor: "pointer"
+              }}
+            />
+            <span>Also send as email notification to targeted audience</span>
+          </label>
         </div>
 
         <button type="submit" className="pn-submit-btn" disabled={busy}>

@@ -13,5 +13,6 @@ class AnnouncementCreate(BaseModel):
     expires_at: Optional[datetime] = None
     target_institute_ids: Optional[list[int]] = None
     target_user_ids: Optional[list[int]] = None
+    send_email: Optional[bool] = False
 
 

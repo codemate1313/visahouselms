@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -42,6 +42,7 @@ class Announcement(Base):
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     target_institute_ids: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     target_user_ids: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    send_email: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="0")
     created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
 
