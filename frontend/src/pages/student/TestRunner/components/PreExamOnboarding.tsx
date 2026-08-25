@@ -464,26 +464,6 @@ export function PreExamOnboarding({
                   </div>
                 )}
 
-                {/* Instructor Directives */}
-                {attempt.parts.some((p) => p.instructions) && (
-                  <div className="onboarding-instructor-notes-box">
-                    <div className="notes-header">
-                      <Icon name="edit" />
-                      <span>Official Instructor Directives</span>
-                    </div>
-                    <div className="notes-body">
-                      {attempt.parts.map((p, idx) => (
-                        p.instructions ? (
-                          <div className="directive-item" key={p.id}>
-                            <span className="directive-tag">Part {idx + 1}</span>
-                            <p>{p.instructions}</p>
-                          </div>
-                        ) : null
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 <div className="onboarding-actions-row flex-end">
                   <Button variant="primary" size="lg" onClick={() => goToStep(2)} rightIcon={<Icon name="chevronDown" style={{ transform: "rotate(-90deg)" }} />}>
                     Proceed: Assessment Structure
@@ -501,15 +481,13 @@ export function PreExamOnboarding({
                   </div>
                   <div>
                     <h2>Assessment Architecture — {displayParts.length} {displayParts.length === 1 ? "Section" : "Sections"}</h2>
-                    <p className="header-subtitle">Comprehensive breakdown of section allocations, question volume, and formats</p>
+                    <p className="header-subtitle">Comprehensive breakdown of section allocations and question volume</p>
                   </div>
                 </div>
 
                 <div className="onboarding-parts-grid">
                   {displayParts.map((part, index) => {
                     const qCount = part.questions?.length || part.question_count || 0;
-                    const duration = part.duration_minutes || Math.round(totalDurationMinutes / displayParts.length);
-                    const percentShare = Math.round((duration / totalDurationMinutes) * 100);
 
                     return (
                       <div className="onboarding-part-card" key={part.id}>
@@ -518,12 +496,6 @@ export function PreExamOnboarding({
                           <div className="part-title-row">
                             <h3>Part {index + 1}: {part.title || `Section ${index + 1}`}</h3>
                             <span className="part-q-tag">{qCount} {qCount === 1 ? "Question" : "Questions"}</span>
-                          </div>
-                          <p className="part-desc">
-                            Format: <strong>{part.section_type ? part.section_type.toUpperCase() : "GENERAL"}</strong> · Target Allocation: ~{duration} Minutes
-                          </p>
-                          <div className="part-time-share-bar">
-                            <div className="part-time-share-fill" style={{ width: `${Math.max(10, percentShare)}%` }} />
                           </div>
                         </div>
                       </div>
