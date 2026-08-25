@@ -485,26 +485,80 @@
   background: #b91c1c;
 }
 
+/* Theme-based logo switches */
+.dark-only {
+  display: none !important;
+}
+.light-only {
+  display: block !important;
+}
+
+[data-theme="dark"] .dark-only {
+  display: block !important;
+}
+[data-theme="dark"] .light-only {
+  display: none !important;
+}
+
 /* Print Rules */
 @media print {
-  body * {
-    visibility: hidden;
+  @page {
+    size: auto;
+    margin: 0;
   }
-  .student-invoice-modal,
-  .student-invoice-modal * {
-    visibility: visible;
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
+
+  body {
+    padding: 2.5cm 2.5cm !important;
+  }
+
+  /* Hide everything except the modal backdrop and modal content */
+  #root > *:not(.student-invoice-modal-backdrop),
+  .dashboard,
+  .purchase-history-container {
+    display: none !important;
+  }
+
+  .student-invoice-modal-backdrop {
+    position: relative !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    display: block !important;
+    z-index: 99999 !important;
+  }
+
   .student-invoice-modal {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    max-width: 100%;
-    box-shadow: none;
+    position: relative !important;
+    max-height: none !important;
+    overflow: visible !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
   }
+
   .student-invoice-header,
   .student-invoice-footer {
     display: none !important;
+  }
+
+  /* Always force light logo when printing */
+  .dark-only {
+    display: none !important;
+  }
+  .light-only {
+    display: block !important;
   }
 }
 

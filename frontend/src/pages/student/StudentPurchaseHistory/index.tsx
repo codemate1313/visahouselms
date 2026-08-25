@@ -88,7 +88,7 @@ export function StudentPurchaseHistory() {
 
   async function loadLogoDataUrl(): Promise<string | null> {
     try {
-      const res = await fetch("/brand/vh-mark-96.png");
+      const res = await fetch("/brand/vh-mark-dark-96.png");
       const blob = await res.blob();
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -571,7 +571,8 @@ export function StudentPurchaseHistory() {
             <div className="student-invoice-body">
               <div className="invoice-brand-bar">
                 <div className="invoice-brand-left">
-                  <img src="/brand/vh-mark-96.png" alt="Visa House Logo" className="invoice-brand-logo" />
+                  <img src="/brand/vh-mark-dark-96.png" alt="Visa House Logo" className="invoice-brand-logo dark-only" />
+                  <img src="/brand/vh-mark-96.png" alt="Visa House Logo" className="invoice-brand-logo light-only" />
                   <div>
                     <div className="invoice-brand-title">{strings.invoiceModal.companyName}</div>
                     <div className="invoice-brand-tagline">{strings.invoiceModal.companyTagline}</div>
