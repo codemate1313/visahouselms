@@ -507,50 +507,97 @@
     margin: 0;
   }
 
-  html, body {
+  html,
+  body {
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
     background: #ffffff !important;
-    color: #000000 !important;
+    color: #0f172a !important;
     margin: 0 !important;
     padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   body {
     padding: 2.5cm 2.5cm !important;
   }
 
-  /* Hide the sidebar, top bars, header navigation */
+  /* Reset outer layout elements so they don't clip height or restrict overflow in print */
+  #root,
+  .dashboard,
+  .student-portal,
+  .dashboard-content,
+  .student-dashboard-content,
+  .gsap-route-scope,
+  .purchase-history-container {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    position: relative !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Hide the sidebar, top bars, and header/navigation */
   .sidebar,
   aside,
   header,
   nav,
   .portal-top-bar,
-  .portal-app-bar,
-  #root > *:not(.student-invoice-modal-backdrop),
+  .portal-app-bar {
+    display: none !important;
+  }
+
+  /* Hide all siblings of the modal backdrop inside the purchase history container */
   .purchase-history-container > *:not(.student-invoice-modal-backdrop) {
     display: none !important;
   }
 
   .student-invoice-modal-backdrop {
     position: relative !important;
-    background: transparent !important;
-    backdrop-filter: none !important;
-    padding: 0 !important;
+    inset: auto !important;
     display: block !important;
-    z-index: 99999 !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    z-index: auto !important;
   }
 
   .student-invoice-modal {
-    position: relative !important;
-    max-height: none !important;
-    overflow: visible !important;
-    left: 0 !important;
-    top: 0 !important;
+    position: static !important;
+    display: block !important;
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
     box-shadow: none !important;
-    border: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
     background: #ffffff !important;
-    color: #000000 !important;
+    color: #0f172a !important;
+  }
+
+  .student-invoice-body {
+    display: block !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt !important;
   }
 
   .student-invoice-header,
@@ -558,10 +605,49 @@
     display: none !important;
   }
 
+  .invoice-brand-bar,
+  .invoice-meta-grid,
+  .invoice-summary-box,
+  .ui-token-panel-success {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .invoice-brand-title,
+  .invoice-summary-row.total,
+  .invoice-meta-block p,
+  .invoice-table td {
+    color: #0f172a !important;
+  }
+
+  .invoice-brand-tagline,
+  .invoice-meta-block label,
+  .invoice-table th,
+  .invoice-summary-row {
+    color: #475569 !important;
+  }
+
+  .invoice-meta-grid,
+  .invoice-table th,
+  .invoice-summary-box,
+  .ui-token-panel-success {
+    background: #f8fafc !important;
+  }
+
+  .invoice-table,
+  .invoice-table th,
+  .invoice-table td,
+  .invoice-meta-grid,
+  .invoice-summary-box,
+  .ui-token-panel-success {
+    border-color: #cbd5e1 !important;
+  }
+
   /* Always force light logo when printing */
   .dark-only {
     display: none !important;
   }
+
   .light-only {
     display: block !important;
   }
