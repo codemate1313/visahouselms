@@ -8,8 +8,8 @@ the reset email goes out and cleared the moment the token is redeemed, and a
 new "forgot password" request overwrites it rather than adding to it - so
 requesting a fresh link also silently kills any earlier unused one.
 
-Revision ID: 0092
-Revises: 0091
+Revision ID: 0093
+Revises: 0092
 Create Date: 2026-08-25
 
 """
@@ -17,8 +17,8 @@ from alembic import op
 # pyrefly: ignore [missing-import]
 import sqlalchemy as sa
 
-revision = "0092"
-down_revision = "0091"
+revision = "0093"
+down_revision = "0092"
 branch_labels = None
 depends_on = None
 
