@@ -17,6 +17,7 @@ jobs:
         env:
           DEPLOY_HOST: ${{ secrets.VPS_HOST || secrets.VPS_IP }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          DEVELOPER_ACCESS_SLUG: ${{ secrets.DEVELOPER_ACCESS_SLUG }}
         run: |
           if [ -z "$SSH_PRIVATE_KEY" ]; then
             echo "❌ Error: SSH_PRIVATE_KEY secret is not configured"
@@ -28,6 +29,11 @@ jobs:
             echo "Please add VPS_HOST, or keep the existing VPS_IP repository secret"
             exit 1
           fi
+          if [ -z "$DEVELOPER_ACCESS_SLUG" ]; then
+            echo "❌ Error: DEVELOPER_ACCESS_SLUG secret is not configured"
+            echo "Please add DEVELOPER_ACCESS_SLUG to repository secrets"
+            exit 1
+          fi
           echo "✅ All required secrets are configured"
 
       - name: Deploy to Hostinger VPS via SSH with Retry
@@ -35,6 +41,7 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST || secrets.VPS_IP }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          DEVELOPER_ACCESS_SLUG: ${{ secrets.DEVELOPER_ACCESS_SLUG }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
@@ -92,6 +99,10 @@ jobs:
             source .venv/bin/activate
             python -m pip install --upgrade pip
             python -m pip install -r requirements.txt
+            
+            # Export DEVELOPER_ACCESS_SLUG for the deployment environment
+            export DEVELOPER_ACCESS_SLUG="${DEVELOPER_ACCESS_SLUG}"
+            
             python -m alembic upgrade head
             cd ..
 
@@ -129,7 +140,7 @@ jobs:
             systemctl reload nginx
 
             echo "✨ Deployment successful!"
-          EOF
+EOF
             then
               echo "✅ SSH Deployment completed successfully."
               exit 0
