@@ -30,7 +30,7 @@
 }
 
 .ui-input::placeholder {
-  color: var(--slate-400, #94a3b8);
+  color: var(--slate-400, #a1a1aa);
   opacity: 1;
 }
 
@@ -46,7 +46,7 @@
 [data-theme="dark"] .ui-input {
   background: rgba(255, 255, 255, 0.055);
   border-color: rgba(255, 255, 255, 0.16);
-  color: #f7f7fa;
+  color: #f7f7f8;
 }
 
 [data-theme="dark"] .ui-input:focus {

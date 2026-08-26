@@ -69,13 +69,13 @@
   --blue-500: #3b82f6;
   --shade-8b5cf6: #8b5cf6;
   --purple-500: #8b5cf6;
-  --slate-100: #f1f5f9;
-  --slate-200: #e2e8f0;
-  --slate-300: #cbd5e1;
-  --slate-400: #94a3b8;
-  --slate-500: #64748b;
-  --slate-700: #334155;
-  --slate-900: #0f172a;
+  --slate-100: #f4f4f5;
+  --slate-200: #e4e4e7;
+  --slate-300: #d4d4d8;
+  --slate-400: #a1a1aa;
+  --slate-500: #71717a;
+  --slate-700: #3f3f46;
+  --slate-900: #0f0f14;
 
   /* Extended red/rose scale used by decorative gradients across the app.
      Kept as a named scale (not collapsed into --primary/--danger) because
@@ -107,8 +107,8 @@
   --sidebar-bg: #ffffff;
   --sidebar-border: #f0f0f4;
   --sidebar-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-  --sidebar-text: #4b5563;
-  --sidebar-text-dark: #111827;
+  --sidebar-text: #52525b;
+  --sidebar-text-dark: #111116;
   --sidebar-text-muted: #8e8e93;
   --sidebar-active-bg: #fee2e2;
   --sidebar-active-text: #dc2626;
@@ -154,8 +154,8 @@
 /* Cross-browser placeholder styling (valid selectors only) */
 input::placeholder,
 textarea::placeholder {
-  color: var(--slate-400, #94a3b8) !important;
-  -webkit-text-fill-color: var(--slate-400, #94a3b8) !important;
+  color: var(--slate-400, #a1a1aa) !important;
+  -webkit-text-fill-color: var(--slate-400, #a1a1aa) !important;
   opacity: 1 !important;
   transition: opacity 0.15s ease, color 0.15s ease;
 }
@@ -170,8 +170,8 @@ textarea::placeholder {
 /* WebKit / Chrome */
 input::-webkit-input-placeholder,
 textarea::-webkit-input-placeholder {
-  color: var(--slate-400, #94a3b8) !important;
-  -webkit-text-fill-color: var(--slate-400, #94a3b8) !important;
+  color: var(--slate-400, #a1a1aa) !important;
+  -webkit-text-fill-color: var(--slate-400, #a1a1aa) !important;
   opacity: 1 !important;
 }
 
@@ -185,7 +185,7 @@ textarea::-webkit-input-placeholder {
 /* Firefox */
 input::-moz-placeholder,
 textarea::-moz-placeholder {
-  color: var(--slate-400, #94a3b8) !important;
+  color: var(--slate-400, #a1a1aa) !important;
   opacity: 1 !important;
 }
 
@@ -221,7 +221,7 @@ textarea:focus::-moz-placeholder,
 [data-theme="dark"] h2,
 [data-theme="dark"] h3,
 [data-theme="dark"] h4 {
-  color: #f7f7fa;
+  color: #f7f7f8;
 }
 
 /* Shared surfaces in dark mode */
@@ -265,7 +265,7 @@ textarea:focus::-moz-placeholder,
   background: rgba(22, 22, 27, 0.88) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.42) !important;
-  color: #f3f4f6 !important;
+  color: #f4f4f5 !important;
 }
 
 [data-theme="dark"] .course-tree-children,
@@ -277,12 +277,12 @@ textarea:focus::-moz-placeholder,
 [data-theme="dark"] .instructor-chevron-toggle {
   background: rgba(255, 255, 255, 0.05) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
-  color: #f3f4f6 !important;
+  color: #f4f4f5 !important;
 }
 
 [data-theme="dark"] .instructor-summary-bar {
   background: transparent !important;
-  color: #f3f4f6 !important;
+  color: #f4f4f5 !important;
 }
 
 [data-theme="dark"] .page-header h1,
@@ -290,7 +290,7 @@ textarea:focus::-moz-placeholder,
 [data-theme="dark"] .course-card-title,
 [data-theme="dark"] .collapsible-panel-title,
 [data-theme="dark"] .fact-value {
-  color: #f7f7fa !important;
+  color: #f7f7f8 !important;
 }
 
 [data-theme="dark"] .page-subtitle,
@@ -332,8 +332,8 @@ textarea:focus::-moz-placeholder,
   --bg: #0d0e12;
   --surface: #16161a;
   --surface-muted: #1f1f24;
-  --text: #f3f4f6;
-  --text-muted: #9ca3af;
+  --text: #f4f4f5;
+  --text-muted: #a1a1aa;
   --border: rgba(255, 255, 255, 0.18);
   --info: #93c5fd;
   --nav-bg: rgba(22, 22, 26, 0.92);

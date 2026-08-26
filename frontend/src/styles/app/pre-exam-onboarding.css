@@ -88,7 +88,7 @@
 }
 
 [data-theme="dark"] .onboarding-sidebar {
-  background: #101522;
+  background: #101014;
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -111,7 +111,7 @@
 }
 
 [data-theme="dark"] .sidebar-hero-card {
-  background: #101522 !important;
+  background: #101014 !important;
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
@@ -182,7 +182,7 @@
 [data-theme="dark"] .sidebar-meta-item {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.08);
-  color: #f1f5f9;
+  color: #f4f4f5;
 }
 
 .sidebar-meta-item svg {
@@ -236,7 +236,7 @@
 [data-theme="dark"] .onboarding-sidebar .ui-stepper-indicator {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.12);
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 [data-theme="dark"] .onboarding-sidebar .ui-stepper-indicator[data-state="active"] {
@@ -254,11 +254,11 @@
 }
 
 [data-theme="dark"] .onboarding-sidebar .ui-stepper-title {
-  color: #f1f5f9;
+  color: #f4f4f5;
 }
 
 [data-theme="dark"] .onboarding-sidebar .ui-stepper-description {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 [data-theme="dark"] .onboarding-sidebar .ui-stepper-separator {
@@ -295,7 +295,7 @@
 }
 
 [data-theme="dark"] .stage-top-header {
-  background: rgba(17, 24, 39, 0.75);
+  background: rgba(17, 17, 22, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -350,7 +350,7 @@
 }
 
 [data-theme="dark"] .stage-percent-text {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 /* Active Stage Card Body */
@@ -363,7 +363,7 @@
 }
 
 [data-theme="dark"] .onboarding-card-body {
-  background: #101522;
+  background: #101014;
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -435,7 +435,7 @@
 }
 
 [data-theme="dark"] .header-subtitle {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 /* ==========================================================================
@@ -576,7 +576,7 @@
 }
 
 [data-theme="dark"] .rule-text {
-  color: #cbd5e1;
+  color: #d4d4d8;
 }
 
 .rule-text strong {
@@ -603,7 +603,7 @@
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--pre-exam-primary) 8%, transparent) 0%,
-    rgba(15, 23, 42, 0.65) 100%
+    rgba(0, 0, 0, 0.65) 100%
   );
   border: 1px solid var(--pre-exam-primary-border);
   border-radius: 20px;
@@ -665,7 +665,7 @@
 }
 
 [data-theme="dark"] .directive-item p {
-  color: #e2e8f0;
+  color: #e4e4e7;
 }
 
 /* ==========================================================================
@@ -761,7 +761,7 @@
 }
 
 [data-theme="dark"] .part-desc {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 .part-q-tag {
@@ -821,7 +821,7 @@
 
 [data-theme="dark"] .onboarding-summary-banner {
   background: rgba(255, 255, 255, 0.035);
-  color: #cbd5e1;
+  color: #d4d4d8;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -900,7 +900,7 @@
 }
 
 [data-theme="dark"] .equipment-info p {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 .equipment-status-badge {
@@ -993,7 +993,7 @@
 }
 
 [data-theme="dark"] .mic-tester-hint {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 .onboarding-test-mic-btn {
@@ -1125,7 +1125,7 @@
 }
 
 [data-theme="dark"] .mic-audibility-question {
-  color: #f1f5f9;
+  color: #f4f4f5;
 }
 
 .mic-audibility-actions {
@@ -1276,7 +1276,7 @@
 }
 
 [data-theme="dark"] .onboarding-ready-desc {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 .onboarding-stat-summary-row {
@@ -1322,7 +1322,7 @@
 }
 
 [data-theme="dark"] .stat-box span {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 .onboarding-consent-card {
@@ -1348,7 +1348,7 @@
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--pre-exam-primary) 8%, transparent) 0%,
-    rgba(15, 23, 42, 0.65) 100%
+    rgba(0, 0, 0, 0.65) 100%
   );
   border: 1px solid var(--pre-exam-primary-border);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
@@ -1374,7 +1374,7 @@
 }
 
 [data-theme="dark"] .onboarding-consent-card span {
-  color: #e2e8f0;
+  color: #e4e4e7;
 }
 
 .onboarding-security-error {

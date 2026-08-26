@@ -722,14 +722,15 @@ export function SupportCenter() {
       <Modal
         open={isChatOpen && Boolean(selectedTicket)}
         onClose={() => setIsChatOpen(false)}
+        className="support-chat-modal"
         size="lg"
         title={
           selectedTicket ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <div className="support-chat-titlebar" style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
               <span className="support-ticket-id" style={{ fontSize: "0.85rem", padding: "4px 10px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.08)", border: "1px solid var(--border)" }}>
                 #{selectedTicket.id}
               </span>
-              <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>
+              <span className="support-chat-title" style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>
                 {selectedTicket.subject}
               </span>
               <Badge tone={statusTone(selectedTicket.status)}>{label(selectedTicket.status)}</Badge>
@@ -738,6 +739,7 @@ export function SupportCenter() {
                 <Button
                   size="sm"
                   variant="secondary"
+                  className="support-chat-secondary-btn"
                   leftIcon={<Icon name="check" />}
                   loading={saving}
                   onClick={() => void handleCloseTicket()}
@@ -748,6 +750,7 @@ export function SupportCenter() {
                 <Button
                   size="sm"
                   variant="secondary"
+                  className="support-chat-secondary-btn"
                   leftIcon={<Icon name="restore" />}
                   loading={saving}
                   onClick={() => void handleReopenTicket()}
@@ -762,9 +765,10 @@ export function SupportCenter() {
         }
       >
         {selectedTicket && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div className="support-chat-thread" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {/* Top Bar: Support Routing Card */}
             <div
+              className="support-chat-routing-card"
               style={{
                 padding: "12px 16px",
                 borderRadius: "14px",
@@ -810,6 +814,7 @@ export function SupportCenter() {
             {/* Messenger Chat Thread Stream */}
             <div
               ref={chatStreamRef}
+              className="support-chat-stream"
               style={{
                 height: "360px",
                 overflowY: "auto",
@@ -829,6 +834,7 @@ export function SupportCenter() {
                   return (
                     <div
                       key={msg.id || idx}
+                      className={`support-chat-message ${isAdmin ? "is-admin" : "is-customer"}`}
                       style={{
                         alignSelf: isAdmin ? "flex-start" : "flex-end",
                         maxWidth: "82%",
@@ -837,8 +843,9 @@ export function SupportCenter() {
                         alignItems: isAdmin ? "flex-start" : "flex-end",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                      <div className="support-chat-message-meta" style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
                         <span
+                          className="support-chat-sender"
                           style={{
                             fontSize: "0.75rem",
                             fontWeight: 700,
@@ -852,6 +859,7 @@ export function SupportCenter() {
                         </span>
                       </div>
                       <div
+                        className={`support-chat-bubble ${isAdmin ? "is-admin" : "is-customer"}`}
                         style={{
                           background: isAdmin
                             ? "var(--surface)"
@@ -883,11 +891,12 @@ export function SupportCenter() {
               ) : (
                 <>
                   <div style={{ alignSelf: "flex-end", maxWidth: "80%" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text)" }}>You</span>
+                    <div className="support-chat-message-meta" style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                      <span className="support-chat-sender" style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text)" }}>You</span>
                       <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{formatDate(selectedTicket.created_at)}</span>
                     </div>
                     <div
+                      className="support-chat-bubble is-customer"
                       style={{
                         background: "var(--primary, #b91c2b)",
                         color: "#ffffff",
@@ -904,10 +913,11 @@ export function SupportCenter() {
 
                   {selectedTicket.admin_note && (
                     <div style={{ alignSelf: "flex-start", maxWidth: "80%" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                        <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--primary, #b91c2b)" }}>Support Response</span>
+                      <div className="support-chat-message-meta" style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                        <span className="support-chat-sender is-support" style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--primary, #b91c2b)" }}>Support Response</span>
                       </div>
                       <div
+                        className="support-chat-bubble is-admin"
                         style={{
                           background: "rgba(255, 255, 255, 0.08)",
                           color: "var(--text)",
@@ -953,6 +963,7 @@ export function SupportCenter() {
                     type="button"
                     variant="secondary"
                     size="sm"
+                    className="support-chat-secondary-btn"
                     leftIcon={<Icon name="restore" />}
                     loading={saving}
                     onClick={() => void handleReopenTicket()}
@@ -1020,6 +1031,7 @@ export function SupportCenter() {
                         type="button"
                         variant="secondary"
                         size="sm"
+                        className="support-chat-secondary-btn"
                         leftIcon={<Icon name="check" />}
                         loading={saving}
                         onClick={() => void handleCloseTicket()}
@@ -1029,6 +1041,7 @@ export function SupportCenter() {
                     )}
                     <button
                       type="button"
+                      className="support-chat-attach-btn"
                       title="Attach files (images, PDF, Word, Excel — max 5, 10MB each)"
                       onClick={() => fileInputRef.current?.click()}
                       style={{
@@ -1050,7 +1063,7 @@ export function SupportCenter() {
                       <Icon name="download" style={{ width: "15px", height: "15px", transform: "rotate(180deg)" }} />
                       <span>Attach</span>
                       {attachedFiles.length > 0 && (
-                        <span style={{ fontSize: "0.725rem", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", background: "var(--primary, #b91c2b)", color: "var(--white)" }}>
+                        <span className="support-chat-attachment-count" style={{ fontSize: "0.725rem", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", background: "var(--primary, #b91c2b)", color: "#ffffff" }}>
                           {attachedFiles.length}
                         </span>
                       )}
@@ -1059,6 +1072,7 @@ export function SupportCenter() {
                   <Button
                     type="submit"
                     size="sm"
+                    className="support-chat-send-btn"
                     loading={sendingMessage}
                     disabled={!replyText.trim() && attachedFiles.length === 0}
                     leftIcon={<Icon name="arrowRight" />}

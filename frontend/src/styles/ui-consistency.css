@@ -13,7 +13,7 @@
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(15, 23, 42, 0.48);
+  background: rgba(17, 17, 19, 0.48);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -428,12 +428,12 @@ button.danger-text:disabled {
   [style*="background-color: #fff"],
   [style*="background: #fafafa"],
   [style*="background-color: #fafafa"],
-  [style*="background: #f8fafc"],
-  [style*="background-color: #f8fafc"],
-  [style*="background: #f1f5f9"],
-  [style*="background-color: #f1f5f9"],
-  [style*="background: #f3f4f6"],
-  [style*="background-color: #f3f4f6"]
+  [style*="background: #fafafa"],
+  [style*="background-color: #fafafa"],
+  [style*="background: #f4f4f5"],
+  [style*="background-color: #f4f4f5"],
+  [style*="background: #f4f4f5"],
+  [style*="background-color: #f4f4f5"]
 ) {
   background: var(--surface-muted) !important;
   background-color: var(--surface-muted) !important;
@@ -474,31 +474,31 @@ button.danger-text:disabled {
 }
 
 [data-theme="dark"] :where(.dashboard, .student-layout, .login-page-container, .modal-backdrop, .logout-modal-backdrop, .student-invoice-modal-backdrop, .ui-modal-backdrop) :where(
-  [style*="color: #0f172a"],
-  [style*="color: #111827"],
-  [style*="color: #1e293b"],
-  [style*="color: #334155"]
+  [style*="color: #111113"],
+  [style*="color: #111116"],
+  [style*="color: #1c1c1f"],
+  [style*="color: #3f3f46"]
 ) {
   color: var(--text) !important;
 }
 
 [data-theme="dark"] :where(.dashboard, .student-layout, .login-page-container, .modal-backdrop, .logout-modal-backdrop, .student-invoice-modal-backdrop, .ui-modal-backdrop) :where(
-  [style*="color: #64748b"],
-  [style*="color: #475569"],
-  [style*="color: #94a3b8"]
+  [style*="color: #6e6e73"],
+  [style*="color: #52525b"],
+  [style*="color: #a1a1aa"]
 ) {
   color: var(--text-muted) !important;
 }
 
 [data-theme="dark"] :where(.dashboard, .student-layout, .login-page-container, .modal-backdrop, .logout-modal-backdrop, .student-invoice-modal-backdrop, .ui-modal-backdrop) :where(
-  [style*="border: 1px solid #f1f5f9"],
+  [style*="border: 1px solid #f4f4f5"],
   [style*="border: 1px solid #f0f0f0"],
-  [style*="border: 1px solid #e2e8f0"],
-  [style*="border: 1px solid #cbd5e1"],
-  [style*="border-color: #f1f5f9"],
+  [style*="border: 1px solid #e4e4e7"],
+  [style*="border: 1px solid #d4d4d8"],
+  [style*="border-color: #f4f4f5"],
   [style*="border-color: #f0f0f0"],
-  [style*="border-color: #e2e8f0"],
-  [style*="border-color: #cbd5e1"]
+  [style*="border-color: #e4e4e7"],
+  [style*="border-color: #d4d4d8"]
 ) {
   border-color: var(--border) !important;
 }
@@ -509,10 +509,10 @@ button.danger-text:disabled {
   [data-theme="dark"] .student-invoice-body,
   [data-theme="dark"] .student-invoice-modal-backdrop :where(*) {
     --surface: #ffffff !important;
-    --surface-muted: #f8fafc !important;
-    --text: #0f172a !important;
-    --text-muted: #475569 !important;
-    --border: #cbd5e1 !important;
+    --surface-muted: #fafafa !important;
+    --text: #0f0f14 !important;
+    --text-muted: #52525b !important;
+    --border: #d4d4d8 !important;
     --background: #ffffff !important;
   }
 
@@ -520,7 +520,7 @@ button.danger-text:disabled {
   [data-theme="dark"] .student-invoice-modal,
   [data-theme="dark"] .student-invoice-body {
     background-color: #ffffff !important;
-    color: #0f172a !important;
+    color: #0f0f14 !important;
     box-shadow: none !important;
   }
 
@@ -535,15 +535,15 @@ button.danger-text:disabled {
     [style*="background-color: #fff"],
     [style*="background: #fafafa"],
     [style*="background-color: #fafafa"],
-    [style*="background: #f8fafc"],
-    [style*="background-color: #f8fafc"],
-    [style*="background: #f1f5f9"],
-    [style*="background-color: #f1f5f9"],
-    [style*="background: #f3f4f6"],
-    [style*="background-color: #f3f4f6"]
+    [style*="background: #fafafa"],
+    [style*="background-color: #fafafa"],
+    [style*="background: #f4f4f5"],
+    [style*="background-color: #f4f4f5"],
+    [style*="background: #f4f4f5"],
+    [style*="background-color: #f4f4f5"]
   ) {
-    background: #f8fafc !important;
-    background-color: #f8fafc !important;
+    background: #fafafa !important;
+    background-color: #fafafa !important;
   }
 
   [data-theme="dark"] .student-invoice-modal-backdrop :where(
@@ -551,12 +551,12 @@ button.danger-text:disabled {
     .invoice-summary-row.total,
     .invoice-meta-block p,
     .invoice-table td,
-    [style*="color: #0f172a"],
-    [style*="color: #111827"],
-    [style*="color: #1e293b"],
-    [style*="color: #334155"]
+    [style*="color: #111113"],
+    [style*="color: #111116"],
+    [style*="color: #1c1c1f"],
+    [style*="color: #3f3f46"]
   ) {
-    color: #0f172a !important;
+    color: #0f0f14 !important;
   }
 
   [data-theme="dark"] .student-invoice-modal-backdrop :where(
@@ -564,11 +564,11 @@ button.danger-text:disabled {
     .invoice-meta-block label,
     .invoice-table th,
     .invoice-summary-row,
-    [style*="color: #64748b"],
-    [style*="color: #475569"],
-    [style*="color: #94a3b8"]
+    [style*="color: #6e6e73"],
+    [style*="color: #52525b"],
+    [style*="color: #a1a1aa"]
   ) {
-    color: #475569 !important;
+    color: #52525b !important;
   }
 
   [data-theme="dark"] .student-invoice-modal-backdrop :where(
@@ -578,16 +578,16 @@ button.danger-text:disabled {
     .invoice-meta-grid,
     .invoice-summary-box,
     .ui-token-panel-success,
-    [style*="border: 1px solid #f1f5f9"],
+    [style*="border: 1px solid #f4f4f5"],
     [style*="border: 1px solid #f0f0f0"],
-    [style*="border: 1px solid #e2e8f0"],
-    [style*="border: 1px solid #cbd5e1"],
-    [style*="border-color: #f1f5f9"],
+    [style*="border: 1px solid #e4e4e7"],
+    [style*="border: 1px solid #d4d4d8"],
+    [style*="border-color: #f4f4f5"],
     [style*="border-color: #f0f0f0"],
-    [style*="border-color: #e2e8f0"],
-    [style*="border-color: #cbd5e1"]
+    [style*="border-color: #e4e4e7"],
+    [style*="border-color: #d4d4d8"]
   ) {
-    border-color: #cbd5e1 !important;
+    border-color: #d4d4d8 !important;
   }
 
   [data-theme="dark"] .student-invoice-modal-backdrop .dark-only {
@@ -653,9 +653,9 @@ html {
   justify-content: center;
   padding: 0;
   border-radius: 8px;
-  background: var(--surface-muted, #f8fafc);
-  color: var(--text-muted, #64748b);
-  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface-muted, #fafafa);
+  color: var(--text-muted, #6e6e73);
+  border: 1px solid var(--border, #e4e4e7);
   box-shadow: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -670,7 +670,7 @@ html {
 .action-btn-icon:hover:not(:disabled) {
   background: var(--primary-soft, rgba(225, 29, 46, 0.08));
   color: var(--primary, #e11d2e) !important;
-  border-color: color-mix(in srgb, var(--primary, #e11d2e) 30%, var(--border, #e2e8f0));
+  border-color: color-mix(in srgb, var(--primary, #e11d2e) 30%, var(--border, #e4e4e7));
 }
 
 .action-btn-icon:hover:not(:disabled) svg,
@@ -1114,7 +1114,7 @@ html {
 .premium-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(17, 17, 19, 0.4);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 99999;
@@ -1137,7 +1137,7 @@ html {
   padding: 32px;
   background: var(--surface);
   border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 25px 50px -12px rgba(17, 17, 19, 0.25), 0 0 0 1px rgba(17, 17, 19, 0.05);
   display: flex;
   flex-direction: column;
   animation: premiumScaleUp 350ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -1201,7 +1201,7 @@ html {
 .premium-modal-description {
   margin: 0;
   font-size: 14.5px;
-  color: #64748b;
+  color: #6e6e73;
   line-height: 1.6;
 }
 
@@ -1242,17 +1242,17 @@ html {
 }
 
 .premium-modal-btn.confirm-btn {
-  background: #0f172a;
+  background: #0f0f14;
   color: #ffffff;
-  border: 1px solid #0f172a;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  border: 1px solid #0f0f14;
+  box-shadow: 0 4px 12px rgba(17, 17, 19, 0.15);
 }
 
 .premium-modal-btn.confirm-btn:hover {
-  background: #1e293b;
-  border-color: #1e293b;
+  background: #27272e;
+  border-color: #27272e;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 6px 16px rgba(17, 17, 19, 0.2);
 }
 
 .premium-modal-btn.confirm-btn.btn-danger {
@@ -1318,7 +1318,7 @@ html {
 }
 
 .premium-textarea::placeholder {
-  color: var(--text-muted, #94a3b8);
+  color: var(--text-muted, #a1a1aa);
   opacity: 1;
 }
 
@@ -1404,4 +1404,67 @@ body:not([data-theme="dark"]) .select-option-item:hover,
 body:not([data-theme="dark"]) .select-option-item.is-highlighted,
 body:not([data-theme="dark"]) select:hover:not(:disabled) {
   color: #000000 !important;
+}
+
+/* ==========================================================================
+   Dark-mode chip legibility
+   --------------------------------------------------------------------------
+   Chips are drawn as a tinted wash of their own colour plus that colour as
+   text. That works on white; on a near-black surface the ink half stays at its
+   light-mode strength (`--danger` #b80f28, emerald-700, amber-700, ...) and
+   the label all but disappears against its own 10% fill. Each rule below hands
+   the label the light end of its ramp, the same tones the `.badge-*` dark
+   palette uses, and leaves the fill alone.
+
+   The list is not guesswork: every chip-shaped class in the stylesheets was
+   rendered on the dark dashboard surface and scored for contrast, and these
+   are the ones that came back under 3:1.
+   ========================================================================== */
+
+[data-theme="dark"] .ui-chip {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .ui-chip-danger,
+[data-theme="dark"] .badge-scheduled,
+[data-theme="dark"] .breakdown-share-badge,
+[data-theme="dark"] .onboarding-directive-badge,
+[data-theme="dark"] .pn-chip.is-active,
+[data-theme="dark"] .student-notification-unread-pill {
+  border-color: rgba(248, 113, 113, 0.34);
+  color: #fca5a5;
+  -webkit-text-fill-color: #fca5a5;
+}
+
+[data-theme="dark"] .ui-chip-success,
+[data-theme="dark"] .vh-gap-pill.is-present,
+[data-theme="dark"] .vh-readiness-status-badge.is-ready {
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #6ee7b7;
+  -webkit-text-fill-color: #6ee7b7;
+}
+
+[data-theme="dark"] .vh-checklist-tag,
+[data-theme="dark"] .vh-readiness-status-badge.needs-work {
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+  -webkit-text-fill-color: #fbbf24;
+}
+
+[data-theme="dark"] .badge-purple,
+[data-theme="dark"] .pill-purple {
+  border-color: rgba(167, 139, 250, 0.32);
+  background: rgba(139, 92, 246, 0.16);
+  color: #c4b5fd;
+  -webkit-text-fill-color: #c4b5fd;
+}
+
+/* Slate was the one chip whose *fill* also had to move: a blue-grey wash is
+   exactly the tint this pass is removing from the dashboards. */
+[data-theme="dark"] .pill-slate {
+  border-color: rgba(161, 161, 170, 0.28);
+  background: rgba(161, 161, 170, 0.14);
+  color: #d4d4d8;
+  -webkit-text-fill-color: #d4d4d8;
 }

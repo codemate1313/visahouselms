@@ -252,18 +252,18 @@
 
 .dev-badge-inactive {
   background: rgba(107, 114, 128, 0.08);
-  color: #6b7280;
+  color: #71717a;
   border: 1px solid rgba(107, 114, 128, 0.2);
 }
 
 .dev-badge-locked {
   background: rgba(107, 114, 128, 0.05);
-  color: #6b7280;
+  color: #71717a;
   border: 1px solid rgba(107, 114, 128, 0.15);
 }
 
 [data-theme="dark"] .developer-portal-container {
-  color: #f3f4f6;
+  color: #f4f4f5;
 }
 
 [data-theme="dark"] .dev-table-wrap,
@@ -275,15 +275,15 @@
 [data-theme="dark"] .dev-data-table th,
 [data-theme="dark"] .dev-data-table td {
   border-color: rgba(255, 255, 255, 0.1);
-  color: #f3f4f6;
+  color: #f4f4f5;
 }
 
 [data-theme="dark"] .developer-card h2 {
-  color: #f7f7fa;
+  color: #f7f7f8;
 }
 
 [data-theme="dark"] .developer-card .muted-text {
-  color: #a5adbb;
+  color: #afafb4;
 }
 
 @media (max-width: 720px) {

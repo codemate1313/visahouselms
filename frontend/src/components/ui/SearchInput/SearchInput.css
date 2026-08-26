@@ -14,7 +14,7 @@
   transform: translateY(-50%);
   width: 16px;
   height: 16px;
-  color: var(--slate-400, #94a3b8);
+  color: var(--slate-400, #a1a1aa);
   pointer-events: none;
   z-index: 2;
   display: flex;
@@ -59,7 +59,7 @@
   background: transparent !important;
   border: none !important;
   border-radius: 50% !important;
-  color: var(--slate-400, #94a3b8) !important;
+  color: var(--slate-400, #a1a1aa) !important;
   font-size: 14px !important;
   line-height: 1 !important;
   cursor: pointer !important;
@@ -71,7 +71,7 @@
 
 .ui-search-input .ui-search-input-clear:hover,
 .ui-search-input-clear:hover {
-  color: var(--text, #1e293b) !important;
+  color: var(--text, #1c1c1f) !important;
   background: rgba(0, 0, 0, 0.08) !important;
   box-shadow: none !important;
   transform: translateY(-50%) !important;
@@ -85,27 +85,27 @@
 [data-theme="dark"] .ui-search-input input {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.14);
-  color: #e2e8f0;
+  color: #e4e4e7;
 }
 
 [data-theme="dark"] .ui-search-input .ui-search-input-icon,
 [data-theme="dark"] .ui-search-input-icon {
-  color: #94a3b8 !important;
+  color: #a1a1aa !important;
   stroke: currentColor !important;
 }
 
 [data-theme="dark"] .ui-search-input input:focus {
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--primary);
-  color: #f7f7fa;
+  color: #f7f7f8;
 }
 
 [data-theme="dark"] .ui-search-input input:focus ~ .ui-search-input-icon {
-  color: #e2e8f0 !important;
+  color: #e4e4e7 !important;
 }
 
 [data-theme="dark"] .ui-search-input .ui-search-input-clear:hover,
 [data-theme="dark"] .ui-search-input-clear:hover {
   background: rgba(255, 255, 255, 0.12) !important;
-  color: #e2e8f0 !important;
+  color: #e4e4e7 !important;
 }

@@ -27,7 +27,7 @@
   html[data-theme],
   :root[data-theme][data-theme][data-theme] body {
     background: #ffffff !important;
-    color: #0f172a !important;
+    color: #111113 !important;
     /* Inherited by the whole tree, so document colour survives a print with
        "Background graphics" switched off. */
     -webkit-print-color-adjust: exact !important;
@@ -50,7 +50,7 @@
   :root[data-theme][data-theme][data-theme] body .page-content {
     background: #ffffff !important;
     background-image: none !important;
-    color: #0f172a !important;
+    color: #111113 !important;
     box-shadow: none !important;
     min-height: 0 !important;
     height: auto !important;

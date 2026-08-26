@@ -184,18 +184,18 @@ button.ui-btn-danger:hover:not(:disabled) {
 
 [data-theme="dark"] .ui-btn-secondary {
   background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
+  color: #e4e4e7;
   border-color: rgba(255, 255, 255, 0.14);
 }
 
 [data-theme="dark"] .ui-btn-secondary:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
-  color: #f7f7fa;
+  color: #f7f7f8;
   border-color: rgba(255, 255, 255, 0.18);
 }
 
 [data-theme="dark"] .ui-btn-ghost {
-  color: #e2e8f0;
+  color: #e4e4e7;
   border-color: rgba(255, 255, 255, 0.14);
 }
 

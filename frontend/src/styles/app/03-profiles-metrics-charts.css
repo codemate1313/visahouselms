@@ -93,9 +93,9 @@
   min-width: 0;
   overflow: hidden;
   background: var(--surface);
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e4e4e7;
   border-radius: 24px;
-  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 10px 30px -5px rgba(17, 17, 19, 0.05);
 }
 
 .role-profile-identity {
@@ -106,7 +106,7 @@
 
 .role-profile-cover-banner {
   height: 110px;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, var(--primary) 100%);
+  background: linear-gradient(135deg, #0f0f14 0%, #27272e 50%, var(--primary) 100%);
   position: relative;
   padding: 16px 20px;
   display: flex;
@@ -141,8 +141,8 @@
   height: 175px;
   border-radius: 24px;
   border: 4px solid #ffffff;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
-  background: #181924;
+  box-shadow: 0 12px 32px rgba(17, 17, 19, 0.16);
+  background: #18181d;
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -153,7 +153,7 @@
   height: 100%;
   object-fit: cover;
   object-position: center bottom;
-  background: #181924;
+  background: #18181d;
 }
 
 .role-profile-initials-badge {
@@ -170,7 +170,7 @@
 .role-profile-avatar-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(17, 17, 19, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -205,14 +205,14 @@
 
 .role-profile-summary h2 {
   margin: 0 0 4px;
-  color: #0f172a;
+  color: #111113;
   font-size: 20px;
   font-weight: 800;
 }
 
 .role-profile-email {
   margin: 0;
-  color: #64748b;
+  color: #6e6e73;
   font-size: 13.5px;
   font-weight: 500;
 }
@@ -220,7 +220,7 @@
 .role-profile-upload-zone {
   margin: 0 24px 24px;
   padding-top: 18px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #f4f4f5;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -235,13 +235,13 @@
 }
 
 .role-profile-photo-info strong {
-  color: #0f172a;
+  color: #111113;
   font-size: 13.5px;
   font-weight: 700;
 }
 
 .role-profile-photo-info span {
-  color: #64748b;
+  color: #6e6e73;
   font-size: 12px;
 }
 
@@ -252,9 +252,9 @@
   gap: 8px;
   padding: 10px 20px;
   background: var(--surface-muted);
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d4d4d8;
   border-radius: var(--radius-lg);
-  color: #1e293b;
+  color: #1c1c1f;
   font-size: 13px;
   font-weight: 650;
   cursor: pointer;
@@ -263,9 +263,9 @@
 }
 
 .role-profile-upload-button:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
-  color: #0f172a;
+  background: #f4f4f5;
+  border-color: #a1a1aa;
+  color: #111113;
 }
 
 .role-profile-upload-button svg {
@@ -307,7 +307,7 @@
 .role-profile-form label {
   display: block;
   margin-bottom: 8px;
-  color: #1e293b;
+  color: #1c1c1f;
   font-size: 13.5px;
   font-weight: 650;
 }
@@ -317,13 +317,13 @@
   min-height: 48px;
   padding: 0 16px;
   background: var(--surface);
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d4d4d8;
   border-radius: var(--radius-lg);
-  color: #0f172a;
+  color: #111113;
   font-size: 14px;
   font-weight: 500;
   transition: all 0.2s ease;
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.02);
+  box-shadow: inset 0 1px 2px rgba(17, 17, 19, 0.02);
 }
 
 .role-profile-form input:focus {
@@ -338,13 +338,13 @@
   min-height: 48px;
   padding: 0 16px;
   background: var(--surface);
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d4d4d8;
   border-radius: var(--radius-lg);
-  color: #0f172a;
+  color: #111113;
   font-size: 14px;
   font-weight: 500;
   transition: all 0.2s ease;
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.02);
+  box-shadow: inset 0 1px 2px rgba(17, 17, 19, 0.02);
 }
 
 .role-profile-form textarea {
@@ -362,7 +362,7 @@
 .role-profile-form .form-actions {
   margin-top: 8px;
   padding-top: 20px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #f4f4f5;
 }
 
 .role-profile-form .form-actions button {
@@ -579,7 +579,7 @@ button.secondary-button {
 
 
 .readonly-field {
-  background: #f8fafc;
+  background: #fafafa;
   color: var(--text-muted);
   cursor: default;
 }
@@ -620,9 +620,9 @@ button.secondary-button {
 .account-profile-panel,
 .account-form-panel {
   background: var(--surface);
-  border: 1px solid rgba(226, 232, 240, 0.92);
+  border: 1px solid rgba(228, 228, 231, 0.92);
   border-radius: 20px;
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.07);
+  box-shadow: 0 18px 44px rgba(17, 17, 19, 0.07);
 }
 
 .account-profile-panel {
@@ -631,7 +631,7 @@ button.secondary-button {
   display: flex;
   flex-direction: column;
   padding: 28px;
-  color: #0f172a;
+  color: #111113;
 }
 
 .account-profile-panel::before {
@@ -2761,8 +2761,8 @@ button.danger-text:hover,
   background: var(--surface);
   padding: 14px 18px;
   border-radius: var(--radius-lg);
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+  border: 1px solid #e4e4e7;
+  box-shadow: 0 4px 14px rgba(17, 17, 19, 0.03);
 }
 
 .course-filter-bar .course-filter-search {
@@ -2774,9 +2774,9 @@ button.danger-text:hover,
   width: 100%;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d4d4d8;
   font-size: 14px;
-  background: #f8fafc;
+  background: #fafafa;
   transition: all 180ms ease;
 }
 
@@ -2789,10 +2789,10 @@ button.danger-text:hover,
 .course-filter-bar select {
   padding: 10px 14px;
   border-radius: var(--radius-sm);
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d4d4d8;
   font-size: 14px;
-  background: #f8fafc;
-  color: #334155;
+  background: #fafafa;
+  color: #3f3f46;
   font-weight: 500;
 }
 
@@ -2811,7 +2811,7 @@ button.danger-text:hover,
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface);
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.03);
+  box-shadow: 0 6px 20px rgba(17, 17, 19, 0.03);
   overflow: hidden;
   transition: border-color 200ms ease;
 }
@@ -2848,7 +2848,7 @@ button.danger-text:hover,
   background: var(--surface);
   color: var(--text-muted);
   margin-left: auto;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 3px rgba(17, 17, 19, 0.04);
   transition: background 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 
@@ -2872,14 +2872,14 @@ button.danger-text:hover,
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  background: linear-gradient(135deg, #27272e 0%, #3f3f46 100%);
   color: #ffffff;
   font-weight: 700;
   font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(30, 41, 59, 0.2);
+  box-shadow: 0 4px 10px rgba(28, 28, 31, 0.2);
 }
 
 .instructor-info-title {
@@ -2935,13 +2935,13 @@ button.danger-text:hover,
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 22px;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+  box-shadow: 0 4px 14px rgba(17, 17, 19, 0.03);
   transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
 }
 
 .sleek-course-card:hover {
   border-color: var(--primary);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+  box-shadow: 0 8px 24px rgba(17, 17, 19, 0.07);
 }
 
 .tree-course-head {
@@ -3077,7 +3077,7 @@ button.danger-text:hover,
 }
 
 [data-theme="dark"] .plan-course-picker legend {
-  color: #f7f7fa;
+  color: #f7f7f8;
 }
 
 [data-theme="dark"] .plan-course-option+.plan-course-option {
@@ -3177,8 +3177,8 @@ button.danger-text:hover,
   background: var(--surface);
   border-radius: 20px;
   padding: 20px 22px 18px;
-  border: 1px solid rgba(226, 232, 240, 0.85);
-  box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.03), 0 1px 3px rgba(15, 23, 42, 0.02);
+  border: 1px solid rgba(228, 228, 231, 0.85);
+  box-shadow: 0 4px 20px -4px rgba(17, 17, 19, 0.03), 0 1px 3px rgba(17, 17, 19, 0.02);
   cursor: pointer;
   outline: none;
   overflow: hidden;
@@ -3189,7 +3189,7 @@ button.danger-text:hover,
 .metric-card:hover,
 .metric-card:focus-visible {
   transform: translateY(-3px);
-  box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+  box-shadow: 0 12px 28px -6px rgba(17, 17, 19, 0.08), 0 4px 12px -2px rgba(17, 17, 19, 0.03);
   border-color: rgba(99, 102, 241, 0.25);
 }
 
@@ -3209,7 +3209,7 @@ button.danger-text:hover,
   min-width: 0;
   font-size: 11.5px;
   font-weight: 700;
-  color: #64748b;
+  color: #6e6e73;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   /* Long labels ("AWAITING GRADING") must wrap rather than run under the
@@ -3254,8 +3254,8 @@ button.danger-text:hover,
 }
 
 .icon-bg-slate {
-  background: rgba(100, 116, 139, 0.12);
-  color: #475569;
+  background: rgba(110, 110, 115, 0.12);
+  color: #52525b;
 }
 
 .metric-card-icon {
@@ -3270,7 +3270,7 @@ button.danger-text:hover,
 .metric-card-number {
   font-size: 30px;
   font-weight: 800;
-  color: #0f172a;
+  color: #111113;
   letter-spacing: 0;
   line-height: 1.1;
 }
@@ -3320,7 +3320,7 @@ button.danger-text:hover,
   inset: 0;
   z-index: 999999 !important;
 
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(17, 17, 19, 0.45);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   display: flex;
@@ -3347,7 +3347,7 @@ button.danger-text:hover,
   padding: 28px 24px 22px;
   background: var(--surface);
   border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  box-shadow: 0 25px 50px -12px rgba(17, 17, 19, 0.25);
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -3418,7 +3418,7 @@ button.danger-text:hover,
   margin: 0 0 6px;
   font-size: 19px;
   font-weight: 600;
-  color: #0f172a;
+  color: #111113;
   letter-spacing: 0;
 }
 
@@ -3426,7 +3426,7 @@ button.danger-text:hover,
   margin: 0 0 22px;
   font-size: 14px;
   line-height: 1.5;
-  color: #64748b;
+  color: #6e6e73;
 }
 
 .custom-dialog-actions {
@@ -3478,7 +3478,7 @@ button.danger-text:hover,
   left: 0;
   height: 3.5px;
   width: 100%;
-  background: rgba(15, 23, 42, 0.15);
+  background: rgba(17, 17, 19, 0.15);
   transform-origin: left;
   animation: dialogProgressShrink linear forwards;
 }
@@ -3536,8 +3536,8 @@ button.danger-text:hover,
 }
 
 .pill-slate {
-  background: rgba(100, 116, 139, 0.1);
-  color: #475569;
+  background: rgba(110, 110, 115, 0.1);
+  color: #52525b;
 }
 
 /* ---------- Dashboard metric drill-down ---------- */
@@ -3549,7 +3549,7 @@ button.danger-text:hover,
   place-items: center;
   padding: 0;
   overflow: hidden;
-  background: rgba(15, 23, 42, 0.34);
+  background: rgba(17, 17, 19, 0.34);
   backdrop-filter: blur(8px) saturate(112%);
   -webkit-backdrop-filter: blur(8px) saturate(112%);
   animation: dashboard-detail-fade 180ms ease-out;
@@ -3568,8 +3568,8 @@ button.danger-text:hover,
   overflow: hidden;
   border: 0;
   border-radius: 20px;
-  background: #f8fafc;
-  box-shadow: 0 32px 90px rgba(15, 23, 42, 0.35);
+  background: #fafafa;
+  box-shadow: 0 32px 90px rgba(17, 17, 19, 0.35);
   animation: dashboard-detail-rise 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -3651,7 +3651,7 @@ button.danger-text:hover,
 
 /* ---------- Metric breakdown (share of a headline figure) ----------
    Categorical slots, validated against this dialog's own surfaces
-   (#f8fafc light, #16161a dark) for the lightness band, chroma floor,
+   (#fafafa light, #16161a dark) for the lightness band, chroma floor,
    colour-vision separation and contrast. The slot ORDER is the safety
    mechanism, not a preference - do not re-order or add a 6th hue; a longer
    tail folds into the neutral "Other" slice instead. Three light-mode hues
@@ -3664,11 +3664,11 @@ button.danger-text:hover,
   --bd-slot-3: #1baf7a;
   --bd-slot-4: #eda100;
   --bd-slot-5: #e87ba4;
-  --bd-surface: #f8fafc;
-  --bd-ink: #0f172a;
+  --bd-surface: #fafafa;
+  --bd-ink: #111113;
   --bd-ink-soft: #52514e;
   --bd-ink-muted: #898781;
-  --bd-hairline: rgba(15, 23, 42, 0.08);
+  --bd-hairline: rgba(17, 17, 19, 0.08);
   margin-bottom: 22px;
 }
 
@@ -3680,7 +3680,7 @@ button.danger-text:hover,
   --bd-slot-4: #c98500;
   --bd-slot-5: #d55181;
   --bd-surface: #16161a;
-  --bd-ink: #f7f7fa;
+  --bd-ink: #f7f7f8;
   --bd-ink-soft: #c3c2b7;
   --bd-ink-muted: #898781;
   --bd-hairline: rgba(255, 255, 255, 0.1);
@@ -3735,10 +3735,10 @@ button.danger-text:hover,
   justify-content: space-between;
   padding: 12px 18px;
   margin-bottom: 20px;
-  background: linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(241, 245, 249, 0.85));
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: linear-gradient(135deg, rgba(250, 250, 250, 0.95), rgba(244, 244, 245, 0.85));
+  border: 1px solid rgba(228, 228, 231, 0.9);
   border-radius: 14px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 8px -2px rgba(15, 23, 42, 0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 8px -2px rgba(17, 17, 19, 0.05);
 }
 
 .records-count-left {
@@ -3758,7 +3758,7 @@ button.danger-text:hover,
 .records-count-label {
   font-size: 11.5px;
   font-weight: 750;
-  color: #475569;
+  color: #52525b;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -3783,7 +3783,7 @@ button.danger-text:hover,
   gap: 24px;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e4e4e7;
   border-radius: 0;
   padding: 18px 12px;
   box-shadow: none;
@@ -3793,7 +3793,7 @@ button.danger-text:hover,
 .dashboard-record-card:hover {
   transform: none;
   box-shadow: none;
-  background: #f8fafc;
+  background: #fafafa;
 }
 
 
@@ -3813,7 +3813,7 @@ button.danger-text:hover,
   margin: 0;
   font-size: 15px;
   font-weight: 800;
-  color: #0f172a;
+  color: #111113;
   line-height: 1.3;
   letter-spacing: 0;
 }
@@ -3821,7 +3821,7 @@ button.danger-text:hover,
 .record-subtitle {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #64748b;
+  color: #6e6e73;
   font-weight: 500;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -3872,8 +3872,8 @@ button.danger-text:hover,
 }
 
 .record-status-pill[data-tone="slate"] {
-  background: rgba(100, 116, 139, 0.12);
-  color: #475569;
+  background: rgba(110, 110, 115, 0.12);
+  color: #52525b;
 }
 
 .record-value-box {
@@ -3901,7 +3901,7 @@ button.danger-text:hover,
 .record-value-lbl {
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: #6e6e73;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin-top: 3px;
@@ -3934,7 +3934,7 @@ button.danger-text:hover,
 .meta-chip-label {
   font-size: 10px;
   font-weight: 700;
-  color: #64748b;
+  color: #6e6e73;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -3942,7 +3942,7 @@ button.danger-text:hover,
 .meta-chip-value {
   font-size: 13px;
   font-weight: 750;
-  color: #0f172a;
+  color: #111113;
   overflow-wrap: anywhere;
 }
 
@@ -4004,7 +4004,7 @@ button.danger-text:hover,
 .clickable-chart-card-wrapper:hover .chart-card,
 .clickable-chart-card-wrapper:focus-visible .chart-card {
   border-color: color-mix(in srgb, var(--primary) 34%, transparent) !important;
-  box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.12), 0 0 0 2px color-mix(in srgb, var(--primary) 10%, transparent) !important;
+  box-shadow: 0 16px 36px -8px rgba(17, 17, 19, 0.12), 0 0 0 2px color-mix(in srgb, var(--primary) 10%, transparent) !important;
 }
 
 .chart-detail-dialog {
@@ -4030,24 +4030,24 @@ button.danger-text:hover,
   gap: 16px;
   margin-bottom: 0;
   padding: 14px 20px;
-  background: linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(241, 245, 249, 0.85));
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: linear-gradient(135deg, rgba(250, 250, 250, 0.95), rgba(244, 244, 245, 0.85));
+  border: 1px solid rgba(228, 228, 231, 0.9);
   border-radius: 16px;
 }
 
 .timeframe-toolbar-label {
   font-size: 11px;
   font-weight: 800;
-  color: #64748b;
+  color: #6e6e73;
   letter-spacing: 0.08em;
 }
 
 .chart-modal-view-container {
   background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  border: 1px solid rgba(228, 228, 231, 0.9);
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 8px 24px -6px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8px 24px -6px rgba(17, 17, 19, 0.04);
   flex: 0 0 auto;
 }
 
@@ -4078,7 +4078,7 @@ button.danger-text:hover,
   gap: 10px;
   padding: 14px 16px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e4e4e7;
   border-radius: 14px;
   transition: border-color 180ms ease, transform 180ms ease;
 }
@@ -4104,7 +4104,7 @@ button.danger-text:hover,
 .breakdown-item-label {
   font-size: 13px;
   font-weight: 700;
-  color: #334155;
+  color: #3f3f46;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4120,7 +4120,7 @@ button.danger-text:hover,
 .breakdown-value-text {
   font-size: 16px;
   font-weight: 800;
-  color: #0f172a;
+  color: #111113;
 }
 
 .breakdown-share-badge {
@@ -4133,7 +4133,7 @@ button.danger-text:hover,
 }
 
 [data-theme="dark"] .chart-timeframe-toolbar {
-  background: rgba(30, 41, 59, 0.6) !important;
+  background: rgba(39, 39, 46, 0.6) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
@@ -4141,12 +4141,12 @@ button.danger-text:hover,
 [data-theme="dark"] .chart-breakdown-card {
   background: #16161a !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
-  color: #f3f4f6 !important;
+  color: #f4f4f5 !important;
 }
 
 [data-theme="dark"] .breakdown-item-label,
 [data-theme="dark"] .breakdown-value-text {
-  color: #f3f4f6 !important;
+  color: #f4f4f5 !important;
 }
 
 @media (max-width: 640px) {
@@ -4241,9 +4241,9 @@ button.danger-text:hover,
   min-height: 330px;
   padding: 22px 24px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(203, 213, 225, 0.72);
+  border: 1px solid rgba(212, 212, 216, 0.72);
   background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
+  box-shadow: 0 8px 24px rgba(17, 17, 19, 0.045);
   transition: box-shadow 220ms ease, border-color 220ms ease, transform 220ms ease;
   position: relative;
   display: flex;
@@ -4253,8 +4253,8 @@ button.danger-text:hover,
 }
 
 .chart-card.reference-styled-chart:hover {
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.075);
-  border-color: rgba(148, 163, 184, 0.72);
+  box-shadow: 0 14px 34px rgba(17, 17, 19, 0.075);
+  border-color: rgba(161, 161, 170, 0.72);
   transform: translateY(-1px);
 }
 
@@ -4329,7 +4329,7 @@ button.danger-text:hover,
 
 .section-title {
   margin: 0 0 12px;
-  color: #1e293b;
+  color: #1c1c1f;
   font-family: var(--app-font-family);
   font-size: 16px;
   font-weight: 650;
@@ -4354,7 +4354,7 @@ button.danger-text:hover,
   gap: 6px;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #6e6e73;
 }
 
 .info-dot {
@@ -4489,7 +4489,7 @@ button.danger-text:hover,
   position: absolute;
   right: -16px;
   top: -26px;
-  background: #0f172a;
+  background: #0f0f14;
   color: #ffffff;
   font-size: 10px;
   font-weight: 700;

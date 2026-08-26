@@ -120,7 +120,7 @@
 
 [data-theme="dark"] .vh-contact-panel {
   border-color: rgba(255, 255, 255, 0.09);
-  background: #11121a;
+  background: #111116;
   box-shadow:
     0 24px 60px -10px rgba(0, 0, 0, 0.6),
     0 48px 100px -15px rgba(0, 0, 0, 0.4);
@@ -426,7 +426,7 @@
 [data-theme="dark"] .vh-form-textarea {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.14);
-  color: #f8fafc;
+  color: #fafafa;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 

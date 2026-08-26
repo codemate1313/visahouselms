@@ -71,7 +71,7 @@
 .ui-icon-btn-outline {
   border-color: var(--border);
   background: var(--surface);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 3px rgba(17, 17, 19, 0.04);
 }
 
 .ui-icon-btn-outline:hover:not(:disabled) {
@@ -103,17 +103,17 @@
 
 [data-theme="dark"] .ui-icon-btn-plain:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.08);
-  color: #f7f7fa;
+  color: #f7f7f8;
 }
 
 [data-theme="dark"] .ui-icon-btn-outline {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.14);
-  color: #e2e8f0;
+  color: #e4e4e7;
 }
 
 [data-theme="dark"] .ui-icon-btn-outline:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
   border-color: var(--primary);
-  color: #f7f7fa;
+  color: #f7f7f8;
 }

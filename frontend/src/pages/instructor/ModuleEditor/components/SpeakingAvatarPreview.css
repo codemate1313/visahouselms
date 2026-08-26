@@ -91,11 +91,11 @@
 }
 
 [data-theme="dark"] .vh-examiner-picker-title {
-  color: #e2e8f0;
+  color: #e4e4e7;
 }
 
 [data-theme="dark"] .vh-examiner-picker-hint {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 [data-theme="dark"] .vh-examiner-picker-hint.is-error {
@@ -105,7 +105,7 @@
 [data-theme="dark"] .vh-examiner-sample-button {
   border-color: rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.06);
-  color: #f8fafc;
+  color: #fafafa;
 }
 
 @media (max-width: 860px) {
@@ -297,15 +297,15 @@
 
 [data-theme="dark"] .vh-avatar-preview-title,
 [data-theme="dark"] .vh-avatar-preview-name {
-  color: #e2e8f0;
+  color: #e4e4e7;
 }
 
 [data-theme="dark"] .vh-avatar-preview-prompt {
-  color: #cbd5e1;
+  color: #d4d4d8;
 }
 
 [data-theme="dark"] .vh-avatar-preview-status {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 [data-theme="dark"] .vh-avatar-preview-button.is-ghost {
@@ -595,15 +595,15 @@
 }
 
 [data-theme="dark"] .vh-speaking-flow-guide strong {
-  color: #f8fafc;
+  color: #fafafa;
 }
 
 [data-theme="dark"] .vh-speaking-flow-guide li {
-  color: #cbd5e1;
+  color: #d4d4d8;
 }
 
 [data-theme="dark"] .vh-speaking-flow-guide li:not(:last-child)::after {
-  color: #475569;
+  color: #52525b;
 }
 
 [data-theme="dark"] .vh-speaking-flow-guide li span {
@@ -617,22 +617,22 @@
 }
 
 [data-theme="dark"] .vh-speaking-auto-type span {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 [data-theme="dark"] .vh-speaking-auto-type strong {
-  color: #f8fafc;
+  color: #fafafa;
 }
 
 [data-theme="dark"] .vh-speaking-material-heading h3,
 [data-theme="dark"] .vh-speaking-pdf-card strong {
-  color: #f1f5f9;
+  color: #f4f4f5;
 }
 
 [data-theme="dark"] .vh-speaking-material-heading p,
 [data-theme="dark"] .vh-speaking-material-empty,
 [data-theme="dark"] .vh-speaking-pdf-card span {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 [data-theme="dark"] .vh-speaking-attachment-card {
@@ -646,7 +646,7 @@
 }
 
 [data-theme="dark"] .vh-speaking-compact-file span {
-  color: #cbd5e1;
+  color: #d4d4d8;
 }
 
 [data-theme="dark"] .vh-speaking-pdf-card {
@@ -655,11 +655,11 @@
 }
 
 [data-theme="dark"] .vh-speaking-attachment-head strong {
-  color: #f1f5f9;
+  color: #f4f4f5;
 }
 
 [data-theme="dark"] .vh-speaking-attachment-head span {
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 @media (max-width: 620px) {
@@ -724,5 +724,5 @@
 [data-theme="dark"] .vh-speaking-heading-block textarea {
   border-color: rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.04);
-  color: #f1f5f9;
+  color: #f4f4f5;
 }

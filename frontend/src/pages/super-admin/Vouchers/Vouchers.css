@@ -126,7 +126,7 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   padding: 0.3rem 0.65rem;
-  background: var(--surface-muted, #f8fafc);
+  background: var(--surface-muted, #fafafa);
   color: var(--text, var(--slate-900));
   border: 1px solid var(--border, var(--slate-300));
   border-radius: var(--radius-sm);
@@ -186,8 +186,8 @@
 }
 
 [data-theme="dark"] .voucher-code-checkbox {
-  background: var(--surface-muted, #1f2937);
-  border-color: rgba(148, 163, 184, 0.55);
+  background: var(--surface-muted, #27272e);
+  border-color: rgba(161, 161, 170, 0.55);
 }
 
 [data-theme="dark"] .voucher-code-checkbox:checked {
@@ -214,9 +214,9 @@
 }
 
 .voucher-code-status.is-disabled {
-  background: rgba(148, 163, 184, 0.14);
+  background: rgba(161, 161, 170, 0.14);
   color: var(--slate-500);
-  border: 1px solid rgba(148, 163, 184, 0.28);
+  border: 1px solid rgba(161, 161, 170, 0.28);
 }
 
 [data-theme="dark"] .voucher-code-status.is-available {
@@ -226,9 +226,9 @@
 }
 
 [data-theme="dark"] .voucher-code-status.is-disabled {
-  background: rgba(148, 163, 184, 0.12);
+  background: rgba(161, 161, 170, 0.12);
   color: var(--slate-400);
-  border-color: rgba(148, 163, 184, 0.24);
+  border-color: rgba(161, 161, 170, 0.24);
 }
 
 .voucher-code-actions {
@@ -424,7 +424,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  background: var(--surface-muted, #f8fafc);
+  background: var(--surface-muted, #fafafa);
   border: none;
   border-radius: var(--radius-lg);
   font-size: 0.85rem;
@@ -475,7 +475,7 @@
   align-items: center;
   justify-content: center;
   padding: 0.85rem 0.5rem;
-  background: var(--surface-muted, #f8fafc);
+  background: var(--surface-muted, #fafafa);
   border: none;
   border-radius: var(--radius-lg);
   text-align: center;

@@ -220,8 +220,8 @@ button.daily-answer-option:disabled {
 }
 
 html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
-  color: #f7f7fa !important;
-  -webkit-text-fill-color: #f7f7fa !important;
+  color: #f7f7f8 !important;
+  -webkit-text-fill-color: #f7f7f8 !important;
 }
 
 .daily-answer-feedback {
@@ -336,7 +336,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 .daily-accuracy-simple {
   font-size: 14.5px;
   font-weight: 600;
-  color: var(--text-muted, #64748b);
+  color: var(--text-muted, #6e6e73);
   letter-spacing: -0.01em;
 }
 
@@ -968,7 +968,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 }
 
 .daily-fact-card {
-  background: var(--slate-50, #f8fafc);
+  background: var(--slate-50, #fafafa);
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 16px;
   padding: 20px;
@@ -1011,7 +1011,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 .daily-fact-text h4 {
   font-size: 16px;
   font-weight: 750;
-  color: var(--text, #0f172a);
+  color: var(--text, #111113);
   margin: 0 0 8px 0;
 }
 
@@ -1022,7 +1022,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 .daily-fact-text p {
   font-size: 13.5px;
   line-height: 1.5;
-  color: var(--text-muted, #475569);
+  color: var(--text-muted, #52525b);
   margin: 0;
 }
 
@@ -1098,7 +1098,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 
 [data-theme="dark"] .daily-fact-nav-btn {
   background: rgba(22, 22, 26, 0.85);
-  color: #f1f5f9;
+  color: #f4f4f5;
   border-color: rgba(255, 255, 255, 0.06);
 }
 
@@ -1166,7 +1166,7 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
   gap: 12px;
   width: 100%;
   padding: 40px 0;
-  color: var(--text-muted, #475569);
+  color: var(--text-muted, #52525b);
   font-weight: 600;
   font-size: 14px;
 }
@@ -1186,6 +1186,6 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 }
 
 [data-theme="dark"] .daily-score-pill {
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(0, 0, 0, 0.5);
   border-color: rgba(255, 255, 255, 0.08);
 }

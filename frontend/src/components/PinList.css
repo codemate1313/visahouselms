@@ -23,7 +23,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-muted, #94a3b8);
+  color: var(--text-muted, #a1a1aa);
 }
 
 .pin-list-label svg {
@@ -40,12 +40,12 @@
   height: 20px;
   padding: 0 6px;
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.15);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(161, 161, 170, 0.15);
+  border: 1px solid rgba(161, 161, 170, 0.2);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0;
-  color: var(--text-muted, #64748b);
+  color: var(--text-muted, #6e6e73);
 }
 
 .pin-list-group-pinned .pin-list-count {
@@ -57,10 +57,10 @@
 .pin-list-empty-hint {
   margin: 0;
   padding: 14px 16px;
-  border: 1px dashed rgba(203, 213, 225, 0.8);
+  border: 1px dashed rgba(212, 212, 216, 0.8);
   border-radius: 12px;
   font-size: 12.5px;
-  color: var(--text-muted, #94a3b8);
+  color: var(--text-muted, #a1a1aa);
   text-align: center;
 }
 
@@ -107,7 +107,7 @@
   border: 1px solid transparent !important;
   border-radius: 8px !important;
   background: transparent !important;
-  color: var(--text-muted, #94a3b8) !important;
+  color: var(--text-muted, #a1a1aa) !important;
   cursor: pointer !important;
   opacity: 0;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -131,9 +131,9 @@
 }
 
 .pin-list-pin:hover:not(:disabled) {
-  background: rgba(148, 163, 184, 0.12) !important;
-  border-color: rgba(148, 163, 184, 0.25) !important;
-  color: var(--text, #0f172a) !important;
+  background: rgba(161, 161, 170, 0.12) !important;
+  border-color: rgba(161, 161, 170, 0.25) !important;
+  color: var(--text, #111113) !important;
 }
 
 .pin-list-pin.is-pinned {

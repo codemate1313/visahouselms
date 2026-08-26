@@ -1197,7 +1197,7 @@ a.vh-hero-cta-alt:hover {
 [data-theme="dark"] .vh-writing-crit {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.1);
-  color: #f1f5f9;
+  color: #f4f4f5;
 }
 
 /* ---------- Steps (flip cards) ---------- */
@@ -2940,7 +2940,7 @@ a.vh-hero-cta-alt:hover {
 }
 
 [data-theme="dark"] .vh-instagram-profile-card {
-  background: rgba(18, 18, 28, 0.84);
+  background: rgba(21, 21, 26, 0.84);
   border-color: rgba(255, 255, 255, 0.12);
   box-shadow:
     0 16px 40px -10px rgba(0, 0, 0, 0.6),
@@ -3418,7 +3418,7 @@ a.vh-hero-cta-alt:hover {
 }
 
 [data-theme="dark"] .vh-instagram-modal-card {
-  background: #12121c;
+  background: #131317;
 }
 
 .vh-instagram-modal-close {
@@ -3548,7 +3548,7 @@ a.vh-hero-cta-alt:hover {
 }
 
 [data-theme="dark"] .vh-instagram-modal-info {
-  background: #12121c;
+  background: #131317;
 }
 
 .vh-instagram-modal-author {

@@ -146,7 +146,7 @@
   overflow-y: auto;
   font-size: 14px;
   line-height: 1.65;
-  color: var(--text, #0f172a);
+  color: var(--text, #111113);
 }
 
 .vh-rte-preview-empty {

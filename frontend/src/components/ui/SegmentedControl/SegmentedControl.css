@@ -18,7 +18,7 @@
   background: color-mix(in srgb, var(--ui-segment-accent) 6%, rgba(255, 255, 255, 0.55)) !important;
   -webkit-backdrop-filter: blur(12px) saturate(150%);
   backdrop-filter: blur(12px) saturate(150%);
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06) !important;
+  box-shadow: 0 4px 18px rgba(17, 17, 19, 0.06) !important;
   transition: all 0.3s ease;
 }
 

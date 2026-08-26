@@ -138,7 +138,7 @@
   z-index: 99999;
   display: flex;
   justify-content: flex-end;
-  background: rgba(15, 23, 42, 0.46);
+  background: rgba(17, 17, 19, 0.46);
   backdrop-filter: blur(6px);
   padding: clamp(12px, 2vw, 24px);
 }
@@ -257,6 +257,166 @@
   margin: 0;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+/* Messenger modal: match portal/sidebar brand and preserve contrast in both themes. */
+.support-chat-modal {
+  --support-chat-primary: var(--primary, #0b2388);
+  --support-chat-primary-hover: var(--primary-hover, color-mix(in srgb, var(--support-chat-primary) 86%, #000000));
+  --support-chat-on-primary: #ffffff;
+}
+
+.support-chat-modal .ui-modal-header {
+  align-items: center;
+}
+
+.support-chat-titlebar,
+.support-chat-thread,
+.support-chat-routing-card,
+.support-chat-stream,
+.support-chat-message,
+.support-chat-bubble {
+  min-width: 0;
+}
+
+.support-chat-title {
+  color: var(--text) !important;
+}
+
+.support-chat-routing-card,
+.support-chat-stream {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+.support-chat-message-meta {
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.support-chat-sender {
+  color: var(--text) !important;
+}
+
+.support-chat-sender.is-support,
+.support-chat-message.is-admin .support-chat-sender {
+  color: color-mix(in srgb, var(--support-chat-primary) 84%, var(--text)) !important;
+}
+
+.support-chat-bubble {
+  overflow-wrap: anywhere;
+}
+
+.support-chat-bubble.is-customer {
+  background: var(--support-chat-primary) !important;
+  color: var(--support-chat-on-primary) !important;
+  border: 1px solid color-mix(in srgb, var(--support-chat-primary) 88%, #ffffff) !important;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--support-chat-primary) 22%, transparent) !important;
+}
+
+.support-chat-bubble.is-admin {
+  background: var(--surface-muted, var(--surface)) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 2px 10px rgba(17, 17, 19, 0.06) !important;
+}
+
+.support-chat-secondary-btn.ui-btn-secondary,
+.support-chat-attach-btn {
+  background: var(--surface) !important;
+  border: 1px solid color-mix(in srgb, var(--support-chat-primary) 22%, var(--border)) !important;
+  color: var(--text) !important;
+  box-shadow: 0 2px 8px rgba(17, 17, 19, 0.06) !important;
+}
+
+.support-chat-secondary-btn.ui-btn-secondary svg,
+.support-chat-attach-btn svg {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.support-chat-secondary-btn.ui-btn-secondary:hover:not(:disabled),
+.support-chat-attach-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--support-chat-primary) 8%, var(--surface)) !important;
+  border-color: var(--support-chat-primary) !important;
+  color: color-mix(in srgb, var(--support-chat-primary) 86%, var(--text)) !important;
+}
+
+.support-chat-send-btn.ui-btn-primary {
+  background: var(--support-chat-primary) !important;
+  border-color: var(--support-chat-primary) !important;
+  color: var(--support-chat-on-primary) !important;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--support-chat-primary) 22%, transparent) !important;
+}
+
+.support-chat-send-btn.ui-btn-primary:hover:not(:disabled) {
+  background: var(--support-chat-primary-hover) !important;
+  border-color: var(--support-chat-primary-hover) !important;
+  color: var(--support-chat-on-primary) !important;
+}
+
+.support-chat-send-btn.ui-btn-primary:disabled {
+  background: color-mix(in srgb, var(--support-chat-primary) 24%, var(--surface-muted)) !important;
+  border-color: color-mix(in srgb, var(--support-chat-primary) 34%, var(--border)) !important;
+  color: color-mix(in srgb, var(--support-chat-on-primary) 70%, var(--text-muted)) !important;
+  opacity: 1 !important;
+}
+
+.support-chat-send-btn.ui-btn-primary svg {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.support-chat-attachment-count {
+  background: var(--support-chat-primary) !important;
+  color: var(--support-chat-on-primary) !important;
+}
+
+[data-theme="dark"] .support-chat-modal {
+  --support-chat-primary-hover: color-mix(in srgb, var(--support-chat-primary) 74%, #ffffff);
+}
+
+[data-theme="dark"] .support-chat-routing-card,
+[data-theme="dark"] .support-chat-stream {
+  background: #151519 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="dark"] .support-chat-sender.is-support,
+[data-theme="dark"] .support-chat-message.is-admin .support-chat-sender {
+  color: color-mix(in srgb, var(--support-chat-primary) 30%, #ffffff) !important;
+}
+
+[data-theme="dark"] .support-chat-bubble.is-admin {
+  background: rgba(255, 255, 255, 0.055) !important;
+  color: #f7f7f8 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .support-chat-bubble.is-customer {
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--support-chat-primary) 30%, transparent) !important;
+}
+
+[data-theme="dark"] .support-chat-secondary-btn.ui-btn-secondary,
+[data-theme="dark"] .support-chat-attach-btn {
+  background: rgba(255, 255, 255, 0.055) !important;
+  border-color: color-mix(in srgb, var(--support-chat-primary) 30%, rgba(255, 255, 255, 0.14)) !important;
+  color: #f7f7f8 !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .support-chat-secondary-btn.ui-btn-secondary:hover:not(:disabled),
+[data-theme="dark"] .support-chat-attach-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--support-chat-primary) 14%, rgba(255, 255, 255, 0.08)) !important;
+  border-color: color-mix(in srgb, var(--support-chat-primary) 42%, rgba(255, 255, 255, 0.18)) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .support-chat-send-btn.ui-btn-primary:disabled {
+  background: color-mix(in srgb, var(--support-chat-primary) 24%, rgba(255, 255, 255, 0.08)) !important;
+  border-color: color-mix(in srgb, var(--support-chat-primary) 34%, rgba(255, 255, 255, 0.14)) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 
 @media (max-width: 900px) {
