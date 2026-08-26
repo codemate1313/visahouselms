@@ -392,6 +392,18 @@
   opacity: 0.55;
 }
 
+[data-theme="dark"] .lc-rail-tab {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #d4d4d8;
+}
+
+[data-theme="dark"] .lc-exam .lc-rail-tab:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: #d4d4d8;
+}
+
 /* No hover on the rail, in any state. Each of these simply restates what the
    tab already looks like, at a specificity high enough to beat the global
    `button:hover` rule that was repainting it. */

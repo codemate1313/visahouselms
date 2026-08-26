@@ -193,7 +193,7 @@
 }
 
 [data-theme="dark"] .sidebar-meta-item svg {
-  color: var(--pre-exam-primary);
+  color: #ffffff;
 }
 
 .sidebar-brand-mark {
@@ -313,9 +313,9 @@
 }
 
 [data-theme="dark"] .stage-step-pill {
-  background: var(--pre-exam-primary-soft);
-  color: var(--pre-exam-primary);
-  border: 1px solid var(--pre-exam-primary-border);
+  background: var(--pre-exam-primary);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .stage-progress-bar-track {
@@ -405,10 +405,10 @@
 }
 
 [data-theme="dark"] .header-icon-badge {
-  background: var(--pre-exam-primary-soft);
-  color: var(--pre-exam-primary);
-  border: 1px solid var(--pre-exam-primary-border);
-  box-shadow: 0 0 20px color-mix(in srgb, var(--pre-exam-primary) 20%, transparent);
+  background: var(--pre-exam-primary);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--pre-exam-primary) 35%, transparent);
 }
 
 .header-icon-badge svg {
@@ -563,10 +563,10 @@
 }
 
 [data-theme="dark"] .rule-icon-box.icon-purple {
-  background: var(--pre-exam-primary-soft);
-  color: var(--pre-exam-primary);
-  border: 1px solid var(--pre-exam-primary-border);
-  box-shadow: 0 0 16px color-mix(in srgb, var(--pre-exam-primary) 25%, transparent);
+  background: var(--pre-exam-primary);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--pre-exam-primary) 35%, transparent);
 }
 
 .rule-text {
@@ -621,7 +621,7 @@
 }
 
 [data-theme="dark"] .onboarding-instructor-notes-box .notes-header {
-  color: var(--pre-exam-primary);
+  color: #ffffff;
 }
 
 .directive-item {
@@ -774,9 +774,9 @@
 }
 
 [data-theme="dark"] .part-q-tag {
-  background: var(--pre-exam-primary-soft);
-  color: var(--pre-exam-primary);
-  border: 1px solid var(--pre-exam-primary-border);
+  background: var(--pre-exam-primary);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .part-time-share-bar {
@@ -832,7 +832,7 @@
 }
 
 [data-theme="dark"] .onboarding-summary-banner svg {
-  color: var(--pre-exam-primary);
+  color: #ffffff;
 }
 
 /* ==========================================================================
@@ -878,9 +878,10 @@
 }
 
 [data-theme="dark"] .equipment-icon-box {
-  background: var(--pre-exam-primary-soft);
-  color: var(--pre-exam-primary);
-  border: 1px solid var(--pre-exam-primary-border);
+  background: var(--pre-exam-primary);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--pre-exam-primary) 35%, transparent);
 }
 
 .equipment-info strong {
@@ -965,9 +966,10 @@
 }
 
 [data-theme="dark"] .mic-equalizer-icon-wrapper {
-  background: var(--pre-exam-primary-soft);
-  color: var(--pre-exam-primary);
-  border: 1px solid var(--pre-exam-primary-border);
+  background: var(--pre-exam-primary);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--pre-exam-primary) 35%, transparent);
 }
 
 .mic-equalizer-icon-wrapper svg {
@@ -1249,10 +1251,10 @@
 }
 
 [data-theme="dark"] .onboarding-rocket-badge {
-  background: var(--pre-exam-primary-soft);
-  color: var(--pre-exam-primary);
-  border: 1px solid var(--pre-exam-primary-border);
-  box-shadow: 0 0 24px color-mix(in srgb, var(--pre-exam-primary) 30%, transparent);
+  background: var(--pre-exam-primary);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--pre-exam-primary) 40%, transparent);
 }
 
 .onboarding-ready-heading {

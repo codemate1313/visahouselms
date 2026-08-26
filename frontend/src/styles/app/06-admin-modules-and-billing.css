@@ -4814,6 +4814,11 @@
   color: #ffffff !important;
 }
 
+[data-theme="dark"] .segmented-tab-count {
+  background: rgba(255, 255, 255, 0.1);
+  color: #a1a1aa;
+}
+
 /* Premium Tests Grid & Cards */
 .premium-tests-grid {
   display: grid !important;

@@ -1127,6 +1127,10 @@
   flex-shrink: 0;
 }
 
+[data-theme="dark"] .sv-inc-item svg {
+  color: #ffffff;
+}
+
 /* Price Section */
 .sv-card-price-section {
   padding-top: 16px;

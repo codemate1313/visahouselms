@@ -1798,6 +1798,11 @@
   color: var(--test-accent, var(--primary));
 }
 
+[data-theme="dark"] .test-runner-inline-options button strong {
+  background: var(--test-accent, var(--primary));
+  color: #ffffff;
+}
+
 .test-runner-inline-options button:hover:not(:disabled),
 .test-runner-inline-options button.is-picked,
 .test-runner-source-text-options button:hover:not(:disabled),
@@ -1859,6 +1864,11 @@
   background: color-mix(in srgb, var(--test-accent, var(--primary)) 12%, transparent);
   color: var(--test-accent, var(--primary));
   font-size: 18px;
+}
+
+[data-theme="dark"] .test-runner-source-text-options button strong {
+  background: var(--test-accent, var(--primary));
+  color: #ffffff;
 }
 
 .test-runner-source-text-options button span {
