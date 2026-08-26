@@ -46,6 +46,46 @@ export const attemptResultStrings = {
     manualReview:
       "AI evaluation could not finish automatically for every enabled part. Your submission remains in the instructor grading queue for manual review.",
     unavailable: "The analysis is temporarily unavailable. Your detailed result is still ready to review.",
+    progression: {
+      heading: "Distance to your next level",
+      currentPrefix: "Now",
+      nextPrefix: "Next",
+      atCeiling: "You are at the top band of this practice scale.",
+      pointsAway: (points: string, level: string, target: string) =>
+        `${points} practice points from ${level} - this attempt scored ${target}.`,
+    },
+    focusAreas: {
+      heading: "Where to focus first",
+      subheading: "Ordered by how much each one is costing you on this paper.",
+      actionLabel: "Try this",
+    },
+    partBreakdown: {
+      heading: "Where your marks went",
+      subheading: "Every part of the paper, what it tests, and what you scored.",
+      awaitingExaminer: "Awaiting examiner marking",
+      unansweredSuffix: (count: number) => `${count} left blank`,
+    },
+    questionTypes: {
+      heading: "By question format",
+      testsPrefix: "Tests",
+    },
+    difficulty: {
+      heading: "By item difficulty",
+    },
+    criteria: {
+      heading: "Examiner criteria",
+      subheading: "The rubric marks behind your Writing and Speaking scores.",
+    },
+    pacing: {
+      heading: "Timing",
+      used: (used: number, allowed: number) => `${used} of ${allowed} minutes used`,
+    },
+    statusLabels: {
+      strong: "Strong",
+      steady: "Steady",
+      priority: "Priority",
+      pending: "Pending",
+    },
     whatWentWell: "What went well",
     whatToImprove: "What to improve",
     nextPracticeSteps: "Next practice steps",

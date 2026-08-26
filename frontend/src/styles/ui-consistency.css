@@ -1468,3 +1468,46 @@ body:not([data-theme="dark"]) select:hover:not(:disabled) {
   color: #d4d4d8;
   -webkit-text-fill-color: #d4d4d8;
 }
+
+/* Student-dashboard action contrast guard
+   Keep filled action buttons readable after inline styles and broad dashboard
+   button rules have all resolved. */
+:where(.student-layout, .dashboard, .modal-backdrop, .ui-modal-backdrop) :where(
+  .ui-btn-primary,
+  .ui-btn-danger,
+  .uui-btn-primary,
+  .catalog-plan-btn,
+  .premium-modal-btn.confirm-btn,
+  .lc-pager-button,
+  .lc-end-exam,
+  .test-runner-end-exam
+) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+:where(.student-layout, .dashboard, .modal-backdrop, .ui-modal-backdrop) :where(
+  .ui-btn-primary,
+  .ui-btn-danger,
+  .uui-btn-primary,
+  .catalog-plan-btn,
+  .premium-modal-btn.confirm-btn,
+  .lc-pager-button,
+  .lc-end-exam,
+  .test-runner-end-exam
+) :where(.ui-btn-label, .ui-btn-icon, span, svg) {
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+:where(.student-layout, .dashboard, .modal-backdrop, .ui-modal-backdrop) :where(
+  button.ui-btn-primary,
+  button.ui-btn-danger,
+  button.catalog-plan-btn,
+  button.uui-btn-primary,
+  .premium-modal-btn.confirm-btn
+):hover:not(:disabled) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}

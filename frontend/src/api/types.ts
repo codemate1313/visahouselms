@@ -825,6 +825,8 @@ export interface Attempt {
   parts: AttemptPart[];
 }
 
+export type AnalysisBandStatus = "strong" | "steady" | "priority" | "pending";
+
 export interface StudentResultAnalysis {
   generated_by: "configured_ai" | "cefr_analysis_engine";
   ai_enabled: boolean;
@@ -851,6 +853,71 @@ export interface StudentResultAnalysis {
     percentage: string;
     cefr_level: string | null;
   }>;
+  /* The four cuts the coaching is built from - see student_analysis_service.
+     Optional so a cached analysis written by the previous version still
+     renders. */
+  part_breakdown?: Array<{
+    part_code: string;
+    label: string;
+    skill: IeltsSection;
+    skill_label: string;
+    focus: string;
+    auto_marked: boolean;
+    total: number;
+    attempted: number;
+    correct: number;
+    incorrect: number;
+    unanswered: number;
+    marks: string | null;
+    percentage: string;
+    status: AnalysisBandStatus;
+  }>;
+  question_type_breakdown?: Array<{
+    type: string;
+    label: string;
+    tests: string;
+    correct: number;
+    total: number;
+    unanswered: number;
+    percentage: string;
+    status: AnalysisBandStatus;
+  }>;
+  difficulty_breakdown?: Array<{
+    difficulty: string;
+    label: string;
+    correct: number;
+    total: number;
+    percentage: string;
+    status: AnalysisBandStatus;
+  }>;
+  criteria_breakdown?: Array<{
+    part_label: string;
+    skill: IeltsSection;
+    criterion: string;
+    marks: string;
+    percentage: string;
+    status: AnalysisBandStatus;
+    action: string;
+  }>;
+  focus_areas?: Array<{
+    title: string;
+    detail: string;
+    action: string;
+    metric: string;
+  }>;
+  pacing?: {
+    minutes_used: number;
+    minutes_allowed: number;
+    share: string;
+    note: string | null;
+  } | null;
+  progression?: {
+    current_level: string;
+    current_score: string;
+    next_level: string | null;
+    target_score: string | null;
+    points_to_next: string | null;
+  } | null;
   framework_version: string;
 }
 

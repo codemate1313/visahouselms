@@ -294,6 +294,90 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertFalse(fallback_analysis["ai_enabled"])
         self.assertTrue(fallback_analysis["next_steps"])
 
+    def test_analysis_breaks_the_result_down_by_part_format_and_difficulty(self):
+        """The coaching has to name where the marks went, not just how many.
+
+        A student who is perfect on Reading 1A and near-zero on Reading 3 gets
+        the same overall percentage as one who is even across the paper - the
+        breakdowns are what separate those two, so they are asserted here
+        rather than left to the summary text.
+        """
+        module = self._build_reading_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+
+        for part in attempt.module.parts:
+            for index, question in enumerate(part.questions):
+                if part.part_code == "reading_4" and index == 0:
+                    continue  # left blank on purpose
+                correct = part.part_code == "reading_1a"
+                attempt_service.save_answer(
+                    self.db,
+                    attempt,
+                    question.id,
+                    {"selected": question.correct_answers[0] if correct else "Z"},
+                )
+        attempt_service.submit_attempt(self.db, attempt)
+
+        analysis = student_analysis_service.result_analysis(self.db, attempt)
+        self.assertEqual(analysis["generated_by"], "cefr_analysis_engine")
+
+        parts = {row["label"]: row for row in analysis["part_breakdown"]}
+        self.assertEqual(parts["Reading 1A"]["marks"], "6 / 6")
+        self.assertEqual(parts["Reading 1A"]["status"], "strong")
+        self.assertEqual(parts["Reading 2"]["status"], "priority")
+        self.assertTrue(parts["Reading 1A"]["focus"])
+        self.assertEqual(parts["Reading 4"]["unanswered"], 1)
+
+        self.assertTrue(analysis["question_type_breakdown"])
+        self.assertTrue(all(row["total"] for row in analysis["question_type_breakdown"]))
+        # Weakest format first: the panel reads top-down as a priority list.
+        percentages = [float(row["percentage"]) for row in analysis["question_type_breakdown"]]
+        self.assertEqual(percentages, sorted(percentages))
+
+        self.assertTrue(analysis["focus_areas"])
+        self.assertTrue(all(area["title"] and area["detail"] for area in analysis["focus_areas"]))
+        # The blank item is the cheapest mark on the paper, so it leads.
+        self.assertIn("never received an answer", analysis["focus_areas"][0]["title"])
+        self.assertEqual(analysis["progression"]["next_level"], "B1")
+        self.assertIn("Reading 1A", analysis["summary"])
+
+    def test_analysis_reports_rubric_criteria_for_examiner_marked_parts(self):
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "My essay response."})
+        attempt_service.submit_attempt(self.db, attempt)
+
+        pending = student_analysis_service.result_analysis(self.db, attempt)
+        self.assertEqual(pending["criteria_breakdown"], [])
+        self.assertTrue(any(row["status"] == "pending" for row in pending["part_breakdown"]))
+        # No objective items to report an accuracy for: the summary must not
+        # claim "0% correct" while the examiner still has the responses.
+        self.assertNotIn("0% correct", pending["summary"])
+
+        grading_service.claim(self.db, self.instructor, attempt)
+        parts = sorted(attempt.module.parts, key=lambda item: item.sort_order)
+        for part in parts:
+            criteria = [
+                {"criterion": item["criterion"], "marks_awarded": 2 if item["criterion"].lower().startswith("gram") else 7}
+                for item in part.rubric
+            ]
+            attempt_service.save_part_draft(self.db, self.instructor, attempt.id, part.id, criteria, "note")
+        attempt_service.submit_grading(self.db, self.instructor, attempt.id)
+        self.db.refresh(attempt)
+
+        analysis = student_analysis_service.result_analysis(self.db, attempt)
+        criteria = analysis["criteria_breakdown"]
+        self.assertTrue(criteria)
+        self.assertEqual(float(criteria[0]["percentage"]), min(float(row["percentage"]) for row in criteria))
+        self.assertTrue(criteria[0]["action"])
+        self.assertTrue(any("criterion" in item.lower() for item in analysis["improvements"]))
+
     def test_mcq_multiple_requires_exact_set_match(self):
         module = self._build_reading_module()
         part = next(p for p in module.parts if p.part_code == "reading_2")
