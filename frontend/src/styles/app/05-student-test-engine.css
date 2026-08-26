@@ -5810,4 +5810,51 @@ th[aria-sort="descending"] .table-sort-button::after {
   }
 }
 
+/*
+ * Selected answer rows need to be instantly distinguishable from unselected
+ * rows on the dense exam surface. Keep this late in the file so it wins over
+ * older shared dashboard option overrides.
+ */
+.test-runner-shell .test-runner-option:has(input:checked),
+.test-security-page .test-runner-option:has(input:checked),
+body .dashboard .test-runner-option:has(input:checked) {
+  border-color: var(--test-accent, var(--primary)) !important;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--test-accent, var(--primary)) 26%, transparent),
+      color-mix(in srgb, var(--test-accent, var(--primary)) 12%, transparent)
+    ) !important;
+  color: var(--text-heading, #111827) !important;
+  box-shadow:
+    inset 4px 0 0 var(--test-accent, var(--primary)),
+    0 0 0 1px color-mix(in srgb, var(--test-accent, var(--primary)) 72%, transparent),
+    0 10px 24px color-mix(in srgb, var(--test-accent, var(--primary)) 16%, transparent) !important;
+}
 
+.test-runner-shell .test-runner-option:has(input:checked) input[type="radio"],
+.test-runner-shell .test-runner-option:has(input:checked) input[type="checkbox"],
+.test-security-page .test-runner-option:has(input:checked) input[type="radio"],
+.test-security-page .test-runner-option:has(input:checked) input[type="checkbox"],
+body .dashboard .test-runner-option:has(input:checked) input[type="radio"],
+body .dashboard .test-runner-option:has(input:checked) input[type="checkbox"] {
+  accent-color: var(--test-accent, var(--primary));
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--test-accent, var(--primary)) 52%, transparent));
+}
+
+[data-theme="dark"] .test-runner-shell .test-runner-option:has(input:checked),
+[data-theme="dark"] .test-security-page .test-runner-option:has(input:checked),
+html[data-theme="dark"] body .dashboard .test-runner-option:has(input:checked) {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--test-accent, var(--primary)) 42%, #151519),
+      color-mix(in srgb, var(--test-accent, var(--primary)) 22%, #151519)
+    ) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow:
+    inset 4px 0 0 var(--test-accent, var(--primary)),
+    0 0 0 1px color-mix(in srgb, var(--test-accent, var(--primary)) 78%, transparent),
+    0 12px 28px color-mix(in srgb, var(--test-accent, var(--primary)) 26%, transparent) !important;
+}
