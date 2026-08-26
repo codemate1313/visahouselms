@@ -1207,6 +1207,10 @@
   color: var(--primary) !important;
 }
 
+[data-theme="dark"] .highlighted-word {
+  color: color-mix(in srgb, var(--primary) 55%, white) !important;
+}
+
 .question-meta {
   display: flex;
   flex-wrap: wrap;

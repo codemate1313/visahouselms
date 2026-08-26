@@ -206,3 +206,7 @@ button.ui-btn-danger:hover:not(:disabled) {
 [data-theme="dark"] .ui-btn-danger {
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.28);
 }
+
+[data-theme="dark"] .ui-btn-text {
+  color: color-mix(in srgb, var(--primary) 55%, white);
+}

@@ -515,6 +515,10 @@
   color: var(--primary, #b91c2b);
 }
 
+[data-theme="dark"] .exam-news-timeline-link:hover .exam-news-timeline-title {
+  color: color-mix(in srgb, var(--primary, #b91c2b) 55%, white);
+}
+
 /* Loading & Empty States */
 .exam-news-loading,
 .exam-news-empty {

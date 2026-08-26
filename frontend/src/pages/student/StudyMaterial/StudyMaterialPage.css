@@ -100,6 +100,10 @@
   font-size: 15px;
 }
 
+[data-theme="dark"] .sm-stat-icon {
+  color: color-mix(in srgb, var(--primary, #e11d2e) 55%, white);
+}
+
 /* Controls & Filter Bar */
 .sm-controls-bar {
   display: flex;
@@ -395,6 +399,11 @@
   border-color: var(--primary, #e11d2e);
 }
 
+[data-theme="dark"] .sm-icon-only-btn:hover {
+  color: color-mix(in srgb, var(--primary, #e11d2e) 55%, white);
+  border-color: color-mix(in srgb, var(--primary, #e11d2e) 55%, white);
+}
+
 /* List Table View */
 .sm-table-card {
   background: var(--surface, #ffffff);
@@ -569,6 +578,12 @@
   transform: translateY(-2px) scale(1.04);
 }
 
+[data-theme="dark"] .sm-empty-icon-box {
+  background: var(--primary, #e11d2e);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
 .sm-empty-icon-main {
   font-size: 32px;
 }
@@ -583,6 +598,12 @@
   border: 1px solid color-mix(in srgb, var(--primary, #e11d2e) 20%, transparent);
   padding: 4px 14px;
   border-radius: 999px;
+}
+
+[data-theme="dark"] .sm-empty-pill {
+  color: #ffffff;
+  background: var(--primary, #e11d2e);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .sm-empty-title {

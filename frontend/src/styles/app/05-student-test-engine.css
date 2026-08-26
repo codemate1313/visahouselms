@@ -2682,6 +2682,11 @@
   border-color: color-mix(in srgb, var(--primary) 24%, transparent) !important;
 }
 
+[data-theme="dark"] .onboarding-back-btn:hover,
+[data-theme="dark"] .onboarding-back-btn:focus-visible {
+  color: color-mix(in srgb, var(--primary) 55%, white) !important;
+}
+
 .student-analysis-panel {
   margin-top: 16px;
   padding: 22px;
@@ -3086,6 +3091,12 @@
 .confirm-modal-icon.is-primary {
   background: var(--primary-soft);
   color: var(--primary);
+}
+
+[data-theme="dark"] .confirm-modal-icon.is-primary {
+  background: var(--primary);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .logout-modal-actions {
@@ -4018,6 +4029,10 @@ th[aria-sort="descending"] .table-sort-button::after {
 .typography-selected-value strong {
   color: var(--primary, #a81c1c);
   font-weight: 800;
+}
+
+[data-theme="dark"] .typography-selected-value strong {
+  color: color-mix(in srgb, var(--primary, #a81c1c) 55%, white);
 }
 
 .typography-preview {

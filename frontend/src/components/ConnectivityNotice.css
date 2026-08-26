@@ -35,6 +35,12 @@
   background: color-mix(in srgb, var(--primary, #e11d2e) 12%, transparent);
 }
 
+[data-theme="dark"] .connectivity-notice-mark {
+  background: var(--primary, #e11d2e);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
 .connectivity-notice-card h1 {
   margin: 0 0 10px;
   font-size: 22px;

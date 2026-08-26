@@ -397,6 +397,15 @@
   color: #f2f2f5;
 }
 [data-theme="dark"] .voucher-ui-scope .vh-pub-done-btn:hover { background: rgba(255, 255, 255, 0.1); }
+[data-theme="dark"] .voucher-ui-scope .vh-pub-badge,
+[data-theme="dark"] .voucher-ui-scope .vh-pub-accent-text,
+[data-theme="dark"] .voucher-ui-scope .vh-pub-chip,
+[data-theme="dark"] .voucher-ui-scope .vh-pub-copy-btn {
+  color: color-mix(in srgb, var(--primary) 55%, white);
+}
+[data-theme="dark"] .voucher-ui-scope .group:hover .vh-pub-title-hover {
+  color: color-mix(in srgb, var(--primary) 55%, white);
+}
 
 /* Voucher Portal Segmented Tab Buttons (prevents raw button selector pollution) */
 .voucher-ui-scope .voucher-tab-btn {
@@ -565,6 +574,10 @@
   letter-spacing: 0.05em;
   color: var(--primary);
   margin-bottom: 6px;
+}
+
+[data-theme="dark"] .voucher-invoice-code-title {
+  color: color-mix(in srgb, var(--primary) 55%, white);
 }
 
 .voucher-invoice-code-text {
@@ -932,6 +945,11 @@
 .sv-tab-btn.is-active .sv-tab-count {
   background: rgba(255, 255, 255, 0.25);
   color: #ffffff !important;
+}
+
+[data-theme="dark"] .sv-tab-count {
+  background: rgba(255, 255, 255, 0.1);
+  color: #a1a1aa;
 }
 
 /* --- Card Grid --- */
@@ -1375,6 +1393,10 @@
 
 .sv-code-sec-icon {
   color: var(--primary, #e11d48);
+}
+
+[data-theme="dark"] .sv-code-sec-icon {
+  color: color-mix(in srgb, var(--primary, #e11d48) 55%, white);
 }
 
 .sv-code-display {

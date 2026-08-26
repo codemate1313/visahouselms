@@ -60,11 +60,16 @@
 }
 
 [data-theme="dark"] .dashboard-btn.ui-btn-secondary,
-[data-theme="dark"] .dashboard-btn.ui-btn-ghost {
+[data-theme="dark"] .dashboard-btn.ui-btn-ghost,
+[data-theme="dark"] .dashboard-btn.ui-btn-text {
   --dashboard-button-readable-accent: color-mix(in srgb, var(--dashboard-button-accent) 24%, #ffffff);
+  color: var(--dashboard-button-readable-accent) !important;
+}
+
+[data-theme="dark"] .dashboard-btn.ui-btn-secondary,
+[data-theme="dark"] .dashboard-btn.ui-btn-ghost {
   background: color-mix(in srgb, var(--dashboard-button-accent) 8%, rgba(255, 255, 255, 0.06));
   border-color: color-mix(in srgb, var(--dashboard-button-accent) 36%, rgba(255, 255, 255, 0.14));
-  color: var(--dashboard-button-readable-accent) !important;
 }
 
 [data-theme="dark"] .dashboard-btn.ui-btn-secondary:hover:not(:disabled),

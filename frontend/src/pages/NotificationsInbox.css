@@ -73,6 +73,12 @@
   color: var(--primary);
 }
 
+[data-theme="dark"] .notifications-inbox-item-icon {
+  background: var(--primary);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
 .notifications-inbox-item-icon svg {
   width: 17px;
   height: 17px;

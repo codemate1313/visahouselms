@@ -274,6 +274,22 @@
   color: var(--primary);
 }
 
+[data-theme="dark"] .role-profile-upload-button {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f4f4f5;
+}
+
+[data-theme="dark"] .role-profile-upload-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .role-profile-upload-button svg {
+  color: color-mix(in srgb, var(--primary) 55%, white);
+}
+
 .role-profile-form-panel {
   padding: 32px;
 }
@@ -453,6 +469,10 @@
   color: var(--primary);
   background: var(--primary-soft);
   transform: none;
+}
+
+[data-theme="dark"] .notification-read-all:hover {
+  color: color-mix(in srgb, var(--primary) 55%, white);
 }
 
 
