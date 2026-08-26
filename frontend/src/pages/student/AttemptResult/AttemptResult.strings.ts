@@ -11,6 +11,9 @@ export const attemptResultStrings = {
   },
   aiEvaluation: {
     inProgress: "AI evaluation in progress...",
+    stillRunning: "Still evaluating - this can take a few minutes on longer answers.",
+    checkAgain: "Check now",
+    checking: "Checking...",
     manualReview: "Manual instructor review required",
   },
   metrics: {

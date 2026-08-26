@@ -781,6 +781,111 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(grade.status, "pending")
         self.assertIsNone(grade.total_marks)
 
+    def test_ai_draft_survives_a_paraphrased_criterion_name(self):
+        """A renamed criterion used to throw the whole evaluation away.
+
+        Models return the rubric's labels in their own casing and punctuation;
+        the marks are still theirs. Rejecting on an exact string match sent a
+        completed provider call - and the student - to the manual queue.
+        """
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "A developed academic response."})
+        attempt_service.submit_attempt(self.db, attempt)
+        part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+
+        def evaluator(_config, payload):
+            return {
+                "criteria": [
+                    {
+                        # lower-cased, punctuated, and marks as a string fraction
+                        "criterion": item["criterion"].lower() + " ",
+                        "marks_awarded": f"{6}/{item['max_marks']}",
+                        "rationale": "Evidence in the response.",
+                    }
+                    for item in payload["rubric"]
+                ],
+                "comment": "Advisory draft only.",
+                "confidence": 0.8,
+            }
+
+        suggestion = ai_evaluation_service.request_suggestion(
+            self.db, self.instructor, attempt, part, evaluator=evaluator
+        )
+        authored = {item["criterion"] for item in part.rubric}
+        self.assertEqual({item["criterion"] for item in suggestion["criteria"]}, authored)
+        self.assertEqual(suggestion["criteria"][0]["marks_awarded"], "6")
+        self.assertEqual(self.db.query(AiEvaluation).filter_by(status="failed").count(), 0)
+
+    def test_normalize_still_rejects_a_criterion_outside_the_rubric(self):
+        module = self._build_writing_module()
+        part = sorted(module.parts, key=lambda item: item.sort_order)[0]
+        with self.assertRaises(ValueError):
+            ai_evaluation_service._normalize(
+                {"criteria": [{"criterion": "Handwriting", "marks_awarded": 5}], "comment": "", "confidence": 0.5},
+                part,
+            )
+        with self.assertRaises(ValueError):
+            # every criterion must still be scored
+            ai_evaluation_service._normalize(
+                {
+                    "criteria": [{"criterion": part.rubric[0]["criterion"], "marks_awarded": 5}],
+                    "comment": "",
+                    "confidence": 0.5,
+                },
+                part,
+            )
+
+    def test_pre_emptive_evaluation_skips_a_part_already_in_flight(self):
+        """Leaving and re-entering a Writing part must not queue a second
+        provider call for it - that is how a per-minute rate limit gets hit
+        with duplicate work."""
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+
+        self.assertFalse(ai_evaluation_service._evaluation_in_flight(self.db, attempt.id, part.id))
+        running = AiEvaluation(
+            attempt_id=attempt.id,
+            part_id=part.id,
+            requested_by_id=self.student.id,
+            provider="gemini",
+            model="gemini-2.0-flash",
+            status="running",
+        )
+        self.db.add(running)
+        self.db.commit()
+        self.assertTrue(ai_evaluation_service._evaluation_in_flight(self.db, attempt.id, part.id))
+
+        # A row left behind by a crashed worker must not wedge the part.
+        running.created_at = datetime.now(timezone.utc) - timedelta(
+            seconds=ai_evaluation_service.IN_FLIGHT_WINDOW_SECONDS + 60
+        )
+        self.db.commit()
+        self.assertFalse(ai_evaluation_service._evaluation_in_flight(self.db, attempt.id, part.id))
+
+        # A finished evaluation never blocks a re-run either.
+        running.created_at = datetime.now(timezone.utc)
+        running.status = "completed"
+        self.db.commit()
+        self.assertFalse(ai_evaluation_service._evaluation_in_flight(self.db, attempt.id, part.id))
+
+    def test_gemini_response_schema_pins_the_rubric_criterion_names(self):
+        module = self._build_writing_module()
+        part = sorted(module.parts, key=lambda item: item.sort_order)[0]
+        schema = ai_evaluation_service._gemini_response_schema(part.rubric)
+        enum = schema["properties"]["criteria"]["items"]["properties"]["criterion"]["enum"]
+        self.assertEqual(set(enum), {item["criterion"] for item in part.rubric})
+        self.assertIsNone(ai_evaluation_service._gemini_response_schema([]))
+
     def test_ai_evaluation_fails_over_to_next_configured_key(self):
         self._subscribe_student_for_ai()
         module = self._build_writing_module()

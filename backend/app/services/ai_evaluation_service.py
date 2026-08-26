@@ -2,8 +2,9 @@ import base64
 import json
 import logging
 import mimetypes
+import re
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Callable, Optional
@@ -32,6 +33,16 @@ from app.models.institute import Institute
 logger = logging.getLogger(__name__)
 
 DEFAULT_MONTHLY_LIMIT = 100
+# A 429 means "too many requests this minute", so moving straight to the next
+# key or the fallback model just spends another request into the same closed
+# window. These pauses are deliberately short: the caller is a background job,
+# but the student is watching a spinner.
+RATE_LIMIT_RETRY_SECONDS = 4.0
+RATE_LIMIT_KEY_SWITCH_SECONDS = 2.0
+# How long an in-flight evaluation row blocks a duplicate request for the same
+# part. Long enough to cover a slow provider call, short enough that a crashed
+# worker cannot wedge a part for ever.
+IN_FLIGHT_WINDOW_SECONDS = 300
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 MASKED_SECRET = "********"
@@ -766,6 +777,36 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
     }
 
 
+def _gemini_response_schema(rubric: list) -> Optional[dict]:
+    """OpenAPI-subset schema Gemini validates its own JSON against.
+
+    The criterion enum is the point: it makes the model return the rubric's
+    exact labels instead of its own wording for them."""
+    names = [str(item.get("criterion")) for item in (rubric or []) if item.get("criterion")]
+    if not names:
+        return None
+    return {
+        "type": "OBJECT",
+        "properties": {
+            "criteria": {
+                "type": "ARRAY",
+                "items": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "criterion": {"type": "STRING", "enum": names},
+                        "marks_awarded": {"type": "NUMBER"},
+                        "rationale": {"type": "STRING"},
+                    },
+                    "required": ["criterion", "marks_awarded", "rationale"],
+                },
+            },
+            "comment": {"type": "STRING"},
+            "confidence": {"type": "NUMBER"},
+        },
+        "required": ["criteria", "comment", "confidence"],
+    }
+
+
 def _gemini_evaluator(config: dict, payload: dict) -> dict:
     api_key = config["api_key"]
     model = config.get("model") or DEFAULT_GEMINI_MODEL
@@ -814,21 +855,39 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
 
     parts.insert(0, {"text": prompt_text})
 
+    generation_config = {
+        "responseMimeType": "application/json",
+        "temperature": 0.2,
+    }
+    # Pin the criterion names to the rubric's own spelling. Asking for JSON
+    # without a schema left the model free to rename a criterion, and
+    # `_normalize` then rejected an otherwise perfect evaluation.
+    schema = _gemini_response_schema(payload["rubric"])
+    if schema:
+        generation_config["responseSchema"] = schema
+
     gemini_payload = {
         "contents": [{"parts": parts}],
-        "generationConfig": {
-            "responseMimeType": "application/json",
-            "temperature": 0.2,
-        },
+        "generationConfig": generation_config,
     }
 
     headers = {"Content-Type": "application/json"}
     
     with httpx.Client(timeout=45.0) as client:
         res = client.post(url, headers=headers, json=gemini_payload)
-        
+
+        # A schema this endpoint will not accept must not cost the student
+        # their evaluation - drop it and ask again in the original shape.
+        if res.status_code == 400 and "responseSchema" in generation_config:
+            logger.info("Gemini rejected the response schema; retrying without it")
+            generation_config.pop("responseSchema")
+            res = client.post(url, headers=headers, json=gemini_payload)
+
         if res.status_code == 429 and model != "gemini-flash-latest":
             logger.info("Primary Gemini model %s returned 429, falling back to gemini-flash-latest", model)
+            # Retrying inside the same minute just spends another request into
+            # a window that is already closed.
+            time.sleep(RATE_LIMIT_RETRY_SECONDS)
             fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={api_key}"
             res = client.post(fallback_url, headers=headers, json=gemini_payload)
 
@@ -1106,17 +1165,46 @@ def generate_speaking_follow_up(
     return fallback
 
 
+def _criterion_key(name: object) -> str:
+    """Match key for a rubric criterion name.
+
+    Models paraphrase the label they are handed - "Task Achievement" comes back
+    as "Task achievement", "Grammar" as "Grammar & Accuracy". The marks are
+    still right, so an exact-string comparison here used to throw away a
+    completed (and billed) evaluation and push the whole attempt to the manual
+    queue. Compare on a squashed key instead, and keep the authored spelling
+    for everything downstream."""
+    return re.sub(r"[^a-z0-9]+", "", str(name or "").lower())
+
+
+def _marks_value(raw: object) -> Decimal:
+    """Coerce whatever the model put in `marks_awarded` into a number.
+
+    Seen in the wild: 6, "6", "6.0", "6/8", "6 out of 8", None. Everything but
+    the last is a usable score, and `Decimal(str(...))` raised on all of them
+    except the first two."""
+    if raw is None:
+        raise ValueError("Criterion is missing marks_awarded")
+    if isinstance(raw, (int, float, Decimal)):
+        return Decimal(str(raw))
+    match = re.search(r"-?\d+(?:\.\d+)?", str(raw))
+    if not match:
+        raise ValueError(f"Criterion marks_awarded is not a number: {raw!r}")
+    return Decimal(match.group(0))
+
+
 def _normalize(result: dict, part: ExamModulePart) -> dict:
     if not isinstance(result, dict) or not isinstance(result.get("criteria"), list):
         raise ValueError("Evaluator response must contain a criteria list")
     rubric = {item["criterion"]: Decimal(str(item["max_marks"])) for item in (part.rubric or [])}
+    by_key = {_criterion_key(name): name for name in rubric}
     normalized = []
     seen = set()
     for item in result["criteria"]:
-        name = item.get("criterion")
-        if name not in rubric or name in seen:
-            raise ValueError(f"Unexpected or duplicate criterion: {name}")
-        awarded = Decimal(str(item.get("marks_awarded")))
+        name = by_key.get(_criterion_key(item.get("criterion")))
+        if name is None or name in seen:
+            raise ValueError(f"Unexpected or duplicate criterion: {item.get('criterion')}")
+        awarded = _marks_value(item.get("marks_awarded"))
         if awarded < 0:
             awarded = Decimal("0")
         if awarded > rubric[name]:
@@ -1142,6 +1230,28 @@ def _normalize(result: dict, part: ExamModulePart) -> dict:
         "framework_version": cefr_service.FRAMEWORK_VERSION,
         "policy_version": cefr_service.POLICY_VERSION,
     }
+
+
+def _evaluation_in_flight(db: Session, attempt_id: int, part_id: int) -> bool:
+    """True while another request for this same part is still with a provider.
+
+    The pre-emptive trigger fires whenever a student leaves a Writing or
+    Speaking part, so tabbing between two parts used to queue a fresh provider
+    call each time - the fastest way there is to hit a per-minute rate limit
+    with duplicate work. The cutoff keeps a crashed worker's abandoned row from
+    blocking the part for ever."""
+    cutoff = _now() - timedelta(seconds=IN_FLIGHT_WINDOW_SECONDS)
+    return (
+        db.query(AiEvaluation)
+        .filter(
+            AiEvaluation.attempt_id == attempt_id,
+            AiEvaluation.part_id == part_id,
+            AiEvaluation.status == "running",
+            AiEvaluation.created_at >= cutoff,
+        )
+        .first()
+        is not None
+    )
 
 
 def request_suggestion(
@@ -1196,6 +1306,10 @@ def request_suggestion(
             if exc.status_code == 429 and index == len(configs_to_try) - 1:
                 db.commit()
                 raise
+            if exc.status_code == 429 and index < len(configs_to_try) - 1:
+                # Separate keys can still share a project quota, so give the
+                # window a moment before spending the next one.
+                time.sleep(RATE_LIMIT_KEY_SWITCH_SECONDS)
         except Exception as exc:
             last_error = exc
             record.status = "failed"
@@ -1303,6 +1417,14 @@ def evaluate_attempt_part_directly(database_url: str, attempt_id: int, part_id: 
         if grade is not None and grade.status != "pending":
             return  # Already graded
 
+        if _evaluation_in_flight(db, attempt_id, part_id):
+            logger.info(
+                "Skipping duplicate pre-emptive AI evaluation for attempt %s part %s",
+                attempt_id,
+                part_id,
+            )
+            return
+
         try:
             suggestion = request_suggestion(db, attempt.user, attempt, part)
         except Exception:
@@ -1323,3 +1445,8 @@ def evaluate_attempt_part_directly(database_url: str, attempt_id: int, part_id: 
         db.commit()
     finally:
         db.close()
+        # This runs in the API process, once per part the student leaves. The
+        # engine owns a connection pool, so leaving it to the garbage collector
+        # leaked a pool per call and slowly starved the database of
+        # connections over a sitting.
+        engine.dispose()

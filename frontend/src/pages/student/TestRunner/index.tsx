@@ -137,6 +137,11 @@ export function TestRunner() {
      would have fired - `submit()` needs to flush these before it can trust
      `savingIds` to reflect every unsaved edit. */
   const debounceTimers = useRef<Record<number, { timer: ReturnType<typeof setTimeout>; run: () => Promise<void> }>>({});
+  // One pre-emptive AI evaluation per part, not one per visit: `selectPart`
+  // runs on every part-tab click, so moving between two Writing parts used to
+  // queue a fresh provider call each time - duplicate work that races the
+  // grading job and burns straight through a per-minute rate limit.
+  const aiEvaluatedPartsRef = useRef<Set<number>>(new Set());
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
   const [recordingStream, setRecordingStream] = useState<MediaStream | null>(null);
@@ -1363,10 +1368,15 @@ export function TestRunner() {
         const ans = qState?.response?.text || qState?.response?.selected || qState?.response?.recorded || q.response?.text || q.response?.selected || q.response?.recorded;
         return Boolean(ans);
       });
-      if (hasAnswers) {
+      if (hasAnswers && !aiEvaluatedPartsRef.current.has(partId)) {
+        aiEvaluatedPartsRef.current.add(partId);
         void apiClient.post(`/student/attempts/${id}/parts/${partId}/ai-evaluate`, {}, {
           headers: { ...securityHeaders(), "X-Skip-Loader": "1" }
-        }).catch(() => {});
+        }).catch(() => {
+          // Let a failed trigger be retried on the next visit; submission
+          // queues the same work regardless.
+          aiEvaluatedPartsRef.current.delete(partId);
+        });
       }
     }
 
