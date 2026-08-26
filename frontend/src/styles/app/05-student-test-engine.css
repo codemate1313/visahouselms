@@ -1162,17 +1162,17 @@ body.test-runner-route-active #root {
   min-height: 40px;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 6px;
-  padding: 9px 12px;
+  padding: 9px 8px;
   border: 1px solid #d9dce2;
   border-radius: 4px;
   background: #ffffff;
   color: #475569;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   text-align: left;
-  white-space: normal;
+  white-space: nowrap;
   box-shadow: none;
 }
 
@@ -1224,6 +1224,9 @@ body.test-runner-route-active #root {
 .test-runner-part-tab>span:first-of-type {
   min-width: 0;
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .test-runner-part-progress {
