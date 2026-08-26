@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { AnalysisBandStatus, StudentResultAnalysis } from "@/api/types";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
 
@@ -17,6 +18,19 @@ function trim(value: string | null | undefined): string {
 function barWidth(percentage: string): string {
   const value = Number(percentage);
   return `${Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0))}%`;
+}
+
+function parseMarks(marksStr: string | null): { awarded: number; max: number; isPending: boolean } {
+  if (!marksStr) return { awarded: 0, max: 0, isPending: true };
+  const parts = marksStr.split("/").map((s) => s.trim());
+  if (parts.length === 2) {
+    const awarded = parseFloat(parts[0]);
+    const max = parseFloat(parts[1]);
+    if (!isNaN(awarded) && !isNaN(max)) {
+      return { awarded, max, isPending: false };
+    }
+  }
+  return { awarded: 0, max: 0, isPending: true };
 }
 
 /** A labelled score row with a status-tinted meter - the shape every
@@ -62,6 +76,8 @@ function ScoreDial({
   percentage,
   status,
   note,
+  onClick,
+  isClickable = false,
 }: {
   label: string;
   caption?: string;
@@ -69,6 +85,8 @@ function ScoreDial({
   percentage: string;
   status: AnalysisBandStatus;
   note?: string;
+  onClick?: () => void;
+  isClickable?: boolean;
 }) {
   const isPending = status === "pending";
   const pct = isPending ? 0 : Number(percentage);
@@ -83,8 +101,11 @@ function ScoreDial({
   if (status === "priority") strokeColor = "var(--primary)";
 
   return (
-    <div className={`score-dial-card is-${status}`}>
-      {caption ? <div className="score-dial-tooltip">{caption}</div> : null}
+    <div
+      className={`score-dial-card is-${status} ${isClickable ? "is-clickable" : ""}`}
+      onClick={onClick}
+    >
+      {caption && !isClickable ? <div className="score-dial-tooltip">{caption}</div> : null}
       
       <div className="score-dial-visual">
         <svg width="56" height="56" viewBox="0 0 56 56">
@@ -138,6 +159,77 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
   const difficulties = analysis.difficulty_breakdown ?? [];
   const criteria = analysis.criteria_breakdown ?? [];
   const pacing = analysis.pacing;
+
+  const [selectedSkill, setSelectedSkill] = useState<any | null>(null);
+
+  // Group sub-parts by skill (listening, reading, writing, speaking)
+  const skillGroups: Record<string, { label: string; subParts: typeof parts }> = {
+    listening: { label: "Listening", subParts: [] },
+    reading: { label: "Reading", subParts: [] },
+    writing: { label: "Writing", subParts: [] },
+    speaking: { label: "Speaking", subParts: [] },
+  };
+
+  parts.forEach((part) => {
+    const s = (part.skill || "").toLowerCase();
+    if (skillGroups[s]) {
+      skillGroups[s].subParts.push(part);
+    } else {
+      const found = Object.keys(skillGroups).find((k) => s.includes(k));
+      if (found) {
+        skillGroups[found].subParts.push(part);
+      }
+    }
+  });
+
+  const aggregatedSkills = Object.entries(skillGroups)
+    .filter(([_, group]) => group.subParts.length > 0)
+    .map(([skillKey, group]) => {
+      let totalAwarded = 0;
+      let totalMax = 0;
+      let isPending = false;
+
+      group.subParts.forEach((part) => {
+        if (part.status === "pending") {
+          isPending = true;
+        }
+
+        if (part.total > 0) {
+          totalAwarded += part.correct;
+          totalMax += part.total;
+        } else if (part.marks) {
+          const parsed = parseMarks(part.marks);
+          if (parsed.isPending) {
+            isPending = true;
+          } else {
+            totalAwarded += parsed.awarded;
+            totalMax += parsed.max;
+          }
+        }
+      });
+
+      const percentageVal = totalMax > 0 ? (totalAwarded / totalMax) * 100 : 0;
+      const percentage = percentageVal.toFixed(1);
+
+      let status: AnalysisBandStatus = "pending";
+      if (!isPending) {
+        if (percentageVal >= 75) status = "strong";
+        else if (percentageVal >= 50) status = "steady";
+        else status = "priority";
+      }
+
+      const marks = isPending ? "" : `${totalAwarded} / ${totalMax}`;
+
+      return {
+        skill: skillKey,
+        label: group.label,
+        percentage,
+        marks,
+        status,
+        subParts: group.subParts,
+        isPending,
+      };
+    });
 
   return (
     <>
@@ -197,28 +289,23 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
         </section>
       )}
 
-      {parts.length > 0 && (
+      {aggregatedSkills.length > 0 && (
         <section className="analysis-block" aria-label={t.partBreakdown.heading}>
           <div className="analysis-block-head">
             <h3>{t.partBreakdown.heading}</h3>
-            <p>{t.partBreakdown.subheading}</p>
+            <p>{t.partBreakdown.subheading} Click any skill for a detailed part-by-part breakdown.</p>
           </div>
           <div className="analysis-score-dials-grid">
-            {parts.map((part) => (
+            {aggregatedSkills.map((skill) => (
               <ScoreDial
-                key={part.part_code || part.label}
-                label={part.label}
-                caption={part.focus}
-                marks={part.marks}
-                percentage={part.percentage}
-                status={part.status}
-                note={
-                  part.status === "pending"
-                    ? t.partBreakdown.awaitingExaminer
-                    : part.unanswered
-                      ? t.partBreakdown.unansweredSuffix(part.unanswered)
-                      : undefined
-                }
+                key={skill.skill}
+                label={skill.label}
+                marks={skill.marks}
+                percentage={skill.percentage}
+                status={skill.status}
+                isClickable={true}
+                onClick={() => setSelectedSkill(skill)}
+                note={skill.isPending ? t.partBreakdown.awaitingExaminer : undefined}
               />
             ))}
           </div>
@@ -293,6 +380,46 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
             ))}
           </div>
         </section>
+      )}
+
+      {selectedSkill && (
+        <div className="score-details-modal-overlay" onClick={() => setSelectedSkill(null)}>
+          <div className="score-details-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="score-details-modal-header">
+              <h3>{selectedSkill.label} Breakdown</h3>
+              <button className="score-details-modal-close-btn" onClick={() => setSelectedSkill(null)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div className="score-details-modal-body">
+              <p className="score-details-modal-subheading">
+                Every part of the {selectedSkill.label} section, what it tests, and what you scored.
+              </p>
+              <div className="analysis-score-dials-grid">
+                {selectedSkill.subParts.map((part: any) => (
+                  <ScoreDial
+                    key={part.part_code || part.label}
+                    label={part.label}
+                    caption={part.focus}
+                    marks={part.marks}
+                    percentage={part.percentage}
+                    status={part.status}
+                    note={
+                      part.status === "pending"
+                        ? t.partBreakdown.awaitingExaminer
+                        : part.unanswered
+                          ? t.partBreakdown.unansweredSuffix(part.unanswered)
+                          : undefined
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
