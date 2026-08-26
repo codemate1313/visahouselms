@@ -90,8 +90,8 @@ function ScoreDial({
 }) {
   const isPending = status === "pending";
   const pct = isPending ? 0 : Number(percentage);
-  const radius = 22;
-  const strokeWidth = 4.5;
+  const radius = 24;
+  const strokeWidth = 3.5;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (Math.max(0, Math.min(100, pct)) / 100) * circumference;
 
