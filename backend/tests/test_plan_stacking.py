@@ -717,4 +717,43 @@ class AlreadyPurchasedTests(unittest.TestCase):
         self.db.add(cancelled_attempt)
         self.db.commit()
 
+        self.assertEqual(cancelled_attempt.status, "cancelled")
         self.assertEqual(entitlement_service.sittings_remaining(self.db, self.student.id, self.module.id), 1)
+
+    def test_demo_attempts_do_not_consume_purchased_sittings(self):
+        # 1. Create a demo/trial attempt before subscription starts
+        demo_attempt = TestAttempt(
+            user_id=self.student.id,
+            module_id=self.module.id,
+            status="submitted",
+            is_retake=False,
+            started_at=_now() - timedelta(days=2),
+            expires_at=_now() - timedelta(days=2) + timedelta(minutes=60),
+            sitting_number=1,
+        )
+        self.db.add(demo_attempt)
+        self.db.commit()
+
+        # 2. Subscribe user to Plan A (duration 90 days, starting now)
+        a = self._plan("Plan A", 90)
+        subscription_service.subscribe_user(self.db, self.student.id, a.id, None)
+
+        # 3. Confirm that sittings_remaining is 1 (excluding the demo attempt)
+        self.assertEqual(entitlement_service.sittings_remaining(self.db, self.student.id, self.module.id), 1)
+
+        # 4. Create another attempt under the subscription
+        new_attempt = TestAttempt(
+            user_id=self.student.id,
+            module_id=self.module.id,
+            status="submitted",
+            is_retake=False,
+            started_at=_now(),
+            expires_at=_now() + timedelta(minutes=60),
+            sitting_number=2,
+        )
+        self.db.add(new_attempt)
+        self.db.commit()
+
+        # 5. Confirm that sittings_remaining is now 0 (since the post-subscription attempt consumed it)
+        self.assertEqual(entitlement_service.sittings_remaining(self.db, self.student.id, self.module.id), 0)
+

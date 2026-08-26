@@ -292,18 +292,31 @@ def sittings_remaining(db: Session, user_id: int, module_id: int) -> int:
     student for the platform's own mistake.
     """
     from app.models.attempt import TestAttempt
+    from app.models.subscription import Subscription
 
     granted = sittings_granted(db, user_id, module_id)
     if granted <= 0:
         return 0
-    used = (
-        db.query(TestAttempt)
+
+    # Exclude demo attempts: only count sittings used after the student's first subscription started.
+    first_sub = (
+        db.query(Subscription.starts_at)
         .filter(
-            TestAttempt.user_id == user_id,
-            TestAttempt.module_id == module_id,
-            TestAttempt.is_retake.is_(False),
-            TestAttempt.status.notin_(["cancelled", "ready"]),
+            Subscription.user_id == user_id,
+            Subscription.cancelled_at.is_(None),
         )
-        .count()
+        .order_by(Subscription.starts_at.asc())
+        .first()
     )
+
+    query = db.query(TestAttempt).filter(
+        TestAttempt.user_id == user_id,
+        TestAttempt.module_id == module_id,
+        TestAttempt.is_retake.is_(False),
+        TestAttempt.status.notin_(["cancelled", "ready"]),
+    )
+    if first_sub is not None:
+        query = query.filter(TestAttempt.started_at >= first_sub[0])
+
+    used = query.count()
     return max(0, granted - used)
