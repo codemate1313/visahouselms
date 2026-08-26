@@ -50,6 +50,18 @@ interface TestResult {
   detection_message?: string;
 }
 
+interface ModelListResult {
+  ok: boolean;
+  provider: string;
+  provider_label?: string;
+  detected_provider?: string;
+  model: string;
+  model_options?: ModelOption[];
+  supported?: boolean;
+  message: string;
+  detection_message?: string;
+}
+
 interface AiKeyPriorityManagerProps {
   keys: AiKeyConfig[];
   onChange: (keys: AiKeyConfig[]) => void;
@@ -57,6 +69,8 @@ interface AiKeyPriorityManagerProps {
   model: string;
   endpointUrl: string;
   testPath: string;
+  /** Asks the provider which models this key can use, without grading anything. */
+  modelsPath: string;
 }
 
 function newKey(index: number, provider: AiProviderSelection, model: string, endpointUrl: string): AiKeyConfig {
@@ -134,9 +148,11 @@ export function AiKeyPriorityManager({
   model,
   endpointUrl,
   testPath,
+  modelsPath,
 }: AiKeyPriorityManagerProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [loadingModelsId, setLoadingModelsId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const rows = keys.length ? keys : [newKey(0, provider, model, endpointUrl)];
@@ -159,6 +175,41 @@ export function AiKeyPriorityManager({
     const [item] = next.splice(from, 1);
     next.splice(to, 0, item);
     onChange(reorder(next));
+  }
+
+  async function loadModels(index: number) {
+    const key = rows[index];
+    setLoadingModelsId(key.id);
+    setError(null);
+    try {
+      const { data } = await apiClient.post<ModelListResult>(modelsPath, {
+        key_id: key.id,
+        provider: "auto",
+        preferred_provider: key.provider || provider,
+        model: key.model || model,
+        endpoint_url: key.endpoint_url || endpointUrl || undefined,
+        api_key: key.api_key,
+      });
+      const detectedProvider = data.detected_provider || data.provider;
+      const providerPatch = providerOptions.some((option) => option.value === detectedProvider)
+        ? { provider: detectedProvider as AiKeyConfig["provider"] }
+        : {};
+      update(index, {
+        ...providerPatch,
+        // Prefer what the key actually offers over whatever model was typed:
+        // a retired model is exactly what this button exists to replace.
+        model: data.model || data.model_options?.[0]?.value || key.model || model,
+        model_options: data.model_options || [],
+        info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}`,
+      });
+      if (!data.ok) setError(data.message);
+    } catch (err: unknown) {
+      const message = extractErrorMessage(err, "Could not load models for this key.");
+      update(index, { info: message });
+      setError(message);
+    } finally {
+      setLoadingModelsId(null);
+    }
   }
 
   async function testKey(index: number) {
@@ -302,13 +353,13 @@ export function AiKeyPriorityManager({
                   <input
                     value={key.model || model}
                     onChange={(event) => update(index, { model: event.target.value })}
-                    placeholder={providerInfo(key.provider).supported ? "Detect & test key to list supported models" : "No supported evaluation models"}
+                    placeholder={providerInfo(key.provider).supported ? "Load models to list what this key supports" : "No supported evaluation models"}
                     disabled={!providerInfo(key.provider).supported}
                   />
                 )}
                 {providerInfo(key.provider).supported && !key.model_options?.length && (
                   <p className="hint" style={{ margin: "6px 0 0" }}>
-                    Use Detect & test to load models available for this key.
+                    Paste the key, then use Load models to list what it can actually run.
                   </p>
                 )}
               </div>
@@ -360,6 +411,14 @@ export function AiKeyPriorityManager({
                 {key.last_status === "ok" ? "Connected" : key.last_status === "failed" ? "Failed" : "Not tested"}
               </Badge>
               <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => void loadModels(index)}
+                  disabled={loadingModelsId === key.id || testingId === key.id}
+                >
+                  {loadingModelsId === key.id ? "Loading models..." : "Load models"}
+                </button>
                 <button type="button" className="secondary" onClick={() => void testKey(index)} disabled={testingId === key.id}>
                   {testingId === key.id ? "Detecting..." : "Detect & test"}
                 </button>

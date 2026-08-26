@@ -240,6 +240,17 @@ def _default_model_options(provider: str, model: Optional[str] = None) -> list[d
     return []
 
 
+def _choose_model_from_options(provider: str, preferred: Optional[str], options: list[dict]) -> str:
+    preferred_value = (preferred or "").removeprefix("models/")
+    values = [str(option.get("value") or "").removeprefix("models/") for option in options]
+    if preferred_value and preferred_value in values:
+        return preferred_value
+    for value in values:
+        if _model_matches_provider(provider, value):
+            return value
+    return _resolve_model_for_provider(provider, preferred)
+
+
 def list_evaluation_models(
     *,
     provider: str,
@@ -300,9 +311,80 @@ def list_evaluation_models(
         options.append(_model_option(model_id, item.get("displayName")))
 
     selected = (model or DEFAULT_GEMINI_MODEL).removeprefix("models/")
-    if selected and not any(option["value"] == selected for option in options):
+    if selected in GEMINI_EVALUATION_MODELS and not any(option["value"] == selected for option in options):
         options.insert(0, _model_option(selected))
     return options or _default_model_options(provider, model)
+
+
+def list_configured_key_models(
+    db: Session,
+    *,
+    key_id: Optional[str],
+    provider: str,
+    api_key: Optional[str],
+    model: Optional[str] = None,
+    endpoint_url: Optional[str] = None,
+    preferred_provider: Optional[str] = None,
+) -> dict:
+    secret = (api_key or "").strip()
+    stored = None
+    if key_id:
+        stored = next((item for item in _configured_keys(db, mask=False) if item.get("id") == key_id), None)
+    if not secret or _is_masked_key_input(secret):
+        secret = (stored or {}).get("api_key") or ""
+    effective_endpoint = endpoint_url or (stored or {}).get("endpoint_url")
+    effective_model = model or (stored or {}).get("model")
+
+    if not secret:
+        return {
+            "ok": False,
+            "provider": provider,
+            "provider_label": _provider_label(provider),
+            "detected_provider": provider,
+            "model": _resolve_model_for_provider(provider, effective_model),
+            "model_options": [],
+            "key_preview": None,
+            "supported": provider in SUPPORTED_KEY_PROVIDERS,
+            "message": "Enter or select a saved API key before loading models.",
+        }
+
+    detected = _detect_provider(
+        api_key=secret,
+        endpoint_url=effective_endpoint,
+        preferred_provider=preferred_provider or provider or (stored or {}).get("provider"),
+    )
+    if not detected["supported"]:
+        return {
+            "ok": False,
+            "provider": detected["provider"],
+            "provider_label": detected["provider_label"],
+            "detected_provider": detected["provider"],
+            "model": _resolve_model_for_provider(detected["provider"], effective_model),
+            "model_options": [],
+            "key_preview": _mask_key(secret),
+            "supported": False,
+            "message": detected["reason"],
+        }
+
+    options = list_evaluation_models(
+        provider=detected["provider"],
+        api_key=secret,
+        model=effective_model,
+        endpoint_url=effective_endpoint,
+    )
+    selected = _choose_model_from_options(detected["provider"], effective_model, options)
+    return {
+        "ok": bool(options),
+        "provider": detected["provider"],
+        "provider_label": detected["provider_label"],
+        "detected_provider": detected["provider"],
+        "model": selected,
+        "model_options": options,
+        "key_preview": _mask_key(secret),
+        "supported": True,
+        "message": "Models loaded for this key." if options else "No supported evaluation models were found for this key.",
+        "detection_message": detected["reason"],
+    }
 
 
 def _configured_keys(db: Session, *, mask: bool) -> list[dict]:
@@ -513,12 +595,27 @@ def test_configured_key(
             "supported": False,
             "message": detected["reason"],
         }
-    return test_connection(
+    effective_model = model or (stored or {}).get("model")
+    effective_endpoint = endpoint_url or (stored or {}).get("endpoint_url")
+    # Ask the key what it can actually run before testing it. A model saved in
+    # settings months ago (or retired by the provider) answers 404, and testing
+    # with it used to fail the whole check - taking the model list down with
+    # it, so the screen could never offer a working model to switch to.
+    discovered = list_evaluation_models(
         provider=detected["provider"],
         api_key=secret,
-        model=_resolve_model_for_provider(detected["provider"], model or (stored or {}).get("model")),
-        endpoint_url=endpoint_url or (stored or {}).get("endpoint_url"),
-    ) | {
+        model=effective_model,
+        endpoint_url=effective_endpoint,
+    )
+    result = test_connection(
+        provider=detected["provider"],
+        api_key=secret,
+        model=_choose_model_from_options(detected["provider"], effective_model, discovered),
+        endpoint_url=effective_endpoint,
+    )
+    if not result.get("model_options"):
+        result["model_options"] = discovered
+    return result | {
         "detected_provider": detected["provider"],
         "provider_label": detected["provider_label"],
         "detection_message": detected["reason"],

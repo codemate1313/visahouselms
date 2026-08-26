@@ -166,6 +166,7 @@ export function AiEvaluationTab() {
           model={form.model}
           endpointUrl={form.endpoint_url}
           testPath="/super-admin/dev-settings/ai-evaluation/test-key"
+          modelsPath="/super-admin/dev-settings/ai-evaluation/models"
         />
 
         {error && <p className="error-text">{error}</p>}

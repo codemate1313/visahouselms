@@ -41,6 +41,15 @@ class AiEvaluationKeyTestIn(BaseModel):
     model: Optional[str] = None
 
 
+class AiEvaluationModelListIn(BaseModel):
+    key_id: Optional[str] = None
+    provider: str = "gemini"
+    preferred_provider: Optional[str] = None
+    endpoint_url: Optional[str] = None
+    api_key: Optional[str] = None
+    model: Optional[str] = None
+
+
 class BackupSettingsIn(BaseModel):
     schedule: Optional[str] = None  # none | daily | weekly
     retention: Optional[str] = None
@@ -86,4 +95,3 @@ class GoogleOAuthSettingsIn(BaseModel):
     client_id: Optional[str] = None
     client_secret: Optional[str] = None  # write-only; masked value leaves stored secret untouched
     redirect_uri: Optional[str] = None
-

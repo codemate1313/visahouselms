@@ -8,6 +8,7 @@ from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.schemas.dev import (
     AiEvaluationKeyTestIn,
+    AiEvaluationModelListIn,
     AiEvaluationSettingsIn,
     BackupSettingsIn,
     FcmSettingsIn,
@@ -130,6 +131,24 @@ def put_ai_evaluation(
         job_service.recover_missing_ai_auto_grade_jobs(db)
     _audit(db, actor, "dev_settings.update_ai_evaluation", request)
     return ai_evaluation_service.config_status(db)
+
+
+@router.post("/ai-evaluation/models")
+def list_ai_evaluation_models(payload: AiEvaluationModelListIn, db: Session = Depends(get_db)):
+    """Models the pasted (or saved) key can actually use.
+
+    The key travels in the request body and never comes back: the response
+    carries a masked preview only, so nothing here can leak the secret into a
+    log or a screenshot."""
+    return ai_evaluation_service.list_configured_key_models(
+        db,
+        key_id=payload.key_id,
+        provider=payload.provider,
+        api_key=payload.api_key,
+        model=payload.model,
+        endpoint_url=payload.endpoint_url,
+        preferred_provider=payload.preferred_provider,
+    )
 
 
 @router.post("/ai-evaluation/test-key")
