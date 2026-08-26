@@ -22,7 +22,7 @@ const MAX_FEATURES = 12;
 // export it without breaking React Fast Refresh).
 const SUPPORTED_CURRENCIES = ["INR", "USD", "EUR", "GBP"] as const;
 
-const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", grace_days: "0", is_published: false, gst_rate_id: "", is_international_enabled: false, usd_price: "" };
+const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", grace_days: "0", is_published: false, gst_rate_id: "", is_international_enabled: false, usd_price: "", ai_evaluation_limit: "" };
 
 interface GstOption {
   id: number;
@@ -94,6 +94,7 @@ export function PlanForm() {
             gst_rate_id: data.gst_rate_id ? String(data.gst_rate_id) : "",
             is_international_enabled: Boolean(data.is_international_enabled),
             usd_price: data.usd_price ? String(Number(data.usd_price)) : "",
+            ai_evaluation_limit: data.ai_evaluation_limit != null ? String(data.ai_evaluation_limit) : "",
           };
           setForm(loadedForm);
           setSubscriberCount(typeof data.subscription_count === "number" ? data.subscription_count : null);
@@ -117,6 +118,7 @@ export function PlanForm() {
             gst_rate_id: loadedForm.gst_rate_id ? Number(loadedForm.gst_rate_id) : null,
             is_international_enabled: loadedForm.is_international_enabled,
             usd_price: loadedForm.is_international_enabled && loadedForm.usd_price ? Number(loadedForm.usd_price) : null,
+            ai_evaluation_limit: loadedForm.ai_evaluation_limit ? Number(loadedForm.ai_evaluation_limit) : null,
             audience: loadedAudience,
             is_published: loadedForm.is_published,
             module_ids: [...loadedSelected],
@@ -176,6 +178,7 @@ export function PlanForm() {
       gst_rate_id: form.gst_rate_id ? Number(form.gst_rate_id) : null,
       is_international_enabled: form.is_international_enabled,
       usd_price: form.is_international_enabled && form.usd_price ? Number(form.usd_price) : null,
+      ai_evaluation_limit: form.ai_evaluation_limit ? Number(form.ai_evaluation_limit) : null,
       audience,
       is_published: form.is_published,
       module_ids: [...selected],
@@ -276,6 +279,16 @@ export function PlanForm() {
           <div>
             <label>{f.graceDays}<RequiredMark /></label>
             <input type="number" min="0" value={form.grace_days} onChange={set("grace_days")} required />
+          </div>
+          <div>
+            <label>{f.aiEvaluationLimit}</label>
+            <input
+              type="number"
+              min="0"
+              placeholder="e.g. 50 (leave empty for default)"
+              value={form.ai_evaluation_limit}
+              onChange={set("ai_evaluation_limit")}
+            />
           </div>
 
           {audience === "institutes" && (

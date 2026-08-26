@@ -47,6 +47,7 @@ export const planFormStrings = {
     graceDays: "Grace period (days)",
     studentLimit: "Student limit",
     staffLimit: "Instructor / Staff limit",
+    aiEvaluationLimit: "AI evaluation limit (per month)",
   },
   coursePicker: {
     legend: "Included courses",
