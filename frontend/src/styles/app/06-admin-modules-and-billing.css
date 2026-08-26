@@ -5019,9 +5019,7 @@
 }
 
 .start-test-btn.ui-btn-primary,
-button.start-test-btn.ui-btn-primary,
-.start-test-btn.ui-btn-primary:hover:not(:disabled),
-button.start-test-btn.ui-btn-primary:hover:not(:disabled) {
+button.start-test-btn.ui-btn-primary {
   color: #ffffff !important;
 }
 
@@ -5124,7 +5122,9 @@ button.start-test-btn.ui-btn-primary svg {
 }
 
 
-.start-test-btn:hover:not(:disabled) {
+.start-test-btn:hover:not(:disabled),
+.start-test-btn.ui-btn-primary:hover:not(:disabled),
+button.start-test-btn.ui-btn-primary:hover:not(:disabled) {
   background: var(--surface) !important;
   color: var(--primary) !important;
   border-color: var(--primary) !important;
