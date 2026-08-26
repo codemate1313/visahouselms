@@ -2572,6 +2572,23 @@ body.test-runner-route-active #root {
   padding: 22px;
 }
 
+.result-overview-page .color-dots-loader span,
+.attempt-detail-page .color-dots-loader span {
+  background: var(--primary);
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+.result-overview-page .color-dots-loader span:nth-child(2),
+.attempt-detail-page .color-dots-loader span:nth-child(2) {
+  background: var(--surface);
+  border-color: var(--primary);
+}
+
+.result-overview-page .color-dots-loader span:nth-child(3),
+.attempt-detail-page .color-dots-loader span:nth-child(3) {
+  background: var(--primary-hover, color-mix(in srgb, var(--primary) 82%, #111113));
+}
+
 .result-overview-heading,
 .student-analysis-heading {
   display: flex;
