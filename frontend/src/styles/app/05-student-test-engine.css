@@ -1276,6 +1276,7 @@ body.test-runner-route-active #root {
 
 .test-runner-body {
   display: grid;
+  flex: 1 1 auto;
   width: auto;
   max-width: none;
   min-width: 0;
@@ -1340,6 +1341,7 @@ body.test-runner-route-active #root {
 .test-runner-source-pane,
 .test-runner-question-pane {
   min-width: 0;
+  max-width: 100%;
   min-height: 0;
   padding: 18px;
   overflow-y: auto;
@@ -1351,9 +1353,12 @@ body.test-runner-route-active #root {
 }
 
 .test-runner-pane-heading {
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: 14px;
   padding-bottom: 0;
   border-bottom: 1px solid #e2e4e8;
+  overflow-wrap: anywhere;
 }
 
 .test-runner-pane-heading>span {
@@ -1364,17 +1369,22 @@ body.test-runner-route-active #root {
 }
 
 .test-runner-pane-heading h2 {
+  max-width: 100%;
   margin: 4px 0 6px;
   color: #191a1e;
   font-size: 22px;
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .test-runner-pane-heading p {
+  max-width: 100%;
   margin: 0;
   color: #64748b;
   font-size: 14.5px;
   line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .test-runner-instructions {
