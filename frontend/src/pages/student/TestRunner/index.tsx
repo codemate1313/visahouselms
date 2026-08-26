@@ -1360,7 +1360,7 @@ export function TestRunner() {
       const partId = currentPart.id;
       const hasAnswers = currentPart.questions.some((q) => {
         const qState = attempt?.parts.flatMap((p) => p.questions).find((qu) => qu.id === q.id);
-        const ans = qState?.response?.text || qState?.response?.audio_path || qState?.response?.audio_url || q.response?.text || q.response?.audio_path || q.response?.audio_url;
+        const ans = qState?.response?.text || qState?.response?.selected || qState?.response?.recorded || q.response?.text || q.response?.selected || q.response?.recorded;
         return Boolean(ans);
       });
       if (hasAnswers) {
