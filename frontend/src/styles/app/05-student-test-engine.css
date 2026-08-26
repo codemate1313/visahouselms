@@ -1,5 +1,30 @@
 /* ---------- Test-taking engine (student attempts) ---------- */
 
+html.test-runner-route-active,
+body.test-runner-route-active {
+  width: 100%;
+  height: 100%;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+body.test-runner-route-active #root {
+  min-height: 100%;
+}
+
+.test-runner-route-frame {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+}
+
 .test-runner-shell {
   position: fixed;
   inset: 0;
@@ -8,7 +33,6 @@
   flex-direction: column;
   width: 100vw;
   height: 100vh;
-  height: 100dvh;
   height: 100dvh;
   overflow: hidden;
   background: var(--bg);
@@ -1153,15 +1177,15 @@
 }
 
 .test-runner-part-tab:hover:not(:disabled) {
-  border-color: #000000;
-  background: #f8fafc;
-  color: #000000;
+  border-color: color-mix(in srgb, var(--test-accent, var(--primary, #c8102e)) 34%, #d9dce2);
+  background: color-mix(in srgb, var(--test-accent, var(--primary, #c8102e)) 6%, #ffffff);
+  color: var(--test-accent, var(--primary, #c8102e));
   transform: none;
 }
 
 .test-runner-part-tab.is-active {
-  border-color: #000000 !important;
-  background: #000000 !important;
+  border-color: var(--test-accent, var(--primary, #c8102e)) !important;
+  background: var(--test-accent, var(--primary, #c8102e)) !important;
   color: #ffffff !important;
   border-radius: 4px;
   box-shadow: none !important;
@@ -1178,13 +1202,13 @@
   height: 0;
   border-top: 9px solid transparent;
   border-bottom: 9px solid transparent;
-  border-left: 9px solid #000000;
+  border-left: 9px solid var(--test-accent, var(--primary, #c8102e));
   z-index: 10;
 }
 
 .test-runner-part-tab.is-active:hover:not(:disabled) {
-  background: #000000 !important;
-  border-color: #000000 !important;
+  background: var(--test-accent, var(--primary, #c8102e)) !important;
+  border-color: var(--test-accent, var(--primary, #c8102e)) !important;
   color: #ffffff !important;
 }
 
@@ -1207,6 +1231,44 @@
   font-size: 12px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+[data-theme="dark"] .test-runner-shell .test-runner-progress-summary {
+  background: #151519;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #f7f7fa;
+}
+
+[data-theme="dark"] .test-runner-shell .test-runner-progress-summary span,
+[data-theme="dark"] .test-runner-shell .test-runner-section-group h2 {
+  color: #b9bac2;
+}
+
+[data-theme="dark"] .test-runner-shell .test-runner-progress-summary strong {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .test-runner-shell .test-runner-part-tab {
+  background: #151519;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #d7d7dd;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .test-runner-shell .test-runner-part-tab:hover:not(:disabled) {
+  background: #1e1e24;
+  border-color: color-mix(in srgb, var(--test-accent, var(--primary, #c8102e)) 42%, rgba(255, 255, 255, 0.18));
+  color: #ffffff;
+}
+
+[data-theme="dark"] .test-runner-shell .test-runner-part-tab.is-active {
+  background: var(--test-accent, var(--primary, #c8102e)) !important;
+  border-color: var(--test-accent, var(--primary, #c8102e)) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .test-runner-shell .test-runner-part-tab.is-active::after {
+  border-left-color: var(--test-accent, var(--primary, #c8102e));
 }
 
 .test-runner-body {
@@ -2757,6 +2819,253 @@
   background: var(--primary);
 }
 
+/* --------------------------------------------------------------------------
+   Result analysis breakdowns
+   --------------------------------------------------------------------------
+   Every block below is one measurement of the same attempt - by part, by
+   question format, by difficulty, by rubric criterion - so they share one row
+   shape (`.analysis-score-row`) and one status ramp. A student scanning the
+   panel learns the vocabulary once.
+   -------------------------------------------------------------------------- */
+
+.analysis-progression {
+  display: grid;
+  gap: 9px;
+  margin: 16px 0 4px;
+  padding: 14px 16px;
+  border: 1px solid #e2e4e8;
+  border-radius: var(--radius-sm);
+  background: #fafafa;
+}
+
+.analysis-progression-levels {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.analysis-progression-level {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #1b1c20;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.analysis-progression-level small {
+  color: #85878e;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.analysis-progression-level.is-next {
+  color: var(--primary);
+}
+
+.analysis-progression-track {
+  flex: 1;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7e8eb;
+}
+
+.analysis-progression-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.analysis-progression p {
+  margin: 0;
+  color: #5c5e65;
+  font-size: 11.5px;
+}
+
+.analysis-block {
+  padding-top: 18px;
+  margin-top: 18px;
+  border-top: 1px solid #e2e4e8;
+}
+
+.analysis-block-head {
+  margin-bottom: 12px;
+}
+
+.analysis-block-head h3 {
+  margin: 0;
+  color: #1b1c20;
+  font-size: 13px;
+}
+
+.analysis-block-head p {
+  margin: 3px 0 0;
+  color: #85878e;
+  font-size: 11px;
+}
+
+.analysis-block-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+}
+
+.analysis-focus-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: analysis-focus;
+}
+
+.analysis-focus-list li {
+  position: relative;
+  padding: 13px 15px 13px 40px;
+  border: 1px solid #e2e4e8;
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  counter-increment: analysis-focus;
+}
+
+.analysis-focus-list li::before {
+  content: counter(analysis-focus);
+  position: absolute;
+  top: 13px;
+  left: 14px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.analysis-focus-list strong {
+  display: block;
+  color: #1b1c20;
+  font-size: 12.5px;
+}
+
+.analysis-focus-list p {
+  margin: 4px 0 0;
+  color: #5c5e65;
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+
+.analysis-focus-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.analysis-focus-action span {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.analysis-score-list {
+  display: grid;
+  gap: 13px;
+}
+
+.analysis-score-row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.analysis-score-row-head strong {
+  color: #1b1c20;
+  font-size: 12px;
+}
+
+.analysis-score-row-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: #1b1c20;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.analysis-score-marks {
+  color: #85878e;
+  font-weight: 600;
+}
+
+.analysis-score-row-caption {
+  margin: 0 0 6px;
+  color: #75777f;
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.analysis-score-row-note {
+  margin: 5px 0 0;
+  color: #85878e;
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+/* The status ramp is the whole point of these rows: crimson where the marks
+   are going, green where they are safe. */
+.analysis-score-row.is-priority .analysis-skill-track span {
+  background: var(--primary);
+}
+
+.analysis-score-row.is-steady .analysis-skill-track span {
+  background: #d97706;
+}
+
+.analysis-score-row.is-strong .analysis-skill-track span {
+  background: #1f7a4d;
+}
+
+.analysis-score-row.is-pending .analysis-score-row-value {
+  color: #85878e;
+  font-weight: 600;
+}
+
+.analysis-pacing {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: #fafafa;
+  color: #5c5e65;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.analysis-pacing strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #1b1c20;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .student-analysis-columns {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2926,6 +3235,11 @@
     padding: 16px 0 0;
     border-top: 1px solid #e2e4e8;
     border-left: 0;
+  }
+
+  .analysis-block-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
   }
 
   .student-analysis-columns {

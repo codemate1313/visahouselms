@@ -1,5 +1,6 @@
 import type { StudentResultAnalysis } from "@/api/types";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
+import { AnalysisBreakdown } from "./AnalysisBreakdown";
 
 interface AnalysisPanelProps {
   analysis: StudentResultAnalysis | null;
@@ -63,6 +64,7 @@ export function AnalysisPanel({ analysis, analysisError, awaitingAiGrading, manu
               ))}
             </div>
           )}
+          <AnalysisBreakdown analysis={analysis} />
           <div className="student-analysis-columns">
             <div>
               <h3>{t.whatWentWell}</h3>

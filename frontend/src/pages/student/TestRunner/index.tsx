@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
@@ -527,6 +527,18 @@ export function TestRunner() {
   /* The exam client has no dark mode, so the Final Test sits the whole attempt
      on the light surface and hands the candidate's preference back on exit. */
   useExamLightTheme(languageCertSkin);
+  /* The attempt route must own scrolling from the first render. Otherwise the
+     document can briefly keep its dashboard scroll bar while onboarding mounts
+     its own scroll surface, which shows two vertical scrollbars for a frame. */
+  useLayoutEffect(() => {
+    document.documentElement.classList.add("test-runner-route-active");
+    document.body.classList.add("test-runner-route-active");
+    window.scrollTo({ top: 0, left: 0 });
+    return () => {
+      document.documentElement.classList.remove("test-runner-route-active");
+      document.body.classList.remove("test-runner-route-active");
+    };
+  }, []);
   /* The global toast stack renders outside this component's own tree, above
      the `.lc-exam` wrapper, so a body class is what lets its stylesheet tell
      a Final Test notification (e.g. "Submit Failed") apart from an ordinary
@@ -1389,7 +1401,7 @@ export function TestRunner() {
     return <DesktopRequiredNotice onBackToDashboard={() => navigate("/student/dashboard")} />;
   }
 
-  if (error) return <p className="error-text">{error}</p>;
+  if (error) return <div className="test-runner-route-frame"><p className="error-text">{error}</p></div>;
   if (!attempt) return <div className="test-runner-loading">{strings.loading}</div>;
 
   const brandedTestClass = isInstituteStudent ? " institute-branded-test" : "";
@@ -1432,7 +1444,7 @@ export function TestRunner() {
      `show_onboarding_instructions` setting. */
   if (languageCertSkin && (attempt.status === "ready" || !securityAuthorized)) {
     return (
-      <>
+      <div className="test-runner-route-frame">
         <FinalTestOnboarding
           attempt={attempt}
           user={user}
@@ -1452,13 +1464,13 @@ export function TestRunner() {
           }}
         />
         {violationModal}
-      </>
+      </div>
     );
   }
 
   if (shouldShowPreExamOnboarding) {
     return (
-      <>
+      <div className="test-runner-route-frame">
         <PreExamOnboarding
           attempt={attempt}
           secondsLeft={secondsLeft}
@@ -1481,7 +1493,7 @@ export function TestRunner() {
           }}
         />
         {violationModal}
-      </>
+      </div>
     );
   }
 
@@ -1508,6 +1520,8 @@ export function TestRunner() {
         onSelectPart={selectPart}
         previousPartIndex={previousPhasePartIndex}
         nextPartIndex={nextPhasePartIndex}
+        onRequestSubmit={() => setConfirmSubmit(true)}
+        submitting={submitting}
         onSkipPart={() => void selectPart(partIndex + 1, true)}
         isNavigationLocked={isNavigationLocked}
         isImmersiveAttempt={isImmersiveAttempt}
@@ -1568,7 +1582,9 @@ export function TestRunner() {
                 const target = phasePartEntries[index];
                 if (target) void selectPart(target.index);
               }}
+              onRequestSubmit={() => setConfirmSubmit(true)}
               isNavigationLocked={isNavigationLocked}
+              submitting={submitting}
             />
           )}
           {currentPart.section_type === "speaking" ? (

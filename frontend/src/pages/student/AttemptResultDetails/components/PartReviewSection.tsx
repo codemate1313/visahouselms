@@ -1,7 +1,55 @@
 import type { Attempt, AttemptQuestion } from "@/api/types";
 import { Badge, renderRichText, type BadgeTone } from "@/components/ui";
-import { formatAttemptAnswer, hasAttemptResponse } from "@/pages/student/attemptMetrics";
+import { hasAttemptResponse } from "@/pages/student/attemptMetrics";
 import { attemptResultDetailsStrings as strings } from "../AttemptResultDetails.strings";
+
+type PromptValue = string | number | boolean | null | undefined | PromptValue[] | {
+  text?: PromptValue;
+  prompt?: PromptValue;
+  content?: PromptValue;
+  value?: PromptValue;
+  children?: PromptValue;
+};
+
+function promptToText(prompt: PromptValue): string {
+  if (prompt === null || prompt === undefined) return "";
+  if (typeof prompt === "string") return prompt;
+  if (typeof prompt === "number" || typeof prompt === "boolean") return String(prompt);
+  if (Array.isArray(prompt)) return prompt.map(promptToText).filter(Boolean).join(" ");
+
+  for (const key of ["text", "prompt", "content", "value", "children"] as const) {
+    const value = prompt[key];
+    const text = promptToText(value);
+    if (text) return text;
+  }
+
+  return "";
+}
+
+function formatOptionValue(question: AttemptQuestion, value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const option = question.options.find((item) => item.key === trimmed);
+  return option ? `${option.key}. ${option.text}` : trimmed;
+}
+
+function formatDetailedAnswer(question: AttemptQuestion): string {
+  const selected = question.response?.selected;
+  if (selected) {
+    const values = Array.isArray(selected) ? selected : [selected];
+    const formatted = values.map((value) => formatOptionValue(question, value)).filter(Boolean);
+    return formatted.length > 0 ? formatted.join(", ") : "Unanswered";
+  }
+  if (question.response?.text?.trim()) return question.response.text;
+  if (question.audio_path || question.response?.recorded) return "Recorded response";
+  return "Unanswered";
+}
+
+function formatCorrectAnswers(question: AttemptQuestion): string {
+  const answers = question.correct_answers ?? [];
+  if (answers.length === 0) return "-";
+  return answers.map((answer) => formatOptionValue(question, answer)).filter(Boolean).join(", ");
+}
 
 function questionOutcome(question: AttemptQuestion): { label: string; badge: BadgeTone } {
   const t = strings.outcome;
@@ -59,10 +107,17 @@ export function PartReviewSection({ part }: PartReviewSectionProps) {
                 return (
                   <tr key={question.id} className={`is-${outcome.label.toLowerCase().replace(" ", "-")}`}>
                     <td>
-                      {part.part_code === "listening_1" ? `Question ${index + 1}` : `${index + 1}. ${renderRichText(question.prompt)}`}
+                      {part.part_code === "listening_1" ? (
+                        `Question ${index + 1}`
+                      ) : (
+                        <>
+                          <span>{index + 1}. </span>
+                          {renderRichText(promptToText(question.prompt as PromptValue))}
+                        </>
+                      )}
                     </td>
-                    <td>{formatAttemptAnswer(question)}</td>
-                    <td>{question.correct_answers?.join(", ") ?? "-"}</td>
+                    <td>{formatDetailedAnswer(question)}</td>
+                    <td>{formatCorrectAnswers(question)}</td>
                     <td>
                       <Badge tone={outcome.badge}>{outcome.label}</Badge>
                     </td>

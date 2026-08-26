@@ -6615,7 +6615,13 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 [data-theme="dark"] .result-overview-meta strong,
 [data-theme="dark"] .result-radial-center strong,
 [data-theme="dark"] .result-metric-list strong,
-[data-theme="dark"] .student-analysis-columns h3 {
+[data-theme="dark"] .student-analysis-columns h3,
+[data-theme="dark"] .analysis-block-head h3,
+[data-theme="dark"] .analysis-progression-level,
+[data-theme="dark"] .analysis-focus-list strong,
+[data-theme="dark"] .analysis-score-row-head strong,
+[data-theme="dark"] .analysis-score-row-value,
+[data-theme="dark"] .analysis-pacing strong {
   color: #f7f7f8 !important;
   -webkit-text-fill-color: #f7f7f8 !important;
 }
@@ -6641,7 +6647,15 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 [data-theme="dark"] .analysis-skill-list span,
 [data-theme="dark"] .student-analysis-columns ul,
 [data-theme="dark"] .student-analysis-columns ol,
-[data-theme="dark"] .analysis-disclaimer {
+[data-theme="dark"] .analysis-disclaimer,
+[data-theme="dark"] .analysis-block-head p,
+[data-theme="dark"] .analysis-progression p,
+[data-theme="dark"] .analysis-progression-level small,
+[data-theme="dark"] .analysis-focus-list p,
+[data-theme="dark"] .analysis-score-row-caption,
+[data-theme="dark"] .analysis-score-row-note,
+[data-theme="dark"] .analysis-score-marks,
+[data-theme="dark"] .analysis-pacing {
   color: #b4b4bb !important;
   -webkit-text-fill-color: #b4b4bb !important;
 }
@@ -6655,6 +6669,37 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 [data-theme="dark"] .test-runner-source-placeholder,
 [data-theme="dark"] .test-security-check,
 [data-theme="dark"] .result-overview-panel,
+
+/* Result analysis breakdowns: the surfaces are white in light mode, so they
+   need the panel's own dark surface rather than the generic card fill. */
+[data-theme="dark"] .analysis-progression,
+[data-theme="dark"] .analysis-focus-list li,
+[data-theme="dark"] .analysis-pacing {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .analysis-focus-list li {
+  border-left-color: var(--primary) !important;
+}
+
+[data-theme="dark"] .analysis-block {
+  border-top-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .analysis-skill-track,
+[data-theme="dark"] .analysis-progression-track {
+  background: rgba(255, 255, 255, 0.09) !important;
+}
+
+[data-theme="dark"] .analysis-score-row.is-steady .analysis-skill-track span {
+  background: #fbbf24 !important;
+}
+
+[data-theme="dark"] .analysis-score-row.is-strong .analysis-skill-track span {
+  background: #6ee7b7 !important;
+}
+
 [data-theme="dark"] .student-analysis-panel {
   background: #16161a !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
@@ -6752,19 +6797,25 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 }
 
 [data-theme="dark"] .test-runner-part-tab {
-  color: #b4b4bb !important;
+  background: #151519 !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  color: #d7d7dd !important;
+  -webkit-text-fill-color: #d7d7dd !important;
+  box-shadow: none !important;
 }
 
 [data-theme="dark"] .test-runner-part-tab:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--primary) 8%, transparent) !important;
-  border-color: color-mix(in srgb, var(--primary) 36%, transparent) !important;
+  background: #1e1e24 !important;
+  border-color: color-mix(in srgb, var(--test-accent, var(--primary)) 42%, rgba(255, 255, 255, 0.18)) !important;
   color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 [data-theme="dark"] .test-runner-part-tab.is-active {
   background: var(--test-accent, var(--primary)) !important;
   border-color: var(--test-accent, var(--primary)) !important;
   color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 [data-theme="dark"] .test-runner-part-tab.is-active::after {
@@ -8851,15 +8902,25 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   color: #ffffff !important;
   border: 1px solid transparent !important;
   font-weight: 700 !important;
+  -webkit-text-fill-color: #ffffff !important;
   box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 25%, transparent) !important;
   transition: all 0.2s ease !important;
 }
 
 .catalog-plan-btn:hover {
-  background: #ffffff !important;
-  color: var(--primary) !important;
+  background: var(--primary-hover, var(--primary)) !important;
+  color: #ffffff !important;
   border-color: var(--primary) !important;
+  -webkit-text-fill-color: #ffffff !important;
   box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 15%, transparent) !important;
+}
+
+.catalog-plan-btn .ui-btn-label,
+.catalog-plan-btn .ui-btn-icon,
+.catalog-plan-btn svg {
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+  stroke: currentColor !important;
 }
 
 
@@ -9155,6 +9216,33 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
   box-shadow: 0 32px 80px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+.catalog-checkout-modal .catalog-plan-btn.ui-btn,
+.catalog-checkout-modal button.catalog-plan-btn.ui-btn-primary {
+  background: var(--primary, #c8102e) !important;
+  border-color: var(--primary, #c8102e) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  min-height: 44px;
+  opacity: 1 !important;
+}
+
+.catalog-checkout-modal .catalog-plan-btn.ui-btn:hover:not(:disabled),
+.catalog-checkout-modal button.catalog-plan-btn.ui-btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover, color-mix(in srgb, var(--primary, #c8102e) 82%, #111113)) !important;
+  border-color: var(--primary-hover, color-mix(in srgb, var(--primary, #c8102e) 82%, #111113)) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.catalog-checkout-modal .catalog-plan-btn.ui-btn:disabled,
+.catalog-checkout-modal button.catalog-plan-btn.ui-btn-primary:disabled {
+  background: color-mix(in srgb, var(--primary, #c8102e) 36%, var(--surface, #ffffff)) !important;
+  border-color: color-mix(in srgb, var(--primary, #c8102e) 42%, transparent) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.88) !important;
+  opacity: 0.86 !important;
 }
 
 

@@ -15,6 +15,8 @@ interface TestRunnerHeaderProps {
   onSelectPart: (index: number) => void;
   previousPartIndex?: number | null;
   nextPartIndex?: number | null;
+  onRequestSubmit: () => void;
+  submitting?: boolean;
   /** Jumps to the next part even while audio holds the part locked. */
   onSkipPart?: () => void;
   isNavigationLocked?: boolean;
@@ -38,6 +40,8 @@ export function TestRunnerHeader({
   onSelectPart,
   previousPartIndex,
   nextPartIndex,
+  onRequestSubmit,
+  submitting = false,
   onSkipPart,
   isNavigationLocked = false,
   isImmersiveAttempt,
@@ -55,6 +59,7 @@ export function TestRunnerHeader({
   const nextTarget = nextPartIndex !== undefined
     ? nextPartIndex
     : (partIndex < attempt.parts.length - 1 ? partIndex + 1 : null);
+  const isFinalSegment = nextTarget === null;
 
   const developerTools = (
     <>
@@ -151,13 +156,17 @@ export function TestRunnerHeader({
           </button>
           <button
             type="button"
-            disabled={nextTarget === null || isNavigationLocked}
+            disabled={isNavigationLocked || submitting}
             onClick={() => {
-              if (nextTarget !== null) onSelectPart(nextTarget);
+              if (nextTarget !== null) {
+                onSelectPart(nextTarget);
+              } else {
+                onRequestSubmit();
+              }
             }}
             title={isNavigationLocked ? t.navigationLocked : undefined}
           >
-            {t.next}
+            {submitting ? strings.footer.submitting : isFinalSegment ? strings.footer.submitTest : t.next}
           </button>
         </div>
         {developerTools}

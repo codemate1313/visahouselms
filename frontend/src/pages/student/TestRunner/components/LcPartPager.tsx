@@ -4,7 +4,9 @@ interface LcPartPagerProps {
   partIndex: number;
   partCount: number;
   onSelectPart: (index: number) => void;
+  onRequestSubmit: () => void;
   isNavigationLocked?: boolean;
+  submitting?: boolean;
 }
 
 /**
@@ -15,11 +17,18 @@ interface LcPartPagerProps {
  * shows Next alone, the last shows Previous alone. Listening never renders this
  * at all: the recording drives the pacing, so the runner omits the pager there.
  */
-export function LcPartPager({ partIndex, partCount, onSelectPart, isNavigationLocked = false }: LcPartPagerProps) {
+export function LcPartPager({
+  partIndex,
+  partCount,
+  onSelectPart,
+  onRequestSubmit,
+  isNavigationLocked = false,
+  submitting = false,
+}: LcPartPagerProps) {
   const t = strings.header;
   const hasPrevious = partIndex > 0;
   const hasNext = partIndex < partCount - 1;
-  if (!hasPrevious && !hasNext) return null;
+  if (partCount <= 0) return null;
 
   return (
     <div className="lc-pager" aria-label={t.partNavigationAriaLabel}>
@@ -34,17 +43,21 @@ export function LcPartPager({ partIndex, partCount, onSelectPart, isNavigationLo
           {t.previous}
         </button>
       )}
-      {hasNext && (
-        <button
-          type="button"
-          className="lc-pager-button"
-          disabled={isNavigationLocked}
-          onClick={() => onSelectPart(partIndex + 1)}
-          title={isNavigationLocked ? t.navigationLocked : undefined}
-        >
-          {t.next}
-        </button>
-      )}
+      <button
+        type="button"
+        className="lc-pager-button"
+        disabled={isNavigationLocked || submitting}
+        onClick={() => {
+          if (hasNext) {
+            onSelectPart(partIndex + 1);
+          } else {
+            onRequestSubmit();
+          }
+        }}
+        title={isNavigationLocked ? t.navigationLocked : undefined}
+      >
+        {submitting ? strings.footer.submitting : hasNext ? t.next : strings.footer.submitTest}
+      </button>
     </div>
   );
 }
