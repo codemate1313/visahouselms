@@ -470,6 +470,18 @@ def get_attempt_analysis(attempt_id: int, db: Session = Depends(get_db), user: U
     return student_analysis_service.result_analysis(db, attempt)
 
 
+@router.post("/attempts/{attempt_id}/ai-retry")
+def retry_ai_evaluation(
+    attempt_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+):
+    from app.services import ai_evaluation_service
+
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    return ai_evaluation_service.retry_attempt_evaluation(db, attempt)
+
+
 @router.post("/attempts/{attempt_id}/reevaluation", status_code=status.HTTP_201_CREATED)
 def request_reevaluation(
     attempt_id: int,

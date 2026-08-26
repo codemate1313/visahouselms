@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models.attempt import (
+    ATTEMPT_GRADING,
     AiEvaluation,
     AiEvaluationLimit,
     AttemptPartGrade,
@@ -112,6 +113,28 @@ def _config(db: Session) -> dict:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI evaluation is not enabled or fully configured")
     status["api_key"] = get_setting(db, "ai.api_key") or settings.ai_api_key
     return status
+
+
+GEMINI_API_ROOT = "https://generativelanguage.googleapis.com/v1beta"
+
+
+def _gemini_headers(api_key: str) -> dict:
+    """Gemini auth goes in a header, never in the query string.
+
+    Two reasons. The newer Google AI Studio keys (the `AQ.` format) are only
+    accepted as `x-goog-api-key` - sent as `?key=` they come back 401, which is
+    exactly the failure this platform kept logging. And a key in the URL ends up
+    inside httpx's error text, so it was being written into the AI evaluation
+    log and shown on screen."""
+    return {"Content-Type": "application/json", "x-goog-api-key": api_key}
+
+
+_SECRET_PATTERN = re.compile(r"(key=|x-goog-api-key['\":\s]+)([A-Za-z0-9._\-]{12,})", re.IGNORECASE)
+
+
+def _redact_secrets(text: object) -> str:
+    """Strip anything key-shaped out of provider error text before it is stored."""
+    return _SECRET_PATTERN.sub(lambda m: f"{m.group(1)}[redacted]", str(text))
 
 
 def _mask_key(value: Optional[str]) -> Optional[str]:
@@ -288,9 +311,7 @@ def list_evaluation_models(
 
     try:
         with httpx.Client(timeout=15.0) as client:
-            response = client.get(
-                f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
-            )
+            response = client.get(f"{GEMINI_API_ROOT}/models", headers=_gemini_headers(api_key))
             response.raise_for_status()
             data = response.json()
     except Exception as exc:
@@ -314,6 +335,21 @@ def list_evaluation_models(
     if selected in GEMINI_EVALUATION_MODELS and not any(option["value"] == selected for option in options):
         options.insert(0, _model_option(selected))
     return options or _default_model_options(provider, model)
+
+
+def _persist_key_model(db: Session, *, key_id: str, provider: str, model: str, options: list[dict]) -> None:
+    from app.services.settings_service import set_setting
+
+    stored = _configured_keys(db, mask=False)
+    changed = False
+    for item in stored:
+        if item["id"] == key_id:
+            item["provider"] = provider
+            item["model"] = model
+            item["model_options"] = options
+            changed = True
+    if changed:
+        set_setting(db, "ai.api_keys", json.dumps(stored))
 
 
 def list_configured_key_models(
@@ -373,6 +409,13 @@ def list_configured_key_models(
         endpoint_url=effective_endpoint,
     )
     selected = _choose_model_from_options(detected["provider"], effective_model, options)
+
+    # Write the discovered model straight back onto the saved key. Loading
+    # models used to leave the choice sitting in the form, so a reload before
+    # "Save AI settings" quietly restored the model that was failing.
+    if stored and options:
+        _persist_key_model(db, key_id=stored["id"], provider=detected["provider"], model=selected, options=options)
+
     return {
         "ok": bool(options),
         "provider": detected["provider"],
@@ -544,7 +587,7 @@ def test_connection(
             "key_preview": _mask_key(api_key),
             "latency_ms": elapsed_ms,
             "supported": provider in SUPPORTED_KEY_PROVIDERS,
-            "message": str(getattr(exc, "detail", exc))[:500],
+            "message": _redact_secrets(getattr(exc, "detail", exc))[:500],
         }
 
 
@@ -607,14 +650,17 @@ def test_configured_key(
         model=effective_model,
         endpoint_url=effective_endpoint,
     )
+    chosen = _choose_model_from_options(detected["provider"], effective_model, discovered)
     result = test_connection(
         provider=detected["provider"],
         api_key=secret,
-        model=_choose_model_from_options(detected["provider"], effective_model, discovered),
+        model=chosen,
         endpoint_url=effective_endpoint,
     )
     if not result.get("model_options"):
         result["model_options"] = discovered
+    if stored and discovered:
+        _persist_key_model(db, key_id=stored["id"], provider=detected["provider"], model=chosen, options=discovered)
     return result | {
         "detected_provider": detected["provider"],
         "provider_label": detected["provider_label"],
@@ -949,7 +995,7 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
         model = "gemini-2.0-flash"
     if model.startswith("models/"):
         model = model[len("models/"):]
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+    url = f"{GEMINI_API_ROOT}/models/{model}:generateContent"
 
     # Build Gemini request prompt & contents
     prompt_text = (
@@ -1006,8 +1052,8 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
         "generationConfig": generation_config,
     }
 
-    headers = {"Content-Type": "application/json"}
-    
+    headers = _gemini_headers(api_key)
+
     with httpx.Client(timeout=45.0) as client:
         res = client.post(url, headers=headers, json=gemini_payload)
 
@@ -1023,7 +1069,7 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
             # Retrying inside the same minute just spends another request into
             # a window that is already closed.
             time.sleep(RATE_LIMIT_RETRY_SECONDS)
-            fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={api_key}"
+            fallback_url = f"{GEMINI_API_ROOT}/models/gemini-flash-latest:generateContent"
             res = client.post(fallback_url, headers=headers, json=gemini_payload)
 
         if res.status_code == 429:
@@ -1207,7 +1253,7 @@ def _interlocutor_instruction(current_prompt: str, next_prompt: str, next_turn_t
 
 def _gemini_interlocutor(config: dict, prompt: str, audio_b64: str, mime_type: str) -> dict:
     model = str(config.get("model") or DEFAULT_GEMINI_MODEL).removeprefix("models/")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={config['api_key']}"
+    url = f"{GEMINI_API_ROOT}/models/{model}:generateContent"
     payload = {
         "contents": [{"parts": [
             {"text": prompt},
@@ -1216,7 +1262,7 @@ def _gemini_interlocutor(config: dict, prompt: str, audio_b64: str, mime_type: s
         "generationConfig": {"responseMimeType": "application/json", "temperature": 0.25},
     }
     with httpx.Client(timeout=45.0) as client:
-        response = client.post(url, headers={"Content-Type": "application/json"}, json=payload)
+        response = client.post(url, headers=_gemini_headers(config["api_key"]), json=payload)
         response.raise_for_status()
         data = response.json()
     return json.loads(data["candidates"][0]["content"]["parts"][0]["text"])
@@ -1449,7 +1495,7 @@ def request_suggestion(
             last_error = exc
             record.status = "failed"
             record.duration_ms = int((time.monotonic() - started) * 1000)
-            record.error = str(exc.detail)[:4000]
+            record.error = _redact_secrets(exc.detail)[:4000]
             db.add(record)
             failed_records.append(record)
             if exc.status_code == 429 and index == len(configs_to_try) - 1:
@@ -1463,12 +1509,12 @@ def request_suggestion(
             last_error = exc
             record.status = "failed"
             record.duration_ms = int((time.monotonic() - started) * 1000)
-            record.error = str(exc)[:4000]
+            record.error = _redact_secrets(exc)[:4000]
             db.add(record)
             failed_records.append(record)
 
     db.commit()
-    detail = str(getattr(last_error, "detail", last_error)) if last_error else "All AI evaluators failed"
+    detail = _redact_secrets(getattr(last_error, "detail", last_error)) if last_error else "All AI evaluators failed"
     raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"All configured AI evaluators failed: {detail[:500]}")
 
 
@@ -1534,6 +1580,59 @@ def auto_evaluate_submission(db: Session, attempt: TestAttempt) -> bool:
 
     _finalize_if_all_graded(db, attempt)
     return quota_exhausted
+
+
+def retry_attempt_evaluation(db: Session, attempt: TestAttempt) -> dict:
+    """Let a student ask for another AI marking pass on their own attempt.
+
+    Only for an attempt still waiting in the grading queue with AI-eligible
+    parts unmarked: once an instructor or the AI has scored a part, nothing
+    here touches it. The work is queued, not run inline - a provider call takes
+    tens of seconds, which is far too long to hold a tap open for.
+    """
+    from app.services import job_service
+
+    if not config_status(db)["configured"]:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI marking is switched off right now. Your answers stay with an instructor.",
+        )
+    if attempt.status != ATTEMPT_GRADING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This attempt is not waiting for marking.",
+        )
+
+    grades_by_part = {grade.part_id: grade for grade in attempt.part_grades}
+    pending = [
+        part
+        for part in attempt.module.parts
+        if not part.auto_marked
+        and part.ai_evaluation_enabled
+        and (grades_by_part.get(part.id) is None or grades_by_part[part.id].status == PART_GRADE_PENDING)
+    ]
+    if not pending:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Every part of this attempt has already been marked.",
+        )
+    if any(_evaluation_in_flight(db, attempt.id, part.id) for part in pending):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An AI marking attempt is already running for this test. Give it a moment.",
+        )
+
+    job = job_service.enqueue_ai_auto_grade(db, attempt.id)
+    db.commit()
+    return {
+        "queued": job is not None,
+        "parts": len(pending),
+        "message": (
+            "Sent back to the AI. This page updates as soon as it answers."
+            if job is not None
+            else "The AI is already working on this test."
+        ),
+    }
 
 
 def evaluate_attempt_part_directly(database_url: str, attempt_id: int, part_id: int) -> None:

@@ -36,6 +36,8 @@ export function AttemptResult() {
   // spinner that no longer watches anything.
   const [pollTimedOut, setPollTimedOut] = useState(false);
   const [rechecking, setRechecking] = useState(false);
+  const [retryingAi, setRetryingAi] = useState(false);
+  const [retryMessage, setRetryMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -131,6 +133,23 @@ export function AttemptResult() {
 
   // A different attempt starts its own watch.
   useEffect(() => setPollTimedOut(false), [id]);
+
+  async function retryAiEvaluation() {
+    setRetryingAi(true);
+    setRetryMessage(null);
+    try {
+      const { data } = await apiClient.post<{ message: string }>(`/student/attempts/${id}/ai-retry`);
+      setRetryMessage(data.message);
+      // Queued work lands in the background: put the page back on watch so the
+      // result appears without a manual reload.
+      setPollTimedOut(false);
+      await recheckGrading();
+    } catch (err: unknown) {
+      setRetryMessage(extractErrorMessage(err, strings.aiEvaluation.retryFailed));
+    } finally {
+      setRetryingAi(false);
+    }
+  }
 
   async function recheckGrading() {
     setRechecking(true);
@@ -252,6 +271,9 @@ export function AttemptResult() {
         analysis={analysis}
         analysisError={analysisError}
         awaitingAiGrading={awaitingAiGrading}
+        onRetryAi={aiManualReviewRequired && attempt.status === "grading" ? () => void retryAiEvaluation() : undefined}
+        retryingAi={retryingAi}
+        retryMessage={retryMessage}
         manualReviewRequired={aiManualReviewRequired && attempt.status === "grading"}
       />
 

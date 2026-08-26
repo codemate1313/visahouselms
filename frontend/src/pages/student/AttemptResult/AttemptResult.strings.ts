@@ -15,6 +15,9 @@ export const attemptResultStrings = {
     checkAgain: "Check now",
     checking: "Checking...",
     manualReview: "Manual instructor review required",
+    retryAi: "Try AI marking again",
+    retrying: "Sending...",
+    retryFailed: "Could not send this for AI marking again.",
   },
   metrics: {
     totalQuestions: "Total questions",

@@ -7,9 +7,21 @@ interface AnalysisPanelProps {
   analysisError: boolean;
   awaitingAiGrading?: boolean;
   manualReviewRequired?: boolean;
+  /** Ask the AI to mark the unmarked parts again. Absent when there is nothing to retry. */
+  onRetryAi?: () => void;
+  retryingAi?: boolean;
+  retryMessage?: string | null;
 }
 
-export function AnalysisPanel({ analysis, analysisError, awaitingAiGrading, manualReviewRequired }: AnalysisPanelProps) {
+export function AnalysisPanel({
+  analysis,
+  analysisError,
+  awaitingAiGrading,
+  manualReviewRequired,
+  onRetryAi,
+  retryingAi,
+  retryMessage,
+}: AnalysisPanelProps) {
   const t = strings.analysis;
   const analysisSourceLabel = analysis?.generated_by === "configured_ai" ? t.aiEvaluated : t.cefrAnalysis;
   const analysisSourceText = analysis?.generated_by === "configured_ai" ? t.aiSourceText : t.cefrSourceText;
@@ -36,10 +48,17 @@ export function AnalysisPanel({ analysis, analysisError, awaitingAiGrading, manu
       )}
 
       {manualReviewRequired && (
-        <div className="banner warning" style={{ display: "flex", alignItems: "center", gap: "12px", maxWidth: "none" }}>
+        <div className="banner warning" style={{ display: "flex", alignItems: "center", gap: "12px", maxWidth: "none", flexWrap: "wrap" }}>
           <span>{t.manualReview}</span>
+          {onRetryAi && (
+            <button type="button" className="ui-btn ui-btn-secondary ui-btn-sm" onClick={onRetryAi} disabled={retryingAi}>
+              {retryingAi ? strings.aiEvaluation.retrying : strings.aiEvaluation.retryAi}
+            </button>
+          )}
         </div>
       )}
+
+      {retryMessage && <p className="hint" style={{ marginTop: -4 }}>{retryMessage}</p>}
 
       {!analysis && !analysisError && <div className="analysis-loading">{t.analysing}</div>}
       {analysisError && <p className="error-text">{t.unavailable}</p>}
