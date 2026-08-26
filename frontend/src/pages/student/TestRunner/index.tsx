@@ -1355,6 +1355,21 @@ export function TestRunner() {
         return;
       }
     }
+    // Pre-emptive AI evaluation trigger when leaving a subjective part (Writing/Speaking)
+    if (currentPart && (currentPart.section_type === "writing" || currentPart.section_type === "speaking")) {
+      const partId = currentPart.id;
+      const hasAnswers = currentPart.questions.some((q) => {
+        const qState = attempt?.parts.flatMap((p) => p.questions).find((qu) => qu.id === q.id);
+        const ans = qState?.response?.text || qState?.response?.audio_path || qState?.response?.audio_url || q.response?.text || q.response?.audio_path || q.response?.audio_url;
+        return Boolean(ans);
+      });
+      if (hasAnswers) {
+        void apiClient.post(`/student/attempts/${id}/parts/${partId}/ai-evaluate`, {}, {
+          headers: { ...securityHeaders(), "X-Skip-Loader": "1" }
+        }).catch(() => {});
+      }
+    }
+
     setPartIndex(index);
     resetRunnerScroll();
   }

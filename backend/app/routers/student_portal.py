@@ -633,6 +633,33 @@ def record_flag(
     )
 
 
+from fastapi import BackgroundTasks
+
+
+@router.post("/attempts/{attempt_id}/parts/{part_id}/ai-evaluate")
+def evaluate_part_immediately(
+    attempt_id: int,
+    part_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+    x_attempt_token: Optional[str] = Header(default=None),
+):
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    attempt_service.require_security_access(attempt, session, x_attempt_token)
+    attempt_service.require_live_security(attempt)
+
+    from app.services import ai_evaluation_service
+    background_tasks.add_task(
+        ai_evaluation_service.evaluate_attempt_part_directly,
+        settings.database_url,
+        attempt.id,
+        part_id,
+    )
+    return {"status": "enqueued"}
+
+
 @router.post("/attempts/{attempt_id}/submit")
 def submit_attempt(
     attempt_id: int,

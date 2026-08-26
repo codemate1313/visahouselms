@@ -1343,7 +1343,7 @@ def _finalize_if_all_graded(db: Session, attempt: TestAttempt) -> bool:
     produced it. A part sitting in "draft" doesn't count as published yet -
     that's the whole point of the draft/submit split, so the attempt can't
     slip into ATTEMPT_GRADED with some parts only half-reviewed."""
-    if attempt.status == ATTEMPT_GRADED:
+    if attempt.status != ATTEMPT_GRADING:
         return False
     if not attempt.part_grades or any(
         g.status not in (PART_GRADE_GRADED, PART_GRADE_AI_GRADED) for g in attempt.part_grades

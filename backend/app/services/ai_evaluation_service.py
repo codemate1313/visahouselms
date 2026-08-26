@@ -1270,3 +1270,56 @@ def auto_evaluate_submission(db: Session, attempt: TestAttempt) -> bool:
 
     _finalize_if_all_graded(db, attempt)
     return quota_exhausted
+
+
+def evaluate_attempt_part_directly(database_url: str, attempt_id: int, part_id: int) -> None:
+    """Evaluate one specific subjective part (Writing/Speaking) of an attempt
+    in the background immediately after the student finishes that part, rather
+    than waiting for the final test submission. This greatly reduces latency.
+    """
+    from app.database import create_database_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.models.attempt import TestAttempt, AttemptPartGrade
+    from app.models.exam_module import ExamModulePart
+    from app.services import grading_service
+
+    engine = create_database_engine(database_url)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    db = SessionLocal()
+    try:
+        if not config_status(db)["configured"]:
+            return
+
+        attempt = db.query(TestAttempt).filter(TestAttempt.id == attempt_id).first()
+        if attempt is None:
+            return
+
+        part = db.query(ExamModulePart).filter(ExamModulePart.id == part_id).first()
+        if part is None or part.auto_marked or not part.ai_evaluation_enabled:
+            return
+
+        # Check if it was already graded
+        grade = next((g for g in attempt.part_grades if g.part_id == part_id), None)
+        if grade is not None and grade.status != "pending":
+            return  # Already graded
+
+        try:
+            suggestion = request_suggestion(db, attempt.user, attempt, part)
+        except Exception:
+            logger.exception(
+                "Pre-emptive background AI evaluation failed for attempt %s part %s",
+                attempt_id,
+                part_id,
+            )
+            return
+
+        grading_service.ensure_queue_entry(db, attempt)
+        _apply_ai_grade(db, attempt, part, suggestion)
+        db.commit()
+
+        # Check if the whole attempt is ready to finalize (if student already submitted)
+        from app.services.attempt_service import _finalize_if_all_graded
+        _finalize_if_all_graded(db, attempt)
+        db.commit()
+    finally:
+        db.close()
