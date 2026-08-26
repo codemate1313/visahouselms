@@ -5510,3 +5510,182 @@ th[aria-sort="descending"] .table-sort-button::after {
 .test-runner-instructions .highlighted-word {
   font-weight: 800;
 }
+
+/* ---------------------------------------------------------------------------
+   Score Dial Cards (Compact Radial Progress)
+   --------------------------------------------------------------------------- */
+
+.analysis-score-dials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 16px;
+  margin-top: 15px;
+}
+
+.score-dial-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  cursor: default;
+}
+
+.score-dial-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
+}
+
+.score-dial-card.is-priority {
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+.score-dial-card.is-priority:hover {
+  border-color: var(--primary);
+}
+
+.score-dial-card.is-steady {
+  border-color: color-mix(in srgb, #d97706 30%, transparent);
+}
+.score-dial-card.is-steady:hover {
+  border-color: #d97706;
+}
+
+.score-dial-card.is-strong {
+  border-color: color-mix(in srgb, #1f7a4d 30%, transparent);
+}
+.score-dial-card.is-strong:hover {
+  border-color: #1f7a4d;
+}
+
+.score-dial-card.is-pending {
+  border-color: #e4e4e7;
+}
+
+.score-dial-tooltip {
+  visibility: hidden;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1e293b;
+  color: #ffffff;
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  width: 200px;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+.score-dial-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #1e293b transparent transparent transparent;
+}
+
+.score-dial-card:hover .score-dial-tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.score-dial-visual {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-dial-visual svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.score-dial-percent {
+  font-size: 13px;
+  font-weight: 750;
+  color: #1b1c20;
+}
+
+.score-dial-pending-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #a1a1aa;
+  border-radius: 50%;
+  animation: pulse-gray 2s infinite ease-in-out;
+}
+
+@keyframes pulse-gray {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.score-dial-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.score-dial-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1b1c20;
+}
+
+.score-dial-marks-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 11px;
+}
+
+.score-dial-marks {
+  color: #85878e;
+  font-weight: 600;
+}
+
+.score-dial-pending-text {
+  color: #85878e;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.score-dial-note {
+  font-size: 10px;
+  color: #a71e2b;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.score-dial-card.is-pending .score-dial-note {
+  color: #71717a;
+}
+

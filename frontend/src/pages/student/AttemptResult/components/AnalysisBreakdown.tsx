@@ -55,6 +55,81 @@ function ScoreRow({
   );
 }
 
+function ScoreDial({
+  label,
+  caption,
+  marks,
+  percentage,
+  status,
+  note,
+}: {
+  label: string;
+  caption?: string;
+  marks?: string | null;
+  percentage: string;
+  status: AnalysisBandStatus;
+  note?: string;
+}) {
+  const isPending = status === "pending";
+  const pct = isPending ? 0 : Number(percentage);
+  const radius = 22;
+  const strokeWidth = 4.5;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (Math.max(0, Math.min(100, pct)) / 100) * circumference;
+
+  let strokeColor = "#e2e8f0";
+  if (status === "strong") strokeColor = "#1f7a4d";
+  if (status === "steady") strokeColor = "#d97706";
+  if (status === "priority") strokeColor = "var(--primary)";
+
+  return (
+    <div className={`score-dial-card is-${status}`}>
+      {caption ? <div className="score-dial-tooltip">{caption}</div> : null}
+      
+      <div className="score-dial-visual">
+        <svg width="56" height="56" viewBox="0 0 56 56">
+          <circle
+            cx="28"
+            cy="28"
+            r={radius}
+            fill="transparent"
+            stroke="#f1f5f9"
+            strokeWidth={strokeWidth}
+          />
+          <circle
+            cx="28"
+            cy="28"
+            r={radius}
+            fill="transparent"
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={isPending ? circumference : strokeDashoffset}
+            strokeLinecap="round"
+            transform="rotate(-90 28 28)"
+          />
+        </svg>
+        <div className="score-dial-percent">
+          {isPending ? (
+            <span className="score-dial-pending-dot" />
+          ) : (
+            `${trim(percentage)}%`
+          )}
+        </div>
+      </div>
+
+      <div className="score-dial-info">
+        <div className="score-dial-label">{label}</div>
+        <div className="score-dial-marks-row">
+          {marks ? <span className="score-dial-marks">{marks}</span> : null}
+          {isPending && <span className="score-dial-pending-text">{statusLabel(status)}</span>}
+        </div>
+        {note ? <div className="score-dial-note">{note}</div> : null}
+      </div>
+    </div>
+  );
+}
+
 export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysis }) {
   const progression = analysis.progression;
   const focusAreas = analysis.focus_areas ?? [];
@@ -128,9 +203,9 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
             <h3>{t.partBreakdown.heading}</h3>
             <p>{t.partBreakdown.subheading}</p>
           </div>
-          <div className="analysis-score-list">
+          <div className="analysis-score-dials-grid">
             {parts.map((part) => (
-              <ScoreRow
+              <ScoreDial
                 key={part.part_code || part.label}
                 label={part.label}
                 caption={part.focus}
