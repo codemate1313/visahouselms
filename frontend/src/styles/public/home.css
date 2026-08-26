@@ -1603,73 +1603,75 @@ a.vh-hero-cta-alt:hover {
   font-weight: 600;
   letter-spacing: -0.4px;
   color: #0f172a;
-  margin: 0 0 6px;
+  margin: 0 0 16px;
   line-height: 1.25;
 }
 
-.vh-step-card-desc {
-  font-size: 14px;
-  line-height: 1.55;
-  color: #64748b;
-  margin: 0 0 14px;
-  font-weight: 400;
-}
-
-/* UI Mockup Component inside Steps Cards - Sleek Premium Architecture */
-.vh-step-card-ui-mockup.vh-step-premium-widget {
-  background: #f8fafc;
+/* UI Mockup & Screenshot Component inside Steps Cards */
+.vh-step-card-ui-mockup.vh-step-screenshot-widget {
+  background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 14px 16px;
-  margin-bottom: 14px;
-  box-shadow: none;
-  transition: border-color 0.3s ease, background 0.3s ease;
+  border-radius: 14px;
+  padding: 0;
+  margin-bottom: 0;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  outline: none;
 }
 
-.vh-steps-gsap-card:hover .vh-step-card-ui-mockup.vh-step-premium-widget {
+.vh-step-card-ui-mockup.vh-step-screenshot-widget:hover,
+.vh-step-card-ui-mockup.vh-step-screenshot-widget:focus-visible {
   border-color: #cbd5e1;
-  background: #f8fafc;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
 }
 
-.vh-mockup-header {
+.vh-step-screenshot-widget .vh-mockup-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 0;
 }
+
+.vh-step-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vh-window-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.vh-dot-red { background: #ef4444; }
+.vh-dot-yellow { background: #f59e0b; }
+.vh-dot-green { background: #10b981; }
 
 .vh-mockup-tag {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   color: #64748b;
   text-transform: uppercase;
 }
 
-.vh-mockup-dot-active {
+.vh-mockup-dot-custom {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
-  animation: vh-pulse 1.4s infinite;
-}
-
-.vh-mockup-dot-star {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #b80f28;
-}
-
-.vh-mockup-dot-trend {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #059669;
+  display: inline-block;
 }
 
 .vh-mockup-timer-clean {
@@ -1677,7 +1679,7 @@ a.vh-hero-cta-alt:hover {
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: #334155;
   font-variant-numeric: tabular-nums;
 }
@@ -1687,256 +1689,134 @@ a.vh-hero-cta-alt:hover {
   flex-shrink: 0;
 }
 
-.vh-mockup-score-clean {
-  font-size: 12px;
-  font-weight: 600;
-  color: #b80f28;
-  letter-spacing: -0.2px;
-}
-
-.vh-mockup-trend-clean {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #059669;
-  letter-spacing: -0.2px;
-}
-
-/* Step 1 Audio Player Card */
-.vh-mockup-audio-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 11px;
-  padding: 9px 12px;
-  margin: 8px 0;
-}
-
-.vh-mockup-audio-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 7px;
-}
-
-.vh-mockup-audio-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #1e293b;
-}
-
-.vh-mockup-audio-info svg {
-  color: #b80f28;
-  flex-shrink: 0;
-}
-
-.vh-mockup-wave-mini {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  height: 13px;
-}
-
-.vh-mockup-wave-mini span {
-  width: 2.5px;
-  background: #b80f28;
-  border-radius: 2px;
-  animation: vh-wave 0.8s ease-in-out infinite alternate;
-}
-
-.vh-mockup-scrubber {
-  height: 3.5px;
-  background: #e2e8f0;
-  border-radius: 999px;
+.vh-step-screenshot-body {
+  position: relative;
+  width: 100%;
+  height: 290px;
   overflow: hidden;
-  margin-bottom: 4px;
-}
-
-.vh-mockup-scrubber-fill {
-  height: 100%;
   background: #0f172a;
-  border-radius: 999px;
 }
 
-.vh-mockup-audio-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  font-weight: 400;
-  color: #94a3b8;
-  font-variant-numeric: tabular-nums;
+.vh-step-screenshot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+  display: block;
+  transition: transform 0.4s ease;
 }
 
-.vh-mockup-status-row {
+.vh-step-screenshot-widget:hover .vh-step-screenshot-img {
+  transform: scale(1.03);
+}
+
+.vh-step-screenshot-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: #64748b;
-  font-weight: 450;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  backdrop-filter: blur(1px);
 }
 
-.vh-mockup-status-item {
+.vh-step-screenshot-widget:hover .vh-step-screenshot-overlay,
+.vh-step-screenshot-widget:focus-visible .vh-step-screenshot-overlay {
+  opacity: 1;
+}
+
+.vh-step-inspect-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-}
-
-.vh-mockup-status-item svg {
-  flex-shrink: 0;
-}
-
-.vh-mockup-status-sep {
-  color: #cbd5e1;
-  font-weight: 600;
-}
-
-/* Step 2 Performance Bars */
-.vh-mockup-skill-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 8px 0 10px;
-}
-
-.vh-mockup-bar-item {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.vh-mockup-bar-meta {
-  display: flex;
-  justify-content: space-between;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  padding: 6px 14px;
+  border-radius: 999px;
   font-size: 11.5px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  transform: translateY(4px);
+  transition: transform 0.25s ease;
+}
+
+.vh-step-screenshot-widget:hover .vh-step-inspect-pill {
+  transform: translateY(0);
+}
+
+.vh-step-screenshot-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  font-size: 11px;
+}
+
+.vh-step-footer-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #475569;
-  font-weight: 450;
-}
-
-.vh-mockup-bar-meta strong {
-  color: #0f172a;
-  font-weight: 600;
-  font-size: 11.5px;
-}
-
-.vh-mockup-track {
-  height: 5px;
-  background: #f1f5f9;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.vh-mockup-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #b80f28, #e11d2e);
-  border-radius: 999px;
-}
-
-.vh-mockup-criteria-clean {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 10.5px;
-  color: #64748b;
-  font-weight: 400;
-}
-
-.vh-mockup-criteria-clean strong {
-  color: #0f172a;
   font-weight: 500;
-  margin-left: 2px;
 }
 
-.vh-mockup-criteria-clean .sep {
-  color: #cbd5e1;
-  font-weight: 600;
-}
-
-/* Step 3 Performance Trajectory */
-.vh-mockup-growth-clean {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 8px 0 8px;
-}
-
-.vh-growth-col {
-  display: flex;
-  flex-direction: column;
-}
-
-.vh-growth-col.target {
-  text-align: right;
-  align-items: flex-end;
-}
-
-.vh-growth-col .lbl {
-  font-size: 9.5px;
-  font-weight: 500;
-  text-transform: uppercase;
-  color: #64748b;
-  letter-spacing: 0.5px;
-  margin-bottom: 2px;
-}
-
-.vh-growth-col .val {
-  font-size: 15px;
-  font-weight: 600;
-  color: #0f172a;
-  letter-spacing: -0.2px;
-}
-
-.vh-growth-col.target .val {
-  color: #b80f28;
-}
-
-.vh-growth-col .sub {
-  font-size: 9.5px;
-  font-weight: 400;
+.vh-step-click-hint {
   color: #94a3b8;
-  margin-top: 1px;
-}
-
-.vh-growth-divider {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #cbd5e1;
-}
-
-.vh-growth-divider .line {
-  flex: 1;
-  height: 1px;
-  background: #e2e8f0;
-}
-
-.vh-growth-divider svg {
-  color: #94a3b8;
-  flex-shrink: 0;
-}
-
-.vh-growth-footnote {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   font-size: 10.5px;
-  font-weight: 400;
-  color: #64748b;
+  font-weight: 500;
 }
 
-.vh-growth-footnote .dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #10b981;
-  flex-shrink: 0;
+/* Lightbox Modal */
+.vh-screenshot-lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: vh-fade-in 0.25s ease;
+}
+
+.vh-screenshot-lightbox-clean {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  max-width: 860px;
+  width: 80vw;
+  max-height: 80vh;
+  animation: vh-scale-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vh-lightbox-pure-img {
+  max-width: 100%;
+  max-height: 80vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.12);
+  display: block;
+}
+
+@keyframes vh-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes vh-scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .vh-step-card-points {

@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { ModuleCard } from "./Home.data";
 
 export function ModuleIcon({ kind }: { kind: ModuleCard["kind"] }) {
@@ -226,162 +228,136 @@ export function StepIcon({ index }: { index: number }) {
   );
 }
 
+interface StepScreenshotData {
+  src: string;
+  alt: string;
+  tag: string;
+  timer: string;
+  dotColor: string;
+  footerText: string;
+}
+
+const SCREENSHOT_DATA: StepScreenshotData[] = [
+  {
+    src: "/images/mock_listening_test.png",
+    alt: "LanguageCert Listening Test Simulation",
+    tag: "LISTENING MOCK SIMULATION",
+    timer: "36:59",
+    dotColor: "#10b981",
+    footerText: "Interactive audio controls & auto-save",
+  },
+  {
+    src: "/images/mock_reading_test.png",
+    alt: "LanguageCert Reading & Gap-Fill Engine",
+    tag: "READING & GAP-FILL ENGINE",
+    timer: "49:40",
+    dotColor: "#b80f28",
+    footerText: "Live source passage & split choice bank",
+  },
+  {
+    src: "/images/mock_speaking_test.png",
+    alt: "LanguageCert AI Speaking Interview Stage",
+    tag: "AI SPEAKING INTERVIEW",
+    timer: "08:51",
+    dotColor: "#059669",
+    footerText: "Real-time voice recording HUD & examiner",
+  },
+];
+
 export function StepCardVisualPreview({ index }: { index: number }) {
-  if (index === 0) {
-    return (
-      <div className="vh-step-card-ui-mockup vh-step-premium-widget">
+  const data = SCREENSHOT_DATA[index] || SCREENSHOT_DATA[0];
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
+  return (
+    <>
+      <div 
+        className="vh-step-card-ui-mockup vh-step-screenshot-widget"
+        onClick={() => setIsOpen(true)}
+        role="button"
+        tabIndex={0}
+        aria-label={`Inspect ${data.alt} full screen`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setIsOpen(true);
+          }
+        }}
+      >
         <div className="vh-mockup-header">
-          <div className="vh-mockup-tag">
-            <span className="vh-mockup-dot-active" />
-            <span>EXAM SIMULATION HUD</span>
+          <div className="vh-step-window-controls">
+            <span className="vh-window-dot vh-dot-red" />
+            <span className="vh-window-dot vh-dot-yellow" />
+            <span className="vh-window-dot vh-dot-green" />
           </div>
+
+          <div className="vh-mockup-tag">
+            <span className="vh-mockup-dot-custom" style={{ background: data.dotColor }} />
+            <span>{data.tag}</span>
+          </div>
+
           <div className="vh-mockup-timer-clean">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
-            <span>01:54:20</span>
+            <span>{data.timer}</span>
           </div>
         </div>
 
-        <div className="vh-mockup-body">
-          <div className="vh-mockup-audio-card">
-            <div className="vh-mockup-audio-top">
-              <div className="vh-mockup-audio-info">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
-                </svg>
-                <span>Section 2: Academic Conversation</span>
-              </div>
-              <div className="vh-mockup-wave-mini">
-                <span style={{ height: "45%" }} />
-                <span style={{ height: "85%" }} />
-                <span style={{ height: "60%" }} />
-                <span style={{ height: "100%" }} />
-                <span style={{ height: "70%" }} />
-                <span style={{ height: "90%" }} />
-                <span style={{ height: "50%" }} />
-              </div>
-            </div>
-            <div className="vh-mockup-scrubber">
-              <div className="vh-mockup-scrubber-fill" style={{ width: "62%" }} />
-            </div>
-            <div className="vh-mockup-audio-meta">
-              <span>04:12</span>
-              <span>12:00</span>
-            </div>
-          </div>
-
-          <div className="vh-mockup-status-row">
-            <span className="vh-mockup-status-item">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
+        <div className="vh-step-screenshot-body">
+          <img
+            src={data.src}
+            alt={data.alt}
+            className="vh-step-screenshot-img"
+            loading="lazy"
+          />
+          <div className="vh-step-screenshot-overlay">
+            <span className="vh-step-inspect-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
               </svg>
-              <span>Auto-saved 2s ago</span>
-            </span>
-            <span className="vh-mockup-status-sep">·</span>
-            <span className="vh-mockup-status-item">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              <span>Proctored & Monitored</span>
+              <span>Inspect Full UI</span>
             </span>
           </div>
         </div>
-      </div>
-    );
-  }
 
-  if (index === 1) {
-    return (
-      <div className="vh-step-card-ui-mockup vh-step-premium-widget">
-        <div className="vh-mockup-header">
-          <div className="vh-mockup-tag">
-            <span className="vh-mockup-dot-star" />
-            <span>AI & EXAMINER AUDIT</span>
-          </div>
-          <div className="vh-mockup-score-clean">Band 8.0 · C1</div>
-        </div>
-
-        <div className="vh-mockup-body">
-          <div className="vh-mockup-skill-bars">
-            <div className="vh-mockup-bar-item">
-              <div className="vh-mockup-bar-meta">
-                <span>Listening Comprehension</span>
-                <strong>8.5</strong>
-              </div>
-              <div className="vh-mockup-track">
-                <div className="vh-mockup-fill" style={{ width: "94%" }} />
-              </div>
-            </div>
-            <div className="vh-mockup-bar-item">
-              <div className="vh-mockup-bar-meta">
-                <span>Speaking Fluency & Accuracy</span>
-                <strong>8.0</strong>
-              </div>
-              <div className="vh-mockup-track">
-                <div className="vh-mockup-fill" style={{ width: "88%" }} />
-              </div>
-            </div>
-          </div>
-
-          <div className="vh-mockup-criteria-clean">
-            <span>Fluency <strong>8.5</strong></span>
-            <span className="sep">·</span>
-            <span>Grammar <strong>8.0</strong></span>
-            <span className="sep">·</span>
-            <span>Pronunciation <strong>8.0</strong></span>
-            <span className="sep">·</span>
-            <span>Lexical <strong>7.5</strong></span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="vh-step-card-ui-mockup vh-step-premium-widget">
-      <div className="vh-mockup-header">
-        <div className="vh-mockup-tag">
-          <span className="vh-mockup-dot-trend" />
-          <span>PERFORMANCE TRAJECTORY</span>
-        </div>
-        <div className="vh-mockup-trend-clean">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-            <polyline points="17 6 23 6 23 12" />
-          </svg>
-          <span>+1.5 Bands</span>
-        </div>
-      </div>
-
-      <div className="vh-mockup-body">
-        <div className="vh-mockup-growth-clean">
-          <div className="vh-growth-col initial">
-            <span className="lbl">Initial Assessment</span>
-            <span className="val">Band 6.5</span>
-            <span className="sub">CEFR B2</span>
-          </div>
-          <div className="vh-growth-divider">
-            <div className="line" />
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14M12 5l7 7-7 7" />
+        <div className="vh-step-screenshot-footer">
+          <div className="vh-step-footer-tag">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
             </svg>
+            <span>{data.footerText}</span>
           </div>
-          <div className="vh-growth-col target">
-            <span className="lbl">Target Mastered</span>
-            <span className="val">Band 8.0</span>
-            <span className="sub">CEFR C1</span>
-          </div>
-        </div>
-
-        <div className="vh-growth-footnote">
-          <span className="dot" />
-          <span>Target band achieved in 3 weeks across 8 full-length simulated mocks</span>
+          <span className="vh-step-click-hint">Click to enlarge ⤢</span>
         </div>
       </div>
-    </div>
+
+      {isOpen && typeof document !== "undefined" && createPortal(
+        <div 
+          className="vh-screenshot-lightbox-backdrop"
+          onClick={() => setIsOpen(false)}
+        >
+          <div 
+            className="vh-screenshot-lightbox-clean"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img src={data.src} alt={data.alt} className="vh-lightbox-pure-img" />
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }

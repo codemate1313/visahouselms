@@ -880,22 +880,7 @@ export function Home() {
 
                   <div className="vh-step-card-content">
                     <h3>{s.title}</h3>
-                    <p className="vh-step-card-desc">{s.desc}</p>
                     <StepCardVisualPreview index={i} />
-
-                    <div className="vh-step-card-points">
-                      <div className="vh-step-points-title">Key Capabilities:</div>
-                      {s.points.map((point) => (
-                        <div className="vh-step-point" key={point}>
-                          <span className="vh-step-point-badge">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M20 6 9 17l-5-5" />
-                            </svg>
-                          </span>
-                          <span>{point}</span>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </div>
               ))}
